@@ -7,7 +7,8 @@ from source import \
  VariableDeclaration, \
  Header, \
  TypeReference, \
- Structure
+ Structure, \
+ Type
 
 class QemuTypeName():
     def __init__(self, name):
@@ -27,21 +28,13 @@ class QOMType():
 
 header_hw_sysbus = Header("hw/sysbus.h")
 
-type_struct_MemoryRegion = TypeReference(
-    "MemoryRegion",
-    # Through another inclusions
-    header_hw_sysbus)
+type_struct_MemoryRegion = Type("MemoryRegion", False)
+type_struct_SysBusDevice = Type("SysBusDevice", False)
+type_qemu_irq = Type("qemu_irq", False)
 
-type_struct_SysBusDevice = TypeReference(
-    "SysBusDevice",
-    header_hw_sysbus
-    )
-
-type_qemu_irq = TypeReference(
-    "qemu_irq",
-    # Through another inclusions
-    header_hw_sysbus
-    )
+header_hw_sysbus.add_type(type_struct_MemoryRegion)
+header_hw_sysbus.add_type(type_struct_SysBusDevice)
+header_hw_sysbus.add_type(type_qemu_irq)
 
 class SysBusDeviceStateStruct(Structure):
     def __init__(self,
@@ -86,8 +79,11 @@ class SysBusDeviceType(QOMType):
             io_num = self.io_num
             )
         
-        header = HeaderFile(self.qtn.get_header_name())
-        header.add_chunk(StructureDeclaration(state_struct))
+        header = Header("hw/{}.h".format(self.qtn.get_header_name()))
+        header.add_type(state_struct)
         
-        return header
+        #header = HeaderFile(self.qtn.get_header_name())
+        #header.add_chunk(StructureDeclaration(state_struct))
+        
+        return header.generate()
 
