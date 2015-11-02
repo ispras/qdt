@@ -52,16 +52,22 @@ Use @file to read arguments from 'file' (one per line)
     print("Qemu version is {}\n".format(qemu_version))
     
     q_sysbus_dev_t = SysBusDeviceType(
-        name = "DynamipsMPC860IC",
+        name = "Dynamips MPC860 IC",
         out_irq_num = 2,
         mmio_num = 1,
-        io_num = 1
+        pio_num = 1,
+        in_irq_num = 1
         )
 
-    header = q_sysbus_dev_t.generate_header();
+    header = q_sysbus_dev_t.generate_header()
     
     header.generate(sys.stdout)
     
+    source = q_sysbus_dev_t.generate_source()
+    
+    source.generate(sys.stdout)
+    
+    '''
     type_void = TypeDecl("opaque", [], IdentifierType(["void"]))
     type_hwaddr = TypeDecl("offset", [], IdentifierType(["hwaddr"]))
     type_unsigned = TypeDecl("size", [], IdentifierType(["unsigned"]))
@@ -87,6 +93,7 @@ Use @file to read arguments from 'file' (one per line)
     
     generator = c_generator.CGenerator()
     print(generator.visit(ast))
+    '''
     
 if __name__ == '__main__':
     main()

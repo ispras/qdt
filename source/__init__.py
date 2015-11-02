@@ -66,7 +66,13 @@ a field of a type defined in another non-header file {}.".format(
     
         for t in self.types.values():
             if t.definer == self:
-                chunks.append(t.gen_chunk())
+                if type(t) == Function:
+                    if type(self) == Header:
+                        chunks.append(t.gen_chunk())
+                    else:
+                        chunks.append(t.gen_definition())
+                else:
+                    chunks.append(t.gen_chunk())
         
         return chunks
     
@@ -105,18 +111,22 @@ class Header(Source):
 # Type models
 
 class Type():
-    def __init__(self, name, incomplete=True):
+    def __init__(self, name, incomplete=True, base=False):
         self.name = name
         self.incomplete = incomplete
         self.definer = None
+        self.base = base
     
-    def gen_var(self, name, pointer):
+    def gen_var(self, name, pointer = False):
         if self.incomplete:
             if not pointer:
                 raise Exception("Cannon create non-pointer variable {} \
 of incomplete type {}.".format(name, self.name))
 
-        return Variable(name, self)
+        if pointer:
+            return Variable('*' + name, self)
+        else:
+            return Variable(name, self)
 
     def get_definers(self):
         if self.definer == None:
@@ -127,6 +137,28 @@ of incomplete type {}.".format(name, self.name))
     def gen_chunk(self):
         raise Exception("Attempt to generate source chunk for type {}"
             .format(self.name))
+    
+    def gen_defining_chunk(self):
+        if self.definer == None:
+            return None
+        elif type(self.definer) == Header:
+            return HeaderInclusion(self.definer)
+        elif self.base:
+            return None
+        else:
+            return self.gen_chunk()
+    
+    def gen_defining_chunk_list(self):
+        d = self.gen_defining_chunk()
+        if d == None:
+            return []
+        else:
+            return [d]
+
+# Base types
+
+type_void = Type(name = "void", incomplete = True, base = True)
+type_int = Type(name = "int", incomplete = False, base = True)
 
 class TypeReference(Type):
     def __init__(self, _type, header):
@@ -177,6 +209,36 @@ is not added to a source", self.name)
     def gen_chunk(self):
         return StructureDeclaration(self)
 
+class Function(Type):
+    def __init__(self,
+            name,
+            body = None,
+            ret_type = type_void,
+            args = None,
+            static = False, 
+            inline = False,
+            used_types = []):
+        # args is list of Variables
+        super(Function, self).__init__(name,
+            # function cannot be a 'type' of variable. Only function
+            # pointer type is permitted.
+            incomplete=True)
+        self.static = static
+        self.inline = inline
+        self.body = body
+        self.ret_type = ret_type
+        self.args = args
+        self.used_types = used_types
+
+    def gen_declaration(self):
+        return FunctionDeclaration(self)
+    
+    def gen_definition(self):
+        return FunctionDefinition(self)
+
+    def gen_chunk(self):
+        return self.gen_declaration()
+
 # Data models
 
 class Variable():
@@ -199,8 +261,6 @@ class VariableOperand(Operand):
         super(VariableOperand, self).__init__(
             "reference to variable {}".format(var.name), [var])
 
-
-
 class Operator():
     def __init__(self, fmt, operands):
         self.format = fmt
@@ -215,10 +275,19 @@ class AssignmentOperator(BinaryOperator):
     def __init__(self, operands):
         super(AssignmentOperator, self).__init__("=", operands)
 
+
+class CodeNode():
+    def __init__(self, name, code, used_types=None, node_references=None):
+        self.name = name
+        self.code = code
+        self.node_users = []
+        self.node_references = []
+        self.used_types = []
+
 # Source code instances
 
 class SourceChunk:
-    def __init__(self, name, code, references):
+    def __init__(self, name, code, references = None):
         # visited is used during deep first sort
         self.name = name
         self.code = code
@@ -237,6 +306,41 @@ class SourceChunk:
     def del_reference(self, chunk):
         self.references.remove(chunk)
         chunk.users.remove(self)
+    
+    def check_cols_fix_up(self, max_cols = 80, indent='    '):
+        lines = self.code.split('\n')
+        code = ''
+        auto_new_line = ' \\\n{}'.format(indent)
+        
+        for line in lines:
+            if line == lines[-1] and len(line) == 0:
+                break;
+
+            if len(line) > max_cols:
+                words = line.split(' ')
+                ll = 0
+                for word in words:
+                    if ll > 0:
+                        # The variable r reserves characters for auto new
+                        # line ' \\' that can be added after current word 
+                        if word == words[-1]:
+                            r = 0
+                        else:
+                            r = 2
+                        if 1 + r + len(word) + ll > max_cols:
+                            code += auto_new_line + word
+                            ll = 0
+                        else:
+                            code += ' ' + word
+                            ll += 1 + len(word)
+                    else:
+                        code += word
+                        ll += len(word)
+                code += '\n'
+            else:
+                code += line + '\n'
+        
+        self.code = code
 
 class HeaderInclusion(SourceChunk):
     def __init__(self, header):
@@ -255,18 +359,12 @@ class HeaderInclusion(SourceChunk):
 
 class VariableDeclaration(SourceChunk):
     def __init__(self, var, indent=""):
-        header = var.type.definer
-        if header == None:
-            references = []
-        else:
-            references = [HeaderInclusion(header)]
-            
         super(VariableDeclaration, self).__init__(
             name = "Variable {} of type {} declaration".format(
                 var.name,
                 var.type.name
                 ),
-            references = references,
+            references = var.type.gen_defining_chunk_list(),
             code = """\
 {indent}{type_name} {var_name};
 """.format(
@@ -307,6 +405,56 @@ class StructureDeclaration(SourceChunk):
             field_declaration.add_reference(struct_begin)
             self.add_reference(field_declaration)
 
+def gen_function_declaration_string(indent, function):
+    if function.args == None:
+        args = "void"
+    else:
+        args = ""
+        for a in function.args:
+            args += a.type.name + " " + a.name
+            if not a == function.args[-1]:
+                args += ", "
+
+    return "{indent}{static}{inline}{ret_type}{name}({args})".format(
+        indent = indent,
+        static = "static " if function.static else "",
+        inline = "inline " if function.inline else "",
+        ret_type = function.ret_type.name + " ",
+            name = function.name,
+            args = args
+    )
+
+def gen_function_referenced_chunks(function):
+    references = function.ret_type.gen_defining_chunk_list() 
+
+    if not function.args == None:
+        for a in function.args:
+            references.extend(a.type.gen_defining_chunk_list())
+    
+    for t in function.used_types:
+        references.extend(t.gen_defining_chunk_list())
+    
+    return references
+
+class FunctionDeclaration(SourceChunk):
+    def __init__(self, function, indent = ""):
+        super(FunctionDeclaration, self).__init__(
+            name = "Declaration of function %s" % function.name,
+            references = gen_function_referenced_chunks(function),
+            code = "%s;" % gen_function_declaration_string(indent, function)
+            )
+
+class FunctionDefinition(SourceChunk):
+    def __init__(self, function, indent = ""):
+        body = " {}" if function.body == None else "\n{\n%s}" % function.body
+        super(FunctionDefinition, self).__init__(
+            name = "Definition of function %s" % function.name,
+            references = gen_function_referenced_chunks(function),
+            code = "{dec}{body}\n".format(
+                dec = gen_function_declaration_string(indent, function),
+                body = body
+                )
+            )
 
 def deep_first_sort(chunk, new_chunks):
     # visited: 
@@ -363,13 +511,12 @@ class SourceFile:
                 user.add_reference(inclusion)
             
             self.chunks.remove(ch)
+            self.sort_needed = True
             
 
     def sort_chunks(self):
         if not self.sort_needed:
             return
-        
-        self.remove_dup_header_inclusions()
         
         new_chunks = []
         # topology sorting
@@ -399,6 +546,8 @@ class SourceFile:
                 chunk.name, chunk.source.name))
     
     def generate(self, writer, gen_debug_comments=False):
+        self.remove_dup_header_inclusions()
+        
         self.sort_chunks()
         
         writer.write("""
@@ -417,6 +566,9 @@ class SourceFile:
         
         
         for chunk in self.chunks:
+            
+            chunk.check_cols_fix_up()
+            
             if gen_debug_comments:
                 writer.write("/* source chunk {} */\n".format(chunk.name))
             writer.write(chunk.code)
