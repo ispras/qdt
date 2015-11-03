@@ -2,6 +2,7 @@ from chunk import Chunk
 from copy import copy
 import this
 from os.path import os
+from gi.overrides import registry
 
 # Source code models
 
@@ -10,6 +11,42 @@ class Source():
         self.path = path
         self.types = {}
         self.inclusions = {}
+        self.global_variables = {}
+    
+    def add_global_variable(self, var):
+        if var.name in self.global_variables:
+            raise Exception("Variable with name %s is already in file %s"
+                % (var.name, self.name))
+
+        # Auto add definers for type
+        for s in var.type.get_definers():
+            if s == self:
+                continue
+            if not type(s) == Header:
+                raise Exception("Attempt to define variable %s whose type \
+is defined in non-header file %s" % (var.name, s.path))
+            self.add_inclusion(s)
+        # Auto add definers for types used by variable initializer
+        if type(self) is Source:
+            if var.initializer == None:
+                raise Exception("Attempt to add uninitialized global \
+variable %s" % var.name)
+            for t in var.initializer.used_types:
+                for s in t.get_definers():
+                    if s == self:
+                        continue
+                    if not type(s) == Header:
+                        raise Exception("Attempt to define variable {var} \
+whose initializer code uses type {t} defined in non-header file {file}"
+.format(
+    var = var.name,
+    t = t.name,
+    file = s.path 
+)
+                              )
+                    self.add_inclusion(s)
+
+        self.global_variables[var.name] = var
     
     def add_inclusion(self, header):
         if not type(header) == Header:
@@ -41,6 +78,10 @@ found in source {}. The type is defined both in {} and {}.\
         
         self.types[type_ref.name] = type_ref
     
+    def add_types(self, types):
+        for t in types:
+            self.add_type(t)
+
     def add_type(self, _type):
         if type(_type) == TypeReference:
             raise Exception("""A type reference ({}) cannot be 
@@ -68,11 +109,18 @@ a field of a type defined in another non-header file {}.".format(
             if t.definer == self:
                 if type(t) == Function:
                     if type(self) == Header:
-                        chunks.append(t.gen_chunk())
+                        chunks.append(t.gen_declaration())
                     else:
                         chunks.append(t.gen_definition())
                 else:
                     chunks.append(t.gen_chunk())
+        
+        if type(self) == Header:
+            for gv in self.global_variables.values():
+                chunks.append(gv.gen_declaration_chunk(extern = True))
+        elif type(self) == Source:
+            for gv in self.global_variables.values():
+                chunks.append(gv.get_definition_chunk())
         
         return chunks
     
@@ -85,13 +133,26 @@ a field of a type defined in another non-header file {}.".format(
         file.add_chunks(self.gen_chunks())
         
         return file
-        
 
 class Header(Source):
+    reg = {}
+    
+    @staticmethod
+    def lookup(path):
+        if not path in Header.reg:
+            raise Exception("Header with path %s is not registered"
+                % path)
+        return Header.reg[path] 
+    
     def __init__(self, path, is_global=False):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
+
+        if path in Header.reg:
+            raise Exception("Header %s is already registered" % path)
+
+        Header.reg[path] = self
     
     def _add_type_recursive(self, type_ref):
         super(Header, self)._add_type_recursive(type_ref)
@@ -111,22 +172,39 @@ class Header(Source):
 # Type models
 
 class Type():
+    reg = {}
+    
+    @staticmethod
+    def lookup(name):
+        if not name in Type.reg:
+            raise Exception("Type with name %s is not registered"
+                % name)
+        return Type.reg[name] 
+    
     def __init__(self, name, incomplete=True, base=False):
         self.name = name
         self.incomplete = incomplete
         self.definer = None
         self.base = base
+        
+        if name in Type.reg:
+            raise Exception("Type %s is already registered" % name)
+
+        Type.reg[name] = self
     
-    def gen_var(self, name, pointer = False):
+    def gen_var(self, name, pointer = False, initializer = None,
+                static = False):
         if self.incomplete:
             if not pointer:
                 raise Exception("Cannon create non-pointer variable {} \
 of incomplete type {}.".format(name, self.name))
 
         if pointer:
-            return Variable('*' + name, self)
+            return Variable(name = '*' + name, _type = self, 
+                initializer = initializer, static = static)
         else:
-            return Variable(name, self)
+            return Variable(name = name, _type = self, 
+                initializer = initializer, static = static)
 
     def get_definers(self):
         if self.definer == None:
@@ -155,19 +233,17 @@ of incomplete type {}.".format(name, self.name))
         else:
             return [d]
 
-# Base types
-
-type_void = Type(name = "void", incomplete = True, base = True)
-type_int = Type(name = "int", incomplete = False, base = True)
-
 class TypeReference(Type):
     def __init__(self, _type, header):
         if type(_type) == TypeReference:
             raise Exception("Cannot create type reference to type \
 reference {}.".format(_type.name))
 
-        super(TypeReference, self).__init__(_type.name, _type.incomplete)
-        self.header = header
+        #super(TypeReference, self).__init__(_type.name, _type.incomplete)
+        self.name = _type.name
+        self.incomplete = _type.incomplete
+        self.definer = None
+        self.base = _type.base
         self.type = _type
         
     def get_definers(self):
@@ -178,9 +254,12 @@ reference {}.".format(_type.name))
 reference to type {}".format(self.name))
 
 class Structure(Type):
-    def __init__(self, name):
+    def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete=False)
         self.fields = []
+        if not fields == None:
+            for v in fields:
+                self.append_field(v)
     
     def get_definers(self):
         if self.definer == None:
@@ -209,11 +288,22 @@ is not added to a source", self.name)
     def gen_chunk(self):
         return StructureDeclaration(self)
 
+# Base types
+
+Type(name = "void", incomplete = True, base = True)
+Type(name = "int", incomplete = False, base = True)
+Type(name = "unsigned", incomplete = False, base = True)
+Type(name = "const char", incomplete = False, base = True)
+
+Header("stdint.h", is_global=True).add_types([
+    Type(name = "uint64_t", incomplete = False, base = False)
+    ])
+
 class Function(Type):
     def __init__(self,
             name,
             body = None,
-            ret_type = type_void,
+            ret_type = Type.lookup("void"),
             args = None,
             static = False, 
             inline = False,
@@ -239,15 +329,35 @@ class Function(Type):
     def gen_chunk(self):
         return self.gen_declaration()
 
+    def use_as_prototype(self,
+        name,
+        body = None,
+        static = False,
+        inline = False,
+        used_types = []):
+        
+        return Function(name, body, self.ret_type, self.args, static, inline,
+            used_types)
+
 # Data models
 
+class Initializer():
+    def __init__(self, code, used_types = []):
+        self.code = code
+        self.used_types = used_types
+
 class Variable():
-    def __init__(self, name, _type):
+    def __init__(self, name, _type, initializer = None, static = False):
         self.name = name
         self.type = _type
+        self.initializer = initializer
+        self.static = static
     
-    def gen_declaration_chunk(self, indent=""):
-        return VariableDeclaration(self, indent)
+    def gen_declaration_chunk(self, indent="", extern = False):
+        return VariableDeclaration(self, indent, extern)
+
+    def get_definition_chunk(self, indent=""):
+        return VariableDefinition(self, indent)
 
 # Function and instruction models
 
@@ -311,13 +421,17 @@ class SourceChunk:
         lines = self.code.split('\n')
         code = ''
         auto_new_line = ' \\\n{}'.format(indent)
+        last_line = len(lines) - 1
         
-        for line in lines:
-            if line == lines[-1] and len(line) == 0:
+        for idx, line in enumerate(lines):
+            if idx == last_line and len(line) == 0:
                 break;
 
             if len(line) > max_cols:
-                words = line.split(' ')
+                line_indent_len = len(line) - len(line.lstrip(' '))
+                line_indent = line[:line_indent_len]
+                
+                words = line.lstrip(' ').split(' ')
                 ll = 0
                 for word in words:
                     if ll > 0:
@@ -328,14 +442,14 @@ class SourceChunk:
                         else:
                             r = 2
                         if 1 + r + len(word) + ll > max_cols:
-                            code += auto_new_line + word
-                            ll = 0
+                            code += auto_new_line + line_indent + word
+                            ll = len(indent) + line_indent_len + len(word)
                         else:
                             code += ' ' + word
                             ll += 1 + len(word)
                     else:
-                        code += word
-                        ll += len(word)
+                        code += line_indent + word
+                        ll += line_indent_len + len(word)
                 code += '\n'
             else:
                 code += line + '\n'
@@ -358,7 +472,7 @@ class HeaderInclusion(SourceChunk):
         self.header = header
 
 class VariableDeclaration(SourceChunk):
-    def __init__(self, var, indent=""):
+    def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(
             name = "Variable {} of type {} declaration".format(
                 var.name,
@@ -366,11 +480,38 @@ class VariableDeclaration(SourceChunk):
                 ),
             references = var.type.gen_defining_chunk_list(),
             code = """\
-{indent}{type_name} {var_name};
+{indent}{extern}{type_name} {var_name};
 """.format(
         indent = indent,
         type_name = var.type.name,
-        var_name = var.name
+        var_name = var.name,
+        extern = "extern " if extern else ""
+    )
+            )
+        self.variable = var
+
+class VariableDefinition(SourceChunk):
+    def __init__(self, var, indent=""):
+        # add indent to initializer code
+        init_code_lines = var.initializer.code.split('\n')
+        init_code = init_code_lines[0]
+        for line in init_code_lines[1:]:
+            init_code += "\n" + indent + line
+        
+        self.variable = var
+        
+        super(VariableDefinition, self).__init__(
+            name = "Variable %s of type %s definition" %
+                (var.name, var.type.name),
+            references = var.type.gen_defining_chunk_list(),
+            code = """\
+{indent}{static}{type_name} {var_name} = {init};
+""".format(
+        indent = indent,
+        static = "static " if var.static else "",
+        type_name = var.type.name,
+        var_name = var.name,
+        init = init_code
     )
             )
 
@@ -404,6 +545,8 @@ class StructureDeclaration(SourceChunk):
             field_declaration = f.gen_declaration_chunk(field_indent)
             field_declaration.add_reference(struct_begin)
             self.add_reference(field_declaration)
+        
+        self.structure = struct
 
 def gen_function_declaration_string(indent, function):
     if function.args == None:
@@ -443,6 +586,7 @@ class FunctionDeclaration(SourceChunk):
             references = gen_function_referenced_chunks(function),
             code = "%s;" % gen_function_declaration_string(indent, function)
             )
+        self.function = function
 
 class FunctionDefinition(SourceChunk):
     def __init__(self, function, indent = ""):
@@ -455,6 +599,7 @@ class FunctionDefinition(SourceChunk):
                 body = body
                 )
             )
+        self.function = function
 
 def deep_first_sort(chunk, new_chunks):
     # visited: 
