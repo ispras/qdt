@@ -51,21 +51,58 @@ Use @file to read arguments from 'file' (one per line)
     
     print("Qemu version is {}\n".format(qemu_version))
     
+    device_purpose_class = "intc"
+    device_derectory = device_purpose_class
+    
     q_sysbus_dev_t = SysBusDeviceType(
-        name = "Dynamips MPC860 IC",
+        name = "Test Generated IC",
+        directory= device_derectory,
         out_irq_num = 2,
         mmio_num = 1,
         pio_num = 1,
         in_irq_num = 1
         )
 
-    header = q_sysbus_dev_t.generate_header()
+    include_path = os.path.join(arguments.qemu_src, 'include')
+    full_header_path = os.path.join(include_path, q_sysbus_dev_t.header.path)
+    full_source_path =  os.path.join(arguments.qemu_src,
+        q_sysbus_dev_t.source.path)
     
-    header.generate(sys.stdout)
+    source_base_name = os.path.basename(full_source_path)
     
+    (source_name, source_ext) = os.path.splitext(source_base_name)
+    
+    obj_base_name = source_name + ".o"
+    
+    hw_path = os.path.join(arguments.qemu_src, 'hw')
+    class_hw_path = os.path.join(hw_path, device_derectory)
+    Makefile_objs_class_path = os.path.join(class_hw_path, 'Makefile.objs')
+    
+    registered_in_makefile = False
+    for line in open(Makefile_objs_class_path, "r").readlines():
+        if obj_base_name in [s.strip() for s in line.split(" ")]:
+            registered_in_makefile = True
+            break
+    
+    if not registered_in_makefile:
+        with open(Makefile_objs_class_path, "a") as Makefile_objs:
+            Makefile_objs.write("obj-y += %s\n" % obj_base_name)
+
+    if os.path.isfile(full_source_path):
+        os.remove(full_source_path)
+    
+    source_writer = open(full_source_path, "w")
     source = q_sysbus_dev_t.generate_source()
-    
-    source.generate(sys.stdout)
+    source.generate(source_writer)
+    source_writer.close()
+
+    if os.path.isfile(full_header_path):
+        os.remove(full_header_path)
+
+    header_writer = open(full_header_path, "w")
+    header = q_sysbus_dev_t.generate_header()
+    header.generate(header_writer)
+    header_writer.close()
     
     '''
     type_void = TypeDecl("opaque", [], IdentifierType(["void"]))

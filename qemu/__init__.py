@@ -12,7 +12,8 @@ from source import \
  Type, \
  Function, \
  Variable, \
- Initializer
+ Initializer, \
+ Macro
 
 from _codecs import lookup
 from friends.utils.logging import initialize
@@ -47,7 +48,15 @@ Header("exec/hwaddr.h").add_types([
 
 Header("qom/object.h").add_types([
     Type("ObjectClass", False),
-    Type("Object", False)
+    Type("Object", False),
+    Type("TypeInfo", False),
+    Type("Type", False),
+    Function(name = "type_register_static",
+        ret_type = Type.lookup("Type"),
+        args = [
+            Type.lookup("TypeInfo").gen_var("info", pointer = True)
+        ]
+    )
     ])
 
 Header("exec/memory.h").add_types([
@@ -102,13 +111,27 @@ Header("hw/sysbus.h").add_types([
     )
     ])
 
-Header("hw/qdev-code.h").add_types([
+Header("hw/qdev-core.h").add_types([
     Type("DeviceClass", False),
-    Type("DeviceState", False)
+    Type("DeviceState", False),
+    Type("Property", False)
     ])
 
 Header("qapi/error.h").add_types([
     Type("Error*", False)
+    ])
+
+Header("migration/vmstate.h").add_types([
+    Type("VMStateDescription", False),
+    Type("VMStateField", False)
+    ])
+
+Header("qemu/module.h").add_types([
+    Macro(name = "type_init", 
+        args = [
+            "function"
+        ]
+    )
     ])
 
 class SysBusDeviceStateStruct(Structure):
@@ -158,11 +181,12 @@ class SysBusDeviceStateStruct(Structure):
 class SysBusDeviceType(QOMType):
     def __init__(self,
         name,
+        directory,
         out_irq_num = 1,
         in_irq_num = 0,
         mmio_num = 1, 
         pio_num = 0):
-        
+
         super(SysBusDeviceType, self).__init__(name)
 
         self.out_irq_num = out_irq_num
@@ -170,33 +194,41 @@ class SysBusDeviceType(QOMType):
         self.mmio_num = mmio_num
         self.pio_num = pio_num
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
-        
+
         # Define header file
-        self.header = Header("hw/{}.h".format(self.qtn.for_header_name))
-        
+        self.header = Header("hw/%s/%s.h" % (directory, 
+            self.qtn.for_header_name))
+
         self.state_struct = SysBusDeviceStateStruct(
             name = self.struct_name,
             irq_num = self.out_irq_num,
             mmio_num = self.mmio_num,
             pio_num = self.pio_num
             )
-        
-        self.type_macros = SourceChunk(
-            name = "Type cast macros for {}".format(self.qtn.name),
-            code = """\
-#define TYPE_{UPPER} "{lower}"
-#define {UPPER}(obj) OBJECT_CHECK({Struct}, (obj), TYPE_{UPPER})
-""".format(
-    UPPER = self.qtn.for_macros,
-    lower = self.qtn.for_id_name,
-    Struct = self.struct_name
-        )
-            )
-        
+
         self.header.add_type(self.state_struct)
-        
+
+        self.type_name_macros = Macro(
+            name = "TYPE_%s" % self.qtn.for_macros,
+            text = '"%s"' % self.qtn.for_id_name
+            )
+
+        self.header.add_type(self.type_name_macros)
+
+        self.type_cast_macro = Macro(
+            name = self.qtn.for_macros, 
+            args = ["obj"],
+            text = "OBJECT_CHECK({Struct}, (obj), TYPE_{UPPER})".format(
+    UPPER = self.qtn.for_macros,
+    Struct = self.struct_name
+)
+            )
+
+        self.header.add_type(self.type_cast_macro)
+
         # Define source file
-        self.source = Source("hw/%s.c" % self.qtn.for_header_name)
+        self.source = Source("hw/%s/%s.c"% (directory, 
+            self.qtn.for_header_name))
         
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
@@ -210,9 +242,9 @@ class SysBusDeviceType(QOMType):
             static = True,
             used_types = [self.state_struct]
             )
-        
+
         self.source.add_type(self.device_reset) 
-        
+
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
@@ -232,6 +264,7 @@ class SysBusDeviceType(QOMType):
 
         instance_init_code = ''
         instance_init_used_types = []
+        instance_init_used_globals = []
 
         if self.mmio_num > 0:
             instance_init_used_types.extend([
@@ -249,14 +282,14 @@ class SysBusDeviceType(QOMType):
                 body = "    return 0;\n",
                 static = True
             )
-            
+
             write_func = Type.lookup("MemoryRegionOps_write").use_as_prototype(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 static = True
             )
-            
+
             self.source.add_types([read_func, write_func])
-            
+
             ops_init = Initializer(
                 used_types = [read_func, write_func],
                 code = """{{
@@ -274,11 +307,12 @@ class SysBusDeviceType(QOMType):
                 initializer = ops_init,
                 static = True
             )
-            
+
             self.source.add_global_variable(ops)
-            
+            instance_init_used_globals.append(ops)
+
             instance_init_code += """
-    memory_region_init_io(&s->{mmio}, obj, &{ops}, TYPE_{UPPER}, 0x1000);
+    memory_region_init_io(&s->{mmio}, obj, &{ops}, s, TYPE_{UPPER}, 0x1000);
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->{mmio});
 """.format(
     mmio = self.state_struct.get_Ith_mmio_name(mmioN),
@@ -300,20 +334,57 @@ class SysBusDeviceType(QOMType):
             args = [
                 Type.lookup("Object").gen_var("obj", pointer = True)
             ],
-            used_types = instance_init_used_types
+            used_types = instance_init_used_types,
+            used_globals = instance_init_used_globals
         )
         
         self.source.add_type(self.instance_init)
+
+        vmstate_init = Initializer(
+            """{{
+    .name = TYPE_{UPPER},
+    .version_id = 1,
+    .fields = (VMStateField[]) {{
+        VMSTATE_END_OF_LIST()
+    }}
+}}""".format(UPPER = self.qtn.for_macros), 
+            used_types = [
+                Type.lookup("VMStateField"),
+                # It actually will be used when fields will be declared
+                self.state_struct
+            ])
+
+        self.vmstate = Type.lookup("VMStateDescription").gen_var(
+            name = "vmstate_%s" % self.qtn.for_id_name,
+            static = True,
+            initializer = vmstate_init
+            )
+
+        self.source.add_global_variable(self.vmstate)
+
+        properties_init = Initializer(
+"""{
+    DEFINE_PROP_END_OF_LIST()
+}"""
+            )
+
+        self.properties = Type.lookup("Property").gen_var(
+            name = "%s_properties[]" % self.qtn.for_id_name,
+            static = True,
+            initializer = properties_init
+            )
+
+        self.source.add_global_variable(self.properties)
 
         self.class_init = Function(
             name = "%s_class_init" % self.qtn.for_id_name, 
             body = """\
     DeviceClass *dc = DEVICE_CLASS(oc);
-    
+
     dc->realize = {dev}_realize;
     dc->reset   = {dev}_reset;
     dc->vmsd    = &vmstate_{dev};
-    dc->props   = {dev}_props;
+    dc->props   = {dev}_properties;
 """.format(dev = self.qtn.for_id_name),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),
@@ -323,10 +394,69 @@ Type.lookup("void").gen_var("opaque", True),
             used_types = [
                 Type.lookup("DeviceClass"),
                 self.device_realize,
-                self.device_reset]
+                self.device_reset],
+            used_globals = [
+                    self.vmstate,
+                    self.properties
+                ]
             )
  
         self.source.add_type(self.class_init)
+
+        type_info_init = Initializer(
+            code = """{{
+    .name          = TYPE_{UPPER},
+    .parent        = TYPE_SYS_BUS_DEVICE,
+    .instance_size = sizeof({Struct}),
+    .instance_init = {instance_init},
+    .class_init    = {class_init}
+}}""".format(
+    UPPER = self.qtn.for_macros,
+    Struct = self.state_struct.name,
+    instance_init = self.instance_init.name,
+    class_init = self.class_init.name
+),
+            used_types = [
+                self.state_struct,
+                self.instance_init,
+                self.class_init
+            ]
+            )
+        
+        self.type_info = Type.lookup("TypeInfo").gen_var(
+            name = self.gen_type_info_name(),
+            static = True,
+            initializer = type_info_init
+            )
+        
+        self.source.add_global_variable(self.type_info)
+        
+        self.register_types = Function(
+            name = self.gen_register_types_name(),
+            body = """\
+    type_register_static(&{type_info});
+""".format(
+    type_info = self.gen_type_info_name()
+), 
+            static = True, 
+            used_types = [
+                Type.lookup("type_register_static")
+            ],
+            used_globals = [self.type_info])
+        
+        self.source.add_type(self.register_types)
+
+        type_init_var = Type.lookup("type_init").gen_var()
+        type_init_usage_init = Initializer(
+            code = {
+                "function": self.register_types.name },
+            used_types = [
+                self.register_types]
+            )
+        self.source.add_usage(
+            type_init_var.gen_usage(type_init_usage_init)
+            )
+        
 
     
     def generate_header(self):
@@ -334,19 +464,24 @@ Type.lookup("void").gen_var("opaque", True),
         #header.add_chunk(StructureDeclaration(state_struct))
         
         header_source = self.header.generate()
-        header_source.add_chunk(self.type_macros)
         
         return header_source;
 
     def generate_source(self):
         return self.source.generate()
-    
+
     def get_Ith_mmio_id_component(self, i):
         return self.state_struct.get_Ith_mmio_name(i)
 
     def gen_Ith_mmio_ops_name(self, i):
         return self.qtn.for_id_name + "_" \
             + self.get_Ith_mmio_id_component(i) + "_ops"
-    
+
     def gen_instance_init_name(self):
         return "%s_instance_init" % self.qtn.for_id_name
+
+    def gen_register_types_name(self):
+        return "%s_register_types" % self.qtn.for_id_name
+
+    def gen_type_info_name(self):
+        return "%s_info" % self.qtn.for_id_name

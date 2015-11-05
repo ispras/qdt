@@ -3,6 +3,7 @@ from copy import copy
 import this
 from os.path import os
 from gi.overrides import registry
+from genericpath import exists
 
 # Source code models
 
@@ -12,7 +13,11 @@ class Source():
         self.types = {}
         self.inclusions = {}
         self.global_variables = {}
-    
+        self.usages = []
+
+    def add_usage(self, usage):
+        self.usages.append(usage)
+
     def add_global_variable(self, var):
         if var.name in self.global_variables:
             raise Exception("Variable with name %s is already in file %s"
@@ -122,6 +127,17 @@ a field of a type defined in another non-header file {}.".format(
             for gv in self.global_variables.values():
                 chunks.append(gv.get_definition_chunk())
         
+        for u in self.usages:
+            usage_chunk = u.gen_chunk();
+            if type(u.variable.type) == Macro:
+                chunks.append(usage_chunk)
+            else:
+                term_chunk = SourceChunk(
+                    name = "Variable %s usage terminator" % u.variable.name,
+                    code = ";\n",
+                    references = [usage_chunk])
+                chunks.append(term_chunk)
+        
         return chunks
     
     def generate(self):
@@ -168,6 +184,14 @@ class Header(Source):
         
         for s in self.includers:
             s._add_type_recursive(type_ref)
+    
+    def __hash__(self):
+        # key contains of 'g' or 'h' and header path
+        # 'g' and 'h' are used to distinguish global and local
+        # headers with same 
+        return hash("{}{}".format(
+                "g" if self.is_global else "l",
+                self.path))
 
 # Type models
 
@@ -252,6 +276,11 @@ reference {}.".format(_type.name))
     def gen_chunk(self):
         raise Exception("Attempt to generate source chunk for \
 reference to type {}".format(self.name))
+    
+    def gen_var(self, name, pointer = False, initializer = None,
+            static = False):
+        raise Exception("""Attempt to generate variable of type %s by
+ reference""" % self.type.name)
 
 class Structure(Type):
     def __init__(self, name, fields = None):
@@ -307,7 +336,8 @@ class Function(Type):
             args = None,
             static = False, 
             inline = False,
-            used_types = []):
+            used_types = [],
+            used_globals = []):
         # args is list of Variables
         super(Function, self).__init__(name,
             # function cannot be a 'type' of variable. Only function
@@ -319,6 +349,7 @@ class Function(Type):
         self.ret_type = ret_type
         self.args = args
         self.used_types = used_types
+        self.used_globals = used_globals
 
     def gen_declaration(self):
         return FunctionDeclaration(self)
@@ -339,12 +370,42 @@ class Function(Type):
         return Function(name, body, self.ret_type, self.args, static, inline,
             used_types)
 
+class Macro(Type):
+    # args is list of strings
+    def __init__(self, name, args = None, text=None):
+        super(Macro, self).__init__(name)
+        
+        self.args = args
+        self.text = text
+
+    def gen_chunk(self):
+        return MacroDefinition(self)
+
+    def gen_usage_string(self, init):
+        if self.args == None:
+            return self.name
+        else:
+            arg_val = "(";
+            for a in self.args[:-1]:
+                arg_val += init.code[a] + ", "
+            arg_val += init.code[self.args[-1]] + ")"
+            
+            return "%s%s" % (self.name, arg_val)
+
+    def gen_var(self):
+        return super(Macro, self).gen_var(
+                name = "fake variable of macro %s" % self.name,
+                pointer = True, # MAcro is incomplete type
+            )
+
 # Data models
 
 class Initializer():
-    def __init__(self, code, used_types = []):
+    #code is string for variables and dictionary for macros
+    def __init__(self, code, used_types = [], used_variables = []):
         self.code = code
         self.used_types = used_types
+        self.used_variables = used_variables
 
 class Variable():
     def __init__(self, name, _type, initializer = None, static = False):
@@ -359,7 +420,18 @@ class Variable():
     def get_definition_chunk(self, indent=""):
         return VariableDefinition(self, indent)
 
+    def gen_usage(self, initializer = None):
+        return Usage(self, initializer)
+
 # Function and instruction models
+
+class Usage():
+    def __init__(self, var, initializer = None):
+        self.variable = var
+        self.initalizer = initializer
+    
+    def gen_chunk(self):
+        return VariableUsage(self.variable, self.initalizer)
 
 class Operand():
     def __init__(self, name, data_references=[]):
@@ -408,7 +480,7 @@ class SourceChunk:
         if not references == None:
             for chunk in references:
                 self.add_reference(chunk)
-    
+
     def add_reference(self, chunk):
         self.references.append(chunk)
         chunk.users.append(self)
@@ -471,6 +543,30 @@ class HeaderInclusion(SourceChunk):
             )
         self.header = header
 
+    def get_origin(self):
+        return self.header
+
+class MacroDefinition(SourceChunk):
+    def __init__(self, macro, indent = ""):
+        if macro.args == None:
+            args_txt = ""
+        else:
+            args_txt = "("
+            for a in macro.args[:-1]:
+                args_txt += a + ", "
+            args_txt += macro.args[-1] + ")"
+        
+        super(MacroDefinition, self).__init__(
+            name = "Definition of macro %s" % macro.name,
+            code = "%s#define %s%s%s" % (
+                indent,
+                macro.name,
+                args_txt,
+                "" if macro.text == None else " %s" % macro.text)
+            )
+            
+        self.macro = macro
+
 class VariableDeclaration(SourceChunk):
     def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(
@@ -500,10 +596,18 @@ class VariableDefinition(SourceChunk):
         
         self.variable = var
         
+        references = var.type.gen_defining_chunk_list()
+        
+        for v in var.initializer.used_variables:
+            references.append(v.get_definition_chunk())
+        
+        for t in var.initializer.used_types:
+            references.extend(t.gen_defining_chunk_list())
+        
         super(VariableDefinition, self).__init__(
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
-            references = var.type.gen_defining_chunk_list(),
+            references = references,
             code = """\
 {indent}{static}{type_name} {var_name} = {init};
 """.format(
@@ -514,6 +618,33 @@ class VariableDefinition(SourceChunk):
         init = init_code
     )
             )
+
+    def get_origin(self):
+        return self.variable
+
+class VariableUsage(SourceChunk):
+    def __init__(self, var, initializer = None):
+        references = var.type.gen_defining_chunk_list()
+        
+        if not initializer == None:
+            for v in initializer.used_variables:
+                references.append(v.get_definition_chunk())
+        
+            for t in initializer.used_types:
+                references.extend(t.gen_defining_chunk_list())
+        
+        if type(var.type) == Macro:
+            super(VariableUsage, self).__init__(
+                name = "Usage of macro %s" % var.type.name,
+                references = references,
+                code = var.type.gen_usage_string(initializer)
+                )
+        else:
+            raise Exception("""Usage of variable of type %s is not
+ implemented""" % var.type.name)
+
+        self.variable = var
+        self.initializer = initializer
 
 class StructureDeclaration(SourceChunk):
     def __init__(self, struct, fields_indent="    ", indent=""):
@@ -567,33 +698,48 @@ def gen_function_declaration_string(indent, function):
             args = args
     )
 
-def gen_function_referenced_chunks(function):
+def gen_function_decl_ref_chunks(function):
     references = function.ret_type.gen_defining_chunk_list() 
 
     if not function.args == None:
         for a in function.args:
             references.extend(a.type.gen_defining_chunk_list())
     
-    for t in function.used_types:
+    return references
+
+def gen_function_def_ref_chunks(f):
+    references = []
+    
+    for t in f.used_types:
         references.extend(t.gen_defining_chunk_list())
     
+    for g in f.used_globals:
+        references.append(g.get_definition_chunk())
+
     return references
 
 class FunctionDeclaration(SourceChunk):
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(
             name = "Declaration of function %s" % function.name,
-            references = gen_function_referenced_chunks(function),
+            references = gen_function_decl_ref_chunks(function),
             code = "%s;" % gen_function_declaration_string(indent, function)
             )
         self.function = function
 
+    def get_origin(self):
+        return self.function
+
 class FunctionDefinition(SourceChunk):
     def __init__(self, function, indent = ""):
         body = " {}" if function.body == None else "\n{\n%s}" % function.body
+        
+        references = gen_function_decl_ref_chunks(function)
+        references.extend(gen_function_def_ref_chunks(function))
+        
         super(FunctionDefinition, self).__init__(
             name = "Definition of function %s" % function.name,
-            references = gen_function_referenced_chunks(function),
+            references = references,
             code = "{dec}{body}\n".format(
                 dec = gen_function_declaration_string(indent, function),
                 body = body
@@ -630,59 +776,57 @@ class SourceFile:
         self.chunks = []
         self.sort_needed = False
 
-    def remove_dup_header_inclusions(self): 
-        included_headers = {}
-        
-        for ch in list(self.chunks):
-            if not type(ch) == HeaderInclusion:
-                continue
-            header = ch.header
-            # key contains of 'g' or 'h' and header path
-            # 'g' and 'h' are used to distinguish global and local
-            # headers with same 
-            key = "{}{}".format(
-                "g" if header.is_global else "l",
-                ch.header.path)
+    def remove_dup_chunk(self, ch, ch_remove):
+        for user in list(ch_remove.users):
+            user.del_reference(ch_remove)
+            user.add_reference(ch)
+
+        self.chunks.remove(ch_remove)
+
+    def remove_chunks_with_same_origin(self, types = []):
+        for t in types:
+            exists = {}
             
-            try:
-                inclusion = included_headers[key]
-            except KeyError:
-                included_headers[key] = ch
-                continue
-            
-            # replace duplicate header references
-            for user in list(ch.users):
-                user.del_reference(ch)
-                user.add_reference(inclusion)
-            
-            self.chunks.remove(ch)
-            self.sort_needed = True
-            
+            for ch in list(self.chunks):
+                if not type(ch) == t:
+                    continue
+
+                origin = ch.get_origin()
+
+                try:
+                    ech = exists[origin]
+                except KeyError:
+                    exists[origin] = ch
+                    continue
+
+                self.remove_dup_chunk(ech, ch)
+
+                self.sort_needed = True
 
     def sort_chunks(self):
         if not self.sort_needed:
             return
-        
+
         new_chunks = []
         # topology sorting
         for chunk in self.chunks:
             if not chunk.visited == 2:
                 deep_first_sort(chunk, new_chunks)
-        
+
         # semantic sort
         new_chunks.sort(key = source_chunk_key)
-        
+
         self.chunks = new_chunks
     
     def add_chunks(self, chunks):
         for ch in chunks:
             self.add_chunk(ch)
-    
+
     def add_chunk(self, chunk):
         if chunk.source == None:
             self.sort_needed = True
             self.chunks.append(chunk)
-            
+
             # Also add referenced chunks into the source
             for ref in chunk.references:
                 self.add_chunk(ref)
@@ -691,10 +835,14 @@ class SourceFile:
                 chunk.name, chunk.source.name))
     
     def generate(self, writer, gen_debug_comments=False):
-        self.remove_dup_header_inclusions()
-        
+        self.remove_chunks_with_same_origin([
+            HeaderInclusion,
+            VariableDefinition,
+            FunctionDeclaration
+            ])
+
         self.sort_chunks()
-        
+
         writer.write("""
 /* {}.{} */
 """.format(
@@ -702,14 +850,14 @@ class SourceFile:
     "h" if self.is_header else "c"
     )
             )
-        
+
         if self.is_header:
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
 """.format(name = self.name.upper()))
-        
-        
+
+
         for chunk in self.chunks:
             
             chunk.check_cols_fix_up()
@@ -717,7 +865,7 @@ class SourceFile:
             if gen_debug_comments:
                 writer.write("/* source chunk {} */\n".format(chunk.name))
             writer.write(chunk.code)
-        
+
         if self.is_header:
             writer.write("""\
 #endif /* INCLUDE_{}_H */
