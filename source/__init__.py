@@ -833,13 +833,46 @@ class SourceFile:
         elif not chunk.source == self:
             raise Exception("The chunk {} is already in {} ".format(
                 chunk.name, chunk.source.name))
-    
+
+    def check_static_function_declarations(self):
+        func_dec = {}
+        for ch in list(self.chunks):
+            if type(ch) != FunctionDeclaration \
+               and type(ch) != FunctionDefinition:
+                continue
+
+            f = ch.function
+
+            if not f.static:
+                continue
+
+            try:
+                prev_ch = func_dec[f]
+            except KeyError:
+                func_dec[f] = ch
+                continue
+
+            # TODO: check for loops in references, the cases in which forward
+            #declarations is really needed.
+
+            if type(ch) == FunctionDeclaration:
+                self.remove_dup_chunk(prev_ch, ch)
+            elif type(ch) == type(prev_ch):
+                # prev_ch and ch are FunctionDefinition
+                self.remove_dup_chunk(prev_ch, ch)
+            else:
+                # prev_ch is FunctionDeclaration but ch is FunctionDefinition
+                self.remove_dup_chunk(ch, prev_ch)
+                func_dec[f] = ch
+
     def generate(self, writer, gen_debug_comments=False):
         self.remove_chunks_with_same_origin([
             HeaderInclusion,
             VariableDefinition,
             FunctionDeclaration
             ])
+
+        self.check_static_function_declarations()
 
         self.sort_chunks()
 

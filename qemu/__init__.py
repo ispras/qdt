@@ -108,6 +108,13 @@ Header("hw/sysbus.h").add_types([
             Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
             Type.lookup("MemoryRegion").gen_var("memory", pointer = True)
         ]
+    ),
+    Function(name = "sysbus_init_irq",
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+            Type.lookup("qemu_irq").gen_var("p", pointer = True)
+        ]
     )
     ])
 
@@ -319,12 +326,27 @@ class SysBusDeviceType(QOMType):
     ops = self.gen_Ith_mmio_ops_name(mmioN),
     UPPER = self.qtn.for_macros
 )
+
+        if self.out_irq_num > 0:
+            instance_init_used_types.extend([
+                Type.lookup("qemu_irq"),
+                Type.lookup("sysbus_init_irq")
+                ])
+
+            instance_init_code += "\n"
+
+            for irqN in range(0, self.out_irq_num):
+                instance_init_code += """\
+    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->%s);
+""" % self.state_struct.get_Ith_irq_name(irqN)
+
+
         instance_init_used_types.append(self.state_struct)
         self.instance_init = Function(
             name = self.gen_instance_init_name(),
             body = """\
     {Struct} *s = {UPPER}(obj);
-    {extra_code}
+{extra_code}
 """.format(
     Struct = self.state_struct.name,
     UPPER = self.qtn.for_macros,
