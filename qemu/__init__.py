@@ -97,6 +97,10 @@ Header("exec/memory.h").add_types([
     )
     ])
 
+Header("exec/ioport.h").add_types([
+    Type("pio_addr_t", incomplete=False)
+    ])
+
 Header("hw/sysbus.h").add_types([
     Type("SysBusDevice", False),
     Type("qemu_irq", False),
@@ -113,13 +117,49 @@ Header("hw/sysbus.h").add_types([
             Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
             Type.lookup("qemu_irq").gen_var("p", pointer = True)
         ]
+    ),
+    Function(name = "sysbus_add_io",
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+            Type.lookup("hwaddr").gen_var("addr"),
+            Type.lookup("MemoryRegion").gen_var("mem", pointer = True)
+        ]
+    ),
+    Function(name = "sysbus_init_ioports",
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+            Type.lookup("pio_addr_t").gen_var("dev"),
+            Type.lookup("pio_addr_t").gen_var("dev")
+        ]
     )
     ])
+
+Header("hw/irq.h").add_types([
+    Function(name = "qemu_irq_handler",
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("void").gen_var("opaque", pointer = True),
+            Type.lookup("int").gen_var("n"),
+            Type.lookup("int").gen_var("level")
+        ]
+    )
+])
 
 Header("hw/qdev-core.h").add_types([
     Type("DeviceClass", False),
     Type("DeviceState", False),
-    Type("Property", False)
+    Macro(name = "DEVICE", args = ["obj"]),
+    Type("Property", False),
+    Function(name = "qdev_init_gpio_in",
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("DeviceState").gen_var("dev", pointer = True),
+            Type.lookup("qemu_irq_handler").gen_var("handler"),
+            Type.lookup("int").gen_var("n")
+        ]
+    )
     ])
 
 Header("qapi/error.h").add_types([
