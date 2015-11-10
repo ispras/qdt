@@ -504,10 +504,11 @@ class SourceChunk:
                 break;
 
             if len(line) > max_cols:
-                line_indent_len = len(line) - len(line.lstrip(' '))
-                line_indent = line[:line_indent_len]
+                line_no_indent_len = len(line) - len(line.lstrip(' '))
+                line_indent = line[:line_no_indent_len]
                 
                 words = line.lstrip(' ').split(' ')
+
                 ll = 0
                 for word in words:
                     if ll > 0:
@@ -519,13 +520,13 @@ class SourceChunk:
                             r = 2
                         if 1 + r + len(word) + ll > max_cols:
                             code += auto_new_line + line_indent + word
-                            ll = len(indent) + line_indent_len + len(word)
+                            ll = len(indent) + len(line_indent) + len(word)
                         else:
                             code += ' ' + word
                             ll += 1 + len(word)
                     else:
                         code += line_indent + word
-                        ll += line_indent_len + len(word)
+                        ll += len(line_indent) + len(word)
                 code += '\n'
             else:
                 code += line + '\n'
