@@ -592,7 +592,7 @@ class VariableDeclaration(SourceChunk):
         self.variable = var
 
 class VariableDefinition(SourceChunk):
-    def __init__(self, var, indent=""):
+    def __init__(self, var, indent="", append_nl = True):
         # add indent to initializer code
         init_code_lines = var.initializer.code.split('\n')
         init_code = init_code_lines[0]
@@ -614,13 +614,14 @@ class VariableDefinition(SourceChunk):
                 (var.name, var.type.name),
             references = references,
             code = """\
-{indent}{static}{type_name} {var_name} = {init};
+{indent}{static}{type_name} {var_name} = {init};{nl}
 """.format(
         indent = indent,
         static = "static " if var.static else "",
         type_name = var.type.name,
         var_name = var.name,
-        init = init_code
+        init = init_code,
+        nl = "\n" if append_nl else ""
     )
             )
 
@@ -630,14 +631,14 @@ class VariableDefinition(SourceChunk):
 class VariableUsage(SourceChunk):
     def __init__(self, var, initializer = None):
         references = var.type.gen_defining_chunk_list()
-        
+
         if not initializer == None:
             for v in initializer.used_variables:
                 references.append(v.get_definition_chunk())
         
             for t in initializer.used_types:
                 references.extend(t.gen_defining_chunk_list())
-        
+
         if type(var.type) == Macro:
             super(VariableUsage, self).__init__(
                 name = "Usage of macro %s" % var.type.name,
@@ -652,7 +653,8 @@ class VariableUsage(SourceChunk):
         self.initializer = initializer
 
 class StructureDeclaration(SourceChunk):
-    def __init__(self, struct, fields_indent="    ", indent=""):
+    def __init__(self, struct, fields_indent="    ", indent="",
+                 append_nl = True):
         struct_begin = SourceChunk(
         name = "Beginning of structure {} declaration".format(struct.name),
         code = """\
@@ -667,10 +669,11 @@ class StructureDeclaration(SourceChunk):
         super(StructureDeclaration, self).__init__(
             name = "Ending of structure {} declaration".format(struct.name),
             code = """\
-{indent}}} {struct_name};
+{indent}}} {struct_name};{nl}
 """.format(
     indent = indent,
-    struct_name = struct.name
+    struct_name = struct.name,
+    nl = "\n" if append_nl else ""
     ),
             references = [struct_begin]
             )
@@ -736,9 +739,12 @@ class FunctionDeclaration(SourceChunk):
         return self.function
 
 class FunctionDefinition(SourceChunk):
-    def __init__(self, function, indent = ""):
+    def __init__(self, function, indent = "", append_nl = True):
         body = " {}" if function.body == None else "\n{\n%s}" % function.body
-        
+
+        if append_nl:
+            body +="\n"
+
         references = gen_function_decl_ref_chunks(function)
         references.extend(gen_function_def_ref_chunks(function))
         
@@ -870,7 +876,8 @@ class SourceFile:
                 self.remove_dup_chunk(ch, prev_ch)
                 func_dec[f] = ch
 
-    def generate(self, writer, gen_debug_comments=False):
+    def generate(self, writer, gen_debug_comments=False, 
+                 append_nl_after_headers = True):
         self.remove_chunks_with_same_origin([
             HeaderInclusion,
             VariableDefinition,
@@ -895,11 +902,19 @@ class SourceFile:
 #define INCLUDE_{name}_H
 """.format(name = self.name.upper()))
 
+        prev_header = False
 
         for chunk in self.chunks:
-            
+
+            if isinstance(chunk, HeaderInclusion):
+                prev_header = True
+            else:
+                if append_nl_after_headers and prev_header:
+                    writer.write("\n")
+                prev_header = False
+
             chunk.check_cols_fix_up()
-            
+
             if gen_debug_comments:
                 writer.write("/* source chunk {} */\n".format(chunk.name))
             writer.write(chunk.code)
