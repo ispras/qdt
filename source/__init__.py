@@ -370,6 +370,10 @@ class Function(Type):
         return Function(name, body, self.ret_type, self.args, static, inline,
             used_types)
 
+    def gen_var(self, name, initializer = None, static = False):
+        return Variable(name = name, _type = self, 
+                initializer = initializer, static = static)
+
 class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):

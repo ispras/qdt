@@ -79,10 +79,8 @@ Header("exec/memory.h").add_types([
         ]
     ),
     Structure("MemoryRegionOps", 
-        [   Type.lookup("MemoryRegionOps_read").gen_var("read",
-                pointer = True),
-            Type.lookup("MemoryRegionOps_write").gen_var("write",
-                pointer = True),
+        [   Type.lookup("MemoryRegionOps_read").gen_var("read"),
+            Type.lookup("MemoryRegionOps_write").gen_var("write"),
          ]
     ),
     Function(name = "memory_region_init_io",
