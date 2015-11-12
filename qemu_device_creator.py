@@ -4,12 +4,6 @@ import argparse
 import os.path
 from _io import open
 from qemu import SysBusDeviceType
-from source import HeaderFile
-import sys
-
-from pycparser import c_generator, c_ast
-from pycparser.c_ast import FuncDef, ParamList, PtrDecl, TypeDecl,\
-    IdentifierType, FuncDecl, FileAST, Constant
 
 def arg_type_directory(string):
     if not os.path.isdir(string):
@@ -105,6 +99,10 @@ Use @file to read arguments from 'file' (one per line)
     header_writer.close()
     
     '''
+    from pycparser import c_generator, c_ast
+    from pycparser.c_ast import FuncDef, ParamList, PtrDecl, TypeDecl,\
+        IdentifierType, FuncDecl, FileAST, Constant
+    
     type_void = TypeDecl("opaque", [], IdentifierType(["void"]))
     type_hwaddr = TypeDecl("offset", [], IdentifierType(["hwaddr"]))
     type_unsigned = TypeDecl("size", [], IdentifierType(["unsigned"]))
