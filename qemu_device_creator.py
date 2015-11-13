@@ -5,6 +5,7 @@ import os.path
 from _io import open
 from qemu import SysBusDeviceType
 import qemu
+from source import Header
 
 def arg_type_directory(string):
     if not os.path.isdir(string):
@@ -30,7 +31,12 @@ Use @file to read arguments from 'file' (one per line)
         type=arg_type_directory,
         metavar='path_to_qemu_source_tree',
         )
-    
+
+    parser.add_argument(
+        '--gen-header-tree',
+        default = None,
+        metavar = "header_tree.gv"
+        )
     
     arguments = parser.parse_args()
     
@@ -49,6 +55,9 @@ Use @file to read arguments from 'file' (one per line)
     include_path = os.path.join(arguments.qemu_src, 'include')
     
     qemu.initialize(include_path)
+
+    if not arguments.gen_header_tree == None:
+        Header.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
     device_purpose_class = "intc"
     device_derectory = device_purpose_class
