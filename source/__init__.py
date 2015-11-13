@@ -1,5 +1,6 @@
 from os.path import os, split, join
 import json
+import sys
 
 # PLY`s C preprocessor is used for several QEMU code analysis
 ply = join(split(split(__file__)[0])[0], "ply")
