@@ -65,14 +65,18 @@ whose initializer code uses type {t} defined in non-header file {file}"
         
         if not header.path in self.inclusions:
             self.inclusions[header.path] = header
-        
-        for name, t in header.types.items():
-            if type(t) == TypeReference:
-                self.types[name] = t
-            else:
-                self.types[name] = TypeReference(t)
-        
-        header.includers.append(self)
+
+            for name, t in header.types.items():
+                if type(t) == TypeReference:
+                    self.types[name] = t
+                else:
+                    self.types[name] = TypeReference(t)
+
+            if self in header.includers:
+                raise Exception("Header %s is in %s includers but does not \
+includes it" % (self.path, header.path))
+
+            header.includers.append(self)
     
     def _add_type_recursive(self, type_ref):
         if type_ref.name in self.types:
@@ -331,6 +335,10 @@ digraph HeaderInclusion {
         Header.reg[path] = self
     
     def _add_type_recursive(self, type_ref):
+        if type_ref.type.definer == self:
+            raise Exception("Adding type %s reference to file %s defining \
+the type" % (type_ref.type.name, self.path))
+        
         super(Header, self)._add_type_recursive(type_ref)
         
         for s in self.includers:
