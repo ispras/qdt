@@ -1,9 +1,19 @@
 from chunk import Chunk
 from copy import copy
 import this
-from os.path import os
+from os.path import os, isdir
 from gi.overrides import registry
 from genericpath import exists
+import sys
+import json
+
+# PLY`s C preprocessor is used for several QEMU code analysis
+ply = join(split(split(__file__)[0])[0], "ply")
+if ply not in sys.path:
+    sys.path.insert(0, ply)
+
+from ply.lex import lex
+from ply.cpp import *
 
 # Source code models
 
@@ -154,7 +164,160 @@ a field of a type defined in another non-header file {}.".format(
 
 class Header(Source):
     reg = {}
-    
+
+    @staticmethod
+    def gen_header_inclusion_dot_file(dot_file_name):
+        dot_writer = open(dot_file_name, "w")
+
+        dot_writer.write("""\
+digraph HeaderInclusion {
+    node [shape=polygon fontname=Monospace]
+    edge[style=filled]
+
+""")
+
+        def _header_path_to_node_name(path):
+            return path.replace(".", "_").replace("/", "__").replace("-", "_")
+
+        dot_writer.write("    /* Header nodes: */\n")
+        for h in Header.reg.values():
+            node = _header_path_to_node_name(h.path)
+            dot_writer.write('    %s [label="%s"]\n' % (node, h.path))
+
+        dot_writer.write("\n    /* Header dependencies: */\n")
+
+        for h in Header.reg.values():
+            h_node = _header_path_to_node_name(h.path)
+            for i in h.inclusions.values():
+                i_node = _header_path_to_node_name(i.path)
+
+                dot_writer.write('    %s -> %s\n' % (i_node, h_node))
+
+        dot_writer.write("}\n")
+
+        dot_writer.close()
+
+    @staticmethod
+    def load_header_db(header_db_file_name):
+        header_db_reader = open(header_db_file_name, "r")
+
+        list_headers = json.load(header_db_reader)
+
+        # Create all headers
+        for dict_h in list_headers:
+            path = dict_h["path"]
+            if not path in Header.reg:
+                Header(
+                       path = dict_h["path"],
+                       is_global = dict_h["is_global"])
+            else:
+                # Check if existing header equals the one from database?
+                pass
+
+        # Set up inclusions
+        for dict_h in list_headers:
+            path = dict_h["path"]
+            h = Header.lookup(path)
+
+            for inc in dict_h["inclusions"]:
+                i = Header.lookup(inc)
+                h.add_inclusion(i)
+
+        header_db_reader.close()
+
+    @staticmethod
+    def save_header_db(header_db_file_name):
+        header_db_writer = open(header_db_file_name, "w")
+
+        list_headers = []
+        for h in Header.reg.values():
+            dict_h = {}
+            dict_h["path"] = h.path
+            dict_h["is_global"] = h.is_global
+            inc_list = []
+            for i in h.inclusions.values():
+                inc_list.append(i.path)
+            dict_h["inclusions"] = inc_list
+            list_headers.append(dict_h)
+
+        json.dump(list_headers, header_db_writer, 
+            indent=4,
+            separators=(',', ': ')
+            )
+
+        header_db_writer.close()
+
+    @staticmethod
+    def _on_include(includer, inclusion, is_global):
+        if not inclusion in Header.reg:
+            print("Parsing " + inclusion + " as inclusion")
+            h = Header(path = inclusion, is_global = is_global)
+            h.parsed = True
+        else:
+            h = Header.lookup(inclusion)
+
+        Header.lookup(includer).add_inclusion(h)
+
+    @staticmethod
+    def _build_inclusions_recursive(start_dir, prefix):
+        full_name = os.path.join(start_dir, prefix)
+        if (os.path.isdir(full_name)):
+            for entry in os.listdir(full_name):
+                Header._build_inclusions_recursive(
+                    start_dir,
+                    os.path.join(prefix, entry)
+                )
+        else:
+            (name, ext) = os.path.splitext(prefix)
+            if ext == ".h":
+                if not prefix in Header.reg:
+                    h = Header(path = prefix, is_global = False)
+                    h.parsed = False
+                else:
+                    h = Header.lookup(prefix)
+
+                if not h.parsed:
+                    h.parsed = True
+                    print("Parsing " + prefix)
+
+                    p = Preprocessor(lex())
+                    p.add_path(start_dir)
+                    p.on_include = Header._on_include
+
+                    header_input = open(full_name, "r").read()
+                    p.parse(input = header_input, source = prefix)
+
+                    class ParsePrintFilter:
+                        def __init__(self, out):
+                            self.out = out
+                            self.written = False
+                        
+                        def write(self, str):
+                            if str.startswith("Parsing"):
+                                self.out.write(str + "\n")
+                                self.written = True
+                        
+                        def flush(self):
+                            if self.written:
+                                self.out.flush()
+                                self.written = False
+
+                    sys.stdout = ParsePrintFilter(sys.stdout)
+                    while p.token(): pass
+                    sys.stdout = sys.stdout.out
+            
+
+    @staticmethod
+    def build_inclusions(dname):
+        for h in Header.reg.values():
+            h.parsed = False
+        
+        for entry in os.listdir(dname):
+            Header._build_inclusions_recursive(dname, entry)
+
+        for h in Header.reg.values():
+            del h.parsed
+
     @staticmethod
     def lookup(path):
         if not path in Header.reg:
