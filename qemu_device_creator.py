@@ -47,10 +47,10 @@ Use @file to read arguments from 'file' (one per line)
         return
     
     VERSION_f = open(VERSION_path)
-    qemu_version = VERSION_f.readline()
+    qemu_version = VERSION_f.readline().rstrip("\n")
     VERSION_f.close()
     
-    print("Qemu version is {}\n".format(qemu_version))
+    print("Qemu version is {}".format(qemu_version))
     
     include_path = os.path.join(arguments.qemu_src, 'include')
     
