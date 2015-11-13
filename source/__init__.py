@@ -1,10 +1,4 @@
-from chunk import Chunk
-from copy import copy
-import this
-from os.path import os, isdir
-from gi.overrides import registry
-from genericpath import exists
-import sys
+from os.path import os, split, join
 import json
 
 # PLY`s C preprocessor is used for several QEMU code analysis

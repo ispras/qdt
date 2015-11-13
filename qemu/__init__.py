@@ -1,22 +1,12 @@
 from source import \
- SourceFile, \
- SourceChunk, \
- HeaderFile, \
- HeaderInclusion, \
- StructureDeclaration, \
- VariableDeclaration, \
  Header, \
  Source, \
- TypeReference, \
  Structure, \
  Type, \
  Function, \
- Variable, \
  Initializer, \
  Macro
 
-from _codecs import lookup
-from friends.utils.logging import initialize
 import os
 
 class QemuTypeName():
