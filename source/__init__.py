@@ -65,7 +65,7 @@ whose initializer code uses type {t} defined in non-header file {file}"
             if type(t) == TypeReference:
                 self.types[name] = t
             else:
-                self.types[name] = TypeReference(t, header)
+                self.types[name] = TypeReference(t)
         
         header.includers.append(self)
     
@@ -74,10 +74,10 @@ whose initializer code uses type {t} defined in non-header file {file}"
             t = self.types[type_ref.name]
             if type(t) == TypeReference:
                 # To check incomplete type case
-                if not t.header == type_ref.header:
+                if not t.type.definer == type_ref.type.definer:
                     raise Exception("""Conflict reference to type {} \
 found in source {}. The type is defined both in {} and {}.\
-""".format(t.name, self.path, type_ref.path, t.path))
+""".format(t.name, self.path, type_ref.type.definer.path, t.type.definer.path))
             # To make more conflicts checking
             return
         
@@ -111,6 +111,8 @@ a field of a type defined in another non-header file {}.".format(
             chunks.append(HeaderInclusion(h))
     
         for t in self.types.values():
+            if type(t) == TypeReference:
+                continue
             if t.definer == self:
                 if type(t) == Function:
                     if type(self) == Header:
@@ -180,7 +182,7 @@ class Header(Source):
         super(Header, self).add_type(_type)
         
         # Auto add type references to self includers
-        type_ref = TypeReference(_type, self)
+        type_ref = TypeReference(_type)
         
         for s in self.includers:
             s._add_type_recursive(type_ref)
@@ -258,7 +260,7 @@ of incomplete type {}.".format(name, self.name))
             return [d]
 
 class TypeReference(Type):
-    def __init__(self, _type, header):
+    def __init__(self, _type):
         if type(_type) == TypeReference:
             raise Exception("Cannot create type reference to type \
 reference {}.".format(_type.name))
@@ -266,7 +268,6 @@ reference {}.".format(_type.name))
         #super(TypeReference, self).__init__(_type.name, _type.incomplete)
         self.name = _type.name
         self.incomplete = _type.incomplete
-        self.definer = None
         self.base = _type.base
         self.type = _type
         
