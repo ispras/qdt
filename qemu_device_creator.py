@@ -4,6 +4,7 @@ import argparse
 import os.path
 from _io import open
 from qemu import SysBusDeviceType
+import qemu
 
 def arg_type_directory(string):
     if not os.path.isdir(string):
@@ -45,6 +46,10 @@ Use @file to read arguments from 'file' (one per line)
     
     print("Qemu version is {}\n".format(qemu_version))
     
+    include_path = os.path.join(arguments.qemu_src, 'include')
+    
+    qemu.initialize(include_path)
+
     device_purpose_class = "intc"
     device_derectory = device_purpose_class
     
@@ -57,7 +62,6 @@ Use @file to read arguments from 'file' (one per line)
         in_irq_num = 1
         )
 
-    include_path = os.path.join(arguments.qemu_src, 'include')
     full_header_path = os.path.join(include_path, q_sysbus_dev_t.header.path)
     full_source_path =  os.path.join(arguments.qemu_src,
         q_sysbus_dev_t.source.path)
@@ -97,7 +101,7 @@ Use @file to read arguments from 'file' (one per line)
     header = q_sysbus_dev_t.generate_header()
     header.generate(header_writer)
     header_writer.close()
-    
+
     '''
     from pycparser import c_generator, c_ast
     from pycparser.c_ast import FuncDef, ParamList, PtrDecl, TypeDecl,\

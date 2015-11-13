@@ -17,6 +17,7 @@ from source import \
 
 from _codecs import lookup
 from friends.utils.logging import initialize
+import os
 
 class QemuTypeName():
     def __init__(self, name):
@@ -42,142 +43,155 @@ class QOMType():
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
 
-Header("exec/hwaddr.h").add_types([
-    Type("hwaddr", False)
-    ])
 
-Header("qom/object.h").add_types([
-    Type("ObjectClass", False),
-    Type("Object", False),
-    Type("TypeInfo", False),
-    Type("Type", False),
-    Function(name = "type_register_static",
-        ret_type = Type.lookup("Type"),
-        args = [
-            Type.lookup("TypeInfo").gen_var("info", pointer = True)
-        ]
-    )
-    ])
+def initialize(include_path):
+    header_db_fname = "header_db.json"
+    if os.path.isfile(header_db_fname):
+        print("Loading Qemu header inclusion tree from " + header_db_fname)
+        Header.load_header_db(header_db_fname)
+    else:
+        print("Building Qemu header inclusion tree")
+        Header.build_inclusions(include_path)
 
-Header("exec/memory.h").add_types([
-    Type("MemoryRegion", False),
-    Function(name = "MemoryRegionOps_read",
-        ret_type = Type.lookup("uint64_t"),
-        args = [
-            Type.lookup("void").gen_var("opqaue", pointer = True),
-            Type.lookup("hwaddr").gen_var("addr"),
-            Type.lookup("unsigned").gen_var("size")
-        ]
-    ),
-    Function(name = "MemoryRegionOps_write",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("void").gen_var("opqaue", pointer = True),
-            Type.lookup("hwaddr").gen_var("addr"),
-            Type.lookup("uint64_t").gen_var("data"),
-            Type.lookup("unsigned").gen_var("size")
-        ]
-    ),
-    Structure("MemoryRegionOps", 
-        [   Type.lookup("MemoryRegionOps_read").gen_var("read"),
-            Type.lookup("MemoryRegionOps_write").gen_var("write"),
-         ]
-    ),
-    Function(name = "memory_region_init_io",
-        args = [
-            Type.lookup("MemoryRegion").gen_var("mr", pointer = True),
-            # struct
-            Type.lookup("Object").gen_var("owner", pointer = True),
-            # const
-            Type.lookup("MemoryRegionOps").gen_var("ops", pointer = True),
-            Type.lookup("void").gen_var("opaque", pointer = True),
-            Type.lookup("const char").gen_var("name", pointer = True),
-            Type.lookup("uint64_t").gen_var("size")
-        ]
-    )
-    ])
+    print("Saving Qemu header inclusion tree to " + header_db_fname)
+    Header.save_header_db(header_db_fname)
 
-Header("exec/ioport.h").add_types([
-    Type("pio_addr_t", incomplete=False)
+    Header.lookup("exec/hwaddr.h").add_types([
+        Type("hwaddr", False)
+        ])
+    
+    Header.lookup("qom/object.h").add_types([
+        Type("ObjectClass", False),
+        Type("Object", False),
+        Type("TypeInfo", False),
+        Type("Type", False),
+        Function(name = "type_register_static",
+            ret_type = Type.lookup("Type"),
+            args = [
+                Type.lookup("TypeInfo").gen_var("info", pointer = True)
+            ]
+        )
+        ])
+    
+    Header.lookup("exec/memory.h").add_types([
+        Type("MemoryRegion", False),
+        Function(name = "MemoryRegionOps_read",
+            ret_type = Type.lookup("uint64_t"),
+            args = [
+                Type.lookup("void").gen_var("opqaue", pointer = True),
+                Type.lookup("hwaddr").gen_var("addr"),
+                Type.lookup("unsigned").gen_var("size")
+            ]
+        ),
+        Function(name = "MemoryRegionOps_write",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("void").gen_var("opqaue", pointer = True),
+                Type.lookup("hwaddr").gen_var("addr"),
+                Type.lookup("uint64_t").gen_var("data"),
+                Type.lookup("unsigned").gen_var("size")
+            ]
+        ),
+        Structure("MemoryRegionOps", 
+            [   Type.lookup("MemoryRegionOps_read").gen_var("read"),
+                Type.lookup("MemoryRegionOps_write").gen_var("write"),
+             ]
+        ),
+        Function(name = "memory_region_init_io",
+            args = [
+                Type.lookup("MemoryRegion").gen_var("mr", pointer = True),
+                # struct
+                Type.lookup("Object").gen_var("owner", pointer = True),
+                # const
+                Type.lookup("MemoryRegionOps").gen_var("ops", pointer = True),
+                Type.lookup("void").gen_var("opaque", pointer = True),
+                Type.lookup("const char").gen_var("name", pointer = True),
+                Type.lookup("uint64_t").gen_var("size")
+            ]
+        )
+        ])
+    
+    Header.lookup("exec/ioport.h").add_types([
+        Type("pio_addr_t", incomplete=False)
+        ])
+    
+    Header.lookup("hw/sysbus.h").add_types([
+        Type("SysBusDevice", False),
+        Type("qemu_irq", False),
+        Function(name = "sysbus_init_mmio",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+                Type.lookup("MemoryRegion").gen_var("memory", pointer = True)
+            ]
+        ),
+        Function(name = "sysbus_init_irq",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+                Type.lookup("qemu_irq").gen_var("p", pointer = True)
+            ]
+        ),
+        Function(name = "sysbus_add_io",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+                Type.lookup("hwaddr").gen_var("addr"),
+                Type.lookup("MemoryRegion").gen_var("mem", pointer = True)
+            ]
+        ),
+        Function(name = "sysbus_init_ioports",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
+                Type.lookup("pio_addr_t").gen_var("dev"),
+                Type.lookup("pio_addr_t").gen_var("dev")
+            ]
+        )
+        ])
+    
+    Header.lookup("hw/irq.h").add_types([
+        Function(name = "qemu_irq_handler",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("void").gen_var("opaque", pointer = True),
+                Type.lookup("int").gen_var("n"),
+                Type.lookup("int").gen_var("level")
+            ]
+        )
     ])
-
-Header("hw/sysbus.h").add_types([
-    Type("SysBusDevice", False),
-    Type("qemu_irq", False),
-    Function(name = "sysbus_init_mmio",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-            Type.lookup("MemoryRegion").gen_var("memory", pointer = True)
-        ]
-    ),
-    Function(name = "sysbus_init_irq",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-            Type.lookup("qemu_irq").gen_var("p", pointer = True)
-        ]
-    ),
-    Function(name = "sysbus_add_io",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-            Type.lookup("hwaddr").gen_var("addr"),
-            Type.lookup("MemoryRegion").gen_var("mem", pointer = True)
-        ]
-    ),
-    Function(name = "sysbus_init_ioports",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-            Type.lookup("pio_addr_t").gen_var("dev"),
-            Type.lookup("pio_addr_t").gen_var("dev")
-        ]
-    )
-    ])
-
-Header("hw/irq.h").add_types([
-    Function(name = "qemu_irq_handler",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("void").gen_var("opaque", pointer = True),
-            Type.lookup("int").gen_var("n"),
-            Type.lookup("int").gen_var("level")
-        ]
-    )
-])
-
-Header("hw/qdev-core.h").add_types([
-    Type("DeviceClass", False),
-    Type("DeviceState", False),
-    Macro(name = "DEVICE", args = ["obj"]),
-    Type("Property", False),
-    Function(name = "qdev_init_gpio_in",
-        ret_type = Type.lookup("void"),
-        args = [
-            Type.lookup("DeviceState").gen_var("dev", pointer = True),
-            Type.lookup("qemu_irq_handler").gen_var("handler"),
-            Type.lookup("int").gen_var("n")
-        ]
-    )
-    ])
-
-Header("qapi/error.h").add_types([
-    Type("Error*", False)
-    ])
-
-Header("migration/vmstate.h").add_types([
-    Type("VMStateDescription", False),
-    Type("VMStateField", False)
-    ])
-
-Header("qemu/module.h").add_types([
-    Macro(name = "type_init", 
-        args = [
-            "function"
-        ]
-    )
-    ])
+    
+    Header.lookup("hw/qdev-core.h").add_types([
+        Type("DeviceClass", False),
+        Type("DeviceState", False),
+        Macro(name = "DEVICE", args = ["obj"]),
+        Type("Property", False),
+        Function(name = "qdev_init_gpio_in",
+            ret_type = Type.lookup("void"),
+            args = [
+                Type.lookup("DeviceState").gen_var("dev", pointer = True),
+                Type.lookup("qemu_irq_handler").gen_var("handler"),
+                Type.lookup("int").gen_var("n")
+            ]
+        )
+        ])
+    
+    Header.lookup("qapi/error.h").add_types([
+        Type("Error*", False)
+        ])
+    
+    Header.lookup("migration/vmstate.h").add_types([
+        Type("VMStateDescription", False),
+        Type("VMStateField", False)
+        ])
+    
+    Header.lookup("qemu/module.h").add_types([
+        Macro(name = "type_init", 
+            args = [
+                "function"
+            ]
+        )
+        ])
 
 class SysBusDeviceStateStruct(Structure):
     def __init__(self,
@@ -245,8 +259,11 @@ class SysBusDeviceType(QOMType):
         self.pio_address_macros = []
 
         # Define header file
-        self.header = Header("hw/%s/%s.h" % (directory, 
-            self.qtn.for_header_name))
+        header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
+        try:
+            self.header = Header.lookup(header_path)
+        except Exception:
+            self.header = Header(header_path)
 
         self.state_struct = SysBusDeviceStateStruct(
             name = self.struct_name,
