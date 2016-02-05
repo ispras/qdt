@@ -33,6 +33,11 @@ class QOMType():
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
 
+    def gen_register_types_name(self):
+        return "%s_register_types" % self.qtn.for_id_name
+    
+    def gen_type_info_name(self):
+        return "%s_info" % self.qtn.for_id_name
 
 def initialize(include_path):
     header_db_fname = "header_db.json"
@@ -692,8 +697,3 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_instance_init_name(self):
         return "%s_instance_init" % self.qtn.for_id_name
 
-    def gen_register_types_name(self):
-        return "%s_register_types" % self.qtn.for_id_name
-
-    def gen_type_info_name(self):
-        return "%s_info" % self.qtn.for_id_name
