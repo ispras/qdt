@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python2
 
 import argparse
 import os.path
@@ -93,21 +93,21 @@ Use @file to read arguments from 'file' (one per line)
     
     if not registered_in_makefile:
         with open(Makefile_objs_class_path, "a") as Makefile_objs:
-            Makefile_objs.write("obj-y += %s\n" % obj_base_name)
+            Makefile_objs.write(u"obj-y += %s\n" % obj_base_name)
 
     if os.path.isfile(full_source_path):
         os.remove(full_source_path)
     
-    source_writer = open(full_source_path, "w")
     source = q_sysbus_dev_t.generate_source()
+    source_writer = open(full_source_path, "wb")
     source.generate(source_writer)
     source_writer.close()
 
     if os.path.isfile(full_header_path):
         os.remove(full_header_path)
 
-    header_writer = open(full_header_path, "w")
     header = q_sysbus_dev_t.generate_header()
+    header_writer = open(full_header_path, "wb")
     header.generate(header_writer)
     header_writer.close()
 

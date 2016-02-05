@@ -29,7 +29,7 @@ class QemuTypeName():
         self.for_macros = tmp
     
 
-class QOMType():
+class QOMType(object):
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
 

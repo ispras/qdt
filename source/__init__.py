@@ -12,7 +12,7 @@ from ply.cpp import *
 
 # Source code models
 
-class Source():
+class Source(object):
     def __init__(self, path):
         self.path = path
         self.types = {}
@@ -363,7 +363,7 @@ the type" % (type_ref.type.name, self.path))
 
 # Type models
 
-class Type():
+class Type(object):
     reg = {}
     
     @staticmethod
@@ -639,7 +639,7 @@ class CodeNode():
 
 # Source code instances
 
-class SourceChunk:
+class SourceChunk(object):
     def __init__(self, name, code, references = None):
         # visited is used during deep first sort
         self.name = name
