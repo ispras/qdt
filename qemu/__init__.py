@@ -188,6 +188,11 @@ def initialize(include_path):
         )
         ])
 
+    Header.lookup("hw/pci/pci.h").add_types([
+        Type("PCIDevice", False),
+        Type("PCIDeviceClass", False)
+        ])
+
 class SysBusDeviceStateStruct(Structure):
     def __init__(self,
         name,
