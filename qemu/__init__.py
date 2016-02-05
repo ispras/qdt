@@ -702,3 +702,4 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_instance_init_name(self):
         return "%s_instance_init" % self.qtn.for_id_name
 
+from pcie import *
