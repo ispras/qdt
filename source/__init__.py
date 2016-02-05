@@ -481,6 +481,9 @@ is not added to a source", self.name)
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
 
+    def append_field_t_s(self, type_name, name, pointer = False):
+        self.append_field_t(Type.lookup(type_name), name, pointer)
+
     def gen_chunk(self):
         return StructureDeclaration(self)
 
