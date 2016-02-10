@@ -88,9 +88,10 @@ includes it" % (self.path, header.path))
 found in source {}. The type is defined both in {} and {}.\
 """.format(t.name, self.path, type_ref.type.definer.path, t.type.definer.path))
             # To make more conflicts checking
-            return
+            return False
         
         self.types[type_ref.name] = type_ref
+        return True
     
     def add_types(self, types):
         for t in types:
@@ -338,11 +339,12 @@ digraph HeaderInclusion {
         if type_ref.type.definer == self:
             raise Exception("Adding type %s reference to file %s defining \
 the type" % (type_ref.type.name, self.path))
-        
-        super(Header, self)._add_type_recursive(type_ref)
-        
-        for s in self.includers:
-            s._add_type_recursive(type_ref)
+
+        # Preventing infinite recursion by header inclusion loop
+        if super(Header, self)._add_type_recursive(type_ref):
+            # Type was added. Hence, It is new type for the header
+            for s in self.includers:
+                s._add_type_recursive(type_ref)
     
     def add_type(self, _type):
         super(Header, self).add_type(_type)
