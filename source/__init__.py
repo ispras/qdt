@@ -363,13 +363,16 @@ the type" % (type_ref.type.name, self.path))
 
 # Type models
 
+class TypeNotRegistered(Exception):
+    pass
+
 class Type(object):
     reg = {}
     
     @staticmethod
     def lookup(name):
         if not name in Type.reg:
-            raise Exception("Type with name %s is not registered"
+            raise TypeNotRegistered("Type with name %s is not registered"
                 % name)
         return Type.reg[name] 
     
