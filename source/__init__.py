@@ -277,7 +277,7 @@ digraph HeaderInclusion {
 
                 if not h.parsed:
                     h.parsed = True
-                    print("Parsing " + prefix)
+                    print("Info: parsing " + prefix)
 
                     p = Preprocessor(lex())
                     p.add_path(start_dir)
@@ -292,7 +292,7 @@ digraph HeaderInclusion {
                             self.written = False
                         
                         def write(self, str):
-                            if str.startswith("Parsing"):
+                            if str.startswith("Info:"):
                                 self.out.write(str + "\n")
                                 self.written = True
                         
