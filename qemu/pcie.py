@@ -5,7 +5,8 @@ from source import \
  Type, \
  Function, \
  Initializer, \
- Macro
+ Macro \
+ , TypeNotRegistered
 
 from qemu import \
  QOMType
@@ -25,6 +26,10 @@ class PCIEDeviceStateStruct(Structure):
 
         self.append_field_t_s("PCIDevice", "parent_obj")
 
+        for irqN in range(0, irq_num):
+            self.append_field_t_s("qemu_irq", 
+                self.get_Ith_irq_name(irqN))
+
         for barN in xrange(0, self.mem_bar_num):
             self.append_field_t_s("MemoryRegion",
                     self.get_Ith_mem_bar_name(barN))
@@ -35,22 +40,38 @@ class PCIEDeviceStateStruct(Structure):
         else:
             return "mem_bar_%u" % i
 
+    def get_Ith_irq_name(self, i):
+        if self.irq_num == 1:
+            return "irq"
+        else:
+            return "irq_{}".format(i)
+
 class PCIEDeviceType(QOMType):
     def __init__(self,
         name,
         directory,
-        irq_num = 1,
+        vendor,
+        device,
+        pci_class,
+        irq_num = 0,
         mem_bar_num = 1,
-        msi_messages_num = 2
+        msi_messages_num = 2,
+        revision = 1
     ):
         super(PCIEDeviceType, self).__init__(name)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
         self.msi_messages_num = msi_messages_num
+        
+        self.revision = revision
+
+        self.vendor = vendor
+        self.device = device
+        self.pci_class = pci_class
 
         self.mem_bar_size_macros = []
-        
+
         """
         There is too many code same as in SysBusDeviceType constructor...
         """
@@ -87,22 +108,111 @@ class PCIEDeviceType(QOMType):
             )
         self.header.add_type(self.type_cast_macro)
 
+        self.vendor_macro = self.vendor.find_macro()
+        try:
+            self.device_macro = self.device.find_macro()
+        except TypeNotRegistered:
+            # TODO: add device id macro to pci_ids.h
+            self.header.add_type(Macro(
+                    name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
+                            self.device.name), 
+                    text = self.device.id))
+
+            self.device_macro = self.device.find_macro()
+
+        self.pci_class_macro = self.pci_class.find_macro()
+
         source_path = "hw/%s/%s.c"% (directory, self.qtn.for_header_name)
         self.source = Source(source_path)
+
+        realize_code = ''
+        realize_used_types = []
+        realize_used_globals = []
+
+        mem_bar_def_size = 0x100
+
+        if self.mem_bar_num > 0:
+            realize_used_types.extend([
+                Type.lookup("sysbus_init_mmio"),
+                Type.lookup("memory_region_init_io"),
+                Type.lookup("Object")
+                ]
+            )
+
+        for barN in range(0, self.mem_bar_num):
+            size_macro = Macro(
+                name = self.gen_Ith_mem_bar_size_macro_name(barN),
+                text = "0x%X" % mem_bar_def_size)
+        
+            self.header.add_type(size_macro)
+            realize_used_types.append(size_macro)
+            
+            component = self.get_Ith_mem_bar_id_component(barN)
+            
+            read_func = Type.lookup("MemoryRegionOps_read").use_as_prototype(
+                name = self.qtn.for_id_name + "_" + component + "_read",
+                body = "    return 0;\n",
+                static = True
+            )
+
+            write_func = Type.lookup("MemoryRegionOps_write").use_as_prototype(
+                name = self.qtn.for_id_name + "_" + component + "_write",
+                static = True
+            )
+
+            self.source.add_types([read_func, write_func])
+
+            ops_init = Initializer(
+                used_types = [read_func, write_func],
+                code = """{{
+    .read = {read},
+    .write = {write}
+}}""".format (
+    read = read_func.name,
+    write = write_func.name
+)
+            )
+
+            ops = Type.lookup("MemoryRegionOps").gen_var(
+                name = self.gen_Ith_mem_bar_ops_name(barN),
+                pointer = False,
+                initializer = ops_init,
+                static = True
+            )
+
+            self.source.add_global_variable(ops)
+            realize_used_globals.append(ops)
+
+            realize_code += """
+    memory_region_init_io(&s->{bar}, OBJECT(dev), &{ops}, s, TYPE_{UPPER}, {size});
+    pci_register_bar(&s->parent_obj, {barN}, PCI_BASE_ADDRESS_SPACE_MEMORY, &s->{bar});
+""".format(
+    barN = barN,
+    bar = self.state_struct.get_Ith_mem_bar_name(barN),
+    ops = self.gen_Ith_mem_bar_ops_name(barN),
+    UPPER = self.qtn.for_macros,
+    size = size_macro.name
+)
+
+        realize_used_types.append(self.state_struct)
 
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(dev);
+    {unused}{Struct} *s = {UPPER}(dev);
+{extra_code}\
 """.format(
+        unused = "__attribute__((unused)) " if realize_code == '' else "",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
+        extra_code = realize_code
     ),
             args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True),
                 Type.lookup("Error*").gen_var("errp", pointer = True)],
             static = True,
-            used_types = [self.state_struct]
+            used_types = realize_used_types,
+            used_globals = realize_used_globals
             )
         self.source.add_type(self.device_realize)
 
@@ -162,11 +272,20 @@ class PCIEDeviceType(QOMType):
     DeviceClass *dc = DEVICE_CLASS(oc);
     PCIDeviceClass *pc = PCI_DEVICE_CLASS(oc);
 
-    pc->realize = {dev}_realize;
-    pc->exit   = {dev}_exit;
-    dc->vmsd    = &vmstate_{dev};
-    dc->props   = {dev}_properties;
-""".format(dev = self.qtn.for_id_name),
+    pc->realize   = {dev}_realize;
+    pc->exit      = {dev}_exit;
+    pc->vendor_id = {vendor_macro};
+    pc->device_id = {device_macro};
+    pc->class_id  = {pci_class_macro};
+    pc->revision  = {revision};
+    dc->vmsd      = &vmstate_{dev};
+    dc->props     = {dev}_properties;
+""".format(dev = self.qtn.for_id_name,
+           revision = self.revision,
+           vendor_macro = self.vendor_macro.name,
+           device_macro = self.device_macro.name,
+           pci_class_macro = self.pci_class_macro.name
+           ),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),
 Type.lookup("void").gen_var("opaque", True),
@@ -176,7 +295,10 @@ Type.lookup("void").gen_var("opaque", True),
                 Type.lookup("DeviceClass"),
                 Type.lookup("PCIDeviceClass"),
                 self.device_realize,
-                self.device_exit],
+                self.device_exit,
+                self.vendor_macro,
+                self.device_macro,
+                self.pci_class_macro],
             used_globals = [
                     self.vmstate,
                     self.properties
@@ -238,3 +360,14 @@ Type.lookup("void").gen_var("opaque", True),
     
     def generate_source(self):
         return self.source.generate()
+
+    def get_Ith_mem_bar_id_component(self, i):
+        return self.state_struct.get_Ith_mem_bar_name(i)
+
+    def gen_Ith_mem_bar_size_macro_name(self, i):
+        UPPER = self.get_Ith_mem_bar_id_component(i).upper()
+        return "%s_%s_SIZE" % (self.qtn.for_macros, UPPER)
+
+    def gen_Ith_mem_bar_ops_name(self, i):
+        return self.qtn.for_id_name + "_" \
+            + self.get_Ith_mem_bar_id_component(i) + "_ops"
