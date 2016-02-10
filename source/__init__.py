@@ -222,6 +222,9 @@ digraph HeaderInclusion {
             for inc in dict_h["inclusions"]:
                 i = Header.lookup(inc)
                 h.add_inclusion(i)
+            
+            for m in dict_h["macros"]:
+                h.add_type(Macro.new_from_dict(m))
 
         header_db_reader.close()
 
@@ -234,10 +237,18 @@ digraph HeaderInclusion {
             dict_h = {}
             dict_h["path"] = h.path
             dict_h["is_global"] = h.is_global
+
             inc_list = []
             for i in h.inclusions.values():
                 inc_list.append(i.path)
             dict_h["inclusions"] = inc_list
+
+            macro_list = []
+            for t in h.types.values():
+                if type(t) == Macro:
+                    macro_list.append(t.gen_dict())
+            dict_h["macros"] = macro_list
+
             list_headers.append(dict_h)
 
         json.dump(list_headers, header_db_writer, 
@@ -575,6 +586,23 @@ class Macro(Type):
         return super(Macro, self).gen_var(
                 name = "fake variable of macro %s" % self.name,
                 pointer = True, # MAcro is incomplete type
+            )
+
+    def gen_dict(self):
+        res = {"name" : self.name}
+        if not self.text == None:
+            res["text"] = self.text
+        if not self.args == None:
+            res["args"] = self.args
+        
+        return res
+
+    @staticmethod
+    def new_from_dict(_dict):
+        return Macro(
+            name = _dict["name"],
+            args = None if not "args" in _dict else _dict["args"],
+            text = None if not "text" in _dict else _dict["text"]
             )
 
 # Data models
