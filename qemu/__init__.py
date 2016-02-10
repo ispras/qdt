@@ -7,6 +7,8 @@ from source import \
  Initializer, \
  Macro
 
+from pci_ids import *
+
 import os
 
 class QemuTypeName():
@@ -192,6 +194,32 @@ def initialize(include_path):
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False)
         ])
+
+    # Search for PCI Ids
+    for t in Type.reg.values():
+        if type(t) == Macro:
+            mi = re_pci_vendor.match(t.name)
+            if mi:
+                PCIVendorId(mi.group(1), t.text)
+                continue
+
+            mi = re_pci_class.match(t.name)
+            if mi:
+                # print 'PCI class %s' % mi.group(1)
+                PCIClassId(mi.group(1), t.text)
+                continue
+
+    # All PCI vendors must be defined before any device.
+    for t in Type.reg.values():
+        if type(t) == Macro:
+            mi = re_pci_device.match(t.name)
+            if mi:
+                for v in pci_id_db.vendors.values():
+                    mi = v.device_pattern.match(t.name)
+                    if mi:
+                        PCIDeviceId(v.name, mi.group(1), t.text)
+                        break;
+                continue
 
 class SysBusDeviceStateStruct(Structure):
     def __init__(self,
