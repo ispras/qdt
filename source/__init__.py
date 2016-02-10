@@ -1,6 +1,7 @@
 from os.path import os, split, join
 import json
 import sys
+import re
 
 # PLY`s C preprocessor is used for several QEMU code analysis
 ply = join(split(split(__file__)[0])[0], "ply")
@@ -269,6 +270,24 @@ digraph HeaderInclusion {
 
         Header.lookup(includer).add_inclusion(h)
 
+    # TODO: Move it to proper place
+    pci_pattern = re.compile("^PCI_((VENDOR_ID)|(DEVICE_ID)|(CLASS))_.*$")
+
+    @staticmethod
+    def _on_define(definer, macro):
+        # macro is ply.cpp.Macro
+
+        h = Header.lookup(definer)
+
+        if macro.arglist == None and Header.pci_pattern.match(macro.name):
+            try:
+                m = Type.lookup(macro.name)
+                if not m.definer.path == definer:
+                    print "Info: multiple definitions of macro %s" % macro.name
+            except:
+                m = Macro(name = macro.name, text = macro.value[0].value)
+                h.add_type(m)
+
     @staticmethod
     def _build_inclusions_recursive(start_dir, prefix):
         full_name = os.path.join(start_dir, prefix)
@@ -294,6 +313,7 @@ digraph HeaderInclusion {
                     p = Preprocessor(lex())
                     p.add_path(start_dir)
                     p.on_include = Header._on_include
+                    p.on_define.append(Header._on_define)
 
                     header_input = open(full_name, "r").read()
                     p.parse(input = header_input, source = prefix)
