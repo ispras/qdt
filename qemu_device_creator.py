@@ -3,7 +3,7 @@
 import argparse
 import os.path
 from _io import open
-from qemu import SysBusDeviceType
+from qemu import SysBusDeviceType, PCIEDeviceType, pci_id_db
 import qemu
 from source import Header
 
@@ -59,57 +59,69 @@ Use @file to read arguments from 'file' (one per line)
     if not arguments.gen_header_tree == None:
         Header.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
-    device_purpose_class = "intc"
-    device_derectory = device_purpose_class
-
-    q_sysbus_dev_t = SysBusDeviceType(
-        name = "Test Generated IC",
-        directory= device_derectory,
-        out_irq_num = 2,
-        mmio_num = 1,
-        pio_num = 1,
-        in_irq_num = 1
+    devices = [
+        ("net", PCIEDeviceType(
+            name = "Test PCI NIC",
+            directory = "net",
+            vendor = pci_id_db.get_vendor(name = "AMD", vid = "0x1022"),
+            device = pci_id_db.get_device(name = "AMD_LANCE",
+                    vendor_name = "AMD", did = "0x2000"),
+            pci_class = pci_id_db.get_class("NETWORK_ETHERNET"),
+            mem_bar_num = 1
+        )),
+        ("intc", SysBusDeviceType(
+            name = "Dynamips MPC860 CPCR",
+            directory = "intc",
+            out_irq_num = 0,
+            mmio_num = 1,
+            pio_num = 0,
+            in_irq_num = 0
         )
+        )
+    ]
 
-    full_header_path = os.path.join(include_path, q_sysbus_dev_t.header.path)
-    full_source_path =  os.path.join(arguments.qemu_src,
-        q_sysbus_dev_t.source.path)
+    for device_purpose_class, dev_t in devices:
+        device_derectory = device_purpose_class
+
+        full_header_path = os.path.join(include_path, dev_t.header.path)
+        full_source_path =  os.path.join(arguments.qemu_src,
+            dev_t.source.path)
     
-    source_base_name = os.path.basename(full_source_path)
-
-    (source_name, source_ext) = os.path.splitext(source_base_name)
-
-    obj_base_name = source_name + ".o"
-
-    hw_path = os.path.join(arguments.qemu_src, 'hw')
-    class_hw_path = os.path.join(hw_path, device_derectory)
-    Makefile_objs_class_path = os.path.join(class_hw_path, 'Makefile.objs')
-
-    registered_in_makefile = False
-    for line in open(Makefile_objs_class_path, "r").readlines():
-        if obj_base_name in [s.strip() for s in line.split(" ")]:
-            registered_in_makefile = True
-            break
-
-    if not registered_in_makefile:
-        with open(Makefile_objs_class_path, "a") as Makefile_objs:
-            Makefile_objs.write(u"obj-y += %s\n" % obj_base_name)
-
-    if os.path.isfile(full_source_path):
-        os.remove(full_source_path)
+        source_base_name = os.path.basename(full_source_path)
     
-    source = q_sysbus_dev_t.generate_source()
-    source_writer = open(full_source_path, "wb")
-    source.generate(source_writer)
-    source_writer.close()
-
-    if os.path.isfile(full_header_path):
-        os.remove(full_header_path)
-
-    header = q_sysbus_dev_t.generate_header()
-    header_writer = open(full_header_path, "wb")
-    header.generate(header_writer)
-    header_writer.close()
+        (source_name, source_ext) = os.path.splitext(source_base_name)
+    
+        obj_base_name = source_name + ".o"
+    
+        hw_path = os.path.join(arguments.qemu_src, 'hw')
+        class_hw_path = os.path.join(hw_path, device_derectory)
+        Makefile_objs_class_path = os.path.join(class_hw_path, 'Makefile.objs')
+    
+        registered_in_makefile = False
+        for line in open(Makefile_objs_class_path, "r").readlines():
+            if obj_base_name in [s.strip() for s in line.split(" ")]:
+                registered_in_makefile = True
+                break
+    
+        if not registered_in_makefile:
+            with open(Makefile_objs_class_path, "a") as Makefile_objs:
+                Makefile_objs.write(u"obj-y += %s\n" % obj_base_name)
+    
+        if os.path.isfile(full_source_path):
+            os.remove(full_source_path)
+    
+        source_writer = open(full_source_path, "wb")
+        source = dev_t.generate_source()
+        source.generate(source_writer)
+        source_writer.close()
+    
+        if os.path.isfile(full_header_path):
+            os.remove(full_header_path)
+    
+        header_writer = open(full_header_path, "wb")
+        header = dev_t.generate_header()
+        header.generate(header_writer)
+        header_writer.close()
 
     '''
     from pycparser import c_generator, c_ast
