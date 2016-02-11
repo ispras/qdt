@@ -1087,6 +1087,45 @@ class SourceFile:
             raise Exception("The chunk {} is already in {} ".format(
                 chunk.name, chunk.source.name))
 
+    def optimize_inclusions(self):
+        # use 'visited' flag to prevent dead loop in case of inclusion cycle
+        for h in Header.reg.values():
+            h.visited = False
+
+        # Dictionary is used for fast lookup HeaderInclusion by Header.
+        # Assuming only one inclusion per header.
+        included_headers = {}
+
+        for ch in self.chunks:
+            if type(ch) == HeaderInclusion:
+                included_headers[ch.header] = ch
+                # root is originally included header.
+                ch.header.root = ch.header
+
+        stack = list(included_headers)
+
+        while stack:
+            h = stack.pop()
+            h.visited = True
+
+            for sp in h.inclusions:
+                s = Header.lookup(sp)
+                if s in included_headers:
+                    # If an originally included header (s) is reached from
+                    # another one, then inclusion of first one should be
+                    # deleted and all references to it should be redirected to
+                    # inclusion of second one.
+                    self.remove_dup_chunk(included_headers[h.root], 
+                            included_headers[s])
+                    # The header reached from another one is no more included.
+                    del included_headers[s]
+
+                if not s.visited:
+                    stack.append(s)
+                    # Keep track of originally included header.
+                    s.root = h.root
+
+
     def check_static_function_declarations(self):
         func_dec = {}
         for ch in list(self.chunks):
@@ -1129,6 +1168,8 @@ class SourceFile:
         self.check_static_function_declarations()
 
         self.sort_chunks()
+
+        self.optimize_inclusions()
 
         writer.write("""
 /* {}.{} */
