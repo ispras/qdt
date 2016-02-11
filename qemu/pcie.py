@@ -149,16 +149,17 @@ class PCIEDeviceType(QOMType):
             
             component = self.get_Ith_mem_bar_id_component(barN)
             
-            read_func = Type.lookup("MemoryRegionOps_read").use_as_prototype(
-                name = self.qtn.for_id_name + "_" + component + "_read",
-                body = "    return 0;\n",
-                static = True
-            )
+            read_func = QOMType.gen_mmio_read(
+                    name = self.qtn.for_id_name + "_" + component + "_read",
+                    struct_name = self.state_struct.name, 
+                    type_cast_macro = self.type_cast_macro.name
+                ) 
 
-            write_func = Type.lookup("MemoryRegionOps_write").use_as_prototype(
-                name = self.qtn.for_id_name + "_" + component + "_write",
-                static = True
-            )
+            write_func = QOMType.gen_mmio_write(
+                    name = self.qtn.for_id_name + "_" + component + "_write",
+                    struct_name = self.state_struct.name, 
+                    type_cast_macro = self.type_cast_macro.name
+                )
 
             self.source.add_types([read_func, write_func])
 
