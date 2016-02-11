@@ -75,7 +75,7 @@ def initialize(include_path):
         Function(name = "MemoryRegionOps_read",
             ret_type = Type.lookup("uint64_t"),
             args = [
-                Type.lookup("void").gen_var("opqaue", pointer = True),
+                Type.lookup("void").gen_var("opaque", pointer = True),
                 Type.lookup("hwaddr").gen_var("addr"),
                 Type.lookup("unsigned").gen_var("size")
             ]
@@ -83,7 +83,7 @@ def initialize(include_path):
         Function(name = "MemoryRegionOps_write",
             ret_type = Type.lookup("void"),
             args = [
-                Type.lookup("void").gen_var("opqaue", pointer = True),
+                Type.lookup("void").gen_var("opaque", pointer = True),
                 Type.lookup("hwaddr").gen_var("addr"),
                 Type.lookup("uint64_t").gen_var("data"),
                 Type.lookup("unsigned").gen_var("size")
