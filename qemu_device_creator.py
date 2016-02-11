@@ -24,7 +24,7 @@ register it as needed.
 Use @file to read arguments from 'file' (one per line) 
         '''
         )
-    
+
     parser.add_argument(
         '--qemu-src', '-q',
         default = '.',
@@ -37,23 +37,23 @@ Use @file to read arguments from 'file' (one per line)
         default = None,
         metavar = "header_tree.gv"
         )
-    
+
     arguments = parser.parse_args()
-    
+
     VERSION_path = os.path.join(arguments.qemu_src, 'VERSION')
-    
+
     if not os.path.isfile(VERSION_path):
         print("{} does not exists\n".format(VERSION_path))
         return
-    
+
     VERSION_f = open(VERSION_path)
     qemu_version = VERSION_f.readline().rstrip("\n")
     VERSION_f.close()
-    
+
     print("Qemu version is {}".format(qemu_version))
-    
+
     include_path = os.path.join(arguments.qemu_src, 'include')
-    
+
     qemu.initialize(include_path)
 
     if not arguments.gen_header_tree == None:
@@ -61,7 +61,7 @@ Use @file to read arguments from 'file' (one per line)
 
     device_purpose_class = "intc"
     device_derectory = device_purpose_class
-    
+
     q_sysbus_dev_t = SysBusDeviceType(
         name = "Test Generated IC",
         directory= device_derectory,
@@ -76,21 +76,21 @@ Use @file to read arguments from 'file' (one per line)
         q_sysbus_dev_t.source.path)
     
     source_base_name = os.path.basename(full_source_path)
-    
+
     (source_name, source_ext) = os.path.splitext(source_base_name)
-    
+
     obj_base_name = source_name + ".o"
-    
+
     hw_path = os.path.join(arguments.qemu_src, 'hw')
     class_hw_path = os.path.join(hw_path, device_derectory)
     Makefile_objs_class_path = os.path.join(class_hw_path, 'Makefile.objs')
-    
+
     registered_in_makefile = False
     for line in open(Makefile_objs_class_path, "r").readlines():
         if obj_base_name in [s.strip() for s in line.split(" ")]:
             registered_in_makefile = True
             break
-    
+
     if not registered_in_makefile:
         with open(Makefile_objs_class_path, "a") as Makefile_objs:
             Makefile_objs.write(u"obj-y += %s\n" % obj_base_name)
@@ -115,13 +115,13 @@ Use @file to read arguments from 'file' (one per line)
     from pycparser import c_generator, c_ast
     from pycparser.c_ast import FuncDef, ParamList, PtrDecl, TypeDecl,\
         IdentifierType, FuncDecl, FileAST, Constant
-    
+
     type_void = TypeDecl("opaque", [], IdentifierType(["void"]))
     type_hwaddr = TypeDecl("offset", [], IdentifierType(["hwaddr"]))
     type_unsigned = TypeDecl("size", [], IdentifierType(["unsigned"]))
     type_void_ptr = PtrDecl([], type_void)
     type_uint64_t = TypeDecl("mmio_write", [], IdentifierType(["uint64_t"]))
-    
+
     f_type_args = ParamList([
         c_ast.Decl(None, [], [], [], type_void_ptr, None, None),
         c_ast.Decl(None, [], [], [], type_hwaddr, None, None),
@@ -130,18 +130,18 @@ Use @file to read arguments from 'file' (one per line)
     f_type_ret = type_uint64_t
     f_type_decl = FuncDecl(f_type_args, f_type_ret)
     f_decl = c_ast.Decl(None, [], [], [], f_type_decl, None, None)
-    
+
     f_body = c_ast.Compound([
         c_ast.Return(Constant(None, "0"))
         ])
-    
+
     mmio_w_f = FuncDef(f_decl, [], f_body)
-    
+
     ast = FileAST([mmio_w_f])
-    
+
     generator = c_generator.CGenerator()
     print(generator.visit(ast))
     '''
-    
+
 if __name__ == '__main__':
     main()

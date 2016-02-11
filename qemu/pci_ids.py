@@ -23,7 +23,7 @@ TODO: create named exception instead of any Exception
 """
 
 class PCIId:
-    
+
     def find_macro(self):
         raise Exception("The virtual method is not implemented.")
 
@@ -34,12 +34,12 @@ class PCIVendorId (PCIId):
 
         self.name = vendor_name
         self.id = vendor_id
-        
+
         self.device_pattern = re.compile(
                 "PCI_DEVICE_ID_%s_([A-Z0-9_]+)" % self.name)
 
         pci_id_db.vendors[self.name] = self
-    
+
     def find_macro(self):
         return Type.lookup("PCI_VENDOR_ID_%s" % self.name)
 
@@ -49,7 +49,7 @@ class PCIDeviceId (PCIId):
         if dev_key in pci_id_db.devices.keys():
             raise PCIDeviceIdAlreadyExists("Vendor %s, Device %s" % vendor_name,
                     device_name)
-        
+
         if not vendor_name in pci_id_db.vendors.keys():
             self.vendor = PCIVendorId(vendor_name, 0xFFFF)
         else:
@@ -99,9 +99,9 @@ class PCIClassification:
             vid = None):
         if not did == None and not type(did) == str:
             raise Exception("Device id must be a string")
-        
+
         v = self.get_vendor(vendor_name, vid)
-        
+
         if not name == None: 
             dev_key = PCIClassification.gen_device_key(v.name, name)
             try:

@@ -63,7 +63,7 @@ class PCIEDeviceType(QOMType):
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
         self.msi_messages_num = msi_messages_num
-        
+
         self.revision = revision
 
         self.vendor = vendor
@@ -75,7 +75,7 @@ class PCIEDeviceType(QOMType):
         """
         There is too many code same as in SysBusDeviceType constructor...
         """
-        
+
         self.struct_name = "%sState" % self.qtn.for_struct_name
 
         header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
@@ -91,13 +91,13 @@ class PCIEDeviceType(QOMType):
             msi_messages_num = self.msi_messages_num
             )
         self.header.add_type(self.state_struct)
-        
+
         self.type_name_macros = Macro(
             name = "TYPE_%s" % self.qtn.for_macros,
             text = '"%s"' % self.qtn.for_id_name
             )
         self.header.add_type(self.type_name_macros)
-        
+
         self.type_cast_macro = Macro(
             name = self.qtn.for_macros, 
             args = ["obj"],
@@ -143,12 +143,12 @@ class PCIEDeviceType(QOMType):
             size_macro = Macro(
                 name = self.gen_Ith_mem_bar_size_macro_name(barN),
                 text = "0x%X" % mem_bar_def_size)
-        
+
             self.header.add_type(size_macro)
             realize_used_types.append(size_macro)
-            
+
             component = self.get_Ith_mem_bar_id_component(barN)
-            
+
             read_func = QOMType.gen_mmio_read(
                     name = self.qtn.for_id_name + "_" + component + "_read",
                     struct_name = self.state_struct.name, 
@@ -323,7 +323,7 @@ Type.lookup("void").gen_var("opaque", True),
                 self.class_init
             ]
             )
-        
+
         self.type_info = Type.lookup("TypeInfo").gen_var(
             name = self.gen_type_info_name(),
             static = True,
@@ -358,7 +358,7 @@ Type.lookup("void").gen_var("opaque", True),
 
     def generate_header(self):
         return self.header.generate()
-    
+
     def generate_source(self):
         return self.source.generate()
 

@@ -58,12 +58,12 @@ whose initializer code uses type {t} defined in non-header file {file}"
                     self.add_inclusion(s)
 
         self.global_variables[var.name] = var
-    
+
     def add_inclusion(self, header):
         if not type(header) == Header:
             raise Exception("Inclusion of non-header file {} is forbidden"
                 .format(header.path))
-        
+
         if not header.path in self.inclusions:
             self.inclusions[header.path] = header
 
@@ -78,7 +78,7 @@ whose initializer code uses type {t} defined in non-header file {file}"
 includes it" % (self.path, header.path))
 
             header.includers.append(self)
-    
+
     def _add_type_recursive(self, type_ref):
         if type_ref.name in self.types:
             t = self.types[type_ref.name]
@@ -90,10 +90,10 @@ found in source {}. The type is defined both in {} and {}.\
 """.format(t.name, self.path, type_ref.type.definer.path, t.type.definer.path))
             # To make more conflicts checking
             return False
-        
+
         self.types[type_ref.name] = type_ref
         return True
-    
+
     def add_types(self, types):
         for t in types:
             self.add_type(t)
@@ -102,10 +102,10 @@ found in source {}. The type is defined both in {} and {}.\
         if type(_type) == TypeReference:
             raise Exception("""A type reference ({}) cannot be 
 added to a source ({}) externally""".format(_type.name, self.path))
-        
+
         _type.definer = self
         self.types[_type.name] = _type
-        
+
         # Auto include type definers
         for s in _type.get_definers():
             if s == self:
@@ -115,12 +115,12 @@ added to a source ({}) externally""".format(_type.name, self.path))
 a field of a type defined in another non-header file {}.".format(
     _type.name, s.path))
             self.add_inclusion(s)
-    
+
     def gen_chunks(self):
         chunks = []
         for h in self.inclusions.values():
             chunks.append(HeaderInclusion(h))
-    
+
         for t in self.types.values():
             if type(t) == TypeReference:
                 continue
@@ -132,14 +132,14 @@ a field of a type defined in another non-header file {}.".format(
                         chunks.append(t.gen_definition())
                 else:
                     chunks.append(t.gen_chunk())
-        
+
         if type(self) == Header:
             for gv in self.global_variables.values():
                 chunks.append(gv.gen_declaration_chunk(extern = True))
         elif type(self) == Source:
             for gv in self.global_variables.values():
                 chunks.append(gv.get_definition_chunk())
-        
+
         for u in self.usages:
             usage_chunk = u.gen_chunk();
             if type(u.variable.type) == Macro:
@@ -150,17 +150,17 @@ a field of a type defined in another non-header file {}.".format(
                     code = ";\n",
                     references = [usage_chunk])
                 chunks.append(term_chunk)
-        
+
         return chunks
-    
+
     def generate(self):
         basename = os.path.basename(self.path)
         name = os.path.splitext(basename)[0]
-        
+
         file = SourceFile(name, type(self) == Header)
-        
+
         file.add_chunks(self.gen_chunks())
-        
+
         return file
 
 class AddTypeRefToDefinerException (Exception):
@@ -226,7 +226,7 @@ digraph HeaderInclusion {
             for inc in dict_h["inclusions"]:
                 i = Header.lookup(inc)
                 h.add_inclusion(i)
-            
+
             for m in dict_h["macros"]:
                 h.add_type(Macro.new_from_dict(m))
 
@@ -316,13 +316,13 @@ digraph HeaderInclusion {
 
                     p = Preprocessor(lex())
                     p.add_path(start_dir)
-                    
+
                     # Default include search folders should be specified to
                     # locate and parse standard headers.
                     # TODO: parse `cpp -v` output to get actual list of default
                     # include folders. It should be cross-platform
                     p.add_path("/usr/include")
-                    
+
                     p.on_include = Header._on_include
                     p.on_define.append(Header._on_define)
 
@@ -333,12 +333,12 @@ digraph HeaderInclusion {
                         def __init__(self, out):
                             self.out = out
                             self.written = False
-                        
+
                         def write(self, str):
                             if str.startswith("Info:"):
                                 self.out.write(str + "\n")
                                 self.written = True
-                        
+
                         def flush(self):
                             if self.written:
                                 self.out.flush()
@@ -347,13 +347,13 @@ digraph HeaderInclusion {
                     sys.stdout = ParsePrintFilter(sys.stdout)
                     while p.token(): pass
                     sys.stdout = sys.stdout.out
-            
+
 
     @staticmethod
     def build_inclusions(dname):
         for h in Header.reg.values():
             h.parsed = False
-        
+
         for entry in os.listdir(dname):
             Header._build_inclusions_recursive(dname, entry)
 
@@ -366,7 +366,7 @@ digraph HeaderInclusion {
             raise Exception("Header with path %s is not registered"
                 % path)
         return Header.reg[path] 
-    
+
     def __init__(self, path, is_global=False):
         super(Header, self).__init__(path)
         self.is_global = is_global
@@ -376,7 +376,7 @@ digraph HeaderInclusion {
             raise Exception("Header %s is already registered" % path)
 
         Header.reg[path] = self
-    
+
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
             raise AddTypeRefToDefinerException("Adding type %s reference to \
@@ -391,16 +391,16 @@ file %s defining the type" % (type_ref.type.name, self.path))
                 except AddTypeRefToDefinerException:
                     # inclusion cycles will cause this exception
                     pass
-    
+
     def add_type(self, _type):
         super(Header, self).add_type(_type)
-        
+
         # Auto add type references to self includers
         type_ref = TypeReference(_type)
-        
+
         for s in self.includers:
             s._add_type_recursive(type_ref)
-    
+
     def __hash__(self):
         # key contains of 'g' or 'h' and header path
         # 'g' and 'h' are used to distinguish global and local
@@ -416,25 +416,25 @@ class TypeNotRegistered(Exception):
 
 class Type(object):
     reg = {}
-    
+
     @staticmethod
     def lookup(name):
         if not name in Type.reg:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name)
         return Type.reg[name] 
-    
+
     def __init__(self, name, incomplete=True, base=False):
         self.name = name
         self.incomplete = incomplete
         self.definer = None
         self.base = base
-        
+
         if name in Type.reg:
             raise Exception("Type %s is already registered" % name)
 
         Type.reg[name] = self
-    
+
     def gen_var(self, name, pointer = False, initializer = None,
                 static = False):
         if self.incomplete:
@@ -454,11 +454,11 @@ of incomplete type {}.".format(name, self.name))
             return []
         else:
             return [self.definer]
-    
+
     def gen_chunk(self):
         raise Exception("Attempt to generate source chunk for type {}"
             .format(self.name))
-    
+
     def gen_defining_chunk(self):
         if self.definer == None:
             return None
@@ -468,7 +468,7 @@ of incomplete type {}.".format(name, self.name))
             return None
         else:
             return self.gen_chunk()
-    
+
     def gen_defining_chunk_list(self):
         d = self.gen_defining_chunk()
         if d == None:
@@ -487,14 +487,14 @@ reference {}.".format(_type.name))
         self.incomplete = _type.incomplete
         self.base = _type.base
         self.type = _type
-        
+
     def get_definers(self):
         return self.type.get_definers()
 
     def gen_chunk(self):
         raise Exception("Attempt to generate source chunk for \
 reference to type {}".format(self.name))
-    
+
     def gen_var(self, name, pointer = False, initializer = None,
             static = False):
         raise Exception("""Attempt to generate variable of type %s by
@@ -507,20 +507,20 @@ class Structure(Type):
         if not fields == None:
             for v in fields:
                 self.append_field(v)
-    
+
     def get_definers(self):
         if self.definer == None:
             raise Exception("Getting definers for structure {} that \
 is not added to a source", self.name)
-        
+
         definers = [self.definer]
-        
+
         for f in self.fields:
             definers.extend(f.type.get_definers())
-        
+
         return definers
-        
-    
+
+
     def append_field(self, variable):
         for f in self.fields:
             if f.name == variable.name:
@@ -528,7 +528,7 @@ is not added to a source", self.name)
  in structure {}""".format(f.name, self.name))
 
         self.fields.append(variable)
-    
+
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
 
@@ -574,7 +574,7 @@ class Function(Type):
 
     def gen_declaration(self):
         return FunctionDeclaration(self)
-    
+
     def gen_definition(self):
         return FunctionDefinition(self)
 
@@ -587,7 +587,7 @@ class Function(Type):
         static = False,
         inline = False,
         used_types = []):
-        
+
         return Function(name, body, self.ret_type, self.args, static, inline,
             used_types)
 
@@ -603,7 +603,7 @@ class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):
         super(Macro, self).__init__(name)
-        
+
         self.args = args
         self.text = text
 
@@ -618,7 +618,7 @@ class Macro(Type):
             for a in self.args[:-1]:
                 arg_val += init.code[a] + ", "
             arg_val += init.code[self.args[-1]] + ")"
-            
+
             return "%s%s" % (self.name, arg_val)
 
     def gen_var(self):
@@ -633,7 +633,7 @@ class Macro(Type):
             res["text"] = self.text
         if not self.args == None:
             res["args"] = self.args
-        
+
         return res
 
     @staticmethod
@@ -659,7 +659,7 @@ class Variable():
         self.type = _type
         self.initializer = initializer
         self.static = static
-    
+
     def gen_declaration_chunk(self, indent="", extern = False):
         return VariableDeclaration(self, indent, extern)
 
@@ -675,7 +675,7 @@ class Usage():
     def __init__(self, var, initializer = None):
         self.variable = var
         self.initalizer = initializer
-    
+
     def gen_chunk(self):
         return VariableUsage(self.variable, self.initalizer)
 
@@ -730,17 +730,17 @@ class SourceChunk(object):
     def add_reference(self, chunk):
         self.references.append(chunk)
         chunk.users.append(self)
-    
+
     def del_reference(self, chunk):
         self.references.remove(chunk)
         chunk.users.remove(self)
-    
+
     def check_cols_fix_up(self, max_cols = 80, indent='    '):
         lines = self.code.split('\n')
         code = ''
         auto_new_line = ' \\\n{}'.format(indent)
         last_line = len(lines) - 1
-        
+
         for idx, line in enumerate(lines):
             if idx == last_line and len(line) == 0:
                 break;
@@ -748,7 +748,7 @@ class SourceChunk(object):
             if len(line) > max_cols:
                 line_no_indent_len = len(line) - len(line.lstrip(' '))
                 line_indent = line[:line_no_indent_len]
-                
+
                 words = line.lstrip(' ').split(' ')
 
                 ll = 0
@@ -772,7 +772,7 @@ class SourceChunk(object):
                 code += '\n'
             else:
                 code += line + '\n'
-        
+
         self.code = code
 
 class HeaderInclusion(SourceChunk):
@@ -802,7 +802,7 @@ class MacroDefinition(SourceChunk):
             for a in macro.args[:-1]:
                 args_txt += a + ", "
             args_txt += macro.args[-1] + ")"
-        
+
         super(MacroDefinition, self).__init__(
             name = "Definition of macro %s" % macro.name,
             code = "%s#define %s%s%s" % (
@@ -811,7 +811,7 @@ class MacroDefinition(SourceChunk):
                 args_txt,
                 "" if macro.text == None else " %s" % macro.text)
             )
-            
+
         self.macro = macro
 
 class VariableDeclaration(SourceChunk):
@@ -840,17 +840,17 @@ class VariableDefinition(SourceChunk):
         init_code = init_code_lines[0]
         for line in init_code_lines[1:]:
             init_code += "\n" + indent + line
-        
+
         self.variable = var
-        
+
         references = var.type.gen_defining_chunk_list()
-        
+
         for v in var.initializer.used_variables:
             references.append(v.get_definition_chunk())
-        
+
         for t in var.initializer.used_types:
             references.extend(t.gen_defining_chunk_list())
-        
+
         super(VariableDefinition, self).__init__(
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
@@ -877,7 +877,7 @@ class VariableUsage(SourceChunk):
         if not initializer == None:
             for v in initializer.used_variables:
                 references.append(v.get_definition_chunk())
-        
+
             for t in initializer.used_types:
                 references.extend(t.gen_defining_chunk_list())
 
@@ -907,7 +907,7 @@ class StructureDeclaration(SourceChunk):
     ),
         references = []
             )
-        
+
         super(StructureDeclaration, self).__init__(
             name = "Ending of structure {} declaration".format(struct.name),
             code = """\
@@ -919,14 +919,14 @@ class StructureDeclaration(SourceChunk):
     ),
             references = [struct_begin]
             )
-        
+
         field_indent = "{}{}".format(indent, fields_indent)
-        
+
         for f in struct.fields:
             field_declaration = f.gen_declaration_chunk(field_indent)
             field_declaration.add_reference(struct_begin)
             self.add_reference(field_declaration)
-        
+
         self.structure = struct
 
 def gen_function_declaration_string(indent, function):
@@ -954,15 +954,15 @@ def gen_function_decl_ref_chunks(function):
     if not function.args == None:
         for a in function.args:
             references.extend(a.type.gen_defining_chunk_list())
-    
+
     return references
 
 def gen_function_def_ref_chunks(f):
     references = []
-    
+
     for t in f.used_types:
         references.extend(t.gen_defining_chunk_list())
-    
+
     for g in f.used_globals:
         references.append(g.get_definition_chunk())
 
@@ -989,7 +989,7 @@ class FunctionDefinition(SourceChunk):
 
         references = gen_function_decl_ref_chunks(function)
         references.extend(gen_function_def_ref_chunks(function))
-        
+
         super(FunctionDefinition, self).__init__(
             name = "Definition of function %s" % function.name,
             references = references,
@@ -1039,7 +1039,7 @@ class SourceFile:
     def remove_chunks_with_same_origin(self, types = []):
         for t in types:
             exists = {}
-            
+
             for ch in list(self.chunks):
                 if not type(ch) == t:
                     continue
@@ -1070,7 +1070,7 @@ class SourceFile:
         new_chunks.sort(key = source_chunk_key)
 
         self.chunks = new_chunks
-    
+
     def add_chunks(self, chunks):
         for ch in chunks:
             self.add_chunk(ch)
