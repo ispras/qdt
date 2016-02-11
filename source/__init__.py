@@ -584,6 +584,10 @@ class Function(Type):
         return Variable(name = name, _type = self, 
                 initializer = initializer, static = static)
 
+Header("stdio.h", is_global=True).add_types([
+    Function("printf")
+    ])
+
 class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):
