@@ -277,6 +277,9 @@ digraph HeaderInclusion {
     def _on_define(definer, macro):
         # macro is ply.cpp.Macro
 
+        if "__FILE__" == macro.name:
+            return
+
         h = Header.lookup(definer)
 
         if macro.arglist == None and Header.pci_pattern.match(macro.name):
