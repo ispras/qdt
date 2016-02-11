@@ -163,6 +163,9 @@ a field of a type defined in another non-header file {}.".format(
         
         return file
 
+class AddTypeRefToDefinerException (Exception):
+    pass
+
 class Header(Source):
     reg = {}
 
@@ -372,14 +375,18 @@ digraph HeaderInclusion {
     
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
-            raise Exception("Adding type %s reference to file %s defining \
-the type" % (type_ref.type.name, self.path))
+            raise AddTypeRefToDefinerException("Adding type %s reference to \
+file %s defining the type" % (type_ref.type.name, self.path))
 
         # Preventing infinite recursion by header inclusion loop
         if super(Header, self)._add_type_recursive(type_ref):
             # Type was added. Hence, It is new type for the header
             for s in self.includers:
-                s._add_type_recursive(type_ref)
+                try:
+                    s._add_type_recursive(type_ref)
+                except AddTypeRefToDefinerException:
+                    # inclusion cycles will cause this exception
+                    pass
     
     def add_type(self, _type):
         super(Header, self).add_type(_type)
