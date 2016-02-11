@@ -273,9 +273,6 @@ digraph HeaderInclusion {
 
         Header.lookup(includer).add_inclusion(h)
 
-    # TODO: Move it to proper place
-    pci_pattern = re.compile("^PCI_((VENDOR_ID)|(DEVICE_ID)|(CLASS))_.*$")
-
     @staticmethod
     def _on_define(definer, macro):
         # macro is ply.cpp.Macro
@@ -285,7 +282,7 @@ digraph HeaderInclusion {
 
         h = Header.lookup(definer)
 
-        if macro.arglist == None and Header.pci_pattern.match(macro.name):
+        if macro.arglist == None:
             try:
                 m = Type.lookup(macro.name)
                 if not m.definer.path == definer:
@@ -319,6 +316,13 @@ digraph HeaderInclusion {
 
                     p = Preprocessor(lex())
                     p.add_path(start_dir)
+                    
+                    # Default include search folders should be specified to
+                    # locate and parse standard headers.
+                    # TODO: parse `cpp -v` output to get actual list of default
+                    # include folders. It should be cross-platform
+                    p.add_path("/usr/include")
+                    
                     p.on_include = Header._on_include
                     p.on_define.append(Header._on_define)
 
