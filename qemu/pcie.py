@@ -56,7 +56,7 @@ class PCIEDeviceType(QOMType):
         irq_num = 0,
         mem_bar_num = 1,
         msi_messages_num = 2,
-        revision = 1,
+        revision = 0,
         subsys = None,
         subsys_vendor = None,
     ):
