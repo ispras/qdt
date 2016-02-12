@@ -56,7 +56,9 @@ class PCIEDeviceType(QOMType):
         irq_num = 0,
         mem_bar_num = 1,
         msi_messages_num = 2,
-        revision = 1
+        revision = 1,
+        subsys = None,
+        subsys_vendor = None,
     ):
         super(PCIEDeviceType, self).__init__(name)
 
@@ -69,6 +71,9 @@ class PCIEDeviceType(QOMType):
         self.vendor = vendor
         self.device = device
         self.pci_class = pci_class
+
+        self.subsystem = subsys
+        self.subsystem_vendor = subsys_vendor
 
         self.mem_bar_size_macros = []
 
@@ -109,6 +114,12 @@ class PCIEDeviceType(QOMType):
         self.header.add_type(self.type_cast_macro)
 
         self.vendor_macro = self.vendor.find_macro()
+
+        if self.subsystem_vendor and self.subsystem:
+            self.subsystem_vendor_macro = self.subsystem_vendor.find_macro()
+        else:
+            self.subsystem_vendor_macro = None
+
         try:
             self.device_macro = self.device.find_macro()
         except TypeNotRegistered:
@@ -119,6 +130,20 @@ class PCIEDeviceType(QOMType):
                     text = self.device.id))
 
             self.device_macro = self.device.find_macro()
+
+        if self.subsystem_vendor and self.subsystem:
+            try:
+                self.subsystem_macro = self.subsystem.find_macro()
+            except TypeNotRegistered:
+                # TODO: add device id macro to pci_ids.h
+                self.header.add_type(Macro(
+                    name = "PCI_DEVICE_ID_%s_%s" % (self.subsystem_vendor.name,
+                            self.subsystem.name), 
+                    text = self.subsystem.id))
+
+                self.subsystem_macro = self.subsystem.find_macro()
+        else:
+            self.subsystem_macro = None
 
         self.pci_class_macro = self.pci_class.find_macro()
 
@@ -273,20 +298,25 @@ class PCIEDeviceType(QOMType):
     DeviceClass *dc = DEVICE_CLASS(oc);
     PCIDeviceClass *pc = PCI_DEVICE_CLASS(oc);
 
-    pc->realize   = {dev}_realize;
-    pc->exit      = {dev}_exit;
-    pc->vendor_id = {vendor_macro};
-    pc->device_id = {device_macro};
-    pc->class_id  = {pci_class_macro};
-    pc->revision  = {revision};
-    dc->vmsd      = &vmstate_{dev};
-    dc->props     = {dev}_properties;
+    pc->realize   {pad}= {dev}_realize;
+    pc->exit      {pad}= {dev}_exit;
+    pc->vendor_id {pad}= {vendor_macro};
+    pc->device_id {pad}= {device_macro};
+    pc->class_id  {pad}= {pci_class_macro};{subsys_id}{subsys_vid}
+    pc->revision  {pad}= {revision};
+    dc->vmsd      {pad}= &vmstate_{dev};
+    dc->props     {pad}= {dev}_properties;
 """.format(dev = self.qtn.for_id_name,
            revision = self.revision,
            vendor_macro = self.vendor_macro.name,
            device_macro = self.device_macro.name,
-           pci_class_macro = self.pci_class_macro.name
-           ),
+           pci_class_macro = self.pci_class_macro.name,
+           subsys_id = '' if self.subsystem_macro == None else ("""
+    pc->subsystem_id        = %s;""" % self.subsystem_macro.name),
+           subsys_vid = '' if self.subsystem_vendor_macro == None else ("""
+    pc->subsystem_vendor_id = %s;""" % self.subsystem_vendor_macro.name),
+           pad = '          ' if self.subsystem_vendor_macro else ''
+    ),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),
 Type.lookup("void").gen_var("opaque", True),
