@@ -59,13 +59,18 @@ Use @file to read arguments from 'file' (one per line)
     if not arguments.gen_header_tree == None:
         Header.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
+    test_vendor = pci_id_db.get_vendor(name = "AMD", vid = "0x1022")
+    test_device = pci_id_db.get_device(name = "AMD_LANCE",
+            vendor_name = "AMD", did = "0x2000")
+
     devices = [
         ("net", PCIEDeviceType(
             name = "Test PCI NIC",
             directory = "net",
-            vendor = pci_id_db.get_vendor(name = "AMD", vid = "0x1022"),
-            device = pci_id_db.get_device(name = "AMD_LANCE",
-                    vendor_name = "AMD", did = "0x2000"),
+            vendor = test_vendor,
+            device = test_device,
+            subsys = test_device,
+            subsys_vendor = test_vendor,
             pci_class = pci_id_db.get_class("NETWORK_ETHERNET"),
             mem_bar_num = 1
         )),
