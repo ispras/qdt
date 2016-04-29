@@ -242,16 +242,23 @@ class PCIEDeviceType(QOMType):
             )
         self.source.add_type(self.device_realize)
 
+        exit_code = ""
+        exit_used_types = [self.state_struct]
+        exit_used_s = False
+
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
             args = [Type.lookup("PCIDevice").gen_var("dev", pointer = True)],
             static = True,
-            used_types = [self.state_struct],
+            used_types = exit_used_types,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(dev);
+    {unused}{Struct} *s = {UPPER}(dev);
+{extra_code}\
 """.format(
+        unused = "" if exit_used_s else "__attribute__((unused)) ",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
+        extra_code = exit_code
     )
         )
         self.source.add_type(self.device_exit)
