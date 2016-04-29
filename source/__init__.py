@@ -610,7 +610,7 @@ class Macro(Type):
     def gen_chunk(self):
         return MacroDefinition(self)
 
-    def gen_usage_string(self, init):
+    def gen_usage_string(self, init = None):
         if self.args == None:
             return self.name
         else:
