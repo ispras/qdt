@@ -15,14 +15,12 @@ class PCIEDeviceStateStruct(Structure):
     def __init__(self,
         name,
         irq_num,
-        mem_bar_num,
-        msi_messages_num,
+        mem_bar_num
     ):
         super(PCIEDeviceStateStruct, self).__init__(name)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
-        self.msi_messages_num = msi_messages_num
 
         self.append_field_t_s("PCIDevice", "parent_obj")
 
@@ -92,8 +90,7 @@ class PCIEDeviceType(QOMType):
         self.state_struct = PCIEDeviceStateStruct(
             name = self.struct_name,
             irq_num = self.irq_num,
-            mem_bar_num = self.mem_bar_num,
-            msi_messages_num = self.msi_messages_num
+            mem_bar_num = self.mem_bar_num
             )
         self.header.add_type(self.state_struct)
 
@@ -220,6 +217,38 @@ class PCIEDeviceType(QOMType):
     size = size_macro.name
 )
 
+        if self.msi_messages_num > 0 :
+            msi_cap_offset = Macro(
+                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros
+                , text = "0x48")
+            msi_vectors = Macro(
+                name = "%s_MSI_VECTORS" % self.qtn.for_macros
+                , text = "%u" % self.msi_messages_num)
+            msi_64bit = Macro(
+                name = "%s_MSI_64BIT" % self.qtn.for_macros
+                , text = "1")
+            msi_masking = Macro(
+                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros
+                , text = "1")
+
+            msi_types = [
+                msi_cap_offset,
+                msi_vectors,
+                msi_64bit,
+                msi_masking
+                ]
+            self.header.add_types(msi_types)
+
+            realize_code += """
+    msi_init(dev, %s, %s, %s, %s);
+""" % (msi_cap_offset.gen_usage_string(),
+       msi_vectors.gen_usage_string(),
+       msi_64bit.gen_usage_string(),
+       msi_masking.gen_usage_string())
+
+            realize_used_types.extend(msi_types)
+            realize_used_types.append(Type.lookup("msi_init"))
+
         realize_used_types.append(self.state_struct)
 
         self.device_realize = Function(
@@ -245,6 +274,12 @@ class PCIEDeviceType(QOMType):
         exit_code = ""
         exit_used_types = [self.state_struct]
         exit_used_s = False
+
+        if self.msi_messages_num > 0 :
+            exit_code += """
+    msi_uninit(dev);
+"""
+            exit_used_types.append(Type.lookup("msi_uninit"))
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
