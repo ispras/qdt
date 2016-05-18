@@ -559,7 +559,7 @@ class Function(Type):
     def __init__(self,
             name,
             body = None,
-            ret_type = Type.lookup("void"),
+            ret_type = None,
             args = None,
             static = False, 
             inline = False,
@@ -573,7 +573,7 @@ class Function(Type):
         self.static = static
         self.inline = inline
         self.body = body
-        self.ret_type = ret_type
+        self.ret_type = Type.lookup("void") if ret_type == None else ret_type
         self.args = args
         self.used_types = used_types
         self.used_globals = used_globals
