@@ -3,7 +3,11 @@
 import argparse
 import os.path
 from _io import open
-from qemu import SysBusDeviceType, PCIEDeviceType, pci_id_db
+from qemu import \
+    SysBusDeviceType, \
+    PCIEDeviceType, \
+    pci_id_db, \
+    MachineType
 import qemu
 from source import Header
 
@@ -64,6 +68,10 @@ Use @file to read arguments from 'file' (one per line)
             vendor_name = "AMD", did = "0x2000")
 
     devices = [
+        ("i386", MachineType(
+            name = "Q35 Test",
+            directory = "i386"
+        )), 
         ("net", PCIEDeviceType(
             name = "Test PCI NIC",
             directory = "net",
@@ -88,7 +96,6 @@ Use @file to read arguments from 'file' (one per line)
     for device_purpose_class, dev_t in devices:
         device_derectory = device_purpose_class
 
-        full_header_path = os.path.join(include_path, dev_t.header.path)
         full_source_path =  os.path.join(arguments.qemu_src,
             dev_t.source.path)
     
@@ -120,13 +127,15 @@ Use @file to read arguments from 'file' (one per line)
         source.generate(source_writer)
         source_writer.close()
     
-        if os.path.isfile(full_header_path):
-            os.remove(full_header_path)
+        if "header" in dev_t.__dict__:
+            full_header_path = os.path.join(include_path, dev_t.header.path)
+            if os.path.isfile(full_header_path):
+                os.remove(full_header_path)
     
-        header_writer = open(full_header_path, "wb")
-        header = dev_t.generate_header()
-        header.generate(header_writer)
-        header_writer.close()
+            header_writer = open(full_header_path, "wb")
+            header = dev_t.generate_header()
+            header.generate(header_writer)
+            header_writer.close()
 
     '''
     from pycparser import c_generator, c_ast
