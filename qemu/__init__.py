@@ -26,6 +26,9 @@ from qom import \
     QemuTypeName, \
     QOMType
 
+from machine import \
+    MachineType
+
 import os
 
 def initialize(include_path):
@@ -49,8 +52,15 @@ def initialize(include_path):
         Type("Object", False),
         Type("TypeInfo", False),
         Type("Type", False),
+        Type("TypeImpl", False),
         Function(name = "type_register_static",
-            ret_type = Type.lookup("Type"),
+            ret_type = Type.lookup("TypeImpl"),
+            args = [
+                Type.lookup("TypeInfo").gen_var("info", pointer = True)
+            ]
+        ),
+        Function(name = "type_register",
+            ret_type = Type.lookup("TypeImpl"),
             args = [
                 Type.lookup("TypeInfo").gen_var("info", pointer = True)
             ]
@@ -97,6 +107,12 @@ def initialize(include_path):
 
     Header.lookup("exec/ioport.h").add_types([
         Type("pio_addr_t", incomplete=False)
+        ])
+
+    Header.lookup("hw/boards.h").add_types([
+        Macro("MACHINE_CLASS"),
+        Structure("MachineClass"),
+        Structure("MachineState")
         ])
 
     Header.lookup("hw/sysbus.h").add_types([
@@ -174,7 +190,8 @@ def initialize(include_path):
             args = [
                 "function"
             ]
-        )
+        ),
+        Macro(name = "machine_init", args = ["function"])
         ])
 
     Header.lookup("hw/pci/pci.h").add_types([
