@@ -8,8 +8,8 @@ from source import \
  Macro \
  , TypeNotRegistered
 
-from qemu import \
- QOMType
+from qom import \
+    QOMType
 
 class PCIEDeviceStateStruct(Structure):
     def __init__(self,
