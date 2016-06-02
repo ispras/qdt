@@ -68,10 +68,6 @@ Use @file to read arguments from 'file' (one per line)
             vendor_name = "AMD", did = "0x2000")
 
     devices = [
-        ("i386", MachineType(
-            name = "Q35 Test",
-            directory = "i386"
-        )), 
         ("net", PCIEDeviceType(
             name = "Test PCI NIC",
             directory = "net",
