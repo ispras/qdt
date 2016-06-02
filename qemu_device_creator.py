@@ -76,7 +76,8 @@ Use @file to read arguments from 'file' (one per line)
             subsys = test_device,
             subsys_vendor = test_vendor,
             pci_class = pci_id_db.get_class("NETWORK_ETHERNET"),
-            mem_bar_num = 1
+            mem_bar_num = 1,
+            msi_messages_num = 2
         )),
         ("intc", SysBusDeviceType(
             name = "Dynamips MPC860 CPCR",
