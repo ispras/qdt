@@ -422,7 +422,7 @@ class Type(object):
         if not name in Type.reg:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name)
-        return Type.reg[name] 
+        return Type.reg[name]
 
     def __init__(self, name, incomplete=True, base=False):
         self.name = name
