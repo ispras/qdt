@@ -29,6 +29,30 @@ from qom import \
 from machine import \
     MachineType
 
+from machine_description import \
+    MachineNode, \
+    BusNode, \
+    I2CBusNode, \
+    SystemBusNode, \
+    SystemBusDeviceNode, \
+    PCIExpressBusNode, \
+    PCIExpressDeviceNode, \
+    ISABusNode, \
+    IDEBusNode, \
+    DeviceNode, \
+    IRQLine, \
+    IRQHub, \
+    QOMPropertyType, \
+    QOMPropertyTypeLink, \
+    QOMPropertyTypeString, \
+    QOMPropertyTypeBoolean, \
+    QOMPropertyTypeInteger, \
+    QOMPropertyValue, \
+    MemoryNode, \
+    MemoryAliasNode, \
+    MemoryRAMNode, \
+    MemoryROMNode
+
 import os
 
 def initialize(include_path):
