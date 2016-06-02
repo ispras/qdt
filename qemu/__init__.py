@@ -64,7 +64,12 @@ def initialize(include_path):
             args = [
                 Type.lookup("TypeInfo").gen_var("info", pointer = True)
             ]
-        )
+        ),
+        Function("object_property_set_str"),
+        Function("object_property_set_link"),
+        Function("object_property_set_bool"),
+        Function("object_property_set_int"),
+        Macro("OBJECT")
         ])
 
     Header.lookup("exec/memory.h").add_types([
@@ -102,7 +107,12 @@ def initialize(include_path):
                 Type.lookup("const char").gen_var("name", pointer = True),
                 Type.lookup("uint64_t").gen_var("size")
             ]
-        )
+        ),
+        Function("memory_region_init"),
+        Function("memory_region_init_alias"),
+        Function("memory_region_init_ram"),
+        Function("memory_region_add_subregion_overlap"),
+        Function("memory_region_add_subregion")
         ])
 
     Header.lookup("exec/ioport.h").add_types([
@@ -147,7 +157,10 @@ def initialize(include_path):
                 Type.lookup("pio_addr_t").gen_var("dev"),
                 Type.lookup("pio_addr_t").gen_var("dev")
             ]
-        )
+        ),
+        Function("sysbus_mmio_map"),
+        Macro("SYS_BUS_DEVICE"),
+        Function("sysbus_connect_irq")
         ])
 
     Header.lookup("hw/irq.h").add_types([
@@ -158,7 +171,8 @@ def initialize(include_path):
                 Type.lookup("int").gen_var("n"),
                 Type.lookup("int").gen_var("level")
             ]
-        )
+        ),
+        Function("qemu_irq_split")
     ])
 
     Header.lookup("hw/qdev-core.h").add_types([
@@ -173,7 +187,15 @@ def initialize(include_path):
                 Type.lookup("qemu_irq_handler").gen_var("handler"),
                 Type.lookup("int").gen_var("n")
             ]
-        )
+        ),
+        Function(name = "qdev_create"),
+        Function(name = "qdev_init_nofail"),
+        Function(name = "qdev_get_child_bus"),
+        Macro(name = "BUS"),
+        Structure(name = "BusState"),
+        Function(name = "qdev_get_gpio_in"),
+        Function(name = "qdev_connect_gpio_out"),
+        Function(name = "qdev_connect_gpio_out_named")
         ])
 
     Header.lookup("qapi/error.h").add_types([
@@ -182,7 +204,8 @@ def initialize(include_path):
 
     Header.lookup("migration/vmstate.h").add_types([
         Type("VMStateDescription", False),
-        Type("VMStateField", False)
+        Type("VMStateField", False),
+        Function("vmstate_register_ram_global")
         ])
 
     Header.lookup("qemu/module.h").add_types([
@@ -196,7 +219,9 @@ def initialize(include_path):
 
     Header.lookup("hw/pci/pci.h").add_types([
         Type("PCIDevice", False),
-        Type("PCIDeviceClass", False)
+        Type("PCIDeviceClass", False),
+        Function("pci_create_multifunction"),
+        Macro("PCI_DEVFN")
         ])
 
     Header.lookup("hw/pci/msi.h").add_types([
@@ -216,6 +241,18 @@ def initialize(include_path):
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
             ]
         )
+        ])
+
+    Header.lookup("hw/pci/pci_bus.h").add_types([
+        Type("PCIBus", incomplete = True)
+        ])
+
+    Header.lookup("hw/pci/pci_host.h").add_types([
+        Macro(name = "PCI_HOST_BRIDGE")
+        ])
+
+    Header.lookup("qemu/typedefs.h").add_types([
+        Structure("I2CBus") # the structure is defined in .c file
         ])
 
     # Search for PCI Ids
