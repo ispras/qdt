@@ -424,6 +424,14 @@ class Type(object):
                 % name)
         return Type.reg[name]
 
+    @staticmethod
+    def exists(name):
+        try:
+            Type.lookup(name)
+            return True
+        except TypeNotRegistered:
+            return False
+
     def __init__(self, name, incomplete=True, base=False):
         self.name = name
         self.incomplete = incomplete
