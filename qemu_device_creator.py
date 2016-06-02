@@ -7,7 +7,11 @@ from qemu import \
     SysBusDeviceType, \
     PCIEDeviceType, \
     pci_id_db, \
-    MachineType
+    MachineType, \
+    MachineNode
+
+from examples import *
+
 import qemu
 from source import Header
 
@@ -67,7 +71,10 @@ Use @file to read arguments from 'file' (one per line)
     test_device = pci_id_db.get_device(name = "AMD_LANCE",
             vendor_name = "AMD", did = "0x2000")
 
+    q35_test_init()
+
     devices = [
+        ("i386", q35_macine.gen_machine_type()), 
         ("net", PCIEDeviceType(
             name = "Test PCI NIC",
             directory = "net",
