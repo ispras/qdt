@@ -53,6 +53,13 @@ from machine_description import \
     MemoryRAMNode, \
     MemoryROMNode
 
+from project import \
+    QProject
+
+from device_description import \
+    SysBusDeviceDescription, \
+    PCIExpressDeviceDescription
+
 import os
 
 def initialize(include_path):

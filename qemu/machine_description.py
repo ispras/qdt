@@ -1,6 +1,7 @@
 import machine
 from __builtin__ import isinstance
 from source import Type
+from project import QOMDescription
 
 # properties
 class QOMPropertyType(object):
@@ -305,7 +306,7 @@ class MemoryROMNode(MemoryLeafNode):
 class MultipleSystemBusesInMachine(Exception):
     pass
 
-class MachineNode(object):
+class MachineNode(QOMDescription):
     def __init__(self,
         name,
         directory,
@@ -315,8 +316,7 @@ class MachineNode(object):
         mems = None,
         irq_hubs = None
     ):
-        self.name = name
-        self.directory = directory
+        QOMDescription.__init__(self, name = name, directory = directory)
 
         self.devices = [] if devices is None else list(devices)
         self.buses = [] if buses is None else list(buses)
@@ -417,7 +417,7 @@ class MachineNode(object):
             return
         self.added = True
 
-    def gen_machine_type(self):
+    def gen_type(self):
         return machine.MachineType(
             machine = self
             )
