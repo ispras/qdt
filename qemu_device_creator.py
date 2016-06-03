@@ -4,11 +4,12 @@ import argparse
 import os.path
 from _io import open
 from qemu import \
-    SysBusDeviceType, \
-    PCIEDeviceType, \
     pci_id_db, \
-    MachineType, \
+    SysBusDeviceDescription, \
+    PCIExpressDeviceDescription, \
+    QProject, \
     MachineNode
+    
 
 from examples import *
 
@@ -73,73 +74,32 @@ Use @file to read arguments from 'file' (one per line)
 
     q35_test_init()
 
-    devices = [
-        ("i386", q35_macine.gen_machine_type()), 
-        ("net", PCIEDeviceType(
-            name = "Test PCI NIC",
-            directory = "net",
-            vendor = test_vendor,
-            device = test_device,
-            subsys = test_device,
-            subsys_vendor = test_vendor,
-            pci_class = pci_id_db.get_class("NETWORK_ETHERNET"),
-            mem_bar_num = 1,
-            msi_messages_num = 2
-        )),
-        ("intc", SysBusDeviceType(
-            name = "Dynamips MPC860 CPCR",
-            directory = "intc",
-            out_irq_num = 0,
-            mmio_num = 1,
-            pio_num = 0,
-            in_irq_num = 0
+    project = QProject(
+        descriptions = [
+                q35_macine,
+                PCIExpressDeviceDescription(
+                    name = "Test PCI NIC",
+                    directory = "net",
+                    vendor = test_vendor,
+                    device = test_device,
+                    subsys = test_device,
+                    subsys_vendor = test_vendor,
+                    pci_class = pci_id_db.get_class("NETWORK_ETHERNET"),
+                    mem_bar_num = 1,
+                    msi_messages_num = 2
+                ),
+                SysBusDeviceDescription(
+                    name = "Dynamips MPC860 CPCR",
+                    directory = "intc",
+                    out_irq_num = 0,
+                    mmio_num = 1,
+                    pio_num = 0,
+                    in_irq_num = 0
+                )
+            ] 
         )
-        )
-    ]
 
-    for device_purpose_class, dev_t in devices:
-        device_derectory = device_purpose_class
-
-        full_source_path =  os.path.join(arguments.qemu_src,
-            dev_t.source.path)
-    
-        source_base_name = os.path.basename(full_source_path)
-    
-        (source_name, source_ext) = os.path.splitext(source_base_name)
-    
-        obj_base_name = source_name + ".o"
-    
-        hw_path = os.path.join(arguments.qemu_src, 'hw')
-        class_hw_path = os.path.join(hw_path, device_derectory)
-        Makefile_objs_class_path = os.path.join(class_hw_path, 'Makefile.objs')
-    
-        registered_in_makefile = False
-        for line in open(Makefile_objs_class_path, "r").readlines():
-            if obj_base_name in [s.strip() for s in line.split(" ")]:
-                registered_in_makefile = True
-                break
-    
-        if not registered_in_makefile:
-            with open(Makefile_objs_class_path, "a") as Makefile_objs:
-                Makefile_objs.write(u"obj-y += %s\n" % obj_base_name)
-    
-        if os.path.isfile(full_source_path):
-            os.remove(full_source_path)
-    
-        source_writer = open(full_source_path, "wb")
-        source = dev_t.generate_source()
-        source.generate(source_writer)
-        source_writer.close()
-    
-        if "header" in dev_t.__dict__:
-            full_header_path = os.path.join(include_path, dev_t.header.path)
-            if os.path.isfile(full_header_path):
-                os.remove(full_header_path)
-    
-            header_writer = open(full_header_path, "wb")
-            header = dev_t.generate_header()
-            header.generate(header_writer)
-            header_writer.close()
+    project.gen_all(arguments.qemu_src)
 
     '''
     from pycparser import c_generator, c_ast
