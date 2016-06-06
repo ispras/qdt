@@ -74,6 +74,7 @@ Use @file to read arguments from 'file' (one per line)
 
     q35_test_init()
 
+    """
     project = QProject(
         descriptions = [
                 q35_macine,
@@ -98,6 +99,9 @@ Use @file to read arguments from 'file' (one per line)
                 )
             ] 
         )
+    """
+
+    project = q35_project
 
     project.gen_all(arguments.qemu_src)
 
