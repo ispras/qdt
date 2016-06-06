@@ -7,15 +7,20 @@ class QemuTypeName():
         lower_name = self.name.lower();
         tmp = '_'.join(lower_name.split())
         tmp = '_'.join(tmp.split('-'))
+        tmp = ''.join(tmp.split('/'))
 
         self.for_id_name = tmp
         self.for_header_name = tmp
 
-        self.for_struct_name = ''.join(self.name.split())
+        tmp =''.join(self.name.split())
+        tmp =''.join(tmp.split('/'))
+        tmp =''.join(tmp.split('-'))
+        self.for_struct_name = tmp
 
         upper_name = self.name.upper()
         tmp = '_'.join(upper_name.split())
         tmp = '_'.join(tmp.split('-'))
+        tmp = ''.join(tmp.split('/'))
 
         self.for_macros = tmp
 
