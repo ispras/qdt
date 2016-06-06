@@ -24,6 +24,7 @@ class SysBusDeviceDescription(QOMDescription):
             directory = self.directory,
             out_irq_num = self.out_irq_num,
             in_irq_num = self.in_irq_num,
+            mmio_num = self.mmio_num,
             pio_num = self.pio_num
             )
 
