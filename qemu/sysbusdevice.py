@@ -145,6 +145,7 @@ class SysBusDeviceType(QOMType):
             )
         self.source.add_type(self.device_realize)
 
+        s_is_used = False
         instance_init_code = ''
         instance_init_used_types = []
         instance_init_used_globals = []
@@ -213,6 +214,8 @@ class SysBusDeviceType(QOMType):
     UPPER = self.qtn.for_macros,
     size = size_macro.name
 )
+            s_is_used = True
+
         pio_def_size = 0x4
         pio_cur_addres = 0x1000
 
@@ -285,6 +288,7 @@ class SysBusDeviceType(QOMType):
     size = size_macro.name,
     addr = address_macro.name
 )
+            s_is_used = True
 
         if self.out_irq_num > 0:
             instance_init_used_types.extend([
@@ -345,12 +349,13 @@ use_as_prototype(
         self.instance_init = Function(
             name = self.gen_instance_init_name(),
             body = """\
-    {Struct} *s = {UPPER}(obj);
+    {used}{Struct} *s = {UPPER}(obj);
 {extra_code}\
 """.format(
     Struct = self.state_struct.name,
     UPPER = self.qtn.for_macros,
-    extra_code = instance_init_code
+    extra_code = instance_init_code,
+    used = "" if s_is_used else "__attribute__((unused)) "
 ),
             static = True,
             args = [
