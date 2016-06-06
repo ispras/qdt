@@ -16,7 +16,7 @@ def init():
         ])
     q35_macine.add_node(cpu)
 
-    # set CPUID with smbios_set_cpuid
+    # set CPUID with smbios_set_cpuid(cpu->env.cpuid_version, cpu->env.features[FEAT_1_EDX]);
     # call pc_acpi_init("q35-acpi-dsdt.aml");
 
     # get memory size from machine->ram_size
@@ -109,6 +109,7 @@ def init():
         QOMPropertyValue(QOMPropertyTypeBoolean, "master", False)
         ])
 
+    # connect master 0-th out IRQ to CPU: pc_allocate_cpu_irq
     IRQLine(i8259_slave, i8259_master, 0, 2, None)
 
     ioapic = SystemBusDeviceNode(
@@ -145,7 +146,7 @@ def init():
             srcs.append((bridge_pci2lpc, i, None))
 
         if i == 13:
-            srcs.append((portF0, 0, None))
+            srcs.append((portF0, 0, "SYSBUS_DEVICE_GPIO_IRQ"))
 
         srcs.append((hpet, i, "SYSBUS_DEVICE_GPIO_IRQ"))
 
@@ -207,11 +208,19 @@ def init():
         parent = isa_bus
         )
 
+    vmport = DeviceNode(
+        qom_type = "TYPE_VMPORT",
+        parent = isa_bus
+        )
+
     vmmouse = DeviceNode(
         qom_type = "vmmouse",
         parent = isa_bus
         )
-    vmmouse.properties.append(QOMPropertyValue(QOMPropertyTypeLink, "ps2_mouse", kbd_and_mouse)) # the device uses opaque pointer instead of link
+    vmmouse.properties.extend([
+        QOMPropertyValue(QOMPropertyTypeLink, "ps2_mouse", kbd_and_mouse),
+        QOMPropertyValue(QOMPropertyTypeLink, "vmport", vmport)
+        ])
 
     port92 = DeviceNode(
         qom_type = "port92",
@@ -240,7 +249,7 @@ def init():
 #    call DMA_init(0);
 
     achi = PCIExpressDeviceNode(
-        qom_type = "ich9-ahci",
+        qom_type = "TYPE_ICH9_AHCI",
         pci_express_bus = pci_bus,
         slot = "ICH9_SATA1_DEV",
         function = "ICH9_SATA1_FUNC",
