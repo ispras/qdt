@@ -5,6 +5,8 @@ q35_macine = MachineNode(
     directory = "i386"
     )
 
+q35_project = QProject()
+
 def init():
     global q35_macine
 
@@ -128,7 +130,7 @@ def init():
     hpet.properties.append(QOMPropertyValue(QOMPropertyTypeInteger, "HPET_INTCAP", 0xff0104))
 
     portF0 = SystemBusDeviceNode(
-        qom_type = "ioportF0",
+        qom_type = "TYPE_IO_PORT_F0",
         pmio = [0xF0]
         )
 
@@ -153,7 +155,7 @@ def init():
         IRQHub(srcs, dsts)
 
     port80 = SystemBusDeviceNode(
-        qom_type = "ioport80",
+        qom_type = "TYPE_IO_PORT_80",
         pmio = [0x80]
         )
     q35_macine.add_node(port80)
@@ -228,7 +230,7 @@ def init():
         )
 
     a20_line = SystemBusDeviceNode(
-        qom_type = "a20-line"
+        qom_type = "TYPE_A20_LINE"
         )
     a20_line.properties.extend([
         QOMPropertyValue(QOMPropertyTypeLink, "cpu", cpu)
@@ -316,3 +318,37 @@ def init():
     # pc_cmos_init !!!
 
     # call pc_vga_init(NULL, pci_bus) and pc_nic_init(NULL, pci_bus);
+
+    global q35_project
+
+    q35_project.descriptions.append(q35_macine)
+
+    ioport80_t = SysBusDeviceDescription(
+        name = "I/O Port 80",
+        directory = "i386",
+        out_irq_num = 0,
+        in_irq_num = 0,
+        mmio_num = 0,
+        pio_num = 1 
+        )
+    q35_project.descriptions.append(ioport80_t)
+
+    ioportF0_t = SysBusDeviceDescription(
+        name = "I/O Port F0",
+        directory = "i386",
+        out_irq_num = 1,
+        in_irq_num = 0,
+        mmio_num = 0,
+        pio_num = 1 
+        )
+    q35_project.descriptions.append(ioportF0_t)
+
+    a20_line_t = SysBusDeviceDescription(
+        name = "A20 Line",
+        directory = "i386",
+        out_irq_num = 0,
+        in_irq_num = 1,
+        mmio_num = 0,
+        pio_num = 0 
+        )
+    q35_project.descriptions.append(a20_line_t)
