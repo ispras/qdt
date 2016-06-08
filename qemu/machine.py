@@ -33,6 +33,9 @@ import os.path
 from qemu.machine_description import DeviceNode, IRQLine, PCIExpressDeviceNode
 from __builtin__ import isinstance
 
+from version import \
+    get_vp
+
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
         Exception.__init__(self, t)
@@ -608,7 +611,8 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         self.source.add_type(self.type_reg_func)
 
         # Main machine registration macro
-        machine_init_def = Type.lookup("machine_init").gen_var()
+        def_type = get_vp()["machine initialization function register type name"]
+        machine_init_def = Type.lookup(def_type).gen_var()
         machine_init_def_args = Initializer(
             code = {"function": self.type_reg_func.name},
             used_types = [self.type_reg_func]

@@ -50,6 +50,16 @@ class QEMUVersionDescription(object):
 
 # Warning! Preserve order!
 qemu_versions = [
+    QEMUVersionDescription(
+        "2.6.0",
+        [
+            QEMUVersionParameterDescription(
+                name = "machine initialization function register type name",
+                new_value = "type_init",
+                old_value = "machine_init" 
+            )
+        ]
+    )
 ]
 
 version_parameters = None
