@@ -62,7 +62,21 @@ from device_description import \
 
 import os
 
-def initialize(include_path):
+def initialize(qemu_src):
+    VERSION_path = os.path.join(qemu_src, 'VERSION')
+
+    if not os.path.isfile(VERSION_path):
+        print("{} does not exists\n".format(VERSION_path))
+        return
+
+    VERSION_f = open(VERSION_path)
+    qemu_version = VERSION_f.readline().rstrip("\n")
+    VERSION_f.close()
+
+    print("Qemu version is {}".format(qemu_version))
+
+    include_path = os.path.join(qemu_src, 'include')
+    
     header_db_fname = "header_db.json"
     if os.path.isfile(header_db_fname):
         print("Loading Qemu header inclusion tree from " + header_db_fname)

@@ -49,21 +49,7 @@ Use @file to read arguments from 'file' (one per line)
 
     arguments = parser.parse_args()
 
-    VERSION_path = os.path.join(arguments.qemu_src, 'VERSION')
-
-    if not os.path.isfile(VERSION_path):
-        print("{} does not exists\n".format(VERSION_path))
-        return
-
-    VERSION_f = open(VERSION_path)
-    qemu_version = VERSION_f.readline().rstrip("\n")
-    VERSION_f.close()
-
-    print("Qemu version is {}".format(qemu_version))
-
-    include_path = os.path.join(arguments.qemu_src, 'include')
-
-    qemu.initialize(include_path)
+    qemu.initialize(arguments.qemu_src)
 
     if not arguments.gen_header_tree == None:
         Header.gen_header_inclusion_dot_file(arguments.gen_header_tree)
