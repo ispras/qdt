@@ -60,6 +60,9 @@ from device_description import \
     SysBusDeviceDescription, \
     PCIExpressDeviceDescription
 
+from version import \
+    initialize as qemu_version_initialize
+
 import os
 
 def initialize(qemu_src):
@@ -324,3 +327,5 @@ def initialize(qemu_src):
                         PCIDeviceId(v.name, mi.group(1), t.text)
                         break;
                 continue
+
+    qemu_version_initialize(qemu_version)
