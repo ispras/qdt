@@ -66,8 +66,7 @@ def initialize(qemu_src):
     VERSION_path = os.path.join(qemu_src, 'VERSION')
 
     if not os.path.isfile(VERSION_path):
-        print("{} does not exists\n".format(VERSION_path))
-        return
+        raise Exception("{} does not exists\n".format(VERSION_path))
 
     VERSION_f = open(VERSION_path)
     qemu_version = VERSION_f.readline().rstrip("\n")
