@@ -91,3 +91,6 @@ def initialize(_version_string):
 
 def get_vp():
     return version_parameters
+
+def get_vs():
+    return version_string

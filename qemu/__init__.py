@@ -61,7 +61,9 @@ from device_description import \
     PCIExpressDeviceDescription
 
 from version import \
-    initialize as qemu_version_initialize
+    initialize as qemu_version_initialize, \
+    get_vp, \
+    get_vs
 
 import os
 
