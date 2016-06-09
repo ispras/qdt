@@ -1,4 +1,5 @@
 from q35_test import \
-    init as q35_test_init, \
-    q35_macine, \
-    q35_project
+    Q35MachineNode_2_5_0, \
+    Q35MachineNode_2_6_0, \
+    Q35Project_2_5_0, \
+    Q35Project_2_6_0

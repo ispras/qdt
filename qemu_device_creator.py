@@ -8,7 +8,8 @@ from qemu import \
     SysBusDeviceDescription, \
     PCIExpressDeviceDescription, \
     QProject, \
-    MachineNode
+    MachineNode, \
+    get_vs
     
 
 from examples import *
@@ -58,8 +59,6 @@ Use @file to read arguments from 'file' (one per line)
     test_device = pci_id_db.get_device(name = "AMD_LANCE",
             vendor_name = "AMD", did = "0x2000")
 
-    q35_test_init()
-
     """
     project = QProject(
         descriptions = [
@@ -87,7 +86,10 @@ Use @file to read arguments from 'file' (one per line)
         )
     """
 
-    project = q35_project
+    if get_vs() == "2.5.0":
+        project = Q35Project_2_5_0()
+    else:
+        project = Q35Project_2_6_0()
 
     project.gen_all(arguments.qemu_src)
 
