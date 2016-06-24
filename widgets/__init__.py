@@ -1,0 +1,2 @@
+from DnDCanvas import \
+    CanvasDnD
