@@ -1,0 +1,400 @@
+#!/usr/bin/python2
+
+from examples import \
+    Q35MachineNode_2_6_0
+
+from widgets import \
+    CanvasDnD
+
+import Tkinter as tk
+
+import math
+import random
+import copy
+
+def sign(x): return 1 if x >= 0 else -1
+
+class NodeBox(object):
+    def __init__(self, node):
+        # "physics" parameters 
+        self.x = 200
+        self.y = 200
+        self.vx = self.vy = 0
+        self.width = 50
+        self.height = 50
+        # the node cannot be moved by engine if static
+        self.static = False
+
+        self.node = node
+        self.conn = None
+
+    def overlaps(self, n):
+        if n.x > self.x + self.width:
+            return False
+        if n.x + n.width < self.x:
+            return False
+        if n.y > self.y + self.height:
+            return False
+        if n.y + n.height < self.y:
+            return False 
+        return True
+
+    def touches_conn(self, c):
+        if self.y > c.y:
+            return False
+        if self.y + self.height < c.y:
+            return False
+        if self.x + self.width < c.x:
+            return False
+        if self.x > c.x + c.width:
+            return False
+        return True
+
+    def touches(self, l):
+        if self.x > l.x:
+            return False
+        if self.x + self.width < l.x:
+            return False
+        if self.y > l.y + l.height:
+            return False
+        if self.y + self.height < l.y:
+            return False
+        return True
+
+class BusLine(object):
+    def __init__(self, bus):
+        self.x = 200
+        self.vx = 0
+        self.y = -100000
+        self.vy = 0
+        self.height = 200000
+        self.static = False
+
+        self.bus = bus
+
+class ConnectionLine(object):
+    def __init__(self, dev_node, bus_node):
+        self.dev_node = dev_node
+        self.bus_node = bus_node
+
+        self.update()
+
+    def update(self):
+        self.y = self.dev_node.y + self.dev_node.height/2
+        self.x = min([self.bus_node.x, self.dev_node.x])
+        self.width = max([self.bus_node.x, self.dev_node.x]) - self.x
+
+class MachineWidget(CanvasDnD):
+    def __init__(self, parent, mach_desc):
+        CanvasDnD.__init__(self, parent)
+
+        mach_desc.link()
+
+        self.mach = mach_desc
+
+        self.id2node = {}
+        self.node2id = {}
+        self.dev2node = {}
+        self.node2dev = {}
+
+        self.nodes = []
+        self.buses = []
+        self.conns = []
+
+        self.velocity_k = 0.05
+        self.velicity_limit = 10
+
+        self.bus_velocity_k = 0.05
+        self.bus_gravity_k = 0.2
+
+        self.update()
+
+        self.bind('<<DnDMoved>>', self.dnd_moved)
+        self.bind('<<DnDDown>>', self.dnd_down)
+        self.bind('<<DnDUp>>', self.dnd_up)
+        self.dragged = []
+
+        self.canvas.bind("<ButtonPress-1>", self.down_all)
+        self.canvas.bind("<ButtonRelease-1>", self.up_all)
+
+    def down_all(self, event):
+        if self.dragging:
+            return
+        #print("down_all")
+        event.widget.bind("<Motion>", self.motion_all)
+        event.widget.scan_mark(
+            int(event.widget.canvasx(event.x)),
+            int(event.widget.canvasy(event.y))
+        )
+
+    def up_all(self, event):
+        #print("up_all")
+        event.widget.unbind("<Motion>")
+        for n in self.nodes + self.buses:
+            n.static = False
+
+    def motion_all(self, event):
+        #print("motion_all")
+        event.widget.scan_dragto(
+            int(event.widget.canvasx(event.x)),
+            int(event.widget.canvasy(event.y)),
+            gain = 1
+        )
+
+        for id, node in self.id2node.iteritems():
+            if isinstance(node, ConnectionLine):
+                continue
+
+            points = self.canvas.coords(id)[:2]
+            node.x = points[0]
+            node.y = points[1]
+            node.static = True
+
+    def dnd_moved(self, event):
+        id = self.canvas.find_withtag(tk.CURRENT)[0]
+        node = self.id2node[id]
+
+        points = self.canvas.coords(tk.CURRENT)[:2]
+        node.x = points[0]
+        node.y = points[1]
+
+    def dnd_down(self, event):
+        id = self.canvas.find_withtag(tk.CURRENT)[0]
+        node = self.id2node[id]
+
+        node.static = True
+        self.dragged.append(node)
+
+    def dnd_up(self, event):
+        for n in self.dragged:
+            n.static = False
+        self.dragged = []
+
+    def update(self):
+        for bus in self.mach.buses:
+            if bus in self.dev2node.keys():
+                continue
+
+            node = BusLine(bus)
+
+            self.dev2node[bus] = node
+            self.node2dev[node] = bus
+
+            self.add_bus(node)
+
+        for dev in self.mach.devices:
+            if not dev in self.dev2node.keys():
+                node = NodeBox(dev)
+    
+                self.dev2node[dev] = node
+                self.node2dev[node] = dev
+    
+                self.add_node(node)
+            else:
+                node = self.dev2node[dev]
+
+            if node.conn:
+                continue
+
+            if not dev.parent_bus:
+                continue
+
+            pb = dev.parent_bus
+            if not pb in self.dev2node.keys():
+                continue
+            pbn = self.dev2node[pb]
+
+            self.add_conn(node, pbn)
+
+    def ph_iterate(self):
+        for n in self.nodes + self.buses:
+            n.vx = n.vy = 0
+
+        for n in self.nodes:
+            for n1 in self.nodes:
+                if n1 == n:
+                    continue
+                if not n.overlaps(n1):
+                    continue
+
+                w2 = (n.width + n1.width) / 2
+                h2 = (n.height + n1.height) / 2
+
+                dx = n1.x - n.x
+
+                while dx == 0:
+                    dx = sign(random.random() - 0.5)
+
+                ix = dx - sign(dx) * w2
+
+                n.vx = n.vx + ix * self.velocity_k
+
+                dy = n1.y - n.y
+
+                while dy == 0:
+                    dy = sign(random.random() - 0.5)
+
+                iy = dy - sign(dy) * h2
+
+                n.vy = n.vy + iy * self.velocity_k
+
+            for b in self.buses:
+                if not n.touches(b):
+                    continue
+
+                parent_device = self.node2dev[b].parent_device
+                if parent_device:
+                    parent_node = self.dev2node[parent_device]
+                    if parent_node == n:
+                        continue
+
+                w2 = n.width / 2
+                dx = b.x - n.x - w2
+
+                while dx == 0:
+                    dx = sign(random.random() - 0.5)
+
+                ix = dx - sign(dx) * w2
+
+                n.vx = n.vx + ix * self.bus_velocity_k
+
+                if parent_device and parent_node:
+                    parent_node.vx = parent_node.vx - ix * self.velocity_k
+
+            for c in self.conns:
+                if n.conn == c:
+                    continue
+
+                if not n.touches_conn(c):
+                    continue
+
+                h2 = n.height / 2
+                dy = c.y - n.y - h2
+
+                while dy == 0:
+                    dy = sign(random.random() - 0.5)
+
+                iy = dy - sign(dy) * h2
+
+                n.vy = n.vy + iy * self.bus_velocity_k
+                c.dev_node.vy = c.dev_node.vy - iy * self.bus_velocity_k
+
+        for b in self.buses:
+            parent_device = self.node2dev[b].parent_device
+            if not parent_device:
+                continue
+
+            parent_node = self.dev2node[parent_device]
+
+            dx = parent_node.x + parent_node.width / 2 - b.x
+            if dx == 0:
+                continue
+
+            b.vx = b.vx + dx * self.bus_gravity_k
+
+        for n in self.nodes + self.buses:
+            if n.static:
+                continue
+
+            self.ph_move(n)
+
+        for c in self.conns:
+            c.update()
+            self.ph_apply_conn(c)
+
+    def ph_apply_conn(self, c):
+        id = self.node2id[c]
+        points = [
+            c.x, c.y,
+            c.x + c.width, c.y
+        ]
+
+        apply(self.canvas.coords, [id] + points)
+
+    def ph_move(self, n):
+        if abs(n.vx) > self.velicity_limit:
+            n.vx = sign(n.vx) * self.velicity_limit
+        if abs(n.vy) > self.velicity_limit:
+            n.vy = sign(n.vy) * self.velicity_limit
+
+        n.x = n.x + n.vx
+        n.y = n.y + n.vy
+
+        self.ph_apply(n)
+
+    def ph_apply(self, n):
+        id = self.node2id[n]
+        points = self.canvas.coords(id)
+        anchors = copy.copy(points[:2])
+        p = (n.x, n.y)
+
+        for idx, point in enumerate(points):
+            points[idx] = point - anchors[idx % 2] + p[idx % 2]
+
+        apply(self.canvas.coords, [id] + points)
+
+
+    def ph_run(self):
+        self.ph_iterate()
+        self.after(10, self.ph_run)
+
+    def add_node(self, node):
+        # todo: replace rectangle with image
+        id = self.canvas.create_rectangle(
+            node.x, node.y,
+            node.x + node.width,
+            node.y + node.height,
+            fill = "white",
+            tag = "DnD"
+        )
+        self.id2node[id] = node
+        self.node2id[node] = id
+
+        self.nodes.append(node)
+
+    def add_bus(self, bus):
+        id = self.canvas.create_line(
+            bus.x, bus.y,
+            bus.x, bus.y + bus.height,
+        )
+        self.canvas.lower(id)
+
+        self.id2node[id] = bus
+        self.node2id[bus] = id
+
+        self.buses.append(bus)
+
+    def add_conn(self, dev, bus):
+        conn = ConnectionLine(dev, bus)
+
+        id = self.canvas.create_line(
+            conn.x, conn.y,
+            conn.x + conn.width, conn.y
+        )
+        self.canvas.lower(id)
+
+        self.id2node[id] = conn
+        self.node2id[conn] = id
+
+        dev.conn = conn
+
+        self.conns.append(conn)
+
+def main():
+    root = tk.Tk()
+    root.title("Drag-N-Drop Demo")
+
+    root.grid()
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_rowconfigure(0, weight=1)
+    root.geometry("500x500")
+
+    cnv = MachineWidget(root, Q35MachineNode_2_6_0())
+    cnv.grid(column = 0, row = 0, sticky = "NEWS")
+
+    cnv.ph_run()
+
+    root.mainloop()
+
+if __name__ == '__main__':
+    main()
