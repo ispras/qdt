@@ -386,7 +386,9 @@ class MachineNode(QOMDescription):
         # Attach all system bus devices to the system bus
         for dev in self.devices:
             if isinstance(dev, SystemBusDeviceNode):
-                dev.parent = self.sysbus
+                if not dev.parent_bus:
+                    dev.parent_bus = self.sysbus
+                    self.sysbus.devices.append(dev)
 
     def has_node(self, n):
         if isinstance(n, DeviceNode):
