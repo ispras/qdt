@@ -85,6 +85,17 @@ class ConnectionLine(object):
         self.x = min([self.bus_node.x, self.dev_node.x])
         self.width = max([self.bus_node.x, self.dev_node.x]) - self.x
 
+    def crosses(self, b):
+        if self.x > b.x:
+            return False
+        if self.y < b.y:
+            return False
+        if self.x + self.width < b.x:
+            return False
+        if b.y + b.height < self.y:
+            return False
+        return True
+
 class MachineWidget(CanvasDnD):
     def __init__(self, parent, mach_desc):
         CanvasDnD.__init__(self, parent)
