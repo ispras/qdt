@@ -226,18 +226,23 @@ class MachineWidget(CanvasDnD):
                 while dx == 0:
                     dx = sign(random.random() - 0.5)
 
-                ix = dx - sign(dx) * (w2 + n.spacing + n1.spacing)
-
-                n.vx = n.vx + ix * self.velocity_k
-
                 dy = n1.y - n.y
 
                 while dy == 0:
                     dy = sign(random.random() - 0.5)
 
+                ix = dx - sign(dx) * (w2 + n.spacing + n1.spacing)
+
+                # When nodes touches each other vertically (dx is near to 0,
+                # dy is near to h2) the x-intersection (xi) is very big.
+                # Which is actually wrong. Fix it up using abs(dx / dy)
+                # coefficient. Note that the evaluation is symmetric for
+                # horizontal touch the.
+                n.vx = n.vx + ix * self.velocity_k * abs(dx / dy)
+
                 iy = dy - sign(dy) * (h2 + n.spacing + n1.spacing)
 
-                n.vy = n.vy + iy * self.velocity_k
+                n.vy = n.vy + iy * self.velocity_k * abs(dy / dx)
 
             for b in self.buses:
                 if not n.touches(b):
