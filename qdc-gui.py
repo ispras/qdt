@@ -70,6 +70,7 @@ class BusLine(object):
         self.vy = 0
         self.height = 200000
         self.static = False
+        self.extra_length = 50
 
         self.bus = bus
 
@@ -297,11 +298,34 @@ class MachineWidget(CanvasDnD):
                 c.dev_node.vy = c.dev_node.vy - iy * self.bus_velocity_k
 
         for b in self.buses:
-            parent_device = self.node2dev[b].parent_device
+            bus = self.node2dev[b]
+
+            parent_device = bus.parent_device
+
+            if parent_device:
+                parent_node = self.dev2node[parent_device]
+                min_y = parent_node.y - b.extra_length
+                max_y = parent_node.y + parent_node.height + b.extra_length
+            else:
+                min_y = b.y + b.height + b.extra_length
+                max_y = b.y - b.extra_length
+
+            for dev in bus.devices:
+                n = self.dev2node[dev]
+
+                y = n.y - b.extra_length
+                if min_y > y:
+                    min_y = y
+
+                y = n.y + n.height + b.extra_length
+                if max_y < y:
+                    max_y = y
+
+            b.y = min_y
+            b.height = max_y - min_y
+
             if not parent_device:
                 continue
-
-            parent_node = self.dev2node[parent_device]
 
             dx = parent_node.x + parent_node.width / 2 - b.x
             if dx == 0:
@@ -309,11 +333,16 @@ class MachineWidget(CanvasDnD):
 
             b.vx = b.vx + dx * self.bus_gravity_k
 
-        for n in self.nodes + self.buses:
+        for n in self.nodes:
             if n.static:
                 continue
 
             self.ph_move(n)
+            self.ph_apply(n)
+
+        for b in self.buses:
+            self.ph_move(b)
+            self.ph_apply_bus(b)
 
         for c in self.conns:
             c.update()
@@ -328,6 +357,15 @@ class MachineWidget(CanvasDnD):
 
         apply(self.canvas.coords, [id] + points)
 
+    def ph_apply_bus(self, b):
+        id = self.node2id[b]
+        points = [
+            b.x, b.y,
+            b.x, b.y + b.height
+        ]
+
+        apply(self.canvas.coords, [id] + points)
+
     def ph_move(self, n):
         if abs(n.vx) > self.velicity_limit:
             n.vx = sign(n.vx) * self.velicity_limit
@@ -336,8 +374,6 @@ class MachineWidget(CanvasDnD):
 
         n.x = n.x + n.vx
         n.y = n.y + n.vy
-
-        self.ph_apply(n)
 
     def ph_apply(self, n):
         id = self.node2id[n]
