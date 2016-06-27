@@ -22,6 +22,7 @@ class NodeBox(object):
         self.vx = self.vy = 0
         self.width = 50
         self.height = 50
+        self.spacing = 10
         # the node cannot be moved by engine if static
         self.static = False
 
@@ -29,35 +30,35 @@ class NodeBox(object):
         self.conn = None
 
     def overlaps(self, n):
-        if n.x > self.x + self.width:
+        if n.x - n.spacing > self.x + self.width + self.spacing:
             return False
-        if n.x + n.width < self.x:
+        if n.x + n.width + n.spacing < self.x - self.spacing:
             return False
-        if n.y > self.y + self.height:
+        if n.y - n.spacing > self.y + self.height + self.spacing:
             return False
-        if n.y + n.height < self.y:
-            return False 
+        if n.y + n.height + n.spacing < self.y - self.spacing:
+            return False
         return True
 
     def touches_conn(self, c):
-        if self.y > c.y:
+        if self.y - self.spacing > c.y:
             return False
-        if self.y + self.height < c.y:
+        if self.y + self.height + self.spacing < c.y:
             return False
-        if self.x + self.width < c.x:
+        if self.x + self.width + self.spacing < c.x:
             return False
-        if self.x > c.x + c.width:
+        if self.x - self.spacing > c.x + c.width:
             return False
         return True
 
     def touches(self, l):
-        if self.x > l.x:
+        if self.x - self.spacing > l.x:
             return False
-        if self.x + self.width < l.x:
+        if self.x + self.width + self.spacing < l.x:
             return False
-        if self.y > l.y + l.height:
+        if self.y - self.spacing > l.y + l.height:
             return False
-        if self.y + self.height < l.y:
+        if self.y + self.height + self.spacing < l.y:
             return False
         return True
 
@@ -225,7 +226,7 @@ class MachineWidget(CanvasDnD):
                 while dx == 0:
                     dx = sign(random.random() - 0.5)
 
-                ix = dx - sign(dx) * w2
+                ix = dx - sign(dx) * (w2 + n.spacing + n1.spacing)
 
                 n.vx = n.vx + ix * self.velocity_k
 
@@ -234,7 +235,7 @@ class MachineWidget(CanvasDnD):
                 while dy == 0:
                     dy = sign(random.random() - 0.5)
 
-                iy = dy - sign(dy) * h2
+                iy = dy - sign(dy) * (h2 + n.spacing + n1.spacing)
 
                 n.vy = n.vy + iy * self.velocity_k
 
@@ -249,12 +250,12 @@ class MachineWidget(CanvasDnD):
                         continue
 
                 w2 = n.width / 2
-                dx = b.x - n.x - w2
+                dx = b.x - (n.x + w2)
 
                 while dx == 0:
                     dx = sign(random.random() - 0.5)
 
-                ix = dx - sign(dx) * w2
+                ix = dx - sign(dx) * (w2 + n.spacing)
 
                 n.vx = n.vx + ix * self.bus_velocity_k
 
@@ -269,12 +270,12 @@ class MachineWidget(CanvasDnD):
                     continue
 
                 h2 = n.height / 2
-                dy = c.y - n.y - h2
+                dy = c.y - (n.y + h2)
 
                 while dy == 0:
                     dy = sign(random.random() - 0.5)
 
-                iy = dy - sign(dy) * h2
+                iy = dy - sign(dy) * (h2 + n.spacing)
 
                 n.vy = n.vy + iy * self.bus_velocity_k
                 c.dev_node.vy = c.dev_node.vy - iy * self.bus_velocity_k
