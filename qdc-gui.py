@@ -239,31 +239,57 @@ class MachineWidget(CanvasDnD):
                 if not n.overlaps(n1):
                     continue
 
-                w2 = (n.width + n1.width) / 2
-                h2 = (n.height + n1.height) / 2
+                w2 = n.width / 2
+                h2 = n.height / 2
 
-                dx = n1.x - n.x
+                w12 = n1.width / 2
+                h12 = n1.height / 2
+
+                # distance vector from n center to n1 center
+                dx = n1.x + w12 - (n.x + w2)
 
                 while dx == 0:
                     dx = sign(random.random() - 0.5)
 
-                dy = n1.y - n.y
+                dy = n1.y + h12 - (n.y + h2) 
 
                 while dy == 0:
                     dy = sign(random.random() - 0.5)
 
-                ix = dx - sign(dx) * (w2 + n.spacing + n1.spacing)
+                w = n.width + 2 * n.spacing
+                w1 = n1.width + 2 * n1.spacing
 
-                # When nodes touches each other vertically (dx is near to 0,
-                # dy is near to h2) the x-intersection (xi) is very big.
-                # Which is actually wrong. Fix it up using
-                # abs(dx * n.height / dy / n.width) coefficient. Note that
-                # the evaluation is symmetric for horizontal touch the.
-                n.vx = n.vx + ix * self.velocity_k * abs(dx * n.height / dy / n.width)
+                h = n.height + 2 * n.spacing
+                h1 = n1.height + 2 * n1.spacing
 
-                iy = dy - sign(dy) * (h2 + n.spacing + n1.spacing)
+                xscale = float(w) / (w + w1)
+                yscale = float(h) / (h + h1)
 
-                n.vy = n.vy + iy * self.velocity_k * abs(dy * n.width / dx / n.height)
+                # intrusion point, inside box physical border (including
+                # spacing)
+                # The intrusion point is shifted from interval's middle point
+                # to the smallest box center.
+                ix = dx * xscale
+                iy = dy * yscale
+
+                # collision point, at box physical border
+                if abs(iy) > abs(ix):
+                    cy = (h2 + n.spacing) * sign(iy)
+                    cx = ix * cy / iy
+                else:
+                    cx = (w2 + n.spacing) * sign(ix)
+                    cy = iy * cx / ix
+
+                # reaction vector, the direction is from intrusion point to
+                # collision point
+                rx = ix - cx
+                ry = iy - cy
+
+                # TODO: The reaction is applied to n only. It is recomputed
+                # again and applied to n1 on symmetric loop iteration. It could
+                # be optimized latter.
+                n.vx = n.vx + rx * self.velocity_k
+                n.vy = n.vy + ry * self.velocity_k
 
             for b in self.buses:
                 if not n.touches(b):
