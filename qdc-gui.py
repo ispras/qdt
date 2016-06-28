@@ -338,7 +338,7 @@ class MachineWidget(CanvasDnD):
                 continue
 
             self.ph_move(n)
-            self.ph_apply(n)
+            self.ph_apply_node(n)
 
         for b in self.buses:
             self.ph_move(b)
@@ -375,7 +375,7 @@ class MachineWidget(CanvasDnD):
         n.x = n.x + n.vx
         n.y = n.y + n.vy
 
-    def ph_apply(self, n):
+    def ph_apply_node(self, n):
         id = self.node2id[n]
         points = [
             n.x, n.y,
