@@ -377,12 +377,10 @@ class MachineWidget(CanvasDnD):
 
     def ph_apply(self, n):
         id = self.node2id[n]
-        points = self.canvas.coords(id)
-        anchors = copy.copy(points[:2])
-        p = (n.x, n.y)
-
-        for idx, point in enumerate(points):
-            points[idx] = point - anchors[idx % 2] + p[idx % 2]
+        points = [
+            n.x, n.y,
+            n.x + n.width, n.y + n.height
+        ]
 
         apply(self.canvas.coords, [id] + points)
 
