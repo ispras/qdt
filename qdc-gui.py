@@ -156,6 +156,10 @@ class MachineWidget(CanvasDnD):
             int(event.widget.canvasy(event.y)),
             gain = 1
         )
+        event.widget.scan_mark(
+            int(event.widget.canvasx(event.x)),
+            int(event.widget.canvasy(event.y))
+        )
 
         for id, node in self.id2node.iteritems():
             if isinstance(node, ConnectionLine):
