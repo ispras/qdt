@@ -29,6 +29,9 @@ class NodeBox(object):
         self.node = node
         self.conn = None
 
+        self.text = None
+        self.padding = 10
+
     def overlaps(self, n):
         if n.x - n.spacing > self.x + self.width + self.spacing:
             return False
@@ -170,6 +173,8 @@ class MachineWidget(CanvasDnD):
         points = self.canvas.coords(tk.CURRENT)[:2]
         node.x = points[0]
         node.y = points[1]
+
+        self.apply_node(node)
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
@@ -375,6 +380,10 @@ class MachineWidget(CanvasDnD):
         n.x = n.x + n.vx
         n.y = n.y + n.vy
 
+    def apply_node(self, n):
+        p = [n.x + n.width / 2, n.y + n.height / 2]
+        apply(self.canvas.coords, [n.text] + p)
+
     def ph_apply_node(self, n):
         id = self.node2id[n]
         points = [
@@ -383,13 +392,31 @@ class MachineWidget(CanvasDnD):
         ]
 
         apply(self.canvas.coords, [id] + points)
-
+        self.apply_node(n)
 
     def ph_run(self):
         self.ph_iterate()
         self.after(10, self.ph_run)
 
     def add_node(self, node):
+        text = node.node.qom_type
+        if text.startswith("TYPE_"):
+            text = text[5:]
+
+        id = self.canvas.create_text(
+            node.x, node.y,
+            text = text,
+            state = tk.DISABLED
+        )
+        node.text = id
+
+        t_bbox = self.canvas.bbox(id)
+        t_width = t_bbox[2] - t_bbox[0]
+        t_height = t_bbox[3] - t_bbox[1]
+
+        node.width = t_width + node.padding
+        node.height = t_height + node.padding
+
         # todo: replace rectangle with image
         id = self.canvas.create_rectangle(
             node.x, node.y,
@@ -400,6 +427,8 @@ class MachineWidget(CanvasDnD):
         )
         self.id2node[id] = node
         self.node2id[node] = id
+
+        self.canvas.lift(node.text)
 
         self.nodes.append(node)
 
