@@ -367,6 +367,11 @@ class MachineNode(QOMDescription):
                     if not child in self.mems:
                         self.add_node(child)
 
+            for hub in self.irq_hubs:
+                for dev in [ x[0] for x in (hub.srcs + hub.dsts) ]:
+                    if not dev in self.devices:
+                        self.add_node(dev)
+
         # A machine should have only one system bus
         self.sysbus = None
 
