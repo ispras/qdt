@@ -100,6 +100,39 @@ class ConnectionLine(object):
             return False
         return True
 
+class NodeCircle(object):
+    def __init__(self):
+        self.x = 200
+        self.vx = 0
+        self.y = 200
+        self.vy = 0
+        self.r = 10
+        self.static = False
+        self.spacing = 0
+
+    def overlaps_hub(self, c):
+        dx = c.x + c.r - (self.x + self.r)
+        dy = c.y + c.r - (self.y + self.r)
+        return math.sqrt( dx * dx + dy * dy ) \
+            < c.r + c.spacing + self.r + self.spacing
+
+    def overlaps_node(self, n):
+        # it is not a precise check 
+        if self.x + self.r * 2 + self.spacing < n.x - n.spacing: 
+            return False
+        if self.y + self.r * 2 + self.spacing < n.y - n.spacing: 
+            return False
+        if n.x + n.width + n.spacing < self.x - self.spacing:
+            return False
+        if n.y + n.height + n.spacing < self.y - self.spacing:
+            return False
+        return True
+
+class IRQHubCircle(NodeCircle):
+    def __init__(self, hub):
+        NodeCircle.__init__(self)
+        self.spacing = 5
+
 class MachineWidget(CanvasDnD):
     def __init__(self, parent, mach_desc):
         CanvasDnD.__init__(self, parent)
@@ -116,6 +149,7 @@ class MachineWidget(CanvasDnD):
         self.nodes = []
         self.buses = []
         self.conns = []
+        self.hubs = []
 
         self.velocity_k = 0.05
         self.velicity_limit = 10
@@ -146,7 +180,7 @@ class MachineWidget(CanvasDnD):
     def up_all(self, event):
         #print("up_all")
         event.widget.unbind("<Motion>")
-        for n in self.nodes + self.buses:
+        for n in self.nodes + self.buses + self.hubs:
             n.static = False
 
     def motion_all(self, event):
@@ -178,7 +212,8 @@ class MachineWidget(CanvasDnD):
         node.x = points[0]
         node.y = points[1]
 
-        self.apply_node(node)
+        if isinstance(node, NodeBox):
+            self.apply_node(node)
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
@@ -193,6 +228,16 @@ class MachineWidget(CanvasDnD):
         self.dragged = []
 
     def update(self):
+        for hub in self.mach.irq_hubs:
+            if hub in self.dev2node.keys():
+                continue
+            hub_node = IRQHubCircle(hub)
+
+            self.dev2node[hub] = hub_node
+            self.node2dev[hub_node] = hub
+
+            self.add_irq_hub(hub_node)
+
         for bus in self.mach.buses:
             if bus in self.dev2node.keys():
                 continue
@@ -229,7 +274,7 @@ class MachineWidget(CanvasDnD):
             self.add_conn(node, pbn)
 
     def ph_iterate(self):
-        for n in self.nodes + self.buses:
+        for n in self.nodes + self.buses + self.hubs:
             n.vx = n.vy = 0
 
         for n in self.nodes:
@@ -332,6 +377,52 @@ class MachineWidget(CanvasDnD):
                 n.vy = n.vy + iy * self.bus_velocity_k
                 c.dev_node.vy = c.dev_node.vy - iy * self.bus_velocity_k
 
+            for hub in self.hubs:
+                if not hub.overlaps_node(n):
+                    continue
+
+                w2 = n.width / 2
+                h2 = n.height / 2
+
+                # distance vector from n center to n1 center
+                dx = hub.x + hub.r - (n.x + w2)
+
+                while dx == 0:
+                    dx = sign(random.random() - 0.5)
+
+                dy = hub.y + hub.r - (n.y + h2) 
+
+                while dy == 0:
+                    dy = sign(random.random() - 0.5)
+
+                w = n.width + 2 * n.spacing
+                h = n.height + 2 * n.spacing
+                d = (hub.r + hub.spacing) * 2
+
+
+                xscale = float(w) / (w + d)
+                yscale = float(h) / (h + d)
+
+                ix = dx * xscale
+                iy = dy * yscale
+
+                # collision point, at box physical border
+                if abs(iy) > abs(ix):
+                    cy = (h2 + n.spacing) * sign(iy)
+                    cx = ix * cy / iy
+                else:
+                    cx = (w2 + n.spacing) * sign(ix)
+                    cy = iy * cx / ix
+
+                rx = ix - cx
+                ry = iy - cy
+
+                n.vx = n.vx + rx * self.velocity_k
+                n.vy = n.vy + ry * self.velocity_k
+
+                hub.vx = hub.vx - rx * self.velocity_k
+                hub.vy = hub.vy - ry * self.velocity_k
+
         for b in self.buses:
             bus = self.node2dev[b]
 
@@ -368,6 +459,40 @@ class MachineWidget(CanvasDnD):
 
             b.vx = b.vx + dx * self.bus_gravity_k
 
+        for h in self.hubs:
+            for h1 in self.hubs:
+                if h == h1:
+                    continue
+                if not h.overlaps_hub(h1):
+                    continue
+
+                dx = h1.x + h1.r - (h.x + h.r)
+
+                while dx == 0:
+                    dx = sign(random.random() - 0.5)
+
+                dy = h1.y + h1.r - (h.y + h.r)
+
+                while dy == 0:
+                    dy = sign(random.random() - 0.5)
+
+                scale = float(h.r) / (h.r + h1.r)
+
+                ix = dx * scale
+                iy = dy * scale
+
+                ir = math.sqrt(ix * ix + iy * iy)
+                k = (h.r + h.spacing) / ir
+
+                cx = ix * k
+                cy = iy * k
+
+                rx = ix - cx
+                ry = iy - cy
+
+                h.vx = h.vx + rx * self.velocity_k
+                h.vy = h.vy + ry * self.velocity_k
+
         for n in self.nodes:
             if n.static:
                 continue
@@ -382,6 +507,13 @@ class MachineWidget(CanvasDnD):
         for c in self.conns:
             c.update()
             self.ph_apply_conn(c)
+
+        for h in self.hubs:
+            if h.static:
+                continue
+
+            self.ph_move(h)
+            self.ph_apply_hub(h)
 
     def ph_apply_conn(self, c):
         id = self.node2id[c]
@@ -424,6 +556,15 @@ class MachineWidget(CanvasDnD):
         apply(self.canvas.coords, [id] + points)
         self.apply_node(n)
 
+    def ph_apply_hub(self, h):
+        id = self.node2id[h]
+        points = [
+            h.x, h.y,
+            h.x + 2 * h.r, h.y + 2 * h.r
+        ]
+
+        apply(self.canvas.coords, [id] + points)
+
     def ph_run(self):
         self.ph_iterate()
         self.after(10, self.ph_run)
@@ -461,6 +602,19 @@ class MachineWidget(CanvasDnD):
         self.canvas.lift(node.text)
 
         self.nodes.append(node)
+
+    def add_irq_hub(self, hub):
+        id = self.canvas.create_oval(
+            0, 0, 1, 1,
+            fill = "white",
+            tag = "DnD"
+        )
+
+        self.id2node[id] = hub
+        self.node2id[hub] = id
+
+        self.hubs.append(hub)
+        self.ph_apply_hub(hub)
 
     def add_bus(self, bus):
         id = self.canvas.create_line(
