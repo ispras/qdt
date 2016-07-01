@@ -167,24 +167,33 @@ class MachineWidget(CanvasDnD):
         self.canvas.bind("<ButtonPress-1>", self.down_all)
         self.canvas.bind("<ButtonRelease-1>", self.up_all)
 
+        # override super class method
+        self.canvas.bind("<Motion>", self.motion_all)
+
+        self.dragging_all = False
+
     def down_all(self, event):
         if self.dragging:
             return
         #print("down_all")
-        event.widget.bind("<Motion>", self.motion_all)
         event.widget.scan_mark(
             int(event.widget.canvasx(event.x)),
             int(event.widget.canvasy(event.y))
         )
+        self.dragging_all = True
 
     def up_all(self, event):
         #print("up_all")
-        event.widget.unbind("<Motion>")
         for n in self.nodes + self.buses + self.hubs:
             n.static = False
+        self.dragging_all = False
 
     def motion_all(self, event):
+        self.motion(event)
         #print("motion_all")
+        if not self.dragging_all:
+            return
+
         event.widget.scan_dragto(
             int(event.widget.canvasx(event.x)),
             int(event.widget.canvasy(event.y)),
