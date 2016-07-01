@@ -204,15 +204,6 @@ class MachineWidget(CanvasDnD):
             int(event.widget.canvasy(event.y))
         )
 
-        for id, node in self.id2node.iteritems():
-            if isinstance(node, ConnectionLine):
-                continue
-
-            points = self.canvas.coords(id)[:2]
-            node.x = points[0]
-            node.y = points[1]
-            node.static = True
-
     def dnd_moved(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
         node = self.id2node[id]
