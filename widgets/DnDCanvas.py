@@ -24,6 +24,7 @@ class CanvasDnD(tk.Frame):
         self.off = None
         self.canvas.tag_bind("DnD", "<ButtonPress-1>", self.down)
         self.canvas.tag_bind("DnD", "<ButtonRelease-1>", self.up)
+        self.canvas.bind("<Motion>", self.motion)
 
     def down(self, event):
         xy = event.widget.canvasx(event.x), event.widget.canvasy(event.y)
@@ -32,11 +33,13 @@ class CanvasDnD(tk.Frame):
 
         #print str(xy) + " - " + str(self.off)
 
-        event.widget.bind("<Motion>", self.motion)
         self.dragging = True
         self.event_generate('<<DnDDown>>')
 
     def motion(self, event):
+        if not self.dragging:
+            return
+
         self.master.config(cursor = "fleur")
         cnv = event.widget
 
@@ -60,7 +63,6 @@ class CanvasDnD(tk.Frame):
         self.event_generate('<<DnDMoved>>')
 
     def up(self, event):
-        event.widget.unbind("<Motion>")
         self.master.config(cursor = "")
         self.dragging = False
         self.off = None
