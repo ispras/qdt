@@ -110,7 +110,7 @@ class NodeCircle(object):
         self.static = False
         self.spacing = 0
 
-    def overlaps_hub(self, c):
+    def overlaps_circle(self, c):
         dx = c.x + c.r - (self.x + self.r)
         dy = c.y + c.r - (self.y + self.r)
         return math.sqrt( dx * dx + dy * dy ) \
@@ -149,7 +149,7 @@ class MachineWidget(CanvasDnD):
         self.nodes = []
         self.buses = []
         self.conns = []
-        self.hubs = []
+        self.circles = []
 
         self.velocity_k = 0.05
         self.velicity_limit = 10
@@ -184,7 +184,7 @@ class MachineWidget(CanvasDnD):
 
     def up_all(self, event):
         #print("up_all")
-        for n in self.nodes + self.buses + self.hubs:
+        for n in self.nodes + self.buses + self.circles:
             n.static = False
         self.dragging_all = False
 
@@ -274,7 +274,7 @@ class MachineWidget(CanvasDnD):
             self.add_conn(node, pbn)
 
     def ph_iterate(self):
-        for n in self.nodes + self.buses + self.hubs:
+        for n in self.nodes + self.buses + self.circles:
             n.vx = n.vy = 0
 
         for n in self.nodes:
@@ -377,7 +377,7 @@ class MachineWidget(CanvasDnD):
                 n.vy = n.vy + iy * self.bus_velocity_k
                 c.dev_node.vy = c.dev_node.vy - iy * self.bus_velocity_k
 
-            for hub in self.hubs:
+            for hub in self.circles:
                 if not hub.overlaps_node(n):
                     continue
 
@@ -459,11 +459,11 @@ class MachineWidget(CanvasDnD):
 
             b.vx = b.vx + dx * self.bus_gravity_k
 
-        for h in self.hubs:
-            for h1 in self.hubs:
+        for h in self.circles:
+            for h1 in self.circles:
                 if h == h1:
                     continue
-                if not h.overlaps_hub(h1):
+                if not h.overlaps_circle(h1):
                     continue
 
                 dx = h1.x + h1.r - (h.x + h.r)
@@ -508,7 +508,7 @@ class MachineWidget(CanvasDnD):
             c.update()
             self.ph_apply_conn(c)
 
-        for h in self.hubs:
+        for h in self.circles:
             if h.static:
                 continue
 
@@ -613,7 +613,7 @@ class MachineWidget(CanvasDnD):
         self.id2node[id] = hub
         self.node2id[hub] = id
 
-        self.hubs.append(hub)
+        self.circles.append(hub)
         self.ph_apply_hub(hub)
 
     def add_bus(self, bus):
