@@ -296,7 +296,17 @@ class MachineWidget(CanvasDnD):
             t0 = t1
 
         self.current_ph_iteration = None
+        self.ph_apply()
 
+        t1 = time.time()
+        dt = t1 - t0
+        t_limit_sec = t_limit_sec - dt
+        if t_limit_sec <= 0:
+            return 0
+        else:
+            return t_limit_sec
+
+    def ph_apply(self):
         for n in self.nodes:
             if n.static:
                 continue
@@ -318,14 +328,6 @@ class MachineWidget(CanvasDnD):
 
             self.ph_move(h)
             self.ph_apply_hub(h)
-
-        t1 = time.time()
-        dt = t1 - t0
-        t_limit_sec = t_limit_sec - dt
-        if t_limit_sec <= 0:
-            return 0
-        else:
-            return t_limit_sec
 
     def ph_iterate_co(self):
         for n in self.nodes + self.buses + self.circles:
