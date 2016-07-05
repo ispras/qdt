@@ -37,3 +37,15 @@ class Segment(Vector):
             return None
 
         return Vector(self.x + self.d.x * t, self.y + self.d.y * t)
+
+    def SetPoint(self, v, idx = 0):
+        if idx == 0:
+            oldx, oldy = self.x + self.d.x, self.x + self.d.y
+            self.x = v.x
+            self.y = v.y
+            self.d.x, self.d.y = oldx - self.x, oldy- self.y
+        elif idx == 1:
+            self.d.x, self.d.y = v.x - self.x, v.y - self.y
+        else:
+            raise IndexError()
+
