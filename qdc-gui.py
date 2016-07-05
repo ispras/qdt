@@ -8,6 +8,11 @@ from widgets import \
 
 import Tkinter as tk
 
+from phy import \
+    Vector, \
+    Segment, \
+    Polygon
+
 import math
 import random
 import copy
@@ -32,6 +37,40 @@ class NodeBox(object):
 
         self.text = None
         self.padding = 10
+
+    def get_irq_binding(self, target):
+        if target:
+            s2 = self.spacing/2
+            p = Polygon(
+                points = [
+                    Vector(self.x - s2, self.y - s2),
+                    Vector(
+                        self.x + self.width + s2,
+                        self.y - s2
+                    ),
+                    Vector(
+                        self.x + self.width + s2,
+                        self.y + self.height + s2
+                    ),
+                    Vector(
+                        self.x - s2,
+                        self.y + self.height + s2
+                    )
+                ],
+                deepcopy = False
+            )
+            b = Vector(self.x + self.width/2, self.y + self.height/2)
+            s = Segment(
+                begin = b,
+                direction = Vector(target[0] - b.x, target[1] - b.y)
+            )
+            s.SetLenght(self.width + self.height + 1 + self.spacing)
+            i = p.Crosses(s)[0]
+            x, y = i.x, i.y
+        else:
+            x = self.x + self.width/2
+            y = self.y + self.height/2
+        return x, y
 
     def overlaps(self, n):
         if n.x - n.spacing > self.x + self.width + self.spacing:
@@ -129,10 +168,34 @@ class NodeCircle(object):
             return False
         return True
 
+class IRQPathCircle(NodeCircle):
+    def __init__(self):
+        NodeCircle.__init__(self)
+        self.spacing = 0
+
 class IRQHubCircle(NodeCircle):
     def __init__(self, hub):
         NodeCircle.__init__(self)
         self.spacing = 5
+
+    def get_irq_binding(self, target):
+        if target:
+            dx = target[0] - self.x
+            dy = target[1] - self.y
+            d = math.sqrt( dx * dx + dy * dy )
+            l = (self.r + self.spacing) / d
+            x, y = self.x + dx * l + self.r, self.y + dy * l + self.r
+        else:
+            x, y = self.x + self.r, self.y + self.r
+        return x, y
+
+class IRQLine(object):
+    def __init__(self, src_node, dst_node):
+        self.src = src_node
+        self.dst = dst_node
+        self.arrow = None
+        self.circles = []
+        self.lines = []
 
 class MachineWidget(CanvasDnD):
     def __init__(self, parent, mach_desc):
@@ -151,12 +214,25 @@ class MachineWidget(CanvasDnD):
         self.buses = []
         self.conns = []
         self.circles = []
+        self.irq_lines = []
 
         self.velocity_k = 0.05
         self.velicity_limit = 10
 
         self.bus_velocity_k = 0.05
         self.bus_gravity_k = 0.2
+
+        # radius and space between IRQ circles
+        self.irq_circle_r = 10
+        self.irq_circle_s = 0
+        self.irq_circle_graviry = 0.02
+        self.irq_arrow_length = 10
+        self.irq_arrow_width2 = 2.5
+        self.irq_circle_per_line_limit = 5
+        self.irq_circle_total_limit = 50
+        self.shown_irq_circle = None
+        self.shown_irq_node = None
+        self.irq_line_color = "grey"
 
         self.update()
 
@@ -195,6 +271,30 @@ class MachineWidget(CanvasDnD):
     def motion_all(self, event):
         self.motion(event)
         #print("motion_all")
+
+        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        if self.shown_irq_circle:
+            if not self.shown_irq_circle in self.canvas.find_overlapping(
+                x - 3, y - 3, x + 3, y + 3
+            ):
+                self.canvas.delete(self.shown_irq_circle)
+                self.shown_irq_circle = None
+                self.shown_irq_node = None
+        else:
+            for c in self.circles:
+                if not isinstance(c, IRQPathCircle):
+                    continue
+                dx, dy = x - (c.x + c.r), y - (c.y + c.r)
+                if c.r >= math.sqrt(dx * dx + dy * dy):
+                    self.shown_irq_circle = self.canvas.create_oval(
+                        c.x, c.y,
+                        c.x + c.r * 2, c.y + c.r * 2,
+                        fill = "white",
+                        tags = "DnD"
+                    )
+                    self.shown_irq_node = c
+                    break
+
         if not self.dragging_all:
             return
 
@@ -214,7 +314,10 @@ class MachineWidget(CanvasDnD):
 
     def dnd_moved(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
-        node = self.id2node[id]
+        if id == self.shown_irq_circle:
+            node = self.shown_irq_node
+        else:
+            node = self.id2node[id]
 
         points = self.canvas.coords(tk.CURRENT)[:2]
         node.x = points[0]
@@ -229,7 +332,10 @@ class MachineWidget(CanvasDnD):
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
-        node = self.id2node[id]
+        if id == self.shown_irq_circle:
+            node = self.shown_irq_node
+        else:
+            node = self.id2node[id]
 
         node.static = True
         self.dragged.append(node)
@@ -240,6 +346,8 @@ class MachineWidget(CanvasDnD):
         self.dragged = []
 
     def update(self):
+        irqs = list(self.mach.irqs)
+
         for hub in self.mach.irq_hubs:
             if hub in self.dev2node.keys():
                 continue
@@ -285,6 +393,50 @@ class MachineWidget(CanvasDnD):
 
             self.add_conn(node, pbn)
 
+        for irq in irqs:
+            if irq in self.dev2node.keys():
+                continue
+
+            src = self.dev2node[irq.src[0]]
+            dst = self.dev2node[irq.dst[0]]
+
+            line = IRQLine(src, dst)
+
+            self.dev2node[irq] = line
+            self.node2dev[line] = irq
+
+            self.add_irq_line(line)
+
+        for hub in self.mach.irq_hubs:
+            for src_desc in hub.srcs:
+                if src_desc in self.dev2node.keys():
+                    continue
+
+                src = self.dev2node[src_desc[0]]
+                dst = self.dev2node[hub]
+
+                line = IRQLine(src, dst)
+
+                self.dev2node[src_desc] = line
+                self.node2dev[line] = src_desc
+
+                self.add_irq_line(line)
+
+            for dst_desc in hub.dsts:
+                if dst_desc in self.dev2node.keys():
+                    continue
+
+                src = self.dev2node[hub]
+                dst = self.dev2node[dst_desc[0]]
+
+                line = IRQLine(src, dst)
+
+                self.dev2node[dst_desc] = line
+                self.node2dev[line] = dst_desc
+
+                self.add_irq_line(line)
+
+
     def ph_iterate(self, t_limit_sec):
         if not self.current_ph_iteration:
             self.current_ph_iteration = self.ph_iterate_co()
@@ -324,7 +476,29 @@ class MachineWidget(CanvasDnD):
             self.ph_apply_conn(c)
 
         for h in self.circles:
-            self.ph_apply_hub(h)
+            if isinstance(h, IRQHubCircle):
+                self.ph_apply_hub(h)
+            elif self.shown_irq_node == h:
+                points = [
+                    h.x, h.y,
+                    h.x + 2 * h.r, h.y + 2 * h.r
+                ]
+
+                apply(self.canvas.coords, [self.shown_irq_circle] + points)
+
+        total_circles = 0
+        for l in self.irq_lines:
+            self.ph_process_irq_line(l)
+            total_circles = total_circles + len(l.circles)
+
+        if total_circles > self.irq_circle_total_limit:
+            self.irq_circle_per_line_limit = int(self.irq_circle_total_limit /
+                len(self.irq_lines))
+            if self.irq_circle_per_line_limit == 0:
+                self.irq_circle_per_line_limit = 1
+
+            #print "Total circles: " + str(total_circles) + ", CPL: " + \
+            #    str(self.irq_circle_per_line_limit) 
 
     def ph_apply(self):
         for n in self.nodes:
@@ -502,8 +676,9 @@ class MachineWidget(CanvasDnD):
                 rx = ix - cx
                 ry = iy - cy
 
-                n.vx = n.vx + rx * self.velocity_k
-                n.vy = n.vy + ry * self.velocity_k
+                if isinstance(hub, IRQHubCircle):
+                    n.vx = n.vx + rx * self.velocity_k
+                    n.vy = n.vy + ry * self.velocity_k
 
                 hub.vx = hub.vx - rx * self.velocity_k
                 hub.vy = hub.vy - ry * self.velocity_k
@@ -552,6 +727,10 @@ class MachineWidget(CanvasDnD):
             for h1 in self.circles:
                 if h == h1:
                     continue
+
+                #if bool(isinstance(h1, IRQPathCircle)) != bool(isinstance(h, IRQPathCircle)):
+                #    continue
+
                 if not h.overlaps_circle(h1):
                     continue
 
@@ -581,6 +760,37 @@ class MachineWidget(CanvasDnD):
 
                 h.vx = h.vx + rx * self.velocity_k
                 h.vy = h.vy + ry * self.velocity_k
+
+            yield
+
+        for l in self.irq_lines:
+            if len(l.circles) < 2:
+                continue
+
+            c = l.circles[0]
+            x, y = l.src.get_irq_binding((c.x, c.y))
+            dx = x - (c.x + c.r)
+            dy = y - (c.y + c.r)
+            c.vx = c.vx + dx * self.irq_circle_graviry
+            c.vy = c.vy + dy * self.irq_circle_graviry
+
+            c = l.circles[-1]
+            x, y = l.dst.get_irq_binding((c.x, c.y))
+            dx = x - (c.x + c.r)
+            dy = y - (c.y + c.r)
+            c.vx = c.vx + dx * self.irq_circle_graviry
+            c.vy = c.vy + dy * self.irq_circle_graviry
+
+            for idx, c in enumerate(l.circles[:-1]):
+                c1 = l.circles[idx + 1]
+
+                dx = c1.x + c1.r - (c.x + c.r)
+                dy = c1.y + c1.r - (c.y + c.r)
+
+                c.vx = c.vx + dx * self.irq_circle_graviry
+                c.vy = c.vy + dy * self.irq_circle_graviry
+                c1.vx = c1.vx - dx * self.irq_circle_graviry
+                c1.vy = c1.vy - dy * self.irq_circle_graviry
 
             yield
 
@@ -640,6 +850,122 @@ class MachineWidget(CanvasDnD):
 
         apply(self.canvas.coords, [id] + points)
 
+    def ph_process_irq_line(self, l):
+        changed = False
+
+        for i, seg in enumerate(l.lines):
+            if i == 0:
+                if l.circles:
+                    c = l.circles[0]
+                    x1, y1 = c.x + c.r, c.y + c.r
+                    x0, y0 = l.src.get_irq_binding((x1, y1))
+                else:
+                    x1, y1 = l.dst.get_irq_binding(None)
+                    x0, y0 = l.src.get_irq_binding((x1, y1))
+                    x1, y1 = l.dst.get_irq_binding((x0, y0))
+            elif i == len(l.lines) - 1:
+                if l.circles:
+                    c = l.circles[i - 1]
+                    x0, y0 = c.x + c.r, c.y + c.r
+                    x1, y1 = l.dst.get_irq_binding((x0, y0))
+                else:
+                    x0, y0 = l.src.get_irq_binding(None)
+                    x1, y1 = l.dst.get_irq_binding((x0, y0))
+                    x0, y0 = l.src.get_irq_binding((x1, y1))
+            else:
+                c = l.circles[i - 1]
+                x0, y0 = c.x + c.r, c.y + c.r
+                c = l.circles[i]
+                x1, y1 = c.x + c.r, c.y + c.r
+
+            # Do not change lines during dragging it could delete currently
+            # dragged circle
+            line_circles = len(l.circles)
+
+            if not (   self.dragging 
+                    or changed 
+                    or self.irq_circle_per_line_limit < line_circles
+                ):
+                dx = x1 - x0
+                dy = y1 - y0
+                d = math.sqrt( dx * dx + dy * dy )
+
+                d1 = (self.irq_circle_r + self.irq_circle_s) * 2
+
+                if d > 2 * d1:
+                    x2 = (x0 + x1) / 2
+                    y2 = (y0 + y1) / 2
+
+                    c = IRQPathCircle()
+                    c.x, c.y = x2 - self.irq_circle_r, y2 - self.irq_circle_r
+                    c.r = self.irq_circle_r
+
+                    self.circles.append(c)
+
+                    id = self.canvas.create_line(
+                        0, 0, 1, 1,
+                        fill = self.irq_line_color
+                    )
+                    self.canvas.lower(id)
+
+                    l.circles.insert(i, c)
+                    l.lines.insert(i + 1, id)
+
+                    x1 = x2
+                    y1 = y2
+
+                    changed = True
+                elif (    d < 1.5 * d1
+                       or line_circles > self.irq_circle_per_line_limit
+                    ):
+                    if i < len(l.lines) - 1:
+                        # not last line
+
+                        self.canvas.delete(l.lines.pop(i + 1))
+                        c = l.circles.pop(i)
+
+                        if c == self.shown_irq_node:
+                            self.canvas.delete(self.shown_irq_circle)
+                            self.shown_irq_node = None
+                            self.shown_irq_circle = None
+
+                        self.circles.remove(c)
+
+                        if i < len(l.circles):
+                            c = l.circles[i]
+                            x1, y1 = c.x + c.r, c.y + c.r
+                        else:
+                            x1, y1 = l.dst.get_irq_binding((x0, y0))
+
+                        changed = True
+
+            apply(self.canvas.coords, [seg] + [x0, y0, x1, y1])
+
+        # update arrow
+        # direction
+        dx, dy = x1 - x0, y1 - y0
+        # normalize direction
+        dl = math.sqrt(dx * dx + dy * dy)
+
+        if dl == 0:
+            # next time last segment length should be non-zero
+            return
+
+        dx, dy = dx / dl, dy / dl
+        # normal vector, 90 degrees
+        nx, ny = dy, -dx
+        # offsets
+        ox, oy = nx * self.irq_arrow_width2, ny * self.irq_arrow_width2
+        dx, dy = dx * self.irq_arrow_length, dy * self.irq_arrow_length
+
+        arrow_coords = [
+            l.arrow,
+            x1, y1,
+            x1 - dx + ox, y1 - dy + oy,
+            x1 - dx - ox, y1 - dy - oy, 
+        ]
+        apply(self.canvas.coords, arrow_coords)
+
     def ph_run(self):
         rest = self.ph_iterate(0.01)
         if rest < 0.001:
@@ -693,6 +1019,24 @@ class MachineWidget(CanvasDnD):
 
         self.circles.append(hub)
         self.ph_apply_hub(hub)
+
+    def add_irq_line(self, line):
+        id = self.canvas.create_line(
+            0, 0, 1, 1,
+            fill = self.irq_line_color
+        )
+
+        self.canvas.lower(id)
+        line.lines.append(id)
+
+        id = self.canvas.create_polygon(
+            0, 0, 0, 0, 0, 0,
+            fill = self.irq_line_color
+        )
+        line.arrow = id
+        self.canvas.lower(id)
+
+        self.irq_lines.append(line)
 
     def add_bus(self, bus):
         id = self.canvas.create_line(
