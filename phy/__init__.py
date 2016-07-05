@@ -6,7 +6,11 @@ class Vector(object):
         return self.x * p.y - self.y * p.x
 
 class Segment(Vector):
-    def __init__(self, begin = Vector(0, 0), direction = Vector(0, 0)):
+    def __init__(self, begin = None, direction = None):
+        if not begin:
+            begin = Vector()
+        if not direction:
+            direction = Vector()
         self.x, self.y = begin.x, begin.y
         self.d = Vector(direction.x, direction.y)
 
