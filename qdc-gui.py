@@ -290,7 +290,7 @@ class MachineWidget(CanvasDnD):
             self.current_ph_iteration = self.ph_iterate_co()
 
             if self.was_dragged:
-                self.ph_apply()
+                self.ph_sync()
                 self.was_dragged = False
 
         t0 = time.time()
@@ -303,7 +303,7 @@ class MachineWidget(CanvasDnD):
             t0 = t1
 
         self.current_ph_iteration = None
-        self.ph_apply()
+        self.ph_sync()
 
         t1 = time.time()
         dt = t1 - t0
@@ -313,7 +313,7 @@ class MachineWidget(CanvasDnD):
         else:
             return t_limit_sec
 
-    def ph_apply(self):
+    def ph_sync(self):
         for n in self.nodes:
             if n.static:
                 continue
