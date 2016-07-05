@@ -174,6 +174,7 @@ class MachineWidget(CanvasDnD):
         self.dragging_all = False
 
         self.current_ph_iteration = None
+        self.was_dragged = False
 
     def down_all(self, event):
         if self.dragging:
@@ -209,6 +210,7 @@ class MachineWidget(CanvasDnD):
 
         # cancel current physic iteration if moved
         self.current_ph_iteration = None
+        self.was_dragged = True
 
     def dnd_moved(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
@@ -223,6 +225,7 @@ class MachineWidget(CanvasDnD):
 
         # cancel current physic iteration if moved
         self.current_ph_iteration = None
+        self.was_dragged = True
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
@@ -285,6 +288,10 @@ class MachineWidget(CanvasDnD):
     def ph_iterate(self, t_limit_sec):
         if not self.current_ph_iteration:
             self.current_ph_iteration = self.ph_iterate_co()
+
+            if self.was_dragged:
+                self.ph_apply()
+                self.was_dragged = False
 
         t0 = time.time()
         for x in self.current_ph_iteration:
