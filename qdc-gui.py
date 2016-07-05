@@ -11,6 +11,7 @@ import Tkinter as tk
 import math
 import random
 import copy
+import time
 
 def sign(x): return 1 if x >= 0 else -1
 
@@ -172,6 +173,8 @@ class MachineWidget(CanvasDnD):
 
         self.dragging_all = False
 
+        self.current_ph_iteration = None
+
     def down_all(self, event):
         if self.dragging:
             return
@@ -204,6 +207,9 @@ class MachineWidget(CanvasDnD):
             int(event.widget.canvasy(event.y))
         )
 
+        # cancel current physic iteration if moved
+        self.current_ph_iteration = None
+
     def dnd_moved(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
         node = self.id2node[id]
@@ -214,6 +220,9 @@ class MachineWidget(CanvasDnD):
 
         if isinstance(node, NodeBox):
             self.apply_node(node)
+
+        # cancel current physic iteration if moved
+        self.current_ph_iteration = None
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
@@ -273,9 +282,56 @@ class MachineWidget(CanvasDnD):
 
             self.add_conn(node, pbn)
 
-    def ph_iterate(self):
+    def ph_iterate(self, t_limit_sec):
+        if not self.current_ph_iteration:
+            self.current_ph_iteration = self.ph_iterate_co()
+
+        t0 = time.time()
+        for x in self.current_ph_iteration:
+            t1 = time.time()
+            dt = t1 - t0
+            t_limit_sec = t_limit_sec - dt
+            if t_limit_sec <= 0:
+                return 0
+            t0 = t1
+
+        self.current_ph_iteration = None
+
+        for n in self.nodes:
+            if n.static:
+                continue
+
+            self.ph_move(n)
+            self.ph_apply_node(n)
+
+        for b in self.buses:
+            self.ph_move(b)
+            self.ph_apply_bus(b)
+
+        for c in self.conns:
+            c.update()
+            self.ph_apply_conn(c)
+
+        for h in self.circles:
+            if h.static:
+                continue
+
+            self.ph_move(h)
+            self.ph_apply_hub(h)
+
+        t1 = time.time()
+        dt = t1 - t0
+        t_limit_sec = t_limit_sec - dt
+        if t_limit_sec <= 0:
+            return 0
+        else:
+            return t_limit_sec
+
+    def ph_iterate_co(self):
         for n in self.nodes + self.buses + self.circles:
             n.vx = n.vy = 0
+
+        yield
 
         for n in self.nodes:
             for n1 in self.nodes:
@@ -336,6 +392,11 @@ class MachineWidget(CanvasDnD):
                 n.vx = n.vx + rx * self.velocity_k
                 n.vy = n.vy + ry * self.velocity_k
 
+                # Artificial sleep for time management test 
+                #time.sleep(0.001)
+
+            yield
+
             for b in self.buses:
                 if not n.touches(b):
                     continue
@@ -359,6 +420,8 @@ class MachineWidget(CanvasDnD):
                 if parent_device and parent_node:
                     parent_node.vx = parent_node.vx - ix * self.velocity_k
 
+            yield
+
             for c in self.conns:
                 if n.conn == c:
                     continue
@@ -376,6 +439,8 @@ class MachineWidget(CanvasDnD):
 
                 n.vy = n.vy + iy * self.bus_velocity_k
                 c.dev_node.vy = c.dev_node.vy - iy * self.bus_velocity_k
+
+            yield
 
             for hub in self.circles:
                 if not hub.overlaps_node(n):
@@ -423,6 +488,8 @@ class MachineWidget(CanvasDnD):
                 hub.vx = hub.vx - rx * self.velocity_k
                 hub.vy = hub.vy - ry * self.velocity_k
 
+            yield
+
         for b in self.buses:
             bus = self.node2dev[b]
 
@@ -459,6 +526,8 @@ class MachineWidget(CanvasDnD):
 
             b.vx = b.vx + dx * self.bus_gravity_k
 
+        yield
+
         for h in self.circles:
             for h1 in self.circles:
                 if h == h1:
@@ -493,27 +562,9 @@ class MachineWidget(CanvasDnD):
                 h.vx = h.vx + rx * self.velocity_k
                 h.vy = h.vy + ry * self.velocity_k
 
-        for n in self.nodes:
-            if n.static:
-                continue
+            yield
 
-            self.ph_move(n)
-            self.ph_apply_node(n)
-
-        for b in self.buses:
-            self.ph_move(b)
-            self.ph_apply_bus(b)
-
-        for c in self.conns:
-            c.update()
-            self.ph_apply_conn(c)
-
-        for h in self.circles:
-            if h.static:
-                continue
-
-            self.ph_move(h)
-            self.ph_apply_hub(h)
+        raise StopIteration()
 
     def ph_apply_conn(self, c):
         id = self.node2id[c]
@@ -570,8 +621,11 @@ class MachineWidget(CanvasDnD):
         apply(self.canvas.coords, [id] + points)
 
     def ph_run(self):
-        self.ph_iterate()
-        self.after(10, self.ph_run)
+        rest = self.ph_iterate(0.01)
+        if rest < 0.001:
+            rest = 0.001
+
+        self.after(int(rest * 1000), self.ph_run)
 
     def add_node(self, node):
         text = node.node.qom_type
