@@ -303,7 +303,7 @@ class MachineWidget(CanvasDnD):
             t0 = t1
 
         self.current_ph_iteration = None
-        self.ph_sync()
+        self.ph_apply()
 
         t1 = time.time()
         dt = t1 - t0
@@ -315,26 +315,37 @@ class MachineWidget(CanvasDnD):
 
     def ph_sync(self):
         for n in self.nodes:
+            self.ph_apply_node(n)
+
+        for b in self.buses:
+            self.ph_apply_bus(b)
+
+        for c in self.conns:
+            self.ph_apply_conn(c)
+
+        for h in self.circles:
+            self.ph_apply_hub(h)
+
+    def ph_apply(self):
+        for n in self.nodes:
             if n.static:
                 continue
 
             self.ph_move(n)
-            self.ph_apply_node(n)
 
         for b in self.buses:
             self.ph_move(b)
-            self.ph_apply_bus(b)
 
         for c in self.conns:
             c.update()
-            self.ph_apply_conn(c)
 
         for h in self.circles:
             if h.static:
                 continue
 
             self.ph_move(h)
-            self.ph_apply_hub(h)
+
+        self.ph_sync()
 
     def ph_iterate_co(self):
         for n in self.nodes + self.buses + self.circles:
