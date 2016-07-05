@@ -1,8 +1,16 @@
 import copy
+import math
 
 class Vector(object):
     def __init__(self, x = 0, y = 0):
         self.x, self.y = x, y
+
+    def Length(self):
+        return math.sqrt(self.x * self.x + self.y * self.y)
+
+    def SetLenght(self, value):
+        scale = float(value) / self.Length()
+        self.x, self.y = self.x * scale, self.y * scale
 
     def Cross(self, p):
         return self.x * p.y - self.y * p.x
@@ -15,6 +23,12 @@ class Segment(Vector):
             direction = Vector()
         self.x, self.y = begin.x, begin.y
         self.d = Vector(direction.x, direction.y)
+
+    def Length(self):
+        return self.d.Length()
+
+    def SetLenght(self, value):
+        self.d.SetLenght(value)
 
     def Intersects(self, v):
         # based on http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
