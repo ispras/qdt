@@ -447,8 +447,8 @@ class MachineWidget(CanvasDnD):
                 if max_y < y:
                     max_y = y
 
-            b.y = min_y
-            b.height = max_y - min_y
+            b.next_y = min_y
+            b.next_height = max_y - min_y
 
             if not parent_device:
                 continue
@@ -526,6 +526,10 @@ class MachineWidget(CanvasDnD):
 
     def ph_apply_bus(self, b):
         id = self.node2id[b]
+
+        b.y = b.next_y
+        b.height = b.next_height
+
         points = [
             b.x, b.y,
             b.x, b.y + b.height
