@@ -1,3 +1,5 @@
+import copy
+
 class Vector(object):
     def __init__(self, x = 0, y = 0):
         self.x, self.y = x, y
@@ -48,4 +50,53 @@ class Segment(Vector):
             self.d.x, self.d.y = v.x - self.x, v.y - self.y
         else:
             raise IndexError()
+
+class Polygon(object):
+    def __init__(self, points = None, deepcopy = True):
+        if not points:
+            self.points = [Vector(), Vector(), Vector()]
+        else:
+            self.points = copy.deepcopy(points) if deepcopy else points
+
+    def SetPoint(self, v, idx = 0):
+        p = self.points[idx]
+        p.x, p.y = v.x, v.y
+
+    def SegmentsGenerator(self):
+        v0 = self.points[0]
+        for p in self.points[1:]:
+            s = Segment(
+                begin = v0,
+                direction = Vector(p.x - v0.x, p.y - v0.y) 
+            )
+            yield s
+            v0 = p
+
+        p = self.points[0]
+        s = Segment(
+            begin = v0,
+            direction = Vector(p.x - v0.x, p.y - v0.y) 
+        )
+        yield s
+
+        raise StopIteration()
+
+    def CoordsGenerator(self):
+        for p in self.points:
+            yield p.x
+            yield p.y
+
+    def GenSegments(self):
+        return [x for x in self.SegmentsGenerator()]
+
+    def GenCoords(self):
+        return [x for x in self.CoordsGenerator()]
+
+    def Crosses(self, segment):
+        crosses = []
+        for s in self.SegmentsGenerator():
+            c = s.Intersects(segment)
+            if c:
+                crosses.append(c)
+        return crosses
 
