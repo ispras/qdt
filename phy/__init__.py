@@ -1,5 +1,6 @@
 import copy
 import math
+import random
 
 class Vector(object):
     def __init__(self, x = 0, y = 0):
@@ -9,7 +10,14 @@ class Vector(object):
         return math.sqrt(self.x * self.x + self.y * self.y)
 
     def SetLenght(self, value):
-        scale = float(value) / self.Length()
+        l = self.Length()
+
+        while l == 0:
+            self.x = random.random() - 0.5
+            self.y = random.random() - 0.5
+            l = self.Length()
+
+        scale = float(value) / l
         self.x, self.y = self.x * scale, self.y * scale
 
     def Cross(self, p):
