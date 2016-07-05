@@ -4,6 +4,41 @@ from Tkinter import *
 from phy import *
 from widgets import *
 
+class CanvasPolygon(Polygon):
+    def __init__(self, canvas, *points, **kwargs):
+        pts = []
+        i = iter(points)
+        while True:
+            try:
+                pts.append(Vector(i.next(), i.next()))
+            except StopIteration:
+                break
+        points = pts
+
+        Polygon.__init__(self, points, deepcopy = False)
+        self.c = canvas
+        self.p = self.c.create_polygon(
+            tuple(self.GenCoords()),
+            **kwargs
+        )
+
+    def update(self):
+        apply(self.c.coords, [self.p] + self.GenCoords())
+
+class CanvasSegment(Segment):
+    def __init__(self, canvas, begin = None, direction = None, **kwargs):
+        Segment.__init__(self, begin, direction)
+        self.c = canvas
+        self.l = self.c.create_line(
+            self.x, self.y, self.x + self.d.x, self.y + self.d.y,
+            **kwargs
+        )
+
+    def update(self):
+        apply(self.c.coords, [self.l] + \
+            [self.x, self.y, self.x + self.d.x, self.y + self.d.y]
+        )
+
 class CrossTest(CanvasDnD):
     def __init__(self, master):
         CanvasDnD.__init__(self, master)
