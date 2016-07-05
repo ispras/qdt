@@ -43,6 +43,7 @@ class CrossTest(CanvasDnD):
     def __init__(self, master):
         CanvasDnD.__init__(self, master)
 
+        self.polygons = []
         self.segments = []
         self.crosses = []
         self.drag_points = {}
@@ -60,6 +61,16 @@ class CrossTest(CanvasDnD):
                 fill = "green"
             ),
         ])
+        self.polygons.extend([
+            CanvasPolygon(self.canvas,
+                300, 300,
+                400, 300,
+                400, 400,
+                300, 400,
+                fill = "",
+                outline = "black"
+            )
+        ])
 
         self.bind('<<DnDMoved>>', self.dnd_moved)
 
@@ -67,6 +78,16 @@ class CrossTest(CanvasDnD):
         self.update()
 
     def create_drags(self):
+        for p in self.polygons:
+            for i, v in enumerate(p.points):
+                id = self.canvas.create_rectangle(
+                    v.x - self.dp_w2, v.y - self.dp_w2,
+                    v.x + self.dp_w2, v.y + self.dp_w2,
+                    fill = "white",
+                    tags = "DnD"
+                )
+                self.drag_points[id] = p, i
+
         for s in self.segments:
             id = self.canvas.create_rectangle(
                 s.x - self.dp_w2, s.y - self.dp_w2,
@@ -91,6 +112,10 @@ class CrossTest(CanvasDnD):
             self.canvas.delete(c)
 
         crosses = []
+        for p in self.polygons:
+            for s in self.segments:
+                crosses.extend(p.Crosses(s))
+
         for idx, s in enumerate(self.segments[:-1]):
             for s1 in self.segments[idx + 1:]:
                 c = s.Intersects(s1)
