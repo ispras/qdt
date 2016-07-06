@@ -751,10 +751,10 @@ class MachineWidget(CanvasDnD):
                 rx = ix - cx
                 ry = iy - cy
 
-                if not (isinstance(h, IRQHubCircle) or isinstance(h1, IRQPathCircle)):
+                if not (isinstance(h, IRQHubCircle) and isinstance(h1, IRQPathCircle)):
                     h.vx = h.vx + rx * self.velocity_k
                     h.vy = h.vy + ry * self.velocity_k
-                if not (isinstance(h1, IRQHubCircle) or isinstance(h, IRQPathCircle)):
+                if not (isinstance(h1, IRQHubCircle) and isinstance(h, IRQPathCircle)):
                     h1.vx = h1.vx - rx * self.velocity_k
                     h1.vy = h1.vy - ry * self.velocity_k
 
