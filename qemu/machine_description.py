@@ -342,6 +342,9 @@ class MachineNode(QOMDescription):
         self.mems = [] if mems is None else list(mems)
         self.irq_hubs = [] if irq_hubs is None else list(irq_hubs)
 
+        for n in self.devices + self.buses + self.irqs + self.mems + self.irq_hubs:
+            self.assign_id(n)
+
         self.link()
 
     def link(self):
@@ -428,9 +431,6 @@ class MachineNode(QOMDescription):
             return False
 
     def add_node(self, n):
-        if not n.id == -1:
-            raise NodeHasId()
-
         if isinstance(n, DeviceNode):
             self.devices.append(n)
         elif isinstance(n, BusNode):
@@ -444,10 +444,15 @@ class MachineNode(QOMDescription):
         else:
             return
 
-        n.id = self.max_id
-        self.max_id = self.max_id + 1
+        self.assign_id(n)
 
         self.added = True
+
+    def assign_id(self, n):
+        if not n.id == -1:
+            raise NodeHasId()
+        n.id = self.max_id
+        self.max_id = self.max_id + 1
 
     def gen_type(self):
         return machine.MachineType(
