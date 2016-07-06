@@ -17,6 +17,7 @@ import math
 import random
 import copy
 import time
+import cPickle
 
 def sign(x): return 1 if x >= 0 else -1
 
@@ -1105,11 +1106,22 @@ def main():
     root.geometry("500x500")
 
     cnv = MachineWidget(root, Q35MachineNode_2_6_0())
+
+    try:
+        layout = cPickle.load(open("layout.p", "rb"))
+    except:
+        layout = {}
+
+    cnv.SetLyout(layout)
+
     cnv.grid(column = 0, row = 0, sticky = "NEWS")
 
     cnv.ph_run()
 
     root.mainloop()
+
+    layout = cnv.GetLayout()
+    cPickle.dump(layout, open("layout.p", "wb"))
 
 if __name__ == '__main__':
     main()
