@@ -253,6 +253,17 @@ class MachineWidget(CanvasDnD):
         self.current_ph_iteration = None
         self.invalidated = False
 
+        self.key_state = {}
+        self.canvas.bind("<KeyPress>", self.on_key_press)
+        self.canvas.bind("<KeyRelease>", self.on_key_release)
+        self.canvas.focus_set()
+
+    def on_key_press(self, event):
+        self.key_state[event.keycode] = True
+
+    def on_key_release(self, event):
+        self.key_state[event.keycode] = False
+
     def down_all(self, event):
         if self.dragging:
             return
