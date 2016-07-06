@@ -343,7 +343,7 @@ class MachineNode(QOMDescription):
                         self.add_node(irq)
                 for prop in dev.properties:
                     if prop.prop_type == QOMPropertyTypeLink:
-                        if not self.has_node(prop.prop_val):
+                        if prop.prop_val and not self.has_node(prop.prop_val):
                             self.add_node(prop.prop_val)
 
             for bus in self.buses:
