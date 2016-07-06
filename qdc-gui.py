@@ -264,6 +264,19 @@ class MachineWidget(CanvasDnD):
     def on_key_release(self, event):
         self.key_state[event.keycode] = False
 
+    def shift_pressed(self):
+        try:
+            if self.key_state[50]:
+                return True
+        except:
+            pass
+        try:
+            if self.key_state[62]:
+                return True
+        except:
+            pass
+        return False
+
     def down_all(self, event):
         if self.dragging:
             return
