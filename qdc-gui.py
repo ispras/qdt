@@ -473,6 +473,7 @@ class MachineWidget(CanvasDnD):
             self.ph_apply_bus(b)
 
         for c in self.conns:
+            c.update()
             self.ph_apply_conn(c)
 
         for h in self.circles:
@@ -509,9 +510,6 @@ class MachineWidget(CanvasDnD):
 
         for b in self.buses:
             self.ph_move(b)
-
-        for c in self.conns:
-            c.update()
 
         for h in self.circles:
             if h.static:
