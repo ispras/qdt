@@ -36,8 +36,12 @@ class QOMPropertyValue(object):
         self.prop_name = prop_name
         self.prop_val = prop_val
 
+class Node(object):
+    def __init__(self):
+        self.id = -1
+
 # bus models
-class BusNode(object):
+class BusNode(Node):
     # Devices on bus with None C type will have NULL as bus parameter
     def __init__(self,
             parent = None,
@@ -46,6 +50,8 @@ class BusNode(object):
             child_name = "bus",
             force_index = True
             ):
+        Node.__init__(self)
+
         self.c_type = c_type
         self.cast = cast
         self.parent_device = parent
@@ -103,7 +109,7 @@ class I2CBusNode(BusNode):
 
 # IRQ line model
 
-class IRQLine(object):
+class IRQLine(Node):
     def __init__(self,
             src_dev,
             dst_dev,
@@ -112,6 +118,8 @@ class IRQLine(object):
             src_irq_name = None,
             dst_irq_name = None
             ):
+        Node.__init__(self)
+
         # src and dst are tuples (device, index)
         self.src = src_dev, src_irq_idx, src_irq_name
         self.dst = dst_dev, dst_irq_idx, dst_irq_name
@@ -122,8 +130,10 @@ class IRQLine(object):
     def __children__(self):
         return [self.src[0], self.dst[0]]
 
-class IRQHub(object):
+class IRQHub(Node):
     def __init__(self, srcs, dsts):
+        Node.__init__(self)
+
         self.srcs = list(srcs)
         self.dsts = list(dsts)
 
@@ -151,8 +161,10 @@ class DevicePropertyDefinition(object):
 
 # device models
 
-class DeviceNode(object):
+class DeviceNode(Node):
     def __init__(self, qom_type, parent = None):
+        Node.__init__(self)
+
         self.qom_type = qom_type
         self.parent_bus = parent
 
@@ -245,11 +257,13 @@ class MemoryNodeAlreadyHasParent(Exception):
 class MemoryNodeCannotHasChildren(Exception):
     pass
 
-class MemoryNode(object):
+class MemoryNode(Node):
     def __init__(self, 
             name,
             size,
             ):
+        Node.__init__(self)
+
         self.name = name
         self.size = size
 
@@ -306,6 +320,9 @@ class MemoryROMNode(MemoryLeafNode):
 class MultipleSystemBusesInMachine(Exception):
     pass
 
+class NodeHasId(Exception):
+    pass
+
 class MachineNode(QOMDescription):
     def __init__(self,
         name,
@@ -318,6 +335,7 @@ class MachineNode(QOMDescription):
     ):
         QOMDescription.__init__(self, name = name, directory = directory)
 
+        self.max_id = 0
         self.devices = [] if devices is None else list(devices)
         self.buses = [] if buses is None else list(buses)
         self.irqs = [] if irqs is None else list(irqs)
@@ -410,6 +428,9 @@ class MachineNode(QOMDescription):
             return False
 
     def add_node(self, n):
+        if not n.id == -1:
+            raise NodeHasId()
+
         if isinstance(n, DeviceNode):
             self.devices.append(n)
         elif isinstance(n, BusNode):
@@ -422,6 +443,10 @@ class MachineNode(QOMDescription):
             self.irq_hubs.append(n)
         else:
             return
+
+        n.id = self.max_id
+        self.max_id = self.max_id + 1
+
         self.added = True
 
     def gen_type(self):
