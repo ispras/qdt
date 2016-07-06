@@ -1064,6 +1064,37 @@ class MachineWidget(CanvasDnD):
 
         self.conns.append(conn)
 
+    def GetLayout(self):
+        layout = {}
+
+        for n in self.nodes:
+            layout[n.node.id] = (n.x, n.y)
+
+        for h in self.circles:
+            if isinstance(h, IRQHubCircle):
+                layout[self.node2dev[h].id] = (h.x, h.y)
+
+        for b in self.buses:
+            layout[b.bus.id] = b.x
+
+        return layout
+
+    def SetLyout(self, l):
+        for id, desc in l.iteritems():
+            if id == -1:
+                continue
+            dev = self.mach.id2node[id]
+            if not dev:
+                continue
+            n = self.dev2node[dev]
+
+            if isinstance(n, NodeBox):
+                n.x, n.y = desc[0], desc[1]
+            elif isinstance(n, IRQHubCircle):
+                n.x, n.y = desc[0], desc[1]
+            elif isinstance(n, BusLine):
+                n.x = desc
+
 def main():
     root = tk.Tk()
     root.title("Drag-N-Drop Demo")
