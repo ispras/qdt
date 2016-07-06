@@ -342,6 +342,8 @@ class MachineNode(QOMDescription):
         self.mems = [] if mems is None else list(mems)
         self.irq_hubs = [] if irq_hubs is None else list(irq_hubs)
 
+        self.id2node = {}
+
         for n in self.devices + self.buses + self.irqs + self.mems + self.irq_hubs:
             self.assign_id(n)
 
@@ -453,6 +455,8 @@ class MachineNode(QOMDescription):
             raise NodeHasId()
         n.id = self.max_id
         self.max_id = self.max_id + 1
+
+        self.id2node[n.id] = n
 
     def gen_type(self):
         return machine.MachineType(
