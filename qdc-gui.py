@@ -730,6 +730,9 @@ class MachineWidget(CanvasDnD):
                 #if bool(isinstance(h1, IRQPathCircle)) != bool(isinstance(h, IRQPathCircle)):
                 #    continue
 
+                if isinstance(h, IRQHubCircle) and isinstance(h1, IRQPathCircle):
+                    continue
+
                 if not h.overlaps_circle(h1):
                     continue
 
