@@ -402,11 +402,25 @@ class MachineWidget(CanvasDnD):
             node = self.id2node[id]
 
         points = self.canvas.coords(tk.CURRENT)[:2]
-        node.x = points[0]
-        node.y = points[1]
+        if id in self.selected:
+            ox = points[0] - node.x
+            oy = points[1] - node.y
 
-        if isinstance(node, NodeBox):
-            self.apply_node(node)
+            for i in self.selected:
+                if i == self.shown_irq_circle:
+                    continue
+
+                n = self.id2node[i]
+                n.x, n.y = n.x + ox, n.y + oy
+
+                if isinstance(n, NodeBox):
+                    self.apply_node(n)
+        else:
+            node.x = points[0]
+            node.y = points[1]
+
+            if isinstance(node, NodeBox):
+                self.apply_node(node)
 
         # cancel current physic iteration if moved
         self.current_ph_iteration = None
@@ -420,8 +434,18 @@ class MachineWidget(CanvasDnD):
         else:
             node = self.id2node[id]
 
-        node.static = True
-        self.dragged.append(node)
+        if id in self.selected:
+            for i in self.selected:
+                if i == self.shown_irq_circle:
+                    continue
+
+                n = self.id2node[i]
+
+                n.static = True
+                self.dragged.append(n)
+        else:
+            node.static = True
+            self.dragged.append(node)
 
     def dnd_up(self, event):
         for n in self.dragged:
