@@ -526,10 +526,8 @@ class MachineWidget(CanvasDnD):
 
         yield
 
-        for n in self.nodes:
-            for n1 in self.nodes:
-                if n1 == n:
-                    continue
+        for idx, n in enumerate(self.nodes):
+            for n1 in self.nodes[idx + 1:]:
                 if not n.overlaps(n1):
                     continue
 
@@ -579,11 +577,10 @@ class MachineWidget(CanvasDnD):
                 rx = ix - cx
                 ry = iy - cy
 
-                # TODO: The reaction is applied to n only. It is recomputed
-                # again and applied to n1 on symmetric loop iteration. It could
-                # be optimized latter.
                 n.vx = n.vx + rx * self.velocity_k
                 n.vy = n.vy + ry * self.velocity_k
+                n1.vx = n1.vx - rx * self.velocity_k
+                n1.vy = n1.vy - ry * self.velocity_k
 
                 # Artificial sleep for time management test 
                 #time.sleep(0.001)
@@ -722,16 +719,10 @@ class MachineWidget(CanvasDnD):
 
         yield
 
-        for h in self.circles:
-            for h1 in self.circles:
-                if h == h1:
-                    continue
-
+        for idx, h in enumerate(self.circles):
+            for h1 in self.circles[idx + 1:]:
                 #if bool(isinstance(h1, IRQPathCircle)) != bool(isinstance(h, IRQPathCircle)):
                 #    continue
-
-                if isinstance(h, IRQHubCircle) and isinstance(h1, IRQPathCircle):
-                    continue
 
                 if not h.overlaps_circle(h1):
                     continue
@@ -760,8 +751,12 @@ class MachineWidget(CanvasDnD):
                 rx = ix - cx
                 ry = iy - cy
 
-                h.vx = h.vx + rx * self.velocity_k
-                h.vy = h.vy + ry * self.velocity_k
+                if not (isinstance(h, IRQHubCircle) or isinstance(h1, IRQPathCircle)):
+                    h.vx = h.vx + rx * self.velocity_k
+                    h.vy = h.vy + ry * self.velocity_k
+                if not (isinstance(h1, IRQHubCircle) or isinstance(h, IRQPathCircle)):
+                    h1.vx = h1.vx - rx * self.velocity_k
+                    h1.vy = h1.vy - ry * self.velocity_k
 
             yield
 
