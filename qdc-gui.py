@@ -402,7 +402,17 @@ class MachineWidget(CanvasDnD):
             node = self.id2node[id]
 
         points = self.canvas.coords(tk.CURRENT)[:2]
-        if id in self.selected:
+
+        # moving of non-selected item while other are selected
+        if self.selected:
+            if not id in self.selected:
+                if self.shift_pressed():
+                    self.selected.append(id)
+                else:
+                    self.selected = []
+
+        if self.selected:
+            # offset
             ox = points[0] - node.x
             oy = points[1] - node.y
 
