@@ -260,6 +260,9 @@ class MachineWidget(CanvasDnD):
         self.canvas.bind("<ButtonPress-1>", self.on_b1_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_b1_release)
 
+        self.select_frame = None
+        self.select_frame_color = "green"
+
         self.key_state = {}
         self.canvas.bind("<KeyPress>", self.on_key_press)
         self.canvas.bind("<KeyRelease>", self.on_key_release)
@@ -285,54 +288,68 @@ class MachineWidget(CanvasDnD):
         return False
 
     def on_b1_press(self, event):
-        self.select_point = (self.canvas.canvasx(event.x),
-                             self.canvas.canvasy(event.y))
+        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        self.select_point = (x, y)
+
+        self.select_frame = self.canvas.create_rectangle(
+            x, y, x + 1, y + 1,
+            fill = "",
+            outline = self.select_frame_color
+        )
+        self.select_by_frame = False
 
     def on_b1_release(self, event):
         if not self.select_point:
             return
 
         x, y = self.select_point[0], self.select_point[1] 
-        self.select_point = None
 
-        touched = self.canvas.find_overlapping(
-            x - 3, y - 3, x + 3, y + 3
-        )
+        if self.select_by_frame:
+            bbox = self.canvas.bbox(self.select_frame)
+            touched = self.canvas.find_enclosed(*bbox)
+        else:
+            touched = self.canvas.find_overlapping(
+                x - 3, y - 3, x + 3, y + 3
+            )
+
+        self.select_point = None
+        self.canvas.delete(self.select_frame)
+        self.select_frame = None
+
+        touched_ids = []
+        for t in touched:
+            if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node.keys()):
+                touched_ids.append(t)
+                if not self.select_by_frame:
+                    break
 
         shift = self.shift_pressed()
 
-        if not touched:
+        if not touched_ids:
             if not shift:
                 self.selected = []
             return
 
-        touched_id = None
-        for t in touched:
-            if "DnD" in self.canvas.gettags(t):
-                touched_id = t
-                break;
-
-        if not touched_id:
+        if not touched_ids:
             return
 
-        if not touched_id in self.id2node.keys():
-            return 
-
         if shift:
-            if touched_id in self.selected:
-                self.selected.remove(touched_id)
-            else:
-                self.selected.append(touched_id)
+            for tid in touched_ids:
+                if self.select_by_frame:
+                    if not tid in self.selected:
+                        self.selected.append(tid)
+                else:
+                    if tid in self.selected:
+                        self.selected.remove(tid)
+                    else:
+                        self.selected.append(tid)
         else:
-            if touched_id in self.selected:
-                self.selected = []
-            else:
-                self.selected = [touched_id]
+            self.selected = list(touched_ids)
 
         self.invalidated = True
 
     def down_all(self, event):
-        if self.dragging:
+        if self.dragging or self.select_point:
             return
         #print("down_all")
         event.widget.scan_mark(
@@ -354,6 +371,16 @@ class MachineWidget(CanvasDnD):
         #print("motion_all")
 
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+
+        if self.select_point:
+            apply(self.canvas.coords, [
+                self.select_frame,
+                self.select_point[0], self.select_point[1],
+                x, y
+            ])
+            self.select_by_frame = True
+            return
+
         if self.shown_irq_circle:
             if not self.shown_irq_circle in self.canvas.find_overlapping(
                 x - 3, y - 3, x + 3, y + 3
@@ -393,6 +420,8 @@ class MachineWidget(CanvasDnD):
         self.current_ph_iteration = None
         self.invalidated = True
         self.select_point = None
+        self.canvas.delete(self.select_frame)
+        self.select_frame = None
 
     def dnd_moved(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
@@ -436,6 +465,8 @@ class MachineWidget(CanvasDnD):
         self.current_ph_iteration = None
         self.invalidated = True
         self.select_point = None
+        self.canvas.delete(self.select_frame)
+        self.select_frame = None
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
