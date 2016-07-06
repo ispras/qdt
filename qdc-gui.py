@@ -262,12 +262,14 @@ class MachineWidget(CanvasDnD):
             int(event.widget.canvasy(event.y))
         )
         self.dragging_all = True
+        self.master.config(cursor = "fleur")
 
     def up_all(self, event):
         #print("up_all")
         for n in self.nodes + self.buses + self.circles:
             n.static = False
         self.dragging_all = False
+        self.master.config(cursor = "")
 
     def motion_all(self, event):
         self.motion(event)
