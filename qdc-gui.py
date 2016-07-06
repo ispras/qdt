@@ -242,8 +242,8 @@ class MachineWidget(CanvasDnD):
         self.bind('<<DnDUp>>', self.dnd_up)
         self.dragged = []
 
-        self.canvas.bind("<ButtonPress-1>", self.down_all)
-        self.canvas.bind("<ButtonRelease-1>", self.up_all)
+        self.canvas.bind("<ButtonPress-3>", self.down_all)
+        self.canvas.bind("<ButtonRelease-3>", self.up_all)
 
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
