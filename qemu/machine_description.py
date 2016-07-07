@@ -409,7 +409,7 @@ class MachineNode(QOMDescription):
         # No system bus: create one
         if self.sysbus == None:
             self.sysbus = SystemBusNode()
-            self.buses.append(self.sysbus)
+            self.add_node(self.sysbus)
 
         # Attach all system bus devices to the system bus
         for dev in self.devices:
