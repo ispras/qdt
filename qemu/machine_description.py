@@ -347,7 +347,6 @@ class MachineNode(QOMDescription):
         for n in self.devices + self.buses + self.irqs + self.mems + self.irq_hubs:
             self.assign_id(n)
 
-        self.link()
 
     def link(self):
         self.added = True
