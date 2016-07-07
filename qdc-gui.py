@@ -1249,20 +1249,25 @@ class MachineWidget(CanvasDnD):
         return layout
 
     def SetLyout(self, l):
-        for id, desc in l.iteritems():
-            if id == -1:
-                continue
-            dev = self.mach.id2node[id]
-            if not dev:
-                continue
-            n = self.dev2node[dev]
-
-            if isinstance(n, NodeBox):
-                n.x, n.y = desc[0], desc[1]
-            elif isinstance(n, IRQHubCircle):
-                n.x, n.y = desc[0], desc[1]
-            elif isinstance(n, BusLine):
-                n.x = desc
+        layout_bak = self.GetLayout()
+        try:
+            for id, desc in l.iteritems():
+                if id == -1:
+                    continue
+                dev = self.mach.id2node[id]
+                if not dev:
+                    continue
+                n = self.dev2node[dev]
+    
+                if isinstance(n, NodeBox):
+                    n.x, n.y = desc[0], desc[1]
+                elif isinstance(n, IRQHubCircle):
+                    n.x, n.y = desc[0], desc[1]
+                elif isinstance(n, BusLine):
+                    n.x = desc
+        except:
+            # if new layout is incorrect then restore previous one
+            self.SetLyout(layout_bak)
 
 def main():
     root = tk.Tk()
