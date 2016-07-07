@@ -18,6 +18,10 @@ import random
 import copy
 import time
 import cPickle
+import qemu
+
+from common import \
+    PyGenerator
 
 def sign(x): return 1 if x >= 0 else -1
 
@@ -1278,7 +1282,22 @@ def main():
     root.grid_rowconfigure(0, weight=1)
     root.geometry("500x500")
 
-    cnv = MachineWidget(root, Q35MachineNode_2_6_0())
+    mach = None
+    try:
+        variables = {}
+        execfile("serialize-test.py", qemu.__dict__, variables)
+
+        for v in variables.values():
+            if isinstance(v, qemu.MachineNode):
+                mach = v
+                break
+    except Exception, e:
+        print "Machine load failed: " + str(e) + "\n"
+
+    if not mach:
+        mach = Q35MachineNode_2_6_0()
+
+    cnv = MachineWidget(root, mach)
 
     try:
         layout = cPickle.load(open("layout.p", "rb"))
@@ -1295,6 +1314,10 @@ def main():
 
     layout = cnv.GetLayout()
     cPickle.dump(layout, open("layout.p", "wb"))
+
+    with open("serialize-test.py", "wb") as f:
+        PyGenerator().serialize(f, mach)
+        f.close()
 
 if __name__ == '__main__':
     main()
