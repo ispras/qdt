@@ -403,7 +403,7 @@ class MachineType(QOMType):
 qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 """.format(
     bridge_name = dev_name,
-    bus_child_name = bus.child_name if len(node.buses) == 1 and not bus.force_index else "%s.%u" % (bus.child_name, bus_idx),
+    bus_child_name = bus.gen_child_name_for_bus(),
                             )
 
             elif isinstance(node, BusNode):

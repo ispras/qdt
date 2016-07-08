@@ -107,6 +107,12 @@ class BusNode(Node):
             return []
         else:
             return [self.parent_device]
+        
+    def gen_child_name_for_bus(self):
+        if self.parent_device is None or len(self.parent_device.buses) == 1 and not self.force_index:
+            return self.child_name
+        else:
+            return "%s.%u" % (self.child_name, self.parent_device.buses.index(self))
 
     def __gen_code__(self, gen):
         self.reset_gen(gen)
