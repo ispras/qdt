@@ -130,9 +130,9 @@ class ConnectionLine(object):
         self.update()
 
     def update(self):
-        self.y = self.dev_node.y + self.dev_node.height/2
-        self.x = min([self.bus_node.x, self.dev_node.x])
-        self.width = max([self.bus_node.x, self.dev_node.x]) - self.x
+        self.y = self.dev_node.y + self.dev_node.height / 2
+        self.x = min([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2])
+        self.width = max([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2]) - self.x
 
     def crosses(self, b):
         if self.x > b.x:
