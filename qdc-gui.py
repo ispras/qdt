@@ -31,6 +31,7 @@ class NodeBox(object):
         self.x = 200
         self.y = 200
         self.vx = self.vy = 0
+        self.offset = [0, 0]
         self.width = 50
         self.height = 50
         self.spacing = 10
@@ -41,7 +42,11 @@ class NodeBox(object):
         self.conn = None
 
         self.text = None
+        self.text_width = 50
+        self.text_height = 50
         self.padding = 10
+
+        self.bus_padding = 20
 
     def get_irq_binding(self, target):
         if target:
@@ -111,7 +116,7 @@ class NodeBox(object):
         return True
 
 class BusLine(object):
-    def __init__(self, bus):
+    def __init__(self, bl):
         self.x = 200
         self.vx = 0
         self.y = self.next_y = -100000
@@ -120,7 +125,14 @@ class BusLine(object):
         self.static = False
         self.extra_length = 50
 
-        self.bus = bus
+        self.buslabel = bl
+
+class BusLabel(NodeBox):
+    def __init__(self, bus):
+        NodeBox.__init__(self, bus)
+
+        self.cap_size = 0.5
+        self.busline = None
 
 class ConnectionLine(object):
     def __init__(self, dev_node, bus_node):
@@ -130,9 +142,9 @@ class ConnectionLine(object):
         self.update()
 
     def update(self):
-        self.y = self.dev_node.y + self.dev_node.height/2
-        self.x = min([self.bus_node.x, self.dev_node.x])
-        self.width = max([self.bus_node.x, self.dev_node.x]) - self.x
+        self.y = self.dev_node.y + self.dev_node.height / 2
+        self.x = min([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2])
+        self.width = max([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2]) - self.x
 
     def crosses(self, b):
         if self.x > b.x:
@@ -151,6 +163,7 @@ class NodeCircle(object):
         self.vx = 0
         self.y = 200
         self.vy = 0
+        self.offset = [0, 0]
         self.r = 10
         self.static = False
         self.spacing = 0
@@ -216,6 +229,7 @@ class MachineWidget(CanvasDnD):
         self.node2dev = {}
 
         self.nodes = []
+        self.buslabels = []
         self.buses = []
         self.conns = []
         self.circles = []
@@ -365,7 +379,7 @@ class MachineWidget(CanvasDnD):
 
     def up_all(self, event):
         #print("up_all")
-        for n in self.nodes + self.buses + self.circles:
+        for n in self.nodes + self.buslabels + self.circles:
             n.static = False
         self.dragging_all = False
         self.master.config(cursor = "")
@@ -435,6 +449,8 @@ class MachineWidget(CanvasDnD):
             node = self.id2node[id]
 
         points = self.canvas.coords(tk.CURRENT)[:2]
+        points[0] = points[0] - node.offset[0]
+        points[1] = points[1] - node.offset[1]
 
         # moving of non-selected item while other are selected
         if self.selected:
@@ -514,21 +530,21 @@ class MachineWidget(CanvasDnD):
             if bus in self.dev2node.keys():
                 continue
 
-            node = BusLine(bus)
+            node = BusLabel(bus)
 
             self.dev2node[bus] = node
             self.node2dev[node] = bus
 
-            self.add_bus(node)
+            self.add_buslabel(node)
 
         for dev in self.mach.devices:
             if not dev in self.dev2node.keys():
                 node = NodeBox(dev)
-    
+
                 self.dev2node[dev] = node
                 self.node2dev[node] = dev
-    
-                self.add_node(node)
+
+                self.add_node(node, dev.buses)
             else:
                 node = self.dev2node[dev]
 
@@ -541,7 +557,7 @@ class MachineWidget(CanvasDnD):
             pb = dev.parent_bus
             if not pb in self.dev2node.keys():
                 continue
-            pbn = self.dev2node[pb]
+            pbn = self.dev2node[pb].busline
 
             self.add_conn(node, pbn)
 
@@ -619,9 +635,71 @@ class MachineWidget(CanvasDnD):
 
     def ph_sync(self):
         for n in self.nodes:
+            dev = self.node2dev[n]
+
+            if dev.buses:
+                min_x = n.x + n.width + n.bus_padding
+                max_x = n.x - n.bus_padding
+
+                for bus in dev.buses:
+                    b = self.dev2node[bus]
+
+                    x = b.x + b.offset[0] - n.bus_padding
+                    if min_x > x:
+                        min_x = x
+
+                    x = b.x + b.offset[0] + n.bus_padding
+                    if max_x < x:
+                        max_x = x
+
+                n.width = max([max_x - min_x, n.text_width + n.padding])
+                if n.x > min_x:
+                    n.x = min_x
+                if n.x + n.width < max_x:
+                    n.x = max_x - n.width
+
             self.ph_apply_node(n)
 
+        for bl in self.buslabels:
+            self.ph_apply_buslabel(bl)
+
         for b in self.buses:
+            # update
+            bus = self.node2dev[b.buslabel]
+
+            parent_device = bus.parent_device
+
+            if parent_device:
+                parent_node = self.dev2node[parent_device]
+                min_y = parent_node.y - b.extra_length
+                max_y = parent_node.y + parent_node.height + b.extra_length
+            else:
+                min_y = b.y + b.height + b.extra_length
+                max_y = b.y - b.extra_length
+
+            for dev in bus.devices:
+                n = self.dev2node[dev]
+
+                y = n.y - b.extra_length
+                if min_y > y:
+                    min_y = y
+
+                y = n.y + n.height + b.extra_length
+                if max_y < y:
+                    max_y = y
+
+            y = b.buslabel.y - b.extra_length
+            if min_y > y:
+                min_y = y
+
+            y = b.buslabel.y + b.buslabel.height + b.extra_length
+            if max_y < y:
+                max_y = y
+
+            b.x = b.buslabel.x + b.buslabel.offset[0]
+            b.y = min_y
+            b.height = max_y - min_y
+
             self.ph_apply_bus(b)
 
         for c in self.conns:
@@ -683,8 +761,11 @@ class MachineWidget(CanvasDnD):
 
             self.ph_move(n)
 
-        for b in self.buses:
-            self.ph_move(b)
+        for bl in self.buslabels:
+            if n.static:
+                continue
+
+            self.ph_move(bl)
 
         for h in self.circles:
             if h.static:
@@ -695,13 +776,15 @@ class MachineWidget(CanvasDnD):
         self.ph_sync()
 
     def ph_iterate_co(self):
-        for n in self.nodes + self.buses + self.circles:
+        for n in self.nodes + self.buslabels + self.circles:
             n.vx = n.vy = 0
 
         yield
 
-        for idx, n in enumerate(self.nodes):
-            for n1 in self.nodes[idx + 1:]:
+        nbl = self.nodes + self.buslabels
+
+        for idx, n in enumerate(nbl):
+            for n1 in nbl[idx + 1:]:
                 if not n.overlaps(n1):
                     continue
 
@@ -765,7 +848,10 @@ class MachineWidget(CanvasDnD):
                 if not n.touches(b):
                     continue
 
-                parent_device = self.node2dev[b].parent_device
+                if n == b.buslabel:
+                    continue
+
+                parent_device = self.node2dev[b.buslabel].parent_device
                 if parent_device:
                     parent_node = self.dev2node[parent_device]
                     if parent_node == n:
@@ -855,44 +941,6 @@ class MachineWidget(CanvasDnD):
 
             yield
 
-        for b in self.buses:
-            bus = self.node2dev[b]
-
-            parent_device = bus.parent_device
-
-            if parent_device:
-                parent_node = self.dev2node[parent_device]
-                min_y = parent_node.y - b.extra_length
-                max_y = parent_node.y + parent_node.height + b.extra_length
-            else:
-                min_y = b.y + b.height + b.extra_length
-                max_y = b.y - b.extra_length
-
-            for dev in bus.devices:
-                n = self.dev2node[dev]
-
-                y = n.y - b.extra_length
-                if min_y > y:
-                    min_y = y
-
-                y = n.y + n.height + b.extra_length
-                if max_y < y:
-                    max_y = y
-
-            b.next_y = min_y
-            b.next_height = max_y - min_y
-
-            if not parent_device:
-                continue
-
-            dx = parent_node.x + parent_node.width / 2 - b.x
-            if dx == 0:
-                continue
-
-            b.vx = b.vx + dx * self.bus_gravity_k
-
-        yield
-
         for idx, h in enumerate(self.circles):
             for h1 in self.circles[idx + 1:]:
                 #if bool(isinstance(h1, IRQPathCircle)) != bool(isinstance(h, IRQPathCircle)):
@@ -976,12 +1024,20 @@ class MachineWidget(CanvasDnD):
 
         apply(self.canvas.coords, [id] + points)
 
+    def ph_apply_buslabel(self, bl):
+        id = self.node2id[bl]
+        points = [bl.x + bl.width / 2, bl.y,
+            bl.x + bl.width, bl.y + bl.cap_size * (bl.text_height + bl.padding),
+            bl.x + bl.width, bl.y + (1 + bl.cap_size) * (bl.text_height + bl.padding),
+            bl.x + bl.width / 2, bl.y + bl.height,
+            bl.x, bl.y + (1 + bl.cap_size) * (bl.text_height + bl.padding),
+            bl.x, bl.y + bl.cap_size * (bl.text_height + bl.padding)]
+
+        apply(self.canvas.coords, [id] + points)
+        self.apply_node(bl)
+
     def ph_apply_bus(self, b):
         id = self.node2id[b]
-
-        b.y = b.next_y
-        b.height = b.next_height
-
         points = [
             b.x, b.y,
             b.x, b.y + b.height
@@ -1144,7 +1200,7 @@ class MachineWidget(CanvasDnD):
 
         self.after(int(rest * 1000), self.ph_run)
 
-    def add_node(self, node):
+    def add_node(self, node, fixed_x):
         text = node.node.qom_type
         if text.startswith("TYPE_"):
             text = text[5:]
@@ -1157,20 +1213,26 @@ class MachineWidget(CanvasDnD):
         node.text = id
 
         t_bbox = self.canvas.bbox(id)
-        t_width = t_bbox[2] - t_bbox[0]
-        t_height = t_bbox[3] - t_bbox[1]
+        node.text_width = t_bbox[2] - t_bbox[0]
+        node.text_height = t_bbox[3] - t_bbox[1]
 
-        node.width = t_width + node.padding
-        node.height = t_height + node.padding
+        node.width = node.text_width + node.padding
+        node.height = node.text_height + node.padding
 
         # todo: replace rectangle with image
+        if fixed_x:
+            tags = ("DnD", "fixed_x")
+        else:
+            tags = "DnD"
+
         id = self.canvas.create_rectangle(
             node.x, node.y,
             node.x + node.width,
             node.y + node.height,
             fill = "white",
-            tag = "DnD"
+            tag = tags
         )
+
         self.id2node[id] = node
         self.node2id[node] = id
 
@@ -1211,8 +1273,7 @@ class MachineWidget(CanvasDnD):
 
     def add_bus(self, bus):
         id = self.canvas.create_line(
-            bus.x, bus.y,
-            bus.x, bus.y + bus.height,
+            0, 0, 0, 0
         )
         self.canvas.lower(id)
 
@@ -1220,6 +1281,41 @@ class MachineWidget(CanvasDnD):
         self.node2id[bus] = id
 
         self.buses.append(bus)
+
+    def add_buslabel(self, bl):
+        node = BusLine(bl)
+        self.add_bus(node)
+        bl.busline = node
+
+        id = self.canvas.create_text(
+            bl.x, bl.y,
+            text = bl.node.gen_child_name_for_bus(),
+            state = tk.DISABLED
+        )
+        bl.text = id
+
+        t_bbox = self.canvas.bbox(id)
+        bl.text_width = t_bbox[2] - t_bbox[0]
+        bl.text_height = t_bbox[3] - t_bbox[1]
+
+        bl.width = bl.text_width + bl.padding
+        bl.height = (1 + 2 * bl.cap_size) * (bl.text_height + bl.padding)
+        bl.offset = [bl.width / 2, 0]
+
+        id = self.canvas.create_polygon(
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            fill = "white",
+            outline = "black",
+            tag = "DnD"
+        )
+
+        self.id2node[id] = bl
+        self.node2id[bl] = id
+
+        self.canvas.lift(id)
+        self.canvas.lift(bl.text)
+
+        self.buslabels.append(bl)
 
     def add_conn(self, dev, bus):
         conn = ConnectionLine(dev, bus)
@@ -1247,8 +1343,8 @@ class MachineWidget(CanvasDnD):
             if isinstance(h, IRQHubCircle):
                 layout[self.node2dev[h].id] = (h.x, h.y)
 
-        for b in self.buses:
-            layout[b.bus.id] = b.x
+        for bl in self.buslabels:
+            layout[bl.node.id] = (bl.x, bl.y)
 
         return layout
 
@@ -1262,13 +1358,7 @@ class MachineWidget(CanvasDnD):
                 if not dev:
                     continue
                 n = self.dev2node[dev]
-    
-                if isinstance(n, NodeBox):
-                    n.x, n.y = desc[0], desc[1]
-                elif isinstance(n, IRQHubCircle):
-                    n.x, n.y = desc[0], desc[1]
-                elif isinstance(n, BusLine):
-                    n.x = desc
+                n.x, n.y = desc[0], desc[1]
         except:
             # if new layout is incorrect then restore previous one
             self.SetLyout(layout_bak)

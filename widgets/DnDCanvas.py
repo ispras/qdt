@@ -50,6 +50,10 @@ class CanvasDnD(tk.Frame):
         #print str(points) + " - " + str(self.off)
 
         for idx in range(len(points)):
+            if "fixed_x" in cnv.gettags(tk.CURRENT) and idx % 2 == 0:
+                continue
+            if "fixed_y" in cnv.gettags(tk.CURRENT) and idx % 2 == 1:
+                continue
             #print idx, xy[idx % 2], anchors[idx % 2]
             mouse = xy[idx % 2]
             zone = anchors[idx % 2]
