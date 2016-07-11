@@ -12,11 +12,15 @@ class ML(StringVar):
 
     @staticmethod
     def set_language(locale = None):
-        ML.current_translation = gettext.translation(
-            "qdc",
-            "/home/real/work/qemu/device_creator/src/locale/",
-            [locale] if locale else []
-        )
+        try:
+            ML.current_translation = gettext.translation(
+                "qdc",
+                "/home/real/work/qemu/device_creator/src/locale/",
+                [locale] if locale else []
+            )
+        except:
+            ML.current_translation = gettext.NullTranslations()
+
         for s in ML.multi_language_strings:
             s.update()
 
