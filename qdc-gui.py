@@ -4,7 +4,8 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
-    CanvasDnD
+    CanvasDnD, \
+    VarTk
 
 import Tkinter as tk
 
@@ -21,7 +22,8 @@ import cPickle
 import qemu
 
 from common import \
-    PyGenerator
+    PyGenerator, \
+    ML as _
 
 def sign(x): return 1 if x >= 0 else -1
 
@@ -1364,8 +1366,8 @@ class MachineWidget(CanvasDnD):
             self.SetLyout(layout_bak)
 
 def main():
-    root = tk.Tk()
-    root.title("Drag-N-Drop Demo")
+    root = VarTk()
+    root.title(_("Qemu device creator GUI"))
 
     root.grid()
     root.grid_columnconfigure(0, weight=1)
