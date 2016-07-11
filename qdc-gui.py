@@ -26,7 +26,8 @@ from common import \
     PyGenerator, \
     ML as _
 
-def sign(x): return 1 if x >= 0 else -1
+from common import \
+    sign
 
 class NodeBox(object):
     def __init__(self, node):
