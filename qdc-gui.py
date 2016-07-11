@@ -5,6 +5,7 @@ from examples import \
 
 from widgets import \
     CanvasDnD, \
+    VarMenu, \
     VarTk
 
 import Tkinter as tk
@@ -1373,6 +1374,14 @@ def main():
     root.grid_columnconfigure(0, weight=1)
     root.grid_rowconfigure(0, weight=1)
     root.geometry("500x500")
+
+    menubar = VarMenu(root)
+
+    filemenu = VarMenu(menubar, tearoff = False)
+    filemenu.add_command(label=_("Quit"), command = root.quit)
+    menubar.add_cascade(label=_("File"), menu = filemenu)
+
+    root.config(menu = menubar)
 
     mach = None
     try:
