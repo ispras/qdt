@@ -8,8 +8,7 @@ files = [
 ]
 
 langs = [
-    "ru_RU",
-    "en_US"
+    "ru_RU"
 ]
 
 for l in langs:
