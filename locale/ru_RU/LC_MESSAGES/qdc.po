@@ -20,6 +20,10 @@ msgstr ""
 msgid "Qemu device creator GUI"
 msgstr "ГИ генератора устройств Qemu"
 
+#: qdc-gui.py:34
+msgid "Shutdown the application."
+msgstr "Завершить приложение."
+
 #: qdc-gui.py:42
 msgid "Quit"
 msgstr "Выход"
