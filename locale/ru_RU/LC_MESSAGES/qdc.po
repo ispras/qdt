@@ -16,15 +16,15 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
-#: qdc-gui.py:1372
+#: qdc-gui.py:22
 msgid "Qemu device creator GUI"
 msgstr "ГИ генератора устройств Qemu"
 
-#: qdc-gui.py:1382
+#: qdc-gui.py:42
 msgid "Quit"
 msgstr "Выход"
 
-#: qdc-gui.py:1383
+#: qdc-gui.py:46
 msgid "File"
 msgstr "Файл"
 
