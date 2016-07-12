@@ -4,6 +4,8 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    HotKeyBinding, \
+    HotKey, \
     MachineWidget, \
     VarMenu, \
     VarTk
@@ -24,10 +26,23 @@ def main():
     root.grid_rowconfigure(0, weight=1)
     root.geometry("500x500")
 
+    hotkeys = HotKey(root)
+    hotkeys.add_bindings([
+        HotKeyBinding(
+            root.quit,
+            key_code = 24, # Q
+            description = _("Shutdown the application.")
+        )
+    ])
+
     menubar = VarMenu(root)
 
     filemenu = VarMenu(menubar, tearoff = False)
-    filemenu.add_command(label=_("Quit"), command = root.quit)
+    filemenu.add_command(
+        label=_("Quit"),
+        command = root.quit,
+        accelerator = hotkeys.get_keycode_string(root.quit)
+    )
     menubar.add_cascade(label=_("File"), menu = filemenu)
 
     root.config(menu = menubar)
