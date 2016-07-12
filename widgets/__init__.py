@@ -7,3 +7,7 @@ from var_widgets import \
 
 from machine_widget import \
     MachineWidget
+
+from hotkey import \
+    HotKeyBinding, \
+    HotKey
