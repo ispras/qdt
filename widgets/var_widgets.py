@@ -24,11 +24,11 @@ class VarTk(Tk):
             self.on_var_changed()
 
 class MenuVarBinding():
-    def __init__(self, menu, var, idx):
-        self.menu, self.var, self.idx = menu, var, idx
+    def __init__(self, menu, var, idx, param):
+        self.menu, self.var, self.idx, self.param = menu, var, idx, param
 
     def on_var_changed(self, *args):
-        self.menu.on_var_changed(self.var, self.idx)
+        self.menu.on_var_changed(self.var, self.idx, self.param)
 
 class VarMenu(Menu):
     def __init__(self, *args, **kw):
@@ -38,27 +38,29 @@ class VarMenu(Menu):
         else:
             self.count = 0
 
-    def on_var_changed(self, var, idx):
-        Menu.entryconfig(self, idx, label = var.get())
+    def on_var_changed(self, var, idx, param):
+        kwargs = {
+            param: var.get()
+        }
+        Menu.entryconfig(self, idx, **kwargs)
 
     def add(self, itemType, cnf = {}, **kw):
-        if "label" in cnf:
-            label = cnf.pop("label")
-        elif "label" in kw:
-            label = kw.pop("label")
-        else:
-            label = StringVar()
+        for param in ["label", "accelerator"]:
+            if param in cnf:
+                var = cnf.pop(param)
+            elif param in kw:
+                var = kw.pop(param)
+            else:
+                var = StringVar()
 
-        binding = MenuVarBinding(self, label, self.count)
+            binding = MenuVarBinding(self, var, self.count, param)
+            var.trace_variable("w", binding.on_var_changed)
+
+            if cnf:
+                cnf[param] = var.get()
+            else:
+                kw[param] = var.get()
+
         self.count = self.count + 1
 
-        label.trace_variable("w", binding.on_var_changed)
-
-        if cnf:
-            cnf["label"] = label.get()
-        else:
-            kw["label"] = label.get()
-
         Menu.add(self, itemType, cnf or kw)
-
-        binding.on_var_changed()
