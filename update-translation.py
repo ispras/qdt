@@ -4,7 +4,8 @@ from subprocess import call
 import os
 
 files = [
-    "qdc-gui.py"
+    "qdc-gui.py",
+    "widgets/hotkey.py"
 ]
 
 langs = [
