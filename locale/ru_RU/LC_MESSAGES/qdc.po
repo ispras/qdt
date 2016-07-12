@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2016-07-12 20:42+0300\n"
 "Last-Translator: Vasily Efimov <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
@@ -27,3 +27,7 @@ msgstr "Выход"
 #: qdc-gui.py:1383
 msgid "File"
 msgstr "Файл"
+
+#: widgets/hotkey.py:51
+msgid "Unassigned"
+msgstr "Не назначено"
