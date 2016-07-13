@@ -4,6 +4,7 @@ from subprocess import call
 import os
 
 files = [
+    "history-test.py",
     "qdc-gui.py",
     "widgets/hotkey.py"
 ]
