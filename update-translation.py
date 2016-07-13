@@ -34,9 +34,9 @@ for l in langs:
     else:
         call(
             [   "msgmerge",
+                "-U",
                 "-N", directory + "qdc.po",
-                directory + "messages.po",
-                "-o" , directory + "new.po"
+                directory + "messages.po"
             ]
         )
         call(
@@ -44,13 +44,6 @@ for l in langs:
                 directory + "messages.po"
             ]
         )
-
-    call(
-        [   "mv",
-            directory + "new.po",
-            directory + "qdc.po"
-        ]
-    )
 
     call(
         [
