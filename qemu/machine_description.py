@@ -550,6 +550,9 @@ class MultipleSystemBusesInMachine(Exception):
 class NodeHasId(Exception):
     pass
 
+class NodeIdIsAlreadyInUse(Exception):
+    pass
+
 class MachineNode(QOMDescription):
     def __init__(self,
         name,
