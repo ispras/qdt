@@ -359,10 +359,11 @@ class MachineWidget(CanvasDnD):
     def down_all(self, event):
         if self.dragging or self.select_point:
             return
+
+        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+
         #print("down_all")
-        event.widget.scan_mark(
-            int(event.widget.canvasx(event.x)),
-            int(event.widget.canvasy(event.y))
+        event.widget.scan_mark(int(x), int(y)
         )
         self.dragging_all = True
         self.master.config(cursor = "fleur")
