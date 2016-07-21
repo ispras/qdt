@@ -592,8 +592,8 @@ class MachineNode(QOMDescription):
 
         # add nodes preserving id order to same identification
         pfx = gen.nameof(self) + ".add_node("
-        for i in xrange(len(self.id2node)):
-            gen.line(pfx + gen.nameof(self.id2node[i]) + ")")
+        for id, node in self.id2node.iteritems():
+            gen.line(pfx + gen.nameof(node) + ", with_id = " + str(id) + ")")
 
     def link(self):
         self.added = True
