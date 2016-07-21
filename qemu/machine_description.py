@@ -21,10 +21,10 @@ class QOMPropertyTypeInteger(QOMPropertyType):
     set_f = "object_property_set_int"
 
     @staticmethod
-    def build_val(val):
-        if Type.exists(val.prop_val):
-            return str(val.prop_val)
-        return "0x%0x" % val.prop_val
+    def build_val(prop_val):
+        if Type.exists(prop_val):
+            return str(prop_val)
+        return "0x%0x" % prop_val
 
 class QOMPropertyValue(object):
     def __init__(self,
