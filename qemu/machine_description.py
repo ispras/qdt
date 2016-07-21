@@ -678,7 +678,7 @@ class MachineNode(QOMDescription):
         else:
             return False
 
-    def add_node(self, n):
+    def add_node(self, n, with_id = None):
         if isinstance(n, DeviceNode):
             self.devices.append(n)
         elif isinstance(n, BusNode):
@@ -692,7 +692,19 @@ class MachineNode(QOMDescription):
         else:
             return
 
-        self.assign_id(n)
+        if with_id:
+            if with_id in self.id2node.keys():
+                raise NodeIdIsAlreadyInUse()
+            if not n.id == -1:
+                raise NodeHasId()
+
+            n.id = with_id
+            self.id2node[n.id] = n
+
+            if with_id >= self.max_id:
+                self.max_id = with_id + 1
+        else:
+            self.assign_id(n)
 
         self.added = True
 
