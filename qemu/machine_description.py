@@ -324,7 +324,9 @@ class DeviceNode(Node):
 
         self.buses = []
         self.irqs = []
-        self.properties = []
+        # Using a dict for properties simplifies looking for the property
+        # descriptor by its property name
+        self.properties = PropList()
 
     def gen_prop_val(self, gen, p):
         if p.prop_type == QOMPropertyTypeLink:
