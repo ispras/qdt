@@ -296,6 +296,22 @@ class DevicePropertyDefinition(object):
 
 # device models
 
+class PropList(dict):
+    def __init__(self, original = None, *args, **kw):
+        dict.__init__(original if original else {}, *args, **kw)
+
+    def append(self, prop):
+        # It is defined that a property descriptor have property name.
+        # Hence the key for a property in dict could be got automatically.
+        self[prop.prop_name] = prop
+
+    def extend(self, props):
+        for prop in props:
+            self.append(prop)
+
+    def __iter__(self):
+        return self.values().__iter__()
+
 class DeviceNode(Node):
     def __init__(self, qom_type, parent = None):
         Node.__init__(self)
