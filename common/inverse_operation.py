@@ -8,6 +8,24 @@ same identifier as sequence parameter.
 refs:
 
 http://legacy.python.org/workshops/1997-10/proceedings/zukowski.html
+
+
+Life cycle:
+                                    done = True
+                backed_up = True     |
+                          |          |
+ __init__ --> __backup__ --> __do__ --> __undo__
+           \                               .
+ backed_up = False             ^           |
+      done = False             `-----------'
+                                     \
+                                    done = False
+
+"__init__" is called same time the operation is created during "stage"
+(by Python).
+"__backup__" is called once JUST before first call of "__do__" during "commit"
+(including "do").
+
 """
 
 class InverseOperation(object):
@@ -15,6 +33,11 @@ class InverseOperation(object):
         self.prev = previous
         self.next = []
         self.seq = sequence
+        self.backed_up = False
+        self.done = False
+
+    def __backup__(self):
+        raise UnimplementedInverseOperation()
 
     def __do__(self):
         raise UnimplementedInverseOperation()
@@ -29,18 +52,22 @@ class InverseOperation(object):
         raise UnimplementedInverseOperation()
 
 
-class InitialOperationDoneOrUndone(Exception):
+class InitialOperationCall(Exception):
     pass
 
 class InitialOperation(InverseOperation):
     def __init__(self):
         InverseOperation.__init__(self)
+        self.done = True
+
+    def __backup__(self):
+        raise InitialOperationCall()
 
     def __do__(self):
-        raise InitialOperationDoneOrUndone
+        raise InitialOperationCall()
 
     def __undo__(self):
-        raise InitialOperationDoneOrUndone
+        raise InitialOperationCall()
 
     def __read_set__(self):
         return []
@@ -60,6 +87,8 @@ class HistoryTracker(object):
 
     def undo(self, including = None):
         self.pos.__undo__()
+        self.pos.done = False
+
         self.pos = self.pos.prev
 
         if including:
@@ -71,25 +100,52 @@ class HistoryTracker(object):
     def can_undo(self):
         return bool(not self.pos == self.history.root)
 
-    def redo(self, index = 0):
-        next = self.pos.next[index]
-        next.__do__()
-        self.pos = next
+    def do(self, index = 0):
+        op = self.pos.next[index]
 
-    def can_redo(self, index = 0):
+        self.commit(op)
+
+        self.pos = op
+
+    def can_do(self, index = 0):
         return bool(self.pos.next and index < len(self.pos.next))
 
-    def commit(self, op_class, *op_args, **op_kwargs):
+    def stage(self, op_class, *op_args, **op_kwargs):
         op = op_class(
             *op_args,
             previous = self.pos,
             **op_kwargs
         )
+
         if self.pos in self.history.leafs:
             self.history.leafs.remove(self.pos)
-
-        op.__do__()
 
         self.history.leafs.append(op)
         self.pos.next.insert(0, op)
         self.pos = op
+
+        return op
+
+    def commit(self, including = None):
+        if not including:
+            p = self.pos
+        else:
+            p = including
+
+        queue = []
+        while p:
+            if not p.done:
+                # TODO:  check read/write sets before
+                # some operations could be skipped if not required
+                queue.insert(0, p)
+            p = p.prev
+
+        for p in queue:
+            if not p.backed_up:
+                p.__backup__()
+                p.backed_up = True
+
+            p.__do__()
+            p.done = True
+
+

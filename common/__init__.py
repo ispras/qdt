@@ -13,6 +13,6 @@ def sign(x): return 1 if x >= 0 else -1
 from inverse_operation import \
     InverseOperation, \
     UnimplementedInverseOperation, \
-    InitialOperationDoneOrUndone, \
+    InitialOperationCall, \
     History, \
     HistoryTracker

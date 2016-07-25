@@ -18,12 +18,16 @@ import Tkinter as tk
 from duplicity.diffdir import tracker
 
 class DnDOperation(InverseOperation):
-    def __init__(self, cnv, id, orig_pos, target_pos, *args, **kwargs):
+    def __init__(self, cnv, id, *args, **kwargs):
         InverseOperation.__init__(self, *args, **kwargs)
         self.cnv = cnv
         self.id = id
-        self.orig_pos = orig_pos
-        self.target_pos = target_pos
+
+        self.orig_pos = self.cnv.canvas.coords(self.id)[:2]
+        self.target_pos = None
+
+    def __backup__(self):
+        self.target_pos = self.cnv.canvas.coords(self.id)[:2]
 
     def __write_set__(self):
         return [self.id]
@@ -56,28 +60,20 @@ class HistCanvasDnD(CanvasDnD):
         self.bind('<<DnDUp>>', self.dnd_up)
 
     def dnd_down(self, event):
-        self.dragged = self.canvas.find_withtag(tk.CURRENT)[0]
-        self.orig_pos = self.canvas.coords(self.dragged)[:2]
-    
-    def dnd_up(self, event):
         dragged = self.canvas.find_withtag(tk.CURRENT)[0]
-        if not dragged == self.dragged:
-            return
 
-        target_pos = self.canvas.coords(dragged)[:2]
+        self.ht.stage(DnDOperation, self,  dragged)
 
-        self.ht.commit(DnDOperation, self, dragged, self.orig_pos, target_pos)
-
-        del self.dragged
-        del self.orig_pos
+    def dnd_up(self, event):
+        self.ht.commit()
 
 def undo():
     if tracker.can_undo():
         tracker.undo()
 
 def redo():
-    if tracker.can_redo():
-        tracker.redo()
+    if tracker.can_do():
+        tracker.do()
 
 def reg_hotkeys():
     hotkeys.add_bindings([
