@@ -17,16 +17,16 @@ class InverseOperation(object):
         self.seq = sequence
 
     def __do__(self):
-        raise UnimplementedInverseOperation
+        raise UnimplementedInverseOperation()
 
     def __undo__(self):
-        raise UnimplementedInverseOperation
+        raise UnimplementedInverseOperation()
 
     def __read_set__(self):
-        raise UnimplementedInverseOperation
+        raise UnimplementedInverseOperation()
 
     def __write_set__(self):
-        raise UnimplementedInverseOperation
+        raise UnimplementedInverseOperation()
 
 
 class InitialOperationDoneOrUndone(Exception):
