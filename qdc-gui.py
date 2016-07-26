@@ -17,36 +17,67 @@ from common import \
     PyGenerator, \
     ML as _
 
-def main():
-    root = VarTk()
-    root.title(_("Qemu device creator GUI"))
+class QDCGUIWindow(VarTk):
+    def __init__(self, machine_description):
+        VarTk.__init__(self)
 
-    root.grid()
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_rowconfigure(0, weight=1)
-    root.geometry("500x500")
+        self.mach = machine_description
 
-    hotkeys = HotKey(root)
-    hotkeys.add_bindings([
-        HotKeyBinding(
-            root.quit,
-            key_code = 24, # Q
-            description = _("Shutdown the application.")
+        self.title(_("Qemu device creator GUI"))
+
+        # Hot keys, accelerators
+        hotkeys = HotKey(self)
+        hotkeys.add_bindings([
+            HotKeyBinding(
+                self.on_delete,
+                key_code = 24, # Q
+                description = _("Shutdown the application.")
+            )
+        ])
+
+        # Menu bar
+        menubar = VarMenu(self)
+
+        filemenu = VarMenu(menubar, tearoff = False)
+        filemenu.add_command(
+            label=_("Quit"),
+            command = self.quit,
+            accelerator = hotkeys.get_keycode_string(self.on_delete)
         )
-    ])
+        menubar.add_cascade(label=_("File"), menu = filemenu)
+    
+        self.config(menu = menubar)
 
-    menubar = VarMenu(root)
+        # Widget layout
+        self.grid()
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-    filemenu = VarMenu(menubar, tearoff = False)
-    filemenu.add_command(
-        label=_("Quit"),
-        command = root.quit,
-        accelerator = hotkeys.get_keycode_string(root.quit)
-    )
-    menubar.add_cascade(label=_("File"), menu = filemenu)
+        self.mw = MachineWidget(self, self.mach)
+        self.mw.grid(column = 0, row = 0, sticky = "NEWS")
 
-    root.config(menu = menubar)
+        self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
+        self.on_enter_main_loop_id = self.after(0, self.on_enter_main_loop)
+
+    def on_enter_main_loop(self):
+        self.on_enter_main_loop_id = None
+
+        self.mw.ph_run()
+
+    def set_machine_widget_layout(self, layout):
+        self.mw.SetLyout(layout)
+
+    def get_machine_widget_layout(self):
+        return self.mw.GetLayout()
+
+    def on_delete(self):
+        if not self.on_enter_main_loop_id is None:
+            self.after_cancel(self.on_enter_main_loop_id)
+
+        self.quit()
+
+def main():
     mach = None
     try:
         variables = {}
@@ -62,22 +93,19 @@ def main():
     if not mach:
         mach = Q35MachineNode_2_6_0()
 
-    cnv = MachineWidget(root, mach)
+    root = QDCGUIWindow(mach)
+    root.geometry("500x500")
 
     try:
         layout = cPickle.load(open("layout.p", "rb"))
     except:
         layout = {}
 
-    cnv.SetLyout(layout)
-
-    cnv.grid(column = 0, row = 0, sticky = "NEWS")
-
-    cnv.ph_run()
+    root.set_machine_widget_layout(layout)
 
     root.mainloop()
 
-    layout = cnv.GetLayout()
+    layout = root.get_machine_widget_layout()
     cPickle.dump(layout, open("layout.p", "wb"))
 
     with open("serialize-test.py", "wb") as f:
