@@ -26,7 +26,7 @@ class QDCGUIWindow(VarTk):
         self.title(_("Qemu device creator GUI"))
 
         # Hot keys, accelerators
-        hotkeys = HotKey(self)
+        self.hk = hotkeys = HotKey(self)
         hotkeys.add_bindings([
             HotKeyBinding(
                 self.on_delete,
