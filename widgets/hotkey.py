@@ -6,6 +6,7 @@ class HotKeyBinding(object):
         self.cb = callback
         self.kc = key_code
         self.desc = description
+        self.enabled = True
 
 class HotKey(object):
     def __init__(self, root):
@@ -29,7 +30,8 @@ class HotKey(object):
 
         kbs = self.keys2bindings[kc]
         for kb in kbs:
-            kb.cb()
+            if kb.enabled:
+                kb.cb()
 
     def add_binding(self, binding):
         kc = binding.kc
@@ -51,6 +53,12 @@ class HotKey(object):
             string = _("Unassigned")
             self.cb2names[callback] = string
             return string
+
+    def set_enabled(self, callback, enabled = True):
+        for kbs in self.keys2bindings.values():
+            for kb in kbs:
+                if kb.cb == callback:
+                    kb.enabled = enabled
 
     def update_name(self, binding):
         keycode = binding.kc
