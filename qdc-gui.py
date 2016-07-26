@@ -66,7 +66,7 @@ class QDCGUIWindow(VarTk):
         self.mw.ph_run()
 
     def set_machine_widget_layout(self, layout):
-        self.mw.SetLyout(layout)
+        self.mw.SetLayout(layout)
 
     def get_machine_widget_layout(self):
         return self.mw.GetLayout()

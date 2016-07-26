@@ -1339,7 +1339,7 @@ class MachineWidget(CanvasDnD):
 
         return layout
 
-    def SetLyout(self, l):
+    def SetLayout(self, l):
         layout_bak = self.GetLayout()
         try:
             for id, desc in l.iteritems():
@@ -1352,4 +1352,4 @@ class MachineWidget(CanvasDnD):
                 n.x, n.y = desc[0], desc[1]
         except:
             # if new layout is incorrect then restore previous one
-            self.SetLyout(layout_bak)
+            self.SetLayout(layout_bak)
