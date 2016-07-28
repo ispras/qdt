@@ -86,26 +86,34 @@ class HistoryTracker(object):
         self.pos = history.leafs[0]
 
     def undo(self, including = None):
-        self.pos.__undo__()
-        self.pos.done = False
+        queue = []
 
-        self.pos = self.pos.prev
+        while True:
+            if self.pos.done:
+                queue.append(self.pos)
 
-        if including:
-            if including == self.pos:
-                self.undo()
+            cur = self.pos
+            self.pos = cur.prev
+
+            if including:
+                if including == cur:
+                    break
             else:
-                self.undo(including)
+                break
+
+        if queue:
+            for p in queue:
+                p.__undo__()
+                p.done = False
 
     def can_undo(self):
         return bool(not self.pos == self.history.root)
 
     def do(self, index = 0):
         op = self.pos.next[index]
-
-        self.commit(op)
-
         self.pos = op
+
+        self.commit()
 
     def can_do(self, index = 0):
         return bool(self.pos.next and index < len(self.pos.next))
@@ -140,12 +148,14 @@ class HistoryTracker(object):
                 queue.insert(0, p)
             p = p.prev
 
-        for p in queue:
-            if not p.backed_up:
-                p.__backup__()
-                p.backed_up = True
+        if queue:
+            for p in queue:
+                if not p.backed_up:
+                    p.__backup__()
+                    p.backed_up = True
+    
+                p.__do__()
+                p.done = True
 
-            p.__do__()
-            p.done = True
 
 
