@@ -1,4 +1,64 @@
-from Tkinter import Tk, Menu, StringVar
+from Tkinter import \
+    Tk, \
+    Menu, \
+    Label, \
+    Toplevel, \
+    Button, \
+    LabelFrame, \
+    Checkbutton, \
+    StringVar
+
+class VarCheckbutton(Checkbutton):
+    def __init__(self, *args, **kw):
+        if "text" in kw:
+            self.text_var = kw.pop("text")
+            kw["text"] = self.text_var.get()
+        else:
+            self.text_var = StringVar("")
+        Checkbutton.__init__(self, *args, **kw)
+        self.text_var.trace_variable("w", self.on_var_changed)
+
+    def on_var_changed(self, *args):
+        Checkbutton.config(self, text = self.text_var.get())
+
+class VarLabelFrame(LabelFrame):
+    def __init__(self, *args, **kw):
+        if "text" in kw:
+            self.text_var = kw.pop("text")
+            kw["text"] = self.text_var.get()
+        else:
+            self.text_var = StringVar("")
+        LabelFrame.__init__(self, *args, **kw)
+        self.text_var.trace_variable("w", self.on_var_changed)
+
+    def on_var_changed(self, *args):
+        Label.config(self, text = self.text_var.get())
+
+class VarLabel(Label):
+    def __init__(self, *args, **kw):
+        if "text" in kw:
+            self.text_var = kw.pop("text")
+            kw["text"] = self.text_var.get()
+        else:
+            self.text_var = StringVar("")
+        Label.__init__(self, *args, **kw)
+        self.text_var.trace_variable("w", self.on_var_changed)
+
+    def on_var_changed(self, *args):
+        Label.config(self, text = self.text_var.get())
+
+class VarButton(Button):
+    def __init__(self, *args, **kw):
+        if "text" in kw:
+            self.text_var = kw.pop("text")
+            kw["text"] = self.text_var.get()
+        else:
+            self.text_var = StringVar("")
+        Button.__init__(self, *args, **kw)
+        self.text_var.trace_variable("w", self.on_var_changed)
+
+    def on_var_changed(self, *args):
+        Button.config(self, text = self.text_var.get())
 
 class VarTk(Tk):
     def __init__(self, **kw):
@@ -22,6 +82,30 @@ class VarTk(Tk):
             )
 
             self.on_var_changed()
+
+class VarToplevel(Toplevel):
+    def __init__(self, *args, **kw):
+        self.var = None
+        Toplevel.__init__(self, *args, **kw)
+
+    def on_var_changed(self, *args):
+        Toplevel.title(self, self.var.get())
+
+    def title(self, stringvar = None):
+        if not stringvar:
+            return self.var
+
+        if stringvar != self.var:
+            if self.var:
+                self.var.trace_vdelete("w", self.observer_name)
+            self.var = stringvar
+            self.observer_name = self.var.trace_variable(
+                "w",
+                self.on_var_changed
+            )
+
+            self.on_var_changed()
+
 
 class MenuVarBinding():
     def __init__(self, menu, var, idx, param):
