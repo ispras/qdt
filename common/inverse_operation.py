@@ -85,6 +85,18 @@ class HistoryTracker(object):
         self.history = history
         self.pos = history.leafs[0]
 
+        self.on_changed_cbs = []
+
+    def add_on_changed(self, callback):
+        self.on_changed_cbs.append(callback)
+
+    def remove_on_changed(self, callback):
+        self.on_changed_cbs.remove(callback)
+
+    def __notify_on_changed__(self, *args, **kw):
+        for cb in self.on_changed_cbs:
+            cb(*args, **kw)
+
     def undo(self, including = None):
         queue = []
 
@@ -105,6 +117,8 @@ class HistoryTracker(object):
             for p in queue:
                 p.__undo__()
                 p.done = False
+
+                self.__notify_on_changed__(p)
 
     def can_undo(self):
         return bool(not self.pos == self.history.root)
@@ -157,5 +171,6 @@ class HistoryTracker(object):
                 p.__do__()
                 p.done = True
 
+                self.__notify_on_changed__(p)
 
 
