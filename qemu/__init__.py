@@ -65,6 +65,15 @@ from version import \
     get_vp, \
     get_vs
 
+from machine_editing import \
+    MachineOperation, \
+        MachineDeviceOperation, \
+            MachineDevicePropertyOperation, \
+                MOp_DelDevProp, \
+                MOp_AddDevProp, \
+                MOp_SetDevProp, \
+    MachineHistoryTracker
+
 import os
 
 def initialize(qemu_src):
