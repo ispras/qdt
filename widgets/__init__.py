@@ -16,3 +16,7 @@ from machine_widget import \
 from hotkey import \
     HotKeyBinding, \
     HotKey
+
+from device_settings import \
+    DeviceSettingsWidget, \
+    DeviceSettingsWindow
