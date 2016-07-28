@@ -13,7 +13,11 @@ import random
 import time
 
 from common import \
+    History, \
     sign
+
+from qemu import \
+    MachineHistoryTracker
 
 class NodeBox(object):
     def __init__(self, node):
@@ -212,6 +216,8 @@ class MachineWidget(CanvasDnD):
         mach_desc.link()
 
         self.mach = mach_desc
+        self.history = History()
+        self.mht = MachineHistoryTracker(self.mach, self.history)
 
         self.id2node = {}
         self.node2id = {}
