@@ -1,4 +1,5 @@
 from widgets import \
+    VarMenu, \
     CanvasDnD
 
 import Tkinter as tk
@@ -14,10 +15,15 @@ import time
 
 from common import \
     History, \
+    ML as _, \
     sign
 
 from qemu import \
+    DeviceNode, \
     MachineHistoryTracker
+
+from device_settings import \
+    DeviceSettingsWindow
 
 class NodeBox(object):
     def __init__(self, node):
@@ -282,6 +288,32 @@ class MachineWidget(CanvasDnD):
         self.canvas.bind("<KeyRelease>", self.on_key_release)
         self.canvas.focus_set()
 
+        p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("Settings"),
+            command = self.on_popup_single_device_settings
+        )
+        self.popup_single_device = p
+
+        self.current_popup = None
+
+
+    def on_popup_single_device_settings(self):
+        id = self.selected[0]
+
+        x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+        x, y = self.canvas.coords(id)[-2:]
+        x = x - x0
+        y = y - y0
+
+        dev = self.node2dev[self.id2node[id]]
+        wnd = DeviceSettingsWindow(self, dev, self.mht)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
 
@@ -302,6 +334,10 @@ class MachineWidget(CanvasDnD):
         return False
 
     def on_b1_press(self, event):
+        if self.current_popup:
+            self.current_popup.unpost()
+            self.current_popup = None
+
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         self.select_point = (x, y)
 
@@ -363,10 +399,55 @@ class MachineWidget(CanvasDnD):
         self.invalidated = True
 
     def down_all(self, event):
+        if self.current_popup:
+            self.current_popup.unpost()
+            self.current_popup = None
+
         if self.dragging or self.select_point:
             return
 
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+
+        touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+
+        for tid in touched_ids:
+            if not "DnD" in self.canvas.gettags(tid):
+                continue
+            if not tid in self.id2node:
+                continue
+
+            shift = self.shift_pressed()
+            if shift:
+                if not tid in self.selected:
+                    self.selected.append(tid)
+            else:
+                if not tid in self.selected:
+                    self.selected = [tid]
+
+            # touched node
+            tnode = self.id2node[tid]
+
+            if not tnode in self.node2dev:
+                break
+
+            # touched device, etc..
+            tdev = self.node2dev[tnode]
+
+            if isinstance(tdev, DeviceNode):
+                if len(self.selected) == 1:
+                    self.current_popup = self.popup_single_device
+
+            if self.current_popup:
+                try: 
+                    self.current_popup.tk_popup(event.x_root, event.y_root)
+                    self.current_popup.grab_release()
+                except:
+                    self.current_popup.grab_release()
+                    self.current_popup = None
+
+                return
+
+            break
 
         #print("down_all")
         event.widget.scan_mark(int(x), int(y)
