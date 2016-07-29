@@ -34,6 +34,16 @@ class PropLineDesc(object):
         self.w_val.destroy()
         self.bt_del.destroy()
 
+        for pld in self.dsw.prop2field.values():
+            if pld.row > self.row:
+                row = pld.row - 1
+                pld.row = row
+
+                pld.e_name.grid(row = row)
+                pld.om_type.grid(row = row)
+                pld.w_val.grid(row = row)
+                pld.bt_del.grid(row = row)
+
     def get_current_type(self):
         type_name = self.v_type.get()
         return DeviceSettingsWidget.prop_name_type_map[type_name]
