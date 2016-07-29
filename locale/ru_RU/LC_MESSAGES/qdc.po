@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"PO-Revision-Date: 2016-07-12 20:42+0300\n"
+"PO-Revision-Date: 2016-07-29 18:32+0300\n"
 "Last-Translator: Vasily Efimov <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
@@ -16,19 +16,55 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
+#: widgets/device_settings.py:175
+msgid "Delete"
+msgstr "Удалить"
+
+#: widgets/device_settings.py:233
+msgid "QOM type"
+msgstr "Тип QOM"
+
+#: widgets/device_settings.py:244
+msgid "Properties"
+msgstr "Свойства"
+
+#: widgets/device_settings.py:259
+msgid "Add"
+msgstr "Добавить"
+
+#: widgets/device_settings.py:419
+msgid "Device settings"
+msgstr "Установки устройства"
+
+#: widgets/device_settings.py:447
+msgid "Refresh"
+msgstr "Освежить"
+
+#: widgets/device_settings.py:456
+msgid "Apply"
+msgstr "Применить"
+
+#: widgets/device_settings.py:465
+msgid "OK"
+msgstr "ОК"
+
+#: widgets/machine_widget.py:293
+msgid "Settings"
+msgstr "Установки"
+
 #: history-test.py:92
 msgid "Edit history test"
 msgstr "Тест истории редактирования"
 
-#: history-test.py:102
+#: history-test.py:102 qdc-gui.py:61
 msgid "Undo"
 msgstr "Отменить"
 
-#: history-test.py:107
+#: history-test.py:107 qdc-gui.py:68
 msgid "Redo"
 msgstr "Повторить"
 
-#: history-test.py:111
+#: history-test.py:111 qdc-gui.py:74
 msgid "Edit"
 msgstr "Правка"
 
@@ -39,6 +75,14 @@ msgstr "ГИ генератора устройств Qemu"
 #: qdc-gui.py:34
 msgid "Shutdown the application."
 msgstr "Завершить приложение."
+
+#: qdc-gui.py:39
+msgid "Revert previous editing."
+msgstr "Отменить изменения."
+
+#: qdc-gui.py:44
+msgid "Make reverted editing again."
+msgstr "Повторить отменённые изменения."
 
 #: qdc-gui.py:53
 msgid "Quit"
