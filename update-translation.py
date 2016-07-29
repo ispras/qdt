@@ -4,6 +4,8 @@ from subprocess import call
 import os
 
 files = [
+    "widgets/device_settings.py",
+    "widgets/machine_widget.py",
     "history-test.py",
     "qdc-gui.py",
     "widgets/hotkey.py"
