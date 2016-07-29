@@ -18,6 +18,9 @@ from qemu import \
         MOp_AddDevProp, \
         MOp_SetDevProp
 
+from itertools import \
+    count
+
 class PropLineDesc(object):
     def __init__(self, device_settings_widget, prop):
         self.dsw = device_settings_widget
@@ -242,6 +245,16 @@ class DeviceSettingsWidget(tk.Frame):
         self.refresh()
 
         self.mht.add_on_changed(self.on_changed)
+
+    def gen_uniq_prop_name(self):
+        for x in count(0, 1):
+            name = "name-of-new-property-" + str(x)
+            for prop in self.prop2field:
+                if name == prop.prop_name:
+                    name = None
+                    break
+            if name:
+                return name
 
     def destroy(self):
         self.mht.remove_on_changed(self.on_changed)
