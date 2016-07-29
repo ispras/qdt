@@ -44,6 +44,8 @@ class PropLineDesc(object):
                 pld.w_val.grid(row = row)
                 pld.bt_del.grid(row = row)
 
+        # TODO: the Add button is to be shifted too.
+
     def get_current_type(self):
         type_name = self.v_type.get()
         return DeviceSettingsWidget.prop_name_type_map[type_name]
@@ -252,6 +254,16 @@ class DeviceSettingsWidget(tk.Frame):
         self.props_lf.columnconfigure(3, weight = 0)
         self.prop2field = {}
 
+        self.bt_add_prop = VarButton(
+            self.props_lf,
+            text = _("Add"),
+            command = self.on_prop_add
+        )
+        self.bt_add_prop.grid(
+            column = 3,
+            sticky = "NEWS"
+        )
+
         self.refresh()
 
         self.mht.add_on_changed(self.on_changed)
@@ -265,6 +277,21 @@ class DeviceSettingsWidget(tk.Frame):
                     break
             if name:
                 return name
+
+    def on_prop_add(self):
+        p = qemu.QOMPropertyValue(
+            qemu.QOMPropertyTypeLink,
+            self.gen_uniq_prop_name(),
+            None
+        )
+        lpd = PropLineDesc(self, p)
+        row = len(self.prop2field)
+        lpd.gen_row(row)
+
+        self.prop2field[p] = lpd
+
+        # Move add button bottom
+        self.bt_add_prop.grid(row = row + 1)
 
     def destroy(self):
         self.mht.remove_on_changed(self.on_changed)
@@ -335,6 +362,9 @@ class DeviceSettingsWidget(tk.Frame):
 
         self.prop2field = {}
 
+        # If self.dev.properties is empty the row variable will remain
+        # undefined.
+        row = -1
         for row, p in enumerate(self.dev.properties):
             lpd = PropLineDesc(self, p)
             lpd.gen_row(row)
@@ -343,6 +373,8 @@ class DeviceSettingsWidget(tk.Frame):
             # The QOMPropertyValue is used to apply deletion of device
             # property. 
             self.prop2field[p] = lpd
+
+        self.bt_add_prop.grid(row = row + 1)
 
     def apply(self):
         self.mht.remove_on_changed(self.on_changed)
@@ -365,8 +397,7 @@ class DeviceSettingsWidget(tk.Frame):
                         self.dev.id
                     )
             except KeyError:
-                raise Exception("Adding device properties is no implemented.")
-                # self.mht.stage(MOp_AddDevProp, p, self.dev.id)
+                self.mht.stage(MOp_AddDevProp, p, self.dev.id)
 
         for p in self.dev.properties:
             if not p in self.prop2field:
