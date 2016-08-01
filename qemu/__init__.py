@@ -69,6 +69,7 @@ from version import \
 from machine_editing import \
     MachineOperation, \
         MachineDeviceOperation, \
+            MOp_SetDevQOMType, \
             MachineDevicePropertyOperation, \
                 MOp_DelDevProp, \
                 MOp_AddDevProp, \

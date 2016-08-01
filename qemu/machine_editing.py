@@ -20,6 +20,28 @@ class MachineDeviceOperation(MachineOperation):
     def gen_dev_entry(self):
         return copy.deepcopy(self.device_id)
 
+class MOp_SetDevQOMType(MachineDeviceOperation):
+    def __init__(self, new_type_name, *args, **kw):
+        MachineDeviceOperation.__init__(self, *args, **kw)
+
+        self.new_type_name = new_type_name
+
+    def __write_set__(self):
+        return MachineDeviceOperation.__write_set__(self) + \
+            [ (self.gen_dev_entry(), "qom_type") ]
+
+    def __backup__(self):
+        dev = self.mach.id2node[self.dev_id]
+        self.old_type_name = dev.qom_type
+
+    def __do__(self):
+        dev = self.mach.id2node[self.dev_id]
+        dev.qom_type = self.new_type_name
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.dev_id]
+        dev.qom_type = self.old_type_name
+
 class MachineDevicePropertyOperation(MachineDeviceOperation):
     def __init__(self, prop, *args, **kw):
         MachineDeviceOperation.__init__(self, *args, **kw)
