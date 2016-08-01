@@ -19,6 +19,7 @@ from common import \
     sign
 
 from qemu import \
+    MOp_SetDevQOMType, \
     Node, \
     DeviceNode, \
     MachineHistoryTracker
@@ -300,6 +301,13 @@ class MachineWidget(CanvasDnD):
 
         self.current_popup = None
 
+        self.mht.add_on_changed(self.on_machine_changed)
+
+    def on_machine_changed(self, op):
+        if isinstance(op, MOp_SetDevQOMType):
+            dev = self.mach.id2node[op.dev_id]
+            node = self.dev2node[dev]
+            self.update_node_text(node)
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
