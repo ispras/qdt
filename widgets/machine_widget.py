@@ -195,6 +195,7 @@ class IRQHubCircle(NodeCircle):
     def __init__(self, hub):
         NodeCircle.__init__(self)
         self.spacing = 5
+        self.node = hub
 
     def get_irq_binding(self, target):
         if target:
