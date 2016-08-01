@@ -15,6 +15,7 @@ import qemu
 
 from qemu import \
     MachineDeviceOperation, \
+        MOp_SetDevQOMType, \
         MOp_DelDevProp, \
         MOp_AddDevProp, \
         MOp_SetDevProp
@@ -381,6 +382,10 @@ class DeviceSettingsWidget(tk.Frame):
 
     def apply(self):
         self.mht.remove_on_changed(self.on_changed)
+
+        qom = self.qom_type_var.get()
+        if not self.dev.qom_type == qom:
+            self.mht.stage(MOp_SetDevQOMType, qom, self.dev.id)
 
         for p, desc in self.prop2field.iteritems():
             cur_name, cur_type, cur_val = desc.get_current_name(), \
