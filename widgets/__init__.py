@@ -14,6 +14,7 @@ from machine_widget import \
     MachineWidget
 
 from hotkey import \
+    HKEntry, \
     HotKeyBinding, \
     HotKey
 

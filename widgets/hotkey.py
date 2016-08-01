@@ -1,6 +1,19 @@
 from common import \
     ML as _
 
+from Tkinter import \
+    Entry
+
+class HKEntry(Entry):
+    def __init__(self, *args, **kw):
+        Entry.__init__(self, *args, **kw)
+
+        self.bind("<Control-Key>", self.ignore)
+
+    def ignore(self, event):
+        if event.keycode == 29: # prevent paste on Ctrl + Y
+            return "break"
+
 class HotKeyBinding(object):
     def __init__(self, callback, key_code, description = None):
         self.cb = callback
