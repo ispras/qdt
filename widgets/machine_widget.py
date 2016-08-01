@@ -19,6 +19,7 @@ from common import \
     sign
 
 from qemu import \
+    Node, \
     DeviceNode, \
     MachineHistoryTracker
 
@@ -230,6 +231,7 @@ class MachineWidget(CanvasDnD):
         self.node2id = {}
         self.dev2node = {}
         self.node2dev = {}
+        self.node2idtext = {}
 
         self.nodes = []
         self.buslabels = []
@@ -832,6 +834,32 @@ class MachineWidget(CanvasDnD):
                 bbox[0] - 1, bbox[1] - 1,
                 bbox[2] + 1, bbox[3] + 1
             ])
+
+            node = self.id2node[sid]
+            if not node in self.node2idtext:
+                idtext = self.canvas.create_text(
+                    0, 0,
+                    text = str(node.node.id),
+                    state = tk.DISABLED
+                )
+                self.node2idtext[node] = idtext
+
+        for n, idtext in list(self.node2idtext.iteritems()):
+            id = self.node2id[n]
+            if not id in self.selected:
+                self.canvas.delete(idtext)
+                del self.node2idtext[n]
+                continue
+
+            dev = self.node2dev[n]
+            if isinstance(dev, Node):
+                if isinstance(n, NodeCircle):
+                    bbox = self.canvas.bbox(idtext)
+                    coords = [n.x + n.r, n.y + n.r]
+                else:
+                    coords = [n.x + n.width + n.spacing,
+                              n.y + n.height + n.spacing]
+                self.canvas.coords(idtext, *coords)
 
     def ph_apply(self):
         for n in self.nodes:

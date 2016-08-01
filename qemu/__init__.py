@@ -30,6 +30,7 @@ from machine import \
     MachineType
 
 from machine_description import \
+    Node, \
     MachineNode, \
     BusNode, \
     I2CBusNode, \
