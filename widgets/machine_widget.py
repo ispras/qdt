@@ -1307,24 +1307,26 @@ class MachineWidget(CanvasDnD):
 
         self.after(int(rest * 1000), self.ph_run)
 
-    def add_node(self, node, fixed_x):
+    def update_node_text(self, node):
         text = node.node.qom_type
         if text.startswith("TYPE_"):
             text = text[5:]
+        self.canvas.itemconfig(node.text, text = text)
 
-        id = self.canvas.create_text(
-            node.x, node.y,
-            text = text,
-            state = tk.DISABLED
-        )
-        node.text = id
-
-        t_bbox = self.canvas.bbox(id)
+        t_bbox = self.canvas.bbox(node.text)
         node.text_width = t_bbox[2] - t_bbox[0]
         node.text_height = t_bbox[3] - t_bbox[1]
 
         node.width = node.text_width + node.padding
         node.height = node.text_height + node.padding
+
+    def add_node(self, node, fixed_x):
+        node.text = self.canvas.create_text(
+            node.x, node.y,
+            state = tk.DISABLED
+        )
+
+        self.update_node_text(node)
 
         # todo: replace rectangle with image
         if fixed_x:
