@@ -9,6 +9,7 @@ from common import \
     ML as _
 
 import Tkinter as tk
+import ttk
 
 import qemu
 
@@ -97,7 +98,11 @@ class PropLineDesc(object):
                 keys.append(
                     DeviceSettingsWidget.gen_node_link_text(prop_val))
 
-            ret = tk.OptionMenu(self.dsw.props_lf, var, *keys)
+            ret = ttk.Combobox(self.dsw.props_lf, 
+                textvariable = var,
+                values = keys,
+                state = "readonly"
+            )
             if prop_val:
                 current = DeviceSettingsWidget.gen_node_link_text(prop_val)
             else:
