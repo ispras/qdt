@@ -219,6 +219,8 @@ class IRQLine(object):
         self.lines = []
 
 class MachineWidget(CanvasDnD):
+    EVENT_SELECT = "<<Select>>"
+
     def __init__(self, parent, mach_desc):
         CanvasDnD.__init__(self, parent)
 
@@ -388,7 +390,9 @@ class MachineWidget(CanvasDnD):
 
         if not touched_ids:
             if not shift:
-                self.selected = []
+                if self.selected:
+                    self.selected = []
+                    self.event_generate(MachineWidget.EVENT_SELECT)
             return
 
         if not touched_ids:
@@ -399,13 +403,17 @@ class MachineWidget(CanvasDnD):
                 if self.select_by_frame:
                     if not tid in self.selected:
                         self.selected.append(tid)
+                        self.event_generate(MachineWidget.EVENT_SELECT)
                 else:
                     if tid in self.selected:
                         self.selected.remove(tid)
+                        self.event_generate(MachineWidget.EVENT_SELECT)
                     else:
                         self.selected.append(tid)
-        else:
+                        self.event_generate(MachineWidget.EVENT_SELECT)
+        elif not self.selected == touched_ids:
             self.selected = list(touched_ids)
+            self.event_generate(MachineWidget.EVENT_SELECT)
 
         self.invalidated = True
 
@@ -431,9 +439,11 @@ class MachineWidget(CanvasDnD):
             if shift:
                 if not tid in self.selected:
                     self.selected.append(tid)
+                    self.event_generate(MachineWidget.EVENT_SELECT)
             else:
                 if not tid in self.selected:
                     self.selected = [tid]
+                    self.event_generate(MachineWidget.EVENT_SELECT)
 
             # touched node
             tnode = self.id2node[tid]
@@ -548,6 +558,7 @@ class MachineWidget(CanvasDnD):
                     self.selected.append(id)
                 else:
                     self.selected = []
+                self.event_generate(MachineWidget.EVENT_SELECT)
 
         if self.selected:
             # offset
