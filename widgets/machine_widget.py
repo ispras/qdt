@@ -845,18 +845,12 @@ class MachineWidget(CanvasDnD):
 
             node = self.id2node[sid]
             if not node in self.node2idtext:
-                idtext = self.canvas.create_text(
-                    0, 0,
-                    text = str(node.node.id),
-                    state = tk.DISABLED
-                )
-                self.node2idtext[node] = idtext
+                self.show_node_id(node)
 
         for n, idtext in list(self.node2idtext.iteritems()):
             id = self.node2id[n]
             if not id in self.selected:
-                self.canvas.delete(idtext)
-                del self.node2idtext[n]
+                self.hide_node_id(n)
                 continue
 
             dev = self.node2dev[n]
@@ -868,6 +862,19 @@ class MachineWidget(CanvasDnD):
                     coords = [n.x + n.width + n.spacing,
                               n.y + n.height + n.spacing]
                 self.canvas.coords(idtext, *coords)
+
+    def show_node_id(self, node):
+        idtext = self.canvas.create_text(
+            0, 0,
+            text = str(node.node.id),
+            state = tk.DISABLED
+        )
+        self.node2idtext[node] = idtext
+
+    def hide_node_id(self, node):
+        idtext = self.node2idtext[node]
+        self.canvas.delete(idtext)
+        del self.node2idtext[node]
 
     def ph_apply(self):
         for n in self.nodes:
