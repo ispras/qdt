@@ -27,6 +27,9 @@ from qemu import \
 from device_settings import \
     DeviceSettingsWindow
 
+from sets import \
+    Set
+
 class NodeBox(object):
     def __init__(self, node):
         # "physics" parameters 
@@ -235,6 +238,9 @@ class MachineWidget(CanvasDnD):
         self.dev2node = {}
         self.node2dev = {}
         self.node2idtext = {}
+
+        self.bind(MachineWidget.EVENT_SELECT, self.on_select)
+        self.ids_shown_on_select = Set([])
 
         self.nodes = []
         self.buslabels = []
@@ -854,16 +860,7 @@ class MachineWidget(CanvasDnD):
                 bbox[2] + 1, bbox[3] + 1
             ])
 
-            node = self.id2node[sid]
-            if not node in self.node2idtext:
-                self.show_node_id(node)
-
         for n, idtext in list(self.node2idtext.iteritems()):
-            id = self.node2id[n]
-            if not id in self.selected:
-                self.hide_node_id(n)
-                continue
-
             dev = self.node2dev[n]
             if isinstance(dev, Node):
                 if isinstance(n, NodeCircle):
@@ -873,6 +870,18 @@ class MachineWidget(CanvasDnD):
                     coords = [n.x + n.width + n.spacing,
                               n.y + n.height + n.spacing]
                 self.canvas.coords(idtext, *coords)
+
+    def on_select(self, event):
+        still_selected = Set([])
+        for sid in self.selected:
+            node = self.id2node[sid]
+            still_selected.add(node)
+
+        for n in self.ids_shown_on_select - still_selected:
+            self.hide_node_id(n)
+        for n in still_selected - self.ids_shown_on_select:
+            self.show_node_id(n)
+        self.ids_shown_on_select = still_selected
 
     def show_node_id(self, node):
         idtext = self.canvas.create_text(
