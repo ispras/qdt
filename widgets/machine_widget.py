@@ -327,6 +327,10 @@ class MachineWidget(CanvasDnD):
 
         dev = self.node2dev[self.id2node[id]]
         wnd = DeviceSettingsWindow(self, dev, self.mht)
+        # Makes settings window always on top.
+        # Is there more pythonic interface?
+        # http://effbot.org/tkinterbook/wm.htm#Tkinter.Wm.attributes-method
+        wnd.attributes("-topmost", 1)
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
