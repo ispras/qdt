@@ -15,6 +15,7 @@ import qemu
 
 from qemu import \
     MachineDeviceOperation, \
+        MOp_SetDevParentBus, \
         MOp_SetDevQOMType, \
         MOp_DelDevProp, \
         MOp_AddDevProp, \
@@ -241,6 +242,19 @@ class DeviceSettingsWidget(tk.Frame):
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
 
+        # parent bus editing widgets
+        l = VarLabel(common_fr, text = _("Parent bus"))
+        self.bus_var = tk.StringVar()
+        self.bus_cb = ttk.Combobox(
+            common_fr,
+            textvariable = self.bus_var,
+            state = "readonly"
+        )
+
+        l.grid(row = 1, column = 0, sticky = "W")
+        self.bus_cb.grid(row = 1, column = 1, sticky = "EW")
+        common_fr.rowconfigure(1, weight = 0)
+
         self.rowconfigure(1, weight = 1)
 
         self.props_lf = VarLabelFrame(
@@ -383,8 +397,25 @@ class DeviceSettingsWidget(tk.Frame):
 
         self.bt_add_prop.grid(row = row + 1)
 
+        # refresh parent bus
+        buses = [ DeviceSettingsWidget.gen_node_link_text(None) ]
+        for n in self.mht.mach.id2node.values():
+            if not isinstance(n, qemu.BusNode):
+                continue
+            buses.append(DeviceSettingsWidget.gen_node_link_text(n))
+        self.bus_cb.config(values = buses)
+        self.bus_var.set(
+            DeviceSettingsWidget.gen_node_link_text(self.dev.parent_bus)
+        )
+
     def apply(self):
         self.mht.remove_on_changed(self.on_changed)
+
+        # apply parent bus
+        new_bus_text = self.bus_var.get()
+        new_bus = self.find_node_by_link_text(new_bus_text)
+        if not self.dev.parent_bus == new_bus:
+            self.mht.stage(MOp_SetDevParentBus, new_bus, self.dev.id)
 
         qom = self.qom_type_var.get()
         if not self.dev.qom_type == qom:
