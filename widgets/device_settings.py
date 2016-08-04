@@ -407,9 +407,7 @@ class DeviceSettingsWidget(tk.Frame):
             DeviceSettingsWidget.gen_node_link_text(self.dev.parent_bus)
         )
 
-    def apply(self):
-        self.mht.remove_on_changed(self.on_changed)
-
+    def __apply_internal__(self):
         # apply parent bus
         new_bus_text = self.bus_var.get()
         new_bus = self.find_node_by_link_text(new_bus_text)
@@ -443,6 +441,11 @@ class DeviceSettingsWidget(tk.Frame):
         for p in self.dev.properties:
             if not p in self.prop2field:
                 self.mht.stage(MOp_DelDevProp, p, self.dev.id)
+
+    def apply(self):
+        self.mht.remove_on_changed(self.on_changed)
+
+        self.__apply_internal__()
 
         self.mht.commit()
 
