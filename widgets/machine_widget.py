@@ -25,7 +25,7 @@ from qemu import \
     DeviceNode, \
     MachineHistoryTracker
 
-from device_settings import \
+from widgets import \
     DeviceSettingsWindow
 
 from sets import \

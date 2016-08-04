@@ -10,14 +10,16 @@ from var_widgets import \
     VarCheckbutton, \
     VarMenu
 
-from machine_widget import \
-    MachineWidget
-
 from hotkey import \
     HKEntry, \
     HotKeyBinding, \
     HotKey
 
 from device_settings import \
-    DeviceSettingsWidget, \
+    DeviceSettingsWidget
+
+from device_settings_window import \
     DeviceSettingsWindow
+
+from machine_widget import \
+    MachineWidget
