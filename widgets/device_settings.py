@@ -282,7 +282,7 @@ class DeviceSettingsWidget(tk.Frame):
             sticky = "NEWS"
         )
 
-        self.refresh()
+        self.after(0, self.refresh)
 
         self.mht.add_on_changed(self.on_changed)
 
