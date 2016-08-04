@@ -341,7 +341,7 @@ class MachineType(QOMType):
                         )
 
                 if isinstance(node, SystemBusDeviceNode):
-                    for idx, mmio in enumerate(node.mmio_mappings):
+                    for idx, mmio in node.mmio_mappings.iteritems():
                         if mmio is not None:
                             self.use_type_name("sysbus_mmio_map")
                             self.use_type_name("SYS_BUS_DEVICE")

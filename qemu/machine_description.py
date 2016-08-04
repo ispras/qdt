@@ -2,6 +2,7 @@ import machine
 from __builtin__ import isinstance
 from source import Type
 from project import QOMDescription
+from itertools import count
 
 # properties
 class QOMPropertyType(object):
@@ -379,8 +380,8 @@ class SystemBusDeviceNode(DeviceNode):
                  pmio = None):
         DeviceNode.__init__(self, qom_type = qom_type, parent = system_bus)
 
-        self.mmio_mappings = []
-        self.pmio_mappings = []
+        self.mmio_mappings = {}
+        self.pmio_mappings = {}
 
         if mmio is not None :
             for index, address in enumerate(mmio):
@@ -400,7 +401,13 @@ class SystemBusDeviceNode(DeviceNode):
             self.gen_field("mmio = [")
             gen.line()
             gen.push_indent()
-            for idx, mmio in enumerate(self.mmio_mappings):
+            prev_idx = -1
+            for idx, mmio in self.mmio_mappings.iteritems():
+                for none_idx in xrange(prev_idx + 1, idx):
+                    if none_idx > 0:
+                        gen.line(",")
+                    gen.write("None")
+                prev_idx = idx
                 if idx > 0:
                     gen.line(",")
                 gen.write(self.gen_const(mmio))
@@ -412,7 +419,13 @@ class SystemBusDeviceNode(DeviceNode):
             self.gen_field("pmio = [")
             gen.line()
             gen.push_indent()
-            for idx, pmio in enumerate(self.pmio_mappings):
+            prev_idx = -1
+            for idx, pmio in self.pmio_mappings.iteritems():
+                for none_idx in xrange(prev_idx + 1, idx):
+                    if none_idx > 0:
+                        gen.line(",")
+                    gen.write("None")
+                prev_idx = idx
                 if idx > 0:
                     gen.line(",")
                 gen.write(self.gen_const(pmio))
@@ -424,30 +437,24 @@ class SystemBusDeviceNode(DeviceNode):
         self.gen_props(gen)
 
     def add_memory_mapping(self, address, index = 0):
-        l = len(self.mmio_mappings)
-        if l <= index:
-            for i in xrange(l, index + 1):
-                self.mmio_mappings.append(None)
+        for idx in count(index):
+            if not idx in self.mmio_mappings:
+                break
 
-        self.mmio_mappings[index] = address
+        self.mmio_mappings[idx] = address
 
     def delete_memory_mapping(self, index = 0):
-        if index < len(self.mmio_mappings):
-            self.mmio_mappings[index] = None
-        # TODO: truncate last None items in the array
+        del self.mmio_mappings[index]
 
     def add_port_mapping(self, port, index = 0):
-        l = len(self.mmio_mappings)
-        if l <= index:
-            for i in xrange(l, index + 1):
-                self.pmio_mappings.append(None)
+        for idx in count(index):
+            if not idx in self.pmio_mappings:
+                break
 
-        self.pmio_mappings[index] = port
+        self.pmio_mappings[idx] = port
 
     def delete_port_mapping(self, index = 0):
-        if index < len(self.pmio_mappings):
-            self.pmio_mappings[index] = None
-        # TODO: truncate last None items in the array
+        del self.pmio_mappings[index]
 
 class PCIExpressDeviceNode(DeviceNode):
     def __init__(self, 
