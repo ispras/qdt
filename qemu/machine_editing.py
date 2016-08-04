@@ -23,6 +23,54 @@ class MachineDeviceOperation(MachineOperation):
     def gen_dev_entry(self):
         return self.gen_node_id_entry(self.device_id)
 
+class MOp_SetDevParentBus(MachineDeviceOperation):
+    def __init__(self, new_bus, *args, **kw):
+        MachineDeviceOperation.__init__(self, *args, **kw)
+
+        self.new_bus_id = new_bus.id if new_bus else -1
+
+    def __backup__(self):
+        dev = self.mach.id2node[self.dev_id]
+        self.old_bus_id = dev.parent_bus.id if dev.parent_bus else -1
+
+    def __do__(self):
+        dev = self.mach.id2node[self.dev_id]
+
+        if dev.parent_bus:
+            dev.parent_bus.devices.remove(dev)
+
+        if self.new_bus_id < 0:
+            dev.parent_bus = None
+        else:
+            parent_bus = self.mach.id2node[self.new_bus_id]
+            dev.parent_bus = parent_bus
+            parent_bus.devices.append(dev)
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.dev_id]
+
+        if dev.parent_bus:
+            dev.parent_bus.devices.remove(dev)
+
+        if self.old_bus_id < 0:
+            dev.parent_bus = None
+        else:
+            parent_bus = self.mach.id2node[self.old_bus_id]
+            dev.parent_bus = parent_bus
+            parent_bus.devices.append(dev)
+
+    def __write_set__(self):
+        return MachineDeviceOperation.__write_set__(self) + \
+            [ (self.gen_dev_entry(), "parent_bus") ]
+
+    def __read_set__(self):
+        ret = MachineDeviceOperation.__write_set__(self) + \
+            [ self.gen_dev_entry() ]
+        if self.new_bus_id >= 0:
+            ret = ret + [ self.gen_node_id_entry(self.new_bus_id) ]
+        if self.old_bus_id >= 0:
+            ret = ret + [ self.gen_node_id_entry(self.old_bus_id) ]
+        return ret
 
 class MOp_SetDevQOMType(MachineDeviceOperation):
     def __init__(self, new_type_name, *args, **kw):
