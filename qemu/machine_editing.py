@@ -21,7 +21,8 @@ class MachineDeviceOperation(MachineOperation):
         self.dev_id = copy.deepcopy(device_id)
 
     def gen_dev_entry(self):
-        return copy.deepcopy(self.device_id)
+        return self.gen_node_id_entry(self.device_id)
+
 
 class MOp_SetDevQOMType(MachineDeviceOperation):
     def __init__(self, new_type_name, *args, **kw):
