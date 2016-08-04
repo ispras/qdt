@@ -18,6 +18,9 @@ from hotkey import \
 from device_settings import \
     DeviceSettingsWidget
 
+from sysbusdevset import \
+    SystemBusDeviceSettingsWidget
+
 from device_settings_window import \
     DeviceSettingsWindow
 
