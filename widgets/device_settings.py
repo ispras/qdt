@@ -330,6 +330,9 @@ class DeviceSettingsWidget(tk.Frame):
     @staticmethod
     def gen_node_link_text(node):
         # TODO: localize?
+        if node is None:
+            return "-1: NULL"
+
         ret = str(node.id) + ": "
         if isinstance(node, qemu.BusNode):
             ret = ret + "Bus, " + node.gen_child_name_for_bus()
