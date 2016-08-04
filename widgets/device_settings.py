@@ -93,9 +93,9 @@ class PropLineDesc(object):
     def gen_prop_value_widget(self, prop_type, prop_val):
         if prop_type == qemu.QOMPropertyTypeLink:
             var = tk.StringVar()
-            keys = ["-1: NULL"] + \
-                [ DeviceSettingsWidget.gen_node_link_text(n) \
-                   for n in self.dsw.mht.mach.id2node.values()]
+            keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
+                    for n in [ None ] + self.dsw.mht.mach.id2node.values()
+                   ]
 
             ret = ttk.Combobox(self.dsw.props_lf, 
                 textvariable = var,
