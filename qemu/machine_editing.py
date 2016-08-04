@@ -12,6 +12,9 @@ class MachineOperation(InverseOperation):
         InverseOperation.__init__(self, *args, **kw)
         self.mach = machine_description
 
+    def gen_node_id_entry(self, node_id):
+        return copy.deepcopy(node_id)
+
 class MachineDeviceOperation(MachineOperation):
     def __init__(self, device_id, *args, **kw):
         MachineOperation.__init__(self, *args, **kw)
