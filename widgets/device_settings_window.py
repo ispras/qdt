@@ -3,12 +3,15 @@ from var_widgets import \
     VarButton
 
 from widgets import \
+    SystemBusDeviceSettingsWidget, \
     DeviceSettingsWidget
 
 import Tkinter as tk
 
 from common import \
     ML as _
+
+import qemu
 
 class DeviceSettingsWindow(VarToplevel):
     def __init__(self,
@@ -26,7 +29,12 @@ class DeviceSettingsWindow(VarToplevel):
 
         self.rowconfigure(0, weight = 1)
 
-        self.dsw = DeviceSettingsWidget(self, device, machine_history_tracker)
+        if isinstance(device, qemu.SystemBusDeviceNode):
+            dsw_class = SystemBusDeviceSettingsWidget
+        else:
+            dsw_class = DeviceSettingsWidget
+
+        self.dsw = dsw_class(self, device, machine_history_tracker)
         self.dsw.grid(
             row = 0,
             column = 0,
