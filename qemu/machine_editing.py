@@ -23,6 +23,84 @@ class MachineDeviceOperation(MachineOperation):
     def gen_dev_entry(self):
         return self.gen_node_id_entry(self.device_id)
 
+class MachineIOMappingOperation(MachineDeviceOperation):
+    def __init__(self, mio, idx, *args, **kw):
+        MachineDeviceOperation.__init__(self, *args, **kw)
+
+        self.mio = copy.deepcopy(mio)
+        self.idx = copy.deepcopy(idx)
+
+    def __write_set__(self):
+        return MachineDeviceOperation.__write_set__(self) + [
+            (self.gen_dev_entry(), copy.deepcopy(self.mio), 
+             copy.deepcopy(self.idx))
+        ]
+
+    def __read_set__(self):
+        return MachineDeviceOperation.__read_set__(self) + [
+            self.gen_dev_entry()
+        ]
+
+class MOp_DelIOMapping(MachineIOMappingOperation):
+    def __backup__(self):
+        dev = self.mach.id2node[self.dev_id]
+
+        self.old_mapping = copy.deepcopy(
+            getattr(dev, self.mio + "_mappings")[self.idx]
+        )
+
+    def __do__(self):
+        dev = self.mach.id2node[self.dev_id]
+        mappings = getattr(dev, self.mio + "_mappings")
+        del mappings[self.idx]
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.dev_id]
+        mappings = getattr(dev, self.mio + "_mappings")
+        mappings[self.idx] = copy.deepcopy(self.old_mapping)
+
+class MOp_AddIOMapping(MachineIOMappingOperation):
+    def __init__(self, mapping, *args, **kw):
+        MachineIOMappingOperation.__init__(self, *args, **kw)
+
+        self.mapping = copy.deepcopy(mapping)
+
+    def __backup__(self):
+        pass
+
+    def __do__(self):
+        dev = self.mach.id2node[self.dev_id]
+        mappings = getattr(dev, self.mio + "_mappings")
+        mappings[self.idx] = copy.deepcopy(self.mapping)
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.dev_id]
+        mappings = getattr(dev, self.mio + "_mappings")
+        del mappings[self.idx]
+
+class MOp_SetIOMapping(MachineIOMappingOperation):
+    def __init__(self, new_mapping, *args, **kw):
+        MachineIOMappingOperation.__init__(self, *args, **kw)
+
+        self.new_mapping = copy.deepcopy(new_mapping)
+
+    def __backup__(self):
+        dev = self.mach.id2node[self.dev_id]
+
+        self.old_mapping = copy.deepcopy(
+            getattr(dev, self.mio + "_mappings")[self.idx]
+        )
+
+    def __do__(self):
+        dev = self.mach.id2node[self.dev_id]
+        mappings = getattr(dev, self.mio + "_mappings")
+        mappings[self.idx] = copy.deepcopy(self.new_mapping)
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.dev_id]
+        mappings = getattr(dev, self.mio + "_mappings")
+        mappings[self.idx] = copy.deepcopy(self.old_mapping)
+
 class MOp_SetDevParentBus(MachineDeviceOperation):
     def __init__(self, new_bus, *args, **kw):
         MachineDeviceOperation.__init__(self, *args, **kw)

@@ -69,6 +69,10 @@ from version import \
 from machine_editing import \
     MachineOperation, \
         MachineDeviceOperation, \
+            MachineIOMappingOperation, \
+                MOp_DelIOMapping, \
+                MOp_AddIOMapping, \
+                MOp_SetIOMapping, \
             MOp_SetDevParentBus, \
             MOp_SetDevQOMType, \
             MachineDevicePropertyOperation, \
