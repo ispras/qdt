@@ -19,6 +19,7 @@ from common import \
     sign
 
 from qemu import \
+    MOp_SetDevParentBus, \
     MOp_SetDevQOMType, \
     Node, \
     DeviceNode, \
@@ -316,6 +317,24 @@ class MachineWidget(CanvasDnD):
             dev = self.mach.id2node[op.dev_id]
             node = self.dev2node[dev]
             self.update_node_text(node)
+        elif isinstance(op, MOp_SetDevParentBus):
+            dev = self.mach.id2node[op.dev_id]
+            node = self.dev2node[dev]
+            pb = dev.parent_bus
+            if node.conn:
+                if pb:
+                    pbn = self.dev2node[pb].busline
+                    node.conn.bus_node = pbn
+                else:
+                    conn_id = self.node2id[node.conn]
+                    del self.id2node[conn_id]
+                    del self.node2id[node.conn]
+                    self.conns.remove(node.conn)
+                    self.canvas.delete(conn_id)
+                    node.conn = None
+            else:
+                pbn = self.dev2node[pb].busline
+                self.add_conn(node, pbn)
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
