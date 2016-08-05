@@ -13,6 +13,9 @@ from common import \
 
 import qemu
 
+from pci_device_settings import \
+    PCIDeviceSettingsWidget
+
 class DeviceSettingsWindow(VarToplevel):
     def __init__(self,
             master,
@@ -31,6 +34,8 @@ class DeviceSettingsWindow(VarToplevel):
 
         if isinstance(device, qemu.SystemBusDeviceNode):
             dsw_class = SystemBusDeviceSettingsWidget
+        elif isinstance(device, qemu.PCIExpressDeviceNode):
+            dsw_class = PCIDeviceSettingsWidget
         else:
             dsw_class = DeviceSettingsWidget
 
