@@ -70,6 +70,9 @@ from machine_editing import \
     MachineOperation, \
         MachineDeviceOperation, \
             MachineDeviceSetAttributeOperation, \
+                MOp_PCIDevSetSlot, \
+                MOp_PCIDevSetFunction, \
+                MOp_PCIDevSetMultifunction, \
             MachineIOMappingOperation, \
                 MOp_DelIOMapping, \
                 MOp_AddIOMapping, \

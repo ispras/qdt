@@ -53,6 +53,27 @@ class MachineDeviceSetAttributeOperation(MachineDeviceOperation):
             (self.gen_dev_entry(), copy.deepcopy(self.attr))
         ]
 
+class MOp_PCIDevSetSlot(MachineDeviceSetAttributeOperation):
+    def __init__(self, slot, *args, **kw):
+        MachineDeviceSetAttributeOperation.__init__(self,
+            "slot", slot,
+            *args, **kw
+        )
+
+class MOp_PCIDevSetFunction(MachineDeviceSetAttributeOperation):
+    def __init__(self, function, *args, **kw):
+        MachineDeviceSetAttributeOperation.__init__(self,
+            "function", function,
+            *args, **kw
+        )
+
+class MOp_PCIDevSetMultifunction(MachineDeviceSetAttributeOperation):
+    def __init__(self, multifunction, *args, **kw):
+        MachineDeviceSetAttributeOperation.__init__(self,
+            "multifunction", multifunction,
+            *args, **kw
+        )
+
 class MachineIOMappingOperation(MachineDeviceOperation):
     def __init__(self, mio, idx, *args, **kw):
         MachineDeviceOperation.__init__(self, *args, **kw)
