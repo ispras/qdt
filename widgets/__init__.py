@@ -26,3 +26,6 @@ from device_settings_window import \
 
 from machine_widget import \
     MachineWidget
+
+from pci_device_settings import \
+    PCIDeviceSettingsWidget
