@@ -23,6 +23,36 @@ class MachineDeviceOperation(MachineOperation):
     def gen_dev_entry(self):
         return self.gen_node_id_entry(self.device_id)
 
+class MachineDeviceSetAttributeOperation(MachineDeviceOperation):
+    def __init__(self, attribute_name, new_value, *args, **kw):
+        MachineDeviceOperation.__init__(self, *args, **kw)
+
+        self.attr = attribute_name
+        self.new_val = copy.deepcopy(new_value)
+
+    def __backup__(self):
+        dev = self.mach.id2node[self.dev_id]
+        val = getattr(dev, self.attr)
+        self.old_val = copy.deepcopy(val)
+
+    def __do__(self):
+        dev = self.mach.id2node[self.dev_id]
+        setattr(dev, self.attr, copy.deepcopy(self.new_val))
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.dev_id]
+        setattr(dev, self.attr, copy.deepcopy(self.old_val))
+
+    def __read_set__(self):
+        return MachineDeviceOperation.__read_set__(self) + [
+            self.gen_dev_entry()
+        ]
+
+    def __write_set__(self):
+        return MachineDeviceOperation.__write_set__(self) + [
+            (self.gen_dev_entry(), copy.deepcopy(self.attr))
+        ]
+
 class MachineIOMappingOperation(MachineDeviceOperation):
     def __init__(self, mio, idx, *args, **kw):
         MachineDeviceOperation.__init__(self, *args, **kw)
