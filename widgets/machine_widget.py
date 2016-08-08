@@ -481,21 +481,22 @@ class MachineWidget(CanvasDnD):
                 break
 
             # touched device, etc..
-            tdev = self.node2dev[tnode]
+            if not self.current_popup:
+                tdev = self.node2dev[tnode]
 
-            if isinstance(tdev, DeviceNode):
-                if len(self.selected) == 1:
-                    self.current_popup = self.popup_single_device
+                if isinstance(tdev, DeviceNode):
+                    if len(self.selected) == 1:
+                        self.current_popup = self.popup_single_device
 
-            if self.current_popup:
-                try: 
-                    self.current_popup.tk_popup(event.x_root, event.y_root)
-                    self.current_popup.grab_release()
-                except:
-                    self.current_popup.grab_release()
-                    self.current_popup = None
+                if self.current_popup:
+                    try: 
+                        self.current_popup.tk_popup(event.x_root, event.y_root)
+                        self.current_popup.grab_release()
+                    except:
+                        self.current_popup.grab_release()
+                        self.current_popup = None
 
-                return
+                    return
 
             break
 
