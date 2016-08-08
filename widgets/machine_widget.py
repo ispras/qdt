@@ -19,6 +19,7 @@ from common import \
     sign
 
 from qemu import \
+    MachineNodeOperation, \
     MOp_SetDevParentBus, \
     MOp_SetDevQOMType, \
     Node, \
@@ -30,6 +31,23 @@ from widgets import \
 
 from sets import \
     Set
+
+class MachineWidgetNodeOperation(MachineNodeOperation):
+    def __init__(self, widget, *args, **kw):
+        MachineNodeOperation.__init__(self, *args, **kw)
+
+        self.w = widget
+
+    def get_widget_entry(self):
+        return (self.gen_entry(), "widget")
+
+    def get_widget_descriptor(self):
+        mach_node = self.w.mach.id2node[self.node_id]
+        widget_node = self.w.dev2node[mach_node]
+        return widget_node
+
+    def __read_set__(self):
+        return MachineNodeOperation.__read_set__(self) + [ self.gen_entry() ]
 
 class NodeBox(object):
     def __init__(self, node):
