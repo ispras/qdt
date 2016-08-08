@@ -49,6 +49,32 @@ class MachineWidgetNodeOperation(MachineNodeOperation):
     def __read_set__(self):
         return MachineNodeOperation.__read_set__(self) + [ self.gen_entry() ]
 
+class MWOp_MoveNode(MachineWidgetNodeOperation):
+    def __init__(self, target_x, target_y, *args, **kw):
+        MachineWidgetNodeOperation.__init__(self, *args, **kw)
+
+        self.tgt = target_x, target_y
+
+    def __backup__(self):
+        w = self.get_widget_descriptor()
+
+        self.orig = w.x, w.y
+
+    def __do__(self):
+        w = self.get_widget_descriptor()
+
+        w.x, w.y = self.tgt
+
+    def __undo__(self):
+        w = self.get_widget_descriptor()
+
+        w.x, w.y = self.orig
+
+    def __write_set__(self):
+        return MachineWidgetNodeOperation.__write_set__(self) + [
+            self.get_widget_entry()
+        ]
+
 class NodeBox(object):
     def __init__(self, node):
         # "physics" parameters 
