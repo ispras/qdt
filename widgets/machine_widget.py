@@ -355,6 +355,10 @@ class MachineWidget(CanvasDnD):
         self.popup_single_device = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("Add IRQ hub"),
+            command = self.on_add_irq_hub 
+        )
         self.popup_empty_no_selected = p
 
         self.current_popup = None
@@ -431,6 +435,19 @@ class MachineWidget(CanvasDnD):
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+
+    def on_add_irq_hub(self):
+        p = self.current_popup
+        x, y = p.winfo_rootx() - self.winfo_rootx(), \
+               p.winfo_rooty() - self.winfo_rooty()
+
+        # print "Adding IRQ hub: " + str(x) + ", " + str(y)
+
+        node_id = self.mach.get_free_id()
+
+        self.mht.stage(MOp_AddIRQHub, node_id)
+        self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
+        self.mht.commit()
 
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
