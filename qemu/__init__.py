@@ -69,6 +69,8 @@ from version import \
 from machine_editing import \
     MachineOperation, \
         MachineNodeOperation, \
+            MOp_AddIRQHub, \
+                MOp_DelIRQHub, \
         MachineDeviceOperation, \
             MachineDeviceSetAttributeOperation, \
                 MOp_PCIDevSetSlot, \

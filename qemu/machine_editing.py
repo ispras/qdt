@@ -3,6 +3,7 @@ from common.inverse_operation import \
     InverseOperation
 
 from machine_description import \
+    IRQHub, \
     QOMPropertyValue
 
 import copy
@@ -23,6 +24,37 @@ class MachineNodeOperation(MachineOperation):
 
     def gen_entry(self):
         return self.gen_node_id_entry(self.node_id)
+
+class MOp_AddIRQHub(MachineNodeOperation):
+    def __init__(self, *args, **kw):
+        MachineNodeOperation.__init__(self, *args, **kw)
+
+    def __backup__(self):
+        pass
+
+    def __do__(self):
+        hub = IRQHub([], [])
+        self.mach.add_node(hub, with_id = self.node_id)
+
+    def __undo__(self):
+        hub = self.mach.id2node[self.node_id]
+
+        if hub.srcs or hub.dsts:
+            raise Exception("The hub has connected IRQs")
+
+        self.mach.irq_hubs.remove(hub)
+        del self.mach.id2node[self.node_id]
+        hub.id = -1
+
+    def __write_set__(self):
+        return MachineNodeOperation.__write_set__(self) + [ self.gen_entry() ]
+
+class MOp_DelIRQHub(MOp_AddIRQHub):
+    def __init__(self, *args, **kw):
+        MOp_AddIRQHub.__init__(self, *args, **kw)
+
+    __do__ = MOp_AddIRQHub.__undo__
+    __undo__ = MOp_AddIRQHub.__do__
 
 class MachineDeviceOperation(MachineOperation):
     def __init__(self, device_id, *args, **kw):
