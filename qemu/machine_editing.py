@@ -50,7 +50,7 @@ class MachineDeviceSetAttributeOperation(MachineDeviceOperation):
 
     def __write_set__(self):
         return MachineDeviceOperation.__write_set__(self) + [
-            (self.gen_dev_entry(), copy.deepcopy(self.attr))
+            (self.gen_dev_entry(), "attr", copy.deepcopy(self.attr))
         ]
 
 class MOp_PCIDevSetSlot(MachineDeviceSetAttributeOperation):
