@@ -741,6 +741,11 @@ class MachineNode(QOMDescription):
 
         self.id2node[n.id] = n
 
+    def get_free_id(self):
+        for i in count(0):
+            if not i in self.id2node:
+                return i
+
     def gen_type(self):
         return machine.MachineType(
             machine = self
