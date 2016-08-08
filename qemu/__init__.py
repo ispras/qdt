@@ -68,6 +68,7 @@ from version import \
 
 from machine_editing import \
     MachineOperation, \
+        MachineNodeOperation, \
         MachineDeviceOperation, \
             MachineDeviceSetAttributeOperation, \
                 MOp_PCIDevSetSlot, \

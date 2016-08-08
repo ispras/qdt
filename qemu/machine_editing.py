@@ -15,6 +15,15 @@ class MachineOperation(InverseOperation):
     def gen_node_id_entry(self, node_id):
         return copy.deepcopy(node_id)
 
+class MachineNodeOperation(MachineOperation):
+    def __init__(self, node_id, *args, **kw):
+        MachineOperation.__init__(self, *args, **kw)
+
+        self.node_id = node_id
+
+    def gen_entry(self):
+        return self.gen_node_id_entry(self.node_id)
+
 class MachineDeviceOperation(MachineOperation):
     def __init__(self, device_id, *args, **kw):
         MachineOperation.__init__(self, *args, **kw)
