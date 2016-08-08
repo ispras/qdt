@@ -20,6 +20,7 @@ from common import \
 
 from qemu import \
     MachineNodeOperation, \
+    MOp_AddIRQHub, \
     MOp_SetDevParentBus, \
     MOp_SetDevQOMType, \
     Node, \
@@ -380,6 +381,33 @@ class MachineWidget(CanvasDnD):
             else:
                 pbn = self.dev2node[pb].busline
                 self.add_conn(node, pbn)
+        elif isinstance(op, MOp_AddIRQHub):
+            # Assuming MOp_DelIRQHub is child class of MOp_AddIRQHub
+            try:
+                hub = self.mach.id2node[op.node_id]
+            except KeyError: # removed
+                for hub_node, hub in self.node2dev.iteritems():
+                    if not isinstance(hub_node, IRQHubCircle):
+                        continue
+                    if hub in self.mach.irq_hubs:
+                        continue
+                    break
+
+                self.circles.remove(hub_node)
+                circle_id = self.node2id[hub_node]
+                del self.node2id[hub_node]
+                del self.id2node[circle_id]
+                self.canvas.delete(circle_id)
+                del self.dev2node[hub]
+                del self.node2dev[hub_node]
+            else:
+                # added
+                hub_node = IRQHubCircle(hub)
+
+                self.dev2node[hub] = hub_node
+                self.node2dev[hub_node] = hub
+
+                self.add_irq_hub(hub_node)
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
