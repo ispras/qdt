@@ -282,6 +282,7 @@ class MachineWidget(CanvasDnD):
         self.canvas.bind("<Motion>", self.motion_all)
 
         self.dragging_all = False
+        self.all_were_dragged = False
 
         self.current_ph_iteration = None
         self.invalidated = False
@@ -505,6 +506,7 @@ class MachineWidget(CanvasDnD):
         )
         self.dragging_all = True
         self.master.config(cursor = "fleur")
+        self.all_were_dragged = False
 
     def on_b3_release(self, event):
         #print("on_b3_release")
@@ -569,6 +571,7 @@ class MachineWidget(CanvasDnD):
         self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
+        self.all_were_dragged = True
 
     def dnd_moved(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
