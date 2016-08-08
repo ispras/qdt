@@ -275,8 +275,8 @@ class MachineWidget(CanvasDnD):
         self.bind('<<DnDUp>>', self.dnd_up)
         self.dragged = []
 
-        self.canvas.bind("<ButtonPress-3>", self.down_all)
-        self.canvas.bind("<ButtonRelease-3>", self.up_all)
+        self.canvas.bind("<ButtonPress-3>", self.on_b3_press)
+        self.canvas.bind("<ButtonRelease-3>", self.on_b3_release)
 
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
@@ -446,7 +446,7 @@ class MachineWidget(CanvasDnD):
 
         self.invalidated = True
 
-    def down_all(self, event):
+    def on_b3_press(self, event):
         if self.current_popup:
             self.current_popup.unpost()
             self.current_popup = None
@@ -499,14 +499,14 @@ class MachineWidget(CanvasDnD):
 
             break
 
-        #print("down_all")
+        #print("on_b3_press")
         event.widget.scan_mark(int(x), int(y)
         )
         self.dragging_all = True
         self.master.config(cursor = "fleur")
 
-    def up_all(self, event):
-        #print("up_all")
+    def on_b3_release(self, event):
+        #print("on_b3_release")
         for n in self.nodes + self.buslabels + self.circles:
             n.static = False
         self.dragging_all = False
