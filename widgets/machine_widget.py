@@ -12,6 +12,7 @@ from phy import \
 import math
 import random
 import time
+import sys
 
 from common import \
     History, \
@@ -312,6 +313,8 @@ class MachineWidget(CanvasDnD):
         self.shown_irq_circle = None
         self.shown_irq_node = None
         self.irq_line_color = "grey"
+        self.irq_line_high_color = "black"
+        self.highlighted_irq_line = None
 
         self.update()
 
@@ -658,6 +661,29 @@ class MachineWidget(CanvasDnD):
                     )
                     self.shown_irq_node = c
                     break
+
+        nearest = (None, sys.float_info.max)
+        for irql in self.irq_lines:
+            for seg_id in irql.lines:
+                x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
+                v0 = Vector(x - x0, y - y0)
+                v1 = Vector(x - x1, y - y1)
+                v2 = Vector(x1 - x0, y1 - y0)
+                d = v0.Length() + v1.Length() - v2.Length()
+
+                if d < nearest[1]:
+                    nearest = (irql, d)
+
+        if self.highlighted_irq_line:
+            self.highlight(self.highlighted_irq_line, False)
+            self.highlighted_irq_line = None
+
+        if nearest[1] <= self.irq_circle_r:
+            self.highlighted_irq_line = nearest[0]
+            self.highlight(self.highlighted_irq_line, True)
+
+            if self.shown_irq_circle:
+                self.canvas.lift(self.shown_irq_circle)
 
         if not self.dragging_all:
             return
@@ -1548,6 +1574,19 @@ class MachineWidget(CanvasDnD):
         self.canvas.lower(id)
 
         self.irq_lines.append(line)
+
+    def highlight(self, line, high = True):
+        if high:
+            color, layer_func = self.irq_line_high_color, self.canvas.lift
+        else:
+            color, layer_func = self.irq_line_color, self.canvas.lower
+
+        for seg_id in line.lines:
+            self.canvas.itemconfig(seg_id, fill = color)
+            layer_func(seg_id)
+
+        self.canvas.itemconfig(line.arrow, fill = color)
+        layer_func(line.arrow)
 
     def add_bus(self, bus):
         id = self.canvas.create_line(
