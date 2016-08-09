@@ -441,8 +441,8 @@ class MachineWidget(CanvasDnD):
 
     def on_add_irq_hub(self):
         p = self.current_popup
-        x, y = p.winfo_rootx() - self.winfo_rootx(), \
-               p.winfo_rooty() - self.winfo_rooty()
+        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
+               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
 
         # print "Adding IRQ hub: " + str(x) + ", " + str(y)
 
