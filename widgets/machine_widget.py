@@ -407,6 +407,9 @@ class MachineWidget(CanvasDnD):
                 circle_id = self.node2id[hub_node]
                 del self.node2id[hub_node]
                 del self.id2node[circle_id]
+                if circle_id in self.selected:
+                    self.selected.remove(circle_id)
+                    self.event_generate(MachineWidget.EVENT_SELECT)
                 self.canvas.delete(circle_id)
                 del self.dev2node[hub]
                 del self.node2dev[hub_node]
