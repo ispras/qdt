@@ -1,6 +1,7 @@
 from Tkinter import StringVar
 import gettext
 import locale
+from os.path import dirname, abspath
 
 """
 ML = Multi language
@@ -12,13 +13,25 @@ class ML(StringVar):
 
     @staticmethod
     def set_language(locale = None):
+        ML.current_translation = None
+        locale = [locale] if locale else []
         try:
-            ML.current_translation = gettext.translation(
-                "qdc",
-                "/home/real/work/qemu/device_creator/src/locale/",
-                [locale] if locale else []
-            )
+            # First search for translation in default location
+            ML.current_translation = gettext.translation("qdc", None, locale)
         except:
+            try:
+                # Else search for translation relative current file path
+                localedir = abspath(dirname(__file__) + "/../locale")
+                ML.current_translation = gettext.translation(
+                    "qdc",
+                    localedir,
+                    locale
+                )
+            except:
+                pass
+
+        if not ML.current_translation:
+            # If translation was found then the keys is used for strings
             ML.current_translation = gettext.NullTranslations()
 
         for s in ML.multi_language_strings:
