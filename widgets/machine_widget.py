@@ -31,6 +31,9 @@ from qemu import \
 from widgets import \
     DeviceSettingsWindow
 
+from irq_settings import \
+    IRQSettingsWindow
+
 from sets import \
     Set
 
@@ -366,6 +369,10 @@ class MachineWidget(CanvasDnD):
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("Settings"),
+            command = self.on_popup_irq_line_settings
+        )
         self.popup_irq_line = p
 
         self.current_popup = None
@@ -445,6 +452,25 @@ class MachineWidget(CanvasDnD):
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+
+    def on_popup_irq_line_settings(self):
+        if not self.highlighted_irq_line:
+            return
+
+        p = self.current_popup
+        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
+               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
+
+        wnd = IRQSettingsWindow(self.mht, self, irq = self.highlighted_irq_line)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
+        # Allow highlighting of another lines when the command was done 
+        self.current_popup.unpost()
+        self.current_popup = None
 
     def on_add_irq_hub(self):
         p = self.current_popup
