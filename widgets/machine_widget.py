@@ -261,7 +261,8 @@ class IRQHubCircle(NodeCircle):
         return x, y
 
 class IRQLine(object):
-    def __init__(self, src_node, dst_node):
+    def __init__(self, irq, src_node, dst_node):
+        self.node = irq
         self.src = src_node
         self.dst = dst_node
         self.arrow = None
@@ -837,7 +838,7 @@ class MachineWidget(CanvasDnD):
             src = self.dev2node[irq.src[0]]
             dst = self.dev2node[irq.dst[0]]
 
-            line = IRQLine(src, dst)
+            line = IRQLine(irq, src, dst)
 
             self.dev2node[irq] = line
             self.node2dev[line] = irq
@@ -852,7 +853,7 @@ class MachineWidget(CanvasDnD):
                 src = self.dev2node[src_desc[0]]
                 dst = self.dev2node[hub]
 
-                line = IRQLine(src, dst)
+                line = IRQLine(hub, src, dst)
 
                 self.dev2node[src_desc] = line
                 self.node2dev[line] = src_desc
@@ -866,7 +867,7 @@ class MachineWidget(CanvasDnD):
                 src = self.dev2node[hub]
                 dst = self.dev2node[dst_desc[0]]
 
-                line = IRQLine(src, dst)
+                line = IRQLine(hub, src, dst)
 
                 self.dev2node[dst_desc] = line
                 self.node2dev[line] = dst_desc
