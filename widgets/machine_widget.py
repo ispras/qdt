@@ -365,6 +365,9 @@ class MachineWidget(CanvasDnD):
         )
         self.popup_empty_no_selected = p
 
+        p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_irq_line = p
+
         self.current_popup = None
 
         self.mht.add_on_changed(self.on_machine_changed)
@@ -613,6 +616,22 @@ class MachineWidget(CanvasDnD):
             n.static = False
         self.dragging_all = False
         self.master.config(cursor = "")
+
+        if (not self.all_were_dragged) and self.highlighted_irq_line:
+            if not self.current_popup:
+                x, y = self.canvas.canvasx(event.x), \
+                       self.canvas.canvasy(event.y)
+
+                self.current_popup = self.popup_irq_line
+
+                try:
+                    self.current_popup.tk_popup(event.x_root, event.y_root)
+                    self.current_popup.grab_release()
+                except:
+                    self.current_popup.grab_release()
+                    self.current_popup = None
+
+                return
 
         if not (self.all_were_dragged or self.selected):
             if not self.current_popup:
