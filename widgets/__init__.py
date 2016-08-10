@@ -29,3 +29,7 @@ from machine_widget import \
 
 from pci_device_settings import \
     PCIDeviceSettingsWidget
+
+from irq_settings import \
+    IRQSettingsWindow, \
+    IRQSettingsWidget
