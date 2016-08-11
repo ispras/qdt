@@ -16,7 +16,7 @@ class SettingsWidget(Frame):
 
         self.grid()
 
-        self.after(0, self.refresh)
+        self.refresh_after = self.after(0, self.__refresh_single__)
 
         self.mht.add_on_changed(self.on_changed)
 
@@ -39,8 +39,16 @@ class SettingsWidget(Frame):
         else:
             return self.mht.mach.id2node[nid]
 
+    def __refresh_single__(self):
+        self.refresh()
+        del self.refresh_after
+
     def __on_destroy__(self, *args):
         self.mht.remove_on_changed(self.on_changed)
+        try:
+            self.after_cancel(self.refresh_after)
+        except AttributeError:
+            pass
 
 class SettingsWindow(VarToplevel):
     def __init__(self, machine_history_tracker, *args, **kw):
