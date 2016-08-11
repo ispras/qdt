@@ -3,6 +3,7 @@ from common.inverse_operation import \
     InverseOperation
 
 from machine_description import \
+    IRQLine, \
     IRQHub, \
     QOMPropertyValue
 
@@ -44,6 +45,47 @@ class MachineNodeOperation(MachineOperation):
     """
     def writes_node(self):
         return self.gen_entry() in self.__write_set__()
+
+class MOp_DelIRQLine(MachineNodeOperation):
+    def __init__(self, *args, **kw):
+        MachineNodeOperation.__init__(self, *args, **kw)
+
+    def __backup__(self):
+        irq = self.mach.id2node[self.node_id]
+
+        self.src = copy.deepcopy((irq.src[0].id, irq.src[1], irq.src[2]))
+        self.dst = copy.deepcopy((irq.dst[0].id, irq.dst[1], irq.dst[2]))
+
+    def __do__(self):
+        irq = self.mach.id2node[self.node_id]
+
+        src_dev = self.mach.id2node[self.src[0]]
+        src_dev.irqs.remove(irq)
+
+        dst_dev = self.mach.id2node[self.dst[0]]
+        dst_dev.irqs.remove(irq)
+
+        self.mach.irqs.remove(irq)
+        del self.mach.id2node[self.node_id]
+        irq.id = -1
+
+    def __undo__(self):
+        irq = IRQLine(
+            self.mach.id2node[self.src[0]], self.mach.id2node[self.dst[0]],
+            *copy.deepcopy((self.src[1], self.dst[1], self.src[2], self.dst[2]))
+        )
+
+        self.mach.add_node(irq, with_id = self.node_id)
+
+    def __read_set__(self):
+        return MachineNodeOperation.__read_set__(self) + [
+            self.gen_node_id_entry(e) for e in [self.src[0], self.dst[0]]
+        ]
+
+    def __write_set__(self):
+        return MachineNodeOperation.__write_set__(self) + [
+            self.gen_entry()
+        ]
 
 class MOp_AddIRQHub(MachineNodeOperation):
     def __init__(self, *args, **kw):
