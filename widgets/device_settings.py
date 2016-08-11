@@ -13,7 +13,7 @@ import ttk
 import qemu
 
 from qemu import \
-    MachineDeviceOperation, \
+    MachineNodeOperation, \
         MOp_SetDevParentBus, \
         MOp_SetDevQOMType, \
         MOp_DelDevProp, \
@@ -315,9 +315,9 @@ class DeviceSettingsWidget(tk.Frame):
         tk.Frame.destroy(self)
 
     def on_changed(self, op, *args, **kw):
-        if not isinstance(op, MachineDeviceOperation):
+        if not isinstance(op, MachineNodeOperation):
             return
-        if not op.dev_id == self.dev.id:
+        if not op.node_id == self.dev.id:
             return
 
         self.refresh()

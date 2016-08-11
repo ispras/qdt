@@ -381,11 +381,11 @@ class MachineWidget(CanvasDnD):
 
     def on_machine_changed(self, op):
         if isinstance(op, MOp_SetDevQOMType):
-            dev = self.mach.id2node[op.dev_id]
+            dev = self.mach.id2node[op.node_id]
             node = self.dev2node[dev]
             self.update_node_text(node)
         elif isinstance(op, MOp_SetDevParentBus):
-            dev = self.mach.id2node[op.dev_id]
+            dev = self.mach.id2node[op.node_id]
             node = self.dev2node[dev]
             pb = dev.parent_bus
             if node.conn:
