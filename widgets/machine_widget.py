@@ -374,6 +374,10 @@ class MachineWidget(CanvasDnD):
             label = _("Settings"),
             command = self.on_popup_irq_line_settings
         )
+        p.add_command(
+            label = _("Delete"),
+            command = self.on_popup_irq_line_delete
+        )
         self.popup_irq_line = p
 
         self.current_popup = None
@@ -509,6 +513,18 @@ class MachineWidget(CanvasDnD):
         # Allow highlighting of another lines when the command was done 
         self.current_popup.unpost()
         self.current_popup = None
+
+    def on_popup_irq_line_delete(self):
+        if not self.highlighted_irq_line:
+            return
+
+        irq = self.node2dev[self.highlighted_irq_line]
+        if isinstance(irq, Node): # qemu.IRQLine
+            self.mht.stage(MOp_DelIRQLine, irq.id)
+        else: # tuple of IRQHub source or destination
+            pass
+
+        self.mht.commit()
 
     def on_add_irq_hub(self):
         p = self.current_popup
