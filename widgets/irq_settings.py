@@ -10,6 +10,7 @@ from var_widgets import \
     VarLabel
 
 from qemu import \
+    MachineNodeOperation, \
     DeviceNode, \
     IRQLine, \
     IRQHub
@@ -141,8 +142,14 @@ class IRQSettingsWidget(SettingsWidget):
                 else:
                     name_var.set("")
 
-    def on_changed(self, *args, **kw):
-        pass
+    def on_changed(self, op, *args, **kw):
+        if not isinstance(op, MachineNodeOperation):
+            return
+
+        if not op.writes_node():
+            return
+
+        self.refresh()
 
 class IRQSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):
