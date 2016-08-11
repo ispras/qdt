@@ -141,7 +141,7 @@ class IRQSettingsWidget(SettingsWidget):
                 else:
                     name_var.set("")
 
-    def on_changed(self):
+    def on_changed(self, *args, **kw):
         pass
 
 class IRQSettingsWindow(SettingsWindow):
