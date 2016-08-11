@@ -16,6 +16,19 @@ class MachineOperation(InverseOperation):
     def gen_node_id_entry(self, node_id):
         return copy.deepcopy(node_id)
 
+    """
+    The InverseOperation defines no read or write sets. Instead it raises an
+    exception. As this is a base class of all machine editing operations it
+    should define the sets. The content of the sets is to be defined by
+    subclasses.
+    """
+
+    def __write_set__(self):
+        return []
+
+    def __read_set__(self):
+        return []
+
 class MachineNodeOperation(MachineOperation):
     def __init__(self, node_id, *args, **kw):
         MachineOperation.__init__(self, *args, **kw)
