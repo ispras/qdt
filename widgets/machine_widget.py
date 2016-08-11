@@ -20,6 +20,7 @@ from common import \
     sign
 
 from qemu import \
+    MOp_DelIRQLine, \
     MachineNodeOperation, \
     MOp_AddIRQHub, \
     MOp_SetDevParentBus, \
@@ -432,6 +433,46 @@ class MachineWidget(CanvasDnD):
                 self.node2dev[hub_node] = hub
 
                 self.add_irq_hub(hub_node)
+        elif isinstance(op, MOp_DelIRQLine):
+            try:
+                irq = self.mach.id2node[op.node_id]
+            except KeyError:
+                for line, irq in self.node2dev.iteritems():
+                    if not (isinstance(line, IRQLine) \
+                            and isinstance(irq, Node)):
+                        continue
+                    if not irq in self.mach.irqs:
+                        break
+
+                if line == self.highlighted_irq_line:
+                    self.highlighted_irq_line = None 
+
+                for c in line.circles:
+                    self.circles.remove(c)
+                    if c == self.shown_irq_node:
+                        self.canvas.delete(self.shown_irq_circle)
+                        self.shown_irq_circle = None
+                        self.shown_irq_node = None
+
+                self.irq_lines.remove(line)
+
+                self.canvas.delete(line.arrow)
+
+                for line_id in line.lines:
+                    self.canvas.delete(line_id)
+
+                del self.node2dev[line]
+                del self.dev2node[irq]
+            else:
+                src = self.dev2node[irq.src[0]]
+                dst = self.dev2node[irq.dst[0]]
+
+                irq_node = IRQLine(irq, src, dst)
+
+                self.dev2node[irq] = irq_node
+                self.node2dev[irq_node] = irq
+
+                self.add_irq_line(irq_node)
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
