@@ -20,6 +20,8 @@ class SettingsWidget(Frame):
 
         self.mht.add_on_changed(self.on_changed)
 
+        self.bind("<Destroy>", self.__on_destroy__)
+
     def apply(self):
         self.mht.remove_on_changed(self.on_changed)
 
@@ -36,6 +38,9 @@ class SettingsWidget(Frame):
             return None
         else:
             return self.mht.mach.id2node[nid]
+
+    def __on_destroy__(self, *args):
+        self.mht.remove_on_changed(self.on_changed)
 
 class SettingsWindow(VarToplevel):
     def __init__(self, machine_history_tracker, *args, **kw):
