@@ -38,6 +38,13 @@ class MachineNodeOperation(MachineOperation):
     def gen_entry(self):
         return self.gen_node_id_entry(self.node_id)
 
+    """
+    Checks if the operation writes the node itself (not node's element)
+    Frequent examples are node adding and deleting operations.
+    """
+    def writes_node(self):
+        return self.gen_entry() in self.__write_set__()
+
 class MOp_AddIRQHub(MachineNodeOperation):
     def __init__(self, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
