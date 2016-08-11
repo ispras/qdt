@@ -458,13 +458,10 @@ class MachineWidget(CanvasDnD):
             return
 
         p = self.current_popup
-        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
-               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
 
         wnd = IRQSettingsWindow(self.mht, self, irq = self.highlighted_irq_line)
 
-        geom = "+" + str(int(self.winfo_rootx() + x)) \
-             + "+" + str(int(self.winfo_rooty() + y))
+        geom = "+" + str(int(p.winfo_rootx())) + "+" + str(int(p.winfo_rooty()))
 
         wnd.geometry(geom)
 
