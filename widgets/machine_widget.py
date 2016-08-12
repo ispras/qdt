@@ -438,6 +438,7 @@ class MachineWidget(CanvasDnD):
 
                 self.add_irq_hub(hub_node)
         elif isinstance(op, MOp_DelIRQLine):
+            # Assuming MOp_AddIRQLine is child class of MOp_DelIRQLine
             try:
                 irq = self.mach.id2node[op.node_id]
             except KeyError:
