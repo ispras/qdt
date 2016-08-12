@@ -526,6 +526,9 @@ class MachineWidget(CanvasDnD):
 
         self.mht.commit()
 
+        # the menu will be unposted after the command
+        self.current_popup = None
+
     def on_add_irq_hub(self):
         p = self.current_popup
         x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
