@@ -20,6 +20,7 @@ from common import \
     sign
 
 from qemu import \
+    MOp_AddIRQLine, \
     MOp_DelIRQLine, \
     MachineNodeOperation, \
     MOp_AddIRQHub, \
@@ -356,6 +357,32 @@ class MachineWidget(CanvasDnD):
         self.canvas.focus_set()
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+
+        """
+IRQ line creation
+
+1.A) Right click on a device -> IRQ source:
+    The device is marked as source end of new IRQ line.
+1.B) Right click on single device -> IRQ source:
+    The source end of new IRQ line is reseted. New value is last clicked
+    device.
+2) Right click on a device -> IRQ destination:
+    The device is marked as destination end of new IRQ line. A new IRQ line is
+    created with corresponding source and destination ends. Indexes are
+    defaulted to 0 and names are defaulted no None (unnamed GPIO).
+        """
+        self.irq_src = None
+        p.add_command(
+            label = _("IRQ source"),
+            command = self.on_popup_single_device_irq_source
+        )
+        self.irq_dst_cmd_idx = 1
+        p.add_command(
+            label = _("IRQ destination"),
+            command = self.on_popup_single_device_irq_destination,
+            state = "disabled"
+        )
+
         p.add_command(
             label = _("Settings"),
             command = self.on_popup_single_device_settings
@@ -478,6 +505,27 @@ class MachineWidget(CanvasDnD):
                 self.node2dev[irq_node] = irq
 
                 self.add_irq_line(irq_node)
+
+    def on_popup_single_device_irq_source(self):
+        sid = self.selected[0]
+        self.irq_src = self.node2dev[self.id2node[sid]].id
+
+        self.popup_single_device.entryconfig(
+            self.irq_dst_cmd_idx,
+            state = "normal"
+        )
+
+    def on_popup_single_device_irq_destination(self):
+        did = self.selected[0]
+        irq_dst = self.node2dev[self.id2node[did]].id
+
+        self.mht.stage(
+            MOp_AddIRQLine,
+            self.irq_src, irq_dst,
+            0, 0, None, None,
+            self.mach.get_free_id()
+        )
+        self.mht.commit()
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
