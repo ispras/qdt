@@ -87,6 +87,29 @@ class MOp_DelIRQLine(MachineNodeOperation):
             self.gen_entry()
         ]
 
+class MOp_AddIRQLine(MOp_DelIRQLine):
+    def __init__(self,
+        source_device_id,
+        destination_device_id,
+        source_index,
+        destination_index,
+        source_name,
+        destination_name,
+        *args, **kw
+    ):
+        MOp_DelIRQLine.__init__(self, *args, **kw)
+
+        self.src = copy.deepcopy((source_device_id, source_index, source_name))
+        self.dst = copy.deepcopy(
+            (destination_device_id, destination_index, destination_name)
+        )
+
+    def __backup__(self):
+        pass
+
+    __do__ = MOp_DelIRQLine.__undo__
+    __undo__ = MOp_DelIRQLine.__do__
+
 class MOp_AddIRQHub(MachineNodeOperation):
     def __init__(self, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)

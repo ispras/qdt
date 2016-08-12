@@ -70,6 +70,7 @@ from machine_editing import \
     MachineOperation, \
         MachineNodeOperation, \
             MOp_DelIRQLine, \
+                MOp_AddIRQLine, \
             MOp_AddIRQHub, \
                 MOp_DelIRQHub, \
             MachineDeviceSetAttributeOperation, \
