@@ -568,10 +568,7 @@ IRQ line creation
             return
 
         irq = self.node2dev[self.highlighted_irq_line]
-        if isinstance(irq, Node): # qemu.IRQLine
-            self.mht.stage(MOp_DelIRQLine, irq.id)
-        else: # tuple of IRQHub source or destination
-            pass
+        self.mht.stage(MOp_DelIRQLine, irq.id)
 
         self.mht.commit()
 
