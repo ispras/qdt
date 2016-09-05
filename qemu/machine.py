@@ -56,7 +56,7 @@ class UnknownMemoryNodeType(Exception):
 
 class IRQHubLayout(object):
     def __init__(self, hub, generator):
-        leafs = [ dst for dst in hub.dsts ]
+        leafs = [ irq for irq in hub.irqs if irq.src[0] == hub ]
         while len(leafs) > 1:
             new_leafs = []
             while leafs:
@@ -73,9 +73,9 @@ class IRQHubLayout(object):
         self.hub = hub
 
     def _gen_irq_get(self, parent_name, node):
-        if isinstance(node[0], DeviceNode):
+        if isinstance(node, IRQLine):
             # leaf
-            return ("", self.gen.gen_irq_get(node, parent_name))
+            return ("", self.gen.gen_irq_get(node.dst, parent_name))
         else:
             # inner node
             self.gen.use_type_name("qemu_irq_split")
@@ -421,6 +421,12 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 decl_code += "    %s *%s;\n" % (node.c_type, bus_name)
             elif isinstance(node, IRQLine):
+                if node.hub_ended():
+                    # Do not generate a code for IRQ lines that refers an IRQ
+                    # hub. The code will be generated during the hub processing.
+                    skip_nl = True
+                    continue
+
                 self.use_type_name("qemu_irq")
 
                 irq_name = self.gen_name_for_irq(node)
@@ -525,8 +531,8 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                 decl_code += code[0]
                 def_code += code[1]
 
-                for src in node.srcs:
-                    def_code += self.gen_irq_connect(src, hub_in_name)
+                for src in [ irq for irq in node.irqs if irq.dst[0] == node ]:
+                    def_code += self.gen_irq_connect(src.src, hub_in_name)
             else:
                 raise UnknownMachineNodeType(str(type(node)))
 

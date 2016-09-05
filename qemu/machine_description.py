@@ -238,57 +238,30 @@ class IRQHub(Node):
     def __init__(self, srcs, dsts):
         Node.__init__(self)
 
-        self.srcs = list(srcs)
-        self.dsts = list(dsts)
+        self.irqs = []
 
-        for src in self.srcs:
-            src[0].irqs.append(self)
+        for end in srcs:
+            IRQLine(
+                end[0], self,
+                src_irq_idx = end[1], dst_irq_idx = None,
+                src_irq_name = end[2], dst_irq_name = None
+            )
 
-        for dst in self.dsts:
-            dst[0].irqs.append(self)
+        for end in dsts:
+            IRQLine(
+                self, end[0],
+                src_irq_idx = None, dst_irq_idx = end[1],
+                src_irq_name = None, dst_irq_name = end[2]
+            )
 
     def __children__(self):
-        ret = []
-        for src in self.srcs:
-            ret.append(src[0])
-        for dst in self.dsts:
-            ret.append(dst[0])
-        return ret
+        return []
 
     def __gen_code__(self, gen):
         self.reset_gen(gen)
-        if self.srcs:
-            self.gen_field("srcs = [")
-            gen.line()
-            gen.push_indent()
-            for idx, i in enumerate(self.srcs):
-                if idx > 0:
-                    gen.line(",")
-                gen.write("(" + gen.nameof(i[0]) + ", " + \
-                    self.gen_const(i[1]) + ", " + \
-                    (('"' + i[2] + '"') if i[2] else ("None")) + ")"
-                )
-            gen.line()
-            gen.pop_indent()
-            gen.write("]")
-        else:
-            self.gen_field("srcs = []")
-        if self.dsts:
-            self.gen_field("dsts = [")
-            gen.line()
-            gen.push_indent()
-            for idx, i in enumerate(self.dsts):
-                if idx > 0:
-                    gen.line(",")
-                gen.write("(" + gen.nameof(i[0]) + ", " + \
-                    self.gen_const(i[1]) + ", " + \
-                    (('"' + i[2] + '"') if i[2] else ("None")) + ")"
-                )
-            gen.line()
-            gen.pop_indent()
-            gen.write("]")
-        else:
-            self.gen_field("dsts = []")
+        # Sources and destinations will be set during loading of
+        # corresponding IRQ lines.
+        gen.write("srcs = [], dsts = []")
         self.gen_end()
 
 # QObject property model
@@ -637,7 +610,7 @@ class MachineNode(QOMDescription):
                     if not bus in self.buses:
                         self.add_node(bus)
                 for irq in dev.irqs:
-                    if not irq in self.irqs and not irq in self.irq_hubs:
+                    if not irq in self.irqs:
                         self.add_node(irq)
                 for prop in dev.properties:
                     if prop.prop_type == QOMPropertyTypeLink:
@@ -653,9 +626,9 @@ class MachineNode(QOMDescription):
                         self.add_node(dev)
 
             for irq in self.irqs:
-                if not irq.src[0] in self.devices:
+                if not irq.src[0] in self.devices + self.irq_hubs:
                     self.add_node(irq.src[0])
-                if not irq.dst[0] in self.devices:
+                if not irq.dst[0] in self.devices + self.irq_hubs:
                     self.add_node(irq.dst[0])
 
             for mem in self.mems:
@@ -666,9 +639,9 @@ class MachineNode(QOMDescription):
                         self.add_node(child)
 
             for hub in self.irq_hubs:
-                for dev in [ x[0] for x in (hub.srcs + hub.dsts) ]:
-                    if not dev in self.devices:
-                        self.add_node(dev)
+                for irq in hub.irqs:
+                    if not irq in self.irqs:
+                        self.add_node(irq)
 
         # A machine should have only one system bus
         self.sysbus = None

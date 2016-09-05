@@ -998,36 +998,6 @@ IRQ line creation
 
             self.add_irq_line(line)
 
-        for hub in self.mach.irq_hubs:
-            for src_desc in hub.srcs:
-                if src_desc in self.dev2node.keys():
-                    continue
-
-                src = self.dev2node[src_desc[0]]
-                dst = self.dev2node[hub]
-
-                line = IRQLine(hub, src, dst)
-
-                self.dev2node[src_desc] = line
-                self.node2dev[line] = src_desc
-
-                self.add_irq_line(line)
-
-            for dst_desc in hub.dsts:
-                if dst_desc in self.dev2node.keys():
-                    continue
-
-                src = self.dev2node[hub]
-                dst = self.dev2node[dst_desc[0]]
-
-                line = IRQLine(hub, src, dst)
-
-                self.dev2node[dst_desc] = line
-                self.node2dev[line] = dst_desc
-
-                self.add_irq_line(line)
-
-
     def ph_iterate(self, t_limit_sec):
         if not self.current_ph_iteration:
             self.current_ph_iteration = self.ph_iterate_co()
