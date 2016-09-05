@@ -12,8 +12,7 @@ from var_widgets import \
 from qemu import \
     MachineNodeOperation, \
     DeviceNode, \
-    IRQLine, \
-    IRQHub
+    IRQLine
 
 from Tkinter import \
     Entry, \
@@ -126,14 +125,7 @@ class IRQSettingsWidget(SettingsWidget):
                 name_var = getattr(self, pfx + "_name_var")
 
                 # IRQ descriptor in machine description
-                irq_node = self.irq.node
-                if isinstance(irq_node, IRQLine): 
-                    end_desc = getattr(self.irq.node, pfx)
-                elif isinstance(irq_node, IRQHub):
-                    # search the end in hub end list
-                    for end_desc in getattr(irq_node, pfx + "s"):
-                        if end_desc[0] == end_node:
-                            break
+                end_desc = getattr(self.irq.node, pfx)
 
                 index_var.set(str(end_desc[1]))
 
