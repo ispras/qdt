@@ -213,6 +213,10 @@ class IRQLine(Node):
         src_dev.irqs.append(self)
         dst_dev.irqs.append(self)
 
+    def hub_ended(self):
+        return    isinstance(self.src[0], IRQHub) \
+               or isinstance(self.dst[0], IRQHub)
+
     def __children__(self):
         return [self.src[0], self.dst[0]]
 
