@@ -410,6 +410,16 @@ IRQ line creation
 
         # single IRQ hub popup menu 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("IRQ source"),
+            command = self.on_popup_single_irq_hub_irq_source
+        )
+        self.popup_single_irq_hub_irq_dst_cmd_idx = 1
+        p.add_command(
+            label = _("IRQ destination"),
+            command = self.on_popup_single_irq_hub_irq_destination,
+            state = "disabled"
+        )
         self.popup_single_irq_hub = p
 
         self.current_popup = None
@@ -519,6 +529,10 @@ IRQ line creation
             self.irq_dst_cmd_idx,
             state = "normal"
         )
+        self.popup_single_irq_hub.entryconfig(
+            self.popup_single_irq_hub_irq_dst_cmd_idx,
+            state = "normal"
+        )
 
     def on_popup_single_device_irq_destination(self):
         did = self.selected[0]
@@ -531,6 +545,12 @@ IRQ line creation
             self.mach.get_free_id()
         )
         self.mht.commit()
+
+    def on_popup_single_irq_hub_irq_source(self):
+        self.on_popup_single_device_irq_source()
+
+    def on_popup_single_irq_hub_irq_destination(self):
+        self.on_popup_single_device_irq_destination()
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
