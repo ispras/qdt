@@ -213,6 +213,38 @@ class IRQLine(Node):
         src_dev.irqs.append(self)
         dst_dev.irqs.append(self)
 
+    @property
+    def src_index(self):
+        return self.src[1]
+
+    @src_index.setter
+    def src_index(self, value):
+        self.src[1] = value
+
+    @property
+    def dst_index(self):
+        return self.dst[1]
+
+    @dst_index.setter
+    def dst_index(self, value):
+        self.dst[1] = value
+
+    @property
+    def src_name(self):
+        return self.src[2]
+
+    @src_name.setter
+    def src_name(self, value):
+        self.src[2] = value
+
+    @property
+    def dst_name(self):
+        return self.dst[2]
+
+    @dst_name.setter
+    def dst_name(self, value):
+        self.dst[2] = value
+
     def hub_ended(self):
         return    isinstance(self.src[0], IRQHub) \
                or isinstance(self.dst[0], IRQHub)
