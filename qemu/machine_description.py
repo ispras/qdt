@@ -207,8 +207,8 @@ class IRQLine(Node):
         Node.__init__(self)
 
         # src and dst are tuples (device, index)
-        self.src = src_dev, src_irq_idx, src_irq_name
-        self.dst = dst_dev, dst_irq_idx, dst_irq_name
+        self.src = [src_dev, src_irq_idx, src_irq_name]
+        self.dst = [dst_dev, dst_irq_idx, dst_irq_name]
 
         src_dev.irqs.append(self)
         dst_dev.irqs.append(self)
