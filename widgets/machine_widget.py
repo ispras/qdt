@@ -28,6 +28,7 @@ from qemu import \
     MOp_SetDevQOMType, \
     Node, \
     DeviceNode, \
+    IRQHub, \
     MachineHistoryTracker
 
 from widgets import \
@@ -407,6 +408,10 @@ IRQ line creation
         )
         self.popup_irq_line = p
 
+        # single IRQ hub popup menu 
+        p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_single_irq_hub = p
+
         self.current_popup = None
 
         self.mht.add_on_changed(self.on_machine_changed)
@@ -719,6 +724,9 @@ IRQ line creation
                 if isinstance(tdev, DeviceNode):
                     if len(self.selected) == 1:
                         self.current_popup = self.popup_single_device
+                elif isinstance(tdev, IRQHub):
+                    if len(self.selected) == 1:
+                        self.current_popup = self.popup_single_irq_hub
 
                 if self.current_popup:
                     try: 
