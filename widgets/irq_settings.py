@@ -10,6 +10,7 @@ from var_widgets import \
     VarLabel
 
 from qemu import \
+    MachineDeviceSetAttributeOperation, \
     MachineNodeOperation, \
     DeviceNode, \
     IRQLine
@@ -103,7 +104,24 @@ class IRQSettingsWidget(SettingsWidget):
                     w.config(state = "disabled")
 
     def __apply_internal__(self):
-        pass
+        irq = self.irq.node
+
+        for pfx in [ "src", "dst" ]:
+            for attr in ["index", "name"]:
+                var = getattr(self, pfx + "_" + attr + "_var")
+                new_val = var.get()
+                if not new_val:
+                    new_val = None
+
+                cur_val = getattr(irq, pfx + "_" +attr)
+
+                if not new_val == cur_val:
+                    self.mht.stage(
+                        MachineDeviceSetAttributeOperation,
+                        pfx + "_" + attr,
+                        new_val,
+                        irq.id
+                    )
 
     def refresh(self):
         nodes = [ DeviceSettingsWidget.gen_node_link_text(node) \
@@ -138,10 +156,11 @@ class IRQSettingsWidget(SettingsWidget):
         if not isinstance(op, MachineNodeOperation):
             return
 
-        if not op.writes_node():
-            return
-
-        self.refresh()
+        if op.writes_node():
+            self.refresh()
+        elif isinstance(op, MachineDeviceSetAttributeOperation):
+            if op.node_id == self.irq.node.id:
+                self.refresh()
 
 class IRQSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):
