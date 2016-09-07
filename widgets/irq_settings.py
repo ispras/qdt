@@ -114,7 +114,10 @@ class IRQSettingsWidget(SettingsWidget):
                 if attr == "node":
                     new_val = self.find_node_by_link_text(new_val) 
                 if not new_val:
-                    new_val = None
+                    if attr is "index":
+                        new_val = 0
+                    else:
+                        new_val = None
 
                 cur_val = getattr(irq, pfx + "_" +attr)
 
