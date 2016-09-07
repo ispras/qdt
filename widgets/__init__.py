@@ -24,7 +24,7 @@ from sysbusdevset import \
 from device_settings_window import \
     DeviceSettingsWindow
 
-from machine_widget import \
+from machine_diagram_widget import \
     MachineDiagramWidget
 
 from pci_device_settings import \
