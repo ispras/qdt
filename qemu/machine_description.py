@@ -295,14 +295,14 @@ class IRQHub(Node):
         for end in srcs:
             IRQLine(
                 end[0], self,
-                src_irq_idx = end[1], dst_irq_idx = None,
+                src_irq_idx = end[1], dst_irq_idx = 0,
                 src_irq_name = end[2], dst_irq_name = None
             )
 
         for end in dsts:
             IRQLine(
                 self, end[0],
-                src_irq_idx = None, dst_irq_idx = end[1],
+                src_irq_idx = 0, dst_irq_idx = end[1],
                 src_irq_name = None, dst_irq_name = end[2]
             )
 
