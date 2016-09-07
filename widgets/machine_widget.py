@@ -20,6 +20,8 @@ from common import \
     sign
 
 from qemu import \
+    IRQLine as QIRQLine, \
+    MachineNodeSetLinkAttributeOperation, \
     MOp_AddIRQLine, \
     MOp_DelIRQLine, \
     MachineNodeOperation, \
@@ -520,6 +522,12 @@ IRQ line creation
                 self.node2dev[irq_node] = irq
 
                 self.add_irq_line(irq_node)
+        elif isinstance(op, MachineNodeSetLinkAttributeOperation):
+            dev = self.mach.id2node[op.node_id]
+            if isinstance(dev, QIRQLine):
+                line = self.dev2node[dev]
+                line.src = self.dev2node[dev.src_node]
+                line.dst = self.dev2node[dev.dst_node]
 
     def on_popup_single_device_irq_source(self):
         sid = self.selected[0]
