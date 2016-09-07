@@ -6,7 +6,7 @@ from examples import \
 from widgets import \
     HotKeyBinding, \
     HotKey, \
-    MachineWidget, \
+    MachineDiagramWidget, \
     VarMenu, \
     VarTk
 
@@ -80,7 +80,7 @@ class QDCGUIWindow(VarTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.mw = MachineWidget(self, self.mach)
+        self.mw = MachineDiagramWidget(self, self.mach)
         self.mw.grid(column = 0, row = 0, sticky = "NEWS")
 
         self.mw.mht.add_on_changed(self.on_changed)

@@ -277,7 +277,7 @@ class IRQLine(object):
         self.circles = []
         self.lines = []
 
-class MachineWidget(CanvasDnD):
+class MachineDiagramWidget(CanvasDnD):
     EVENT_SELECT = "<<Select>>"
 
     def __init__(self, parent, mach_desc):
@@ -295,7 +295,7 @@ class MachineWidget(CanvasDnD):
         self.node2dev = {}
         self.node2idtext = {}
 
-        self.bind(MachineWidget.EVENT_SELECT, self.on_select)
+        self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select)
         self.ids_shown_on_select = Set([])
 
         self.nodes = []
@@ -469,7 +469,7 @@ IRQ line creation
                 del self.id2node[circle_id]
                 if circle_id in self.selected:
                     self.selected.remove(circle_id)
-                    self.event_generate(MachineWidget.EVENT_SELECT)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
                 self.canvas.delete(circle_id)
                 del self.dev2node[hub]
                 del self.node2dev[hub_node]
@@ -686,7 +686,7 @@ IRQ line creation
             if not shift:
                 if self.selected:
                     self.selected = []
-                    self.event_generate(MachineWidget.EVENT_SELECT)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
             return
 
         if not touched_ids:
@@ -697,17 +697,17 @@ IRQ line creation
                 if self.select_by_frame:
                     if not tid in self.selected:
                         self.selected.append(tid)
-                        self.event_generate(MachineWidget.EVENT_SELECT)
+                        self.event_generate(MachineDiagramWidget.EVENT_SELECT)
                 else:
                     if tid in self.selected:
                         self.selected.remove(tid)
-                        self.event_generate(MachineWidget.EVENT_SELECT)
+                        self.event_generate(MachineDiagramWidget.EVENT_SELECT)
                     else:
                         self.selected.append(tid)
-                        self.event_generate(MachineWidget.EVENT_SELECT)
+                        self.event_generate(MachineDiagramWidget.EVENT_SELECT)
         elif not self.selected == touched_ids:
             self.selected = list(touched_ids)
-            self.event_generate(MachineWidget.EVENT_SELECT)
+            self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
         self.invalidated = True
 
@@ -733,11 +733,11 @@ IRQ line creation
             if shift:
                 if not tid in self.selected:
                     self.selected.append(tid)
-                    self.event_generate(MachineWidget.EVENT_SELECT)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
             else:
                 if not tid in self.selected:
                     self.selected = [tid]
-                    self.event_generate(MachineWidget.EVENT_SELECT)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
             # touched node
             tnode = self.id2node[tid]
@@ -914,7 +914,7 @@ IRQ line creation
                     self.selected.append(id)
                 else:
                     self.selected = []
-                self.event_generate(MachineWidget.EVENT_SELECT)
+                self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
         if self.selected:
             # offset
