@@ -11,6 +11,7 @@ from var_widgets import \
 
 from qemu import \
     MachineDeviceSetAttributeOperation, \
+    MachineNodeSetLinkAttributeOperation, \
     MachineNodeOperation, \
     DeviceNode, \
     IRQLine
@@ -107,9 +108,11 @@ class IRQSettingsWidget(SettingsWidget):
         irq = self.irq.node
 
         for pfx in [ "src", "dst" ]:
-            for attr in ["index", "name"]:
+            for attr in [ "node", "index", "name" ]:
                 var = getattr(self, pfx + "_" + attr + "_var")
                 new_val = var.get()
+                if attr == "node":
+                    new_val = self.find_node_by_link_text(new_val) 
                 if not new_val:
                     new_val = None
 
@@ -117,7 +120,8 @@ class IRQSettingsWidget(SettingsWidget):
 
                 if not new_val == cur_val:
                     self.mht.stage(
-                        MachineDeviceSetAttributeOperation,
+                        MachineNodeSetLinkAttributeOperation if attr == "node" \
+                            else MachineDeviceSetAttributeOperation,
                         pfx + "_" + attr,
                         new_val,
                         irq.id
