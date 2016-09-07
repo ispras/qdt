@@ -74,6 +74,7 @@ from machine_editing import \
             MOp_AddIRQHub, \
                 MOp_DelIRQHub, \
             MachineDeviceSetAttributeOperation, \
+                MachineNodeSetLinkAttributeOperation, \
                 MOp_PCIDevSetSlot, \
                 MOp_PCIDevSetFunction, \
                 MOp_PCIDevSetMultifunction, \

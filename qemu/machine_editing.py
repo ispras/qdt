@@ -171,6 +171,29 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
             (self.gen_entry(), "attr", copy.deepcopy(self.attr))
         ]
 
+class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
+    def __init__(self, attribute_name, new_value, *args, **kw):
+        MachineDeviceSetAttributeOperation.__init__(self,
+            attribute_name,
+            new_value.id,
+            *args, **kw
+        )
+
+    def __backup__(self):
+        node = self.mach.id2node[self.node_id]
+        val = getattr(node, self.attr)
+        self.old_val = copy.deepcopy(val.id)
+
+    def __do__(self):
+        node = self.mach.id2node[self.node_id]
+        new_val = self.mach.id2node[self.new_val]
+        setattr(node, self.attr, new_val)
+
+    def __undo__(self):
+        node = self.mach.id2node[self.node_id]
+        old_val = self.mach.id2node[self.old_val]
+        setattr(node, self.attr, old_val)
+
 class MOp_PCIDevSetSlot(MachineDeviceSetAttributeOperation):
     def __init__(self, slot, *args, **kw):
         MachineDeviceSetAttributeOperation.__init__(self,
