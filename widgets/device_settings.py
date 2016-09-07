@@ -23,6 +23,9 @@ from qemu import \
 from itertools import \
     count
 
+from settings_window import \
+    SettingsWidget
+
 class PropLineDesc(object):
     def __init__(self, device_settings_widget, prop):
         self.dsw = device_settings_widget
@@ -194,7 +197,7 @@ class PropLineDesc(object):
         self.v_val = var_p_val
         self.bt_del = bt_del
 
-class DeviceSettingsWidget(tk.Frame):
+class DeviceSettingsWidget(SettingsWidget):
     prop_type_name_map = {
         qemu.QOMPropertyTypeInteger: ("Integer", ),
         qemu.QOMPropertyTypeLink: ("Link", ),
@@ -208,17 +211,9 @@ class DeviceSettingsWidget(tk.Frame):
         "Boolean": qemu.QOMPropertyTypeBoolean
     }
 
-    def __init__(self,
-            master,
-            device,
-            machine_history_tracker,
-            *args, **kwargs
-        ):
-        tk.Frame.__init__(self, master,  *args, **kwargs)
+    def __init__(self, device, *args, **kw):
+        SettingsWidget.__init__(self, *args, **kw)
         self.dev = device
-        self.mht = machine_history_tracker
-
-        self.grid()
 
         self.columnconfigure(0, weight = 1)
 
@@ -281,10 +276,6 @@ class DeviceSettingsWidget(tk.Frame):
             sticky = "NEWS"
         )
 
-        self.after(0, self.refresh)
-
-        self.mht.add_on_changed(self.on_changed)
-
     def gen_uniq_prop_name(self):
         for x in count(0, 1):
             name = "name-of-new-property-" + str(x)
@@ -309,10 +300,6 @@ class DeviceSettingsWidget(tk.Frame):
 
         # Move add button bottom
         self.bt_add_prop.grid(row = row + 1)
-
-    def destroy(self):
-        self.mht.remove_on_changed(self.on_changed)
-        tk.Frame.destroy(self)
 
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
@@ -441,12 +428,3 @@ class DeviceSettingsWidget(tk.Frame):
         for p in self.dev.properties:
             if not p in self.prop2field:
                 self.mht.stage(MOp_DelDevProp, p, self.dev.id)
-
-    def apply(self):
-        self.mht.remove_on_changed(self.on_changed)
-
-        self.__apply_internal__()
-
-        self.mht.commit()
-
-        self.mht.add_on_changed(self.on_changed)

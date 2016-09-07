@@ -569,7 +569,7 @@ IRQ line creation
         y = y - y0
 
         dev = self.node2dev[self.id2node[id]]
-        wnd = DeviceSettingsWindow(self, dev, self.mht)
+        wnd = DeviceSettingsWindow(self.mht, self, device = dev)
         # Makes settings window always on top.
         # Is there more pythonic interface?
         # http://effbot.org/tkinterbook/wm.htm#Tkinter.Wm.attributes-method
