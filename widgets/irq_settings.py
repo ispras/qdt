@@ -13,6 +13,7 @@ from qemu import \
     MachineDeviceSetAttributeOperation, \
     MachineNodeSetLinkAttributeOperation, \
     MachineNodeOperation, \
+    IRQHub, \
     DeviceNode, \
     IRQLine
 
@@ -108,11 +109,32 @@ class IRQSettingsWidget(SettingsWidget):
         irq = self.irq.node
 
         for pfx in [ "src", "dst" ]:
-            for attr in [ "node", "index", "name" ]:
+            var = getattr(self, pfx + "_node_var")
+            new_val = self.find_node_by_link_text(var.get()) 
+
+            cur_val = getattr(irq, pfx + "_node")
+
+            if not new_val == cur_val:
+                # if end node type is changed then reset index and name
+                if isinstance(new_val, DeviceNode) \
+                   and not isinstance(cur_val, DeviceNode):
+                    getattr(self, pfx + "_index_var").set("0")
+                    getattr(self, pfx + "_name_var").set("")
+                elif isinstance(new_val, IRQHub) \
+                     and not isinstance(cur_val, IRQHub):
+                    getattr(self, pfx + "_index_var").set("")
+                    getattr(self, pfx + "_name_var").set("")
+
+                self.mht.stage(
+                    MachineNodeSetLinkAttributeOperation,
+                    pfx + "_node",
+                    new_val,
+                    irq.id
+                )
+
+            for attr in [ "index", "name" ]:
                 var = getattr(self, pfx + "_" + attr + "_var")
                 new_val = var.get()
-                if attr == "node":
-                    new_val = self.find_node_by_link_text(new_val) 
                 if not new_val:
                     if attr is "index":
                         new_val = 0
@@ -123,8 +145,7 @@ class IRQSettingsWidget(SettingsWidget):
 
                 if not new_val == cur_val:
                     self.mht.stage(
-                        MachineNodeSetLinkAttributeOperation if attr == "node" \
-                            else MachineDeviceSetAttributeOperation,
+                        MachineDeviceSetAttributeOperation,
                         pfx + "_" + attr,
                         new_val,
                         irq.id
