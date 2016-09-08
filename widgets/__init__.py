@@ -33,3 +33,6 @@ from pci_device_settings import \
 from irq_settings import \
     IRQSettingsWindow, \
     IRQSettingsWidget
+
+from gui_project import \
+    GUIProject
