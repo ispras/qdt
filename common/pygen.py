@@ -60,3 +60,40 @@ class PyGenerator(object):
                 print e
                 self.line("None")
             self.line()
+
+    def gen_const(self, c):
+        if isinstance(c, bool):
+            return "True" if c else "False"
+        elif isinstance(c, int) or isinstance(c, long):
+            return "0x%0x" % c
+        elif isinstance(c, str):
+            return "\"" + c + "\""
+        elif isinstance(c, bool):
+            return "True" if c else "False"
+        else:
+            return str(c)
+
+    def reset_gen(self, obj):
+        self.reset_gen_common(type(obj).__name__ + "(")
+
+    def reset_gen_common(self, prefix):
+        self.first_field = True
+        self.write(prefix)
+
+    def gen_field(self, string):
+        if self.first_field:
+            self.line()
+            self.push_indent()
+            self.write(string)
+            self.first_field = False
+        else:
+            self.line(",")
+            self.write(string)
+
+    def gen_end(self, suffix = ")"):
+        if not self.first_field:
+            self.line()
+            self.pop_indent()
+        self.line(suffix)
+
+        self.first_field = True
