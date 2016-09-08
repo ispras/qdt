@@ -55,6 +55,7 @@ from machine_description import \
     MemoryROMNode
 
 from project import \
+    QOMDescription, \
     QProject
 
 from device_description import \
