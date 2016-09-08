@@ -4,6 +4,8 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    __dict__ as widgets_dict, \
+    GUIProject, \
     HotKeyBinding, \
     HotKey, \
     MachineDiagramWidget, \
@@ -134,39 +136,56 @@ class QDCGUIWindow(VarTk):
         self.quit()
 
 def main():
-    mach = None
     try:
         variables = {}
-        execfile("serialize-test.py", qemu.__dict__, variables)
+        context = dict(qemu.__dict__)
+        context.update(widgets_dict)
+        execfile("project.py", context, variables)
 
         for v in variables.values():
-            if isinstance(v, qemu.MachineNode):
-                mach = v
+            if isinstance(v, GUIProject):
+                project = v
                 break
     except Exception, e:
-        print "Machine load failed: " + str(e) + "\n"
+        print "Project load filed: " + str(e) + "\n"
+        project = GUIProject()
 
-    if not mach:
-        mach = Q35MachineNode_2_6_0()
+    try:
+        mach = project.get_machine_descriptions()[0]
+    except IndexError:
+        try:
+            variables = {}
+            execfile("serialize-test.py", qemu.__dict__, variables)
+    
+            for v in variables.values():
+                if isinstance(v, qemu.MachineNode):
+                    mach = v
+                    break
+        except Exception, e:
+            print "Machine load failed: " + str(e) + "\n"
+            mach = Q35MachineNode_2_6_0()
+
+        project.descriptions.append(mach)
+
+    try:
+        layout = project.get_layouts(mach.name)[0]
+    except IndexError:
+        try:
+            layout = cPickle.load(open("layout.p", "rb"))
+        except Exception, e:
+            print "Layout load filed: " + str(e) + "\n"
+            layout = {}
+        project.layouts = [(mach.name, layout)]
 
     root = QDCGUIWindow(mach)
     root.geometry("500x500")
-
-    try:
-        layout = cPickle.load(open("layout.p", "rb"))
-    except:
-        layout = {}
-
     root.set_machine_widget_layout(layout)
 
     root.mainloop()
 
-    layout = root.get_machine_widget_layout()
-    cPickle.dump(layout, open("layout.p", "wb"))
+    project.layouts = [(mach.name, layout)]
 
-    with open("serialize-test.py", "wb") as f:
-        PyGenerator().serialize(f, mach)
-        f.close()
+    PyGenerator().serialize(open("project.py", "wb"), project)
 
 if __name__ == '__main__':
     main()
