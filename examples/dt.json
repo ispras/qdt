@@ -1,0 +1,4073 @@
+[
+    {
+        "macro": [
+            "TYPE_DEVICE"
+        ],
+        "type": "device",
+        "children": [
+            {
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "unit"
+                    }
+                ],
+                "type": "ide-device",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            },
+                            {
+                                "type": 2,
+                                "name": "logical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "physical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "min_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "opt_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "discard_granularity"
+                            },
+                            {
+                                "type": 0,
+                                "name": "ver"
+                            },
+                            {
+                                "type": 2,
+                                "name": "wwn"
+                            },
+                            {
+                                "type": 0,
+                                "name": "serial"
+                            },
+                            {
+                                "type": 0,
+                                "name": "model"
+                            }
+                        ],
+                        "type": "ide-drive"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            },
+                            {
+                                "type": 2,
+                                "name": "logical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "physical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "min_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "opt_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "discard_granularity"
+                            },
+                            {
+                                "type": 0,
+                                "name": "ver"
+                            },
+                            {
+                                "type": 2,
+                                "name": "wwn"
+                            },
+                            {
+                                "type": 0,
+                                "name": "serial"
+                            },
+                            {
+                                "type": 0,
+                                "name": "model"
+                            }
+                        ],
+                        "type": "ide-cd"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            },
+                            {
+                                "type": 2,
+                                "name": "logical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "physical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "min_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "opt_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "discard_granularity"
+                            },
+                            {
+                                "type": 0,
+                                "name": "ver"
+                            },
+                            {
+                                "type": 2,
+                                "name": "wwn"
+                            },
+                            {
+                                "type": 0,
+                                "name": "serial"
+                            },
+                            {
+                                "type": 0,
+                                "name": "model"
+                            },
+                            {
+                                "type": 2,
+                                "name": "cyls"
+                            },
+                            {
+                                "type": 2,
+                                "name": "heads"
+                            },
+                            {
+                                "type": 2,
+                                "name": "secs"
+                            },
+                            {
+                                "type": 2,
+                                "name": "bios-chs-trans"
+                            }
+                        ],
+                        "type": "ide-hd"
+                    }
+                ]
+            },
+            {
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "cad"
+                    }
+                ],
+                "type": "hda-codec",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "debug"
+                            },
+                            {
+                                "type": 7,
+                                "name": "mixer"
+                            }
+                        ],
+                        "type": "hda-audio",
+                        "children": [
+                            {
+                                "type": "hda-micro"
+                            },
+                            {
+                                "type": "hda-duplex"
+                            },
+                            {
+                                "type": "hda-output"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "property": [
+                    {
+                        "type": 0,
+                        "name": "drive"
+                    },
+                    {
+                        "type": 7,
+                        "name": "spi"
+                    }
+                ],
+                "type": "sd-card"
+            },
+            {
+                "macro": [
+                    "TYPE_ISA_DEVICE"
+                ],
+                "type": "isa-device",
+                "children": [
+                    {
+                        "macro": [
+                            "TYPE_ISA_FDC"
+                        ],
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dma"
+                            },
+                            {
+                                "type": 0,
+                                "name": "driveA"
+                            },
+                            {
+                                "type": 0,
+                                "name": "driveB"
+                            },
+                            {
+                                "type": 7,
+                                "name": "check_media_rate"
+                            },
+                            {
+                                "type": 2,
+                                "name": "fdtypeA"
+                            },
+                            {
+                                "type": 2,
+                                "name": "fdtypeB"
+                            },
+                            {
+                                "type": 2,
+                                "name": "fallback"
+                            }
+                        ],
+                        "type": "isa-fdc"
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "ne2k_isa"
+                    },
+                    {
+                        "type": "port92"
+                    },
+                    {
+                        "macro": [
+                            "PC_MACHINE_VMPORT"
+                        ],
+                        "type": "vmport"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "ps2_mouse"
+                            }
+                        ],
+                        "type": "vmmouse"
+                    },
+                    {
+                        "type": "i8042"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_PIT_COMMON"
+                        ],
+                        "type": "pit-common",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_KVM_I8254"
+                                ],
+                                "property": [
+                                    {
+                                        "macro": [
+                                            "APPLESMC_PROP_IO_BASE"
+                                        ],
+                                        "type": 2,
+                                        "name": "iobase"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "lost_tick_policy"
+                                    }
+                                ],
+                                "type": "kvm-pit"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_I8254"
+                                ],
+                                "property": [
+                                    {
+                                        "macro": [
+                                            "APPLESMC_PROP_IO_BASE"
+                                        ],
+                                        "type": 2,
+                                        "name": "iobase"
+                                    }
+                                ],
+                                "type": "isa-pit"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "vgamem_mb"
+                            }
+                        ],
+                        "type": "isa-cirrus-vga"
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dma"
+                            }
+                        ],
+                        "type": "cs4231a"
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "type": 2,
+                                "name": "freq"
+                            }
+                        ],
+                        "type": "adlib"
+                    },
+                    {
+                        "type": "sga"
+                    },
+                    {
+                        "type": "pc-testdev"
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "type": 2,
+                                "name": "iosize"
+                            }
+                        ],
+                        "type": "isa-debug-exit"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_TPM_TIS"
+                        ],
+                        "property": [
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 0,
+                                "name": "tpmdev"
+                            }
+                        ],
+                        "type": "tpm-tis"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "vgamem_mb"
+                            }
+                        ],
+                        "type": "isa-vga"
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "type": 2,
+                                "name": "iobase2"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            }
+                        ],
+                        "type": "isa-ide"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "ioport"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            }
+                        ],
+                        "type": "isa-ipmi-kcs"
+                    },
+                    {
+                        "type": "ib700"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_PIC_COMMON"
+                        ],
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "type": 2,
+                                "name": "elcr_addr"
+                            },
+                            {
+                                "type": 2,
+                                "name": "elcr_mask"
+                            },
+                            {
+                                "type": 7,
+                                "name": "master"
+                            }
+                        ],
+                        "type": "pic-common",
+                        "children": [
+                            {
+                                "type": "kvm-i8259"
+                            },
+                            {
+                                "type": "isa-i8259"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "base"
+                            },
+                            {
+                                "type": 2,
+                                "name": "page-base"
+                            },
+                            {
+                                "type": 2,
+                                "name": "pageh-base"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dshift"
+                            }
+                        ],
+                        "type": "i8257"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "version"
+                            },
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dma"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dma16"
+                            }
+                        ],
+                        "type": "sb16"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "ioport"
+                            }
+                        ],
+                        "type": "pvpanic"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_MC146818_RTC"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "base_year"
+                            },
+                            {
+                                "type": 2,
+                                "name": "lost_tick_policy"
+                            }
+                        ],
+                        "type": "mc146818rtc"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_APPLE_SMC"
+                        ],
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "type": 0,
+                                "name": "osk"
+                            }
+                        ],
+                        "type": "isa-applesmc"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "freq"
+                            },
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dma"
+                            }
+                        ],
+                        "type": "gus"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_PC_SPEAKER"
+                        ],
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            }
+                        ],
+                        "type": "isa-pcspk"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "ioport"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            }
+                        ],
+                        "type": "isa-ipmi-bt"
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev"
+                            },
+                            {
+                                "type": 2,
+                                "name": "readback"
+                            }
+                        ],
+                        "type": "isa-debugcon"
+                    },
+                    {
+                        "type": "hyperv-testdev"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_ISA_SERIAL"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "index"
+                            },
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev"
+                            },
+                            {
+                                "type": 2,
+                                "name": "wakeup"
+                            }
+                        ],
+                        "type": "isa-serial"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "index"
+                            },
+                            {
+                                "macro": [
+                                    "APPLESMC_PROP_IO_BASE"
+                                ],
+                                "type": 2,
+                                "name": "iobase"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_IRQ"
+                                ],
+                                "type": 2,
+                                "name": "irq"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev"
+                            }
+                        ],
+                        "type": "isa-parallel"
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_SCSI_DEVICE"
+                ],
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "channel"
+                    },
+                    {
+                        "type": 2,
+                        "name": "scsi-id"
+                    },
+                    {
+                        "type": 2,
+                        "name": "lun"
+                    }
+                ],
+                "type": "scsi-device",
+                "children": [
+                    {
+                        "type": "scsi-disk-base",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "drive"
+                                    }
+                                ],
+                                "type": "scsi-block"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "drive"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "logical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "physical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "min_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "opt_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "discard_granularity"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "ver"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "serial"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "vendor"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "product"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "removable"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "dpofua"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "wwn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "port_wwn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "port_index"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_unmap_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "cyls"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "heads"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "secs"
+                                    }
+                                ],
+                                "type": "scsi-hd"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "drive"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "logical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "physical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "min_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "opt_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "discard_granularity"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "ver"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "serial"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "vendor"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "product"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "removable"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "dpofua"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "wwn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "port_wwn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "port_index"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_unmap_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_io_size"
+                                    }
+                                ],
+                                "type": "scsi-disk"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "drive"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "logical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "physical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "min_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "opt_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "discard_granularity"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "ver"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "serial"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "vendor"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "product"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "wwn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "port_wwn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "port_index"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_io_size"
+                                    }
+                                ],
+                                "type": "scsi-cd"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            }
+                        ],
+                        "type": "scsi-generic"
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_APIC_COMMON"
+                ],
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "id"
+                    },
+                    {
+                        "type": 2,
+                        "name": "version"
+                    },
+                    {
+                        "type": 7,
+                        "name": "vapic"
+                    }
+                ],
+                "type": "apic-common",
+                "children": [
+                    {
+                        "type": "kvm-apic"
+                    },
+                    {
+                        "type": "apic"
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_VIRTIO_DEVICE"
+                ],
+                "property": [
+                    {
+                        "type": 7,
+                        "name": "indirect_desc"
+                    },
+                    {
+                        "type": 7,
+                        "name": "event_idx"
+                    },
+                    {
+                        "type": 7,
+                        "name": "notify_on_empty"
+                    },
+                    {
+                        "type": 7,
+                        "name": "any_layout"
+                    }
+                ],
+                "type": "virtio-device",
+                "children": [
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_BLK"
+                        ],
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            },
+                            {
+                                "type": 2,
+                                "name": "logical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "physical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "min_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "opt_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "discard_granularity"
+                            },
+                            {
+                                "type": 2,
+                                "name": "cyls"
+                            },
+                            {
+                                "type": 2,
+                                "name": "heads"
+                            },
+                            {
+                                "type": 2,
+                                "name": "secs"
+                            },
+                            {
+                                "type": 0,
+                                "name": "serial"
+                            },
+                            {
+                                "type": 7,
+                                "name": "config-wce"
+                            },
+                            {
+                                "type": 7,
+                                "name": "scsi"
+                            },
+                            {
+                                "type": 7,
+                                "name": "request-merging"
+                            },
+                            {
+                                "type": 2,
+                                "name": "num-queues"
+                            }
+                        ],
+                        "type": "virtio-blk-device"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_RNG"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "max-bytes"
+                            },
+                            {
+                                "type": 2,
+                                "name": "period"
+                            }
+                        ],
+                        "type": "virtio-rng-device"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_SERIAL"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "max_ports"
+                            }
+                        ],
+                        "type": "virtio-serial-device"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_BALLOON"
+                        ],
+                        "property": [
+                            {
+                                "type": 7,
+                                "name": "deflate-on-oom"
+                            }
+                        ],
+                        "type": "virtio-balloon-device"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_NET"
+                        ],
+                        "property": [
+                            {
+                                "type": 7,
+                                "name": "csum"
+                            },
+                            {
+                                "type": 7,
+                                "name": "guest_csum"
+                            },
+                            {
+                                "type": 7,
+                                "name": "gso"
+                            },
+                            {
+                                "type": 7,
+                                "name": "guest_tso4"
+                            },
+                            {
+                                "type": 7,
+                                "name": "guest_tso6"
+                            },
+                            {
+                                "type": 7,
+                                "name": "guest_ecn"
+                            },
+                            {
+                                "type": 7,
+                                "name": "guest_ufo"
+                            },
+                            {
+                                "type": 7,
+                                "name": "guest_announce"
+                            },
+                            {
+                                "type": 7,
+                                "name": "host_tso4"
+                            },
+                            {
+                                "type": 7,
+                                "name": "host_tso6"
+                            },
+                            {
+                                "type": 7,
+                                "name": "host_ecn"
+                            },
+                            {
+                                "type": 7,
+                                "name": "host_ufo"
+                            },
+                            {
+                                "type": 7,
+                                "name": "mrg_rxbuf"
+                            },
+                            {
+                                "type": 7,
+                                "name": "status"
+                            },
+                            {
+                                "type": 7,
+                                "name": "ctrl_vq"
+                            },
+                            {
+                                "type": 7,
+                                "name": "ctrl_rx"
+                            },
+                            {
+                                "type": 7,
+                                "name": "ctrl_vlan"
+                            },
+                            {
+                                "type": 7,
+                                "name": "ctrl_rx_extra"
+                            },
+                            {
+                                "type": 7,
+                                "name": "ctrl_mac_addr"
+                            },
+                            {
+                                "type": 7,
+                                "name": "ctrl_guest_offloads"
+                            },
+                            {
+                                "type": 7,
+                                "name": "mq"
+                            },
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-txtimer"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-txburst"
+                            },
+                            {
+                                "type": 0,
+                                "name": "tx"
+                            }
+                        ],
+                        "type": "virtio-net-device"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_SCSI_COMMON"
+                        ],
+                        "type": "virtio-scsi-common",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_VHOST_SCSI"
+                                ],
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "vhostfd"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "wwpn"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "boot_tpgt"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "num_queues"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_sectors"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "cmd_per_lun"
+                                    }
+                                ],
+                                "type": "vhost-scsi"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_VIRTIO_SCSI"
+                                ],
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "num_queues"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_sectors"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "cmd_per_lun"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "hotplug"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "param_change"
+                                    }
+                                ],
+                                "type": "virtio-scsi-device"
+                            }
+                        ]
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_INPUT"
+                        ],
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "serial"
+                            }
+                        ],
+                        "type": "virtio-input-device",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_VIRTIO_INPUT_HOST"
+                                ],
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "evdev"
+                                    }
+                                ],
+                                "type": "virtio-input-host-device"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_VIRTIO_INPUT_HID"
+                                ],
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "display"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "head"
+                                    }
+                                ],
+                                "type": "virtio-input-hid-device",
+                                "children": [
+                                    {
+                                        "macro": [
+                                            "TYPE_VIRTIO_KEYBOARD"
+                                        ],
+                                        "type": "virtio-keyboard-device"
+                                    },
+                                    {
+                                        "macro": [
+                                            "TYPE_VIRTIO_TABLET"
+                                        ],
+                                        "type": "virtio-tablet-device"
+                                    },
+                                    {
+                                        "macro": [
+                                            "TYPE_VIRTIO_MOUSE"
+                                        ],
+                                        "type": "virtio-mouse-device"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VIRTIO_GPU"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "max_outputs"
+                            }
+                        ],
+                        "type": "virtio-gpu-device"
+                    }
+                ]
+            },
+            {
+                "type": "qemu,register"
+            },
+            {
+                "macro": [
+                    "TYPE_USB_DEVICE"
+                ],
+                "property": [
+                    {
+                        "type": 0,
+                        "name": "port"
+                    },
+                    {
+                        "type": 0,
+                        "name": "serial"
+                    },
+                    {
+                        "type": 7,
+                        "name": "full-path"
+                    },
+                    {
+                        "type": 7,
+                        "name": "msos-desc"
+                    }
+                ],
+                "type": "usb-device",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "log-scsi-req"
+                            }
+                        ],
+                        "type": "usb-uas"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "x-root"
+                            },
+                            {
+                                "type": 0,
+                                "name": "desc"
+                            }
+                        ],
+                        "type": "usb-mtp"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "debug"
+                            }
+                        ],
+                        "type": "usb-ccid"
+                    },
+                    {
+                        "type": "usb-storage-dev",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "drive"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "logical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "physical_block_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "min_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "opt_io_size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "discard_granularity"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "removable"
+                                    }
+                                ],
+                                "type": "usb-storage"
+                            },
+                            {
+                                "type": "usb-bot"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "debug"
+                            },
+                            {
+                                "type": 2,
+                                "name": "buffer"
+                            }
+                        ],
+                        "type": "usb-audio"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "usb-net"
+                    },
+                    {
+                        "type": "usb-wacom-tablet"
+                    },
+                    {
+                        "type": "usb-hub"
+                    },
+                    {
+                        "type": "usb-serial-dev",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "chardev"
+                                    }
+                                ],
+                                "type": "usb-serial"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "chardev"
+                                    }
+                                ],
+                                "type": "usb-braille"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "usb-bt-dongle"
+                    },
+                    {
+                        "type": "usb-hid",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "usb_version"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "display"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "head"
+                                    }
+                                ],
+                                "type": "usb-tablet"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "usb_version"
+                                    }
+                                ],
+                                "type": "usb-mouse"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "usb_version"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "display"
+                                    }
+                                ],
+                                "type": "usb-kbd"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "property": [
+                    {
+                        "macro": [
+                            "PC_DIMM_SLOT_PROP"
+                        ],
+                        "type": 2,
+                        "name": "slot"
+                    }
+                ],
+                "type": "ccid-card"
+            },
+            {
+                "macro": [
+                    "TYPE_I2C_SLAVE"
+                ],
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "address"
+                    }
+                ],
+                "type": "i2c-slave",
+                "children": [
+                    {
+                        "macro": [
+                            "TYPE_SMBUS_DEVICE"
+                        ],
+                        "type": "smbus-device",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "data"
+                                    }
+                                ],
+                                "type": "smbus-eeprom"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "slave_addr"
+                    }
+                ],
+                "type": "ipmi-bmc",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "chardev"
+                            }
+                        ],
+                        "type": "ipmi-bmc-extern"
+                    },
+                    {
+                        "type": "ipmi-bmc-sim"
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_VIRTIO_SERIAL_PORT"
+                ],
+                "property": [
+                    {
+                        "type": 2,
+                        "name": "nr"
+                    },
+                    {
+                        "type": 0,
+                        "name": "name"
+                    }
+                ],
+                "type": "virtio-serial-port",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "chardev"
+                            }
+                        ],
+                        "type": "virtserialport",
+                        "children": [
+                            {
+                                "type": "virtconsole"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_SYS_BUS_DEVICE"
+                ],
+                "type": "sys-bus-device",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "num-ports"
+                            },
+                            {
+                                "type": 2,
+                                "name": "dma-offset"
+                            }
+                        ],
+                        "type": "sysbus-ohci"
+                    },
+                    {
+                        "type": "esp"
+                    },
+                    {
+                        "type": "kvmclock"
+                    },
+                    {
+                        "type": "kvmvapic"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_VFIO_PLATFORM"
+                        ],
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "host"
+                            },
+                            {
+                                "type": 0,
+                                "name": "sysfsdev"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-no-mmap"
+                            },
+                            {
+                                "type": 2,
+                                "name": "mmap-timeout-ms"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-irqfd"
+                            }
+                        ],
+                        "type": "vfio-platform",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_VFIO_CALXEDA_XGMAC"
+                                ],
+                                "type": "vfio-calxeda-xgmac"
+                            },
+                            {
+                                "type": "vfio-amd-xgbe"
+                            }
+                        ]
+                    },
+                    {
+                        "macro": [
+                            "TYPE_HPET"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "timers"
+                            },
+                            {
+                                "macro": [
+                                    "PCI_BRIDGE_DEV_PROP_MSI"
+                                ],
+                                "type": 7,
+                                "name": "msi"
+                            },
+                            {
+                                "macro": [
+                                    "HPET_INTCAP"
+                                ],
+                                "type": 2,
+                                "name": "hpet-intcap"
+                            }
+                        ],
+                        "type": "hpet"
+                    },
+                    {
+                        "type": "isabus-bridge"
+                    },
+                    {
+                        "type": "base-sysbus-fdc",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "driveA"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "driveB"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "fdtypeA"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "fdtypeB"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "fallback"
+                                    }
+                                ],
+                                "type": "sysbus-fdc"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "drive"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "fdtype"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "fallback"
+                                    }
+                                ],
+                                "type": "SUNW,fdtwo"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "virtio-mmio"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "num-ports"
+                            }
+                        ],
+                        "type": "sysbus-ahci",
+                        "children": [
+                            {
+                                "type": "allwinner-ahci"
+                            }
+                        ]
+                    },
+                    {
+                        "macro": [
+                            "TYPE_IOAPIC_COMMON"
+                        ],
+                        "type": "ioapic-common",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "gsi_base"
+                                    }
+                                ],
+                                "type": "kvm-ioapic"
+                            },
+                            {
+                                "type": "ioapic"
+                            }
+                        ]
+                    },
+                    {
+                        "macro": [
+                            "TYPE_INTEL_IOMMU_DEVICE"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "version"
+                            }
+                        ],
+                        "type": "intel-iommu"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_PCI_HOST_BRIDGE"
+                        ],
+                        "type": "pci-host-bridge",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_I440FX_PCI_HOST_BRIDGE"
+                                ],
+                                "property": [
+                                    {
+                                        "macro": [
+                                            "PCI_HOST_PROP_PCI_HOLE64_SIZE"
+                                        ],
+                                        "type": 2,
+                                        "name": "pci-hole64-size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "short_root_bus"
+                                    }
+                                ],
+                                "type": "i440FX-pcihost"
+                            },
+                            {
+                                "macro": [
+                                    "TYPE_PCIE_HOST_BRIDGE"
+                                ],
+                                "type": "pcie-host-bridge",
+                                "children": [
+                                    {
+                                        "macro": [
+                                            "TYPE_Q35_HOST_DEVICE"
+                                        ],
+                                        "property": [
+                                            {
+                                                "macro": [
+                                                    "PCIE_HOST_MCFG_BASE"
+                                                ],
+                                                "type": 2,
+                                                "name": "MCFG"
+                                            },
+                                            {
+                                                "macro": [
+                                                    "PCI_HOST_PROP_PCI_HOLE64_SIZE"
+                                                ],
+                                                "type": 2,
+                                                "name": "pci-hole64-size"
+                                            },
+                                            {
+                                                "type": 2,
+                                                "name": "short_root_bus"
+                                            },
+                                            {
+                                                "type": 2,
+                                                "name": "below-4g-mem-size"
+                                            },
+                                            {
+                                                "type": 2,
+                                                "name": "above-4g-mem-size"
+                                            }
+                                        ],
+                                        "type": "q35-pcihost"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "pxb-host"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            },
+                            {
+                                "type": 2,
+                                "name": "num-blocks"
+                            },
+                            {
+                                "type": 2,
+                                "name": "sector-length"
+                            },
+                            {
+                                "type": 2,
+                                "name": "width"
+                            },
+                            {
+                                "type": 2,
+                                "name": "device-width"
+                            },
+                            {
+                                "type": 2,
+                                "name": "max-device-width"
+                            },
+                            {
+                                "type": 7,
+                                "name": "big-endian"
+                            },
+                            {
+                                "type": 7,
+                                "name": "secure"
+                            },
+                            {
+                                "type": 2,
+                                "name": "id0"
+                            },
+                            {
+                                "type": 2,
+                                "name": "id1"
+                            },
+                            {
+                                "type": 2,
+                                "name": "id2"
+                            },
+                            {
+                                "type": 2,
+                                "name": "id3"
+                            },
+                            {
+                                "type": 0,
+                                "name": "name"
+                            }
+                        ],
+                        "type": "cfi.pflash01"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_SYSBUS_SDHCI"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "capareg"
+                            },
+                            {
+                                "type": 2,
+                                "name": "maxcurr"
+                            },
+                            {
+                                "type": 7,
+                                "name": "pending-insert-quirk"
+                            }
+                        ],
+                        "type": "generic-sdhci"
+                    },
+                    {
+                        "type": "fw_cfg",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "data_width"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "dma_enabled"
+                                    }
+                                ],
+                                "type": "fw_cfg_mem"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "macro": [
+                                            "APPLESMC_PROP_IO_BASE"
+                                        ],
+                                        "type": 2,
+                                        "name": "iobase"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "dma_iobase"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "dma_enabled"
+                                    }
+                                ],
+                                "type": "fw_cfg_io"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_PCI_DEVICE"
+                ],
+                "property": [
+                    {
+                        "macro": [
+                            "PC_DIMM_ADDR_PROP"
+                        ],
+                        "type": 2,
+                        "name": "addr"
+                    },
+                    {
+                        "type": 0,
+                        "name": "romfile"
+                    },
+                    {
+                        "type": 2,
+                        "name": "rombar"
+                    },
+                    {
+                        "type": 7,
+                        "name": "multifunction"
+                    },
+                    {
+                        "type": 7,
+                        "name": "command_serr_enable"
+                    }
+                ],
+                "type": "pci-device",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "host"
+                            },
+                            {
+                                "type": 0,
+                                "name": "sysfsdev"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-intx-mmap-timeout-ms"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-vga"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-req"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-igd-opregion"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-no-mmap"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-no-kvm-intx"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-no-kvm-msi"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-no-kvm-msix"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-pci-vendor-id"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-pci-device-id"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-pci-sub-vendor-id"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-pci-sub-device-id"
+                            },
+                            {
+                                "type": 2,
+                                "name": "x-igd-gms"
+                            }
+                        ],
+                        "type": "vfio-pci"
+                    },
+                    {
+                        "type": "ich9-ahci"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82562"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "ne2k_pci"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_I440FX_PCI_DEVICE"
+                        ],
+                        "type": "i440FX",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_IGD_PASSTHROUGH_I440FX_PCI_DEVICE"
+                                ],
+                                "type": "igd-passthrough-i440FX"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82557a"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82557c"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82557b"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82801"
+                    },
+                    {
+                        "type": "am53c974",
+                        "children": [
+                            {
+                                "type": "dc390"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "bus_nr"
+                            },
+                            {
+                                "type": 2,
+                                "name": "numa_node"
+                            }
+                        ],
+                        "type": "pxb"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_PCI_SDHCI"
+                        ],
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "capareg"
+                            },
+                            {
+                                "type": 2,
+                                "name": "maxcurr"
+                            }
+                        ],
+                        "type": "sdhci-pci"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82558a"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82558b"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "rtl8139"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82559a"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82559b"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82559c"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "chardev"
+                            },
+                            {
+                                "type": 2,
+                                "name": "prog_if"
+                            }
+                        ],
+                        "type": "pci-serial"
+                    },
+                    {
+                        "type": "pci-testdev"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-old-msi-offsets"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-disable-pcie"
+                            }
+                        ],
+                        "type": "vmxnet3"
+                    },
+                    {
+                        "type": "ICH9 SMB"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "bus_nr"
+                            },
+                            {
+                                "type": 2,
+                                "name": "numa_node"
+                            }
+                        ],
+                        "type": "pxb-pcie"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "maxframes"
+                            }
+                        ],
+                        "type": "pci-ehci-usb",
+                        "children": [
+                            {
+                                "type": "ich9-usb-ehci2"
+                            },
+                            {
+                                "type": "ich9-usb-ehci1"
+                            },
+                            {
+                                "type": "usb-ehci"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "pci-vga",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "vgamem_mb"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "qemu-extended-regs"
+                                    }
+                                ],
+                                "type": "secondary-vga"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "vgamem_mb"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "mmio"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "qemu-extended-regs"
+                                    }
+                                ],
+                                "type": "VGA"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "pci-ide",
+                        "children": [
+                            {
+                                "type": "piix3-ide-xen"
+                            },
+                            {
+                                "type": "piix4-ide"
+                            },
+                            {
+                                "type": "piix3-ide"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "edu"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_ICH9_LPC_DEVICE"
+                        ],
+                        "property": [
+                            {
+                                "type": 7,
+                                "name": "noreboot"
+                            }
+                        ],
+                        "type": "ICH9-LPC"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_MCH_PCI_DEVICE"
+                        ],
+                        "type": "mch"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "drive"
+                            },
+                            {
+                                "type": 2,
+                                "name": "logical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "physical_block_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "min_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "opt_io_size"
+                            },
+                            {
+                                "type": 2,
+                                "name": "discard_granularity"
+                            },
+                            {
+                                "type": 0,
+                                "name": "serial"
+                            }
+                        ],
+                        "type": "nvme"
+                    },
+                    {
+                        "type": "lsi53c895a",
+                        "children": [
+                            {
+                                "type": "lsi53c810"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "pcnet"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "name"
+                            },
+                            {
+                                "type": 0,
+                                "name": "world"
+                            },
+                            {
+                                "type": 0,
+                                "name": "fp_start_macaddr"
+                            },
+                            {
+                                "type": 2,
+                                "name": "switch_id"
+                            },
+                            {
+                                "type": 2,
+                                "name": "len-ports"
+                            }
+                        ],
+                        "type": "rocker"
+                    },
+                    {
+                        "type": "megasas-base",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "max_sge"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_cmds"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "hba_serial"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "sas_address"
+                                    },
+                                    {
+                                        "macro": [
+                                            "PCI_BRIDGE_DEV_PROP_MSI"
+                                        ],
+                                        "type": 2,
+                                        "name": "msi"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "msix"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "use_jbod"
+                                    }
+                                ],
+                                "type": "megasas-gen2"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "max_sge"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "max_cmds"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "hba_serial"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "sas_address"
+                                    },
+                                    {
+                                        "macro": [
+                                            "PCI_BRIDGE_DEV_PROP_MSI"
+                                        ],
+                                        "type": 2,
+                                        "name": "msi"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "msix"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "use_jbod"
+                                    }
+                                ],
+                                "type": "megasas"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "masterbus"
+                            },
+                            {
+                                "type": 2,
+                                "name": "num-ports"
+                            },
+                            {
+                                "type": 2,
+                                "name": "firstport"
+                            }
+                        ],
+                        "type": "pci-ohci"
+                    },
+                    {
+                        "type": "igd-passthrough-isa-bridge"
+                    },
+                    {
+                        "type": "pci-uhci-usb",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "vt82c686b-usb-uhci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "masterbus"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "firstport"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "ich9-usb-uhci1"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "masterbus"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "firstport"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "ich9-usb-uhci5"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "masterbus"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "firstport"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "ich9-usb-uhci3"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "masterbus"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "firstport"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "ich9-usb-uhci6"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "masterbus"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "firstport"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "ich9-usb-uhci4"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "masterbus"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "firstport"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "ich9-usb-uhci2"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "piix3-usb-uhci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "bandwidth"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "maxframes"
+                                    }
+                                ],
+                                "type": "piix4-usb-uhci"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "macro": [
+                                    "PCI_BRIDGE_DEV_PROP_MSI"
+                                ],
+                                "type": 2,
+                                "name": "msi"
+                            },
+                            {
+                                "type": 2,
+                                "name": "msix"
+                            },
+                            {
+                                "type": 7,
+                                "name": "superspeed-ports-first"
+                            },
+                            {
+                                "type": 7,
+                                "name": "force-pcie-endcap"
+                            },
+                            {
+                                "type": 7,
+                                "name": "streams"
+                            },
+                            {
+                                "type": 2,
+                                "name": "intrs"
+                            },
+                            {
+                                "type": 2,
+                                "name": "slots"
+                            },
+                            {
+                                "type": 2,
+                                "name": "p2"
+                            },
+                            {
+                                "type": 2,
+                                "name": "p3"
+                            }
+                        ],
+                        "type": "nec-usb-xhci"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "use_msg"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-old-pci-configuration"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-disable-pcie"
+                            }
+                        ],
+                        "type": "pvscsi"
+                    },
+                    {
+                        "macro": [
+                            "TYPE_PCI_BRIDGE"
+                        ],
+                        "type": "base-pci-bridge",
+                        "children": [
+                            {
+                                "macro": [
+                                    "TYPE_PCIE_PORT"
+                                ],
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "port"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "aer_log_max"
+                                    }
+                                ],
+                                "type": "pcie-port",
+                                "children": [
+                                    {
+                                        "type": "x3130-upstream"
+                                    },
+                                    {
+                                        "macro": [
+                                            "TYPE_PCIE_SLOT"
+                                        ],
+                                        "property": [
+                                            {
+                                                "type": 2,
+                                                "name": "chassis"
+                                            },
+                                            {
+                                                "macro": [
+                                                    "PC_DIMM_SLOT_PROP"
+                                                ],
+                                                "type": 2,
+                                                "name": "slot"
+                                            }
+                                        ],
+                                        "type": "pcie-slot",
+                                        "children": [
+                                            {
+                                                "property": [
+                                                    {
+                                                        "macro": [
+                                                            "COMPAT_PROP_PCP"
+                                                        ],
+                                                        "type": 7,
+                                                        "name": "power_controller_present"
+                                                    }
+                                                ],
+                                                "type": "ioh3420"
+                                            },
+                                            {
+                                                "property": [
+                                                    {
+                                                        "macro": [
+                                                            "COMPAT_PROP_PCP"
+                                                        ],
+                                                        "type": 7,
+                                                        "name": "power_controller_present"
+                                                    }
+                                                ],
+                                                "type": "xio3130-downstream"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "macro": [
+                                            "PCI_BRIDGE_DEV_PROP_CHASSIS_NR"
+                                        ],
+                                        "type": 2,
+                                        "name": "chassis_nr"
+                                    },
+                                    {
+                                        "macro": [
+                                            "PCI_BRIDGE_DEV_PROP_MSI"
+                                        ],
+                                        "type": 2,
+                                        "name": "msi"
+                                    },
+                                    {
+                                        "macro": [
+                                            "PCI_BRIDGE_DEV_PROP_SHPC"
+                                        ],
+                                        "type": 7,
+                                        "name": "shpc"
+                                    }
+                                ],
+                                "type": "pci-bridge",
+                                "children": [
+                                    {
+                                        "type": "pci-bridge-seat"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "i82801b11-bridge"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "tpci200"
+                    },
+                    {
+                        "type": "vfio-pci-igd-lpc-bridge"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "smb_io_base"
+                            },
+                            {
+                                "macro": [
+                                    "ACPI_PM_PROP_S3_DISABLED"
+                                ],
+                                "type": 2,
+                                "name": "disable_s3"
+                            },
+                            {
+                                "macro": [
+                                    "ACPI_PM_PROP_S4_DISABLED"
+                                ],
+                                "type": 2,
+                                "name": "disable_s4"
+                            },
+                            {
+                                "macro": [
+                                    "ACPI_PM_PROP_S4_VAL"
+                                ],
+                                "type": 2,
+                                "name": "s4_val"
+                            },
+                            {
+                                "type": 7,
+                                "name": "acpi-pci-hotplug-with-bridge-support"
+                            },
+                            {
+                                "type": 7,
+                                "name": "memory-hotplug-support"
+                            }
+                        ],
+                        "type": "PIIX4_PM"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "use_broken_id"
+                            }
+                        ],
+                        "type": "AC97"
+                    },
+                    {
+                        "type": "i6300esb"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82559er"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "host"
+                            },
+                            {
+                                "type": 7,
+                                "name": "prefer_msi"
+                            },
+                            {
+                                "type": 7,
+                                "name": "share_intx"
+                            },
+                            {
+                                "type": 0,
+                                "name": "configfd"
+                            }
+                        ],
+                        "type": "kvm-pci-assign"
+                    },
+                    {
+                        "type": "ES1370"
+                    },
+                    {
+                        "type": "e1000-base",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "mac"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "vlan"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "netdev"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "autonegotiation"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "mitigation"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "extra_mac_registers"
+                                    }
+                                ],
+                                "type": "e1000"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "mac"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "vlan"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "netdev"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "autonegotiation"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "mitigation"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "extra_mac_registers"
+                                    }
+                                ],
+                                "type": "e1000-82544gc"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "mac"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "vlan"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "netdev"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "autonegotiation"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "mitigation"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "extra_mac_registers"
+                                    }
+                                ],
+                                "type": "e1000-82545em"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 7,
+                                "name": "virtio-pci-bus-master-bug-migration"
+                            },
+                            {
+                                "type": 7,
+                                "name": "disable-legacy"
+                            },
+                            {
+                                "type": 7,
+                                "name": "disable-modern"
+                            },
+                            {
+                                "type": 7,
+                                "name": "migrate-extra"
+                            },
+                            {
+                                "type": 7,
+                                "name": "modern-pio-notify"
+                            },
+                            {
+                                "type": 7,
+                                "name": "x-disable-pcie"
+                            }
+                        ],
+                        "type": "virtio-pci",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "virtio-gpu-pci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "virtio-scsi-pci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "virtio-input-pci",
+                                "children": [
+                                    {
+                                        "type": "virtio-input-host-pci"
+                                    },
+                                    {
+                                        "type": "virtio-input-hid-pci",
+                                        "children": [
+                                            {
+                                                "type": "virtio-keyboard-pci"
+                                            },
+                                            {
+                                                "type": "virtio-mouse-pci"
+                                            },
+                                            {
+                                                "type": "virtio-tablet-pci"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "class"
+                                    }
+                                ],
+                                "type": "virtio-serial-pci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "class"
+                                    }
+                                ],
+                                "type": "virtio-balloon-pci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "class"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "virtio-blk-pci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "vhost-scsi-pci"
+                            },
+                            {
+                                "type": "virtio-rng-pci"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "virtio-vga"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    }
+                                ],
+                                "type": "virtio-net-pci"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "vgamem_mb"
+                            }
+                        ],
+                        "type": "cirrus-vga"
+                    },
+                    {
+                        "type": "ivshmem-common",
+                        "children": [
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "chardev"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "master"
+                                    }
+                                ],
+                                "type": "ivshmem-doorbell"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 2,
+                                        "name": "master"
+                                    }
+                                ],
+                                "type": "ivshmem-plain"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 0,
+                                        "name": "chardev"
+                                    },
+                                    {
+                                        "macro": [
+                                            "PC_DIMM_SIZE_PROP",
+                                            "BLOCK_OPT_SIZE"
+                                        ],
+                                        "type": 0,
+                                        "name": "size"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "vectors"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "ioeventfd"
+                                    },
+                                    {
+                                        "macro": [
+                                            "PCI_BRIDGE_DEV_PROP_MSI"
+                                        ],
+                                        "type": 7,
+                                        "name": "msi"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "shm"
+                                    },
+                                    {
+                                        "type": 0,
+                                        "name": "role"
+                                    },
+                                    {
+                                        "type": 2,
+                                        "name": "use64"
+                                    }
+                                ],
+                                "type": "ivshmem"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "chardev1"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev2"
+                            },
+                            {
+                                "type": 2,
+                                "name": "prog_if"
+                            }
+                        ],
+                        "type": "pci-serial-2x"
+                    },
+                    {
+                        "type": "pci-piix3",
+                        "children": [
+                            {
+                                "type": "PIIX3"
+                            },
+                            {
+                                "type": "PIIX3-xen"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "vgamem_mb"
+                            }
+                        ],
+                        "type": "vmware-svga"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "sas_address"
+                            },
+                            {
+                                "macro": [
+                                    "PCI_BRIDGE_DEV_PROP_MSI"
+                                ],
+                                "type": 2,
+                                "name": "msi"
+                            }
+                        ],
+                        "type": "mptsas1068"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            },
+                            {
+                                "type": 2,
+                                "name": "disable_vnet_hdr"
+                            },
+                            {
+                                "type": 2,
+                                "name": "subsys_ven"
+                            },
+                            {
+                                "type": 2,
+                                "name": "subsys"
+                            }
+                        ],
+                        "type": "e1000e"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 2,
+                                "name": "debug"
+                            },
+                            {
+                                "macro": [
+                                    "PCI_BRIDGE_DEV_PROP_MSI"
+                                ],
+                                "type": 2,
+                                "name": "msi"
+                            },
+                            {
+                                "type": 7,
+                                "name": "old_msi_addr"
+                            }
+                        ],
+                        "type": "intel-hda-generic",
+                        "children": [
+                            {
+                                "type": "ich9-intel-hda"
+                            },
+                            {
+                                "type": "intel-hda"
+                            }
+                        ]
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "chardev1"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev2"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev3"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev4"
+                            },
+                            {
+                                "type": 2,
+                                "name": "prog_if"
+                            }
+                        ],
+                        "type": "pci-serial-4x"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82550"
+                    },
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "mac"
+                            },
+                            {
+                                "type": 0,
+                                "name": "vlan"
+                            },
+                            {
+                                "type": 0,
+                                "name": "netdev"
+                            }
+                        ],
+                        "type": "i82551"
+                    }
+                ]
+            },
+            {
+                "type": "cpu-core"
+            },
+            {
+                "macro": [
+                    "TYPE_PCMCIA_CARD"
+                ],
+                "type": "pcmcia-card"
+            },
+            {
+                "macro": [
+                    "TYPE_CPU"
+                ],
+                "type": "cpu",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 7,
+                                "name": "pmu"
+                            },
+                            {
+                                "type": 0,
+                                "name": "hv-spinlocks"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-relaxed"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-vapic"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-time"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-crash"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-reset"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-vpindex"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-runtime"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-synic"
+                            },
+                            {
+                                "type": 7,
+                                "name": "hv-stimer"
+                            },
+                            {
+                                "type": 7,
+                                "name": "check"
+                            },
+                            {
+                                "type": 7,
+                                "name": "enforce"
+                            },
+                            {
+                                "type": 7,
+                                "name": "kvm"
+                            },
+                            {
+                                "type": 2,
+                                "name": "level"
+                            },
+                            {
+                                "type": 2,
+                                "name": "xlevel"
+                            },
+                            {
+                                "type": 2,
+                                "name": "xlevel2"
+                            },
+                            {
+                                "type": 0,
+                                "name": "hv-vendor-id"
+                            },
+                            {
+                                "type": 7,
+                                "name": "cpuid-0xb"
+                            }
+                        ],
+                        "type": "i386-cpu",
+                        "children": [
+                            {
+                                "type": "pentium2-i386-cpu"
+                            },
+                            {
+                                "type": "pentium3-i386-cpu"
+                            },
+                            {
+                                "type": "phenom-i386-cpu"
+                            },
+                            {
+                                "type": "IvyBridge-i386-cpu"
+                            },
+                            {
+                                "type": "Haswell-i386-cpu"
+                            },
+                            {
+                                "type": "kvm64-i386-cpu"
+                            },
+                            {
+                                "type": "pentium-i386-cpu"
+                            },
+                            {
+                                "type": "kvm32-i386-cpu"
+                            },
+                            {
+                                "type": "qemu64-i386-cpu"
+                            },
+                            {
+                                "type": "core2duo-i386-cpu"
+                            },
+                            {
+                                "type": "Opteron_G3-i386-cpu"
+                            },
+                            {
+                                "type": "qemu32-i386-cpu"
+                            },
+                            {
+                                "type": "Opteron_G4-i386-cpu"
+                            },
+                            {
+                                "type": "Broadwell-noTSX-i386-cpu"
+                            },
+                            {
+                                "type": "n270-i386-cpu"
+                            },
+                            {
+                                "type": "Haswell-noTSX-i386-cpu"
+                            },
+                            {
+                                "type": "Opteron_G5-i386-cpu"
+                            },
+                            {
+                                "type": "Westmere-i386-cpu"
+                            },
+                            {
+                                "type": "coreduo-i386-cpu"
+                            },
+                            {
+                                "type": "SandyBridge-i386-cpu"
+                            },
+                            {
+                                "type": "Skylake-Client-i386-cpu"
+                            },
+                            {
+                                "type": "Conroe-i386-cpu"
+                            },
+                            {
+                                "property": [
+                                    {
+                                        "type": 7,
+                                        "name": "migratable"
+                                    },
+                                    {
+                                        "type": 7,
+                                        "name": "host-cache-info"
+                                    }
+                                ],
+                                "type": "host-i386-cpu"
+                            },
+                            {
+                                "type": "Nehalem-i386-cpu"
+                            },
+                            {
+                                "type": "athlon-i386-cpu"
+                            },
+                            {
+                                "type": "Opteron_G1-i386-cpu"
+                            },
+                            {
+                                "type": "Broadwell-i386-cpu"
+                            },
+                            {
+                                "type": "Opteron_G2-i386-cpu"
+                            },
+                            {
+                                "type": "486-i386-cpu"
+                            },
+                            {
+                                "type": "Penryn-i386-cpu"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_PC_DIMM"
+                ],
+                "property": [
+                    {
+                        "macro": [
+                            "PC_DIMM_ADDR_PROP"
+                        ],
+                        "type": 2,
+                        "name": "addr"
+                    },
+                    {
+                        "macro": [
+                            "PC_DIMM_NODE_PROP"
+                        ],
+                        "type": 2,
+                        "name": "node"
+                    },
+                    {
+                        "macro": [
+                            "PC_DIMM_SLOT_PROP"
+                        ],
+                        "type": 2,
+                        "name": "slot"
+                    }
+                ],
+                "type": "pc-dimm",
+                "children": [
+                    {
+                        "type": "nvdimm"
+                    }
+                ]
+            },
+            {
+                "macro": [
+                    "TYPE_IPACK_DEVICE"
+                ],
+                "property": [
+                    {
+                        "macro": [
+                            "PC_DIMM_SLOT_PROP"
+                        ],
+                        "type": 2,
+                        "name": "slot"
+                    }
+                ],
+                "type": "ipack-device",
+                "children": [
+                    {
+                        "property": [
+                            {
+                                "type": 0,
+                                "name": "chardev0"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev1"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev2"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev3"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev4"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev5"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev6"
+                            },
+                            {
+                                "type": 0,
+                                "name": "chardev7"
+                            }
+                        ],
+                        "type": "ipoctal232"
+                    }
+                ]
+            }
+        ]
+    }
+]
