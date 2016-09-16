@@ -94,6 +94,8 @@ from machine_editing import \
 
 import os
 
+device_tree = DeviceTree()
+
 def initialize(qemu_src):
     VERSION_path = os.path.join(qemu_src, 'VERSION')
 
@@ -330,6 +332,13 @@ def initialize(qemu_src):
     Header.lookup("qemu/typedefs.h").add_types([
         Structure("I2CBus") # the structure is defined in .c file
         ])
+
+    #load Device Tree
+    dt_db_fname = "dt.json"
+    if os.path.isfile(dt_db_fname):
+        print("Loading Device Tree from " + dt_db_fname)
+        device_tree.load_dt_db(dt_db_fname)
+        device_tree.save_dt_db("new_" + dt_db_fname)
 
     # Search for PCI Ids
     for t in Type.reg.values():
