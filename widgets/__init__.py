@@ -8,7 +8,8 @@ from var_widgets import \
     VarButton, \
     VarLabelFrame, \
     VarCheckbutton, \
-    VarMenu
+    VarMenu, \
+    VarTreeView
 
 from hotkey import \
     HKEntry, \

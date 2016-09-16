@@ -8,6 +8,9 @@ from Tkinter import \
     Checkbutton, \
     StringVar
 
+from ttk import \
+    Treeview
+
 class VarCheckbutton(Checkbutton):
     def __init__(self, *args, **kw):
         if "text" in kw:
@@ -148,3 +151,27 @@ class VarMenu(Menu):
         self.count = self.count + 1
 
         Menu.add(self, itemType, cnf or kw)
+
+class TreeViewVarBinding():
+    def __init__(self, menu, column, var_str):
+        self.menu, self.column, self.str = menu, column, var_str
+
+    def on_var_changed(self, *args):
+        self.menu.on_var_changed(self.column, self.str.get())
+
+class VarTreeView(Treeview):
+    def __init__(self, *args, **kw):
+        Treeview.__init__(self, *args, **kw)
+
+    def on_var_changed(self, column, var_str):
+        Treeview.heading(self, column, text = var_str)
+
+    def heading(self, column, **kw):
+        if "text" in kw:
+            text_var = kw.pop("text")
+            kw["text"] = text_var.get()
+            binding = TreeViewVarBinding(self, column, text_var)
+            text_var.trace_variable("w", binding.on_var_changed)
+
+        Treeview.heading(self, column, **kw)
+
