@@ -4,6 +4,9 @@ from var_widgets import \
     VarLabelFrame, \
     VarCheckbutton
 
+from device_tree_widget import \
+    DeviceTreeWidget
+
 from common import \
     ML as _
 
@@ -236,6 +239,12 @@ class DeviceSettingsWidget(SettingsWidget):
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
 
+        b = VarButton(common_fr,
+            text = _("Select"),
+            command = self.on_press_select_qom_type
+        )
+        b.grid(row = 0, column = 2, sticky = "EW")
+
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
         self.bus_var = tk.StringVar()
@@ -275,6 +284,9 @@ class DeviceSettingsWidget(SettingsWidget):
             column = 3,
             sticky = "NEWS"
         )
+
+    def on_press_select_qom_type(self):
+        DeviceTreeWidget(self)
 
     def gen_uniq_prop_name(self):
         for x in count(0, 1):
