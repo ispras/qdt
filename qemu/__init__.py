@@ -24,7 +24,8 @@ from pcie import \
     
 from qom import \
     QemuTypeName, \
-    QOMType
+    QOMType, \
+    DeviceTree
 
 from machine import \
     MachineType
