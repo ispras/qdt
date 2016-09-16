@@ -25,6 +25,9 @@ from sysbusdevset import \
 from device_settings_window import \
     DeviceSettingsWindow
 
+from device_tree_widget import \
+    DeviceTreeWidget
+
 from machine_diagram_widget import \
     MachineDiagramWidget
 
