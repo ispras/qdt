@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"Last-Translator: Vasily Efimov <real@ispras.ru>\n"
-"PO-Revision-Date:  2016-09-19 18:39+0300\n"
+"PO-Revision-Date:  2016-09-19 18:40+0300\n"
+"Last-Translator: Oleg Goremykin <goremykin@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
 "MIME-Version: 1.0\n"
@@ -25,6 +25,10 @@ msgstr "Удалить"
 msgid "QOM type"
 msgstr "Тип QOM"
 
+#: widgets/device_settings.py:243 widgets/device_tree_widget.py:81
+msgid "Select"
+msgstr "Выбрать"
+
 #: widgets/device_settings.py:265
 msgid "Properties"
 msgstr "Свойства"
@@ -36,6 +40,18 @@ msgstr "Добавить"
 #: widgets/device_settings_window.py:22
 msgid "Device settings"
 msgstr "Установки устройства"
+
+#: widgets/device_tree_widget.py:34
+msgid "Device Tree"
+msgstr "Дерево устройств"
+
+#: widgets/device_tree_widget.py:54
+msgid "Devices"
+msgstr "Устройства"
+
+#: widgets/device_tree_widget.py:55
+msgid "Macros"
+msgstr "Макросы"
 
 #: widgets/machine_diagram_widget.py:390 widgets/machine_diagram_widget.py:404
 msgid "Settings"
