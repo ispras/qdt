@@ -40,6 +40,9 @@ from widgets import \
 from irq_settings import \
     IRQSettingsWindow
 
+from bus_settings import \
+    BusSettingsWindow
+
 from sets import \
     Set
 
@@ -427,6 +430,10 @@ IRQ line creation
 
         # single bus popup menu
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("Settings"),
+            command = self.on_popup_single_bus_settings
+        )
         self.popup_single_bus = p
 
         self.current_popup = None
@@ -608,6 +615,22 @@ IRQ line creation
 
         # the menu will be unposted after the command
         self.current_popup = None
+
+    def on_popup_single_bus_settings(self):
+        id = self.selected[0]
+
+        x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+        x, y = self.canvas.coords(id)[-2:]
+        x = x - x0
+        y = y - y0
+
+        bus = self.node2dev[self.id2node[id]]
+        wnd = BusSettingsWindow(bus, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
 
     def on_add_irq_hub(self):
         p = self.current_popup
