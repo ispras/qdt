@@ -33,6 +33,8 @@ class PropLineDesc(object):
     def __init__(self, device_settings_widget, prop):
         self.dsw = device_settings_widget
         self.prop = prop
+        # It stores property type for which the value widget was generated.
+        self.val_widget_prop_type = None
 
     def on_delete(self):
         del self.dsw.prop2field[self.prop]
@@ -80,7 +82,7 @@ class PropLineDesc(object):
     def on_prop_type_changed(self, *args):
         new_type = self.get_current_type()
 
-        if not new_type == self.prop.prop_type:
+        if not new_type == self.val_widget_prop_type:
             self.w_val.destroy()
 
             # fixme: assign a default value for each type
@@ -93,6 +95,7 @@ class PropLineDesc(object):
                 sticky = "NEWS"
             )
 
+            self.val_widget_prop_type = new_type
             self.w_val = w_p_val
             self.v_val = var_p_val
 
@@ -197,6 +200,7 @@ class PropLineDesc(object):
         self.om_type = om_p_type
         self.v_type = var_p_type
         self.w_val = w_p_val
+        self.val_widget_prop_type = self.prop.prop_type
         self.v_val = var_p_val
         self.bt_del = bt_del
 
