@@ -85,8 +85,11 @@ class PropLineDesc(object):
         if not new_type == self.val_widget_prop_type:
             self.w_val.destroy()
 
-            # fixme: assign a default value for each type
-            new_val = None
+            if new_type == self.prop.prop_type:
+                new_val = self.prop.prop_val
+            else:
+                # fixme: assign a default value for each type
+                new_val = None
 
             w_p_val, var_p_val = self.gen_prop_value_widget(new_type, new_val)
             w_p_val.grid(
