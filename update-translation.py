@@ -5,10 +5,16 @@ import os
 
 files = [
     "widgets/device_settings.py",
-    "widgets/machine_widget.py",
-    "history-test.py",
+    "widgets/device_settings_window.py",
+    "widgets/device_tree_widget.py",
+    "widgets/irq_settings.py",
+    "widgets/machine_diagram_widget.py",
+    "widgets/pci_device_settings.py",
+    "widgets/settings_window.py",
+    "widgets/sysbusdevset.py",
+    "widgets/hotkey.py",
     "qdc-gui.py",
-    "widgets/hotkey.py"
+    "history-test.py"
 ]
 
 langs = [
