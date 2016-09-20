@@ -20,6 +20,7 @@ from common import \
     sign
 
 from qemu import \
+    BusNode, \
     IRQLine as QIRQLine, \
     MachineNodeSetLinkAttributeOperation, \
     MOp_AddIRQLine, \
@@ -424,6 +425,10 @@ IRQ line creation
         )
         self.popup_single_irq_hub = p
 
+        # single bus popup menu
+        p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_single_bus = p
+
         self.current_popup = None
 
         self.mht.add_on_changed(self.on_machine_changed)
@@ -751,6 +756,9 @@ IRQ line creation
                 elif isinstance(tdev, IRQHub):
                     if len(self.selected) == 1:
                         self.current_popup = self.popup_single_irq_hub
+                elif isinstance(tdev, BusNode):
+                    if len(self.selected) == 1:
+                        self.current_popup = self.popup_single_bus
 
                 if self.current_popup:
                     try: 
