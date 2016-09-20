@@ -40,3 +40,7 @@ from irq_settings import \
 
 from gui_project import \
     GUIProject
+
+from bus_settings import \
+    BusSettingsWindow, \
+    BusSettingsWidget

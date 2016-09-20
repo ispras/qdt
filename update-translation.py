@@ -13,6 +13,7 @@ files = [
     "widgets/settings_window.py",
     "widgets/sysbusdevset.py",
     "widgets/hotkey.py",
+    "widgets/bus_settings.py",
     "qdc-gui.py",
     "history-test.py"
 ]
