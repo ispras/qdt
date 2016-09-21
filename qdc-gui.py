@@ -90,8 +90,6 @@ class QDCGUIWindow(VarTk):
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
-        self.on_enter_main_loop_id = self.after(0, self.on_enter_main_loop)
-
     def chack_undo_redo(self):
         can_do = self.mw.mdw.mht.can_do()
 
@@ -118,9 +116,6 @@ class QDCGUIWindow(VarTk):
     def redo(self):
         self.mw.mdw.mht.do()
 
-    def on_enter_main_loop(self):
-        self.on_enter_main_loop_id = None
-
     def set_machine_widget_layout(self, layout):
         self.mw.mdw.SetLayout(layout)
 
@@ -128,9 +123,6 @@ class QDCGUIWindow(VarTk):
         return self.mw.mdw.GetLayout()
 
     def on_delete(self):
-        if not self.on_enter_main_loop_id is None:
-            self.after_cancel(self.on_enter_main_loop_id)
-
         self.quit()
 
 def main():
