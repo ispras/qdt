@@ -437,6 +437,8 @@ IRQ line creation
 
         self.mht.add_on_changed(self.on_machine_changed)
 
+        self.after(0, self.ph_run())
+
     def on_machine_changed(self, op):
         if isinstance(op, MOp_SetDevQOMType):
             dev = self.mach.id2node[op.node_id]

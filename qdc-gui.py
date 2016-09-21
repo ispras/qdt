@@ -121,8 +121,6 @@ class QDCGUIWindow(VarTk):
     def on_enter_main_loop(self):
         self.on_enter_main_loop_id = None
 
-        self.mw.mdw.ph_run()
-
     def set_machine_widget_layout(self, layout):
         self.mw.mdw.SetLayout(layout)
 
