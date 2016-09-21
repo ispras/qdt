@@ -92,6 +92,10 @@ from machine_editing import \
                 MOp_SetDevProp, \
     MachineHistoryTracker
 
+from project_editing import \
+    ProjectOperation, \
+    ProjectHistoryTracker
+
 import os
 
 device_tree = DeviceTree()
