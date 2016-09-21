@@ -5,6 +5,7 @@ class QOMDescription(object):
     def __init__(self, name, directory):
         self.name = name
         self.directory = directory
+        self.project = None
 
     def gen_type(self):
         raise Exception("Attempt to create type model from interface type " \
@@ -14,7 +15,16 @@ class QProject(object):
     def __init__(self,
         descriptions = None
     ):
-        self.descriptions = [] if descriptions is None else list(descriptions)
+        self.descriptions = []
+
+        if not descriptions is None:
+            for d in descriptions:
+                if not d.project == None:
+                    raise Exception("The description '" + d.name + "' is \
+already in another project.")
+                else:
+                    d.project = self
+                    self.descriptions.append(d)
 
     def gen_all(self, qemu_src):
         # First, generate all devices, then generate machines
