@@ -178,7 +178,7 @@ def main():
         project.layouts = [(mach.name, layout)]
 
     root = QDCGUIWindow(mach)
-    root.geometry("500x500")
+    root.geometry("1000x750")
     root.set_machine_widget_layout(layout)
 
     root.mainloop()
