@@ -9,7 +9,7 @@ from var_widgets import \
     VarLabelFrame, \
     VarCheckbutton, \
     VarMenu, \
-    VarTreeView
+    VarTreeview
 
 from hotkey import \
     HKEntry, \

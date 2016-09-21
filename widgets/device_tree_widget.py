@@ -1,6 +1,6 @@
 from var_widgets import \
     VarToplevel, \
-    VarTreeView, \
+    VarTreeview, \
     VarButton, \
     VarLabelFrame
 
@@ -48,7 +48,7 @@ class DeviceTreeWidget(VarToplevel):
         self.grab_set()
         self.focus()
 
-        self.device_tree = VarTreeView(self)
+        self.device_tree = VarTreeview(self)
         self.device_tree["columns"] = ("Macros")
 
         self.device_tree.heading("#0", text = _("Devices"))
