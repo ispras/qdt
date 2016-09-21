@@ -1,12 +1,17 @@
 from qemu import \
+    ProjectHistoryTracker, \
     MachineNode, \
     QProject
+
+from common import \
+    History
 
 class GUIProject(QProject):
     def __init__(self, layouts = [], **kw):
         QProject.__init__(self, **kw)
 
         self.layouts = layouts
+        self.pht = ProjectHistoryTracker(self, History())
 
     def get_layouts(self, desc_name):
         return [ l for name, l in self.layouts if name == desc_name ]
