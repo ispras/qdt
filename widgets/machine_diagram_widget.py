@@ -15,7 +15,6 @@ import time
 import sys
 
 from common import \
-    History, \
     ML as _, \
     sign
 
@@ -31,8 +30,7 @@ from qemu import \
     MOp_SetDevQOMType, \
     Node, \
     DeviceNode, \
-    IRQHub, \
-    MachineHistoryTracker
+    IRQHub
 
 from widgets import \
     DeviceSettingsWindow
@@ -290,8 +288,7 @@ class MachineDiagramWidget(CanvasDnD):
         mach_desc.link()
 
         self.mach = mach_desc
-        self.history = History()
-        self.mht = MachineHistoryTracker(self.mach, self.history)
+        self.mht = self.mach.project.pht.get_machine_proxy(self.mach)
 
         self.id2node = {}
         self.node2id = {}
