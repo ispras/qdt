@@ -8,7 +8,7 @@ from widgets import \
     GUIProject, \
     HotKeyBinding, \
     HotKey, \
-    MachineDiagramWidget, \
+    MachineWidget, \
     VarMenu, \
     VarTk
 
@@ -82,10 +82,10 @@ class QDCGUIWindow(VarTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.mw = MachineDiagramWidget(self, self.mach)
+        self.mw = MachineWidget(self.mach, self)
         self.mw.grid(column = 0, row = 0, sticky = "NEWS")
 
-        self.mw.mht.add_on_changed(self.on_changed)
+        self.mw.mdw.mht.add_on_changed(self.on_changed)
         self.chack_undo_redo()
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
@@ -93,7 +93,7 @@ class QDCGUIWindow(VarTk):
         self.on_enter_main_loop_id = self.after(0, self.on_enter_main_loop)
 
     def chack_undo_redo(self):
-        can_do = self.mw.mht.can_do()
+        can_do = self.mw.mdw.mht.can_do()
 
         self.hk.set_enabled(self.redo, can_do)
         if can_do:
@@ -101,7 +101,7 @@ class QDCGUIWindow(VarTk):
         else:
             self.editmenu.entryconfig(self.redo_idx, state = "disabled")
 
-        can_undo = self.mw.mht.can_undo()
+        can_undo = self.mw.mdw.mht.can_undo()
 
         self.hk.set_enabled(self.undo, can_undo)
         if can_undo:
@@ -113,21 +113,21 @@ class QDCGUIWindow(VarTk):
         self.chack_undo_redo()
 
     def undo(self):
-        self.mw.mht.undo()
+        self.mw.mdw.mht.undo()
 
     def redo(self):
-        self.mw.mht.do()
+        self.mw.mdw.mht.do()
 
     def on_enter_main_loop(self):
         self.on_enter_main_loop_id = None
 
-        self.mw.ph_run()
+        self.mw.mdw.ph_run()
 
     def set_machine_widget_layout(self, layout):
-        self.mw.SetLayout(layout)
+        self.mw.mdw.SetLayout(layout)
 
     def get_machine_widget_layout(self):
-        return self.mw.GetLayout()
+        return self.mw.mdw.GetLayout()
 
     def on_delete(self):
         if not self.on_enter_main_loop_id is None:
