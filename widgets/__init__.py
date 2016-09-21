@@ -44,3 +44,6 @@ from gui_project import \
 from bus_settings import \
     BusSettingsWindow, \
     BusSettingsWidget
+
+from machine_widget import \
+    MachineWidget
