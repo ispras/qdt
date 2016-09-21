@@ -1,34 +1,21 @@
-from common.inverse_operation import \
-    HistoryTracker, \
-    InverseOperation
-
 from machine_description import \
     IRQLine, \
     IRQHub, \
     QOMPropertyValue
 
+from project_editing import \
+    ProjectOperation, \
+    ProjectHistoryTracker
+
 import copy
 
-class MachineOperation(InverseOperation):
+class MachineOperation(ProjectOperation):
     def __init__(self, machine_description, *args, **kw):
-        InverseOperation.__init__(self, *args, **kw)
+        ProjectOperation.__init__(self, *args, **kw)
         self.mach = machine_description
 
     def gen_node_id_entry(self, node_id):
         return copy.deepcopy(node_id)
-
-    """
-    The InverseOperation defines no read or write sets. Instead it raises an
-    exception. As this is a base class of all machine editing operations it
-    should define the sets. The content of the sets is to be defined by
-    subclasses.
-    """
-
-    def __write_set__(self):
-        return []
-
-    def __read_set__(self):
-        return []
 
 class MachineNodeOperation(MachineOperation):
     def __init__(self, node_id, *args, **kw):
@@ -461,13 +448,14 @@ class MOp_SetDevProp(MachineDevicePropertyOperation):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
 
-class MachineHistoryTracker(HistoryTracker):
+class MachineHistoryTracker(ProjectHistoryTracker):
     def __init__(self, machine_description, *args, **kw):
-        HistoryTracker.__init__(self, *args, **kw)
         self.mach = machine_description
 
+        ProjectHistoryTracker.__init__(self, self.mach.project, *args, **kw)
+
     def stage(self, op_class,  *op_args, **op_kw):
-        return HistoryTracker.stage(self,
+        return ProjectHistoryTracker.stage(self,
             op_class,
             *(op_args + (self.mach,)), **op_kw
         )
