@@ -111,7 +111,7 @@ class MOp_AddIRQHub(MachineNodeOperation):
     def __undo__(self):
         hub = self.mach.id2node[self.node_id]
 
-        if hub.srcs or hub.dsts:
+        if hub.irqs:
             raise Exception("The hub has connected IRQs")
 
         self.mach.irq_hubs.remove(hub)
