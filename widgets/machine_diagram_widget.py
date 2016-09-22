@@ -183,7 +183,7 @@ class BusLine(object):
         self.vx = 0
         self.y = self.next_y = -100000
         self.vy = 0
-        self.height = self.next_height = 200000
+        self.height = 200000
         self.static = False
         self.extra_length = 50
 
