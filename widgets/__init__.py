@@ -47,3 +47,6 @@ from bus_settings import \
 
 from machine_widget import \
     MachineWidget
+
+from project_widget import \
+    ProjectWidget
