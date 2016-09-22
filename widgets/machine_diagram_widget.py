@@ -44,6 +44,30 @@ from bus_settings import \
 from sets import \
     Set
 
+class PhObject(object):
+    def __init__(self,
+            # "physics" parameters
+            x = 200, y = 200,
+            vx = 0, vy = 0,
+            w = 50, h = 50, spacing = 10,
+            # the node cannot be moved by engine if static
+            static = False
+        ):
+        self.x, self.y = x, y
+        self.vx, self.vy = vx, vy
+        self.spacing = spacing
+        self.static = static
+
+class PhBox(PhObject):
+    def __init__(self, w = 50, h = 50, **kw):
+        PhObject.__init__(self, **kw)
+        self.width, self.height = w, h
+
+class PhCircle(PhObject):
+    def __init__(self, r = 10, **kw):
+        PhObject.__init__(self, **kw)
+        self.r = r
+
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
