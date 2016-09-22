@@ -181,7 +181,7 @@ class BusLine(object):
     def __init__(self, bl):
         self.x = 200
         self.vx = 0
-        self.y = self.next_y = -100000
+        self.y = -100000
         self.vy = 0
         self.height = 200000
         self.static = False
