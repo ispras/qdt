@@ -111,18 +111,11 @@ class MWOp_MoveNode(MachineWidgetNodeOperation):
             self.get_widget_entry()
         ]
 
-class NodeBox(object):
+class NodeBox(PhBox):
     def __init__(self, node):
-        # "physics" parameters 
-        self.x = 200
-        self.y = 200
-        self.vx = self.vy = 0
+        PhBox.__init__(self)
+
         self.offset = [0, 0]
-        self.width = 50
-        self.height = 50
-        self.spacing = 10
-        # the node cannot be moved by engine if static
-        self.static = False
 
         self.node = node
         self.conn = None
@@ -201,14 +194,12 @@ class NodeBox(object):
             return False
         return True
 
-class BusLine(object):
+class BusLine(PhBox):
     def __init__(self, bl):
-        self.x = 200
-        self.vx = 0
-        self.y = -100000
-        self.vy = 0
-        self.height = 200000
-        self.static = False
+        PhBox.__init__(self,
+            y = -100000,
+            h = 200000,
+        )
         self.extra_length = 50
 
         self.buslabel = bl
@@ -220,8 +211,9 @@ class BusLabel(NodeBox):
         self.cap_size = 0.5
         self.busline = None
 
-class ConnectionLine(object):
+class ConnectionLine(PhBox):
     def __init__(self, dev_node, bus_node):
+        PhBox.__init__(self)
         self.dev_node = dev_node
         self.bus_node = bus_node
 
@@ -243,16 +235,12 @@ class ConnectionLine(object):
             return False
         return True
 
-class NodeCircle(object):
+class NodeCircle(PhCircle):
     def __init__(self):
-        self.x = 200
-        self.vx = 0
-        self.y = 200
-        self.vy = 0
+        PhCircle.__init__(self,
+            spacing = 0
+        )
         self.offset = [0, 0]
-        self.r = 10
-        self.static = False
-        self.spacing = 0
 
     def overlaps_circle(self, c):
         dx = c.x + c.r - (self.x + self.r)
@@ -275,7 +263,6 @@ class NodeCircle(object):
 class IRQPathCircle(NodeCircle):
     def __init__(self):
         NodeCircle.__init__(self)
-        self.spacing = 0
 
 class IRQHubCircle(NodeCircle):
     def __init__(self, hub):
