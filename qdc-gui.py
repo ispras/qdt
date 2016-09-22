@@ -8,7 +8,7 @@ from widgets import \
     GUIProject, \
     HotKeyBinding, \
     HotKey, \
-    MachineWidget, \
+    ProjectWidget, \
     VarMenu, \
     VarTk
 
@@ -20,10 +20,10 @@ from common import \
     ML as _
 
 class QDCGUIWindow(VarTk):
-    def __init__(self, machine_description):
+    def __init__(self, project):
         VarTk.__init__(self)
 
-        self.mach = machine_description
+        self.proj = project
 
         self.title(_("Qemu device creator GUI"))
 
@@ -82,16 +82,16 @@ class QDCGUIWindow(VarTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.mw = MachineWidget(self.mach, self)
-        self.mw.grid(column = 0, row = 0, sticky = "NEWS")
+        self.pw = ProjectWidget(self.proj, self)
+        self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
-        self.mw.mdw.mht.add_on_changed(self.on_changed)
+        self.proj.pht.add_on_changed(self.on_changed)
         self.chack_undo_redo()
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
     def chack_undo_redo(self):
-        can_do = self.mw.mdw.mht.can_do()
+        can_do = self.proj.pht.can_do()
 
         self.hk.set_enabled(self.redo, can_do)
         if can_do:
@@ -99,7 +99,7 @@ class QDCGUIWindow(VarTk):
         else:
             self.editmenu.entryconfig(self.redo_idx, state = "disabled")
 
-        can_undo = self.mw.mdw.mht.can_undo()
+        can_undo = self.proj.pht.can_undo()
 
         self.hk.set_enabled(self.undo, can_undo)
         if can_undo:
@@ -111,16 +111,10 @@ class QDCGUIWindow(VarTk):
         self.chack_undo_redo()
 
     def undo(self):
-        self.mw.mdw.mht.undo()
+        self.proj.pht.undo()
 
     def redo(self):
-        self.mw.mdw.mht.do()
-
-    def set_machine_widget_layout(self, layout):
-        self.mw.mdw.SetLayout(layout)
-
-    def get_machine_widget_layout(self):
-        return self.mw.mdw.GetLayout()
+        self.proj.pht.do()
 
     def on_delete(self):
         self.quit()
@@ -167,13 +161,12 @@ def main():
             layout = {}
         project.layouts = [(mach.name, layout)]
 
-    root = QDCGUIWindow(mach)
+    root = QDCGUIWindow(project)
     root.geometry("1000x750")
-    root.set_machine_widget_layout(layout)
 
     root.mainloop()
 
-    project.layouts = [(mach.name, layout)]
+    root.pw.refresh_layouts()
 
     PyGenerator().serialize(open("project.py", "wb"), project)
 
