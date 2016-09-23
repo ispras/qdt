@@ -23,8 +23,12 @@ class QProject(object):
                     raise Exception("The description '" + d.name + "' is \
 already in another project.")
                 else:
-                    d.project = self
-                    self.descriptions.append(d)
+                    self.add_description(d)
+
+    def add_description(self, desc):
+        if desc:
+            desc.project = self
+            self.descriptions.append(desc)
 
     def gen_all(self, qemu_src):
         # First, generate all devices, then generate machines

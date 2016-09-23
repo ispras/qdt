@@ -149,7 +149,7 @@ def main():
             print "Machine load failed: " + str(e) + "\n"
             mach = Q35MachineNode_2_6_0()
 
-        project.descriptions.append(mach)
+        project.add_description(mach)
 
     try:
         layout = project.get_layouts(mach.name)[0]
