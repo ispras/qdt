@@ -1697,6 +1697,9 @@ IRQ line creation
         apply(self.canvas.coords, arrow_coords)
 
     def ph_launch(self):
+        self.__ph_launch__()
+
+    def __ph_launch__(self):
         if "_ph_run" in self.__dict__:
             raise Exception("Attempt to launch physical simulation twice")
         self._ph_run = self.after(0, self.ph_run)
@@ -1705,6 +1708,9 @@ IRQ line creation
         return "_ph_run" in self.__dict__
 
     def ph_stop(self):
+        self.__ph_stop__()
+
+    def __ph_stop__(self):
         self.after_cancel(self._ph_run)
         del self._ph_run
 
