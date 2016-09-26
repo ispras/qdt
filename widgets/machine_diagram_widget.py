@@ -447,7 +447,7 @@ IRQ line creation
 
         self.mht.add_on_changed(self.on_machine_changed)
 
-        self.after(0, self.ph_run())
+        self.ph_launch()
 
     def on_machine_changed(self, op):
         if isinstance(op, MOp_SetDevQOMType):
@@ -1695,6 +1695,9 @@ IRQ line creation
             x1 - dx - ox, y1 - dy - oy, 
         ]
         apply(self.canvas.coords, arrow_coords)
+
+    def ph_launch(self):
+        self.after(0, self.ph_run)
 
     def ph_run(self):
         rest = self.ph_iterate(0.01)
