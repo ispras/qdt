@@ -412,6 +412,10 @@ IRQ line creation
             label = _("Add IRQ hub"),
             command = self.on_add_irq_hub 
         )
+        p.add_checkbutton(
+            label = _("Dynamic layout"),
+            variable = self.var_physical_layout
+        )
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
