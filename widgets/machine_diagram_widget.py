@@ -1900,6 +1900,10 @@ IRQ line creation
         for bl in self.buslabels:
             layout[bl.node.id] = (bl.x, bl.y)
 
+        layout[-1] = {
+            "physical layout": self.var_physical_layout.get()
+        }
+
         return layout
 
     def SetLayout(self, l):
@@ -1907,6 +1911,10 @@ IRQ line creation
         try:
             for id, desc in l.iteritems():
                 if id == -1:
+                    try:
+                        self.var_physical_layout.set(desc["physical layout"])
+                    except KeyError:
+                        pass
                     continue
                 dev = self.mach.id2node[id]
                 if not dev:
