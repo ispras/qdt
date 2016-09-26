@@ -1873,6 +1873,8 @@ IRQ line creation
                     continue
                 n = self.dev2node[dev]
                 n.x, n.y = desc[0], desc[1]
+
+            self.invalidated = True
         except:
             # if new layout is incorrect then restore previous one
             self.SetLayout(layout_bak)
