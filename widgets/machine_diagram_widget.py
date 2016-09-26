@@ -1697,14 +1697,23 @@ IRQ line creation
         apply(self.canvas.coords, arrow_coords)
 
     def ph_launch(self):
-        self.after(0, self.ph_run)
+        if "_ph_run" in self.__dict__:
+            raise Exception("Attempt to launch physical simulation twice")
+        self._ph_run = self.after(0, self.ph_run)
+
+    def ph_is_running(self):
+        return "_ph_run" in self.__dict__
+
+    def ph_stop(self):
+        self.after_cancel(self._ph_run)
+        del self._ph_run
 
     def ph_run(self):
         rest = self.ph_iterate(0.01)
         if rest < 0.001:
             rest = 0.001
 
-        self.after(int(rest * 1000), self.ph_run)
+        self._ph_run = self.after(int(rest * 1000), self.ph_run)
 
     def update_node_text(self, node):
         text = node.node.qom_type
