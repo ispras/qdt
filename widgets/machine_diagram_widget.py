@@ -1213,29 +1213,6 @@ IRQ line creation
             #print "Total circles: " + str(total_circles) + ", CPL: " + \
             #    str(self.irq_circle_per_line_limit) 
 
-        marks = len(self.selection_marks)
-        selects = len(self.selected)
-
-        if marks < selects:
-            for i in xrange(0, selects - marks):
-                self.selection_marks.append(self.canvas.create_rectangle(
-                    0,0,0,0,
-                    outline = self.selection_mark_color,
-                    fill = ""
-                ))
-        elif marks > selects:
-            for id in self.selection_marks[selects:]:
-                self.canvas.delete(id)
-            self.selection_marks = self.selection_marks[:selects]
-
-        for idx, sid in enumerate(self.selected):
-            bbox = self.canvas.bbox(sid)
-            apply(self.canvas.coords, [
-                self.selection_marks[idx],
-                bbox[0] - 1, bbox[1] - 1,
-                bbox[2] + 1, bbox[3] + 1
-            ])
-
         for n, idtext in list(self.node2idtext.iteritems()):
             dev = self.node2dev[n]
             if isinstance(dev, Node):
@@ -1258,6 +1235,29 @@ IRQ line creation
         for n in still_selected - self.ids_shown_on_select:
             self.show_node_id(n)
         self.ids_shown_on_select = still_selected
+
+        marks = len(self.selection_marks)
+        selects = len(self.selected)
+
+        if marks < selects:
+            for i in xrange(0, selects - marks):
+                self.selection_marks.append(self.canvas.create_rectangle(
+                    0,0,0,0,
+                    outline = self.selection_mark_color,
+                    fill = ""
+                ))
+        elif marks > selects:
+            for id in self.selection_marks[selects:]:
+                self.canvas.delete(id)
+            self.selection_marks = self.selection_marks[:selects]
+
+        for idx, sid in enumerate(self.selected):
+            bbox = self.canvas.bbox(sid)
+            apply(self.canvas.coords, [
+                self.selection_marks[idx],
+                bbox[0] - 1, bbox[1] - 1,
+                bbox[2] + 1, bbox[3] + 1
+            ])
 
     def show_node_id(self, node):
         idtext = self.canvas.create_text(
