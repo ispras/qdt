@@ -336,6 +336,7 @@ class MachineDiagramWidget(CanvasDnD):
         self.irq_line_color = "grey"
         self.irq_line_high_color = "black"
         self.highlighted_irq_line = None
+        self.irq_circle_preview = None
 
         self.update()
 
@@ -531,7 +532,8 @@ IRQ line creation
                         break
 
                 if line == self.highlighted_irq_line:
-                    self.highlighted_irq_line = None 
+                    self.highlighted_irq_line = None
+                    self.stop_circle_preview()
 
                 for c in line.circles:
                     self.circles.remove(c)
@@ -1119,6 +1121,41 @@ IRQ line creation
     def ph_sync_single(self):
         self.ph_sync()
         del self._ph_sync_single
+
+    def irq_circle_preview_update(self):
+        if self.shown_irq_circle:
+            if self.irq_circle_preview:
+                self.canvas.delete(self.irq_circle_preview)
+                self.irq_circle_preview = None
+        else:
+            x, y = self.last_canvas_mouse
+            coords = [
+                x - self.irq_circle_r, y - self.irq_circle_r,
+                x + self.irq_circle_r, y + self.irq_circle_r
+            ]
+            if not self.irq_circle_preview:
+                self.irq_circle_preview = self.canvas.create_oval(
+                    *coords,
+                    fill = "white"
+                )
+                self.canvas.lift(self.irq_circle_preview)
+            else:
+                self.canvas.coords(self.irq_circle_preview, *coords)
+
+        self._irq_circle_preview_update = self.after(10,
+            self.irq_circle_preview_update)
+
+    def start_circle_preview(self):
+        self._irq_circle_preview_update = self.after(0,
+            self.irq_circle_preview_update)
+
+    def stop_circle_preview(self):
+        if "_irq_circle_preview_update" in self.__dict__:
+            self.after_cancel(self._irq_circle_preview_update)
+            del self._irq_circle_preview_update
+        if self.irq_circle_preview:
+            self.canvas.delete(self.irq_circle_preview)
+            self.irq_circle_preview = None
 
     def ph_sync(self):
         for n in self.nodes:
@@ -1821,9 +1858,11 @@ IRQ line creation
 
     def highlight(self, line, high = True):
         if high:
-            color, layer_func = self.irq_line_high_color, self.canvas.lift
+            color, layer_func, preview_func = self.irq_line_high_color, \
+                self.canvas.lift, self.start_circle_preview
         else:
-            color, layer_func = self.irq_line_color, self.canvas.lower
+            color, layer_func, preview_func = self.irq_line_color, \
+                self.canvas.lower, self.stop_circle_preview
 
         for seg_id in line.lines:
             self.canvas.itemconfig(seg_id, fill = color)
@@ -1831,6 +1870,8 @@ IRQ line creation
 
         self.canvas.itemconfig(line.arrow, fill = color)
         layer_func(line.arrow)
+
+        preview_func()
 
     def add_bus(self, bus):
         id = self.canvas.create_line(
