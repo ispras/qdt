@@ -355,6 +355,10 @@ class MachineDiagramWidget(CanvasDnD):
 
         self.current_ph_iteration = None
 
+        self.var_physical_layout = tk.BooleanVar()
+        self.var_physical_layout.trace_variable("w",
+            self.on_var_physical_layout)
+
         self.selection_marks = []
         self.selection_mark_color = "orange"
         self.selected = []
@@ -448,6 +452,13 @@ IRQ line creation
         self.mht.add_on_changed(self.on_machine_changed)
 
         self.ph_launch()
+
+    def on_var_physical_layout(self, *args):
+        if self.var_physical_layout.get():
+            if not self.ph_is_running():
+                self.__ph_launch__()
+        elif self.ph_is_running():
+            self.__ph_stop__()
 
     def on_machine_changed(self, op):
         if isinstance(op, MOp_SetDevQOMType):
@@ -1697,7 +1708,7 @@ IRQ line creation
         apply(self.canvas.coords, arrow_coords)
 
     def ph_launch(self):
-        self.__ph_launch__()
+        self.var_physical_layout.set(True)
 
     def __ph_launch__(self):
         if "_ph_run" in self.__dict__:
@@ -1708,7 +1719,7 @@ IRQ line creation
         return "_ph_run" in self.__dict__
 
     def ph_stop(self):
-        self.__ph_stop__()
+        self.var_physical_layout.set(False)
 
     def __ph_stop__(self):
         self.after_cancel(self._ph_run)
