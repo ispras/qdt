@@ -354,7 +354,6 @@ class MachineDiagramWidget(CanvasDnD):
         self.all_were_dragged = False
 
         self.current_ph_iteration = None
-        self.invalidated = False
 
         self.selection_marks = []
         self.selection_mark_color = "orange"
@@ -743,7 +742,7 @@ IRQ line creation
             self.selected = list(touched_ids)
             self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
-        self.invalidated = True
+        self.invalidate()
 
     def on_b3_press(self, event):
         if self.current_popup:
@@ -926,8 +925,7 @@ IRQ line creation
         )
 
         # cancel current physic iteration if moved
-        self.current_ph_iteration = None
-        self.invalidated = True
+        self.invalidate()
         self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
@@ -975,8 +973,7 @@ IRQ line creation
                 self.apply_node(node)
 
         # cancel current physic iteration if moved
-        self.current_ph_iteration = None
-        self.invalidated = True
+        self.invalidate()
         self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
@@ -1068,13 +1065,16 @@ IRQ line creation
 
             self.add_irq_line(line)
 
+    def invalidate(self):
+        if self.current_ph_iteration:
+            self.current_ph_iteration = None
+
+        if not "_ph_sync_single" in self.__dict__:
+            self._ph_sync_single = self.after(0, self.ph_sync_single)
+
     def ph_iterate(self, t_limit_sec):
         if not self.current_ph_iteration:
             self.current_ph_iteration = self.ph_iterate_co()
-
-            if self.invalidated:
-                self.ph_sync()
-                self.invalidated = False
 
         t0 = time.time()
         for x in self.current_ph_iteration:
@@ -1095,6 +1095,10 @@ IRQ line creation
             return 0
         else:
             return t_limit_sec
+
+    def ph_sync_single(self):
+        self.ph_sync()
+        del self._ph_sync_single
 
     def ph_sync(self):
         for n in self.nodes:
@@ -1874,7 +1878,7 @@ IRQ line creation
                 n = self.dev2node[dev]
                 n.x, n.y = desc[0], desc[1]
 
-            self.invalidated = True
+            self.invalidate()
         except:
             # if new layout is incorrect then restore previous one
             self.SetLayout(layout_bak)
