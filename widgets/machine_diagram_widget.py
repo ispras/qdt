@@ -849,20 +849,23 @@ IRQ line creation
 
                 return
 
-        if not (self.all_were_dragged or self.selected):
-            if not self.current_popup:
-                x, y = self.canvas.canvasx(event.x), \
-                       self.canvas.canvasy(event.y)
+        if not (self.all_were_dragged or self.current_popup):
+            if self.selected:
+                self.selected = []
+                self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
-                if not self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3):
-                    self.current_popup = self.popup_empty_no_selected
+            x, y = self.canvas.canvasx(event.x), \
+                   self.canvas.canvasy(event.y)
 
-                    try:
-                        self.current_popup.tk_popup(event.x_root, event.y_root)
-                        self.current_popup.grab_release()
-                    except:
-                        self.current_popup.grab_release()
-                        self.current_popup = None
+            if not self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3):
+                self.current_popup = self.popup_empty_no_selected
+
+                try:
+                    self.current_popup.tk_popup(event.x_root, event.y_root)
+                    self.current_popup.grab_release()
+                except:
+                    self.current_popup.grab_release()
+                    self.current_popup = None
 
     def motion_all(self, event):
         self.motion(event)
