@@ -1598,6 +1598,24 @@ IRQ line creation
 
         apply(self.canvas.coords, [id] + points)
 
+    def irq_line_add_circle(self, l, idx, x, y):
+        c = IRQPathCircle()
+        c.x, c.y = x - self.irq_circle_r, y - self.irq_circle_r
+        c.r = self.irq_circle_r
+
+        self.circles.append(c)
+
+        id = self.canvas.create_line(
+            0, 0, 1, 1,
+            fill = self.irq_line_color
+        )
+        self.canvas.lower(id)
+
+        l.circles.insert(idx, c)
+        l.lines.insert(idx + 1, id)
+
+        return c
+
     def ph_process_irq_line(self, l):
         changed = False
 
@@ -1644,20 +1662,7 @@ IRQ line creation
                     x2 = (x0 + x1) / 2
                     y2 = (y0 + y1) / 2
 
-                    c = IRQPathCircle()
-                    c.x, c.y = x2 - self.irq_circle_r, y2 - self.irq_circle_r
-                    c.r = self.irq_circle_r
-
-                    self.circles.append(c)
-
-                    id = self.canvas.create_line(
-                        0, 0, 1, 1,
-                        fill = self.irq_line_color
-                    )
-                    self.canvas.lower(id)
-
-                    l.circles.insert(i, c)
-                    l.lines.insert(i + 1, id)
+                    self.irq_line_add_circle(l, i, x2, y2)
 
                     x1 = x2
                     y1 = y2
