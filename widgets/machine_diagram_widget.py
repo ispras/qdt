@@ -349,6 +349,7 @@ class MachineDiagramWidget(CanvasDnD):
 
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
+        self.last_canvas_mouse = (0, 0)
 
         self.dragging_all = False
         self.all_were_dragged = False
@@ -872,6 +873,7 @@ IRQ line creation
         #print("motion_all")
 
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        self.last_canvas_mouse = x, y
 
         if self.select_point:
             apply(self.canvas.coords, [
