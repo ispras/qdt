@@ -1682,6 +1682,19 @@ IRQ line creation
 
         return c
 
+    def irq_line_delete_circle(self, l, idx):
+        self.canvas.delete(l.lines.pop(idx + 1))
+        c = l.circles.pop(idx)
+
+        if c == self.shown_irq_node:
+            self.canvas.delete(self.shown_irq_circle)
+            self.shown_irq_node = None
+            self.shown_irq_circle = None
+
+        self.circles.remove(c)
+
+        return c
+
     def ph_process_irq_line(self, l):
         changed = False
 
@@ -1739,16 +1752,7 @@ IRQ line creation
                     ):
                     if i < len(l.lines) - 1:
                         # not last line
-
-                        self.canvas.delete(l.lines.pop(i + 1))
-                        c = l.circles.pop(i)
-
-                        if c == self.shown_irq_node:
-                            self.canvas.delete(self.shown_irq_circle)
-                            self.shown_irq_node = None
-                            self.shown_irq_circle = None
-
-                        self.circles.remove(c)
+                        self.irq_line_delete_circle(l, i)
 
                         if i < len(l.circles):
                             c = l.circles[i]
