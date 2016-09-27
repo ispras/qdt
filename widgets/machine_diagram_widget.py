@@ -1002,6 +1002,10 @@ IRQ line creation
 
     def dnd_down(self, event):
         id = self.canvas.find_withtag(tk.CURRENT)[0]
+
+        if id == self.irq_circle_preview:
+            self.circle_preview_to_irq(self.highlighted_irq_line)
+
         if id == self.shown_irq_circle:
             node = self.shown_irq_node
         else:
@@ -1136,7 +1140,8 @@ IRQ line creation
             if not self.irq_circle_preview:
                 self.irq_circle_preview = self.canvas.create_oval(
                     *coords,
-                    fill = "white"
+                    fill = "white",
+                    tags = "DnD"
                 )
                 self.canvas.lift(self.irq_circle_preview)
             else:
@@ -1156,6 +1161,28 @@ IRQ line creation
         if self.irq_circle_preview:
             self.canvas.delete(self.irq_circle_preview)
             self.irq_circle_preview = None
+
+    def circle_preview_to_irq(self, irql):
+        coords = self.canvas.coords(self.irq_circle_preview)
+        x, y = (coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2
+
+        nearest = (0, sys.float_info.max)
+
+        for idx, seg_id in enumerate(irql.lines):
+            x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
+            v0 = Vector(x - x0, y - y0)
+            v1 = Vector(x - x1, y - y1)
+            v2 = Vector(x1 - x0, y1 - y0)
+            d = v0.Length() + v1.Length() - v2.Length()
+
+            if d < nearest[1]:
+                nearest = (idx, d)
+
+        self.shown_irq_node = self.irq_line_add_circle(irql, nearest[0], x, y)
+        self.shown_irq_circle = self.irq_circle_preview
+
+        self.irq_circle_preview = None
+        self.stop_circle_preview()
 
     def ph_sync(self):
         for n in self.nodes:
