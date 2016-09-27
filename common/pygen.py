@@ -97,3 +97,52 @@ class PyGenerator(object):
         self.line(suffix)
 
         self.first_field = True
+
+    def pprint(self, val):
+        if isinstance(val, list):
+            self.line("[")
+            self.push_indent()
+            if val:
+                self.pprint(val[0])
+                for v in val[1:]:
+                    self.line(",")
+                    self.pprint(v)
+            self.pop_indent()
+            self.line()
+            self.write("]")
+        elif isinstance(val, dict):
+            self.line("{")
+            self.push_indent()
+            if val:
+                k, v = list(val.iteritems())[0]
+                self.pprint(k)
+                self.write(": ")
+                self.pprint(v)
+                for k, v in list(val.iteritems())[1:]:
+                    self.line(",")
+                    self.pprint(k)
+                    self.write(": ")
+                    self.pprint(v)
+            self.pop_indent()
+            self.line()
+            self.write("}")
+        elif isinstance(val, tuple):
+            self.line("(")
+            self.push_indent()
+            if val:
+                self.pprint(val[0])
+                if len(val) > 1:
+                    for v in list(val)[1:]:
+                        self.line(",")
+                        self.pprint(v)
+                else:
+                    self.line(",")
+            self.pop_indent()
+            self.line()
+            self.write(")")
+        elif type(val) in [ int, long, bool, float ]:
+            self.write(str(val))
+        elif isinstance(val, str):
+            self.write("'" + val + "'")
+        else:
+            self.write(self.obj2name[val])
