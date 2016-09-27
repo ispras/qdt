@@ -24,7 +24,8 @@ class GUIProject(QProject):
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field("layouts = " + str(self.layouts))
+        gen.gen_field("layouts = ")
+        gen.pprint(self.layouts)
         gen.gen_field("descriptions = [")
         gen.line()
         gen.push_indent()
