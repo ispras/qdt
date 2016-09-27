@@ -1192,6 +1192,21 @@ IRQ line creation
         self.irq_circle_preview = None
         self.stop_circle_preview()
 
+    def process_irq_circles(self):
+        total_circles = 0
+        for l in self.irq_lines:
+            self.ph_process_irq_line(l)
+            total_circles = total_circles + len(l.circles)
+
+        if total_circles > self.irq_circle_total_limit:
+            self.irq_circle_per_line_limit = int(self.irq_circle_total_limit /
+                len(self.irq_lines))
+            if self.irq_circle_per_line_limit == 0:
+                self.irq_circle_per_line_limit = 1
+
+            #print "Total circles: " + str(total_circles) + ", CPL: " + \
+            #    str(self.irq_circle_per_line_limit)
+
     def ph_sync(self):
         for n in self.nodes:
             dev = self.node2dev[n]
@@ -1276,19 +1291,7 @@ IRQ line creation
 
                 apply(self.canvas.coords, [self.shown_irq_circle] + points)
 
-        total_circles = 0
-        for l in self.irq_lines:
-            self.ph_process_irq_line(l)
-            total_circles = total_circles + len(l.circles)
-
-        if total_circles > self.irq_circle_total_limit:
-            self.irq_circle_per_line_limit = int(self.irq_circle_total_limit /
-                len(self.irq_lines))
-            if self.irq_circle_per_line_limit == 0:
-                self.irq_circle_per_line_limit = 1
-
-            #print "Total circles: " + str(total_circles) + ", CPL: " + \
-            #    str(self.irq_circle_per_line_limit) 
+        self.process_irq_circles()
 
         for n, idtext in list(self.node2idtext.iteritems()):
             dev = self.node2dev[n]
