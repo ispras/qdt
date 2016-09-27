@@ -1992,8 +1992,16 @@ IRQ line creation
         for bl in self.buslabels:
             layout[bl.node.id] = (bl.x, bl.y)
 
+        irqs = {}
+        for l in self.irq_lines:
+            irqs[self.node2dev[l].id] = [
+                (c.x + self.irq_circle_r, c.y + self.irq_circle_r) \
+                    for c in l.circles
+            ]
+
         layout[-1] = {
-            "physical layout": self.var_physical_layout.get()
+            "physical layout": self.var_physical_layout.get(),
+            "IRQ lines points": irqs
         }
 
         return layout
@@ -2007,6 +2015,19 @@ IRQ line creation
                         self.var_physical_layout.set(desc["physical layout"])
                     except KeyError:
                         pass
+
+                    try:
+                        irqs = desc["IRQ lines points"]
+                    except KeyError:
+                        irqs = {}
+
+                    for irq_id, points in irqs.iteritems():
+                        l = self.dev2node[self.mach.id2node[irq_id]]
+                        while l.circles:
+                            self.irq_line_delete_circle(l, 0)
+                        for i, (x, y) in enumerate(points):
+                            self.irq_line_add_circle(l, i, x, y)
+
                     continue
                 dev = self.mach.id2node[id]
                 if not dev:
