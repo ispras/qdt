@@ -1742,7 +1742,7 @@ IRQ line creation
 
             if not (   self.dragging 
                     or changed 
-                    or self.irq_circle_per_line_limit < line_circles
+                    or self.irq_circle_per_line_limit <= line_circles
                 ):
                 dx = x1 - x0
                 dy = y1 - y0
