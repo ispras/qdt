@@ -837,6 +837,14 @@ IRQ line creation
         self.master.config(cursor = "")
 
         if (not self.all_were_dragged) and self.highlighted_irq_line:
+            if self.shown_irq_circle:
+                for l in self.irq_lines:
+                    for idx, c in enumerate(l.circles):
+                        if c == self.shown_irq_node:
+                            self.irq_line_delete_circle(l, idx)
+                            self.invalidate()
+                            return
+
             if not self.current_popup:
                 x, y = self.canvas.canvasx(event.x), \
                        self.canvas.canvasy(event.y)
