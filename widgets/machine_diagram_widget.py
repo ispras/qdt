@@ -336,6 +336,7 @@ class MachineDiagramWidget(CanvasDnD):
         self.irq_line_color = "grey"
         self.irq_line_high_color = "black"
         self.highlighted_irq_line = None
+        self.irq_highlight_r = 3
         self.irq_circle_preview = None
 
         self.update()
@@ -934,7 +935,7 @@ IRQ line creation
                 self.highlight(self.highlighted_irq_line, False)
                 self.highlighted_irq_line = None
 
-            if nearest[1] <= self.irq_circle_r:
+            if nearest[1] <= self.irq_highlight_r:
                 self.highlighted_irq_line = nearest[0]
                 self.highlight(self.highlighted_irq_line, True)
 
