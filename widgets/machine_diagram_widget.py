@@ -1195,8 +1195,7 @@ IRQ line creation
     def process_irq_circles(self):
         total_circles = 0
         for l in self.irq_lines:
-            self.ph_process_irq_line(l)
-            total_circles = total_circles + len(l.circles)
+            total_circles += len(l.circles)
 
         if total_circles > self.irq_circle_total_limit:
             self.irq_circle_per_line_limit = int(self.irq_circle_total_limit /
@@ -1206,6 +1205,9 @@ IRQ line creation
 
             #print "Total circles: " + str(total_circles) + ", CPL: " + \
             #    str(self.irq_circle_per_line_limit)
+
+        for l in self.irq_lines:
+            self.ph_process_irq_line(l)
 
     def ph_sync(self):
         for n in self.nodes:
