@@ -569,6 +569,8 @@ IRQ line creation
                 line.src = self.dev2node[dev.src_node]
                 line.dst = self.dev2node[dev.dst_node]
 
+        self.invalidate()
+
     def on_popup_single_device_irq_source(self):
         sid = self.selected[0]
         self.irq_src = self.node2dev[self.id2node[sid]].id
