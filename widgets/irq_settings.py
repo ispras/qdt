@@ -185,7 +185,10 @@ class IRQSettingsWidget(SettingsWidget):
             return
 
         if op.writes_node():
-            self.refresh()
+            if not self.irq.node.id in self.mht.mach.id2node:
+                self.destroy()
+            else:
+                self.refresh()
         elif isinstance(op, MachineDeviceSetAttributeOperation):
             if op.node_id == self.irq.node.id:
                 self.refresh()
