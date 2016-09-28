@@ -119,3 +119,15 @@ class SettingsWindow(VarToplevel):
     def apply_and_quit(self):
         self.sw.apply()
         self.destroy()
+ 
+    # Attempt to use @property + @sw.setter or __setattr__ has failed.
+    # Maybe, because of Tkinter...
+    def set_sw(self, value):
+        if not self.sw is None:
+            self.sw.unbind("<Destroy>", self.__on_sw_destroy__)
+        if not value is None:
+            value.bind("<Destroy>", self.__on_sw_destroy__, "+")
+        self.sw = value
+
+    def __on_sw_destroy__(self, event):
+        self.destroy()

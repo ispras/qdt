@@ -198,5 +198,5 @@ class IRQSettingsWindow(SettingsWindow):
 
         self.title(_("IRQ line settings"))
 
-        self.sw = IRQSettingsWidget(irq, self.mht, self)
+        self.set_sw(IRQSettingsWidget(irq, self.mht, self))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")
