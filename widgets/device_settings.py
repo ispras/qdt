@@ -326,7 +326,10 @@ class DeviceSettingsWidget(SettingsWidget):
         if not op.node_id == self.dev.id:
             return
 
-        self.refresh()
+        if not self.irq.node.id in self.mht.mach.id2node:
+            self.destroy()
+        else:
+            self.refresh()
 
     @staticmethod
     def gen_prop_type_optionmenu(parent, current = None):
