@@ -1296,6 +1296,14 @@ IRQ line creation
 
         self.process_irq_circles()
 
+        for idx, sid in enumerate(self.selected):
+            bbox = self.canvas.bbox(sid)
+            apply(self.canvas.coords, [
+                self.selection_marks[idx],
+                bbox[0] - 1, bbox[1] - 1,
+                bbox[2] + 1, bbox[3] + 1
+            ])
+
         for n, idtext in list(self.node2idtext.iteritems()):
             dev = self.node2dev[n]
             if isinstance(dev, Node):
@@ -1333,14 +1341,6 @@ IRQ line creation
             for id in self.selection_marks[selects:]:
                 self.canvas.delete(id)
             self.selection_marks = self.selection_marks[:selects]
-
-        for idx, sid in enumerate(self.selected):
-            bbox = self.canvas.bbox(sid)
-            apply(self.canvas.coords, [
-                self.selection_marks[idx],
-                bbox[0] - 1, bbox[1] - 1,
-                bbox[2] + 1, bbox[3] + 1
-            ])
 
     def show_node_id(self, node):
         idtext = self.canvas.create_text(
