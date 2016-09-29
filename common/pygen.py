@@ -39,6 +39,9 @@ class PyGenerator(object):
         self.current_indent = self.current_indent[:-len(self.indent)]
 
     def nameof(self, obj):
+        if obj is None:
+            return "None"
+
         if not obj in self.obj2name:
             name = "obj%u" % self.max_name
             self.max_name = self.max_name + 1
