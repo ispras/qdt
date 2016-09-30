@@ -33,6 +33,66 @@ class MachineNodeOperation(MachineOperation):
     def writes_node(self):
         return self.gen_entry() in self.__write_set__()
 
+class MOp_SetChildBus(MachineOperation):
+    def __init__(self, dev_id, child_idx, bus_id, *args, **kw):
+        MachineOperation.__init__(self, *args, **kw)
+
+        self.dev_id, self.idx, self.bus_id = dev_id, child_idx, bus_id
+
+    def __backup__(self):
+        dev = self.mach.id2node[self.dev_id]
+        try:
+            self.prev_bus_id = dev.buses[self.idx].id
+        except IndexError:
+            self.prev_bus_id = -1
+
+    @staticmethod
+    def swap_child_bus(mach, dev_id, idx, new_bus_id):
+        dev = mach.id2node[dev_id]
+
+        if new_bus_id == -1:
+            try:
+                cur_bus = dev.buses.pop(idx)
+            except IndexError:
+                raise Exception("Device %i has no bus at index %i" % \
+                    (dev_id, idx))
+            else:
+                cur_bus.parent_device = None
+        else:
+            new_bus = mach.id2node[new_bus_id]
+            if new_bus.parent_device:
+                raise Exception("Bus %i already has parent" % new_bus.id)
+
+            new_bus.parent_device = dev
+
+            if idx == len(dev.buses):
+                dev.buses.append(new_bus)
+            else:
+                dev.buses[idx].parent_device = None
+                dev.buses[idx] = new_bus
+
+    def __do__(self):
+        MOp_SetChildBus.swap_child_bus(self.mach, self.dev_id, self.idx,
+            self.bus_id)
+
+    def __undo__(self):
+        MOp_SetChildBus.swap_child_bus(self.mach, self.dev_id, self.idx,
+            self.prev_bus_id)
+
+    def __read_set__(self):
+        return MachineOperation.__read_set__(self) + [
+            self.gen_node_id_entry(i) for i in [
+                self.dev_id, self.bus_id, self.prev_bus_id
+            ] 
+        ]
+
+    def __write_set__(self):
+        return MachineOperation.__write_set__(self) + [
+            (self.gen_node_id_entry(self.dev_id), "buses"),
+            (self.gen_node_id_entry(self.bus_id), "parent_device")
+            (self.gen_node_id_entry(self.prev_bus_id), "parent_device")
+        ]
+
 class MOp_DelIRQLine(MachineNodeOperation):
     def __init__(self, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
