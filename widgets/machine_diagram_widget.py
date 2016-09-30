@@ -1592,9 +1592,6 @@ IRQ line creation
             yield
 
         for l in self.irq_lines:
-            if len(l.circles) < 2:
-                continue
-
             c = l.circles[0]
             x, y = l.src.get_irq_binding((c.x, c.y))
             dx = x - (c.x + c.r)
@@ -1608,6 +1605,9 @@ IRQ line creation
             dy = y - (c.y + c.r)
             c.vx = c.vx + dx * self.irq_circle_graviry
             c.vy = c.vy + dy * self.irq_circle_graviry
+
+            if len(l.circles) < 2:
+                continue
 
             for idx, c in enumerate(l.circles[:-1]):
                 c1 = l.circles[idx + 1]
