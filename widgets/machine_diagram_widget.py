@@ -1931,6 +1931,20 @@ IRQ line creation
 
         self.buses.append(bus)
 
+    def update_buslabel_text(self, bl):
+        self.canvas.itemconfig(bl.text,
+            text = bl.node.gen_child_name_for_bus()
+        )
+
+        t_bbox = self.canvas.bbox(bl.text)
+        bl.text_width = t_bbox[2] - t_bbox[0]
+        bl.text_height = t_bbox[3] - t_bbox[1]
+
+        bl.width = bl.text_width + bl.padding
+        bl.height = (1 + 2 * bl.cap_size) \
+            * (bl.text_height + bl.padding)
+        bl.offset = [bl.width / 2, 0]
+
     def add_buslabel(self, bl):
         node = BusLine(bl)
         self.add_bus(node)
@@ -1938,18 +1952,9 @@ IRQ line creation
 
         id = self.canvas.create_text(
             bl.x, bl.y,
-            text = bl.node.gen_child_name_for_bus(),
             state = tk.DISABLED
         )
         bl.text = id
-
-        t_bbox = self.canvas.bbox(id)
-        bl.text_width = t_bbox[2] - t_bbox[0]
-        bl.text_height = t_bbox[3] - t_bbox[1]
-
-        bl.width = bl.text_width + bl.padding
-        bl.height = (1 + 2 * bl.cap_size) * (bl.text_height + bl.padding)
-        bl.offset = [bl.width / 2, 0]
 
         id = self.canvas.create_polygon(
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1957,6 +1962,8 @@ IRQ line creation
             outline = "black",
             tag = "DnD"
         )
+
+        self.update_buslabel_text(bl)
 
         self.id2node[id] = bl
         self.node2id[bl] = id
