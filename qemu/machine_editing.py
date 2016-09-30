@@ -4,8 +4,7 @@ from machine_description import \
     QOMPropertyValue
 
 from project_editing import \
-    ProjectOperation, \
-    ProjectHistoryTracker
+    ProjectOperation
 
 import copy
 
@@ -507,15 +506,3 @@ class MOp_SetDevProp(MachineDevicePropertyOperation):
     def __write_set__(self):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
-
-class MachineHistoryTracker(ProjectHistoryTracker):
-    def __init__(self, machine_description, *args, **kw):
-        self.mach = machine_description
-
-        ProjectHistoryTracker.__init__(self, self.mach.project, *args, **kw)
-
-    def stage(self, op_class,  *op_args, **op_kw):
-        return ProjectHistoryTracker.stage(self,
-            op_class,
-            *(op_args + (self.mach,)), **op_kw
-        )

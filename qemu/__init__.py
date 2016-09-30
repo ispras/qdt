@@ -90,8 +90,7 @@ from machine_editing import \
                 MOp_DelDevProp, \
                 MOp_AddDevProp, \
                 MOp_SetDevProp, \
-        MOp_SetChildBus, \
-    MachineHistoryTracker
+        MOp_SetChildBus
 
 from project_editing import \
     ProjectOperation, \
