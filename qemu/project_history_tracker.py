@@ -1,6 +1,10 @@
 from common import \
     HistoryTracker
 
+from machine_editing import \
+    MOp_DelIRQLine, \
+    MOp_DelIRQHub
+
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):
         self.pht = project_history_tracker
@@ -13,8 +17,21 @@ class MachineProxyTracker(object):
             **op_kw
         )
 
+    def delete_irq_line(self, line_id):
+        return self.stage(MOp_DelIRQLine, line_id)
+
+    def delete_irq_hub(self, hub_id):
+        hub = self.mach.id2node[hub_id]
+        for irq in hub.irqs:
+            self.delete_irq_line(irq.id)
+        self.stage(MOp_DelIRQHub, hub_id)
+
     def __getattr__(self, name):
-        if name == "stage":
+        if name in [ 
+            "stage",
+            "delete_irq_line",
+            "delete_irq_hub"
+        ]:
             return MachineProxyTracker.stage
         else:
             return getattr(self.pht, name)
