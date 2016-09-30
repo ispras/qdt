@@ -208,6 +208,8 @@ class PropLineDesc(object):
         self.bt_del = bt_del
 
 class DeviceSettingsWidget(SettingsWidget):
+    EVENT_BUS_SELECTED = "<<DSWBusSelected>>"
+
     prop_type_name_map = {
         qemu.QOMPropertyTypeInteger: ("Integer", ),
         qemu.QOMPropertyTypeLink: ("Link", ),
@@ -255,6 +257,7 @@ class DeviceSettingsWidget(SettingsWidget):
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
         self.bus_var = tk.StringVar()
+        self.bus_var.trace_variable("w", self.on_parent_bus_var_changed)
         self.bus_cb = ttk.Combobox(
             common_fr,
             textvariable = self.bus_var,
@@ -292,6 +295,9 @@ class DeviceSettingsWidget(SettingsWidget):
             sticky = "NEWS"
         )
 
+    def on_parent_bus_var_changed(self, *args):
+        self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
+
     def on_press_select_qom_type(self):
         DeviceTreeWidget(self)
 
@@ -323,6 +329,10 @@ class DeviceSettingsWidget(SettingsWidget):
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
             return
+
+        if isinstance(op, MOp_SetDevParentBus):
+            self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
+
         if not op.node_id == self.dev.id:
             return
 
