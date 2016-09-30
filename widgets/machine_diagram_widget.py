@@ -450,6 +450,10 @@ IRQ line creation
             command = self.on_popup_single_irq_hub_irq_destination,
             state = "disabled"
         )
+        p.add_command(
+            label = _("Delete"),
+            command = self.on_popup_single_irq_hub_delete
+        )
         self.popup_single_irq_hub = p
 
         # single bus popup menu
@@ -612,6 +616,12 @@ IRQ line creation
 
     def on_popup_single_irq_hub_irq_destination(self):
         self.on_popup_single_device_irq_destination()
+
+    def on_popup_single_irq_hub_delete(self):
+        hid = self.selected[0]
+        hid = self.node2dev[self.id2node[hid]].id
+        self.mht.delete_irq_hub(hid)
+        self.mht.commit()
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
