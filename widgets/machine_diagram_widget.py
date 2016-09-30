@@ -654,7 +654,7 @@ IRQ line creation
             return
 
         irq = self.node2dev[self.highlighted_irq_line]
-        self.mht.stage(MOp_DelIRQLine, irq.id)
+        self.mht.delete_irq_line(irq.id)
 
         self.mht.commit()
 
