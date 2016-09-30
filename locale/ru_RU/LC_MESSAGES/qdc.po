@@ -16,24 +16,24 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
-#: widgets/device_settings.py:185 widgets/machine_diagram_widget.py:408
+#: widgets/device_settings.py:262 widgets/machine_diagram_widget.py:436
 #: widgets/sysbusdevset.py:67
 msgid "Delete"
 msgstr "Удалить"
 
-#: widgets/device_settings.py:235
+#: widgets/device_settings.py:315
 msgid "QOM type"
 msgstr "Тип QOM"
 
-#: widgets/device_settings.py:243 widgets/device_tree_widget.py:81
+#: widgets/device_settings.py:323 widgets/device_tree_widget.py:81
 msgid "Select"
 msgstr "Выбрать"
 
-#: widgets/device_settings.py:265
+#: widgets/device_settings.py:357
 msgid "Properties"
 msgstr "Свойства"
 
-#: widgets/device_settings.py:280 widgets/sysbusdevset.py:61
+#: widgets/device_settings.py:372 widgets/sysbusdevset.py:61
 msgid "Add"
 msgstr "Добавить"
 
@@ -53,19 +53,20 @@ msgstr "Устройства"
 msgid "Macros"
 msgstr "Макросы"
 
-#: widgets/machine_diagram_widget.py:390 widgets/machine_diagram_widget.py:404
+#: widgets/machine_diagram_widget.py:409 widgets/machine_diagram_widget.py:432
+#: widgets/machine_diagram_widget.py:458
 msgid "Settings"
 msgstr "Установки"
 
-#: widgets/settings_window.py:81
+#: widgets/settings_window.py:84
 msgid "Refresh"
 msgstr "Освежить"
 
-#: widgets/settings_window.py:90
+#: widgets/settings_window.py:93
 msgid "Apply"
 msgstr "Применить"
 
-#: widgets/settings_window.py:99
+#: widgets/settings_window.py:102
 msgid "OK"
 msgstr "ОК"
 
