@@ -862,7 +862,12 @@ IRQ line creation
                     for l in self.irq_lines:
                         for idx, c in enumerate(l.circles):
                             if c == self.shown_irq_node:
-                                self.circle_to_be_deleted = (l, idx)
+                                if self.shift_pressed():
+                                    self.irq_line_delete_circle(l, idx)
+                                    self.invalidate()
+                                    return
+                                else:
+                                    self.circle_to_be_deleted = (l, idx)
                                 break
                         else:
                             continue
