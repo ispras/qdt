@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"PO-Revision-Date:  2016-09-19 18:40+0300\n"
-"Last-Translator: Oleg Goremykin <goremykin@ispras.ru>\n"
+"PO-Revision-Date:  2016-09-30 17:29+0300\n"
+"Last-Translator: Efimov Vasily <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
 "MIME-Version: 1.0\n"
@@ -28,6 +28,14 @@ msgstr "Тип QOM"
 #: widgets/device_settings.py:323 widgets/device_tree_widget.py:81
 msgid "Select"
 msgstr "Выбрать"
+
+#: widgets/device_settings.py:329
+msgid "Parent bus"
+msgstr "Родительская шина"
+
+#: widgets/device_settings.py:346
+msgid "Child buses"
+msgstr "Дочерние шины"
 
 #: widgets/device_settings.py:357
 msgid "Properties"
@@ -53,10 +61,74 @@ msgstr "Устройства"
 msgid "Macros"
 msgstr "Макросы"
 
+#: widgets/device_tree_widget.py:87
+msgid "Select QOM type"
+msgstr "Выбор типа QOM"
+
+#: widgets/irq_settings.py:39
+msgid "Source"
+msgstr "Передатчик"
+
+#: widgets/irq_settings.py:40
+msgid "Destination"
+msgstr "Приёмник"
+
+#: widgets/irq_settings.py:53
+msgid "Node"
+msgstr "Узел"
+
+#: widgets/irq_settings.py:65
+msgid "GPIO index"
+msgstr "Индекс GPIO"
+
+#: widgets/irq_settings.py:72
+msgid "GPIO name"
+msgstr "Имя GPIO"
+
+#: widgets/irq_settings.py:202
+msgid "IRQ line settings"
+msgstr "Установки линии IRQ"
+
+#: widgets/machine_diagram_widget.py:398 widgets/machine_diagram_widget.py:444
+msgid "IRQ source"
+msgstr "Передатчик IRQ"
+
+#: widgets/machine_diagram_widget.py:403 widgets/machine_diagram_widget.py:449
+msgid "IRQ destination"
+msgstr "Приёмник IRQ"
+
 #: widgets/machine_diagram_widget.py:409 widgets/machine_diagram_widget.py:432
 #: widgets/machine_diagram_widget.py:458
 msgid "Settings"
 msgstr "Установки"
+
+#: widgets/machine_diagram_widget.py:416
+msgid "Add IRQ hub"
+msgstr "Добавить узел IRQ"
+
+#: widgets/machine_diagram_widget.py:420
+msgid "Dynamic layout"
+msgstr "Динамическое размещение"
+
+#: widgets/machine_diagram_widget.py:427
+msgid "Delete point"
+msgstr "Удалить точку"
+
+#: widgets/pci_device_settings.py:20
+msgid "PCI"
+msgstr ""
+
+#: widgets/pci_device_settings.py:28
+msgid "Slot (Device number)"
+msgstr "Слот (номер устройства)"
+
+#: widgets/pci_device_settings.py:35
+msgid "Function number"
+msgstr "Номер функции"
+
+#: widgets/pci_device_settings.py:45
+msgid "multifunction"
+msgstr "многофункциональное"
 
 #: widgets/settings_window.py:84
 msgid "Refresh"
@@ -70,9 +142,21 @@ msgstr "Применить"
 msgid "OK"
 msgstr "ОК"
 
+#: widgets/sysbusdevset.py:41
+msgid "MMIO Mappings"
+msgstr "Отображения MMIO"
+
+#: widgets/sysbusdevset.py:42
+msgid "PMIO Mappings"
+msgstr "Отображения PMIO"
+
 #: widgets/hotkey.py:66
 msgid "Unassigned"
 msgstr "Не назначено"
+
+#: widgets/bus_settings.py:27
+msgid "Bus settings"
+msgstr "Установки шины"
 
 #: qdc-gui.py:28
 msgid "Qemu device creator GUI"
