@@ -16,6 +16,7 @@ import ttk
 import qemu
 
 from qemu import \
+    MOp_SetChildBus, \
     MachineNodeOperation, \
         MOp_SetDevParentBus, \
         MOp_SetDevQOMType, \
@@ -24,10 +25,80 @@ from qemu import \
         MOp_SetDevProp
 
 from itertools import \
+    izip, \
     count
 
 from settings_window import \
     SettingsWidget
+
+class BusLineDesc(object):
+    def __init__(self, device_settings_widget, idx):
+        self.dsw = device_settings_widget
+        self.idx = idx
+
+    def gen_row(self):
+        p = self.dsw.buses_lf
+
+        p.rowconfigure(self.idx, weight = 1)
+
+        self.v = tk.StringVar()
+        # When a bus is selected all Combobox values lists should be updated
+        # to prevent selecting of this bus in another Combobox
+        self._on_var_changed = self.v.trace_variable("w", self.on_var_changed)
+
+        self.cb = ttk.Combobox(p,
+            textvariable = self.v,
+            state = "readonly"
+        )
+        self.cb.grid(row = self.idx, column = 0, sticky = "NEWS")
+
+        self._on_bus_selected = self.dsw.bind(
+            DeviceSettingsWidget.EVENT_BUS_SELECTED, self.on_bus_selected, "+")
+
+    def on_var_changed(self, *args):
+        self.dsw.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
+
+    def update(self):
+        try:
+            cur_bus = self.dsw.dev.buses[self.idx]
+        except IndexError:
+            cur_bus = None
+        bus_text = DeviceSettingsWidget.gen_node_link_text(cur_bus)
+
+        self.v.set(bus_text)
+
+    def delete(self):
+        self.v.trace_vdelete("w", self._on_var_changed)
+
+        self.dsw.unbind(DeviceSettingsWidget.EVENT_BUS_SELECTED,
+            self._on_bus_selected)
+
+        if "obs" in self.__dict__:
+            self.v.trace_vdelete("w", self.obs)
+            del self.obs
+
+        self.cb.destroy()
+
+    def update_values(self):
+        sel_buses = self.dsw.get_selected_buses()
+
+        values = [
+            DeviceSettingsWidget.gen_node_link_text(b) for b in (
+                [ b for b in self.dsw.mht.mach.buses if (\
+                        (   b.parent_device is None \
+                         or b.parent_device == self.dsw.dev) 
+                    and (not b.id in sel_buses))
+                ] + [ None ]
+            )
+        ]
+
+        self.cb.config(values = values)
+
+    def on_bus_selected(self, event):
+        self.update_values()
+
+    def on_dsw_destroy(self, event):
+        self.delete()
 
 class PropLineDesc(object):
     def __init__(self, device_settings_widget, prop):
@@ -270,6 +341,17 @@ class DeviceSettingsWidget(SettingsWidget):
 
         self.rowconfigure(1, weight = 1)
 
+        self.buses_lf = lf = VarLabelFrame(
+            common_fr,
+            text = _("Child buses")
+        )
+        lf.grid(row = 2, column = 0, columns = 3, sticky = "NEWS")
+        self.rowconfigure(2, weight = 1)
+
+        lf.columnconfigure(0, weight = 1)
+
+        self.child_buses_rows = []
+
         self.props_lf = VarLabelFrame(
             self,
             text = _("Properties")
@@ -294,6 +376,12 @@ class DeviceSettingsWidget(SettingsWidget):
             column = 3,
             sticky = "NEWS"
         )
+
+    def __on_destroy__(self, *args):
+        for bld in self.child_buses_rows:
+            bld.delete()
+
+        SettingsWidget.__on_destroy__(self, *args)
 
     def on_parent_bus_var_changed(self, *args):
         self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
@@ -327,6 +415,9 @@ class DeviceSettingsWidget(SettingsWidget):
         self.bt_add_prop.grid(row = row + 1)
 
     def on_changed(self, op, *args, **kw):
+        if isinstance(op, MOp_SetChildBus):
+            self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
+
         if not isinstance(op, MachineNodeOperation):
             return
 
@@ -426,6 +517,62 @@ class DeviceSettingsWidget(SettingsWidget):
             DeviceSettingsWidget.gen_node_link_text(self.dev.parent_bus)
         )
 
+        bus_row_count = len(self.child_buses_rows)
+        bus_count = len(self.dev.buses) + 1
+
+        if bus_row_count < bus_count:
+            for idx in xrange(bus_row_count, bus_count):
+                bld = BusLineDesc(self, idx)
+                self.child_buses_rows.append(bld)
+                bld.gen_row()
+
+            bld.obs = bld.v.trace_variable("w", self.on_last_child_bus_changed)
+
+        if bus_count < bus_row_count:
+            for idx in xrange(bus_count, bus_row_count):
+                bld = self.child_buses_rows.pop()
+                bld.delete()
+
+            bld = self.child_buses_rows[-1]
+            bld.obs = bld.v.trace_variable("w", 
+                self.on_last_child_bus_changed)
+
+        for bld in self.child_buses_rows:
+            bld.update()
+
+    def on_last_child_bus_changed(self, *args):
+        bld = self.child_buses_rows[-1]
+        bus = self.find_node_by_link_text(bld.v.get())
+
+        if not bus is None:
+            # Selecting not NULL child bus means that a child bus was added.
+            # Add new NULL bus string for consequent bus addition.
+            bld.v.trace_vdelete("w", bld.obs)
+            del bld.obs
+
+            bld = BusLineDesc(self, len(self.child_buses_rows))
+            self.child_buses_rows.append(bld)
+            bld.gen_row()
+            bld.update()
+
+            bld.obs = bld.v.trace_variable("w", self.on_last_child_bus_changed)
+
+    def get_selected_child_buses(self):
+        child_buses = [ bld.v.get() for bld in self.child_buses_rows ]
+        ret = [ self.find_node_by_link_text(t) for t in child_buses if t ]
+        return [ b.id for b in ret if not b is None ]
+
+    def get_selected_buses(self):
+        ret = self.get_selected_child_buses()
+
+        parent_bus = self.find_node_by_link_text(self.bus_var.get())
+        if not parent_bus is None:
+            parent_bus = parent_bus.id
+            if not parent_bus in ret:
+                ret.append(parent_bus)
+
+        return ret
+
     def __apply_internal__(self):
         # apply parent bus
         new_bus_text = self.bus_var.get()
@@ -460,3 +607,48 @@ class DeviceSettingsWidget(SettingsWidget):
         for p in self.dev.properties:
             if not p in self.prop2field:
                 self.mht.stage(MOp_DelDevProp, p, self.dev.id)
+
+        new_buses = self.get_selected_child_buses()
+
+        # Changing of buses is made in two steps to allow reordering of buses
+        # during single iteration.
+        step2 = []
+
+        # The child bus list is reversed to remove buses from the end to to the
+        # begin. After removing bus from middle consequent indexes becomes
+        # incorrect.
+        for i, bus in reversed([ x for x in enumerate(self.dev.buses) ]):
+            try:
+                new_bus = new_buses.pop(i)
+            except IndexError:
+                # remove i-th bus
+                self.mht.stage(
+                    MOp_SetChildBus,
+                    self.dev.id,
+                    i,
+                    -1
+                )
+            else:
+                if bus.id == new_bus:
+                    continue
+
+                # change i-th bus (1-st step: remove)
+                self.mht.stage(
+                    MOp_SetChildBus,
+                    self.dev.id,
+                    i,
+                    -1
+                )
+                # step 2 should be done in increasing index order
+                step2.insert(0, (i, new_bus))
+
+        adding = [ x for x in izip(count(len(self.dev.buses)), new_buses) ]
+
+        for i, new_bus in step2 + adding:
+            # add i-th bus
+            self.mht.stage(
+                MOp_SetChildBus,
+                self.dev.id,
+                i,
+                new_bus
+            )
