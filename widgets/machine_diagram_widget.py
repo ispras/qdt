@@ -882,6 +882,7 @@ IRQ line creation
                 try:
                     self.current_popup.tk_popup(event.x_root, event.y_root)
                     self.current_popup.grab_release()
+                    self.stop_circle_preview()
                 except:
                     self.current_popup.grab_release()
                     self.current_popup = None
