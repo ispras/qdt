@@ -6,9 +6,12 @@ from Tkinter import \
     Frame
 
 from common import \
+    unbind, \
     ML as _
 
 class SettingsWidget(Frame):
+    unbind = unbind
+
     def __init__(self, machine_history_tracker, *args, **kw):
         Frame.__init__(self, *args, **kw)
 
