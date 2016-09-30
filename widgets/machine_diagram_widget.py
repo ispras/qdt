@@ -424,6 +424,11 @@ IRQ line creation
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
         p.add_command(
+            label = _("Delete point"),
+            command = self.on_popup_irq_line_delete_point
+        )
+        self.on_popup_irq_line_delete_point_idx = 0
+        p.add_command(
             label = _("Settings"),
             command = self.on_popup_irq_line_settings
         )
@@ -623,6 +628,10 @@ IRQ line creation
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+
+    def on_popup_irq_line_delete_point(self):
+        self.irq_line_delete_circle(*self.circle_to_be_deleted)
+        self.invalidate()
 
     def on_popup_irq_line_settings(self):
         if not self.highlighted_irq_line:
@@ -846,15 +855,25 @@ IRQ line creation
         self.master.config(cursor = "")
 
         if (not self.all_were_dragged) and self.highlighted_irq_line:
-            if self.shown_irq_circle:
-                for l in self.irq_lines:
-                    for idx, c in enumerate(l.circles):
-                        if c == self.shown_irq_node:
-                            self.irq_line_delete_circle(l, idx)
-                            self.invalidate()
-                            return
-
             if not self.current_popup:
+                self.circle_to_be_deleted = None
+
+                if self.shown_irq_circle:
+                    for l in self.irq_lines:
+                        for idx, c in enumerate(l.circles):
+                            if c == self.shown_irq_node:
+                                self.circle_to_be_deleted = (l, idx)
+                                break
+                        else:
+                            continue
+                        break
+
+                self.popup_irq_line.entryconfig(
+                    self.on_popup_irq_line_delete_point_idx,
+                    state = "disabled" if self.circle_to_be_deleted is None \
+                        else "normal"
+                )
+
                 x, y = self.canvas.canvasx(event.x), \
                        self.canvas.canvasy(event.y)
 
