@@ -418,18 +418,16 @@ class DeviceSettingsWidget(SettingsWidget):
         if isinstance(op, MOp_SetChildBus):
             self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
 
-        if not isinstance(op, MachineNodeOperation):
-            return
-
         if isinstance(op, MOp_SetDevParentBus):
             self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
 
-        if not op.node_id == self.dev.id:
-            return
-
-        if not self.irq.node.id in self.mht.mach.id2node:
-            self.destroy()
-        else:
+        if op.writes(self.dev.id):
+            if not self.dev.id in self.mht.mach.id2node:
+                self.destroy()
+            else:
+                self.refresh()
+        elif isinstance(op, MachineNodeOperation) \
+        and (op.node_id == self.dev.id):
             self.refresh()
 
     @staticmethod
