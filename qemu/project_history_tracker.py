@@ -2,6 +2,10 @@ from common import \
     HistoryTracker
 
 from machine_editing import \
+    MOp_AddBus, \
+    MOp_DelBus, \
+    MOp_SetChildBus, \
+    MOp_SetDevParentBus, \
     MOp_DelIRQLine, \
     MOp_DelIRQHub
 
@@ -25,6 +29,40 @@ class MachineProxyTracker(object):
         for irq in hub.irqs:
             self.delete_irq_line(irq.id)
         self.stage(MOp_DelIRQHub, hub_id)
+
+    def add_bus(self, bus_class_name, new_id, **bus_arguments):
+        self.stage(MOp_AddBus, bus_class_name, new_id,
+            **bus_arguments)
+
+    def delete_bus(self, bus_id):
+        bus = self.mach.id2node[bus_id]
+
+        if bus.parent_device:
+            parent_id = bus.parent_device.id
+
+            # Deleting child bus involves shifting of consequent buses indexes.
+            # The only currently available way is to disconnect tail buses,
+            # disconnect the bus, reconnect tail buses again with decremented
+            # indexes 
+
+            temporally_disconnected = []
+
+            for idx, b in reversed(
+                [ x for x in enumerate(bus.parent_device.buses) ]
+            ):
+                if b.id == bus_id:
+                    self.stage(MOp_SetChildBus, parent_id, idx, -1)
+                    for jdx, bus_id in temporally_disconnected:
+                        self.stage(MOp_SetChildBus, parent_id, jdx - 1, bus_id)
+                    break
+                else:
+                    temporally_disconnected.insert(0, (idx, b.id))
+                    self.stage(MOp_SetChildBus, parent_id, idx, -1)
+
+        for child in bus.devices:
+            self.stage(MOp_SetDevParentBus, None, child.id)
+
+        self.stage(MOp_DelBus, bus.id)
 
     def __getattr__(self, name):
         if name in [ 
