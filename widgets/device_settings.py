@@ -519,6 +519,11 @@ class DeviceSettingsWidget(SettingsWidget):
         bus_count = len(self.dev.buses) + 1
 
         if bus_row_count < bus_count:
+            if bus_row_count:
+                bld = self.child_buses_rows[-1]
+                bld.v.trace_vdelete("w", bld.obs)
+                del bld.obs
+
             for idx in xrange(bus_row_count, bus_count):
                 bld = BusLineDesc(self, idx)
                 self.child_buses_rows.append(bld)
