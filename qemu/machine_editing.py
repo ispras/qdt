@@ -3,6 +3,8 @@ from machine_description import \
     IRQHub, \
     QOMPropertyValue
 
+import machine_description
+
 from project_editing import \
     ProjectOperation
 
@@ -31,6 +33,50 @@ class MachineNodeOperation(MachineOperation):
     """
     def writes_node(self):
         return self.gen_entry() in self.__write_set__()
+
+class MachineNodeAdding(MachineNodeOperation):
+    # node_class_name - string name adding machine node. The class with such
+    #     name should be in machine_description module
+    # arg_list, kw_list - lists with argument names of  node class __init__
+    #     argument values will be excluded from key word arguments of this
+    #     __init__ method
+    def __init__(self, node_class_name, arg_list, kw_list, *args, **kw):
+        for n in arg_list + kw_list:
+            if n in kw:
+                setattr(self, n, kw.pop(n))
+
+        MachineNodeOperation.__init__(self, *args, **kw)
+
+        self.nc = str(node_class_name)
+        self.al = copy.deepcopy(arg_list)
+        self.kwl = copy.deepcopy(kw_list)
+
+    def new(self):
+        Class = getattr(machine_description, self.nc)
+
+        args = []
+        for n in self.al:
+            try:
+                val = getattr(self, n)
+            except AttributeError:
+                val = None
+            args.append(val)
+
+        kw = {}
+        for n in self.kwl:
+            try:
+                val = getattr(self, n)
+            except AttributeError:
+                pass
+            else:
+                kw[n] = val
+
+        return Class(*args, **kw)
+
+    def __write_set__(self):
+        return MachineNodeOperation.__write_set__(self) + [
+            self.gen_entry()
+        ]
 
 class MOp_SetChildBus(MachineOperation):
     def __init__(self, dev_id, child_idx, bus_id, *args, **kw):
