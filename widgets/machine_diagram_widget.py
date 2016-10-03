@@ -464,6 +464,10 @@ IRQ line creation
             label = _("Settings"),
             command = self.on_popup_single_bus_settings
         )
+        p.add_command(
+            label = _("Delete"),
+            command = self.on_popup_single_bus_delete
+        )
         self.popup_single_bus = p
 
         self.current_popup = None
@@ -728,6 +732,12 @@ IRQ line creation
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+
+    def on_popup_single_bus_delete(self):
+        bus_id = self.selected[0]
+        bus_id = self.node2dev[self.id2node[bus_id]].id
+        self.mht.delete_bus(bus_id)
+        self.mht.commit()
 
     def on_add_irq_hub(self):
         p = self.current_popup
