@@ -72,6 +72,8 @@ from machine_editing import \
     MachineOperation, \
         MachineNodeOperation, \
             MachineNodeAdding, \
+                MOp_AddBus, \
+                    MOp_DelBus, \
             MOp_DelIRQLine, \
                 MOp_AddIRQLine, \
             MOp_AddIRQHub, \

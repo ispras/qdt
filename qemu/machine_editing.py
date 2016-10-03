@@ -78,6 +78,66 @@ class MachineNodeAdding(MachineNodeOperation):
             self.gen_entry()
         ]
 
+def gen_bus_class_args(bus_class_name):
+    al, kwl = [], []
+
+    if bus_class_name in [ "I2CBusNode", "IDEBusNode", "ISABusNode" ]:
+        al.append("bus_controller")
+    elif bus_class_name == "PCIExpressBusNode":
+        al.append("host_bridge")
+    elif bus_class_name == "SystemBusNode":
+        pass
+    else:
+        kwl.extend([ "c_type", "cast", "child_name", "force_index" ])
+
+    return al, kwl
+
+class MOp_AddBus(MachineNodeAdding):
+    def __init__(self, bus_class_name, *args, **kw):
+        al, kwl = gen_bus_class_args(bus_class_name)
+
+        MachineNodeAdding.__init__(self, bus_class_name, al, kwl, *args, **kw)
+
+    def __backup__(self):
+        pass
+
+    def __undo__(self):
+        bus = self.mach.id2node[self.node_id]
+
+        if bus.parent_device:
+            raise Exception("Bus %i should not have parent" % self.node_id)
+
+        if bus.devices:
+            raise Exception("Bus %i should not have children" % self.node_id)
+
+        self.mach.buses.remove(bus)
+        del self.mach.id2node[self.node_id]
+        bus.id = -1
+
+    def __do__(self):
+        bus = self.new()
+        self.mach.add_node(bus, with_id = self.node_id)
+
+class MOp_DelBus(MOp_AddBus):
+    def __init__(self, *args, **kw):
+        # SystemBusNode is used to minimize initial sizes of argument & key
+        # word argument lists. The actual values will be written by __backup__.
+        MOp_AddBus.__init__(self, "SystemBusNode", *args, **kw)
+
+    def __backup__(self):
+        bus = self.mach.id2node[self.node_id]
+
+        self.nc = str(type(bus).__name__)
+        self.c_type = copy.deepcopy(bus.c_type)
+        self.cast = copy.deepcopy(bus.cast)
+        self.child_name = copy.deepcopy(bus.child_name)
+        self.force_index = copy.deepcopy(bus.force_index)
+
+        self.al, self.kwl = gen_bus_class_args(self.nc)
+
+    __do__ = MOp_AddBus.__undo__
+    __undo__ = MOp_AddBus.__do__
+
 class MOp_SetChildBus(MachineOperation):
     def __init__(self, dev_id, child_idx, bus_id, *args, **kw):
         MachineOperation.__init__(self, *args, **kw)
