@@ -19,6 +19,8 @@ from common import \
     sign
 
 from qemu import \
+    MOp_AddBus, \
+    MOp_DelBus, \
     MOp_SetChildBus, \
     BusNode, \
     IRQLine as QIRQLine, \
@@ -583,6 +585,46 @@ IRQ line creation
                 if not bus_id == -1:
                     bus = self.mach.id2node[bus_id]
                     self.update_buslabel_text(self.dev2node[bus])
+        elif isinstance(op, MOp_AddBus) or isinstance(op, MOp_DelBus):
+            try:
+                bus = self.mach.id2node[op.node_id]
+            except KeyError:
+                # deleted
+                for bus, bl in self.dev2node.iteritems():
+                    if isinstance(bus, BusNode):
+                        if bus.id == -1:
+                            break
+
+                poly_id = self.node2id[bl]
+                line_id = self.node2id[bl.busline]
+
+                if poly_id in self.selected:
+                    self.selected.remove(poly_id)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+
+                self.buslabels.remove(bl)
+                del self.node2id[bl]
+                del self.id2node[poly_id]
+
+                self.canvas.delete(poly_id)
+                self.canvas.delete(bl.text)
+
+                self.buses.remove(bl.busline)
+                del self.node2id[bl.busline]
+                del self.id2node[line_id]
+
+                self.canvas.delete(line_id)
+
+                del self.dev2node[bus]
+                del self.node2dev[bl]
+            else:
+                # added
+                node = BusLabel(bus)
+
+                self.dev2node[bus] = node
+                self.node2dev[node] = bus
+
+                self.add_buslabel(node)
 
         self.invalidate()
 
