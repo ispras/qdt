@@ -1,5 +1,32 @@
+from itertools import \
+    izip
+
 class UnimplementedInverseOperation(Exception):
     pass
+
+def set_touches_entry(X, e):
+    for x in X:
+        if isinstance(x, tuple):
+            if isinstance(e, tuple):
+                for ee, xx in izip(e, x):
+                    if not ee == xx:
+                        break
+                else:
+                    return True
+            elif type(e) in [ int, long, bool, str, float ]:
+                if e == x[0]:
+                    return True
+            else:
+                raise Exception("Unsupported type of entry: " + str(type(e)))
+        elif type(x) in [ int, long, bool, str, float ]:
+            if isinstance(e, tuple):
+                if e[0] == x:
+                    return True
+            elif e == x:
+                return True
+        else:
+            Exception("Unsupported type of entry: " + str(type(x)))
+    return False
 
 """
 Composite operations should be divided in sequence of basic operations with
@@ -50,6 +77,9 @@ class InverseOperation(object):
 
     def __write_set__(self):
         raise UnimplementedInverseOperation()
+
+    def writes(self, entry):
+        return set_touches_entry(self.__write_set__(), entry)
 
 
 class InitialOperationCall(Exception):
