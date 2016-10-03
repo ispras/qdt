@@ -188,15 +188,20 @@ class MOp_SetChildBus(MachineOperation):
         return MachineOperation.__read_set__(self) + [
             self.gen_node_id_entry(i) for i in [
                 self.dev_id, self.bus_id, self.prev_bus_id
-            ] 
+            ] if not i == -1
         ]
 
     def __write_set__(self):
-        return MachineOperation.__write_set__(self) + [
-            (self.gen_node_id_entry(self.dev_id), "buses"),
-            (self.gen_node_id_entry(self.bus_id), "parent_device")
-            (self.gen_node_id_entry(self.prev_bus_id), "parent_device")
+        ret = MachineOperation.__write_set__(self) + [
+            (self.gen_node_id_entry(self.dev_id), "buses")
         ]
+        if not self.bus_id == -1:
+            ret.append((self.gen_node_id_entry(self.bus_id), "parent_device"))
+        if not self.prev_bus_id == -1:
+            ret.append(
+                (self.gen_node_id_entry(self.prev_bus_id),"parent_device")
+            )
+        return ret
 
 class MOp_DelIRQLine(MachineNodeOperation):
     def __init__(self, *args, **kw):
