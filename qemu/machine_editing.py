@@ -32,7 +32,7 @@ class MachineNodeOperation(MachineOperation):
     Frequent examples are node adding and deleting operations.
     """
     def writes_node(self):
-        return self.gen_entry() in self.__write_set__()
+        return self.writes(self.gen_entry())
 
 class MachineNodeAdding(MachineNodeOperation):
     # node_class_name - string name adding machine node. The class with such
