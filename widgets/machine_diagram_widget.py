@@ -418,6 +418,26 @@ IRQ line creation
             label = _("Add IRQ hub"),
             command = self.on_add_irq_hub 
         )
+
+        p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        for bus_type in [
+            "Common",
+            "System",
+            "PCI-E",
+            "ISA",
+            "IDE",
+            "I2C"
+        ]:
+            p0.add_command(
+                label = _(bus_type),
+                command = getattr(self, "on_add_bus_" +
+                    bus_type.lower().replace(" ", "_").replace("-", "_")
+                )
+            )
+        p.add_cascade(
+            label = _("Add bus"),
+            menu = p0
+        )
         p.add_checkbutton(
             label = _("Dynamic layout"),
             variable = self.var_physical_layout
@@ -751,6 +771,35 @@ IRQ line creation
         self.mht.stage(MOp_AddIRQHub, node_id)
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         self.mht.commit()
+
+    def add_bus_at_popup(self, class_name):
+        p = self.current_popup
+        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
+               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
+
+        node_id = self.mach.get_free_id()
+
+        self.mht.add_bus(class_name, node_id)
+        self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
+        self.mht.commit()
+
+    def on_add_bus_common(self):
+        self.add_bus_at_popup("BusNode")
+
+    def on_add_bus_system(self):
+        self.add_bus_at_popup("SystemBusNode")
+
+    def on_add_bus_pci_e(self):
+        self.add_bus_at_popup("PCIExpressBusNode")
+
+    def on_add_bus_isa(self):
+        self.add_bus_at_popup("ISABusNode")
+
+    def on_add_bus_ide(self):
+        self.add_bus_at_popup("IDEBusNode")
+
+    def on_add_bus_i2c(self):
+        self.add_bus_at_popup("I2CBusNode")
 
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
