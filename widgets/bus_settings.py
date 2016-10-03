@@ -5,6 +5,9 @@ from settings_window import \
 from common import \
     ML as _
 
+from qemu import \
+    MachineNodeOperation
+
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):
         SettingsWidget.__init__(self, *args, **kw)
@@ -18,7 +21,14 @@ class BusSettingsWidget(SettingsWidget):
         pass
 
     def on_changed(self, op, *args, **kw):
-        pass
+        if not isinstance(op, MachineNodeOperation):
+            return
+
+        if op.writes_node():
+            if not self.bus.id in self.mht.mach.id2node:
+                self.destroy()
+            else:
+                self.refresh()
 
 class BusSettingsWindow(SettingsWindow):
     def __init__(self, bus, *args, **kw):
