@@ -42,7 +42,25 @@ class BusSettingsWidget(SettingsWidget):
         self.cb_parent.grid(row = 0, column = 1, sticky = "NEWS")
 
     def __apply_internal__(self):
-        pass
+        new_parent = self.find_node_by_link_text(self.var_parent.get())
+        cur_parent = self.bus.parent_device
+
+        if new_parent is None:
+            new_parent_id = -1
+        else:
+            new_parent_id = new_parent.id
+
+        if cur_parent is None:
+            cur_parent_id = -1
+        else:
+            cur_parent_id = cur_parent.id
+
+        if not new_parent_id == cur_parent_id:
+            if new_parent_id == -1:
+                if not cur_parent_id == -1:
+                    self.mht.disconnect_child_bus(self.bus.id)
+            else:
+                self.mht.append_child_bus(new_parent_id, self.bus.id)
 
     def refresh(self):
         values = [
