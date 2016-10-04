@@ -150,6 +150,20 @@ class HistoryTracker(object):
 
                 self.__notify_on_changed__(p)
 
+    def undo_sequence(self):
+        cur = self.pos
+
+        seq = cur.seq
+        if seq is None:
+            raise Exception("No sequence was defined")
+
+        while True:
+            prev = cur.prev
+            if not prev.seq == seq:
+                self.undo(cur)
+                break
+            cur = prev
+
     def can_undo(self):
         return bool(not self.pos == self.history.root)
 
@@ -157,6 +171,26 @@ class HistoryTracker(object):
         op = self.pos.next[index]
         self.pos = op
 
+        self.commit()
+
+    def do_sequence(self):
+        for n in self.pos.next:
+            if not n.seq is None:
+                seq = n.seq
+                op = n
+                break
+        else:
+            raise Exception("No sequence was defined")
+
+        while True:
+            for n in op.next:
+                if n.seq == seq:
+                    op = n
+                    break
+            else:
+                break
+
+        self.pos = op
         self.commit()
 
     def can_do(self, index = 0):
