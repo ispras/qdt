@@ -413,6 +413,10 @@ IRQ line creation
             label = _("Settings"),
             command = self.on_popup_single_device_settings
         )
+        p.add_command(
+            label = _("Delete"),
+            command = self.on_popup_single_device_delete
+        )
         self.popup_single_device = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -721,6 +725,12 @@ IRQ line creation
         hid = self.selected[0]
         hid = self.node2dev[self.id2node[hid]].id
         self.mht.delete_irq_hub(hid)
+        self.mht.commit()
+
+    def on_popup_single_device_delete(self):
+        dev_id = self.selected[0]
+        dev_id = self.node2dev[self.id2node[dev_id]].id
+        self.mht.delete_device(dev_id)
         self.mht.commit()
 
     def on_popup_single_device_settings(self):
