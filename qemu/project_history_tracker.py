@@ -129,8 +129,13 @@ class ProjectHistoryTracker(HistoryTracker):
     def __init__(self, project, *args, **kw):
         HistoryTracker.__init__(self, *args, **kw)
         self.p = project
+        self.current_sequence = 0
+        self.new_sequence = True
 
     def stage(self, op_class, *op_args, **op_kw):
+        self.new_sequence = True
+        op_kw["sequence"] = self.current_sequence
+
         return HistoryTracker.stage(self,
             op_class,
             *(op_args + (self.p,)), **op_kw
@@ -138,3 +143,10 @@ class ProjectHistoryTracker(HistoryTracker):
 
     def get_machine_proxy(self, machine_description):
         return MachineProxyTracker(self, machine_description)
+
+    def commit(self, *args, **kw):
+        if self.new_sequence:
+            self.new_sequence = False
+            self.current_sequence += 1
+
+        HistoryTracker.commit(self, *args, **kw)
