@@ -804,6 +804,7 @@ IRQ line creation
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+        self.current_popup = None
 
     def on_popup_single_bus_delete(self):
         bus_id = self.selected[0]
