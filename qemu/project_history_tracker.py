@@ -34,30 +34,35 @@ class MachineProxyTracker(object):
         self.stage(MOp_AddBus, bus_class_name, new_id,
             **bus_arguments)
 
+    def disconnect_child_bus(self, bus_id):
+        bus = self.mach.id2node[bus_id]
+
+        parent_id = bus.parent_device.id
+
+        # Child bus disconnecting involves shifting of consequent buses indexes.
+        # The only currently available way is to disconnect tail buses,
+        # disconnect the bus, reconnect tail buses again with decremented
+        # indexes
+
+        temporally_disconnected = []
+
+        for idx, b in reversed(
+            [ x for x in enumerate(bus.parent_device.buses) ]
+        ):
+            if b.id == bus_id:
+                self.stage(MOp_SetChildBus, parent_id, idx, -1)
+                for jdx, bus_id in temporally_disconnected:
+                    self.stage(MOp_SetChildBus, parent_id, jdx - 1, bus_id)
+                break
+            else:
+                temporally_disconnected.insert(0, (idx, b.id))
+                self.stage(MOp_SetChildBus, parent_id, idx, -1)
+
     def delete_bus(self, bus_id):
         bus = self.mach.id2node[bus_id]
 
         if bus.parent_device:
-            parent_id = bus.parent_device.id
-
-            # Deleting child bus involves shifting of consequent buses indexes.
-            # The only currently available way is to disconnect tail buses,
-            # disconnect the bus, reconnect tail buses again with decremented
-            # indexes 
-
-            temporally_disconnected = []
-
-            for idx, b in reversed(
-                [ x for x in enumerate(bus.parent_device.buses) ]
-            ):
-                if b.id == bus_id:
-                    self.stage(MOp_SetChildBus, parent_id, idx, -1)
-                    for jdx, bus_id in temporally_disconnected:
-                        self.stage(MOp_SetChildBus, parent_id, jdx - 1, bus_id)
-                    break
-                else:
-                    temporally_disconnected.insert(0, (idx, b.id))
-                    self.stage(MOp_SetChildBus, parent_id, idx, -1)
+            self.disconnect_child_bus(bus_id)
 
         for child in bus.devices:
             self.stage(MOp_SetDevParentBus, None, child.id)
