@@ -117,10 +117,6 @@ class MOp_AddBus(MachineNodeAdding):
         del self.mach.id2node[self.node_id]
         bus.id = -1
 
-    def __do__(self):
-        bus = self.new()
-        self.mach.add_node(bus, with_id = self.node_id)
-
 class MOp_DelBus(MOp_AddBus):
     def __init__(self, *args, **kw):
         # SystemBusNode is used to minimize initial sizes of argument & key
