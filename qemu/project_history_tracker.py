@@ -123,14 +123,7 @@ class MachineProxyTracker(object):
             self.delete_base_device(dev_id)
 
     def __getattr__(self, name):
-        if name in [ 
-            "stage",
-            "delete_irq_line",
-            "delete_irq_hub"
-        ]:
-            return MachineProxyTracker.stage
-        else:
-            return getattr(self.pht, name)
+        return getattr(self.pht, name)
 
 class ProjectHistoryTracker(HistoryTracker):
     def __init__(self, project, *args, **kw):
