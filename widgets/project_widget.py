@@ -79,10 +79,10 @@ class ProjectWidget(PanedWindow):
                 self.p.layouts.append((desc.name, l))
 
     def undo(self):
-        self.p.pht.undo()
+        self.p.pht.undo_sequence()
 
     def redo(self):
-        self.p.pht.do()
+        self.p.pht.do_sequence()
 
     def can_do(self):
         return self.p.pht.can_do()
