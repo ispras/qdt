@@ -111,10 +111,10 @@ class QDCGUIWindow(VarTk):
         self.chack_undo_redo()
 
     def undo(self):
-        self.proj.pht.undo()
+        self.pw.undo()
 
     def redo(self):
-        self.proj.pht.do()
+        self.pw.redo()
 
     def on_delete(self):
         self.quit()
