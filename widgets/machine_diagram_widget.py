@@ -994,9 +994,11 @@ IRQ line creation
                 if self.current_popup:
                     try: 
                         self.current_popup.tk_popup(event.x_root, event.y_root)
-                        self.current_popup.grab_release()
+                        # make sure to release the grab (Tk 8.0a1 only)
+                        # self.current_popup.grab_release()
                     except:
-                        self.current_popup.grab_release()
+                         # make sure to release the grab (Tk 8.0a1 only)
+                        # self.current_popup.grab_release()
                         self.current_popup = None
 
                     return
@@ -1049,10 +1051,12 @@ IRQ line creation
 
                 try:
                     self.current_popup.tk_popup(event.x_root, event.y_root)
-                    self.current_popup.grab_release()
+                    # make sure to release the grab (Tk 8.0a1 only)
+                    # self.current_popup.grab_release()
                     self.stop_circle_preview()
                 except:
-                    self.current_popup.grab_release()
+                    # make sure to release the grab (Tk 8.0a1 only)
+                    # self.current_popup.grab_release()
                     self.current_popup = None
 
                 return
@@ -1070,9 +1074,11 @@ IRQ line creation
 
                 try:
                     self.current_popup.tk_popup(event.x_root, event.y_root)
-                    self.current_popup.grab_release()
+                    # make sure to release the grab (Tk 8.0a1 only)
+                    # self.current_popup.grab_release()
                 except:
-                    self.current_popup.grab_release()
+                    # make sure to release the grab (Tk 8.0a1 only)
+                    # self.current_popup.grab_release()
                     self.current_popup = None
 
     def motion_all(self, event):
