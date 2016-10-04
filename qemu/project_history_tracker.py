@@ -34,6 +34,16 @@ class MachineProxyTracker(object):
         self.stage(MOp_AddBus, bus_class_name, new_id,
             **bus_arguments)
 
+    def append_child_bus(self, dev_id, bus_id):
+        bus = self.mach.id2node[bus_id]
+
+        if bus.parent_device:
+            self.disconnect_child_bus(bus_id)
+
+        dev = self.mach.id2node[dev_id]
+
+        self.stage(MOp_SetChildBus, dev_id, len(dev.buses), bus_id)
+
     def disconnect_child_bus(self, bus_id):
         bus = self.mach.id2node[bus_id]
 
