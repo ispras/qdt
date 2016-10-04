@@ -605,7 +605,8 @@ IRQ line creation
                 line.src = self.dev2node[dev.src_node]
                 line.dst = self.dev2node[dev.dst_node]
         elif isinstance(op, MOp_SetChildBus):
-            for bus_id in [ op.prev_bus_id, op.bus_id ]:
+            for bus_id in [ b.id for b in self.mach.id2node[op.dev_id].buses ] \
+            + [ op.prev_bus_id, op.bus_id ]:
                 if not bus_id == -1:
                     bus = self.mach.id2node[bus_id]
                     self.update_buslabel_text(self.dev2node[bus])
