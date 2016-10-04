@@ -19,6 +19,8 @@ from common import \
     sign
 
 from qemu import \
+    MOp_AddDevice, \
+    MOp_DelDevice, \
     MOp_AddBus, \
     MOp_DelBus, \
     MOp_SetChildBus, \
@@ -650,6 +652,37 @@ IRQ line creation
                 self.node2dev[node] = bus
 
                 self.add_buslabel(node)
+        elif isinstance(op, MOp_AddDevice) or isinstance(op, MOp_DelDevice):
+            try:
+                dev = self.mach.id2node[op.node_id]
+            except KeyError:
+                # deleted
+                for dev, node in self.dev2node.iteritems():
+                    if isinstance(dev, DeviceNode):
+                        if dev.id == -1:
+                            break
+
+                node_id = self.node2id[node]
+
+                if node_id in self.selected:
+                    self.selected.remove(node_id)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+
+                self.nodes.remove(node)
+                del self.node2id[node]
+                del self.id2node[node_id]
+                self.canvas.delete(node_id)
+                self.canvas.delete(node.text)
+                del self.dev2node[dev]
+                del self.node2dev[node]
+            else:
+                # added
+                node = NodeBox(dev)
+
+                self.dev2node[dev] = node
+                self.node2dev[node] = dev
+
+                self.add_node(node, False)
 
         self.invalidate()
 
