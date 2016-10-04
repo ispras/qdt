@@ -81,6 +81,82 @@ class MachineNodeAdding(MachineNodeOperation):
     def __do__(self):
         self.mach.add_node(self.new(), with_id = self.node_id)
 
+def gen_device_class_args(device_class_name):
+    al, kwl = [ "qom_type" ], []
+
+    if device_class_name == "PCIExpressDeviceNode":
+        al.extend([
+            "pci_express_bus",
+            "slot",
+            "function",
+        ])
+        kwl.append("multifunction")
+    elif device_class_name == "SystemBusDeviceNode" :
+        kwl.extend([
+            "system_bus",
+            "mmio",
+            "pmio"
+        ])
+    else:
+        kwl.append("parent")
+
+    return al, kwl
+
+class MOp_AddDevice(MachineNodeAdding):
+    def __init__(self, device_class_name, *args, **kw):
+        al, kwl = gen_device_class_args(device_class_name)
+
+        MachineNodeAdding.__init__(self, device_class_name, al, kwl, *args,
+            **kw)
+
+    def __backup__(self):
+        pass
+
+    def __undo__(self):
+        dev = self.mach.id2node[self.node_id]
+
+        if not dev.parent_bus is None:
+            raise Exception("Device %i should not be connected to a bus" %
+                self.node_id)
+
+        if dev.buses:
+            raise Exception("Device %i should not have child buses" %
+                self.node_id)
+
+        if dev.irqs:
+            raise Exception("Device %i should not be linked by IRQs" %
+                self.node_id)
+
+        if dev.properties:
+            raise Exception("Device %i should not have properties" %
+                self.node_id)
+
+        # TODO: Checking for MMIOs, PMIOs & so on might be useful too
+
+        self.mach.devices.remove(dev)
+        del self.mach.id2node[self.node_id]
+        dev.id = -1
+
+class MOp_DelDevice(MOp_AddDevice):
+    def __init__(self, *args, **kw):
+        MOp_AddDevice.__init__(self, "", *args, **kw)
+
+    def __backup__(self):
+        dev = self.mach.id2node[self.node_id]
+
+        self.nc = str(type(dev).__name__)
+        self.qom_type = str(dev.qom_type)
+
+        if self.nc == "PCIExpressDeviceNode":
+            self.slot = copy.deepcopy(dev.slot)
+            self.function = copy.deepcopy(dev.function)
+            self.multifunction = copy.deepcopy(dev.multifunction)
+
+        self.al, self.kwl = gen_device_class_args(self.nc)
+
+    __do__ = MOp_AddDevice.__undo__
+    __undo__ = MachineNodeAdding.__do__
+
 def gen_bus_class_args(bus_class_name):
     al, kwl = [], []
 
