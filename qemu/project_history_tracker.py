@@ -2,12 +2,19 @@ from common import \
     HistoryTracker
 
 from machine_editing import \
+    MOp_DelDevProp, \
+    MOp_DelIOMapping, \
+    MOp_AddDevice, \
+    MOp_DelDevice, \
     MOp_AddBus, \
     MOp_DelBus, \
     MOp_SetChildBus, \
     MOp_SetDevParentBus, \
     MOp_DelIRQLine, \
     MOp_DelIRQHub
+
+from machine_description import \
+    SystemBusDeviceNode
 
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):
@@ -78,6 +85,42 @@ class MachineProxyTracker(object):
             self.stage(MOp_SetDevParentBus, None, child.id)
 
         self.stage(MOp_DelBus, bus.id)
+
+    def delete_base_device(self, dev_id):
+        dev = self.mach.id2node[dev_id]
+
+        if not dev.parent_bus is None:
+            self.stage(MOp_SetDevParentBus, None, dev_id)
+
+        for idx in reversed(range(len(dev.buses))):
+            self.stage(MOp_SetChildBus, dev_id, idx, -1)
+
+        for irq in dev.irqs:
+            self.stage(MOp_DelIRQLine, irq.id)
+
+        for prop in dev.properties:
+            self.stage(MOp_DelDevProp, prop, dev_id)
+
+        self.stage(MOp_DelDevice, dev_id)
+
+    def delete_system_bus_device(self, dev_id):
+        dev = self.mach.id2node[dev_id]
+
+        for mio in [ "pmio", "mmio" ]:
+            for idx in reversed(
+                range(len(getattr(dev, mio + "_mappings")))
+            ):
+                self.stage(MOp_DelIOMapping, mio, idx, dev_id)
+
+        self.delete_base_device(dev_id)
+
+    def delete_device(self, dev_id):
+        dev = self.mach.id2node[dev_id]
+
+        if isinstance(dev, SystemBusDeviceNode):
+            self.delete_system_bus_device(dev_id)
+        else:
+            self.delete_base_device(dev_id)
 
     def __getattr__(self, name):
         if name in [ 
