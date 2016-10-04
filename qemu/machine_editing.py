@@ -78,6 +78,9 @@ class MachineNodeAdding(MachineNodeOperation):
             self.gen_entry()
         ]
 
+    def __do__(self):
+        self.mach.add_node(self.new(), with_id = self.node_id)
+
 def gen_bus_class_args(bus_class_name):
     al, kwl = [], []
 
