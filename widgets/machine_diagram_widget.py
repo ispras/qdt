@@ -611,7 +611,15 @@ IRQ line creation
                 line.src = self.dev2node[dev.src_node]
                 line.dst = self.dev2node[dev.dst_node]
         elif isinstance(op, MOp_SetChildBus):
-            for bus_id in [ b.id for b in self.mach.id2node[op.dev_id].buses ] \
+            dev = self.mach.id2node[op.dev_id]
+            dev_node_id = self.node2id[self.dev2node[dev]]
+
+            if dev.buses:
+                self.canvas.addtag_withtag("fixed_x", dev_node_id)
+            else:
+                self.canvas.dtag(dev_node_id, "fixed_x")
+
+            for bus_id in [ b.id for b in dev.buses ] \
             + [ op.prev_bus_id, op.bus_id ]:
                 if not bus_id == -1:
                     bus = self.mach.id2node[bus_id]
