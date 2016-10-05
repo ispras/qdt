@@ -2194,7 +2194,7 @@ IRQ line creation
 
         self.conns.append(conn)
 
-    def GetLayout(self):
+    def gen_layout(self):
         layout = {}
 
         for n in self.nodes:
@@ -2221,8 +2221,8 @@ IRQ line creation
 
         return layout
 
-    def SetLayout(self, l):
-        layout_bak = self.GetLayout()
+    def set_layout(self, l):
+        layout_bak = self.gen_layout()
         try:
             for id, desc in l.iteritems():
                 if id == -1:
@@ -2253,4 +2253,4 @@ IRQ line creation
             self.invalidate()
         except:
             # if new layout is incorrect then restore previous one
-            self.SetLayout(layout_bak)
+            self.set_layout(layout_bak)

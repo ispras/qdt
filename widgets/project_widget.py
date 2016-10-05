@@ -54,7 +54,7 @@ class ProjectWidget(PanedWindow):
             for l in self.p.get_layouts(desc.name):
                 w = MachineWidget(desc, self)
                 try:
-                    w.mdw.SetLayout(l)
+                    w.mdw.set_layout(l)
                 except:
                     if self.desc2w[desc]:
                         continue
@@ -70,7 +70,7 @@ class ProjectWidget(PanedWindow):
                 if not isinstance(w, MachineWidget):
                     continue
 
-                layouts.append(w.mdw.GetLayout())
+                layouts.append(w.mdw.gen_layout())
 
             self.p.layouts.remove(
                 *[ e for e in self.p.layouts if e[0] == desc.name ]
