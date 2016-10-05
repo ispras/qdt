@@ -5,7 +5,7 @@ from source import \
     Header, \
     Macro
 
-class QemuTypeName():
+class QemuTypeName(object):
     def __init__(self, name):
         self.name = name.strip()
 
