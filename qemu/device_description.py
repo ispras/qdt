@@ -28,6 +28,16 @@ class SysBusDeviceDescription(QOMDescription):
             pio_num = self.pio_num
             )
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field('name = "' + self.name + '"')
+        gen.gen_field('directory = "' + self.directory + '"')
+        gen.gen_field("out_irq_num = " + str(self.out_irq_num))
+        gen.gen_field("in_irq_num = " + str(self.in_irq_num))
+        gen.gen_field("mmio_num = " + str(self.mmio_num))
+        gen.gen_field("pio_num = " + str(self.pio_num))
+        gen.gen_end()
+
 class PCIExpressDeviceDescription(QOMDescription):
     def __init__(self,
         name,
