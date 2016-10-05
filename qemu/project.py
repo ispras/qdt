@@ -7,6 +7,9 @@ class QOMDescription(object):
         self.directory = directory
         self.project = None
 
+    def __children__(self):
+        return []
+
     def gen_type(self):
         raise Exception("Attempt to create type model from interface type " \
                         + str(self.__class__) + ".")
