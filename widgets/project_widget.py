@@ -46,21 +46,22 @@ class ProjectWidget(PanedWindow):
 
         self.desc2w = {}
         for desc in self.p.descriptions:
-            if not isinstance(desc, MachineNode):
-                continue
-
-            self.desc2w[desc] = []
-
             for l in self.p.get_layouts(desc.name):
-                w = MachineWidget(desc, self)
+                w = self.gen_widget(desc)
                 try:
                     w.set_layout(l)
                 except:
-                    if self.desc2w[desc]:
-                        continue
+                    w.destroy()
+                    w = None
+                else:
+                    try:
+                        widgets =  self.desc2w[desc]
+                    except KeyError:
+                        self.desc2w[desc] = [ w ]
+                    else:
+                        widgets.append(w)
 
-                self.desc2w[desc].append(w)
-                self.nb_descriptions.add(w, text = desc.name)
+                    self.nb_descriptions.add(w, text = desc.name)
 
     def refresh_layouts(self):
         for desc, widgets in self.desc2w.iteritems():
