@@ -69,9 +69,10 @@ class ProjectWidget(PanedWindow):
             for w in widgets:
                 layouts.append(w.gen_layout())
 
-            self.p.layouts.remove(
-                *[ e for e in self.p.layouts if e[0] == desc.name ]
-            )
+            old_layouts = [ e for e in self.p.layouts if e[0] == desc.name ]
+            if old_layouts:
+                self.p.layouts.remove(*old_layouts)
+
             for l in layouts:
                 self.p.layouts.append((desc.name, l))
 
