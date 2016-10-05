@@ -593,7 +593,8 @@ class MachineNode(QOMDescription):
             self.assign_id(n)
 
     def __children__(self):
-        return [] + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
+        return QOMDescription.__children__(self) \
+            + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
