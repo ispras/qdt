@@ -7,9 +7,17 @@ from source import \
 
 class QemuTypeName(object):
     def __init__(self, name):
-        self.name = name.strip()
+        self.name = name
 
-        lower_name = self.name.lower();
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value.strip()
+
+        lower_name = self._name.lower();
         tmp = '_'.join(lower_name.split())
         tmp = '_'.join(tmp.split('-'))
         tmp = ''.join(tmp.split('/'))
@@ -17,12 +25,12 @@ class QemuTypeName(object):
         self.for_id_name = tmp
         self.for_header_name = tmp
 
-        tmp =''.join(self.name.split())
+        tmp =''.join(self._name.split())
         tmp =''.join(tmp.split('/'))
         tmp =''.join(tmp.split('-'))
         self.for_struct_name = tmp
 
-        upper_name = self.name.upper()
+        upper_name = self._name.upper()
         tmp = '_'.join(upper_name.split())
         tmp = '_'.join(tmp.split('-'))
         tmp = ''.join(tmp.split('/'))
