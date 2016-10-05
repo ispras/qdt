@@ -30,6 +30,10 @@ already in another project.")
             desc.project = self
             self.descriptions.append(desc)
 
+    def remove_description(self, desc):
+        self.descriptions.remove(desc)
+        desc.project = None
+
     def gen_all(self, qemu_src):
         # First, generate all devices, then generate machines
         for desc in self.descriptions:
