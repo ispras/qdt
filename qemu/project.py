@@ -11,6 +11,9 @@ class QOMDescription(object):
         raise Exception("Attempt to create type model from interface type " \
                         + str(self.__class__) + ".")
 
+    def remove_from_project(self):
+        self.project.remove_description(self)
+
 class QProject(object):
     def __init__(self,
         descriptions = None
