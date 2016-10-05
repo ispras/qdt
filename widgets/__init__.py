@@ -50,3 +50,6 @@ from machine_widget import \
 
 from project_widget import \
     ProjectWidget
+
+from gui_frame import \
+    GUIFrame
