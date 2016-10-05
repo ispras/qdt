@@ -87,3 +87,12 @@ class ProjectWidget(PanedWindow):
 
     def can_redo(self):
         return self.p.pht.can_do()
+
+    def gen_widget(self, desc):
+        if isinstance(desc, MachineNode):
+            w = MachineWidget(desc, self)
+        else:
+            raise Exception("No widget exists for description %s of type %s." %
+                    (desc.name, type(desc).__name__)
+                )
+        return w
