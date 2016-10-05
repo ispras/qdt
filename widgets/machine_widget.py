@@ -21,3 +21,9 @@ class MachineWidget(PanedWindow):
 
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw)
+
+    def gen_layout(self):
+        return self.mdw.gen_layout()
+
+    def set_layout(self, layout):
+        self.mdw.set_layout(layout)
