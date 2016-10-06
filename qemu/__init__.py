@@ -98,7 +98,8 @@ from machine_editing import \
         MOp_SetChildBus
 
 from project_editing import \
-    ProjectOperation
+    ProjectOperation, \
+        DescriptionOperation
 
 from project_history_tracker import \
     ProjectHistoryTracker

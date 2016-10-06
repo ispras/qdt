@@ -19,3 +19,11 @@ class ProjectOperation(InverseOperation):
 
     def __read_set__(self):
         return []
+
+class DescriptionOperation(ProjectOperation):
+    def __init__(self, description, *args, **kw):
+        ProjectOperation.__init__(self, *args, **kw)
+        # desc is cached value, the description identifier is desc_name
+        self.desc = description
+        self.desc_name = str(self.desc.name)
+
