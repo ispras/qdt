@@ -6,17 +6,20 @@ from machine_description import \
 import machine_description
 
 from project_editing import \
-    ProjectOperation
+    DescriptionOperation
 
 import copy
 
-class MachineOperation(ProjectOperation):
+class MachineOperation(DescriptionOperation):
     def __init__(self, machine_description, *args, **kw):
-        ProjectOperation.__init__(self, *args, **kw)
-        self.mach = machine_description
+        DescriptionOperation.__init__(self, machine_description, *args, **kw)
 
     def gen_node_id_entry(self, node_id):
         return copy.deepcopy(node_id)
+
+    @property
+    def mach(self):
+        return self.desc
 
 class MachineNodeOperation(MachineOperation):
     def __init__(self, node_id, *args, **kw):
