@@ -72,6 +72,8 @@ class ProjectWidget(PanedWindow):
 
                     self.nb_descriptions.add(w, text = desc.name)
 
+        self.tv_descs.bind("<Double-1>", self.on_tv_desc_b1_double)
+
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
@@ -81,6 +83,46 @@ class ProjectWidget(PanedWindow):
             for w in list(widgets):
                 if w not in tabs:
                     widgets.remove(w)
+
+    def on_tv_desc_b1_double(self, event):
+        try:
+            item = self.tv_descs.selection()[0]
+        except IndexError:
+            # nothing is selected
+            return
+
+        name = self.tv_descs.item(item)["text"]
+
+        for desc in self.p.descriptions:
+            if desc.name == name:
+                break
+
+        widgets = self.desc2w[desc]
+
+        if not widgets:
+            w = self.gen_widget(desc)
+
+            widgets.append(w)
+
+            layouts = self.p.get_layouts(desc.name)
+            if layouts:
+                w.set_layout(layouts[0])
+
+            self.nb_descriptions.add(w, text = desc.name)
+            for tab_id in self.nb_descriptions.tabs():
+                if self.nb_descriptions.tab(tab_id)["text"] == desc.name:
+                    break
+            self.nb_descriptions.select(tab_id)
+        else:
+            # select next widget
+            tab_id = self.nb_descriptions.select()
+            w = self.nametowidget(tab_id)
+            if w in widgets:
+                i = widgets.index(w)
+                next_w = widgets[(i + 1) % len(widgets)]
+            else:
+                next_w = widgets[0]
+            self.nb_descriptions.select(next_w)
 
     def refresh_layouts(self):
         for desc, widgets in self.desc2w.iteritems():
