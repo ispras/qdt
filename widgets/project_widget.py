@@ -49,6 +49,18 @@ class ProjectWidget(PanedWindow):
             widgets = self.desc2w[desc] = []
 
             for l in self.p.get_layouts(desc.name):
+                try:
+                    cfg = l[-1]
+                except KeyError:
+                    l[-1] = cfg = {}
+
+                try:
+                    if not cfg["shown"]:
+                        continue
+                except KeyError:
+                    # by default the layout is shown
+                    pass
+
                 w = self.gen_widget(desc)
                 try:
                     w.set_layout(l)
@@ -65,14 +77,34 @@ class ProjectWidget(PanedWindow):
 
             layouts = []
             for w in widgets:
-                layouts.append(w.gen_layout())
+                l = w.gen_layout()
+                try:
+                    cfg = l[-1]
+                except KeyError:
+                    l[-1] = cfg = {}
+
+                cfg["shown"] = True
+
+                layouts.append(l)
 
             old_layouts = [ e for e in self.p.layouts if e[0] == desc.name ]
-            if old_layouts:
-                self.p.layouts.remove(*old_layouts)
 
-            for l in layouts:
-                self.p.layouts.append((desc.name, l))
+            if layouts:
+                if old_layouts:
+                    self.p.layouts.remove(*old_layouts)
+    
+                for l in layouts:
+                    self.p.layouts.append((desc.name, l))
+            else:
+                for n, l in old_layouts:
+                    try:
+                        cfg = l[-1]
+                    except KeyError:
+                        continue
+                    try:
+                        cfg["shown"] = False
+                    except KeyError:
+                        pass
 
     def undo(self):
         self.p.pht.undo_sequence()
