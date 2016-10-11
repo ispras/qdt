@@ -98,6 +98,7 @@ from machine_editing import \
         MOp_SetChildBus
 
 from project_editing import \
+    QemuObjectCreationHelper, \
     ProjectOperation, \
         DescriptionOperation
 
