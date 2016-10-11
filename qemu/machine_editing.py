@@ -18,7 +18,7 @@ class MachineOperation(DescriptionOperation):
 
     @property
     def mach(self):
-        return self.desc
+        return self.find_desc()
 
 class MachineNodeOperation(MachineOperation):
     def __init__(self, node_id, *args, **kw):

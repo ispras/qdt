@@ -78,7 +78,8 @@ class QemuObjectCreationHelper(object):
 class DescriptionOperation(ProjectOperation):
     def __init__(self, description, *args, **kw):
         ProjectOperation.__init__(self, *args, **kw)
-        # desc is cached value, the description identifier is desc_name
-        self.desc = description
-        self.desc_name = str(self.desc.name)
 
+        self.desc_name = str(description.name)
+
+    def find_desc(self):
+        return self.p.find(name = self.desc_name).next()
