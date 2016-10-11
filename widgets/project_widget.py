@@ -1,8 +1,8 @@
 from var_widgets import \
     VarTreeview
 
-from ttk import \
-    Notebook
+from close_button_notebook import \
+    CloseButtonNotebook
 
 from machine_widget import \
     MachineWidget
@@ -41,7 +41,7 @@ class ProjectWidget(PanedWindow):
         self.tv_descs = DescriptionsTreeview(self.p.descriptions)
         self.add(self.tv_descs)
 
-        self.nb_descriptions = Notebook(self)
+        self.nb_descriptions = CloseButtonNotebook(self)
         self.add(self.nb_descriptions)
 
         self.desc2w = {}
@@ -71,6 +71,16 @@ class ProjectWidget(PanedWindow):
                     widgets.append(w)
 
                     self.nb_descriptions.add(w, text = desc.name)
+
+        self.nb_descriptions.bind("<<NotebookTabClosed>>",
+            self.on_notebook_tab_closed)
+
+    def on_notebook_tab_closed(self, event):
+        tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ] 
+        for widgets in self.desc2w.values():
+            for w in list(widgets):
+                if w not in tabs:
+                    widgets.remove(w)
 
     def refresh_layouts(self):
         for desc, widgets in self.desc2w.iteritems():
