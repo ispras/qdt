@@ -37,6 +37,31 @@ class MachineNodeOperation(MachineOperation):
     def writes_node(self):
         return self.writes(self.gen_entry())
 
+"""
+The function returns lists of positional and key word arguments of
+class constructor. 
+"""
+def gen_class_args(class_name):
+    Class = getattr(machine_description, class_name)
+
+    # Get all arguments without "self".
+    all_args = Class.__init__.__code__.co_varnames[1:]
+
+    """
+    The code below distinguishes positional arguments and key word
+    arguments. Assume that all key word arguments do have defaults and
+    only they do.
+    """
+
+    if Class.__init__.__defaults__ is not None:
+        kwarg_count = len(Class.__init__.__defaults__)
+        al = all_args[:-kwarg_count]
+        kwl = all_args[-kwarg_count:]
+    else:
+        al, kwl = list(all_args), []
+
+    return al, kwl
+
 class MachineNodeAdding(MachineNodeOperation):
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module
