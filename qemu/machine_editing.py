@@ -3,7 +3,8 @@ from machine_description import \
     IRQHub, \
     QOMPropertyValue
 
-import machine_description
+from importlib import \
+    import_module
 
 from project_editing import \
     DescriptionOperation
@@ -41,8 +42,10 @@ class MachineNodeOperation(MachineOperation):
 The function returns lists of positional and key word arguments of
 class constructor. 
 """
-def gen_class_args(class_name):
-    Class = getattr(machine_description, class_name)
+def gen_class_args(full_class_name):
+    segments = full_class_name.split(".")
+    module, class_name = ".".join(segments[:-1]), segments[-1]
+    Class = getattr(import_module(module), class_name)
 
     # Get all arguments without "self".
     all_args = Class.__init__.__code__.co_varnames[1:]
@@ -68,10 +71,11 @@ class MachineNodeAdding(MachineNodeOperation):
     #     argument values will be excluded from key word arguments of this
     #     __init__ method.
     def __init__(self, node_class_name, *args, **kw):
-        self.nc = str(node_class_name)
-        if self.nc:
+        if node_class_name:
+            self.nc = "qemu." + node_class_name
             self.al, self.kwl = gen_class_args(self.nc)
         else:
+            self.nc = ""
             self.al, self.kwl = [], []
 
         for n in self.al + self.kwl:
@@ -81,7 +85,9 @@ class MachineNodeAdding(MachineNodeOperation):
         MachineNodeOperation.__init__(self, *args, **kw)
 
     def new(self):
-        Class = getattr(machine_description, self.nc)
+        segments = self.nc.split(".")
+        module, class_name = ".".join(segments[:-1]), segments[-1]
+        Class = getattr(import_module(module), class_name)
 
         args = []
         for n in self.al:
@@ -149,7 +155,7 @@ class MOp_DelDevice(MOp_AddDevice):
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
 
-        self.nc = str(type(dev).__name__)
+        self.nc = "qemu." + type(dev).__name__
         self.qom_type = str(dev.qom_type)
 
         if self.nc == "PCIExpressDeviceNode":
@@ -191,7 +197,7 @@ class MOp_DelBus(MOp_AddBus):
     def __backup__(self):
         bus = self.mach.id2node[self.node_id]
 
-        self.nc = str(type(bus).__name__)
+        self.nc = "qemu." + type(bus).__name__
         self.c_type = copy.deepcopy(bus.c_type)
         self.cast = copy.deepcopy(bus.cast)
         self.child_name = copy.deepcopy(bus.child_name)
