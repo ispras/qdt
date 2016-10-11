@@ -3,13 +3,8 @@ from machine_description import \
     IRQHub, \
     QOMPropertyValue
 
-from importlib import \
-    import_module
-
-from common import \
-    gen_class_args
-
 from project_editing import \
+    QemuObjectCreationHelper, \
     DescriptionOperation
 
 import copy
@@ -41,48 +36,14 @@ class MachineNodeOperation(MachineOperation):
     def writes_node(self):
         return self.writes(self.gen_entry())
 
-class MachineNodeAdding(MachineNodeOperation):
+class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module. Class constructor
     #     argument values will be excluded from key word arguments of this
     #     __init__ method.
     def __init__(self, node_class_name, *args, **kw):
-        if node_class_name:
-            self.nc = "qemu." + node_class_name
-            self.al, self.kwl = gen_class_args(self.nc)
-        else:
-            self.nc = ""
-            self.al, self.kwl = [], []
-
-        for n in self.al + self.kwl:
-            if n in kw:
-                setattr(self, n, kw.pop(n))
-
+        QemuObjectCreationHelper.__init__(self, node_class_name, kw)
         MachineNodeOperation.__init__(self, *args, **kw)
-
-    def new(self):
-        segments = self.nc.split(".")
-        module, class_name = ".".join(segments[:-1]), segments[-1]
-        Class = getattr(import_module(module), class_name)
-
-        args = []
-        for n in self.al:
-            try:
-                val = getattr(self, n)
-            except AttributeError:
-                val = None
-            args.append(val)
-
-        kw = {}
-        for n in self.kwl:
-            try:
-                val = getattr(self, n)
-            except AttributeError:
-                pass
-            else:
-                kw[n] = val
-
-        return Class(*args, **kw)
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
@@ -131,15 +92,13 @@ class MOp_DelDevice(MOp_AddDevice):
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
 
-        self.nc = "qemu." + type(dev).__name__
+        self.nc = type(dev).__name__
         self.qom_type = str(dev.qom_type)
 
         if self.nc == "PCIExpressDeviceNode":
             self.slot = copy.deepcopy(dev.slot)
             self.function = copy.deepcopy(dev.function)
             self.multifunction = copy.deepcopy(dev.multifunction)
-
-        self.al, self.kwl = gen_class_args(self.nc)
 
     __do__ = MOp_AddDevice.__undo__
     __undo__ = MachineNodeAdding.__do__
@@ -173,13 +132,11 @@ class MOp_DelBus(MOp_AddBus):
     def __backup__(self):
         bus = self.mach.id2node[self.node_id]
 
-        self.nc = "qemu." + type(bus).__name__
+        self.nc = type(bus).__name__
         self.c_type = copy.deepcopy(bus.c_type)
         self.cast = copy.deepcopy(bus.cast)
         self.child_name = copy.deepcopy(bus.child_name)
         self.force_index = copy.deepcopy(bus.force_index)
-
-        self.al, self.kwl = gen_class_args(self.nc)
 
     __do__ = MOp_AddBus.__undo__
     __undo__ = MOp_AddBus.__do__
