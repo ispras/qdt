@@ -64,20 +64,21 @@ def gen_class_args(class_name):
 
 class MachineNodeAdding(MachineNodeOperation):
     # node_class_name - string name adding machine node. The class with such
-    #     name should be in machine_description module
-    # arg_list, kw_list - lists with argument names of  node class __init__
+    #     name should be in machine_description module. Class constructor
     #     argument values will be excluded from key word arguments of this
-    #     __init__ method
-    def __init__(self, node_class_name, arg_list, kw_list, *args, **kw):
-        for n in arg_list + kw_list:
+    #     __init__ method.
+    def __init__(self, node_class_name, *args, **kw):
+        self.nc = str(node_class_name)
+        if self.nc:
+            self.al, self.kwl = gen_class_args(self.nc)
+        else:
+            self.al, self.kwl = [], []
+
+        for n in self.al + self.kwl:
             if n in kw:
                 setattr(self, n, kw.pop(n))
 
         MachineNodeOperation.__init__(self, *args, **kw)
-
-        self.nc = str(node_class_name)
-        self.al = copy.deepcopy(arg_list)
-        self.kwl = copy.deepcopy(kw_list)
 
     def new(self):
         Class = getattr(machine_description, self.nc)
@@ -109,33 +110,9 @@ class MachineNodeAdding(MachineNodeOperation):
     def __do__(self):
         self.mach.add_node(self.new(), with_id = self.node_id)
 
-def gen_device_class_args(device_class_name):
-    al, kwl = [ "qom_type" ], []
-
-    if device_class_name == "PCIExpressDeviceNode":
-        al.extend([
-            "pci_express_bus",
-            "slot",
-            "function",
-        ])
-        kwl.append("multifunction")
-    elif device_class_name == "SystemBusDeviceNode" :
-        kwl.extend([
-            "system_bus",
-            "mmio",
-            "pmio"
-        ])
-    else:
-        kwl.append("parent")
-
-    return al, kwl
-
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
-        al, kwl = gen_device_class_args(device_class_name)
-
-        MachineNodeAdding.__init__(self, device_class_name, al, kwl, *args,
-            **kw)
+        MachineNodeAdding.__init__(self, device_class_name, *args, **kw)
 
     def __backup__(self):
         pass
@@ -180,30 +157,14 @@ class MOp_DelDevice(MOp_AddDevice):
             self.function = copy.deepcopy(dev.function)
             self.multifunction = copy.deepcopy(dev.multifunction)
 
-        self.al, self.kwl = gen_device_class_args(self.nc)
+        self.al, self.kwl = gen_class_args(self.nc)
 
     __do__ = MOp_AddDevice.__undo__
     __undo__ = MachineNodeAdding.__do__
 
-def gen_bus_class_args(bus_class_name):
-    al, kwl = [], []
-
-    if bus_class_name in [ "I2CBusNode", "IDEBusNode", "ISABusNode" ]:
-        al.append("bus_controller")
-    elif bus_class_name == "PCIExpressBusNode":
-        al.append("host_bridge")
-    elif bus_class_name == "SystemBusNode":
-        pass
-    else:
-        kwl.extend([ "c_type", "cast", "child_name", "force_index" ])
-
-    return al, kwl
-
 class MOp_AddBus(MachineNodeAdding):
     def __init__(self, bus_class_name, *args, **kw):
-        al, kwl = gen_bus_class_args(bus_class_name)
-
-        MachineNodeAdding.__init__(self, bus_class_name, al, kwl, *args, **kw)
+        MachineNodeAdding.__init__(self, bus_class_name, *args, **kw)
 
     def __backup__(self):
         pass
@@ -236,7 +197,7 @@ class MOp_DelBus(MOp_AddBus):
         self.child_name = copy.deepcopy(bus.child_name)
         self.force_index = copy.deepcopy(bus.force_index)
 
-        self.al, self.kwl = gen_bus_class_args(self.nc)
+        self.al, self.kwl = gen_class_args(self.nc)
 
     __do__ = MOp_AddBus.__undo__
     __undo__ = MOp_AddBus.__do__
