@@ -40,6 +40,18 @@ already in another project.")
         self.descriptions.remove(desc)
         desc.project = None
 
+    def find(self, **kw):
+        for d in self.descriptions:
+            for k, v in kw.iteritems():
+                try:
+                    if not getattr(d, k) == v:
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield d
+        raise StopIteration()
+
     def gen_all(self, qemu_src):
         # First, generate all devices, then generate machines
         for desc in self.descriptions:
