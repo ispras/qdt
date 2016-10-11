@@ -46,6 +46,8 @@ class ProjectWidget(PanedWindow):
 
         self.desc2w = {}
         for desc in self.p.descriptions:
+            widgets = self.desc2w[desc] = []
+
             for l in self.p.get_layouts(desc.name):
                 w = self.gen_widget(desc)
                 try:
@@ -54,12 +56,7 @@ class ProjectWidget(PanedWindow):
                     w.destroy()
                     w = None
                 else:
-                    try:
-                        widgets =  self.desc2w[desc]
-                    except KeyError:
-                        self.desc2w[desc] = [ w ]
-                    else:
-                        widgets.append(w)
+                    widgets.append(w)
 
                     self.nb_descriptions.add(w, text = desc.name)
 
