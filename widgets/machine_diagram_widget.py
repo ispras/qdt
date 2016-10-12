@@ -774,7 +774,6 @@ IRQ line creation
         wnd.geometry(geom)
 
         # Allow highlighting of another lines when the command was done 
-        self.current_popup.unpost()
         self.current_popup = None
 
     def on_popup_irq_line_delete(self):
