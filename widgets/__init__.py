@@ -56,3 +56,6 @@ from project_widget import \
 
 from gui_frame import \
     GUIFrame
+
+from qom_settings import \
+    QOMDescriptionSettingsWidget
