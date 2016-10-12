@@ -16,6 +16,9 @@ from qemu import \
 from itertools import \
     count
 
+from hotkey import \
+    HKEntry
+
 def gen_mapping_string(mapping):
     if mapping is None:
         return ""
@@ -86,7 +89,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
         l.grid(row = row, column = 0, sticky = "NES")
 
         v = tk.StringVar()
-        e = tk.Entry(grid, textvariable = v)
+        e = HKEntry(grid, textvariable = v)
         e.grid(row = row, column = 1, sticky = "NEWS")
 
         row_desc = (l, e, v)

@@ -18,7 +18,6 @@ from qemu import \
     IRQLine
 
 from Tkinter import \
-    Entry, \
     StringVar
 
 from ttk import \
@@ -26,6 +25,9 @@ from ttk import \
 
 from device_settings import \
     DeviceSettingsWidget
+
+from hotkey import \
+    HKEntry
 
 class IRQSettingsWidget(SettingsWidget):
     def __init__(self, irq, *args, **kw):
@@ -66,14 +68,14 @@ class IRQSettingsWidget(SettingsWidget):
             index_l.grid(row = 1, column = 0, sticky = "NE")
 
             index_var = StringVar()
-            index_e = Entry(lf, textvariable = index_var)
+            index_e = HKEntry(lf, textvariable = index_var)
             index_e.grid(row = 1, column = 1, sticky = "NEW")
 
             name_l = VarLabel(lf, text = _("GPIO name"))
             name_l.grid(row = 2, column = 0, sticky = "NE")
 
             name_var = StringVar()
-            name_e = Entry(lf, textvariable = name_var)
+            name_e = HKEntry(lf, textvariable = name_var)
             name_e.grid(row = 2, column = 1, sticky = "NEW")
 
             for v in ["lf", "node_var", "node_cb",

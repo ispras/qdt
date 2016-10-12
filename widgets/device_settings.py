@@ -31,6 +31,9 @@ from itertools import \
 from settings_window import \
     SettingsWidget
 
+from hotkey import \
+    HKEntry
+
 class BusLineDesc(object):
     def __init__(self, device_settings_widget, idx):
         self.dsw = device_settings_widget
@@ -206,7 +209,7 @@ class PropLineDesc(object):
             var.set(current)
         else:
             var = tk.StringVar()
-            ret = tk.Entry(
+            ret = HKEntry(
                 self.dsw.props_lf,
                 textvariable = var
             )
@@ -229,7 +232,7 @@ class PropLineDesc(object):
     def gen_row(self, row):
         var_p_name = tk.StringVar()
         var_p_name.set(self.prop.prop_name)
-        e_p_name = tk.Entry(self.dsw.props_lf, textvariable = var_p_name)
+        e_p_name = HKEntry(self.dsw.props_lf, textvariable = var_p_name)
         e_p_name.grid(
             column = 0,
             row = row,
@@ -314,7 +317,7 @@ class DeviceSettingsWidget(SettingsWidget):
 
         l = VarLabel(common_fr, text = _("QOM type"))
         self.qom_type_var = tk.StringVar()
-        e = tk.Entry(common_fr, textvariable = self.qom_type_var)
+        e = HKEntry(common_fr, textvariable = self.qom_type_var)
 
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
