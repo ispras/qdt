@@ -426,6 +426,24 @@ IRQ line creation
         )
 
         p0 = VarMenu(p, tearoff = 0)
+        for device_type in [
+            _("Common device"),
+            _("System bus device"),
+            _("PCI-E function")
+        ]:
+            p0.add_command(
+                label = device_type,
+                command = getattr(self, "on_add_" +
+                    device_type.key_value.lower().replace(" ", "_").\
+                        replace("-", "_")
+                )
+            )
+        p.add_cascade(
+            label = _("Add device"),
+            menu = p0
+        )
+
+        p0 = VarMenu(p, tearoff = 0)
         for bus_type in [
             "Common",
             "System",
@@ -872,6 +890,28 @@ IRQ line creation
 
     def on_add_bus_i2c(self):
         self.add_bus_at_popup("I2CBusNode")
+
+    def add_device_at_popup(self, class_name):
+        p = self.current_popup
+        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
+               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
+
+        node_id = self.mach.get_free_id()
+
+        self.mht.add_device(class_name, node_id)
+        self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
+        self.mht.commit()
+
+        self.current_popup = None
+
+    def on_add_common_device(self):
+        self.add_device_at_popup("DeviceNode")
+
+    def on_add_system_bus_device(self):
+        self.add_device_at_popup("SystemBusDeviceNode")
+
+    def on_add_pci_e_function(self):
+        self.add_device_at_popup("PCIExpressDeviceNode")
 
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
