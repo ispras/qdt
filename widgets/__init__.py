@@ -62,3 +62,6 @@ from qom_settings import \
 
 from device_description_settings import \
     DeviceDescriptionSettingsWidget
+
+from sysbusdev_description_settings import \
+    SystemBusDeviceDescriptionSettingsWidget
