@@ -711,6 +711,8 @@ IRQ line creation
             state = "normal"
         )
 
+        self.current_popup = None
+
     def on_popup_single_device_irq_destination(self):
         did = self.selected[0]
         irq_dst = self.node2dev[self.id2node[did]].id
@@ -722,6 +724,8 @@ IRQ line creation
             self.mach.get_free_id()
         )
         self.mht.commit()
+
+        self.current_popup = None
 
     def on_popup_single_irq_hub_irq_source(self):
         self.on_popup_single_device_irq_source()
@@ -735,11 +739,15 @@ IRQ line creation
         self.mht.delete_irq_hub(hid)
         self.mht.commit()
 
+        self.current_popup = None
+
     def on_popup_single_device_delete(self):
         dev_id = self.selected[0]
         dev_id = self.node2dev[self.id2node[dev_id]].id
         self.mht.delete_device(dev_id)
         self.mht.commit()
+
+        self.current_popup = None
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
@@ -757,12 +765,17 @@ IRQ line creation
 
         wnd.geometry(geom)
 
+        self.current_popup = None
+
     def on_popup_irq_line_delete_point(self):
         self.irq_line_delete_circle(*self.circle_to_be_deleted)
         self.invalidate()
 
+        self.current_popup = None
+
     def on_popup_irq_line_settings(self):
         if not self.highlighted_irq_line:
+            self.current_popup = None
             return
 
         p = self.current_popup
@@ -778,6 +791,7 @@ IRQ line creation
 
     def on_popup_irq_line_delete(self):
         if not self.highlighted_irq_line:
+            self.current_popup = None
             return
 
         irq = self.node2dev[self.highlighted_irq_line]
@@ -811,6 +825,8 @@ IRQ line creation
         self.mht.delete_bus(bus_id)
         self.mht.commit()
 
+        self.current_popup = None
+
     def on_add_irq_hub(self):
         p = self.current_popup
         x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
@@ -824,6 +840,8 @@ IRQ line creation
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         self.mht.commit()
 
+        self.current_popup = None
+
     def add_bus_at_popup(self, class_name):
         p = self.current_popup
         x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
@@ -834,6 +852,8 @@ IRQ line creation
         self.mht.add_bus(class_name, node_id)
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         self.mht.commit()
+
+        self.current_popup = None
 
     def on_add_bus_common(self):
         self.add_bus_at_popup("BusNode")
