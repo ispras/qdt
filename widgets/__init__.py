@@ -59,3 +59,6 @@ from gui_frame import \
 
 from qom_settings import \
     QOMDescriptionSettingsWidget
+
+from device_description_settings import \
+    DeviceDescriptionSettingsWidget
