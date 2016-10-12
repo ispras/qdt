@@ -425,7 +425,7 @@ IRQ line creation
             command = self.on_add_irq_hub 
         )
 
-        p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p0 = VarMenu(p, tearoff = 0)
         for bus_type in [
             "Common",
             "System",
