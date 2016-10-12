@@ -105,6 +105,9 @@ from project_editing import \
 from project_history_tracker import \
     ProjectHistoryTracker
 
+from qom_editing import \
+    DOp_SetAttr
+
 import os
 
 device_tree = DeviceTree()
