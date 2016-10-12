@@ -122,6 +122,24 @@ class MachineProxyTracker(object):
         else:
             self.delete_base_device(dev_id)
 
+    def add_device(self, class_name, new_id, **device_arguments):
+        default_qom_type = "TYPE_DEVICE"
+        if class_name == "SystemBusDeviceNode":
+            default_qom_type = "TYPE_SYS_BUS_DEVICE"
+        elif class_name == "PCIExpressDeviceNode":
+            default_qom_type = "TYPE_PCI_DEVICE"
+
+            if "slot" not in device_arguments:
+                device_arguments["slot"] = 0
+
+            if "function" not in device_arguments:
+                device_arguments["function"] = 0
+
+        if "qom_type" not in device_arguments:
+            device_arguments["qom_type"] = default_qom_type
+
+        self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
+
     def __getattr__(self, name):
         return getattr(self.pht, name)
 
