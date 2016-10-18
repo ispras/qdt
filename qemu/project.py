@@ -1,5 +1,7 @@
 import qemu
 import os
+from itertools import \
+    count
 
 class QOMDescription(object):
     def __init__(self, name, directory):
@@ -39,6 +41,14 @@ already in another project.")
     def remove_description(self, desc):
         self.descriptions.remove(desc)
         desc.project = None
+
+    def gen_uniq_desc_name(self):
+        for i in count(0):
+            cand = "description" + str(i)
+            try:
+                self.find(name = cand).next()
+            except StopIteration:
+                return cand
 
     def find(self, **kw):
         for d in self.descriptions:
