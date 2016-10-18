@@ -17,6 +17,9 @@ from Tkinter import \
 from common import \
     ML as _
 
+from qemu import \
+    POp_AddDesc
+
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
@@ -80,6 +83,26 @@ class ProjectWidget(PanedWindow):
 
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
+
+        self.p.pht.add_on_changed(self.on_project_changed)
+
+    def on_project_changed(self, op):
+        if isinstance(op, POp_AddDesc):
+            self.tv_descs.update()
+
+            for desc, wl in self.desc2w.iteritems():
+                if desc not in self.p.descriptions:
+                    # removed
+                    for w in wl:
+                        w.destroy()
+                    del self.desc2w[desc]
+                    break
+            else:
+                for desc in self.p.descriptions:
+                    if desc not in self.desc2w:
+                        # added
+                        self.desc2w[desc] = []
+                        break
 
     def on_notebook_tab_closed(self, event):
         tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ] 
