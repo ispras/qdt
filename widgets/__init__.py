@@ -58,6 +58,9 @@ from project_widget import \
 from gui_frame import \
     GUIFrame
 
+from add_desc_dialog import \
+    AddDescriptionDialog
+
 from qom_settings import \
     QOMDescriptionSettingsWidget
 
