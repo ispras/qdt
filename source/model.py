@@ -367,11 +367,17 @@ digraph HeaderInclusion {
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
+        self.references = []
 
         if path in Header.reg:
             raise Exception("Header %s is already registered" % path)
 
         Header.reg[path] = self
+
+    def add_reference(self, ref):
+        if not isinstance(ref, Type):
+            raise Exception('Trying to add header reference which is not a Type object')
+        self.references.append(ref)
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
