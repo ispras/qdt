@@ -5,6 +5,7 @@ from close_button_notebook import \
     CloseButtonNotebook
 
 from var_widgets import \
+    VarCombobox, \
     VarTk, \
     VarLabel, \
     VarToplevel, \

@@ -9,6 +9,7 @@ from Tkinter import \
     StringVar
 
 from ttk import \
+    Combobox, \
     Treeview
 
 class VarCheckbutton(Checkbutton):
@@ -175,3 +176,56 @@ class VarTreeview(Treeview):
 
         Treeview.heading(self, column, **kw)
 
+class ComboboxEntryBinding():
+    def __init__(self, varcombobox, idx, variable):
+        self.vcb = varcombobox
+        self.var = variable
+        self.cb_id = variable.trace_variable("w", self.on_changed)
+        self.idx = idx
+
+    def unbind(self):
+        self.var.trace_vdelete(self.cb_id)
+
+    def on_changed(self, *args):
+        current_values = Combobox.cget(self.vcb, "values")
+
+        cur = Combobox.current(self.vcb)
+
+        new_values = list(current_values)
+        new_values[self.idx] = self.var.get()
+
+        Combobox.config(self.vcb, values = new_values)
+
+        if cur == self.idx:
+            Combobox.current(self.vcb, cur)
+
+class VarCombobox(Combobox):
+    def __init__(self, *args, **kw):
+        self.bindings = []
+
+        if "values" in kw:
+            self.set_var_values(kw["values"])
+            kw["values"] = [ b.var.get() for b in self.bindings ]
+
+        Combobox.__init__(self, *args, **kw)
+
+    def set_var_values(self, values):
+        for b in self.bindings:
+            b.unbind()
+
+        self.bindings = [
+            ComboboxEntryBinding(self, *v) for v in enumerate(values)
+        ]
+
+    def cget(self, key):
+        if "values" == key:
+            return [ b.var for b in self.bindings ]
+
+        return Combobox.cget(self, key)
+
+    def config(self, cnf = None, **kw):
+        if "values" in kw:
+            self.set_var_values(kw["values"])
+            kw["values"] = [ b.var.get() for b in self.bindings ]
+
+        return Combobox.config(self, cnf, **kw)
