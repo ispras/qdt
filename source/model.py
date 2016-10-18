@@ -122,7 +122,7 @@ a field of a type defined in another non-header file {}.".format(
         for t in self.types.values():
             if isinstance(t, TypeReference) or t.definer == self:
                 if type(t) == Function:
-                    if type(self) == Header:
+                    if type(self) == Header and (not t.static or not t.inline):
                         chunks.extend(t.gen_declaration_chunks())
                     else:
                         chunks.extend(t.gen_definition_chunks())
