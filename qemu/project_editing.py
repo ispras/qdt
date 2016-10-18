@@ -75,6 +75,37 @@ class QemuObjectCreationHelper(object):
 
         return Class(*args, **kw)
 
+class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
+    def __init__(self, desc_class_name, desc_name, *args, **kw):
+        if not "directory" in kw:
+            kw["directory"] = "hw"
+
+        QemuObjectCreationHelper.__init__(self, desc_class_name, kw)
+        ProjectOperation.__init__(self, *args, **kw)
+
+        self.name = desc_name
+
+    def __backup__(self):
+        pass
+
+    def __do__(self):
+        self.p.add_description(self.new())
+
+    def __undo__(self):
+        desc = self.p.find(name = self.name).next()
+
+        """ It is unexpected way to type independently check for the description
+        is empty. """
+        if desc.__children__():
+            raise Exception("Not empty description removing attempt.")
+
+        self.p.remove_description(desc)
+
+    def __write_set__(self):
+        return ProjectOperation.__write_set__(self) + [
+            str(self.name)
+        ]
+
 class DescriptionOperation(ProjectOperation):
     def __init__(self, description, *args, **kw):
         ProjectOperation.__init__(self, *args, **kw)

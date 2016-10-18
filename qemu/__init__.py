@@ -100,6 +100,7 @@ from machine_editing import \
 from project_editing import \
     QemuObjectCreationHelper, \
     ProjectOperation, \
+        POp_AddDesc, \
         DescriptionOperation
 
 from project_history_tracker import \
