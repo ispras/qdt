@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    AddDescriptionDialog, \
     __dict__ as widgets_dict, \
     GUIProject, \
     HotKeyBinding, \
@@ -32,6 +33,11 @@ class QDCGUIWindow(VarTk):
         self.hk = hotkeys = HotKey(self)
         hotkeys.add_bindings([
             HotKeyBinding(
+                self.on_add_description,
+                key_code = 40, # D
+                description = _("Add description to the project")
+            ),
+            HotKeyBinding(
                 self.on_delete,
                 key_code = 24, # Q
                 description = _("Shutdown the application.")
@@ -52,6 +58,11 @@ class QDCGUIWindow(VarTk):
         menubar = VarMenu(self)
 
         filemenu = VarMenu(menubar, tearoff = False)
+        filemenu.add_command(
+            label = _("Add description"),
+            command = self.on_add_description,
+            accelerator = hotkeys.get_keycode_string(self.on_add_description)
+        )
         filemenu.add_command(
             label=_("Quit"),
             command = self.quit,
@@ -119,6 +130,9 @@ class QDCGUIWindow(VarTk):
 
     def on_delete(self):
         self.quit()
+
+    def on_add_description(self):
+        d = AddDescriptionDialog(self.proj.pht, self)
 
 def main():
     try:
