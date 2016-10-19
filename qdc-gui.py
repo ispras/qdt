@@ -25,8 +25,6 @@ class QDCGUIWindow(VarTk):
     def __init__(self, project = None):
         VarTk.__init__(self)
 
-        self.proj = GUIProject() if project is None else project 
-
         self.title(_("Qemu device creator GUI"))
 
         # Hot keys, accelerators
@@ -94,11 +92,7 @@ class QDCGUIWindow(VarTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.pw = ProjectWidget(self.proj, self)
-        self.pw.grid(column = 0, row = 0, sticky = "NEWS")
-
-        self.proj.pht.add_on_changed(self.on_changed)
-        self.chack_undo_redo()
+        self.set_project(GUIProject() if project is None else project)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
