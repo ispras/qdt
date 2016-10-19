@@ -168,6 +168,10 @@ class QDCGUIWindow(VarTk):
             else:
                 raise Exception("No GUI project object was loaded")
 
+    def save_project_to_file(self, file_name):
+        self.pw.refresh_layouts()
+        PyGenerator().serialize(open(file_name, "wb"), self.proj)
+
 def main():
     try:
         variables = {}
