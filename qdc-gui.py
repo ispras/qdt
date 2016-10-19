@@ -173,6 +173,7 @@ class QDCGUIWindow(VarTk):
             for v in loaded_variables.values():
                 if isinstance(v, GUIProject):
                     self.set_project(v)
+                    self.set_current_file_name(file_name)
                     break
             else:
                 raise Exception("No GUI project object was loaded")
