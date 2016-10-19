@@ -160,6 +160,9 @@ def main():
                 if isinstance(v, qemu.MachineNode):
                     mach = v
                     break
+            else:
+                raise Exception(
+                    "No MachineNode instance was found in serialize-test.py")
         except Exception, e:
             print "Machine load failed: " + str(e) + "\n"
             mach = Q35MachineNode_2_6_0()
