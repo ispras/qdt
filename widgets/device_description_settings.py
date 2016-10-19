@@ -96,4 +96,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __on_changed__(self, op, *args, **kw):
         for field, val_type in self.fields:
             if op.writes((self.desc.name, field)):
-                self.refresh_field(field, val_type) 
+                self.__refresh__()
+                return
+
+        QOMDescriptionSettingsWidget.__on_changed__(self, op, *args, **kw)
