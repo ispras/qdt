@@ -15,6 +15,9 @@ from common import \
 from hotkey import \
     HKEntry
 
+from qemu import \
+    DOp_SetAttr
+
 class QOMDescriptionSettingsWidget(GUIFrame):
     def __init__(self, qom_desc, project_history_tracker, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
@@ -39,6 +42,16 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         v = self.var_name = StringVar()
         e = HKEntry(f, textvariable = v, state="readonly")
         e.grid(row = 0, column = 1, sticky = "NEWS")
+
+        # Directory editing row
+        f.rowconfigure(0, weight = 0)
+
+        l = VarLabel(f, text = _("Directory"))
+        l.grid(row = 1, column = 0, sticky = "NES")
+
+        v = self.var_directory = StringVar()
+        e = HKEntry(f, textvariable = v)
+        e.grid(row = 1, column = 1, sticky = "NEWS")
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -67,8 +80,14 @@ class QOMDescriptionSettingsWidget(GUIFrame):
 
     def __refresh__(self):
         self.var_name.set(self.desc.name)
+        self.var_directory.set(self.desc.directory)
 
     def __apply__(self):
+        new_dir = self.var_directory.get()
+
+        if new_dir != self.desc.directory:
+            self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
+
         self.__apply_internal__()
 
         self.pht.commit()
