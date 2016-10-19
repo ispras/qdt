@@ -151,6 +151,23 @@ class QDCGUIWindow(VarTk):
     def on_add_description(self):
         d = AddDescriptionDialog(self.proj.pht, self)
 
+    def load_project_from_file(self, file_name):
+        loaded_variables = {}
+        available_names = dict(qemu.__dict__)
+        available_names.update(widgets_dict)
+
+        try:
+            execfile(file_name, available_names, loaded_variables)
+        except Exception as e:
+            raise e
+        else:
+            for v in loaded_variables.values():
+                if isinstance(v, GUIProject):
+                    self.set_project(v)
+                    break
+            else:
+                raise Exception("No GUI project object was loaded")
+
 def main():
     try:
         variables = {}
