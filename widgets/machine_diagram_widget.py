@@ -1625,7 +1625,7 @@ IRQ line creation
             self.ph_move(n)
 
         for bl in self.buslabels:
-            if n.static:
+            if bl.static:
                 continue
 
             self.ph_move(bl)
