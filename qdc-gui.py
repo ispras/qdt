@@ -31,6 +31,11 @@ class QDCGUIWindow(VarTk):
         self.title_suffix = _("Qemu device creator GUI")
         self.title_suffix.trace_variable("w", self.__on_title_suffix_write__)
 
+        self.title_not_saved_asterisk = StringVar()
+        self.title_not_saved_asterisk.trace_variable("w",
+            self.__on_title_suffix_write__)
+        self.saved_operation = None
+
         self.var_title = StringVar()
         self.title(self.var_title)
 
@@ -104,6 +109,7 @@ class QDCGUIWindow(VarTk):
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
         self.__update_title__()
+        self.__check_saved_asterisk__()
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -114,7 +120,12 @@ class QDCGUIWindow(VarTk):
         except AttributeError:
             title_prefix = "[New project]"
 
-        self.var_title.set(title_prefix + " - " + self.title_suffix.get())
+        self.var_title.set(
+            title_prefix
+                + self.title_not_saved_asterisk.get()
+                + " - "
+                + self.title_suffix.get()
+        )
 
     def chack_undo_redo(self):
         can_do = self.proj.pht.can_do()
@@ -167,8 +178,23 @@ class QDCGUIWindow(VarTk):
         self.proj.pht.add_on_changed(self.on_changed)
         self.chack_undo_redo()
 
+    def __saved_asterisk__(self, saved = True):
+        if saved:
+            if self.title_not_saved_asterisk.get() != "":
+                self.title_not_saved_asterisk.set("")
+        else:
+            if self.title_not_saved_asterisk.get() != "*":
+                self.title_not_saved_asterisk.set("*")
+
+    def __check_saved_asterisk__(self):
+        if self.saved_operation == self.proj.pht.pos:
+            self.__saved_asterisk__(True)
+        else:
+            self.__saved_asterisk__(False)
+
     def on_changed(self, *args, **kw):
         self.chack_undo_redo()
+        self.__check_saved_asterisk__()
 
     def undo(self):
         self.pw.undo()
@@ -196,6 +222,8 @@ class QDCGUIWindow(VarTk):
                 if isinstance(v, GUIProject):
                     self.set_project(v)
                     self.set_current_file_name(file_name)
+                    self.saved_operation = v.pht.pos
+                    self.__check_saved_asterisk__()
                     break
             else:
                 raise Exception("No GUI project object was loaded")
@@ -203,6 +231,9 @@ class QDCGUIWindow(VarTk):
     def save_project_to_file(self, file_name):
         self.pw.refresh_layouts()
         PyGenerator().serialize(open(file_name, "wb"), self.proj)
+
+        self.saved_operation = self.proj.pht.pos
+        self.__check_saved_asterisk__()
 
 def main():
     root = QDCGUIWindow()
