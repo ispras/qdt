@@ -21,11 +21,18 @@ from common import \
     PyGenerator, \
     ML as _
 
+from Tkinter import \
+    StringVar
+
 class QDCGUIWindow(VarTk):
     def __init__(self, project = None):
         VarTk.__init__(self)
 
-        self.title(_("Qemu device creator GUI"))
+        self.title_suffix = _("Qemu device creator GUI")
+        self.title_suffix.trace_variable("w", self.__on_title_suffix_write__)
+
+        self.var_title = StringVar()
+        self.title(self.var_title)
 
         # Hot keys, accelerators
         self.hk = hotkeys = HotKey(self)
@@ -96,6 +103,19 @@ class QDCGUIWindow(VarTk):
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
+        self.__update_title__()
+
+    def __on_title_suffix_write__(self, *args, **kw):
+        self.__update_title__()
+
+    def __update_title__(self):
+        try:
+            title_prefix = str(self.current_file_name)
+        except AttributeError:
+            title_prefix = "[New project]"
+
+        self.var_title.set(title_prefix + " - " + self.title_suffix.get())
+
     def chack_undo_redo(self):
         can_do = self.proj.pht.can_do()
 
@@ -121,6 +141,8 @@ class QDCGUIWindow(VarTk):
                 pass
         else:
             self.current_file_name = file_name
+
+        self.__update_title__()
 
     def set_project(self, project):
         try:
