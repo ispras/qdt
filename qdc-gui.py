@@ -223,6 +223,7 @@ def main():
                 project.add_description(desc)
 
         root.set_project(project)
+        root.set_current_file_name("project.py")
 
     root.geometry("1000x750")
 
