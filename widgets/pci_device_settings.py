@@ -13,6 +13,9 @@ from var_widgets import \
 
 import sys
 
+from hotkey import \
+    HKEntry
+
 class PCIDeviceSettingsWidget(DeviceSettingsWidget):
     def __init__(self, *args, **kw):
         DeviceSettingsWidget.__init__(self, *args, **kw)
@@ -29,14 +32,14 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
         l.grid(row = 0, column = 0, sticky = "NES")
 
         self.var_slot = tk.StringVar()
-        e = tk.Entry(lf, textvariable = self.var_slot)
+        e = HKEntry(lf, textvariable = self.var_slot)
         e.grid(row = 0, column = 1, sticky = "NEWS")
 
         l = VarLabel(lf, text = _("Function number"))
         l.grid(row = 1, column = 0, sticky = "NES")
 
         self.var_function = tk.StringVar()
-        e = tk.Entry(lf, textvariable = self.var_function)
+        e = HKEntry(lf, textvariable = self.var_function)
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
         self.var_multifunction = tk.BooleanVar()

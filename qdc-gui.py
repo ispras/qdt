@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 
 from examples import \
+    Q35Project_2_6_0, \
     Q35MachineNode_2_6_0
 
 from widgets import \
@@ -160,6 +161,16 @@ def main():
             print "Layout load filed: " + str(e) + "\n"
             layout = {}
         project.layouts = [(mach.name, layout)]
+
+    for desc in project.descriptions:
+        if not isinstance(desc, qemu.MachineNode):
+            break
+    else:
+        tmp_p = Q35Project_2_6_0()
+        for desc in list(tmp_p.descriptions):
+            if not isinstance(desc, qemu.MachineNode):
+                desc.remove_from_project()
+                project.add_description(desc)
 
     root = QDCGUIWindow(project)
     root.geometry("1000x750")

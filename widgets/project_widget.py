@@ -8,6 +8,7 @@ from machine_widget import \
     MachineWidget
 
 from qemu import \
+    SysBusDeviceDescription, \
     MachineNode
 
 from Tkinter import \
@@ -15,6 +16,9 @@ from Tkinter import \
 
 from common import \
     ML as _
+
+from sysbusdev_description_settings import \
+    SystemBusDeviceDescriptionSettingsWidget
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
@@ -173,6 +177,8 @@ class ProjectWidget(PanedWindow):
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
             w = MachineWidget(desc, self)
+        elif isinstance(desc, SysBusDeviceDescription):
+            w = SystemBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
         else:
             raise Exception("No widget exists for description %s of type %s." %
                     (desc.name, type(desc).__name__)
