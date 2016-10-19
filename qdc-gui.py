@@ -173,23 +173,15 @@ class QDCGUIWindow(VarTk):
         PyGenerator().serialize(open(file_name, "wb"), self.proj)
 
 def main():
-    try:
-        variables = {}
-        context = dict(qemu.__dict__)
-        context.update(widgets_dict)
-        execfile("project.py", context, variables)
+    root = QDCGUIWindow()
 
-        for v in variables.values():
-            if isinstance(v, GUIProject):
-                project = v
-                break
+    try:
+        root.load_project_from_file("project.py")
     except Exception, e:
         print "Project load filed: " + str(e) + "\n"
+
         project = GUIProject()
 
-    try:
-        mach = project.get_machine_descriptions()[0]
-    except IndexError:
         try:
             variables = {}
             execfile("serialize-test.py", qemu.__dict__, variables)
@@ -207,34 +199,26 @@ def main():
 
         project.add_description(mach)
 
-    try:
-        layout = project.get_layouts(mach.name)[0]
-    except IndexError:
         try:
             layout = cPickle.load(open("layout.p", "rb"))
         except Exception, e:
             print "Layout load filed: " + str(e) + "\n"
-            layout = {}
-        project.layouts = [(mach.name, layout)]
+        else:
+            project.layouts.append((mach.name, layout))
 
-    for desc in project.descriptions:
-        if not isinstance(desc, qemu.MachineNode):
-            break
-    else:
         tmp_p = Q35Project_2_6_0()
         for desc in list(tmp_p.descriptions):
             if not isinstance(desc, qemu.MachineNode):
                 desc.remove_from_project()
                 project.add_description(desc)
 
-    root = QDCGUIWindow(project)
+        root.set_project(project)
+
     root.geometry("1000x750")
 
     root.mainloop()
 
-    root.pw.refresh_layouts()
-
-    PyGenerator().serialize(open("project.py", "wb"), project)
+    root.save_project_to_file("project.py")
 
 if __name__ == '__main__':
     main()
