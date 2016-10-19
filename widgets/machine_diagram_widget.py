@@ -1618,23 +1618,11 @@ IRQ line creation
         del self.node2idtext[node]
 
     def ph_apply(self):
-        for n in self.nodes:
+        for n in self.nodes + self.buslabels + self.circles:
             if n.static:
                 continue
 
             self.ph_move(n)
-
-        for bl in self.buslabels:
-            if bl.static:
-                continue
-
-            self.ph_move(bl)
-
-        for h in self.circles:
-            if h.static:
-                continue
-
-            self.ph_move(h)
 
         self.ph_sync()
 
