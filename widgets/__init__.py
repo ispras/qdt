@@ -50,6 +50,7 @@ from bus_settings import \
     BusSettingsWidget
 
 from machine_widget import \
+    MachineDescriptionSettingsWidget, \
     MachineWidget
 
 from project_widget import \

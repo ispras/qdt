@@ -5,6 +5,9 @@ from Tkinter import \
 from machine_diagram_widget import \
     MachineDiagramWidget
 
+from qom_settings import \
+    QOMDescriptionSettingsWidget
+
 class MachineWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
@@ -27,3 +30,23 @@ class MachineWidget(PanedWindow):
 
     def set_layout(self, layout):
         self.mdw.set_layout(layout)
+
+class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
+    def __init__(self, *args, **kw):
+        QOMDescriptionSettingsWidget.__init__(self, *args, **kw)
+
+        # 'self' is used as master widget (instead of self.settings_fr)
+        # because buttons is only affects inherited fields. Changes to
+        # the machine and its memory diagrams is handled by diagrams itself  
+        self.mw = MachineWidget(self.desc, self)
+        self.mw.pack()
+
+    def gen_layout(self):
+        return self.mw.gen_layout()
+
+    def set_layout(self, layout):
+        self.mw.set_layout(layout)
+
+    def __apply_internal__(self):
+        # There is nothing to apply additionally
+        pass
