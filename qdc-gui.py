@@ -113,6 +113,15 @@ class QDCGUIWindow(VarTk):
         else:
             self.editmenu.entryconfig(self.undo_idx, state = "disabled")
 
+    def set_current_file_name(self, file_name = None):
+        if file_name is None:
+            try:
+                del self.current_file_name
+            except AttributeError:
+                pass
+        else:
+            self.current_file_name = file_name
+
     def set_project(self, project):
         try:
             proj = self.proj
