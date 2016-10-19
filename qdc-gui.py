@@ -119,6 +119,29 @@ class QDCGUIWindow(VarTk):
         else:
             self.editmenu.entryconfig(self.undo_idx, state = "disabled")
 
+    def set_project(self, project):
+        try:
+            proj = self.proj
+        except AttributeError:
+            # Project was never been set
+            pass
+        else:
+            proj.pht.remove_on_changed(self.on_changed)
+
+        try:
+            self.pw.destroy()
+        except AttributeError:
+            # project widget was never been created
+            pass
+
+        self.proj = project
+
+        self.pw = ProjectWidget(self.proj, self)
+        self.pw.grid(column = 0, row = 0, sticky = "NEWS")
+
+        self.proj.pht.add_on_changed(self.on_changed)
+        self.chack_undo_redo()
+
     def on_changed(self, *args, **kw):
         self.chack_undo_redo()
 
