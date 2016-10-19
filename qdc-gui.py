@@ -22,10 +22,10 @@ from common import \
     ML as _
 
 class QDCGUIWindow(VarTk):
-    def __init__(self, project):
+    def __init__(self, project = None):
         VarTk.__init__(self)
 
-        self.proj = project
+        self.proj = GUIProject() if project is None else project 
 
         self.title(_("Qemu device creator GUI"))
 
