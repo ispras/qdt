@@ -5,7 +5,7 @@ from close_button_notebook import \
     CloseButtonNotebook
 
 from machine_widget import \
-    MachineWidget
+    MachineDescriptionSettingsWidget
 
 from qemu import \
     SysBusDeviceDescription, \
@@ -199,7 +199,7 @@ class ProjectWidget(PanedWindow):
 
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
-            w = MachineWidget(desc, self)
+            w = MachineDescriptionSettingsWidget(desc, self.p.pht, self)
         elif isinstance(desc, SysBusDeviceDescription):
             w = SystemBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
         else:
