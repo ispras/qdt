@@ -26,6 +26,7 @@ from Tkinter import \
     StringVar
 
 from tkMessageBox import \
+    askyesno, \
     showerror
 
 class QDCGUIWindow(VarTk):
@@ -46,6 +47,11 @@ class QDCGUIWindow(VarTk):
         # Hot keys, accelerators
         self.hk = hotkeys = HotKey(self)
         hotkeys.add_bindings([
+            HotKeyBinding(
+                self.on_new_project,
+                key_code = 57, # N
+                description = _("Create new project.")
+            ),
             HotKeyBinding(
                 self.on_add_description,
                 key_code = 40, # D
@@ -82,6 +88,11 @@ class QDCGUIWindow(VarTk):
             command = self.on_add_description,
             accelerator = hotkeys.get_keycode_string(self.on_add_description)
         )
+        filemenu.add_command(
+            label = _("New project"),
+            command = self.on_new_project,
+            accelerator = hotkeys.get_keycode_string(self.on_new_project)
+        ),
         filemenu.add_command(
             label = _("Save"),
             command = self.on_save,
@@ -288,6 +299,28 @@ class QDCGUIWindow(VarTk):
             self.on_save_as()
         else:
             self.try_save_project_to_file(fname)
+
+    def check_unsaved(self):
+        if self.title_not_saved_asterisk.get() == "*":
+            return askyesno(
+                title = self.title_suffix.get(),
+                message =
+_("Current project has unsaved changes. They will be lost. Continue?").get()
+            )
+        else:
+            return True
+
+    def on_new_project(self):
+        if not self.check_unsaved():
+            return
+
+        self.set_project(GUIProject())
+        self.set_current_file_name()
+
+        """ There is nothing to save in just created project. So declare that
+all changes are saved. """  
+        self.saved_operation = self.proj.pht.pos
+        self.__check_saved_asterisk__()
 
 def main():
     root = QDCGUIWindow()
