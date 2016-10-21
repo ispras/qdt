@@ -3,7 +3,7 @@ from widgets import \
     DeviceSettingsWidget
 
 from common import \
-    ML as _
+    mlget as _
 
 import qemu
 

@@ -3,7 +3,7 @@ from settings_window import \
     SettingsWidget
 
 from common import \
-    ML as _
+    mlget as _
 
 from qemu import \
     MOp_SetChildBus, \

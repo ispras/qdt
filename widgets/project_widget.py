@@ -15,7 +15,7 @@ from Tkinter import \
     PanedWindow
 
 from common import \
-    ML as _
+    mlget as _
 
 from qemu import \
     POp_AddDesc

@@ -6,7 +6,7 @@ from Tkinter import \
     Frame
 
 from common import \
-    ML as _
+    mlget as _
 
 from gui_frame import \
     GUIFrame

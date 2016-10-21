@@ -5,7 +5,7 @@ from common import \
     InverseOperation, \
     History, \
     HistoryTracker, \
-    ML as _
+    mlget as _
 
 from widgets import \
     CanvasDnD, \

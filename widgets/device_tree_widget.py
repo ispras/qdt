@@ -13,7 +13,7 @@ from Tkinter import \
     StringVar
 
 from common import \
-    ML as _
+    mlget as _
 
 import os
 

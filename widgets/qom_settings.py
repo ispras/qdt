@@ -10,7 +10,7 @@ from var_widgets import \
     VarButton
 
 from common import \
-    ML as _
+    mlget as _
 
 from hotkey import \
     HKEntry

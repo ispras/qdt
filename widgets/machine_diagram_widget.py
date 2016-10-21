@@ -15,7 +15,7 @@ import time
 import sys
 
 from common import \
-    ML as _, \
+    mlget as _, \
     sign
 
 from qemu import \

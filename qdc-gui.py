@@ -20,7 +20,7 @@ import qemu
 
 from common import \
     PyGenerator, \
-    ML as _
+    mlget as _
 
 from Tkinter import \
     StringVar

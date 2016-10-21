@@ -1,5 +1,5 @@
 from common import \
-    ML as _
+    mlget as _
 
 from hotkey import \
     HKEntry
@@ -24,6 +24,9 @@ class AddDescriptionDialog(VarToplevel):
 
     def __init__(self, project_history_tracker, *args, **kw):
         if not AddDescriptionDialog.initialized:
+            """ String caching is not actually necessary after ML was replaced
+with mlget because no memory leak will take place. But it still helps avoid
+string searching during each AddDescriptionDialog creation. """
             AddDescriptionDialog.msg_title = _("Description creation error")
             AddDescriptionDialog.msg_name = \
                 _("Name '%s' is incorrect or already in use.")

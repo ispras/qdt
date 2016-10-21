@@ -3,7 +3,7 @@ from settings_window import \
     SettingsWindow
 
 from common import \
-    ML as _
+    mlget as _
 
 from var_widgets import \
     VarLabelFrame, \

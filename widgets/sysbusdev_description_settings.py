@@ -2,7 +2,7 @@ from device_description_settings import \
     DeviceDescriptionSettingsWidget
 
 from common import \
-    ML as _
+    mlget as _
 
 class SystemBusDeviceDescriptionSettingsWidget(DeviceDescriptionSettingsWidget):
     def __init__(self, *args, **kw):

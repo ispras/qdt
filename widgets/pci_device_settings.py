@@ -2,7 +2,7 @@ from device_settings import \
     DeviceSettingsWidget
 
 from common import \
-    ML as _
+    mlget as _
 
 import Tkinter as tk
 

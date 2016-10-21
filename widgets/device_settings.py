@@ -8,7 +8,7 @@ from device_tree_widget import \
     DeviceTreeWidget
 
 from common import \
-    ML as _
+    mlget as _
 
 import Tkinter as tk
 import ttk
