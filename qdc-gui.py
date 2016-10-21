@@ -232,6 +232,7 @@ class QDCGUIWindow(VarTk):
         self.pw.refresh_layouts()
         PyGenerator().serialize(open(file_name, "wb"), self.proj)
 
+        self.set_current_file_name(file_name)
         self.saved_operation = self.proj.pht.pos
         self.__check_saved_asterisk__()
 
