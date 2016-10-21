@@ -29,6 +29,7 @@ class HotKey(object):
         self.cb2names = {}
 
         root.bind_all("<Control-Key>", self.on_ctrl_key)
+        root.bind_all("<<Control-Y-Breaked>>", self.on_ctrl_y_breaked)
 
     def process_ctrl_key(self, keycode, keysym):
         kc = keycode
@@ -46,6 +47,9 @@ class HotKey(object):
         for kb in kbs:
             if kb.enabled:
                 kb.cb()
+
+    def on_ctrl_y_breaked(self, event):
+        self.process_ctrl_key(29, 'Y')
 
     def on_ctrl_key(self, event):
         self.process_ctrl_key(event.keycode, event.keysym)
