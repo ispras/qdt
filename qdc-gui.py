@@ -65,6 +65,11 @@ class QDCGUIWindow(VarTk):
                 self.redo,
                 key_code = 29, # Y
                 description = _("Make reverted editing again.")
+            ),
+            HotKeyBinding(
+                self.on_save,
+                key_code = 39, # S
+                description = _("Save project.")
             )
         ])
 
@@ -77,6 +82,11 @@ class QDCGUIWindow(VarTk):
             command = self.on_add_description,
             accelerator = hotkeys.get_keycode_string(self.on_add_description)
         )
+        filemenu.add_command(
+            label = _("Save"),
+            command = self.on_save,
+            accelerator = hotkeys.get_keycode_string(self.on_save)
+        ),
         filemenu.add_command(
             label = _("Save project as..."),
             command = self.on_save_as
@@ -270,6 +280,14 @@ class QDCGUIWindow(VarTk):
             return
 
         self.try_save_project_to_file(fname)
+
+    def on_save(self):
+        try:
+            fname = self.current_file_name
+        except AttributeError:
+            self.on_save_as()
+        else:
+            self.try_save_project_to_file(fname)
 
 def main():
     root = QDCGUIWindow()
