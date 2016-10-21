@@ -30,11 +30,11 @@ class HotKey(object):
 
         root.bind_all("<Control-Key>", self.on_ctrl_key)
 
-    def on_ctrl_key(self, event):
-        kc = event.keycode
+    def process_ctrl_key(self, keycode, keysym):
+        kc = keycode
 
-        if not (kc in self.keys2sym and self.keys2sym[kc] == event.keysym):
-            self.keys2sym[kc] = event.keysym
+        if not (kc in self.keys2sym and self.keys2sym[kc] == keysym):
+            self.keys2sym[kc] = keysym
             if kc in self.keys2bindings:
                 for kb in self.keys2bindings[kc]:
                     self.update_name(kb)
@@ -46,6 +46,9 @@ class HotKey(object):
         for kb in kbs:
             if kb.enabled:
                 kb.cb()
+
+    def on_ctrl_key(self, event):
+        self.process_ctrl_key(event.keycode, event.keysym)
 
     def add_binding(self, binding):
         kc = binding.kc
