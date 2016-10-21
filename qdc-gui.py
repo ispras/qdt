@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    asksaveas, \
     AddDescriptionDialog, \
     __dict__ as widgets_dict, \
     GUIProject, \
@@ -23,6 +24,9 @@ from common import \
 
 from Tkinter import \
     StringVar
+
+from tkMessageBox import \
+    showerror
 
 class QDCGUIWindow(VarTk):
     def __init__(self, project = None):
@@ -72,6 +76,10 @@ class QDCGUIWindow(VarTk):
             label = _("Add description"),
             command = self.on_add_description,
             accelerator = hotkeys.get_keycode_string(self.on_add_description)
+        )
+        filemenu.add_command(
+            label = _("Save project as..."),
+            command = self.on_save_as
         )
         filemenu.add_command(
             label=_("Quit"),
@@ -235,6 +243,30 @@ class QDCGUIWindow(VarTk):
         self.set_current_file_name(file_name)
         self.saved_operation = self.proj.pht.pos
         self.__check_saved_asterisk__()
+
+    def on_save_as(self):
+        fname = asksaveas([(_("QDC GUI Project defining script"), ".py")],
+            title = _("Save project")
+        )
+
+        if not fname:
+            return
+
+        try:
+            open(fname, "wb").close()
+        except Exception as e:
+            try:
+                os.delete(fname)
+            except:
+                pass
+
+            showerror(
+                title = _("Cannot save project").get(),
+                message = str(e)
+            )
+            return
+
+        self.save_project_to_file(fname)
 
 def main():
     root = QDCGUIWindow()
