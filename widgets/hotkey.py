@@ -12,6 +12,7 @@ class HKEntry(Entry):
 
     def ignore(self, event):
         if event.keycode == 29: # prevent paste on Ctrl + Y
+            self.event_generate("<<Control-Y-Breaked>>")
             return "break"
 
 class HotKeyBinding(object):
