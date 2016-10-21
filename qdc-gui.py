@@ -244,19 +244,12 @@ class QDCGUIWindow(VarTk):
         self.saved_operation = self.proj.pht.pos
         self.__check_saved_asterisk__()
 
-    def on_save_as(self):
-        fname = asksaveas([(_("QDC GUI Project defining script"), ".py")],
-            title = _("Save project")
-        )
-
-        if not fname:
-            return
-
+    def try_save_project_to_file(self, file_name):
         try:
-            open(fname, "wb").close()
+            open(file_name, "wb").close()
         except Exception as e:
             try:
-                os.delete(fname)
+                os.delete(file_name)
             except:
                 pass
 
@@ -266,7 +259,17 @@ class QDCGUIWindow(VarTk):
             )
             return
 
-        self.save_project_to_file(fname)
+        self.save_project_to_file(file_name)
+
+    def on_save_as(self):
+        fname = asksaveas([(_("QDC GUI Project defining script"), ".py")],
+            title = _("Save project")
+        )
+
+        if not fname:
+            return
+
+        self.try_save_project_to_file(fname)
 
 def main():
     root = QDCGUIWindow()
