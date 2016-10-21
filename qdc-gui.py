@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    askopen, \
     asksaveas, \
     AddDescriptionDialog, \
     __dict__ as widgets_dict, \
@@ -47,6 +48,11 @@ class QDCGUIWindow(VarTk):
         # Hot keys, accelerators
         self.hk = hotkeys = HotKey(self)
         hotkeys.add_bindings([
+            HotKeyBinding(
+                self.on_load,
+                key_code = 32, # O
+                description = _("Load project from file.")
+            ),
             HotKeyBinding(
                 self.on_new_project,
                 key_code = 57, # N
@@ -102,6 +108,11 @@ class QDCGUIWindow(VarTk):
             label = _("Save project as..."),
             command = self.on_save_as
         )
+        filemenu.add_command(
+            label = _("Load"),
+            command = self.on_load,
+            accelerator = hotkeys.get_keycode_string(self.on_load)
+        ),
         filemenu.add_command(
             label=_("Quit"),
             command = self.quit,
@@ -321,6 +332,25 @@ _("Current project has unsaved changes. They will be lost. Continue?").get()
 all changes are saved. """  
         self.saved_operation = self.proj.pht.pos
         self.__check_saved_asterisk__()
+
+    def on_load(self):
+        if not self.check_unsaved():
+            return
+
+        fname = askopen([(_("QDC GUI Project defining script"), ".py")],
+            title = _("Load project")
+        )
+
+        if not fname:
+            return
+
+        try:
+            self.load_project_from_file(fname)
+        except Exception as e:
+            showerror(
+                title = _("Project loading failed").get(),
+                message = str(e)
+            )
 
 def main():
     root = QDCGUIWindow()
