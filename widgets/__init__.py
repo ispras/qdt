@@ -70,3 +70,7 @@ from device_description_settings import \
 
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
+
+from cross_dialogs import \
+    CrossSaveAsDialog, \
+        asksaveas
