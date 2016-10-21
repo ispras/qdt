@@ -47,5 +47,12 @@ class ML(StringVar):
     def update(self):
         self.set(ML.current_translation.lgettext(self.key_value))
 
+def mlget(key_value):
+    for mls in ML.multi_language_strings:
+        if mls.key_value == key_value:
+            return mls
+
+    return ML(key_value)
+
 current_locale, encoding = locale.getdefaultlocale()
 ML.set_language(current_locale)
