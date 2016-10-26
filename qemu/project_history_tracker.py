@@ -178,8 +178,19 @@ class ProjectHistoryTracker(HistoryTracker):
     def get_machine_proxy(self, machine_description):
         return MachineProxyTracker(self, machine_description)
 
+    """
+    new_sequence - begin new sequence after committing staged operation
+        (True by default)
+    """
     def commit(self, *args, **kw):
-        if self.new_sequence:
+        try:
+            ns = kw["new_sequence"]
+        except KeyError:
+            ns = True
+        else:
+            del kw["new_sequence"]
+
+        if ns and self.new_sequence:
             self.new_sequence = False
             self.current_sequence += 1
 
