@@ -25,11 +25,16 @@ from sysbusdev_description_settings import \
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
+        kw["columns"] = [
+            "directory"
+        ]
+
         VarTreeview.__init__(self, *args, **kw)
 
         self.descs = descriptions
 
         self.heading("#0", text = _("Name"))
+        self.heading("directory", text = _("Directory"))
 
         self.after(0, self.update)
 
@@ -37,7 +42,7 @@ class DescriptionsTreeview(VarTreeview):
         self.delete(*self.get_children())
 
         for i, d in enumerate(self.descs):
-            self.insert('', i, text = d.name)
+            self.insert('', i, text = d.name, values = [d.directory])
 
 class ProjectWidget(PanedWindow):
     def __init__(self, project, *args, **kw):
