@@ -175,6 +175,12 @@ class ProjectHistoryTracker(HistoryTracker):
             *(op_args + (self.p,)), **op_kw
         )
 
+    # explicitly attach consequent staged operation to new sequence
+    def start_new_sequence(self):
+        if self.new_sequence:
+            self.new_sequence = False
+            self.current_sequence += 1
+
     def get_machine_proxy(self, machine_description):
         return MachineProxyTracker(self, machine_description)
 
@@ -190,8 +196,7 @@ class ProjectHistoryTracker(HistoryTracker):
         else:
             del kw["new_sequence"]
 
-        if ns and self.new_sequence:
-            self.new_sequence = False
-            self.current_sequence += 1
-
         HistoryTracker.commit(self, *args, **kw)
+
+        if ns:
+            self.start_new_sequence()
