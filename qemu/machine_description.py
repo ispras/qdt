@@ -707,7 +707,7 @@ class MachineNode(QOMDescription):
         else:
             return
 
-        if with_id:
+        if with_id is not None:
             if with_id in self.id2node.keys():
                 raise NodeIdIsAlreadyInUse()
             if not n.id == -1:
