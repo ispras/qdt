@@ -174,7 +174,7 @@ class VarTreeview(Treeview):
             binding = TreeviewVarBinding(self, column, text_var)
             text_var.trace_variable("w", binding.on_var_changed)
 
-        Treeview.heading(self, column, **kw)
+        return Treeview.heading(self, column, **kw)
 
 class ComboboxEntryBinding():
     def __init__(self, varcombobox, idx, variable):
