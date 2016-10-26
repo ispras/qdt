@@ -27,6 +27,12 @@ from sysbusdev_description_settings import \
 from tkFont import \
     Font
 
+from gui_frame import \
+    GUIFrame
+
+from ttk import \
+    Scrollbar
+
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
         kw["columns"] = [
@@ -82,8 +88,25 @@ class ProjectWidget(PanedWindow):
 
         self.p = project
 
-        self.tv_descs = DescriptionsTreeview(self.p.descriptions)
-        self.add(self.tv_descs)
+        fr = GUIFrame(self)
+        fr.grid()
+        fr.rowconfigure(0, weight = 1)
+        fr.rowconfigure(1, weight = 0)
+        fr.columnconfigure(0, weight = 1)
+        fr.columnconfigure(1, weight = 0)
+
+        tv = self.tv_descs = DescriptionsTreeview(self.p.descriptions, fr)
+        tv.grid(row = 0, column = 0, sticky = "NEWS")
+
+        vsb = Scrollbar(fr, orient="vertical", command = tv.yview)
+        vsb.grid(row = 0, column = 1, sticky = "NS")
+
+        hsb = Scrollbar(fr, orient="horizontal", command = tv.xview)
+        hsb.grid(row = 1, column = 0, sticky = "EW")
+
+        tv.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)
+
+        self.add(fr)
 
         self.nb_descriptions = CloseButtonNotebook(self)
         self.add(self.nb_descriptions)
