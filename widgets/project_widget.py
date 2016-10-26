@@ -24,6 +24,9 @@ from qemu import \
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
+from tkFont import \
+    Font
+
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
         kw["columns"] = [
@@ -34,16 +37,44 @@ class DescriptionsTreeview(VarTreeview):
 
         self.descs = descriptions
 
-        self.heading("#0", text = _("Name"))
-        self.heading("directory", text = _("Directory"))
+        ml_text = _("Name")
+        self.heading("#0", text = ml_text)
+        ml_text.trace_variable("w", self.on_column_heading_changed)
+
+        ml_text = _("Directory")
+        self.heading("directory", text = ml_text)
+        ml_text.trace_variable("w", self.on_column_heading_changed)
 
         self.after(0, self.update)
+
+    def on_column_heading_changed(self, *args):
+        self.adjust_widths()
+
+    def adjust_widths(self):
+        f = Font()
+
+        max_name_len = f.measure(self.heading("#0")["text"])
+        max_dir_len = f.measure(self.heading("directory")["text"])
+
+        for d in self.descs:
+            l = f.measure(d.name)
+            if l > max_name_len:
+                max_name_len = l
+
+            l = f.measure(d.directory)
+            if l > max_dir_len:
+                max_dir_len = l
+
+            self.column("#0", width = max_name_len)
+            self.column("directory", width = max_dir_len)
 
     def update(self):
         self.delete(*self.get_children())
 
         for i, d in enumerate(self.descs):
             self.insert('', i, text = d.name, values = [d.directory])
+
+        self.adjust_widths()
 
 class ProjectWidget(PanedWindow):
     def __init__(self, project, *args, **kw):
