@@ -12,6 +12,7 @@ from qemu import \
     MachineNode
 
 from Tkinter import \
+    NO, \
     PanedWindow
 
 from common import \
@@ -50,6 +51,9 @@ class DescriptionsTreeview(VarTreeview):
         ml_text = _("Directory")
         self.heading("directory", text = ml_text)
         ml_text.trace_variable("w", self.on_column_heading_changed)
+
+        self.column("#0", stretch = NO)
+        self.column("directory", stretch = NO)
 
         self.after(0, self.update)
 
