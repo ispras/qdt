@@ -18,6 +18,7 @@ from common import \
     mlget as _
 
 from qemu import \
+    DOp_SetAttr, \
     POp_AddDesc
 
 from sysbusdev_description_settings import \
@@ -108,6 +109,8 @@ class ProjectWidget(PanedWindow):
                         # added
                         self.desc2w[desc] = []
                         break
+        elif isinstance(op, DOp_SetAttr):
+            self.tv_descs.update()
 
     def on_notebook_tab_closed(self, event):
         tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ] 
