@@ -816,6 +816,19 @@ class MacroDefinition(SourceChunk):
         self.macro = macro
 
 class VariableDeclaration(SourceChunk):
+    @staticmethod
+    def gen_chunks(var, indent = "", extern = False):
+        ch = VariableDeclaration(var, indent, extern)
+
+        refs = var.type.gen_defining_chunk_list()
+
+        # remove self-generated references
+        ch.clean_references()
+
+        ch.add_references(refs)
+
+        return [ch] + refs
+
     def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(
             name = "Variable {} of type {} declaration".format(
@@ -835,6 +848,23 @@ class VariableDeclaration(SourceChunk):
         self.variable = var
 
 class VariableDefinition(SourceChunk):
+    @staticmethod
+    def gen_chunks(var, indent="", append_nl = True):
+        ch = VariableDefinition(var, indent, append_nl)
+
+        refs = var.type.gen_defining_chunk_list()
+        for v in var.initializer.used_variables:
+            refs.append(v.get_definition_chunk())
+
+        for t in var.initializer.used_types:
+            refs.extend(t.gen_defining_chunk_list())
+
+        # remove self-generated references
+        ch.clean_references()
+
+        ch.add_references(refs)
+        return [ch] + refs
+
     def __init__(self, var, indent="", append_nl = True):
         # add indent to initializer code
         init_code_lines = var.initializer.code.split('\n')
@@ -872,6 +902,25 @@ class VariableDefinition(SourceChunk):
         return self.variable
 
 class VariableUsage(SourceChunk):
+    @staticmethod
+    def gen_chunks(var, initializer = None):
+        ch = VariableUsage(var, initializer)
+
+        refs = var.type.gen_defining_chunk_list()
+
+        if initializer is not None:
+            for v in initializer.used_variables:
+                refs.append(v.get_definition_chunk())
+
+            for t in initializer.used_types:
+                refs.extend(t.gen_defining_chunk_list())
+
+        # remove self-generated references
+        ch.clean_references()
+
+        ch.add_references(refs)
+        return [ch] + refs
+
     def __init__(self, var, initializer = None):
         references = var.type.gen_defining_chunk_list()
 
@@ -896,6 +945,41 @@ class VariableUsage(SourceChunk):
         self.initializer = initializer
 
 class StructureDeclaration(SourceChunk):
+    @staticmethod
+    def gen_chunks(struct,
+        fields_indent = "    ",
+        indent = "",
+        append_nl = True
+    ):
+        struct_begin = SourceChunk(
+            name = "Beginning of structure {} declaration".format(struct.name),
+            code = """\
+{indent}typedef struct _{struct_name} {{
+""".format(
+    indent = indent,
+    struct_name = struct.name
+)
+        )
+
+        struct_end = StructureDeclaration(struct, fields_indent, indent,
+            append_nl)
+
+        field_indent = "{}{}".format(indent, fields_indent)
+        field_chunks = []
+
+        for f in struct.fields:
+            field_declaration = f.gen_declaration_chunk(field_indent)
+
+            field_declaration.add_reference(struct_begin)
+            field_chunks.append(field_declaration)
+
+        # remove self-generated references
+        struct_end.clean_references()
+
+        struct_end.add_references(field_chunks)
+
+        return [struct_end, struct_begin] + field_chunks
+
     def __init__(self, struct, fields_indent="    ", indent="",
                  append_nl = True):
         struct_begin = SourceChunk(
@@ -970,6 +1054,19 @@ def gen_function_def_ref_chunks(f):
     return references
 
 class FunctionDeclaration(SourceChunk):
+    @staticmethod
+    def gen_chunks(function, indent = ""):
+        ch = FunctionDeclaration(function, indent)
+
+        refs = gen_function_decl_ref_chunks(function)
+
+        # remove self-generated references
+        ch.clean_references()
+
+        ch.add_references(refs)
+
+        return [ch] + refs
+
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(
             name = "Declaration of function %s" % function.name,
@@ -982,6 +1079,19 @@ class FunctionDeclaration(SourceChunk):
         return self.function
 
 class FunctionDefinition(SourceChunk):
+    @staticmethod
+    def gen_chunks(function, indent = "", append_nl = True):
+        ch = FunctionDefinition(function, indent)
+
+        refs = gen_function_decl_ref_chunks(function) + \
+               gen_function_def_ref_chunks(function)
+
+        # remove self-generated references
+        ch.clean_references()
+
+        ch.add_references(refs)
+        return [ch] + refs
+
     def __init__(self, function, indent = "", append_nl = True):
         body = " {}" if function.body == None else "\n{\n%s}" % function.body
 
