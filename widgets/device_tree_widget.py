@@ -4,7 +4,8 @@ from var_widgets import \
     VarButton, \
     VarLabelFrame
 
-from qemu import DeviceTree
+from qemu import \
+    qvd_get_registered
 
 from ttk import Scrollbar
 
@@ -15,21 +16,10 @@ from Tkinter import \
 from common import \
     mlget as _
 
-import os
-
 class DeviceTreeWidget(VarToplevel):
     def __init__(self, root, *args, **kw):
         VarToplevel.__init__(self, master = root, *args, **kw)
         self.qom_type_var = root.qom_type_var
-
-        #TODO: replace this + add check file
-        dt_db_fname = "examples/dt.json"
-        if os.path.isfile(dt_db_fname):
-            device_tree_json = DeviceTree()
-            print("Loading Device Tree from " + dt_db_fname)
-            device_tree_json.load_dt_db(dt_db_fname)
-        else:
-            return
 
         self.title(_("Device Tree"))
         self.grid()
@@ -87,8 +77,11 @@ class DeviceTreeWidget(VarToplevel):
         self.fr = VarLabelFrame(self, text = _("Select QOM type"))
         self.fr.grid(row = 0, column = 2, sticky = "SEWN")
 
+        #Check exception before __init__ call.
+        bp = root.mht.mach.project.build_path
+        qvd = qvd_get_registered(bp)
         #the QOM type of roots[0] is "device"
-        roots = device_tree_json.roots[0]["children"]
+        roots = qvd.qvc.device_tree[0]["children"]
         self.qom_create_tree("", roots)
 
     def qom_create_tree(self, parent_id, dt_list):
