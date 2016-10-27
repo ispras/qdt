@@ -127,7 +127,9 @@ def initialize(qemu_src):
     print("Qemu version is {}".format(qemu_version))
 
     include_path = os.path.join(qemu_src, 'include')
-    
+
+    add_base_types()
+
     header_db_fname = "header_db.json"
     if os.path.isfile(header_db_fname):
         print("Loading Qemu header inclusion tree from " + header_db_fname)
