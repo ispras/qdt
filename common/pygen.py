@@ -6,10 +6,20 @@ The file is to be a python script such that execution of the file will
 reconstruct the object.
 """
 class PyGenerator(object):
+    escape_characters = {
+        '\'': '\\\'',
+        '\\': '\\\\'
+    }
+
     def __init__(self, indent = "    "):
         self.indent = indent
 
         self.reset()
+
+    def escape(self, val):
+        for k, v in self.escape_characters.iteritems():
+            val = val.replace(k, v)
+        return val
 
     def reset(self):
         self.obj2name = {}
@@ -146,6 +156,12 @@ class PyGenerator(object):
         elif type(val) in [ int, long, bool, float ]:
             self.write(str(val))
         elif isinstance(val, str):
+            val = self.escape(val)
             self.write("'" + val + "'")
+        elif isinstance(val, unicode):
+            val = self.escape(val)
+            self.write("u'" + val + "'")
+        elif val is None:
+            self.write("None")
         else:
             self.write(self.obj2name[val])
