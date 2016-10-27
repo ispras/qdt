@@ -127,9 +127,9 @@ a field of a type defined in another non-header file {}.".format(
             if t.definer == self:
                 if type(t) == Function:
                     if type(self) == Header:
-                        chunks.append(t.gen_declaration())
+                        chunks.extend(t.gen_declaration_chunks())
                     else:
-                        chunks.append(t.gen_definition())
+                        chunks.extend(t.gen_definition_chunks())
                 else:
                     chunks.extend(t.gen_chunks())
 
@@ -562,11 +562,11 @@ class Function(Type):
         self.used_types = used_types
         self.used_globals = used_globals
 
-    def gen_declaration(self):
-        return FunctionDeclaration(self)
+    def gen_declaration_chunks(self):
+        return FunctionDeclaration.gen_chunks(self)
 
-    def gen_definition(self):
-        return FunctionDefinition(self)
+    def gen_definition_chunks(self):
+        return FunctionDefinition.gen_chunks(self)
 
     def gen_chunks(self):
         return FunctionDeclaration.gen_chunks(self)
