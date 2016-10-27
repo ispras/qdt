@@ -724,6 +724,10 @@ class SourceChunk(object):
         self.references.append(chunk)
         chunk.users.append(self)
 
+    def add_references(self, refs):
+        for r in refs:
+            self.add_reference(r)
+
     def del_reference(self, chunk):
         self.references.remove(chunk)
         chunk.users.remove(self)
