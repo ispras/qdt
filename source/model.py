@@ -118,13 +118,9 @@ a field of a type defined in another non-header file {}.".format(
 
     def gen_chunks(self):
         chunks = []
-        for h in self.inclusions.values():
-            chunks.append(HeaderInclusion(h))
 
         for t in self.types.values():
-            if type(t) == TypeReference:
-                continue
-            if t.definer == self:
+            if isinstance(t, TypeReference) or t.definer == self:
                 if type(t) == Function:
                     if type(self) == Header:
                         chunks.extend(t.gen_declaration_chunks())
