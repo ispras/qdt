@@ -828,7 +828,6 @@ class VariableDeclaration(SourceChunk):
                 var.name,
                 var.type.name
                 ),
-            references = var.type.gen_defining_chunk_list(),
             code = """\
 {indent}{extern}{type_name} {var_name};
 """.format(
@@ -868,19 +867,9 @@ class VariableDefinition(SourceChunk):
 
         self.variable = var
 
-        references = var.type.gen_defining_chunk_list()
-
-        for v in var.initializer.used_variables:
-            # Note that 0-th chunk is variable and rest are its dependencies
-            references.append(v.get_definition_chunks()[0])
-
-        for t in var.initializer.used_types:
-            references.extend(t.gen_defining_chunk_list())
-
         super(VariableDefinition, self).__init__(
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
-            references = references,
             code = """\
 {indent}{static}{type_name} {var_name} = {init};{nl}
 """.format(
@@ -919,21 +908,9 @@ class VariableUsage(SourceChunk):
         return [ch] + refs
 
     def __init__(self, var, initializer = None):
-        references = var.type.gen_defining_chunk_list()
-
-        if not initializer == None:
-            for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
-                references.append(v.get_definition_chunks()[0])
-
-            for t in initializer.used_types:
-                references.extend(t.gen_defining_chunk_list())
-
         if type(var.type) == Macro:
             super(VariableUsage, self).__init__(
                 name = "Usage of macro %s" % var.type.name,
-                references = references,
                 code = var.type.gen_usage_string(initializer)
                 )
         else:
@@ -982,17 +959,6 @@ class StructureDeclaration(SourceChunk):
 
     def __init__(self, struct, fields_indent="    ", indent="",
                  append_nl = True):
-        struct_begin = SourceChunk(
-        name = "Beginning of structure {} declaration".format(struct.name),
-        code = """\
-{indent}typedef struct _{struct_name} {{
-""".format(
-        indent = indent,
-        struct_name = struct.name
-    ),
-        references = []
-            )
-
         super(StructureDeclaration, self).__init__(
             name = "Ending of structure {} declaration".format(struct.name),
             code = """\
@@ -1002,16 +968,7 @@ class StructureDeclaration(SourceChunk):
     struct_name = struct.name,
     nl = "\n" if append_nl else ""
     ),
-            references = [struct_begin]
             )
-
-        field_indent = "{}{}".format(indent, fields_indent)
-
-        for f in struct.fields:
-            # Note that 0-th chunk is field and rest are its dependencies
-            field_declaration = f.gen_declaration_chunks(field_indent)[0]
-            field_declaration.add_reference(struct_begin)
-            self.add_reference(field_declaration)
 
         self.structure = struct
 
@@ -1072,7 +1029,6 @@ class FunctionDeclaration(SourceChunk):
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(
             name = "Declaration of function %s" % function.name,
-            references = gen_function_decl_ref_chunks(function),
             code = "%s;" % gen_function_declaration_string(indent, function)
             )
         self.function = function
@@ -1100,12 +1056,8 @@ class FunctionDefinition(SourceChunk):
         if append_nl:
             body +="\n"
 
-        references = gen_function_decl_ref_chunks(function)
-        references.extend(gen_function_def_ref_chunks(function))
-
         super(FunctionDefinition, self).__init__(
             name = "Definition of function %s" % function.name,
-            references = references,
             code = "{dec}{body}\n".format(
                 dec = gen_function_declaration_string(indent, function),
                 body = body
