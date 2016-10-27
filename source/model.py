@@ -463,8 +463,8 @@ of incomplete type {}.".format(name, self.name))
         else:
             return [self.definer]
 
-    def gen_chunk(self):
-        raise Exception("Attempt to generate source chunk for type {}"
+    def gen_chunks(self):
+        raise Exception("Attempt to generate source chunks for type {}"
             .format(self.name))
 
     def gen_defining_chunk_list(self):
@@ -476,8 +476,6 @@ of incomplete type {}.".format(name, self.name))
             return []
         else:
             return self.gen_chunks()
-
-    gen_chunks = gen_chunk
 
 class TypeReference(Type):
     def __init__(self, _type):
@@ -494,11 +492,9 @@ reference {}.".format(_type.name))
     def get_definers(self):
         return self.type.get_definers()
 
-    def gen_chunk(self):
-        raise Exception("Attempt to generate source chunk for \
+    def gen_chunks(self):
+        raise Exception("Attempt to generate source chunks for \
 reference to type {}".format(self.name))
-
-    gen_chunks = gen_chunk
 
     def gen_var(self, name, pointer = False, initializer = None,
             static = False):
@@ -540,9 +536,6 @@ is not added to a source", self.name)
     def append_field_t_s(self, type_name, name, pointer = False):
         self.append_field_t(Type.lookup(type_name), name, pointer)
 
-    def gen_chunk(self):
-        return StructureDeclaration(self)
-
     def gen_chunks(self):
         return StructureDeclaration.gen_chunks(self)
 
@@ -575,9 +568,6 @@ class Function(Type):
     def gen_definition(self):
         return FunctionDefinition(self)
 
-    def gen_chunk(self):
-        return self.gen_declaration()
-
     def gen_chunks(self):
         return FunctionDeclaration.gen_chunks(self)
 
@@ -602,9 +592,6 @@ class Macro(Type):
 
         self.args = args
         self.text = text
-
-    def gen_chunk(self):
-        return MacroDefinition(self)
 
     def gen_chunks(self):
         return [ MacroDefinition(self) ]
@@ -674,9 +661,6 @@ class Usage():
     def __init__(self, var, initializer = None):
         self.variable = var
         self.initalizer = initializer
-
-    def gen_chunk(self):
-        return VariableUsage(self.variable, self.initalizer)
 
     def gen_chunks(self):
         return VariableUsage.gen_chunks(self.variable, self.initalizer)
