@@ -493,8 +493,7 @@ reference {}.".format(_type.name))
         return self.type.get_definers()
 
     def gen_chunks(self):
-        raise Exception("Attempt to generate source chunks for \
-reference to type {}".format(self.name))
+        return [ HeaderInclusion(self.type.definer) ]
 
     def gen_var(self, name, pointer = False, initializer = None,
             static = False):
