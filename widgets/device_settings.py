@@ -22,7 +22,8 @@ from qemu import \
         MOp_SetDevQOMType, \
         MOp_DelDevProp, \
         MOp_AddDevProp, \
-        MOp_SetDevProp
+        MOp_SetDevProp, \
+    qvd_get_registered
 
 from itertools import \
     izip, \
@@ -327,6 +328,19 @@ class DeviceSettingsWidget(SettingsWidget):
             command = self.on_press_select_qom_type
         )
         b.grid(row = 0, column = 2, sticky = "EW")
+        # Check for device tree
+        bp = self.mht.mach.project.build_path
+        if bp == None:
+            b["state"] = "disabled"
+        else:
+            try:
+                qvd = qvd_get_registered(bp)
+            except Exception:
+                b["state"] = "disabled"
+            if qvd == None or \
+               qvd.qvc == None or \
+               qvd.qvc.device_tree == None:
+                b["state"] = "disabled"
 
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
