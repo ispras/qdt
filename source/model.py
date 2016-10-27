@@ -467,22 +467,15 @@ of incomplete type {}.".format(name, self.name))
         raise Exception("Attempt to generate source chunk for type {}"
             .format(self.name))
 
-    def gen_defining_chunk(self):
-        if self.definer == None:
-            return None
-        elif type(self.definer) == Header:
-            return HeaderInclusion(self.definer)
-        elif self.base:
-            return None
-        else:
-            return self.gen_chunk()
-
     def gen_defining_chunk_list(self):
-        d = self.gen_defining_chunk()
-        if d == None:
+        if self.definer == None:
+            return []
+        elif type(self.definer) == Header:
+            return [ HeaderInclusion(self.definer) ]
+        elif self.base:
             return []
         else:
-            return [d]
+            return self.gen_chunks()
 
     gen_chunks = gen_chunk
 
