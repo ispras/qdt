@@ -16,6 +16,11 @@ from widgets import \
     VarMenu, \
     VarTk
 
+import argparse
+
+from qemu_device_creator import \
+    arg_type_directory
+
 import cPickle
 import qemu
 
@@ -353,6 +358,17 @@ all changes are saved. """
             )
 
 def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--qemu-build', '-b',
+        default = '.',
+        type = arg_type_directory,
+        metavar = 'path_to_qemu_build',
+        )
+
+    arguments = parser.parse_args()
+
     root = QDCGUIWindow()
 
     try:
