@@ -3,7 +3,8 @@ from source import \
     Type, \
     Function, \
     Macro, \
-    Structure
+    Structure, \
+    add_base_types
 
 from pci_ids import \
     re_pci_vendor, \
