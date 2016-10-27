@@ -6,6 +6,18 @@ from source import \
     Structure, \
     add_base_types
 
+from version_description import \
+    QemuVersionDescription, \
+    qvd_create, \
+    qvd_get, \
+    qvd_get_registered, \
+    qvds_load, \
+    qvds_load_with_cache, \
+    qvds_init_cache, \
+    forget_build_path, \
+    load_build_path_list, \
+    account_build_path
+
 from pci_ids import \
     re_pci_vendor, \
     re_pci_class, \
