@@ -7,9 +7,10 @@ from common import \
     History
 
 class GUIProject(QProject):
-    def __init__(self, layouts = [], **kw):
+    def __init__(self, layouts = [], build_path = None, **kw):
         QProject.__init__(self, **kw)
 
+        self.build_path = build_path
         self.layouts = layouts
         self.pht = ProjectHistoryTracker(self, History())
 
@@ -26,6 +27,7 @@ class GUIProject(QProject):
         gen.reset_gen(self)
         gen.gen_field("layouts = ")
         gen.pprint(self.layouts)
+        gen.gen_field("build_path = " + gen.gen_const(self.build_path))
         gen.gen_field("descriptions = [")
         gen.line()
         gen.push_indent()
