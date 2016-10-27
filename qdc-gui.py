@@ -419,6 +419,8 @@ def main():
         root.set_project(project)
         root.set_current_file_name("project.py")
 
+    root.proj.build_path = arguments.qemu_build
+
     root.geometry("1000x750")
 
     root.mainloop()
