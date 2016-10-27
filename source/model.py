@@ -131,7 +131,7 @@ a field of a type defined in another non-header file {}.".format(
                     else:
                         chunks.append(t.gen_definition())
                 else:
-                    chunks.append(t.gen_chunk())
+                    chunks.extend(t.gen_chunks())
 
         if type(self) == Header:
             for gv in self.global_variables.values():
@@ -141,14 +141,14 @@ a field of a type defined in another non-header file {}.".format(
                 chunks.append(gv.get_definition_chunk())
 
         for u in self.usages:
-            usage_chunk = u.gen_chunk();
+            usage_chunks = u.gen_chunks();
             if type(u.variable.type) == Macro:
-                chunks.append(usage_chunk)
+                chunks.extend(usage_chunks)
             else:
                 term_chunk = SourceChunk(
                     name = "Variable %s usage terminator" % u.variable.name,
                     code = ";\n",
-                    references = [usage_chunk])
+                    references = usage_chunks)
                 chunks.append(term_chunk)
 
         return chunks
