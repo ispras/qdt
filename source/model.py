@@ -135,10 +135,10 @@ a field of a type defined in another non-header file {}.".format(
 
         if type(self) == Header:
             for gv in self.global_variables.values():
-                chunks.append(gv.gen_declaration_chunk(extern = True))
+                chunks.extend(gv.gen_declaration_chunks(extern = True))
         elif type(self) == Source:
             for gv in self.global_variables.values():
-                chunks.append(gv.get_definition_chunk())
+                chunks.extend(gv.get_definition_chunks())
 
         for u in self.usages:
             usage_chunks = u.gen_chunks();
@@ -646,11 +646,11 @@ class Variable():
         self.initializer = initializer
         self.static = static
 
-    def gen_declaration_chunk(self, indent="", extern = False):
-        return VariableDeclaration(self, indent, extern)
+    def gen_declaration_chunks(self, indent="", extern = False):
+        return VariableDeclaration.gen_chunks(self, indent, extern)
 
-    def get_definition_chunk(self, indent=""):
-        return VariableDefinition(self, indent)
+    def get_definition_chunks(self, indent=""):
+        return VariableDefinition.gen_chunks(self, indent)
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
@@ -847,7 +847,8 @@ class VariableDefinition(SourceChunk):
 
         refs = var.type.gen_defining_chunk_list()
         for v in var.initializer.used_variables:
-            refs.append(v.get_definition_chunk())
+            # Note that 0-th chunk is variable and rest are its dependencies
+            refs.append(v.get_definition_chunks()[0])
 
         for t in var.initializer.used_types:
             refs.extend(t.gen_defining_chunk_list())
@@ -870,7 +871,8 @@ class VariableDefinition(SourceChunk):
         references = var.type.gen_defining_chunk_list()
 
         for v in var.initializer.used_variables:
-            references.append(v.get_definition_chunk())
+            # Note that 0-th chunk is variable and rest are its dependencies
+            references.append(v.get_definition_chunks()[0])
 
         for t in var.initializer.used_types:
             references.extend(t.gen_defining_chunk_list())
@@ -903,7 +905,9 @@ class VariableUsage(SourceChunk):
 
         if initializer is not None:
             for v in initializer.used_variables:
-                refs.append(v.get_definition_chunk())
+                """ Note that 0-th chunk is variable and rest are its
+                dependencies """
+                refs.append(v.get_definition_chunks()[0])
 
             for t in initializer.used_types:
                 refs.extend(t.gen_defining_chunk_list())
@@ -919,7 +923,9 @@ class VariableUsage(SourceChunk):
 
         if not initializer == None:
             for v in initializer.used_variables:
-                references.append(v.get_definition_chunk())
+                """ Note that 0-th chunk is variable and rest are its
+                dependencies """
+                references.append(v.get_definition_chunks()[0])
 
             for t in initializer.used_types:
                 references.extend(t.gen_defining_chunk_list())
@@ -961,7 +967,8 @@ class StructureDeclaration(SourceChunk):
         field_chunks = []
 
         for f in struct.fields:
-            field_declaration = f.gen_declaration_chunk(field_indent)
+            # Note that 0-th chunk is field and rest are its dependencies
+            field_declaration = f.gen_declaration_chunks(field_indent)[0]
 
             field_declaration.add_reference(struct_begin)
             field_chunks.append(field_declaration)
@@ -1001,7 +1008,8 @@ class StructureDeclaration(SourceChunk):
         field_indent = "{}{}".format(indent, fields_indent)
 
         for f in struct.fields:
-            field_declaration = f.gen_declaration_chunk(field_indent)
+            # Note that 0-th chunk is field and rest are its dependencies
+            field_declaration = f.gen_declaration_chunks(field_indent)[0]
             field_declaration.add_reference(struct_begin)
             self.add_reference(field_declaration)
 
@@ -1042,7 +1050,8 @@ def gen_function_def_ref_chunks(f):
         references.extend(t.gen_defining_chunk_list())
 
     for g in f.used_globals:
-        references.append(g.get_definition_chunk())
+        # Note that 0-th chunk is the global and rest are its dependencies
+        references.append(g.get_definition_chunks()[0])
 
     return references
 
