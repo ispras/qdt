@@ -484,6 +484,8 @@ of incomplete type {}.".format(name, self.name))
         else:
             return [d]
 
+    gen_chunks = gen_chunk
+
 class TypeReference(Type):
     def __init__(self, _type):
         if type(_type) == TypeReference:
@@ -502,6 +504,8 @@ reference {}.".format(_type.name))
     def gen_chunk(self):
         raise Exception("Attempt to generate source chunk for \
 reference to type {}".format(self.name))
+
+    gen_chunks = gen_chunk
 
     def gen_var(self, name, pointer = False, initializer = None,
             static = False):
@@ -546,6 +550,9 @@ is not added to a source", self.name)
     def gen_chunk(self):
         return StructureDeclaration(self)
 
+    def gen_chunks(self):
+        return StructureDeclaration.gen_chunks(self)
+
 class Function(Type):
     def __init__(self,
             name,
@@ -578,6 +585,9 @@ class Function(Type):
     def gen_chunk(self):
         return self.gen_declaration()
 
+    def gen_chunks(self):
+        return FunctionDeclaration.gen_chunks(self)
+
     def use_as_prototype(self,
         name,
         body = None,
@@ -602,6 +612,9 @@ class Macro(Type):
 
     def gen_chunk(self):
         return MacroDefinition(self)
+
+    def gen_chunks(self):
+        return [ MacroDefinition(self) ]
 
     def gen_usage_string(self, init = None):
         if self.args == None:
@@ -671,6 +684,9 @@ class Usage():
 
     def gen_chunk(self):
         return VariableUsage(self.variable, self.initalizer)
+
+    def gen_chunks(self):
+        return VariableUsage.gen_chunks(self.variable, self.initalizer)
 
 class Operand():
     def __init__(self, name, data_references=[]):
