@@ -732,6 +732,10 @@ class SourceChunk(object):
         self.references.remove(chunk)
         chunk.users.remove(self)
 
+    def clean_references(self):
+        for r in list(self.references):
+            self.del_reference(r)
+
     def check_cols_fix_up(self, max_cols = 80, indent='    '):
         lines = self.code.split('\n')
         code = ''
