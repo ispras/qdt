@@ -815,9 +815,6 @@ class VariableDeclaration(SourceChunk):
 
         refs = var.type.gen_defining_chunk_list()
 
-        # remove self-generated references
-        ch.clean_references()
-
         ch.add_references(refs)
 
         return [ch] + refs
@@ -851,9 +848,6 @@ class VariableDefinition(SourceChunk):
 
         for t in var.initializer.used_types:
             refs.extend(t.gen_defining_chunk_list())
-
-        # remove self-generated references
-        ch.clean_references()
 
         ch.add_references(refs)
         return [ch] + refs
@@ -901,9 +895,6 @@ class VariableUsage(SourceChunk):
             for t in initializer.used_types:
                 refs.extend(t.gen_defining_chunk_list())
 
-        # remove self-generated references
-        ch.clean_references()
-
         ch.add_references(refs)
         return [ch] + refs
 
@@ -949,9 +940,6 @@ class StructureDeclaration(SourceChunk):
 
             field_declaration.add_reference(struct_begin)
             field_chunks.append(field_declaration)
-
-        # remove self-generated references
-        struct_end.clean_references()
 
         struct_end.add_references(field_chunks)
 
@@ -1019,9 +1007,6 @@ class FunctionDeclaration(SourceChunk):
 
         refs = gen_function_decl_ref_chunks(function)
 
-        # remove self-generated references
-        ch.clean_references()
-
         ch.add_references(refs)
 
         return [ch] + refs
@@ -1043,9 +1028,6 @@ class FunctionDefinition(SourceChunk):
 
         refs = gen_function_decl_ref_chunks(function) + \
                gen_function_def_ref_chunks(function)
-
-        # remove self-generated references
-        ch.clean_references()
 
         ch.add_references(refs)
         return [ch] + refs
