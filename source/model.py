@@ -26,12 +26,16 @@ class Source(object):
         self.usages = []
 
     def add_usage(self, usage):
+        TypeFixerVisitor(self, usage).visit()
+
         self.usages.append(usage)
 
     def add_global_variable(self, var):
         if var.name in self.global_variables:
             raise Exception("Variable with name %s is already in file %s"
                 % (var.name, self.name))
+
+        TypeFixerVisitor(self, var).visit()
 
         # Auto add definers for type
         for s in var.type.get_definers():
@@ -106,6 +110,8 @@ found in source {}. The type is defined both in {} and {}.\
         if type(_type) == TypeReference:
             raise Exception("""A type reference ({}) cannot be 
 added to a source ({}) externally""".format(_type.name, self.path))
+
+        TypeFixerVisitor(self, _type).visit()
 
         _type.definer = self
         self.types[_type.name] = _type
