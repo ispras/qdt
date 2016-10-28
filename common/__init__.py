@@ -33,3 +33,7 @@ def unbind(tk_widget, sequence, funcid = None):
 
 from class_tools import \
     gen_class_args
+
+from visitor import \
+    ObjectVisitor, \
+    BreakVisiting
