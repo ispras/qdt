@@ -501,6 +501,8 @@ reference {}.".format(_type.name))
     def gen_chunks(self):
         return [ HeaderInclusion(self.type.definer) ]
 
+    gen_defining_chunk_list = gen_chunks
+
     def gen_var(self, name, pointer = False, initializer = None,
             static = False):
         raise Exception("""Attempt to generate variable of type %s by
