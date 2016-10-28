@@ -11,6 +11,10 @@ if ply not in sys.path:
 from ply.lex import lex
 from ply.cpp import *
 
+from common import \
+    ObjectVisitor, \
+    BreakVisiting
+
 # Source code models
 
 class Source(object):
@@ -696,6 +700,45 @@ class Variable():
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
+
+# Type inspecting
+
+class TypeFixerVisitor(ObjectVisitor):
+    def __init__(self, source, type_object, *args, **kw):
+        kw["field_name"] = "__type_references__"
+        ObjectVisitor.__init__(self, type_object, *args, **kw)
+
+        self.source = source
+
+    def on_visit(self):
+        if isinstance(self.cur, Type):
+            t = self.cur
+            if isinstance(t, TypeReference):
+                raise BreakVisiting()
+
+            if t.base:
+                raise BreakVisiting()
+
+            """ Skip pointer types without name. Nameless pointer does not have
+            definer and should not be replaced with type reference """
+            if isinstance(t, Pointer) and not t.is_named:
+                return
+
+            # Do not add definerless types to the Source automatically
+            if t.definer is None:
+                return
+
+            if t.definer is self.source:
+                return
+
+            try:
+                tr = self.source.types[t.name]
+            except KeyError:
+                self.source.add_inclusion(t.definer)
+                # Now a reference to type t must be in types of the source
+                tr = self.source.types[t.name]
+
+            self.replace(tr)
 
 # Function and instruction models
 
