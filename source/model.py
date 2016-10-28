@@ -962,7 +962,7 @@ class StructureDeclaration(SourceChunk):
 
         self.structure = struct
 
-def gen_function_declaration_string(indent, function):
+def gen_function_declaration_string(indent, function, pointer_name = None):
     if function.args == None:
         args = "void"
     else:
@@ -977,7 +977,7 @@ def gen_function_declaration_string(indent, function):
         static = "static " if function.static else "",
         inline = "inline " if function.inline else "",
         ret_type = function.ret_type.name + " ",
-            name = function.name,
+            name = function.name if pointer_name is None else ('(*' + pointer_name + ')'),
             args = args
     )
 
