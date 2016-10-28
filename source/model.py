@@ -511,7 +511,14 @@ reference {}.".format(_type.name))
         return self.type.get_definers()
 
     def gen_chunks(self):
-        return [ HeaderInclusion(self.type.definer) ]
+        inc = HeaderInclusion(self.type.definer)
+
+        refs = []
+        for r in self.definer_references:
+            refs.extend(r.gen_defining_chunk_list())
+
+        inc.add_references(refs)
+        return [inc] + refs
 
     gen_defining_chunk_list = gen_chunks
 
