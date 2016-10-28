@@ -588,6 +588,43 @@ class Function(Type):
         return Variable(name = name, _type = self, 
                 initializer = initializer, static = static)
 
+class Pointer(Type):
+    def __init__(self, _type, name=None):
+        self.is_named = name is not None
+        name = name if self.is_named else _type.name + '*'
+
+        # do not add nameless pointers to type registry
+        if self.is_named:
+            super(Pointer, self).__init__(name,
+                incomplete = False,
+                base = False)
+        else:
+            self.name = name
+            self.incomplete = False
+            self.base = False
+
+        self.type = _type
+
+    def gen_chunks(self):
+        # strip function definition chunk, its references is only needed
+        if isinstance(self.type, Function):
+            refs = gen_function_decl_ref_chunks(self.type)
+        else:
+            refs = self.type.gen_defining_chunk_list()
+
+        if self.is_named:
+            ch = PointerTypeDeclaration(self.type, self.name)
+
+            """ 'typedef' does not require refererenced types to be visible.
+Hence, it is not correct to add references to the PointerTypeDeclaration
+chunk. The references is to be added to 'users' of the 'typedef'.
+        """
+            ch.add_references(refs)
+
+            return [ch] + refs
+        else:
+            return refs
+
 class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):
@@ -649,7 +686,10 @@ class Variable():
         self.static = static
 
     def gen_declaration_chunks(self, indent="", extern = False):
-        return VariableDeclaration.gen_chunks(self, indent, extern)
+        if isinstance(self.type, Pointer) and not self.type.is_named:
+            return PointerVariableDeclaration.gen_chunks(self, indent, extern)
+        else:
+            return VariableDeclaration.gen_chunks(self, indent, extern)
 
     def get_definition_chunks(self, indent=""):
         return VariableDefinition.gen_chunks(self, indent)
@@ -809,6 +849,61 @@ class MacroDefinition(SourceChunk):
             )
 
         self.macro = macro
+
+class PointerTypeDeclaration(SourceChunk):
+    def __init__(self, _type, def_name):
+        self.type = _type
+        self.def_name = def_name
+        name = 'Definition of pointer to type' + self.type.name
+
+        if type(self.type) == Function:
+            code = 'typedef ' + gen_function_declaration_string('', self.type, def_name)
+            code += ';\n'
+        else:
+            code = 'typedef ' + self.type.name + ' ' + def_name
+
+        super(PointerTypeDeclaration, self).__init__(name, code)
+
+    def get_origin(self):
+        return self.type
+
+class PointerVariableDeclaration(SourceChunk):
+    @staticmethod
+    def gen_chunks(var, indent="", extern=False):
+        ch = PointerVariableDeclaration(var, indent, extern)
+
+        refs = var.type.type.gen_defining_chunk_list()
+
+        ch.add_references(refs)
+
+        return [ch] + refs
+
+    def __init__(self, var, indent="", extern = False):
+        t = var.type.type
+        if type(t) == Function:
+            code = """\
+{indent}{extern}{decl_str};
+""".format(
+                indent = indent,
+                extern = "extern " if extern else "",
+                decl_str = gen_function_declaration_string('', t, var.name)
+                )
+        else:
+            code = """\
+{indent}{extern}{type_name} *{var_name};
+""".format(
+                indent = indent,
+                type_name = t.name,
+                var_name = var.name,
+                extern = "extern " if extern else ""
+            )
+        super(PointerVariableDeclaration, self).__init__(
+            name = "Declaration of pointer {} to type {}".format(
+                var.name,
+                t.name
+            ),
+            code = code
+        )
 
 class VariableDeclaration(SourceChunk):
     @staticmethod
