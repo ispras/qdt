@@ -508,6 +508,10 @@ reference {}.".format(_type.name))
         raise Exception("""Attempt to generate variable of type %s by
  reference""" % self.type.name)
 
+    def gen_usage_string(self, initializer):
+        # redirect to referenced type
+        return self.type.gen_usage_string(initializer)
+
 class Structure(Type):
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete=False)
