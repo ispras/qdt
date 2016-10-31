@@ -1008,14 +1008,10 @@ class VariableUsage(SourceChunk):
         return [ch] + refs
 
     def __init__(self, var, initializer = None):
-        if type(var.type) == Macro:
-            super(VariableUsage, self).__init__(
-                name = "Usage of macro %s" % var.type.name,
-                code = var.type.gen_usage_string(initializer)
-                )
-        else:
-            raise Exception("""Usage of variable of type %s is not
- implemented""" % var.type.name)
+        super(VariableUsage, self).__init__(
+            name = "Usage of variable of type %s" % var.type.name,
+            code = var.type.gen_usage_string(initializer)
+        )
 
         self.variable = var
         self.initializer = initializer
