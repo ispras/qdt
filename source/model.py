@@ -137,19 +137,8 @@ a field of a type defined in another non-header file {}.".format(
                 chunks.extend(gv.get_definition_chunks())
 
         for u in self.usages:
-            usage_chunks = u.gen_chunks();
-            if type(u.variable.type) == Macro \
-                or isinstance(u.variable.type, TypeReference) and \
-                    isinstance(u.variable.type.type, Macro) \
-            :
-                chunks.extend(usage_chunks)
-            else:
-                term_chunk = SourceChunk(
-                    name = "Variable %s usage terminator" % u.variable.name,
-                    code = ";\n",
-                    references = usage_chunks)
-                chunks.append(term_chunk)
-
+            chunks.extend(u.gen_chunks())
+ 
         return chunks
 
     def generate(self):
@@ -716,7 +705,19 @@ class Usage():
         self.initalizer = initializer
 
     def gen_chunks(self):
-        return VariableUsage.gen_chunks(self.variable, self.initalizer)
+        ret = VariableUsage.gen_chunks(self.variable, self.initalizer)
+        # do not add semicolon after macro usage
+        if not (type(self.variable.type) == Macro \
+            or isinstance(self.variable.type, TypeReference) and \
+                isinstance(self.variable.type.type, Macro) \
+        ):
+            term_chunk = SourceChunk(
+                name = "Variable %s usage terminator" % self.variable.name,
+                code = ";\n",
+                references = ret)
+            ret.append(term_chunk)
+
+        return ret 
 
 class Operand():
     def __init__(self, name, data_references=[]):
