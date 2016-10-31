@@ -488,11 +488,7 @@ of incomplete type {}.".format(name, self.name))
             .format(self.name))
 
     def gen_defining_chunk_list(self):
-        if self.definer == None:
-            return []
-        elif type(self.definer) == Header:
-            return [ HeaderInclusion(self.definer) ]
-        elif self.base:
+        if self.base:
             return []
         else:
             return self.gen_chunks()
