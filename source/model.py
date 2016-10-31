@@ -138,7 +138,10 @@ a field of a type defined in another non-header file {}.".format(
 
         for u in self.usages:
             usage_chunks = u.gen_chunks();
-            if type(u.variable.type) == Macro:
+            if type(u.variable.type) == Macro \
+                or isinstance(u.variable.type, TypeReference) and \
+                    isinstance(u.variable.type.type, Macro) \
+            :
                 chunks.extend(usage_chunks)
             else:
                 term_chunk = SourceChunk(
