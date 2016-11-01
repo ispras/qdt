@@ -493,6 +493,8 @@ reference {}.".format(_type.name))
         self.base = _type.base
         self.type = _type
 
+        self.definer_references = list(_type.definer.references)
+
     def get_definers(self):
         return self.type.get_definers()
 
