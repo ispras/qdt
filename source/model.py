@@ -471,7 +471,8 @@ class Type(object):
 of incomplete type {}.".format(name, self.name))
 
         if pointer:
-            return Variable(name = '*' + name, _type = self, 
+            pt = Pointer(self)
+            return Variable(name = name, _type = pt,
                 initializer = initializer, static = static)
         else:
             return Variable(name = name, _type = self, 
