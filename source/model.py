@@ -581,7 +581,7 @@ class Function(Type):
 class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):
-        super(Macro, self).__init__(name)
+        super(Macro, self).__init__(name, incomplete = False)
 
         self.args = args
         self.text = text
@@ -602,8 +602,7 @@ class Macro(Type):
 
     def gen_var(self):
         return super(Macro, self).gen_var(
-                name = "fake variable of macro %s" % self.name,
-                pointer = True, # MAcro is incomplete type
+                name = "fake variable of macro %s" % self.name
             )
 
     def gen_dict(self):
