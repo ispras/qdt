@@ -129,6 +129,20 @@ a field of a type defined in another non-header file {}.".format(
     def gen_chunks(self):
         chunks = []
 
+        # fix up types for headers with references
+        l = self.types.values()
+
+        while True:
+            for t in l:
+                if not isinstance(t, TypeReference):
+                    continue
+    
+                TypeFixerVisitor(self, t).visit()
+
+            if l == self.types.values():
+                break
+            l = self.types.values()
+
         for t in self.types.values():
             if isinstance(t, TypeReference) or t.definer == self:
                 if type(t) == Function:
