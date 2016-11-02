@@ -67,11 +67,11 @@ whose initializer code uses type {t} defined in non-header file {file}"
         if not header.path in self.inclusions:
             self.inclusions[header.path] = header
 
-            for name, t in header.types.items():
+            for t in header.types.values():
                 if type(t) == TypeReference:
-                    self.types[name] = TypeReference(t.type)
+                    self._add_type_recursive(TypeReference(t.type))
                 else:
-                    self.types[name] = TypeReference(t)
+                    self._add_type_recursive(TypeReference(t))
 
             if self in header.includers:
                 raise Exception("Header %s is in %s includers but does not \
