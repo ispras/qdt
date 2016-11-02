@@ -429,6 +429,37 @@ file %s defining the type" % (type_ref.type.name, self.path))
                 "g" if self.is_global else "l",
                 self.path))
 
+    @staticmethod
+    def _propagate_reference(h, ref):
+        h.add_reference(ref)
+
+        for u in h.includers:
+            if type(u) == Source:
+                continue
+            if ref in u.references:
+                continue
+            """ u is definer of ref or u has type reference to ref (i.e.
+transitively includes definer of ref)"""
+            if ref.name in u.types:
+                continue
+            Header._propagate_reference(u, ref)
+
+    @staticmethod
+    def propagate_references():
+        for h in Header.reg.values():
+            if not isinstance(h, Header):
+                continue
+
+            for ref in h.references:
+                for u in h.includers:
+                    if type(u) == Source:
+                        continue
+                    if ref in u.references:
+                        continue
+                    if ref.name in u.types:
+                        continue
+                    Header._propagate_reference(u, ref)
+
 # Type models
 
 class TypeNotRegistered(Exception):
