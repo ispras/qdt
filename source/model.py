@@ -69,7 +69,7 @@ whose initializer code uses type {t} defined in non-header file {file}"
 
             for name, t in header.types.items():
                 if type(t) == TypeReference:
-                    self.types[name] = t
+                    self.types[name] = TypeReference(t.type)
                 else:
                     self.types[name] = TypeReference(t)
 
@@ -383,7 +383,7 @@ file %s defining the type" % (type_ref.type.name, self.path))
             # Type was added. Hence, It is new type for the header
             for s in self.includers:
                 try:
-                    s._add_type_recursive(type_ref)
+                    s._add_type_recursive(TypeReference(type_ref.type))
                 except AddTypeRefToDefinerException:
                     # inclusion cycles will cause this exception
                     pass
@@ -392,10 +392,8 @@ file %s defining the type" % (type_ref.type.name, self.path))
         super(Header, self).add_type(_type)
 
         # Auto add type references to self includers
-        type_ref = TypeReference(_type)
-
         for s in self.includers:
-            s._add_type_recursive(type_ref)
+            s._add_type_recursive(TypeReference(_type))
 
     def __hash__(self):
         # key contains of 'g' or 'h' and header path
