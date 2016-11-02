@@ -166,6 +166,8 @@ a field of a type defined in another non-header file {}.".format(
         return chunks
 
     def generate(self):
+        Header.propagate_references()
+
         basename = os.path.basename(self.path)
         name = os.path.splitext(basename)[0]
 
