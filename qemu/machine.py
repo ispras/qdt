@@ -294,7 +294,7 @@ class MachineType(QOMType):
                     self.use_type_name(p.prop_type.set_f)
                     if Type.exists(p.prop_name):
                         self.use_type_name(p.prop_name)
-                    if Type.exists(p.prop_val):
+                    if isinstance(p.prop_val, str) and Type.exists(p.prop_val):
                         self.use_type_name(p.prop_val)
 
                     props_code += """
@@ -437,7 +437,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                           + self.gen_irq_connect(node.src, irq_name)
             elif isinstance(node, MemoryNode):
                 self.use_type_name("MemoryRegion")
-                if Type.exists(node.size):
+                if isinstance(node.size, str) and Type.exists(node.size):
                     self.use_type_name(node.size)
                 if Type.exists(node.name):
                     self.use_type_name(node.name)
