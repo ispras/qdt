@@ -1108,6 +1108,9 @@ class SourceFile:
             if not chunk.visited == 2:
                 deep_first_sort(chunk, new_chunks)
 
+        for chunk in new_chunks:
+            chunk.visited = 0
+
         # semantic sort
         new_chunks.sort(key = source_chunk_key)
 
