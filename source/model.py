@@ -1074,7 +1074,9 @@ class SourceFile:
     def remove_dup_chunk(self, ch, ch_remove):
         for user in list(ch_remove.users):
             user.del_reference(ch_remove)
-            user.add_reference(ch)
+            # prevent self references
+            if user is not ch:
+                user.add_reference(ch)
 
         self.chunks.remove(ch_remove)
 
