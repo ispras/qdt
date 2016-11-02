@@ -379,6 +379,10 @@ digraph HeaderInclusion {
             raise Exception('Trying to add header reference which is not a Type object')
         self.references.append(ref)
 
+    def add_references(self, refs):
+        for ref in refs:
+            self.add_reference(ref)
+
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
             raise AddTypeRefToDefinerException("Adding type %s reference to \
