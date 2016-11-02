@@ -1442,6 +1442,8 @@ class SourceFile:
 
         self.optimize_inclusions()
 
+        self.sort_chunks()
+
         writer.write("""
 /* {}.{} */
 """.format(
