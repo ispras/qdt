@@ -2,6 +2,7 @@ from common import \
     HistoryTracker
 
 from machine_editing import \
+    MOp_SetDevProp, \
     MOp_DelDevProp, \
     MOp_DelIOMapping, \
     MOp_AddDevice, \
@@ -14,6 +15,7 @@ from machine_editing import \
     MOp_DelIRQHub
 
 from machine_description import \
+    QOMPropertyTypeLink, \
     SystemBusDeviceNode
 
 class MachineProxyTracker(object):
@@ -100,6 +102,20 @@ class MachineProxyTracker(object):
 
         for prop in dev.properties:
             self.stage(MOp_DelDevProp, prop, dev_id)
+
+        """ If propery of other device is link to the device then set the
+        property to -1 """
+        for other_dev in self.mach.devices:
+            if other_dev is dev:
+                # Self-linking properties of the device is already deleted
+                continue
+
+            for prop in other_dev.properties:
+                if prop.prop_type is QOMPropertyTypeLink:
+                    if prop.prop_val is dev:
+                        self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None,
+                            prop, other_dev.id
+                        )
 
         self.stage(MOp_DelDevice, dev_id)
 
