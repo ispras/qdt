@@ -7,7 +7,7 @@ reconstruct the object.
 """
 class PyGenerator(object):
     escape_characters = {
-        '\'': '\\\'',
+        "'": "\\'",
         '\\': '\\\\'
     }
 
