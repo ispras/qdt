@@ -369,6 +369,14 @@ def main():
 
     arguments = parser.parse_args()
 
+    qemu.load_build_path_list()
+    qemu.account_build_path(arguments.qemu_build)
+
+    try:
+        qemu.qvds_load_with_cache()
+    except Exception, e:
+        print "QVD load filed: " + str(e) + "\n"
+
     root = QDCGUIWindow()
 
     try:
