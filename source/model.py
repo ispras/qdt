@@ -508,6 +508,8 @@ reference {}.".format(_type.name))
         # redirect to referenced type
         return self.type.gen_usage_string(initializer)
 
+    __type_references__ = ["definer_references"]
+
 class Structure(Type):
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete=False)
@@ -545,6 +547,8 @@ is not added to a source", self.name)
 
     def gen_chunks(self):
         return StructureDeclaration.gen_chunks(self)
+
+    __type_references__ = ["fields"]
 
 class Function(Type):
     def __init__(self,
@@ -592,6 +596,8 @@ class Function(Type):
         return Variable(name = name, _type = self, 
                 initializer = initializer, static = static)
 
+    __type_references__ = ["ret_type", "args", "used_types", "used_globals"]
+
 class Pointer(Type):
     def __init__(self, _type, name=None):
         self.is_named = name is not None
@@ -628,6 +634,8 @@ chunk. The references is to be added to 'users' of the 'typedef'.
             return [ch] + refs
         else:
             return refs
+
+    __type_references__ = ["type"]
 
 class Macro(Type):
     # args is list of strings
@@ -682,6 +690,8 @@ class Initializer():
         self.used_types = used_types
         self.used_variables = used_variables
 
+    __type_references__ = ["used_types", "used_variables"]
+
 class Variable():
     def __init__(self, name, _type, initializer = None, static = False):
         self.name = name
@@ -700,6 +710,8 @@ class Variable():
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
+
+    __type_references__ = ["type", "initializer"]
 
 # Type inspecting
 
@@ -761,6 +773,8 @@ class Usage():
             ret.append(term_chunk)
 
         return ret 
+
+    __type_references__ = ["variable", "initalizer"]
 
 class Operand():
     def __init__(self, name, data_references=[]):
