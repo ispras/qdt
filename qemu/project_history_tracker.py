@@ -15,6 +15,10 @@ from machine_editing import \
     MOp_DelIRQHub
 
 from machine_description import \
+    DeviceNode, \
+    BusNode, \
+    IRQHub, \
+    IRQLine, \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
 
@@ -155,6 +159,30 @@ class MachineProxyTracker(object):
             device_arguments["qom_type"] = default_qom_type
 
         self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
+
+    def delete_ids(self, node_ids):
+        for node_id in node_ids:
+            try:
+                n = self.mach.id2node[node_id]
+            except KeyError:
+                # The node was removed by one of previously called helper
+                continue
+
+            if isinstance(n, DeviceNode):
+                self.delete_device(node_id)
+            elif isinstance(n, BusNode):
+                self.delete_bus(node_id)
+            elif isinstance(n, IRQHub):
+                self.delete_irq_hub(node_id)
+            elif isinstance(n, IRQLine):
+                self.delete_irq_line(node_id)
+            else:
+                raise Exception(
+"No helper for deletion of node %d of type %s was defined" % \
+(n.id, type(n).__name__)
+                )
+
+            self.pht.commit(new_sequence = False)
 
     def __getattr__(self, name):
         return getattr(self.pht, name)
