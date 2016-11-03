@@ -1,4 +1,5 @@
 from machine_description import \
+    QOMPropertyTypeLink, \
     IRQLine, \
     IRQHub, \
     QOMPropertyValue
@@ -15,6 +16,30 @@ class MachineOperation(DescriptionOperation):
 
     def gen_node_id_entry(self, node_id):
         return copy.deepcopy(node_id)
+
+    """ Converts invariant link property value to python object reference used
+across machine description object. Non-link property values is just deeply
+copied. Invariant link value is an integer now. """
+    def prop_val_2_ref(self, prop_type, prop_val):
+        if prop_type == QOMPropertyTypeLink:
+            if prop_val == -1:
+                return None
+            else:
+                return self.mach.id2node[prop_val]
+        else:
+            return copy.deepcopy(prop_val)
+
+    """ Converts link property value presented by python object reference to
+invariant values (independent from the machine description instance). Non-link
+property values is just deeply copied. """
+    def prop_val_2_inv(self, prop_type, prop_val):
+        if prop_type == QOMPropertyTypeLink:
+            if prop_val is None:
+                return -1
+            else:
+                return copy.deepcopy(prop_val.id)
+        else:
+            return copy.deepcopy(prop_val)
 
     @property
     def mach(self):
