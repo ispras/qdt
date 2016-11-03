@@ -77,10 +77,10 @@ class DeviceTreeWidget(VarToplevel):
         self.fr = VarLabelFrame(self, text = _("Select QOM type"))
         self.fr.grid(row = 0, column = 2, sticky = "SEWN")
 
-        #Check exception before __init__ call.
+        # Check exception before __init__ call.
         bp = root.mht.mach.project.build_path
         qvd = qvd_get_registered(bp)
-        #the QOM type of roots[0] is "device"
+        # the QOM type of roots[0] is "device"
         roots = qvd.qvc.device_tree[0]["children"]
         self.qom_create_tree("", roots)
 
@@ -104,7 +104,7 @@ class DeviceTreeWidget(VarToplevel):
         self.qom_type_var.set(self.v.get())
         self.destroy()
 
-    #write selected qom type in qom_type_var
+    # write selected qom type in qom_type_var
     def on_b1_press_dt(self, event):
         item = self.device_tree.identify('item', event.x, event.y)
         if item:
