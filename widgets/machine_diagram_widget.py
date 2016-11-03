@@ -753,7 +753,13 @@ IRQ line creation
 
     def on_popup_single_irq_hub_delete(self):
         hid = self.selected[0]
-        hid = self.node2dev[self.id2node[hid]].id
+        node = self.id2node[hid]
+        hid = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, hid)
+
         self.mht.delete_irq_hub(hid)
         self.mht.commit()
 
@@ -761,7 +767,13 @@ IRQ line creation
 
     def on_popup_single_device_delete(self):
         dev_id = self.selected[0]
-        dev_id = self.node2dev[self.id2node[dev_id]].id
+        node = self.id2node[dev_id]
+        dev_id = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, dev_id)
+
         self.mht.delete_device(dev_id)
         self.mht.commit()
 
@@ -839,7 +851,13 @@ IRQ line creation
 
     def on_popup_single_bus_delete(self):
         bus_id = self.selected[0]
-        bus_id = self.node2dev[self.id2node[bus_id]].id
+        node = self.id2node[bus_id]
+        bus_id = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, bus_id)
+
         self.mht.delete_bus(bus_id)
         self.mht.commit()
 
