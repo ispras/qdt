@@ -12,32 +12,79 @@ from qemu import \
     MachineNode
 
 from Tkinter import \
+    NO, \
     PanedWindow
 
 from common import \
     mlget as _
 
 from qemu import \
+    DOp_SetAttr, \
     POp_AddDesc
 
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
+from tkFont import \
+    Font
+
+from gui_frame import \
+    GUIFrame
+
+from ttk import \
+    Scrollbar
+
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
+        kw["columns"] = [
+            "directory"
+        ]
+
         VarTreeview.__init__(self, *args, **kw)
 
         self.descs = descriptions
 
-        self.heading("#0", text = _("Name"))
+        ml_text = _("Name")
+        self.heading("#0", text = ml_text)
+        ml_text.trace_variable("w", self.on_column_heading_changed)
+
+        ml_text = _("Directory")
+        self.heading("directory", text = ml_text)
+        ml_text.trace_variable("w", self.on_column_heading_changed)
+
+        self.column("#0", stretch = NO)
+        self.column("directory", stretch = NO)
 
         self.after(0, self.update)
+
+    def on_column_heading_changed(self, *args):
+        self.adjust_widths()
+
+    def adjust_widths(self):
+        f = Font()
+
+        max_name_len = f.measure(self.heading("#0")["text"])
+        max_dir_len = f.measure(self.heading("directory")["text"])
+
+        for d in self.descs:
+            l = f.measure(d.name)
+            if l > max_name_len:
+                max_name_len = l
+
+            l = f.measure(d.directory)
+            if l > max_dir_len:
+                max_dir_len = l
+
+            self.column("#0", width = max_name_len)
+            self.column("directory", width = max_dir_len)
 
     def update(self):
         self.delete(*self.get_children())
 
         for i, d in enumerate(self.descs):
-            self.insert('', i, text = d.name)
+            self.insert('', i, text = d.name, values = [d.directory])
+
+        self.adjust_widths()
 
 class ProjectWidget(PanedWindow):
     def __init__(self, project, *args, **kw):
@@ -45,8 +92,25 @@ class ProjectWidget(PanedWindow):
 
         self.p = project
 
-        self.tv_descs = DescriptionsTreeview(self.p.descriptions)
-        self.add(self.tv_descs)
+        fr = GUIFrame(self)
+        fr.grid()
+        fr.rowconfigure(0, weight = 1)
+        fr.rowconfigure(1, weight = 0)
+        fr.columnconfigure(0, weight = 1)
+        fr.columnconfigure(1, weight = 0)
+
+        tv = self.tv_descs = DescriptionsTreeview(self.p.descriptions, fr)
+        tv.grid(row = 0, column = 0, sticky = "NEWS")
+
+        vsb = Scrollbar(fr, orient="vertical", command = tv.yview)
+        vsb.grid(row = 0, column = 1, sticky = "NS")
+
+        hsb = Scrollbar(fr, orient="horizontal", command = tv.xview)
+        hsb.grid(row = 1, column = 0, sticky = "EW")
+
+        tv.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)
+
+        self.add(fr)
 
         self.nb_descriptions = CloseButtonNotebook(self)
         self.add(self.nb_descriptions)
@@ -103,6 +167,8 @@ class ProjectWidget(PanedWindow):
                         # added
                         self.desc2w[desc] = []
                         break
+        elif isinstance(op, DOp_SetAttr):
+            self.tv_descs.update()
 
     def on_notebook_tab_closed(self, event):
         tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ] 
