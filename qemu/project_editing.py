@@ -97,10 +97,11 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         if not "directory" in kw:
             kw["directory"] = "hw"
 
-        QemuObjectCreationHelper.__init__(self, desc_class_name, kw)
+        QemuObjectCreationHelper.__init__(self, desc_class_name, kw, "desc_")
         ProjectOperation.__init__(self, *args, **kw)
 
         self.name = desc_name
+        self.desc_name = desc_name
 
     def __backup__(self):
         pass
