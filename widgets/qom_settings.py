@@ -16,6 +16,7 @@ from hotkey import \
     HKEntry
 
 from qemu import \
+    POp_AddDesc, \
     DOp_SetAttr
 
 class QOMDescriptionSettingsWidget(GUIFrame):
@@ -96,6 +97,13 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         if not op.writes(self.desc.name):
             return
  
+        if isinstance(op, POp_AddDesc):
+            try:
+                self.pht.p.find(name = self.desc.name).next()
+            except StopIteration:
+                # the operation removes current description
+                return
+
         self.__refresh__()
 
     def __on_destory__(self, *args, **kw):
