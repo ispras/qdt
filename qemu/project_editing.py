@@ -28,16 +28,32 @@ class QemuObjectCreationHelper(object):
     """ The class helps implement Qemu model object creation operations. It
     automates handling of arguments for __init__ method of created objects.
     The helper class __init__ method gets lists of handled class __init__
-    arguments. Then it moves them from kw dictionary to self. The 'new' method
-    of the helper class creates object of handled class with this arguments.
+    arguments. Then it moves them from kw dictionary to self. They are stored
+    as attributes of the helper class instance. Names of the attributes are
+    built using user defined prefix and names of corresponding handled class
+    __init__ arguments. The 'new' method of the helper class creates object of
+    handled class with this arguments.
     """
 
-    def __init__(self, class_name, kw):
+    def __init__(self, class_name, kw, arg_name_prefix = ""):
         self.nc = class_name
+
+        if arg_name_prefix and arg_name_prefix[0] == '_':
+            """
+            If attribute is set like o.__my_attr. The getattr(o, "__my_attr")
+will return AttributeError while the attribute is accessible by o.__my_attr
+expression. The valid attribute name for getattr is something about
+_MyClassName__my_attr in this case. It is Python internals...
+            """
+            raise Exception( """Prefix for target constructor arguments storing\
+ should not start with '_'."""
+            )
+
+        self.prefix = arg_name_prefix
 
         for n in self.al + self.kwl:
             if n in kw:
-                setattr(self, n, kw.pop(n))
+                setattr(self, self.prefix + n, kw.pop(n))
 
     @property
     def nc(self):
@@ -60,7 +76,7 @@ class QemuObjectCreationHelper(object):
         args = []
         for n in self.al:
             try:
-                val = getattr(self, n)
+                val = getattr(self, self.prefix + n)
             except AttributeError:
                 val = None
             args.append(val)
@@ -68,7 +84,7 @@ class QemuObjectCreationHelper(object):
         kw = {}
         for n in self.kwl:
             try:
-                val = getattr(self, n)
+                val = getattr(self, self.prefix + n)
             except AttributeError:
                 pass
             else:
