@@ -124,7 +124,12 @@ class HistoryTracker(object):
         self.on_changed_cbs.remove(callback)
 
     def __notify_on_changed__(self, *args, **kw):
-        for cb in self.on_changed_cbs:
+        """ Because listeners could add and/or remove callbacks during
+        notification the listener list should be copied before the process. """
+        for cb in list(self.on_changed_cbs):
+            if not cb in self.on_changed_cbs:
+                """ The callback has been denied during the loop. """
+                continue
             cb(*args, **kw)
 
     def undo(self, including = None):
