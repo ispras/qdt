@@ -1402,9 +1402,6 @@ class SourceFile:
         for chunk in new_chunks:
             chunk.visited = 0
 
-        # semantic sort
-        new_chunks.sort(key = source_chunk_key)
-
         self.chunks = new_chunks
 
     def add_chunks(self, chunks):
@@ -1512,6 +1509,9 @@ class SourceFile:
         self.sort_chunks()
 
         self.optimize_inclusions()
+
+        # semantic sort
+        self.chunks.sort(key = source_chunk_key)
 
         self.sort_chunks()
 
