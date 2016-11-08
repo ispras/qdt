@@ -68,7 +68,7 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     #     argument values will be excluded from key word arguments of this
     #     __init__ method.
     def __init__(self, node_class_name, *args, **kw):
-        QemuObjectCreationHelper.__init__(self, node_class_name, kw)
+        QemuObjectCreationHelper.__init__(self, node_class_name, kw, "node__")
         MachineNodeOperation.__init__(self, *args, **kw)
 
         self.value_import_helpers[Node] = self.node_import_helper
