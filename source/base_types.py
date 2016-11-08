@@ -9,7 +9,10 @@ def add_base_types():
 
     Header("stdint.h", is_global=True).add_types([
         Type(name = "uint64_t", incomplete = False, base = False)
+        , Type(name = "uint32_t", incomplete = False, base = False)
+        , Type(name = "uint16_t", incomplete = False, base = False)
         , Type(name = "uint8_t", incomplete = False, base = False)
+        , Type(name = "uintptr_t", incomplete = False, base = False)
         ])
 
     Header("stdbool.h", is_global=True).add_types([
