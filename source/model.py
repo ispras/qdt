@@ -1175,16 +1175,39 @@ class StructureDeclaration(SourceChunk):
         struct_end = StructureDeclaration(struct, fields_indent, indent,
             append_nl)
 
+        """
+        References map of structure definition chunks:
+
+                      ____--------> [self references of struct_begin ]
+                     /    ___-----> [ united references of all fields ]
+                    |    /     _--> [ references of struct_end ]
+                    |    |    /
+                    |    |    |
+             ----> struct_begin <-----
+            /           ^             \
+           |            |             |
+          field_0      field_i     field_N
+           ^              ^          ^
+           \              |          /
+            ----------struct_end-----
+
+        """
+
         field_indent = "{}{}".format(indent, fields_indent)
         field_chunks = []
+        field_refs = []
 
         for f in struct.fields:
             # Note that 0-th chunk is field and rest are its dependencies
-            field_declaration = f.gen_declaration_chunks(field_indent)[0]
+            decl_chunks = f.gen_declaration_chunks(field_indent)
+            field_declaration = decl_chunks[0]
 
+            field_refs.extend(decl_chunks[1:])
+            field_declaration.clean_references()
             field_declaration.add_reference(struct_begin)
             field_chunks.append(field_declaration)
 
+        struct_begin.add_references(field_refs)
         struct_end.add_references(field_chunks)
 
         return [struct_end, struct_begin] + field_chunks
