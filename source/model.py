@@ -649,6 +649,18 @@ class Function(Type):
         return Function(name, body, self.ret_type, self.args, static, inline,
             used_types)
 
+    def gen_body(self):
+        return Function(
+            self.name + '.body',
+            self.body,
+            self.ret_type,
+            self.args,
+            self.static,
+            self.inline,
+            [self],
+            self.used_globals
+        )
+
     def gen_var(self, name, initializer = None, static = False):
         return Variable(name = name, _type = self, 
                 initializer = initializer, static = static)
@@ -1189,13 +1201,18 @@ def gen_function_declaration_string(indent, function, pointer_name = None):
             if not a == function.args[-1]:
                 args += ", "
 
+    if function.name.find('.body') != -1:
+        decl_name = function.name[:-5]
+    else:
+        decl_name = function.name
+
     return "{indent}{static}{inline}{ret_type}{name}({args})".format(
         indent = indent,
         static = "static " if function.static else "",
         inline = "inline " if function.inline else "",
         ret_type = function.ret_type.name + " ",
-            name = function.name if pointer_name is None else ('(*' + pointer_name + ')'),
             args = args
+        name = decl_name if pointer_name is None else ('(*' + pointer_name + ')'),
     )
 
 def gen_function_decl_ref_chunks(function):
