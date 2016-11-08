@@ -988,6 +988,9 @@ class MacroDefinition(SourceChunk):
 
         self.macro = macro
 
+    def get_origin(self):
+        return self.macro
+
 class PointerTypeDeclaration(SourceChunk):
     def __init__(self, _type, def_name):
         self.type = _type
