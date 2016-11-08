@@ -1074,6 +1074,9 @@ class VariableDeclaration(SourceChunk):
             )
         self.variable = var
 
+    def get_origin(self):
+        return self.variable
+
 class VariableDefinition(SourceChunk):
     @staticmethod
     def gen_chunks(var, indent="", append_nl = True):
