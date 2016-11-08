@@ -1328,6 +1328,9 @@ class FunctionDefinition(SourceChunk):
             )
         self.function = function
 
+    def get_origin(self):
+        return self.function
+
 def deep_first_sort(chunk, new_chunks):
     # visited: 
     # 0 - not visited
