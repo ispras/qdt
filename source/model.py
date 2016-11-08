@@ -1498,7 +1498,13 @@ class SourceFile:
         self.remove_chunks_with_same_origin([
             HeaderInclusion,
             VariableDefinition,
-            FunctionDeclaration
+            VariableDeclaration,
+            FunctionDeclaration,
+            FunctionDefinition,
+            StructureDeclaration,
+            StructureDeclarationBegin,
+            MacroDefinition,
+            PointerTypeDeclaration
             ])
 
         self.check_static_function_declarations()
