@@ -2,6 +2,7 @@ from common import \
     HistoryTracker
 
 from machine_editing import \
+    MOp_SetDevProp, \
     MOp_DelDevProp, \
     MOp_DelIOMapping, \
     MOp_AddDevice, \
@@ -14,6 +15,11 @@ from machine_editing import \
     MOp_DelIRQHub
 
 from machine_description import \
+    DeviceNode, \
+    BusNode, \
+    IRQHub, \
+    IRQLine, \
+    QOMPropertyTypeLink, \
     SystemBusDeviceNode
 
 class MachineProxyTracker(object):
@@ -101,6 +107,20 @@ class MachineProxyTracker(object):
         for prop in dev.properties:
             self.stage(MOp_DelDevProp, prop, dev_id)
 
+        """ If propery of other device is link to the device then set the
+        property to -1 """
+        for other_dev in self.mach.devices:
+            if other_dev is dev:
+                # Self-linking properties of the device is already deleted
+                continue
+
+            for prop in other_dev.properties:
+                if prop.prop_type is QOMPropertyTypeLink:
+                    if prop.prop_val is dev:
+                        self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None,
+                            prop, other_dev.id
+                        )
+
         self.stage(MOp_DelDevice, dev_id)
 
     def delete_system_bus_device(self, dev_id):
@@ -140,6 +160,30 @@ class MachineProxyTracker(object):
 
         self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
 
+    def delete_ids(self, node_ids):
+        for node_id in node_ids:
+            try:
+                n = self.mach.id2node[node_id]
+            except KeyError:
+                # The node was removed by one of previously called helper
+                continue
+
+            if isinstance(n, DeviceNode):
+                self.delete_device(node_id)
+            elif isinstance(n, BusNode):
+                self.delete_bus(node_id)
+            elif isinstance(n, IRQHub):
+                self.delete_irq_hub(node_id)
+            elif isinstance(n, IRQLine):
+                self.delete_irq_line(node_id)
+            else:
+                raise Exception(
+"No helper for deletion of node %d of type %s was defined" % \
+(n.id, type(n).__name__)
+                )
+
+            self.pht.commit(new_sequence = False)
+
     def __getattr__(self, name):
         return getattr(self.pht, name)
 
@@ -159,12 +203,28 @@ class ProjectHistoryTracker(HistoryTracker):
             *(op_args + (self.p,)), **op_kw
         )
 
-    def get_machine_proxy(self, machine_description):
-        return MachineProxyTracker(self, machine_description)
-
-    def commit(self, *args, **kw):
+    # explicitly attach consequent staged operation to new sequence
+    def start_new_sequence(self):
         if self.new_sequence:
             self.new_sequence = False
             self.current_sequence += 1
 
+    def get_machine_proxy(self, machine_description):
+        return MachineProxyTracker(self, machine_description)
+
+    """
+    new_sequence - begin new sequence after committing staged operation
+        (True by default)
+    """
+    def commit(self, *args, **kw):
+        try:
+            ns = kw["new_sequence"]
+        except KeyError:
+            ns = True
+        else:
+            del kw["new_sequence"]
+
         HistoryTracker.commit(self, *args, **kw)
+
+        if ns:
+            self.start_new_sequence()

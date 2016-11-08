@@ -514,6 +514,14 @@ IRQ line creation
         )
         self.popup_single_bus = p
 
+        # popup menu for multiple selection
+        p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("Delete"),
+            command = self.on_popup_multiple_delete
+        )
+        self.popup_multiple = p
+
         self.current_popup = None
 
         self.mht.add_on_changed(self.on_machine_changed)
@@ -753,7 +761,13 @@ IRQ line creation
 
     def on_popup_single_irq_hub_delete(self):
         hid = self.selected[0]
-        hid = self.node2dev[self.id2node[hid]].id
+        node = self.id2node[hid]
+        hid = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, hid)
+
         self.mht.delete_irq_hub(hid)
         self.mht.commit()
 
@@ -761,7 +775,13 @@ IRQ line creation
 
     def on_popup_single_device_delete(self):
         dev_id = self.selected[0]
-        dev_id = self.node2dev[self.id2node[dev_id]].id
+        node = self.id2node[dev_id]
+        dev_id = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, dev_id)
+
         self.mht.delete_device(dev_id)
         self.mht.commit()
 
@@ -839,11 +859,45 @@ IRQ line creation
 
     def on_popup_single_bus_delete(self):
         bus_id = self.selected[0]
-        bus_id = self.node2dev[self.id2node[bus_id]].id
+        node = self.id2node[bus_id]
+        bus_id = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, bus_id)
+
         self.mht.delete_bus(bus_id)
         self.mht.commit()
 
         self.current_popup = None
+
+    def on_popup_multiple_delete(self):
+        self.delete_selected()
+        self.current_popup = None
+
+    def delete_selected(self):
+        to_del = []
+        for sid in self.selected:
+            try:
+                n = self.id2node[sid]
+                mach_n = self.node2dev[n]
+            except KeyError:
+                continue
+            else:
+                node_id = mach_n.id
+
+                if isinstance(mach_n, DeviceNode) \
+                    or isinstance(mach_n, BusNode) \
+                    or isinstance(mach_n, IRQHub) \
+                :
+                    if n.x != 0 or n.y != 0:
+                        # move node to 0, 0 to preserve its coordinates
+                        self.mht.stage(MWOp_MoveNode, 0, 0, self, node_id)
+
+                to_del.append(node_id)
+
+        self.mht.delete_ids(to_del)
+        self.mht.start_new_sequence()
 
     def on_add_irq_hub(self):
         p = self.current_popup
@@ -1050,6 +1104,9 @@ IRQ line creation
                 elif isinstance(tdev, BusNode):
                     if len(self.selected) == 1:
                         self.current_popup = self.popup_single_bus
+
+                if not self.current_popup and len(self.selected):
+                    self.current_popup = self.popup_multiple
 
                 if self.current_popup:
                     try: 

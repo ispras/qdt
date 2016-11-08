@@ -1,4 +1,5 @@
 from machine_description import \
+    QOMPropertyTypeLink, \
     IRQLine, \
     IRQHub, \
     QOMPropertyValue
@@ -15,6 +16,30 @@ class MachineOperation(DescriptionOperation):
 
     def gen_node_id_entry(self, node_id):
         return copy.deepcopy(node_id)
+
+    """ Converts invariant link property value to python object reference used
+across machine description object. Non-link property values is just deeply
+copied. Invariant link value is an integer now. """
+    def prop_val_2_ref(self, prop_type, prop_val):
+        if prop_type == QOMPropertyTypeLink:
+            if prop_val == -1:
+                return None
+            else:
+                return self.mach.id2node[prop_val]
+        else:
+            return copy.deepcopy(prop_val)
+
+    """ Converts link property value presented by python object reference to
+invariant values (independent from the machine description instance). Non-link
+property values is just deeply copied. """
+    def prop_val_2_inv(self, prop_type, prop_val):
+        if prop_type == QOMPropertyTypeLink:
+            if prop_val is None:
+                return -1
+            else:
+                return copy.deepcopy(prop_val.id)
+        else:
+            return copy.deepcopy(prop_val)
 
     @property
     def mach(self):
@@ -548,19 +573,26 @@ class MOp_DelDevProp(MachineDevicePropertyOperation):
     def __backup__(self):
         prop = self.lookup_prop()
 
+        # print "%s %s -> %s" % (prop.prop_name, prop.prop_type.__name__,
+        #     str(prop.prop_val))
+
         self.prop_type = prop.prop_type
-        self.prop_val = copy.deepcopy(prop.prop_val)
+        self.prop_val = self.prop_val_2_inv(prop.prop_type, prop.prop_val)
 
     def __do__(self):
         dev = self.mach.id2node[self.node_id]
         del dev.properties[self.prop_name]
 
     def __undo__(self):
-        prop = QOMPropertyValue(self.prop_type, self.prop_name, self.prop_val)
+        prop = QOMPropertyValue(self.prop_type, self.prop_name,
+            self.prop_val_2_ref(self.prop_type, self.prop_val))
 
         dev = self.mach.id2node[self.node_id]
 
         dev.properties.append(prop)
+
+        # print "%s %s <- %s" % (prop.prop_name, prop.prop_type.__name__,
+        #     str(prop.prop_val))
 
     def __write_set__(self):
         return MachineDevicePropertyOperation.__write_set__(self) + \
@@ -572,13 +604,14 @@ class MOp_AddDevProp(MachineNodeOperation):
 
         self.prop_name = copy.deepcopy(prop.prop_name)
         self.prop_type = prop.prop_type
-        self.prop_val = copy.deepcopy(prop.prop_val)
+        self.prop_val = self.prop_val_2_inv(prop.prop_type, prop.prop_val)
 
     def __backup__(self):
         pass
 
     def __do__(self):
-        prop = QOMPropertyValue(self.prop_type, self.prop_name, self.prop_val)
+        prop = QOMPropertyValue(self.prop_type, self.prop_name,
+            self.prop_val_2_ref(self.prop_type, self.prop_val))
 
         dev = self.mach.id2node[self.node_id]
 
@@ -597,25 +630,37 @@ class MOp_SetDevProp(MachineDevicePropertyOperation):
         MachineDevicePropertyOperation.__init__(self, *args, **kw)
 
         self.new_prop_type = new_prop_type
-        self.new_prop_val = copy.deepcopy(new_prop_val)
+        self.new_prop_val = self.prop_val_2_inv(new_prop_type, new_prop_val)
 
     def __backup__(self):
         prop = self.lookup_prop()
 
         self.orig_prop_type = prop.prop_type
-        self.orig_prop_val = copy.deepcopy(prop.prop_val)
+        self.orig_prop_val = self.prop_val_2_inv(prop.prop_type, prop.prop_val)
+
+        # print "%s %s -> %s (orig)" % (prop.prop_name, prop.prop_type.__name__,
+        #     str(prop.prop_val))
 
     def __do__(self):
         prop = self.lookup_prop()
 
         prop.prop_type = self.new_prop_type
-        prop.prop_val = copy.deepcopy(self.new_prop_val)
+        prop.prop_val = self.prop_val_2_ref(self.new_prop_type,
+            self.new_prop_val)
+
+        # print "%s %s <- %s (new)" % (prop.prop_name, prop.prop_type.__name__,
+        #     str(prop.prop_val))
 
     def __undo__(self):
         prop = self.lookup_prop()
 
         prop.prop_type = self.orig_prop_type
-        prop.prop_val = copy.deepcopy(self.orig_prop_val)
+
+        prop.prop_val = self.prop_val_2_ref(self.orig_prop_type,
+            self.orig_prop_val)
+
+        # print "%s %s <- %s (orig)" % (prop.prop_name, prop.prop_type.__name__,
+        #     str(prop.prop_val))
 
     def __write_set__(self):
         return MachineDevicePropertyOperation.__write_set__(self) + \
