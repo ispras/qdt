@@ -1218,6 +1218,9 @@ class StructureDeclaration(SourceChunk):
 
         return [struct_end, struct_begin] + field_chunks
 
+    def get_origin(self):
+        return self.structure
+
     def __init__(self, struct, fields_indent="    ", indent="",
                  append_nl = True):
         super(StructureDeclaration, self).__init__(
