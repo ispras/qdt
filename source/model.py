@@ -1211,8 +1211,8 @@ def gen_function_declaration_string(indent, function, pointer_name = None):
         static = "static " if function.static else "",
         inline = "inline " if function.inline else "",
         ret_type = function.ret_type.name + " ",
-            args = args
         name = decl_name if pointer_name is None else ('(*' + pointer_name + ')'),
+        args = args
     )
 
 def gen_function_decl_ref_chunks(function):
