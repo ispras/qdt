@@ -2,6 +2,7 @@ from qom_settings import \
     QOMDescriptionSettingsWidget
 
 from qemu import \
+    POp_AddDesc, \
     DOp_SetAttr
 
 from gui_frame import \
@@ -94,6 +95,13 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
                 raise Exception("Not implemented value type")
 
     def __on_changed__(self, op, *args, **kw):
+        if isinstance(op, POp_AddDesc):
+            try:
+                self.pht.p.find(name = self.desc.name).next()
+            except StopIteration:
+                # the operation removes current description
+                return
+
         for field, val_type in self.fields:
             if op.writes((self.desc.name, field)):
                 self.__refresh__()
