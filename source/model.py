@@ -1170,15 +1170,7 @@ class StructureDeclaration(SourceChunk):
         indent = "",
         append_nl = True
     ):
-        struct_begin = SourceChunk(
-            name = "Beginning of structure {} declaration".format(struct.name),
-            code = """\
-{indent}typedef struct _{struct_name} {{
-""".format(
-    indent = indent,
-    struct_name = struct.name
-)
-        )
+        struct_begin = StructureDeclarationBegin.gen_chunks(struct, indent)[0]
 
         struct_end = StructureDeclaration(struct, fields_indent, indent,
             append_nl)
