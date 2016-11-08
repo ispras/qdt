@@ -1142,6 +1142,27 @@ class VariableUsage(SourceChunk):
         self.variable = var
         self.initializer = initializer
 
+class StructureDeclarationBegin(SourceChunk):
+    @staticmethod
+    def gen_chunks(struct, indent = ""):
+        ch = StructureDeclarationBegin(struct, indent)
+        return [ch]
+
+    def __init__(self, struct, indent):
+        self.structure = struct
+        super(StructureDeclarationBegin, self).__init__(
+            name="Beginning of structure {} declaration".format(struct.name),
+            code="""\
+{indent}typedef struct _{struct_name} {{
+""".format(
+                indent=indent,
+                struct_name=struct.name
+            )
+        )
+
+    def get_origin(self):
+        return self.structure
+
 class StructureDeclaration(SourceChunk):
     @staticmethod
     def gen_chunks(struct,
