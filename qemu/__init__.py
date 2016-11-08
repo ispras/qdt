@@ -157,6 +157,14 @@ def initialize(qemu_src):
         Type("hwaddr", False)
         ])
 
+    Header.lookup("qemu/osdep.h").add_types([
+        Macro("MIN")
+    ])
+
+    Header.lookup("exec/cpu-defs.h").add_types([
+        Type("target_ulong", False),
+    ])
+
     Header.lookup("qom/object.h").add_types([
         Type("ObjectClass", False),
         Type("Object", False),
@@ -181,6 +189,27 @@ def initialize(qemu_src):
         Function("object_property_set_int"),
         Macro("OBJECT")
         ])
+
+    Header.lookup("qom/cpu.h").add_types([
+        Type("CPUState", False),
+        Type("CPUClass", False),
+        Type("vaddr", False),
+        Type("MMUAccessType", False)
+    ])
+
+    Header.lookup("exec/exec-all.h").add_types([
+        Type("TranslationBlock", False),
+        Function('tlb_fill',
+                 args = [
+                     Type.lookup('CPUState').gen_var('cs', pointer=True),
+                     Type.lookup('target_ulong').gen_var('addr'),
+                     Type.lookup('MMUAccessType').gen_var('access_type'),
+                     Type.lookup('int').gen_var('mmu_idx'),
+                     Type.lookup('uintptr_t').gen_var('retaddr')
+                 ],
+                 used_types = []
+                 )
+    ])
 
     Header.lookup("exec/memory.h").add_types([
         Type("MemoryRegion", False),
@@ -298,6 +327,7 @@ def initialize(qemu_src):
                 Type.lookup("int").gen_var("n")
             ]
         ),
+        Function(name = "DeviceRealize"),
         Function(name = "qdev_create"),
         Function(name = "qdev_init_nofail"),
         Function(name = "qdev_get_child_bus"),
