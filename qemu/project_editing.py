@@ -177,6 +177,11 @@ None values are imported too.
 
             setattr(self, self.prefix + attr_name, val)
 
+    def set_with_origin(self, origin):
+        self.nc = type(origin).__name__
+
+        self.import_argument_values(origin)
+
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, desc_name, *args, **kw):
         if not "directory" in kw:
