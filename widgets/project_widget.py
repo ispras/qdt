@@ -1,4 +1,5 @@
 from var_widgets import \
+    VarMenu, \
     VarTreeview
 
 from close_button_notebook import \
@@ -115,6 +116,11 @@ class ProjectWidget(PanedWindow):
         self.nb_descriptions = CloseButtonNotebook(self)
         self.add(self.nb_descriptions)
 
+        self.current_popup = None
+
+        tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
+        self.popup_tv_empty = tvm
+
         self.desc2w = {}
         for desc in self.p.descriptions:
             widgets = self.desc2w[desc] = []
@@ -145,10 +151,26 @@ class ProjectWidget(PanedWindow):
 
         self.tv_descs.bind("<Double-1>", self.on_tv_desc_b1_double)
 
+        self.tv_descs.bind("<Button-3>", self.on_tv_b3, "+")
+
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
         self.p.pht.add_on_changed(self.on_project_changed)
+
+    def on_tv_b3(self, event):
+        if self.current_popup is not None:
+            self.current_popup.unpost()
+            self.current_popup = None
+
+        popup = self.popup_tv_empty
+
+        try:
+            popup.post(event.x_root, event.y_root)
+        except:
+            pass
+        else:
+            self.current_popup = popup
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
