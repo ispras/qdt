@@ -5,6 +5,7 @@ from common import \
 from machine_editing import \
     MachineDeviceSetAttributeOperation, \
     MOp_RemoveMemChild, \
+    MOp_DelMemoryNode, \
     MOp_SetDevProp, \
     MOp_DelDevProp, \
     MOp_DelIOMapping, \
@@ -18,6 +19,7 @@ from machine_editing import \
     MOp_DelIRQHub
 
 from machine_description import \
+    MemoryAliasNode, \
     DeviceNode, \
     BusNode, \
     IRQHub, \
@@ -177,6 +179,38 @@ class MachineProxyTracker(object):
                     arg_val, child_id)
 
         self.stage(MOp_RemoveMemChild, child_id, parent_id)
+
+    def delete_memory_node(self, m_id):
+        mem = self.mach.id2node[m_id]
+
+        # delete all aliases to the memory node
+        for n in self.mach.id2node.values():
+            if isinstance(n, MemoryAliasNode):
+                if n.alias_to is mem:
+                    self.delete_memory_node(n.id)
+
+        # commit all deletions because they could change children of mem
+        self.commit(new_sequence = False)
+
+        for child in mem.children:
+            self.remove_memory_child(m_id, child.id)
+
+        if mem.parent is not None:
+            self.remove_memory_child(mem.parent.id, m_id)
+
+        # set properties linking to the memory node to linking nothing
+        for n in self.mach.id2node.values():
+            if not isinstance(n, DeviceNode):
+                continue
+
+            for p in n.properties:
+                if  not p.prop_type is QOMPropertyTypeLink \
+                or  not p.prop_val is mem :
+                    continue
+
+                self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None, p, n.id)
+
+        self.stage(MOp_DelMemoryNode, m_id)
 
     def delete_ids(self, node_ids):
         for node_id in node_ids:
