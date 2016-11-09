@@ -297,6 +297,17 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
             str(self.name)
         ]
 
+class POp_DelDesc(POp_AddDesc):
+    def __init__(self, desc_name, *args, **kw):
+        POp_AddDesc.__init__(self, "QOMDescription", desc_name, *args, **kw)
+
+    def __backup__(self):
+        desc = self.p.find(name = self.name).next()
+        self.set_with_origin(desc)
+
+    __do__ = POp_AddDesc.__undo__
+    __undo__ = POp_AddDesc.__do__
+
 class DescriptionOperation(ProjectOperation):
     def __init__(self, description, *args, **kw):
         ProjectOperation.__init__(self, *args, **kw)

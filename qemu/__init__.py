@@ -119,6 +119,7 @@ from project_editing import \
     QemuObjectCreationHelper, \
     ProjectOperation, \
         POp_AddDesc, \
+            POp_DelDesc, \
         DescriptionOperation
 
 from project_history_tracker import \
