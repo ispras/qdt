@@ -10,8 +10,9 @@ def gen_class_args(full_class_name):
     module, class_name = ".".join(segments[:-1]), segments[-1]
     Class = getattr(import_module(module), class_name)
 
+    all_vars = Class.__init__.__code__.co_varnames
     # Get all arguments without "self".
-    all_args = Class.__init__.__code__.co_varnames[1:]
+    all_args = all_vars[:Class.__init__.__code__.co_argcount][1:]
 
     """
     The code below distinguishes positional arguments and key word
