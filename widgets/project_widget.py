@@ -129,6 +129,10 @@ class ProjectWidget(PanedWindow):
 
         self.popup_tv_empty = tvm
 
+        tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
+
+        self.popup_tv_single = tvm
+
         self.desc2w = {}
         for desc in self.p.descriptions:
             widgets = self.desc2w[desc] = []
@@ -172,6 +176,12 @@ class ProjectWidget(PanedWindow):
             self.current_popup = None
 
         popup = self.popup_tv_empty
+
+        row = self.tv_descs.identify_row(event.y)
+
+        if row != "":
+            self.tv_descs.selection_set(row)
+            popup = self.popup_tv_single
 
         try:
             popup.post(event.x_root, event.y_root)
