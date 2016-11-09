@@ -127,6 +127,16 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     def __do__(self):
         self.mach.add_node(self.new(), with_id = self.node_id)
 
+class MachineNodeDeletion(MachineNodeAdding):
+    def __init__(self, *args, **kw):
+        MachineNodeAdding.__init__(self, "", *args, **kw)
+
+    def __backup__(self):
+        n = self.find_desc().id2node[self.node_id]
+        self.set_with_origin(n)
+
+    __undo__ = MachineNodeAdding.__do__
+
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
         MachineNodeAdding.__init__(self, device_class_name, *args, **kw)
