@@ -34,6 +34,9 @@ def unbind(tk_widget, sequence, funcid = None):
 from class_tools import \
     gen_class_args
 
+from reflection import \
+    get_default_args
+
 from visitor import \
     ObjectVisitor, \
     BreakVisiting
