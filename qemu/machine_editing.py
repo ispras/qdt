@@ -164,6 +164,12 @@ class MOp_AddMemoryNode(MachineNodeAdding):
         del mach.id2node[self.node_id]
         mem.id = -1
 
+class MOp_DelMemoryNode(MachineNodeDeletion, MOp_AddMemoryNode):
+    def __init__(self, *args, **kw):
+        MachineNodeDeletion.__init__(self, *args, **kw)
+
+    __do__ =  MOp_AddMemoryNode.__undo__
+
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
         MachineNodeAdding.__init__(self, device_class_name, *args, **kw)
