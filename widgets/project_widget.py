@@ -130,6 +130,10 @@ class ProjectWidget(PanedWindow):
         self.popup_tv_empty = tvm
 
         tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
+        tvm.add_command(
+            label = _("Delete description"),
+            command = self.on_delete_description
+        )
 
         self.popup_tv_single = tvm
 
@@ -192,6 +196,13 @@ class ProjectWidget(PanedWindow):
 
     def on_add_description(self):
         self.add_description()
+
+    def on_delete_description(self):
+        item = self.tv_descs.selection()[0]
+        name = self.tv_descs.item(item)["text"]
+        desc = self.p.find(name = name).next()
+        self.p.pht.delete_description(desc)
+        self.p.pht.commit()
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
