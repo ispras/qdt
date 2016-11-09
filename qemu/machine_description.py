@@ -562,6 +562,13 @@ class MemoryNode(Node):
         child.parent = self
         self.children.append(child)
 
+    def remove_child(self, child):
+        if not child.parent is self:
+            raise MemoryNodeHasNoSuchParent()
+
+        child.parent = None
+        self.children.remove(child)
+
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
