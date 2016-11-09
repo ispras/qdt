@@ -62,6 +62,40 @@ class MachineNodeOperation(MachineOperation):
     def writes_node(self):
         return self.writes(self.gen_entry())
 
+class MOp_AddMemChild(MachineNodeOperation):
+    def __init__(self, child_id, *args, **kw):
+        MachineNodeOperation.__init__(self, *args, **kw)
+        self.child_id = copy.deepcopy(child_id)
+
+    def __backup__(self):
+        pass
+
+    def __do__(self):
+        m = self.find_desc()
+        child, parent = m.id2node[self.child_id], m.id2node[self.node_id]
+
+        parent.add_child(child)
+
+    def __undo__(self):
+        m = self.find_desc()
+        child, parent = m.id2node[self.child_id], m.id2node[self.node_id]
+
+        parent.remove_child(child)
+
+    def __read_set__(self):
+        return MachineNodeOperation.__read_set__(self) + [
+            self.gen_node_id_entry(self.child_id), self.gen_entry()
+        ]
+
+    def __write_set__(self):
+        """ Because order of children is not important, we are only have to
+organize operations about same child. """
+
+        return MachineNodeOperation.__write_set__(self) + [
+            (self.gen_entry(), "__child__", \
+                self.gen_node_id_entry(self.child_id))
+        ]
+
 class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module. Class constructor
