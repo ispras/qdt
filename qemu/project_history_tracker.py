@@ -20,6 +20,7 @@ from machine_editing import \
 
 from machine_description import \
     MemoryAliasNode, \
+    MachineNode, \
     DeviceNode, \
     BusNode, \
     IRQHub, \
@@ -27,6 +28,9 @@ from machine_description import \
     MemoryNode, \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
+
+from project_editing import \
+    POp_DelDesc
 
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):
@@ -283,3 +287,11 @@ class ProjectHistoryTracker(HistoryTracker):
 
         if ns:
             self.start_new_sequence()
+
+    def delete_description(self, desc):
+        if isinstance(desc, MachineNode):
+            # first delete all content of machine
+            mht = MachineProxyTracker(self, desc)
+            mht.delete_ids(list(desc.id2node.keys()))
+
+        self.stage(POp_DelDesc, desc.name)
