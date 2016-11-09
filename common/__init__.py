@@ -33,6 +33,7 @@ def unbind(tk_widget, sequence, funcid = None):
 
 from class_tools import \
     get_class, \
+    get_class_defaults, \
     gen_class_args
 
 from reflection import \

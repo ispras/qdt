@@ -1,6 +1,9 @@
 from importlib import \
     import_module
 
+from reflection import \
+    get_default_args
+
 def get_class(full_class_name):
     segments = full_class_name.split(".")
     module, class_name = ".".join(segments[:-1]), segments[-1]
@@ -31,3 +34,7 @@ def gen_class_args(full_class_name):
         al, kwl = list(all_args), []
 
     return al, kwl
+
+def get_class_defaults(full_class_name):
+    Class = get_class(full_class_name)
+    return get_default_args(Class.__init__)
