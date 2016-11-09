@@ -116,14 +116,7 @@ class MOp_DelDevice(MOp_AddDevice):
 
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
-
-        self.nc = type(dev).__name__
-        self.qom_type = str(dev.qom_type)
-
-        if self.nc == "PCIExpressDeviceNode":
-            self.slot = copy.deepcopy(dev.slot)
-            self.function = copy.deepcopy(dev.function)
-            self.multifunction = copy.deepcopy(dev.multifunction)
+        self.set_with_origin(dev)
 
     __do__ = MOp_AddDevice.__undo__
     __undo__ = MachineNodeAdding.__do__
@@ -156,12 +149,7 @@ class MOp_DelBus(MOp_AddBus):
 
     def __backup__(self):
         bus = self.mach.id2node[self.node_id]
-
-        self.nc = type(bus).__name__
-        self.c_type = copy.deepcopy(bus.c_type)
-        self.cast = copy.deepcopy(bus.cast)
-        self.child_name = copy.deepcopy(bus.child_name)
-        self.force_index = copy.deepcopy(bus.force_index)
+        self.set_with_origin(bus)
 
     __do__ = MOp_AddBus.__undo__
     __undo__ = MOp_AddBus.__do__
