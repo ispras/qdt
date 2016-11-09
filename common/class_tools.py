@@ -1,6 +1,11 @@
 from importlib import \
     import_module
 
+def get_class(full_class_name):
+    segments = full_class_name.split(".")
+    module, class_name = ".".join(segments[:-1]), segments[-1]
+    return getattr(import_module(module), class_name)
+
 """
 The function returns lists of positional and key word arguments of
 class constructor. 

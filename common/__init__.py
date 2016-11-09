@@ -32,6 +32,7 @@ def unbind(tk_widget, sequence, funcid = None):
         tk_widget.deletecommand(funcid)
 
 from class_tools import \
+    get_class, \
     gen_class_args
 
 from reflection import \
