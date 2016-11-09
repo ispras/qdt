@@ -35,6 +35,9 @@ from gui_frame import \
 from ttk import \
     Scrollbar
 
+from add_desc_dialog import \
+    AddDescriptionDialog
+
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
         kw["columns"] = [
@@ -119,6 +122,11 @@ class ProjectWidget(PanedWindow):
         self.current_popup = None
 
         tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
+        tvm.add_command(
+            label = _("Add description"),
+            command = self.on_add_description
+        )
+
         self.popup_tv_empty = tvm
 
         self.desc2w = {}
@@ -171,6 +179,9 @@ class ProjectWidget(PanedWindow):
             pass
         else:
             self.current_popup = popup
+
+    def on_add_description(self):
+        self.add_description()
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
@@ -295,3 +306,6 @@ class ProjectWidget(PanedWindow):
                     (desc.name, type(desc).__name__)
                 )
         return w
+
+    def add_description(self):
+        AddDescriptionDialog(self.p.pht, self.winfo_toplevel())
