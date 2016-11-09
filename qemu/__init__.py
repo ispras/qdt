@@ -85,6 +85,7 @@ from machine_editing import \
     MachineOperation, \
         MachineNodeOperation, \
             MOp_AddMemChild, \
+                MOp_RemoveMemChild, \
             MachineNodeAdding, \
                 MOp_AddBus, \
                     MOp_DelBus, \

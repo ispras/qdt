@@ -96,6 +96,11 @@ organize operations about same child. """
                 self.gen_node_id_entry(self.child_id))
         ]
 
+class MOp_RemoveMemChild(MOp_AddMemChild):
+
+    __do__ = MOp_AddMemChild.__undo__
+    __undo__ = MOp_AddMemChild.__do__
+
 class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module. Class constructor
