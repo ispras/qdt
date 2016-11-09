@@ -1,7 +1,10 @@
 from common import \
+    get_default_args, \
     HistoryTracker
 
 from machine_editing import \
+    MachineDeviceSetAttributeOperation, \
+    MOp_RemoveMemChild, \
     MOp_SetDevProp, \
     MOp_DelDevProp, \
     MOp_DelIOMapping, \
@@ -159,6 +162,21 @@ class MachineProxyTracker(object):
             device_arguments["qom_type"] = default_qom_type
 
         self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
+
+    def remove_memory_child(self, parent_id, child_id):
+        parent = self.mach.id2node[parent_id]
+        child = self.mach.id2node[child_id]
+
+        """ Generate operations reverting child setting to defaults. Reverting
+        the operation restores child settings. """
+
+        add_child_args = get_default_args(parent.__class__.add_child)
+        for arg_name, arg_val in add_child_args.iteritems():
+            if getattr(child, arg_name) != arg_val:
+                self.stage(MachineDeviceSetAttributeOperation, arg_name,
+                    arg_val, child_id)
+
+        self.stage(MOp_RemoveMemChild, child_id, parent_id)
 
     def delete_ids(self, node_ids):
         for node_id in node_ids:
