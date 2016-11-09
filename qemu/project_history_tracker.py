@@ -24,6 +24,7 @@ from machine_description import \
     BusNode, \
     IRQHub, \
     IRQLine, \
+    MemoryNode, \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
 
@@ -228,6 +229,8 @@ class MachineProxyTracker(object):
                 self.delete_irq_hub(node_id)
             elif isinstance(n, IRQLine):
                 self.delete_irq_line(node_id)
+            elif isinstance(n, MemoryNode):
+                self.delete_memory_node(n.id)
             else:
                 raise Exception(
 "No helper for deletion of node %d of type %s was defined" % \
