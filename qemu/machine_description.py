@@ -524,6 +524,9 @@ class MemoryNodeAlreadyHasParent(Exception):
 class MemoryNodeCannotHasChildren(Exception):
     pass
 
+class MemoryNodeHasNoSuchParent(Exception):
+    pass
+
 class MemoryNode(Node):
     def __init__(self, 
             name,

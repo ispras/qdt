@@ -62,6 +62,7 @@ from machine_description import \
     QOMPropertyTypeBoolean, \
     QOMPropertyTypeInteger, \
     QOMPropertyValue, \
+    MemoryNodeHasNoSuchParent, \
     MemoryNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
