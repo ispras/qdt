@@ -598,11 +598,10 @@ class MOp_DelDevProp(MachineDevicePropertyOperation):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
 
-class MOp_AddDevProp(MachineNodeOperation):
+class MOp_AddDevProp(MachineDevicePropertyOperation):
     def __init__(self, prop, *args, **kw):
-        MachineNodeOperation.__init__(self, *args, **kw)
+        MachineDevicePropertyOperation.__init__(self, prop, *args, **kw)
 
-        self.prop_name = copy.deepcopy(prop.prop_name)
         self.prop_type = prop.prop_type
         self.prop_val = self.prop_val_2_inv(prop.prop_type, prop.prop_val)
 
