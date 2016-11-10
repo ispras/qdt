@@ -71,6 +71,9 @@ from device_description_settings import \
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
+from tk_co_dispatcher import \
+    TkCoDispatcher
+
 from cross_dialogs import \
     CrossOpenDialog, \
         askopen, \
