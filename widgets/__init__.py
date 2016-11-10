@@ -79,3 +79,6 @@ from cross_dialogs import \
         askopen, \
     CrossSaveAsDialog, \
         asksaveas
+
+from gui_tk import \
+    GUITk
