@@ -552,6 +552,16 @@ class MemoryAliasNode(MemoryLeafNode):
         self.alias_to = alias_to
         self.alias_offset = offset
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field('name = "' + self.name + '"')
+        gen.gen_field("size = " + gen.gen_const(self.size))
+        gen.gen_field("alias_to = " + gen.nameof(self.alias_to))
+        gen.gen_field("offset = " + gen.gen_const(self.alias_offset))
+        gen.gen_end()
+
+        self.gen_parent_attachment(gen)
+
 class MemoryRAMNode(MemoryLeafNode):
     def __init__(self, name, size):
         MemoryLeafNode.__init__(self, name = name, size = size)
