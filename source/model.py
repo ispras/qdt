@@ -732,7 +732,7 @@ class Macro(Type):
 
             return "%s%s" % (self.name, arg_val)
 
-    def gen_var(self):
+    def gen_var(self, pointer = False, inititalizer = None, static = False):
         return super(Macro, self).gen_var(
                 name = "fake variable of macro %s" % self.name
             )
