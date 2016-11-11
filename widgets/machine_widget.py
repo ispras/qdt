@@ -8,6 +8,9 @@ from machine_diagram_widget import \
 from qom_settings import \
     QOMDescriptionSettingsWidget
 
+from memory_tree_widget import \
+    MemoryTreeWidget
+
 class MachineWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
@@ -16,11 +19,8 @@ class MachineWidget(PanedWindow):
 
         self.pack(fill="both", expand="yes")
 
-        # todo: replace with memory diagram
-        l = Label(self,
-            text = "A memory diagram will be here.".replace(" ", "\n")
-        )
-        self.add(l)
+        self.mtw = MemoryTreeWidget(self.mach)
+        self.add(self.mtw)
 
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw)
