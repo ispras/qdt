@@ -1053,9 +1053,15 @@ class PointerVariableDeclaration(SourceChunk):
 class VariableDeclaration(SourceChunk):
     @staticmethod
     def gen_chunks(var, indent = "", extern = False):
-        ch = VariableDeclaration(var, indent, extern)
+        t = var.type if not isinstance(var.type, TypeReference) else var.type.type
 
-        refs = var.type.gen_defining_chunk_list()
+        if type(t) == Macro:
+            u = VariableUsage.gen_chunks(var, indent)
+            ch = u[0]
+            refs = u[1:]
+        else:
+            ch = VariableDeclaration(var, indent, extern)
+            refs = var.type.gen_defining_chunk_list()
 
         ch.add_references(refs)
 
