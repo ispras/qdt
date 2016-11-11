@@ -337,10 +337,11 @@ class DeviceSettingsWidget(SettingsWidget):
                 qvd = qvd_get_registered(bp)
             except Exception:
                 b["state"] = "disabled"
-            if qvd == None or \
-               qvd.qvc == None or \
-               qvd.qvc.device_tree == None:
-                b["state"] = "disabled"
+            else:
+                if qvd == None or \
+                   qvd.qvc == None or \
+                   qvd.qvc.device_tree == None:
+                    b["state"] = "disabled"
 
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
