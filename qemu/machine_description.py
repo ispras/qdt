@@ -522,7 +522,9 @@ class MemoryNode(Node):
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field("size = " + gen.gen_const(self.size))
         gen.gen_end()
+        self.gen_parent_attachment(gen)
 
+    def gen_parent_attachment(self, gen):
         if self.parent:
             gen.reset_gen_common(gen.nameof(self.parent) + ".add_child(")
             gen.gen_field("child = " + gen.nameof(self))
