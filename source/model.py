@@ -1509,7 +1509,8 @@ class SourceFile:
             StructureDeclaration,
             StructureDeclarationBegin,
             MacroDefinition,
-            PointerTypeDeclaration
+            PointerTypeDeclaration,
+            VariableUsage
             ])
 
         self.check_static_function_declarations()
