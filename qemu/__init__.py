@@ -63,6 +63,7 @@ from machine_description import \
     QOMPropertyTypeInteger, \
     QOMPropertyValue, \
     MemoryNode, \
+    MemoryLeafNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
     MemoryROMNode
