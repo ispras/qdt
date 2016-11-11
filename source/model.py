@@ -133,14 +133,18 @@ a field of a type defined in another non-header file {}.".format(
     def gen_chunks(self):
         chunks = []
 
-        for t in self.types.values():
-            if isinstance(t, TypeReference):
-                t.definer_references = list(t.type.definer.references)
-
         # fix up types for headers with references
         l = self.types.values()
 
         while True:
+            for t in l:
+                if not isinstance(t, TypeReference):
+                    continue
+                if t.definer_references is not None:
+                    # References are already specified
+                    continue
+                t.definer_references = list(t.type.definer.references)
+
             for t in l:
                 if not isinstance(t, TypeReference):
                     continue
@@ -547,12 +551,17 @@ reference {}.".format(_type.name))
         self.base = _type.base
         self.type = _type
 
-        self.definer_references = []
+        self.definer_references = None
 
     def get_definers(self):
         return self.type.get_definers()
 
     def gen_chunks(self):
+        if self.definer_references is None:
+            raise Exception("""Attempt to generate chunks for %s type reference\
+ without the type reference adjusting pass""" % self.name
+            )
+
         inc = HeaderInclusion(self.type.definer)
 
         refs = []
