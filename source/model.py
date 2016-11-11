@@ -133,6 +133,10 @@ a field of a type defined in another non-header file {}.".format(
     def gen_chunks(self):
         chunks = []
 
+        for t in self.types.values():
+            if isinstance(t, TypeReference):
+                t.definer_references = list(t.type.definer.references)
+
         # fix up types for headers with references
         l = self.types.values()
 
@@ -543,7 +547,7 @@ reference {}.".format(_type.name))
         self.base = _type.base
         self.type = _type
 
-        self.definer_references = list(_type.definer.references)
+        self.definer_references = []
 
     def get_definers(self):
         return self.type.get_definers()
