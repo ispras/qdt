@@ -1126,8 +1126,8 @@ class VariableDefinition(SourceChunk):
 
 class VariableUsage(SourceChunk):
     @staticmethod
-    def gen_chunks(var, initializer = None):
-        ch = VariableUsage(var, initializer)
+    def gen_chunks(var, indent = "", initializer = None):
+        ch = VariableUsage(var, indent, initializer)
 
         refs = var.type.gen_defining_chunk_list()
 
@@ -1143,13 +1143,14 @@ class VariableUsage(SourceChunk):
         ch.add_references(refs)
         return [ch] + refs
 
-    def __init__(self, var, initializer = None):
+    def __init__(self, var, indent = "", initializer = None):
         super(VariableUsage, self).__init__(
             name = "Usage of variable of type %s" % var.type.name,
-            code = var.type.gen_usage_string(initializer)
+            code = indent + var.type.gen_usage_string(initializer)
         )
 
         self.variable = var
+        self.indent = indent
         self.initializer = initializer
 
 
