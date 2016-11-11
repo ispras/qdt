@@ -78,7 +78,10 @@ class PyGenerator(object):
         if isinstance(c, bool):
             return "True" if c else "False"
         elif isinstance(c, int) or isinstance(c, long):
-            return "0x%0x" % c
+            if c <= 0:
+                return "%d" % c
+            else:
+                return "0x%0x" % c
         elif isinstance(c, str):
             return "\"" + c + "\""
         elif isinstance(c, bool):
