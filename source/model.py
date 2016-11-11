@@ -799,6 +799,16 @@ class TypeFixerVisitor(ObjectVisitor):
         if isinstance(self.cur, Type):
             t = self.cur
             if isinstance(t, TypeReference):
+                try:
+                    self_tr = self.source.types[t.name]
+                except KeyError:
+                    # The source does not have such type reference
+                    self.source.add_inclusion(t.type.definer)
+                    self_tr = self.source.types[t.name]
+
+                if self_tr is not t:
+                    self.replace(self_tr)
+
                 raise BreakVisiting()
 
             if t.base:
