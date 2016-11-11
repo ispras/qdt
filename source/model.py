@@ -1056,7 +1056,7 @@ class VariableDeclaration(SourceChunk):
         t = var.type if not isinstance(var.type, TypeReference) else var.type.type
 
         if type(t) == Macro:
-            u = VariableUsage.gen_chunks(var, indent)
+            u = VariableUsage.gen_chunks(var, indent = indent)
             ch = u[0]
             refs = u[1:]
         else:
