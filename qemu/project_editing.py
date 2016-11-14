@@ -27,9 +27,10 @@ class ProjectOperation(InverseOperation):
 class QemuObjectCreationHelper(object):
     """ The class helps implement Qemu model object creation operations. It
     automates handling of arguments for __init__ method of created objects.
-    The helper class __init__ methods gets lists of handled class __init__
-    arguments. Then it moves them from kw dictionary to self. The new method of
-    the helper class creates object of handled class with this arguments. """
+    The helper class __init__ method gets lists of handled class __init__
+    arguments. Then it moves them from kw dictionary to self. The 'new' method
+    of the helper class creates object of handled class with this arguments.
+    """
 
     def __init__(self, class_name, kw):
         self.nc = class_name
