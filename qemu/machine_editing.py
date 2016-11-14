@@ -1,4 +1,5 @@
 from machine_description import \
+    Node, \
     QOMPropertyTypeLink, \
     IRQLine, \
     IRQHub, \
@@ -69,6 +70,15 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     def __init__(self, node_class_name, *args, **kw):
         QemuObjectCreationHelper.__init__(self, node_class_name, kw)
         MachineNodeOperation.__init__(self, *args, **kw)
+
+        self.value_import_helpers[Node] = self.node_import_helper
+        self.value_export_helpers[Node] = self.node_export_helper
+
+    def node_import_helper(self, node):
+        return node.id
+
+    def node_export_helper(self, node_id):
+        return self.find_desc().id2node[node_id]
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
