@@ -218,8 +218,8 @@ class MemoryTreeWidget(VarTreeview):
             # make sure to release the grab (Tk 8.0a1 only)
             # self.current_popup.grab_release()
         except:
-             # make sure to release the grab (Tk 8.0a1 only)
+            # make sure to release the grab (Tk 8.0a1 only)
             # self.current_popup.grab_release()
             self.current_popup = None
 
-        #print("on_b3_press")
+        # print("on_b3_press")
