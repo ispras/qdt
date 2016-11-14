@@ -1,7 +1,5 @@
-from widgets import \
-    VarMenu
-
 from var_widgets import \
+    VarMenu, \
     VarTreeview
 
 from qemu import \
