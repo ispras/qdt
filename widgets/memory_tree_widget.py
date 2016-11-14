@@ -28,7 +28,7 @@ class MemoryTreeWidget(VarTreeview):
         self.selected = None
 
         self["columns"] = ("id", "offset", "size", "type")
- 
+
         self.heading("#0", text = _("Name"))
         self.heading("id", text = _("Id"))
         self.heading("offset", text = _("Offset"))
@@ -100,7 +100,7 @@ class MemoryTreeWidget(VarTreeview):
         self.current_popup = None
 
         self.after(0, self.update)
-        
+
     def on_popup_node_settings(self):
         # TODO
         self.current_popup = None
@@ -215,7 +215,7 @@ class MemoryTreeWidget(VarTreeview):
                 self.selected = None
                 self.current_popup = self.popup_empty
 
-        try: 
+        try:
             self.current_popup.tk_popup(event.x_root, event.y_root)
             # make sure to release the grab (Tk 8.0a1 only)
             # self.current_popup.grab_release()
