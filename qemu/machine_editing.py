@@ -1,5 +1,6 @@
 from machine_description import \
     Node, \
+    MemoryAliasNode, \
     QOMPropertyTypeLink, \
     IRQLine, \
     IRQHub, \
@@ -136,6 +137,32 @@ class MachineNodeDeletion(MachineNodeAdding):
         self.set_with_origin(n)
 
     __undo__ = MachineNodeAdding.__do__
+
+class MOp_AddMemoryNode(MachineNodeAdding):
+
+    def __backup__(self):
+        pass
+
+    def __undo__(self):
+        mach = self.find_desc()
+        mem = mach.id2node[self.node_id]
+
+        if mem.children:
+            raise Exception("Memory node %d has children" % self.node_id)
+
+        if mem.parent:
+            raise Exception("Memory node %d has parent %d" % mem.parent.id)
+
+        for n in mach.id2node.values():
+            if isinstance(n, MemoryAliasNode):
+                if n.alias_to is mem:
+                    raise Exception(
+"Memory node to be deleted %d is aliased by node %d" % (self.node_id, n.id)
+                    )
+
+        mach.mems.remove(mem)
+        del mach.id2node[self.node_id]
+        mem.id = -1
 
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
