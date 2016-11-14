@@ -1,5 +1,6 @@
 from common import \
     gen_class_args, \
+    get_class_defaults, \
     InverseOperation
 
 from importlib import \
@@ -91,6 +92,90 @@ _MyClassName__my_attr in this case. It is Python internals...
                 kw[n] = val
 
         return Class(*args, **kw)
+
+    """ The method imports from origin values for arguments of current class
+__init__ method. By default the method uses getattr method. The attrinutes names
+are assumed to be same as names of __init__ arguments. It is incorrect the
+the origin object class can provide __get_init_arg_val__ method. The method
+should be getattr-like:
+    1-st argument is the reference to the origin
+    2-nd argument is name of __init__ argument the value for which should be
+returned.
+
+Basic example:
+
+    def __get_init_arg_val__(self, arg_name):
+        return getattr(self, arg_name)
+
+The behaviour in this case is same as if no __get_init_arg_val__ method is
+defined.
+
+    The import_argument_values do not imports complicated values. Supported
+types are:
+    bool
+    int
+    long
+    str
+    unicode
+None values are imported too.
+
+    """
+    def import_argument_values(self, origin):
+        try:
+            import_method = type(origin).__get_init_arg_val__
+        except AttributeError:
+            import_method = getattr
+
+        for attr_name in self.al:
+            try:
+                val = import_method(origin, attr_name)
+            except AttributeError:
+                raise Exception(
+                    "Cannot import value of argument with name '%s'" % attr_name
+                )
+
+            # import values of basic types only
+            t = type(val)
+            if not (
+                    val is None
+                or  t is bool
+                or  t is int
+                or  t is long
+                or  t is str
+                or  t is unicode
+            ):
+                # print "skipping %s of type %s" % (attr_name, t.__name__)
+                continue
+
+            setattr(self, self.prefix + attr_name, val)
+
+        def_args = get_class_defaults(self._nc)
+
+        for attr_name in self.kwl:
+            try:
+                val = import_method(origin, attr_name)
+            except AttributeError:
+                # values of arguments with defaults are not important enough.
+                continue
+
+            # import values of basic types only
+            t = type(val)
+            if not (
+                    val is None
+                or  t is bool
+                or  t is int
+                or  t is long
+                or  t is str
+                or  t is unicode
+            ):
+                # print "skipping %s of type %s" % (attr_name, t.__name__)
+                continue
+
+            # do not store default values
+            if def_args[attr_name] == val:
+                continue
+
+            setattr(self, self.prefix + attr_name, val)
 
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, desc_name, *args, **kw):
