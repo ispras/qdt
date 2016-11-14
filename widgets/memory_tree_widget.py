@@ -98,6 +98,9 @@ class MemoryTreeWidget(VarTreeview):
 
         self.after(0, self.update)
 
+        # TODO: watch machine changes and update map on relevant changes
+        # TODO: remove watching callback
+
     def on_popup_node_settings(self):
         # TODO
         self.current_popup = None
@@ -197,6 +200,9 @@ class MemoryTreeWidget(VarTreeview):
             self.current_popup = None
 
         iid = self.identify_row(event.y)
+        """ TODO: when user clicks over a row, the row should be be selected
+        in the tree view. This prevents confusion of row for which the popup
+        is shown. """
         try:
             self.selected = self.iid2node[iid]
 
