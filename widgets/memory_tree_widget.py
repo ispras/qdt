@@ -3,7 +3,6 @@ from var_widgets import \
     VarTreeview
 
 from qemu import \
-    MachineNode, \
     MemoryNode, \
     MemoryLeafNode, \
     MemoryAliasNode, \
