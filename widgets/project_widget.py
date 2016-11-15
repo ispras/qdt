@@ -120,6 +120,7 @@ class ProjectWidget(PanedWindow):
         self.add(self.nb_descriptions)
 
         self.current_popup = None
+        self.previous_desc_popup = None
 
         tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
         tvm.add_command(
@@ -175,10 +176,7 @@ class ProjectWidget(PanedWindow):
         self.p.pht.add_on_changed(self.on_project_changed)
 
     def on_tv_b3(self, event):
-        if self.current_popup is not None:
-            self.current_popup.unpost()
-            self.current_popup = None
-
+        # select appropriate menu
         popup = self.popup_tv_empty
 
         row = self.tv_descs.identify_row(event.y)
@@ -187,12 +185,52 @@ class ProjectWidget(PanedWindow):
             self.tv_descs.selection_set(row)
             popup = self.popup_tv_single
 
+
+        class DoShow(BaseException):
+            def __init__(self, show):
+                self.show = show
+
+        # Do not show same menu again. Just hide it.
         try:
-            popup.post(event.x_root, event.y_root)
-        except:
-            pass
+            if self.current_popup is None:
+                # no menu is shown now
+                raise DoShow(True)
+            else:
+                # unpost current menu
+                self.current_popup.unpost()
+
+            if popup is not self.current_popup:
+                # popup is another menu
+                raise DoShow(True)
+
+            # popup is same menu
+            if popup is not self.popup_tv_single:
+                # menu is not for single description row
+                raise DoShow(False)
+
+            if row != self.previous_desc_popup:
+                # menu is for anoter row
+                raise DoShow(True)
+
+        except DoShow as e:
+            show = e.show
         else:
-            self.current_popup = popup
+            # do not show menu by default
+            show = False
+        finally:
+            # the value is not more needed
+            self.current_popup = None
+
+        if show:
+            self.previous_desc_popup = row
+            try:
+                popup.tk_popup(event.x_root, event.y_root)
+            except:
+                pass
+            else:
+                self.current_popup = popup
+            finally:
+                popup.grab_release()
 
     def on_add_description(self):
         self.add_description()
