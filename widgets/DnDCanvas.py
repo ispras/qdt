@@ -33,6 +33,8 @@ class CanvasDnD(tk.Frame):
 
         #print str(xy) + " - " + str(self.off)
 
+        self.dnd_dragged = self.canvas.find_withtag(tk.CURRENT)[0]
+
         self.dragging = True
         self.event_generate('<<DnDDown>>')
 
@@ -71,3 +73,6 @@ class CanvasDnD(tk.Frame):
         self.dragging = False
         self.off = None
         self.event_generate('<<DnDUp>>')
+        """ Right after event. Listeners should be able to get which id
+        is not dragged now. """
+        del self.dnd_dragged
