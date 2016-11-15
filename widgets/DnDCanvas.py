@@ -6,7 +6,9 @@ import Tkinter
 tk = Tkinter
 
 class CanvasDnD(tk.Frame):
-    def __init__(self, master):
+    def __init__(self, master,
+            id_priority_sort_function = lambda ids : ids
+        ):
         self.master = master
 
         tk.Frame.__init__ (self, master)
@@ -26,6 +28,8 @@ class CanvasDnD(tk.Frame):
         self.canvas.bind("<ButtonRelease-1>", self.up, "+")
         self.canvas.bind("<Motion>", self.motion, "+")
 
+        self.id_priority_sort_function = id_priority_sort_function
+
     def down(self, event):
         x, y = event.widget.canvasx(event.x), event.widget.canvasy(event.y)
 
@@ -35,6 +39,7 @@ class CanvasDnD(tk.Frame):
         if not touched:
             return
 
+        touched = self.id_priority_sort_function(touched)
         self.dnd_dragged = touched[0]
 
         offset = event.widget.coords(self.dnd_dragged)
