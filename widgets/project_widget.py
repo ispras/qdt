@@ -170,10 +170,19 @@ class ProjectWidget(PanedWindow):
 
         self.tv_descs.bind("<Button-3>", self.on_tv_b3, "+")
 
+        toplevel = self.tv_descs.winfo_toplevel()
+        if toplevel is not None:
+            toplevel.bind("<Button-1>", self.on_tv_b1, "+")
+
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
         self.p.pht.add_on_changed(self.on_project_changed)
+
+    def on_tv_b1(self, event):
+        if self.current_popup:
+            self.current_popup.unpost()
+            self.current_popup = None
 
     def on_tv_b3(self, event):
         # select appropriate menu
