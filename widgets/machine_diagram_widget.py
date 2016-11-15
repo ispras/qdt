@@ -1049,6 +1049,11 @@ IRQ line creation
 
         return ret
 
+    def sort_ids_by_priority(self, ids):
+        return sorted(ids, reverse = True, key = lambda id : (
+            self.get_id_priority(id)
+        ))
+
     def on_b1_release(self, event):
         if not self.select_point:
             return
