@@ -1294,13 +1294,13 @@ IRQ line creation
         self.all_were_dragged = True
 
     def dnd_moved(self, event):
-        id = self.canvas.find_withtag(tk.CURRENT)[0]
+        id = self.dnd_dragged
         if id == self.shown_irq_circle:
             node = self.shown_irq_node
         else:
             node = self.id2node[id]
 
-        points = self.canvas.coords(tk.CURRENT)[:2]
+        points = self.canvas.coords(id)[:2]
         points[0] = points[0] - node.offset[0]
         points[1] = points[1] - node.offset[1]
 
@@ -1341,7 +1341,7 @@ IRQ line creation
         self.select_frame = None
 
     def dnd_down(self, event):
-        id = self.canvas.find_withtag(tk.CURRENT)[0]
+        id = self.dnd_dragged
 
         if id == self.irq_circle_preview:
             self.circle_preview_to_irq(self.highlighted_irq_line)
