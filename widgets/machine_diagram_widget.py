@@ -299,7 +299,9 @@ class MachineDiagramWidget(CanvasDnD):
     EVENT_SELECT = "<<Select>>"
 
     def __init__(self, parent, mach_desc):
-        CanvasDnD.__init__(self, parent)
+        CanvasDnD.__init__(self, parent,
+            id_priority_sort_function = self.sort_ids_by_priority
+        )
 
         mach_desc.link()
 
@@ -1068,6 +1070,8 @@ IRQ line creation
                 x - 3, y - 3, x + 3, y + 3
             )
 
+        touched = self.sort_ids_by_priority(touched)
+
         self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
@@ -1121,6 +1125,8 @@ IRQ line creation
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
 
         touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+
+        touched_ids = self.sort_ids_by_priority(touched_ids)
 
         for tid in touched_ids:
             if not "DnD" in self.canvas.gettags(tid):
