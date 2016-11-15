@@ -244,12 +244,16 @@ class ProjectWidget(PanedWindow):
     def on_add_description(self):
         self.add_description()
 
+        self.current_popup = None
+
     def on_delete_description(self):
         item = self.tv_descs.selection()[0]
         name = self.tv_descs.item(item)["text"]
         desc = self.p.find(name = name).next()
         self.p.pht.delete_description(desc)
         self.p.pht.commit()
+
+        self.current_popup = None
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
