@@ -319,7 +319,7 @@ class MachineDiagramWidget(CanvasDnD):
         self.node2dev = {}
         self.node2idtext = {}
 
-        self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select)
+        self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select, "+")
         self.ids_shown_on_select = Set([])
 
         self.nodes = []
@@ -353,13 +353,13 @@ class MachineDiagramWidget(CanvasDnD):
 
         self.update()
 
-        self.bind('<<DnDMoved>>', self.dnd_moved)
-        self.bind('<<DnDDown>>', self.dnd_down)
-        self.bind('<<DnDUp>>', self.dnd_up)
+        self.bind('<<DnDMoved>>', self.dnd_moved, "+")
+        self.bind('<<DnDDown>>', self.dnd_down, "+")
+        self.bind('<<DnDUp>>', self.dnd_up, "+")
         self.dragged = []
 
-        self.canvas.bind("<ButtonPress-3>", self.on_b3_press)
-        self.canvas.bind("<ButtonRelease-3>", self.on_b3_release)
+        self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
+        self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
 
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
@@ -378,15 +378,15 @@ class MachineDiagramWidget(CanvasDnD):
         self.selection_mark_color = "orange"
         self.selected = []
         self.select_point = None
-        self.canvas.bind("<ButtonPress-1>", self.on_b1_press)
-        self.canvas.bind("<ButtonRelease-1>", self.on_b1_release)
+        self.canvas.bind("<ButtonPress-1>", self.on_b1_press, "+")
+        self.canvas.bind("<ButtonRelease-1>", self.on_b1_release, "+")
 
         self.select_frame = None
         self.select_frame_color = "green"
 
         self.key_state = {}
-        self.canvas.bind("<KeyPress>", self.on_key_press)
-        self.canvas.bind("<KeyRelease>", self.on_key_release)
+        self.canvas.bind("<KeyPress>", self.on_key_press, "+")
+        self.canvas.bind("<KeyRelease>", self.on_key_release, "+")
         self.canvas.focus_set()
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
