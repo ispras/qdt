@@ -1013,6 +1013,42 @@ IRQ line creation
         )
         self.select_by_frame = False
 
+    def get_id_priority(self, id):
+        try:
+            n = self.id2node[id]
+            if isinstance(n, IRQPathCircle):
+                """ IRQ Line circles could discourage another nodes dragging,
+                especially related IRQ hub nodes. Hence, make IRQ line circles
+                less priority. """
+                ret = 2
+                """ There is no meaningful reason to distribute other nodes
+                priorities such way. So, just try and watch what will happen. """
+            elif isinstance(n, IRQHubCircle):
+                ret =  3
+            else:
+                n = self.node2dev[n]
+
+                if isinstance(n, DeviceNode):
+                    ret =  4
+                elif isinstance(n, BusNode):
+                    ret =  5
+                else:
+                    """ Unspecified node. Make it much intrusive to speed up its
+                    priority specification. """
+                    ret =  6
+        except KeyError:
+            # print "id %d without prototype has less priority" % id
+            return 0
+
+        """
+        print str(id) \
+            + " priority " \
+            + str(ret) \
+            + " (" + type(n).__name__ + ")"
+        """
+
+        return ret
+
     def on_b1_release(self, event):
         if not self.select_point:
             return
