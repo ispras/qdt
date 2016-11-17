@@ -14,7 +14,7 @@ from widgets import \
     HotKey, \
     ProjectWidget, \
     VarMenu, \
-    VarTk
+    GUITk
 
 import argparse
 
@@ -35,9 +35,9 @@ from tkMessageBox import \
     askyesno, \
     showerror
 
-class QDCGUIWindow(VarTk):
+class QDCGUIWindow(GUITk):
     def __init__(self, project = None):
-        VarTk.__init__(self)
+        GUITk.__init__(self, wait_msec = 1)
 
         self.title_suffix = _("Qemu device creator GUI")
         self.title_suffix.trace_variable("w", self.__on_title_suffix_write__)

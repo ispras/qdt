@@ -304,6 +304,13 @@ class MachineDiagramWidget(CanvasDnD):
         mach_desc.link()
 
         self.mach = mach_desc
+
+        toplevel = self.winfo_toplevel()
+        try:
+            self.task_manager = toplevel.task_manager
+        except:
+            self.task_manager = None
+
         self.mht = self.mach.project.pht.get_machine_proxy(self.mach)
 
         self.id2node = {}
@@ -2120,7 +2127,14 @@ IRQ line creation
     def __ph_launch__(self):
         if "_ph_run" in self.__dict__:
             raise Exception("Attempt to launch physical simulation twice")
-        self._ph_run = self.after(0, self.ph_run)
+
+        """ If background task manager is available then use coroutine task
+        to compute physics else use legacy "after" based method """
+        if self.task_manager is None:
+            self._ph_run = self.after(0, self.ph_run)
+        else:
+            self._ph_run = self.co_ph_task()
+            self.task_manager.enqueue(self._ph_run)
 
     def ph_is_running(self):
         return "_ph_run" in self.__dict__
@@ -2129,7 +2143,10 @@ IRQ line creation
         self.var_physical_layout.set(False)
 
     def __ph_stop__(self):
-        self.after_cancel(self._ph_run)
+        if self.task_manager is None:
+            self.after_cancel(self._ph_run)
+        else:
+            self.task_manager.remove(self._ph_run)
         del self._ph_run
 
     def ph_run(self):
@@ -2138,6 +2155,12 @@ IRQ line creation
             rest = 0.001
 
         self._ph_run = self.after(int(rest * 1000), self.ph_run)
+
+    def co_ph_task(self):
+        while True:
+            rest = self.ph_iterate(0.01)
+            # If engine is still computing an iteration
+            yield rest <= 0.0
 
     def update_node_text(self, node):
         text = node.node.qom_type
