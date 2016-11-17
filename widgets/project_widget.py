@@ -1,4 +1,5 @@
 from var_widgets import \
+    VarMenu, \
     VarTreeview
 
 from close_button_notebook import \
@@ -33,6 +34,9 @@ from gui_frame import \
 
 from ttk import \
     Scrollbar
+
+from add_desc_dialog import \
+    AddDescriptionDialog
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
@@ -115,6 +119,24 @@ class ProjectWidget(PanedWindow):
         self.nb_descriptions = CloseButtonNotebook(self)
         self.add(self.nb_descriptions)
 
+        self.current_popup = None
+
+        tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
+        tvm.add_command(
+            label = _("Add description"),
+            command = self.on_add_description
+        )
+
+        self.popup_tv_empty = tvm
+
+        tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
+        tvm.add_command(
+            label = _("Delete description"),
+            command = self.on_delete_description
+        )
+
+        self.popup_tv_single = tvm
+
         self.desc2w = {}
         for desc in self.p.descriptions:
             widgets = self.desc2w[desc] = []
@@ -145,10 +167,42 @@ class ProjectWidget(PanedWindow):
 
         self.tv_descs.bind("<Double-1>", self.on_tv_desc_b1_double)
 
+        self.tv_descs.bind("<Button-3>", self.on_tv_b3, "+")
+
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
         self.p.pht.add_on_changed(self.on_project_changed)
+
+    def on_tv_b3(self, event):
+        if self.current_popup is not None:
+            self.current_popup.unpost()
+            self.current_popup = None
+
+        popup = self.popup_tv_empty
+
+        row = self.tv_descs.identify_row(event.y)
+
+        if row != "":
+            self.tv_descs.selection_set(row)
+            popup = self.popup_tv_single
+
+        try:
+            popup.post(event.x_root, event.y_root)
+        except:
+            pass
+        else:
+            self.current_popup = popup
+
+    def on_add_description(self):
+        self.add_description()
+
+    def on_delete_description(self):
+        item = self.tv_descs.selection()[0]
+        name = self.tv_descs.item(item)["text"]
+        desc = self.p.find(name = name).next()
+        self.p.pht.delete_description(desc)
+        self.p.pht.commit()
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
@@ -273,3 +327,6 @@ class ProjectWidget(PanedWindow):
                     (desc.name, type(desc).__name__)
                 )
         return w
+
+    def add_description(self):
+        AddDescriptionDialog(self.p.pht, self.winfo_toplevel())

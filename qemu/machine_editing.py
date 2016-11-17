@@ -1,4 +1,6 @@
 from machine_description import \
+    Node, \
+    MemoryAliasNode, \
     QOMPropertyTypeLink, \
     IRQLine, \
     IRQHub, \
@@ -61,14 +63,62 @@ class MachineNodeOperation(MachineOperation):
     def writes_node(self):
         return self.writes(self.gen_entry())
 
+class MOp_AddMemChild(MachineNodeOperation):
+    def __init__(self, child_id, *args, **kw):
+        MachineNodeOperation.__init__(self, *args, **kw)
+        self.child_id = copy.deepcopy(child_id)
+
+    def __backup__(self):
+        pass
+
+    def __do__(self):
+        m = self.find_desc()
+        child, parent = m.id2node[self.child_id], m.id2node[self.node_id]
+
+        parent.add_child(child)
+
+    def __undo__(self):
+        m = self.find_desc()
+        child, parent = m.id2node[self.child_id], m.id2node[self.node_id]
+
+        parent.remove_child(child)
+
+    def __read_set__(self):
+        return MachineNodeOperation.__read_set__(self) + [
+            self.gen_node_id_entry(self.child_id), self.gen_entry()
+        ]
+
+    def __write_set__(self):
+        """ Because order of children is not important, we are only have to
+organize operations about same child. """
+
+        return MachineNodeOperation.__write_set__(self) + [
+            (self.gen_entry(), "__child__", \
+                self.gen_node_id_entry(self.child_id))
+        ]
+
+class MOp_RemoveMemChild(MOp_AddMemChild):
+
+    __do__ = MOp_AddMemChild.__undo__
+    __undo__ = MOp_AddMemChild.__do__
+
 class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module. Class constructor
     #     argument values will be excluded from key word arguments of this
     #     __init__ method.
     def __init__(self, node_class_name, *args, **kw):
-        QemuObjectCreationHelper.__init__(self, node_class_name, kw)
+        QemuObjectCreationHelper.__init__(self, node_class_name, kw, "node__")
         MachineNodeOperation.__init__(self, *args, **kw)
+
+        self.value_import_helpers[Node] = self.node_import_helper
+        self.value_export_helpers[Node] = self.node_export_helper
+
+    def node_import_helper(self, node):
+        return node.id
+
+    def node_export_helper(self, node_id):
+        return self.find_desc().id2node[node_id]
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
@@ -77,6 +127,48 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
 
     def __do__(self):
         self.mach.add_node(self.new(), with_id = self.node_id)
+
+class MachineNodeDeletion(MachineNodeAdding):
+    def __init__(self, *args, **kw):
+        MachineNodeAdding.__init__(self, "", *args, **kw)
+
+    def __backup__(self):
+        n = self.find_desc().id2node[self.node_id]
+        self.set_with_origin(n)
+
+    __undo__ = MachineNodeAdding.__do__
+
+class MOp_AddMemoryNode(MachineNodeAdding):
+
+    def __backup__(self):
+        pass
+
+    def __undo__(self):
+        mach = self.find_desc()
+        mem = mach.id2node[self.node_id]
+
+        if mem.children:
+            raise Exception("Memory node %d has children" % self.node_id)
+
+        if mem.parent:
+            raise Exception("Memory node %d has parent %d" % mem.parent.id)
+
+        for n in mach.id2node.values():
+            if isinstance(n, MemoryAliasNode):
+                if n.alias_to is mem:
+                    raise Exception(
+"Memory node to be deleted %d is aliased by node %d" % (self.node_id, n.id)
+                    )
+
+        mach.mems.remove(mem)
+        del mach.id2node[self.node_id]
+        mem.id = -1
+
+class MOp_DelMemoryNode(MachineNodeDeletion, MOp_AddMemoryNode):
+    def __init__(self, *args, **kw):
+        MachineNodeDeletion.__init__(self, *args, **kw)
+
+    __do__ =  MOp_AddMemoryNode.__undo__
 
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
@@ -116,14 +208,7 @@ class MOp_DelDevice(MOp_AddDevice):
 
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
-
-        self.nc = type(dev).__name__
-        self.qom_type = str(dev.qom_type)
-
-        if self.nc == "PCIExpressDeviceNode":
-            self.slot = copy.deepcopy(dev.slot)
-            self.function = copy.deepcopy(dev.function)
-            self.multifunction = copy.deepcopy(dev.multifunction)
+        self.set_with_origin(dev)
 
     __do__ = MOp_AddDevice.__undo__
     __undo__ = MachineNodeAdding.__do__
@@ -156,12 +241,7 @@ class MOp_DelBus(MOp_AddBus):
 
     def __backup__(self):
         bus = self.mach.id2node[self.node_id]
-
-        self.nc = type(bus).__name__
-        self.c_type = copy.deepcopy(bus.c_type)
-        self.cast = copy.deepcopy(bus.cast)
-        self.child_name = copy.deepcopy(bus.child_name)
-        self.force_index = copy.deepcopy(bus.force_index)
+        self.set_with_origin(bus)
 
     __do__ = MOp_AddBus.__undo__
     __undo__ = MOp_AddBus.__do__
@@ -598,11 +678,10 @@ class MOp_DelDevProp(MachineDevicePropertyOperation):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
 
-class MOp_AddDevProp(MachineNodeOperation):
+class MOp_AddDevProp(MachineDevicePropertyOperation):
     def __init__(self, prop, *args, **kw):
-        MachineNodeOperation.__init__(self, *args, **kw)
+        MachineDevicePropertyOperation.__init__(self, prop, *args, **kw)
 
-        self.prop_name = copy.deepcopy(prop.prop_name)
         self.prop_type = prop.prop_type
         self.prop_val = self.prop_val_2_inv(prop.prop_type, prop.prop_val)
 

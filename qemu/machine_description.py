@@ -90,6 +90,11 @@ class BusNode(Node):
             gen.gen_field("force_index = False")
         gen.gen_end()
 
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "parent":
+            arg_name = "parent_device"
+        return getattr(self, arg_name)
+
 class SystemBusNode(BusNode):
     def __init__(self):
         # Assume, the system bus has no parent
@@ -115,12 +120,22 @@ class PCIExpressBusNode(BusNode):
         gen.gen_field("host_bridge = " + gen.nameof(self.parent_device))
         gen.gen_end()
 
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "host_bridge":
+            arg_name = "parent_device"
+        return getattr(self, arg_name)
+
 class ISABusNode(BusNode):
     def __init__(self, bus_controller):
         BusNode.__init__(self,
             parent = bus_controller,
             child_name = "isa"
             )
+
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "bus_controller":
+            arg_name = "parent_device"
+        return getattr(self, arg_name)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -139,6 +154,11 @@ class IDEBusNode(BusNode):
         gen.gen_field("bus_controller = " + gen.nameof(self.parent_device))
         gen.gen_end()
 
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "bus_controller":
+            arg_name = "parent_device"
+        return getattr(self, arg_name)
+
 class I2CBusNode(BusNode):
     def __init__(self, bus_controller):
         BusNode.__init__(self,
@@ -153,6 +173,11 @@ class I2CBusNode(BusNode):
         gen.reset_gen(self)
         gen.gen_field("bus_controller = " + gen.nameof(self.parent_device))
         gen.gen_end()
+
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "bus_controller":
+            arg_name = "parent_device"
+        return getattr(self, arg_name)
 
 # IRQ line model
 
@@ -362,6 +387,11 @@ class DeviceNode(Node):
                     ret.append(p.prop_val)
         return ret
 
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "parent":
+            arg_name = "parent_bus"
+        return getattr(self, arg_name)
+
 class SystemBusDeviceNode(DeviceNode):
     def __init__(self,
                  qom_type,
@@ -446,6 +476,13 @@ class SystemBusDeviceNode(DeviceNode):
     def delete_port_mapping(self, index = 0):
         del self.pmio_mappings[index]
 
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "system_bus":
+            arg_name = "parent_bus"
+        elif arg_name == "mmio" or arg_name == "pmio":
+            return None
+        return getattr(self, arg_name)
+
 class PCIExpressDeviceNode(DeviceNode):
     def __init__(self, 
                  qom_type,
@@ -474,12 +511,20 @@ class PCIExpressDeviceNode(DeviceNode):
         gen.gen_end()
         self.gen_props(gen)
 
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "pci_express_bus":
+            arg_name = "parent_bus"
+        return getattr(self, arg_name)
+
 # Memory tree model
 
 class MemoryNodeAlreadyHasParent(Exception):
     pass
 
 class MemoryNodeCannotHasChildren(Exception):
+    pass
+
+class MemoryNodeHasNoSuchParent(Exception):
     pass
 
 class MemoryNode(Node):
@@ -516,6 +561,13 @@ class MemoryNode(Node):
         child.priority = priority
         child.parent = self
         self.children.append(child)
+
+    def remove_child(self, child):
+        if not child.parent is self:
+            raise MemoryNodeHasNoSuchParent()
+
+        child.parent = None
+        self.children.remove(child)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -561,6 +613,11 @@ class MemoryAliasNode(MemoryLeafNode):
         gen.gen_end()
 
         self.gen_parent_attachment(gen)
+
+    def __get_init_arg_val__(self, arg_name):
+        if arg_name == "offset":
+            arg_name = "alias_offset"
+        return getattr(self, arg_name)
 
 class MemoryRAMNode(MemoryLeafNode):
     def __init__(self, name, size):

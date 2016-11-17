@@ -62,6 +62,7 @@ from machine_description import \
     QOMPropertyTypeBoolean, \
     QOMPropertyTypeInteger, \
     QOMPropertyValue, \
+    MemoryNodeHasNoSuchParent, \
     MemoryNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
@@ -83,7 +84,12 @@ from version import \
 from machine_editing import \
     MachineOperation, \
         MachineNodeOperation, \
+            MOp_AddMemChild, \
+                MOp_RemoveMemChild, \
             MachineNodeAdding, \
+                MachineNodeDeletion, \
+                    MOp_DelMemoryNode, \
+                MOp_AddMemoryNode, \
                 MOp_AddBus, \
                     MOp_DelBus, \
                 MOp_AddDevice, \
@@ -113,6 +119,7 @@ from project_editing import \
     QemuObjectCreationHelper, \
     ProjectOperation, \
         POp_AddDesc, \
+            POp_DelDesc, \
         DescriptionOperation
 
 from project_history_tracker import \

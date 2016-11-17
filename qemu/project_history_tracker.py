@@ -1,7 +1,11 @@
 from common import \
+    get_default_args, \
     HistoryTracker
 
 from machine_editing import \
+    MachineDeviceSetAttributeOperation, \
+    MOp_RemoveMemChild, \
+    MOp_DelMemoryNode, \
     MOp_SetDevProp, \
     MOp_DelDevProp, \
     MOp_DelIOMapping, \
@@ -15,12 +19,18 @@ from machine_editing import \
     MOp_DelIRQHub
 
 from machine_description import \
+    MemoryAliasNode, \
+    MachineNode, \
     DeviceNode, \
     BusNode, \
     IRQHub, \
     IRQLine, \
+    MemoryNode, \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
+
+from project_editing import \
+    POp_DelDesc
 
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):
@@ -160,6 +170,53 @@ class MachineProxyTracker(object):
 
         self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
 
+    def remove_memory_child(self, parent_id, child_id):
+        parent = self.mach.id2node[parent_id]
+        child = self.mach.id2node[child_id]
+
+        """ Generate operations reverting child setting to defaults. Reverting
+        the operation restores child settings. """
+
+        add_child_args = get_default_args(parent.__class__.add_child)
+        for arg_name, arg_val in add_child_args.iteritems():
+            if getattr(child, arg_name) != arg_val:
+                self.stage(MachineDeviceSetAttributeOperation, arg_name,
+                    arg_val, child_id)
+
+        self.stage(MOp_RemoveMemChild, child_id, parent_id)
+
+    def delete_memory_node(self, m_id):
+        mem = self.mach.id2node[m_id]
+
+        # delete all aliases to the memory node
+        for n in self.mach.id2node.values():
+            if isinstance(n, MemoryAliasNode):
+                if n.alias_to is mem:
+                    self.delete_memory_node(n.id)
+
+        # commit all deletions because they could change children of mem
+        self.commit(new_sequence = False)
+
+        for child in mem.children:
+            self.remove_memory_child(m_id, child.id)
+
+        if mem.parent is not None:
+            self.remove_memory_child(mem.parent.id, m_id)
+
+        # set properties linking to the memory node to linking nothing
+        for n in self.mach.id2node.values():
+            if not isinstance(n, DeviceNode):
+                continue
+
+            for p in n.properties:
+                if  not p.prop_type is QOMPropertyTypeLink \
+                or  not p.prop_val is mem :
+                    continue
+
+                self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None, p, n.id)
+
+        self.stage(MOp_DelMemoryNode, m_id)
+
     def delete_ids(self, node_ids):
         for node_id in node_ids:
             try:
@@ -176,6 +233,8 @@ class MachineProxyTracker(object):
                 self.delete_irq_hub(node_id)
             elif isinstance(n, IRQLine):
                 self.delete_irq_line(node_id)
+            elif isinstance(n, MemoryNode):
+                self.delete_memory_node(n.id)
             else:
                 raise Exception(
 "No helper for deletion of node %d of type %s was defined" % \
@@ -228,3 +287,11 @@ class ProjectHistoryTracker(HistoryTracker):
 
         if ns:
             self.start_new_sequence()
+
+    def delete_description(self, desc):
+        if isinstance(desc, MachineNode):
+            # first delete all content of machine
+            mht = MachineProxyTracker(self, desc)
+            mht.delete_ids(list(desc.id2node.keys()))
+
+        self.stage(POp_DelDesc, desc.name)
