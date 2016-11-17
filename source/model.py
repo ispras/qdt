@@ -370,13 +370,12 @@ digraph HeaderInclusion {
                     header_input = open(full_name, "r").read()
                     p.parse(input = header_input, source = prefix)
 
-                    sys.stdout = ParsePrintFilter(sys.stdout)
                     while p.token(): pass
-                    sys.stdout = sys.stdout.out
-
 
     @staticmethod
     def build_inclusions(dname):
+        ppf = sys.stdout = ParsePrintFilter(sys.stdout)
+
         for h in Header.reg.values():
             h.parsed = False
 
@@ -385,6 +384,8 @@ digraph HeaderInclusion {
 
         for h in Header.reg.values():
             del h.parsed
+
+        sys.stdout = ppf.out
 
     @staticmethod
     def lookup(path):
