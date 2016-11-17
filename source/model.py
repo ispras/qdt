@@ -338,10 +338,11 @@ digraph HeaderInclusion {
         full_name = os.path.join(start_dir, prefix)
         if (os.path.isdir(full_name)):
             for entry in os.listdir(full_name):
-                Header._build_inclusions_recursive(
+                for ret in Header._build_inclusions_recursive(
                     start_dir,
                     os.path.join(prefix, entry)
-                )
+                ):
+                    yield ret
         else:
             (name, ext) = os.path.splitext(prefix)
             if ext == ".h":
@@ -370,22 +371,44 @@ digraph HeaderInclusion {
                     header_input = open(full_name, "r").read()
                     p.parse(input = header_input, source = prefix)
 
-                    while p.token(): pass
+                    tokens_before_yield = 0
+                    while p.token():
+                        if not tokens_before_yield:
+                            yield True
+                            tokens_before_yield = 1000 # an adjusted value
+                        else:
+                            tokens_before_yield -= 1
+
+        raise StopIteration()
 
     @staticmethod
-    def build_inclusions(dname):
+    def co_build_inclusions(dname):
         ppf = sys.stdout = ParsePrintFilter(sys.stdout)
 
         for h in Header.reg.values():
             h.parsed = False
 
         for entry in os.listdir(dname):
-            Header._build_inclusions_recursive(dname, entry)
+            for res in Header._build_inclusions_recursive(dname, entry):
+                yield res
 
         for h in Header.reg.values():
             del h.parsed
 
         sys.stdout = ppf.out
+
+        raise StopIteration()
+
+
+    @staticmethod
+    def build_inclusions(dname):
+        gen = Header.co_build_inclusions(dname)
+
+        try:
+            while True:
+                gen.next()
+        except StopIteration:
+            pass
 
     @staticmethod
     def lookup(path):
