@@ -192,6 +192,21 @@ a field of a type defined in another non-header file {}.".format(
 class AddTypeRefToDefinerException (Exception):
     pass
 
+class ParsePrintFilter:
+    def __init__(self, out):
+        self.out = out
+        self.written = False
+
+    def write(self, str):
+        if str.startswith("Info:"):
+            self.out.write(str + "\n")
+            self.written = True
+
+    def flush(self):
+        if self.written:
+            self.out.flush()
+            self.written = False
+
 class Header(Source):
     reg = {}
 
@@ -354,21 +369,6 @@ digraph HeaderInclusion {
 
                     header_input = open(full_name, "r").read()
                     p.parse(input = header_input, source = prefix)
-
-                    class ParsePrintFilter:
-                        def __init__(self, out):
-                            self.out = out
-                            self.written = False
-
-                        def write(self, str):
-                            if str.startswith("Info:"):
-                                self.out.write(str + "\n")
-                                self.written = True
-
-                        def flush(self):
-                            if self.written:
-                                self.out.flush()
-                                self.written = False
 
                     sys.stdout = ParsePrintFilter(sys.stdout)
                     while p.token(): pass
