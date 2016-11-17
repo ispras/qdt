@@ -371,18 +371,28 @@ digraph HeaderInclusion {
                     header_input = open(full_name, "r").read()
                     p.parse(input = header_input, source = prefix)
 
+                    yields_per_current_header = 0
+
                     tokens_before_yield = 0
                     while p.token():
                         if not tokens_before_yield:
+
+                            yields_per_current_header += 1
+
                             yield True
                             tokens_before_yield = 1000 # an adjusted value
                         else:
                             tokens_before_yield -= 1
 
+                    Header.yields_per_header.append(yields_per_current_header)
+
         raise StopIteration()
 
     @staticmethod
     def co_build_inclusions(dname):
+        yields_total = 0
+        Header.yields_per_header = []
+
         ppf = sys.stdout = ParsePrintFilter(sys.stdout)
 
         for h in Header.reg.values():
@@ -390,12 +400,27 @@ digraph HeaderInclusion {
 
         for entry in os.listdir(dname):
             for res in Header._build_inclusions_recursive(dname, entry):
+                yields_total += 1
                 yield res
 
         for h in Header.reg.values():
             del h.parsed
 
         sys.stdout = ppf.out
+
+        print """Header inclusions build statistic:
+    Yields total: %d
+    Max yields per header: %d
+    Min yields per header: %d
+    Average yields per headed: %f
+""" % (
+    yields_total,
+    max(Header.yields_per_header),
+    min(Header.yields_per_header),
+    sum(Header.yields_per_header) / float(len(Header.yields_per_header))
+        )
+
+        del Header.yields_per_header
 
         raise StopIteration()
 
