@@ -4,6 +4,9 @@ from project_editing import \
 from copy import \
     deepcopy as dcp
 
+from common import \
+    mlget as _
+
 class DOp_SetAttr(DescriptionOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
         DescriptionOperation.__init__(self, *args, **kw)
@@ -29,3 +32,10 @@ class DOp_SetAttr(DescriptionOperation):
 
     def __undo__(self):
         setattr(self.find_desc(), self.attr, dcp(self.old_val))
+
+    def __description__(self):
+        return _("Set '%s' of '%s' to '%s'.") % (
+            self.attr,
+            self.desc_name,
+            str(self.val)
+        )
