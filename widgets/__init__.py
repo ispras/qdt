@@ -96,3 +96,6 @@ from gui_proj_ht import \
 
 from branch_tree_view import \
     BranchTreeview
+
+from history_window import \
+    HistoryWindow
