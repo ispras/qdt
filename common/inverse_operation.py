@@ -105,6 +105,13 @@ class InitialOperation(InverseOperation):
     def __write_set__(self):
         return []
 
+def InitialOperationBackwardIterator(cur):
+    while cur is not None:
+        yield cur
+        cur = cur.prev
+
+    raise StopIteration()
+
 class History(object):
     def __init__(self):
         self.root = InitialOperation()
