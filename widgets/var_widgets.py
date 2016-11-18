@@ -161,7 +161,7 @@ class VarMenu(Menu):
 
         Menu.add(self, itemType, cnf or kw)
 
-class TreeviewVarBinding():
+class TreeviewHeaderBinding():
     def __init__(self, menu, column, var_str):
         self.menu, self.column, self.str = menu, column, var_str
 
@@ -179,7 +179,7 @@ class VarTreeview(Treeview):
         if "text" in kw:
             text_var = kw.pop("text")
             kw["text"] = text_var.get()
-            binding = TreeviewVarBinding(self, column, text_var)
+            binding = TreeviewHeaderBinding(self, column, text_var)
             text_var.trace_variable("w", binding.on_var_changed)
 
         return Treeview.heading(self, column, **kw)
