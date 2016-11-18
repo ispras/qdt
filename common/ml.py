@@ -1,4 +1,6 @@
-from Tkinter import StringVar
+from formated_string_var import \
+    FormatVar
+
 import gettext
 import locale
 from os.path import dirname, abspath
@@ -7,7 +9,7 @@ from os.path import dirname, abspath
 ML = Multi language
 """
 
-class ML(StringVar):
+class ML(FormatVar):
     multi_language_strings = []
     current_translation = None
 
@@ -38,7 +40,7 @@ class ML(StringVar):
             s.update()
 
     def __init__(self, value, **kwargs):
-        StringVar.__init__(self, **kwargs)
+        FormatVar.__init__(self, **kwargs)
         self.key_value = value
 
         self.update()
