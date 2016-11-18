@@ -87,3 +87,6 @@ from cross_dialogs import \
 
 from gui_tk import \
     GUITk
+
+from tv_width_helper import \
+    TreeviewWidthHelper
