@@ -46,3 +46,8 @@ from reflection import \
 from visitor import \
     ObjectVisitor, \
     BreakVisiting
+
+from formated_string_var import \
+    FormatedStringChangindException, \
+    FormatVar, \
+    FormatedStringVar
