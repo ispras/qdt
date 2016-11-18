@@ -1,7 +1,9 @@
 from qemu import \
-    ProjectHistoryTracker, \
     MachineNode, \
     QProject
+
+from gui_proj_ht import \
+    GUIProjectHistoryTracker
 
 from common import \
     History
@@ -12,7 +14,7 @@ class GUIProject(QProject):
 
         self.build_path = build_path
         self.layouts = layouts
-        self.pht = ProjectHistoryTracker(self, History())
+        self.pht = GUIProjectHistoryTracker(self, History())
 
     def add_layout(self, desc_name, layout):
         self.layouts.append((desc_name, layout))
