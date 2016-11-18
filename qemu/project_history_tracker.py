@@ -250,7 +250,17 @@ class ProjectHistoryTracker(HistoryTracker):
     def __init__(self, project, *args, **kw):
         HistoryTracker.__init__(self, *args, **kw)
         self.p = project
-        self.current_sequence = 0
+
+        ops = self.get_branch()
+        last_seq = ops[-1].seq
+
+        if last_seq is None:
+            last_seq = 0
+            for op in ops:
+                op.seq = 0
+
+        self.current_sequence = last_seq + 1
+
         self.new_sequence = True
 
     def stage(self, op_class, *op_args, **op_kw):
