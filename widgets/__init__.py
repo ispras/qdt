@@ -90,3 +90,6 @@ from gui_tk import \
 
 from tv_width_helper import \
     TreeviewWidthHelper
+
+from gui_proj_ht import \
+    GUIProjectHistoryTracker
