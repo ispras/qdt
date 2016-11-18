@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    HistoryWindow, \
     askopen, \
     asksaveas, \
     AddDescriptionDialog, \
@@ -29,6 +30,7 @@ from common import \
     mlget as _
 
 from Tkinter import \
+    BooleanVar, \
     StringVar
 
 from tkMessageBox import \
@@ -142,6 +144,21 @@ class QDCGUIWindow(GUITk):
         )
         self.redo_idx = editmenu.count - 1
 
+        editmenu.add_separator()
+
+        v = self.var_history_window = BooleanVar()
+        v.set(False)
+
+        self.__on_var_history_window = v.trace_variable("w",
+            self.__on_var_history_window__
+        )
+
+        editmenu.add_checkbutton(
+            label = _("Editing history window"),
+            variable = v,
+            accelerator = hotkeys.get_keycode_string(self.invert_history_window)
+        )
+
         menubar.add_cascade(label = _("Edit"), menu = editmenu)
 
         self.config(menu = menubar)
@@ -157,6 +174,31 @@ class QDCGUIWindow(GUITk):
 
         self.__update_title__()
         self.__check_saved_asterisk__()
+
+    def __on_history_window_destroy__(self, *args, **kw):
+        self.var_history_window.trace_vdelete("w",
+            self.__on_var_history_window
+        )
+
+        self.var_history_window.set(False)
+
+        self.__on_var_history_window = self.var_history_window.trace_variable(
+            "w", self.__on_var_history_window__
+        )
+
+    def __on_var_history_window__(self, *args):
+        if self.var_history_window.get():
+            self._history_window = HistoryWindow(self.proj.pht, self)
+            self._history_window.bind("<Destroy>",
+                self.__on_history_window_destroy__, "+"
+            )
+        else:
+            try:
+                self._history_window.destroy()
+            except AttributeError:
+                pass
+            else:
+                del self._history_window
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -216,6 +258,10 @@ class QDCGUIWindow(GUITk):
         except AttributeError:
             # project widget was never been created
             pass
+
+        # Close history window
+        if self.var_history_window.get():
+            self.var_history_window.set(False)
 
         self.proj = project
 
