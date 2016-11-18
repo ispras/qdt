@@ -12,6 +12,9 @@ from project_editing import \
 
 import copy
 
+from common import \
+    mlget as _
+
 class MachineOperation(DescriptionOperation):
     def __init__(self, machine_description, *args, **kw):
         DescriptionOperation.__init__(self, machine_description, *args, **kw)
@@ -97,10 +100,24 @@ organize operations about same child. """
                 self.gen_node_id_entry(self.child_id))
         ]
 
+    def __description__(self):
+        mach = self.find_desc()
+        return _("Include memory region %s (%d) to %s (%d).") % (
+            mach.id2node[self.child_id].name, self.child_id,
+            mach.id2node[self.node_id].name, self.node_id
+        )
+
 class MOp_RemoveMemChild(MOp_AddMemChild):
 
     __do__ = MOp_AddMemChild.__undo__
     __undo__ = MOp_AddMemChild.__do__
+
+    def __description__(self):
+        mach = self.find_desc()
+        return _("Exclude memory region %s (%d) from %s (%d).") % (
+            mach.id2node[self.child_id].name, self.child_id,
+            mach.id2node[self.node_id].name, self.node_id
+        )
 
 class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     # node_class_name - string name adding machine node. The class with such
@@ -164,11 +181,51 @@ class MOp_AddMemoryNode(MachineNodeAdding):
         del mach.id2node[self.node_id]
         mem.id = -1
 
+    def get_kind_str(self):
+        if "MemoryNode" in self.nc:
+            return _("container")
+        elif "MemoryAliasNode" in self.nc:
+            mach = self.find_desc()
+
+            aliased_id = self.node__alias_to[1]
+
+            aliased_offset = self.node__offset[1]
+            if isinstance(aliased_offset, int) \
+            or isinstance(aliased_offset, long):
+                aliased_offset = "0x%X" % aliased_offset
+            else:
+                aliased_offset = str(aliased_offset)
+
+            return _("alias of %s (%d) with offset %s") % (
+                mach.id2node[aliased_id].name, aliased_id,
+                aliased_offset
+            )
+        elif "MemoryRAMNode" in self.nc:
+            return _("RAM")
+        elif "MemoryROMNode" in self.nc:
+            return _("ROM")
+        else:
+            return "!"
+
+    def __description__(self):
+        name = self.node__name[1]
+        return _("Create memory region %s (%d) of kind %s.") % (
+            name, self.node_id,
+            self.get_kind_str()
+        )
+
 class MOp_DelMemoryNode(MachineNodeDeletion, MOp_AddMemoryNode):
     def __init__(self, *args, **kw):
         MachineNodeDeletion.__init__(self, *args, **kw)
 
     __do__ =  MOp_AddMemoryNode.__undo__
+
+    def __description__(self):
+        name = self.node__name[1]
+        return _("Delete memory region %s (%d) of kind %s.") % (
+            name, self.node_id,
+            self.get_kind_str()
+        )
 
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
@@ -310,6 +367,31 @@ class MOp_SetChildBus(MachineOperation):
                 (self.gen_node_id_entry(self.prev_bus_id),"parent_device")
             )
         return ret
+
+    def __description__(self):
+        mach = self.find_desc()
+        if self.prev_bus_id == -1:
+            return _("Make device %s (%d) a controller of bus %s (%d) with \
+index %d.") % (
+                mach.id2node[self.dev_id].qom_type, self.dev_id,
+                mach.id2node[self.bus_id].child_name, self.bus_id,
+                self.idx
+            )
+        elif self.bus_id == -1:
+            return _("Disconnect bus %s (%d) from index %d of controller %s \
+(%d).") % (
+                mach.id2node[self.prev_bus_id].child_name, self.prev_bus_id,
+                self.idx,
+                mach.id2node[self.dev_id].qom_type, self.dev_id
+            )
+        else:
+            return _("Replace bus %s (%d) with %s (%d) in controller %s (%d)\
+at index %d.") % (
+                mach.id2node[self.prev_bus_id].child_name, self.prev_bus_id,
+                mach.id2node[self.bus_id].child_name, self.bus_id,
+                mach.id2node[self.dev_id].qom_type, self.dev_id,
+                self.idx
+            )
 
 class MOp_DelIRQLine(MachineNodeOperation):
     def __init__(self, *args, **kw):
