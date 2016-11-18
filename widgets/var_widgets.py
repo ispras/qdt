@@ -6,6 +6,7 @@ from Tkinter import \
     Button, \
     LabelFrame, \
     Checkbutton, \
+    Variable, \
     StringVar
 
 from ttk import \
@@ -168,6 +169,17 @@ class TreeviewHeaderBinding():
     def on_var_changed(self, *args):
         self.menu.on_var_changed(self.column, self.str.get())
 
+class TreeviewCellBinding():
+    def __init__(self, tv, col, row, var):
+        self.tv, self.col, self.row, self.var = tv, col, row, var
+
+        self._var = self.var.trace_variable("w", self.on_var_changed)
+
+    def on_var_changed(self, *a):
+        values = list(self.tv.item(self.row, "values"))
+        values[self.col] = self.var.get()
+        self.tv.item(self.row, values = values)
+
 class VarTreeview(Treeview):
     def __init__(self, *args, **kw):
         Treeview.__init__(self, *args, **kw)
@@ -183,6 +195,26 @@ class VarTreeview(Treeview):
             text_var.trace_variable("w", binding.on_var_changed)
 
         return Treeview.heading(self, column, **kw)
+
+    """ If at least one value is StringVar then the values should be a list, not
+    a tuple. """
+    def insert(self, *a, **kw):
+        to_track = []
+
+        try:
+            values = kw["values"]
+        except KeyError:
+            pass
+        else:
+            for col, v in enumerate(list(values)):
+                if isinstance(v, Variable):
+                    to_track.append((col, v))
+                    values[col] = v.get()
+
+        item_iid = Treeview.insert(self, *a, **kw)
+
+        for col, v in to_track:
+            TreeviewCellBinding(self, col, item_iid, v)
 
 class ComboboxEntryBinding():
     def __init__(self, varcombobox, idx, variable):
