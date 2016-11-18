@@ -56,6 +56,12 @@ class QDCGUIWindow(GUITk):
         self.hk = hotkeys = HotKey(self)
         hotkeys.add_bindings([
             HotKeyBinding(
+                self.invert_history_window,
+                key_code = 43, # H
+                description = _("If operation history window is hidden then \
+show it else hide it.")
+            ),
+            HotKeyBinding(
                 self.on_load,
                 key_code = 32, # O
                 description = _("Load project from file.")
@@ -199,6 +205,9 @@ class QDCGUIWindow(GUITk):
                 pass
             else:
                 del self._history_window
+
+    def invert_history_window(self):
+        self.var_history_window.set(not self.var_history_window.get())
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
