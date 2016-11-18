@@ -1,6 +1,9 @@
 from itertools import \
     izip
 
+from ml import \
+    mlget as _
+
 class UnimplementedInverseOperation(Exception):
     pass
 
@@ -38,13 +41,17 @@ http://legacy.python.org/workshops/1997-10/proceedings/zukowski.html
 
 
 Life cycle:
-                                    done = True
-                backed_up = True     |
-                          |          |
- __init__ --> __backup__ --> __do__ --> __undo__
-           \                               .
- backed_up = False             ^           |
-      done = False             `-----------'
+                                   ___---> __description__
+        / after first call \      /                ^
+        \ to __do__ only]  / -->(!)                |
+                                 |                 |   / all referenced   \
+                                 |  done = True    |   | objects should   |
+              backed_up = True   |   |             |   | be in same state |
+                          |      |   |            (!)<-| as during first  |
+ __init__ --> __backup__ --> __do__ --> __undo__   |   | call to __do__   |
+           \                               .       |   | (use r/w sets    |
+ backed_up = False             ^           |-------'   | to control this, |
+      done = False             `-----------'           \ for instance)]   /
                                      \
                                     done = False
 
@@ -81,6 +88,9 @@ class InverseOperation(object):
     def writes(self, entry):
         return set_touches_entry(self.__write_set__(), entry)
 
+    def __description__(self):
+        return _("Reversible operation with unimplemented description \
+(class %s).") % type(self).__name__
 
 class InitialOperationCall(Exception):
     pass
@@ -104,6 +114,9 @@ class InitialOperation(InverseOperation):
 
     def __write_set__(self):
         return []
+
+    def __description__(self):
+        return _("The beginning of known history.")
 
 def InitialOperationBackwardIterator(cur):
     while cur is not None:
