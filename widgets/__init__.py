@@ -93,3 +93,6 @@ from tv_width_helper import \
 
 from gui_proj_ht import \
     GUIProjectHistoryTracker
+
+from branch_tree_view import \
+    BranchTreeview
