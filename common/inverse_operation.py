@@ -224,6 +224,10 @@ class HistoryTracker(object):
 
         return op
 
+    def get_branch(self):
+        backlog = list(InitialOperationBackwardIterator(self.pos))
+        return list(reversed(backlog))
+
     def commit(self, including = None):
         if not including:
             p = self.pos
