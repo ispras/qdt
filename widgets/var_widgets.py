@@ -269,3 +269,43 @@ class VarCombobox(Combobox):
             kw["values"] = [ b.var.get() for b in self.bindings ]
 
         return Combobox.config(self, cnf, **kw)
+
+if __name__ == "__main__":
+    root = VarTk()
+    root.title(StringVar(value = "Variable widgets test"))
+    root.grid()
+    root.rowconfigure(0, weight = 1)
+    root.columnconfigure(0, weight = 1)
+
+    tv = VarTreeview(root,
+        columns = ["0", "1", "2", "3"]
+    )
+    tv.grid(row = 0, column = 0, sticky = "NEWS")
+
+    from Tkinter import \
+        BooleanVar, \
+        IntVar, \
+        DoubleVar
+
+    sv = StringVar(value = "xxx...")
+    bv = BooleanVar(value = True)
+    iv = IntVar(value = 0)
+    dv = DoubleVar(value = 1.0)
+
+    tv.insert("", 0, values = [sv, bv, iv, dv])
+    tv.insert("", 1, values = [bv, iv, dv, sv])
+    tv.insert("", 2, values = [iv, dv, sv, bv])
+    tv.insert("", 3, values = [dv, sv, bv, iv])
+
+    def update():
+        s = sv.get()
+        s = s[-1] + s[:-1]
+        sv.set(s)
+        bv.set(not bv.get())
+        iv.set(iv.get() + 1)
+        dv.set(dv.get() + 0.1)
+        root.after(250, update)
+
+    update()
+
+    root.mainloop()
