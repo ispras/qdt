@@ -1,5 +1,8 @@
 from machine_description import \
+    DeviceNode, \
+    BusNode, \
     Node, \
+    MemoryNode, \
     MemoryAliasNode, \
     QOMPropertyTypeLink, \
     IRQLine, \
@@ -65,6 +68,28 @@ class MachineNodeOperation(MachineOperation):
     """
     def writes_node(self):
         return self.writes(self.gen_entry())
+
+    def gen_id_str(self, val):
+        if val < 0:
+            return "NULL"
+
+        mach = self.find_desc()
+        node = mach.id2node[val]
+
+        if isinstance(node, DeviceNode):
+            node_kind_str = _("device '%s'") % node.qom_type
+        elif isinstance(node, BusNode):
+            node_kind_str = _("bus '%s'") % node.child_name
+        elif isinstance(node, MemoryNode):
+            node_kind_str = _("memory region '%s'") % node.name
+        elif isinstance(node, IRQLine):
+            node_kind_str = _("IRQ line")
+        elif isinstance(node, IRQHub):
+            node_kind_str = _("IRQ hub")
+        else:
+            node_kind_str = _("node")
+
+        return _("%s (%d)") % (node_kind_str, val)
 
 class MOp_AddMemChild(MachineNodeOperation):
     def __init__(self, child_id, *args, **kw):
@@ -259,6 +284,21 @@ class MOp_AddDevice(MachineNodeAdding):
         del self.mach.id2node[self.node_id]
         dev.id = -1
 
+    def get_kind_str(self):
+        if "SystemBusDeviceNode" in self.nc:
+            return _("system bus device")
+        elif "PCIExpressDeviceNode" in self.nc:
+            return _("PCI(E) function")
+        elif "DeviceNode" in self.nc:
+            return _("generic device")
+
+    def __description__(self):
+        return _("Create %s (%d) of type '%s'.") % (
+            self.get_kind_str(),
+            self.node_id,
+            self.node__qom_type[1]
+        )
+
 class MOp_DelDevice(MOp_AddDevice):
     def __init__(self, *args, **kw):
         MOp_AddDevice.__init__(self, "", *args, **kw)
@@ -269,6 +309,13 @@ class MOp_DelDevice(MOp_AddDevice):
 
     __do__ = MOp_AddDevice.__undo__
     __undo__ = MachineNodeAdding.__do__
+
+    def __description__(self):
+        return _("Delete %s (%d) of type '%s'.") % (
+            self.get_kind_str(),
+            self.node_id,
+            self.node__qom_type[1]
+        )
 
 class MOp_AddBus(MachineNodeAdding):
     def __init__(self, bus_class_name, *args, **kw):
@@ -290,6 +337,26 @@ class MOp_AddBus(MachineNodeAdding):
         del self.mach.id2node[self.node_id]
         bus.id = -1
 
+    def get_kind_str(self):
+        if "SystemBusNode" in self.nc:
+            return _("system bus")
+        elif "PCIExpressBusNode" in self.nc:
+            return _("PCI(E) bus")
+        elif "ISABusNode" in self.nc:
+            return _("ISA bus")
+        elif "IDEBusNod" in self.nc:
+            return _("IDE bus")
+        elif "I2CBusNode" in self.nc:
+            return _("I2C bus")
+        elif "BusNode" in self.nc:
+            return "generic bus"
+
+    def __description__(self):
+        return _("Create %s (%d).") % (
+            self.get_kind_str(),
+            self.node_id
+        )
+
 class MOp_DelBus(MOp_AddBus):
     def __init__(self, *args, **kw):
         # SystemBusNode is used to minimize initial sizes of argument & key
@@ -302,6 +369,12 @@ class MOp_DelBus(MOp_AddBus):
 
     __do__ = MOp_AddBus.__undo__
     __undo__ = MOp_AddBus.__do__
+
+    def __description__(self):
+        return _("Delete %s (%d).") % (
+            self.get_kind_str(),
+            self.node_id
+        )
 
 class MOp_SetChildBus(MachineOperation):
     def __init__(self, dev_id, child_idx, bus_id, *args, **kw):
@@ -434,6 +507,33 @@ class MOp_DelIRQLine(MachineNodeOperation):
             self.gen_entry()
         ]
 
+    def gen_end_str(self, eid, idx, name):
+        mach = self.find_desc()
+
+        end_node = mach.id2node[eid]
+        if isinstance(end_node, DeviceNode):
+            if name:
+                return _("%s %s out of device %s (%d)") % (
+                    name, str(idx),
+                    end_node.qom_type, eid
+                )
+            else:
+                return _("unnamed %s out of device %s (%d)") % (
+                    str(idx),
+                    end_node.qom_type, eid
+                )
+        elif isinstance(end_node, IRQHub):
+            return _("IRQ hub (%d)") % eid
+        else:
+            return "!"
+
+    def __description__(self):
+        return _("Delete IRQ line (%d) from %s to %s.") % (
+            self.node_id,
+            self.gen_end_str(*self.src),
+            self.gen_end_str(*self.dst)
+        )
+
 class MOp_AddIRQLine(MOp_DelIRQLine):
     def __init__(self,
         source_device_id,
@@ -456,6 +556,13 @@ class MOp_AddIRQLine(MOp_DelIRQLine):
 
     __do__ = MOp_DelIRQLine.__undo__
     __undo__ = MOp_DelIRQLine.__do__
+
+    def __description__(self):
+        return _("Create IRQ line (%d) from %s to %s.") % (
+            self.node_id,
+            self.gen_end_str(*self.src),
+            self.gen_end_str(*self.dst)
+        )
 
 class MOp_AddIRQHub(MachineNodeOperation):
     def __init__(self, *args, **kw):
@@ -481,12 +588,18 @@ class MOp_AddIRQHub(MachineNodeOperation):
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [ self.gen_entry() ]
 
+    def __description__(self):
+        return _("Create IRQ hub (%d).") % self.node_id
+
 class MOp_DelIRQHub(MOp_AddIRQHub):
     def __init__(self, *args, **kw):
         MOp_AddIRQHub.__init__(self, *args, **kw)
 
     __do__ = MOp_AddIRQHub.__undo__
     __undo__ = MOp_AddIRQHub.__do__
+
+    def __description__(self):
+        return _("Delete IRQ hub (%d).") % self.node_id
 
 class MachineDeviceSetAttributeOperation(MachineNodeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
@@ -518,8 +631,40 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
             (self.gen_entry(), "attr", copy.deepcopy(self.attr))
         ]
 
+    def gen_val_str(self, val):
+        if isinstance(val, (int, long)):
+            if val < 0:
+                return "%d" % val
+            else:
+                return "0x%X" % val
+        else:
+            return str(val)
+
+    def __description__(self):
+        mach = self.find_desc()
+        dev = mach.id2node[self.node_id]
+
+        return _("Replace value '%s' of attribute '%s' of device %s (%d) with \
+value '%s'.") % (
+            self.gen_val_str(self.old_val),
+            self.attr,
+            dev.qom_type, self.node_id,
+            self.gen_val_str(self.new_val)
+        )
+
 class MOp_SetMemNodeAttr(MachineDeviceSetAttributeOperation):
-    pass
+
+    def __description__(self):
+        mach = self.find_desc()
+        mem = mach.id2node[self.node_id]
+
+        return _("Replace value '%s' of attribute '%s' of memory node %s (%d) \
+with value '%s'.") % (
+            self.gen_val_str(self.old_val),
+            self.attr,
+            mem.name, self.node_id,
+            self.gen_val_str(self.new_val)
+        )
 
 class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
@@ -544,6 +689,9 @@ class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
         old_val = self.mach.id2node[self.old_val]
         setattr(node, self.attr, old_val)
 
+    def gen_val_str(self, val):
+        return self.gen_id_str(val)
+
 class MOp_PCIDevSetSlot(MachineDeviceSetAttributeOperation):
     def __init__(self, slot, *args, **kw):
         MachineDeviceSetAttributeOperation.__init__(self,
@@ -566,10 +714,31 @@ class MOp_PCIDevSetMultifunction(MachineDeviceSetAttributeOperation):
         )
 
 class MOp_SetIRQAttr(MachineDeviceSetAttributeOperation):
-    pass
+    def __description__(self):
+        mach = self.find_desc()
+        dev = mach.id2node[self.node_id]
+
+        return _("Replace value '%s' of attribute '%s' of IRQ line %d with \
+value '%s'.") % (
+            self.gen_val_str(self.old_val),
+            self.attr,
+            self.node_id,
+            self.gen_val_str(self.new_val)
+        )
 
 class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
-    pass
+    def __description__(self):
+        mach = self.find_desc()
+        dev = mach.id2node[self.node_id]
+
+        return _("Replace %s '%s' of IRQ line %d with value '%s'.\
+") % (
+            _("source end-point") if "src" in self.attr \
+                else _("destination end-point"),
+            self.gen_id_str(self.old_val),
+            self.node_id,
+            self.gen_id_str(self.new_val)
+        )
 
 class MachineIOMappingOperation(MachineNodeOperation):
     def __init__(self, mio, idx, *args, **kw):
@@ -589,6 +758,15 @@ class MachineIOMappingOperation(MachineNodeOperation):
             self.gen_entry()
         ]
 
+    def gen_val_str(self, val):
+        if isinstance(val, (int, long)):
+            if val < 0:
+                return "-0x%X" % -val
+            else:
+                return "0x%X" % val
+        else:
+            return str(val)
+
 class MOp_DelIOMapping(MachineIOMappingOperation):
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
@@ -606,6 +784,14 @@ class MOp_DelIOMapping(MachineIOMappingOperation):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
         mappings[self.idx] = copy.deepcopy(self.old_mapping)
+
+    def __description__(self):
+        return _("Delete %s %s mapping from index %d of %s.") % (
+            self.mio.upper(),
+            self.gen_val_str(self.old_mapping),
+            self.idx,
+            self.gen_id_str(self.node_id)
+        )
 
 class MOp_AddIOMapping(MachineIOMappingOperation):
     def __init__(self, mapping, *args, **kw):
@@ -625,6 +811,14 @@ class MOp_AddIOMapping(MachineIOMappingOperation):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
         del mappings[self.idx]
+
+    def __description__(self):
+        return _("Add %s %s mapping to index %d of %s.") % (
+            self.mio.upper(),
+            self.gen_val_str(self.mapping),
+            self.idx,
+            self.gen_id_str(self.node_id)
+        )
 
 class MOp_SetIOMapping(MachineIOMappingOperation):
     def __init__(self, new_mapping, *args, **kw):
@@ -648,6 +842,15 @@ class MOp_SetIOMapping(MachineIOMappingOperation):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
         mappings[self.idx] = copy.deepcopy(self.old_mapping)
+
+    def __description__(self):
+        return _("Replace %s %s mapping at index %d of %s with %s.") % (
+            self.mio.upper(),
+            self.gen_val_str(self.old_mapping),
+            self.idx,
+            self.gen_id_str(self.node_id),
+            self.gen_val_str(self.new_mapping)
+        )
 
 class MOp_SetDevParentBus(MachineNodeOperation):
     def __init__(self, new_bus, *args, **kw):
@@ -698,6 +901,24 @@ class MOp_SetDevParentBus(MachineNodeOperation):
             ret = ret + [ self.gen_node_id_entry(self.old_bus_id) ]
         return ret
 
+    def __description__(self):
+        if self.new_bus_id < 0:
+            return _("Detach %s from %s.") % (
+                self.gen_id_str(self.node_id),
+                self.gen_id_str(self.old_bus_id)
+            )
+        elif self.old_bus_id < 0:
+            return _("Attach %s to %s.") % (
+                self.gen_id_str(self.node_id),
+                self.gen_id_str(self.new_bus_id)
+            )
+        else:
+            return _("Move %s from %s to %s.") % (
+                self.gen_id_str(self.node_id),
+                self.gen_id_str(self.old_bus_id),
+                self.gen_id_str(self.new_bus_id)
+            )
+
 class MOp_SetDevQOMType(MachineNodeOperation):
     def __init__(self, new_type_name, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
@@ -720,6 +941,11 @@ class MOp_SetDevQOMType(MachineNodeOperation):
         dev = self.mach.id2node[self.node_id]
         dev.qom_type = self.old_type_name
 
+    def __description__(self):
+        return _("Change %s QOM type to '%s'.") % (
+            self.gen_id_str(self.node_id), self.new_type_name
+        )
+
 class MachineDevicePropertyOperation(MachineNodeOperation):
     def __init__(self, prop, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
@@ -736,6 +962,17 @@ class MachineDevicePropertyOperation(MachineNodeOperation):
     def __read_set__(self):
         return MachineNodeOperation.__read_set__(self) + \
             [ self.gen_entry() ]
+
+    def gen_val_str(self, p_type, p_val):
+        if p_type == QOMPropertyTypeLink:
+            return self.gen_id_str(p_val)
+        elif isinstance(p_val, (int, long)):
+            if p_val < 0:
+                return "-0x%X" % p_val
+            else:
+                return "0x%X" % p_val
+        else:
+            return str(p_val)
 
 class MOp_DelDevProp(MachineDevicePropertyOperation):
     def __init__(self, *args, **kwargs):
@@ -769,6 +1006,14 @@ class MOp_DelDevProp(MachineDevicePropertyOperation):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
 
+    def __description__(self):
+        return _("Delete property '%s' with value %s from device %s (%d)."
+) % (
+            self.prop_name,
+            self.gen_val_str(self.prop_type, self.prop_val),
+            self.find_desc().id2node[self.node_id].qom_type, self.node_id
+        )
+
 class MOp_AddDevProp(MachineDevicePropertyOperation):
     def __init__(self, prop, *args, **kw):
         MachineDevicePropertyOperation.__init__(self, prop, *args, **kw)
@@ -794,6 +1039,14 @@ class MOp_AddDevProp(MachineDevicePropertyOperation):
     def __write_set__(self):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
+
+    def __description__(self):
+        return _("Add property '%s' with value %s to device %s (%d)."
+) % (
+            self.prop_name,
+            self.gen_val_str(self.prop_type, self.prop_val),
+            self.find_desc().id2node[self.node_id].qom_type, self.node_id
+        )
 
 class MOp_SetDevProp(MachineDevicePropertyOperation):
     def __init__(self, new_prop_type, new_prop_val, *args, **kw):
@@ -835,3 +1088,12 @@ class MOp_SetDevProp(MachineDevicePropertyOperation):
     def __write_set__(self):
         return MachineDevicePropertyOperation.__write_set__(self) + \
             [ self.gen_prop_entry() ]
+
+    def __description__(self):
+        return _("Replace property '%s' value %s of device %s (%d) with \
+value %s.") % (
+            self.prop_name,
+            self.gen_val_str(self.orig_prop_type, self.orig_prop_val),
+            self.find_desc().id2node[self.node_id].qom_type, self.node_id,
+            self.gen_val_str(self.new_prop_type, self.new_prop_val),
+        )
