@@ -436,6 +436,9 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
             (self.gen_entry(), "attr", copy.deepcopy(self.attr))
         ]
 
+class MOp_SetMemNodeAttr(MachineDeviceSetAttributeOperation):
+    pass
+
 class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
         MachineDeviceSetAttributeOperation.__init__(self,
