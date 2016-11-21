@@ -3,7 +3,7 @@ from common import \
     HistoryTracker
 
 from machine_editing import \
-    MachineDeviceSetAttributeOperation, \
+    MOp_SetMemNodeAttr, \
     MOp_RemoveMemChild, \
     MOp_DelMemoryNode, \
     MOp_SetDevProp, \
@@ -180,7 +180,7 @@ class MachineProxyTracker(object):
         add_child_args = get_default_args(parent.__class__.add_child)
         for arg_name, arg_val in add_child_args.iteritems():
             if getattr(child, arg_name) != arg_val:
-                self.stage(MachineDeviceSetAttributeOperation, arg_name,
+                self.stage(MOp_SetMemNodeAttr, arg_name,
                     arg_val, child_id)
 
         self.stage(MOp_RemoveMemChild, child_id, parent_id)
