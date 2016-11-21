@@ -108,6 +108,8 @@ class IRQSettingsWidget(SettingsWidget):
                     w.config(state = "disabled")
 
     def __apply_internal__(self):
+        prev_pos = self.mht.pos
+
         irq = self.irq.node
 
         for pfx in [ "src", "dst" ]:
@@ -152,6 +154,9 @@ class IRQSettingsWidget(SettingsWidget):
                         new_val,
                         irq.id
                     )
+
+        if prev_pos is not self.mht.pos:
+            self.mht.set_sequence_description(_("IRQ line configuration."))
 
     def refresh(self):
         nodes = [ DeviceSettingsWidget.gen_node_link_text(node) \

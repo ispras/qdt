@@ -769,7 +769,7 @@ IRQ line creation
             0, 0, None, None,
             self.mach.get_free_id()
         )
-        self.mht.commit()
+        self.mht.commit(sequence_description = _("Add IRQ line."))
 
         self.current_popup = None
 
@@ -930,6 +930,7 @@ IRQ line creation
 
         self.mht.stage(MOp_AddIRQHub, node_id)
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
+        self.mht.set_sequence_description(_("IRQ hub creation."))
         self.mht.commit()
 
         self.current_popup = None

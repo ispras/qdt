@@ -32,6 +32,9 @@ from machine_description import \
 from project_editing import \
     POp_DelDesc
 
+from common import \
+    mlget as _
+
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):
         self.pht = project_history_tracker
@@ -45,7 +48,9 @@ class MachineProxyTracker(object):
         )
 
     def delete_irq_line(self, line_id):
-        return self.stage(MOp_DelIRQLine, line_id)
+        self.stage(MOp_DelIRQLine, line_id)
+
+        self.set_sequence_description(_("Delete IRQ line."))
 
     def delete_irq_hub(self, hub_id):
         hub = self.mach.id2node[hub_id]
@@ -53,9 +58,13 @@ class MachineProxyTracker(object):
             self.delete_irq_line(irq.id)
         self.stage(MOp_DelIRQHub, hub_id)
 
+        self.set_sequence_description(_("Delete IRQ hub."))
+
     def add_bus(self, bus_class_name, new_id, **bus_arguments):
         self.stage(MOp_AddBus, bus_class_name, new_id,
             **bus_arguments)
+
+        self.set_sequence_description(_("Add bus."))
 
     def append_child_bus(self, dev_id, bus_id):
         bus = self.mach.id2node[bus_id]
@@ -66,6 +75,8 @@ class MachineProxyTracker(object):
         dev = self.mach.id2node[dev_id]
 
         self.stage(MOp_SetChildBus, dev_id, len(dev.buses), bus_id)
+
+        self.set_sequence_description(_("Connect bus to controller."))
 
     def disconnect_child_bus(self, bus_id):
         bus = self.mach.id2node[bus_id]
@@ -91,6 +102,8 @@ class MachineProxyTracker(object):
                 temporally_disconnected.insert(0, (idx, b.id))
                 self.stage(MOp_SetChildBus, parent_id, idx, -1)
 
+        self.set_sequence_description(_("Disconnect bus from controller."))
+
     def delete_bus(self, bus_id):
         bus = self.mach.id2node[bus_id]
 
@@ -101,6 +114,8 @@ class MachineProxyTracker(object):
             self.stage(MOp_SetDevParentBus, None, child.id)
 
         self.stage(MOp_DelBus, bus.id)
+
+        self.set_sequence_description(_("Delete bus."))
 
     def delete_base_device(self, dev_id):
         dev = self.mach.id2node[dev_id]
@@ -152,6 +167,8 @@ class MachineProxyTracker(object):
         else:
             self.delete_base_device(dev_id)
 
+        self.set_sequence_description(_("Delete device."))
+
     def add_device(self, class_name, new_id, **device_arguments):
         default_qom_type = "TYPE_DEVICE"
         if class_name == "SystemBusDeviceNode":
@@ -170,6 +187,8 @@ class MachineProxyTracker(object):
 
         self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
 
+        self.set_sequence_description(_("Add device."))
+
     def remove_memory_child(self, parent_id, child_id):
         parent = self.mach.id2node[parent_id]
         child = self.mach.id2node[child_id]
@@ -184,6 +203,8 @@ class MachineProxyTracker(object):
                     arg_val, child_id)
 
         self.stage(MOp_RemoveMemChild, child_id, parent_id)
+
+        self.set_sequence_description(_("Exclude memory region."))
 
     def delete_memory_node(self, m_id):
         mem = self.mach.id2node[m_id]
@@ -216,6 +237,7 @@ class MachineProxyTracker(object):
                 self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None, p, n.id)
 
         self.stage(MOp_DelMemoryNode, m_id)
+        self.set_sequence_description(_("Delete memory region."))
 
     def delete_ids(self, node_ids):
         for node_id in node_ids:
@@ -242,6 +264,8 @@ class MachineProxyTracker(object):
                 )
 
             self.pht.commit(new_sequence = False)
+
+        self.set_sequence_description(_("Delete set of machine nodes."))
 
     def __getattr__(self, name):
         return getattr(self.pht, name)
@@ -305,3 +329,4 @@ class ProjectHistoryTracker(HistoryTracker):
             mht.delete_ids(list(desc.id2node.keys()))
 
         self.stage(POp_DelDesc, desc.name)
+        self.set_sequence_description(_("Delete description '%s'.") % desc.name)

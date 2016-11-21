@@ -18,6 +18,9 @@ from var_widgets import \
 from hotkey import \
     HKEntry
 
+from common import \
+    mlget as _
+
 class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, fields_and_names, *args, **kw):
         QOMDescriptionSettingsWidget.__init__(self, *args, **kw)
@@ -66,6 +69,8 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             self.refresh_field(*f)
 
     def __apply_internal__(self):
+        prev_pos = self.pht.pos
+
         for field, val_type in self.fields:
             var = getattr(self, "var_" + field)
             new_val = var.get()
@@ -93,6 +98,11 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
                     )
             else:
                 raise Exception("Not implemented value type")
+
+        if prev_pos is not self.pht.pos:
+            self.pht.set_sequence_description(
+                _("Device template attributes customization.")
+            )
 
     def __on_changed__(self, op, *args, **kw):
         if isinstance(op, POp_AddDesc):

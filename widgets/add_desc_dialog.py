@@ -122,6 +122,8 @@ string searching during each AddDescriptionDialog creation. """
             class_name = "MachineNode"
 
         self.pht.stage(POp_AddDesc, class_name, cur_name)
-        self.pht.commit()
+        self.pht.commit(
+            sequence_description = _("Add description '%s'.") % cur_name
+        )
 
         self.destroy()
