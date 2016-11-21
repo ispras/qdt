@@ -107,11 +107,13 @@ string searching during each AddDescriptionDialog creation. """
                 AddDescriptionDialog.msg_empty_name.get(),
                 parent = self
             )
+            return
         elif not self.check_name():
             showerror(AddDescriptionDialog.msg_title.get(),
                 AddDescriptionDialog.msg_name.get() % cur_name,
                 parent = self
             )
+            return
 
         kind = self.cb_kind.current()
         if kind == 0:
