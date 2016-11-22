@@ -4,6 +4,9 @@ from qemu import \
 from copy import \
     deepcopy
 
+from common import \
+    mlget as _
+
 from gui_project import \
     GUIProject
 
@@ -52,3 +55,14 @@ class POp_SetDescLayout(GUIDescriptionOperation):
             self.p.set_layouts(self.desc_name, deepcopy(self.prev_layouts))
         else:
             self.p.delete_layouts(self.desc_name)
+
+    def __description__(self):
+        if self.prev_layouts is None:
+            return _("Set layout for '%s' description representation.") % \
+                self.desc_name
+        elif self.new_layout is None:
+            return _("Remove layouts of '%s' description representation.") % \
+                self.desc_name
+        else:
+            return _("Replace layout of '%s' description representation.") % \
+                self.desc_name
