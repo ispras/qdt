@@ -277,9 +277,22 @@ if __name__ == "__main__":
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
 
-    tv = VarTreeview(root,
-        columns = ["0", "1", "2", "3"]
-    )
+    from tv_width_helper import \
+        TreeviewWidthHelper
+
+    class TestTV(VarTreeview, TreeviewWidthHelper):
+        def __init__(self, *args, **kw):
+            kw["columns"] = ["0", "1", "2", "3"]
+            VarTreeview.__init__(self, *args, **kw)
+
+            TreeviewWidthHelper.__init__(self,
+                auto_columns = ["#0"] + kw["columns"]
+            )
+
+            for col in kw["columns"]:
+                self.column(col, stretch = False)
+
+    tv = TestTV(root)
     tv.grid(row = 0, column = 0, sticky = "NEWS")
 
     from Tkinter import \
@@ -304,6 +317,9 @@ if __name__ == "__main__":
         bv.set(not bv.get())
         iv.set(iv.get() + 1)
         dv.set(dv.get() + 0.1)
+
+        tv.adjust_widths()
+
         root.after(250, update)
 
     update()
