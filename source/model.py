@@ -2,6 +2,7 @@ from os.path import os, split, join
 import json
 import sys
 import re
+import copy
 
 # PLY`s C preprocessor is used for several QEMU code analysis
 ply = join(split(split(__file__)[0])[0], "ply")
@@ -847,6 +848,36 @@ class TypeFixerVisitor(ObjectVisitor):
                 tr = self.source.types[t.name]
 
             self.replace(tr)
+
+    """
+    CopyVisitor is now used for true copying function body arguments
+    in order to prevent wrong TypeReferences among them
+    because before function prototype and body had the same args
+    references (in terms of python references)
+    """
+
+class CopyFixerVisitor(ObjectVisitor):
+    def __init__(self, type_object, *args, **kw):
+        kw["field_name"] = "__type_references__"
+        ObjectVisitor.__init__(self, type_object, *args, **kw)
+
+    def on_visit(self):
+        t = self.cur
+        if isinstance(t, Variable) or \
+            isinstance(t, Usage) or \
+            isinstance(t, Initializer) or \
+            (isinstance(t, Pointer) and not t.is_named):
+            new_t = copy.copy(t)
+            if isinstance(t, Initializer):
+                new_t.used_variables = list(t.used_variables)
+                new_t.used_types = list(t.used_types)
+            try:
+                self.replace(new_t)
+            except BreakVisiting:
+                pass
+
+        else:
+            raise BreakVisiting
 
 # Function and instruction models
 
