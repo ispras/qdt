@@ -668,16 +668,18 @@ class Function(Type):
             used_types)
 
     def gen_body(self):
-        return Function(
+        new_f = Function(
             self.name + '.body',
             self.body,
             self.ret_type,
-            self.args,
+            list(self.args),
             self.static,
             self.inline,
             [self],
-            self.used_globals
+            list(self.used_globals)
         )
+        CopyFixerVisitor(new_f).visit()
+        return new_f
 
     def gen_var(self, name, initializer = None, static = False):
         return Variable(name = name, _type = self, 
