@@ -56,6 +56,11 @@ from machine_widget import \
 from project_widget import \
     ProjectWidget
 
+from gui_editing import \
+    GUIProjectOperation, \
+        GUIDescriptionOperation, \
+            POp_SetDescLayout
+
 from gui_frame import \
     GUIFrame
 
