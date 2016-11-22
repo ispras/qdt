@@ -14,6 +14,27 @@ class GUIProject(QProject):
         self.layouts = layouts
         self.pht = ProjectHistoryTracker(self, History())
 
+    def add_layout(self, desc_name, layout):
+        self.layouts.append((desc_name, layout))
+
+    def delete_layouts(self, desc_name):
+        # filter out existing layouts for the description
+        new_layouts = [
+            (name, l) for name, l in self.layouts if name != desc_name
+        ]
+        self.layouts = new_layouts
+
+    # replaces all layouts for description with new layout
+    def set_layout(self, desc_name, layout):
+        self.delete_layouts(desc_name)
+        self.add_layout(desc_name, layout)
+
+    def set_layouts(self, desc_name, layouts):
+        self.delete_layouts(desc_name)
+
+        for l in layouts:
+            self.add_layout(desc_name, l)
+
     def get_layouts(self, desc_name):
         return [ l for name, l in self.layouts if name == desc_name ]
 
