@@ -415,11 +415,12 @@ IRQ line creation
             command = self.on_popup_single_device_irq_destination,
             state = "disabled"
         )
-
+        p.add_separator()
         p.add_command(
             label = _("Settings"),
             command = self.on_popup_single_device_settings
         )
+        p.add_separator()
         p.add_command(
             label = _("Delete"),
             command = self.on_popup_single_device_delete
@@ -469,6 +470,7 @@ IRQ line creation
             label = _("Add bus"),
             menu = p0
         )
+        p.add_separator()
         p.add_checkbutton(
             label = _("Dynamic layout"),
             variable = self.var_physical_layout
@@ -481,10 +483,12 @@ IRQ line creation
             command = self.on_popup_irq_line_delete_point
         )
         self.on_popup_irq_line_delete_point_idx = 0
+        p.add_separator()
         p.add_command(
             label = _("Settings"),
             command = self.on_popup_irq_line_settings
         )
+        p.add_separator()
         p.add_command(
             label = _("Delete"),
             command = self.on_popup_irq_line_delete
@@ -503,6 +507,7 @@ IRQ line creation
             command = self.on_popup_single_irq_hub_irq_destination,
             state = "disabled"
         )
+        p.add_separator()
         p.add_command(
             label = _("Delete"),
             command = self.on_popup_single_irq_hub_delete
@@ -515,6 +520,7 @@ IRQ line creation
             label = _("Settings"),
             command = self.on_popup_single_bus_settings
         )
+        p.add_separator()
         p.add_command(
             label = _("Delete"),
             command = self.on_popup_single_bus_delete

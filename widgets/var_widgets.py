@@ -133,21 +133,29 @@ class VarMenu(Menu):
         Menu.entryconfig(self, idx, **kwargs)
 
     def add(self, itemType, cnf = {}, **kw):
-        for param in ["label", "accelerator"]:
-            if param in cnf:
-                var = cnf.pop(param)
-            elif param in kw:
-                var = kw.pop(param)
-            else:
-                var = StringVar()
+        # handle variable text only for items which have such parameters
+        if itemType in [
+            # "radiobutton" - TODO: check it
+            "cascade",
+            "command",
+            "checkbutton"
+            # "separator" - does not have such parameters
+        ]:
+            for param in ["label", "accelerator"]:
+                if param in cnf:
+                    var = cnf.pop(param)
+                elif param in kw:
+                    var = kw.pop(param)
+                else:
+                    var = StringVar()
 
-            binding = MenuVarBinding(self, var, self.count, param)
-            var.trace_variable("w", binding.on_var_changed)
+                binding = MenuVarBinding(self, var, self.count, param)
+                var.trace_variable("w", binding.on_var_changed)
 
-            if cnf:
-                cnf[param] = var.get()
-            else:
-                kw[param] = var.get()
+                if cnf:
+                    cnf[param] = var.get()
+                else:
+                    kw[param] = var.get()
 
         self.count = self.count + 1
 

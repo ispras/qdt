@@ -99,6 +99,7 @@ class QDCGUIWindow(GUITk):
             command = self.on_add_description,
             accelerator = hotkeys.get_keycode_string(self.on_add_description)
         )
+        filemenu.add_separator()
         filemenu.add_command(
             label = _("New project"),
             command = self.on_new_project,
@@ -118,6 +119,7 @@ class QDCGUIWindow(GUITk):
             command = self.on_load,
             accelerator = hotkeys.get_keycode_string(self.on_load)
         ),
+        filemenu.add_separator()
         filemenu.add_command(
             label=_("Quit"),
             command = self.quit,
