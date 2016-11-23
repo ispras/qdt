@@ -6,7 +6,9 @@ import Tkinter
 tk = Tkinter
 
 class CanvasDnD(tk.Frame):
-    def __init__(self, master):
+    def __init__(self, master,
+            id_priority_sort_function = lambda ids : ids
+        ):
         self.master = master
 
         tk.Frame.__init__ (self, master)
@@ -22,16 +24,28 @@ class CanvasDnD(tk.Frame):
 
         self.dragging = False
         self.off = None
-        self.canvas.tag_bind("DnD", "<ButtonPress-1>", self.down)
-        self.canvas.tag_bind("DnD", "<ButtonRelease-1>", self.up)
-        self.canvas.bind("<Motion>", self.motion)
+        self.canvas.bind("<ButtonPress-1>", self.down, "+")
+        self.canvas.bind("<ButtonRelease-1>", self.up, "+")
+        self.canvas.bind("<Motion>", self.motion, "+")
+
+        self.id_priority_sort_function = id_priority_sort_function
 
     def down(self, event):
-        xy = event.widget.canvasx(event.x), event.widget.canvasy(event.y)
-        offset = event.widget.coords(tk.CURRENT)
-        self.off = [xy[0] - offset[0], xy[1] - offset[1]]
+        x, y = event.widget.canvasx(event.x), event.widget.canvasy(event.y)
 
-        #print str(xy) + " - " + str(self.off)
+        touched = self.canvas.find_overlapping(x - 1, y - 1, x + 1, y + 1)
+        touched = [ t for t in touched if ("DnD" in self.canvas.gettags(t)) ]
+
+        if not touched:
+            return
+
+        touched = self.id_priority_sort_function(touched)
+        self.dnd_dragged = touched[0]
+
+        offset = event.widget.coords(self.dnd_dragged)
+        self.off = [x - offset[0], y - offset[1]]
+
+        #print str((x,y)) + " - " + str(self.off)
 
         self.dragging = True
         self.event_generate('<<DnDDown>>')
@@ -44,15 +58,15 @@ class CanvasDnD(tk.Frame):
         cnv = event.widget
 
         xy = cnv.canvasx(event.x), cnv.canvasy(event.y)
-        points = event.widget.coords(tk.CURRENT)
+        points = event.widget.coords(self.dnd_dragged)
         anchors = copy.copy(points[:2])
 
         #print str(points) + " - " + str(self.off)
 
         for idx in range(len(points)):
-            if "fixed_x" in cnv.gettags(tk.CURRENT) and idx % 2 == 0:
+            if "fixed_x" in cnv.gettags(self.dnd_dragged) and idx % 2 == 0:
                 continue
-            if "fixed_y" in cnv.gettags(tk.CURRENT) and idx % 2 == 1:
+            if "fixed_y" in cnv.gettags(self.dnd_dragged) and idx % 2 == 1:
                 continue
             #print idx, xy[idx % 2], anchors[idx % 2]
             mouse = xy[idx % 2]
@@ -62,12 +76,16 @@ class CanvasDnD(tk.Frame):
     
         #print points
 
-        apply(event.widget.coords, [tk.CURRENT] + points)
+        apply(event.widget.coords, [self.dnd_dragged] + points)
 
         self.event_generate('<<DnDMoved>>')
 
     def up(self, event):
-        self.master.config(cursor = "")
-        self.dragging = False
-        self.off = None
-        self.event_generate('<<DnDUp>>')
+        if self.dragging:
+            self.master.config(cursor = "")
+            self.dragging = False
+            self.off = None
+            self.event_generate('<<DnDUp>>')
+            """ Right after event. Listeners should be able to get which id
+            is not dragged now. """
+            del self.dnd_dragged

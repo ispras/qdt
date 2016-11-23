@@ -299,7 +299,9 @@ class MachineDiagramWidget(CanvasDnD):
     EVENT_SELECT = "<<Select>>"
 
     def __init__(self, parent, mach_desc):
-        CanvasDnD.__init__(self, parent)
+        CanvasDnD.__init__(self, parent,
+            id_priority_sort_function = self.sort_ids_by_priority
+        )
 
         mach_desc.link()
 
@@ -319,7 +321,7 @@ class MachineDiagramWidget(CanvasDnD):
         self.node2dev = {}
         self.node2idtext = {}
 
-        self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select)
+        self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select, "+")
         self.ids_shown_on_select = Set([])
 
         self.nodes = []
@@ -353,13 +355,13 @@ class MachineDiagramWidget(CanvasDnD):
 
         self.update()
 
-        self.bind('<<DnDMoved>>', self.dnd_moved)
-        self.bind('<<DnDDown>>', self.dnd_down)
-        self.bind('<<DnDUp>>', self.dnd_up)
+        self.bind('<<DnDMoved>>', self.dnd_moved, "+")
+        self.bind('<<DnDDown>>', self.dnd_down, "+")
+        self.bind('<<DnDUp>>', self.dnd_up, "+")
         self.dragged = []
 
-        self.canvas.bind("<ButtonPress-3>", self.on_b3_press)
-        self.canvas.bind("<ButtonRelease-3>", self.on_b3_release)
+        self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
+        self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
 
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
@@ -378,15 +380,15 @@ class MachineDiagramWidget(CanvasDnD):
         self.selection_mark_color = "orange"
         self.selected = []
         self.select_point = None
-        self.canvas.bind("<ButtonPress-1>", self.on_b1_press)
-        self.canvas.bind("<ButtonRelease-1>", self.on_b1_release)
+        self.canvas.bind("<ButtonPress-1>", self.on_b1_press, "+")
+        self.canvas.bind("<ButtonRelease-1>", self.on_b1_release, "+")
 
         self.select_frame = None
         self.select_frame_color = "green"
 
         self.key_state = {}
-        self.canvas.bind("<KeyPress>", self.on_key_press)
-        self.canvas.bind("<KeyRelease>", self.on_key_release)
+        self.canvas.bind("<KeyPress>", self.on_key_press, "+")
+        self.canvas.bind("<KeyRelease>", self.on_key_release, "+")
         self.canvas.focus_set()
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -1019,6 +1021,47 @@ IRQ line creation
         )
         self.select_by_frame = False
 
+    def get_id_priority(self, id):
+        try:
+            n = self.id2node[id]
+            if isinstance(n, IRQPathCircle):
+                """ IRQ Line circles could discourage another nodes dragging,
+                especially related IRQ hub nodes. Hence, make IRQ line circles
+                less priority. """
+                ret = 2
+                """ There is no meaningful reason to distribute other nodes
+                priorities such way. So, just try and watch what will happen. """
+            elif isinstance(n, IRQHubCircle):
+                ret =  3
+            else:
+                n = self.node2dev[n]
+
+                if isinstance(n, DeviceNode):
+                    ret =  4
+                elif isinstance(n, BusNode):
+                    ret =  5
+                else:
+                    """ Unspecified node. Make it much intrusive to speed up its
+                    priority specification. """
+                    ret =  6
+        except KeyError:
+            # print "id %d without prototype has less priority" % id
+            return 0
+
+        """
+        print str(id) \
+            + " priority " \
+            + str(ret) \
+            + " (" + type(n).__name__ + ")"
+        """
+
+        return ret
+
+    def sort_ids_by_priority(self, ids):
+        return sorted(ids, reverse = True, key = lambda id : (
+            self.get_id_priority(id)
+        ))
+
     def on_b1_release(self, event):
         if not self.select_point:
             return
@@ -1032,6 +1075,8 @@ IRQ line creation
             touched = self.canvas.find_overlapping(
                 x - 3, y - 3, x + 3, y + 3
             )
+
+        touched = self.sort_ids_by_priority(touched)
 
         self.select_point = None
         self.canvas.delete(self.select_frame)
@@ -1086,6 +1131,8 @@ IRQ line creation
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
 
         touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+
+        touched_ids = self.sort_ids_by_priority(touched_ids)
 
         for tid in touched_ids:
             if not "DnD" in self.canvas.gettags(tid):
@@ -1300,13 +1347,13 @@ IRQ line creation
         self.all_were_dragged = True
 
     def dnd_moved(self, event):
-        id = self.canvas.find_withtag(tk.CURRENT)[0]
+        id = self.dnd_dragged
         if id == self.shown_irq_circle:
             node = self.shown_irq_node
         else:
             node = self.id2node[id]
 
-        points = self.canvas.coords(tk.CURRENT)[:2]
+        points = self.canvas.coords(id)[:2]
         points[0] = points[0] - node.offset[0]
         points[1] = points[1] - node.offset[1]
 
@@ -1347,7 +1394,7 @@ IRQ line creation
         self.select_frame = None
 
     def dnd_down(self, event):
-        id = self.canvas.find_withtag(tk.CURRENT)[0]
+        id = self.dnd_dragged
 
         if id == self.irq_circle_preview:
             self.circle_preview_to_irq(self.highlighted_irq_line)
