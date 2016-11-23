@@ -753,6 +753,12 @@ class Pointer(Type):
 
         self.type = _type
 
+    def get_definers(self):
+        if self.is_named:
+            return super(Pointer, self).get_definers()
+        else:
+            return self.type.get_definers()
+
     def gen_chunks(self):
         # strip function definition chunk, its references is only needed
         if isinstance(self.type, Function):
