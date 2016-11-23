@@ -90,6 +90,17 @@ class QDCGUIWindow(GUITk):
             )
         ])
 
+        hotkeys.add_key_symbols({
+            43: "H",
+            32: "O",
+            57: "N",
+            40: "D",
+            24: "Q",
+            52: "Z",
+            29: "Y",
+            39: "S"
+        })
+
         # Menu bar
         menubar = VarMenu(self)
 
