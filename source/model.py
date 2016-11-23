@@ -193,6 +193,21 @@ a field of a type defined in another non-header file {}.".format(
 class AddTypeRefToDefinerException (Exception):
     pass
 
+class ParsePrintFilter:
+    def __init__(self, out):
+        self.out = out
+        self.written = False
+
+    def write(self, str):
+        if str.startswith("Info:"):
+            self.out.write(str + "\n")
+            self.written = True
+
+    def flush(self):
+        if self.written:
+            self.out.flush()
+            self.written = False
+
 class Header(Source):
     reg = {}
 
@@ -324,10 +339,11 @@ digraph HeaderInclusion {
         full_name = os.path.join(start_dir, prefix)
         if (os.path.isdir(full_name)):
             for entry in os.listdir(full_name):
-                Header._build_inclusions_recursive(
+                for ret in Header._build_inclusions_recursive(
                     start_dir,
                     os.path.join(prefix, entry)
-                )
+                ):
+                    yield ret
         else:
             (name, ext) = os.path.splitext(prefix)
             if ext == ".h":
@@ -356,36 +372,69 @@ digraph HeaderInclusion {
                     header_input = open(full_name, "r").read()
                     p.parse(input = header_input, source = prefix)
 
-                    class ParsePrintFilter:
-                        def __init__(self, out):
-                            self.out = out
-                            self.written = False
+                    yields_per_current_header = 0
 
-                        def write(self, str):
-                            if str.startswith("Info:"):
-                                self.out.write(str + "\n")
-                                self.written = True
+                    tokens_before_yield = 0
+                    while p.token():
+                        if not tokens_before_yield:
 
-                        def flush(self):
-                            if self.written:
-                                self.out.flush()
-                                self.written = False
+                            yields_per_current_header += 1
 
-                    sys.stdout = ParsePrintFilter(sys.stdout)
-                    while p.token(): pass
-                    sys.stdout = sys.stdout.out
+                            yield True
+                            tokens_before_yield = 1000 # an adjusted value
+                        else:
+                            tokens_before_yield -= 1
 
+                    Header.yields_per_header.append(yields_per_current_header)
+
+        raise StopIteration()
 
     @staticmethod
-    def build_inclusions(dname):
+    def co_build_inclusions(dname):
+        yields_total = 0
+        Header.yields_per_header = []
+
+        ppf = sys.stdout = ParsePrintFilter(sys.stdout)
+
         for h in Header.reg.values():
             h.parsed = False
 
         for entry in os.listdir(dname):
-            Header._build_inclusions_recursive(dname, entry)
+            for res in Header._build_inclusions_recursive(dname, entry):
+                yields_total += 1
+                yield res
 
         for h in Header.reg.values():
             del h.parsed
+
+        sys.stdout = ppf.out
+
+        print """Header inclusions build statistic:
+    Yields total: %d
+    Max yields per header: %d
+    Min yields per header: %d
+    Average yields per headed: %f
+""" % (
+    yields_total,
+    max(Header.yields_per_header),
+    min(Header.yields_per_header),
+    sum(Header.yields_per_header) / float(len(Header.yields_per_header))
+        )
+
+        del Header.yields_per_header
+
+        raise StopIteration()
+
+
+    @staticmethod
+    def build_inclusions(dname):
+        gen = Header.co_build_inclusions(dname)
+
+        try:
+            while True:
+                gen.next()
+        except StopIteration:
+            pass
 
     @staticmethod
     def lookup(path):
