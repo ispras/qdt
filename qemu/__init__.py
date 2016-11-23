@@ -19,13 +19,8 @@ from version_description import \
     account_build_path
 
 from pci_ids import \
-    re_pci_vendor, \
-    re_pci_class, \
-    re_pci_device, \
     pci_id_db, \
-    PCIVendorId, \
-    PCIClassId, \
-    PCIDeviceId
+    PCIClassification
 
 from sysbusdevice import \
     SysBusDeviceStateStruct, \
@@ -403,29 +398,6 @@ def initialize(qemu_src):
         ])
 
     # Search for PCI Ids
-    for t in Type.reg.values():
-        if type(t) == Macro:
-            mi = re_pci_vendor.match(t.name)
-            if mi:
-                PCIVendorId(mi.group(1), t.text)
-                continue
-
-            mi = re_pci_class.match(t.name)
-            if mi:
-                # print 'PCI class %s' % mi.group(1)
-                PCIClassId(mi.group(1), t.text)
-                continue
-
-    # All PCI vendors must be defined before any device.
-    for t in Type.reg.values():
-        if type(t) == Macro:
-            mi = re_pci_device.match(t.name)
-            if mi:
-                for v in pci_id_db.vendors.values():
-                    mi = v.device_pattern.match(t.name)
-                    if mi:
-                        PCIDeviceId(v.name, mi.group(1), t.text)
-                        break;
-                continue
+    PCIClassification.build()
 
     qemu_version_initialize(qemu_version)
