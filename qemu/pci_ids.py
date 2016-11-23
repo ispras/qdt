@@ -1,6 +1,8 @@
 import re
 
-from source import Type
+from source import \
+    Type, \
+    Macro
 
 re_pci_vendor = re.compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = re.compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
@@ -82,6 +84,33 @@ class PCIClassification:
         self.vendors = {}
         self.devices = {}
         self.classes = {}
+
+    @staticmethod
+    def build():
+        for t in Type.reg.values():
+            if type(t) == Macro:
+                mi = re_pci_vendor.match(t.name)
+                if mi:
+                    PCIVendorId(mi.group(1), t.text)
+                    continue
+
+                mi = re_pci_class.match(t.name)
+                if mi:
+                    # print 'PCI class %s' % mi.group(1)
+                    PCIClassId(mi.group(1), t.text)
+                    continue
+
+        # All PCI vendors must be defined before any device.
+        for t in Type.reg.values():
+            if type(t) == Macro:
+                mi = re_pci_device.match(t.name)
+                if mi:
+                    for v in pci_id_db.vendors.values():
+                        mi = v.device_pattern.match(t.name)
+                        if mi:
+                            PCIDeviceId(v.name, mi.group(1), t.text)
+                            break;
+                    continue
 
     @staticmethod
     def gen_device_key(vendor_name, device_name):
