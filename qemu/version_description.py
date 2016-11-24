@@ -5,9 +5,6 @@ from source import \
     Macro, \
     add_base_types
 
-from predefined_types import \
-    add_types
-
 from common import \
     PyGenerator
 
