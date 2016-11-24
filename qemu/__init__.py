@@ -125,38 +125,3 @@ from qom_editing import \
 
 from predefined_types import \
     add_types
-
-import os
-
-def initialize(qemu_src):
-    VERSION_path = os.path.join(qemu_src, 'VERSION')
-
-    if not os.path.isfile(VERSION_path):
-        raise Exception("{} does not exists\n".format(VERSION_path))
-
-    VERSION_f = open(VERSION_path)
-    qemu_version = VERSION_f.readline().rstrip("\n")
-    VERSION_f.close()
-
-    print("Qemu version is {}".format(qemu_version))
-
-    include_path = os.path.join(qemu_src, 'include')
-
-    header_db_fname = "header_db.json"
-    if os.path.isfile(header_db_fname):
-        print("Loading Qemu header inclusion tree from " + header_db_fname)
-        Header.load_header_db(header_db_fname)
-    else:
-        print("Building Qemu header inclusion tree")
-        Header.build_inclusions(include_path)
-
-    print("Saving Qemu header inclusion tree to " + header_db_fname)
-    Header.save_header_db(header_db_fname)
-
-    qemu_version_initialize(qemu_version)
-
-    # Search for PCI Ids
-    PCIClassification.build()
-
-    get_vp()["qemu types definer"]()
-
