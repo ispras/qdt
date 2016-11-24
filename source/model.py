@@ -244,67 +244,6 @@ digraph HeaderInclusion {
         dot_writer.close()
 
     @staticmethod
-    def load_header_db(header_db_file_name):
-        header_db_reader = open(header_db_file_name, "r")
-
-        list_headers = json.load(header_db_reader)
-
-        # Create all headers
-        for dict_h in list_headers:
-            path = dict_h["path"]
-            if not path in Header.reg:
-                Header(
-                       path = dict_h["path"],
-                       is_global = dict_h["is_global"])
-            else:
-                # Check if existing header equals the one from database?
-                pass
-
-        # Set up inclusions
-        for dict_h in list_headers:
-            path = dict_h["path"]
-            h = Header.lookup(path)
-
-            for inc in dict_h["inclusions"]:
-                i = Header.lookup(inc)
-                h.add_inclusion(i)
-
-            for m in dict_h["macros"]:
-                h.add_type(Macro.new_from_dict(m))
-
-        header_db_reader.close()
-
-    @staticmethod
-    def save_header_db(header_db_file_name):
-        header_db_writer = open(header_db_file_name, "w")
-
-        list_headers = []
-        for h in Header.reg.values():
-            dict_h = {}
-            dict_h["path"] = h.path
-            dict_h["is_global"] = h.is_global
-
-            inc_list = []
-            for i in h.inclusions.values():
-                inc_list.append(i.path)
-            dict_h["inclusions"] = inc_list
-
-            macro_list = []
-            for t in h.types.values():
-                if type(t) == Macro:
-                    macro_list.append(t.gen_dict())
-            dict_h["macros"] = macro_list
-
-            list_headers.append(dict_h)
-
-        json.dump(list_headers, header_db_writer, 
-            indent=4,
-            separators=(',', ': ')
-            )
-
-        header_db_writer.close()
-
-    @staticmethod
     def _on_include(includer, inclusion, is_global):
         if not inclusion in Header.reg:
             print("Parsing " + inclusion + " as inclusion")
