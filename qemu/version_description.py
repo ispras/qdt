@@ -260,14 +260,6 @@ class QemuVersionDescription(object):
         else:
             return None
 
-    @staticmethod
-    def gen_header_inclusion(src_path, stc):
-        include_path = os.path.join(src_path, 'include')
-        print("Building Qemu header inclusion tree")
-        add_base_types()
-        stc.build_inclusions(include_path)
-        add_types(stc)
-
     # TODO: get dt from qemu
     @staticmethod
     def gen_device_tree(build_path, stc):
