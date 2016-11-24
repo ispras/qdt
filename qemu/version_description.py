@@ -151,6 +151,17 @@ class QemuVersionDescription(object):
             self.src_path
         )
 
+        VERSION_path = os.path.join(self.src_path, 'VERSION')
+
+        if not os.path.isfile(VERSION_path):
+            raise Exception("{} does not exists\n".format(VERSION_path))
+
+        VERSION_f = open(VERSION_path)
+        self.qemu_version = VERSION_f.readline().rstrip("\n")
+        VERSION_f.close()
+
+        print("Qemu version is {}".format(self.qemu_version))
+
         self.qvc = None
 
     def init_cache(self):
