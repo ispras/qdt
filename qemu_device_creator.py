@@ -37,13 +37,6 @@ Use @file to read arguments from 'file' (one per line)
         )
 
     parser.add_argument(
-        '--qemu-src', '-q',
-        default = '.',
-        type=arg_type_directory,
-        metavar='path_to_qemu_source_tree',
-        )
-
-    parser.add_argument(
         '--qemu-build', '-b',
         default = '.',
         type=arg_type_directory,
