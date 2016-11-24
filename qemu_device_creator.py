@@ -9,6 +9,7 @@ from qemu import \
     PCIExpressDeviceDescription, \
     QProject, \
     MachineNode, \
+    PCIClassification, \
     get_vs
     
 
@@ -43,6 +44,13 @@ Use @file to read arguments from 'file' (one per line)
         )
 
     parser.add_argument(
+        '--qemu-build', '-b',
+        default = '.',
+        type=arg_type_directory,
+        metavar='path_to_qemu_build',
+        )
+
+    parser.add_argument(
         '--gen-header-tree',
         default = None,
         metavar = "header_tree.gv"
@@ -50,7 +58,16 @@ Use @file to read arguments from 'file' (one per line)
 
     arguments = parser.parse_args()
 
-    qemu.initialize(arguments.qemu_src)
+    qemu.load_build_path_list()
+    qemu.account_build_path(arguments.qemu_build)
+
+    try:
+        qemu.qvds_load_with_cache()
+    except Exception, e:
+        print "QVD load filed: " + str(e) + "\n"
+
+    # Search for PCI Ids
+    PCIClassification.build()
 
     if not arguments.gen_header_tree == None:
         Header.gen_header_inclusion_dot_file(arguments.gen_header_tree)
