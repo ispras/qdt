@@ -175,10 +175,11 @@ class QemuVersionDescription(object):
 
         if not os.path.isfile(qvc_path):
             self.qvc = QemuVersionCache()
-            QemuVersionDescription.gen_header_inclusion(
-                self.src_path,
-                self.qvc.stc
-            )
+
+            # make STC from QVC active and build headers
+            self.qvc.stc.set_cur_stc()
+            Header.build_inclusions(self.include_path)
+
             self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
                 self.build_path,
                 self.qvc.stc
