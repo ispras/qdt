@@ -162,6 +162,8 @@ class QemuVersionDescription(object):
 
         print("Qemu version is {}".format(self.qemu_version))
 
+        self.include_path = os.path.join(self.src_path, 'include')
+
         self.qvc = None
 
     def init_cache(self):
