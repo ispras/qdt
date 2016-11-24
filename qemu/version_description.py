@@ -86,6 +86,15 @@ def qvds_load():
         if v == None:
             qvd_reg[k] = QemuVersionDescription(k)
 
+def qvd_load_with_cache(build_path):
+    try:
+        qvd = qvd_get_registered(build_path)
+    except:
+        qvd = qvd_get(build_path)
+
+    qvd.init_cache()
+    return qvd
+
 def qvds_load_with_cache():
     for k, v in qvd_reg.iteritems():
         if v == None:

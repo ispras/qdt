@@ -12,6 +12,7 @@ from version_description import \
     qvd_get, \
     qvd_get_registered, \
     qvds_load, \
+    qvd_load_with_cache, \
     qvds_load_with_cache, \
     qvds_init_cache, \
     forget_build_path, \
