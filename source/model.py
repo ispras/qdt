@@ -212,38 +212,6 @@ class Header(Source):
     reg = {}
 
     @staticmethod
-    def gen_header_inclusion_dot_file(dot_file_name):
-        dot_writer = open(dot_file_name, "w")
-
-        dot_writer.write("""\
-digraph HeaderInclusion {
-    node [shape=polygon fontname=Monospace]
-    edge[style=filled]
-
-""")
-
-        def _header_path_to_node_name(path):
-            return path.replace(".", "_").replace("/", "__").replace("-", "_")
-
-        dot_writer.write("    /* Header nodes: */\n")
-        for h in Header.reg.values():
-            node = _header_path_to_node_name(h.path)
-            dot_writer.write('    %s [label="%s"]\n' % (node, h.path))
-
-        dot_writer.write("\n    /* Header dependencies: */\n")
-
-        for h in Header.reg.values():
-            h_node = _header_path_to_node_name(h.path)
-            for i in h.inclusions.values():
-                i_node = _header_path_to_node_name(i.path)
-
-                dot_writer.write('    %s -> %s\n' % (i_node, h_node))
-
-        dot_writer.write("}\n")
-
-        dot_writer.close()
-
-    @staticmethod
     def _on_include(includer, inclusion, is_global):
         if not inclusion in Header.reg:
             print("Parsing " + inclusion + " as inclusion")
