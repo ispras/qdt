@@ -1876,3 +1876,7 @@ digraph HeaderInclusion {
             list_headers.append(dict_h)
 
         return list_headers
+
+    def set_cur_stc(self):
+        Header.reg = self.reg_header
+        Type.reg = self.reg_type
