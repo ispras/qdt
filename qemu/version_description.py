@@ -17,6 +17,10 @@ from subprocess import \
     check_output, \
     STDOUT
 
+from version import \
+    initialize as initialize_version, \
+    get_vp
+
 import os
 
 bp_file_name = "build_path_list"
@@ -106,7 +110,6 @@ class QemuVersionCache(object):
         self.stc.set_cur_stc()
 
         if not list_headers == None:
-            add_base_types()
             self.stc.load_header_db(list_headers)
 
     def __children__(self):
@@ -189,6 +192,12 @@ class QemuVersionDescription(object):
             self.load_cache(qvc_path)
             # make STC from just loaded QVC active
             self.qvc.stc.set_cur_stc()
+
+        # select Qemu version parameters according to current version
+        initialize_version(self.qemu_version)
+
+        # initialize Qemu types in QVC
+        get_vp()["qemu types definer"]()
 
     def load_cache(self, qvc_path):
         if not os.path.isfile(qvc_path):
