@@ -2,21 +2,18 @@
 
 import argparse
 import os.path
-from _io import open
+
 from qemu import \
     pci_id_db, \
     SysBusDeviceDescription, \
     PCIExpressDeviceDescription, \
     QProject, \
-    MachineNode, \
     PCIClassification, \
     get_vs
-    
 
 from examples import *
 
 import qemu
-from source import Header
 
 def arg_type_directory(string):
     if not os.path.isdir(string):
