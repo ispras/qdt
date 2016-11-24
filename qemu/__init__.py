@@ -20,6 +20,10 @@ from version_description import \
     account_build_path
 
 from pci_ids import \
+    PCIId, \
+    PCIVendorId, \
+    PCIDeviceId, \
+    PCIClassId, \
     pci_id_db, \
     PCIClassification
 
