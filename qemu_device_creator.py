@@ -58,11 +58,8 @@ Use @file to read arguments from 'file' (one per line)
 
     arguments = parser.parse_args()
 
-    qemu.load_build_path_list()
-    qemu.account_build_path(arguments.qemu_build)
-
     try:
-        qemu.qvds_load_with_cache()
+        qemu.qvd_load_with_cache(arguments.qemu_build)
     except Exception, e:
         print "QVD load filed: " + str(e) + "\n"
 
