@@ -85,6 +85,26 @@ class PCIClassification:
         self.devices = {}
         self.classes = {}
 
+    def gen_uniq_vid(self):
+        for i in xrange(0, 0xFFFF):
+            for v in self.vendors.values():
+                if v.id.upper() == "0x%X" % i:
+                    break;
+            else:
+                return "0x%X" % i
+        # no uniq ID
+        return "0xDEAD"
+
+    def gen_uniq_did(self):
+        for i in xrange(0, 0xFFFF):
+            for d in self.devices.values():
+                if d.id.upper() == "0x%X" % i:
+                    break;
+            else:
+                return "0x%X" % i
+        # no uniq ID
+        return "0xBEAF"
+
     @staticmethod
     def build():
         for t in Type.reg.values():
