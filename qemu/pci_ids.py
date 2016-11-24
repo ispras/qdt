@@ -149,9 +149,35 @@ class PCIClassification:
         if not did == None and not type(did) == str:
             raise Exception("Device id must be a string")
 
-        v = self.get_vendor(vendor_name, vid)
+        if vid is not None:
+            try:
+                v = self.get_vendor(vendor_name, vid)
+            except PCIVendorIdNetherExistsNorCreate as e:
+                if vendor_name is not None:
+                    raise e
+                v = None
+        elif vendor_name is not None:
+            try:
+                v = self.get_vendor(vendor_name, vid)
+            except PCIVendorIdNetherExistsNorCreate:
+                v = self.get_vendor(vendor_name, self.gen_uniq_vid())
+        else:
+            if name is None:
+                if did is None:
+                    raise Exception("No identification information was got!")
+                # Return first device with such ID
+                for d in self.devices.values():
+                    if did.upper() == d.id.upper():
+                        return d
+                raise Exception("No device with id %s was found!" % did.upper())
+            # Try get vendor by device name
+            for v in self.vendors.values():
+                if v.device_pattern.match(name):
+                    break
+            else:
+                raise Exception("Cannot get vendor by device name %s." % name)
 
-        if not name == None: 
+        if name is not None:
             dev_key = PCIClassification.gen_device_key(v.name, name)
             try:
                 d = self.devices[dev_key]
@@ -159,13 +185,16 @@ class PCIClassification:
                     raise Exception("Device %s, vendor %s, device id %s/%s" %
                         d.name, v.name, d.id, did) 
             except KeyError:
-                if did == None:
-                    raise Exception("Cannot create device %s because of no id \
- was specified" % did)
+                if did is None:
+                    did = self.gen_uniq_did()
 
                 d = PCIDeviceId(v.name, name, did)
         else:
-            raise Exception("Not implemented case")
+            if did is None:
+                did = self.gen_uniq_did()
+            name = "UNKNOWN_DEVICE_%X" % did
+
+            d = PCIDeviceId(v.name, name, did)
 
         return d
 
