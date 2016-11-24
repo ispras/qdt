@@ -187,6 +187,8 @@ class QemuVersionDescription(object):
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
             self.load_cache(qvc_path)
+            # make STC from just loaded QVC active
+            self.qvc.stc.set_cur_stc()
 
     def load_cache(self, qvc_path):
         if not os.path.isfile(qvc_path):
