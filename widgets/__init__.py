@@ -21,6 +21,9 @@ from hotkey import \
     HotKeyBinding, \
     HotKey
 
+from obj_ref_var import \
+    ObjRefVar
+
 from device_settings import \
     DeviceSettingsWidget
 
