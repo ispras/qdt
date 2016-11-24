@@ -103,8 +103,7 @@ class QemuVersionCache(object):
         # Create source tree container
         self.stc = SourceTreeContainer()
         # Temporarily
-        self.stc.reg_header = Header.reg
-        self.stc.reg_type = Type.reg
+        self.stc.set_cur_stc()
 
         if not list_headers == None:
             add_base_types()
