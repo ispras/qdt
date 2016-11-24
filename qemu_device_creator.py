@@ -59,7 +59,7 @@ Use @file to read arguments from 'file' (one per line)
     arguments = parser.parse_args()
 
     try:
-        qemu.qvd_load_with_cache(arguments.qemu_build)
+        qvd = qemu.qvd_load_with_cache(arguments.qemu_build)
     except Exception, e:
         print "QVD load filed: " + str(e) + "\n"
         return -1
@@ -106,7 +106,7 @@ Use @file to read arguments from 'file' (one per line)
     else:
         project = Q35Project_2_6_0()
 
-    project.gen_all(arguments.qemu_src)
+    project.gen_all(qvd.src_path)
 
     '''
     from pycparser import c_generator, c_ast
