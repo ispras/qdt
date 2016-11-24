@@ -1,9 +1,7 @@
 from source import \
     SourceTreeContainer, \
     Header, \
-    Type, \
-    Macro, \
-    add_base_types
+    Macro
 
 from common import \
     PyGenerator
