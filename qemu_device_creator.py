@@ -61,7 +61,7 @@ Use @file to read arguments from 'file' (one per line)
     PCIClassification.build()
 
     if not arguments.gen_header_tree == None:
-        Header.gen_header_inclusion_dot_file(arguments.gen_header_tree)
+        qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
     test_vendor = pci_id_db.get_vendor(name = "AMD", vid = "0x1022")
     test_device = pci_id_db.get_device(name = "AMD_LANCE",
