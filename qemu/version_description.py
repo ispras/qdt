@@ -195,8 +195,8 @@ class QemuVersionDescription(object):
         if not os.path.isfile(qvc_path):
             self.qvc = QemuVersionCache()
 
-            # make STC from QVC active and build headers
-            self.qvc.stc.set_cur_stc()
+            # make new QVC active and begin construction
+            self.qvc.use()
             Header.build_inclusions(self.include_path)
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
@@ -208,8 +208,8 @@ class QemuVersionDescription(object):
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
             self.load_cache(qvc_path)
-            # make STC from just loaded QVC active
-            self.qvc.stc.set_cur_stc()
+            # make just loaded QVC active
+            self.qvc.use()
 
             if not self.qvc.list_headers == None:
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
