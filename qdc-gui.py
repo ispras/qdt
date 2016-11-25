@@ -485,9 +485,11 @@ def main():
     root.proj.build_path = arguments.qemu_build
 
     try:
-        qemu.qvd_load_with_cache(root.proj.build_path)
+        qvd = qemu.qvd_load_with_cache(root.proj.build_path)
     except Exception, e:
         print "QVD load filed: " + str(e) + "\n"
+
+    qvd.use()
 
     root.geometry("1000x750")
 
