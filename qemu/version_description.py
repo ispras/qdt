@@ -18,6 +18,10 @@ from version import \
 
 import os
 
+from pci_ids import \
+    PCIId, \
+    PCIClassification
+
 bp_file_name = "build_path_list"
 
 qvd_reg = {}
@@ -112,15 +116,18 @@ def qvds_init_cache():
 class QemuVersionCache(object):
     def __init__(self,
                  list_headers = None,
-                 device_tree = None):
+                 device_tree = None,
+                 pci_classes = None
+    ):
         self.device_tree = device_tree
         self.list_headers = list_headers
 
         # Create source tree container
         self.stc = SourceTreeContainer()
+        self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
     def __children__(self):
-        return []
+        return [ self.pci_c ]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -131,11 +138,14 @@ class QemuVersionCache(object):
         gen.gen_field("list_headers = ")
         gen.pprint(self.list_headers)
 
+        gen.gen_field("pci_classes = " + gen.nameof(self.pci_c))
+
         gen.gen_end()
 
     # The method made the cache active.
     def use(self):
         self.stc.set_cur_stc()
+        PCIId.db = self.pci_c
 
 class QemuVersionDescription(object):
     def __init__(self, build_path):
@@ -205,6 +215,10 @@ class QemuVersionDescription(object):
                 self.build_path,
                 self.qvc.stc
             )
+
+            # Search for PCI Ids
+            PCIClassification.build()
+
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
             self.load_cache(qvc_path)
@@ -230,6 +244,10 @@ class QemuVersionDescription(object):
             context = {
                 "QemuVersionCache": QemuVersionCache
             }
+
+            import qemu
+            context.update(qemu.__dict__)
+
             execfile(qvc_path, context, variables)
 
             for v in variables.values():
