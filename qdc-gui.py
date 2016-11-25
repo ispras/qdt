@@ -441,7 +441,7 @@ def main():
     qemu.account_build_path(arguments.qemu_build)
 
     try:
-        qemu.qvds_load_with_cache()
+        qemu.qvd_load_with_cache(arguments.qemu_build)
     except Exception, e:
         print "QVD load filed: " + str(e) + "\n"
 
