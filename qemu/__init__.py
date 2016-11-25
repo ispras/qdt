@@ -132,4 +132,3 @@ from project_history_tracker import \
 from qom_editing import \
     DOp_SetAttr
 
-pci_id_db = PCIId.db
