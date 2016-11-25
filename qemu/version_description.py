@@ -177,6 +177,12 @@ class QemuVersionDescription(object):
 
         self.qvc = None
 
+    # The method made the description active
+    def use(self):
+        if self.qvc == None:
+            self.init_cache()
+        self.qvc.use()
+
     def init_cache(self):
         if not self.qvc == None:
             raise Exception("Multiple cache init (source: %s)" % self.src_path)
