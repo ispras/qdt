@@ -114,6 +114,7 @@ class QemuVersionCache(object):
                  list_headers = None,
                  device_tree = None):
         self.device_tree = device_tree
+        self.list_headers = list_headers
 
         # Create source tree container
         self.stc = SourceTreeContainer()
