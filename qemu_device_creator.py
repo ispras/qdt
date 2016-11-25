@@ -8,7 +8,6 @@ from qemu import \
     SysBusDeviceDescription, \
     PCIExpressDeviceDescription, \
     QProject, \
-    PCIClassification, \
     get_vs
 
 from examples import *
@@ -55,9 +54,6 @@ Use @file to read arguments from 'file' (one per line)
         return -1
 
     qvd.use()
-
-    # Search for PCI Ids
-    PCIClassification.build()
 
     if not arguments.gen_header_tree == None:
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
