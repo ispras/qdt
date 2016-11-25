@@ -131,6 +131,10 @@ class QemuVersionCache(object):
 
         gen.gen_end()
 
+    # The method made the cache active.
+    def use(self):
+        self.stc.set_cur_stc()
+
 class QemuVersionDescription(object):
     def __init__(self, build_path):
         config_host_path = os.path.join(build_path, 'config-host.mak')
