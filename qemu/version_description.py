@@ -59,10 +59,16 @@ def forget_build_path(path):
 
 def qvd_create(path):
     account_build_path(path)
-    if qvd_reg[path] == None:
-        qvd_reg[path] = QemuVersionDescription(path)
+
+    qvd = qvd_reg[path]
+
+    if qvd == None:
+        qvd = QemuVersionDescription(path)
     else:
         raise Exception("Multiple Qemu version descriptions for %s." % path)
+
+    qvd_reg[path] = qvd
+    return qvd
 
 def qvd_get(path):
     if not path in qvd_reg.keys():
