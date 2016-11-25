@@ -71,16 +71,21 @@ def qvd_create(path):
     return qvd
 
 def qvd_get(path):
-    if not path in qvd_reg.keys():
-        qvd_create(path)
+    try:
+        qvd = qvd_reg[path]
+    except KeyError:
+        qvd = None
 
-    return qvd_reg[path]
+    if qvd is None:
+        qvd = qvd_create(path)
+
+    return qvd
 
 def qvd_get_registered(path):
     if not path in qvd_reg.keys():
         raise Exception("%s was not registered." % path)
 
-    return qvd_reg[path]
+    return qvd_get(path)
 
 def qvds_load():
     for k, v in qvd_reg.iteritems():
