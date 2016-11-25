@@ -54,6 +54,8 @@ Use @file to read arguments from 'file' (one per line)
         print "QVD load filed: " + str(e) + "\n"
         return -1
 
+    qvd.use()
+
     # Search for PCI Ids
     PCIClassification.build()
 
