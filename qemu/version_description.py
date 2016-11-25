@@ -118,11 +118,6 @@ class QemuVersionCache(object):
 
         # Create source tree container
         self.stc = SourceTreeContainer()
-        # Temporarily
-        self.stc.set_cur_stc()
-
-        if not list_headers == None:
-            self.stc.load_header_db(list_headers)
 
     def __children__(self):
         return []
@@ -214,6 +209,9 @@ class QemuVersionDescription(object):
             self.load_cache(qvc_path)
             # make STC from just loaded QVC active
             self.qvc.stc.set_cur_stc()
+
+            if not self.qvc.list_headers == None:
+                self.qvc.stc.load_header_db(self.qvc.list_headers)
 
         # select Qemu version parameters according to current version
         initialize_version(self.qemu_version)
