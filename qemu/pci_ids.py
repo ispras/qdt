@@ -107,6 +107,25 @@ class PCIClassification(object):
         self.devices = {}
         self.classes = {}
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_end()
+
+        gen.line(gen.nameof(self) + ".tmp = PCIId.db")
+        gen.line("PCIId.db = " + gen.nameof(self))
+
+        for pci_id in self.vendors.values() \
+             + self.devices.values() \
+             + self.classes.values() \
+        :
+            pci_id.__gen_code__(gen)
+
+        gen.line("PCIId.db = " + gen.nameof(self) + ".tmp")
+        gen.line("del " + gen.nameof(self) + ".tmp")
+
+    def __children__(self):
+        return []
+
     def gen_uniq_vid(self):
         for i in xrange(0, 0xFFFF):
             for v in self.vendors.values():
