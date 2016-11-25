@@ -136,11 +136,18 @@ class PCIClassification:
     def gen_device_key(vendor_name, device_name):
         return vendor_name + "_" + device_name
 
-    def get_class(self, name):
+    def get_class(self, name, cid = None):
         try:
             c = self.classes[name]
+            if cid is not None and c.id != cid:
+                raise Exception("PCI class ID  %s already exists but is \
+assigned different value %s / %s." % (name, c.id, cid)
+                )
         except KeyError:
-            raise Exception("Unknown PCI class %s" % name)
+            if cid is None:
+                raise Exception("Unknown PCI class %s" % name)
+            else:
+                c = PCIClassId(name, cid)
 
         return c
 
