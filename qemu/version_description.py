@@ -93,11 +93,7 @@ def qvds_load():
             qvd_reg[k] = QemuVersionDescription(k)
 
 def qvd_load_with_cache(build_path):
-    try:
-        qvd = qvd_get_registered(build_path)
-    except:
-        qvd = qvd_get(build_path)
-
+    qvd = qvd_get(build_path)
     qvd.init_cache()
     return qvd
 
