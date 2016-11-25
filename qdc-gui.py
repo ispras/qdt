@@ -440,11 +440,6 @@ def main():
     qemu.load_build_path_list()
     qemu.account_build_path(arguments.qemu_build)
 
-    try:
-        qemu.qvd_load_with_cache(arguments.qemu_build)
-    except Exception, e:
-        print "QVD load filed: " + str(e) + "\n"
-
     root = QDCGUIWindow()
 
     try:
@@ -488,6 +483,11 @@ def main():
         root.set_current_file_name("project.py")
 
     root.proj.build_path = arguments.qemu_build
+
+    try:
+        qemu.qvd_load_with_cache(root.proj.build_path)
+    except Exception, e:
+        print "QVD load filed: " + str(e) + "\n"
 
     root.geometry("1000x750")
 
