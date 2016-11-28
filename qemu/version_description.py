@@ -128,9 +128,8 @@ class QemuVersionCache(object):
         gen.gen_field("device_tree = ")
         gen.pprint(self.device_tree)
 
-        list_headers = self.stc.create_header_db()
         gen.gen_field("list_headers = ")
-        gen.pprint(list_headers)
+        gen.pprint(self.list_headers)
 
         gen.gen_end()
 
@@ -199,6 +198,8 @@ class QemuVersionDescription(object):
             # make STC from QVC active and build headers
             self.qvc.stc.set_cur_stc()
             Header.build_inclusions(self.include_path)
+
+            self.qvc.list_headers = self.qvc.stc.create_header_db()
 
             self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
                 self.build_path,
