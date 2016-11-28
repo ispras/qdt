@@ -131,5 +131,6 @@ from project_history_tracker import \
 
 from qom_editing import \
     SetDescriptionReferenceAttribute, \
+        DOp_SetPCIIdAttr, \
     DOp_SetAttr
 
