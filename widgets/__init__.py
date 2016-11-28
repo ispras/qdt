@@ -107,3 +107,6 @@ from branch_tree_view import \
 
 from history_window import \
     HistoryWindow
+
+from pci_id_widget import \
+    PCIIdWidget
