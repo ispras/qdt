@@ -32,6 +32,9 @@ class PCIId(object):
     def find_macro(self):
         raise Exception("The virtual method is not implemented.")
 
+    def __children__(self):
+        return []
+
 class PCIVendorId (PCIId):
     def __init__(self, vendor_name, vendor_id):
         if vendor_name in pci_id_db.vendors.keys():
@@ -46,6 +49,12 @@ class PCIVendorId (PCIId):
 
     def find_macro(self):
         return Type.lookup("PCI_VENDOR_ID_%s" % self.name)
+
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field("vendor_name = " + gen.gen_const(self.name))
+        gen.gen_field("vendor_id = " + gen.gen_const(self.id))
+        gen.gen_end()
 
 class PCIDeviceId (PCIId):
     def __init__(self, vendor_name, device_name, device_id):
@@ -67,6 +76,13 @@ class PCIDeviceId (PCIId):
         return Type.lookup("PCI_DEVICE_ID_%s_%s" % 
                 (self.vendor.name, self.name))
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field("vendor_name = " + gen.gen_const(self.vendor.name))
+        gen.gen_field("device_name = " + gen.gen_const(self.name))
+        gen.gen_field("device_id = " + gen.gen_const(self.id))
+        gen.gen_end()
+
 class PCIClassId (PCIId):
     def __init__(self, class_name, class_id):
         if class_name in pci_id_db.classes.keys():
@@ -78,6 +94,12 @@ class PCIClassId (PCIId):
 
     def find_macro(self):
         return Type.lookup("PCI_CLASS_%s" % self.name)
+
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field("class_name = " + gen.gen_const(self.name))
+        gen.gen_field("class_id = " + gen.gen_const(self.id))
+        gen.gen_end()
 
 class PCIClassification(object):
     def __init__(self):
