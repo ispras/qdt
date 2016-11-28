@@ -84,6 +84,9 @@ from device_description_settings import \
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
+from pci_description_settings import \
+    PCIEBusDeviceDescriptionSettingsWidget
+
 from tk_co_dispatcher import \
     TkCoDispatcher
 
