@@ -130,5 +130,6 @@ from project_history_tracker import \
     ProjectHistoryTracker
 
 from qom_editing import \
+    SetDescriptionReferenceAttribute, \
     DOp_SetAttr
 

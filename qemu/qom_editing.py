@@ -39,3 +39,30 @@ class DOp_SetAttr(DescriptionOperation):
             self.desc_name,
             str(self.val)
         )
+
+class SetDescriptionReferenceAttribute(DescriptionOperation):
+    def __init__(self, attribute_name, new_value, *args, **kw):
+        DescriptionOperation.__init__(self, *args, **kw)
+
+        self.attr = str(attribute_name)
+        self.val = new_value
+
+    def __read_set__(self):
+        # Note that new referenced value is probably to be in read set.
+        return DescriptionOperation.__read_set__(self) + [
+            str(self.desc_name)
+        ]
+
+    def __write_set__(self):
+        return DescriptionOperation.__write_set__(self) + [
+            (str(self.desc_name), str(self.attr))
+        ]
+
+    def __backup__(self):
+        self.old_val = getattr(self.find_desc(), self.attr)
+
+    def __do__(self):
+        setattr(self.find_desc(), self.attr, self.val)
+
+    def __undo__(self):
+        setattr(self.find_desc(), self.attr, self.old_val)
