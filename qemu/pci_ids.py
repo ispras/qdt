@@ -24,7 +24,7 @@ class PCIVendorIdMismatch(Exception):
 TODO: create named exception instead of any Exception
 """
 
-class PCIId:
+class PCIId(object):
     def __init__(self, name, id):
         self.name = name
         self.id = id
@@ -79,7 +79,7 @@ class PCIClassId (PCIId):
     def find_macro(self):
         return Type.lookup("PCI_CLASS_%s" % self.name)
 
-class PCIClassification:
+class PCIClassification(object):
     def __init__(self):
         self.vendors = {}
         self.devices = {}
