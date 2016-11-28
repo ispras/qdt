@@ -10,6 +10,7 @@ from machine_widget import \
 
 from qemu import \
     SysBusDeviceDescription, \
+    PCIExpressDeviceDescription, \
     MachineNode
 
 from Tkinter import \
@@ -25,6 +26,9 @@ from qemu import \
 
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
+
+from pci_description_settings import \
+    PCIEBusDeviceDescriptionSettingsWidget
 
 from tkFont import \
     Font
@@ -378,6 +382,8 @@ class ProjectWidget(PanedWindow):
             w = MachineDescriptionSettingsWidget(desc, self.p.pht, self)
         elif isinstance(desc, SysBusDeviceDescription):
             w = SystemBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
+        elif isinstance(desc, PCIExpressDeviceDescription):
+            w = PCIEBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
         else:
             raise Exception("No widget exists for description %s of type %s." %
                     (desc.name, type(desc).__name__)
