@@ -68,7 +68,8 @@ string searching during each AddDescriptionDialog creation. """
             textvariable = v,
             values = [
                 _("System bus device template"),
-                _("Machine draft")
+                _("Machine draft"),
+                _("PCI(E) function template")
             ],
             state = "readonly"
         )
@@ -120,6 +121,8 @@ string searching during each AddDescriptionDialog creation. """
             class_name = "SysBusDeviceDescription"
         elif kind == 1:
             class_name = "MachineNode"
+        elif kind == 2:
+            class_name = "PCIExpressDeviceDescription"
 
         self.pht.stage(POp_AddDesc, class_name, cur_name)
         self.pht.commit(
