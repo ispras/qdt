@@ -11,7 +11,7 @@ from qom_settings import \
 from memory_tree_widget import \
     MemoryTreeWidget
 
-class MachineWidget(PanedWindow):
+class MachinePanedWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
 
@@ -38,7 +38,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         # 'self' is used as master widget (instead of self.settings_fr)
         # because buttons is only affects inherited fields. Changes to
         # the machine and its memory diagrams is handled by diagrams itself  
-        self.mw = MachineWidget(self.desc, self)
+        self.mw = MachinePanedWidget(self.desc, self)
         self.mw.pack()
 
     def gen_layout(self):
