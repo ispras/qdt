@@ -39,9 +39,8 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             l = VarLabel(f, text = text)
             l.grid(row = row, column = 0, sticky = "NES")
 
-            v = StringVar()
-
             if val_type is long:
+                v = StringVar()
                 w = HKEntry(f, textvariable = v)
             else:
                 raise Exception("Not implemented value type")
