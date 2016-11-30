@@ -100,6 +100,7 @@ from machine_editing import \
                 MOp_DelIRQHub, \
             MachineDeviceSetAttributeOperation, \
                 MachineNodeSetLinkAttributeOperation, \
+                    MOp_SetIRQEndPoint, \
                 MOp_PCIDevSetSlot, \
                 MOp_PCIDevSetFunction, \
                 MOp_PCIDevSetMultifunction, \
