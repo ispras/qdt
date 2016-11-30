@@ -546,6 +546,7 @@ IRQ line creation
         self.ph_launch()
 
     def __on_destory__(self, *args, **kw):
+        self.var_physical_layout.set(False)
         self.mht.remove_on_changed(self.on_machine_changed)
 
     def on_var_physical_layout(self, *args):
