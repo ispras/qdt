@@ -10,7 +10,7 @@ from var_widgets import \
     VarLabel
 
 from qemu import \
-    MachineDeviceSetAttributeOperation, \
+    MOp_SetIRQAttr, \
     MachineNodeSetLinkAttributeOperation, \
     MachineNodeOperation, \
     IRQHub, \
@@ -147,7 +147,7 @@ class IRQSettingsWidget(SettingsWidget):
 
                 if not new_val == cur_val:
                     self.mht.stage(
-                        MachineDeviceSetAttributeOperation,
+                        MOp_SetIRQAttr,
                         pfx + "_" + attr,
                         new_val,
                         irq.id
@@ -191,7 +191,7 @@ class IRQSettingsWidget(SettingsWidget):
                 self.destroy()
             else:
                 self.refresh()
-        elif isinstance(op, MachineDeviceSetAttributeOperation):
+        elif isinstance(op, MOp_SetIRQAttr):
             if op.node_id == self.irq.node.id:
                 self.refresh()
 
