@@ -43,10 +43,10 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             setattr(self, "var_" + field, v)
 
             if val_type is long:
-                e = HKEntry(f, textvariable = v)
-                e.grid(row = row, column = 1, sticky = "NEWS")
+                w = HKEntry(f, textvariable = v)
+                w.grid(row = row, column = 1, sticky = "NEWS")
 
-                setattr(self, "e_" + field, e)
+                setattr(self, "w_" + field, w)
 
             self.fields.append((field, val_type))
 
@@ -57,7 +57,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         if val_type is long:
             var.set(str(val))
 
-            e = getattr(self, "e_" + field)
+            e = getattr(self, "w_" + field)
             e.config(bg = "white")
         else:
             raise Exception("Not implemented value type")
@@ -75,17 +75,17 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             var = getattr(self, "var_" + field)
             new_val = var.get()
 
-            e = getattr(self, "e_" + field)
+            w = getattr(self, "w_" + field)
 
             if val_type is long:
                 try:
                     new_val = long(new_val, 0)
                 except:
                     
-                    e.config(bg = "red")
+                    w.config(bg = "red")
                     continue
                 else:
-                    e.config(bg = "white")
+                    w.config(bg = "white")
             else:
                 raise Exception("Not implemented value type")
 
