@@ -1,4 +1,5 @@
 from Tkinter import \
+    BooleanVar, \
     Label, \
     PanedWindow
 
@@ -12,6 +13,7 @@ from memory_tree_widget import \
     MemoryTreeWidget
 
 from var_widgets import \
+    VarCheckbutton, \
     VarNotebook
 
 from common import \
@@ -61,11 +63,37 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, *args, **kw):
         QOMDescriptionSettingsWidget.__init__(self, *args, **kw)
 
-        # 'self' is used as master widget (instead of self.settings_fr)
-        # because buttons is only affects inherited fields. Changes to
-        # the machine and its memory diagrams is handled by diagrams itself  
-        self.mw = MachineTabsWidget(self.desc, self)
-        self.mw.pack()
+        self.var_tabs = v = BooleanVar()
+        self.buttons_fr.columnconfigure(2, weight = 0)
+        chb = VarCheckbutton(self.buttons_fr,
+            text = _("Use tabs"),
+            variable = v
+        )
+        chb.grid(row = 0, column = 2, sticky = "NEWS")
+        v.trace_variable("w", self.__on_tabs__)
+
+        self.mw = None
+        self.var_tabs.set(True)
+
+    def __on_tabs__(self, *args):
+        use_tabs = self.var_tabs.get()
+
+        if use_tabs != isinstance(self.mw, MachineTabsWidget):
+            if self.mw is None:
+                layout = {}
+            else:
+                layout = self.mw.gen_layout()
+                self.mw.destroy()
+
+            # 'self' is used as master widget (instead of self.settings_fr)
+            # because buttons is only affects inherited fields. Changes to
+            # the machine and its memory diagrams is handled by diagrams itself
+            self.mw = (MachineTabsWidget if use_tabs else MachinePanedWidget) \
+                (self.desc, self)
+
+            self.mw.pack()
+
+            self.mw.set_layout(layout)
 
     def gen_layout(self):
         layout = self.mw.gen_layout()
@@ -75,7 +103,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         except KeyError:
             layout[-1] = extra = {}
 
-        extra["use tabs"] = isinstance(self.mw, MachineTabsWidget)
+        extra["use tabs"] = self.var_tabs.get()
 
         return layout
 
@@ -90,11 +118,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             except KeyError:
                 use_tabs = True
 
-        if use_tabs != isinstance(self.mw, MachineTabsWidget):
-            self.mw.destroy()
-            self.mw = (MachineTabsWidget if use_tabs else MachinePanedWidget) \
-                (self.desc, self)
-            self.mw.pack()
+        self.var_tabs.set(use_tabs)
 
         self.mw.set_layout(layout)
 
