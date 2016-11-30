@@ -55,6 +55,7 @@ from bus_settings import \
 
 from machine_widget import \
     MachineDescriptionSettingsWidget, \
+    MachineTabsWidget, \
     MachinePanedWidget
 
 from project_widget import \

@@ -11,6 +11,12 @@ from qom_settings import \
 from memory_tree_widget import \
     MemoryTreeWidget
 
+from var_widgets import \
+    VarNotebook
+
+from common import \
+    mlget as _
+
 class MachinePanedWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
@@ -24,6 +30,26 @@ class MachinePanedWidget(PanedWindow):
 
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw)
+
+    def gen_layout(self):
+        return self.mdw.gen_layout()
+
+    def set_layout(self, layout):
+        self.mdw.set_layout(layout)
+
+class MachineTabsWidget(VarNotebook):
+    def __init__(self, machine_description, *args, **kw):
+        VarNotebook.__init__(self, *args, **kw)
+
+        self.mach = machine_description
+
+        self.pack(fill="both", expand="yes")
+
+        self.mdw = MachineDiagramWidget(self, self.mach)
+        self.add(self.mdw, text = "Device diagram")
+
+        self.mtw = MemoryTreeWidget(self.mach)
+        self.add(self.mtw, text = "Memory")
 
     def gen_layout(self):
         return self.mdw.gen_layout()
