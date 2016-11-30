@@ -44,11 +44,11 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             if val_type is long:
                 w = HKEntry(f, textvariable = v)
-                w.grid(row = row, column = 1, sticky = "NEWS")
-
-                setattr(self, "w_" + field, w)
             else:
                 raise Exception("Not implemented value type")
+
+            w.grid(row = row, column = 1, sticky = "NEWS")
+            setattr(self, "w_" + field, w)
 
             self.fields.append((field, val_type))
 
