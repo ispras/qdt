@@ -64,7 +64,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         # 'self' is used as master widget (instead of self.settings_fr)
         # because buttons is only affects inherited fields. Changes to
         # the machine and its memory diagrams is handled by diagrams itself  
-        self.mw = MachinePanedWidget(self.desc, self)
+        self.mw = MachineTabsWidget(self.desc, self)
         self.mw.pack()
 
     def gen_layout(self):
