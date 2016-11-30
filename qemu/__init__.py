@@ -103,6 +103,7 @@ from machine_editing import \
                 MOp_PCIDevSetSlot, \
                 MOp_PCIDevSetFunction, \
                 MOp_PCIDevSetMultifunction, \
+                MOp_SetIRQAttr, \
             MachineIOMappingOperation, \
                 MOp_DelIOMapping, \
                 MOp_AddIOMapping, \

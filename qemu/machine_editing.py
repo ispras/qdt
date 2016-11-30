@@ -480,6 +480,9 @@ class MOp_PCIDevSetMultifunction(MachineDeviceSetAttributeOperation):
             *args, **kw
         )
 
+class MOp_SetIRQAttr(MachineDeviceSetAttributeOperation):
+    pass
+
 class MachineIOMappingOperation(MachineNodeOperation):
     def __init__(self, mio, idx, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
