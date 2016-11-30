@@ -68,9 +68,34 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         self.mw.pack()
 
     def gen_layout(self):
-        return self.mw.gen_layout()
+        layout = self.mw.gen_layout()
+
+        try:
+            extra = layout[-1]
+        except KeyError:
+            layout[-1] = extra = {}
+
+        extra["use tabs"] = isinstance(self.mw, MachineTabsWidget)
+
+        return layout
 
     def set_layout(self, layout):
+        try:
+            extra = layout[-1]
+        except KeyError:
+            use_tabs = True
+        else:
+            try:
+                use_tabs = extra.pop("use tabs")
+            except KeyError:
+                use_tabs = True
+
+        if use_tabs != isinstance(self.mw, MachineTabsWidget):
+            self.mw.destroy()
+            self.mw = (MachineTabsWidget if use_tabs else MachinePanedWidget) \
+                (self.desc, self)
+            self.mw.pack()
+
         self.mw.set_layout(layout)
 
     def __apply_internal__(self):
