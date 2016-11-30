@@ -10,6 +10,7 @@ from Tkinter import \
     StringVar
 
 from ttk import \
+    Notebook, \
     Combobox, \
     Treeview
 
@@ -269,6 +270,10 @@ class VarCombobox(Combobox):
             kw["values"] = [ b.var.get() for b in self.bindings ]
 
         return Combobox.config(self, cnf, **kw)
+
+class VarNotebook(Notebook):
+    def __init__(self, *args, **kw):
+        Notebook.__init__(self, *args, **kw)
 
 if __name__ == "__main__":
     root = VarTk()
