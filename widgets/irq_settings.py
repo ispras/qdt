@@ -11,7 +11,7 @@ from var_widgets import \
 
 from qemu import \
     MOp_SetIRQAttr, \
-    MachineNodeSetLinkAttributeOperation, \
+    MOp_SetIRQEndPoint, \
     MachineNodeOperation, \
     IRQHub, \
     DeviceNode, \
@@ -128,7 +128,7 @@ class IRQSettingsWidget(SettingsWidget):
                     getattr(self, pfx + "_name_var").set("")
 
                 self.mht.stage(
-                    MachineNodeSetLinkAttributeOperation,
+                    MOp_SetIRQEndPoint,
                     pfx + "_node",
                     new_val,
                     irq.id
