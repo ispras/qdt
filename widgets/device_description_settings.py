@@ -47,6 +47,8 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
                 w.grid(row = row, column = 1, sticky = "NEWS")
 
                 setattr(self, "w_" + field, w)
+            else:
+                raise Exception("Not implemented value type")
 
             self.fields.append((field, val_type))
 
