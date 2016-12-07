@@ -1,4 +1,5 @@
 from source import \
+    Structure, \
     TypeNotRegistered, \
     Initializer, \
     Function, \
@@ -192,3 +193,33 @@ class QOMType(object):
                 Type.lookup("PRIx64")
             ]
         )
+
+
+class QOMStateField(object):
+    def __init__(self, ftype, name, num=None, save=True):
+        self.type = ftype
+        self.name = name
+        self.num = num
+        self.save = save
+
+
+class QOMDevice(QOMType):
+    def __init__(self, name):
+        super(QOMDevice, self).__init__(name)
+
+        self.state_fields = []
+
+    def add_state_fields(self, fields):
+        for field in fields:
+            self.state_fields.append(field)
+
+    def gen_state(self):
+        s = Structure(self.qtn.for_struct_name + 'State')
+        for f in self.state_fields:
+            s.append_field(Type.lookup(f.type)
+                           .gen_var(f.name, array_size=f.num))
+        return s
+
+    def gen_source(self):
+        pass
+
