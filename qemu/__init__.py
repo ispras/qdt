@@ -38,7 +38,9 @@ from pcie import \
     PCIEDeviceType
     
 from qom import \
+    QOMStateField, \
     QemuTypeName, \
+    QOMDevice, \
     QOMType
 
 from machine import \
