@@ -301,11 +301,16 @@ class IRQLine(object):
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
-    def __init__(self, parent, mach_desc):
+    def __init__(self, parent, mach_desc, node_font = None):
         CanvasDnD.__init__(self, parent,
             id_priority_sort_function = self.sort_ids_by_priority
         )
         TkPopupHelper.__init__(self)
+
+        if node_font is None:
+            self.node_font = ("Monospace", 10)
+        else:
+            self.node_font = node_font
 
         mach_desc.link()
 
@@ -1708,7 +1713,8 @@ IRQ line creation
         idtext = self.canvas.create_text(
             0, 0,
             text = str(node.node.id),
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            font = self.node_font
         )
         self.node2idtext[node] = idtext
 
@@ -2214,7 +2220,8 @@ IRQ line creation
     def add_node(self, node, fixed_x):
         node.text = self.canvas.create_text(
             node.x, node.y,
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            font = self.node_font
         )
 
         self.update_node_text(node)
@@ -2320,7 +2327,8 @@ IRQ line creation
 
         id = self.canvas.create_text(
             bl.x, bl.y,
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            font = self.node_font
         )
         bl.text = id
 
