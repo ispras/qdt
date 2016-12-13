@@ -24,6 +24,7 @@ from qemu_device_creator import \
 
 import cPickle
 import qemu
+import os
 
 from common import \
     PyGenerator, \
@@ -352,11 +353,12 @@ show it else hide it.")
     def try_save_project_to_file(self, file_name):
         try:
             open(file_name, "wb").close()
-        except Exception as e:
-            try:
-                os.delete(file_name)
-            except:
-                pass
+        except IOError as e:
+            if not e.errno == 13: # Do not remove read-only files
+                try:
+                    os.remove(file_name)
+                except:
+                    pass
 
             showerror(
                 title = _("Cannot save project").get(),
