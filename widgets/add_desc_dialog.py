@@ -107,11 +107,13 @@ string searching during each AddDescriptionDialog creation. """
                 AddDescriptionDialog.msg_empty_name.get(),
                 parent = self
             )
+            return
         elif not self.check_name():
             showerror(AddDescriptionDialog.msg_title.get(),
                 AddDescriptionDialog.msg_name.get() % cur_name,
                 parent = self
             )
+            return
 
         kind = self.cb_kind.current()
         if kind == 0:
@@ -120,6 +122,8 @@ string searching during each AddDescriptionDialog creation. """
             class_name = "MachineNode"
 
         self.pht.stage(POp_AddDesc, class_name, cur_name)
-        self.pht.commit()
+        self.pht.commit(
+            sequence_description = _("Add description '%s'.") % cur_name
+        )
 
         self.destroy()

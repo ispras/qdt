@@ -10,8 +10,8 @@ from var_widgets import \
     VarLabel
 
 from qemu import \
-    MachineDeviceSetAttributeOperation, \
-    MachineNodeSetLinkAttributeOperation, \
+    MOp_SetIRQAttr, \
+    MOp_SetIRQEndPoint, \
     MachineNodeOperation, \
     IRQHub, \
     DeviceNode, \
@@ -108,6 +108,8 @@ class IRQSettingsWidget(SettingsWidget):
                     w.config(state = "disabled")
 
     def __apply_internal__(self):
+        prev_pos = self.mht.pos
+
         irq = self.irq.node
 
         for pfx in [ "src", "dst" ]:
@@ -128,7 +130,7 @@ class IRQSettingsWidget(SettingsWidget):
                     getattr(self, pfx + "_name_var").set("")
 
                 self.mht.stage(
-                    MachineNodeSetLinkAttributeOperation,
+                    MOp_SetIRQEndPoint,
                     pfx + "_node",
                     new_val,
                     irq.id
@@ -147,11 +149,14 @@ class IRQSettingsWidget(SettingsWidget):
 
                 if not new_val == cur_val:
                     self.mht.stage(
-                        MachineDeviceSetAttributeOperation,
+                        MOp_SetIRQAttr,
                         pfx + "_" + attr,
                         new_val,
                         irq.id
                     )
+
+        if prev_pos is not self.mht.pos:
+            self.mht.set_sequence_description(_("IRQ line configuration."))
 
     def refresh(self):
         nodes = [ DeviceSettingsWidget.gen_node_link_text(node) \
@@ -191,7 +196,7 @@ class IRQSettingsWidget(SettingsWidget):
                 self.destroy()
             else:
                 self.refresh()
-        elif isinstance(op, MachineDeviceSetAttributeOperation):
+        elif isinstance(op, MOp_SetIRQAttr):
             if op.node_id == self.irq.node.id:
                 self.refresh()
 

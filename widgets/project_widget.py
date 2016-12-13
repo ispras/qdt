@@ -38,6 +38,9 @@ from ttk import \
 from add_desc_dialog import \
     AddDescriptionDialog
 
+from gui_editing import \
+    POp_SetDescLayout
+
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
         kw["columns"] = [
@@ -250,6 +253,8 @@ class ProjectWidget(PanedWindow):
         item = self.tv_descs.selection()[0]
         name = self.tv_descs.item(item)["text"]
         desc = self.p.find(name = name).next()
+        self.refresh_layouts()
+        self.p.pht.stage(POp_SetDescLayout, None, desc)
         self.p.pht.delete_description(desc)
         self.p.pht.commit()
 

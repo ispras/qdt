@@ -84,10 +84,15 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         self.var_directory.set(self.desc.directory)
 
     def __apply__(self):
+        prev_pos = self.pht.pos
+
         new_dir = self.var_directory.get()
 
         if new_dir != self.desc.directory:
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
+
+        if prev_pos is not self.pht.pos:
+            self.pht.set_sequence_description(_("QOM object configuration."))
 
         self.__apply_internal__()
 

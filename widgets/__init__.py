@@ -56,6 +56,11 @@ from machine_widget import \
 from project_widget import \
     ProjectWidget
 
+from gui_editing import \
+    GUIProjectOperation, \
+        GUIDescriptionOperation, \
+            POp_SetDescLayout
+
 from gui_frame import \
     GUIFrame
 
@@ -82,3 +87,15 @@ from cross_dialogs import \
 
 from gui_tk import \
     GUITk
+
+from tv_width_helper import \
+    TreeviewWidthHelper
+
+from gui_proj_ht import \
+    GUIProjectHistoryTracker
+
+from branch_tree_view import \
+    BranchTreeview
+
+from history_window import \
+    HistoryWindow

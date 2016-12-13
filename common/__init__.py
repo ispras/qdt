@@ -16,6 +16,7 @@ def sign(x): return 1 if x >= 0 else -1
 
 from inverse_operation import \
     InverseOperation, \
+    InitialOperationBackwardIterator, \
     UnimplementedInverseOperation, \
     InitialOperationCall, \
     History, \
@@ -45,3 +46,8 @@ from reflection import \
 from visitor import \
     ObjectVisitor, \
     BreakVisiting
+
+from formated_string_var import \
+    FormatedStringChangindException, \
+    FormatVar, \
+    FormatedStringVar

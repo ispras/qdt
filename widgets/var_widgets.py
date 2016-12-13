@@ -6,6 +6,7 @@ from Tkinter import \
     Button, \
     LabelFrame, \
     Checkbutton, \
+    Variable, \
     StringVar
 
 from ttk import \
@@ -161,12 +162,23 @@ class VarMenu(Menu):
 
         Menu.add(self, itemType, cnf or kw)
 
-class TreeviewVarBinding():
+class TreeviewHeaderBinding():
     def __init__(self, menu, column, var_str):
         self.menu, self.column, self.str = menu, column, var_str
 
     def on_var_changed(self, *args):
         self.menu.on_var_changed(self.column, self.str.get())
+
+class TreeviewCellBinding():
+    def __init__(self, tv, col, row, var):
+        self.tv, self.col, self.row, self.var = tv, col, row, var
+
+        self._var = self.var.trace_variable("w", self.on_var_changed)
+
+    def on_var_changed(self, *a):
+        values = list(self.tv.item(self.row, "values"))
+        values[self.col] = self.var.get()
+        self.tv.item(self.row, values = values)
 
 class VarTreeview(Treeview):
     def __init__(self, *args, **kw):
@@ -179,10 +191,30 @@ class VarTreeview(Treeview):
         if "text" in kw:
             text_var = kw.pop("text")
             kw["text"] = text_var.get()
-            binding = TreeviewVarBinding(self, column, text_var)
+            binding = TreeviewHeaderBinding(self, column, text_var)
             text_var.trace_variable("w", binding.on_var_changed)
 
         return Treeview.heading(self, column, **kw)
+
+    """ If at least one value is StringVar then the values should be a list, not
+    a tuple. """
+    def insert(self, *a, **kw):
+        to_track = []
+
+        try:
+            values = kw["values"]
+        except KeyError:
+            pass
+        else:
+            for col, v in enumerate(list(values)):
+                if isinstance(v, Variable):
+                    to_track.append((col, v))
+                    values[col] = v.get()
+
+        item_iid = Treeview.insert(self, *a, **kw)
+
+        for col, v in to_track:
+            TreeviewCellBinding(self, col, item_iid, v)
 
 class ComboboxEntryBinding():
     def __init__(self, varcombobox, idx, variable):
@@ -237,3 +269,59 @@ class VarCombobox(Combobox):
             kw["values"] = [ b.var.get() for b in self.bindings ]
 
         return Combobox.config(self, cnf, **kw)
+
+if __name__ == "__main__":
+    root = VarTk()
+    root.title(StringVar(value = "Variable widgets test"))
+    root.grid()
+    root.rowconfigure(0, weight = 1)
+    root.columnconfigure(0, weight = 1)
+
+    from tv_width_helper import \
+        TreeviewWidthHelper
+
+    class TestTV(VarTreeview, TreeviewWidthHelper):
+        def __init__(self, *args, **kw):
+            kw["columns"] = ["0", "1", "2", "3"]
+            VarTreeview.__init__(self, *args, **kw)
+
+            TreeviewWidthHelper.__init__(self,
+                auto_columns = ["#0"] + kw["columns"]
+            )
+
+            for col in kw["columns"]:
+                self.column(col, stretch = False)
+
+    tv = TestTV(root)
+    tv.grid(row = 0, column = 0, sticky = "NEWS")
+
+    from Tkinter import \
+        BooleanVar, \
+        IntVar, \
+        DoubleVar
+
+    sv = StringVar(value = "xxx...")
+    bv = BooleanVar(value = True)
+    iv = IntVar(value = 0)
+    dv = DoubleVar(value = 1.0)
+
+    tv.insert("", 0, values = [sv, bv, iv, dv])
+    tv.insert("", 1, values = [bv, iv, dv, sv])
+    tv.insert("", 2, values = [iv, dv, sv, bv])
+    tv.insert("", 3, values = [dv, sv, bv, iv])
+
+    def update():
+        s = sv.get()
+        s = s[-1] + s[:-1]
+        sv.set(s)
+        bv.set(not bv.get())
+        iv.set(iv.get() + 1)
+        dv.set(dv.get() + 0.1)
+
+        tv.adjust_widths()
+
+        root.after(250, update)
+
+    update()
+
+    root.mainloop()

@@ -59,6 +59,8 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
     def __apply_internal__(self):
         DeviceSettingsWidget.__apply_internal__(self)
 
+        prev_pos = self.mht.pos
+
         for attr in [ "slot", "function", "multifunction" ]:
             new_val = getattr(self, "var_" + attr).get()
             cur_val = getattr(self.dev, attr)
@@ -79,3 +81,6 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
                 new_val,
                 self.dev.id
             )
+
+        if prev_pos is not self.mht.pos:
+            self.mht.set_sequence_description(_("PCI device configuration."))

@@ -1,4 +1,5 @@
 from common import \
+    mlget as _, \
     gen_class_args, \
     get_class_defaults, \
     InverseOperation
@@ -297,6 +298,22 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
             str(self.name)
         ]
 
+    def get_kind_str(self):
+        return (_("machine draft")
+                if "MachineNode" in self.nc
+            else _("system bus device template")
+                if "SysBusDeviceDescription" in self.nc
+            else _("PCI bus device template")
+                if "PCIExpressDeviceDescription" in self.nc
+            else _("an auto generated code")
+        )
+
+    def __description__(self):
+        return _("'%s' QOM object addition (%s).") % (
+            self.name,
+            self.get_kind_str()
+        )
+
 class POp_DelDesc(POp_AddDesc):
     def __init__(self, desc_name, *args, **kw):
         POp_AddDesc.__init__(self, "QOMDescription", desc_name, *args, **kw)
@@ -307,6 +324,12 @@ class POp_DelDesc(POp_AddDesc):
 
     __do__ = POp_AddDesc.__undo__
     __undo__ = POp_AddDesc.__do__
+
+    def __description__(self):
+        return _("'%s' QOM object deletion (%s).") % (
+            self.name,
+            self.get_kind_str()
+        )
 
 class DescriptionOperation(ProjectOperation):
     def __init__(self, description, *args, **kw):

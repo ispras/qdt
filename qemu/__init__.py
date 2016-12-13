@@ -95,10 +95,13 @@ from machine_editing import \
             MOp_AddIRQHub, \
                 MOp_DelIRQHub, \
             MachineDeviceSetAttributeOperation, \
+                MOp_SetMemNodeAttr, \
                 MachineNodeSetLinkAttributeOperation, \
+                    MOp_SetIRQEndPoint, \
                 MOp_PCIDevSetSlot, \
                 MOp_PCIDevSetFunction, \
                 MOp_PCIDevSetMultifunction, \
+                MOp_SetIRQAttr, \
             MachineIOMappingOperation, \
                 MOp_DelIOMapping, \
                 MOp_AddIOMapping, \
