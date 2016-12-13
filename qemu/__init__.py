@@ -60,6 +60,7 @@ from machine_description import \
     QOMPropertyValue, \
     MemoryNodeHasNoSuchParent, \
     MemoryNode, \
+    MemoryLeafNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
     MemoryROMNode

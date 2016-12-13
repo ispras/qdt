@@ -35,6 +35,9 @@ from device_tree_widget import \
 from machine_diagram_widget import \
     MachineDiagramWidget
 
+from memory_tree_widget import \
+    MemoryTreeWidget
+
 from pci_device_settings import \
     PCIDeviceSettingsWidget
 
