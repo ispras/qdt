@@ -59,6 +59,9 @@ from cross_dialogs import \
 from tkMessageBox import \
     showerror
 
+from hotkey import \
+    HotKeyBinding
+
 class PhObject(object):
     def __init__(self,
             # "physics" parameters
@@ -329,6 +332,22 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         except:
             self.task_manager = None
 
+        try:
+            hotkeys = toplevel.hk
+        except AttributeError:
+            hotkeys = None
+        else:
+            hotkeys.add_binding(
+                HotKeyBinding(
+                    self.on_export_diagram,
+                    key_code = 26, # E
+                    description = _("Export of machine diagram.")
+                )
+            )
+            hotkeys.add_key_symbols({
+                26: "E"
+            })
+
         self.mht = self.mach.project.pht.get_machine_proxy(self.mach)
 
         self.id2node = {}
@@ -493,10 +512,16 @@ IRQ line creation
             label = _("Dynamic layout"),
             variable = self.var_physical_layout
         )
-        p.add_command(
-            label = _("Export diagram"),
-            command = self.on_export_diagram
-        )
+
+        export_args = {
+            "label" : _("Export diagram"),
+            "command" : self.on_export_diagram
+        }
+        if hotkeys is not None:
+            export_args["accelerator"] = \
+                hotkeys.get_keycode_string(self.on_export_diagram)
+        p.add_command(**export_args)
+
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
