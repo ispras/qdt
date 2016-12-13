@@ -1265,6 +1265,32 @@ IRQ line creation
                     # self.current_popup.grab_release()
                     self.current_popup = None
 
+    def update_highlighted_irq_line(self):
+        x, y = self.last_canvas_mouse
+
+        nearest = (None, sys.float_info.max)
+        for irql in self.irq_lines:
+            for seg_id in irql.lines:
+                x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
+                v0 = Vector(x - x0, y - y0)
+                v1 = Vector(x - x1, y - y1)
+                v2 = Vector(x1 - x0, y1 - y0)
+                d = v0.Length() + v1.Length() - v2.Length()
+
+                if d < nearest[1]:
+                    nearest = (irql, d)
+
+        if self.highlighted_irq_line:
+            self.highlight(self.highlighted_irq_line, False)
+            self.highlighted_irq_line = None
+
+        if nearest[1] <= self.irq_highlight_r:
+            self.highlighted_irq_line = nearest[0]
+            self.highlight(self.highlighted_irq_line, True)
+
+            if self.shown_irq_circle:
+                self.canvas.lift(self.shown_irq_circle)
+
     def motion_all(self, event):
         self.motion(event)
         #print("motion_all")
@@ -1305,28 +1331,7 @@ IRQ line creation
 
         # If IRQ line popup menu is showed, then do not change IRQ highlighting
         if not self.current_popup == self.popup_irq_line:
-            nearest = (None, sys.float_info.max)
-            for irql in self.irq_lines:
-                for seg_id in irql.lines:
-                    x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
-                    v0 = Vector(x - x0, y - y0)
-                    v1 = Vector(x - x1, y - y1)
-                    v2 = Vector(x1 - x0, y1 - y0)
-                    d = v0.Length() + v1.Length() - v2.Length()
-
-                    if d < nearest[1]:
-                        nearest = (irql, d)
-
-            if self.highlighted_irq_line:
-                self.highlight(self.highlighted_irq_line, False)
-                self.highlighted_irq_line = None
-
-            if nearest[1] <= self.irq_highlight_r:
-                self.highlighted_irq_line = nearest[0]
-                self.highlight(self.highlighted_irq_line, True)
-
-                if self.shown_irq_circle:
-                    self.canvas.lift(self.shown_irq_circle)
+            self.update_highlighted_irq_line()
 
         if not self.dragging_all:
             return
