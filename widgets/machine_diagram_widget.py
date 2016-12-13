@@ -1203,6 +1203,8 @@ IRQ line creation
         self.dragging_all = False
         self.master.config(cursor = "")
 
+        self.update_highlighted_irq_line()
+
         if (not self.all_were_dragged) and self.highlighted_irq_line:
             if not self.current_popup:
                 self.circle_to_be_deleted = None
