@@ -13,6 +13,7 @@ import math
 import random
 import time
 import sys
+import os
 
 from common import \
     mlget as _, \
@@ -51,6 +52,12 @@ from sets import \
 
 from popup_helper import \
     TkPopupHelper
+
+from cross_dialogs import \
+    asksaveas
+
+from tkMessageBox import \
+    showerror
 
 class PhObject(object):
     def __init__(self,
@@ -486,6 +493,10 @@ IRQ line creation
             label = _("Dynamic layout"),
             variable = self.var_physical_layout
         )
+        p.add_command(
+            label = _("Export diagram"),
+            command = self.on_export_diagram
+        )
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -555,6 +566,43 @@ IRQ line creation
     def __on_destory__(self, *args, **kw):
         self.var_physical_layout.set(False)
         self.mht.remove_on_changed(self.on_machine_changed)
+
+    def on_export_diagram(self, *args):
+        file_name = asksaveas(
+            [((_("Postscript image"), ".ps"))],
+            title = _("Export machine diagram")
+        )
+
+        if not file_name:
+            return
+
+        try:
+            open(file_name, "wb").close()
+        except IOError as e:
+            if not e.errno == 13: # Do not remove read-only files
+                try:
+                    os.remove(file_name)
+                except:
+                    pass
+
+            showerror(
+                title = _("Cannot export image").get(),
+                message = str(e)
+            )
+            return
+
+        self.canvas.postscript(file = file_name, colormode = "color")
+
+        # fix up font
+        f = open(file_name, "rb")
+        lines = f.readlines()
+        f.close()
+        os.remove(file_name)
+
+        f = open(file_name, "wb")
+        for l in lines:
+            f.write(l.replace("/DejavuSansMono", "/" + self.node_font[0]))
+        f.close()
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
