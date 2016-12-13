@@ -12,9 +12,13 @@ from qemu import \
 from common import \
     mlget as _
 
-class MemoryTreeWidget(VarTreeview):
+from popup_helper import \
+    TkPopupHelper
+
+class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
         VarTreeview.__init__(self, *args, **kw)
+        TkPopupHelper.__init__(self)
 
         mach_desc.link()
 
@@ -94,7 +98,6 @@ class MemoryTreeWidget(VarTreeview):
         self.popup_not_leaf_node = p1
         self.popup_empty = p2
         self.popup_temp_node = p3
-        self.current_popup = None
 
         self.after(0, self.update)
 
@@ -103,27 +106,27 @@ class MemoryTreeWidget(VarTreeview):
 
     def on_popup_node_settings(self):
         # TODO
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_node_delete(self):
         # TODO
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_add_container(self):
         # TODO
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_add_ram(self):
         # TODO
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_add_rom(self):
         # TODO
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_add_alias(self):
         # TODO
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_select_origin(self):
         self.selection_set(self.selected.id)
@@ -195,36 +198,26 @@ class MemoryTreeWidget(VarTreeview):
         self.tag_configure("alias", foreground = "grey")
 
     def on_b3_press(self, event):
-        if self.current_popup:
-            self.current_popup.unpost()
-            self.current_popup = None
-
         iid = self.identify_row(event.y)
         """ TODO: when user clicks over a row, the row should be be selected
         in the tree view. This prevents confusion of row for which the popup
         is shown. """
+
         try:
             self.selected = self.iid2node[iid]
 
             if isinstance(self.selected, MemoryLeafNode):
-                self.current_popup = self.popup_leaf_node
+                popup = self.popup_leaf_node
             else:
-                self.current_popup = self.popup_not_leaf_node
+                popup = self.popup_not_leaf_node
         except:
             if "." in iid:
                 self.selected = self.iid2node[iid.split(".", 1)[0]]
-                self.current_popup = self.popup_temp_node
+                popup = self.popup_temp_node
             else:
                 self.selected = None
-                self.current_popup = self.popup_empty
+                popup = self.popup_empty
 
-        try:
-            self.current_popup.tk_popup(event.x_root, event.y_root)
-            # make sure to release the grab (Tk 8.0a1 only)
-            # self.current_popup.grab_release()
-        except:
-            # make sure to release the grab (Tk 8.0a1 only)
-            # self.current_popup.grab_release()
-            self.current_popup = None
+        self.show_popup(event.x_root, event.y_root, popup, self.selected)
 
         # print("on_b3_press")
