@@ -32,6 +32,18 @@ class HotKey(object):
         root.bind_all("<Control-Key>", self.on_ctrl_key)
         root.bind_all("<<Control-Y-Breaked>>", self.on_ctrl_y_breaked)
 
+    def add_key_symbols(self, keys2sym):
+        for key, sym in keys2sym.iteritems():
+            self.keys2sym[key] = sym
+
+            try:
+                bindings = self.keys2bindings[key]
+            except KeyError:
+                continue
+
+            for binding in bindings:
+                self.update_name(binding)
+
     def process_ctrl_key(self, keycode, keysym):
         kc = keycode
 
