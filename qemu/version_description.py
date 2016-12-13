@@ -1,12 +1,7 @@
 from source import \
     SourceTreeContainer, \
     Header, \
-    Type, \
-    Macro, \
-    add_base_types
-
-from predefined_types import \
-    add_types
+    Macro
 
 from common import \
     PyGenerator
@@ -16,6 +11,10 @@ from json import load
 from subprocess import \
     check_output, \
     STDOUT
+
+from version import \
+    initialize as initialize_version, \
+    get_vp
 
 import os
 
@@ -82,6 +81,15 @@ def qvds_load():
         if v == None:
             qvd_reg[k] = QemuVersionDescription(k)
 
+def qvd_load_with_cache(build_path):
+    try:
+        qvd = qvd_get_registered(build_path)
+    except:
+        qvd = qvd_get(build_path)
+
+    qvd.init_cache()
+    return qvd
+
 def qvds_load_with_cache():
     for k, v in qvd_reg.iteritems():
         if v == None:
@@ -106,7 +114,6 @@ class QemuVersionCache(object):
         self.stc.set_cur_stc()
 
         if not list_headers == None:
-            add_base_types()
             self.stc.load_header_db(list_headers)
 
     def __children__(self):
@@ -151,6 +158,19 @@ class QemuVersionDescription(object):
             self.src_path
         )
 
+        VERSION_path = os.path.join(self.src_path, 'VERSION')
+
+        if not os.path.isfile(VERSION_path):
+            raise Exception("{} does not exists\n".format(VERSION_path))
+
+        VERSION_f = open(VERSION_path)
+        self.qemu_version = VERSION_f.readline().rstrip("\n")
+        VERSION_f.close()
+
+        print("Qemu version is {}".format(self.qemu_version))
+
+        self.include_path = os.path.join(self.src_path, 'include')
+
         self.qvc = None
 
     def init_cache(self):
@@ -162,10 +182,11 @@ class QemuVersionDescription(object):
 
         if not os.path.isfile(qvc_path):
             self.qvc = QemuVersionCache()
-            QemuVersionDescription.gen_header_inclusion(
-                self.src_path,
-                self.qvc.stc
-            )
+
+            # make STC from QVC active and build headers
+            self.qvc.stc.set_cur_stc()
+            Header.build_inclusions(self.include_path)
+
             self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
                 self.build_path,
                 self.qvc.stc
@@ -173,6 +194,14 @@ class QemuVersionDescription(object):
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
             self.load_cache(qvc_path)
+            # make STC from just loaded QVC active
+            self.qvc.stc.set_cur_stc()
+
+        # select Qemu version parameters according to current version
+        initialize_version(self.qemu_version)
+
+        # initialize Qemu types in QVC
+        get_vp()["qemu types definer"]()
 
     def load_cache(self, qvc_path):
         if not os.path.isfile(qvc_path):
@@ -245,14 +274,6 @@ class QemuVersionDescription(object):
             return l[1]
         else:
             return None
-
-    @staticmethod
-    def gen_header_inclusion(src_path, stc):
-        include_path = os.path.join(src_path, 'include')
-        print("Building Qemu header inclusion tree")
-        add_base_types()
-        stc.build_inclusions(include_path)
-        add_types(stc)
 
     # TODO: get dt from qemu
     @staticmethod

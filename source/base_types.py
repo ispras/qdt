@@ -7,7 +7,12 @@ def add_base_types():
     Type(name = "unsigned int", incomplete = False, base = True)
     Type(name = "const char", incomplete = False, base = True)
 
-    Header("stdint.h", is_global=True).add_types([
+    try:
+        h = Header.lookup("stdint.h")
+    except:
+        h = Header("stdint.h", is_global=True)
+
+    h.add_types([
         Type(name = "uint64_t", incomplete = False, base = False)
         , Type(name = "uint32_t", incomplete = False, base = False)
         , Type(name = "uint16_t", incomplete = False, base = False)
@@ -15,10 +20,20 @@ def add_base_types():
         , Type(name = "uintptr_t", incomplete = False, base = False)
         ])
 
-    Header("stdbool.h", is_global=True).add_types([
+    try:
+        h = Header.lookup("stdbool.h")
+    except:
+        h = Header("stdbool.h", is_global=True)
+
+    h.add_types([
         Type(name = "bool", incomplete = False, base = False)
         ])
 
-    Header("stdio.h", is_global=True).add_types([
+    try:
+        h = Header.lookup("stdio.h")
+    except:
+        h = Header("stdio.h", is_global=True)
+
+    h.add_types([
         Function("printf")
         ])

@@ -1,6 +1,8 @@
 import re
 
-from source import Type
+from source import \
+    Type, \
+    Macro
 
 re_pci_vendor = re.compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = re.compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
@@ -23,6 +25,9 @@ TODO: create named exception instead of any Exception
 """
 
 class PCIId:
+    def __init__(self, name, id):
+        self.name = name
+        self.id = id
 
     def find_macro(self):
         raise Exception("The virtual method is not implemented.")
@@ -32,8 +37,7 @@ class PCIVendorId (PCIId):
         if vendor_name in pci_id_db.vendors.keys():
             raise PCIVendorIdAlreadyExists(vendor_name)
 
-        self.name = vendor_name
-        self.id = vendor_id
+        PCIId.__init__(self, vendor_name, vendor_id)
 
         self.device_pattern = re.compile(
                 "PCI_DEVICE_ID_%s_([A-Z0-9_]+)" % self.name)
@@ -50,13 +54,12 @@ class PCIDeviceId (PCIId):
             raise PCIDeviceIdAlreadyExists("Vendor %s, Device %s" % vendor_name,
                     device_name)
 
+        PCIId.__init__(self, device_name, device_id)
+
         if not vendor_name in pci_id_db.vendors.keys():
             self.vendor = PCIVendorId(vendor_name, 0xFFFF)
         else:
             self.vendor = pci_id_db.vendors[vendor_name]
-
-        self.name = device_name
-        self.id = device_id
 
         pci_id_db.devices[dev_key] = self
 
@@ -69,8 +72,7 @@ class PCIClassId (PCIId):
         if class_name in pci_id_db.classes.keys():
             raise Exception("PCI class %s already exists" % class_name)
 
-        self.name = class_name
-        self.id = class_id
+        PCIId.__init__(self, class_name, class_id)
 
         pci_id_db.classes[self.name] = self
 
@@ -82,6 +84,53 @@ class PCIClassification:
         self.vendors = {}
         self.devices = {}
         self.classes = {}
+
+    def gen_uniq_vid(self):
+        for i in xrange(0, 0xFFFF):
+            for v in self.vendors.values():
+                if v.id.upper() == "0x%X" % i:
+                    break;
+            else:
+                return "0x%X" % i
+        # no uniq ID
+        return "0xDEAD"
+
+    def gen_uniq_did(self):
+        for i in xrange(0, 0xFFFF):
+            for d in self.devices.values():
+                if d.id.upper() == "0x%X" % i:
+                    break;
+            else:
+                return "0x%X" % i
+        # no uniq ID
+        return "0xBEAF"
+
+    @staticmethod
+    def build():
+        for t in Type.reg.values():
+            if type(t) == Macro:
+                mi = re_pci_vendor.match(t.name)
+                if mi:
+                    PCIVendorId(mi.group(1), t.text)
+                    continue
+
+                mi = re_pci_class.match(t.name)
+                if mi:
+                    # print 'PCI class %s' % mi.group(1)
+                    PCIClassId(mi.group(1), t.text)
+                    continue
+
+        # All PCI vendors must be defined before any device.
+        for t in Type.reg.values():
+            if type(t) == Macro:
+                mi = re_pci_device.match(t.name)
+                if mi:
+                    for v in pci_id_db.vendors.values():
+                        mi = v.device_pattern.match(t.name)
+                        if mi:
+                            PCIDeviceId(v.name, mi.group(1), t.text)
+                            break;
+                    continue
 
     @staticmethod
     def gen_device_key(vendor_name, device_name):
@@ -100,9 +149,35 @@ class PCIClassification:
         if not did == None and not type(did) == str:
             raise Exception("Device id must be a string")
 
-        v = self.get_vendor(vendor_name, vid)
+        if vid is not None:
+            try:
+                v = self.get_vendor(vendor_name, vid)
+            except PCIVendorIdNetherExistsNorCreate as e:
+                if vendor_name is not None:
+                    raise e
+                v = None
+        elif vendor_name is not None:
+            try:
+                v = self.get_vendor(vendor_name, vid)
+            except PCIVendorIdNetherExistsNorCreate:
+                v = self.get_vendor(vendor_name, self.gen_uniq_vid())
+        else:
+            if name is None:
+                if did is None:
+                    raise Exception("No identification information was got!")
+                # Return first device with such ID
+                for d in self.devices.values():
+                    if did.upper() == d.id.upper():
+                        return d
+                raise Exception("No device with id %s was found!" % did.upper())
+            # Try get vendor by device name
+            for v in self.vendors.values():
+                if v.device_pattern.match(name):
+                    break
+            else:
+                raise Exception("Cannot get vendor by device name %s." % name)
 
-        if not name == None: 
+        if name is not None:
             dev_key = PCIClassification.gen_device_key(v.name, name)
             try:
                 d = self.devices[dev_key]
@@ -110,13 +185,16 @@ class PCIClassification:
                     raise Exception("Device %s, vendor %s, device id %s/%s" %
                         d.name, v.name, d.id, did) 
             except KeyError:
-                if did == None:
-                    raise Exception("Cannot create device %s because of no id \
- was specified" % did)
+                if did is None:
+                    did = self.gen_uniq_did()
 
                 d = PCIDeviceId(v.name, name, did)
         else:
-            raise Exception("Not implemented case")
+            if did is None:
+                did = self.gen_uniq_did()
+            name = "UNKNOWN_DEVICE_%X" % did
+
+            d = PCIDeviceId(v.name, name, did)
 
         return d
 
