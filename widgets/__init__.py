@@ -5,6 +5,7 @@ from close_button_notebook import \
     CloseButtonNotebook
 
 from var_widgets import \
+    VarNotebook, \
     VarCombobox, \
     VarTk, \
     VarLabel, \
@@ -54,7 +55,8 @@ from bus_settings import \
 
 from machine_widget import \
     MachineDescriptionSettingsWidget, \
-    MachineWidget
+    MachineTabsWidget, \
+    MachinePanedWidget
 
 from project_widget import \
     ProjectWidget
