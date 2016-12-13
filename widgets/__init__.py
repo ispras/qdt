@@ -90,6 +90,9 @@ from cross_dialogs import \
     CrossSaveAsDialog, \
         asksaveas
 
+from popup_helper import \
+    TkPopupHelper
+
 from gui_tk import \
     GUITk
 
