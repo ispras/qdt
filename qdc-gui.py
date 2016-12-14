@@ -491,6 +491,8 @@ def main():
 
     qvd.use()
 
+    root.proj.pht.all_pci_ids_2_objects()
+
     root.geometry("1000x750")
 
     root.mainloop()
