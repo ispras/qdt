@@ -69,8 +69,10 @@ from machine_description import \
     MemoryRAMNode, \
     MemoryROMNode
 
+from qom_desc import \
+    QOMDescription
+
 from project import \
-    QOMDescription, \
     QProject
 
 from device_description import \

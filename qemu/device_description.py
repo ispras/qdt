@@ -1,4 +1,5 @@
-from project import QOMDescription
+from qom_desc import \
+    QOMDescription
 from sysbusdevice import SysBusDeviceType
 from pcie import PCIEDeviceType
 
