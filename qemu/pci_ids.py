@@ -121,6 +121,17 @@ class PCIClassification(object):
             else:
                 yield dev
 
+    def find_classes(self, **kw):
+        for klass in self.classes.values():
+            for key, val in kw.iteritems():
+                try:
+                    if val != getattr(klass, key):
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield klass
+
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         if self.built:
