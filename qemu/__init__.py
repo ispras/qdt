@@ -20,6 +20,7 @@ from version_description import \
     account_build_path
 
 from pci_ids import \
+    PCIVendorIdNetherExistsNorCreate, \
     PCIId, \
     PCIVendorId, \
     PCIDeviceId, \
