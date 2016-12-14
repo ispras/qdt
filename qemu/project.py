@@ -1,7 +1,8 @@
-import qemu
 import os
 from itertools import \
     count
+from machine_description import \
+    MachineNode
 
 class QProject(object):
     def __init__(self,
@@ -49,11 +50,11 @@ already in another project.")
     def gen_all(self, qemu_src):
         # First, generate all devices, then generate machines
         for desc in self.descriptions:
-            if not isinstance(desc, qemu.MachineNode):
+            if not isinstance(desc, MachineNode):
                 self.gen(desc, qemu_src)
 
         for desc in self.descriptions:
-            if isinstance(desc, qemu.MachineNode):
+            if isinstance(desc, MachineNode):
                 self.gen(desc, qemu_src)
 
     def gen(self, desc, src):
