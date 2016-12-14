@@ -110,6 +110,17 @@ class PCIClassification(object):
         self.classes = {}
         self.built = built
 
+    def find_vendors(self, **kw):
+        for vendor in self.vendors.values():
+            for key, val in kw.iteritems():
+                try:
+                    if val != getattr(vendor, key):
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield vendor
+
     def find_devices(self, **kw):
         for dev in self.devices.values():
             for key, val in kw.iteritems():
