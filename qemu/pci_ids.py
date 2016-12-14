@@ -110,6 +110,17 @@ class PCIClassification(object):
         self.classes = {}
         self.built = built
 
+    def find_devices(self, **kw):
+        for dev in self.devices.values():
+            for key, val in kw.iteritems():
+                try:
+                    if val != getattr(dev, key):
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield dev
+
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         if self.built:
