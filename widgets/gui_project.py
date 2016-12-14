@@ -62,4 +62,3 @@ class GUIProject(QProject):
         gen.pop_indent()
         gen.write("]")
         gen.gen_end()
-
