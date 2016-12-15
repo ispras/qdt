@@ -41,6 +41,18 @@ class QemuTypeName(object):
 class QOMType(object):
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
+        self.state_fields = []
+
+    def add_state_fields(self, fields):
+        for field in fields:
+            self.state_fields.append(field)
+
+    def gen_state(self):
+        s = Structure(self.qtn.for_struct_name + 'State')
+        for f in self.state_fields:
+            s.append_field(Type.lookup(f.type)
+                           .gen_var(f.name, array_size=f.num))
+        return s
 
     def gen_instance_init_name(self):
         return "%s_instance_init" % self.qtn.for_id_name
@@ -206,19 +218,6 @@ class QOMStateField(object):
 class QOMDevice(QOMType):
     def __init__(self, name):
         super(QOMDevice, self).__init__(name)
-
-        self.state_fields = []
-
-    def add_state_fields(self, fields):
-        for field in fields:
-            self.state_fields.append(field)
-
-    def gen_state(self):
-        s = Structure(self.qtn.for_struct_name + 'State')
-        for f in self.state_fields:
-            s.append_field(Type.lookup(f.type)
-                           .gen_var(f.name, array_size=f.num))
-        return s
 
     def gen_source(self):
         pass
