@@ -37,3 +37,12 @@ def add_base_types():
     h.add_types([
         Function("printf")
         ])
+
+    try:
+        h = Header.lookup("string.h")
+    except:
+        h = Header("string.h", is_global=True)
+
+    h.add_types([
+        Function("memcpy")
+        ])
