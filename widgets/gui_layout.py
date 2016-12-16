@@ -22,6 +22,10 @@ class GUILayout(object):
             else:
                 del cfg["shown"]
 
+            if not cfg.values():
+                # remove empty configuration
+                del self.opaque[-1]
+
     def __deepcopy__(self, memo):
         ret = type(self)(self.desc_name, deepcopy(self.opaque, memo))
         ret.lid = self.lid
