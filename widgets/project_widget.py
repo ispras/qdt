@@ -145,11 +145,11 @@ class ProjectWidget(PanedWindow):
         for desc in self.p.descriptions:
             widgets = self.desc2w[desc] = []
 
-            for l in self.p.get_layouts(desc.name):
+            for l in self.p.get_layout_objects(desc.name):
                 try:
-                    cfg = l[-1]
+                    cfg = l.opaque[-1]
                 except KeyError:
-                    l[-1] = cfg = {}
+                    l.opaque[-1] = cfg = {}
 
                 try:
                     if not cfg["shown"]:
@@ -160,7 +160,7 @@ class ProjectWidget(PanedWindow):
 
                 w = self.gen_widget(desc)
                 try:
-                    w.set_layout(l)
+                    w.set_layout(l.opaque)
                 except:
                     w.destroy()
                     w = None
@@ -307,9 +307,9 @@ class ProjectWidget(PanedWindow):
 
             widgets.append(w)
 
-            layouts = self.p.get_layouts(desc.name)
+            layouts = self.p.get_layout_objects(desc.name)
             if layouts:
-                w.set_layout(layouts[0])
+                w.set_layout(layouts[0].opaque)
 
             self.nb_descriptions.add(w, text = desc.name)
             for tab_id in self.nb_descriptions.tabs():
@@ -348,9 +348,9 @@ class ProjectWidget(PanedWindow):
                 for l in layouts:
                     self.p.add_layout(desc.name, l)
             else:
-                for l in self.p.get_layouts(desc.name):
+                for l in self.p.get_layout_objects(desc.name):
                     try:
-                        cfg = l[-1]
+                        cfg = l.opaque[-1]
                     except KeyError:
                         continue
                     try:
