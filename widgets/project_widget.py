@@ -153,7 +153,7 @@ class ProjectWidget(PanedWindow):
                         continue
                 except KeyError:
                     # by default the layout is shown
-                    pass
+                    cfg["shown"] = True
 
                 if l.widget is None:
                     desc = self.p.find(name = desc_name).next()
@@ -164,6 +164,7 @@ class ProjectWidget(PanedWindow):
                     except:
                         w.destroy()
                         w = None
+                        cfg["shown"] = False
                     else:
                         l.widget = w
 
@@ -273,6 +274,13 @@ class ProjectWidget(PanedWindow):
                         if l.widget is not None:
                             l.widget.destroy()
                             l.widget = None
+
+                            try:
+                                cfg = l.opaque[-1]
+                            except KeyError:
+                                l.opaque[-1] = cfg = {}
+
+                            cfg["shown"] = False
                     break
         elif isinstance(op, DOp_SetAttr):
             self.tv_descs.update()
@@ -296,6 +304,14 @@ class ProjectWidget(PanedWindow):
                 if l.widget is not None and l.widget not in tabs:
                     l.widget.destroy()
                     l.widget = None
+
+                    try:
+                        cfg = l.opaque[-1]
+                    except KeyError:
+                        l.opaque[-1] = cfg = {}
+
+                    cfg["shown"] = False
+
                     break
             else:
                 continue
@@ -332,7 +348,14 @@ class ProjectWidget(PanedWindow):
                     l.widget = w
                     break
             else:
-                self.p.add_layout(desc.name, w.gen_layout())
+                l = self.p.add_layout(desc.name, w.gen_layout())
+
+            try:
+                cfg = l.opaque[-1]
+            except KeyError:
+                l.opaque[-1] = cfg = {}
+
+            cfg["shown"] = True
 
             self.nb_descriptions.add(w, text = desc.name)
             for tab_id in self.nb_descriptions.tabs():
