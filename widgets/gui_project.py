@@ -40,12 +40,14 @@ class GUIProject(QProject):
         try:
             l_dict = self.layouts[l.desc_name]
         except KeyError:
-            self.layouts[l.desc_name] = l_dict = {}
-        for lid in count(0):
-            if lid not in l_dict:
-                l.lid = lid
-                l_dict[lid] = l
-                break
+            l.lid = 0
+        else:
+            for lid in count(0):
+                if lid not in l_dict:
+                    l.lid = lid
+                    break
+
+        self.add_layout_object(l)
 
     def add_layout_object(self, l):
         try:
