@@ -66,11 +66,14 @@ class GUIProject(QProject):
             self.add_layout(desc_name, lo)
 
     def get_layouts(self, desc_name):
+        return [ l.opaque for l in self.get_layout_objects(desc_name) ]
+
+    def get_layout_objects(self, desc_name):
         try:
             lys = self.layouts[desc_name]
         except KeyError:
             return []
-        return [ l.opaque for l in lys.values() ]
+        return lys.values()
 
     def get_machine_descriptions(self):
         return [ d for d in self.descriptions if isinstance(d, MachineNode) ]
