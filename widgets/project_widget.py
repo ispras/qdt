@@ -143,17 +143,8 @@ class ProjectWidget(PanedWindow):
 
         for desc_name, lys in self.p.layouts.iteritems():
             for l in lys.values():
-                try:
-                    cfg = l.opaque[-1]
-                except KeyError:
-                    l.opaque[-1] = cfg = {}
-
-                try:
-                    if not cfg["shown"]:
-                        continue
-                except KeyError:
-                    # by default the layout is shown
-                    cfg["shown"] = True
+                if not l.shown:
+                    continue
 
                 if l.widget is None:
                     desc = self.p.find(name = desc_name).next()
@@ -164,7 +155,7 @@ class ProjectWidget(PanedWindow):
                     except:
                         w.destroy()
                         w = None
-                        cfg["shown"] = False
+                        l.shown = False
                     else:
                         l.widget = w
 
@@ -274,13 +265,7 @@ class ProjectWidget(PanedWindow):
                         if l.widget is not None:
                             l.widget.destroy()
                             l.widget = None
-
-                            try:
-                                cfg = l.opaque[-1]
-                            except KeyError:
-                                l.opaque[-1] = cfg = {}
-
-                            cfg["shown"] = False
+                            l.shown = False
                     break
         elif isinstance(op, DOp_SetAttr):
             self.tv_descs.update()
@@ -304,13 +289,7 @@ class ProjectWidget(PanedWindow):
                 if l.widget is not None and l.widget not in tabs:
                     l.widget.destroy()
                     l.widget = None
-
-                    try:
-                        cfg = l.opaque[-1]
-                    except KeyError:
-                        l.opaque[-1] = cfg = {}
-
-                    cfg["shown"] = False
+                    l.shown = False
 
                     break
             else:
@@ -350,12 +329,7 @@ class ProjectWidget(PanedWindow):
             else:
                 l = self.p.add_layout(desc.name, w.gen_layout())
 
-            try:
-                cfg = l.opaque[-1]
-            except KeyError:
-                l.opaque[-1] = cfg = {}
-
-            cfg["shown"] = True
+            l.shown = True
 
             self.nb_descriptions.add(w, text = desc.name)
             for tab_id in self.nb_descriptions.tabs():
@@ -378,13 +352,8 @@ class ProjectWidget(PanedWindow):
             for l in desc_layouts.values():
                 if l.widget is not None:
                     l.opaque = l.widget.gen_layout()
-
-                try:
-                    cfg = l.opaque[-1]
-                except KeyError:
-                    l.opaque[-1] = cfg = {}
-
-                cfg["shown"] = (l.widget is not None)
+                """ "shown" from opaque dictionary is not more relevant while
+                its attribute analog is maintained dynamically. """
 
     def undo(self):
         self.p.pht.undo_sequence()
