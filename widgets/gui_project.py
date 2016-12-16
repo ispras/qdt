@@ -47,6 +47,17 @@ class GUIProject(QProject):
                 l_dict[lid] = l
                 break
 
+    def add_layout_object(self, l):
+        try:
+            l_dict = self.layouts[l.desc_name]
+        except KeyError:
+            self.layouts[l.desc_name] = l_dict = {}
+        if l.lid in l_dict:
+            raise Exception("Layout with id %d for description '%s' already \
+exists." % (l.lid, l.desc_name)
+            )
+        l_dict[l.lid] = l
+
     def add_layout(self, desc_name, layout_opaque):
         l = GUILayout(desc_name, layout_opaque)
         self.add_layout_object_auto_id(l)
