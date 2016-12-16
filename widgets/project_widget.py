@@ -279,6 +279,12 @@ class ProjectWidget(PanedWindow):
                         break
         elif isinstance(op, DOp_SetAttr):
             self.tv_descs.update()
+        elif isinstance(op, POp_SetDescLayout):
+            # The operation changes all layouts. So any widget becomes invalid.
+            desc = self.p.find(name = op.desc_name).next()
+            for w in self.desc2w[desc]:
+                w.destroy()
+            self.desc2w[desc] = []
 
     def on_notebook_tab_closed(self, event):
         tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ] 
