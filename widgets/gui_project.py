@@ -67,6 +67,7 @@ exists." % (l.lid, l.desc_name)
     def add_layout(self, desc_name, layout_opaque):
         l = GUILayout(desc_name, layout_opaque)
         self.add_layout_object_auto_id(l)
+        return l
 
     def delete_layouts(self, desc_name):
         del self.layouts[desc_name]
