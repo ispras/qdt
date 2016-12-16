@@ -60,6 +60,10 @@ exists." % (l.lid, l.desc_name)
             )
         l_dict[l.lid] = l
 
+    def add_layout_objects(self, lys):
+        for l in lys:
+            self.add_layout_object(l)
+
     def add_layout(self, desc_name, layout_opaque):
         l = GUILayout(desc_name, layout_opaque)
         self.add_layout_object_auto_id(l)
