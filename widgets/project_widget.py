@@ -342,16 +342,13 @@ class ProjectWidget(PanedWindow):
 
                 layouts.append(l)
 
-            old_layouts = [ e for e in self.p.layouts if e[0] == desc.name ]
-
             if layouts:
-                if old_layouts:
-                    self.p.layouts.remove(*old_layouts)
+                self.p.delete_layouts(desc.name)
     
                 for l in layouts:
-                    self.p.layouts.append((desc.name, l))
+                    self.p.add_layout(desc.name, l)
             else:
-                for n, l in old_layouts:
+                for l in self.p.get_layouts(desc.name):
                     try:
                         cfg = l[-1]
                     except KeyError:
