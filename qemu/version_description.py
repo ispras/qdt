@@ -196,6 +196,10 @@ class QemuVersionDescription(object):
         self.qvc.use()
 
     def init_cache(self):
+        for junk in self.co_init_cache():
+            pass
+
+    def co_init_cache(self):
         if not self.qvc == None:
             raise Exception("Multiple cache init (source: %s)" % self.src_path)
 
@@ -207,17 +211,24 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             self.qvc.use()
-            Header.build_inclusions(self.include_path)
+            for ret in Header.co_build_inclusions(self.include_path):
+                yield ret
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
+
+            yield True
 
             self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
                 self.build_path,
                 self.qvc.stc
             )
 
+            yield True
+
             # Search for PCI Ids
             PCIClassification.build()
+
+            yield True
 
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
@@ -226,10 +237,16 @@ class QemuVersionDescription(object):
             self.qvc.use()
 
             if self.qvc.list_headers is not None:
+                yield True
+
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
+
+        yield True
 
         # select Qemu version parameters according to current version
         initialize_version(self.qemu_version)
+
+        yield True
 
         # initialize Qemu types in QVC
         get_vp()["qemu types definer"]()
