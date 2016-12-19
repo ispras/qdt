@@ -225,7 +225,7 @@ class QemuVersionDescription(object):
             # make just loaded QVC active
             self.qvc.use()
 
-            if not self.qvc.list_headers == None:
+            if self.qvc.list_headers is not None:
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
 
         # select Qemu version parameters according to current version
