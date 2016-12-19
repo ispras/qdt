@@ -118,3 +118,29 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
 
             self.stage(DOp_SetAttr, "pci_class", None, desc)
             self.stage(DOp_SetPCIIdAttr, "pci_class", val, desc)
+
+    def all_pci_ids_2_values(self):
+        for pci_desc in self.p.descriptions:
+            if not isinstance(pci_desc, PCIExpressDeviceDescription):
+                continue
+            self.pci_ids_2_values(pci_desc)
+
+        self.commit(
+            sequence_description =
+                _("Converting PCI identifiers to numeric values.")
+        )
+
+    def pci_ids_2_values(self, desc):
+        for attr in [
+            "vendor",
+            "subsys_vendor",
+            "device",
+            "subsys",
+            "pci_class"
+        ]:
+            val = getattr(desc, attr)
+            if (val is not None) and isinstance(val, PCIId):
+                val = val.id
+
+                self.stage(DOp_SetPCIIdAttr, attr, None, desc)
+                self.stage(DOp_SetAttr, attr, val, desc)
