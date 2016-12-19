@@ -1,3 +1,15 @@
+class CoTask(object):
+    def __init__(self, generator):
+        self.generator = generator
+
+    def on_activated(self):
+        # do nothing by default
+        pass
+
+    def on_finished(self):
+        # do nothing by default
+        pass
+
 class CoDispatcher(object):
     """
     The dispatcher for coroutine task.
