@@ -1,6 +1,6 @@
 class CoDispatcher(object):
     """
-    The dispatcher for coroutine like task.
+    The dispatcher for coroutine task.
     The task is assumed to be a generator following the protocol below.
 
     - Generator yields between 'small' pieces of work. A piece should be small
