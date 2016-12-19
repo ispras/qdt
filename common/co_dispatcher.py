@@ -33,6 +33,7 @@ will never be given control.
         self.active_tasks = []
         self.finished_tasks = []
         self.max_tasks = max_tasks
+        self.gen2task = {}
 
     # poll returns True if at least one task is ready to proceed immediately.
     def poll(self):
@@ -42,9 +43,8 @@ will never be given control.
         ready = False
 
         for task in self.active_tasks:
-            # Note that a task is a generator
             try:
-                ret = task.next()
+                ret = task.generator.next()
             except StopIteration:
                 to_remove.append(task)
             else:
@@ -54,10 +54,14 @@ will never be given control.
             # print 'Task %s finished' % str(task)
             self.active_tasks.remove(task)
             self.finished_tasks.append(task)
+            task.on_finished()
 
         return ready
 
     def remove(self, task):
+        if not isinstance(task, CoTask):
+            task = self.gen2task[task]
+
         if task in self.finished_tasks:
             self.finished_tasks.remove(task)
         elif task in self.tasks:
@@ -67,6 +71,12 @@ will never be given control.
         # print 'Task %s was removed' % str(task)
 
     def enqueue(self, task):
+        # just generator can define a task
+        if not isinstance(task, CoTask):
+            task = CoTask(task)
+
+        self.gen2task[task.generator] = task
+
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
@@ -78,8 +88,10 @@ will never be given control.
         if self.max_tasks < 0:
             added = bool(self.tasks)
             if added:
-                self.active_tasks.extend(self.tasks)
-                del self.tasks[:]
+                while self.tasks:
+                    task = self.tasks.pop(0)
+                    self.active_tasks.append(task)
+                    task.on_activated()
         else:
             rest = self.max_tasks - len(self.active_tasks)
             while rest > 0 and self.tasks:
@@ -87,6 +99,7 @@ will never be given control.
                 task = self.tasks.pop(0)
                 # print 'Activating task %s' % str(task)
                 self.active_tasks.append(task)
+                task.on_activated()
                 added = True
 
         return added
