@@ -329,7 +329,7 @@ class DeviceSettingsWidget(SettingsWidget):
         )
         b.grid(row = 0, column = 2, sticky = "EW")
         # Check for device tree
-        bp = self.mht.mach.project.build_path
+        bp = self.mach.project.build_path
         if bp == None:
             b["state"] = "disabled"
         else:
@@ -513,7 +513,7 @@ class DeviceSettingsWidget(SettingsWidget):
 
         # refresh parent bus
         buses = [ DeviceSettingsWidget.gen_node_link_text(None) ]
-        for n in self.mht.mach.id2node.values():
+        for n in self.mach.id2node.values():
             if not isinstance(n, qemu.BusNode):
                 continue
             buses.append(DeviceSettingsWidget.gen_node_link_text(n))
