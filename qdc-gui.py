@@ -312,10 +312,10 @@ show it else hide it.")
         self.__check_saved_asterisk__()
 
     def undo(self):
-        self.pw.undo()
+        self.pht.undo_sequence()
 
     def redo(self):
-        self.pw.redo()
+        self.pht.do_sequence()
 
     def on_delete(self):
         self.quit()
