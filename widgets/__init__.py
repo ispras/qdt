@@ -66,6 +66,7 @@ from project_widget import \
 
 from gui_editing import \
     GUIProjectOperation, \
+        GUIPOp_SetBuildPath, \
         GUIDescriptionOperation, \
             POp_SetDescLayout
 
