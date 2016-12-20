@@ -488,15 +488,6 @@ def main():
 
     root.proj.build_path = arguments.qemu_build
 
-    try:
-        qvd = qemu.qvd_load_with_cache(root.proj.build_path)
-    except Exception, e:
-        print "QVD load filed: " + str(e) + "\n"
-
-    qvd.use()
-
-    root.pht.all_pci_ids_2_objects()
-
     root.geometry("1000x750")
 
     root.mainloop()
