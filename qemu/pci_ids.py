@@ -104,13 +104,16 @@ class PCIClassId (PCIId):
         gen.gen_end()
 
 class PCIClassification(object):
-    def __init__(self):
+    def __init__(self, built = False):
         self.vendors = {}
         self.devices = {}
         self.classes = {}
+        self.built = built
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
+        if self.built:
+            gen.gen_field("built = " + gen.gen_const(True))
         gen.gen_end()
 
         gen.line(gen.nameof(self) + ".tmp = PCIId.db")
@@ -174,6 +177,8 @@ class PCIClassification(object):
                             PCIDeviceId(v.name, mi.group(1), t.text)
                             break;
                     continue
+
+        PCIId.db.built = True
 
     @staticmethod
     def gen_device_key(vendor_name, device_name):
