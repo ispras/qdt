@@ -2,9 +2,6 @@ from qemu import \
     MachineNode, \
     QProject
 
-from gui_proj_ht import \
-    GUIProjectHistoryTracker
-
 from common import \
     History
 
@@ -35,7 +32,6 @@ class GUIProject(QProject):
             l_dict[l.lid] = l
 
         self.history = History()
-        self.pht = GUIProjectHistoryTracker(self, self.history)
 
     def add_layout_object_auto_id(self, l):
         try:
