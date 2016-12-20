@@ -205,9 +205,9 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         name = self.tv_descs.item(item)["text"]
         desc = self.p.find(name = name).next()
         self.refresh_layouts()
-        self.p.pht.stage(POp_SetDescLayout, None, desc)
-        self.p.pht.delete_description(desc)
-        self.p.pht.commit()
+        self.pht.stage(POp_SetDescLayout, None, desc)
+        self.pht.delete_description(desc)
+        self.pht.commit()
 
         self.notify_popup_command()
 
@@ -327,4 +327,4 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         return w
 
     def add_description(self):
-        AddDescriptionDialog(self.p.pht, self.winfo_toplevel())
+        AddDescriptionDialog(self.pht, self.winfo_toplevel())
