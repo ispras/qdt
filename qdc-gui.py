@@ -486,7 +486,7 @@ def main():
     if arguments.qemu_build is not None:
         qemu.load_build_path_list()
         qemu.account_build_path(arguments.qemu_build)
-        root.proj.build_path = arguments.qemu_build
+        root.pht.set_build_path(arguments.qemu_build)
 
     root.geometry("1000x750")
 
