@@ -27,7 +27,7 @@ class MachinePanedWidget(PanedWindow):
 
         self.pack(fill="both", expand="yes")
 
-        self.mtw = MemoryTreeWidget(self.mach)
+        self.mtw = MemoryTreeWidget(self.mach, self)
         self.add(self.mtw)
 
         self.mdw = MachineDiagramWidget(self, self.mach)
@@ -50,7 +50,7 @@ class MachineTabsWidget(VarNotebook):
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw, text = "Device diagram")
 
-        self.mtw = MemoryTreeWidget(self.mach)
+        self.mtw = MemoryTreeWidget(self.mach, self)
         self.add(self.mtw, text = "Memory")
 
     def gen_layout(self):
