@@ -92,6 +92,7 @@ class IRQSettingsWidget(SettingsWidget):
                 continue
 
             node = self.find_node_by_link_text(node_text)
+            node_is_device = isinstance(node, DeviceNode)
 
             index_l = getattr(self, pfx + "_index_l")
             index_e = getattr(self, pfx + "_index_e")
@@ -100,7 +101,7 @@ class IRQSettingsWidget(SettingsWidget):
 
             dev_widgets = [index_l, index_e, name_l, name_e]
 
-            if isinstance(node, DeviceNode):
+            if node_is_device:
                 for w in dev_widgets:
                     w.config(state = "normal")
             else:
