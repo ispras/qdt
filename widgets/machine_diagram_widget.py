@@ -897,7 +897,7 @@ IRQ line creation
         y = y - y0
 
         dev = self.node2dev[self.id2node[id]]
-        wnd = DeviceSettingsWindow(self.mht, self, device = dev)
+        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = dev)
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -919,7 +919,9 @@ IRQ line creation
 
         p = self.current_popup
 
-        wnd = IRQSettingsWindow(self.mht, self, irq = self.highlighted_irq_line)
+        wnd = IRQSettingsWindow(self.mach, self.mht, self,
+            irq = self.highlighted_irq_line
+        )
 
         geom = "+" + str(int(p.winfo_rootx())) + "+" + str(int(p.winfo_rooty()))
 
@@ -950,7 +952,7 @@ IRQ line creation
         y = y - y0
 
         bus = self.node2dev[self.id2node[id]]
-        wnd = BusSettingsWindow(bus, self.mht, self)
+        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
