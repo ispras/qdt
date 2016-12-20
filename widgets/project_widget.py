@@ -23,6 +23,7 @@ from common import \
 
 from qemu import \
     qvd_get, \
+    qvd_load_with_cache, \
     DOp_SetAttr, \
     POp_AddDesc
 
@@ -201,11 +202,23 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
+        self.__account_build_path = self.after(1, self.account_build_path)
+
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
     def __on_destroy__(self, event):
         if self.pht is not None:
             self.pht.remove_on_changed(self.on_project_changed)
+
+        try:
+            self.after_cancel(self.__account_build_path)
+        except AttributeError:
+            pass
+
+        try:
+            self.tm.remove(self.reload_build_path_task)
+        except AttributeError:
+            pass
 
     def on_tv_b3(self, event):
         # select appropriate menu
@@ -234,6 +247,31 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         self.pht.commit()
 
         self.notify_popup_command()
+
+    def account_build_path(self):
+        del self.__account_build_path
+
+        self.pht.all_pci_ids_2_values()
+
+        if self.p.build_path is None:
+            return
+
+        if self.tm:
+            # If task manager is available then use background task
+            try:
+                self.tm.remove(self.reload_build_path_task)
+            except AttributeError:
+                pass
+
+            self.reload_build_path_task = ReloadBuildPathTask(self)
+            self.tm.enqueue(self.reload_build_path_task)
+        else:
+            """ If no task manager is available then account build path right
+            now. It will cause GUI to freeze but there are no more options. """
+
+            qvd = qvd_load_with_cache(self.p.build_path)
+            qvd.use()
+            self.pht.all_pci_ids_2_objects()
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
