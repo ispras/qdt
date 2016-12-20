@@ -12,7 +12,7 @@ from gui_frame import \
     GUIFrame
 
 class SettingsWidget(GUIFrame):
-    def __init__(self, machine, machine_history_tracker, *args, **kw):
+    def __init__(self, machine, *args, **kw):
         Frame.__init__(self, *args, **kw)
 
         try:
