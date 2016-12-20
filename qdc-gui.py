@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    GUIProjectHistoryTracker, \
     HistoryWindow, \
     askopen, \
     asksaveas, \
@@ -285,7 +286,7 @@ show it else hide it.")
             self.var_history_window.set(False)
 
         self.proj = project
-        self.pht = self.proj.pht
+        self.pht = GUIProjectHistoryTracker(self.proj, self.proj.history)
 
         self.pw = ProjectWidget(self.proj, self)
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
