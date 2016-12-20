@@ -46,6 +46,7 @@ from add_desc_dialog import \
     AddDescriptionDialog
 
 from gui_editing import \
+    GUIPOp_SetBuildPath, \
     POp_SetDescLayout
 
 from popup_helper import \
@@ -301,7 +302,13 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
                         break
                 else:
                     w.destroy()
-
+        elif isinstance(op, GUIPOp_SetBuildPath):
+            try:
+                self.__account_build_path
+            except AttributeError:
+                self.__account_build_path = self.after(1,
+                    self.account_build_path
+                )
 
     def on_notebook_tab_closed(self, event):
         tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ]
