@@ -88,7 +88,7 @@ class BusLineDesc(object):
 
         values = [
             DeviceSettingsWidget.gen_node_link_text(b) for b in (
-                [ b for b in self.dsw.mht.mach.buses if (\
+                [ b for b in self.dsw.mach.buses if (\
                         (   b.parent_device is None \
                          or b.parent_device == self.dsw.dev) 
                     and (not b.id in sel_buses))
@@ -181,7 +181,7 @@ class PropLineDesc(object):
         if prop_type == qemu.QOMPropertyTypeLink:
             var = tk.StringVar()
             keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
-                    for n in [ None ] + self.dsw.mht.mach.id2node.values()
+                    for n in [ None ] + self.dsw.mach.id2node.values()
                    ]
 
             ret = ttk.Combobox(self.dsw.props_lf, 
