@@ -434,15 +434,12 @@ def main():
 
     parser.add_argument(
         '--qemu-build', '-b',
-        default = '.',
+        default = None,
         type = arg_type_directory,
         metavar = 'path_to_qemu_build',
         )
 
     arguments = parser.parse_args()
-
-    qemu.load_build_path_list()
-    qemu.account_build_path(arguments.qemu_build)
 
     root = QDCGUIWindow()
 
@@ -486,7 +483,10 @@ def main():
         root.set_project(project)
         root.set_current_file_name("project.py")
 
-    root.proj.build_path = arguments.qemu_build
+    if arguments.qemu_build is not None:
+        qemu.load_build_path_list()
+        qemu.account_build_path(arguments.qemu_build)
+        root.proj.build_path = arguments.qemu_build
 
     root.geometry("1000x750")
 
