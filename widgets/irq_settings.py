@@ -161,7 +161,7 @@ class IRQSettingsWidget(SettingsWidget):
 
     def refresh(self):
         nodes = [ DeviceSettingsWidget.gen_node_link_text(node) \
-            for node in self.mht.mach.devices + self.mht.mach.irq_hubs ]
+            for node in self.mach.devices + self.mach.irq_hubs ]
 
         for pfx in [ "src", "dst" ]:
             cb = getattr(self, pfx + "_node_cb")
@@ -193,7 +193,7 @@ class IRQSettingsWidget(SettingsWidget):
             return
 
         if op.writes_node():
-            if not self.irq.node.id in self.mht.mach.id2node:
+            if not self.irq.node.id in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
