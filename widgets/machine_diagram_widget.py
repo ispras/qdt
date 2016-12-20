@@ -348,7 +348,20 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
                 26: "E"
             })
 
-        self.mht = self.mach.project.pht.get_machine_proxy(self.mach)
+        try:
+            pht = self.winfo_toplevel().pht
+        except AttributeError:
+            self.mht = None
+        else:
+            if pht is None:
+                self.mht = None
+            else:
+                self.mht = pht.get_machine_proxy(self.mach)
+
+        # snapshot mode without MHT
+        if self.mht is not None:
+            self.mht = pht.get_machine_proxy(self.mach)
+            self.mht.add_on_changed(self.on_machine_changed)
 
         self.id2node = {}
         self.node2id = {}
@@ -460,14 +473,16 @@ IRQ line creation
         p.add_separator()
         p.add_command(
             label = _("Delete"),
-            command = self.on_popup_single_device_delete
+            command = self.notify_popup_command if self.mht is None else \
+               self.on_popup_single_device_delete
         )
         self.popup_single_device = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
         p.add_command(
             label = _("Add IRQ hub"),
-            command = self.on_add_irq_hub 
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_add_irq_hub
         )
 
         p0 = VarMenu(p, tearoff = 0)
@@ -478,9 +493,10 @@ IRQ line creation
         ]:
             p0.add_command(
                 label = device_type,
-                command = getattr(self, "on_add_" +
-                    device_type.key_value.lower().replace(" ", "_").\
-                        replace("-", "_")
+                command = self.notify_popup_command if self.mht is None else \
+                    getattr(self, "on_add_" +
+                        device_type.key_value.lower().replace(" ", "_").\
+                            replace("-", "_")
                 )
             )
         p.add_cascade(
@@ -499,8 +515,9 @@ IRQ line creation
         ]:
             p0.add_command(
                 label = _(bus_type),
-                command = getattr(self, "on_add_bus_" +
-                    bus_type.lower().replace(" ", "_").replace("-", "_")
+                command = self.notify_popup_command if self.mht is None else \
+                    getattr(self, "on_add_bus_" +
+                        bus_type.lower().replace(" ", "_").replace("-", "_")
                 )
             )
         p.add_cascade(
@@ -538,7 +555,8 @@ IRQ line creation
         p.add_separator()
         p.add_command(
             label = _("Delete"),
-            command = self.on_popup_irq_line_delete
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_popup_irq_line_delete
         )
         self.popup_irq_line = p
 
@@ -551,13 +569,15 @@ IRQ line creation
         self.popup_single_irq_hub_irq_dst_cmd_idx = 1
         p.add_command(
             label = _("IRQ destination"),
-            command = self.on_popup_single_irq_hub_irq_destination,
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_popup_single_irq_hub_irq_destination,
             state = "disabled"
         )
         p.add_separator()
         p.add_command(
             label = _("Delete"),
-            command = self.on_popup_single_irq_hub_delete
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_popup_single_irq_hub_delete
         )
         self.popup_single_irq_hub = p
 
@@ -570,7 +590,8 @@ IRQ line creation
         p.add_separator()
         p.add_command(
             label = _("Delete"),
-            command = self.on_popup_single_bus_delete
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_popup_single_bus_delete
         )
         self.popup_single_bus = p
 
@@ -578,11 +599,10 @@ IRQ line creation
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
         p.add_command(
             label = _("Delete"),
-            command = self.on_popup_multiple_delete
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_popup_multiple_delete
         )
         self.popup_multiple = p
-
-        self.mht.add_on_changed(self.on_machine_changed)
 
         self.bind("<Destroy>", self.__on_destory__, "+")
 
@@ -590,7 +610,9 @@ IRQ line creation
 
     def __on_destory__(self, *args, **kw):
         self.var_physical_layout.set(False)
-        self.mht.remove_on_changed(self.on_machine_changed)
+        if self.mht is not None:
+            # the listener is not assigned in snapshot mode
+            self.mht.remove_on_changed(self.on_machine_changed)
 
     def on_export_diagram(self, *args):
         file_name = asksaveas(
