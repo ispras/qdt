@@ -305,18 +305,6 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
                 """ "shown" from opaque dictionary is not more relevant while
                 its attribute analog is maintained dynamically. """
 
-    def undo(self):
-        self.p.pht.undo_sequence()
-
-    def redo(self):
-        self.p.pht.do_sequence()
-
-    def can_do(self):
-        return self.p.pht.can_do()
-
-    def can_redo(self):
-        return self.p.pht.can_do()
-
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
             w = MachineDescriptionSettingsWidget(desc, self)
