@@ -41,7 +41,7 @@ class SettingsWidget(GUIFrame):
         if nid < 0:
             return None
         else:
-            return self.mht.mach.id2node[nid]
+            return self.mach.id2node[nid]
 
     def __refresh_single__(self):
         self.refresh()
