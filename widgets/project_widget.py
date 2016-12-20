@@ -350,8 +350,7 @@ class ProjectWidget(PanedWindow):
     def refresh_layouts(self):
         for desc_layouts in self.p.layouts.values():
             for l in desc_layouts.values():
-                if l.widget is not None:
-                    l.opaque = l.widget.gen_layout()
+                l.sync_from_widget()
                 """ "shown" from opaque dictionary is not more relevant while
                 its attribute analog is maintained dynamically. """
 
