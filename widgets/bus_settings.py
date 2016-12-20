@@ -94,5 +94,5 @@ class BusSettingsWindow(SettingsWindow):
 
         self.title(_("Bus settings"))
 
-        self.set_sw(BusSettingsWidget(bus, self.mht, self))
+        self.set_sw(BusSettingsWidget(bus, self.mach, self.mht, self))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

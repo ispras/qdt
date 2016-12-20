@@ -12,10 +12,11 @@ from gui_frame import \
     GUIFrame
 
 class SettingsWidget(GUIFrame):
-    def __init__(self, machine_history_tracker, *args, **kw):
+    def __init__(self, machine, machine_history_tracker, *args, **kw):
         Frame.__init__(self, *args, **kw)
 
         self.mht = machine_history_tracker
+        self.mach = machine
 
         self.grid()
 
