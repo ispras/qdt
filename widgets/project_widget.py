@@ -183,6 +183,12 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
+        self.bind("<Destroy>", self.__on_destroy__, "+")
+
+    def __on_destroy__(self, event):
+        if self.pht is not None:
+            self.pht.remove_on_changed(self.on_project_changed)
+
     def on_tv_b3(self, event):
         # select appropriate menu
         popup = self.popup_tv_empty
