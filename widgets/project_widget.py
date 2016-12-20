@@ -319,11 +319,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
 
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
-            w = MachineDescriptionSettingsWidget(desc, self.p.pht, self)
+            w = MachineDescriptionSettingsWidget(desc, self)
         elif isinstance(desc, SysBusDeviceDescription):
-            w = SystemBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
+            w = SystemBusDeviceDescriptionSettingsWidget(desc, self)
         elif isinstance(desc, PCIExpressDeviceDescription):
-            w = PCIEBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
+            w = PCIEBusDeviceDescriptionSettingsWidget(desc, self)
         else:
             raise Exception("No widget exists for description %s of type %s." %
                     (desc.name, type(desc).__name__)

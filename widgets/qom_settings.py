@@ -20,7 +20,7 @@ from qemu import \
     DOp_SetAttr
 
 class QOMDescriptionSettingsWidget(GUIFrame):
-    def __init__(self, qom_desc, project_history_tracker, *args, **kw):
+    def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
         self.desc = qom_desc
