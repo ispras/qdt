@@ -22,7 +22,8 @@ from qemu import \
 class AddDescriptionDialog(VarToplevel):
     initialized = False
 
-    def __init__(self, project_history_tracker, *args, **kw):
+    # If project_history_tracker is None than the window works in demo mode.
+    def __init__(self, project_history_tracker = None, *args, **kw):
         if not AddDescriptionDialog.initialized:
             """ String caching is not actually necessary after ML was replaced
 with mlget because no memory leak will take place. But it still helps avoid
@@ -57,7 +58,9 @@ string searching during each AddDescriptionDialog creation. """
         e.grid(row = 0, column = 1, sticky = "NEWS")
 
         v.trace_variable("w", self.on_var_name_write)
-        v.set(self.pht.p.gen_uniq_desc_name())
+        if self.pht is not None:
+            # do not generate name in demo mode
+            v.set(self.pht.p.gen_uniq_desc_name())
 
         self.rowconfigure(1, weight = 0)
         l = VarLabel(self, text = _("Description kind"))
@@ -91,6 +94,9 @@ string searching during each AddDescriptionDialog creation. """
             self.e_name.config(bg = "red")
             return False
         try:
+            if self.pht is None:
+                # do not check unicity in demo mode
+                raise StopIteration()
             self.pht.p.find(name = n).next()
         except StopIteration:
             # free name
@@ -114,6 +120,10 @@ string searching during each AddDescriptionDialog creation. """
                 AddDescriptionDialog.msg_name.get() % cur_name,
                 parent = self
             )
+            return
+
+        if self.pht is None:
+            # check name only in demo mode
             return
 
         kind = self.cb_kind.current()
