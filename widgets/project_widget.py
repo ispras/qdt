@@ -116,6 +116,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         if self.pht is not None:
             self.pht.add_on_changed(self.on_project_changed)
 
+        try:
+            self.tm = self.winfo_toplevel().task_manager
+        except AttributeError:
+            self.tm = None
+
         fr = GUIFrame(self)
         fr.grid()
         fr.rowconfigure(0, weight = 1)
