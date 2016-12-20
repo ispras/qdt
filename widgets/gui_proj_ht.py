@@ -8,6 +8,9 @@ from qemu import \
 from common import \
     mlget as _
 
+from gui_editing import \
+    GUIPOp_SetBuildPath
+
 class GUIProjectHistoryTracker(ProjectHistoryTracker):
     def __init__(self, *args, **kw):
         ProjectHistoryTracker.__init__(self, *args, **kw)
@@ -144,3 +147,12 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
 
                 self.stage(DOp_SetPCIIdAttr, attr, None, desc)
                 self.stage(DOp_SetAttr, attr, val, desc)
+
+    def set_build_path(self, path):
+        if self.p.build_path == path:
+            return
+
+        self.stage(GUIPOp_SetBuildPath, path)
+        self.commit(sequence_description =
+            _("Qemu build path configuration.")
+        )
