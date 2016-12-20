@@ -18,9 +18,11 @@ from Tkinter import \
     PanedWindow
 
 from common import \
+    CoTask, \
     mlget as _
 
 from qemu import \
+    qvd_get, \
     DOp_SetAttr, \
     POp_AddDesc
 
@@ -47,6 +49,17 @@ from gui_editing import \
 
 from popup_helper import \
     TkPopupHelper
+
+class ReloadBuildPathTask(CoTask):
+    def __init__(self, project_widget):
+        self.pht = project_widget.pht
+        self.qvd = qvd_get(project_widget.p.build_path)
+        CoTask.__init__(self, generator = self.qvd.co_init_cache())
+
+    def on_finished(self):
+        self.qvd.use()
+        if self.pht is not None:
+            self.pht.all_pci_ids_2_objects()
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
