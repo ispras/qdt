@@ -486,14 +486,6 @@ class DeviceSettingsWidget(SettingsWidget):
 
         return ret
 
-    def find_node_by_link_text(self, text):
-        id = text.split(":")[0]
-        id = int(id)
-        if id < 0:
-            return None
-        else:
-            return self.mht.mach.id2node[id]
-
     def refresh(self):
         self.qom_type_var.set(self.dev.qom_type)
 
