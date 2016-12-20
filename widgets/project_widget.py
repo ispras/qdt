@@ -107,6 +107,15 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
 
         self.p = project
 
+        try:
+            self.pht = self.winfo_toplevel().pht
+        except AttributeError:
+            self.pht = None
+
+        # snapshot mode without PHT
+        if self.pht is not None:
+            self.pht.add_on_changed(self.on_project_changed)
+
         fr = GUIFrame(self)
         fr.grid()
         fr.rowconfigure(0, weight = 1)
@@ -141,7 +150,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
         tvm.add_command(
             label = _("Delete description"),
-            command = self.on_delete_description
+            command = self.notify_popup_command if self.pht is None \
+                else self.on_delete_description
         )
 
         self.popup_tv_single = tvm
@@ -172,8 +182,6 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
 
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
-
-        self.p.pht.add_on_changed(self.on_project_changed)
 
     def on_tv_b3(self, event):
         # select appropriate menu
