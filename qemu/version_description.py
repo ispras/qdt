@@ -230,7 +230,7 @@ class QemuVersionDescription(object):
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
-            self.qvc.use()
+            prev_qvc = self.qvc.use()
             for ret in Header.co_build_inclusions(self.include_path):
                 yield ret
 
@@ -254,7 +254,7 @@ class QemuVersionDescription(object):
         else:
             self.load_cache(qvc_path)
             # make just loaded QVC active
-            self.qvc.use()
+            prev_qvc = self.qvc.use()
 
             if self.qvc.list_headers is not None:
                 yield True
@@ -270,6 +270,9 @@ class QemuVersionDescription(object):
 
         # initialize Qemu types in QVC
         get_vp()["qemu types definer"]()
+
+        if prev_qvc is not None:
+            prev_qvc.use()
 
     def load_cache(self, qvc_path):
         if not os.path.isfile(qvc_path):
