@@ -92,6 +92,8 @@ from tk_co_dispatcher import \
     TkCoDispatcher
 
 from cross_dialogs import \
+    CrossDirectoryDialog, \
+        askdirectory, \
     CrossOpenDialog, \
         askopen, \
     CrossSaveAsDialog, \

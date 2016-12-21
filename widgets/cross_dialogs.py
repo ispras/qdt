@@ -2,6 +2,7 @@ from common import \
     mlget as _
 
 from tkFileDialog import \
+    askdirectory as tk_askdirector, \
     askopenfilename, \
     asksaveasfilename
 
@@ -46,3 +47,17 @@ class CrossOpenDialog(object):
 
 def askopen(*args, **kw):
     return CrossOpenDialog(*args, **kw).ask()
+
+class CrossDirectoryDialog(object):
+    def __init__(self, title = None):
+        self.title = _("Select directory") if title is None else title
+
+    def ask(self):
+        kw = {
+            "title" : self.title.get()
+        }
+
+        return tk_askdirector(**kw)
+
+def askdirectory(*args, **kw):
+    return CrossDirectoryDialog(*args, **kw).ask()
