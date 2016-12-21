@@ -144,6 +144,12 @@ class MOp_RemoveMemChild(MOp_AddMemChild):
             mach.id2node[self.node_id].name, self.node_id
         )
 
+def node_import_helper(node, operation):
+    return node.id
+
+def node_export_helper(node_id, operation):
+    return operation.find_desc().id2node[node_id]
+
 class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module. Class constructor
@@ -153,14 +159,8 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
         QemuObjectCreationHelper.__init__(self, node_class_name, kw, "node__")
         MachineNodeOperation.__init__(self, *args, **kw)
 
-        self.value_import_helpers[Node] = self.node_import_helper
-        self.value_export_helpers[Node] = self.node_export_helper
-
-    def node_import_helper(self, node, *args):
-        return node.id
-
-    def node_export_helper(self, node_id, *args):
-        return self.find_desc().id2node[node_id]
+        self.value_import_helpers[Node] = node_import_helper
+        self.value_export_helpers[Node] = node_export_helper
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
