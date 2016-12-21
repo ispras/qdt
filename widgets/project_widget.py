@@ -22,6 +22,7 @@ from common import \
     mlget as _
 
 from qemu import \
+    MultipleQVCInitialization, \
     qvd_get, \
     qvd_load_with_cache, \
     DOp_SetAttr, \
@@ -56,7 +57,14 @@ class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pht = project_widget.pht
         self.qvd = qvd_get(project_widget.p.build_path)
-        CoTask.__init__(self, generator = self.qvd.co_init_cache())
+        CoTask.__init__(self, generator = self.begin())
+
+    def begin(self):
+        try:
+            for ret in self.qvd.co_init_cache():
+                yield ret
+        except MultipleQVCInitialization:
+            pass # it is acceptable situation
 
     def on_finished(self):
         self.qvd.use()
