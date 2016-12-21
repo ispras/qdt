@@ -37,8 +37,7 @@ will never be given control.
 
     # poll returns True if at least one task is ready to proceed immediately.
     def poll(self):
-        # finished tasks
-        to_remove = []
+        finished = []
 
         ready = False
 
@@ -46,11 +45,11 @@ will never be given control.
             try:
                 ret = task.generator.next()
             except StopIteration:
-                to_remove.append(task)
+                finished.append(task)
             else:
                 ready = ret or ready
 
-        for task in to_remove:
+        for task in finished:
             # print 'Task %s finished' % str(task)
             self.active_tasks.remove(task)
             self.finished_tasks.append(task)
