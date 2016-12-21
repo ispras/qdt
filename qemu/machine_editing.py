@@ -151,6 +151,12 @@ def node_export_helper(node_id, operation):
     return operation.find_desc().id2node[node_id]
 
 class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
+    value_import_helpers = dict(QemuObjectCreationHelper.value_import_helpers)
+    value_export_helpers = dict(QemuObjectCreationHelper.value_export_helpers)
+
+    value_import_helpers[Node] = node_import_helper
+    value_export_helpers[Node] = node_export_helper
+
     # node_class_name - string name adding machine node. The class with such
     #     name should be in machine_description module. Class constructor
     #     argument values will be excluded from key word arguments of this
@@ -158,9 +164,6 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
     def __init__(self, node_class_name, *args, **kw):
         QemuObjectCreationHelper.__init__(self, node_class_name, kw, "node__")
         MachineNodeOperation.__init__(self, *args, **kw)
-
-        self.value_import_helpers[Node] = node_import_helper
-        self.value_export_helpers[Node] = node_export_helper
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
