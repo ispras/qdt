@@ -271,6 +271,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
                 self.tm.remove(self.reload_build_path_task)
             except AttributeError:
                 pass
+            else:
+                del self.reload_build_path_task
 
             self.reload_build_path_task = ReloadBuildPathTask(self)
             self.tm.enqueue(self.reload_build_path_task)
