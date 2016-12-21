@@ -592,6 +592,11 @@ IRQ line creation
         self.var_physical_layout.set(False)
         self.mht.remove_on_changed(self.on_machine_changed)
 
+        try:
+            self.after_cancel(self._update_selection_marks_onece)
+        except AttributeError:
+            pass
+
     def on_export_diagram(self, *args):
         file_name = asksaveas(
             [((_("Postscript image"), ".ps"))],
@@ -1650,7 +1655,9 @@ IRQ line creation
         for l in self.irq_lines:
             self.ph_process_irq_line(l)
 
-    def update_selection_marks(self):
+    def update_selection_marks_once(self):
+        del self._update_selection_marks_onece
+
         for idx, sid in enumerate(self.selected):
             bbox = self.canvas.bbox(sid)
             apply(self.canvas.coords, [
@@ -1658,6 +1665,13 @@ IRQ line creation
                 bbox[0] - 1, bbox[1] - 1,
                 bbox[2] + 1, bbox[3] + 1
             ])
+
+    def update_selection_marks(self):
+        if "_update_selection_marks_onece" in self.__dict__:
+            return
+        self._update_selection_marks_onece = self.after(1,
+            self.update_selection_marks_once
+        )
 
     def ph_sync(self):
         for n in self.nodes:
