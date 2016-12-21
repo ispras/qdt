@@ -68,6 +68,8 @@ will never be given control.
             self.tasks.remove(task)
         else:
             self.active_tasks.remove(task)
+
+        del self.gen2task[task.generator]
         # print 'Task %s was removed' % str(task)
 
     def enqueue(self, task):
