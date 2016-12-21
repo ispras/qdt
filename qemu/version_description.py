@@ -211,7 +211,9 @@ class QemuVersionDescription(object):
             self.init_cache()
         self.qvc.use()
 
+        previous = QemuVersionDescription.current
         QemuVersionDescription.current = self
+        return previous
 
     def init_cache(self):
         for junk in self.co_init_cache():
