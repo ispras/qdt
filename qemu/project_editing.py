@@ -85,6 +85,20 @@ choose the helper.
 slot of the tuple) is not restricted.
     """
 
+    value_export_helpers = {}
+
+    value_import_helpers = {
+        type(None): none_import_hepler
+    }
+    for base_type in [
+        bool,
+        int,
+        long,
+        str,
+        unicode
+    ]:
+        value_import_helpers[base_type] = basic_import_helper
+
     def __init__(self, class_name, kw, arg_name_prefix = ""):
         self.nc = class_name
 
@@ -98,20 +112,6 @@ _MyClassName__my_attr in this case. It is Python internals...
             raise Exception( """Prefix for target constructor arguments storing\
  should not start with '_'."""
             )
-
-        self.value_export_helpers = {}
-
-        self.value_import_helpers = {
-            type(None): none_import_hepler
-        }
-        for base_type in [
-            bool,
-            int,
-            long,
-            str,
-            unicode
-        ]:
-            self.value_import_helpers[base_type] = basic_import_helper
 
         self.prefix = arg_name_prefix
 
