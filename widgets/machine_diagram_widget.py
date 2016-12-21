@@ -1799,6 +1799,9 @@ IRQ line creation
                 self.canvas.delete(id)
             self.selection_marks = self.selection_marks[:selects]
 
+        if not self.var_physical_layout.get():
+            self.update_selection_marks()
+
     def show_node_id(self, node):
         idtext = self.canvas.create_text(
             0, 0,
