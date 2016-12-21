@@ -54,6 +54,9 @@ from gui_editing import \
 from popup_helper import \
     TkPopupHelper
 
+from tkMessageBox import \
+    showerror
+
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pht = project_widget.pht
@@ -278,7 +281,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
             try:
                 self.reload_build_path_task = ReloadBuildPathTask(self)
             except BadBuildPath as bbpe:
-                print bbpe
+                showerror(_("Bad build path").get(), str(bbpe))
             else:
                 self.tm.enqueue(self.reload_build_path_task)
         else:
@@ -288,7 +291,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
             try:
                 qvd = qvd_load_with_cache(self.p.build_path)
             except BadBuildPath as bbpe:
-                print bbpe
+                showerror(_("Bad build path").get(), str(bbpe))
             else:
                 qvd.use()
                 self.pht.all_pci_ids_2_objects()
