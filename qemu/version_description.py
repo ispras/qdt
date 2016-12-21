@@ -114,6 +114,8 @@ def qvds_init_cache():
             v.init_cache()
 
 class QemuVersionCache(object):
+    current = None
+
     def __init__(self,
                  list_headers = None,
                  device_tree = None,
@@ -146,6 +148,8 @@ class QemuVersionCache(object):
     def use(self):
         self.stc.set_cur_stc()
         PCIId.db = self.pci_c
+
+        QemuVersionCache.current = self
 
 class BadBuildPath(Exception):
     def __init__(self, message):
