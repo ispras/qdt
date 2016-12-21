@@ -1042,6 +1042,7 @@ class PointerVariableDeclaration(SourceChunk):
         return [ch] + refs
 
     def __init__(self, var, indent="", extern = False):
+        self.var = var
         t = var.type.type
         if type(t) == Function:
             code = """\
@@ -1067,6 +1068,10 @@ class PointerVariableDeclaration(SourceChunk):
             ),
             code = code
         )
+
+    def get_origin(self):
+        return self.var
+
 
 class VariableDeclaration(SourceChunk):
     @staticmethod
