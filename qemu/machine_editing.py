@@ -156,10 +156,10 @@ class MachineNodeAdding(MachineNodeOperation, QemuObjectCreationHelper):
         self.value_import_helpers[Node] = self.node_import_helper
         self.value_export_helpers[Node] = self.node_export_helper
 
-    def node_import_helper(self, node):
+    def node_import_helper(self, node, *args):
         return node.id
 
-    def node_export_helper(self, node_id):
+    def node_export_helper(self, node_id, *args):
         return self.find_desc().id2node[node_id]
 
     def __write_set__(self):
