@@ -23,6 +23,7 @@ from common import \
 
 from qemu import \
     MultipleQVCInitialization, \
+    BadBuildPath, \
     qvd_get, \
     qvd_load_with_cache, \
     DOp_SetAttr, \
@@ -274,15 +275,23 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
             else:
                 del self.reload_build_path_task
 
-            self.reload_build_path_task = ReloadBuildPathTask(self)
-            self.tm.enqueue(self.reload_build_path_task)
+            try:
+                self.reload_build_path_task = ReloadBuildPathTask(self)
+            except BadBuildPath as bbpe:
+                print bbpe
+            else:
+                self.tm.enqueue(self.reload_build_path_task)
         else:
             """ If no task manager is available then account build path right
             now. It will cause GUI to freeze but there are no more options. """
 
-            qvd = qvd_load_with_cache(self.p.build_path)
-            qvd.use()
-            self.pht.all_pci_ids_2_objects()
+            try:
+                qvd = qvd_load_with_cache(self.p.build_path)
+            except BadBuildPath as bbpe:
+                print bbpe
+            else:
+                qvd.use()
+                self.pht.all_pci_ids_2_objects()
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
