@@ -209,7 +209,7 @@ class QemuVersionDescription(object):
 
     def co_init_cache(self):
         if not self.qvc == None:
-            raise Exception("Multiple cache init (source: %s)" % self.src_path)
+            raise MultipleQVCInitialization(self.src_path)
 
         qvc_file_name = "qvc_" + self.commit_sha + ".py"
         qvc_path = os.path.join(self.build_path, qvc_file_name)
