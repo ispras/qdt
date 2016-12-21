@@ -162,6 +162,8 @@ class MultipleQVCInitialization(Exception):
         Exception.__init__(self, path)
 
 class QemuVersionDescription(object):
+    current = None
+
     def __init__(self, build_path):
         config_host_path = os.path.join(build_path, 'config-host.mak')
         if not os.path.isfile(config_host_path):
@@ -208,6 +210,8 @@ class QemuVersionDescription(object):
         if self.qvc == None:
             self.init_cache()
         self.qvc.use()
+
+        QemuVersionDescription.current = self
 
     def init_cache(self):
         for junk in self.co_init_cache():
