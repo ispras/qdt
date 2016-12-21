@@ -1541,6 +1541,7 @@ class SourceFile:
             StructureDeclarationBegin,
             MacroDefinition,
             PointerTypeDeclaration,
+            PointerVariableDeclaration,
             VariableUsage
             ])
 
