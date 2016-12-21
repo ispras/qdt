@@ -149,7 +149,9 @@ class QemuVersionCache(object):
         self.stc.set_cur_stc()
         PCIId.db = self.pci_c
 
+        previous = QemuVersionCache.current
         QemuVersionCache.current = self
+        return previous
 
 class BadBuildPath(Exception):
     def __init__(self, message):
