@@ -147,6 +147,10 @@ class QemuVersionCache(object):
         self.stc.set_cur_stc()
         PCIId.db = self.pci_c
 
+class BadBuildPath(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
 class QemuVersionDescription(object):
     def __init__(self, build_path):
         config_host_path = os.path.join(build_path, 'config-host.mak')
