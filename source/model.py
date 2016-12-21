@@ -1035,8 +1035,10 @@ class PointerVariableDeclaration(SourceChunk):
     def gen_chunks(var, indent="", extern=False):
         ch = PointerVariableDeclaration(var, indent, extern)
 
-        refs = var.type.type.gen_defining_chunk_list()
-
+        if isinstance(var.type.type, Function):
+            refs = gen_function_decl_ref_chunks(var.type.type)
+        else:
+            refs = var.type.type.gen_defining_chunk_list()
         ch.add_references(refs)
 
         return [ch] + refs
