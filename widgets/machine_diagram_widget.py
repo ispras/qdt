@@ -1650,6 +1650,15 @@ IRQ line creation
         for l in self.irq_lines:
             self.ph_process_irq_line(l)
 
+    def update_selection_marks(self):
+        for idx, sid in enumerate(self.selected):
+            bbox = self.canvas.bbox(sid)
+            apply(self.canvas.coords, [
+                self.selection_marks[idx],
+                bbox[0] - 1, bbox[1] - 1,
+                bbox[2] + 1, bbox[3] + 1
+            ])
+
     def ph_sync(self):
         for n in self.nodes:
             dev = self.node2dev[n]
@@ -1736,13 +1745,7 @@ IRQ line creation
 
         self.process_irq_circles()
 
-        for idx, sid in enumerate(self.selected):
-            bbox = self.canvas.bbox(sid)
-            apply(self.canvas.coords, [
-                self.selection_marks[idx],
-                bbox[0] - 1, bbox[1] - 1,
-                bbox[2] + 1, bbox[3] + 1
-            ])
+        self.update_selection_marks()
 
         for n, idtext in list(self.node2idtext.iteritems()):
             dev = self.node2dev[n]
