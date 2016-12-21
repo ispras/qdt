@@ -8,6 +8,7 @@ from source import \
 
 from version_description import \
     BadBuildPath, \
+    MultipleQVCInitialization, \
     QemuVersionDescription, \
     qvd_create, \
     qvd_get, \

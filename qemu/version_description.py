@@ -151,6 +151,10 @@ class BadBuildPath(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+class MultipleQVCInitialization(Exception):
+    def __init__(self, path):
+        Exception.__init__(self, path)
+
 class QemuVersionDescription(object):
     def __init__(self, build_path):
         config_host_path = os.path.join(build_path, 'config-host.mak')
