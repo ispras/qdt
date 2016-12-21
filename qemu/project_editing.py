@@ -29,10 +29,10 @@ class ProjectOperation(InverseOperation):
     def __read_set__(self):
         return []
 
-def none_import_hepler(val):
+def none_import_hepler(val, helper):
     return None
 
-def basic_import_helper(val):
+def basic_import_helper(val, helper):
     return type(val)(val)
 
 class QemuObjectCreationHelper(object):
@@ -146,7 +146,7 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
             except KeyError:
                 continue
             else:
-                return helper(val)
+                return helper(val, self)
         return val
 
     def new(self):
@@ -189,7 +189,7 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
                 break
         else:
             raise QemuObjectCreationHelper.CannotImport()
-        return (t, helper(val))
+        return (t, helper(val, self))
 
     """ The method imports from origin values for arguments of current class
 __init__ method. By default the method uses getattr method. The attrinutes names
