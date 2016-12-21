@@ -9,6 +9,7 @@ from widgets import \
     HistoryWindow, \
     askopen, \
     asksaveas, \
+    askdirectory, \
     AddDescriptionDialog, \
     __dict__ as widgets_dict, \
     GUIProject, \
@@ -79,6 +80,11 @@ show it else hide it.")
                 description = _("Add description to the project")
             ),
             HotKeyBinding(
+                self.on_set_qemu_build_path,
+                key_code = 56, # B
+                description = _("Set Qemu build path for the project")
+            ),
+            HotKeyBinding(
                 self.on_delete,
                 key_code = 24, # Q
                 description = _("Shutdown the application.")
@@ -105,6 +111,7 @@ show it else hide it.")
             32: "O",
             57: "N",
             40: "D",
+            56: "B",
             24: "Q",
             52: "Z",
             29: "Y",
@@ -119,6 +126,13 @@ show it else hide it.")
             label = _("Add description"),
             command = self.on_add_description,
             accelerator = hotkeys.get_keycode_string(self.on_add_description)
+        )
+        filemenu.add_command(
+            label = _("Set Qemu build path"),
+            command = self.on_set_qemu_build_path,
+            accelerator = hotkeys.get_keycode_string(
+                self.on_set_qemu_build_path
+            )
         )
         filemenu.add_separator()
         filemenu.add_command(
@@ -323,6 +337,13 @@ show it else hide it.")
 
     def on_add_description(self):
         d = AddDescriptionDialog(self.pht, self)
+
+    def on_set_qemu_build_path(self):
+        dir = askdirectory(title = _("Select Qemu build path"))
+        if not dir:
+            return
+
+        self.pht.set_build_path(dir)
 
     def load_project_from_file(self, file_name):
         loaded_variables = {}
