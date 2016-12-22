@@ -29,6 +29,7 @@ import qemu
 import os
 
 from common import \
+    CoTask, \
     PyGenerator, \
     mlget as _
 
@@ -37,8 +38,37 @@ from Tkinter import \
     StringVar
 
 from tkMessageBox import \
+    showinfo, \
     askyesno, \
     showerror
+
+class ProjectGeneration(CoTask):
+    def __init__(self, project, source_path):
+        self.p = project
+        self.s = source_path
+        self.finished = False
+        CoTask.__init__(self, self.begin())
+
+    def begin(self):
+        try:
+            self.p.gen_all(self.s)
+        except Exception as e:
+            yield True
+
+            showerror(
+                title = _("Generation failed").get(),
+                message = (_("Exception: '%s'.") % str(e)).get()
+            )
+        else:
+            yield True
+
+            showinfo(
+                title = _("Generation completed").get(),
+                message = _("No errors were reported.").get()
+            )
+
+    def on_finished(self):
+        self.finished = True
 
 class QDCGUIWindow(GUITk):
     def __init__(self, project = None):
