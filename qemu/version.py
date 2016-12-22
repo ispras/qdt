@@ -301,6 +301,12 @@ def define_qemu_2_6_0_types():
         Structure("I2CBus") # the structure is defined in .c file
         ])
 
+    Header.lookup("qemu/bswap.h").add_types([
+        Function("bswap64"),
+        Function("bswap32"),
+        Function("bswap16")
+        ])
+
 # Warning! Preserve order!
 qemu_versions = [
     QEMUVersionDescription(
