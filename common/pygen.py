@@ -116,6 +116,9 @@ class PyGenerator(object):
 
     def pprint(self, val):
         if isinstance(val, list):
+            if not val:
+                self.write("[]")
+                return
             self.line("[")
             self.push_indent()
             if val:
@@ -127,6 +130,9 @@ class PyGenerator(object):
             self.line()
             self.write("]")
         elif isinstance(val, dict):
+            if not val:
+                self.write("{}")
+                return
             self.line("{")
             self.push_indent()
             if val:
@@ -143,6 +149,9 @@ class PyGenerator(object):
             self.line()
             self.write("}")
         elif isinstance(val, tuple):
+            if not val:
+                self.write("()")
+                return
             self.line("(")
             self.push_indent()
             if val:

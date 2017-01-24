@@ -4,7 +4,7 @@ from Tkinter import \
     StringVar, \
     Tk
 
-from widgets import VarTreeView
+from widgets import VarTreeview
 
 class Mytest(object):
     def __init__(self, delay, var1, var2):
@@ -23,9 +23,9 @@ class Mytest(object):
 
 def main():
     root = Tk()
-    root.title("Test VarTreeView")
+    root.title("Test VarTreeview")
 
-    device_tree = VarTreeView(root)
+    device_tree = VarTreeview(root)
     device_tree["columns"] = ("Macros")
 
     dev = StringVar()

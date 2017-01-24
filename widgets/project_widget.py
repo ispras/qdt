@@ -146,33 +146,25 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
 
         self.popup_tv_single = tvm
 
-        self.desc2w = {}
-        for desc in self.p.descriptions:
-            widgets = self.desc2w[desc] = []
+        for desc_name, lys in self.p.layouts.iteritems():
+            for l in lys.values():
+                if not l.shown:
+                    continue
 
-            for l in self.p.get_layouts(desc.name):
-                try:
-                    cfg = l[-1]
-                except KeyError:
-                    l[-1] = cfg = {}
+                if l.widget is None:
+                    desc = self.p.find(name = desc_name).next()
 
-                try:
-                    if not cfg["shown"]:
-                        continue
-                except KeyError:
-                    # by default the layout is shown
-                    pass
+                    w = self.gen_widget(desc)
+                    try:
+                        w.set_layout(l.opaque)
+                    except:
+                        w.destroy()
+                        w = None
+                        l.shown = False
+                    else:
+                        l.widget = w
 
-                w = self.gen_widget(desc)
-                try:
-                    w.set_layout(l)
-                except:
-                    w.destroy()
-                    w = None
-                else:
-                    widgets.append(w)
-
-                    self.nb_descriptions.add(w, text = desc.name)
+                        self.nb_descriptions.add(w, text = desc.name)
 
         self.tv_descs.bind("<Double-1>", self.on_tv_desc_b1_double)
 
@@ -215,28 +207,45 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         if isinstance(op, POp_AddDesc):
             self.tv_descs.update()
 
-            for desc, wl in self.desc2w.iteritems():
-                if desc not in self.p.descriptions:
+            for desc_name, lys in self.p.layouts.iteritems():
+                try:
+                    self.p.find(name = desc_name).next()
+                except StopIteration:
                     # removed
-                    for w in wl:
-                        w.destroy()
-                    del self.desc2w[desc]
+                    for l in lys.values():
+                        if l.widget is not None:
+                            l.widget.destroy()
+                            l.widget = None
+                            l.shown = False
                     break
-            else:
-                for desc in self.p.descriptions:
-                    if desc not in self.desc2w:
-                        # added
-                        self.desc2w[desc] = []
-                        break
         elif isinstance(op, DOp_SetAttr):
             self.tv_descs.update()
+        elif isinstance(op, POp_SetDescLayout):
+            # remove all tabs that are not cached in current layouts
+            for tab_id in self.nb_descriptions.tabs():
+                desc_name = self.nb_descriptions.tab(tab_id)["text"]
+                lys = self.p.get_layout_objects(desc_name)
+                w = self.nametowidget(tab_id)
+                for l in lys:
+                    if l.widget is w:
+                        break
+                else:
+                    w.destroy()
+
 
     def on_notebook_tab_closed(self, event):
-        tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ] 
-        for widgets in self.desc2w.values():
-            for w in list(widgets):
-                if w not in tabs:
-                    widgets.remove(w)
+        tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ]
+        for lys in self.p.layouts.values():
+            for l in lys.values():
+                if l.widget is not None and l.widget not in tabs:
+                    l.widget.destroy()
+                    l.widget = None
+                    l.shown = False
+
+                    break
+            else:
+                continue
+            break
 
     def on_tv_desc_b1_double(self, event):
         try:
@@ -251,16 +260,27 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
             if desc.name == name:
                 break
 
-        widgets = self.desc2w[desc]
+        layouts = sorted(
+            self.p.get_layout_objects(desc.name),
+            key = lambda l : l.lid
+        )
+        widgets = [ l.widget for l in layouts if l.widget is not None ]
 
         if not widgets:
             w = self.gen_widget(desc)
 
-            widgets.append(w)
+            for l in layouts:
+                try:
+                    w.set_layout(l.opaque)
+                except:
+                    continue
+                else:
+                    l.widget = w
+                    break
+            else:
+                l = self.p.add_layout(desc.name, w.gen_layout())
 
-            layouts = self.p.get_layouts(desc.name)
-            if layouts:
-                w.set_layout(layouts[0])
+            l.shown = True
 
             self.nb_descriptions.add(w, text = desc.name)
             for tab_id in self.nb_descriptions.tabs():
@@ -268,7 +288,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
                     break
             self.nb_descriptions.select(tab_id)
         else:
-            # select next widget
+            # select next widget in layout id order
             tab_id = self.nb_descriptions.select()
             w = self.nametowidget(tab_id)
             if w in widgets:
@@ -279,38 +299,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
             self.nb_descriptions.select(next_w)
 
     def refresh_layouts(self):
-        for desc, widgets in self.desc2w.iteritems():
-
-            layouts = []
-            for w in widgets:
-                l = w.gen_layout()
-                try:
-                    cfg = l[-1]
-                except KeyError:
-                    l[-1] = cfg = {}
-
-                cfg["shown"] = True
-
-                layouts.append(l)
-
-            old_layouts = [ e for e in self.p.layouts if e[0] == desc.name ]
-
-            if layouts:
-                if old_layouts:
-                    self.p.layouts.remove(*old_layouts)
-    
-                for l in layouts:
-                    self.p.layouts.append((desc.name, l))
-            else:
-                for n, l in old_layouts:
-                    try:
-                        cfg = l[-1]
-                    except KeyError:
-                        continue
-                    try:
-                        cfg["shown"] = False
-                    except KeyError:
-                        pass
+        for desc_layouts in self.p.layouts.values():
+            for l in desc_layouts.values():
+                l.sync_from_widget()
+                """ "shown" from opaque dictionary is not more relevant while
+                its attribute analog is maintained dynamically. """
 
     def undo(self):
         self.p.pht.undo_sequence()

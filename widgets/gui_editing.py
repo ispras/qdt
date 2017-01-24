@@ -37,7 +37,7 @@ class POp_SetDescLayout(GUIDescriptionOperation):
             self.new_layout = None
 
     def __backup__(self):
-        layouts = self.p.get_layouts(self.desc_name)
+        layouts = self.p.get_layout_objects(self.desc_name)
 
         if layouts:
             self.prev_layouts = deepcopy(layouts)
@@ -45,16 +45,16 @@ class POp_SetDescLayout(GUIDescriptionOperation):
             self.prev_layouts = None
 
     def __do__(self):
-        if self.new_layout is not None:
-            self.p.set_layout(self.desc_name, deepcopy(self.new_layout))
-        else:
+        if self.prev_layouts is not None:
             self.p.delete_layouts(self.desc_name)
+        if self.new_layout is not None:
+            self.p.add_layout_object(deepcopy(self.new_layout))
 
     def __undo__(self):
-        if self.prev_layouts is not None:
-            self.p.set_layouts(self.desc_name, deepcopy(self.prev_layouts))
-        else:
+        if self.new_layout is not None:
             self.p.delete_layouts(self.desc_name)
+        if self.prev_layouts is not None:
+            self.p.add_layout_objects(deepcopy(self.prev_layouts))
 
     def __description__(self):
         if self.prev_layouts is None:
