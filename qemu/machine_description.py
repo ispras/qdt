@@ -1,7 +1,8 @@
 import machine
 from __builtin__ import isinstance
 from source import Type
-from project import QOMDescription
+from qom_desc import \
+    QOMDescription
 from itertools import count
 
 # properties

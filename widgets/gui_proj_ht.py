@@ -1,5 +1,12 @@
 from qemu import \
+    PCIExpressDeviceDescription, \
+    PCIId, \
+    DOp_SetAttr, \
+    DOp_SetPCIIdAttr, \
     ProjectHistoryTracker
+
+from common import \
+    mlget as _
 
 class GUIProjectHistoryTracker(ProjectHistoryTracker):
     def __init__(self, *args, **kw):
@@ -42,3 +49,98 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
             self.sequence_strings[self.current_sequence] = seq_desc
 
         ProjectHistoryTracker.commit(self, *args, **kw)
+
+    def all_pci_ids_2_objects(self):
+        for pci_desc in self.p.descriptions:
+            if not isinstance(pci_desc, PCIExpressDeviceDescription):
+                continue
+            self.pci_ids_2_objects(pci_desc)
+
+        self.commit(
+            sequence_description = _("Fixing up PCI identifiers.")
+        )
+
+    def pci_ids_2_objects(self, desc):
+        for attr in [ "vendor", "subsys_vendor" ]:
+            val = getattr(desc, attr)
+            if (val is not None) and (not isinstance(val, PCIId)):
+                try:
+                    val = PCIId.db.find_vendors(id = val).next()
+                except StopIteration:
+                    # no vendor id with such value is registered
+                    continue
+
+                self.stage(DOp_SetAttr, attr, None, desc)
+                self.stage(DOp_SetPCIIdAttr, attr, val, desc)
+
+        self.commit(new_sequence = False)
+
+        for attr, vendor_attr in [
+            ("device", "vendor"),
+            ("subsys", "subsys_vendor")
+        ]:
+            val = getattr(desc, attr)
+            vendor = getattr(desc, vendor_attr)
+
+            if  (val is not None) and (not isinstance(val, PCIId)):
+                if vendor is None:
+                    try:
+                        val = PCIId.db.find_devices(id = val).next()
+                    except StopIteration:
+                        # No device id with such value is registered
+                        continue
+                try:
+                    val = PCIId.db.find_devices(
+                        id = val,
+                        vendor = vendor
+                    ).next()
+                except StopIteration:
+                    # no device id with such value is registered for the vendor
+                    try:
+                        val = PCIId.db.find_devices(id = val).next()
+                    except StopIteration:
+                        # No device id with such value is registered
+                        continue
+
+                self.stage(DOp_SetAttr, attr, None, desc)
+                self.stage(DOp_SetPCIIdAttr, attr, val, desc)
+
+        val = getattr(desc, "pci_class")
+        if (val is not None) and (not isinstance(val, PCIId)):
+            try:
+                val = PCIId.db.get_class(name = val)
+            except:
+                try:
+                    val = PCIId.db.find_classes(id = val).next()
+                except StopIteration:
+                    # no class id with such value is registered
+                    return
+
+            self.stage(DOp_SetAttr, "pci_class", None, desc)
+            self.stage(DOp_SetPCIIdAttr, "pci_class", val, desc)
+
+    def all_pci_ids_2_values(self):
+        for pci_desc in self.p.descriptions:
+            if not isinstance(pci_desc, PCIExpressDeviceDescription):
+                continue
+            self.pci_ids_2_values(pci_desc)
+
+        self.commit(
+            sequence_description =
+                _("Converting PCI identifiers to numeric values.")
+        )
+
+    def pci_ids_2_values(self, desc):
+        for attr in [
+            "vendor",
+            "subsys_vendor",
+            "device",
+            "subsys",
+            "pci_class"
+        ]:
+            val = getattr(desc, attr)
+            if (val is not None) and isinstance(val, PCIId):
+                val = val.id
+
+                self.stage(DOp_SetPCIIdAttr, attr, None, desc)
+                self.stage(DOp_SetAttr, attr, val, desc)

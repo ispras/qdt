@@ -21,6 +21,9 @@ from hotkey import \
     HotKeyBinding, \
     HotKey
 
+from obj_ref_var import \
+    ObjRefVar
+
 from device_settings import \
     DeviceSettingsWidget
 
@@ -81,6 +84,9 @@ from device_description_settings import \
 from sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
+from pci_description_settings import \
+    PCIEBusDeviceDescriptionSettingsWidget
+
 from tk_co_dispatcher import \
     TkCoDispatcher
 
@@ -107,3 +113,6 @@ from branch_tree_view import \
 
 from history_window import \
     HistoryWindow
+
+from pci_id_widget import \
+    PCIIdWidget

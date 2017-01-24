@@ -20,7 +20,11 @@ from version_description import \
     account_build_path
 
 from pci_ids import \
-    pci_id_db, \
+    PCIVendorIdNetherExistsNorCreate, \
+    PCIId, \
+    PCIVendorId, \
+    PCIDeviceId, \
+    PCIClassId, \
     PCIClassification
 
 from sysbusdevice import \
@@ -65,8 +69,10 @@ from machine_description import \
     MemoryRAMNode, \
     MemoryROMNode
 
+from qom_desc import \
+    QOMDescription
+
 from project import \
-    QOMDescription, \
     QProject
 
 from device_description import \
@@ -126,4 +132,7 @@ from project_history_tracker import \
     ProjectHistoryTracker
 
 from qom_editing import \
+    SetDescriptionReferenceAttribute, \
+        DOp_SetPCIIdAttr, \
     DOp_SetAttr
+

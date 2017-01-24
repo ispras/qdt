@@ -18,6 +18,10 @@ from version import \
 
 import os
 
+from pci_ids import \
+    PCIId, \
+    PCIClassification
+
 bp_file_name = "build_path_list"
 
 qvd_reg = {}
@@ -59,22 +63,33 @@ def forget_build_path(path):
 
 def qvd_create(path):
     account_build_path(path)
-    if qvd_reg[path] == None:
-        qvd_reg[path] = QemuVersionDescription(path)
+
+    qvd = qvd_reg[path]
+
+    if qvd == None:
+        qvd = QemuVersionDescription(path)
     else:
         raise Exception("Multiple Qemu version descriptions for %s." % path)
 
-def qvd_get(path):
-    if not path in qvd_reg.keys():
-        qvd_create(path)
+    qvd_reg[path] = qvd
+    return qvd
 
-    return qvd_reg[path]
+def qvd_get(path):
+    try:
+        qvd = qvd_reg[path]
+    except KeyError:
+        qvd = None
+
+    if qvd is None:
+        qvd = qvd_create(path)
+
+    return qvd
 
 def qvd_get_registered(path):
     if not path in qvd_reg.keys():
         raise Exception("%s was not registered." % path)
 
-    return qvd_reg[path]
+    return qvd_get(path)
 
 def qvds_load():
     for k, v in qvd_reg.iteritems():
@@ -82,11 +97,7 @@ def qvds_load():
             qvd_reg[k] = QemuVersionDescription(k)
 
 def qvd_load_with_cache(build_path):
-    try:
-        qvd = qvd_get_registered(build_path)
-    except:
-        qvd = qvd_get(build_path)
-
+    qvd = qvd_get(build_path)
     qvd.init_cache()
     return qvd
 
@@ -105,19 +116,18 @@ def qvds_init_cache():
 class QemuVersionCache(object):
     def __init__(self,
                  list_headers = None,
-                 device_tree = None):
+                 device_tree = None,
+                 pci_classes = None
+    ):
         self.device_tree = device_tree
+        self.list_headers = list_headers
 
         # Create source tree container
         self.stc = SourceTreeContainer()
-        # Temporarily
-        self.stc.set_cur_stc()
-
-        if not list_headers == None:
-            self.stc.load_header_db(list_headers)
+        self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
     def __children__(self):
-        return []
+        return [ self.pci_c ]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -125,11 +135,17 @@ class QemuVersionCache(object):
         gen.gen_field("device_tree = ")
         gen.pprint(self.device_tree)
 
-        list_headers = self.stc.create_header_db()
         gen.gen_field("list_headers = ")
-        gen.pprint(list_headers)
+        gen.pprint(self.list_headers)
+
+        gen.gen_field("pci_classes = " + gen.nameof(self.pci_c))
 
         gen.gen_end()
+
+    # The method made the cache active.
+    def use(self):
+        self.stc.set_cur_stc()
+        PCIId.db = self.pci_c
 
 class QemuVersionDescription(object):
     def __init__(self, build_path):
@@ -173,6 +189,12 @@ class QemuVersionDescription(object):
 
         self.qvc = None
 
+    # The method made the description active
+    def use(self):
+        if self.qvc == None:
+            self.init_cache()
+        self.qvc.use()
+
     def init_cache(self):
         if not self.qvc == None:
             raise Exception("Multiple cache init (source: %s)" % self.src_path)
@@ -183,19 +205,28 @@ class QemuVersionDescription(object):
         if not os.path.isfile(qvc_path):
             self.qvc = QemuVersionCache()
 
-            # make STC from QVC active and build headers
-            self.qvc.stc.set_cur_stc()
+            # make new QVC active and begin construction
+            self.qvc.use()
             Header.build_inclusions(self.include_path)
+
+            self.qvc.list_headers = self.qvc.stc.create_header_db()
 
             self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
                 self.build_path,
                 self.qvc.stc
             )
+
+            # Search for PCI Ids
+            PCIClassification.build()
+
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
             self.load_cache(qvc_path)
-            # make STC from just loaded QVC active
-            self.qvc.stc.set_cur_stc()
+            # make just loaded QVC active
+            self.qvc.use()
+
+            if not self.qvc.list_headers == None:
+                self.qvc.stc.load_header_db(self.qvc.list_headers)
 
         # select Qemu version parameters according to current version
         initialize_version(self.qemu_version)
@@ -213,6 +244,10 @@ class QemuVersionDescription(object):
             context = {
                 "QemuVersionCache": QemuVersionCache
             }
+
+            import qemu
+            context.update(qemu.__dict__)
+
             execfile(qvc_path, context, variables)
 
             for v in variables.values():

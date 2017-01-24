@@ -24,7 +24,9 @@ class PCIVendorIdMismatch(Exception):
 TODO: create named exception instead of any Exception
 """
 
-class PCIId:
+class PCIId(object):
+    db = None # at the end of module the value will be defined
+
     def __init__(self, name, id):
         self.name = name
         self.id = id
@@ -32,9 +34,12 @@ class PCIId:
     def find_macro(self):
         raise Exception("The virtual method is not implemented.")
 
+    def __children__(self):
+        return []
+
 class PCIVendorId (PCIId):
     def __init__(self, vendor_name, vendor_id):
-        if vendor_name in pci_id_db.vendors.keys():
+        if vendor_name in PCIId.db.vendors.keys():
             raise PCIVendorIdAlreadyExists(vendor_name)
 
         PCIId.__init__(self, vendor_name, vendor_id)
@@ -42,48 +47,122 @@ class PCIVendorId (PCIId):
         self.device_pattern = re.compile(
                 "PCI_DEVICE_ID_%s_([A-Z0-9_]+)" % self.name)
 
-        pci_id_db.vendors[self.name] = self
+        PCIId.db.vendors[self.name] = self
 
     def find_macro(self):
         return Type.lookup("PCI_VENDOR_ID_%s" % self.name)
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field("vendor_name = " + gen.gen_const(self.name))
+        gen.gen_field("vendor_id = " + gen.gen_const(self.id))
+        gen.gen_end()
+
 class PCIDeviceId (PCIId):
     def __init__(self, vendor_name, device_name, device_id):
         dev_key = PCIClassification.gen_device_key(vendor_name, device_name)
-        if dev_key in pci_id_db.devices.keys():
+        if dev_key in PCIId.db.devices.keys():
             raise PCIDeviceIdAlreadyExists("Vendor %s, Device %s" % vendor_name,
                     device_name)
 
         PCIId.__init__(self, device_name, device_id)
 
-        if not vendor_name in pci_id_db.vendors.keys():
+        if not vendor_name in PCIId.db.vendors.keys():
             self.vendor = PCIVendorId(vendor_name, 0xFFFF)
         else:
-            self.vendor = pci_id_db.vendors[vendor_name]
+            self.vendor = PCIId.db.vendors[vendor_name]
 
-        pci_id_db.devices[dev_key] = self
+        PCIId.db.devices[dev_key] = self
 
     def find_macro(self):
         return Type.lookup("PCI_DEVICE_ID_%s_%s" % 
                 (self.vendor.name, self.name))
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field("vendor_name = " + gen.gen_const(self.vendor.name))
+        gen.gen_field("device_name = " + gen.gen_const(self.name))
+        gen.gen_field("device_id = " + gen.gen_const(self.id))
+        gen.gen_end()
+
 class PCIClassId (PCIId):
     def __init__(self, class_name, class_id):
-        if class_name in pci_id_db.classes.keys():
+        if class_name in PCIId.db.classes.keys():
             raise Exception("PCI class %s already exists" % class_name)
 
         PCIId.__init__(self, class_name, class_id)
 
-        pci_id_db.classes[self.name] = self
+        PCIId.db.classes[self.name] = self
 
     def find_macro(self):
         return Type.lookup("PCI_CLASS_%s" % self.name)
 
-class PCIClassification:
-    def __init__(self):
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field("class_name = " + gen.gen_const(self.name))
+        gen.gen_field("class_id = " + gen.gen_const(self.id))
+        gen.gen_end()
+
+class PCIClassification(object):
+    def __init__(self, built = False):
         self.vendors = {}
         self.devices = {}
         self.classes = {}
+        self.built = built
+
+    def find_vendors(self, **kw):
+        for vendor in self.vendors.values():
+            for key, val in kw.iteritems():
+                try:
+                    if val != getattr(vendor, key):
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield vendor
+
+    def find_devices(self, **kw):
+        for dev in self.devices.values():
+            for key, val in kw.iteritems():
+                try:
+                    if val != getattr(dev, key):
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield dev
+
+    def find_classes(self, **kw):
+        for klass in self.classes.values():
+            for key, val in kw.iteritems():
+                try:
+                    if val != getattr(klass, key):
+                        break
+                except AttributeError:
+                    break
+            else:
+                yield klass
+
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        if self.built:
+            gen.gen_field("built = " + gen.gen_const(True))
+        gen.gen_end()
+
+        gen.line(gen.nameof(self) + ".tmp = PCIId.db")
+        gen.line("PCIId.db = " + gen.nameof(self))
+
+        for pci_id in self.vendors.values() \
+             + self.devices.values() \
+             + self.classes.values() \
+        :
+            pci_id.__gen_code__(gen)
+
+        gen.line("PCIId.db = " + gen.nameof(self) + ".tmp")
+        gen.line("del " + gen.nameof(self) + ".tmp")
+
+    def __children__(self):
+        return []
 
     def gen_uniq_vid(self):
         for i in xrange(0, 0xFFFF):
@@ -125,22 +204,31 @@ class PCIClassification:
             if type(t) == Macro:
                 mi = re_pci_device.match(t.name)
                 if mi:
-                    for v in pci_id_db.vendors.values():
+                    for v in PCIId.db.vendors.values():
                         mi = v.device_pattern.match(t.name)
                         if mi:
                             PCIDeviceId(v.name, mi.group(1), t.text)
                             break;
                     continue
 
+        PCIId.db.built = True
+
     @staticmethod
     def gen_device_key(vendor_name, device_name):
         return vendor_name + "_" + device_name
 
-    def get_class(self, name):
+    def get_class(self, name, cid = None):
         try:
             c = self.classes[name]
+            if cid is not None and c.id != cid:
+                raise Exception("PCI class ID  %s already exists but is \
+assigned different value %s / %s." % (name, c.id, cid)
+                )
         except KeyError:
-            raise Exception("Unknown PCI class %s" % name)
+            if cid is None:
+                raise Exception("Unknown PCI class %s" % name)
+            else:
+                c = PCIClassId(name, cid)
 
         return c
 
@@ -229,4 +317,4 @@ class PCIClassification:
             return v
         raise Exception("At least one vendor name or id must be specified")
 
-pci_id_db = PCIClassification()
+PCIId.db = PCIClassification()
