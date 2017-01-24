@@ -13,6 +13,7 @@ import math
 import random
 import time
 import sys
+import os
 
 from common import \
     mlget as _, \
@@ -48,6 +49,18 @@ from bus_settings import \
 
 from sets import \
     Set
+
+from popup_helper import \
+    TkPopupHelper
+
+from cross_dialogs import \
+    asksaveas
+
+from tkMessageBox import \
+    showerror
+
+from hotkey import \
+    HotKeyBinding
 
 class PhObject(object):
     def __init__(self,
@@ -295,13 +308,19 @@ class IRQLine(object):
         self.circles = []
         self.lines = []
 
-class MachineDiagramWidget(CanvasDnD):
+class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
-    def __init__(self, parent, mach_desc):
+    def __init__(self, parent, mach_desc, node_font = None):
         CanvasDnD.__init__(self, parent,
             id_priority_sort_function = self.sort_ids_by_priority
         )
+        TkPopupHelper.__init__(self)
+
+        if node_font is None:
+            self.node_font = ("Monospace", 10)
+        else:
+            self.node_font = node_font
 
         mach_desc.link()
 
@@ -312,6 +331,22 @@ class MachineDiagramWidget(CanvasDnD):
             self.task_manager = toplevel.task_manager
         except:
             self.task_manager = None
+
+        try:
+            hotkeys = toplevel.hk
+        except AttributeError:
+            hotkeys = None
+        else:
+            hotkeys.add_binding(
+                HotKeyBinding(
+                    self.on_export_diagram,
+                    key_code = 26, # E
+                    description = _("Export of machine diagram.")
+                )
+            )
+            hotkeys.add_key_symbols({
+                26: "E"
+            })
 
         self.mht = self.mach.project.pht.get_machine_proxy(self.mach)
 
@@ -477,6 +512,16 @@ IRQ line creation
             label = _("Dynamic layout"),
             variable = self.var_physical_layout
         )
+
+        export_args = {
+            "label" : _("Export diagram"),
+            "command" : self.on_export_diagram
+        }
+        if hotkeys is not None:
+            export_args["accelerator"] = \
+                hotkeys.get_keycode_string(self.on_export_diagram)
+        p.add_command(**export_args)
+
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -537,8 +582,6 @@ IRQ line creation
         )
         self.popup_multiple = p
 
-        self.current_popup = None
-
         self.mht.add_on_changed(self.on_machine_changed)
 
         self.bind("<Destroy>", self.__on_destory__, "+")
@@ -548,6 +591,43 @@ IRQ line creation
     def __on_destory__(self, *args, **kw):
         self.var_physical_layout.set(False)
         self.mht.remove_on_changed(self.on_machine_changed)
+
+    def on_export_diagram(self, *args):
+        file_name = asksaveas(
+            [((_("Postscript image"), ".ps"))],
+            title = _("Export machine diagram")
+        )
+
+        if not file_name:
+            return
+
+        try:
+            open(file_name, "wb").close()
+        except IOError as e:
+            if not e.errno == 13: # Do not remove read-only files
+                try:
+                    os.remove(file_name)
+                except:
+                    pass
+
+            showerror(
+                title = _("Cannot export image").get(),
+                message = str(e)
+            )
+            return
+
+        self.canvas.postscript(file = file_name, colormode = "color")
+
+        # fix up font
+        f = open(file_name, "rb")
+        lines = f.readlines()
+        f.close()
+        os.remove(file_name)
+
+        f = open(file_name, "wb")
+        for l in lines:
+            f.write(l.replace("/DejavuSansMono", "/" + self.node_font[0]))
+        f.close()
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
@@ -758,7 +838,7 @@ IRQ line creation
             state = "normal"
         )
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_single_device_irq_destination(self):
         did = self.selected[0]
@@ -772,7 +852,7 @@ IRQ line creation
         )
         self.mht.commit(sequence_description = _("Add IRQ line."))
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_single_irq_hub_irq_source(self):
         self.on_popup_single_device_irq_source()
@@ -792,7 +872,7 @@ IRQ line creation
         self.mht.delete_irq_hub(hid)
         self.mht.commit()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_single_device_delete(self):
         dev_id = self.selected[0]
@@ -806,7 +886,7 @@ IRQ line creation
         self.mht.delete_device(dev_id)
         self.mht.commit()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_single_device_settings(self):
         id = self.selected[0]
@@ -824,17 +904,17 @@ IRQ line creation
 
         wnd.geometry(geom)
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_irq_line_delete_point(self):
         self.irq_line_delete_circle(*self.circle_to_be_deleted)
         self.invalidate()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_irq_line_settings(self):
         if not self.highlighted_irq_line:
-            self.current_popup = None
+            self.notify_popup_command()
             return
 
         p = self.current_popup
@@ -846,11 +926,11 @@ IRQ line creation
         wnd.geometry(geom)
 
         # Allow highlighting of another lines when the command was done 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_irq_line_delete(self):
         if not self.highlighted_irq_line:
-            self.current_popup = None
+            self.notify_popup_command()
             return
 
         irq = self.node2dev[self.highlighted_irq_line]
@@ -859,7 +939,7 @@ IRQ line creation
         self.mht.commit()
 
         # the menu will be unposted after the command
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_single_bus_settings(self):
         id = self.selected[0]
@@ -876,7 +956,7 @@ IRQ line creation
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_single_bus_delete(self):
         bus_id = self.selected[0]
@@ -890,11 +970,11 @@ IRQ line creation
         self.mht.delete_bus(bus_id)
         self.mht.commit()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_popup_multiple_delete(self):
         self.delete_selected()
-        self.current_popup = None
+        self.notify_popup_command()
 
     def delete_selected(self):
         to_del = []
@@ -934,7 +1014,7 @@ IRQ line creation
         self.mht.set_sequence_description(_("IRQ hub creation."))
         self.mht.commit()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def add_bus_at_popup(self, class_name):
         p = self.current_popup
@@ -947,7 +1027,7 @@ IRQ line creation
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         self.mht.commit()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_add_bus_common(self):
         self.add_bus_at_popup("BusNode")
@@ -978,7 +1058,7 @@ IRQ line creation
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         self.mht.commit()
 
-        self.current_popup = None
+        self.notify_popup_command()
 
     def on_add_common_device(self):
         self.add_device_at_popup("DeviceNode")
@@ -1009,10 +1089,6 @@ IRQ line creation
         return False
 
     def on_b1_press(self, event):
-        if self.current_popup:
-            self.current_popup.unpost()
-            self.current_popup = None
-
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         self.select_point = (x, y)
 
@@ -1123,10 +1199,6 @@ IRQ line creation
         self.invalidate()
 
     def on_b3_press(self, event):
-        if self.current_popup:
-            self.current_popup.unpost()
-            self.current_popup = None
-
         if self.dragging or self.select_point:
             return
 
@@ -1159,39 +1231,25 @@ IRQ line creation
                 break
 
             # touched device, etc..
-            if not self.current_popup:
-                tdev = self.node2dev[tnode]
+            tdev = self.node2dev[tnode]
+            popup = None
 
+            if len(self.selected) == 1:
                 if isinstance(tdev, DeviceNode):
-                    if len(self.selected) == 1:
-                        self.current_popup = self.popup_single_device
+                    popup = self.popup_single_device
                 elif isinstance(tdev, IRQHub):
-                    if len(self.selected) == 1:
-                        self.current_popup = self.popup_single_irq_hub
+                    popup = self.popup_single_irq_hub
                 elif isinstance(tdev, BusNode):
-                    if len(self.selected) == 1:
-                        self.current_popup = self.popup_single_bus
+                    popup = self.popup_single_bus
+            else:
+                popup = self.popup_multiple
 
-                if not self.current_popup and len(self.selected):
-                    self.current_popup = self.popup_multiple
-
-                if self.current_popup:
-                    try: 
-                        self.current_popup.tk_popup(event.x_root, event.y_root)
-                        # make sure to release the grab (Tk 8.0a1 only)
-                        # self.current_popup.grab_release()
-                    except:
-                         # make sure to release the grab (Tk 8.0a1 only)
-                        # self.current_popup.grab_release()
-                        self.current_popup = None
-
-                    return
-
-            break
+            if popup:
+                self.show_popup(event.x_root, event.y_root, popup, tdev)
+                return
 
         #print("on_b3_press")
-        event.widget.scan_mark(int(x), int(y)
-        )
+        event.widget.scan_mark(int(x), int(y))
         self.dragging_all = True
         self.master.config(cursor = "fleur")
         self.all_were_dragged = False
@@ -1203,49 +1261,48 @@ IRQ line creation
         self.dragging_all = False
         self.master.config(cursor = "")
 
+        self.update_highlighted_irq_line()
+
         if (not self.all_were_dragged) and self.highlighted_irq_line:
-            if not self.current_popup:
-                self.circle_to_be_deleted = None
+            self.circle_to_be_deleted = None
 
-                if self.shown_irq_circle:
-                    for l in self.irq_lines:
-                        for idx, c in enumerate(l.circles):
-                            if c == self.shown_irq_node:
-                                if self.shift_pressed():
-                                    self.irq_line_delete_circle(l, idx)
-                                    self.invalidate()
-                                    return
-                                else:
-                                    self.circle_to_be_deleted = (l, idx)
-                                break
-                        else:
-                            continue
-                        break
+            if self.shown_irq_circle:
+                for l in self.irq_lines:
+                    for idx, c in enumerate(l.circles):
+                        if c == self.shown_irq_node:
+                            if self.shift_pressed():
+                                self.irq_line_delete_circle(l, idx)
+                                self.invalidate()
+                                return
+                            else:
+                                self.circle_to_be_deleted = (l, idx)
+                            break
+                    else:
+                        continue
+                    break
 
-                self.popup_irq_line.entryconfig(
-                    self.on_popup_irq_line_delete_point_idx,
-                    state = "disabled" if self.circle_to_be_deleted is None \
-                        else "normal"
-                )
+            self.popup_irq_line.entryconfig(
+                self.on_popup_irq_line_delete_point_idx,
+                state = "disabled" if self.circle_to_be_deleted is None \
+                    else "normal"
+            )
 
-                x, y = self.canvas.canvasx(event.x), \
-                       self.canvas.canvasy(event.y)
+            x, y = self.canvas.canvasx(event.x), \
+                   self.canvas.canvasy(event.y)
 
-                self.current_popup = self.popup_irq_line
+            self.stop_circle_preview()
 
-                try:
-                    self.current_popup.tk_popup(event.x_root, event.y_root)
-                    # make sure to release the grab (Tk 8.0a1 only)
-                    # self.current_popup.grab_release()
-                    self.stop_circle_preview()
-                except:
-                    # make sure to release the grab (Tk 8.0a1 only)
-                    # self.current_popup.grab_release()
-                    self.current_popup = None
+            if self.circle_to_be_deleted:
+                tag = self.circle_to_be_deleted
+            else:
+                tag = self.highlighted_irq_line
 
-                return
+            self.show_popup(event.x_root, event.y_root, self.popup_irq_line,
+                tag)
 
-        if not (self.all_were_dragged or self.current_popup):
+            return
+
+        if not self.all_were_dragged:
             if self.selected:
                 self.selected = []
                 self.event_generate(MachineDiagramWidget.EVENT_SELECT)
@@ -1254,16 +1311,34 @@ IRQ line creation
                    self.canvas.canvasy(event.y)
 
             if not self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3):
-                self.current_popup = self.popup_empty_no_selected
+                self.show_popup(event.x_root, event.y_root,
+                    self.popup_empty_no_selected)
 
-                try:
-                    self.current_popup.tk_popup(event.x_root, event.y_root)
-                    # make sure to release the grab (Tk 8.0a1 only)
-                    # self.current_popup.grab_release()
-                except:
-                    # make sure to release the grab (Tk 8.0a1 only)
-                    # self.current_popup.grab_release()
-                    self.current_popup = None
+    def update_highlighted_irq_line(self):
+        x, y = self.last_canvas_mouse
+
+        nearest = (None, sys.float_info.max)
+        for irql in self.irq_lines:
+            for seg_id in irql.lines:
+                x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
+                v0 = Vector(x - x0, y - y0)
+                v1 = Vector(x - x1, y - y1)
+                v2 = Vector(x1 - x0, y1 - y0)
+                d = v0.Length() + v1.Length() - v2.Length()
+
+                if d < nearest[1]:
+                    nearest = (irql, d)
+
+        if self.highlighted_irq_line:
+            self.highlight(self.highlighted_irq_line, False)
+            self.highlighted_irq_line = None
+
+        if nearest[1] <= self.irq_highlight_r:
+            self.highlighted_irq_line = nearest[0]
+            self.highlight(self.highlighted_irq_line, True)
+
+            if self.shown_irq_circle:
+                self.canvas.lift(self.shown_irq_circle)
 
     def motion_all(self, event):
         self.motion(event)
@@ -1305,28 +1380,7 @@ IRQ line creation
 
         # If IRQ line popup menu is showed, then do not change IRQ highlighting
         if not self.current_popup == self.popup_irq_line:
-            nearest = (None, sys.float_info.max)
-            for irql in self.irq_lines:
-                for seg_id in irql.lines:
-                    x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
-                    v0 = Vector(x - x0, y - y0)
-                    v1 = Vector(x - x1, y - y1)
-                    v2 = Vector(x1 - x0, y1 - y0)
-                    d = v0.Length() + v1.Length() - v2.Length()
-
-                    if d < nearest[1]:
-                        nearest = (irql, d)
-
-            if self.highlighted_irq_line:
-                self.highlight(self.highlighted_irq_line, False)
-                self.highlighted_irq_line = None
-
-            if nearest[1] <= self.irq_highlight_r:
-                self.highlighted_irq_line = nearest[0]
-                self.highlight(self.highlighted_irq_line, True)
-
-                if self.shown_irq_circle:
-                    self.canvas.lift(self.shown_irq_circle)
+            self.update_highlighted_irq_line()
 
         if not self.dragging_all:
             return
@@ -1732,7 +1786,8 @@ IRQ line creation
         idtext = self.canvas.create_text(
             0, 0,
             text = str(node.node.id),
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            font = self.node_font
         )
         self.node2idtext[node] = idtext
 
@@ -2238,7 +2293,8 @@ IRQ line creation
     def add_node(self, node, fixed_x):
         node.text = self.canvas.create_text(
             node.x, node.y,
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            font = self.node_font
         )
 
         self.update_node_text(node)
@@ -2344,7 +2400,8 @@ IRQ line creation
 
         id = self.canvas.create_text(
             bl.x, bl.y,
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            font = self.node_font
         )
         bl.text = id
 
