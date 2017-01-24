@@ -614,6 +614,11 @@ IRQ line creation
             # the listener is not assigned in snapshot mode
             self.mht.remove_on_changed(self.on_machine_changed)
 
+        try:
+            self.after_cancel(self._update_selection_marks_onece)
+        except AttributeError:
+            pass
+
     def on_export_diagram(self, *args):
         file_name = asksaveas(
             [((_("Postscript image"), ".ps"))],
@@ -1674,6 +1679,24 @@ IRQ line creation
         for l in self.irq_lines:
             self.ph_process_irq_line(l)
 
+    def update_selection_marks_once(self):
+        del self._update_selection_marks_onece
+
+        for idx, sid in enumerate(self.selected):
+            bbox = self.canvas.bbox(sid)
+            apply(self.canvas.coords, [
+                self.selection_marks[idx],
+                bbox[0] - 1, bbox[1] - 1,
+                bbox[2] + 1, bbox[3] + 1
+            ])
+
+    def update_selection_marks(self):
+        if "_update_selection_marks_onece" in self.__dict__:
+            return
+        self._update_selection_marks_onece = self.after(1,
+            self.update_selection_marks_once
+        )
+
     def ph_sync(self):
         for n in self.nodes:
             dev = self.node2dev[n]
@@ -1760,13 +1783,7 @@ IRQ line creation
 
         self.process_irq_circles()
 
-        for idx, sid in enumerate(self.selected):
-            bbox = self.canvas.bbox(sid)
-            apply(self.canvas.coords, [
-                self.selection_marks[idx],
-                bbox[0] - 1, bbox[1] - 1,
-                bbox[2] + 1, bbox[3] + 1
-            ])
+        self.update_selection_marks()
 
         for n, idtext in list(self.node2idtext.iteritems()):
             dev = self.node2dev[n]
@@ -1805,6 +1822,9 @@ IRQ line creation
             for id in self.selection_marks[selects:]:
                 self.canvas.delete(id)
             self.selection_marks = self.selection_marks[:selects]
+
+        if not self.var_physical_layout.get():
+            self.update_selection_marks()
 
     def show_node_id(self, node):
         idtext = self.canvas.create_text(
