@@ -29,10 +29,10 @@ class ProjectOperation(InverseOperation):
     def __read_set__(self):
         return []
 
-def none_import_hepler(val):
+def none_import_hepler(val, helper):
     return None
 
-def basic_import_helper(val):
+def basic_import_helper(val, helper):
     return type(val)(val)
 
 class QemuObjectCreationHelper(object):
@@ -85,6 +85,20 @@ choose the helper.
 slot of the tuple) is not restricted.
     """
 
+    value_export_helpers = {}
+
+    value_import_helpers = {
+        type(None): none_import_hepler
+    }
+    for base_type in [
+        bool,
+        int,
+        long,
+        str,
+        unicode
+    ]:
+        value_import_helpers[base_type] = basic_import_helper
+
     def __init__(self, class_name, kw, arg_name_prefix = ""):
         self.nc = class_name
 
@@ -98,20 +112,6 @@ _MyClassName__my_attr in this case. It is Python internals...
             raise Exception( """Prefix for target constructor arguments storing\
  should not start with '_'."""
             )
-
-        self.value_export_helpers = {}
-
-        self.value_import_helpers = {
-            type(None): none_import_hepler
-        }
-        for base_type in [
-            bool,
-            int,
-            long,
-            str,
-            unicode
-        ]:
-            self.value_import_helpers[base_type] = basic_import_helper
 
         self.prefix = arg_name_prefix
 
@@ -146,7 +146,7 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
             except KeyError:
                 continue
             else:
-                return helper(val)
+                return helper(val, self)
         return val
 
     def new(self):
@@ -189,7 +189,7 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
                 break
         else:
             raise QemuObjectCreationHelper.CannotImport()
-        return (t, helper(val))
+        return (t, helper(val, self))
 
     """ The method imports from origin values for arguments of current class
 __init__ method. By default the method uses getattr method. The attrinutes names
