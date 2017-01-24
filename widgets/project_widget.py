@@ -18,9 +18,14 @@ from Tkinter import \
     PanedWindow
 
 from common import \
+    CoTask, \
     mlget as _
 
 from qemu import \
+    MultipleQVCInitialization, \
+    BadBuildPath, \
+    qvd_get, \
+    qvd_load_with_cache, \
     DOp_SetAttr, \
     POp_AddDesc
 
@@ -43,10 +48,32 @@ from add_desc_dialog import \
     AddDescriptionDialog
 
 from gui_editing import \
+    GUIPOp_SetBuildPath, \
     POp_SetDescLayout
 
 from popup_helper import \
     TkPopupHelper
+
+from tkMessageBox import \
+    showerror
+
+class ReloadBuildPathTask(CoTask):
+    def __init__(self, project_widget):
+        self.pht = project_widget.pht
+        self.qvd = qvd_get(project_widget.p.build_path)
+        CoTask.__init__(self, generator = self.begin())
+
+    def begin(self):
+        try:
+            for ret in self.qvd.co_init_cache():
+                yield ret
+        except MultipleQVCInitialization:
+            pass # it is acceptable situation
+
+    def on_finished(self):
+        self.qvd.use()
+        if self.pht is not None:
+            self.pht.all_pci_ids_2_objects()
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
@@ -107,6 +134,20 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
 
         self.p = project
 
+        try:
+            self.pht = self.winfo_toplevel().pht
+        except AttributeError:
+            self.pht = None
+
+        # snapshot mode without PHT
+        if self.pht is not None:
+            self.pht.add_on_changed(self.on_project_changed)
+
+        try:
+            self.tm = self.winfo_toplevel().task_manager
+        except AttributeError:
+            self.tm = None
+
         fr = GUIFrame(self)
         fr.grid()
         fr.rowconfigure(0, weight = 1)
@@ -141,7 +182,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         tvm = VarMenu(self.winfo_toplevel(), tearoff = False)
         tvm.add_command(
             label = _("Delete description"),
-            command = self.on_delete_description
+            command = self.notify_popup_command if self.pht is None \
+                else self.on_delete_description
         )
 
         self.popup_tv_single = tvm
@@ -173,7 +215,23 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
-        self.p.pht.add_on_changed(self.on_project_changed)
+        self.__account_build_path = self.after(1, self.account_build_path)
+
+        self.bind("<Destroy>", self.__on_destroy__, "+")
+
+    def __on_destroy__(self, event):
+        if self.pht is not None:
+            self.pht.remove_on_changed(self.on_project_changed)
+
+        try:
+            self.after_cancel(self.__account_build_path)
+        except AttributeError:
+            pass
+
+        try:
+            self.tm.remove(self.reload_build_path_task)
+        except AttributeError:
+            pass
 
     def on_tv_b3(self, event):
         # select appropriate menu
@@ -197,11 +255,46 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         name = self.tv_descs.item(item)["text"]
         desc = self.p.find(name = name).next()
         self.refresh_layouts()
-        self.p.pht.stage(POp_SetDescLayout, None, desc)
-        self.p.pht.delete_description(desc)
-        self.p.pht.commit()
+        self.pht.stage(POp_SetDescLayout, None, desc)
+        self.pht.delete_description(desc)
+        self.pht.commit()
 
         self.notify_popup_command()
+
+    def account_build_path(self):
+        del self.__account_build_path
+
+        self.pht.all_pci_ids_2_values()
+
+        if self.p.build_path is None:
+            return
+
+        if self.tm:
+            # If task manager is available then use background task
+            try:
+                self.tm.remove(self.reload_build_path_task)
+            except AttributeError:
+                pass
+            else:
+                del self.reload_build_path_task
+
+            try:
+                self.reload_build_path_task = ReloadBuildPathTask(self)
+            except BadBuildPath as bbpe:
+                showerror(_("Bad build path").get(), str(bbpe))
+            else:
+                self.tm.enqueue(self.reload_build_path_task)
+        else:
+            """ If no task manager is available then account build path right
+            now. It will cause GUI to freeze but there are no more options. """
+
+            try:
+                qvd = qvd_load_with_cache(self.p.build_path)
+            except BadBuildPath as bbpe:
+                showerror(_("Bad build path").get(), str(bbpe))
+            else:
+                qvd.use()
+                self.pht.all_pci_ids_2_objects()
 
     def on_project_changed(self, op):
         if isinstance(op, POp_AddDesc):
@@ -231,7 +324,13 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
                         break
                 else:
                     w.destroy()
-
+        elif isinstance(op, GUIPOp_SetBuildPath):
+            try:
+                self.__account_build_path
+            except AttributeError:
+                self.__account_build_path = self.after(1,
+                    self.account_build_path
+                )
 
     def on_notebook_tab_closed(self, event):
         tabs = [ self.nametowidget(w) for w in self.nb_descriptions.tabs() ]
@@ -305,25 +404,13 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
                 """ "shown" from opaque dictionary is not more relevant while
                 its attribute analog is maintained dynamically. """
 
-    def undo(self):
-        self.p.pht.undo_sequence()
-
-    def redo(self):
-        self.p.pht.do_sequence()
-
-    def can_do(self):
-        return self.p.pht.can_do()
-
-    def can_redo(self):
-        return self.p.pht.can_do()
-
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
-            w = MachineDescriptionSettingsWidget(desc, self.p.pht, self)
+            w = MachineDescriptionSettingsWidget(desc, self)
         elif isinstance(desc, SysBusDeviceDescription):
-            w = SystemBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
+            w = SystemBusDeviceDescriptionSettingsWidget(desc, self)
         elif isinstance(desc, PCIExpressDeviceDescription):
-            w = PCIEBusDeviceDescriptionSettingsWidget(desc, self.p.pht, self)
+            w = PCIEBusDeviceDescriptionSettingsWidget(desc, self)
         else:
             raise Exception("No widget exists for description %s of type %s." %
                     (desc.name, type(desc).__name__)
@@ -331,4 +418,4 @@ class ProjectWidget(PanedWindow, TkPopupHelper):
         return w
 
     def add_description(self):
-        AddDescriptionDialog(self.p.pht, self.winfo_toplevel())
+        AddDescriptionDialog(self.pht, self.winfo_toplevel())

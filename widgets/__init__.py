@@ -66,6 +66,7 @@ from project_widget import \
 
 from gui_editing import \
     GUIProjectOperation, \
+        GUIPOp_SetBuildPath, \
         GUIDescriptionOperation, \
             POp_SetDescLayout
 
@@ -91,6 +92,8 @@ from tk_co_dispatcher import \
     TkCoDispatcher
 
 from cross_dialogs import \
+    CrossDirectoryDialog, \
+        askdirectory, \
     CrossOpenDialog, \
         askopen, \
     CrossSaveAsDialog, \

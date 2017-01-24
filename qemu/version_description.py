@@ -147,12 +147,20 @@ class QemuVersionCache(object):
         self.stc.set_cur_stc()
         PCIId.db = self.pci_c
 
+class BadBuildPath(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+class MultipleQVCInitialization(Exception):
+    def __init__(self, path):
+        Exception.__init__(self, path)
+
 class QemuVersionDescription(object):
     def __init__(self, build_path):
         config_host_path = os.path.join(build_path, 'config-host.mak')
         if not os.path.isfile(config_host_path):
             forget_build_path(build_path)
-            raise Exception("%s does not exists." % config_host_path)
+            raise BadBuildPath("%s does not exists." % config_host_path)
 
         self.build_path = build_path
 
@@ -196,8 +204,12 @@ class QemuVersionDescription(object):
         self.qvc.use()
 
     def init_cache(self):
+        for junk in self.co_init_cache():
+            pass
+
+    def co_init_cache(self):
         if not self.qvc == None:
-            raise Exception("Multiple cache init (source: %s)" % self.src_path)
+            raise MultipleQVCInitialization(self.src_path)
 
         qvc_file_name = "qvc_" + self.commit_sha + ".py"
         qvc_path = os.path.join(self.build_path, qvc_file_name)
@@ -207,17 +219,24 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             self.qvc.use()
-            Header.build_inclusions(self.include_path)
+            for ret in Header.co_build_inclusions(self.include_path):
+                yield ret
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
+
+            yield True
 
             self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
                 self.build_path,
                 self.qvc.stc
             )
 
+            yield True
+
             # Search for PCI Ids
             PCIClassification.build()
+
+            yield True
 
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
@@ -225,11 +244,17 @@ class QemuVersionDescription(object):
             # make just loaded QVC active
             self.qvc.use()
 
-            if not self.qvc.list_headers == None:
+            if self.qvc.list_headers is not None:
+                yield True
+
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
+
+        yield True
 
         # select Qemu version parameters according to current version
         initialize_version(self.qemu_version)
+
+        yield True
 
         # initialize Qemu types in QVC
         get_vp()["qemu types definer"]()

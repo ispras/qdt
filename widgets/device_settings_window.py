@@ -33,5 +33,5 @@ class DeviceSettingsWindow(SettingsWindow):
         else:
             dsw_class = DeviceSettingsWidget
 
-        self.set_sw(dsw_class(device, self.mht, self))
+        self.set_sw(dsw_class(device, self.mach, self))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

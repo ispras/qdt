@@ -92,6 +92,7 @@ class IRQSettingsWidget(SettingsWidget):
                 continue
 
             node = self.find_node_by_link_text(node_text)
+            node_is_device = isinstance(node, DeviceNode)
 
             index_l = getattr(self, pfx + "_index_l")
             index_e = getattr(self, pfx + "_index_e")
@@ -100,7 +101,7 @@ class IRQSettingsWidget(SettingsWidget):
 
             dev_widgets = [index_l, index_e, name_l, name_e]
 
-            if isinstance(node, DeviceNode):
+            if node_is_device:
                 for w in dev_widgets:
                     w.config(state = "normal")
             else:
@@ -160,7 +161,7 @@ class IRQSettingsWidget(SettingsWidget):
 
     def refresh(self):
         nodes = [ DeviceSettingsWidget.gen_node_link_text(node) \
-            for node in self.mht.mach.devices + self.mht.mach.irq_hubs ]
+            for node in self.mach.devices + self.mach.irq_hubs ]
 
         for pfx in [ "src", "dst" ]:
             cb = getattr(self, pfx + "_node_cb")
@@ -192,7 +193,7 @@ class IRQSettingsWidget(SettingsWidget):
             return
 
         if op.writes_node():
-            if not self.irq.node.id in self.mht.mach.id2node:
+            if not self.irq.node.id in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
@@ -208,5 +209,5 @@ class IRQSettingsWindow(SettingsWindow):
 
         self.title(_("IRQ line settings"))
 
-        self.set_sw(IRQSettingsWidget(irq, self.mht, self))
+        self.set_sw(IRQSettingsWidget(irq, self.mach, self))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

@@ -5,9 +5,11 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    GUIProjectHistoryTracker, \
     HistoryWindow, \
     askopen, \
     asksaveas, \
+    askdirectory, \
     AddDescriptionDialog, \
     __dict__ as widgets_dict, \
     GUIProject, \
@@ -78,6 +80,11 @@ show it else hide it.")
                 description = _("Add description to the project")
             ),
             HotKeyBinding(
+                self.on_set_qemu_build_path,
+                key_code = 56, # B
+                description = _("Set Qemu build path for the project")
+            ),
+            HotKeyBinding(
                 self.on_delete,
                 key_code = 24, # Q
                 description = _("Shutdown the application.")
@@ -104,6 +111,7 @@ show it else hide it.")
             32: "O",
             57: "N",
             40: "D",
+            56: "B",
             24: "Q",
             52: "Z",
             29: "Y",
@@ -118,6 +126,13 @@ show it else hide it.")
             label = _("Add description"),
             command = self.on_add_description,
             accelerator = hotkeys.get_keycode_string(self.on_add_description)
+        )
+        filemenu.add_command(
+            label = _("Set Qemu build path"),
+            command = self.on_set_qemu_build_path,
+            accelerator = hotkeys.get_keycode_string(
+                self.on_set_qemu_build_path
+            )
         )
         filemenu.add_separator()
         filemenu.add_command(
@@ -206,7 +221,7 @@ show it else hide it.")
 
     def __on_var_history_window__(self, *args):
         if self.var_history_window.get():
-            self._history_window = HistoryWindow(self.proj.pht, self)
+            self._history_window = HistoryWindow(self.pht, self)
             self._history_window.bind("<Destroy>",
                 self.__on_history_window_destroy__, "+"
             )
@@ -238,7 +253,7 @@ show it else hide it.")
         )
 
     def chack_undo_redo(self):
-        can_do = self.proj.pht.can_do()
+        can_do = self.pht.can_do()
 
         self.hk.set_enabled(self.redo, can_do)
         if can_do:
@@ -246,7 +261,7 @@ show it else hide it.")
         else:
             self.editmenu.entryconfig(self.redo_idx, state = "disabled")
 
-        can_undo = self.proj.pht.can_undo()
+        can_undo = self.pht.can_undo()
 
         self.hk.set_enabled(self.undo, can_undo)
         if can_undo:
@@ -267,12 +282,12 @@ show it else hide it.")
 
     def set_project(self, project):
         try:
-            proj = self.proj
+            pht = self.pht
         except AttributeError:
             # Project was never been set
             pass
         else:
-            proj.pht.remove_on_changed(self.on_changed)
+            pht.remove_on_changed(self.on_changed)
 
         try:
             self.pw.destroy()
@@ -285,11 +300,12 @@ show it else hide it.")
             self.var_history_window.set(False)
 
         self.proj = project
+        self.pht = GUIProjectHistoryTracker(self.proj, self.proj.history)
 
         self.pw = ProjectWidget(self.proj, self)
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
-        self.proj.pht.add_on_changed(self.on_changed)
+        self.pht.add_on_changed(self.on_changed)
         self.chack_undo_redo()
 
     def __saved_asterisk__(self, saved = True):
@@ -301,7 +317,7 @@ show it else hide it.")
                 self.title_not_saved_asterisk.set("*")
 
     def __check_saved_asterisk__(self):
-        if self.saved_operation == self.proj.pht.pos:
+        if self.saved_operation == self.pht.pos:
             self.__saved_asterisk__(True)
         else:
             self.__saved_asterisk__(False)
@@ -311,16 +327,23 @@ show it else hide it.")
         self.__check_saved_asterisk__()
 
     def undo(self):
-        self.pw.undo()
+        self.pht.undo_sequence()
 
     def redo(self):
-        self.pw.redo()
+        self.pht.do_sequence()
 
     def on_delete(self):
         self.quit()
 
     def on_add_description(self):
-        d = AddDescriptionDialog(self.proj.pht, self)
+        d = AddDescriptionDialog(self.pht, self)
+
+    def on_set_qemu_build_path(self):
+        dir = askdirectory(title = _("Select Qemu build path"))
+        if not dir:
+            return
+
+        self.pht.set_build_path(dir)
 
     def load_project_from_file(self, file_name):
         loaded_variables = {}
@@ -336,7 +359,7 @@ show it else hide it.")
                 if isinstance(v, GUIProject):
                     self.set_project(v)
                     self.set_current_file_name(file_name)
-                    self.saved_operation = v.pht.pos
+                    self.saved_operation = self.pht.pos
                     self.__check_saved_asterisk__()
                     break
             else:
@@ -347,7 +370,7 @@ show it else hide it.")
         PyGenerator().serialize(open(file_name, "wb"), self.proj)
 
         self.set_current_file_name(file_name)
-        self.saved_operation = self.proj.pht.pos
+        self.saved_operation = self.pht.pos
         self.__check_saved_asterisk__()
 
     def try_save_project_to_file(self, file_name):
@@ -405,7 +428,7 @@ _("Current project has unsaved changes. They will be lost. Continue?").get()
 
         """ There is nothing to save in just created project. So declare that
 all changes are saved. """  
-        self.saved_operation = self.proj.pht.pos
+        self.saved_operation = self.pht.pos
         self.__check_saved_asterisk__()
 
     def on_load(self):
@@ -432,15 +455,12 @@ def main():
 
     parser.add_argument(
         '--qemu-build', '-b',
-        default = '.',
+        default = None,
         type = arg_type_directory,
         metavar = 'path_to_qemu_build',
         )
 
     arguments = parser.parse_args()
-
-    qemu.load_build_path_list()
-    qemu.account_build_path(arguments.qemu_build)
 
     root = QDCGUIWindow()
 
@@ -484,16 +504,10 @@ def main():
         root.set_project(project)
         root.set_current_file_name("project.py")
 
-    root.proj.build_path = arguments.qemu_build
-
-    try:
-        qvd = qemu.qvd_load_with_cache(root.proj.build_path)
-    except Exception, e:
-        print "QVD load filed: " + str(e) + "\n"
-
-    qvd.use()
-
-    root.proj.pht.all_pci_ids_2_objects()
+    if arguments.qemu_build is not None:
+        qemu.load_build_path_list()
+        qemu.account_build_path(arguments.qemu_build)
+        root.pht.set_build_path(arguments.qemu_build)
 
     root.geometry("1000x750")
 

@@ -20,11 +20,18 @@ from qemu import \
     DOp_SetAttr
 
 class QOMDescriptionSettingsWidget(GUIFrame):
-    def __init__(self, qom_desc, project_history_tracker, *args, **kw):
+    def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
         self.desc = qom_desc
-        self.pht = project_history_tracker
+        try:
+            self.pht = self.winfo_toplevel().pht
+        except AttributeError:
+            self.pht = None
+
+        # shapshot mode without PHT
+        if self.pht is not None:
+            self.pht.add_on_changed(self.__on_changed__)
 
         sf = self.settings_fr = GUIFrame(self)
         sf.pack(fill = BOTH, expand = False)
@@ -75,8 +82,6 @@ class QOMDescriptionSettingsWidget(GUIFrame):
 
         self.after(0, self.__refresh__)
 
-        self.pht.add_on_changed(self.__on_changed__)
-
         self.bind("<Destroy>", self.__on_destory__, "+")
 
     def __refresh__(self):
@@ -84,6 +89,10 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         self.var_directory.set(self.desc.directory)
 
     def __apply__(self):
+        if self.pht is None:
+            # snapshot mode
+            return
+
         prev_pos = self.pht.pos
 
         new_dir = self.var_directory.get()
@@ -112,7 +121,8 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         self.__refresh__()
 
     def __on_destory__(self, *args, **kw):
-        self.pht.remove_on_changed(self.__on_changed__)
+        if self.pht is not None:
+            self.pht.remove_on_changed(self.__on_changed__)
 
     def __on_apply__(self):
         self.__apply__()

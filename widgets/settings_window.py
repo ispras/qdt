@@ -12,20 +12,31 @@ from gui_frame import \
     GUIFrame
 
 class SettingsWidget(GUIFrame):
-    def __init__(self, machine_history_tracker, *args, **kw):
+    def __init__(self, machine, *args, **kw):
         Frame.__init__(self, *args, **kw)
 
-        self.mht = machine_history_tracker
+        try:
+            self.mht = self.winfo_toplevel().mht
+        except AttributeError:
+            # snapshot mode
+            self.mht = None
+
+        if self.mht is not None:
+            self.mht.add_on_changed(self.on_changed)
+
+        self.mach = machine
 
         self.grid()
 
         self.refresh_after = self.after(0, self.__refresh_single__)
 
-        self.mht.add_on_changed(self.on_changed)
-
         self.bind("<Destroy>", self.__on_destroy__)
 
     def apply(self):
+        if self.mht is None:
+            # apply have no effect in snapshot mode
+            return
+
         self.mht.remove_on_changed(self.on_changed)
 
         self.__apply_internal__()
@@ -40,23 +51,27 @@ class SettingsWidget(GUIFrame):
         if nid < 0:
             return None
         else:
-            return self.mht.mach.id2node[nid]
+            return self.mach.id2node[nid]
 
     def __refresh_single__(self):
         self.refresh()
         del self.refresh_after
 
     def __on_destroy__(self, *args):
-        self.mht.remove_on_changed(self.on_changed)
+        if self.mht is not None:
+            # the listener is not assigned in snapshot mode
+            self.mht.remove_on_changed(self.on_changed)
+
         try:
             self.after_cancel(self.refresh_after)
         except AttributeError:
             pass
 
 class SettingsWindow(VarToplevel):
-    def __init__(self, machine_history_tracker, *args, **kw):
+    def __init__(self, machine, machine_history_tracker = None, *args, **kw):
         VarToplevel.__init__(self, *args, **kw)
 
+        self.mach = machine
         self.mht = machine_history_tracker
 
         self.grid()

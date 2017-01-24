@@ -23,7 +23,21 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         mach_desc.link()
 
         self.mach = mach_desc
-        self.mht = self.mach.project.pht.get_machine_proxy(self.mach)
+        try:
+            pht = self.winfo_toplevel().pht
+        except AttributeError:
+            self.mht = None
+        else:
+            if pht is None:
+                self.mht = None
+            else:
+                self.mht = pht.get_machine_proxy(self.mach)
+
+        # snapshot mode without MHT
+        if self.mht is not None:
+            pass
+            # TODO: watch machine changes and update map on relevant changes
+            # TODO: remove watching callback
 
         self.iid2node = {}
         self.selected = None
@@ -51,9 +65,16 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
                 label = command,
                 command = self.on_popup_node_settings
             )
+
+            """ All commands should follow consequent rule. If a command
+does action immediately then it should be disabled in snapshot mode like this
+command. If a command shows a dialog then either the dialog should support
+snapshot mode or the command should be disabled too.
+            """
             p1.add_command(
                 label = command,
-                command = self.on_popup_node_delete
+                command = self.notify_popup_command if self.mht is None else \
+                    self.on_popup_node_delete
             )
 
         c0 = VarMenu(p1, tearoff = 0)
@@ -100,9 +121,6 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.popup_temp_node = p3
 
         self.after(0, self.update)
-
-        # TODO: watch machine changes and update map on relevant changes
-        # TODO: remove watching callback
 
     def on_popup_node_settings(self):
         # TODO

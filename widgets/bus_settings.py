@@ -65,7 +65,7 @@ class BusSettingsWidget(SettingsWidget):
     def refresh(self):
         values = [
             DeviceSettingsWidget.gen_node_link_text(dev) for dev \
-                in ( self.mht.mach.devices + [ None ] )
+                in ( self.mach.devices + [ None ] )
         ]
         self.cb_parent.config(values = values)
 
@@ -83,7 +83,7 @@ class BusSettingsWidget(SettingsWidget):
             return
 
         if op.writes_node():
-            if not self.bus.id in self.mht.mach.id2node:
+            if not self.bus.id in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
@@ -94,5 +94,5 @@ class BusSettingsWindow(SettingsWindow):
 
         self.title(_("Bus settings"))
 
-        self.set_sw(BusSettingsWidget(bus, self.mht, self))
+        self.set_sw(BusSettingsWidget(bus, self.mach, self))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

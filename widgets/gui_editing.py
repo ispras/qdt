@@ -18,6 +18,38 @@ class GUIProjectOperation(ProjectOperation):
 
         ProjectOperation.__init__(self, project, *args, **kw)
 
+class GUIPOp_SetBuildPath(GUIProjectOperation):
+    def __init__(self, path, *args, **kw):
+        GUIProjectOperation.__init__(self, *args, **kw)
+        self.new_path = None if path is None else deepcopy(path)
+
+    def __backup__(self):
+        self.old_path = \
+            None if self.p.build_path is None else deepcopy(self.p.build_path)
+
+    def __do__(self):
+        self.p.build_path = \
+            None if self.new_path is None else deepcopy(self.new_path)
+
+    def __undo__(self):
+        self.p.build_path = \
+            None if self.old_path is None else deepcopy(self.old_path)
+
+    def __write_set__(self):
+        return GUIProjectOperation.__write_set__(self) + [
+            "build_path"
+        ]
+
+    def __description__(self):
+        if self.new_path is None:
+            return _("Forget project build path value '%s'") % self.old_path
+        elif self.old_path is None:
+            return _("Specify project build path value '%s'") % self.new_path
+        else:
+            return _("Change project build path value '%s' to '%s'") % (
+                self.old_path, self.new_path
+            )
+
 class GUIDescriptionOperation(GUIProjectOperation):
     def __init__(self, description, *args, **kw):
         GUIProjectOperation.__init__(self, *args, **kw)

@@ -88,7 +88,7 @@ class BusLineDesc(object):
 
         values = [
             DeviceSettingsWidget.gen_node_link_text(b) for b in (
-                [ b for b in self.dsw.mht.mach.buses if (\
+                [ b for b in self.dsw.mach.buses if (\
                         (   b.parent_device is None \
                          or b.parent_device == self.dsw.dev) 
                     and (not b.id in sel_buses))
@@ -181,7 +181,7 @@ class PropLineDesc(object):
         if prop_type == qemu.QOMPropertyTypeLink:
             var = tk.StringVar()
             keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
-                    for n in [ None ] + self.dsw.mht.mach.id2node.values()
+                    for n in [ None ] + self.dsw.mach.id2node.values()
                    ]
 
             ret = ttk.Combobox(self.dsw.props_lf, 
@@ -329,7 +329,7 @@ class DeviceSettingsWidget(SettingsWidget):
         )
         b.grid(row = 0, column = 2, sticky = "EW")
         # Check for device tree
-        bp = self.mht.mach.project.build_path
+        bp = self.mach.project.build_path
         if bp == None:
             b["state"] = "disabled"
         else:
@@ -486,14 +486,6 @@ class DeviceSettingsWidget(SettingsWidget):
 
         return ret
 
-    def find_node_by_link_text(self, text):
-        id = text.split(":")[0]
-        id = int(id)
-        if id < 0:
-            return None
-        else:
-            return self.mht.mach.id2node[id]
-
     def refresh(self):
         self.qom_type_var.set(self.dev.qom_type)
 
@@ -521,7 +513,7 @@ class DeviceSettingsWidget(SettingsWidget):
 
         # refresh parent bus
         buses = [ DeviceSettingsWidget.gen_node_link_text(None) ]
-        for n in self.mht.mach.id2node.values():
+        for n in self.mach.id2node.values():
             if not isinstance(n, qemu.BusNode):
                 continue
             buses.append(DeviceSettingsWidget.gen_node_link_text(n))

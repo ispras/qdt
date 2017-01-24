@@ -10,6 +10,7 @@ from ml import \
     ML
 
 from co_dispatcher import \
+    CoTask, \
     CoDispatcher
 
 def sign(x): return 1 if x >= 0 else -1

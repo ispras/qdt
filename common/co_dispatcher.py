@@ -1,6 +1,18 @@
+class CoTask(object):
+    def __init__(self, generator):
+        self.generator = generator
+
+    def on_activated(self):
+        # do nothing by default
+        pass
+
+    def on_finished(self):
+        # do nothing by default
+        pass
+
 class CoDispatcher(object):
     """
-    The dispatcher for coroutine like task.
+    The dispatcher for coroutine task.
     The task is assumed to be a generator following the protocol below.
 
     - Generator yields between 'small' pieces of work. A piece should be small
@@ -21,40 +33,51 @@ will never be given control.
         self.active_tasks = []
         self.finished_tasks = []
         self.max_tasks = max_tasks
+        self.gen2task = {}
 
     # poll returns True if at least one task is ready to proceed immediately.
     def poll(self):
-        # finished tasks
-        to_remove = []
+        finished = []
 
         ready = False
 
         for task in self.active_tasks:
-            # Note that a task is a generator
             try:
-                ret = task.next()
+                ret = task.generator.next()
             except StopIteration:
-                to_remove.append(task)
+                finished.append(task)
             else:
                 ready = ret or ready
 
-        for task in to_remove:
+        for task in finished:
             # print 'Task %s finished' % str(task)
             self.active_tasks.remove(task)
             self.finished_tasks.append(task)
+            task.on_finished()
 
         return ready
 
     def remove(self, task):
+        if not isinstance(task, CoTask):
+            task = self.gen2task[task]
+
         if task in self.finished_tasks:
             self.finished_tasks.remove(task)
         elif task in self.tasks:
             self.tasks.remove(task)
         else:
             self.active_tasks.remove(task)
+
+        del self.gen2task[task.generator]
         # print 'Task %s was removed' % str(task)
 
     def enqueue(self, task):
+        # just generator can define a task
+        if not isinstance(task, CoTask):
+            task = CoTask(task)
+
+        self.gen2task[task.generator] = task
+
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
@@ -66,8 +89,10 @@ will never be given control.
         if self.max_tasks < 0:
             added = bool(self.tasks)
             if added:
-                self.active_tasks.extend(self.tasks)
-                del self.tasks[:]
+                while self.tasks:
+                    task = self.tasks.pop(0)
+                    self.active_tasks.append(task)
+                    task.on_activated()
         else:
             rest = self.max_tasks - len(self.active_tasks)
             while rest > 0 and self.tasks:
@@ -75,6 +100,7 @@ will never be given control.
                 task = self.tasks.pop(0)
                 # print 'Activating task %s' % str(task)
                 self.active_tasks.append(task)
+                task.on_activated()
                 added = True
 
         return added
