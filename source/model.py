@@ -466,7 +466,7 @@ class Type(object):
         Type.reg[name] = self
 
     def gen_var(self, name, pointer = False, initializer = None,
-                static = False):
+                static = False, array_size = None):
         if self.incomplete:
             if not pointer:
                 raise Exception("Cannon create non-pointer variable {} \
@@ -475,10 +475,12 @@ of incomplete type {}.".format(name, self.name))
         if pointer:
             pt = Pointer(self)
             return Variable(name = name, _type = pt,
-                initializer = initializer, static = static)
+                initializer = initializer, static = static,
+                array_size = array_size)
         else:
-            return Variable(name = name, _type = self, 
-                initializer = initializer, static = static)
+            return Variable(name = name, _type = self,
+                initializer = initializer, static = static,
+                array_size = array_size)
 
     def get_definers(self):
         if self.definer == None:
@@ -744,11 +746,13 @@ class Initializer():
     __type_references__ = ["used_types", "used_variables"]
 
 class Variable():
-    def __init__(self, name, _type, initializer = None, static = False):
+    def __init__(self, name, _type, initializer = None, static = False,
+                 array_size = None):
         self.name = name
         self.type = _type
         self.initializer = initializer
         self.static = static
+        self.array_size = array_size
 
     def gen_declaration_chunks(self, indent="", extern = False):
         if isinstance(self.type, Pointer) and not self.type.is_named:
@@ -1035,13 +1039,16 @@ class PointerVariableDeclaration(SourceChunk):
     def gen_chunks(var, indent="", extern=False):
         ch = PointerVariableDeclaration(var, indent, extern)
 
-        refs = var.type.type.gen_defining_chunk_list()
-
+        if isinstance(var.type.type, Function):
+            refs = gen_function_decl_ref_chunks(var.type.type)
+        else:
+            refs = var.type.type.gen_defining_chunk_list()
         ch.add_references(refs)
 
         return [ch] + refs
 
     def __init__(self, var, indent="", extern = False):
+        self.var = var
         t = var.type.type
         if type(t) == Function:
             code = """\
@@ -1049,7 +1056,8 @@ class PointerVariableDeclaration(SourceChunk):
 """.format(
                 indent = indent,
                 extern = "extern " if extern else "",
-                decl_str = gen_function_declaration_string('', t, var.name)
+                decl_str = gen_function_declaration_string('', t, var.name,
+                                                           var.array_size)
                 )
         else:
             code = """\
@@ -1068,10 +1076,15 @@ class PointerVariableDeclaration(SourceChunk):
             code = code
         )
 
+    def get_origin(self):
+        return self.var
+
+
 class VariableDeclaration(SourceChunk):
     @staticmethod
     def gen_chunks(var, indent = "", extern = False):
-        t = var.type if not isinstance(var.type, TypeReference) else var.type.type
+        t = var.type if not isinstance(var.type, TypeReference)\
+            else var.type.type
 
         if type(t) == Macro:
             u = VariableUsage.gen_chunks(var, indent = indent)
@@ -1092,11 +1105,12 @@ class VariableDeclaration(SourceChunk):
                 var.type.name
                 ),
             code = """\
-{indent}{extern}{type_name} {var_name};
+{indent}{extern}{type_name} {var_name}{array_decl};
 """.format(
         indent = indent,
         type_name = var.type.name,
         var_name = var.name,
+        array_decl =  gen_array_declaration(var.array_size),
         extern = "extern " if extern else ""
     )
             )
@@ -1134,12 +1148,13 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{type_name} {var_name} = {init};{nl}
+{indent}{static}{type_name} {var_name}{array_decl} = {init};{nl}
 """.format(
         indent = indent,
         static = "static " if var.static else "",
         type_name = var.type.name,
         var_name = var.name,
+        array_decl = gen_array_declaration(var.array_size),
         init = init_code,
         nl = "\n" if append_nl else ""
     )
@@ -1269,7 +1284,18 @@ class StructureDeclaration(SourceChunk):
 
         self.structure = struct
 
-def gen_function_declaration_string(indent, function, pointer_name = None):
+def gen_array_declaration(array_size):
+    if array_size is not None:
+        if array_size == 0:
+            array_decl = '[]'
+        elif array_size > 0:
+            array_decl = '[' + str(array_size) + ']'
+    else:
+        array_decl = ''
+    return array_decl
+
+def gen_function_declaration_string(indent, function, pointer_name = None,
+                                    array_size = None):
     if function.args == None:
         args = "void"
     else:
@@ -1289,7 +1315,8 @@ def gen_function_declaration_string(indent, function, pointer_name = None):
         static = "static " if function.static else "",
         inline = "inline " if function.inline else "",
         ret_type = function.ret_type.name + " ",
-        name = decl_name if pointer_name is None else ('(*' + pointer_name + ')'),
+        name = decl_name if pointer_name is None else ('(*' + pointer_name +
+                                                       gen_array_declaration(array_size) + ')'),
         args = args
     )
 
@@ -1535,6 +1562,7 @@ class SourceFile:
             StructureDeclarationBegin,
             MacroDefinition,
             PointerTypeDeclaration,
+            PointerVariableDeclaration,
             VariableUsage
             ])
 
