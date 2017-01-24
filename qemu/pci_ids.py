@@ -4,6 +4,9 @@ from source import \
     Type, \
     Macro
 
+from common import \
+    co_find_eq
+
 re_pci_vendor = re.compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = re.compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
 re_pci_class = re.compile("PCI_CLASS_([A-Z0-9_]+)")
@@ -111,37 +114,13 @@ class PCIClassification(object):
         self.built = built
 
     def find_vendors(self, **kw):
-        for vendor in self.vendors.values():
-            for key, val in kw.iteritems():
-                try:
-                    if val != getattr(vendor, key):
-                        break
-                except AttributeError:
-                    break
-            else:
-                yield vendor
+        return co_find_eq(self.vendors.values(), **kw)
 
     def find_devices(self, **kw):
-        for dev in self.devices.values():
-            for key, val in kw.iteritems():
-                try:
-                    if val != getattr(dev, key):
-                        break
-                except AttributeError:
-                    break
-            else:
-                yield dev
+        return co_find_eq(self.devices.values(), **kw)
 
     def find_classes(self, **kw):
-        for klass in self.classes.values():
-            for key, val in kw.iteritems():
-                try:
-                    if val != getattr(klass, key):
-                        break
-                except AttributeError:
-                    break
-            else:
-                yield klass
+        return co_find_eq(self.classes.values(), **kw)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)

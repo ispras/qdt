@@ -3,6 +3,8 @@ from itertools import \
     count
 from machine_description import \
     MachineNode
+from common import \
+    co_find_eq
 
 class QProject(object):
     def __init__(self,
@@ -36,16 +38,7 @@ already in another project.")
                 return cand
 
     def find(self, **kw):
-        for d in self.descriptions:
-            for k, v in kw.iteritems():
-                try:
-                    if not getattr(d, k) == v:
-                        break
-                except AttributeError:
-                    break
-            else:
-                yield d
-        raise StopIteration()
+        return co_find_eq(self.descriptions, **kw)
 
     def gen_all(self, qemu_src):
         # First, generate all devices, then generate machines

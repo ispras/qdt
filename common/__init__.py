@@ -48,6 +48,9 @@ from visitor import \
     ObjectVisitor, \
     BreakVisiting
 
+from search_helper import \
+    co_find_eq
+
 from formated_string_var import \
     FormatedStringChangindException, \
     FormatVar, \
