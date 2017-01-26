@@ -345,6 +345,13 @@ class DeviceNode(Node):
         # descriptor by its property name
         self.properties = PropList()
 
+    # Internal use only.
+    def append_child_bus(self, bus):
+        if bus.parent_device is not None:
+            raise Exception("The bus already have a parent.")
+        bus.parent_device = self
+        self.buses.append(bus)
+
     def gen_prop_val(self, gen, p):
         if p.prop_type == QOMPropertyTypeLink:
             if p.prop_val:
