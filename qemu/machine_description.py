@@ -103,9 +103,15 @@ class SystemBusNode(BusNode):
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        if self.parent_device:
-            gen.gen_field("parent = " + gen.nameof(self.parent_device))
         gen.gen_end()
+        if self.parent_device:
+            # Note that a system bus cannot have parent device by design. But,
+            # if user really want problems with code generator then it is
+            # technically possible.
+            gen.line(gen.nameof(self.parent_device) + ".append_child_bus("
+                + gen.nameof(self) + ")"
+            )
+
 
 class PCIExpressBusNode(BusNode):
     def __init__(self, host_bridge):
