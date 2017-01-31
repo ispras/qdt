@@ -1620,6 +1620,8 @@ class HeaderFile(SourceFile):
 #Source tree container
 
 class SourceTreeContainer(object):
+    current = None
+
     def __init__(self):
         self.reg_header = {}
         self.reg_type = {}
@@ -1723,5 +1725,9 @@ digraph HeaderInclusion {
     def set_cur_stc(self):
         Header.reg = self.reg_header
         Type.reg = self.reg_type
+
+        previous = SourceTreeContainer.current
+        SourceTreeContainer.current = self
+        return previous
 
 SourceTreeContainer().set_cur_stc()

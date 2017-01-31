@@ -29,6 +29,7 @@ import qemu
 import os
 
 from common import \
+    CoTask, \
     PyGenerator, \
     mlget as _
 
@@ -37,8 +38,37 @@ from Tkinter import \
     StringVar
 
 from tkMessageBox import \
+    showinfo, \
     askyesno, \
     showerror
+
+class ProjectGeneration(CoTask):
+    def __init__(self, project, source_path):
+        self.p = project
+        self.s = source_path
+        self.finished = False
+        CoTask.__init__(self, self.begin())
+
+    def begin(self):
+        try:
+            self.p.gen_all(self.s)
+        except Exception as e:
+            yield True
+
+            showerror(
+                title = _("Generation failed").get(),
+                message = (_("Exception: '%s'.") % str(e)).get()
+            )
+        else:
+            yield True
+
+            showinfo(
+                title = _("Generation completed").get(),
+                message = _("No errors were reported.").get()
+            )
+
+    def on_finished(self):
+        self.finished = True
 
 class QDCGUIWindow(GUITk):
     def __init__(self, project = None):
@@ -85,6 +115,11 @@ show it else hide it.")
                 description = _("Set Qemu build path for the project")
             ),
             HotKeyBinding(
+                self.on_generate,
+                key_code = 42, # G
+                description = _("Launch code generation")
+            ),
+            HotKeyBinding(
                 self.on_delete,
                 key_code = 24, # Q
                 description = _("Shutdown the application.")
@@ -112,6 +147,7 @@ show it else hide it.")
             57: "N",
             40: "D",
             56: "B",
+            42: "G",
             24: "Q",
             52: "Z",
             29: "Y",
@@ -132,6 +168,13 @@ show it else hide it.")
             command = self.on_set_qemu_build_path,
             accelerator = hotkeys.get_keycode_string(
                 self.on_set_qemu_build_path
+            )
+        )
+        filemenu.add_command(
+            label = _("Generate"),
+            command = self.on_generate,
+            accelerator = hotkeys.get_keycode_string(
+                self.on_generate
             )
         )
         filemenu.add_separator()
@@ -333,6 +376,16 @@ show it else hide it.")
         self.pht.do_sequence()
 
     def on_delete(self):
+        try:
+            """ TODO: Note that it is possible to prevent window to close if a
+            generation task is in process. But is it really needed? """
+
+            self.task_manager.remove(self._project_generation_task)
+        except AttributeError:
+            pass
+        else:
+            del self._project_generation_task
+
         self.quit()
 
     def on_add_description(self):
@@ -344,6 +397,52 @@ show it else hide it.")
             return
 
         self.pht.set_build_path(dir)
+
+    def on_generate(self):
+        try:
+            t = self._project_generation_task
+        except AttributeError:
+            pass
+        else:
+            if not t.finished:
+                showerror(
+                    title = _("Generation is cancelled").get(),
+                    message = _("At least one generation task is already \
+in process.").get()
+                )
+                return
+
+        qvd = qemu.QemuVersionDescription.current
+
+        if qvd is None:
+            showerror(
+                title = _("Generation is impossible").get(),
+                message = _("No Qemu version descriptor is selected. Try to \
+set correct Qemu build path.").get()
+            )
+            return
+
+        if not self.proj.build_path:
+            showerror(
+                title = _("Generation is impossible").get(),
+                message = _("No Qemu build path is set for the project.").get()
+            )
+            return
+
+        if qvd.build_path != self.proj.build_path:
+            showerror(
+                title = _("Generation is cancelled").get(),
+                message = (_("Qemu build path of current version description '\
+%s' differs from one selected for the project '%s'.") % (
+    qvd.build_path, self.proj.build_path)).get()
+            )
+            return
+
+        self._project_generation_task = ProjectGeneration(
+            self.proj,
+            qvd.src_path
+        )
+        self.task_manager.enqueue(self._project_generation_task)
 
     def load_project_from_file(self, file_name):
         loaded_variables = {}

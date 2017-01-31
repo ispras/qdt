@@ -114,6 +114,8 @@ def qvds_init_cache():
             v.init_cache()
 
 class QemuVersionCache(object):
+    current = None
+
     def __init__(self,
                  list_headers = None,
                  device_tree = None,
@@ -147,6 +149,10 @@ class QemuVersionCache(object):
         self.stc.set_cur_stc()
         PCIId.db = self.pci_c
 
+        previous = QemuVersionCache.current
+        QemuVersionCache.current = self
+        return previous
+
 class BadBuildPath(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
@@ -156,6 +162,8 @@ class MultipleQVCInitialization(Exception):
         Exception.__init__(self, path)
 
 class QemuVersionDescription(object):
+    current = None
+
     def __init__(self, build_path):
         config_host_path = os.path.join(build_path, 'config-host.mak')
         if not os.path.isfile(config_host_path):
@@ -203,6 +211,10 @@ class QemuVersionDescription(object):
             self.init_cache()
         self.qvc.use()
 
+        previous = QemuVersionDescription.current
+        QemuVersionDescription.current = self
+        return previous
+
     def init_cache(self):
         for junk in self.co_init_cache():
             pass
@@ -218,7 +230,7 @@ class QemuVersionDescription(object):
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
-            self.qvc.use()
+            prev_qvc = self.qvc.use()
             for ret in Header.co_build_inclusions(self.include_path):
                 yield ret
 
@@ -242,7 +254,7 @@ class QemuVersionDescription(object):
         else:
             self.load_cache(qvc_path)
             # make just loaded QVC active
-            self.qvc.use()
+            prev_qvc = self.qvc.use()
 
             if self.qvc.list_headers is not None:
                 yield True
@@ -258,6 +270,9 @@ class QemuVersionDescription(object):
 
         # initialize Qemu types in QVC
         get_vp()["qemu types definer"]()
+
+        if prev_qvc is not None:
+            prev_qvc.use()
 
     def load_cache(self, qvc_path):
         if not os.path.isfile(qvc_path):
