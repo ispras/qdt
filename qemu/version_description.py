@@ -243,9 +243,8 @@ class QemuVersionDescription(object):
 
             yield True
 
-            self.gen_device_tree()
-
-            yield True
+            for ret in self.co_gen_device_tree():
+                yield ret
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -340,19 +339,23 @@ class QemuVersionDescription(object):
             return None
 
     # TODO: get dt from qemu
-    def gen_device_tree(self):
+
+    def co_gen_device_tree(self):
         dt_db_fname = join(self.build_path, "dt.json")
         if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname)
             dt_db_reader = open(dt_db_fname, "rb")
             self.qvc.device_tree = load(dt_db_reader)
             dt_db_reader.close()
+            yield True
+
             print("Adding macros to " + dt_db_fname)
-            self.add_dt_macro(device_tree)
+            for ret in self.co_add_dt_macro(self.qvc.device_tree):
+                yield True
         else:
             self.qvc.device_tree = None
 
-    def add_dt_macro(self, list_dt):
+    def co_add_dt_macro(self, list_dt):
         for dict_dt in list_dt:
             dt_type = dict_dt["type"]
             for h in self.qvc.stc.reg_header.values():
@@ -377,4 +380,6 @@ class QemuVersionDescription(object):
                                     else:
                                         dt_property["macro"] = [t.name]
             if "children" in dict_dt:
-                self.add_dt_macro(dict_dt["children"])
+                yield True
+                for ret in self.co_add_dt_macro(dict_dt["children"]):
+                    yield True
