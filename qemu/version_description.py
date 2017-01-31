@@ -25,6 +25,9 @@ from pci_ids import \
     PCIId, \
     PCIClassification
 
+from git import \
+    Repo
+
 bp_file_name = "build_path_list"
 
 qvd_reg = {}
@@ -189,9 +192,8 @@ class QemuVersionDescription(object):
         )
 
         # Get SHA
-        self.commit_sha = QemuVersionDescription.get_head_commit_sha(
-            self.src_path
-        )
+        self.repo = Repo(self.src_path)
+        self.commit_sha = self.repo.head.commit.hexsha
 
         VERSION_path = join(self.src_path, 'VERSION')
 
