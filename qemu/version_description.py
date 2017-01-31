@@ -305,18 +305,9 @@ class QemuVersionDescription(object):
 "No QemuVersionCache was loaded from %s." % qvc_path
                     )
 
-    @staticmethod
-    def get_head_commit_sha(src_path):
-        cmd = ['git', '-C', src_path, 'rev-parse', 'HEAD']
-        sha = check_output(cmd, stderr = STDOUT)
 
-        sha = sha.rstrip()
 
-        # Error when get SHA
-        if not (sha.islower() and sha.isalnum() and len(sha) == 40):
-            raise Exception('Geg SHA: "{}".'.format(sha))
 
-        return sha
 
     @staticmethod
     def check_uncommit_change(src_path):
@@ -334,11 +325,6 @@ class QemuVersionDescription(object):
 
         if "Untracked files" in status:
             print "WARNING! " + src_path + " has untracked files."
-
-    @staticmethod
-    def compare_by_sha(sha):
-        # git rev-list --count SHA
-        pass
 
     @staticmethod
     def ch_lookup(config_host, parameter):
