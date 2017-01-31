@@ -41,6 +41,20 @@ class QEMUVersionParameterDescription(object):
         self.new_value = new_value
         self.old_value = old_value
 
+    # modification detection code
+    def gen_mdc(self):
+        if callable(self.new_value):
+            nv = self.new_value.__name__
+        else:
+            nv = self.new_value
+
+        if callable(self.old_value):
+            ov = self.old_value.__name__
+        else:
+            ov = self.old_value
+
+        return self.name + nv + ov
+
 class QEMUVersionDescription(object):
     def __init__(self, version_string, parameters):
         self.version = parse_version(version_string)
