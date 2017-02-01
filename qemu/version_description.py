@@ -122,6 +122,20 @@ def qvds_init_cache():
         if not v == None:
             v.init_cache()
 
+class CommitDesc(object):
+    def __init__(self, sha, parents, children):
+        self.sha = sha
+        self.parents = parents
+        self.children = children
+
+        # dict of QEMUVersionParameterDescription new_value parameters
+        self.param_nval = {}
+        # dict of QEMUVersionParameterDescription old_value parameters
+        self.param_oval = {}
+
+        # serial number according to the topological sorting
+        self.num = None
+
 class QemuVersionCache(object):
     current = None
 
