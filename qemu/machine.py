@@ -8,14 +8,10 @@ from source import \
     Function
 
 from machine_description import \
-    MachineNode, \
-    DeviceNode, \
     SystemBusDeviceNode, \
-    PCIExpressDeviceNode, \
     BusNode, \
     SystemBusNode, \
     PCIExpressBusNode, \
-    IRQLine, \
     IRQHub, \
     QOMPropertyTypeLink, \
     QOMPropertyTypeString, \
@@ -24,14 +20,16 @@ from machine_description import \
     MemoryNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
-    MemoryROMNode
+    MemoryROMNode, \
+    DeviceNode, \
+    IRQLine, \
+    PCIExpressDeviceNode
 
 from common import \
     sort_topologically
 
-import os.path
-from qemu.machine_description import DeviceNode, IRQLine, PCIExpressDeviceNode
-from __builtin__ import isinstance
+from os.path import \
+    join as join_path
 
 from version import \
     get_vp
@@ -255,7 +253,7 @@ class MachineType(QOMType):
 
         # source file model
         source_path = \
-            os.path.join("hw", machine.directory,
+            join_path("hw", machine.directory,
                          self.qtn.for_header_name + ".c")
 
         self.source = Source(source_path)
