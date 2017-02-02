@@ -1,9 +1,16 @@
 from formated_string_var import \
     FormatVar
 
-import gettext
-import locale
-from os.path import dirname, abspath
+from gettext import \
+    translation, \
+    NullTranslations
+
+from locale import \
+    getdefaultlocale
+
+from os.path import \
+    dirname, \
+    abspath
 
 """
 ML = Multi language
@@ -19,12 +26,12 @@ class ML(FormatVar):
         locale = [locale] if locale else []
         try:
             # First search for translation in default location
-            ML.current_translation = gettext.translation("qdc", None, locale)
+            ML.current_translation = translation("qdc", None, locale)
         except:
             try:
                 # Else search for translation relative current file path
                 localedir = abspath(dirname(__file__) + "/../locale")
-                ML.current_translation = gettext.translation(
+                ML.current_translation = translation(
                     "qdc",
                     localedir,
                     locale
@@ -34,7 +41,7 @@ class ML(FormatVar):
 
         if not ML.current_translation:
             # If translation was found then the keys is used for strings
-            ML.current_translation = gettext.NullTranslations()
+            ML.current_translation = NullTranslations()
 
         for s in ML.multi_language_strings:
             s.update()
@@ -56,5 +63,5 @@ def mlget(key_value):
 
     return ML(key_value)
 
-current_locale, encoding = locale.getdefaultlocale()
+current_locale, encoding = getdefaultlocale()
 ML.set_language(current_locale)
