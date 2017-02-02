@@ -142,10 +142,12 @@ class QemuVersionCache(object):
     def __init__(self,
                  list_headers = None,
                  device_tree = None,
+                 version_desc = None,
                  pci_classes = None
     ):
         self.device_tree = device_tree
         self.list_headers = list_headers
+        self.version_desc = version_desc
 
         # Create source tree container
         self.stc = SourceTreeContainer()
@@ -381,6 +383,9 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
 
         gen.gen_field("list_headers = ")
         gen.pprint(self.list_headers)
+
+        gen.gen_field("version_desc = ")
+        gen.pprint(self.version_desc)
 
         gen.gen_field("pci_classes = " + gen.nameof(self.pci_c))
 
