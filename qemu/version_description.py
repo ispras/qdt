@@ -6,7 +6,8 @@ from source import \
 from common import \
     PyGenerator
 
-from json import load
+from json import \
+    load
 
 from subprocess import \
     check_output, \
@@ -16,7 +17,9 @@ from version import \
     initialize as initialize_version, \
     get_vp
 
-import os
+from os.path import \
+    join, \
+    isfile
 
 from pci_ids import \
     PCIId, \
@@ -27,7 +30,7 @@ bp_file_name = "build_path_list"
 qvd_reg = {}
 
 def load_build_path_list():
-    if not os.path.isfile(bp_file_name):
+    if not isfile(bp_file_name):
         return
 
     build_path_f = open(bp_file_name)
@@ -40,7 +43,7 @@ def load_build_path_list():
 def account_build_path(path):
     if path in qvd_reg.keys():
         return
-    if not os.path.isfile(bp_file_name):
+    if not isfile(bp_file_name):
         f = open(bp_file_name, 'w')
     else:
         f = open(bp_file_name, 'a')
@@ -165,8 +168,8 @@ class QemuVersionDescription(object):
     current = None
 
     def __init__(self, build_path):
-        config_host_path = os.path.join(build_path, 'config-host.mak')
-        if not os.path.isfile(config_host_path):
+        config_host_path = join(build_path, 'config-host.mak')
+        if not isfile(config_host_path):
             forget_build_path(build_path)
             raise BadBuildPath("%s does not exists." % config_host_path)
 
@@ -190,9 +193,9 @@ class QemuVersionDescription(object):
             self.src_path
         )
 
-        VERSION_path = os.path.join(self.src_path, 'VERSION')
+        VERSION_path = join(self.src_path, 'VERSION')
 
-        if not os.path.isfile(VERSION_path):
+        if not  isfile(VERSION_path):
             raise Exception("{} does not exists\n".format(VERSION_path))
 
         VERSION_f = open(VERSION_path)
@@ -201,7 +204,7 @@ class QemuVersionDescription(object):
 
         print("Qemu version is {}".format(self.qemu_version))
 
-        self.include_path = os.path.join(self.src_path, 'include')
+        self.include_path = join(self.src_path, 'include')
 
         self.qvc = None
 
@@ -224,9 +227,9 @@ class QemuVersionDescription(object):
             raise MultipleQVCInitialization(self.src_path)
 
         qvc_file_name = "qvc_" + self.commit_sha + ".py"
-        qvc_path = os.path.join(self.build_path, qvc_file_name)
+        qvc_path = join(self.build_path, qvc_file_name)
 
-        if not os.path.isfile(qvc_path):
+        if not  isfile(qvc_path):
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
@@ -275,7 +278,7 @@ class QemuVersionDescription(object):
             prev_qvc.use()
 
     def load_cache(self, qvc_path):
-        if not os.path.isfile(qvc_path):
+        if not  isfile(qvc_path):
             raise Exception("%s does not exists." % qvc_path)
         else:
             print("Loading QVC from " + qvc_path)
@@ -354,7 +357,7 @@ class QemuVersionDescription(object):
     @staticmethod
     def gen_device_tree(build_path, stc):
         dt_db_fname = build_path + "/dt.json"
-        if os.path.isfile(dt_db_fname):
+        if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname)
             dt_db_reader = open(dt_db_fname, "rb")
             device_tree = load(dt_db_reader)
