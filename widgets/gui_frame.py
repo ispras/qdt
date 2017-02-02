@@ -1,7 +1,7 @@
 from Tkinter import \
     Frame
 
-from common import \
+from tk_unbind import \
     unbind
 
 class GUIFrame(Frame):
