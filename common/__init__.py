@@ -42,4 +42,7 @@ from formated_string_var import \
     FormatedStringVar
 
 from extra_math import \
+    Vector, \
+    Segment, \
+    Polygon, \
     sign
