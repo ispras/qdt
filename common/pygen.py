@@ -1,4 +1,5 @@
-from common import topology
+from common import \
+    topology
 
 """
 PyGenerator provides an interface for saving an object to the file.
