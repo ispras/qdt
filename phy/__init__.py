@@ -1,20 +1,25 @@
-import copy
-import math
-import random
+from copy import \
+    deepcopy as dcp
+
+from math import \
+    sqrt
+
+from random import \
+    random
 
 class Vector(object):
     def __init__(self, x = 0, y = 0):
         self.x, self.y = x, y
 
     def Length(self):
-        return math.sqrt(self.x * self.x + self.y * self.y)
+        return sqrt(self.x * self.x + self.y * self.y)
 
     def SetLenght(self, value):
         l = self.Length()
 
         while l == 0:
-            self.x = random.random() - 0.5
-            self.y = random.random() - 0.5
+            self.x = random() - 0.5
+            self.y = random() - 0.5
             l = self.Length()
 
         scale = float(value) / l
@@ -78,7 +83,7 @@ class Polygon(object):
         if not points:
             self.points = [Vector(), Vector(), Vector()]
         else:
-            self.points = copy.deepcopy(points) if deepcopy else points
+            self.points = dcp(points) if deepcopy else points
 
     def SetPoint(self, v, idx = 0):
         p = self.points[idx]
