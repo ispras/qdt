@@ -13,9 +13,6 @@ from qemu import \
     MOp_AddIOMapping, \
     MOp_SetIOMapping
 
-from itertools import \
-    count
-
 from hotkey import \
     HKEntry
 
