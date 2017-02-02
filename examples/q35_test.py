@@ -1,4 +1,24 @@
-from qemu import *
+from qemu import \
+    QProject, \
+    SysBusDeviceDescription, \
+    MachineNode, \
+    MemoryNode, \
+    MemoryRAMNode, \
+    MemoryROMNode, \
+    IRQLine, \
+    IRQHub, \
+    DeviceNode, \
+    PCIExpressDeviceNode, \
+    SystemBusDeviceNode, \
+    PCIExpressBusNode, \
+    ISABusNode, \
+    IDEBusNode, \
+    I2CBusNode, \
+    QOMPropertyValue, \
+    QOMPropertyTypeInteger, \
+    QOMPropertyTypeLink, \
+    QOMPropertyTypeBoolean, \
+    QOMPropertyTypeString
 
 def Q35MachineNode_2_5_0():
     self = MachineNode("q35_test", "i386")
