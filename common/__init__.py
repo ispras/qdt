@@ -13,8 +13,6 @@ from co_dispatcher import \
     CoTask, \
     CoDispatcher
 
-def sign(x): return 1 if x >= 0 else -1
-
 from inverse_operation import \
     InverseOperation, \
     InitialOperationBackwardIterator, \
@@ -42,3 +40,6 @@ from formated_string_var import \
     FormatedStringChangindException, \
     FormatVar, \
     FormatedStringVar
+
+from extra_math import \
+    sign
