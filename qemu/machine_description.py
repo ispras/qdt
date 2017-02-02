@@ -1,9 +1,13 @@
 import machine
-from __builtin__ import isinstance
-from source import Type
+
+from source import \
+    Type
+
 from qom_desc import \
     QOMDescription
-from itertools import count
+
+from itertools import \
+    count
 
 # properties
 class QOMPropertyType(object):
