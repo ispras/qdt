@@ -4,11 +4,6 @@ from widgets import \
 
 import Tkinter as tk
 
-from phy import \
-    Vector, \
-    Segment, \
-    Polygon
-
 import math
 import random
 import time
@@ -16,6 +11,9 @@ import sys
 import os
 
 from common import \
+    Vector, \
+    Segment, \
+    Polygon, \
     mlget as _, \
     sign
 
