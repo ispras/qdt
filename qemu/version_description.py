@@ -229,6 +229,147 @@ class QemuVersionCache(object):
 
         self.commit_desc_nodes = commit_desc_nodes
 
+    def co_propagate_new_param(self, sorted_vd_keys, vd):
+        '''This method propagate QEMUVersionParameterDescription.new_value
+        in graph of commits. It must be called before old_value propagation.
+
+        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        vd: qemu_versions_desc
+        '''
+
+        for key in sorted_vd_keys:
+            cur_vd = vd[key]
+            cur_node = self.commit_desc_nodes[key]
+            for vpd in cur_vd:
+                cur_node.param_nval[vpd.name] = vpd.new_value
+
+        yield True
+
+        # vd_keys_set is used to accelerate propagation
+        vd_keys_set = set(sorted_vd_keys)
+
+        # old_val contains all old_value that are in ancestors
+        old_val = {}
+        for key in sorted_vd_keys:
+            stack = [self.commit_desc_nodes[key]]
+            for vpd in vd[key]:
+                try:
+                    old_val[vpd.name].append(vpd.old_value)
+                except KeyError:
+                    old_val[vpd.name] = [vpd.old_value]
+            while stack:
+                cur_node = stack.pop()
+                for c in cur_node.children:
+                    if c.sha in vd_keys_set:
+                        # if the child is vd, only the parameters that are not
+                        # in vd's param_nval are added
+                        for p in cur_node.param_nval:
+                            if p not in c.param_nval:
+                                c.param_nval[p] = cur_node.param_nval[p]
+                        # no need to add element to stack, as it's in the sorted_vd_keys
+                    else:
+                        # the child is't vd
+                        for p in cur_node.param_nval:
+                            if p in c.param_nval:
+                                if cur_node.param_nval[p] != c.param_nval[p]:
+                                    exc_raise = False
+                                    if p in old_val:
+                                        if cur_node.param_nval[p] not in old_val[p]:
+                                            if c.param_nval[p] in old_val[p]:
+                                                c.param_nval[p] = cur_node.param_nval[p]
+                                                stack.append(c)
+                                            else:
+                                                exc_raise = True
+                                    else:
+                                        exc_raise = True
+                                    if exc_raise:
+                                        raise Exception("Contradictory definition of param " \
+"'%s' in commit %s (%s != %s)" % (p, c.sha, cur_node.param_nval[p], c.param_nval[p])
+                                        )
+                            else:
+                                c.param_nval[p] = cur_node.param_nval[p]
+                                stack.append(c)
+
+                yield True
+
+    def co_propagate_old_param(self, sorted_vd_keys, vd):
+        '''This method propagate QEMUVersionParameterDescription.old_value
+        in graph of commits. It must be called after new_value propagation.
+
+        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        vd: qemu_versions_desc
+        '''
+
+        # messages for exceptions
+        msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
+        msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+
+        # starting initialization
+        for key in sorted_vd_keys[::-1]:
+            node = self.commit_desc_nodes[key]
+            cur_vd = vd[key]
+            for parent in node.parents:
+                # propagate old_val from node to their parents
+                # this is necessary if the vd are consecutive
+                for param_name in node.param_oval:
+                    parent.param_oval[param_name] = node.param_oval[param_name]
+                # init old_val of nodes that consist of vd's parents
+                # and check conflicts
+                for param in cur_vd:
+                    if param.name in parent.param_nval:
+                        if parent.param_nval[param.name] != param.old_value:
+                            Exception(msg1 % (
+param.name, parent.sha, param.old_value, parent.param_nval[param.name]
+                            ))
+                    elif param.name in parent.param_oval:
+                        if param.old_value != parent.param_oval[param.name]:
+                            Exception(msg2 % (
+param.name, parent.sha, param.old_value, parent.param_oval[param.name]
+                            ))
+                    else:
+                        parent.param_oval[param.name] = param.old_value
+
+        yield True
+
+        # set is used to accelerate propagation
+        vd_keys_set = set(sorted_vd_keys)
+        visited_vd = set()
+        for key in sorted_vd_keys[::-1]:
+            stack = []
+            # used to avoid multiple processing of one node
+            visited_nodes = set([key])
+            visited_vd.add(key)
+            for p in self.commit_desc_nodes[key].parents:
+                stack.append(p)
+            while stack:
+                cur_node = stack.pop()
+                visited_nodes.add(cur_node.sha)
+
+                for commit in cur_node.parents + cur_node.children:
+                    if commit.sha in visited_nodes:
+                        continue
+                    for param_name in cur_node.param_oval:
+                        if param_name in commit.param_nval:
+                            continue
+                        elif param_name in commit.param_oval:
+                            if commit.param_oval[param_name] != cur_node.param_oval[param_name]:
+                                Exception(msg2 % (
+param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param_name]
+                                ))
+                        else:
+                            commit.param_oval[param_name] = cur_node.param_oval[param_name]
+                            if commit.sha not in vd_keys_set:
+                                stack.append(commit)
+                            # if we have visited vd before, it is necessary
+                            # to propagate the param, otherwise we do it
+                            # in the following iterations of the outer loop
+                            elif commit.sha in visited_vd:
+                                stack.append(commit)
+
+                yield True
+
     def __children__(self):
         return [ self.pci_c ]
 
