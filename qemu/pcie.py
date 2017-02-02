@@ -1,12 +1,12 @@
 from source import \
- Header, \
- Source, \
- Structure, \
- Type, \
- Function, \
- Initializer, \
- Macro \
- , TypeNotRegistered
+    Header, \
+    Source, \
+    Structure, \
+    Type, \
+    Function, \
+    Initializer, \
+    Macro, \
+    TypeNotRegistered
 
 from qom import \
     QOMType
