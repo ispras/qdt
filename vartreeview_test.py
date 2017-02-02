@@ -4,7 +4,8 @@ from Tkinter import \
     StringVar, \
     Tk
 
-from widgets import VarTreeview
+from widgets import \
+    VarTreeview
 
 class Mytest(object):
     def __init__(self, delay, var1, var2):
