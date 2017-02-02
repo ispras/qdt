@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 from Tkinter import *
-from phy import *
+from common import *
 from widgets import *
 
 class CanvasPolygon(Polygon):
