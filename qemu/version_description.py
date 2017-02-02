@@ -151,6 +151,84 @@ class QemuVersionCache(object):
         self.stc = SourceTreeContainer()
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
+    def co_gen_commits_graph(self, repo):
+        iterations_per_yield = 20
+        commit_desc_nodes = {}
+        # n is serial number according to the topology sorting
+        n = 0
+        # to_enum is used during topological sorting
+        # it contains commit to enumerate
+        to_enum = None
+        # build_stack contains eges represented by tuples
+        # (parent, child), where parent is instance of
+        # git.Commit, child is instance of CommitDesc
+        build_stack = []
+        for head in repo.branches:
+            # skip processed heads
+            if head.commit.hexsha in commit_desc_nodes:
+                continue
+
+            head_desc = CommitDesc(head.commit.hexsha, [], [])
+            commit_desc_nodes[head.commit.hexsha] = head_desc
+            # add edges connected to head being processed
+            for p in head.commit.parents:
+                build_stack.append((p, head_desc))
+
+            while build_stack:
+                parent, child_commit_desc = build_stack.pop()
+
+                try:
+                    parent_desc = commit_desc_nodes[parent.hexsha]
+                except KeyError:
+                    parent_desc = CommitDesc(parent.hexsha, [], [])
+                    commit_desc_nodes[parent.hexsha] = parent_desc
+
+                    if parent.parents:
+                        for p in parent.parents:
+                            build_stack.append((p, parent_desc))
+                    else:
+                        # current edge parent is an elder commit in the tree,
+                        # that is why we should enumerate starting from it
+                        to_enum = parent_desc
+                else:
+                    # the existence of parent_desc means that parent has been
+                    # enumerated before. Hence, we starts enumeration from
+                    # it's child
+                    to_enum = child_commit_desc
+                finally:
+                    parent_desc.children.append(child_commit_desc)
+                    child_commit_desc.parents.append(parent_desc)
+
+                # numbering is performed from the 'to_enum' to either a leaf
+                # commit or a commit just before a merge which have at least
+                # one parent without number (except the commit)
+                while to_enum is not None:
+                    e = to_enum
+                    to_enum = None
+                    # if the number of parents in the commit_desc_nodes
+                    # is equal to the number of parents in the repo,
+                    # then all parents were numbered (added) earlier
+                    # according to the graph building algorithm,
+                    # else we cannot assign number to the commit yet
+                    if len(e.parents) == len(repo.commit(e.sha).parents):
+                        e.num = n
+                        n = n + 1
+                        # according to the algorithm, only one child
+                        # have no number. Other children either have
+                        # been enumerated already or are not added yet
+                        for c in e.children:
+                            if c.num is None:
+                                to_enum = c
+                                break
+
+                    if n % iterations_per_yield == 0:
+                        yield
+
+            if len(commit_desc_nodes) % iterations_per_yield == 0:
+                yield
+
+        self.commit_desc_nodes = commit_desc_nodes
+
     def __children__(self):
         return [ self.pci_c ]
 
