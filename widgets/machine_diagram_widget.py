@@ -1011,7 +1011,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_multiple_delete(self):
-        self.delete_selected()
+        self.delete_ids(self.current_popup_tag)
         self.notify_popup_command()
 
     def delete_selected(self):
