@@ -1279,11 +1279,13 @@ IRQ line creation
                     popup = self.popup_single_irq_hub
                 elif isinstance(tdev, BusNode):
                     popup = self.popup_single_bus
+                tag = tid
             else:
                 popup = self.popup_multiple
+                tag = list(self.selected)
 
             if popup:
-                self.show_popup(event.x_root, event.y_root, popup, tdev)
+                self.show_popup(event.x_root, event.y_root, popup, tag)
                 return
 
         #print("on_b3_press")
