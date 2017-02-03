@@ -10,10 +10,12 @@ from device_tree_widget import \
 from common import \
     mlget as _
 
+from gui_frame import \
+    GUIFrame
+
 from Tkinter import \
     StringVar, \
     BooleanVar, \
-    Frame, \
     OptionMenu
 
 from ttk import \
@@ -319,7 +321,7 @@ class DeviceSettingsWidget(SettingsWidget):
         self.columnconfigure(0, weight = 1)
 
         self.rowconfigure(0, weight = 0)
-        common_fr = Frame(self)
+        common_fr = GUIFrame(self)
         common_fr.grid(
             row = 0,
             column = 0,
