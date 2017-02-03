@@ -1015,8 +1015,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def delete_selected(self):
+        self.delete_ids(list(self.selected))
+
+    def delete_ids(self, ids):
         to_del = []
-        for sid in self.selected:
+        for sid in ids:
             try:
                 n = self.id2node[sid]
                 mach_n = self.node2dev[n]
