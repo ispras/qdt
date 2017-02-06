@@ -7,22 +7,23 @@ from os import \
     makedirs
 
 from os.path import \
+    join, \
     isdir, \
     isfile
 
 files = [
-    "widgets/device_settings.py",
-    "widgets/device_settings_window.py",
-    "widgets/device_tree_widget.py",
-    "widgets/irq_settings.py",
-    "widgets/machine_diagram_widget.py",
-    "widgets/pci_device_settings.py",
-    "widgets/settings_window.py",
-    "widgets/sysbusdevset.py",
-    "widgets/hotkey.py",
-    "widgets/bus_settings.py",
-    "qdc-gui.py",
-    "history-test.py"
+    join("widgets", "device_settings.py"),
+    join("widgets", "device_settings_window.py"),
+    join("widgets", "device_tree_widget.py"),
+    join("widgets", "irq_settings.py"),
+    join("widgets", "machine_diagram_widget.py"),
+    join("widgets", "pci_device_settings.py"),
+    join("widgets", "settings_window.py"),
+    join("widgets", "sysbusdevset.py"),
+    join("widgets", "hotkey.py"),
+    join("widgets", "bus_settings.py"),
+    join("qdc-gui.py"),
+    join("history-test.py")
 ]
 
 langs = [
@@ -30,41 +31,41 @@ langs = [
 ]
 
 for l in langs:
-    directory = "locale/" + l + "/LC_MESSAGES/"
+    directory = join("locale", l, "LC_MESSAGES")
     if not isdir(directory):
         makedirs(directory)
 
     call(
         [   "xgettext",
-            "-o", directory + "messages.po",
+            "-o", join(directory, "messages.po"),
         ] + files
     )
 
     if not isfile(directory + "qdc.po"):
         call(
             [   "mv",
-                directory + "messages.po",
-                directory + "qdc.po"
+                join(directory, "messages.po"),
+                join(directory, "qdc.po")
             ]
         )
     else:
         call(
             [   "msgmerge",
                 "-U",
-                "-N", directory + "qdc.po",
-                directory + "messages.po"
+                "-N", join(directory, "qdc.po"),
+                join(directory,"messages.po")
             ]
         )
         call(
             [   "rm",
-                directory + "messages.po"
+                join(directory, "messages.po")
             ]
         )
 
     call(
         [
             "msgfmt",
-            "-o", directory + "qdc.mo",
-            directory + "qdc.po"
+            "-o", join(directory, "qdc.mo"),
+            join(directory, "qdc.po")
         ]
     )

@@ -4,19 +4,21 @@
 from copy import \
     copy
 
+from gui_frame import \
+    GUIFrame
+
 from Tkinter import \
-    Frame, \
     Canvas, \
     RIDGE, \
     BOTH
 
-class CanvasDnD(Frame):
+class CanvasDnD(GUIFrame):
     def __init__(self, master,
             id_priority_sort_function = lambda ids : ids
         ):
         self.master = master
 
-        Frame.__init__ (self, master)
+        GUIFrame.__init__ (self, master)
         self.canvas = Canvas (self, 
             width = 100, # default width
             height = 100, # default height

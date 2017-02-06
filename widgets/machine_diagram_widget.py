@@ -862,7 +862,7 @@ IRQ line creation
         self.invalidate()
 
     def on_popup_single_device_irq_source(self):
-        sid = self.selected[0]
+        sid = self.current_popup_tag
         self.irq_src = self.node2dev[self.id2node[sid]].id
 
         self.popup_single_device.entryconfig(
@@ -877,7 +877,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_device_irq_destination(self):
-        did = self.selected[0]
+        did = self.current_popup_tag
         irq_dst = self.node2dev[self.id2node[did]].id
 
         self.mht.stage(
@@ -897,7 +897,7 @@ IRQ line creation
         self.on_popup_single_device_irq_destination()
 
     def on_popup_single_irq_hub_delete(self):
-        hid = self.selected[0]
+        hid = self.current_popup_tag
         node = self.id2node[hid]
         hid = self.node2dev[node].id
 
@@ -911,7 +911,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_device_delete(self):
-        dev_id = self.selected[0]
+        dev_id = self.current_popup_tag
         node = self.id2node[dev_id]
         dev_id = self.node2dev[node].id
 
@@ -925,7 +925,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_device_settings(self):
-        id = self.selected[0]
+        id = self.current_popup_tag
 
         x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
         x, y = self.canvas.coords(id)[-2:]
@@ -980,7 +980,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_bus_settings(self):
-        id = self.selected[0]
+        id = self.current_popup_tag
 
         x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
         x, y = self.canvas.coords(id)[-2:]
@@ -997,7 +997,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_bus_delete(self):
-        bus_id = self.selected[0]
+        bus_id = self.current_popup_tag
         node = self.id2node[bus_id]
         bus_id = self.node2dev[node].id
 
@@ -1011,12 +1011,15 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_multiple_delete(self):
-        self.delete_selected()
+        self.delete_ids(self.current_popup_tag)
         self.notify_popup_command()
 
     def delete_selected(self):
+        self.delete_ids(list(self.selected))
+
+    def delete_ids(self, ids):
         to_del = []
-        for sid in self.selected:
+        for sid in ids:
             try:
                 n = self.id2node[sid]
                 mach_n = self.node2dev[n]
@@ -1279,11 +1282,13 @@ IRQ line creation
                     popup = self.popup_single_irq_hub
                 elif isinstance(tdev, BusNode):
                     popup = self.popup_single_bus
+                tag = tid
             else:
                 popup = self.popup_multiple
+                tag = list(self.selected)
 
             if popup:
-                self.show_popup(event.x_root, event.y_root, popup, tdev)
+                self.show_popup(event.x_root, event.y_root, popup, tag)
                 return
 
         #print("on_b3_press")
