@@ -7,7 +7,8 @@ from var_widgets import \
 from qemu import \
     qvd_get_registered
 
-from ttk import Scrollbar
+from ttk import \
+    Scrollbar
 
 from Tkinter import \
     Radiobutton, \

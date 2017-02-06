@@ -14,8 +14,8 @@ from widgets import \
     HotKey, \
     HotKeyBinding
 
-import Tkinter as tk
-from duplicity.diffdir import tracker
+from Tkinter import \
+    CURRENT
 
 class DnDOperation(InverseOperation):
     def __init__(self, cnv, id, *args, **kwargs):
@@ -60,7 +60,7 @@ class HistCanvasDnD(CanvasDnD):
         self.bind('<<DnDUp>>', self.dnd_up)
 
     def dnd_down(self, event):
-        dragged = self.canvas.find_withtag(tk.CURRENT)[0]
+        dragged = self.canvas.find_withtag(CURRENT)[0]
 
         self.ht.stage(DnDOperation, self,  dragged)
 

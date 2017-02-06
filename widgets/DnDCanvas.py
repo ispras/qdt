@@ -1,26 +1,31 @@
 #!/usr/bin/python2
 # based on http://code.activestate.com/lists/python-list/281562/
 
-import copy
-import Tkinter
-tk = Tkinter
+from copy import \
+    copy
 
-class CanvasDnD(tk.Frame):
+from Tkinter import \
+    Frame, \
+    Canvas, \
+    RIDGE, \
+    BOTH
+
+class CanvasDnD(Frame):
     def __init__(self, master,
             id_priority_sort_function = lambda ids : ids
         ):
         self.master = master
 
-        tk.Frame.__init__ (self, master)
-        self.canvas = tk.Canvas (self, 
+        Frame.__init__ (self, master)
+        self.canvas = Canvas (self, 
             width = 100, # default width
             height = 100, # default height
-            relief = tk.RIDGE,
+            relief = RIDGE,
             background = "white",
             borderwidth = 1
         )
 
-        self.canvas.pack(expand = 1, fill = tk.BOTH)
+        self.canvas.pack(expand = 1, fill = BOTH)
 
         self.dragging = False
         self.off = None
@@ -59,7 +64,7 @@ class CanvasDnD(tk.Frame):
 
         xy = cnv.canvasx(event.x), cnv.canvasy(event.y)
         points = event.widget.coords(self.dnd_dragged)
-        anchors = copy.copy(points[:2])
+        anchors = copy(points[:2])
 
         #print str(points) + " - " + str(self.off)
 

@@ -14,8 +14,7 @@ from qemu import \
     MOp_SetIRQEndPoint, \
     MachineNodeOperation, \
     IRQHub, \
-    DeviceNode, \
-    IRQLine
+    DeviceNode
 
 from Tkinter import \
     StringVar

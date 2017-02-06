@@ -1,9 +1,5 @@
-import json
-
 from source import \
-    Type, \
-    Header, \
-    Macro
+    Type
 
 class QemuTypeName(object):
     def __init__(self, name):

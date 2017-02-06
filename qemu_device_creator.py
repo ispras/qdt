@@ -1,27 +1,31 @@
 #!/usr/bin/python2
 
-import argparse
-import os.path
+from argparse import \
+    ArgumentTypeError, \
+    ArgumentParser
+
+from os.path import \
+    isdir
 
 from qemu import \
     pci_id_db, \
-    SysBusDeviceDescription, \
-    PCIExpressDeviceDescription, \
-    QProject, \
     get_vs
 
-from examples import *
+from examples import \
+    Q35Project_2_5_0, \
+    Q35Project_2_6_0
 
-import qemu
+from qemu import \
+    qvd_load_with_cache
 
 def arg_type_directory(string):
-    if not os.path.isdir(string):
-        raise argparse.ArgumentTypeError(
+    if not isdir(string):
+        raise ArgumentTypeError(
             "{} is not directory".format(string))
     return string
 
 def main():
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description='''
 The program generates device model stub file inside QEMU source tree and
 register it as needed.
@@ -48,7 +52,7 @@ Use @file to read arguments from 'file' (one per line)
     arguments = parser.parse_args()
 
     try:
-        qvd = qemu.qvd_load_with_cache(arguments.qemu_build)
+        qvd = qvd_load_with_cache(arguments.qemu_build)
     except Exception, e:
         print "QVD load filed: " + str(e) + "\n"
         return -1

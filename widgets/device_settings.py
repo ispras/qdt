@@ -10,12 +10,26 @@ from device_tree_widget import \
 from common import \
     mlget as _
 
-import Tkinter as tk
-import ttk
+from Tkinter import \
+    StringVar, \
+    BooleanVar, \
+    Frame, \
+    OptionMenu
 
-import qemu
+from ttk import \
+    Combobox
 
 from qemu import \
+    BusNode, \
+    IRQLine, \
+    IRQHub, \
+    DeviceNode, \
+    MemoryNode, \
+    QOMPropertyValue, \
+    QOMPropertyTypeLink, \
+    QOMPropertyTypeBoolean, \
+    QOMPropertyTypeInteger, \
+    QOMPropertyTypeString, \
     MOp_SetChildBus, \
     MachineNodeOperation, \
         MOp_SetDevParentBus, \
@@ -45,12 +59,12 @@ class BusLineDesc(object):
 
         p.rowconfigure(self.idx, weight = 1)
 
-        self.v = tk.StringVar()
+        self.v = StringVar()
         # When a bus is selected all Combobox values lists should be updated
         # to prevent selecting of this bus in another Combobox
         self._on_var_changed = self.v.trace_variable("w", self.on_var_changed)
 
-        self.cb = ttk.Combobox(p,
+        self.cb = Combobox(p,
             textvariable = self.v,
             state = "readonly"
         )
@@ -137,15 +151,15 @@ class PropLineDesc(object):
 
     def get_current_val(self):
         prop_type = self.get_current_type()
-        if prop_type == qemu.QOMPropertyTypeLink:
+        if prop_type == QOMPropertyTypeLink:
             link_text = self.v_val.get()
             ret = self.dsw.find_node_by_link_text(link_text)
-        elif prop_type == qemu.QOMPropertyTypeBoolean:
+        elif prop_type == QOMPropertyTypeBoolean:
             ret = self.v_val.get()
-        elif prop_type == qemu.QOMPropertyTypeInteger:
+        elif prop_type == QOMPropertyTypeInteger:
             long_text = self.v_val.get()
             ret = long(long_text, base = 0)
-        elif prop_type == qemu.QOMPropertyTypeString:
+        elif prop_type == QOMPropertyTypeString:
             ret = str(self.v_val.get())
         else:
             raise Exception("Unknown property type")
@@ -178,13 +192,13 @@ class PropLineDesc(object):
             self.v_val = var_p_val
 
     def gen_prop_value_widget(self, prop_type, prop_val):
-        if prop_type == qemu.QOMPropertyTypeLink:
-            var = tk.StringVar()
+        if prop_type == QOMPropertyTypeLink:
+            var = StringVar()
             keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
                     for n in [ None ] + self.dsw.mach.id2node.values()
                    ]
 
-            ret = ttk.Combobox(self.dsw.props_lf, 
+            ret = Combobox(self.dsw.props_lf,
                 textvariable = var,
                 values = keys,
                 state = "readonly"
@@ -195,11 +209,11 @@ class PropLineDesc(object):
                 current = keys[0]
 
             var.set(current)
-        elif prop_type == qemu.QOMPropertyTypeBoolean:
-            var = tk.BooleanVar()
+        elif prop_type == QOMPropertyTypeBoolean:
+            var = BooleanVar()
             ret = VarCheckbutton(
                 self.dsw.props_lf,
-                text = tk.StringVar(""),
+                text = StringVar(""),
                 variable = var
             )
             if prop_val is None:
@@ -209,19 +223,19 @@ class PropLineDesc(object):
 
             var.set(current)
         else:
-            var = tk.StringVar()
+            var = StringVar()
             ret = HKEntry(
                 self.dsw.props_lf,
                 textvariable = var
             )
 
             if prop_val:
-                if prop_type == qemu.QOMPropertyTypeInteger:
+                if prop_type == QOMPropertyTypeInteger:
                     current = prop_type.build_val(prop_val)
                 else:
                     current = str(prop_val)
             else:
-                if prop_type == qemu.QOMPropertyTypeInteger:
+                if prop_type == QOMPropertyTypeInteger:
                     current = "0x0"
                 else:
                     current = ""
@@ -231,7 +245,7 @@ class PropLineDesc(object):
         return ret, var
 
     def gen_row(self, row):
-        var_p_name = tk.StringVar()
+        var_p_name = StringVar()
         var_p_name.set(self.prop.prop_name)
         e_p_name = HKEntry(self.dsw.props_lf, textvariable = var_p_name)
         e_p_name.grid(
@@ -286,16 +300,16 @@ class DeviceSettingsWidget(SettingsWidget):
     EVENT_BUS_SELECTED = "<<DSWBusSelected>>"
 
     prop_type_name_map = {
-        qemu.QOMPropertyTypeInteger: ("Integer", ),
-        qemu.QOMPropertyTypeLink: ("Link", ),
-        qemu.QOMPropertyTypeString: ("String", ),
-        qemu.QOMPropertyTypeBoolean: ("Boolean", )
+        QOMPropertyTypeInteger: ("Integer", ),
+        QOMPropertyTypeLink: ("Link", ),
+        QOMPropertyTypeString: ("String", ),
+        QOMPropertyTypeBoolean: ("Boolean", )
     }
     prop_name_type_map = {
-        "Integer": qemu.QOMPropertyTypeInteger,
-        "Link": qemu.QOMPropertyTypeLink,
-        "String": qemu.QOMPropertyTypeString,
-        "Boolean": qemu.QOMPropertyTypeBoolean
+        "Integer": QOMPropertyTypeInteger,
+        "Link": QOMPropertyTypeLink,
+        "String": QOMPropertyTypeString,
+        "Boolean": QOMPropertyTypeBoolean
     }
 
     def __init__(self, device, *args, **kw):
@@ -305,7 +319,7 @@ class DeviceSettingsWidget(SettingsWidget):
         self.columnconfigure(0, weight = 1)
 
         self.rowconfigure(0, weight = 0)
-        common_fr = tk.Frame(self)
+        common_fr = Frame(self)
         common_fr.grid(
             row = 0,
             column = 0,
@@ -317,7 +331,7 @@ class DeviceSettingsWidget(SettingsWidget):
         common_fr.rowconfigure(0, weight = 0)
 
         l = VarLabel(common_fr, text = _("QOM type"))
-        self.qom_type_var = tk.StringVar()
+        self.qom_type_var = StringVar()
         e = HKEntry(common_fr, textvariable = self.qom_type_var)
 
         l.grid(row = 0, column = 0, sticky = "W")
@@ -345,9 +359,9 @@ class DeviceSettingsWidget(SettingsWidget):
 
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
-        self.bus_var = tk.StringVar()
+        self.bus_var = StringVar()
         self.bus_var.trace_variable("w", self.on_parent_bus_var_changed)
-        self.bus_cb = ttk.Combobox(
+        self.bus_cb = Combobox(
             common_fr,
             textvariable = self.bus_var,
             state = "readonly"
@@ -418,8 +432,8 @@ class DeviceSettingsWidget(SettingsWidget):
                 return name
 
     def on_prop_add(self):
-        p = qemu.QOMPropertyValue(
-            qemu.QOMPropertyTypeLink,
+        p = QOMPropertyValue(
+            QOMPropertyTypeLink,
             self.gen_uniq_prop_name(),
             None
         )
@@ -447,12 +461,12 @@ class DeviceSettingsWidget(SettingsWidget):
 
     @staticmethod
     def gen_prop_type_optionmenu(parent, current = None):
-        var = tk.StringVar()
+        var = StringVar()
         keys = []
         for ptn in DeviceSettingsWidget.prop_type_name_map.values():
             keys.append(ptn[0])
 
-        om = tk.OptionMenu(parent, var, *keys)
+        om = OptionMenu(parent, var, *keys)
 
         if current:
             current = DeviceSettingsWidget.prop_type_name_map[current][0]
@@ -470,18 +484,18 @@ class DeviceSettingsWidget(SettingsWidget):
             return "-1: NULL"
 
         ret = str(node.id) + ": "
-        if isinstance(node, qemu.BusNode):
+        if isinstance(node, BusNode):
             ret = ret + "Bus, " + node.gen_child_name_for_bus()
-        elif isinstance(node, qemu.IRQLine):
+        elif isinstance(node, IRQLine):
             ret = ret + "IRQ: " \
                 + DeviceSettingsWidget.gen_node_link_text(node.src[0]) \
                 + " -> " \
                 + DeviceSettingsWidget.gen_node_link_text(node.dst[0])
-        elif isinstance(node, qemu.IRQHub):
+        elif isinstance(node, IRQHub):
             ret = ret + "IRQ Hub"
-        elif isinstance(node, qemu.DeviceNode):
+        elif isinstance(node, DeviceNode):
             ret = ret + "Device, " + node.qom_type
-        elif isinstance(node, qemu.MemoryNode):
+        elif isinstance(node, MemoryNode):
             ret = ret + "Memory, " + node.name
 
         return ret
@@ -514,7 +528,7 @@ class DeviceSettingsWidget(SettingsWidget):
         # refresh parent bus
         buses = [ DeviceSettingsWidget.gen_node_link_text(None) ]
         for n in self.mach.id2node.values():
-            if not isinstance(n, qemu.BusNode):
+            if not isinstance(n, BusNode):
                 continue
             buses.append(DeviceSettingsWidget.gen_node_link_text(n))
         self.bus_cb.config(values = buses)

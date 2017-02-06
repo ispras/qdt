@@ -122,3 +122,7 @@ from history_window import \
 
 from pci_id_widget import \
     PCIIdWidget
+
+from tk_unbind import \
+    unbind
+

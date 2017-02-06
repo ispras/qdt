@@ -13,7 +13,8 @@ from project_editing import \
     QemuObjectCreationHelper, \
     DescriptionOperation
 
-import copy
+from copy import \
+    deepcopy
 
 from common import \
     mlget as _
@@ -23,7 +24,7 @@ class MachineOperation(DescriptionOperation):
         DescriptionOperation.__init__(self, machine_description, *args, **kw)
 
     def gen_node_id_entry(self, node_id):
-        return copy.deepcopy(node_id)
+        return deepcopy(node_id)
 
     """ Converts invariant link property value to python object reference used
 across machine description object. Non-link property values is just deeply
@@ -35,7 +36,7 @@ copied. Invariant link value is an integer now. """
             else:
                 return self.mach.id2node[prop_val]
         else:
-            return copy.deepcopy(prop_val)
+            return deepcopy(prop_val)
 
     """ Converts link property value presented by python object reference to
 invariant values (independent from the machine description instance). Non-link
@@ -45,9 +46,9 @@ property values is just deeply copied. """
             if prop_val is None:
                 return -1
             else:
-                return copy.deepcopy(prop_val.id)
+                return deepcopy(prop_val.id)
         else:
-            return copy.deepcopy(prop_val)
+            return deepcopy(prop_val)
 
     @property
     def mach(self):
@@ -94,7 +95,7 @@ class MachineNodeOperation(MachineOperation):
 class MOp_AddMemChild(MachineNodeOperation):
     def __init__(self, child_id, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
-        self.child_id = copy.deepcopy(child_id)
+        self.child_id = deepcopy(child_id)
 
     def __backup__(self):
         pass
@@ -476,8 +477,8 @@ class MOp_DelIRQLine(MachineNodeOperation):
     def __backup__(self):
         irq = self.mach.id2node[self.node_id]
 
-        self.src = copy.deepcopy((irq.src[0].id, irq.src[1], irq.src[2]))
-        self.dst = copy.deepcopy((irq.dst[0].id, irq.dst[1], irq.dst[2]))
+        self.src = deepcopy((irq.src[0].id, irq.src[1], irq.src[2]))
+        self.dst = deepcopy((irq.dst[0].id, irq.dst[1], irq.dst[2]))
 
     def __do__(self):
         irq = self.mach.id2node[self.node_id]
@@ -495,7 +496,7 @@ class MOp_DelIRQLine(MachineNodeOperation):
     def __undo__(self):
         irq = IRQLine(
             self.mach.id2node[self.src[0]], self.mach.id2node[self.dst[0]],
-            *copy.deepcopy((self.src[1], self.dst[1], self.src[2], self.dst[2]))
+            *deepcopy((self.src[1], self.dst[1], self.src[2], self.dst[2]))
         )
 
         self.mach.add_node(irq, with_id = self.node_id)
@@ -549,8 +550,8 @@ class MOp_AddIRQLine(MOp_DelIRQLine):
     ):
         MOp_DelIRQLine.__init__(self, *args, **kw)
 
-        self.src = copy.deepcopy((source_device_id, source_index, source_name))
-        self.dst = copy.deepcopy(
+        self.src = deepcopy((source_device_id, source_index, source_name))
+        self.dst = deepcopy(
             (destination_device_id, destination_index, destination_name)
         )
 
@@ -609,20 +610,20 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
         MachineNodeOperation.__init__(self, *args, **kw)
 
         self.attr = attribute_name
-        self.new_val = copy.deepcopy(new_value)
+        self.new_val = deepcopy(new_value)
 
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
         val = getattr(dev, self.attr)
-        self.old_val = copy.deepcopy(val)
+        self.old_val = deepcopy(val)
 
     def __do__(self):
         dev = self.mach.id2node[self.node_id]
-        setattr(dev, self.attr, copy.deepcopy(self.new_val))
+        setattr(dev, self.attr, deepcopy(self.new_val))
 
     def __undo__(self):
         dev = self.mach.id2node[self.node_id]
-        setattr(dev, self.attr, copy.deepcopy(self.old_val))
+        setattr(dev, self.attr, deepcopy(self.old_val))
 
     def __read_set__(self):
         return MachineNodeOperation.__read_set__(self) + [
@@ -631,7 +632,7 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
-            (self.gen_entry(), "attr", copy.deepcopy(self.attr))
+            (self.gen_entry(), "attr", deepcopy(self.attr))
         ]
 
     def gen_val_str(self, val):
@@ -680,7 +681,7 @@ class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
     def __backup__(self):
         node = self.mach.id2node[self.node_id]
         val = getattr(node, self.attr)
-        self.old_val = copy.deepcopy(val.id)
+        self.old_val = deepcopy(val.id)
 
     def __do__(self):
         node = self.mach.id2node[self.node_id]
@@ -747,13 +748,13 @@ class MachineIOMappingOperation(MachineNodeOperation):
     def __init__(self, mio, idx, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
 
-        self.mio = copy.deepcopy(mio)
-        self.idx = copy.deepcopy(idx)
+        self.mio = deepcopy(mio)
+        self.idx = deepcopy(idx)
 
     def __write_set__(self):
         return MachineNodeOperation.__write_set__(self) + [
-            (self.gen_entry(), copy.deepcopy(self.mio), 
-             copy.deepcopy(self.idx))
+            (self.gen_entry(), deepcopy(self.mio), 
+             deepcopy(self.idx))
         ]
 
     def __read_set__(self):
@@ -774,7 +775,7 @@ class MOp_DelIOMapping(MachineIOMappingOperation):
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
 
-        self.old_mapping = copy.deepcopy(
+        self.old_mapping = deepcopy(
             getattr(dev, self.mio + "_mappings")[self.idx]
         )
 
@@ -786,7 +787,7 @@ class MOp_DelIOMapping(MachineIOMappingOperation):
     def __undo__(self):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
-        mappings[self.idx] = copy.deepcopy(self.old_mapping)
+        mappings[self.idx] = deepcopy(self.old_mapping)
 
     def __description__(self):
         return _("Delete %s %s mapping from index %d of %s.") % (
@@ -800,7 +801,7 @@ class MOp_AddIOMapping(MachineIOMappingOperation):
     def __init__(self, mapping, *args, **kw):
         MachineIOMappingOperation.__init__(self, *args, **kw)
 
-        self.mapping = copy.deepcopy(mapping)
+        self.mapping = deepcopy(mapping)
 
     def __backup__(self):
         pass
@@ -808,7 +809,7 @@ class MOp_AddIOMapping(MachineIOMappingOperation):
     def __do__(self):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
-        mappings[self.idx] = copy.deepcopy(self.mapping)
+        mappings[self.idx] = deepcopy(self.mapping)
 
     def __undo__(self):
         dev = self.mach.id2node[self.node_id]
@@ -827,24 +828,24 @@ class MOp_SetIOMapping(MachineIOMappingOperation):
     def __init__(self, new_mapping, *args, **kw):
         MachineIOMappingOperation.__init__(self, *args, **kw)
 
-        self.new_mapping = copy.deepcopy(new_mapping)
+        self.new_mapping = deepcopy(new_mapping)
 
     def __backup__(self):
         dev = self.mach.id2node[self.node_id]
 
-        self.old_mapping = copy.deepcopy(
+        self.old_mapping = deepcopy(
             getattr(dev, self.mio + "_mappings")[self.idx]
         )
 
     def __do__(self):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
-        mappings[self.idx] = copy.deepcopy(self.new_mapping)
+        mappings[self.idx] = deepcopy(self.new_mapping)
 
     def __undo__(self):
         dev = self.mach.id2node[self.node_id]
         mappings = getattr(dev, self.mio + "_mappings")
-        mappings[self.idx] = copy.deepcopy(self.old_mapping)
+        mappings[self.idx] = deepcopy(self.old_mapping)
 
     def __description__(self):
         return _("Replace %s %s mapping at index %d of %s with %s.") % (
@@ -952,10 +953,10 @@ class MOp_SetDevQOMType(MachineNodeOperation):
 class MachineDevicePropertyOperation(MachineNodeOperation):
     def __init__(self, prop, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
-        self.prop_name = copy.deepcopy(prop.prop_name)
+        self.prop_name = deepcopy(prop.prop_name)
 
     def gen_prop_entry(self):
-        return (self.gen_entry(), "prop", copy.deepcopy(self.prop_name))
+        return (self.gen_entry(), "prop", deepcopy(self.prop_name))
 
     def lookup_prop(self):
         dev = self.mach.id2node[self.node_id]

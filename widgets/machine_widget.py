@@ -1,6 +1,5 @@
 from Tkinter import \
     BooleanVar, \
-    Label, \
     PanedWindow
 
 from machine_diagram_widget import \

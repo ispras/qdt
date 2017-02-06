@@ -1,8 +1,18 @@
-import os
+from os import \
+    remove
+
+from os.path import \
+    join, \
+    basename, \
+    splitext, \
+    isfile
+
 from itertools import \
     count
+
 from machine_description import \
     MachineNode
+
 from common import \
     co_find_eq
 
@@ -53,15 +63,15 @@ already in another project.")
     def gen(self, desc, src):
         dev_t = desc.gen_type()
 
-        full_source_path = os.path.join(src, dev_t.source.path)
+        full_source_path = join(src, dev_t.source.path)
 
-        source_base_name = os.path.basename(full_source_path)
-        (source_name, source_ext) = os.path.splitext(source_base_name)
+        source_base_name = basename(full_source_path)
+        (source_name, source_ext) = splitext(source_base_name)
         object_base_name = source_name + ".o"
 
-        hw_path = os.path.join(src, "hw")
-        class_hw_path = os.path.join(hw_path, desc.directory)
-        Makefile_objs_class_path = os.path.join(class_hw_path, 'Makefile.objs')
+        hw_path = join(src, "hw")
+        class_hw_path = join(hw_path, desc.directory)
+        Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
 
         registered_in_makefile = False
         for line in open(Makefile_objs_class_path, "r").readlines():
@@ -73,20 +83,20 @@ already in another project.")
             with open(Makefile_objs_class_path, "a") as Makefile_objs:
                 Makefile_objs.write(u"obj-y += %s\n" % object_base_name)
     
-        if os.path.isfile(full_source_path):
-            os.remove(full_source_path)
+        if isfile(full_source_path):
+            remove(full_source_path)
     
         source_writer = open(full_source_path, "wb")
         source = dev_t.generate_source()
         source.generate(source_writer)
         source_writer.close()
 
-        include_path = os.path.join(src, 'include')
+        include_path = join(src, 'include')
 
         if "header" in dev_t.__dict__:
-            full_header_path = os.path.join(include_path, dev_t.header.path)
-            if os.path.isfile(full_header_path):
-                os.remove(full_header_path)
+            full_header_path = join(include_path, dev_t.header.path)
+            if isfile(full_header_path):
+                remove(full_header_path)
     
             header_writer = open(full_header_path, "wb")
             header = dev_t.generate_header()

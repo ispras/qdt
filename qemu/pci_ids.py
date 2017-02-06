@@ -1,4 +1,5 @@
-import re
+from re import \
+    compile
 
 from source import \
     Type, \
@@ -7,9 +8,9 @@ from source import \
 from common import \
     co_find_eq
 
-re_pci_vendor = re.compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
-re_pci_device = re.compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
-re_pci_class = re.compile("PCI_CLASS_([A-Z0-9_]+)")
+re_pci_vendor = compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
+re_pci_device = compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
+re_pci_class = compile("PCI_CLASS_([A-Z0-9_]+)")
 
 class PCIVendorIdAlreadyExists (Exception):
     pass
@@ -47,7 +48,7 @@ class PCIVendorId (PCIId):
 
         PCIId.__init__(self, vendor_name, vendor_id)
 
-        self.device_pattern = re.compile(
+        self.device_pattern = compile(
                 "PCI_DEVICE_ID_%s_([A-Z0-9_]+)" % self.name)
 
         PCIId.db.vendors[self.name] = self

@@ -1,7 +1,14 @@
 #!/usr/bin/python2
 
-from subprocess import call
-import os
+from subprocess import \
+    call
+
+from os import \
+    makedirs
+
+from os.path import \
+    isdir, \
+    isfile
 
 files = [
     "widgets/device_settings.py",
@@ -24,8 +31,8 @@ langs = [
 
 for l in langs:
     directory = "locale/" + l + "/LC_MESSAGES/"
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
+    if not isdir(directory):
+        makedirs(directory)
 
     call(
         [   "xgettext",
@@ -33,7 +40,7 @@ for l in langs:
         ] + files
     )
 
-    if not os.path.isfile(directory + "qdc.po"):
+    if not isfile(directory + "qdc.po"):
         call(
             [   "mv",
                 directory + "messages.po",

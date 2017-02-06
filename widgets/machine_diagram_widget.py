@@ -2,20 +2,29 @@ from widgets import \
     VarMenu, \
     CanvasDnD
 
-import Tkinter as tk
+from Tkinter import \
+    BooleanVar, \
+    DISABLED
 
-from phy import \
-    Vector, \
-    Segment, \
-    Polygon
+from math import \
+    sqrt
 
-import math
-import random
-import time
-import sys
-import os
+from random import \
+    random
+
+from time import \
+    time
+
+from sys import \
+    float_info
+
+from os import \
+    remove
 
 from common import \
+    Vector, \
+    Segment, \
+    Polygon, \
     mlget as _, \
     sign
 
@@ -263,7 +272,7 @@ class NodeCircle(PhCircle):
     def overlaps_circle(self, c):
         dx = c.x + c.r - (self.x + self.r)
         dy = c.y + c.r - (self.y + self.r)
-        return math.sqrt( dx * dx + dy * dy ) \
+        return sqrt( dx * dx + dy * dy ) \
             < c.r + c.spacing + self.r + self.spacing
 
     def overlaps_node(self, n):
@@ -292,7 +301,7 @@ class IRQHubCircle(NodeCircle):
         if target:
             dx = target[0] - self.x
             dy = target[1] - self.y
-            d = math.sqrt( dx * dx + dy * dy )
+            d = sqrt( dx * dx + dy * dy )
             l = (self.r + self.spacing) / d
             x, y = self.x + dx * l + self.r, self.y + dy * l + self.r
         else:
@@ -420,7 +429,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         self.current_ph_iteration = None
 
-        self.var_physical_layout = tk.BooleanVar()
+        self.var_physical_layout = BooleanVar()
         self.var_physical_layout.trace_variable("w",
             self.on_var_physical_layout)
 
@@ -633,7 +642,7 @@ IRQ line creation
         except IOError as e:
             if not e.errno == 13: # Do not remove read-only files
                 try:
-                    os.remove(file_name)
+                    remove(file_name)
                 except:
                     pass
 
@@ -649,7 +658,7 @@ IRQ line creation
         f = open(file_name, "rb")
         lines = f.readlines()
         f.close()
-        os.remove(file_name)
+        remove(file_name)
 
         f = open(file_name, "wb")
         for l in lines:
@@ -1346,7 +1355,7 @@ IRQ line creation
     def update_highlighted_irq_line(self):
         x, y = self.last_canvas_mouse
 
-        nearest = (None, sys.float_info.max)
+        nearest = (None, float_info.max)
         for irql in self.irq_lines:
             for seg_id in irql.lines:
                 x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
@@ -1397,7 +1406,7 @@ IRQ line creation
                 if not isinstance(c, IRQPathCircle):
                     continue
                 dx, dy = x - (c.x + c.r), y - (c.y + c.r)
-                if c.r >= math.sqrt(dx * dx + dy * dy):
+                if c.r >= sqrt(dx * dx + dy * dy):
                     self.shown_irq_circle = self.canvas.create_oval(
                         c.x, c.y,
                         c.x + c.r * 2, c.y + c.r * 2,
@@ -1580,9 +1589,9 @@ IRQ line creation
         if not self.current_ph_iteration:
             self.current_ph_iteration = self.ph_iterate_co()
 
-        t0 = time.time()
+        t0 = time()
         for x in self.current_ph_iteration:
-            t1 = time.time()
+            t1 = time()
             dt = t1 - t0
             t_limit_sec = t_limit_sec - dt
             if t_limit_sec <= 0:
@@ -1592,7 +1601,7 @@ IRQ line creation
         self.current_ph_iteration = None
         self.ph_apply()
 
-        t1 = time.time()
+        t1 = time()
         dt = t1 - t0
         t_limit_sec = t_limit_sec - dt
         if t_limit_sec <= 0:
@@ -1644,7 +1653,7 @@ IRQ line creation
         coords = self.canvas.coords(self.irq_circle_preview)
         x, y = (coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2
 
-        nearest = (0, sys.float_info.max)
+        nearest = (0, float_info.max)
 
         for idx, seg_id in enumerate(irql.lines):
             x0, y0, x1, y1 = tuple(self.canvas.coords(seg_id))
@@ -1830,7 +1839,7 @@ IRQ line creation
         idtext = self.canvas.create_text(
             0, 0,
             text = str(node.node.id),
-            state = tk.DISABLED,
+            state = DISABLED,
             font = self.node_font
         )
         self.node2idtext[node] = idtext
@@ -1872,12 +1881,12 @@ IRQ line creation
                 dx = n1.x + w12 - (n.x + w2)
 
                 while dx == 0:
-                    dx = sign(random.random() - 0.5)
+                    dx = sign(random() - 0.5)
 
                 dy = n1.y + h12 - (n.y + h2) 
 
                 while dy == 0:
-                    dy = sign(random.random() - 0.5)
+                    dy = sign(random() - 0.5)
 
                 w = n.width + 2 * n.spacing
                 w1 = n1.width + 2 * n1.spacing
@@ -1935,7 +1944,7 @@ IRQ line creation
                 dx = b.x - (n.x + w2)
 
                 while dx == 0:
-                    dx = sign(random.random() - 0.5)
+                    dx = sign(random() - 0.5)
 
                 ix = dx - sign(dx) * (w2 + n.spacing)
 
@@ -1957,7 +1966,7 @@ IRQ line creation
                 dy = c.y - (n.y + h2)
 
                 while dy == 0:
-                    dy = sign(random.random() - 0.5)
+                    dy = sign(random() - 0.5)
 
                 iy = dy - sign(dy) * (h2 + n.spacing)
 
@@ -1977,12 +1986,12 @@ IRQ line creation
                 dx = hub.x + hub.r - (n.x + w2)
 
                 while dx == 0:
-                    dx = sign(random.random() - 0.5)
+                    dx = sign(random() - 0.5)
 
                 dy = hub.y + hub.r - (n.y + h2) 
 
                 while dy == 0:
-                    dy = sign(random.random() - 0.5)
+                    dy = sign(random() - 0.5)
 
                 w = n.width + 2 * n.spacing
                 h = n.height + 2 * n.spacing
@@ -2026,19 +2035,19 @@ IRQ line creation
                 dx = h1.x + h1.r - (h.x + h.r)
 
                 while dx == 0:
-                    dx = sign(random.random() - 0.5)
+                    dx = sign(random() - 0.5)
 
                 dy = h1.y + h1.r - (h.y + h.r)
 
                 while dy == 0:
-                    dy = sign(random.random() - 0.5)
+                    dy = sign(random() - 0.5)
 
                 scale = float(h.r) / (h.r + h1.r)
 
                 ix = dx * scale
                 iy = dy * scale
 
-                ir = math.sqrt(ix * ix + iy * iy)
+                ir = sqrt(ix * ix + iy * iy)
                 k = (h.r + h.spacing) / ir
 
                 cx = ix * k
@@ -2224,7 +2233,7 @@ IRQ line creation
                 ):
                 dx = x1 - x0
                 dy = y1 - y0
-                d = math.sqrt( dx * dx + dy * dy )
+                d = sqrt( dx * dx + dy * dy )
 
                 d1 = (self.irq_circle_r + self.irq_circle_s) * 2
 
@@ -2259,7 +2268,7 @@ IRQ line creation
         # direction
         dx, dy = x1 - x0, y1 - y0
         # normalize direction
-        dl = math.sqrt(dx * dx + dy * dy)
+        dl = sqrt(dx * dx + dy * dy)
 
         if dl == 0:
             # next time last segment length should be non-zero
@@ -2337,7 +2346,7 @@ IRQ line creation
     def add_node(self, node, fixed_x):
         node.text = self.canvas.create_text(
             node.x, node.y,
-            state = tk.DISABLED,
+            state = DISABLED,
             font = self.node_font
         )
 
@@ -2444,7 +2453,7 @@ IRQ line creation
 
         id = self.canvas.create_text(
             bl.x, bl.y,
-            state = tk.DISABLED,
+            state = DISABLED,
             font = self.node_font
         )
         bl.text = id

@@ -1,8 +1,17 @@
-from os.path import os, split, join
-import json
+from os import \
+    listdir
+
+from os.path import \
+    basename, \
+    splitext, \
+    split, \
+    join, \
+    isdir
+
+from copy import \
+    copy
+
 import sys
-import re
-import copy
 
 # PLY`s C preprocessor is used for several QEMU code analysis
 ply = join(split(split(__file__)[0])[0], "ply")
@@ -181,8 +190,8 @@ a field of a type defined in another non-header file {}.".format(
     def generate(self):
         Header.propagate_references()
 
-        basename = os.path.basename(self.path)
-        name = os.path.splitext(basename)[0]
+        source_basename = basename(self.path)
+        name = splitext(source_basename)[0]
 
         file = SourceFile(name, type(self) == Header)
 
@@ -243,16 +252,16 @@ class Header(Source):
 
     @staticmethod
     def _build_inclusions_recursive(start_dir, prefix):
-        full_name = os.path.join(start_dir, prefix)
-        if (os.path.isdir(full_name)):
-            for entry in os.listdir(full_name):
+        full_name = join(start_dir, prefix)
+        if (isdir(full_name)):
+            for entry in listdir(full_name):
                 for ret in Header._build_inclusions_recursive(
                     start_dir,
-                    os.path.join(prefix, entry)
+                    join(prefix, entry)
                 ):
                     yield ret
         else:
-            (name, ext) = os.path.splitext(prefix)
+            (name, ext) = splitext(prefix)
             if ext == ".h":
                 if not prefix in Header.reg:
                     h = Header(path = prefix, is_global = False)
@@ -306,7 +315,7 @@ class Header(Source):
         for h in Header.reg.values():
             h.parsed = False
 
-        for entry in os.listdir(dname):
+        for entry in listdir(dname):
             for res in Header._build_inclusions_recursive(dname, entry):
                 yields_total += 1
                 yield res
@@ -835,7 +844,7 @@ class CopyFixerVisitor(ObjectVisitor):
             isinstance(t, Usage) or \
             isinstance(t, Initializer) or \
             (isinstance(t, Pointer) and not t.is_named):
-            new_t = copy.copy(t)
+            new_t = copy(t)
             if isinstance(t, Initializer):
                 new_t.used_variables = list(t.used_variables)
                 new_t.used_types = list(t.used_types)

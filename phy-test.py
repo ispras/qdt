@@ -1,8 +1,15 @@
 #!/usr/bin/python2
 
-from Tkinter import *
-from phy import *
-from widgets import *
+from Tkinter import \
+    Tk
+
+from common import \
+    Polygon, \
+    Segment, \
+    Vector
+
+from widgets import \
+    CanvasDnD
 
 class CanvasPolygon(Polygon):
     def __init__(self, canvas, *points, **kwargs):

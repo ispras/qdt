@@ -19,14 +19,24 @@ from widgets import \
     VarMenu, \
     GUITk
 
-import argparse
+from argparse import \
+    ArgumentParser
 
 from qemu_device_creator import \
     arg_type_directory
 
-import cPickle
-import qemu
-import os
+from qemu import \
+    MachineNode, \
+    __dict__ as qemu_namespace, \
+    load_build_path_list, \
+    account_build_path, \
+    QemuVersionDescription
+
+from cPickle import \
+    load as load_cPickled
+
+from os import \
+    remove
 
 from common import \
     CoTask, \
@@ -412,7 +422,7 @@ in process.").get()
                 )
                 return
 
-        qvd = qemu.QemuVersionDescription.current
+        qvd = QemuVersionDescription.current
 
         if qvd is None:
             showerror(
@@ -446,7 +456,7 @@ set correct Qemu build path.").get()
 
     def load_project_from_file(self, file_name):
         loaded_variables = {}
-        available_names = dict(qemu.__dict__)
+        available_names = dict(qemu_namespace)
         available_names.update(widgets_dict)
 
         try:
@@ -478,7 +488,7 @@ set correct Qemu build path.").get()
         except IOError as e:
             if not e.errno == 13: # Do not remove read-only files
                 try:
-                    os.remove(file_name)
+                    remove(file_name)
                 except:
                     pass
 
@@ -550,7 +560,7 @@ all changes are saved. """
             )
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
 
     parser.add_argument(
         '--qemu-build', '-b',
@@ -572,10 +582,10 @@ def main():
 
         try:
             variables = {}
-            execfile("serialize-test.py", qemu.__dict__, variables)
+            execfile("serialize-test.py", qemu_namespace, variables)
     
             for v in variables.values():
-                if isinstance(v, qemu.MachineNode):
+                if isinstance(v, MachineNode):
                     mach = v
                     break
             else:
@@ -588,7 +598,7 @@ def main():
         project.add_description(mach)
 
         try:
-            layout = cPickle.load(open("layout.p", "rb"))
+            layout = load_cPickled(open("layout.p", "rb"))
         except Exception, e:
             print "Layout load filed: " + str(e) + "\n"
         else:
@@ -596,7 +606,7 @@ def main():
 
         tmp_p = Q35Project_2_6_0()
         for desc in list(tmp_p.descriptions):
-            if not isinstance(desc, qemu.MachineNode):
+            if not isinstance(desc, MachineNode):
                 desc.remove_from_project()
                 project.add_description(desc)
 
@@ -604,8 +614,8 @@ def main():
         root.set_current_file_name("project.py")
 
     if arguments.qemu_build is not None:
-        qemu.load_build_path_list()
-        qemu.account_build_path(arguments.qemu_build)
+        load_build_path_list()
+        account_build_path(arguments.qemu_build)
         root.pht.set_build_path(arguments.qemu_build)
 
     root.geometry("1000x750")
