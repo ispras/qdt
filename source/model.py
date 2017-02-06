@@ -383,6 +383,10 @@ class Header(Source):
     def add_reference(self, ref):
         if not isinstance(ref, Type):
             raise Exception('Trying to add header reference which is not a Type object')
+        if isinstance(ref, TypeReference):
+            raise Exception("""Header reference may not be TypeReference.
+ Only original types are allowed."""
+            )
         self.references.append(ref)
 
         return self
