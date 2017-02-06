@@ -59,13 +59,20 @@ class QEMUVersionDescription(object):
 def define_qemu_2_6_0_types():
     add_base_types()
 
-    Header.lookup("exec/hwaddr.h").add_types([
-        Type("hwaddr", False)
-        ])
+    # According to Qemu inclusion policy, each source file must include
+    # qemu/osdep.h. This could be meet using different ways. For now add a
+    # reference to a fake type inside osdep.h.
+    # TODO: the tweak must be handled using version API.
+    osdep_fake_type = Type("FAKE_TYPE_IN_QEMU_OSDEP")
 
     Header.lookup("qemu/osdep.h").add_types([
-        Macro("MIN")
+        Macro("MIN"),
+        osdep_fake_type
     ])
+
+    Header.lookup("exec/hwaddr.h").add_types([
+        Type("hwaddr", False)
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/cpu-defs.h").add_types([
         Type("target_ulong", False),
@@ -94,14 +101,14 @@ def define_qemu_2_6_0_types():
         Function("object_property_set_bool"),
         Function("object_property_set_int"),
         Macro("OBJECT")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("qom/cpu.h").add_types([
         Type("CPUState", False),
         Type("CPUClass", False),
         Type("vaddr", False),
         Type("MMUAccessType", False)
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/exec-all.h").add_types([
         Type("TranslationBlock", False),
@@ -115,7 +122,7 @@ def define_qemu_2_6_0_types():
                  ],
                  used_types = []
                  )
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/memory.h").add_types([
         Type("MemoryRegion", False),
@@ -158,17 +165,17 @@ def define_qemu_2_6_0_types():
         Function("memory_region_init_ram"),
         Function("memory_region_add_subregion_overlap"),
         Function("memory_region_add_subregion")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/ioport.h").add_types([
         Type("pio_addr_t", incomplete=False)
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/boards.h").add_types([
         Macro("MACHINE_CLASS"),
         Structure("MachineClass"),
         Structure("MachineState")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/sysbus.h").add_types([
         Type("SysBusDevice", False),
@@ -206,7 +213,7 @@ def define_qemu_2_6_0_types():
         Function("sysbus_mmio_map"),
         Macro("SYS_BUS_DEVICE"),
         Function("sysbus_connect_irq")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/irq.h").add_types([
         Function(name = "qemu_irq_handler",
@@ -218,7 +225,7 @@ def define_qemu_2_6_0_types():
             ]
         ),
         Function("qemu_irq_split")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/qdev-core.h").add_types([
         Type("DeviceClass", False),
@@ -242,17 +249,17 @@ def define_qemu_2_6_0_types():
         Function(name = "qdev_get_gpio_in"),
         Function(name = "qdev_connect_gpio_out"),
         Function(name = "qdev_connect_gpio_out_named")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("qapi/error.h").add_types([
         Type("Error*", False)
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("migration/vmstate.h").add_types([
         Type("VMStateDescription", False),
         Type("VMStateField", False),
         Function("vmstate_register_ram_global")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("qemu/module.h").add_types([
         Macro(name = "type_init",
@@ -261,14 +268,14 @@ def define_qemu_2_6_0_types():
             ]
         ),
         Macro(name = "machine_init", args = ["function"])
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/pci.h").add_types([
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False),
         Function("pci_create_multifunction"),
         Macro("PCI_DEVFN")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/msi.h").add_types([
         Function(name="msi_init"
@@ -287,25 +294,39 @@ def define_qemu_2_6_0_types():
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
             ]
         )
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/pci_bus.h").add_types([
         Type("PCIBus", incomplete = True)
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/pci_host.h").add_types([
         Macro(name = "PCI_HOST_BRIDGE")
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("qemu/typedefs.h").add_types([
         Structure("I2CBus") # the structure is defined in .c file
-        ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("qemu/bswap.h").add_types([
         Function("bswap64"),
         Function("bswap32"),
         Function("bswap16")
-        ])
+    ]).add_reference(osdep_fake_type)
+
+    Header.lookup("hw/ide/internal.h").add_types([
+        Structure("IDEDMA")
+    ]).add_reference(osdep_fake_type)
+
+    Header.lookup("hw/ide/ahci.h").add_references([
+        Type.lookup("IDEDMA"),
+        osdep_fake_type
+    ])
+
+    Header.lookup("hw/block/flash.h").add_references([
+        Type.lookup("VMStateDescription"),
+        osdep_fake_type
+    ])
 
 # Warning! Preserve order!
 qemu_versions = [

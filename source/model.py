@@ -40,6 +40,8 @@ class Source(object):
 
         self.usages.append(usage)
 
+        return self
+
     def add_global_variable(self, var):
         if var.name in self.global_variables:
             raise Exception("Variable with name %s is already in file %s"
@@ -77,6 +79,8 @@ whose initializer code uses type {t} defined in non-header file {file}"
 
         self.global_variables[var.name] = var
 
+        return self
+
     def add_inclusion(self, header):
         if not type(header) == Header:
             raise Exception("Inclusion of non-header file {} is forbidden"
@@ -101,6 +105,8 @@ includes it" % (self.path, header.path))
 
             header.includers.append(self)
 
+        return self
+
     def _add_type_recursive(self, type_ref):
         if type_ref.name in self.types:
             t = self.types[type_ref.name]
@@ -119,6 +125,8 @@ found in source {}. The type is defined both in {} and {}.\
     def add_types(self, types):
         for t in types:
             self.add_type(t)
+
+        return self
 
     def add_type(self, _type):
         if type(_type) == TypeReference:
@@ -140,7 +148,18 @@ a field of a type defined in another non-header file {}.".format(
     _type.name, s.path))
             self.add_inclusion(s)
 
-    def gen_chunks(self):
+        return self
+
+    def gen_chunks(self, inherit_references = False):
+        """ In some use cases header should not satisfy references of its
+inclusions by itself. Instead, it must inherit them. A source file must
+satisfy the references in such case. Set inherit_references to True for
+switching to that mode.
+        """
+
+        if inherit_references:
+            assert(isinstance(self, Header))
+
         chunks = []
 
         # fix up types for headers with references
@@ -150,10 +169,21 @@ a field of a type defined in another non-header file {}.".format(
             for t in l:
                 if not isinstance(t, TypeReference):
                     continue
+
                 if t.definer_references is not None:
                     # References are already specified
                     continue
-                t.definer_references = list(t.type.definer.references)
+
+                if inherit_references:
+                    t.definer_references = []
+                    for ref in t.type.definer.references:
+                        for self_ref in self.references:
+                            if self_ref is ref:
+                                break
+                        else:
+                            self.references.append(ref)
+                else:
+                    t.definer_references = list(t.type.definer.references)
 
             for t in l:
                 if not isinstance(t, TypeReference):
@@ -187,7 +217,7 @@ a field of a type defined in another non-header file {}.".format(
  
         return chunks
 
-    def generate(self):
+    def generate(self, inherit_references = False):
         Header.propagate_references()
 
         source_basename = basename(self.path)
@@ -195,7 +225,7 @@ a field of a type defined in another non-header file {}.".format(
 
         file = SourceFile(name, type(self) == Header)
 
-        file.add_chunks(self.gen_chunks())
+        file.add_chunks(self.gen_chunks(inherit_references))
 
         return file
 
@@ -373,11 +403,19 @@ class Header(Source):
     def add_reference(self, ref):
         if not isinstance(ref, Type):
             raise Exception('Trying to add header reference which is not a Type object')
+        if isinstance(ref, TypeReference):
+            raise Exception("""Header reference may not be TypeReference.
+ Only original types are allowed."""
+            )
         self.references.append(ref)
+
+        return self
 
     def add_references(self, refs):
         for ref in refs:
             self.add_reference(ref)
+
+        return self
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
@@ -400,6 +438,8 @@ file %s defining the type" % (type_ref.type.name, self.path))
         # Auto add type references to self includers
         for s in self.includers:
             s._add_type_recursive(TypeReference(_type))
+
+        return self
 
     def __hash__(self):
         # key contains of 'g' or 'h' and header path

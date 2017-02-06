@@ -490,7 +490,9 @@ Type.lookup("void").gen_var("opaque", True),
         #header = HeaderFile(self.qtn.get_header_name())
         #header.add_chunk(StructureDeclaration(state_struct))
 
-        header_source = self.header.generate()
+        # TODO: current value of inherit_references is dictated by Qemu coding
+        # policy. Hence, version API must be used there.
+        header_source = self.header.generate(inherit_references = True)
 
         return header_source;
 

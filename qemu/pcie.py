@@ -429,7 +429,9 @@ Type.lookup("void").gen_var("opaque", True),
             )
 
     def generate_header(self):
-        return self.header.generate()
+        # TODO: current value of inherit_references is dictated by Qemu coding
+        # policy. Hence, version API must be used there.
+        return self.header.generate(inherit_references = True)
 
     def generate_source(self):
         return self.source.generate()
