@@ -150,7 +150,16 @@ a field of a type defined in another non-header file {}.".format(
 
         return self
 
-    def gen_chunks(self):
+    def gen_chunks(self, inherit_references = False):
+        """ In some use cases header should not satisfy references of its
+inclusions by itself. Instead, it must inherit them. A source file must
+satisfy the references in such case. Set inherit_references to True for
+switching to that mode.
+        """
+
+        if inherit_references:
+            assert(isinstance(self, Header))
+
         chunks = []
 
         # fix up types for headers with references
@@ -160,10 +169,21 @@ a field of a type defined in another non-header file {}.".format(
             for t in l:
                 if not isinstance(t, TypeReference):
                     continue
+
                 if t.definer_references is not None:
                     # References are already specified
                     continue
-                t.definer_references = list(t.type.definer.references)
+
+                if inherit_references:
+                    t.definer_references = []
+                    for ref in t.type.definer.references:
+                        for self_ref in self.references:
+                            if self_ref is ref:
+                                break
+                        else:
+                            self.references.append(ref)
+                else:
+                    t.definer_references = list(t.type.definer.references)
 
             for t in l:
                 if not isinstance(t, TypeReference):
@@ -197,7 +217,7 @@ a field of a type defined in another non-header file {}.".format(
  
         return chunks
 
-    def generate(self):
+    def generate(self, inherit_references = False):
         Header.propagate_references()
 
         source_basename = basename(self.path)
@@ -205,7 +225,7 @@ a field of a type defined in another non-header file {}.".format(
 
         file = SourceFile(name, type(self) == Header)
 
-        file.add_chunks(self.gen_chunks())
+        file.add_chunks(self.gen_chunks(inherit_references))
 
         return file
 
