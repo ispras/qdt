@@ -318,6 +318,11 @@ def define_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    Header.lookup("hw/block/flash.h").add_references([
+        Type.lookup("VMStateDescription"),
+        osdep_fake_type
+    ])
+
 # Warning! Preserve order!
 qemu_versions = [
     QEMUVersionDescription(
