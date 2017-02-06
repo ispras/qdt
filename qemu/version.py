@@ -319,6 +319,7 @@ def define_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/ide/ahci.h").add_references([
+        Type.lookup("IDEDMA"),
         osdep_fake_type
     ])
 
