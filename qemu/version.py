@@ -314,6 +314,10 @@ def define_qemu_2_6_0_types():
         Function("bswap16")
     ]).add_reference(osdep_fake_type)
 
+    Header.lookup("hw/ide/internal.h").add_types([
+        Structure("IDEDMA")
+    ])
+
     Header.lookup("hw/ide/ahci.h").add_references([
         osdep_fake_type
     ])
