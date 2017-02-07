@@ -166,6 +166,8 @@ class PCIClassification(object):
 
     @staticmethod
     def build():
+        db = PCIId.db
+
         for t in Type.reg.values():
             if type(t) == Macro:
                 mi = re_pci_vendor.match(t.name)
@@ -184,14 +186,14 @@ class PCIClassification(object):
             if type(t) == Macro:
                 mi = re_pci_device.match(t.name)
                 if mi:
-                    for v in PCIId.db.vendors.values():
+                    for v in db.vendors.values():
                         mi = v.device_pattern.match(t.name)
                         if mi:
                             PCIDeviceId(v.name, mi.group(1), t.text)
                             break;
                     continue
 
-        PCIId.db.built = True
+        db.built = True
 
     @staticmethod
     def gen_device_key(vendor_name, device_name):
