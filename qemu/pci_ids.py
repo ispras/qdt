@@ -114,6 +114,12 @@ class PCIClassification(object):
         self.classes = {}
         self.built = built
 
+    def clear(self):
+        self.vendors = {}
+        self.devices = {}
+        self.classes = {}
+        self.built = False
+
     def find_vendors(self, **kw):
         return co_find_eq(self.vendors.values(), **kw)
 
