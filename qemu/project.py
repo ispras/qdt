@@ -16,6 +16,9 @@ from machine_description import \
 from common import \
     co_find_eq
 
+from makefile_patching import \
+    patch_makefile
+
 class QProject(object):
     def __init__(self,
         descriptions = None
@@ -73,16 +76,8 @@ already in another project.")
         class_hw_path = join(hw_path, desc.directory)
         Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
 
-        registered_in_makefile = False
-        for line in open(Makefile_objs_class_path, "r").readlines():
-            if object_base_name in [s.strip() for s in line.split(" ")]:
-                registered_in_makefile = True
-                break
-    
-        if not registered_in_makefile:
-            with open(Makefile_objs_class_path, "a") as Makefile_objs:
-                Makefile_objs.write(u"obj-y += %s\n" % object_base_name)
-    
+        patch_makefile(Makefile_objs_class_path, object_base_name, "obj", "y")
+
         if isfile(full_source_path):
             remove(full_source_path)
     
