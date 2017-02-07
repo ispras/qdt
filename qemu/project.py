@@ -76,7 +76,25 @@ already in another project.")
         class_hw_path = join(hw_path, desc.directory)
         Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
 
-        patch_makefile(Makefile_objs_class_path, object_base_name, "obj", "y")
+        """ TODO: Selection of configuration flag and accumulator variable
+        name is Qemu version specific. Version API must be used there. """
+
+        obj_var_names = {}
+        config_flags = {}
+
+        try:
+            obj_var_name = obj_var_names[desc.directory]
+        except KeyError:
+            obj_var_name = "obj"
+
+        try:
+            config_flag = config_flags[desc.directory]
+        except KeyError:
+            config_flag = "y"
+
+        patch_makefile(Makefile_objs_class_path, object_base_name,
+            obj_var_name, config_flag
+        )
 
         if isfile(full_source_path):
             remove(full_source_path)
