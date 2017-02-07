@@ -174,6 +174,9 @@ class PCIClassification(object):
     def build():
         db = PCIId.db
 
+        if db.built:
+            db.clear()
+
         for t in Type.reg.values():
             if type(t) == Macro:
                 mi = re_pci_vendor.match(t.name)
