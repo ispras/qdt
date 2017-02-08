@@ -59,7 +59,7 @@ from tkMessageBox import \
 
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
-        self.pht = project_widget.pht
+        self.pw = project_widget
         self.qvd = qvd_get(project_widget.p.build_path)
         CoTask.__init__(self, generator = self.begin())
 
@@ -72,8 +72,9 @@ class ReloadBuildPathTask(CoTask):
 
     def on_finished(self):
         self.qvd.use()
-        if self.pht is not None:
-            self.pht.all_pci_ids_2_objects()
+        pht = self.pw.pht
+        if pht is not None:
+            pht.all_pci_ids_2_objects()
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
