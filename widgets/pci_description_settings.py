@@ -23,3 +23,14 @@ class PCIEBusDeviceDescriptionSettingsWidget(DeviceDescriptionSettingsWidget):
             ],
             *args, **kw
         )
+        self.qsig_watch("qvd_switched", self.__on_qvd_switched__)
+
+    def __on_qvd_switched__(self):
+        for f in self.fields:
+            if issubclass(f[1], PCIId):
+                self.refresh_field(*f)
+
+    def __on_destory__(self, *args, **kw):
+        DeviceDescriptionSettingsWidget.__on_destory__(self, *args, **kw)
+
+        self.qsig_unwatch("qvd_switched", self.__on_qvd_switched__)
