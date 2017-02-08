@@ -138,3 +138,5 @@ from qom_editing import \
         DOp_SetPCIIdAttr, \
     DOp_SetAttr
 
+from makefile_patching import \
+    patch_makefile

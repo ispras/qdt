@@ -16,6 +16,9 @@ from machine_description import \
 from common import \
     co_find_eq
 
+from makefile_patching import \
+    patch_makefile
+
 class QProject(object):
     def __init__(self,
         descriptions = None
@@ -73,16 +76,30 @@ already in another project.")
         class_hw_path = join(hw_path, desc.directory)
         Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
 
-        registered_in_makefile = False
-        for line in open(Makefile_objs_class_path, "r").readlines():
-            if object_base_name in [s.strip() for s in line.split(" ")]:
-                registered_in_makefile = True
-                break
-    
-        if not registered_in_makefile:
-            with open(Makefile_objs_class_path, "a") as Makefile_objs:
-                Makefile_objs.write(u"obj-y += %s\n" % object_base_name)
-    
+        """ TODO: Selection of configuration flag and accumulator variable
+        name is Qemu version specific. Version API must be used there. """
+
+        obj_var_names = {
+            "pci" : "common-obj"
+        }
+        config_flags = {
+            "pci" : "$(CONFIG_PCI)"
+        }
+
+        try:
+            obj_var_name = obj_var_names[desc.directory]
+        except KeyError:
+            obj_var_name = "obj"
+
+        try:
+            config_flag = config_flags[desc.directory]
+        except KeyError:
+            config_flag = "y"
+
+        patch_makefile(Makefile_objs_class_path, object_base_name,
+            obj_var_name, config_flag
+        )
+
         if isfile(full_source_path):
             remove(full_source_path)
     
