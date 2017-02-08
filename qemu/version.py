@@ -278,17 +278,7 @@ def define_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/msi.h").add_types([
-        Function(name="msi_init"
-            , ret_type = Type.lookup("int")
-            , args = [
-                Type.lookup("PCIDevice").gen_var("dev", pointer = True)
-                , Type.lookup("uint8_t").gen_var("offset")
-                , Type.lookup("unsigned int").gen_var("nr_vectors")
-                , Type.lookup("bool").gen_var("msi64bit")
-                , Type.lookup("bool").gen_var("msi_per_vector_mask")
-            ]
-        )
-        , Function(name="msi_uninit"
+        Function(name="msi_uninit"
             , ret_type = Type.lookup("void")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)

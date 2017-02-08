@@ -273,6 +273,7 @@ class QemuVersionDescription(object):
 
         # initialize Qemu types in QVC
         get_vp()["qemu types definer"]()
+        get_vp()["msi_init type definer"]()
 
         if prev_qvc is not None:
             prev_qvc.use()
