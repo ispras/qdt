@@ -75,9 +75,6 @@ class ReloadBuildPathTask(CoTask):
 
     def on_finished(self):
         self.qvd.use()
-        pht = self.pw.pht
-        if pht is not None:
-            pht.all_pci_ids_2_objects()
         self.pw.qsig_emit("qvd_switched")
 
 class DescriptionsTreeview(VarTreeview):
@@ -224,6 +221,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
+        self.qsig_watch("qvd_switched", self.on_qvd_switched)
+
     def __on_destroy__(self, event):
         if self.pht is not None:
             self.pht.remove_on_changed(self.on_project_changed)
@@ -237,6 +236,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             self.tm.remove(self.reload_build_path_task)
         except AttributeError:
             pass
+
+        self.qsig_unwatch("qvd_switched", self.on_qvd_switched)
 
     def on_tv_b3(self, event):
         # select appropriate menu
@@ -424,3 +425,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
     def add_description(self):
         AddDescriptionDialog(self.pht, self.winfo_toplevel())
+
+    def on_qvd_switched(self):
+        pht = self.pht
+        if pht is not None:
+            pht.all_pci_ids_2_objects()
