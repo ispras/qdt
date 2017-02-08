@@ -19,7 +19,10 @@ from qemu import \
     POp_AddDesc, \
     DOp_SetAttr
 
-class QOMDescriptionSettingsWidget(GUIFrame):
+from qdc_gui_signal_helper import \
+    QDCGUISignalHelper
+
+class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
