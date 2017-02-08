@@ -126,15 +126,23 @@ string searching during each AddDescriptionDialog creation. """
             # check name only in demo mode
             return
 
+        """ TODO: Directory is defined by current Qemu source tree. Hence,
+        version API must be use there. """
+
         kind = self.cb_kind.current()
         if kind == 0:
             class_name = "SysBusDeviceDescription"
+            directory = ""
         elif kind == 1:
             class_name = "MachineNode"
+            directory = ""
         elif kind == 2:
             class_name = "PCIExpressDeviceDescription"
+            directory = "pci"
 
-        self.pht.stage(POp_AddDesc, class_name, cur_name)
+        self.pht.stage(POp_AddDesc, class_name, cur_name,
+            directory = directory
+        )
         self.pht.commit(
             sequence_description = _("Add description '%s'.") % cur_name
         )

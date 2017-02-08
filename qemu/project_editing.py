@@ -269,7 +269,7 @@ arguments then it is skipped.
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, desc_name, *args, **kw):
         if not "directory" in kw:
-            kw["directory"] = "hw"
+            kw["directory"] = ""
         kw["name"] = desc_name
 
         QemuObjectCreationHelper.__init__(self, desc_class_name, kw, "desc_")
