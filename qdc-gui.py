@@ -86,6 +86,7 @@ class QDCGUIWindow(GUITk):
         GUITk.__init__(self, wait_msec = 1)
 
         for signame in [
+            "qvd_switched"
         ]:
             s = CoSignal()
             s.attach(self.signal_dispatcher)
