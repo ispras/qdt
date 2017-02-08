@@ -79,8 +79,12 @@ already in another project.")
         """ TODO: Selection of configuration flag and accumulator variable
         name is Qemu version specific. Version API must be used there. """
 
-        obj_var_names = {}
-        config_flags = {}
+        obj_var_names = {
+            "pci" : "common-obj"
+        }
+        config_flags = {
+            "pci" : "$(CONFIG_PCI)"
+        }
 
         try:
             obj_var_name = obj_var_names[desc.directory]
