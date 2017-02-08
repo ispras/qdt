@@ -46,3 +46,9 @@ from extra_math import \
     Segment, \
     Polygon, \
     sign
+
+from co_signal import \
+    SignalIsAlreadyAttached, \
+    SignalIsNotAttached, \
+    SignalDispatcherTask, \
+    CoSignal
