@@ -4,6 +4,9 @@ from var_widgets import \
 from tk_co_dispatcher import \
     TkCoDispatcher
 
+from common import \
+    SignalDispatcherTask
+
 class GUITk(VarTk):
 
     def __init__(self, **kw):
@@ -17,6 +20,9 @@ class GUITk(VarTk):
 
         VarTk.__init__(self, **kw)
         self.task_manager = TkCoDispatcher(self, **disp_kw)
+
+        self.signal_dispatcher = SignalDispatcherTask()
+        self.task_manager.enqueue(self.signal_dispatcher)
 
     def mainloop(self, *args, **kw):
         self.task_manager.start_loop()
