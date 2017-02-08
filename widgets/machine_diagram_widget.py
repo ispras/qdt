@@ -21,6 +21,9 @@ from sys import \
 from os import \
     remove
 
+from os.path import \
+    splitext
+
 from common import \
     Vector, \
     Segment, \
@@ -70,6 +73,9 @@ from tkMessageBox import \
 
 from hotkey import \
     HotKeyBinding
+
+from canvas2svg import \
+    saveall as saveall2svg
 
 class PhObject(object):
     def __init__(self,
@@ -630,7 +636,10 @@ IRQ line creation
 
     def on_export_diagram(self, *args):
         file_name = asksaveas(
-            [((_("Postscript image"), ".ps"))],
+            [
+                ((_("Scalable Vector Graphics image"), ".svg")),
+                ((_("Postscript image"), ".ps"))
+            ],
             title = _("Export machine diagram")
         )
 
@@ -652,18 +661,28 @@ IRQ line creation
             )
             return
 
-        self.canvas.postscript(file = file_name, colormode = "color")
+        ext = splitext(file_name)[1]
 
-        # fix up font
-        f = open(file_name, "rb")
-        lines = f.readlines()
-        f.close()
-        remove(file_name)
+        if ext == ".ps":
+            self.canvas.postscript(file = file_name, colormode = "color")
 
-        f = open(file_name, "wb")
-        for l in lines:
-            f.write(l.replace("/DejavuSansMono", "/" + self.node_font[0]))
-        f.close()
+            # fix up font
+            f = open(file_name, "rb")
+            lines = f.readlines()
+            f.close()
+            remove(file_name)
+
+            f = open(file_name, "wb")
+            for l in lines:
+                f.write(l.replace("/DejavuSansMono", "/" + self.node_font[0]))
+            f.close()
+        elif ext == ".svg":
+            saveall2svg(file_name, self.canvas)
+        else:
+            showerror(
+                title = _("Export error").get(),
+                message = (_("Unexpected file extension %s") % ext).get()
+            )
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
