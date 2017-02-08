@@ -92,18 +92,20 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
                     except StopIteration:
                         # No device id with such value is registered
                         continue
-                try:
-                    val = PCIId.db.find_devices(
-                        id = val,
-                        vendor = vendor
-                    ).next()
-                except StopIteration:
-                    # no device id with such value is registered for the vendor
+                else:
                     try:
-                        val = PCIId.db.find_devices(id = val).next()
+                        val = PCIId.db.find_devices(
+                            id = val,
+                            vendor = vendor
+                        ).next()
                     except StopIteration:
-                        # No device id with such value is registered
-                        continue
+                        # no device id with such value is registered for the
+                        # vendor
+                        try:
+                            val = PCIId.db.find_devices(id = val).next()
+                        except StopIteration:
+                            # No device id with such value is registered
+                            continue
 
                 self.stage(DOp_SetAttr, attr, None, desc)
                 self.stage(DOp_SetPCIIdAttr, attr, val, desc)
