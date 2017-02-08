@@ -328,6 +328,35 @@ def define_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+def define_msi_init_2_6_5():
+    Header.lookup("hw/pci/msi.h").add_type(
+        Function(name="msi_init"
+            , ret_type = Type.lookup("int")
+            , args = [
+                Type.lookup("PCIDevice").gen_var("dev", pointer = True)
+                , Type.lookup("uint8_t").gen_var("offset")
+                , Type.lookup("unsigned int").gen_var("nr_vectors")
+                , Type.lookup("bool").gen_var("msi64bit")
+                , Type.lookup("bool").gen_var("msi_per_vector_mask")
+                , Type.lookup("Error*").gen_var("errp", pointer = True)
+            ]
+        )
+    )
+
+def define_msi_init_2_6_0():
+    Header.lookup("hw/pci/msi.h").add_type(
+        Function(name="msi_init"
+            , ret_type = Type.lookup("int")
+            , args = [
+                Type.lookup("PCIDevice").gen_var("dev", pointer = True)
+                , Type.lookup("uint8_t").gen_var("offset")
+                , Type.lookup("unsigned int").gen_var("nr_vectors")
+                , Type.lookup("bool").gen_var("msi64bit")
+                , Type.lookup("bool").gen_var("msi_per_vector_mask")
+            ]
+        )
+    )
+
 # Warning! Preserve order!
 qemu_versions = [
     QEMUVersionDescription(
@@ -342,6 +371,17 @@ qemu_versions = [
                 name = "machine initialization function register type name",
                 new_value = "type_init",
                 old_value = "machine_init" 
+            )
+        ]
+    ),
+    QEMUVersionDescription(
+        "2.6.50",
+        [
+            QEMUVersionParameterDescription(
+                # related commit 1108b2f8a939fb5778d384149e2f1b99062a72da
+                name = "msi_init type definer",
+                new_value = define_msi_init_2_6_5,
+                old_value = define_msi_init_2_6_0
             )
         ]
     )
