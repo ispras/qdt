@@ -39,6 +39,7 @@ from os import \
     remove
 
 from common import \
+    CoSignal, \
     CoTask, \
     PyGenerator, \
     mlget as _
@@ -83,6 +84,13 @@ class ProjectGeneration(CoTask):
 class QDCGUIWindow(GUITk):
     def __init__(self, project = None):
         GUITk.__init__(self, wait_msec = 1)
+
+        for signame in [
+            "qvd_switched"
+        ]:
+            s = CoSignal()
+            s.attach(self.signal_dispatcher)
+            setattr(self, "sig_" + signame, s)
 
         self.title_suffix = _("Qemu device creator GUI")
         self.title_suffix.trace_variable("w", self.__on_title_suffix_write__)

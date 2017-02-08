@@ -126,3 +126,5 @@ from pci_id_widget import \
 from tk_unbind import \
     unbind
 
+from qdc_gui_signal_helper import \
+    QDCGUISignalHelper
