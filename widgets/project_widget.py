@@ -57,6 +57,9 @@ from popup_helper import \
 from tkMessageBox import \
     showerror
 
+from qdc_gui_signal_helper import \
+    QDCGUISignalHelper
+
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
@@ -75,6 +78,7 @@ class ReloadBuildPathTask(CoTask):
         pht = self.pw.pht
         if pht is not None:
             pht.all_pci_ids_2_objects()
+        self.pw.qsig_emit("qvd_switched")
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
@@ -128,7 +132,7 @@ class DescriptionsTreeview(VarTreeview):
 
         self.adjust_widths()
 
-class ProjectWidget(PanedWindow, TkPopupHelper):
+class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def __init__(self, project, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
