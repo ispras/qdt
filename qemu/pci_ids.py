@@ -114,6 +114,12 @@ class PCIClassification(object):
         self.classes = {}
         self.built = built
 
+    def clear(self):
+        self.vendors = {}
+        self.devices = {}
+        self.classes = {}
+        self.built = False
+
     def find_vendors(self, **kw):
         return co_find_eq(self.vendors.values(), **kw)
 
@@ -166,6 +172,11 @@ class PCIClassification(object):
 
     @staticmethod
     def build():
+        db = PCIId.db
+
+        if db.built:
+            db.clear()
+
         for t in Type.reg.values():
             if type(t) == Macro:
                 mi = re_pci_vendor.match(t.name)
@@ -184,14 +195,14 @@ class PCIClassification(object):
             if type(t) == Macro:
                 mi = re_pci_device.match(t.name)
                 if mi:
-                    for v in PCIId.db.vendors.values():
+                    for v in db.vendors.values():
                         mi = v.device_pattern.match(t.name)
                         if mi:
                             PCIDeviceId(v.name, mi.group(1), t.text)
                             break;
                     continue
 
-        PCIId.db.built = True
+        db.built = True
 
     @staticmethod
     def gen_device_key(vendor_name, device_name):
