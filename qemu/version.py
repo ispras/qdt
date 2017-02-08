@@ -56,9 +56,7 @@ class QEMUVersionDescription(object):
             return 0
         raise Exception("Lexical comparation of version suffix is not implemented yet!")
 
-def define_qemu_2_6_0_types():
-    add_base_types()
-
+def define_only_qemu_2_6_0_types():
     # According to Qemu inclusion policy, each source file must include
     # qemu/osdep.h. This could be meet using different ways. For now add a
     # reference to a fake type inside osdep.h.
@@ -318,6 +316,17 @@ def define_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+def define_qemu_2_6_5_types():
+    add_base_types()
+    define_only_qemu_2_6_0_types()
+
+def define_qemu_2_6_0_types():
+    add_base_types()
+    # The paths of the headers are presented relative root directory.
+    Header("hw/ide/internal.h")
+    Header("hw/ide/ahci.h")
+    define_only_qemu_2_6_0_types()
+
 def define_msi_init_2_6_5():
     Header.lookup("hw/pci/msi.h").add_type(
         Function(name="msi_init"
@@ -353,11 +362,6 @@ qemu_versions = [
         "2.6.0",
         [
             QEMUVersionParameterDescription(
-                name = "qemu types definer",
-                new_value = define_qemu_2_6_0_types,
-                old_value = define_qemu_2_6_0_types,
-            ),
-            QEMUVersionParameterDescription(
                 name = "machine initialization function register type name",
                 new_value = "type_init",
                 old_value = "machine_init" 
@@ -367,6 +371,12 @@ qemu_versions = [
     QEMUVersionDescription(
         "2.6.50",
         [
+            QEMUVersionParameterDescription(
+                # related commit e8ad4d16808690e9c0d68b140218ca466c9309fc
+                name = "qemu types definer",
+                new_value = define_qemu_2_6_5_types,
+                old_value = define_qemu_2_6_0_types,
+            ),
             QEMUVersionParameterDescription(
                 # related commit 1108b2f8a939fb5778d384149e2f1b99062a72da
                 name = "msi_init type definer",
