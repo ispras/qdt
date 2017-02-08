@@ -1,4 +1,5 @@
 from source import \
+    Pointer, \
     Header, \
     Source, \
     Structure, \
@@ -239,15 +240,20 @@ class PCIEDeviceType(QOMType):
                 ]
             self.header.add_types(msi_types)
 
+            msi_init_type = Type.lookup("msi_init")
+
             realize_code += """
-    msi_init(dev, %s, %s, %s, %s);
+    msi_init(dev, %s, %s, %s, %s%s);
 """ % (msi_cap_offset.gen_usage_string(),
        msi_vectors.gen_usage_string(),
        msi_64bit.gen_usage_string(),
-       msi_masking.gen_usage_string())
+       msi_masking.gen_usage_string(),
+       ", errp" if msi_init_type.args[-1].type \
+                   == Pointer(Type.lookup("Error*")) else ""
+            )
 
             realize_used_types.extend(msi_types)
-            realize_used_types.append(Type.lookup("msi_init"))
+            realize_used_types.append(msi_init_type)
 
         realize_used_types.append(self.state_struct)
 

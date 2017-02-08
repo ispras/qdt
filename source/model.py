@@ -547,6 +547,13 @@ of incomplete type {}.".format(name, self.name))
         else:
             return self.gen_chunks()
 
+    def __eq__(self, other):
+        if isinstance(other, TypeReference):
+            return other.type == self
+        # This code assumes that one type cannot be represented by several
+        # objects.
+        return self is other
+
 class TypeReference(Type):
     def __init__(self, _type):
         if type(_type) == TypeReference:
@@ -591,6 +598,9 @@ reference {}.".format(_type.name))
         return self.type.gen_usage_string(initializer)
 
     __type_references__ = ["definer_references"]
+
+    def __eq__(self, other):
+        return self.type == other
 
 class Structure(Type):
     def __init__(self, name, fields = None):
@@ -710,6 +720,20 @@ class Pointer(Type):
             self.base = False
 
         self.type = _type
+
+    def __eq__(self, other):
+        if not isinstance(other, Pointer):
+            return False
+
+        if self.is_named:
+            if other.is_named:
+                return super(Pointer, self).__eq__(other)
+            return False
+
+        if other.is_named:
+            return False
+
+        return self.type == other.type
 
     def get_definers(self):
         if self.is_named:
