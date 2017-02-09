@@ -971,6 +971,17 @@ IRQ line creation
 
         self.notify_popup_command()
 
+    def show_irq_line_settings(self, irq, x, y):
+        wnd = IRQSettingsWindow(self.mach, self.mht, self,
+            # The window requires descriptor of widget, not a machine node.
+            irq = self.dev2node[irq]
+        )
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_irq_line_settings(self):
         if not self.highlighted_irq_line:
             self.notify_popup_command()
@@ -978,13 +989,9 @@ IRQ line creation
 
         p = self.current_popup
 
-        wnd = IRQSettingsWindow(self.mach, self.mht, self,
-            irq = self.highlighted_irq_line
+        self.show_irq_line_settings(self.node2dev[self.highlighted_irq_line],
+            p.winfo_rootx(), p.winfo_rooty()
         )
-
-        geom = "+" + str(int(p.winfo_rootx())) + "+" + str(int(p.winfo_rooty()))
-
-        wnd.geometry(geom)
 
         # Allow highlighting of another lines when the command was done 
         self.notify_popup_command()
