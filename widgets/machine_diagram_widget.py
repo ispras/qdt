@@ -943,6 +943,14 @@ IRQ line creation
 
         self.notify_popup_command()
 
+    def show_device_settings(self, device, x, y):
+        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = device)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_single_device_settings(self):
         id = self.current_popup_tag
 
@@ -952,12 +960,8 @@ IRQ line creation
         y = y - y0
 
         dev = self.node2dev[self.id2node[id]]
-        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = dev)
 
-        geom = "+" + str(int(self.winfo_rootx() + x)) \
-             + "+" + str(int(self.winfo_rooty() + y))
-
-        wnd.geometry(geom)
+        self.show_device_settings(dev, x, y)
 
         self.notify_popup_command()
 
