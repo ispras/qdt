@@ -1009,6 +1009,14 @@ IRQ line creation
         # the menu will be unposted after the command
         self.notify_popup_command()
 
+    def show_bus_settings(self, bus, x, y):
+        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_single_bus_settings(self):
         id = self.current_popup_tag
 
@@ -1018,12 +1026,9 @@ IRQ line creation
         y = y - y0
 
         bus = self.node2dev[self.id2node[id]]
-        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
 
-        geom = "+" + str(int(self.winfo_rootx() + x)) \
-             + "+" + str(int(self.winfo_rooty() + y))
+        self.show_bus_settings(bus, x, y)
 
-        wnd.geometry(geom)
         self.notify_popup_command()
 
     def on_popup_single_bus_delete(self):
