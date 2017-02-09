@@ -294,8 +294,9 @@ class NodeCircle(PhCircle):
         return True
 
 class IRQPathCircle(NodeCircle):
-    def __init__(self):
+    def __init__(self, line):
         NodeCircle.__init__(self)
+        self.line = line
 
 class IRQHubCircle(NodeCircle):
     def __init__(self, hub):
@@ -2209,7 +2210,7 @@ IRQ line creation
         apply(self.canvas.coords, [id] + points)
 
     def irq_line_add_circle(self, l, idx, x, y):
-        c = IRQPathCircle()
+        c = IRQPathCircle(l)
         c.x, c.y = x - self.irq_circle_r, y - self.irq_circle_r
         c.r = self.irq_circle_r
 
