@@ -691,6 +691,11 @@ IRQ line creation
         elif self.ph_is_running():
             self.__ph_stop__()
 
+    def hide_irq_line_circle(self):
+        self.canvas.delete(self.shown_irq_circle)
+        self.shown_irq_circle = None
+        self.shown_irq_node = None
+
     def on_machine_changed(self, op):
         if isinstance(op, MOp_SetDevQOMType):
             dev = self.mach.id2node[op.node_id]
@@ -763,9 +768,7 @@ IRQ line creation
                 for c in line.circles:
                     self.circles.remove(c)
                     if c == self.shown_irq_node:
-                        self.canvas.delete(self.shown_irq_circle)
-                        self.shown_irq_circle = None
-                        self.shown_irq_node = None
+                        self.hide_irq_line_circle()
 
                 self.irq_lines.remove(line)
 
@@ -1441,9 +1444,7 @@ IRQ line creation
             if not self.shown_irq_circle in self.canvas.find_overlapping(
                 x - 3, y - 3, x + 3, y + 3
             ):
-                self.canvas.delete(self.shown_irq_circle)
-                self.shown_irq_circle = None
-                self.shown_irq_node = None
+                self.hide_irq_line_circle()
         else:
             for c in self.circles:
                 if not isinstance(c, IRQPathCircle):
@@ -2230,9 +2231,7 @@ IRQ line creation
         c = l.circles.pop(idx)
 
         if c == self.shown_irq_node:
-            self.canvas.delete(self.shown_irq_circle)
-            self.shown_irq_node = None
-            self.shown_irq_circle = None
+            self.hide_irq_line_circle()
 
         self.circles.remove(c)
 
