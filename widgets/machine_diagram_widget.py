@@ -294,8 +294,9 @@ class NodeCircle(PhCircle):
         return True
 
 class IRQPathCircle(NodeCircle):
-    def __init__(self):
+    def __init__(self, line):
         NodeCircle.__init__(self)
+        self.line = line
 
 class IRQHubCircle(NodeCircle):
     def __init__(self, hub):
@@ -425,6 +426,8 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
         self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
+
+        self.canvas.bind("<Double-Button-1>", self.on_b1_double, "+")
 
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
@@ -623,6 +626,54 @@ IRQ line creation
 
         self.ph_launch()
 
+    def on_b1_double(self, event):
+        """ Double-click handler for 1-st (left) mouse button. """
+        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+        touched_ids = self.sort_ids_by_priority(touched_ids)
+
+        for tid in touched_ids:
+            if not "DnD" in self.canvas.gettags(tid):
+                continue
+
+            if tid == self.shown_irq_circle:
+                # special lookup for IRQ lines
+                tnode = self.shown_irq_node.line
+            else:
+                try:
+                    # touched node
+                    tnode = self.id2node[tid]
+                except KeyError:
+                    continue
+
+            try:
+                # touched device, etc..
+                tdev = self.node2dev[tnode]
+            except KeyError:
+                continue
+
+            # Handler must perform machine node specific action for
+            # double-click.
+            handler = None
+
+            if isinstance(tdev, DeviceNode):
+                handler = self.show_device_settings
+            elif isinstance(tdev, BusNode):
+                handler = self.show_bus_settings
+            elif isinstance(tdev, QIRQLine):
+                handler = self.show_irq_line_settings
+
+            if handler is None:
+                continue
+
+            x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+            x, y = self.canvas.coords(tid)[-2:]
+            x = x - x0
+            y = y - y0
+
+            handler(tdev, x, y)
+            break
+
     def __on_destory__(self, *args, **kw):
         self.var_physical_layout.set(False)
         if self.mht is not None:
@@ -690,6 +741,11 @@ IRQ line creation
                 self.__ph_launch__()
         elif self.ph_is_running():
             self.__ph_stop__()
+
+    def hide_irq_line_circle(self):
+        self.canvas.delete(self.shown_irq_circle)
+        self.shown_irq_circle = None
+        self.shown_irq_node = None
 
     def on_machine_changed(self, op):
         if isinstance(op, MOp_SetDevQOMType):
@@ -763,9 +819,7 @@ IRQ line creation
                 for c in line.circles:
                     self.circles.remove(c)
                     if c == self.shown_irq_node:
-                        self.canvas.delete(self.shown_irq_circle)
-                        self.shown_irq_circle = None
-                        self.shown_irq_node = None
+                        self.hide_irq_line_circle()
 
                 self.irq_lines.remove(line)
 
@@ -943,6 +997,14 @@ IRQ line creation
 
         self.notify_popup_command()
 
+    def show_device_settings(self, device, x, y):
+        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = device)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_single_device_settings(self):
         id = self.current_popup_tag
 
@@ -952,12 +1014,8 @@ IRQ line creation
         y = y - y0
 
         dev = self.node2dev[self.id2node[id]]
-        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = dev)
 
-        geom = "+" + str(int(self.winfo_rootx() + x)) \
-             + "+" + str(int(self.winfo_rooty() + y))
-
-        wnd.geometry(geom)
+        self.show_device_settings(dev, x, y)
 
         self.notify_popup_command()
 
@@ -967,6 +1025,17 @@ IRQ line creation
 
         self.notify_popup_command()
 
+    def show_irq_line_settings(self, irq, x, y):
+        wnd = IRQSettingsWindow(self.mach, self.mht, self,
+            # The window requires descriptor of widget, not a machine node.
+            irq = self.dev2node[irq]
+        )
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_irq_line_settings(self):
         if not self.highlighted_irq_line:
             self.notify_popup_command()
@@ -974,13 +1043,9 @@ IRQ line creation
 
         p = self.current_popup
 
-        wnd = IRQSettingsWindow(self.mach, self.mht, self,
-            irq = self.highlighted_irq_line
+        self.show_irq_line_settings(self.node2dev[self.highlighted_irq_line],
+            p.winfo_rootx(), p.winfo_rooty()
         )
-
-        geom = "+" + str(int(p.winfo_rootx())) + "+" + str(int(p.winfo_rooty()))
-
-        wnd.geometry(geom)
 
         # Allow highlighting of another lines when the command was done 
         self.notify_popup_command()
@@ -998,6 +1063,14 @@ IRQ line creation
         # the menu will be unposted after the command
         self.notify_popup_command()
 
+    def show_bus_settings(self, bus, x, y):
+        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_single_bus_settings(self):
         id = self.current_popup_tag
 
@@ -1007,12 +1080,9 @@ IRQ line creation
         y = y - y0
 
         bus = self.node2dev[self.id2node[id]]
-        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
 
-        geom = "+" + str(int(self.winfo_rootx() + x)) \
-             + "+" + str(int(self.winfo_rooty() + y))
+        self.show_bus_settings(bus, x, y)
 
-        wnd.geometry(geom)
         self.notify_popup_command()
 
     def on_popup_single_bus_delete(self):
@@ -1223,6 +1293,9 @@ IRQ line creation
         touched_ids = []
         for t in touched:
             if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node.keys()):
+                if t == self.shown_irq_circle:
+                    # IRQ line selection is not supported yet.
+                    continue
                 touched_ids.append(t)
                 if not self.select_by_frame:
                     break
@@ -1422,9 +1495,7 @@ IRQ line creation
             if not self.shown_irq_circle in self.canvas.find_overlapping(
                 x - 3, y - 3, x + 3, y + 3
             ):
-                self.canvas.delete(self.shown_irq_circle)
-                self.shown_irq_circle = None
-                self.shown_irq_node = None
+                self.hide_irq_line_circle()
         else:
             for c in self.circles:
                 if not isinstance(c, IRQPathCircle):
@@ -2189,7 +2260,7 @@ IRQ line creation
         apply(self.canvas.coords, [id] + points)
 
     def irq_line_add_circle(self, l, idx, x, y):
-        c = IRQPathCircle()
+        c = IRQPathCircle(l)
         c.x, c.y = x - self.irq_circle_r, y - self.irq_circle_r
         c.r = self.irq_circle_r
 
@@ -2211,9 +2282,7 @@ IRQ line creation
         c = l.circles.pop(idx)
 
         if c == self.shown_irq_node:
-            self.canvas.delete(self.shown_irq_circle)
-            self.shown_irq_node = None
-            self.shown_irq_circle = None
+            self.hide_irq_line_circle()
 
         self.circles.remove(c)
 
