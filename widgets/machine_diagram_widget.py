@@ -1239,6 +1239,9 @@ IRQ line creation
         touched_ids = []
         for t in touched:
             if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node.keys()):
+                if t == self.shown_irq_circle:
+                    # IRQ line selection is not supported yet.
+                    continue
                 touched_ids.append(t)
                 if not self.select_by_frame:
                     break
