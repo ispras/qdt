@@ -427,6 +427,8 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
         self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
 
+        self.canvas.bind("<Double-Button-1>", self.on_b1_double, "+")
+
         # override super class method
         self.canvas.bind("<Motion>", self.motion_all)
         self.last_canvas_mouse = (0, 0)
@@ -623,6 +625,54 @@ IRQ line creation
         self.bind("<Destroy>", self.__on_destory__, "+")
 
         self.ph_launch()
+
+    def on_b1_double(self, event):
+        """ Double-click handler for 1-st (left) mouse button. """
+        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+        touched_ids = self.sort_ids_by_priority(touched_ids)
+
+        for tid in touched_ids:
+            if not "DnD" in self.canvas.gettags(tid):
+                continue
+
+            if tid == self.shown_irq_circle:
+                # special lookup for IRQ lines
+                tnode = self.shown_irq_node.line
+            else:
+                try:
+                    # touched node
+                    tnode = self.id2node[tid]
+                except KeyError:
+                    continue
+
+            try:
+                # touched device, etc..
+                tdev = self.node2dev[tnode]
+            except KeyError:
+                continue
+
+            # Handler must perform machine node specific action for
+            # double-click.
+            handler = None
+
+            if isinstance(tdev, DeviceNode):
+                handler = self.show_device_settings
+            elif isinstance(tdev, BusNode):
+                handler = self.show_bus_settings
+            elif isinstance(tdev, QIRQLine):
+                handler = self.show_irq_line_settings
+
+            if handler is None:
+                continue
+
+            x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+            x, y = self.canvas.coords(tid)[-2:]
+            x = x - x0
+            y = y - y0
+
+            handler(tdev, x, y)
+            break
 
     def __on_destory__(self, *args, **kw):
         self.var_physical_layout.set(False)
