@@ -32,6 +32,7 @@ from common import \
     sign
 
 from qemu import \
+    MOp_SetBusAttr, \
     MOp_AddDevice, \
     MOp_DelDevice, \
     MOp_AddBus, \
@@ -846,6 +847,10 @@ IRQ line creation
                 line = self.dev2node[dev]
                 line.src = self.dev2node[dev.src_node]
                 line.dst = self.dev2node[dev.dst_node]
+        elif isinstance(op, MOp_SetBusAttr):
+            if op.attr in ["child_name", "force_index"]:
+                bus = self.mach.id2node[op.node_id]
+                self.update_buslabel_text(self.dev2node[bus])
         elif isinstance(op, MOp_SetChildBus):
             dev = self.mach.id2node[op.dev_id]
             dev_node_id = self.node2id[self.dev2node[dev]]
