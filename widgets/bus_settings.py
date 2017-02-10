@@ -10,9 +10,11 @@ from qemu import \
     MachineNodeOperation
 
 from var_widgets import \
+    VarCheckbutton, \
     VarLabel
 
 from Tkinter import \
+    BooleanVar, \
     StringVar
 
 from ttk import \
@@ -20,6 +22,13 @@ from ttk import \
 
 from device_settings import \
     DeviceSettingsWidget
+
+from qemu import \
+    MOp_SetBusAttr, \
+    BusNode
+
+from hotkey import \
+    HKEntry
 
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):
@@ -40,6 +49,38 @@ class BusSettingsWidget(SettingsWidget):
             state = "readonly"
         )
         self.cb_parent.grid(row = 0, column = 1, sticky = "NEWS")
+
+        self.fields = []
+        if type(bus) is BusNode:
+            self.fields.extend([
+                (_("C type"), "c_type", str),
+                (_("Casting macro"), "cast", str),
+                (_("Child name"), "child_name", str),
+                (_("Always show index"), "force_index", bool)
+            ])
+
+        # Common bus type
+        for row, (text, field, _type) in enumerate(self.fields, start = 1):
+            if _type is str:
+                l = VarLabel(self, text = text)
+                v = StringVar()
+                w = HKEntry(self, textvariable = v)
+            elif _type is bool:
+                l = None
+                v = BooleanVar()
+                w = VarCheckbutton(self, text = text, variable = v)
+
+            self.rowconfigure(row, weight = 0)
+            if l is None:
+                w.grid(row = row, column = 0, sticky = "NEWS",
+                    columnspan = 2
+                )
+            else:
+                l.grid(row = row, column = 0, sticky = "NES")
+                w.grid(row = row, column = 1, sticky = "NEWS")
+
+            setattr(self, "w_" + field, w)
+            setattr(self, "var_" + field, v)
 
     def __apply_internal__(self):
         new_parent = self.find_node_by_link_text(self.var_parent.get())
@@ -62,6 +103,22 @@ class BusSettingsWidget(SettingsWidget):
             else:
                 self.mht.append_child_bus(new_parent_id, self.bus.id)
 
+        prev_pos = self.mht.pos
+
+        for (text, field, _type) in self.fields:
+            new_val = getattr(self, "var_" + field).get()
+            cur_val = getattr(self.bus, field)
+
+            if new_val == cur_val:
+                continue
+
+            self.mht.stage(MOp_SetBusAttr, field, new_val, self.bus.id)
+
+        if prev_pos is not self.mht.pos:
+            self.mht.set_sequence_description(
+                _("Bus %d configuration.") % self.bus.id
+            )
+
     def refresh(self):
         values = [
             DeviceSettingsWidget.gen_node_link_text(dev) for dev \
@@ -72,6 +129,12 @@ class BusSettingsWidget(SettingsWidget):
         self.var_parent.set(
             DeviceSettingsWidget.gen_node_link_text(self.bus.parent_device)
         )
+
+        for (text, field, _type) in self.fields:
+            var = getattr(self, "var_" + field)
+            cur_val = getattr(self.bus, field)
+
+            var.set(cur_val)
 
     def on_changed(self, op, *args, **kw):
         if isinstance(op, MOp_SetChildBus):
