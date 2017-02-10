@@ -111,6 +111,7 @@ from machine_editing import \
                 MOp_PCIDevSetFunction, \
                 MOp_PCIDevSetMultifunction, \
                 MOp_SetIRQAttr, \
+                MOp_SetBusAttr, \
             MachineIOMappingOperation, \
                 MOp_DelIOMapping, \
                 MOp_AddIOMapping, \

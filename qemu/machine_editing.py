@@ -744,6 +744,16 @@ class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
             self.gen_id_str(self.new_val)
         )
 
+class MOp_SetBusAttr(MachineDeviceSetAttributeOperation):
+    def __description__(self):
+        return _("Replace value '%s' of attribute '%s' of bus %d with value \
+'%s'.") % (
+            self.gen_val_str(self.old_val),
+            self.attr,
+            self.node_id,
+            self.gen_val_str(self.new_val)
+        )
+
 class MachineIOMappingOperation(MachineNodeOperation):
     def __init__(self, mio, idx, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
