@@ -307,6 +307,9 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         if self.p.build_path is None:
             return
 
+        self.reload_build_path()
+
+    def reload_build_path(self):
         if self.tm:
             # If task manager is available then use background task
             try:
