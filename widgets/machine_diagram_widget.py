@@ -460,6 +460,8 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.canvas.bind("<KeyRelease>", self.on_key_release, "+")
         self.canvas.focus_set()
 
+        self.canvas.bind("<Delete>", self.on_key_delete, "+")
+
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
 
         """
@@ -1113,6 +1115,15 @@ IRQ line creation
 
     def delete_selected(self):
         self.delete_ids(list(self.selected))
+
+    def on_key_delete(self, event):
+        if self.selected:
+            to_del = self.selected
+
+            self.selected = []
+            self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+
+            self.delete_ids(to_del)
 
     def delete_ids(self, ids):
         to_del = []
