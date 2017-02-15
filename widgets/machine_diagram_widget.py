@@ -76,6 +76,8 @@ from hotkey import \
     HotKeyBinding
 
 from canvas2svg import \
+    configure as svg_configure, \
+    SEGMENT_TO_PATH, \
     saveall as saveall2svg
 
 class PhObject(object):
@@ -729,6 +731,7 @@ IRQ line creation
                 f.write(l.replace("/DejavuSansMono", "/" + self.node_font[0]))
             f.close()
         elif ext == ".svg":
+            svg_configure(SEGMENT_TO_PATH)
             saveall2svg(file_name, self.canvas)
         else:
             showerror(
