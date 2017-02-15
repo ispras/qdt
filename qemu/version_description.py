@@ -225,6 +225,11 @@ class QemuVersionDescription(object):
         for junk in self.co_init_cache():
             pass
 
+    def forget_cache(self):
+        if self.qvc is None:
+            raise QVCWasNotInitialized()
+        self.qvc = None
+
     def co_init_cache(self):
         if not self.qvc == None:
             raise MultipleQVCInitialization(self.src_path)
