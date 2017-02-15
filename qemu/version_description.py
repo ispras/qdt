@@ -164,6 +164,9 @@ class MultipleQVCInitialization(Exception):
     def __init__(self, path):
         Exception.__init__(self, path)
 
+class QVCWasNotInitialized(Exception):
+    pass
+
 class QemuVersionDescription(object):
     current = None
 

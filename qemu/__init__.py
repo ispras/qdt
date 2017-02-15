@@ -7,6 +7,7 @@ from source import \
     add_base_types
 
 from version_description import \
+    QVCWasNotInitialized, \
     BadBuildPath, \
     MultipleQVCInitialization, \
     QemuVersionDescription, \
