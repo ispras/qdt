@@ -167,6 +167,9 @@ class MultipleQVCInitialization(Exception):
 class QVCWasNotInitialized(Exception):
     pass
 
+class QVCIsNotReady(Exception):
+    pass
+
 class QemuVersionDescription(object):
     current = None
 
