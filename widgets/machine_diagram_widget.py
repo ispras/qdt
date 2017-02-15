@@ -1227,6 +1227,8 @@ IRQ line creation
         return False
 
     def on_b1_press(self, event):
+        event.widget.focus_set()
+
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         self.select_point = (x, y)
 
@@ -1340,6 +1342,8 @@ IRQ line creation
         self.invalidate()
 
     def on_b3_press(self, event):
+        event.widget.focus_set()
+
         if self.dragging or self.select_point:
             return
 
