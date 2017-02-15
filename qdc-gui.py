@@ -456,6 +456,14 @@ set correct Qemu build path.").get()
             )
             return
 
+        if not qvd.qvc_is_ready:
+            showerror(
+                title = _("Generation is cancelled").get(),
+                message = _("Qemu version cache is not ready yet. Try \
+later.").get()
+            )
+            return
+
         self._project_generation_task = ProjectGeneration(
             self.proj,
             qvd.src_path
