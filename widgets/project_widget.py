@@ -214,6 +214,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.tv_descs.bind("<Button-3>", self.on_tv_b3, "+")
 
+        self.tv_descs.bind("<Delete>", self.on_key_delete, "+")
+
         self.nb_descriptions.bind("<<NotebookTabClosed>>",
             self.on_notebook_tab_closed)
 
@@ -256,16 +258,46 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.notify_popup_command()
 
+    def delete_description(self, desc):
+        self.pht.stage(POp_SetDescLayout, None, desc)
+        self.pht.delete_description(desc)
+
     def on_delete_description(self):
         item = self.tv_descs.selection()[0]
         name = self.tv_descs.item(item)["text"]
         desc = self.p.find(name = name).next()
+
+        # Layout refreshing is required because the layout of widget
+        # representing description being deleted, must be saved too.
+        # TODO: Only corresponding layout should be refreshed.
         self.refresh_layouts()
-        self.pht.stage(POp_SetDescLayout, None, desc)
-        self.pht.delete_description(desc)
+
+        self.delete_description(desc)
+
         self.pht.commit()
 
         self.notify_popup_command()
+
+    def on_key_delete(self, event):
+        # Description deletion may cause item identifiers to become invalid.
+        # Hence, first look up all descriptions to be deleted.
+        descs_to_del = []
+        for item in self.tv_descs.selection():
+            name = self.tv_descs.item(item)["text"]
+            descs_to_del.append(self.p.find(name = name).next())
+
+        if descs_to_del:
+            # Layout refreshing is required because the layout of widget
+            # representing description being deleted, must be saved too.
+            # TODO: Only corresponding layout should be refreshed.
+            self.refresh_layouts()
+
+            for desc in descs_to_del:
+                self.delete_description(desc)
+
+            self.pht.commit(
+                sequence_description = _("Selected descriptions deletion")
+            )
 
     def account_build_path(self):
         del self.__account_build_path
