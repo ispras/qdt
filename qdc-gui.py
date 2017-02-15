@@ -54,9 +54,10 @@ from tkMessageBox import \
     showerror
 
 class ProjectGeneration(CoTask):
-    def __init__(self, project, source_path):
+    def __init__(self, project, source_path, signal):
         self.p = project
         self.s = source_path
+        self.sig = signal
         self.finished = False
         CoTask.__init__(self, self.begin())
 
@@ -80,6 +81,7 @@ class ProjectGeneration(CoTask):
 
     def on_finished(self):
         self.finished = True
+        self.sig.emit()
 
 class QDCGUIWindow(GUITk):
     def __init__(self, project = None):
@@ -467,7 +469,8 @@ later.").get()
 
         self._project_generation_task = ProjectGeneration(
             self.proj,
-            qvd.src_path
+            qvd.src_path,
+            self.sig_generation_finished
         )
         self.task_manager.enqueue(self._project_generation_task)
 
