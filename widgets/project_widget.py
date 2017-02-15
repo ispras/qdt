@@ -256,13 +256,22 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.notify_popup_command()
 
+    def delete_description(self, desc):
+        self.pht.stage(POp_SetDescLayout, None, desc)
+        self.pht.delete_description(desc)
+
     def on_delete_description(self):
         item = self.tv_descs.selection()[0]
         name = self.tv_descs.item(item)["text"]
         desc = self.p.find(name = name).next()
+
+        # Layout refreshing is required because the layout of widget
+        # representing description being deleted, must be saved too.
+        # TODO: Only corresponding layout should be refreshed.
         self.refresh_layouts()
-        self.pht.stage(POp_SetDescLayout, None, desc)
-        self.pht.delete_description(desc)
+
+        self.delete_description(desc)
+
         self.pht.commit()
 
         self.notify_popup_command()
