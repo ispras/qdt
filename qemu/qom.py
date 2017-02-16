@@ -41,6 +41,9 @@ class QOMType(object):
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
 
+    def gen_instance_init_name(self):
+        return "%s_instance_init" % self.qtn.for_id_name
+
     def gen_register_types_name(self):
         return "%s_register_types" % self.qtn.for_id_name
 

@@ -486,6 +486,3 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_Ith_pio_address_macro_name(self, i):
         UPPER = self.get_Ith_pio_id_component(i).upper()
         return "%s_%s_ADDR" % (self.qtn.for_macros, UPPER)
-
-    def gen_instance_init_name(self):
-        return "%s_instance_init" % self.qtn.for_id_name
