@@ -1,6 +1,7 @@
 from source import \
     TypeNotRegistered, \
     Initializer, \
+    Function, \
     Type
 
 class QemuTypeName(object):
@@ -45,6 +46,35 @@ class QOMType(object):
 
     def gen_type_info_name(self):
         return "%s_info" % self.qtn.for_id_name
+
+    def gen_instance_init_fn(self, state_struct,
+        code = "",
+        s_is_used = False,
+        used_types = [],
+        used_globals = []
+    ):
+        type_cast_macro = Type.lookup(self.qtn.for_macros)
+
+        fn = Function(
+            name = self.gen_instance_init_name(),
+            body = """\
+    {used}{Struct} *s = {UPPER}(obj);
+{extra_code}\
+""".format(
+    Struct = state_struct.name,
+    UPPER = type_cast_macro.name,
+    extra_code = code,
+    used = "" if s_is_used else "__attribute__((unused)) "
+            ),
+            static = True,
+            args = [
+                Type.lookup("Object").gen_var("obj", pointer = True)
+            ],
+            used_types = [state_struct, type_cast_macro] + used_types,
+            used_globals = used_globals
+        )
+
+        return fn
 
     def gen_type_info_var(self, state_struct, instance_init_fn, class_init_fn,
         parent_tn = "TYPE_OBJECT"
