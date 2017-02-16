@@ -341,26 +341,9 @@ use_as_prototype(
                 Type.lookup("DEVICE")
                 ])
 
-
-        instance_init_used_types.extend([
-            self.state_struct,
-            self.type_cast_macro
-            ])
-        self.instance_init = Function(
-            name = self.gen_instance_init_name(),
-            body = """\
-    {used}{Struct} *s = {UPPER}(obj);
-{extra_code}\
-""".format(
-    Struct = self.state_struct.name,
-    UPPER = self.qtn.for_macros,
-    extra_code = instance_init_code,
-    used = "" if s_is_used else "__attribute__((unused)) "
-),
-            static = True,
-            args = [
-                Type.lookup("Object").gen_var("obj", pointer = True)
-            ],
+        self.instance_init = self.gen_instance_init_fn(self.state_struct,
+            code = instance_init_code,
+            s_is_used = s_is_used,
             used_types = instance_init_used_types,
             used_globals = instance_init_used_globals
         )
