@@ -122,6 +122,23 @@ class QOMType(object):
 
         return tiv
 
+    def gen_register_types_fn(self, *infos):
+        body = ""
+        for info in infos:
+            body += "    type_register_static(&%s);\n" % info.name
+
+        fn = Function(
+            name = self.gen_register_types_name(),
+            body = body,
+            static = True,
+            used_types = [
+                Type.lookup("type_register_static")
+            ],
+            used_globals = list(infos)
+        )
+
+        return fn
+
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro):
         return Type.lookup("MemoryRegionOps_read").use_as_prototype(
