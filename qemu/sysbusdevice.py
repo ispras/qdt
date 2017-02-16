@@ -420,18 +420,7 @@ Type.lookup("void").gen_var("opaque", True),
 
         self.source.add_global_variable(self.type_info)
 
-        self.register_types = Function(
-            name = self.gen_register_types_name(),
-            body = """\
-    type_register_static(&{type_info});
-""".format(
-    type_info = self.gen_type_info_name()
-), 
-            static = True, 
-            used_types = [
-                Type.lookup("type_register_static")
-            ],
-            used_globals = [self.type_info])
+        self.register_types = self.gen_register_types_fn(self.type_info)
 
         self.source.add_type(self.register_types)
 
