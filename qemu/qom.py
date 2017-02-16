@@ -1,4 +1,6 @@
 from source import \
+    TypeNotRegistered, \
+    Initializer, \
     Type
 
 class QemuTypeName(object):
@@ -43,6 +45,49 @@ class QOMType(object):
 
     def gen_type_info_name(self):
         return "%s_info" % self.qtn.for_id_name
+
+    def gen_type_info_var(self, state_struct, instance_init_fn, class_init_fn,
+        parent_tn = "TYPE_OBJECT"
+    ):
+        used_types = [
+            state_struct,
+            instance_init_fn,
+            class_init_fn
+        ]
+
+        try:
+            parent_macro = Type.lookup(parent_tn)
+        except TypeNotRegistered:
+            parent_macro = None
+        else:
+            used_types.append(parent_macro)
+
+        # Type info initializer
+        tii = Initializer(
+            code = """{{
+    .name          = TYPE_{UPPER},
+    .parent        = {parent_tn},
+    .instance_size = sizeof({Struct}),
+    .instance_init = {instance_init},
+    .class_init    = {class_init}
+}}""".format(
+    UPPER = self.qtn.for_macros,
+    parent_tn = ('"%s"' % parent_tn) if parent_macro is None \
+                else parent_macro.name,
+    Struct = state_struct.name,
+    instance_init = instance_init_fn.name,
+    class_init = class_init_fn.name
+            ),
+            used_types = used_types
+        )
+        # TypeInfo variable
+        tiv = Type.lookup("TypeInfo").gen_var(
+            name = self.gen_type_info_name(),
+            static = True,
+            initializer = tii
+        )
+
+        return tiv
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro):
