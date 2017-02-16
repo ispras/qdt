@@ -430,31 +430,10 @@ Type.lookup("void").gen_var("opaque", True),
 
         self.source.add_type(self.class_init)
 
-        type_info_init = Initializer(
-            code = """{{
-    .name          = TYPE_{UPPER},
-    .parent        = TYPE_SYS_BUS_DEVICE,
-    .instance_size = sizeof({Struct}),
-    .instance_init = {instance_init},
-    .class_init    = {class_init}
-}}""".format(
-    UPPER = self.qtn.for_macros,
-    Struct = self.state_struct.name,
-    instance_init = self.instance_init.name,
-    class_init = self.class_init.name
-),
-            used_types = [
-                self.state_struct,
-                self.instance_init,
-                self.class_init
-            ]
-            )
-
-        self.type_info = Type.lookup("TypeInfo").gen_var(
-            name = self.gen_type_info_name(),
-            static = True,
-            initializer = type_info_init
-            )
+        self.type_info = self.gen_type_info_var(self.state_struct,
+            self.instance_init, self.class_init,
+            parent_tn = "TYPE_SYS_BUS_DEVICE"
+        )
 
         self.source.add_global_variable(self.type_info)
 
