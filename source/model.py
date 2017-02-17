@@ -270,15 +270,20 @@ class Header(Source):
 
         h = Header.lookup(definer)
 
-        if macro.arglist == None:
-            try:
-                m = Type.lookup(macro.name)
-                if not m.definer.path == definer:
-                    print "Info: multiple definitions of macro %s in %s and %s"\
-                         % (macro.name, m.definer.path, definer)
-            except:
-                m = Macro(name = macro.name, text = macro.value[0].value)
-                h.add_type(m)
+        try:
+            m = Type.lookup(macro.name)
+            if not m.definer.path == definer:
+                print "Info: multiple definitions of macro %s in %s and %s"\
+                     % (macro.name, m.definer.path, definer)
+        except:
+            m = Macro(
+                name = macro.name,
+                text = macro.value[0].value,
+                args = (
+                    None if macro.arglist is None else list(macro.arglist)
+                )
+            )
+            h.add_type(m)
 
     @staticmethod
     def _build_inclusions_recursive(start_dir, prefix):
