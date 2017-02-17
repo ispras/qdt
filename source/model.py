@@ -270,15 +270,20 @@ class Header(Source):
 
         h = Header.lookup(definer)
 
-        if macro.arglist == None:
-            try:
-                m = Type.lookup(macro.name)
-                if not m.definer.path == definer:
-                    print "Info: multiple definitions of macro %s in %s and %s"\
-                         % (macro.name, m.definer.path, definer)
-            except:
-                m = Macro(name = macro.name, text = macro.value[0].value)
-                h.add_type(m)
+        try:
+            m = Type.lookup(macro.name)
+            if not m.definer.path == definer:
+                print "Info: multiple definitions of macro %s in %s and %s"\
+                     % (macro.name, m.definer.path, definer)
+        except:
+            m = Macro(
+                name = macro.name,
+                text = macro.value[0].value,
+                args = (
+                    None if macro.arglist is None else list(macro.arglist)
+                )
+            )
+            h.add_type(m)
 
     @staticmethod
     def _build_inclusions_recursive(start_dir, prefix):
@@ -775,15 +780,17 @@ class Macro(Type):
         return [ MacroDefinition(self) ]
 
     def gen_usage_string(self, init = None):
-        if self.args == None:
+        if self.args is None:
             return self.name
-        else:
+        elif self.args:
             arg_val = "(";
             for a in self.args[:-1]:
                 arg_val += init.code[a] + ", "
             arg_val += init.code[self.args[-1]] + ")"
+        else:
+            arg_val = "()"
 
-            return "%s%s" % (self.name, arg_val)
+        return "%s%s" % (self.name, arg_val)
 
     def gen_var(self, pointer = False, inititalizer = None, static = False):
         return super(Macro, self).gen_var(

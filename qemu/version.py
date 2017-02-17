@@ -64,7 +64,6 @@ def define_only_qemu_2_6_0_types():
     osdep_fake_type = Type("FAKE_TYPE_IN_QEMU_OSDEP")
 
     Header.lookup("qemu/osdep.h").add_types([
-        Macro("MIN"),
         osdep_fake_type
     ])
 
@@ -97,8 +96,7 @@ def define_only_qemu_2_6_0_types():
         Function("object_property_set_str"),
         Function("object_property_set_link"),
         Function("object_property_set_bool"),
-        Function("object_property_set_int"),
-        Macro("OBJECT")
+        Function("object_property_set_int")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("qom/cpu.h").add_types([
@@ -170,7 +168,6 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/boards.h").add_types([
-        Macro("MACHINE_CLASS"),
         Structure("MachineClass"),
         Structure("MachineState")
     ]).add_reference(osdep_fake_type)
@@ -209,7 +206,6 @@ def define_only_qemu_2_6_0_types():
             ]
         ),
         Function("sysbus_mmio_map"),
-        Macro("SYS_BUS_DEVICE"),
         Function("sysbus_connect_irq")
     ]).add_reference(osdep_fake_type)
 
@@ -228,7 +224,6 @@ def define_only_qemu_2_6_0_types():
     Header.lookup("hw/qdev-core.h").add_types([
         Type("DeviceClass", False),
         Type("DeviceState", False),
-        Macro(name = "DEVICE", args = ["obj"]),
         Type("Property", False),
         Function(name = "qdev_init_gpio_in",
             ret_type = Type.lookup("void"),
@@ -242,7 +237,6 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_create"),
         Function(name = "qdev_init_nofail"),
         Function(name = "qdev_get_child_bus"),
-        Macro(name = "BUS"),
         Structure(name = "BusState"),
         Function(name = "qdev_get_gpio_in"),
         Function(name = "qdev_connect_gpio_out"),
@@ -259,20 +253,12 @@ def define_only_qemu_2_6_0_types():
         Function("vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("qemu/module.h").add_types([
-        Macro(name = "type_init",
-            args = [
-                "function"
-            ]
-        ),
-        Macro(name = "machine_init", args = ["function"])
-    ]).add_reference(osdep_fake_type)
+    Header.lookup("qemu/module.h").add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/pci.h").add_types([
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False),
         Function("pci_create_multifunction"),
-        Macro("PCI_DEVFN")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/msi.h").add_types([
@@ -288,9 +274,7 @@ def define_only_qemu_2_6_0_types():
         Type("PCIBus", incomplete = True)
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/pci/pci_host.h").add_types([
-        Macro(name = "PCI_HOST_BRIDGE")
-    ]).add_reference(osdep_fake_type)
+    Header.lookup("hw/pci/pci_host.h").add_reference(osdep_fake_type)
 
     Header.lookup("qemu/typedefs.h").add_types([
         Structure("I2CBus") # the structure is defined in .c file

@@ -1,4 +1,8 @@
 from source import \
+    Structure, \
+    TypeNotRegistered, \
+    Initializer, \
+    Function, \
     Type
 
 class QemuTypeName(object):
@@ -33,16 +37,202 @@ class QemuTypeName(object):
 
         self.for_macros = tmp
 
+type2vmstate = {
+    "PCIDevice" : "VMSTATE_PCI_DEVICE"
+}
 
 class QOMType(object):
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
+        self.state_fields = []
+
+    def add_state_fields(self, fields):
+        for field in fields:
+            self.state_fields.append(field)
+
+    def gen_state(self):
+        s = Structure(self.qtn.for_struct_name + 'State')
+        for f in self.state_fields:
+            s.append_field(Type.lookup(f.type)
+                           .gen_var(f.name, array_size=f.num))
+        return s
+
+    def gen_vmstate_initializer(self, state_struct):
+        type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
+        code = ("""{
+    .name = %s,
+    .version_id = 1,
+    .fields = (VMStateField[]) {""" % type_macro.name
+        )
+
+        # TODO: make Macro hashable, then use set()
+        used_macros = {}
+        global type2vmstate
+
+        first = True
+        for f in self.state_fields:
+            if not f.save:
+                continue
+
+            if f.num is not None:
+                raise Exception(
+                    "VMState field generation for arrays is not supported"
+                )
+
+            try:
+                vms_macro_name = type2vmstate[f.type.name]
+            except KeyError:
+                raise Exception(
+                    "VMState generation for type %s is not implemented" % \
+                        f.type.name
+                )
+
+            vms_macro = Type.lookup(vms_macro_name)
+            used_macros[vms_macro_name] = vms_macro
+
+            init = Initializer(
+                # code of macro initializer is dict
+                {
+                    "_field": f.name,
+                    "_state": state_struct.name
+                }
+            )
+
+            if first:
+                first = False
+                code += "\n"
+            else:
+                code += ",\n"
+
+            code += " " * 8 + vms_macro.gen_usage_string(init)
+
+        # Generate VM state list terminator macro.
+        if first:
+            code += "\n"
+        else:
+            code += ",\n"
+        code += " " * 8 + Type.lookup("VMSTATE_END_OF_LIST").gen_usage_string()
+
+        code += "\n    }\n}"
+
+        init = Initializer(
+            code = code,
+            used_types = [
+                type_macro,
+                Type.lookup("VMStateField"),
+                state_struct
+            ] + used_macros.values()
+        )
+        return init
+
+    def gen_vmstate_var(self, state_struct):
+        init = self.gen_vmstate_initializer(state_struct)
+
+        vmstate = Type.lookup("VMStateDescription").gen_var(
+            name = "vmstate_%s" % self.qtn.for_id_name,
+            static = True,
+            initializer = init
+        )
+
+        return vmstate
+
+    def gen_instance_init_name(self):
+        return "%s_instance_init" % self.qtn.for_id_name
 
     def gen_register_types_name(self):
         return "%s_register_types" % self.qtn.for_id_name
 
     def gen_type_info_name(self):
         return "%s_info" % self.qtn.for_id_name
+
+    def gen_instance_init_fn(self, state_struct,
+        code = "",
+        s_is_used = False,
+        used_types = [],
+        used_globals = []
+    ):
+        type_cast_macro = Type.lookup(self.qtn.for_macros)
+
+        fn = Function(
+            name = self.gen_instance_init_name(),
+            body = """\
+    {used}{Struct} *s = {UPPER}(obj);
+{extra_code}\
+""".format(
+    Struct = state_struct.name,
+    UPPER = type_cast_macro.name,
+    extra_code = code,
+    used = "" if s_is_used else "__attribute__((unused)) "
+            ),
+            static = True,
+            args = [
+                Type.lookup("Object").gen_var("obj", pointer = True)
+            ],
+            used_types = [state_struct, type_cast_macro] + used_types,
+            used_globals = used_globals
+        )
+
+        return fn
+
+    def gen_type_info_var(self, state_struct, instance_init_fn, class_init_fn,
+        parent_tn = "TYPE_OBJECT"
+    ):
+        used_types = [
+            state_struct,
+            instance_init_fn,
+            class_init_fn
+        ]
+
+        try:
+            parent_macro = Type.lookup(parent_tn)
+        except TypeNotRegistered:
+            parent_macro = None
+        else:
+            used_types.append(parent_macro)
+
+        # Type info initializer
+        tii = Initializer(
+            code = """{{
+    .name          = TYPE_{UPPER},
+    .parent        = {parent_tn},
+    .instance_size = sizeof({Struct}),
+    .instance_init = {instance_init},
+    .class_init    = {class_init}
+}}""".format(
+    UPPER = self.qtn.for_macros,
+    parent_tn = ('"%s"' % parent_tn) if parent_macro is None \
+                else parent_macro.name,
+    Struct = state_struct.name,
+    instance_init = instance_init_fn.name,
+    class_init = class_init_fn.name
+            ),
+            used_types = used_types
+        )
+        # TypeInfo variable
+        tiv = Type.lookup("TypeInfo").gen_var(
+            name = self.gen_type_info_name(),
+            static = True,
+            initializer = tii
+        )
+
+        return tiv
+
+    def gen_register_types_fn(self, *infos):
+        body = ""
+        for info in infos:
+            body += "    type_register_static(&%s);\n" % info.name
+
+        fn = Function(
+            name = self.gen_register_types_name(),
+            body = body,
+            static = True,
+            used_types = [
+                Type.lookup("type_register_static")
+            ],
+            used_globals = list(infos)
+        )
+
+        return fn
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro):
@@ -97,3 +287,20 @@ class QOMType(object):
                 Type.lookup("PRIx64")
             ]
         )
+
+
+class QOMStateField(object):
+    def __init__(self, ftype, name, num=None, save=True):
+        self.type = ftype
+        self.name = name
+        self.num = num
+        self.save = save
+
+
+class QOMDevice(QOMType):
+    def __init__(self, name):
+        super(QOMDevice, self).__init__(name)
+
+    def gen_source(self):
+        pass
+

@@ -341,51 +341,16 @@ use_as_prototype(
                 Type.lookup("DEVICE")
                 ])
 
-
-        instance_init_used_types.extend([
-            self.state_struct,
-            self.type_cast_macro
-            ])
-        self.instance_init = Function(
-            name = self.gen_instance_init_name(),
-            body = """\
-    {used}{Struct} *s = {UPPER}(obj);
-{extra_code}\
-""".format(
-    Struct = self.state_struct.name,
-    UPPER = self.qtn.for_macros,
-    extra_code = instance_init_code,
-    used = "" if s_is_used else "__attribute__((unused)) "
-),
-            static = True,
-            args = [
-                Type.lookup("Object").gen_var("obj", pointer = True)
-            ],
+        self.instance_init = self.gen_instance_init_fn(self.state_struct,
+            code = instance_init_code,
+            s_is_used = s_is_used,
             used_types = instance_init_used_types,
             used_globals = instance_init_used_globals
         )
 
         self.source.add_type(self.instance_init)
 
-        vmstate_init = Initializer(
-            """{{
-    .name = TYPE_{UPPER},
-    .version_id = 1,
-    .fields = (VMStateField[]) {{
-        VMSTATE_END_OF_LIST()
-    }}
-}}""".format(UPPER = self.qtn.for_macros), 
-            used_types = [
-                Type.lookup("VMStateField"),
-                # It actually will be used when fields will be declared
-                self.state_struct
-            ])
-
-        self.vmstate = Type.lookup("VMStateDescription").gen_var(
-            name = "vmstate_%s" % self.qtn.for_id_name,
-            static = True,
-            initializer = vmstate_init
-            )
+        self.vmstate = self.gen_vmstate_var(self.state_struct)
 
         self.source.add_global_variable(self.vmstate)
 
@@ -430,46 +395,14 @@ Type.lookup("void").gen_var("opaque", True),
 
         self.source.add_type(self.class_init)
 
-        type_info_init = Initializer(
-            code = """{{
-    .name          = TYPE_{UPPER},
-    .parent        = TYPE_SYS_BUS_DEVICE,
-    .instance_size = sizeof({Struct}),
-    .instance_init = {instance_init},
-    .class_init    = {class_init}
-}}""".format(
-    UPPER = self.qtn.for_macros,
-    Struct = self.state_struct.name,
-    instance_init = self.instance_init.name,
-    class_init = self.class_init.name
-),
-            used_types = [
-                self.state_struct,
-                self.instance_init,
-                self.class_init
-            ]
-            )
-
-        self.type_info = Type.lookup("TypeInfo").gen_var(
-            name = self.gen_type_info_name(),
-            static = True,
-            initializer = type_info_init
-            )
+        self.type_info = self.gen_type_info_var(self.state_struct,
+            self.instance_init, self.class_init,
+            parent_tn = "TYPE_SYS_BUS_DEVICE"
+        )
 
         self.source.add_global_variable(self.type_info)
 
-        self.register_types = Function(
-            name = self.gen_register_types_name(),
-            body = """\
-    type_register_static(&{type_info});
-""".format(
-    type_info = self.gen_type_info_name()
-), 
-            static = True, 
-            used_types = [
-                Type.lookup("type_register_static")
-            ],
-            used_globals = [self.type_info])
+        self.register_types = self.gen_register_types_fn(self.type_info)
 
         self.source.add_type(self.register_types)
 
@@ -524,6 +457,3 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_Ith_pio_address_macro_name(self, i):
         UPPER = self.get_Ith_pio_id_component(i).upper()
         return "%s_%s_ADDR" % (self.qtn.for_macros, UPPER)
-
-    def gen_instance_init_name(self):
-        return "%s_instance_init" % self.qtn.for_id_name
