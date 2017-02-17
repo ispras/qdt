@@ -345,7 +345,7 @@ class QemuVersionDescription(object):
     # TODO: get dt from qemu
     @staticmethod
     def gen_device_tree(build_path, stc):
-        dt_db_fname = build_path + "/dt.json"
+        dt_db_fname = join(build_path, "dt.json")
         if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname)
             dt_db_reader = open(dt_db_fname, "rb")
