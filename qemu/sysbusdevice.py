@@ -350,25 +350,7 @@ use_as_prototype(
 
         self.source.add_type(self.instance_init)
 
-        vmstate_init = Initializer(
-            """{{
-    .name = TYPE_{UPPER},
-    .version_id = 1,
-    .fields = (VMStateField[]) {{
-        VMSTATE_END_OF_LIST()
-    }}
-}}""".format(UPPER = self.qtn.for_macros), 
-            used_types = [
-                Type.lookup("VMStateField"),
-                # It actually will be used when fields will be declared
-                self.state_struct
-            ])
-
-        self.vmstate = Type.lookup("VMStateDescription").gen_var(
-            name = "vmstate_%s" % self.qtn.for_id_name,
-            static = True,
-            initializer = vmstate_init
-            )
+        self.vmstate = self.gen_vmstate_var(self.state_struct)
 
         self.source.add_global_variable(self.vmstate)
 
