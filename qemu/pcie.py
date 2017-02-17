@@ -10,6 +10,7 @@ from source import \
     TypeNotRegistered
 
 from qom import \
+    QOMStateField, \
     QOMType
 
 class PCIEDeviceStateStruct(Structure):
@@ -304,28 +305,15 @@ class PCIEDeviceType(QOMType):
         )
         self.source.add_type(self.device_exit)
 
-        vmstate_init = Initializer(
-            """{{
-    .name = TYPE_{UPPER},
-    .version_id = 1,
-    .fields = (VMStateField[]) {{
-        VMSTATE_PCI_DEVICE(parent_obj, {Struct}),
-        VMSTATE_END_OF_LIST()
-    }}
-}}""".format(
-    UPPER = self.qtn.for_macros,
-    Struct = self.state_struct.name
-    ), 
-            used_types = [
-                Type.lookup("VMStateField"),
-                self.state_struct
-            ])
-
-        self.vmstate = Type.lookup("VMStateDescription").gen_var(
-            name = "vmstate_%s" % self.qtn.for_id_name,
-            static = True,
-            initializer = vmstate_init
+        self.add_state_fields([
+            QOMStateField(
+                Type.lookup("PCIDevice"),
+                "parent_obj"
             )
+        ])
+
+        self.vmstate = self.gen_vmstate_var(self.state_struct)
+
         self.source.add_global_variable(self.vmstate)
 
         properties_init = Initializer(
