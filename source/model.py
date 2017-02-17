@@ -775,15 +775,17 @@ class Macro(Type):
         return [ MacroDefinition(self) ]
 
     def gen_usage_string(self, init = None):
-        if self.args == None:
+        if self.args is None:
             return self.name
-        else:
+        elif self.args:
             arg_val = "(";
             for a in self.args[:-1]:
                 arg_val += init.code[a] + ", "
             arg_val += init.code[self.args[-1]] + ")"
+        else:
+            arg_val = "()"
 
-            return "%s%s" % (self.name, arg_val)
+        return "%s%s" % (self.name, arg_val)
 
     def gen_var(self, pointer = False, inititalizer = None, static = False):
         return super(Macro, self).gen_var(
