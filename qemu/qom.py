@@ -37,6 +37,9 @@ class QemuTypeName(object):
 
         self.for_macros = tmp
 
+type2vmstate = {
+    "PCIDevice" : "VMSTATE_PCI_DEVICE"
+}
 
 class QOMType(object):
     def __init__(self, name):
@@ -53,6 +56,85 @@ class QOMType(object):
             s.append_field(Type.lookup(f.type)
                            .gen_var(f.name, array_size=f.num))
         return s
+
+    def gen_vmstate_initializer(self, state_struct):
+        type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
+        code = ("""{
+    .name = %s,
+    .version_id = 1,
+    .fields = (VMStateField[]) {""" % type_macro.name
+        )
+
+        # TODO: make Macro hashable, then use set()
+        used_macros = {}
+        global type2vmstate
+
+        first = True
+        for f in self.state_fields:
+            if not f.save:
+                continue
+
+            if f.num is not None:
+                raise Exception(
+                    "VMState field generation for arrays is not supported"
+                )
+
+            try:
+                vms_macro_name = type2vmstate[f.type.name]
+            except KeyError:
+                raise Exception(
+                    "VMState generation for type %s is not implemented" % \
+                        f.type.name
+                )
+
+            vms_macro = Type.lookup(vms_macro_name)
+            used_macros[vms_macro_name] = vms_macro
+
+            init = Initializer(
+                # code of macro initializer is dict
+                {
+                    "_field": f.name,
+                    "_state": state_struct.name
+                }
+            )
+
+            if first:
+                first = False
+                code += "\n"
+            else:
+                code += ",\n"
+
+            code += " " * 8 + vms_macro.gen_usage_string(init)
+
+        # Generate VM state list terminator macro.
+        if first:
+            code += "\n"
+        else:
+            code += ",\n"
+        code += " " * 8 + Type.lookup("VMSTATE_END_OF_LIST").gen_usage_string()
+
+        code += "\n    }\n}"
+
+        init = Initializer(
+            code = code,
+            used_types = [
+                type_macro,
+                Type.lookup("VMStateField"),
+                state_struct
+            ] + used_macros.values()
+        )
+        return init
+
+    def gen_vmstate_var(self, state_struct):
+        init = self.gen_vmstate_initializer(state_struct)
+
+        vmstate = Type.lookup("VMStateDescription").gen_var(
+            name = "vmstate_%s" % self.qtn.for_id_name,
+            static = True,
+            initializer = init
+        )
+
+        return vmstate
 
     def gen_instance_init_name(self):
         return "%s_instance_init" % self.qtn.for_id_name
