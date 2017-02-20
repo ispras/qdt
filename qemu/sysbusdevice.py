@@ -469,3 +469,9 @@ Type.lookup("void").gen_var("opaque", True),
             return "mmio"
         else:
             return "mmio_{}".format(i)
+
+    def get_Ith_io_name(self, i):
+        if self.pio_num == 1:
+            return "pio"
+        else:
+            return "pio_{}".format(i)
