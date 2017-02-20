@@ -463,3 +463,9 @@ Type.lookup("void").gen_var("opaque", True),
             return "out_irq"
         else:
             return "out_irq_{}".format(i)
+
+    def get_Ith_mmio_name(self, i):
+        if self.mmio_num == 1:
+            return "mmio"
+        else:
+            return "mmio_{}".format(i)
