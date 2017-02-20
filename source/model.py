@@ -59,23 +59,21 @@ is defined in non-header file %s" % (var.name, s.path))
             self.add_inclusion(s)
         # Auto add definers for types used by variable initializer
         if type(self) is Source:
-            if var.initializer == None:
-                raise Exception("Attempt to add uninitialized global \
-variable %s" % var.name)
-            for t in var.initializer.used_types:
-                for s in t.get_definers():
-                    if s == self:
-                        continue
-                    if not type(s) == Header:
-                        raise Exception("Attempt to define variable {var} \
-whose initializer code uses type {t} defined in non-header file {file}"
-.format(
-    var = var.name,
-    t = t.name,
-    file = s.path 
-)
-                              )
-                    self.add_inclusion(s)
+            if var.initializer is not None:
+                for t in var.initializer.used_types:
+                    for s in t.get_definers():
+                        if s == self:
+                            continue
+                        if not type(s) == Header:
+                            raise Exception("Attempt to define variable {var} \
+    whose initializer code uses type {t} defined in non-header file {file}"
+    .format(
+        var = var.name,
+        t = t.name,
+        file = s.path
+    )
+                                  )
+                        self.add_inclusion(s)
 
         self.global_variables[var.name] = var
 
@@ -1205,22 +1203,25 @@ class VariableDefinition(SourceChunk):
         ch = VariableDefinition(var, indent, append_nl)
 
         refs = var.type.gen_defining_chunk_list()
-        for v in var.initializer.used_variables:
-            # Note that 0-th chunk is variable and rest are its dependencies
-            refs.append(v.get_definition_chunks()[0])
+        if var.initializer is not None:
+            for v in var.initializer.used_variables:
+                # Note that 0-th chunk is variable and rest are its dependencies
+                refs.append(v.get_definition_chunks()[0])
 
-        for t in var.initializer.used_types:
-            refs.extend(t.gen_defining_chunk_list())
+            for t in var.initializer.used_types:
+                refs.extend(t.gen_defining_chunk_list())
 
         ch.add_references(refs)
         return [ch] + refs
 
     def __init__(self, var, indent="", append_nl = True):
-        # add indent to initializer code
-        init_code_lines = var.initializer.code.split('\n')
-        init_code = init_code_lines[0]
-        for line in init_code_lines[1:]:
-            init_code += "\n" + indent + line
+        init_code = ''
+        if var.initializer is not None:
+            # add indent to initializer code
+            init_code_lines = var.initializer.code.split('\n')
+            init_code = " = " + init_code_lines[0]
+            for line in init_code_lines[1:]:
+                init_code += "\n" + indent + line
 
         self.variable = var
 
@@ -1228,7 +1229,7 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{type_name} {var_name}{array_decl} = {init};{nl}
+{indent}{static}{type_name} {var_name}{array_decl}{init};{nl}
 """.format(
         indent = indent,
         static = "static " if var.static else "",
