@@ -224,7 +224,7 @@ class PCIEDeviceType(QOMType):
        msi_64bit.gen_usage_string(),
        msi_masking.gen_usage_string(),
        ", errp" if msi_init_type.args[-1].type \
-                   == Pointer(Type.lookup("Error*")) else ""
+                   == Pointer(Pointer(Type.lookup("Error"))) else ""
             )
 
             realize_used_types.extend(msi_types)
@@ -245,7 +245,7 @@ class PCIEDeviceType(QOMType):
     ),
             args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True),
-                Type.lookup("Error*").gen_var("errp", pointer = True)],
+                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)],
             static = True,
             used_types = realize_used_types,
             used_globals = realize_used_globals
