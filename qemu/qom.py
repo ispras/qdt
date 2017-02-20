@@ -48,7 +48,7 @@ class QOMType(object):
 
     def add_state_fields(self, fields):
         for field in fields:
-            self.state_fields.append(field)
+            self.add_state_field(field)
 
     def add_state_field(self, field):
         self.state_fields.append(field)
