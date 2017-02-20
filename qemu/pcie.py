@@ -422,3 +422,9 @@ Type.lookup("void").gen_var("opaque", True),
             return "mem_bar"
         else:
             return "mem_bar_%u" % i
+
+    def get_Ith_irq_name(self, i):
+        if self.irq_num == 1:
+            return "irq"
+        else:
+            return "irq_{}".format(i)
