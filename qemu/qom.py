@@ -53,8 +53,7 @@ class QOMType(object):
     def gen_state(self):
         s = Structure(self.qtn.for_struct_name + 'State')
         for f in self.state_fields:
-            s.append_field(Type.lookup(f.type)
-                           .gen_var(f.name, array_size=f.num))
+            s.append_field(f.type.gen_var(f.name, array_size = f.num))
         return s
 
     def gen_vmstate_initializer(self, state_struct):
