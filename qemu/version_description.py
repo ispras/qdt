@@ -243,10 +243,7 @@ class QemuVersionDescription(object):
 
             yield True
 
-            self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
-                self.build_path,
-                self.qvc.stc
-            )
+            self.gen_device_tree()
 
             yield True
 
@@ -343,25 +340,22 @@ class QemuVersionDescription(object):
             return None
 
     # TODO: get dt from qemu
-    @staticmethod
-    def gen_device_tree(build_path, stc):
-        dt_db_fname = join(build_path, "dt.json")
+    def gen_device_tree(self):
+        dt_db_fname = join(self.build_path, "dt.json")
         if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname)
             dt_db_reader = open(dt_db_fname, "rb")
-            device_tree = load(dt_db_reader)
+            self.qvc.device_tree = load(dt_db_reader)
             dt_db_reader.close()
             print("Adding macros to " + dt_db_fname)
-            QemuVersionDescription.add_dt_macro(device_tree, stc)
-            return device_tree
+            self.add_dt_macro(device_tree)
         else:
-            return None
+            self.qvc.device_tree = None
 
-    @staticmethod
-    def add_dt_macro(list_dt, stc):
+    def add_dt_macro(self, list_dt):
         for dict_dt in list_dt:
             dt_type = dict_dt["type"]
-            for h in stc.reg_header.values():
+            for h in self.qvc.stc.reg_header.values():
                 for t in h.types.values():
                     if isinstance(t, Macro):
                         if t.text == '"' + dt_type + '"':
@@ -373,7 +367,7 @@ class QemuVersionDescription(object):
             if "property" in dict_dt:
                 for dt_property in dict_dt["property"]:
                     dt_property_name = dt_property["name"]
-                    for h in stc.reg_header.values():
+                    for h in self.qvc.stc.reg_header.values():
                         for t in h.types.values():
                             if isinstance(t, Macro):
                                 if t.text == '"' + dt_property_name + '"':
@@ -383,4 +377,4 @@ class QemuVersionDescription(object):
                                     else:
                                         dt_property["macro"] = [t.name]
             if "children" in dict_dt:
-                QemuVersionDescription.add_dt_macro(dict_dt["children"], stc)
+                self.add_dt_macro(dict_dt["children"])
