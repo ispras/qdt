@@ -2,7 +2,6 @@ from source import \
     Pointer, \
     Header, \
     Source, \
-    Structure, \
     Type, \
     Function, \
     Initializer, \
@@ -11,39 +10,6 @@ from source import \
 
 from qom import \
     QOMType
-
-class PCIEDeviceStateStruct(Structure):
-    def __init__(self,
-        name,
-        irq_num,
-        mem_bar_num
-    ):
-        super(PCIEDeviceStateStruct, self).__init__(name)
-
-        self.irq_num = irq_num
-        self.mem_bar_num = mem_bar_num
-
-        self.append_field_t_s("PCIDevice", "parent_obj")
-
-        for irqN in range(0, irq_num):
-            self.append_field_t_s("qemu_irq", 
-                self.get_Ith_irq_name(irqN))
-
-        for barN in xrange(0, self.mem_bar_num):
-            self.append_field_t_s("MemoryRegion",
-                    self.get_Ith_mem_bar_name(barN))
-
-    def get_Ith_mem_bar_name(self, i):
-        if self.mem_bar_num == 1:
-            return "mem_bar"
-        else:
-            return "mem_bar_%u" % i
-
-    def get_Ith_irq_name(self, i):
-        if self.irq_num == 1:
-            return "irq"
-        else:
-            return "irq_{}".format(i)
 
 class PCIEDeviceType(QOMType):
     def __init__(self,

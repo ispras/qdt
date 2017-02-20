@@ -34,7 +34,6 @@ from sysbusdevice import \
     SysBusDeviceType
 
 from pcie import \
-    PCIEDeviceStateStruct, \
     PCIEDeviceType
     
 from qom import \
