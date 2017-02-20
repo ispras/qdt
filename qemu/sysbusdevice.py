@@ -301,7 +301,7 @@ class SysBusDeviceType(QOMType):
             for irqN in range(0, self.out_irq_num):
                 instance_init_code += """\
     sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->%s);
-""" % self.state_struct.get_Ith_irq_name(irqN)
+""" % self.get_Ith_irq_name(irqN)
 
         if self.in_irq_num > 0:
             self.irq_handler = Type.lookup("qemu_irq_handler").\
