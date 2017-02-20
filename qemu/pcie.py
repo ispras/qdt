@@ -416,3 +416,9 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_Ith_mem_bar_ops_name(self, i):
         return self.qtn.for_id_name + "_" \
             + self.get_Ith_mem_bar_id_component(i) + "_ops"
+
+    def get_Ith_mem_bar_name(self, i):
+        if self.mem_bar_num == 1:
+            return "mem_bar"
+        else:
+            return "mem_bar_%u" % i
