@@ -213,7 +213,7 @@ class PCIEDeviceType(QOMType):
     pci_register_bar(&s->parent_obj, {barN}, PCI_BASE_ADDRESS_SPACE_MEMORY, &s->{bar});
 """.format(
     barN = barN,
-    bar = self.state_struct.get_Ith_mem_bar_name(barN),
+    bar = self.get_Ith_mem_bar_name(barN),
     ops = self.gen_Ith_mem_bar_ops_name(barN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name
@@ -407,7 +407,7 @@ Type.lookup("void").gen_var("opaque", True),
         return self.source.generate()
 
     def get_Ith_mem_bar_id_component(self, i):
-        return self.state_struct.get_Ith_mem_bar_name(i)
+        return self.get_Ith_mem_bar_name(i)
 
     def gen_Ith_mem_bar_size_macro_name(self, i):
         UPPER = self.get_Ith_mem_bar_id_component(i).upper()
