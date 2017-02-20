@@ -30,13 +30,11 @@ from pci_ids import \
     PCIClassification
 
 from sysbusdevice import \
-    SysBusDeviceStateStruct, \
     SysBusDeviceType
 
 from pcie import \
-    PCIEDeviceStateStruct, \
     PCIEDeviceType
-    
+
 from qom import \
     QOMStateField, \
     QemuTypeName, \

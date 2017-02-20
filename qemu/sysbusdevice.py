@@ -2,57 +2,12 @@ from qom import \
     QOMType
 
 from source import \
-    Structure, \
     Header, \
     Macro, \
     Source, \
     Initializer, \
     Function, \
     Type
-
-class SysBusDeviceStateStruct(Structure):
-    def __init__(self,
-        name,
-        irq_num = 1,
-        mmio_num = 1,
-        pio_num = 0,
-    ):
-        super(SysBusDeviceStateStruct, self).__init__(name)
-        self.irq_num = irq_num
-        self.mmio_num = mmio_num
-        self.pio_num = pio_num
-
-        self.append_field_t(Type.lookup("SysBusDevice"), "parent_obj")
-
-        for irqN in range(0, irq_num):
-            self.append_field_t(Type.lookup("qemu_irq"), 
-                self.get_Ith_irq_name(irqN))
-
-        for mmioN in range(0, mmio_num):
-            self.append_field_t(Type.lookup("MemoryRegion"), 
-                self.get_Ith_mmio_name(mmioN))
-
-        for ioN in range(0, pio_num):
-            self.append_field_t(Type.lookup("MemoryRegion"),
-                self.get_Ith_io_name(ioN))
-
-    def get_Ith_irq_name(self, i):
-        if self.irq_num == 1:
-            return "out_irq"
-        else:
-            return "out_irq_{}".format(i)
-
-    def get_Ith_mmio_name(self, i):
-        if self.mmio_num == 1:
-            return "mmio"
-        else:
-            return "mmio_{}".format(i)
-
-    def get_Ith_io_name(self, i):
-        if self.pio_num == 1:
-            return "pio"
-        else:
-            return "pio_{}".format(i)
 
 class SysBusDeviceType(QOMType):
     def __init__(self,
@@ -82,12 +37,26 @@ class SysBusDeviceType(QOMType):
         except Exception:
             self.header = Header(header_path)
 
-        self.state_struct = SysBusDeviceStateStruct(
-            name = self.struct_name,
-            irq_num = self.out_irq_num,
-            mmio_num = self.mmio_num,
-            pio_num = self.pio_num
+        self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
+
+        for irqN in range(0, self.out_irq_num):
+            self.add_state_field_h("qemu_irq", self.get_Ith_irq_name(irqN),
+                save = False
             )
+
+        for mmioN in range(0, self.mmio_num):
+            self.add_state_field_h("MemoryRegion",
+                self.get_Ith_mmio_name(mmioN),
+                save = False
+            )
+
+        for ioN in range(0, self.pio_num):
+            self.add_state_field_h("MemoryRegion",
+                self.get_Ith_io_name(ioN),
+                save = False
+            )
+
+        self.state_struct = self.gen_state()
 
         self.header.add_type(self.state_struct)
 
@@ -209,7 +178,7 @@ class SysBusDeviceType(QOMType):
     memory_region_init_io(&s->{mmio}, obj, &{ops}, s, TYPE_{UPPER}, {size});
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->{mmio});
 """.format(
-    mmio = self.state_struct.get_Ith_mmio_name(mmioN),
+    mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name
@@ -282,7 +251,7 @@ class SysBusDeviceType(QOMType):
     sysbus_add_io(SYS_BUS_DEVICE(obj), {addr}, &s->{pio});
     sysbus_init_ioports(SYS_BUS_DEVICE(obj), {addr}, {size});
 """.format(
-    pio = self.state_struct.get_Ith_io_name(pioN),
+    pio = self.get_Ith_io_name(pioN),
     ops = self.gen_Ith_pio_ops_name(pioN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name,
@@ -301,7 +270,7 @@ class SysBusDeviceType(QOMType):
             for irqN in range(0, self.out_irq_num):
                 instance_init_code += """\
     sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->%s);
-""" % self.state_struct.get_Ith_irq_name(irqN)
+""" % self.get_Ith_irq_name(irqN)
 
         if self.in_irq_num > 0:
             self.irq_handler = Type.lookup("qemu_irq_handler").\
@@ -433,7 +402,7 @@ Type.lookup("void").gen_var("opaque", True),
         return self.source.generate()
 
     def get_Ith_mmio_id_component(self, i):
-        return self.state_struct.get_Ith_mmio_name(i)
+        return self.get_Ith_mmio_name(i)
 
     def gen_Ith_mmio_size_macro_name(self, i):
         UPPER = self.get_Ith_mmio_id_component(i).upper()
@@ -444,7 +413,7 @@ Type.lookup("void").gen_var("opaque", True),
             + self.get_Ith_mmio_id_component(i) + "_ops"
 
     def get_Ith_pio_id_component(self, i):
-        return self.state_struct.get_Ith_io_name(i)
+        return self.get_Ith_io_name(i)
 
     def gen_Ith_pio_ops_name(self, i):
         return self.qtn.for_id_name + "_" \
@@ -457,3 +426,21 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_Ith_pio_address_macro_name(self, i):
         UPPER = self.get_Ith_pio_id_component(i).upper()
         return "%s_%s_ADDR" % (self.qtn.for_macros, UPPER)
+
+    def get_Ith_irq_name(self, i):
+        if self.out_irq_num == 1:
+            return "out_irq"
+        else:
+            return "out_irq_{}".format(i)
+
+    def get_Ith_mmio_name(self, i):
+        if self.mmio_num == 1:
+            return "mmio"
+        else:
+            return "mmio_{}".format(i)
+
+    def get_Ith_io_name(self, i):
+        if self.pio_num == 1:
+            return "pio"
+        else:
+            return "pio_{}".format(i)

@@ -2,7 +2,6 @@ from source import \
     Pointer, \
     Header, \
     Source, \
-    Structure, \
     Type, \
     Function, \
     Initializer, \
@@ -10,41 +9,7 @@ from source import \
     TypeNotRegistered
 
 from qom import \
-    QOMStateField, \
     QOMType
-
-class PCIEDeviceStateStruct(Structure):
-    def __init__(self,
-        name,
-        irq_num,
-        mem_bar_num
-    ):
-        super(PCIEDeviceStateStruct, self).__init__(name)
-
-        self.irq_num = irq_num
-        self.mem_bar_num = mem_bar_num
-
-        self.append_field_t_s("PCIDevice", "parent_obj")
-
-        for irqN in range(0, irq_num):
-            self.append_field_t_s("qemu_irq", 
-                self.get_Ith_irq_name(irqN))
-
-        for barN in xrange(0, self.mem_bar_num):
-            self.append_field_t_s("MemoryRegion",
-                    self.get_Ith_mem_bar_name(barN))
-
-    def get_Ith_mem_bar_name(self, i):
-        if self.mem_bar_num == 1:
-            return "mem_bar"
-        else:
-            return "mem_bar_%u" % i
-
-    def get_Ith_irq_name(self, i):
-        if self.irq_num == 1:
-            return "irq"
-        else:
-            return "irq_{}".format(i)
 
 class PCIEDeviceType(QOMType):
     def __init__(self,
@@ -89,11 +54,20 @@ class PCIEDeviceType(QOMType):
         except Exception:
             self.header = Header(header_path)
 
-        self.state_struct = PCIEDeviceStateStruct(
-            name = self.struct_name,
-            irq_num = self.irq_num,
-            mem_bar_num = self.mem_bar_num
+        self.add_state_field_h("PCIDevice", "parent_obj")
+
+        for irqN in range(0, self.irq_num):
+            self.add_state_field_h("qemu_irq", self.get_Ith_irq_name(irqN),
+                save = False
             )
+
+        for barN in xrange(0, self.mem_bar_num):
+            self.add_state_field_h("MemoryRegion",
+                self.get_Ith_mem_bar_name(irqN),
+                save = False
+            )
+
+        self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
         self.type_name_macros = Macro(
@@ -213,7 +187,7 @@ class PCIEDeviceType(QOMType):
     pci_register_bar(&s->parent_obj, {barN}, PCI_BASE_ADDRESS_SPACE_MEMORY, &s->{bar});
 """.format(
     barN = barN,
-    bar = self.state_struct.get_Ith_mem_bar_name(barN),
+    bar = self.get_Ith_mem_bar_name(barN),
     ops = self.gen_Ith_mem_bar_ops_name(barN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name
@@ -304,13 +278,6 @@ class PCIEDeviceType(QOMType):
     )
         )
         self.source.add_type(self.device_exit)
-
-        self.add_state_fields([
-            QOMStateField(
-                Type.lookup("PCIDevice"),
-                "parent_obj"
-            )
-        ])
 
         self.vmstate = self.gen_vmstate_var(self.state_struct)
 
@@ -407,7 +374,7 @@ Type.lookup("void").gen_var("opaque", True),
         return self.source.generate()
 
     def get_Ith_mem_bar_id_component(self, i):
-        return self.state_struct.get_Ith_mem_bar_name(i)
+        return self.get_Ith_mem_bar_name(i)
 
     def gen_Ith_mem_bar_size_macro_name(self, i):
         UPPER = self.get_Ith_mem_bar_id_component(i).upper()
@@ -416,3 +383,15 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_Ith_mem_bar_ops_name(self, i):
         return self.qtn.for_id_name + "_" \
             + self.get_Ith_mem_bar_id_component(i) + "_ops"
+
+    def get_Ith_mem_bar_name(self, i):
+        if self.mem_bar_num == 1:
+            return "mem_bar"
+        else:
+            return "mem_bar_%u" % i
+
+    def get_Ith_irq_name(self, i):
+        if self.irq_num == 1:
+            return "irq"
+        else:
+            return "irq_{}".format(i)
