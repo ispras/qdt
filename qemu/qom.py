@@ -50,6 +50,9 @@ class QOMType(object):
         for field in fields:
             self.state_fields.append(field)
 
+    def add_state_field(self, field):
+        self.state_fields.append(field)
+
     def gen_state(self):
         s = Structure(self.qtn.for_struct_name + 'State')
         for f in self.state_fields:
