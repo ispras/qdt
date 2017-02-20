@@ -457,3 +457,9 @@ Type.lookup("void").gen_var("opaque", True),
     def gen_Ith_pio_address_macro_name(self, i):
         UPPER = self.get_Ith_pio_id_component(i).upper()
         return "%s_%s_ADDR" % (self.qtn.for_macros, UPPER)
+
+    def get_Ith_irq_name(self, i):
+        if self.out_irq_num == 1:
+            return "out_irq"
+        else:
+            return "out_irq_{}".format(i)
