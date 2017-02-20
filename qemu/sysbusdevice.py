@@ -2,57 +2,12 @@ from qom import \
     QOMType
 
 from source import \
-    Structure, \
     Header, \
     Macro, \
     Source, \
     Initializer, \
     Function, \
     Type
-
-class SysBusDeviceStateStruct(Structure):
-    def __init__(self,
-        name,
-        irq_num = 1,
-        mmio_num = 1,
-        pio_num = 0,
-    ):
-        super(SysBusDeviceStateStruct, self).__init__(name)
-        self.irq_num = irq_num
-        self.mmio_num = mmio_num
-        self.pio_num = pio_num
-
-        self.append_field_t(Type.lookup("SysBusDevice"), "parent_obj")
-
-        for irqN in range(0, irq_num):
-            self.append_field_t(Type.lookup("qemu_irq"), 
-                self.get_Ith_irq_name(irqN))
-
-        for mmioN in range(0, mmio_num):
-            self.append_field_t(Type.lookup("MemoryRegion"), 
-                self.get_Ith_mmio_name(mmioN))
-
-        for ioN in range(0, pio_num):
-            self.append_field_t(Type.lookup("MemoryRegion"),
-                self.get_Ith_io_name(ioN))
-
-    def get_Ith_irq_name(self, i):
-        if self.irq_num == 1:
-            return "out_irq"
-        else:
-            return "out_irq_{}".format(i)
-
-    def get_Ith_mmio_name(self, i):
-        if self.mmio_num == 1:
-            return "mmio"
-        else:
-            return "mmio_{}".format(i)
-
-    def get_Ith_io_name(self, i):
-        if self.pio_num == 1:
-            return "pio"
-        else:
-            return "pio_{}".format(i)
 
 class SysBusDeviceType(QOMType):
     def __init__(self,
