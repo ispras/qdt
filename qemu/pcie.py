@@ -10,7 +10,6 @@ from source import \
     TypeNotRegistered
 
 from qom import \
-    QOMStateField, \
     QOMType
 
 class PCIEDeviceStateStruct(Structure):
@@ -305,12 +304,7 @@ class PCIEDeviceType(QOMType):
         )
         self.source.add_type(self.device_exit)
 
-        self.add_state_fields([
-            QOMStateField(
-                Type.lookup("PCIDevice"),
-                "parent_obj"
-            )
-        ])
+        self.add_state_field_h("PCIDevice", "parent_obj")
 
         self.vmstate = self.gen_vmstate_var(self.state_struct)
 
