@@ -343,15 +343,17 @@ class QemuVersionDescription(object):
     def co_gen_device_tree(self):
         dt_db_fname = join(self.build_path, "dt.json")
         if  isfile(dt_db_fname):
-            print("Loading Device Tree from " + dt_db_fname)
+            print("Loading Device Tree from " + dt_db_fname + "...")
             dt_db_reader = open(dt_db_fname, "rb")
             self.qvc.device_tree = load(dt_db_reader)
             dt_db_reader.close()
+            print("Device Tree was loaded from " + dt_db_fname)
             yield True
 
-            print("Adding macros to " + dt_db_fname)
+            print("Adding macros to device tree ...")
             for ret in self.co_add_dt_macro(self.qvc.device_tree):
                 yield True
+            print("Macros were added to device tree")
         else:
             self.qvc.device_tree = None
 
