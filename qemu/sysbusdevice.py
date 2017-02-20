@@ -82,12 +82,26 @@ class SysBusDeviceType(QOMType):
         except Exception:
             self.header = Header(header_path)
 
-        self.state_struct = SysBusDeviceStateStruct(
-            name = self.struct_name,
-            irq_num = self.out_irq_num,
-            mmio_num = self.mmio_num,
-            pio_num = self.pio_num
+        self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
+
+        for irqN in range(0, self.out_irq_num):
+            self.add_state_field_h("qemu_irq", self.get_Ith_irq_name(irqN),
+                save = False
             )
+
+        for mmioN in range(0, self.mmio_num):
+            self.add_state_field_h("MemoryRegion",
+                self.get_Ith_mmio_name(mmioN),
+                save = False
+            )
+
+        for ioN in range(0, self.pio_num):
+            self.add_state_field_h("MemoryRegion",
+                self.get_Ith_io_name(ioN),
+                save = False
+            )
+
+        self.state_struct = self.gen_state()
 
         self.header.add_type(self.state_struct)
 
