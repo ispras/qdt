@@ -88,11 +88,20 @@ class PCIEDeviceType(QOMType):
         except Exception:
             self.header = Header(header_path)
 
-        self.state_struct = PCIEDeviceStateStruct(
-            name = self.struct_name,
-            irq_num = self.irq_num,
-            mem_bar_num = self.mem_bar_num
+        self.add_state_field_h("PCIDevice", "parent_obj")
+
+        for irqN in range(0, self.irq_num):
+            self.add_state_field_h("qemu_irq", self.get_Ith_irq_name(irqN),
+                save = False
             )
+
+        for barN in xrange(0, self.mem_bar_num):
+            self.add_state_field_h("MemoryRegion",
+                self.get_Ith_mem_bar_name(irqN),
+                save = False
+            )
+
+        self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
         self.type_name_macros = Macro(
@@ -303,8 +312,6 @@ class PCIEDeviceType(QOMType):
     )
         )
         self.source.add_type(self.device_exit)
-
-        self.add_state_field_h("PCIDevice", "parent_obj")
 
         self.vmstate = self.gen_vmstate_var(self.state_struct)
 
