@@ -36,6 +36,12 @@ from pcie import \
     PCIEDeviceType
 
 from qom import \
+    QOMPropertyType, \
+    QOMPropertyTypeLink, \
+    QOMPropertyTypeString, \
+    QOMPropertyTypeBoolean, \
+    QOMPropertyTypeInteger, \
+    QOMPropertyValue, \
     QOMStateField, \
     QemuTypeName, \
     QOMDevice, \
@@ -58,12 +64,6 @@ from machine_description import \
     DeviceNode, \
     IRQLine, \
     IRQHub, \
-    QOMPropertyType, \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeString, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
-    QOMPropertyValue, \
     MemoryNodeHasNoSuchParent, \
     MemoryNode, \
     MemoryLeafNode, \

@@ -1,46 +1,13 @@
 import machine
 
-from source import \
-    Type
-
 from qom_desc import \
     QOMDescription
 
 from itertools import \
     count
 
-# properties
-class QOMPropertyType(object):
-    set_f = None
-    build_val = None
-
-class QOMPropertyTypeLink(QOMPropertyType):
-    set_f = "object_property_set_link"
-
-class QOMPropertyTypeString(QOMPropertyType):
-    set_f = "object_property_set_str"
-
-class QOMPropertyTypeBoolean(QOMPropertyType):
-    set_f = "object_property_set_bool"
-
-class QOMPropertyTypeInteger(QOMPropertyType):
-    set_f = "object_property_set_int"
-
-    @staticmethod
-    def build_val(prop_val):
-        if Type.exists(prop_val):
-            return str(prop_val)
-        return "0x%0x" % prop_val
-
-class QOMPropertyValue(object):
-    def __init__(self,
-        prop_type,
-        prop_name,
-        prop_val
-        ):
-        self.prop_type = prop_type
-        self.prop_name = prop_name
-        self.prop_val = prop_val
+from qom import \
+    QOMPropertyTypeLink
 
 class Node(object):
     def __init__(self):
