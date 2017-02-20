@@ -1,5 +1,6 @@
 from source import \
     add_base_types, \
+    Pointer, \
     Header,\
     Type, \
     Function, \
@@ -322,7 +323,7 @@ def define_msi_init_2_6_5():
                 , Type.lookup("unsigned int").gen_var("nr_vectors")
                 , Type.lookup("bool").gen_var("msi64bit")
                 , Type.lookup("bool").gen_var("msi_per_vector_mask")
-                , Type.lookup("Error*").gen_var("errp", pointer = True)
+                , Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
             ]
         )
     )
