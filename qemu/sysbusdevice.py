@@ -282,7 +282,7 @@ class SysBusDeviceType(QOMType):
     sysbus_add_io(SYS_BUS_DEVICE(obj), {addr}, &s->{pio});
     sysbus_init_ioports(SYS_BUS_DEVICE(obj), {addr}, {size});
 """.format(
-    pio = self.state_struct.get_Ith_io_name(pioN),
+    pio = self.get_Ith_io_name(pioN),
     ops = self.gen_Ith_pio_ops_name(pioN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name,
@@ -444,7 +444,7 @@ Type.lookup("void").gen_var("opaque", True),
             + self.get_Ith_mmio_id_component(i) + "_ops"
 
     def get_Ith_pio_id_component(self, i):
-        return self.state_struct.get_Ith_io_name(i)
+        return self.get_Ith_io_name(i)
 
     def gen_Ith_pio_ops_name(self, i):
         return self.qtn.for_id_name + "_" \
