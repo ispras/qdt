@@ -7,6 +7,7 @@ from source import \
     Source, \
     Initializer, \
     Function, \
+    Pointer, \
     Type
 
 class SysBusDeviceType(QOMType):
@@ -107,7 +108,7 @@ class SysBusDeviceType(QOMType):
         ),
             args = [
                 Type.lookup("DeviceState").gen_var("dev", True),
-                Type.lookup("Error*").gen_var("errp", True)
+                Pointer(Type.lookup("Error")).gen_var("errp", True)
                 ],
             static = True,
             used_types = [self.state_struct]
