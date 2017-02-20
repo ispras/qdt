@@ -209,7 +209,7 @@ class SysBusDeviceType(QOMType):
     memory_region_init_io(&s->{mmio}, obj, &{ops}, s, TYPE_{UPPER}, {size});
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->{mmio});
 """.format(
-    mmio = self.state_struct.get_Ith_mmio_name(mmioN),
+    mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name
@@ -433,7 +433,7 @@ Type.lookup("void").gen_var("opaque", True),
         return self.source.generate()
 
     def get_Ith_mmio_id_component(self, i):
-        return self.state_struct.get_Ith_mmio_name(i)
+        return self.get_Ith_mmio_name(i)
 
     def gen_Ith_mmio_size_macro_name(self, i):
         UPPER = self.get_Ith_mmio_id_component(i).upper()
