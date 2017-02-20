@@ -34,7 +34,7 @@ from sysbusdevice import \
 
 from pcie import \
     PCIEDeviceType
-    
+
 from qom import \
     QOMStateField, \
     QemuTypeName, \
