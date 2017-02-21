@@ -46,8 +46,6 @@ class PCIEDeviceType(QOMType):
         There is too many code same as in SysBusDeviceType constructor...
         """
 
-        self.struct_name = "%sState" % self.qtn.for_struct_name
-
         header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
         try:
             self.header = Header.lookup(header_path)

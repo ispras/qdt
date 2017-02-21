@@ -25,7 +25,6 @@ class SysBusDeviceType(QOMType):
         self.in_irq_num = in_irq_num
         self.mmio_num = mmio_num
         self.pio_num = pio_num
-        self.struct_name = "{}State".format(self.qtn.for_struct_name)
 
         self.mmio_size_macros = []
         self.pio_size_macros = []

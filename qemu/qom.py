@@ -77,6 +77,7 @@ type2vmstate = {
 class QOMType(object):
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
+        self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
 
     def add_state_fields(self, fields):
