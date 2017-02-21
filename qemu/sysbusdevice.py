@@ -71,10 +71,6 @@ class SysBusDeviceType(QOMDevice):
 
         self.header.add_type(self.type_cast_macro)
 
-        # Define source file
-        self.source = Source("hw/%s/%s.c"% (directory, 
-            self.qtn.for_header_name))
-
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\

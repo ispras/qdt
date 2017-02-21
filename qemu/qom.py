@@ -1,4 +1,5 @@
 from source import \
+    Source, \
     Header, \
     Structure, \
     TypeNotRegistered, \
@@ -351,6 +352,10 @@ class QOMDevice(QOMType):
             self.header = Header.lookup(header_path)
         except Exception:
             self.header = Header(header_path)
+
+        # Define source file
+        source_path = "hw/%s/%s.c"% (directory, self.qtn.for_header_name)
+        self.source = Source(source_path)
 
     def gen_source(self):
         pass

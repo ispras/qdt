@@ -1,6 +1,5 @@
 from source import \
     Pointer, \
-    Source, \
     Type, \
     Function, \
     Initializer, \
@@ -111,9 +110,6 @@ class PCIEDeviceType(QOMDevice):
             self.subsystem_macro = None
 
         self.pci_class_macro = self.pci_class.find_macro()
-
-        source_path = "hw/%s/%s.c"% (directory, self.qtn.for_header_name)
-        self.source = Source(source_path)
 
         realize_code = ''
         realize_used_types = []
