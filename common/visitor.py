@@ -1,6 +1,9 @@
 class BreakVisiting(Exception):
     pass
 
+class VisitingIsNotImplemented(Exception):
+    pass
+
 class ObjectVisitor():
     """
     The class defines common interface to traverse an object tree.
@@ -38,6 +41,8 @@ Note that 'replace' method internally raises BreakVisiting.
     + replacement of reference in list
     + visiting of references in dictionary
     + replacement of references (values) in dictionary
+    + visiting of references in set
+    + replacement of reference in set
     - visiting of references in tuple
     - replacement of reference in tuple (new tuple should be constructed
 because the tuple class does not support editing)
@@ -66,6 +71,10 @@ traversing is skipped using BreakVisiting exception (including replacement).
            or isinstance(cur_container, dict) \
         :
             cur_container[cur_name] = new_value
+        elif isinstance(cur_container, set):
+            cur_value = self.path[-1][0]
+            cur_container.remove(cur_value)
+            cur_container.add(new_value)
         elif isinstance(cur_container, object):
             setattr(cur_container, cur_name, new_value)
         else:
@@ -116,8 +125,22 @@ traversing is skipped using BreakVisiting exception (including replacement).
             self.__visit_list_attribute__(attr, attribute_name)
         elif isinstance(attr, dict):
             self.__visit_dictionary_attribute__(attr, attribute_name)
+        elif isinstance(attr, set):
+            self.__visit_set_attribute__(attr, attribute_name)
         elif isinstance(attr, object):
             self.__visit_object_attribute__(attr, attribute_name)
+        else:
+            raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
+type '%s is not implemented" % (attribute_name, type(attr).name)
+            )
+
+    def __visit_set_attribute__(self, attr, attribute_name):
+        self.__push__(attr, attribute_name)
+        for e in attr:
+            self.__push__(e, None) # objects in a set are not named.
+            self.__visit_current__()
+            self.__pop__()
+        self.__pop__()
 
     def __visit_object_attribute__(self, attr, attribute_name):
         self.__push__(attr, attribute_name)

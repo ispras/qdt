@@ -31,6 +31,7 @@ from reflection import \
 
 from visitor import \
     ObjectVisitor, \
+    VisitingIsNotImplemented, \
     BreakVisiting
 
 from search_helper import \

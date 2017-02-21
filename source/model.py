@@ -172,15 +172,15 @@ switching to that mode.
                     continue
 
                 if inherit_references:
-                    t.definer_references = []
+                    t.definer_references = set()
                     for ref in t.type.definer.references:
                         for self_ref in self.references:
                             if self_ref is ref:
                                 break
                         else:
-                            self.references.append(ref)
+                            self.references.add(ref)
                 else:
-                    t.definer_references = list(t.type.definer.references)
+                    t.definer_references = set(t.type.definer.references)
 
             for t in l:
                 if not isinstance(t, TypeReference):
@@ -395,7 +395,7 @@ class Header(Source):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
-        self.references = []
+        self.references = set()
 
         if path in Header.reg:
             raise Exception("Header %s is already registered" % path)
@@ -409,7 +409,7 @@ class Header(Source):
             raise Exception("""Header reference may not be TypeReference.
  Only original types are allowed."""
             )
-        self.references.append(ref)
+        self.references.add(ref)
 
         return self
 
@@ -556,6 +556,9 @@ of incomplete type {}.".format(name, self.name))
         # objects.
         return self is other
 
+    def __hash__(self):
+        return hash(self.name)
+
 class TypeReference(Type):
     def __init__(self, _type):
         if type(_type) == TypeReference:
@@ -603,6 +606,9 @@ reference {}.".format(_type.name))
 
     def __eq__(self, other):
         return self.type == other
+
+    def __hash__(self):
+        return hash(self.type)
 
 class Structure(Type):
     def __init__(self, name, fields = None):
@@ -664,7 +670,7 @@ class Function(Type):
         self.body = body
         self.ret_type = Type.lookup("void") if ret_type == None else ret_type
         self.args = args
-        self.used_types = used_types
+        self.used_types = set(used_types)
         self.used_globals = used_globals
 
     def gen_declaration_chunks(self):
@@ -763,6 +769,14 @@ chunk. The references is to be added to 'users' of the 'typedef'.
         else:
             return refs
 
+    def __hash__(self):
+        stars = "*"
+        t = self.type
+        while isinstance(t, Pointer) and not t.is_named:
+            t = t.type
+            stars += "*"
+        return hash(hash(t) + hash(stars))
+
     __type_references__ = ["type"]
 
 class Macro(Type):
@@ -817,7 +831,7 @@ class Initializer():
     #code is string for variables and dictionary for macros
     def __init__(self, code, used_types = [], used_variables = []):
         self.code = code
-        self.used_types = used_types
+        self.used_types = set(used_types)
         self.used_variables = used_variables
 
     __type_references__ = ["used_types", "used_variables"]
@@ -915,7 +929,7 @@ class CopyFixerVisitor(ObjectVisitor):
             new_t = copy(t)
             if isinstance(t, Initializer):
                 new_t.used_variables = list(t.used_variables)
-                new_t.used_types = list(t.used_types)
+                new_t.used_types = set(t.used_types)
             try:
                 self.replace(new_t)
             except BreakVisiting:
@@ -979,7 +993,7 @@ class CodeNode():
         self.code = code
         self.node_users = []
         self.node_references = []
-        self.used_types = []
+        self.used_types = set()
 
 # Source code instances
 
