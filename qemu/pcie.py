@@ -9,9 +9,10 @@ from source import \
     TypeNotRegistered
 
 from qom import \
+    QOMDevice, \
     QOMType
 
-class PCIEDeviceType(QOMType):
+class PCIEDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
@@ -25,7 +26,7 @@ class PCIEDeviceType(QOMType):
         subsys = None,
         subsys_vendor = None,
     ):
-        super(PCIEDeviceType, self).__init__(name)
+        super(PCIEDeviceType, self).__init__(name, directory)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
