@@ -66,13 +66,12 @@ is defined in non-header file %s" % (var.name, s.path))
                             continue
                         if not type(s) == Header:
                             raise Exception("Attempt to define variable {var} \
-    whose initializer code uses type {t} defined in non-header file {file}"
-    .format(
-        var = var.name,
-        t = t.name,
-        file = s.path
-    )
-                                  )
+whose initializer code uses type {t} defined in non-header file {file}".format(
+    var = var.name,
+    t = t.name,
+    file = s.path
+)
+                            )
                         self.add_inclusion(s)
 
         self.global_variables[var.name] = var
