@@ -1,6 +1,5 @@
 from source import \
     Pointer, \
-    Header, \
     Source, \
     Type, \
     Function, \
@@ -46,12 +45,6 @@ class PCIEDeviceType(QOMDevice):
         """
         There is too many code same as in SysBusDeviceType constructor...
         """
-
-        header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
-        try:
-            self.header = Header.lookup(header_path)
-        except Exception:
-            self.header = Header(header_path)
 
         self.add_state_field_h("PCIDevice", "parent_obj")
 

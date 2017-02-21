@@ -3,7 +3,6 @@ from qom import \
     QOMType
 
 from source import \
-    Header, \
     Macro, \
     Source, \
     Initializer, \
@@ -30,13 +29,6 @@ class SysBusDeviceType(QOMDevice):
         self.mmio_size_macros = []
         self.pio_size_macros = []
         self.pio_address_macros = []
-
-        # Define header file
-        header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
-        try:
-            self.header = Header.lookup(header_path)
-        except Exception:
-            self.header = Header(header_path)
 
         self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
 
