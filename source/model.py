@@ -556,6 +556,9 @@ of incomplete type {}.".format(name, self.name))
         # objects.
         return self is other
 
+    def __hash__(self):
+        return hash(self.name)
+
 class TypeReference(Type):
     def __init__(self, _type):
         if type(_type) == TypeReference:
@@ -603,6 +606,9 @@ reference {}.".format(_type.name))
 
     def __eq__(self, other):
         return self.type == other
+
+    def __hash__(self):
+        return hash(self.type)
 
 class Structure(Type):
     def __init__(self, name, fields = None):
@@ -762,6 +768,14 @@ chunk. The references is to be added to 'users' of the 'typedef'.
             return [ch] + refs
         else:
             return refs
+
+    def __hash__(self):
+        stars = "*"
+        t = self.type
+        while isinstance(t, Pointer) and not t.is_named:
+            t = t.type
+            stars += "*"
+        return hash(hash(t) + hash(stars))
 
     __type_references__ = ["type"]
 
