@@ -1,4 +1,5 @@
 from qom import \
+    QOMDevice, \
     QOMType
 
 from source import \
@@ -10,7 +11,7 @@ from source import \
     Pointer, \
     Type
 
-class SysBusDeviceType(QOMType):
+class SysBusDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
@@ -19,7 +20,7 @@ class SysBusDeviceType(QOMType):
         mmio_num = 1, 
         pio_num = 0):
 
-        super(SysBusDeviceType, self).__init__(name)
+        super(SysBusDeviceType, self).__init__(name, directory)
 
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
