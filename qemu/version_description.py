@@ -18,6 +18,7 @@ from subprocess import \
 
 from .version import \
     initialize as initialize_version, \
+    qemu_versions_desc, \
     get_vp
 
 from os.path import \
@@ -152,6 +153,26 @@ class QemuVersionCache(object):
         # Create source tree container
         self.stc = SourceTreeContainer()
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
+
+    def co_propagete_param(self):
+        vd = qemu_versions_desc
+        vd_list = []
+        for k in vd.keys():
+            if k in self.commit_desc_nodes:
+                vd_list.append((k, self.commit_desc_nodes[k].num))
+
+        sorted_tuple = sorted(vd_list, key = lambda x: x[1])
+        sorted_vd_keys = [t[0] for t in sorted_tuple]
+
+        yield True
+
+        # first, need to propagate the new labels
+        print("Propagation params in graph of commit's description ...")
+        for ret in self.co_propagate_new_param(sorted_vd_keys, vd):
+            yield ret
+        for ret in self.co_propagate_old_param(sorted_vd_keys, vd):
+            yield ret
+        print("Params in graph of commit's description were propagated")
 
     def co_gen_commits_graph(self, repo):
         iterations_per_yield = 20
