@@ -7,6 +7,9 @@ from source import \
     Function, \
     Type
 
+from os.path import \
+    join
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -347,14 +350,14 @@ class QOMDevice(QOMType):
         self.directory = directory
 
         # Define header file
-        header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
+        header_path = join("hw", directory, self.qtn.for_header_name + ".h")
         try:
             self.header = Header.lookup(header_path)
         except Exception:
             self.header = Header(header_path)
 
         # Define source file
-        source_path = "hw/%s/%s.c"% (directory, self.qtn.for_header_name)
+        source_path = join("hw", directory, self.qtn.for_header_name + ".c")
         self.source = Source(source_path)
 
     def gen_source(self):
