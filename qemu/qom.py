@@ -339,8 +339,10 @@ class QOMStateField(object):
 
 
 class QOMDevice(QOMType):
-    def __init__(self, name):
+    def __init__(self, name, directory):
         super(QOMDevice, self).__init__(name)
+
+        self.directory = directory
 
     def gen_source(self):
         pass
