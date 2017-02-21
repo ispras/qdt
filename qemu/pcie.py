@@ -271,16 +271,9 @@ class PCIEDeviceType(QOMDevice):
 
         self.source.add_global_variable(self.vmstate)
 
-        properties_init = Initializer(
-"""{
-    DEFINE_PROP_END_OF_LIST()
-}"""
-            )
-        self.properties = Type.lookup("Property").gen_var(
-            name = "%s_properties[]" % self.qtn.for_id_name,
-            static = True,
-            initializer = properties_init
-            )
+        self.gen_property_macros(self.header)
+        self.properties = self.gen_properties_global(self.state_struct)
+
         self.source.add_global_variable(self.properties)
 
         self.class_init = Function(
