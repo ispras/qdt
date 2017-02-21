@@ -1,3 +1,6 @@
+from qemu import \
+    QOMPropertyValue
+
 from machine_description import \
     DeviceNode, \
     BusNode, \
@@ -6,8 +9,7 @@ from machine_description import \
     MemoryAliasNode, \
     QOMPropertyTypeLink, \
     IRQLine, \
-    IRQHub, \
-    QOMPropertyValue
+    IRQHub
 
 from project_editing import \
     QemuObjectCreationHelper, \

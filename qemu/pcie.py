@@ -1,7 +1,5 @@
 from source import \
     Pointer, \
-    Header, \
-    Source, \
     Type, \
     Function, \
     Initializer, \
@@ -9,9 +7,10 @@ from source import \
     TypeNotRegistered
 
 from qom import \
+    QOMDevice, \
     QOMType
 
-class PCIEDeviceType(QOMType):
+class PCIEDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
@@ -25,7 +24,7 @@ class PCIEDeviceType(QOMType):
         subsys = None,
         subsys_vendor = None,
     ):
-        super(PCIEDeviceType, self).__init__(name)
+        super(PCIEDeviceType, self).__init__(name, directory)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
@@ -45,14 +44,6 @@ class PCIEDeviceType(QOMType):
         """
         There is too many code same as in SysBusDeviceType constructor...
         """
-
-        self.struct_name = "%sState" % self.qtn.for_struct_name
-
-        header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
-        try:
-            self.header = Header.lookup(header_path)
-        except Exception:
-            self.header = Header(header_path)
 
         self.add_state_field_h("PCIDevice", "parent_obj")
 
@@ -119,9 +110,6 @@ class PCIEDeviceType(QOMType):
             self.subsystem_macro = None
 
         self.pci_class_macro = self.pci_class.find_macro()
-
-        source_path = "hw/%s/%s.c"% (directory, self.qtn.for_header_name)
-        self.source = Source(source_path)
 
         realize_code = ''
         realize_used_types = []

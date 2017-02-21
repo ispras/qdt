@@ -1,9 +1,47 @@
 from source import \
+    Source, \
+    Header, \
     Structure, \
     TypeNotRegistered, \
     Initializer, \
     Function, \
     Type
+
+from os.path import \
+    join
+
+# properties
+class QOMPropertyType(object):
+    set_f = None
+    build_val = None
+
+class QOMPropertyTypeLink(QOMPropertyType):
+    set_f = "object_property_set_link"
+
+class QOMPropertyTypeString(QOMPropertyType):
+    set_f = "object_property_set_str"
+
+class QOMPropertyTypeBoolean(QOMPropertyType):
+    set_f = "object_property_set_bool"
+
+class QOMPropertyTypeInteger(QOMPropertyType):
+    set_f = "object_property_set_int"
+
+    @staticmethod
+    def build_val(prop_val):
+        if Type.exists(prop_val):
+            return str(prop_val)
+        return "0x%0x" % prop_val
+
+class QOMPropertyValue(object):
+    def __init__(self,
+        prop_type,
+        prop_name,
+        prop_val
+        ):
+        self.prop_type = prop_type
+        self.prop_name = prop_name
+        self.prop_val = prop_val
 
 class QemuTypeName(object):
     def __init__(self, name):
@@ -44,11 +82,12 @@ type2vmstate = {
 class QOMType(object):
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
+        self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
 
     def add_state_fields(self, fields):
         for field in fields:
-            self.state_fields.append(field)
+            self.add_state_field(field)
 
     def add_state_field(self, field):
         self.state_fields.append(field)
@@ -305,8 +344,21 @@ class QOMStateField(object):
 
 
 class QOMDevice(QOMType):
-    def __init__(self, name):
+    def __init__(self, name, directory):
         super(QOMDevice, self).__init__(name)
+
+        self.directory = directory
+
+        # Define header file
+        header_path = join("hw", directory, self.qtn.for_header_name + ".h")
+        try:
+            self.header = Header.lookup(header_path)
+        except Exception:
+            self.header = Header(header_path)
+
+        # Define source file
+        source_path = join("hw", directory, self.qtn.for_header_name + ".c")
+        self.source = Source(source_path)
 
     def gen_source(self):
         pass

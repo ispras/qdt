@@ -1,8 +1,8 @@
 from qom import \
+    QOMDevice, \
     QOMType
 
 from source import \
-    Header, \
     Macro, \
     Source, \
     Initializer, \
@@ -10,7 +10,7 @@ from source import \
     Pointer, \
     Type
 
-class SysBusDeviceType(QOMType):
+class SysBusDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
@@ -19,24 +19,16 @@ class SysBusDeviceType(QOMType):
         mmio_num = 1, 
         pio_num = 0):
 
-        super(SysBusDeviceType, self).__init__(name)
+        super(SysBusDeviceType, self).__init__(name, directory)
 
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
         self.mmio_num = mmio_num
         self.pio_num = pio_num
-        self.struct_name = "{}State".format(self.qtn.for_struct_name)
 
         self.mmio_size_macros = []
         self.pio_size_macros = []
         self.pio_address_macros = []
-
-        # Define header file
-        header_path = "hw/%s/%s.h" % (directory, self.qtn.for_header_name)
-        try:
-            self.header = Header.lookup(header_path)
-        except Exception:
-            self.header = Header(header_path)
 
         self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
 
@@ -78,10 +70,6 @@ class SysBusDeviceType(QOMType):
             )
 
         self.header.add_type(self.type_cast_macro)
-
-        # Define source file
-        self.source = Source("hw/%s/%s.c"% (directory, 
-            self.qtn.for_header_name))
 
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,

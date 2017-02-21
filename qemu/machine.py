@@ -1,4 +1,8 @@
 from qom import \
+    QOMPropertyTypeLink, \
+    QOMPropertyTypeString, \
+    QOMPropertyTypeBoolean, \
+    QOMPropertyTypeInteger, \
     QOMType
 
 from source import \
@@ -13,10 +17,6 @@ from machine_description import \
     SystemBusNode, \
     PCIExpressBusNode, \
     IRQHub, \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeString, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
     MemoryNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
