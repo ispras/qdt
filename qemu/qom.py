@@ -336,12 +336,19 @@ class QOMType(object):
 
 
 class QOMStateField(object):
-    def __init__(self, ftype, name, num=None, save=True):
+    def __init__(self, ftype, name,
+            num = None,
+            save = True,
+            prop = False,
+            default = None
+        ):
         self.type = ftype
         self.name = name
         self.num = num
+        self.prop_name = '"' + name.replace('_', '-') + '"'
         self.save = save
-
+        self.prop = prop
+        self.default = default
 
 class QOMDevice(QOMType):
     def __init__(self, name, directory):
