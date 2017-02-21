@@ -1,6 +1,9 @@
 class BreakVisiting(Exception):
     pass
 
+class VisitingIsNotImplemented(Exception):
+    pass
+
 class ObjectVisitor():
     """
     The class defines common interface to traverse an object tree.
@@ -118,6 +121,10 @@ traversing is skipped using BreakVisiting exception (including replacement).
             self.__visit_dictionary_attribute__(attr, attribute_name)
         elif isinstance(attr, object):
             self.__visit_object_attribute__(attr, attribute_name)
+        else:
+            raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
+type '%s is not implemented" % (attribute_name, type(attr).name)
+            )
 
     def __visit_object_attribute__(self, attr, attribute_name):
         self.__push__(attr, attribute_name)
