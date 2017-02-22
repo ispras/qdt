@@ -14,12 +14,15 @@ class SysBusDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
+        timer_num = 0,
         out_irq_num = 1,
         in_irq_num = 0,
         mmio_num = 1, 
         pio_num = 0):
 
-        super(SysBusDeviceType, self).__init__(name, directory)
+        super(SysBusDeviceType, self).__init__(name, directory,
+            timer_num = timer_num
+        )
 
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
