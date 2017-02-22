@@ -14,6 +14,7 @@ class SysBusDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
+        char_num = 0,
         timer_num = 0,
         out_irq_num = 1,
         in_irq_num = 0,
@@ -21,6 +22,7 @@ class SysBusDeviceType(QOMDevice):
         pio_num = 0):
 
         super(SysBusDeviceType, self).__init__(name, directory,
+            char_num = char_num,
             timer_num = timer_num
         )
 
