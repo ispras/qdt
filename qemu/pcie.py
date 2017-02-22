@@ -61,6 +61,8 @@ class PCIEDeviceType(QOMDevice):
                 save = False
             )
 
+        self.timer_declare_fields()
+
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
@@ -324,7 +326,35 @@ Type.lookup("void").gen_var("opaque", True),
             )
         self.source.add_type(self.class_init)
 
-        self.instance_init = self.gen_instance_init_fn(self.state_struct)
+        instance_init_used_types = []
+        instance_init_code = ""
+        s_is_used = False
+
+        if self.timer_num > 0:
+            instance_init_used_types.extend([
+                Type.lookup("QEMU_CLOCK_VIRTUAL"),
+                Type.lookup("timer_new_ns")
+            ])
+            s_is_used = True
+            instance_init_code += "\n"
+
+            for timerN in range(self.timer_num):
+                cb = self.timer_gen_cb(timerN, self.source, self.state_struct,
+                    self.type_cast_macro
+                )
+
+                instance_init_used_types.append(cb)
+
+                instance_init_code += """\
+    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+""" % (self.timer_name(timerN), cb.name,
+                )
+
+        self.instance_init = self.gen_instance_init_fn(self.state_struct,
+            code = instance_init_code,
+            s_is_used = s_is_used,
+            used_types = instance_init_used_types
+        )
         self.source.add_type(self.instance_init)
 
         self.type_info = self.gen_type_info_var(self.state_struct,
