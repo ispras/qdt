@@ -531,8 +531,8 @@ class QOMStateField(object):
         self.default = default
 
 class QOMDevice(QOMType):
-    def __init__(self, name, directory):
-        super(QOMDevice, self).__init__(name)
+    def __init__(self, name, directory, timer_num = 0):
+        super(QOMDevice, self).__init__(name, timer_num = timer_num)
 
         self.directory = directory
 
