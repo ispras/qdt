@@ -135,6 +135,11 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     usage_str = decl_macro.gen_usage_string(initializer)
     return (usage_str, used_types)
 
+def declare_int(ctn, prop_macro):
+    type2prop[ctn] = lambda field, state_struct: gen_prop_declaration(field,
+        prop_macro, state_struct, default_default = 0
+    )
+
 type2prop = {
 }
 
