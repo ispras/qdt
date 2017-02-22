@@ -90,6 +90,7 @@ class QOMType(object):
             self.add_state_field(field)
 
     def add_state_field(self, field):
+        field.prop_macro_name = self.qtn.for_macros + "_" + field.name.upper()
         self.state_fields.append(field)
 
     def add_state_field_h(self, type_name, field_name,
