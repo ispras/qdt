@@ -92,9 +92,19 @@ class QOMType(object):
     def add_state_field(self, field):
         self.state_fields.append(field)
 
-    def add_state_field_h(self, type_name, field_name, num = None, save = True):
+    def add_state_field_h(self, type_name, field_name,
+            num = None,
+            save = True,
+            prop = False,
+            default = None
+        ):
         t = Type.lookup(type_name)
-        f = QOMStateField(t, field_name, num = num, save = save)
+        f = QOMStateField(t, field_name,
+            num = num,
+            save = save,
+            prop = prop,
+            default = default
+        )
         self.add_state_field(f)
 
     def gen_state(self):
