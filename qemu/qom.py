@@ -159,6 +159,7 @@ for U in ["", "U"]:
         declare_int(ctn, "DEFINE_PROP_" + msfx)
 
 type2vmstate = {
+    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
     "PCIDevice" : "VMSTATE_PCI_DEVICE"
 }
 
