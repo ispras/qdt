@@ -142,6 +142,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "CharDriverState*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_CHR", state_struct
+    ),
     "bool" : lambda field, state_struct: gen_prop_declaration(field,
         "DEFINE_PROP_BOOL", state_struct, default_default = False
     ),
