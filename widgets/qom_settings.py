@@ -64,15 +64,24 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e = HKEntry(f, textvariable = v)
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
-        # Timer quantity editing
-        f.rowconfigure(2, weight = 0)
+        # Integer argument editing rows
+        for row, (iattr, text) in enumerate(
+            [
+                ("timer_quantity", _("Timer quantity"))
+            ],
+            2
+        ):
+            f.rowconfigure(row, weight = 0)
 
-        l = VarLabel(f, text = _("Timer quantity"))
-        l.grid(row = 2, column = 0, sticky = "NES")
+            l = VarLabel(f, text = text)
+            l.grid(row = row, column = 0, sticky = "NES")
 
-        v = self.var_timer_quantity = StringVar()
-        e = self.e_timer_quantity = HKEntry(f, textvariable = v)
-        e.grid(row = 2, column = 1, sticky = "NEWS")
+            v = StringVar()
+            e = HKEntry(f, textvariable = v)
+            e.grid(row = row, column = 1, sticky = "NEWS")
+
+            setattr(self, "var_" + iattr, v)
+            setattr(self, "e_" + iattr, e)
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -114,18 +123,22 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         if new_dir != self.desc.directory:
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
 
-        new_timer_quantity = self.var_timer_quantity.get()
-        try:
-            new_timer_quantity = long(new_timer_quantity, base = 0)
-        except ValueError:
-            self.e_timer_quantity.config(bg = "red")
-        else:
-            self.e_timer_quantity.config(bg = "white")
+        for iattr, dattr in [
+            ("timer_quantity", "timer_num")
+        ]:
+            v = getattr(self, "var_" + iattr)
+            e = getattr(self, "e_" + iattr)
 
-            if new_timer_quantity != self.desc.timer_num:
-                self.pht.stage(DOp_SetAttr, "timer_num", new_timer_quantity,
-                    self.desc
-                )
+            new_val = v.get()
+            try:
+                new_val = long(new_val, base = 0)
+            except ValueError:
+                e.config(bg = "red")
+            else:
+                e.config(bg = "white")
+
+            if new_val != getattr(self.desc, dattr):
+                self.pht.stage(DOp_SetAttr, dattr, new_val, self.desc)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
