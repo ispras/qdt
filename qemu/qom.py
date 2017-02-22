@@ -5,6 +5,8 @@ from source import \
     TypeNotRegistered, \
     Initializer, \
     Function, \
+    Macro, \
+    Pointer, \
     Type
 
 from os.path import \
@@ -75,26 +77,228 @@ class QemuTypeName(object):
 
         self.for_macros = tmp
 
+# Property declaration generation helpers
+
+def gen_prop_declaration(field, decl_macro_name, state_struct,
+    default_default = None
+):
+    decl_macro = Type.lookup(decl_macro_name)
+    name_macro = Type.lookup(field.prop_macro_name)
+    used_types = set([decl_macro, name_macro, state_struct])
+    bool_true = Type.lookup("true")
+    bool_false = Type.lookup("false")
+
+    init_code = {
+        "_n" : name_macro.name,
+        "_s" : state_struct.name,
+        "_f" : field.name,
+    }
+
+    init_code["_name"] = init_code["_n"]
+    init_code["_state"] = init_code["_s"]
+    init_code["_field"] = init_code["_f"]
+
+    if default_default is not None:
+        if field.default is None:
+            val = default_default
+        else:
+            val = field.default
+
+        if isinstance(val, str):
+            try:
+                val_macro = Type.lookup(val)
+            except TypeNotRegistered:
+                val = '"%s"' % val
+            else:
+                if not isinstance(val_macro, Macro):
+                    val = '"%s"' % val
+                else:
+                    used_types.add(val_macro)
+        elif isinstance(val, bool):
+            if val:
+                val = "true"
+                used_types.add(bool_true)
+            else:
+                val = "false"
+                used_types.add(bool_false)
+        elif isinstance(val, int) or isinstance(val, long):
+            if field.type.name[0] == "u":
+                val = "0x%X" % val
+            else:
+                val = str(val)
+        else:
+            val = str(val)
+
+        init_code["_d"] = val
+        init_code["_defval"] = val
+
+    initializer = Initializer(code = init_code)
+    usage_str = decl_macro.gen_usage_string(initializer)
+    return (usage_str, used_types)
+
+def declare_int(ctn, prop_macro):
+    type2prop[ctn] = lambda field, state_struct: gen_prop_declaration(field,
+        prop_macro, state_struct, default_default = 0
+    )
+
+type2prop = {
+    "CharDriverState*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_CHR", state_struct
+    ),
+    "bool" : lambda field, state_struct: gen_prop_declaration(field,
+        "DEFINE_PROP_BOOL", state_struct, default_default = False
+    ),
+    "size_t" : lambda field, state_struct: gen_prop_declaration(field,
+        "DEFINE_PROP_SIZE", state_struct, default_default = 0
+    )
+}
+
+for U in ["", "U"]:
+    for bits in ["8", "16", "32", "64"]:
+        # macro suffix
+        msfx = U + "INT" + bits
+        # C type name
+        ctn = msfx.lower() + "_t"
+
+        declare_int(ctn, "DEFINE_PROP_" + msfx)
+
 type2vmstate = {
+    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
     "PCIDevice" : "VMSTATE_PCI_DEVICE"
 }
 
 class QOMType(object):
-    def __init__(self, name):
+    def __init__(self, name, timer_num = 0, char_num = 0):
         self.qtn = QemuTypeName(name)
+        self.timer_num = timer_num
+        self.char_num = char_num
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
+
+    def test_basic_state(self):
+        for u, bits in [("", "32"), ("u", "8"), ("u", "16"), ("u", "32"),
+            ("u", "64")
+        ]:
+            # variable name
+            ctn = u + "int" + bits + "_t"
+            vn = "var_" + ctn
+            self.add_state_field_h(ctn, vn, save = False,
+                prop = True, default = (0xdeadbeef if bits == "32" else None)
+            )
+
+        self.add_state_field_h("size_t", "var_size", save = False, prop = True,
+            default = "UINT32_MAX"
+        )
+        self.add_state_field_h("bool", "var_b0", save = False, prop = True)
+        self.add_state_field_h("bool", "var_b1", save = False, prop = True,
+            default = True
+        )
+
+    # Character driver
+    def char_name(self, index):
+        if self.char_num == 1:
+            return "chr"
+        else:
+            return "chr_%u" % index
+
+    def char_can_read_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_can_read"
+
+    def char_read_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_read"
+
+    def char_event_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
+
+    def char_declare_fields(self):
+        for index in range(self.char_num):
+            self.add_state_field(QOMStateField(
+                Pointer(Type.lookup("CharDriverState")), self.char_name(index),
+                save = False,
+                prop = True
+            ))
+
+    def char_gen_cb(self, proto_name, handler_name, index, source,
+        state_struct, type_cast_macro
+    ):
+        proto = Type.lookup(proto_name)
+        cb = proto.use_as_prototype(handler_name,
+            body = """\
+    __attribute__((unused)) %s *s = %s(opaque);%s
+""" % (
+    state_struct.name,
+    self.type_cast_macro.name,
+    "\n\n    return 0;" \
+    if proto.ret_type not in [ None, Type.lookup("void") ] else "",
+            ),
+            static = True,
+            used_types = set([state_struct, type_cast_macro])
+        )
+        source.add_type(cb)
+        return cb
+
+    def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
+        return [
+            self.char_gen_cb(proto_name, handler_name, index, source,
+                state_struct, type_cast_macro
+            ) for proto_name, handler_name in [
+                ("IOCanReadHandler", self.char_can_read_name(index)),
+                ("IOReadHandler", self.char_read_name(index)),
+                ("IOEventHandler", self.char_event_name(index))
+            ]
+        ]
+
+    # TIMERS
+    def timer_name(self, index):
+        if self.timer_num == 1:
+            return "timer"
+        else:
+            return "timer_%u" % index
+
+    def timer_cb_name(self, index):
+        return self.qtn.for_id_name + "_" + self.timer_name(index) + "_cb"
+
+    def timer_declare_fields(self):
+        for index in range(self.timer_num):
+            self.add_state_field(QOMStateField(
+                Pointer(Type.lookup("QEMUTimer")), self.timer_name(index),
+                save = True
+            ))
+
+    def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
+        timer_cb = Function(self.timer_cb_name(index),
+            body = """\
+    __attribute__((unused)) %s *s = %s(opaque);
+""" % (state_struct.name, self.type_cast_macro.name
+            ),
+            args = [Type.lookup("void").gen_var("opaque", pointer = True)],
+            static = True,
+            used_types = set([state_struct, type_cast_macro])
+        )
+        source.add_type(timer_cb)
+        return timer_cb
 
     def add_state_fields(self, fields):
         for field in fields:
             self.add_state_field(field)
 
     def add_state_field(self, field):
+        field.prop_macro_name = self.qtn.for_macros + "_" + field.name.upper()
         self.state_fields.append(field)
 
-    def add_state_field_h(self, type_name, field_name, num = None, save = True):
+    def add_state_field_h(self, type_name, field_name,
+            num = None,
+            save = True,
+            prop = False,
+            default = None
+        ):
         t = Type.lookup(type_name)
-        f = QOMStateField(t, field_name, num = num, save = save)
+        f = QOMStateField(t, field_name,
+            num = num,
+            save = save,
+            prop = prop,
+            default = default
+        )
         self.add_state_field(f)
 
     def gen_state(self):
@@ -102,6 +306,72 @@ class QOMType(object):
         for f in self.state_fields:
             s.append_field(f.type.gen_var(f.name, array_size = f.num))
         return s
+
+    def gen_property_macros(self, source):
+        for field in self.state_fields:
+            if not field.prop:
+                continue
+
+            t = Macro(field.prop_macro_name, text = field.prop_name)
+            source.add_type(t)
+
+    def gen_properties_initializer(self, state_struct):
+        used_types = set()
+        global type2prop
+
+        code = "{"
+
+        first = True
+        for f in self.state_fields:
+            if not f.prop:
+                continue
+
+            try:
+                helper = type2prop[f.type.name]
+            except KeyError:
+                raise Exception(
+                    "Property generation for type %s is not implemented" % \
+                        f.type.name
+                )
+
+            decl_code, decl_types = helper(f, state_struct)
+
+            used_types |= decl_types
+
+            if first:
+                first = False
+                code += "\n"
+            else:
+                code += ",\n"
+            code += "    " + decl_code
+
+        # generate property list terminator
+        terminator_macro = Type.lookup("DEFINE_PROP_END_OF_LIST")
+        if first:
+            code += "\n"
+        else:
+            code += ",\n"
+        code += "    " + terminator_macro.gen_usage_string() + "\n}"
+
+        init = Initializer(
+            code = code,
+            used_types = used_types.union([
+                terminator_macro,
+                state_struct
+            ])
+        )
+        return init
+
+    def gen_properties_global(self, state_struct):
+        init = self.gen_properties_initializer(state_struct)
+        prop_type = Type.lookup("Property")
+        var = prop_type.gen_var(
+            name = self.qtn.for_id_name + "_properties",
+            initializer = init,
+            static = True,
+            array_size = 0
+        )
+        return var
 
     def gen_vmstate_initializer(self, state_struct):
         type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
@@ -111,8 +381,7 @@ class QOMType(object):
     .fields = (VMStateField[]) {""" % type_macro.name
         )
 
-        # TODO: make Macro hashable, then use set()
-        used_macros = {}
+        used_macros = set()
         global type2vmstate
 
         first = True
@@ -134,11 +403,14 @@ class QOMType(object):
                 )
 
             vms_macro = Type.lookup(vms_macro_name)
-            used_macros[vms_macro_name] = vms_macro
+            used_macros.add(vms_macro)
 
             init = Initializer(
                 # code of macro initializer is dict
                 {
+                    "_f": f.name,
+                    "_s": state_struct.name,
+                    # Macros may use different argument names
                     "_field": f.name,
                     "_state": state_struct.name
                 }
@@ -163,11 +435,11 @@ class QOMType(object):
 
         init = Initializer(
             code = code,
-            used_types = [
+            used_types = used_macros.union([
                 type_macro,
                 Type.lookup("VMStateField"),
                 state_struct
-            ] + used_macros.values()
+            ])
         )
         return init
 
@@ -336,16 +608,26 @@ class QOMType(object):
 
 
 class QOMStateField(object):
-    def __init__(self, ftype, name, num=None, save=True):
+    def __init__(self, ftype, name,
+            num = None,
+            save = True,
+            prop = False,
+            default = None
+        ):
         self.type = ftype
         self.name = name
         self.num = num
+        self.prop_name = '"' + name.replace('_', '-') + '"'
         self.save = save
-
+        self.prop = prop
+        self.default = default
 
 class QOMDevice(QOMType):
-    def __init__(self, name, directory):
-        super(QOMDevice, self).__init__(name)
+    def __init__(self, name, directory, timer_num = 0, char_num = 0):
+        super(QOMDevice, self).__init__(name,
+            timer_num = timer_num,
+            char_num = char_num
+        )
 
         self.directory = directory
 

@@ -17,6 +17,8 @@ class PCIEDeviceType(QOMDevice):
         vendor,
         device,
         pci_class,
+        char_num = 0,
+        timer_num = 0,
         irq_num = 0,
         mem_bar_num = 1,
         msi_messages_num = 2,
@@ -24,7 +26,10 @@ class PCIEDeviceType(QOMDevice):
         subsys = None,
         subsys_vendor = None,
     ):
-        super(PCIEDeviceType, self).__init__(name, directory)
+        super(PCIEDeviceType, self).__init__(name, directory,
+            char_num = char_num,
+            timer_num = timer_num
+        )
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
@@ -57,6 +62,10 @@ class PCIEDeviceType(QOMDevice):
                 self.get_Ith_mem_bar_name(irqN),
                 save = False
             )
+
+        self.timer_declare_fields()
+
+        self.char_declare_fields()
 
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
@@ -114,10 +123,12 @@ class PCIEDeviceType(QOMDevice):
         realize_code = ''
         realize_used_types = []
         realize_used_globals = []
+        s_is_used = False
 
         mem_bar_def_size = 0x100
 
         if self.mem_bar_num > 0:
+            s_is_used = True
             realize_used_types.extend([
                 Type.lookup("sysbus_init_mmio"),
                 Type.lookup("memory_region_init_io"),
@@ -204,6 +215,7 @@ class PCIEDeviceType(QOMDevice):
             self.header.add_types(msi_types)
 
             msi_init_type = Type.lookup("msi_init")
+            s_is_used = True
 
             realize_code += """
     msi_init(dev, %s, %s, %s, %s%s);
@@ -220,13 +232,35 @@ class PCIEDeviceType(QOMDevice):
 
         realize_used_types.append(self.state_struct)
 
+        if self.char_num > 0:
+            realize_used_types.extend([
+                Type.lookup("qemu_chr_add_handlers")
+            ])
+            realize_code += "\n"
+            s_is_used = True
+
+            for chrN in range(self.char_num):
+                chr_name = self.char_name(chrN)
+                har_handlers = self.char_gen_handlers(chrN, self.source,
+                    self.state_struct, self.type_cast_macro
+                )
+                realize_code += """\
+    if (s->{chr_name}) {{
+        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
+    }}
+""".format(
+    chr_name = chr_name,
+    helpers = ", ".join([h.name for h in har_handlers])
+                )
+                realize_used_types.extend(har_handlers)
+
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
     {unused}{Struct} *s = {UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "__attribute__((unused)) " if realize_code == '' else "",
+        unused = "" if s_is_used else "__attribute__((unused)) ",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
         extra_code = realize_code
@@ -271,16 +305,9 @@ class PCIEDeviceType(QOMDevice):
 
         self.source.add_global_variable(self.vmstate)
 
-        properties_init = Initializer(
-"""{
-    DEFINE_PROP_END_OF_LIST()
-}"""
-            )
-        self.properties = Type.lookup("Property").gen_var(
-            name = "%s_properties[]" % self.qtn.for_id_name,
-            static = True,
-            initializer = properties_init
-            )
+        self.gen_property_macros(self.header)
+        self.properties = self.gen_properties_global(self.state_struct)
+
         self.source.add_global_variable(self.properties)
 
         self.class_init = Function(
@@ -328,7 +355,35 @@ Type.lookup("void").gen_var("opaque", True),
             )
         self.source.add_type(self.class_init)
 
-        self.instance_init = self.gen_instance_init_fn(self.state_struct)
+        instance_init_used_types = []
+        instance_init_code = ""
+        s_is_used = False
+
+        if self.timer_num > 0:
+            instance_init_used_types.extend([
+                Type.lookup("QEMU_CLOCK_VIRTUAL"),
+                Type.lookup("timer_new_ns")
+            ])
+            s_is_used = True
+            instance_init_code += "\n"
+
+            for timerN in range(self.timer_num):
+                cb = self.timer_gen_cb(timerN, self.source, self.state_struct,
+                    self.type_cast_macro
+                )
+
+                instance_init_used_types.append(cb)
+
+                instance_init_code += """\
+    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+""" % (self.timer_name(timerN), cb.name,
+                )
+
+        self.instance_init = self.gen_instance_init_fn(self.state_struct,
+            code = instance_init_code,
+            s_is_used = s_is_used,
+            used_types = instance_init_used_types
+        )
         self.source.add_type(self.instance_init)
 
         self.type_info = self.gen_type_info_var(self.state_struct,

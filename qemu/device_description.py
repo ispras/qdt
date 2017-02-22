@@ -15,13 +15,18 @@ class SysBusDeviceDescription(QOMDescription):
     def __init__(self,
         name,
         directory,
+        char_num = 0,
+        timer_num = 0,
         out_irq_num = 1,
         in_irq_num = 1,
         mmio_num = 1,
         pio_num = 0
     ):
 
-        QOMDescription.__init__(self, name = name, directory = directory)
+        QOMDescription.__init__(self, name = name, directory = directory,
+            char_num = char_num,
+            timer_num = timer_num
+        )
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
         self.mmio_num = mmio_num
@@ -31,6 +36,8 @@ class SysBusDeviceDescription(QOMDescription):
         return SysBusDeviceType(
             name = self.name,
             directory = self.directory,
+            char_num = self.char_num,
+            timer_num = self.timer_num,
             out_irq_num = self.out_irq_num,
             in_irq_num = self.in_irq_num,
             mmio_num = self.mmio_num,
@@ -41,6 +48,8 @@ class SysBusDeviceDescription(QOMDescription):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field('directory = "' + self.directory + '"')
+        gen.gen_field("char_num = " + gen.gen_const(self.char_num))
+        gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
         gen.gen_field("out_irq_num = " + str(self.out_irq_num))
         gen.gen_field("in_irq_num = " + str(self.in_irq_num))
         gen.gen_field("mmio_num = " + str(self.mmio_num))
@@ -54,6 +63,8 @@ class PCIExpressDeviceDescription(QOMDescription):
         vendor,
         device,
         pci_class,
+        char_num = 0,
+        timer_num = 0,
         irq_num = 0,
         mem_bar_num = 1,
         msi_messages_num = 2,
@@ -62,7 +73,10 @@ class PCIExpressDeviceDescription(QOMDescription):
         subsys_vendor = None
     ):
 
-        QOMDescription.__init__(self, name = name, directory = directory)
+        QOMDescription.__init__(self, name = name, directory = directory,
+            char_num = char_num,
+            timer_num = timer_num
+        )
         self.vendor = vendor
         self.device = device
         self.pci_class = pci_class
@@ -89,6 +103,8 @@ class PCIExpressDeviceDescription(QOMDescription):
         self.gen_id_get(gen, self.device)
         gen.gen_field('pci_class = ')
         self.gen_id_get(gen, self.pci_class)
+        gen.gen_field("char_num = " + gen.gen_const(self.char_num))
+        gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
         gen.gen_field("irq_num = " + gen.gen_const(self.irq_num))
         gen.gen_field("mem_bar_num = " + gen.gen_const(self.mem_bar_num))
         gen.gen_field("msi_messages_num = " +
@@ -104,8 +120,8 @@ class PCIExpressDeviceDescription(QOMDescription):
     def gen_type(self):
         kw = {}
 
-        for attr in ["name", "directory", "irq_num", "mem_bar_num",
-            "msi_messages_num", "revision"
+        for attr in ["name", "directory", "timer_num", "irq_num",
+            "mem_bar_num", "msi_messages_num", "revision", "char_num"
         ]:
             kw[attr] = getattr(self, attr)
 

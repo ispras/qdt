@@ -713,9 +713,15 @@ class Function(Type):
     __type_references__ = ["ret_type", "args", "used_types", "used_globals"]
 
 class Pointer(Type):
-    def __init__(self, _type, name=None):
+    def __init__(self, _type, name=None, const = False):
+        """
+        const: pointer to constant (not a constant pointer).
+        """
         self.is_named = name is not None
-        name = name if self.is_named else _type.name + '*'
+        if not self.is_named:
+            name = _type.name + '*'
+            if const:
+                name = "const " + name
 
         # do not add nameless pointers to type registry
         if self.is_named:
@@ -728,6 +734,7 @@ class Pointer(Type):
             self.base = False
 
         self.type = _type
+        self.const = const
 
     def __eq__(self, other):
         if not isinstance(other, Pointer):
@@ -741,7 +748,7 @@ class Pointer(Type):
         if other.is_named:
             return False
 
-        return self.type == other.type
+        return (self.type == other.type) and (self.const == other.const)
 
     def get_definers(self):
         if self.is_named:

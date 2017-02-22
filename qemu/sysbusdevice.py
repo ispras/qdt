@@ -14,12 +14,17 @@ class SysBusDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
+        char_num = 0,
+        timer_num = 0,
         out_irq_num = 1,
         in_irq_num = 0,
         mmio_num = 1, 
         pio_num = 0):
 
-        super(SysBusDeviceType, self).__init__(name, directory)
+        super(SysBusDeviceType, self).__init__(name, directory,
+            char_num = char_num,
+            timer_num = timer_num
+        )
 
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
@@ -48,6 +53,9 @@ class SysBusDeviceType(QOMDevice):
                 self.get_Ith_io_name(ioN),
                 save = False
             )
+
+        self.timer_declare_fields()
+        self.char_declare_fields()
 
         self.state_struct = self.gen_state()
 
@@ -86,20 +94,46 @@ class SysBusDeviceType(QOMDevice):
 
         self.source.add_type(self.device_reset) 
 
+        s_is_used = False
+        realize_code = ""
+        realize_used_types = set([self.state_struct])
+
+        if self.char_num > 0:
+            realize_used_types.add(Type.lookup("qemu_chr_add_handlers"))
+            realize_code += "\n"
+            s_is_used = True
+
+            for chrN in range(self.char_num):
+                chr_name = self.char_name(chrN)
+                har_handlers = self.char_gen_handlers(chrN, self.source,
+                    self.state_struct, self.type_cast_macro
+                )
+                realize_code += """\
+    if (s->{chr_name}) {{
+        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
+    }}
+""".format(
+    chr_name = chr_name,
+    helpers = ", ".join([h.name for h in har_handlers])
+                )
+                realize_used_types.update(har_handlers)
+
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(dev);
+    {unused}{Struct} *s = {UPPER}(dev);{extra_code}
 """.format(
+        unused = "" if s_is_used else "__attribute__((unused)) ",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
+        extra_code = realize_code
         ),
             args = [
                 Type.lookup("DeviceState").gen_var("dev", True),
                 Pointer(Type.lookup("Error")).gen_var("errp", True)
                 ],
             static = True,
-            used_types = [self.state_struct]
+            used_types = realize_used_types
             )
         self.source.add_type(self.device_realize)
 
@@ -299,6 +333,26 @@ use_as_prototype(
                 Type.lookup("DEVICE")
                 ])
 
+        if self.timer_num > 0:
+            instance_init_used_types.extend([
+                Type.lookup("QEMU_CLOCK_VIRTUAL"),
+                Type.lookup("timer_new_ns")
+            ])
+            s_is_used = True
+            instance_init_code += "\n"
+
+            for timerN in range(self.timer_num):
+                cb = self.timer_gen_cb(timerN, self.source, self.state_struct,
+                    self.type_cast_macro
+                )
+
+                instance_init_used_types.append(cb)
+
+                instance_init_code += """\
+    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+""" % (self.timer_name(timerN), cb.name,
+                )
+
         self.instance_init = self.gen_instance_init_fn(self.state_struct,
             code = instance_init_code,
             s_is_used = s_is_used,
@@ -312,17 +366,8 @@ use_as_prototype(
 
         self.source.add_global_variable(self.vmstate)
 
-        properties_init = Initializer(
-"""{
-    DEFINE_PROP_END_OF_LIST()
-}"""
-            )
-
-        self.properties = Type.lookup("Property").gen_var(
-            name = "%s_properties[]" % self.qtn.for_id_name,
-            static = True,
-            initializer = properties_init
-            )
+        self.gen_property_macros(self.header)
+        self.properties = self.gen_properties_global(self.state_struct)
 
         self.source.add_global_variable(self.properties)
 
