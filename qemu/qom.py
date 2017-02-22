@@ -319,6 +319,9 @@ class QOMType(object):
             init = Initializer(
                 # code of macro initializer is dict
                 {
+                    "_f": f.name,
+                    "_s": state_struct.name,
+                    # Macros may use different argument names
                     "_field": f.name,
                     "_state": state_struct.name
                 }
