@@ -301,6 +301,14 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    Header.lookup("qemu/timer.h").add_types([
+        Structure("QEMUTimer"),
+        Function("timer_new_ns"),
+        Type("QEMU_CLOCK_VIRTUAL") # It is enumeration entry...
+    ]).add_references([
+        osdep_fake_type
+    ])
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
