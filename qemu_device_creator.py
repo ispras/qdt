@@ -8,8 +8,7 @@ from os.path import \
     isdir
 
 from qemu import \
-    pci_id_db, \
-    get_vs
+    PCIId
 
 from examples import \
     Q35Project_2_5_0, \
@@ -92,10 +91,8 @@ Use @file to read arguments from 'file' (one per line)
         )
     """
 
-    if get_vs() == "2.5.0":
-        project = Q35Project_2_5_0()
-    else:
-        project = Q35Project_2_6_0()
+    # TODO: handle example project as QEMU version heuristic
+    project = QProject()
 
     project.gen_all(qvd.src_path)
 
