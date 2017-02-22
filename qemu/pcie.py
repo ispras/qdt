@@ -119,10 +119,12 @@ class PCIEDeviceType(QOMDevice):
         realize_code = ''
         realize_used_types = []
         realize_used_globals = []
+        s_is_used = False
 
         mem_bar_def_size = 0x100
 
         if self.mem_bar_num > 0:
+            s_is_used = True
             realize_used_types.extend([
                 Type.lookup("sysbus_init_mmio"),
                 Type.lookup("memory_region_init_io"),
@@ -209,6 +211,7 @@ class PCIEDeviceType(QOMDevice):
             self.header.add_types(msi_types)
 
             msi_init_type = Type.lookup("msi_init")
+            s_is_used = True
 
             realize_code += """
     msi_init(dev, %s, %s, %s, %s%s);
@@ -231,7 +234,7 @@ class PCIEDeviceType(QOMDevice):
     {unused}{Struct} *s = {UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "__attribute__((unused)) " if realize_code == '' else "",
+        unused = "" if s_is_used else "__attribute__((unused)) ",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
         extra_code = realize_code
