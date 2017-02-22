@@ -323,8 +323,7 @@ class QOMType(object):
     .fields = (VMStateField[]) {""" % type_macro.name
         )
 
-        # TODO: make Macro hashable, then use set()
-        used_macros = {}
+        used_macros = set()
         global type2vmstate
 
         first = True
@@ -346,7 +345,7 @@ class QOMType(object):
                 )
 
             vms_macro = Type.lookup(vms_macro_name)
-            used_macros[vms_macro_name] = vms_macro
+            used_macros.add(vms_macro)
 
             init = Initializer(
                 # code of macro initializer is dict
@@ -378,11 +377,11 @@ class QOMType(object):
 
         init = Initializer(
             code = code,
-            used_types = [
+            used_types = used_macros.union([
                 type_macro,
                 Type.lookup("VMStateField"),
                 state_struct
-            ] + used_macros.values()
+            ])
         )
         return init
 
