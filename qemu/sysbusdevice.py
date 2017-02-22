@@ -93,20 +93,26 @@ class SysBusDeviceType(QOMDevice):
 
         self.source.add_type(self.device_reset) 
 
+        s_is_used = False
+        realize_code = ""
+        realize_used_types = set([self.state_struct])
+
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(dev);
+    {unused}{Struct} *s = {UPPER}(dev);{extra_code}
 """.format(
+        unused = "" if s_is_used else "__attribute__((unused)) ",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
+        extra_code = realize_code
         ),
             args = [
                 Type.lookup("DeviceState").gen_var("dev", True),
                 Pointer(Type.lookup("Error")).gen_var("errp", True)
                 ],
             static = True,
-            used_types = [self.state_struct]
+            used_types = realize_used_types
             )
         self.source.add_type(self.device_realize)
 
