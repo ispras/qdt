@@ -135,6 +135,9 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     usage_str = decl_macro.gen_usage_string(initializer)
     return (usage_str, used_types)
 
+type2prop = {
+}
+
 type2vmstate = {
     "PCIDevice" : "VMSTATE_PCI_DEVICE"
 }
