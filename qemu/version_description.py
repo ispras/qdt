@@ -18,7 +18,7 @@ from subprocess import \
 
 from .version import \
     QVHDict, \
-    initialize as initialize_version, \
+    initialize_version, \
     qemu_versions_desc, \
     get_vp
 
@@ -546,6 +546,10 @@ class QemuVersionDescription(object):
             for ret in self.co_gen_device_tree():
                 yield ret
 
+            # gen version description
+            for ret in self.qvc.co_computing_parameters(self.repo):
+                yield ret
+
             # Search for PCI Ids
             PCIClassification.build()
 
@@ -564,8 +568,8 @@ class QemuVersionDescription(object):
 
         yield True
 
-        # select Qemu version parameters according to current version
-        initialize_version(self.qemu_version)
+        # set Qemu version heuristics according to current version
+        initialize_version(self.qvc.version_desc)
 
         yield True
 
@@ -602,6 +606,7 @@ class QemuVersionDescription(object):
                 raise Exception(
 "No QemuVersionCache was loaded from %s." % qvc_path
                 )
+            self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 
 
 
