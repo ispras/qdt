@@ -141,6 +141,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "bool" : lambda field, state_struct: gen_prop_declaration(field,
+        "DEFINE_PROP_BOOL", state_struct, default_default = False
+    ),
     "size_t" : lambda field, state_struct: gen_prop_declaration(field,
         "DEFINE_PROP_SIZE", state_struct, default_default = 0
     )
