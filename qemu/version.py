@@ -309,6 +309,37 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    Header.lookup("qemu/main-loop.h").add_types([
+        Function("IOCanReadHandler",
+            ret_type = Type.lookup("int"),
+            args = [
+                Pointer(Type.lookup("void")).gen_var("opaque")
+            ]
+        ),
+        Function("IOReadHandler",
+            args = [
+                Pointer(Type.lookup("void")).gen_var("opaque"),
+                Pointer(Type.lookup("uint8_t"), const = True).gen_var("buf"),
+                Type.lookup("int").gen_var("size")
+            ]
+        )
+    ]).add_references([
+        osdep_fake_type
+    ])
+
+    Header.lookup("sysemu/char.h").add_types([
+        Function("qemu_chr_add_handlers"),
+        Structure("CharDriverState"),
+        Function("IOEventHandler",
+            args = [
+                Pointer(Type.lookup("void")).gen_var("opaque"),
+                Type.lookup("int").gen_var("event")
+            ]
+        )
+    ]).add_references([
+        osdep_fake_type
+    ])
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
