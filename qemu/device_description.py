@@ -15,13 +15,16 @@ class SysBusDeviceDescription(QOMDescription):
     def __init__(self,
         name,
         directory,
+        timer_num = 0,
         out_irq_num = 1,
         in_irq_num = 1,
         mmio_num = 1,
         pio_num = 0
     ):
 
-        QOMDescription.__init__(self, name = name, directory = directory)
+        QOMDescription.__init__(self, name = name, directory = directory,
+            timer_num = timer_num
+        )
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
         self.mmio_num = mmio_num
@@ -31,6 +34,7 @@ class SysBusDeviceDescription(QOMDescription):
         return SysBusDeviceType(
             name = self.name,
             directory = self.directory,
+            timer_num = self.timer_num,
             out_irq_num = self.out_irq_num,
             in_irq_num = self.in_irq_num,
             mmio_num = self.mmio_num,
@@ -41,6 +45,7 @@ class SysBusDeviceDescription(QOMDescription):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field('directory = "' + self.directory + '"')
+        gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
         gen.gen_field("out_irq_num = " + str(self.out_irq_num))
         gen.gen_field("in_irq_num = " + str(self.in_irq_num))
         gen.gen_field("mmio_num = " + str(self.mmio_num))
