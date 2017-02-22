@@ -63,6 +63,7 @@ class PCIExpressDeviceDescription(QOMDescription):
         vendor,
         device,
         pci_class,
+        char_num = 0,
         timer_num = 0,
         irq_num = 0,
         mem_bar_num = 1,
@@ -73,6 +74,7 @@ class PCIExpressDeviceDescription(QOMDescription):
     ):
 
         QOMDescription.__init__(self, name = name, directory = directory,
+            char_num = char_num,
             timer_num = timer_num
         )
         self.vendor = vendor
@@ -101,6 +103,7 @@ class PCIExpressDeviceDescription(QOMDescription):
         self.gen_id_get(gen, self.device)
         gen.gen_field('pci_class = ')
         self.gen_id_get(gen, self.pci_class)
+        gen.gen_field("char_num = " + gen.gen_const(self.char_num))
         gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
         gen.gen_field("irq_num = " + gen.gen_const(self.irq_num))
         gen.gen_field("mem_bar_num = " + gen.gen_const(self.mem_bar_num))
@@ -118,7 +121,7 @@ class PCIExpressDeviceDescription(QOMDescription):
         kw = {}
 
         for attr in ["name", "directory", "timer_num", "irq_num",
-            "mem_bar_num", "msi_messages_num", "revision"
+            "mem_bar_num", "msi_messages_num", "revision", "char_num"
         ]:
             kw[attr] = getattr(self, attr)
 
