@@ -64,6 +64,16 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e = HKEntry(f, textvariable = v)
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
+        # Timer quantity editing
+        f.rowconfigure(2, weight = 0)
+
+        l = VarLabel(f, text = _("Timer quantity"))
+        l.grid(row = 2, column = 0, sticky = "NES")
+
+        v = self.var_timer_quantity = StringVar()
+        e = self.e_timer_quantity = HKEntry(f, textvariable = v)
+        e.grid(row = 2, column = 1, sticky = "NEWS")
+
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
 
@@ -90,6 +100,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __refresh__(self):
         self.var_name.set(self.desc.name)
         self.var_directory.set(self.desc.directory)
+        self.var_timer_quantity.set(str(self.desc.timer_num))
 
     def __apply__(self):
         if self.pht is None:
@@ -102,6 +113,19 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         if new_dir != self.desc.directory:
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
+
+        new_timer_quantity = self.var_timer_quantity.get()
+        try:
+            new_timer_quantity = long(new_timer_quantity, base = 0)
+        except ValueError:
+            self.e_timer_quantity.config(bg = "red")
+        else:
+            self.e_timer_quantity.config(bg = "white")
+
+            if new_timer_quantity != self.desc.timer_num:
+                self.pht.stage(DOp_SetAttr, "timer_num", new_timer_quantity,
+                    self.desc
+                )
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
