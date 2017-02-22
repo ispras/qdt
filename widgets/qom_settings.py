@@ -55,7 +55,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e.grid(row = 0, column = 1, sticky = "NEWS")
 
         # Directory editing row
-        f.rowconfigure(0, weight = 0)
+        f.rowconfigure(1, weight = 0)
 
         l = VarLabel(f, text = _("Directory"))
         l.grid(row = 1, column = 0, sticky = "NES")
