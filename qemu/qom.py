@@ -76,6 +76,65 @@ class QemuTypeName(object):
 
         self.for_macros = tmp
 
+# Property declaration generation helpers
+
+def gen_prop_declaration(field, decl_macro_name, state_struct,
+    default_default = None
+):
+    decl_macro = Type.lookup(decl_macro_name)
+    name_macro = Type.lookup(field.prop_macro_name)
+    used_types = set([decl_macro, name_macro, state_struct])
+    bool_true = Type.lookup("true")
+    bool_false = Type.lookup("false")
+
+    init_code = {
+        "_n" : name_macro.name,
+        "_s" : state_struct.name,
+        "_f" : field.name,
+    }
+
+    init_code["_name"] = init_code["_n"]
+    init_code["_state"] = init_code["_s"]
+    init_code["_field"] = init_code["_f"]
+
+    if default_default is not None:
+        if field.default is None:
+            val = default_default
+        else:
+            val = field.default
+
+        if isinstance(val, str):
+            try:
+                val_macro = Type.lookup(val)
+            except TypeNotRegistered:
+                val = '"%s"' % val
+            else:
+                if not isinstance(val_macro, Macro):
+                    val = '"%s"' % val
+                else:
+                    used_types.add(val_macro)
+        elif isinstance(val, bool):
+            if val:
+                val = "true"
+                used_types.add(bool_true)
+            else:
+                val = "false"
+                used_types.add(bool_false)
+        elif isinstance(val, int) or isinstance(val, long):
+            if field.type.name[0] == "u":
+                val = "0x%X" % val
+            else:
+                val = str(val)
+        else:
+            val = str(val)
+
+        init_code["_d"] = val
+        init_code["_defval"] = val
+
+    initializer = Initializer(code = init_code)
+    usage_str = decl_macro.gen_usage_string(initializer)
+    return (usage_str, used_types)
+
 type2vmstate = {
     "PCIDevice" : "VMSTATE_PCI_DEVICE"
 }
