@@ -55,6 +55,7 @@ class SysBusDeviceType(QOMDevice):
             )
 
         self.timer_declare_fields()
+        self.char_declare_fields()
 
         self.state_struct = self.gen_state()
 
@@ -96,6 +97,26 @@ class SysBusDeviceType(QOMDevice):
         s_is_used = False
         realize_code = ""
         realize_used_types = set([self.state_struct])
+
+        if self.char_num > 0:
+            realize_used_types.add(Type.lookup("qemu_chr_add_handlers"))
+            realize_code += "\n"
+            s_is_used = True
+
+            for chrN in range(self.char_num):
+                chr_name = self.char_name(chrN)
+                har_handlers = self.char_gen_handlers(chrN, self.source,
+                    self.state_struct, self.type_cast_macro
+                )
+                realize_code += """\
+    if (s->{chr_name}) {{
+        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
+    }}
+""".format(
+    chr_name = chr_name,
+    helpers = ", ".join([h.name for h in har_handlers])
+                )
+                realize_used_types.update(har_handlers)
 
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
