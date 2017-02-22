@@ -5,6 +5,7 @@ from source import \
     TypeNotRegistered, \
     Initializer, \
     Function, \
+    Macro, \
     Type
 
 from os.path import \
@@ -113,6 +114,14 @@ class QOMType(object):
         for f in self.state_fields:
             s.append_field(f.type.gen_var(f.name, array_size = f.num))
         return s
+
+    def gen_property_macros(self, source):
+        for field in self.state_fields:
+            if not field.prop:
+                continue
+
+            t = Macro(field.prop_macro_name, text = field.prop_name)
+            source.add_type(t)
 
     def gen_vmstate_initializer(self, state_struct):
         type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
