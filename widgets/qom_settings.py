@@ -67,6 +67,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         # Integer argument editing rows
         for row, (iattr, text) in enumerate(
             [
+                ("char_quantity", _("Character driver quantity")),
                 ("timer_quantity", _("Timer quantity"))
             ],
             2
@@ -110,6 +111,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         self.var_name.set(self.desc.name)
         self.var_directory.set(self.desc.directory)
         self.var_timer_quantity.set(str(self.desc.timer_num))
+        self.var_char_quantity.set(str(self.desc.char_num))
 
     def __apply__(self):
         if self.pht is None:
@@ -124,6 +126,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
 
         for iattr, dattr in [
+            ("char_quantity", "char_num"),
             ("timer_quantity", "timer_num")
         ]:
             v = getattr(self, "var_" + iattr)
