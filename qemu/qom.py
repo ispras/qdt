@@ -141,6 +141,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "size_t" : lambda field, state_struct: gen_prop_declaration(field,
+        "DEFINE_PROP_SIZE", state_struct, default_default = 0
+    )
 }
 
 for U in ["", "U"]:
