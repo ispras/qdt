@@ -194,6 +194,60 @@ class QOMType(object):
             default = True
         )
 
+    # Character driver
+    def char_name(self, index):
+        if self.char_num == 1:
+            return "chr"
+        else:
+            return "chr_%u" % index
+
+    def char_can_read_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_can_read"
+
+    def char_read_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_read"
+
+    def char_event_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
+
+    def char_declare_fields(self):
+        for index in range(self.char_num):
+            self.add_state_field(QOMStateField(
+                Pointer(Type.lookup("CharDriverState")), self.char_name(index),
+                save = False,
+                prop = True
+            ))
+
+    def char_gen_cb(self, proto_name, handler_name, index, source,
+        state_struct, type_cast_macro
+    ):
+        proto = Type.lookup(proto_name)
+        cb = proto.use_as_prototype(handler_name,
+            body = """\
+    __attribute__((unused)) %s *s = %s(opaque);%s
+""" % (
+    state_struct.name,
+    self.type_cast_macro.name,
+    "\n\n    return 0;" \
+    if proto.ret_type not in [ None, Type.lookup("void") ] else "",
+            ),
+            static = True,
+            used_types = set([state_struct, type_cast_macro])
+        )
+        source.add_type(cb)
+        return cb
+
+    def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
+        return [
+            self.char_gen_cb(proto_name, handler_name, index, source,
+                state_struct, type_cast_macro
+            ) for proto_name, handler_name in [
+                ("IOCanReadHandler", self.char_can_read_name(index)),
+                ("IOReadHandler", self.char_read_name(index)),
+                ("IOEventHandler", self.char_event_name(index))
+            ]
+        ]
+
     # TIMERS
     def timer_name(self, index):
         if self.timer_num == 1:
