@@ -143,6 +143,15 @@ def declare_int(ctn, prop_macro):
 type2prop = {
 }
 
+for U in ["", "U"]:
+    for bits in ["8", "16", "32", "64"]:
+        # macro suffix
+        msfx = U + "INT" + bits
+        # C type name
+        ctn = msfx.lower() + "_t"
+
+        declare_int(ctn, "DEFINE_PROP_" + msfx)
+
 type2vmstate = {
     "PCIDevice" : "VMSTATE_PCI_DEVICE"
 }
