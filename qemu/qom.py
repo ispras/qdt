@@ -168,6 +168,25 @@ class QOMType(object):
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
 
+    def test_basic_state(self):
+        for u, bits in [("", "32"), ("u", "8"), ("u", "16"), ("u", "32"),
+            ("u", "64")
+        ]:
+            # variable name
+            ctn = u + "int" + bits + "_t"
+            vn = "var_" + ctn
+            self.add_state_field_h(ctn, vn, save = False,
+                prop = True, default = (0xdeadbeef if bits == "32" else None)
+            )
+
+        self.add_state_field_h("size_t", "var_size", save = False, prop = True,
+            default = "UINT32_MAX"
+        )
+        self.add_state_field_h("bool", "var_b0", save = False, prop = True)
+        self.add_state_field_h("bool", "var_b1", save = False, prop = True,
+            default = True
+        )
+
     def add_state_fields(self, fields):
         for field in fields:
             self.add_state_field(field)
