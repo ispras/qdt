@@ -6,6 +6,7 @@ from source import \
     Initializer, \
     Function, \
     Macro, \
+    Pointer, \
     Type
 
 from os.path import \
@@ -188,6 +189,36 @@ class QOMType(object):
         self.add_state_field_h("bool", "var_b1", save = False, prop = True,
             default = True
         )
+
+    # TIMERS
+    def timer_name(self, index):
+        if self.timer_num == 1:
+            return "timer"
+        else:
+            return "timer_%u" % index
+
+    def timer_cb_name(self, index):
+        return self.qtn.for_id_name + "_" + self.timer_name(index) + "_cb"
+
+    def timer_declare_fields(self):
+        for index in range(self.timer_num):
+            self.add_state_field(QOMStateField(
+                Pointer(Type.lookup("QEMUTimer")), self.timer_name(index),
+                save = True
+            ))
+
+    def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
+        timer_cb = Function(self.timer_cb_name(index),
+            body = """\
+    __attribute__((unused)) %s *s = %s(opaque);
+""" % (state_struct.name, self.type_cast_macro.name
+            ),
+            args = [Type.lookup("void").gen_var("opaque", pointer = True)],
+            static = True,
+            used_types = set([state_struct, type_cast_macro])
+        )
+        source.add_type(timer_cb)
+        return timer_cb
 
     def add_state_fields(self, fields):
         for field in fields:
