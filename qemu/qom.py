@@ -205,6 +205,64 @@ class QOMType(object):
             t = Macro(field.prop_macro_name, text = field.prop_name)
             source.add_type(t)
 
+    def gen_properties_initializer(self, state_struct):
+        used_types = set()
+        global type2prop
+
+        code = "{"
+
+        first = True
+        for f in self.state_fields:
+            if not f.prop:
+                continue
+
+            try:
+                helper = type2prop[f.type.name]
+            except KeyError:
+                raise Exception(
+                    "Property generation for type %s is not implemented" % \
+                        f.type.name
+                )
+
+            decl_code, decl_types = helper(f, state_struct)
+
+            used_types |= decl_types
+
+            if first:
+                first = False
+                code += "\n"
+            else:
+                code += ",\n"
+            code += "    " + decl_code
+
+        # generate property list terminator
+        terminator_macro = Type.lookup("DEFINE_PROP_END_OF_LIST")
+        if first:
+            code += "\n"
+        else:
+            code += ",\n"
+        code += "    " + terminator_macro.gen_usage_string() + "\n}"
+
+        init = Initializer(
+            code = code,
+            used_types = used_types.union([
+                terminator_macro,
+                state_struct
+            ])
+        )
+        return init
+
+    def gen_properties_global(self, state_struct):
+        init = self.gen_properties_initializer(state_struct)
+        prop_type = Type.lookup("Property")
+        var = prop_type.gen_var(
+            name = self.qtn.for_id_name + "_properties",
+            initializer = init,
+            static = True,
+            array_size = 0
+        )
+        return var
+
     def gen_vmstate_initializer(self, state_struct):
         type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
         code = ("""{
