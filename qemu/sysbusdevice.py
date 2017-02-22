@@ -52,6 +52,8 @@ class SysBusDeviceType(QOMDevice):
                 save = False
             )
 
+        self.timer_declare_fields()
+
         self.state_struct = self.gen_state()
 
         self.header.add_type(self.state_struct)
@@ -301,6 +303,26 @@ use_as_prototype(
                 Type.lookup("qdev_init_gpio_in"),
                 Type.lookup("DEVICE")
                 ])
+
+        if self.timer_num > 0:
+            instance_init_used_types.extend([
+                Type.lookup("QEMU_CLOCK_VIRTUAL"),
+                Type.lookup("timer_new_ns")
+            ])
+            s_is_used = True
+            instance_init_code += "\n"
+
+            for timerN in range(self.timer_num):
+                cb = self.timer_gen_cb(timerN, self.source, self.state_struct,
+                    self.type_cast_macro
+                )
+
+                instance_init_used_types.append(cb)
+
+                instance_init_code += """\
+    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+""" % (self.timer_name(timerN), cb.name,
+                )
 
         self.instance_init = self.gen_instance_init_fn(self.state_struct,
             code = instance_init_code,
