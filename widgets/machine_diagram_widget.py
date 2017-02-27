@@ -60,9 +60,6 @@ from irq_settings import \
 from bus_settings import \
     BusSettingsWindow
 
-from sets import \
-    Set
-
 from popup_helper import \
     TkPopupHelper
 
@@ -389,7 +386,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.node2idtext = {}
 
         self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select, "+")
-        self.ids_shown_on_select = Set([])
+        self.ids_shown_on_select = set([])
 
         self.nodes = []
         self.buslabels = []
@@ -1924,7 +1921,7 @@ IRQ line creation
                 self.canvas.coords(idtext, *coords)
 
     def on_select(self, event):
-        still_selected = Set([])
+        still_selected = set([])
         for sid in self.selected:
             node = self.id2node[sid]
             still_selected.add(node)
