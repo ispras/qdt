@@ -1,4 +1,4 @@
-from qemu import \
+from qom import \
     QOMPropertyValue
 
 from machine_description import \
