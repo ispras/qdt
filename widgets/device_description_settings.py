@@ -47,7 +47,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             l = VarLabel(f, text = text)
             l.grid(row = row, column = 0, sticky = "NES")
 
-            if val_type is long:
+            if val_type is int:
                 v = StringVar()
                 w = HKEntry(f, textvariable = v)
             elif val_type is PCIId:
@@ -72,7 +72,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         var = getattr(self, "var_" + field)
         val = getattr(self.desc, field)
 
-        if val_type is long:
+        if val_type is int:
             var.set(str(val))
 
             e = getattr(self, "w_" + field)
@@ -128,7 +128,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             w = getattr(self, "w_" + field)
 
-            if val_type is long:
+            if val_type is int:
                 try:
                     new_val = long(new_val, 0)
                 except:
@@ -144,7 +144,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             cur_val = getattr(self.desc, field)
 
-            if val_type is long:
+            if val_type is int:
                 if cur_val != new_val:
                     self.pht.stage(DOp_SetAttr,
                         field, new_val, self.desc
