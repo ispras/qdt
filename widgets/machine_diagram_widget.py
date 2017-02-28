@@ -2,6 +2,9 @@ from widgets import \
     VarMenu, \
     CanvasDnD
 
+from six.moves import \
+    range as xrange
+
 from six.moves.tkinter import \
     BooleanVar, \
     DISABLED
@@ -1310,7 +1313,7 @@ IRQ line creation
 
         touched_ids = []
         for t in touched:
-            if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node.keys()):
+            if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node):
                 if t == self.shown_irq_circle:
                     # IRQ line selection is not supported yet.
                     continue
@@ -1635,7 +1638,7 @@ IRQ line creation
         irqs = list(self.mach.irqs)
 
         for hub in self.mach.irq_hubs:
-            if hub in self.dev2node.keys():
+            if hub in self.dev2node:
                 continue
             hub_node = IRQHubCircle(hub)
 
@@ -1645,7 +1648,7 @@ IRQ line creation
             self.add_irq_hub(hub_node)
 
         for bus in self.mach.buses:
-            if bus in self.dev2node.keys():
+            if bus in self.dev2node:
                 continue
 
             node = BusLabel(bus)
@@ -1656,7 +1659,7 @@ IRQ line creation
             self.add_buslabel(node)
 
         for dev in self.mach.devices:
-            if not dev in self.dev2node.keys():
+            if not dev in self.dev2node:
                 node = NodeBox(dev)
 
                 self.dev2node[dev] = node
@@ -1673,14 +1676,14 @@ IRQ line creation
                 continue
 
             pb = dev.parent_bus
-            if not pb in self.dev2node.keys():
+            if not pb in self.dev2node:
                 continue
             pbn = self.dev2node[pb].busline
 
             self.add_conn(node, pbn)
 
         for irq in irqs:
-            if irq in self.dev2node.keys():
+            if irq in self.dev2node:
                 continue
 
             src = self.dev2node[irq.src[0]]
