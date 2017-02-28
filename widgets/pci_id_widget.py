@@ -27,13 +27,16 @@ idx2kind = {}
 for kind, idx in kind2idx.items():
     idx2kind[idx] = kind
 
+from six import \
+    iteritems
+
 def get_db(idx):
     if idx == 0:
-        return PCIId.db.classes.iteritems()
+        return iteritems(PCIId.db.classes)
     elif idx == 1:
-        return PCIId.db.vendors.iteritems()
+        return iteritems(PCIId.db.vendors)
     elif idx == 2:
-        return PCIId.db.devices.iteritems()
+        return iteritems(PCIId.db.devices)
     return None
 
 def get_db_sorted(idx):
