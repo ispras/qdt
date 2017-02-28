@@ -16,6 +16,9 @@ from qemu import \
     IRQHub, \
     DeviceNode
 
+from six.moves import \
+    range as xrange
+
 from six.moves.tkinter import \
     StringVar
 

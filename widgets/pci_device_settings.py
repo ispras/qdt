@@ -5,6 +5,7 @@ from common import \
     mlget as _
 
 from six.moves import \
+    range as xrange, \
     tkinter as tk
 
 from .var_widgets import \

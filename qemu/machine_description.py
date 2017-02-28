@@ -9,6 +9,9 @@ from itertools import \
 from .qom import \
     QOMPropertyTypeLink
 
+from six.moves import \
+    range as xrange
+
 class Node(object):
     def __init__(self):
         self.id = -1

@@ -20,6 +20,9 @@ from qemu import \
     QOMPropertyTypeBoolean, \
     QOMPropertyTypeString
 
+from six.moves import \
+    range as xrange
+
 def Q35MachineNode_2_5_0():
     self = MachineNode("q35_test", "i386")
 

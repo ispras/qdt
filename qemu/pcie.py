@@ -10,6 +10,9 @@ from .qom import \
     QOMDevice, \
     QOMType
 
+from six.moves import \
+    range as xrange
+
 class PCIEDeviceType(QOMDevice):
     def __init__(self,
         name,

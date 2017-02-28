@@ -13,6 +13,9 @@ from common import \
 from .gui_frame import \
     GUIFrame
 
+from six.moves import \
+    range as xrange
+
 from six.moves.tkinter import \
     StringVar, \
     BooleanVar, \
