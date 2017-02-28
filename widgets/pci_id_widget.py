@@ -45,7 +45,7 @@ def get_db_sorted(idx):
     if dbiter is None:
         return None
 
-    return sorted(dbiter, key = lambda (n, desc) : n)
+    return sorted(dbiter, key = lambda n_desc : n_desc[0])
 
 class PCIIdWidget(GUIFrame):
     def __init__(self, idvariable, *args, **kw):
