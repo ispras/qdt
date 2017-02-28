@@ -16,10 +16,10 @@ from qemu import \
     IRQHub, \
     DeviceNode
 
-from Tkinter import \
+from six.moves.tkinter import \
     StringVar
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
 from .device_settings import \

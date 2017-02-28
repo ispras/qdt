@@ -1,7 +1,7 @@
-from Tkinter import \
+from six.moves.tkinter import \
     Frame
 
-from tk_unbind import \
+from .tk_unbind import \
     unbind
 
 class GUIFrame(Frame):

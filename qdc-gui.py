@@ -44,11 +44,11 @@ from common import \
     PyGenerator, \
     mlget as _
 
-from Tkinter import \
+from six.moves.tkinter import \
     BooleanVar, \
     StringVar
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showinfo, \
     askyesno, \
     showerror

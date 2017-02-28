@@ -1,7 +1,7 @@
 from common import \
     mlget as _
 
-from tkFileDialog import \
+from six.moves.tkinter_tkfiledialog import \
     askdirectory as tk_askdirector, \
     askopenfilename, \
     asksaveasfilename

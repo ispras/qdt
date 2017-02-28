@@ -4,7 +4,7 @@ from .gui_frame import \
 from .var_widgets import \
     VarCombobox
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
 from common import \

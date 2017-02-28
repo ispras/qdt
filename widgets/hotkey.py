@@ -2,7 +2,7 @@
 from common import \
     ML as _
 
-from Tkinter import \
+from six.moves.tkinter import \
     Entry
 
 class HKEntry(Entry):

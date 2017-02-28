@@ -7,7 +7,7 @@ from copy import \
 from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six.moves.tkinter import \
     Canvas, \
     RIDGE, \
     BOTH

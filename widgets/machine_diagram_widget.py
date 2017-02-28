@@ -2,7 +2,7 @@ from widgets import \
     VarMenu, \
     CanvasDnD
 
-from Tkinter import \
+from six.moves.tkinter import \
     BooleanVar, \
     DISABLED
 
@@ -66,7 +66,7 @@ from .popup_helper import \
 from .cross_dialogs import \
     asksaveas
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showerror
 
 from .hotkey import \

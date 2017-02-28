@@ -10,10 +10,10 @@ from .var_widgets import \
     VarButton, \
     VarCombobox
 
-from Tkinter import \
+from six.moves.tkinter import \
     StringVar
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showerror
 
 from qemu import \

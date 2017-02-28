@@ -6,7 +6,8 @@ from widgets import \
 from common import \
     mlget as _
 
-import Tkinter as tk
+from six.moves import \
+    tkinter as tk
 
 from qemu import \
     MOp_DelIOMapping, \

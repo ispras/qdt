@@ -13,12 +13,12 @@ from common import \
 from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six.moves.tkinter import \
     StringVar, \
     BooleanVar, \
     OptionMenu
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
 from qemu import \

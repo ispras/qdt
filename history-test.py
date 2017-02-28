@@ -14,7 +14,7 @@ from widgets import \
     HotKey, \
     HotKeyBinding
 
-from Tkinter import \
+from six.moves.tkinter import \
     CURRENT
 
 class DnDOperation(InverseOperation):

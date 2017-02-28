@@ -13,11 +13,11 @@ from .var_widgets import \
     VarCheckbutton, \
     VarLabel
 
-from Tkinter import \
+from six.moves.tkinter import \
     BooleanVar, \
     StringVar
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
 from .device_settings import \

@@ -13,7 +13,7 @@ from qemu import \
     PCIExpressDeviceDescription, \
     MachineNode
 
-from Tkinter import \
+from six.moves.tkinter import \
     NO, \
     PanedWindow
 
@@ -35,13 +35,13 @@ from .sysbusdev_description_settings import \
 from .pci_description_settings import \
     PCIEBusDeviceDescriptionSettingsWidget
 
-from tkFont import \
+from six.moves.tkinter_font import \
     Font
 
 from .gui_frame import \
     GUIFrame
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Scrollbar
 
 from .add_desc_dialog import \
@@ -54,7 +54,7 @@ from .gui_editing import \
 from .popup_helper import \
     TkPopupHelper
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showerror
 
 from .qdc_gui_signal_helper import \

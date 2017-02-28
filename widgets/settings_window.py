@@ -2,7 +2,7 @@ from .var_widgets import \
     VarButton, \
     VarToplevel
 
-from Tkinter import \
+from six.moves.tkinter import \
     Frame
 
 from common import \

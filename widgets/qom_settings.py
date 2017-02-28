@@ -1,7 +1,7 @@
 from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six.moves.tkinter import \
     BOTH, \
     StringVar
 

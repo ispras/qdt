@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-from Tkinter import \
+from six.moves.tkinter import \
     StringVar, \
     Tk
 
