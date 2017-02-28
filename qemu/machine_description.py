@@ -1,4 +1,4 @@
-import machine
+import qemu.machine
 
 from .qom_desc import \
     QOMDescription
@@ -791,6 +791,6 @@ class MachineNode(QOMDescription):
                 return i
 
     def gen_type(self):
-        return machine.MachineType(
+        return qemu.machine.MachineType(
             machine = self
             )
