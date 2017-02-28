@@ -190,7 +190,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.popup_tv_single = tvm
 
-        for desc_name, lys in self.p.layouts.iteritems():
+        for desc_name, lys in self.p.layouts.items():
             for l in lys.values():
                 if not l.shown:
                     continue
@@ -343,7 +343,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         if isinstance(op, POp_AddDesc):
             self.tv_descs.update()
 
-            for desc_name, lys in self.p.layouts.iteritems():
+            for desc_name, lys in self.p.layouts.items():
                 try:
                     next(self.p.find(name = desc_name))
                 except StopIteration:

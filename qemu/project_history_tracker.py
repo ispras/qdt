@@ -197,7 +197,7 @@ class MachineProxyTracker(object):
         the operation restores child settings. """
 
         add_child_args = get_default_args(parent.__class__.add_child)
-        for arg_name, arg_val in add_child_args.iteritems():
+        for arg_name, arg_val in add_child_args.items():
             if getattr(child, arg_name) != arg_val:
                 self.stage(MOp_SetMemNodeAttr, arg_name,
                     arg_val, child_id)

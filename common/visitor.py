@@ -157,7 +157,7 @@ type '%s is not implemented" % (attribute_name, type(attr).name)
 
     def __visit_dictionary_attribute__(self, attr, attribute_name):
         self.__push__(attr, attribute_name)
-        for k, e in attr.iteritems():
+        for k, e in attr.items():
             self.__push__(e, k)
             self.__visit_current__()
             self.__pop__()

@@ -505,7 +505,7 @@ class DeviceSettingsWidget(SettingsWidget):
     def refresh(self):
         self.qom_type_var.set(self.dev.qom_type)
 
-        for p, desc in self.prop2field.iteritems():
+        for p, desc in self.prop2field.items():
             desc.e_name.destroy()
             desc.om_type.destroy()
             desc.w_val.destroy()
@@ -612,7 +612,7 @@ class DeviceSettingsWidget(SettingsWidget):
         if not self.dev.qom_type == qom:
             self.mht.stage(MOp_SetDevQOMType, qom, self.dev.id)
 
-        for p, desc in self.prop2field.iteritems():
+        for p, desc in self.prop2field.items():
             cur_name, cur_type, cur_val = desc.get_current_name(), \
                 desc.get_current_type(), desc.get_current_val()
 

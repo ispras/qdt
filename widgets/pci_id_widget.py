@@ -24,7 +24,7 @@ kind2idx = {
 }
 
 idx2kind = {}
-for kind, idx in kind2idx.iteritems():
+for kind, idx in kind2idx.items():
     idx2kind[idx] = kind
 
 def get_db(idx):
@@ -82,7 +82,7 @@ class PCIIdWidget(GUIFrame):
 
     def find_idx(self, **kw):
         for idx, (name, desc) in enumerate(self.kind_db):
-            for key, value in kw.iteritems():
+            for key, value in kw.items():
                 if getattr(desc, key) == value:
                     return idx
         raise Exception("Incorrect find request: " + str(kw))

@@ -137,7 +137,7 @@ class CrossTest(CanvasDnD):
             self.crosses.append(id)
 
     def dnd_moved(self, event):
-        for dp, do in self.drag_points.iteritems():
+        for dp, do in self.drag_points.items():
             coords = self.canvas.coords(dp)[:2]
             do[0].SetPoint(
                 Vector(coords[0] + self.dp_w2, coords[1] + self.dp_w2),

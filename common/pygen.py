@@ -18,7 +18,7 @@ class PyGenerator(object):
         self.reset()
 
     def escape(self, val):
-        for k, v in self.escape_characters.iteritems():
+        for k, v in self.escape_characters.items():
             val = val.replace(k, v)
         return val
 
@@ -137,11 +137,11 @@ class PyGenerator(object):
             self.line("{")
             self.push_indent()
             if val:
-                k, v = list(val.iteritems())[0]
+                k, v = list(val.items())[0]
                 self.pprint(k)
                 self.write(": ")
                 self.pprint(v)
-                for k, v in list(val.iteritems())[1:]:
+                for k, v in list(val.items())[1:]:
                     self.line(",")
                     self.pprint(k)
                     self.write(": ")

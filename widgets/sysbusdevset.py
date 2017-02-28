@@ -123,7 +123,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
                 for row in xrange(row_count, mapping_count):
                     self.append_row_to_grid(fr, rows, mio)
 
-            for row, mapping in mappings.iteritems():
+            for row, mapping in mappings.items():
                 rows[row][2].set(
                     gen_mapping_string(mapping)
                 )
@@ -152,7 +152,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             rows = getattr(self, mio + "_rows")
             mappings = getattr(self.dev, mio + "_mappings")
 
-            for idx, mapping in mappings.iteritems():
+            for idx, mapping in mappings.items():
                 try:
                     row = rows[idx]
                 except IndexError:
