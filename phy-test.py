@@ -17,7 +17,7 @@ class CanvasPolygon(Polygon):
         i = iter(points)
         while True:
             try:
-                pts.append(Vector(i.next(), i.next()))
+                pts.append(Vector(next(i), next(i)))
             except StopIteration:
                 break
         points = pts

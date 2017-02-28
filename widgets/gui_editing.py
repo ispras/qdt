@@ -57,7 +57,7 @@ class GUIDescriptionOperation(GUIProjectOperation):
         self.desc_name = str(description.name)
 
     def find_desc(self):
-        return self.p.find(name = self.desc_name).next()
+        return next(self.p.find(name = self.desc_name))
 
 class POp_SetDescLayout(GUIDescriptionOperation):
     def __init__(self, new_layout, *args, **kw):

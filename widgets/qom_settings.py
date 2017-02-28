@@ -156,7 +156,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
  
         if isinstance(op, POp_AddDesc):
             try:
-                self.pht.p.find(name = self.desc.name).next()
+                next(self.pht.p.find(name = self.desc.name))
             except StopIteration:
                 # the operation removes current description
                 return

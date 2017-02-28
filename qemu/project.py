@@ -46,7 +46,7 @@ already in another project.")
         for i in count(0):
             cand = "description" + str(i)
             try:
-                self.find(name = cand).next()
+                next(self.find(name = cand))
             except StopIteration:
                 return cand
 

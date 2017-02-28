@@ -196,7 +196,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                     continue
 
                 if l.widget is None:
-                    desc = self.p.find(name = desc_name).next()
+                    desc = next(self.p.find(name = desc_name))
 
                     w = self.gen_widget(desc)
                     try:
@@ -267,7 +267,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def on_delete_description(self):
         item = self.tv_descs.selection()[0]
         name = self.tv_descs.item(item)["text"]
-        desc = self.p.find(name = name).next()
+        desc = next(self.p.find(name = name))
 
         # Layout refreshing is required because the layout of widget
         # representing description being deleted, must be saved too.
@@ -286,7 +286,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         descs_to_del = []
         for item in self.tv_descs.selection():
             name = self.tv_descs.item(item)["text"]
-            descs_to_del.append(self.p.find(name = name).next())
+            descs_to_del.append(next(self.p.find(name = name)))
 
         if descs_to_del:
             # Layout refreshing is required because the layout of widget
@@ -345,7 +345,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
             for desc_name, lys in self.p.layouts.iteritems():
                 try:
-                    self.p.find(name = desc_name).next()
+                    next(self.p.find(name = desc_name))
                 except StopIteration:
                     # removed
                     for l in lys.values():

@@ -189,7 +189,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __on_changed__(self, op, *args, **kw):
         if isinstance(op, POp_AddDesc):
             try:
-                self.pht.p.find(name = self.desc.name).next()
+                next(self.pht.p.find(name = self.desc.name))
             except StopIteration:
                 # the operation removes current description
                 return

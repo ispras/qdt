@@ -382,7 +382,7 @@ class Header(Source):
 
         try:
             while True:
-                gen.next()
+                next(gen)
         except StopIteration:
             pass
 

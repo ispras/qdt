@@ -284,7 +284,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         self.p.add_description(self.new())
 
     def __undo__(self):
-        desc = self.p.find(name = self.name).next()
+        desc = next(self.p.find(name = self.name))
 
         """ It is unexpected way to type independently check for the description
         is empty. """
@@ -319,7 +319,7 @@ class POp_DelDesc(POp_AddDesc):
         POp_AddDesc.__init__(self, "QOMDescription", desc_name, *args, **kw)
 
     def __backup__(self):
-        desc = self.p.find(name = self.name).next()
+        desc = next(self.p.find(name = self.name))
         self.set_with_origin(desc)
 
     __do__ = POp_AddDesc.__undo__
@@ -338,4 +338,4 @@ class DescriptionOperation(ProjectOperation):
         self.desc_name = str(description.name)
 
     def find_desc(self):
-        return self.p.find(name = self.desc_name).next()
+        return next(self.p.find(name = self.desc_name))

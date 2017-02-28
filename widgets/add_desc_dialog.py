@@ -97,7 +97,7 @@ string searching during each AddDescriptionDialog creation. """
             if self.pht is None:
                 # do not check unicity in demo mode
                 raise StopIteration()
-            self.pht.p.find(name = n).next()
+            next(self.pht.p.find(name = n))
         except StopIteration:
             # free name
             self.e_name.config(bg = "white")

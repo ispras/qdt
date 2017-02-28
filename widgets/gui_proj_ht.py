@@ -68,7 +68,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
             val = getattr(desc, attr)
             if (val is not None) and (not isinstance(val, PCIId)):
                 try:
-                    val = PCIId.db.find_vendors(id = val).next()
+                    val = next(PCIId.db.find_vendors(id = val))
                 except StopIteration:
                     # no vendor id with such value is registered
                     continue
@@ -88,21 +88,21 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
             if  (val is not None) and (not isinstance(val, PCIId)):
                 if vendor is None:
                     try:
-                        val = PCIId.db.find_devices(id = val).next()
+                        val = next(PCIId.db.find_devices(id = val))
                     except StopIteration:
                         # No device id with such value is registered
                         continue
                 else:
                     try:
-                        val = PCIId.db.find_devices(
+                        val = next(PCIId.db.find_devices(
                             id = val,
                             vendor = vendor
-                        ).next()
+                        ))
                     except StopIteration:
                         # no device id with such value is registered for the
                         # vendor
                         try:
-                            val = PCIId.db.find_devices(id = val).next()
+                            val = next(PCIId.db.find_devices(id = val))
                         except StopIteration:
                             # No device id with such value is registered
                             continue
@@ -116,7 +116,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
                 val = PCIId.db.get_class(name = val)
             except:
                 try:
-                    val = PCIId.db.find_classes(id = val).next()
+                    val = next(PCIId.db.find_classes(id = val))
                 except StopIteration:
                     # no class id with such value is registered
                     return
