@@ -17,6 +17,7 @@ from six import \
     itervalues
 
 from six.moves import \
+    zip, \
     range as xrange
 
 from six.moves.tkinter import \
@@ -48,7 +49,6 @@ from qemu import \
     qvd_get_registered
 
 from itertools import \
-    izip, \
     count
 
 from .settings_window import \
@@ -676,7 +676,7 @@ class DeviceSettingsWidget(SettingsWidget):
                 # step 2 should be done in increasing index order
                 step2.insert(0, (i, new_bus))
 
-        adding = [ x for x in izip(count(len(self.dev.buses)), new_buses) ]
+        adding = [ x for x in zip(count(len(self.dev.buses)), new_buses) ]
 
         for i, new_bus in step2 + adding:
             # add i-th bus

@@ -1,5 +1,5 @@
-from itertools import \
-    izip
+from six.moves import \
+    zip
 
 from .ml import \
     mlget as _
@@ -11,7 +11,7 @@ def set_touches_entry(X, e):
     for x in X:
         if isinstance(x, tuple):
             if isinstance(e, tuple):
-                for ee, xx in izip(e, x):
+                for ee, xx in zip(e, x):
                     if not ee == xx:
                         break
                 else:
