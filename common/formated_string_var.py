@@ -75,7 +75,7 @@ if __name__ == "__main__":
     res = fmt % text
 
     def on_w(*args):
-        print res.get()
+        print(res.get())
 
     res.trace_variable("w", on_w)
 

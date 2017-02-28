@@ -347,14 +347,14 @@ class QemuVersionDescription(object):
             raise Exception("%s: %s" % (src_path, status))
 
         if "Changes to be committed" in status:
-            print "WARNING! " + \
-                  src_path + " has changes that need to be committed."
+            print("WARNING! " + \
+                  src_path + " has changes that need to be committed.")
 
         if "Changes not staged for commit" in status:
-            print "WARNING! " + src_path + ": changes not staged for commit."
+            print("WARNING! " + src_path + ": changes not staged for commit.")
 
         if "Untracked files" in status:
-            print "WARNING! " + src_path + " has untracked files."
+            print("WARNING! " + src_path + " has untracked files.")
 
     @staticmethod
     def compare_by_sha(sha):

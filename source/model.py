@@ -270,8 +270,9 @@ class Header(Source):
         try:
             m = Type.lookup(macro.name)
             if not m.definer.path == definer:
-                print "Info: multiple definitions of macro %s in %s and %s"\
+                print("Info: multiple definitions of macro %s in %s and %s"\
                      % (macro.name, m.definer.path, definer)
+                )
         except:
             m = Macro(
                 name = macro.name,
@@ -357,7 +358,7 @@ class Header(Source):
 
         sys.stdout = ppf.out
 
-        print """Header inclusions build statistic:
+        print("""Header inclusions build statistic:
     Yields total: %d
     Max yields per header: %d
     Min yields per header: %d
@@ -367,6 +368,7 @@ class Header(Source):
     max(Header.yields_per_header),
     min(Header.yields_per_header),
     sum(Header.yields_per_header) / float(len(Header.yields_per_header))
+)
         )
 
         del Header.yields_per_header

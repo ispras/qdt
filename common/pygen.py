@@ -71,7 +71,7 @@ class PyGenerator(object):
             try: 
                 o.__gen_code__(self)
             except Exception, e:
-                print e
+                print(e)
                 self.line("None")
             self.line()
 
