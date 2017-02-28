@@ -13,6 +13,9 @@ from common import \
 from .gui_frame import \
     GUIFrame
 
+from six import \
+    itervalues
+
 from six.moves import \
     range as xrange
 
@@ -476,7 +479,7 @@ class DeviceSettingsWidget(SettingsWidget):
         if current:
             current = DeviceSettingsWidget.prop_type_name_map[current][0]
         else:
-            DeviceSettingsWidget.prop_type_name_map.values()[0]
+            current = next(itervalues(DeviceSettingsWidget.prop_type_name_map))
 
         var.set(current)
 
