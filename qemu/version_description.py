@@ -164,6 +164,12 @@ class MultipleQVCInitialization(Exception):
     def __init__(self, path):
         Exception.__init__(self, path)
 
+class QVCWasNotInitialized(Exception):
+    pass
+
+class QVCIsNotReady(Exception):
+    pass
+
 class QemuVersionDescription(object):
     current = None
 
@@ -207,6 +213,7 @@ class QemuVersionDescription(object):
         self.include_path = join(self.src_path, 'include')
 
         self.qvc = None
+        self.qvc_is_ready = False
 
     # The method made the description active
     def use(self):
@@ -221,6 +228,16 @@ class QemuVersionDescription(object):
     def init_cache(self):
         for junk in self.co_init_cache():
             pass
+
+    def forget_cache(self):
+        if self.qvc is None:
+            raise QVCWasNotInitialized()
+        if not self.qvc_is_ready:
+            raise QVCIsNotReady(
+                "Attempt to forget QVC which is not ready yet."
+            )
+        self.qvc = None
+        self.qvc_is_ready = False
 
     def co_init_cache(self):
         if not self.qvc == None:
@@ -277,6 +294,8 @@ class QemuVersionDescription(object):
 
         if prev_qvc is not None:
             prev_qvc.use()
+
+        self.qvc_is_ready = True
 
     def load_cache(self, qvc_path):
         if not  isfile(qvc_path):

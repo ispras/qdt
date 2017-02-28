@@ -7,8 +7,10 @@ from source import \
     add_base_types
 
 from version_description import \
+    QVCWasNotInitialized, \
     BadBuildPath, \
     MultipleQVCInitialization, \
+    QVCIsNotReady, \
     QemuVersionDescription, \
     qvd_create, \
     qvd_get, \
