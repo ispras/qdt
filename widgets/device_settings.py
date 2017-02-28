@@ -163,7 +163,7 @@ class PropLineDesc(object):
             ret = self.v_val.get()
         elif prop_type == QOMPropertyTypeInteger:
             long_text = self.v_val.get()
-            ret = long(long_text, base = 0)
+            ret = int(long_text, base = 0)
         elif prop_type == QOMPropertyTypeString:
             ret = str(self.v_val.get())
         else:

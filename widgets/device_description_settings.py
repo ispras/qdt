@@ -130,7 +130,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             if val_type is int:
                 try:
-                    new_val = long(new_val, 0)
+                    new_val = int(new_val, 0)
                 except:
                     
                     w.config(bg = "red")

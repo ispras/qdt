@@ -134,7 +134,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
             new_val = v.get()
             try:
-                new_val = long(new_val, base = 0)
+                new_val = int(new_val, base = 0)
             except ValueError:
                 e.config(bg = "red")
             else:

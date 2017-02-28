@@ -33,7 +33,7 @@ def parse_mapping_string(mapping):
     if not mapping:
         return None
     try:
-        val = long(mapping, base = 0)
+        val = int(mapping, base = 0)
     except ValueError:
         val = str(mapping)
     return val
