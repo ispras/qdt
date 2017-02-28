@@ -160,7 +160,11 @@ switching to that mode.
         chunks = []
 
         # fix up types for headers with references
-        l = self.types.values()
+        # list of types must be copied because it is changed during each
+        # loop iteration. values() returns generator in Python 3.x, which
+        # must be explicitly enrolled to a list. Though is it redundant
+        # copy operation in Pyhton 2.x.
+        l = list(self.types.values())
 
         while True:
             for t in l:
@@ -190,7 +194,8 @@ switching to that mode.
 
             if l == self.types.values():
                 break
-            l = self.types.values()
+            # Preserve current types list. See the comment above.
+            l = list(self.types.values())
 
         for t in self.types.values():
             if isinstance(t, TypeReference) or t.definer == self:
