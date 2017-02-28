@@ -88,7 +88,8 @@ exists." % (l.lid, l.desc_name)
             lys = self.layouts[desc_name]
         except KeyError:
             return []
-        return lys.values()
+        # explicit list conversion is used for Python 3.x compatibility
+        return list(lys.values())
 
     def get_machine_descriptions(self):
         return [ d for d in self.descriptions if isinstance(d, MachineNode) ]
