@@ -32,7 +32,7 @@ from qemu import \
     account_build_path, \
     QemuVersionDescription
 
-from cPickle import \
+from six.moves.cPickle import \
     load as load_cPickled
 
 from os import \
