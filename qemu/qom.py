@@ -12,6 +12,9 @@ from source import \
 from os.path import \
     join
 
+from six import \
+    integer_types
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -121,7 +124,7 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
             else:
                 val = "false"
                 used_types.add(bool_false)
-        elif isinstance(val, int) or isinstance(val, long):
+        elif isinstance(val, integer_types):
             if field.type.name[0] == "u":
                 val = "0x%X" % val
             else:

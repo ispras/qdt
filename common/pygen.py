@@ -1,6 +1,9 @@
 from common import \
     topology
 
+from six import \
+    integer_types
+
 """
 PyGenerator provides an interface for saving an object to the file.
 The file is to be a python script such that execution of the file will
@@ -78,7 +81,7 @@ class PyGenerator(object):
     def gen_const(self, c):
         if isinstance(c, bool):
             return "True" if c else "False"
-        elif isinstance(c, int) or isinstance(c, long):
+        elif isinstance(c, integer_types):
             if c <= 0:
                 return "%d" % c
             else:

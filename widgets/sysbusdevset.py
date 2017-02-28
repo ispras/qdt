@@ -6,6 +6,9 @@ from widgets import \
 from common import \
     mlget as _
 
+from six import \
+    integer_types
+
 from six.moves import \
     range as xrange, \
     tkinter as tk
@@ -21,7 +24,7 @@ from .hotkey import \
 def gen_mapping_string(mapping):
     if mapping is None:
         return ""
-    elif isinstance(mapping, int) or isinstance(mapping, long):
+    elif isinstance(mapping, integer_types):
         return "0x%0x" % mapping
     else:
         return str(mapping)

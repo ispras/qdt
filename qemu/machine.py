@@ -34,6 +34,9 @@ from os.path import \
 from .version import \
     get_vp
 
+from six import \
+    integer_types
+
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
         Exception.__init__(self, t)
@@ -173,8 +176,7 @@ class MachineType(QOMType):
             self.use_type_name("bool")
             return "true" if prop.prop_val else "false"
         elif prop.prop_type == QOMPropertyTypeInteger:
-            if not (   isinstance(prop.prop_val, long) 
-                    or isinstance(prop.prop_val, int)):
+            if not isinstance(prop.prop_val, integer_types):
                 raise IncorrectPropertyValue()
 
             return "0x%x" % prop.prop_val
