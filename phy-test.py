@@ -30,7 +30,7 @@ class CanvasPolygon(Polygon):
         )
 
     def update(self):
-        apply(self.c.coords, [self.p] + self.GenCoords())
+        self.c.coords(*([self.p] + self.GenCoords()))
 
 class CanvasSegment(Segment):
     def __init__(self, canvas, begin = None, direction = None, **kwargs):
@@ -42,8 +42,8 @@ class CanvasSegment(Segment):
         )
 
     def update(self):
-        apply(self.c.coords, [self.l] + \
-            [self.x, self.y, self.x + self.d.x, self.y + self.d.y]
+        self.c.coords(*([self.l] + \
+            [self.x, self.y, self.x + self.d.x, self.y + self.d.y])
         )
 
 class CrossTest(CanvasDnD):

@@ -1503,7 +1503,7 @@ IRQ line creation
         self.last_canvas_mouse = x, y
 
         if self.select_point:
-            apply(self.canvas.coords, [
+            self.canvas.coords(*[
                 self.select_frame,
                 self.select_point[0], self.select_point[1],
                 x, y
@@ -1808,7 +1808,7 @@ IRQ line creation
 
         for idx, sid in enumerate(self.selected):
             bbox = self.canvas.bbox(sid)
-            apply(self.canvas.coords, [
+            self.canvas.coords(*[
                 self.selection_marks[idx],
                 bbox[0] - 1, bbox[1] - 1,
                 bbox[2] + 1, bbox[3] + 1
@@ -1903,7 +1903,7 @@ IRQ line creation
                     h.x + 2 * h.r, h.y + 2 * h.r
                 ]
 
-                apply(self.canvas.coords, [self.shown_irq_circle] + points)
+                self.canvas.coords(*([self.shown_irq_circle] + points))
 
         self.process_irq_circles()
 
@@ -2224,7 +2224,7 @@ IRQ line creation
             c.x + c.width, c.y
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
 
     def ph_apply_buslabel(self, bl):
         id = self.node2id[bl]
@@ -2235,7 +2235,7 @@ IRQ line creation
             bl.x, bl.y + (1 + bl.cap_size) * (bl.text_height + bl.padding),
             bl.x, bl.y + bl.cap_size * (bl.text_height + bl.padding)]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
         self.apply_node(bl)
 
     def ph_apply_bus(self, b):
@@ -2245,7 +2245,7 @@ IRQ line creation
             b.x, b.y + b.height
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
 
     def ph_move(self, n):
         if abs(n.vx) > self.velicity_limit:
@@ -2258,7 +2258,7 @@ IRQ line creation
 
     def apply_node(self, n):
         p = [n.x + n.width / 2, n.y + n.height / 2]
-        apply(self.canvas.coords, [n.text] + p)
+        self.canvas.coords(*([n.text] + p))
 
     def ph_apply_node(self, n):
         id = self.node2id[n]
@@ -2267,7 +2267,7 @@ IRQ line creation
             n.x + n.width, n.y + n.height
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
         self.apply_node(n)
 
     def ph_apply_hub(self, h):
@@ -2277,7 +2277,7 @@ IRQ line creation
             h.x + 2 * h.r, h.y + 2 * h.r
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
 
     def irq_line_add_circle(self, l, idx, x, y):
         c = IRQPathCircle(l)
@@ -2375,7 +2375,7 @@ IRQ line creation
 
                         changed = True
 
-            apply(self.canvas.coords, [seg] + [x0, y0, x1, y1])
+            self.canvas.coords(*([seg] + [x0, y0, x1, y1]))
 
         # update arrow
         # direction
@@ -2400,7 +2400,7 @@ IRQ line creation
             x1 - dx + ox, y1 - dy + oy,
             x1 - dx - ox, y1 - dy - oy, 
         ]
-        apply(self.canvas.coords, arrow_coords)
+        self.canvas.coords(*arrow_coords)
 
     def ph_launch(self):
         self.var_physical_layout.set(True)

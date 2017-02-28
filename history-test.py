@@ -43,7 +43,7 @@ class DnDOperation(InverseOperation):
             offset = p - anchor[idx % 2]
             points[idx] = offset + pos[idx % 2]
 
-        apply(self.cnv.canvas.coords, [self.id] + points)
+        self.cnv.canvas.coords(*([self.id] + points))
 
     def __do__(self):
         self.apply(self.target_pos)

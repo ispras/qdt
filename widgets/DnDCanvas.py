@@ -83,7 +83,7 @@ class CanvasDnD(GUIFrame):
     
         #print points
 
-        apply(event.widget.coords, [self.dnd_dragged] + points)
+        event.widget.coords(*([self.dnd_dragged] + points))
 
         self.event_generate('<<DnDMoved>>')
 
