@@ -70,7 +70,7 @@ class PyGenerator(object):
             self.write(self.nameof(o) + " = ")
             try: 
                 o.__gen_code__(self)
-            except Exception, e:
+            except Exception as e:
                 print(e)
                 self.line("None")
             self.line()

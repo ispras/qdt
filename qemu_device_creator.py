@@ -53,7 +53,7 @@ Use @file to read arguments from 'file' (one per line)
 
     try:
         qvd = qvd_load_with_cache(arguments.qemu_build)
-    except Exception, e:
+    except Exception as e:
         print("QVD load filed: " + str(e) + "\n")
         return -1
 

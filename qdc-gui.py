@@ -595,7 +595,7 @@ def main():
 
     try:
         root.load_project_from_file("project.py")
-    except Exception, e:
+    except Exception as e:
         print("Project load filed: " + str(e) + "\n")
 
         project = GUIProject()
@@ -611,7 +611,7 @@ def main():
             else:
                 raise Exception(
                     "No MachineNode instance was found in serialize-test.py")
-        except Exception, e:
+        except Exception as e:
             print("Machine load failed: " + str(e) + "\n")
             mach = Q35MachineNode_2_6_0()
 
@@ -619,7 +619,7 @@ def main():
 
         try:
             layout = load_cPickled(open("layout.p", "rb"))
-        except Exception, e:
+        except Exception as e:
             print("Layout load filed: " + str(e) + "\n")
         else:
             project.layouts.append((mach.name, layout))
