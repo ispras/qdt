@@ -4,6 +4,7 @@ from source import \
     Macro
 
 from common import \
+    execfile, \
     PyGenerator
 
 from json import \

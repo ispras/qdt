@@ -39,6 +39,7 @@ from os import \
     remove
 
 from common import \
+    execfile, \
     CoSignal, \
     CoTask, \
     PyGenerator, \
