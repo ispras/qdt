@@ -53,3 +53,6 @@ from .co_signal import \
     SignalIsNotAttached, \
     SignalDispatcherTask, \
     CoSignal
+
+from .compat import \
+    execfile
