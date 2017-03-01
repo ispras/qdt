@@ -881,6 +881,11 @@ class TypeFixerVisitor(ObjectVisitor):
         ObjectVisitor.__init__(self, type_object, *args, **kw)
 
         self.source = source
+        self.replaced = False
+
+    def replace(self, new_value):
+        self.replaced = True
+        ObjectVisitor.replace(self, new_value)
 
     def on_visit(self):
         if isinstance(self.cur, Type):
