@@ -7,6 +7,12 @@ from common import \
 from inspect import \
     getmro
 
+from six import \
+    binary_type, \
+    string_types, \
+    text_type, \
+    integer_types
+
 from importlib import \
     import_module
 
@@ -31,6 +37,12 @@ class ProjectOperation(InverseOperation):
 
 def none_import_hepler(val, helper):
     return None
+
+basic_types = [
+    text_type,
+    binary_type,
+    bool
+] + list(integer_types) + list(string_types)
 
 def basic_import_helper(val, helper):
     return type(val)(val)
@@ -90,14 +102,8 @@ slot of the tuple) is not restricted.
     value_import_helpers = {
         type(None): none_import_hepler
     }
-    for base_type in [
-        bool,
-        int,
-        long,
-        str,
-        unicode
-    ]:
-        value_import_helpers[base_type] = basic_import_helper
+    for basic_type in basic_types:
+        value_import_helpers[basic_type] = basic_import_helper
 
     def __init__(self, class_name, kw, arg_name_prefix = ""):
         self.nc = class_name
