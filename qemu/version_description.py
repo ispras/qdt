@@ -28,6 +28,9 @@ from .pci_ids import \
     PCIId, \
     PCIClassification
 
+from git import \
+    Repo
+
 bp_file_name = "build_path_list"
 
 qvd_reg = {}
@@ -198,9 +201,8 @@ class QemuVersionDescription(object):
         )
 
         # Get SHA
-        self.commit_sha = QemuVersionDescription.get_head_commit_sha(
-            self.src_path
-        )
+        self.repo = Repo(self.src_path)
+        self.commit_sha = self.repo.head.commit.hexsha
 
         VERSION_path = join(self.src_path, 'VERSION')
 
@@ -265,12 +267,8 @@ class QemuVersionDescription(object):
 
             yield True
 
-            self.qvc.device_tree = QemuVersionDescription.gen_device_tree(
-                self.build_path,
-                self.qvc.stc
-            )
-
-            yield True
+            for ret in self.co_gen_device_tree():
+                yield ret
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -329,18 +327,9 @@ class QemuVersionDescription(object):
 "No QemuVersionCache was loaded from %s." % qvc_path
                 )
 
-    @staticmethod
-    def get_head_commit_sha(src_path):
-        cmd = ['git', '-C', src_path, 'rev-parse', 'HEAD']
-        sha = check_output(cmd, stderr = STDOUT)
 
-        sha = sha.rstrip()
 
-        # Error when get SHA
-        if not (sha.islower() and sha.isalnum() and len(sha) == 40):
-            raise Exception('Geg SHA: "{}".'.format(sha))
 
-        return sha
 
     @staticmethod
     def check_uncommit_change(src_path):
@@ -366,11 +355,6 @@ use another way to check this.
         """
 
     @staticmethod
-    def compare_by_sha(sha):
-        # git rev-list --count SHA
-        pass
-
-    @staticmethod
     def ch_lookup(config_host, parameter):
         indx_begin = config_host.find(parameter)
         if indx_begin == -1:
@@ -387,25 +371,28 @@ use another way to check this.
             return None
 
     # TODO: get dt from qemu
-    @staticmethod
-    def gen_device_tree(build_path, stc):
-        dt_db_fname = build_path + "/dt.json"
-        if  isfile(dt_db_fname):
-            print("Loading Device Tree from " + dt_db_fname)
-            dt_db_reader = open(dt_db_fname, "rb")
-            device_tree = load(dt_db_reader)
-            dt_db_reader.close()
-            print("Adding macros to " + dt_db_fname)
-            QemuVersionDescription.add_dt_macro(device_tree, stc)
-            return device_tree
-        else:
-            return None
 
-    @staticmethod
-    def add_dt_macro(list_dt, stc):
+    def co_gen_device_tree(self):
+        dt_db_fname = join(self.build_path, "dt.json")
+        if  isfile(dt_db_fname):
+            print("Loading Device Tree from " + dt_db_fname + "...")
+            dt_db_reader = open(dt_db_fname, "rb")
+            self.qvc.device_tree = load(dt_db_reader)
+            dt_db_reader.close()
+            print("Device Tree was loaded from " + dt_db_fname)
+            yield True
+
+            print("Adding macros to device tree ...")
+            for ret in self.co_add_dt_macro(self.qvc.device_tree):
+                yield True
+            print("Macros were added to device tree")
+        else:
+            self.qvc.device_tree = None
+
+    def co_add_dt_macro(self, list_dt):
         for dict_dt in list_dt:
             dt_type = dict_dt["type"]
-            for h in stc.reg_header.values():
+            for h in self.qvc.stc.reg_header.values():
                 for t in h.types.values():
                     if isinstance(t, Macro):
                         if t.text == '"' + dt_type + '"':
@@ -417,7 +404,7 @@ use another way to check this.
             if "property" in dict_dt:
                 for dt_property in dict_dt["property"]:
                     dt_property_name = dt_property["name"]
-                    for h in stc.reg_header.values():
+                    for h in self.qvc.stc.reg_header.values():
                         for t in h.types.values():
                             if isinstance(t, Macro):
                                 if t.text == '"' + dt_property_name + '"':
@@ -427,4 +414,6 @@ use another way to check this.
                                     else:
                                         dt_property["macro"] = [t.name]
             if "children" in dict_dt:
-                QemuVersionDescription.add_dt_macro(dict_dt["children"], stc)
+                yield True
+                for ret in self.co_add_dt_macro(dict_dt["children"]):
+                    yield True
