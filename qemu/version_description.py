@@ -204,7 +204,10 @@ class QemuVersionDescription(object):
 
         print("Qemu version is {}".format(self.qemu_version))
 
-        self.include_path = join(self.src_path, 'include')
+        self.include_paths = [
+            join(self.src_path, 'include'),
+            join(self.src_path, 'tcg')
+        ]
 
         self.qvc = None
 
@@ -234,8 +237,9 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
-            for ret in Header.co_build_inclusions(self.include_path):
-                yield ret
+            for path in self.include_paths:
+                for ret in Header.co_build_inclusions(path):
+                    yield ret
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
