@@ -37,18 +37,21 @@ class PyGenerator(object):
 
     def line(self, suffix = ""):
         if self.new_line:
-            self.w.write(self.current_indent)
+            self.write_enc(self.current_indent)
         else:
             self.new_line = True
 
-        self.w.write(suffix + "\n")
+        self.write_enc(suffix + "\n")
 
     def write(self, string = ""):
         if self.new_line:
-            self.w.write(self.current_indent)
+            self.write_enc(self.current_indent)
             self.new_line = False
 
-        self.w.write(string)
+        self.write_enc(string)
+
+    def write_enc(self, string):
+        self.w.write(string.encode("utf-8"))
 
     def push_indent(self):
         self.current_indent = self.current_indent + self.indent
@@ -74,7 +77,7 @@ class PyGenerator(object):
         objects = topology.sort_topologically([root])
 
         for o in objects:
-            self.write(self.nameof(o) + " = ")
+            self.write_enc(self.nameof(o) + " = ")
             try: 
                 o.__gen_code__(self)
             except Exception as e:
@@ -102,17 +105,17 @@ class PyGenerator(object):
 
     def reset_gen_common(self, prefix):
         self.first_field = True
-        self.write(prefix)
+        self.write_enc(prefix)
 
     def gen_field(self, string):
         if self.first_field:
             self.line()
             self.push_indent()
-            self.write(string)
+            self.write_enc(string)
             self.first_field = False
         else:
             self.line(",")
-            self.write(string)
+            self.write_enc(string)
 
     def gen_end(self, suffix = ")"):
         if not self.first_field:
@@ -125,7 +128,7 @@ class PyGenerator(object):
     def pprint(self, val):
         if isinstance(val, list):
             if not val:
-                self.write("[]")
+                self.write_enc("[]")
                 return
             self.line("[")
             self.push_indent()
@@ -136,29 +139,29 @@ class PyGenerator(object):
                     self.pprint(v)
             self.pop_indent()
             self.line()
-            self.write("]")
+            self.write_enc("]")
         elif isinstance(val, dict):
             if not val:
-                self.write("{}")
+                self.write_enc("{}")
                 return
             self.line("{")
             self.push_indent()
             if val:
                 k, v = list(val.items())[0]
                 self.pprint(k)
-                self.write(": ")
+                self.write_enc(": ")
                 self.pprint(v)
                 for k, v in list(val.items())[1:]:
                     self.line(",")
                     self.pprint(k)
-                    self.write(": ")
+                    self.write_enc(": ")
                     self.pprint(v)
             self.pop_indent()
             self.line()
-            self.write("}")
+            self.write_enc("}")
         elif isinstance(val, tuple):
             if not val:
-                self.write("()")
+                self.write_enc("()")
                 return
             self.line("(")
             self.push_indent()
@@ -172,16 +175,16 @@ class PyGenerator(object):
                     self.line(",")
             self.pop_indent()
             self.line()
-            self.write(")")
+            self.write_enc(")")
         elif type(val) in str_able_types:
-            self.write(str(val))
+            self.write_enc(str(val))
         elif PY2 and isinstance(val, str):
             val = self.escape(val)
-            self.write("'" + val + "'")
+            self.write_enc("'" + val + "'")
         elif isinstance(val, text_type):
             val = self.escape(val)
-            self.write("u'" + val + "'")
+            self.write_enc("u'" + val + "'")
         elif val is None:
-            self.write("None")
+            self.write_enc("None")
         else:
-            self.write(self.obj2name[val])
+            self.write_enc(self.obj2name[val])
