@@ -11,6 +11,8 @@ from json import \
     load
 
 from subprocess import \
+    Popen, \
+    PIPE, \
     check_output, \
     STDOUT
 
@@ -343,9 +345,10 @@ class QemuVersionDescription(object):
     @staticmethod
     def check_uncommit_change(src_path):
         cmd = ['git', '-C', src_path, 'status']
-        status = check_output(cmd, stderr = STDOUT)
-        if "fatal" in status:
-            raise Exception("%s: %s" % (src_path, status))
+        p = Popen(cmd, stderr = PIPE, stdout = PIPE)
+        p.wait()
+        if p.returncode:
+            raise Exception("`git status` failed with code %d" % p.returncode)
 
         """ TODO: either set up corresponding locale settings before command or
 use another way to check this.
