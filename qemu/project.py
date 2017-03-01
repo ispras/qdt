@@ -19,6 +19,9 @@ from common import \
 from .makefile_patching import \
     patch_makefile
 
+from codecs import \
+    open
+
 class QProject(object):
     def __init__(self,
         descriptions = None
@@ -103,7 +106,7 @@ already in another project.")
         if isfile(full_source_path):
             remove(full_source_path)
     
-        source_writer = open(full_source_path, "wb")
+        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
         source = dev_t.generate_source()
         source.generate(source_writer)
         source_writer.close()
@@ -115,7 +118,10 @@ already in another project.")
             if isfile(full_header_path):
                 remove(full_header_path)
     
-            header_writer = open(full_header_path, "wb")
+            header_writer = open(full_header_path,
+                mode = "wb",
+                encoding = "utf-8"
+            )
             header = dev_t.generate_header()
             header.generate(header_writer)
             header_writer.close()
