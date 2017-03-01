@@ -347,6 +347,10 @@ class QemuVersionDescription(object):
         if "fatal" in status:
             raise Exception("%s: %s" % (src_path, status))
 
+        """ TODO: either set up corresponding locale settings before command or
+use another way to check this.
+        """
+        """
         if "Changes to be committed" in status:
             print("WARNING! " + \
                   src_path + " has changes that need to be committed.")
@@ -356,6 +360,7 @@ class QemuVersionDescription(object):
 
         if "Untracked files" in status:
             print("WARNING! " + src_path + " has untracked files.")
+        """
 
     @staticmethod
     def compare_by_sha(sha):
