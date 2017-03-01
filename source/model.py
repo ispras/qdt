@@ -186,13 +186,18 @@ switching to that mode.
                 else:
                     t.definer_references = set(t.type.definer.references)
 
+            replaced = False
             for t in l:
                 if not isinstance(t, TypeReference):
                     continue
     
-                TypeFixerVisitor(self, t).visit()
+                tfv = TypeFixerVisitor(self, t)
+                tfv.visit()
 
-            if l == self.types.values():
+                if tfv.replaced:
+                    replaced = True
+
+            if not replaced:
                 break
             # Preserve current types list. See the comment above.
             l = list(self.types.values())
