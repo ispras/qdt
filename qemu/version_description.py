@@ -324,10 +324,10 @@ class QemuVersionDescription(object):
                 if isinstance(v, QemuVersionCache):
                     self.qvc = v
                     break
-                else:
-                    raise Exception(
+            else:
+                raise Exception(
 "No QemuVersionCache was loaded from %s." % qvc_path
-                    )
+                )
 
     @staticmethod
     def get_head_commit_sha(src_path):
