@@ -2,7 +2,11 @@ from common import \
     topology
 
 from six import \
+    PY2, \
+    text_type, \
     integer_types
+
+str_able_types = [bool, float] + list(integer_types)
 
 """
 PyGenerator provides an interface for saving an object to the file.
@@ -169,12 +173,12 @@ class PyGenerator(object):
             self.pop_indent()
             self.line()
             self.write(")")
-        elif type(val) in [ int, long, bool, float ]:
+        elif type(val) in str_able_types:
             self.write(str(val))
-        elif isinstance(val, str):
+        elif PY2 and isinstance(val, str):
             val = self.escape(val)
             self.write("'" + val + "'")
-        elif isinstance(val, unicode):
+        elif isinstance(val, text_type):
             val = self.escape(val)
             self.write("u'" + val + "'")
         elif val is None:
