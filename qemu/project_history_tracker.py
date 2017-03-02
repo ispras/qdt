@@ -2,7 +2,7 @@ from common import \
     get_default_args, \
     HistoryTracker
 
-from machine_editing import \
+from .machine_editing import \
     MOp_SetMemNodeAttr, \
     MOp_RemoveMemChild, \
     MOp_DelMemoryNode, \
@@ -18,7 +18,7 @@ from machine_editing import \
     MOp_DelIRQLine, \
     MOp_DelIRQHub
 
-from machine_description import \
+from .machine_description import \
     MemoryAliasNode, \
     MachineNode, \
     DeviceNode, \
@@ -29,7 +29,7 @@ from machine_description import \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
 
-from project_editing import \
+from .project_editing import \
     POp_DelDesc
 
 from common import \
@@ -197,7 +197,7 @@ class MachineProxyTracker(object):
         the operation restores child settings. """
 
         add_child_args = get_default_args(parent.__class__.add_child)
-        for arg_name, arg_val in add_child_args.iteritems():
+        for arg_name, arg_val in add_child_args.items():
             if getattr(child, arg_name) != arg_val:
                 self.stage(MOp_SetMemNodeAttr, arg_name,
                     arg_val, child_id)

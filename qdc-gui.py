@@ -32,23 +32,24 @@ from qemu import \
     account_build_path, \
     QemuVersionDescription
 
-from cPickle import \
+from six.moves.cPickle import \
     load as load_cPickled
 
 from os import \
     remove
 
 from common import \
+    execfile, \
     CoSignal, \
     CoTask, \
     PyGenerator, \
     mlget as _
 
-from Tkinter import \
+from six.moves.tkinter import \
     BooleanVar, \
     StringVar
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showinfo, \
     askyesno, \
     showerror
@@ -595,8 +596,8 @@ def main():
 
     try:
         root.load_project_from_file("project.py")
-    except Exception, e:
-        print "Project load filed: " + str(e) + "\n"
+    except Exception as e:
+        print("Project load filed: " + str(e) + "\n")
 
         project = GUIProject()
 
@@ -611,16 +612,16 @@ def main():
             else:
                 raise Exception(
                     "No MachineNode instance was found in serialize-test.py")
-        except Exception, e:
-            print "Machine load failed: " + str(e) + "\n"
+        except Exception as e:
+            print("Machine load failed: " + str(e) + "\n")
             mach = Q35MachineNode_2_6_0()
 
         project.add_description(mach)
 
         try:
             layout = load_cPickled(open("layout.p", "rb"))
-        except Exception, e:
-            print "Layout load filed: " + str(e) + "\n"
+        except Exception as e:
+            print("Layout load filed: " + str(e) + "\n")
         else:
             project.layouts.append((mach.name, layout))
 

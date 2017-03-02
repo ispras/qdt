@@ -1,14 +1,14 @@
-from var_widgets import \
+from .var_widgets import \
     VarButton, \
     VarToplevel
 
-from Tkinter import \
+from six.moves.tkinter import \
     Frame
 
 from common import \
     mlget as _
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
 class SettingsWidget(GUIFrame):

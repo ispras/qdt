@@ -1,7 +1,7 @@
-from tv_width_helper import \
+from .tv_width_helper import \
     TreeviewWidthHelper
 
-from var_widgets import \
+from .var_widgets import \
     VarTreeview
 
 from common import \
@@ -117,7 +117,7 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
                 seq_iid = self.gen_seq_iid(op_seq)
 
                 try:
-                    ex_seq_iid = existing_seq_iids_iter.next()
+                    ex_seq_iid = next(existing_seq_iids_iter)
                 except StopIteration:
                     existing_seq_iids_iter = None
                     break

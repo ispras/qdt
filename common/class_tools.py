@@ -1,7 +1,7 @@
 from importlib import \
     import_module
 
-from reflection import \
+from .reflection import \
     get_default_args
 
 def get_class(full_class_name):

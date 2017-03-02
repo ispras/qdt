@@ -1,4 +1,4 @@
-from device_description_settings import \
+from .device_description_settings import \
     DeviceDescriptionSettingsWidget
 
 from qemu import \
@@ -14,10 +14,10 @@ class PCIEBusDeviceDescriptionSettingsWidget(DeviceDescriptionSettingsWidget):
                 ("vendor", _("Vendor"), PCIId),
                 ("device", _("Device"), PCIId),
                 ("pci_class", _("Class"), PCIId),
-                ("irq_num", _("IRQ pin quantity"), long),
-                ("mem_bar_num", _("BAR quantity"), long),
-                ("msi_messages_num", _("MSI message quantity"), long),
-                ("revision", _("Revision"), long),
+                ("irq_num", _("IRQ pin quantity"), int),
+                ("mem_bar_num", _("BAR quantity"), int),
+                ("msi_messages_num", _("MSI message quantity"), int),
+                ("revision", _("Revision"), int),
                 ("subsys_vendor", _("Subsystem vendor"), PCIId),
                 ("subsys", _("Subsystem"), PCIId)
             ],

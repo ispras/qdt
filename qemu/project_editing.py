@@ -7,6 +7,12 @@ from common import \
 from inspect import \
     getmro
 
+from six import \
+    binary_type, \
+    string_types, \
+    text_type, \
+    integer_types
+
 from importlib import \
     import_module
 
@@ -31,6 +37,12 @@ class ProjectOperation(InverseOperation):
 
 def none_import_hepler(val, helper):
     return None
+
+basic_types = [
+    text_type,
+    binary_type,
+    bool
+] + list(integer_types) + list(string_types)
 
 def basic_import_helper(val, helper):
     return type(val)(val)
@@ -90,14 +102,8 @@ slot of the tuple) is not restricted.
     value_import_helpers = {
         type(None): none_import_hepler
     }
-    for base_type in [
-        bool,
-        int,
-        long,
-        str,
-        unicode
-    ]:
-        value_import_helpers[base_type] = basic_import_helper
+    for basic_type in basic_types:
+        value_import_helpers[basic_type] = basic_import_helper
 
     def __init__(self, class_name, kw, arg_name_prefix = ""):
         self.nc = class_name
@@ -284,7 +290,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         self.p.add_description(self.new())
 
     def __undo__(self):
-        desc = self.p.find(name = self.name).next()
+        desc = next(self.p.find(name = self.name))
 
         """ It is unexpected way to type independently check for the description
         is empty. """
@@ -319,7 +325,7 @@ class POp_DelDesc(POp_AddDesc):
         POp_AddDesc.__init__(self, "QOMDescription", desc_name, *args, **kw)
 
     def __backup__(self):
-        desc = self.p.find(name = self.name).next()
+        desc = next(self.p.find(name = self.name))
         self.set_with_origin(desc)
 
     __do__ = POp_AddDesc.__undo__
@@ -338,4 +344,4 @@ class DescriptionOperation(ProjectOperation):
         self.desc_name = str(description.name)
 
     def find_desc(self):
-        return self.p.find(name = self.desc_name).next()
+        return next(self.p.find(name = self.desc_name))

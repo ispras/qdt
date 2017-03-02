@@ -1,27 +1,36 @@
-from itertools import \
-    izip
+from six import \
+    integer_types
 
-from ml import \
+from six.moves import \
+    zip
+
+from .ml import \
     mlget as _
 
 class UnimplementedInverseOperation(Exception):
     pass
 
+simple_eq_types = [
+    bool,
+    str,
+    float
+] + list(integer_types)
+
 def set_touches_entry(X, e):
     for x in X:
         if isinstance(x, tuple):
             if isinstance(e, tuple):
-                for ee, xx in izip(e, x):
+                for ee, xx in zip(e, x):
                     if not ee == xx:
                         break
                 else:
                     return True
-            elif type(e) in [ int, long, bool, str, float ]:
+            elif type(e) in simple_eq_types:
                 if e == x[0]:
                     return True
             else:
                 raise Exception("Unsupported type of entry: " + str(type(e)))
-        elif type(x) in [ int, long, bool, str, float ]:
+        elif type(x) in simple_eq_types:
             if isinstance(e, tuple):
                 if e[0] == x:
                     return True

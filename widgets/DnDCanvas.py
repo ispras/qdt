@@ -4,10 +4,10 @@
 from copy import \
     copy
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six.moves.tkinter import \
     Canvas, \
     RIDGE, \
     BOTH
@@ -83,7 +83,7 @@ class CanvasDnD(GUIFrame):
     
         #print points
 
-        apply(event.widget.coords, [self.dnd_dragged] + points)
+        event.widget.coords(*([self.dnd_dragged] + points))
 
         self.event_generate('<<DnDMoved>>')
 

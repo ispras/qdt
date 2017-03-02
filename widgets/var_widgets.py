@@ -1,4 +1,4 @@
-from Tkinter import \
+from six.moves.tkinter import \
     Tk, \
     Menu, \
     Label, \
@@ -9,7 +9,7 @@ from Tkinter import \
     Variable, \
     StringVar
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Notebook, \
     Combobox, \
     Treeview
@@ -282,7 +282,7 @@ if __name__ == "__main__":
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
 
-    from tv_width_helper import \
+    from .tv_width_helper import \
         TreeviewWidthHelper
 
     class TestTV(VarTreeview, TreeviewWidthHelper):
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     tv = TestTV(root)
     tv.grid(row = 0, column = 0, sticky = "NEWS")
 
-    from Tkinter import \
+    from six.moves.tkinter import \
         BooleanVar, \
         IntVar, \
         DoubleVar

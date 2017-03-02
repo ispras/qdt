@@ -8,6 +8,9 @@ from source import \
 from common import \
     co_find_eq
 
+from six.moves import \
+    range as xrange
+
 re_pci_vendor = compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
 re_pci_class = compile("PCI_CLASS_([A-Z0-9_]+)")

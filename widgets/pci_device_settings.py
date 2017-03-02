@@ -1,19 +1,21 @@
-from device_settings import \
+from .device_settings import \
     DeviceSettingsWidget
 
 from common import \
     mlget as _
 
-import Tkinter as tk
+from six.moves import \
+    range as xrange, \
+    tkinter as tk
 
-from var_widgets import \
+from .var_widgets import \
     VarLabelFrame, \
     VarLabel, \
     VarCheckbutton
 
 import sys
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 class PCIDeviceSettingsWidget(DeviceSettingsWidget):

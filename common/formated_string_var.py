@@ -1,4 +1,4 @@
-from Tkinter import \
+from six.moves.tkinter import \
     Variable, \
     StringVar
 
@@ -67,7 +67,7 @@ temporally replaces self.set with nope lambda to bypass this.
 # Test
 if __name__ == "__main__":
     # at least one Tk instance should exist
-    from Tkinter import Tk
+    from six.moves.tkinter import Tk
     root = Tk()
 
     fmt = FormatVar(value = "Text example is '%s'")
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     res = fmt % text
 
     def on_w(*args):
-        print res.get()
+        print(res.get())
 
     res.trace_variable("w", on_w)
 

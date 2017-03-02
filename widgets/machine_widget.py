@@ -1,17 +1,17 @@
-from Tkinter import \
+from six.moves.tkinter import \
     BooleanVar, \
     PanedWindow
 
-from machine_diagram_widget import \
+from .machine_diagram_widget import \
     MachineDiagramWidget
 
-from qom_settings import \
+from .qom_settings import \
     QOMDescriptionSettingsWidget
 
-from memory_tree_widget import \
+from .memory_tree_widget import \
     MemoryTreeWidget
 
-from var_widgets import \
+from .var_widgets import \
     VarCheckbutton, \
     VarNotebook
 

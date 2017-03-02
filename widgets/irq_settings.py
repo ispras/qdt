@@ -1,11 +1,11 @@
-from settings_window import \
+from .settings_window import \
     SettingsWidget, \
     SettingsWindow
 
 from common import \
     mlget as _
 
-from var_widgets import \
+from .var_widgets import \
     VarLabelFrame, \
     VarLabel
 
@@ -16,16 +16,19 @@ from qemu import \
     IRQHub, \
     DeviceNode
 
-from Tkinter import \
+from six.moves import \
+    range as xrange
+
+from six.moves.tkinter import \
     StringVar
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
-from device_settings import \
+from .device_settings import \
     DeviceSettingsWidget
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 class IRQSettingsWidget(SettingsWidget):

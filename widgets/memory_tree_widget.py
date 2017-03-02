@@ -1,4 +1,4 @@
-from var_widgets import \
+from .var_widgets import \
     VarMenu, \
     VarTreeview
 
@@ -12,8 +12,11 @@ from qemu import \
 from common import \
     mlget as _
 
-from popup_helper import \
+from .popup_helper import \
     TkPopupHelper
+
+from six import \
+    integer_types
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
@@ -178,7 +181,7 @@ snapshot mode or the command should be disabled too.
                     )
                 else:
                     def hwaddr_val(val):
-                        if isinstance(val, int) or isinstance(val, long):
+                        if isinstance(val, integer_types):
                             return hex(val)
                         else:
                             return str(val)

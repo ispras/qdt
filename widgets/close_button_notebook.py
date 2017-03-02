@@ -1,8 +1,8 @@
-from ttk import \
+from six.moves.tkinter_ttk import \
     Notebook, \
     Style
 
-from Tkinter import \
+from six.moves.tkinter import \
     PhotoImage
 
 """

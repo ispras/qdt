@@ -1,7 +1,7 @@
-from qemu import \
+from .qom import \
     QOMPropertyValue
 
-from machine_description import \
+from .machine_description import \
     DeviceNode, \
     BusNode, \
     Node, \
@@ -11,7 +11,7 @@ from machine_description import \
     IRQLine, \
     IRQHub
 
-from project_editing import \
+from .project_editing import \
     QemuObjectCreationHelper, \
     DescriptionOperation
 
@@ -20,6 +20,9 @@ from copy import \
 
 from common import \
     mlget as _
+
+from six import \
+    integer_types
 
 class MachineOperation(DescriptionOperation):
     def __init__(self, machine_description, *args, **kw):
@@ -221,8 +224,7 @@ class MOp_AddMemoryNode(MachineNodeAdding):
             aliased_id = self.node__alias_to[1]
 
             aliased_offset = self.node__offset[1]
-            if isinstance(aliased_offset, int) \
-            or isinstance(aliased_offset, long):
+            if isinstance(aliased_offset, integer_types):
                 aliased_offset = "0x%X" % aliased_offset
             else:
                 aliased_offset = str(aliased_offset)
@@ -638,7 +640,7 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
         ]
 
     def gen_val_str(self, val):
-        if isinstance(val, (int, long)):
+        if isinstance(val, integer_types):
             if val < 0:
                 return "%d" % val
             else:
@@ -775,7 +777,7 @@ class MachineIOMappingOperation(MachineNodeOperation):
         ]
 
     def gen_val_str(self, val):
-        if isinstance(val, (int, long)):
+        if isinstance(val, integer_types):
             if val < 0:
                 return "-0x%X" % -val
             else:
@@ -982,7 +984,7 @@ class MachineDevicePropertyOperation(MachineNodeOperation):
     def gen_val_str(self, p_type, p_val):
         if p_type == QOMPropertyTypeLink:
             return self.gen_id_str(p_val)
-        elif isinstance(p_val, (int, long)):
+        elif isinstance(p_val, integer_types):
             if p_val < 0:
                 return "-0x%X" % p_val
             else:

@@ -1,4 +1,4 @@
-from var_widgets import \
+from .var_widgets import \
     VarToplevel, \
     VarTreeview, \
     VarButton, \
@@ -7,10 +7,10 @@ from var_widgets import \
 from qemu import \
     qvd_get_registered
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Scrollbar
 
-from Tkinter import \
+from six.moves.tkinter import \
     Radiobutton, \
     StringVar
 

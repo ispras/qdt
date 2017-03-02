@@ -2,7 +2,10 @@ from widgets import \
     VarMenu, \
     CanvasDnD
 
-from Tkinter import \
+from six.moves import \
+    range as xrange
+
+from six.moves.tkinter import \
     BooleanVar, \
     DISABLED
 
@@ -54,25 +57,22 @@ from qemu import \
 from widgets import \
     DeviceSettingsWindow
 
-from irq_settings import \
+from .irq_settings import \
     IRQSettingsWindow
 
-from bus_settings import \
+from .bus_settings import \
     BusSettingsWindow
 
-from sets import \
-    Set
-
-from popup_helper import \
+from .popup_helper import \
     TkPopupHelper
 
-from cross_dialogs import \
+from .cross_dialogs import \
     asksaveas
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showerror
 
-from hotkey import \
+from .hotkey import \
     HotKeyBinding
 
 from canvas2svg import \
@@ -389,7 +389,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.node2idtext = {}
 
         self.bind(MachineDiagramWidget.EVENT_SELECT, self.on_select, "+")
-        self.ids_shown_on_select = Set([])
+        self.ids_shown_on_select = set([])
 
         self.nodes = []
         self.buslabels = []
@@ -781,7 +781,7 @@ IRQ line creation
             try:
                 hub = self.mach.id2node[op.node_id]
             except KeyError: # removed
-                for hub_node, hub in self.node2dev.iteritems():
+                for hub_node, hub in self.node2dev.items():
                     if not isinstance(hub_node, IRQHubCircle):
                         continue
                     if hub in self.mach.irq_hubs:
@@ -811,7 +811,7 @@ IRQ line creation
             try:
                 irq = self.mach.id2node[op.node_id]
             except KeyError:
-                for line, irq in self.node2dev.iteritems():
+                for line, irq in self.node2dev.items():
                     if not (isinstance(line, IRQLine) \
                             and isinstance(irq, Node)):
                         continue
@@ -875,7 +875,7 @@ IRQ line creation
                 bus = self.mach.id2node[op.node_id]
             except KeyError:
                 # deleted
-                for bus, bl in self.dev2node.iteritems():
+                for bus, bl in self.dev2node.items():
                     if isinstance(bus, BusNode):
                         if bus.id == -1:
                             break
@@ -915,7 +915,7 @@ IRQ line creation
                 dev = self.mach.id2node[op.node_id]
             except KeyError:
                 # deleted
-                for dev, node in self.dev2node.iteritems():
+                for dev, node in self.dev2node.items():
                     if isinstance(dev, DeviceNode):
                         if dev.id == -1:
                             break
@@ -1313,7 +1313,7 @@ IRQ line creation
 
         touched_ids = []
         for t in touched:
-            if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node.keys()):
+            if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node):
                 if t == self.shown_irq_circle:
                     # IRQ line selection is not supported yet.
                     continue
@@ -1506,7 +1506,7 @@ IRQ line creation
         self.last_canvas_mouse = x, y
 
         if self.select_point:
-            apply(self.canvas.coords, [
+            self.canvas.coords(*[
                 self.select_frame,
                 self.select_point[0], self.select_point[1],
                 x, y
@@ -1638,7 +1638,7 @@ IRQ line creation
         irqs = list(self.mach.irqs)
 
         for hub in self.mach.irq_hubs:
-            if hub in self.dev2node.keys():
+            if hub in self.dev2node:
                 continue
             hub_node = IRQHubCircle(hub)
 
@@ -1648,7 +1648,7 @@ IRQ line creation
             self.add_irq_hub(hub_node)
 
         for bus in self.mach.buses:
-            if bus in self.dev2node.keys():
+            if bus in self.dev2node:
                 continue
 
             node = BusLabel(bus)
@@ -1659,7 +1659,7 @@ IRQ line creation
             self.add_buslabel(node)
 
         for dev in self.mach.devices:
-            if not dev in self.dev2node.keys():
+            if not dev in self.dev2node:
                 node = NodeBox(dev)
 
                 self.dev2node[dev] = node
@@ -1676,14 +1676,14 @@ IRQ line creation
                 continue
 
             pb = dev.parent_bus
-            if not pb in self.dev2node.keys():
+            if not pb in self.dev2node:
                 continue
             pbn = self.dev2node[pb].busline
 
             self.add_conn(node, pbn)
 
         for irq in irqs:
-            if irq in self.dev2node.keys():
+            if irq in self.dev2node:
                 continue
 
             src = self.dev2node[irq.src[0]]
@@ -1811,7 +1811,7 @@ IRQ line creation
 
         for idx, sid in enumerate(self.selected):
             bbox = self.canvas.bbox(sid)
-            apply(self.canvas.coords, [
+            self.canvas.coords(*[
                 self.selection_marks[idx],
                 bbox[0] - 1, bbox[1] - 1,
                 bbox[2] + 1, bbox[3] + 1
@@ -1906,13 +1906,13 @@ IRQ line creation
                     h.x + 2 * h.r, h.y + 2 * h.r
                 ]
 
-                apply(self.canvas.coords, [self.shown_irq_circle] + points)
+                self.canvas.coords(*([self.shown_irq_circle] + points))
 
         self.process_irq_circles()
 
         self.update_selection_marks()
 
-        for n, idtext in list(self.node2idtext.iteritems()):
+        for n, idtext in list(self.node2idtext.items()):
             dev = self.node2dev[n]
             if isinstance(dev, Node):
                 if isinstance(n, NodeCircle):
@@ -1924,7 +1924,7 @@ IRQ line creation
                 self.canvas.coords(idtext, *coords)
 
     def on_select(self, event):
-        still_selected = Set([])
+        still_selected = set([])
         for sid in self.selected:
             node = self.id2node[sid]
             still_selected.add(node)
@@ -2227,7 +2227,7 @@ IRQ line creation
             c.x + c.width, c.y
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
 
     def ph_apply_buslabel(self, bl):
         id = self.node2id[bl]
@@ -2238,7 +2238,7 @@ IRQ line creation
             bl.x, bl.y + (1 + bl.cap_size) * (bl.text_height + bl.padding),
             bl.x, bl.y + bl.cap_size * (bl.text_height + bl.padding)]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
         self.apply_node(bl)
 
     def ph_apply_bus(self, b):
@@ -2248,7 +2248,7 @@ IRQ line creation
             b.x, b.y + b.height
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
 
     def ph_move(self, n):
         if abs(n.vx) > self.velicity_limit:
@@ -2261,7 +2261,7 @@ IRQ line creation
 
     def apply_node(self, n):
         p = [n.x + n.width / 2, n.y + n.height / 2]
-        apply(self.canvas.coords, [n.text] + p)
+        self.canvas.coords(*([n.text] + p))
 
     def ph_apply_node(self, n):
         id = self.node2id[n]
@@ -2270,7 +2270,7 @@ IRQ line creation
             n.x + n.width, n.y + n.height
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
         self.apply_node(n)
 
     def ph_apply_hub(self, h):
@@ -2280,7 +2280,7 @@ IRQ line creation
             h.x + 2 * h.r, h.y + 2 * h.r
         ]
 
-        apply(self.canvas.coords, [id] + points)
+        self.canvas.coords(*([id] + points))
 
     def irq_line_add_circle(self, l, idx, x, y):
         c = IRQPathCircle(l)
@@ -2378,7 +2378,7 @@ IRQ line creation
 
                         changed = True
 
-            apply(self.canvas.coords, [seg] + [x0, y0, x1, y1])
+            self.canvas.coords(*([seg] + [x0, y0, x1, y1]))
 
         # update arrow
         # direction
@@ -2403,7 +2403,7 @@ IRQ line creation
             x1 - dx + ox, y1 - dy + oy,
             x1 - dx - ox, y1 - dy - oy, 
         ]
-        apply(self.canvas.coords, arrow_coords)
+        self.canvas.coords(*arrow_coords)
 
     def ph_launch(self):
         self.var_physical_layout.set(True)
@@ -2637,7 +2637,7 @@ IRQ line creation
     def set_layout(self, l):
         layout_bak = self.gen_layout()
         try:
-            for id, desc in l.iteritems():
+            for id, desc in l.items():
                 if id == -1:
                     try:
                         self.var_physical_layout.set(desc["physical layout"])
@@ -2649,7 +2649,7 @@ IRQ line creation
                     except KeyError:
                         irqs = {}
 
-                    for irq_id, points in irqs.iteritems():
+                    for irq_id, points in irqs.items():
                         l = self.dev2node[self.mach.id2node[irq_id]]
                         while l.circles:
                             self.irq_line_delete_circle(l, 0)

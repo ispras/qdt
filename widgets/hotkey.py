@@ -2,7 +2,7 @@
 from common import \
     ML as _
 
-from Tkinter import \
+from six.moves.tkinter import \
     Entry
 
 class HKEntry(Entry):
@@ -33,7 +33,7 @@ class HotKey(object):
         root.bind_all("<<Control-Y-Breaked>>", self.on_ctrl_y_breaked)
 
     def add_key_symbols(self, keys2sym):
-        for key, sym in keys2sym.iteritems():
+        for key, sym in keys2sym.items():
             self.keys2sym[key] = sym
 
             try:

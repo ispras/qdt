@@ -1,19 +1,19 @@
 from common import \
     mlget as _
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
-from var_widgets import \
+from .var_widgets import \
     VarToplevel, \
     VarLabel, \
     VarButton, \
     VarCombobox
 
-from Tkinter import \
+from six.moves.tkinter import \
     StringVar
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showerror
 
 from qemu import \
@@ -97,7 +97,7 @@ string searching during each AddDescriptionDialog creation. """
             if self.pht is None:
                 # do not check unicity in demo mode
                 raise StopIteration()
-            self.pht.p.find(name = n).next()
+            next(self.pht.p.find(name = n))
         except StopIteration:
             # free name
             self.e_name.config(bg = "white")

@@ -1,25 +1,25 @@
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six.moves.tkinter import \
     BOTH, \
     StringVar
 
-from var_widgets import \
+from .var_widgets import \
     VarLabel, \
     VarButton
 
 from common import \
     mlget as _
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 from qemu import \
     POp_AddDesc, \
     DOp_SetAttr
 
-from qdc_gui_signal_helper import \
+from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
@@ -134,7 +134,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
             new_val = v.get()
             try:
-                new_val = long(new_val, base = 0)
+                new_val = int(new_val, base = 0)
             except ValueError:
                 e.config(bg = "red")
             else:
@@ -156,7 +156,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
  
         if isinstance(op, POp_AddDesc):
             try:
-                self.pht.p.find(name = self.desc.name).next()
+                next(self.pht.p.find(name = self.desc.name))
             except StopIteration:
                 # the operation removes current description
                 return

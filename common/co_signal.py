@@ -1,4 +1,4 @@
-from co_dispatcher import \
+from .co_dispatcher import \
     CoTask
 
 class SignalIsAlreadyAttached(Exception):

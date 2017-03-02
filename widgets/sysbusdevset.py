@@ -6,20 +6,25 @@ from widgets import \
 from common import \
     mlget as _
 
-import Tkinter as tk
+from six import \
+    integer_types
+
+from six.moves import \
+    range as xrange, \
+    tkinter as tk
 
 from qemu import \
     MOp_DelIOMapping, \
     MOp_AddIOMapping, \
     MOp_SetIOMapping
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 def gen_mapping_string(mapping):
     if mapping is None:
         return ""
-    elif isinstance(mapping, int) or isinstance(mapping, long):
+    elif isinstance(mapping, integer_types):
         return "0x%0x" % mapping
     else:
         return str(mapping)
@@ -28,7 +33,7 @@ def parse_mapping_string(mapping):
     if not mapping:
         return None
     try:
-        val = long(mapping, base = 0)
+        val = int(mapping, base = 0)
     except ValueError:
         val = str(mapping)
     return val
@@ -122,7 +127,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
                 for row in xrange(row_count, mapping_count):
                     self.append_row_to_grid(fr, rows, mio)
 
-            for row, mapping in mappings.iteritems():
+            for row, mapping in mappings.items():
                 rows[row][2].set(
                     gen_mapping_string(mapping)
                 )
@@ -151,7 +156,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             rows = getattr(self, mio + "_rows")
             mappings = getattr(self.dev, mio + "_mappings")
 
-            for idx, mapping in mappings.iteritems():
+            for idx, mapping in mappings.items():
                 try:
                     row = rows[idx]
                 except IndexError:

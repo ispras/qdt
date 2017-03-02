@@ -1,10 +1,10 @@
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from var_widgets import \
+from .var_widgets import \
     VarCombobox
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
 from common import \
@@ -24,16 +24,19 @@ kind2idx = {
 }
 
 idx2kind = {}
-for kind, idx in kind2idx.iteritems():
+for kind, idx in kind2idx.items():
     idx2kind[idx] = kind
+
+from six import \
+    iteritems
 
 def get_db(idx):
     if idx == 0:
-        return PCIId.db.classes.iteritems()
+        return iteritems(PCIId.db.classes)
     elif idx == 1:
-        return PCIId.db.vendors.iteritems()
+        return iteritems(PCIId.db.vendors)
     elif idx == 2:
-        return PCIId.db.devices.iteritems()
+        return iteritems(PCIId.db.devices)
     return None
 
 def get_db_sorted(idx):
@@ -42,7 +45,7 @@ def get_db_sorted(idx):
     if dbiter is None:
         return None
 
-    return sorted(dbiter, key = lambda (n, desc) : n)
+    return sorted(dbiter, key = lambda n_desc : n_desc[0])
 
 class PCIIdWidget(GUIFrame):
     def __init__(self, idvariable, *args, **kw):
@@ -82,7 +85,7 @@ class PCIIdWidget(GUIFrame):
 
     def find_idx(self, **kw):
         for idx, (name, desc) in enumerate(self.kind_db):
-            for key, value in kw.iteritems():
+            for key, value in kw.items():
                 if getattr(desc, key) == value:
                     return idx
         raise Exception("Incorrect find request: " + str(kw))

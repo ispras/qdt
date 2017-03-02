@@ -1,7 +1,7 @@
-from ttk import \
+from six.moves.tkinter_ttk import \
     Treeview
 
-from tkFont import \
+from six.moves.tkinter_font import \
     Font
 
 class TreeviewWidthHelper(Treeview):

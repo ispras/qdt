@@ -1,4 +1,4 @@
-from qom_settings import \
+from .qom_settings import \
     QOMDescriptionSettingsWidget
 
 from qemu import \
@@ -7,26 +7,26 @@ from qemu import \
     POp_AddDesc, \
     DOp_SetAttr
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six.moves.tkinter import \
     BOTH, \
     StringVar
 
-from var_widgets import \
+from .var_widgets import \
     VarLabel
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 from common import \
     mlget as _
 
-from obj_ref_var import \
+from .obj_ref_var import \
     ObjRefVar
 
-from pci_id_widget import \
+from .pci_id_widget import \
     PCIIdWidget
 
 class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
@@ -47,7 +47,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             l = VarLabel(f, text = text)
             l.grid(row = row, column = 0, sticky = "NES")
 
-            if val_type is long:
+            if val_type is int:
                 v = StringVar()
                 w = HKEntry(f, textvariable = v)
             elif val_type is PCIId:
@@ -72,7 +72,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         var = getattr(self, "var_" + field)
         val = getattr(self.desc, field)
 
-        if val_type is long:
+        if val_type is int:
             var.set(str(val))
 
             e = getattr(self, "w_" + field)
@@ -128,9 +128,9 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             w = getattr(self, "w_" + field)
 
-            if val_type is long:
+            if val_type is int:
                 try:
-                    new_val = long(new_val, 0)
+                    new_val = int(new_val, 0)
                 except:
                     
                     w.config(bg = "red")
@@ -144,7 +144,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             cur_val = getattr(self.desc, field)
 
-            if val_type is long:
+            if val_type is int:
                 if cur_val != new_val:
                     self.pht.stage(DOp_SetAttr,
                         field, new_val, self.desc
@@ -189,7 +189,7 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __on_changed__(self, op, *args, **kw):
         if isinstance(op, POp_AddDesc):
             try:
-                self.pht.p.find(name = self.desc.name).next()
+                next(self.pht.p.find(name = self.desc.name))
             except StopIteration:
                 # the operation removes current description
                 return

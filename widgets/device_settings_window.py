@@ -7,10 +7,10 @@ from common import \
 
 import qemu
 
-from pci_device_settings import \
+from .pci_device_settings import \
     PCIDeviceSettingsWidget
 
-from settings_window import \
+from .settings_window import \
     SettingsWindow
 
 class DeviceSettingsWindow(SettingsWindow):

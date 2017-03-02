@@ -1,24 +1,31 @@
-from var_widgets import \
+from .var_widgets import \
     VarLabel, \
     VarButton, \
     VarLabelFrame, \
     VarCheckbutton
 
-from device_tree_widget import \
+from .device_tree_widget import \
     DeviceTreeWidget
 
 from common import \
     mlget as _
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from Tkinter import \
+from six import \
+    itervalues
+
+from six.moves import \
+    zip, \
+    range as xrange
+
+from six.moves.tkinter import \
     StringVar, \
     BooleanVar, \
     OptionMenu
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Combobox
 
 from qemu import \
@@ -42,13 +49,12 @@ from qemu import \
     qvd_get_registered
 
 from itertools import \
-    izip, \
     count
 
-from settings_window import \
+from .settings_window import \
     SettingsWidget
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 class BusLineDesc(object):
@@ -160,7 +166,7 @@ class PropLineDesc(object):
             ret = self.v_val.get()
         elif prop_type == QOMPropertyTypeInteger:
             long_text = self.v_val.get()
-            ret = long(long_text, base = 0)
+            ret = int(long_text, base = 0)
         elif prop_type == QOMPropertyTypeString:
             ret = str(self.v_val.get())
         else:
@@ -473,7 +479,7 @@ class DeviceSettingsWidget(SettingsWidget):
         if current:
             current = DeviceSettingsWidget.prop_type_name_map[current][0]
         else:
-            DeviceSettingsWidget.prop_type_name_map.values()[0]
+            current = next(itervalues(DeviceSettingsWidget.prop_type_name_map))
 
         var.set(current)
 
@@ -505,7 +511,7 @@ class DeviceSettingsWidget(SettingsWidget):
     def refresh(self):
         self.qom_type_var.set(self.dev.qom_type)
 
-        for p, desc in self.prop2field.iteritems():
+        for p, desc in self.prop2field.items():
             desc.e_name.destroy()
             desc.om_type.destroy()
             desc.w_val.destroy()
@@ -612,7 +618,7 @@ class DeviceSettingsWidget(SettingsWidget):
         if not self.dev.qom_type == qom:
             self.mht.stage(MOp_SetDevQOMType, qom, self.dev.id)
 
-        for p, desc in self.prop2field.iteritems():
+        for p, desc in self.prop2field.items():
             cur_name, cur_type, cur_val = desc.get_current_name(), \
                 desc.get_current_type(), desc.get_current_val()
 
@@ -670,7 +676,7 @@ class DeviceSettingsWidget(SettingsWidget):
                 # step 2 should be done in increasing index order
                 step2.insert(0, (i, new_bus))
 
-        adding = [ x for x in izip(count(len(self.dev.buses)), new_buses) ]
+        adding = [ x for x in zip(count(len(self.dev.buses)), new_buses) ]
 
         for i, new_bus in step2 + adding:
             # add i-th bus

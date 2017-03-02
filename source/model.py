@@ -160,7 +160,11 @@ switching to that mode.
         chunks = []
 
         # fix up types for headers with references
-        l = self.types.values()
+        # list of types must be copied because it is changed during each
+        # loop iteration. values() returns generator in Python 3.x, which
+        # must be explicitly enrolled to a list. Though is it redundant
+        # copy operation in Pyhton 2.x.
+        l = list(self.types.values())
 
         while True:
             for t in l:
@@ -182,15 +186,21 @@ switching to that mode.
                 else:
                     t.definer_references = set(t.type.definer.references)
 
+            replaced = False
             for t in l:
                 if not isinstance(t, TypeReference):
                     continue
     
-                TypeFixerVisitor(self, t).visit()
+                tfv = TypeFixerVisitor(self, t)
+                tfv.visit()
 
-            if l == self.types.values():
+                if tfv.replaced:
+                    replaced = True
+
+            if not replaced:
                 break
-            l = self.types.values()
+            # Preserve current types list. See the comment above.
+            l = list(self.types.values())
 
         for t in self.types.values():
             if isinstance(t, TypeReference) or t.definer == self:
@@ -270,8 +280,9 @@ class Header(Source):
         try:
             m = Type.lookup(macro.name)
             if not m.definer.path == definer:
-                print "Info: multiple definitions of macro %s in %s and %s"\
+                print("Info: multiple definitions of macro %s in %s and %s"\
                      % (macro.name, m.definer.path, definer)
+                )
         except:
             m = Macro(
                 name = macro.name,
@@ -357,7 +368,7 @@ class Header(Source):
 
         sys.stdout = ppf.out
 
-        print """Header inclusions build statistic:
+        print("""Header inclusions build statistic:
     Yields total: %d
     Max yields per header: %d
     Min yields per header: %d
@@ -367,6 +378,7 @@ class Header(Source):
     max(Header.yields_per_header),
     min(Header.yields_per_header),
     sum(Header.yields_per_header) / float(len(Header.yields_per_header))
+)
         )
 
         del Header.yields_per_header
@@ -380,7 +392,7 @@ class Header(Source):
 
         try:
             while True:
-                gen.next()
+                next(gen)
         except StopIteration:
             pass
 
@@ -874,6 +886,11 @@ class TypeFixerVisitor(ObjectVisitor):
         ObjectVisitor.__init__(self, type_object, *args, **kw)
 
         self.source = source
+        self.replaced = False
+
+    def replace(self, new_value):
+        self.replaced = True
+        ObjectVisitor.replace(self, new_value)
 
     def on_visit(self):
         if isinstance(self.cur, Type):

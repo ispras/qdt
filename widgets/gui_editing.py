@@ -7,7 +7,7 @@ from copy import \
 from common import \
     mlget as _
 
-from gui_project import \
+from .gui_project import \
     GUIProject
 
 """ The difference is the project should be a _GUI_ project. """
@@ -57,7 +57,7 @@ class GUIDescriptionOperation(GUIProjectOperation):
         self.desc_name = str(description.name)
 
     def find_desc(self):
-        return self.p.find(name = self.desc_name).next()
+        return next(self.p.find(name = self.desc_name))
 
 class POp_SetDescLayout(GUIDescriptionOperation):
     def __init__(self, new_layout, *args, **kw):

@@ -7,6 +7,9 @@ from source import \
     Macro, \
     Structure
 
+from six.moves import \
+    range as xrange
+
 def parse_version(ver):
     ver_parts = ver.split(".")
 

@@ -1,10 +1,10 @@
-from branch_tree_view import \
+from .branch_tree_view import \
     BranchTreeview
 
-from var_widgets import \
+from .var_widgets import \
     VarToplevel
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Scrollbar
 
 from common import \

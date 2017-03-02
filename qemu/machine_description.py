@@ -1,13 +1,16 @@
-import machine
+import qemu.machine
 
-from qom_desc import \
+from .qom_desc import \
     QOMDescription
 
 from itertools import \
     count
 
-from qom import \
+from .qom import \
     QOMPropertyTypeLink
+
+from six.moves import \
+    range as xrange
 
 class Node(object):
     def __init__(self):
@@ -407,7 +410,7 @@ class SystemBusDeviceNode(DeviceNode):
             gen.line()
             gen.push_indent()
             prev_idx = -1
-            for idx, mmio in self.mmio_mappings.iteritems():
+            for idx, mmio in self.mmio_mappings.items():
                 for none_idx in xrange(prev_idx + 1, idx):
                     if none_idx > 0:
                         gen.line(",")
@@ -425,7 +428,7 @@ class SystemBusDeviceNode(DeviceNode):
             gen.line()
             gen.push_indent()
             prev_idx = -1
-            for idx, pmio in self.pmio_mappings.iteritems():
+            for idx, pmio in self.pmio_mappings.items():
                 for none_idx in xrange(prev_idx + 1, idx):
                     if none_idx > 0:
                         gen.line(",")
@@ -661,7 +664,7 @@ class MachineNode(QOMDescription):
 
         # add nodes preserving id order to same identification
         pfx = gen.nameof(self) + ".add_node("
-        for id, node in self.id2node.iteritems():
+        for id, node in self.id2node.items():
             gen.line(pfx + gen.nameof(node) + ", with_id = " + str(id) + ")")
 
     def link(self):
@@ -791,6 +794,6 @@ class MachineNode(QOMDescription):
                 return i
 
     def gen_type(self):
-        return machine.MachineType(
+        return qemu.machine.MachineType(
             machine = self
             )

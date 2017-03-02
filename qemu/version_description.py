@@ -4,16 +4,19 @@ from source import \
     Macro
 
 from common import \
+    execfile, \
     PyGenerator
 
 from json import \
     load
 
 from subprocess import \
+    Popen, \
+    PIPE, \
     check_output, \
     STDOUT
 
-from version import \
+from .version import \
     initialize as initialize_version, \
     get_vp
 
@@ -21,7 +24,7 @@ from os.path import \
     join, \
     isfile
 
-from pci_ids import \
+from .pci_ids import \
     PCIId, \
     PCIClassification
 
@@ -95,7 +98,7 @@ def qvd_get_registered(path):
     return qvd_get(path)
 
 def qvds_load():
-    for k, v in qvd_reg.iteritems():
+    for k, v in qvd_reg.items():
         if v == None:
             qvd_reg[k] = QemuVersionDescription(k)
 
@@ -105,7 +108,7 @@ def qvd_load_with_cache(build_path):
     return qvd
 
 def qvds_load_with_cache():
-    for k, v in qvd_reg.iteritems():
+    for k, v in qvd_reg.items():
         if v == None:
             qvd_reg[k] = QemuVersionDescription(k)
         qvd = qvd_reg[k]
@@ -246,7 +249,7 @@ class QemuVersionDescription(object):
         if not self.qvc == None:
             raise MultipleQVCInitialization(self.src_path)
 
-        qvc_file_name = "qvc_" + self.commit_sha + ".py"
+        qvc_file_name = "qvc_" + self.commit_sha.decode("utf-8") + ".py"
         qvc_path = join(self.build_path, qvc_file_name)
 
         if not  isfile(qvc_path):
@@ -321,10 +324,10 @@ class QemuVersionDescription(object):
                 if isinstance(v, QemuVersionCache):
                     self.qvc = v
                     break
-                else:
-                    raise Exception(
+            else:
+                raise Exception(
 "No QemuVersionCache was loaded from %s." % qvc_path
-                    )
+                )
 
     @staticmethod
     def get_head_commit_sha(src_path):
@@ -342,19 +345,25 @@ class QemuVersionDescription(object):
     @staticmethod
     def check_uncommit_change(src_path):
         cmd = ['git', '-C', src_path, 'status']
-        status = check_output(cmd, stderr = STDOUT)
-        if "fatal" in status:
-            raise Exception("%s: %s" % (src_path, status))
+        p = Popen(cmd, stderr = PIPE, stdout = PIPE)
+        p.wait()
+        if p.returncode:
+            raise Exception("`git status` failed with code %d" % p.returncode)
 
+        """ TODO: either set up corresponding locale settings before command or
+use another way to check this.
+        """
+        """
         if "Changes to be committed" in status:
-            print "WARNING! " + \
-                  src_path + " has changes that need to be committed."
+            print("WARNING! " + \
+                  src_path + " has changes that need to be committed.")
 
         if "Changes not staged for commit" in status:
-            print "WARNING! " + src_path + ": changes not staged for commit."
+            print("WARNING! " + src_path + ": changes not staged for commit.")
 
         if "Untracked files" in status:
-            print "WARNING! " + src_path + " has untracked files."
+            print("WARNING! " + src_path + " has untracked files.")
+        """
 
     @staticmethod
     def compare_by_sha(sha):

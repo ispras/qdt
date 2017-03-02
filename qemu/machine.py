@@ -1,4 +1,4 @@
-from qom import \
+from .qom import \
     QOMPropertyTypeLink, \
     QOMPropertyTypeString, \
     QOMPropertyTypeBoolean, \
@@ -11,7 +11,7 @@ from source import \
     Initializer, \
     Function
 
-from machine_description import \
+from .machine_description import \
     SystemBusDeviceNode, \
     BusNode, \
     SystemBusNode, \
@@ -31,8 +31,11 @@ from common import \
 from os.path import \
     join as join_path
 
-from version import \
+from .version import \
     get_vp
+
+from six import \
+    integer_types
 
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
@@ -173,8 +176,7 @@ class MachineType(QOMType):
             self.use_type_name("bool")
             return "true" if prop.prop_val else "false"
         elif prop.prop_type == QOMPropertyTypeInteger:
-            if not (   isinstance(prop.prop_val, long) 
-                    or isinstance(prop.prop_val, int)):
+            if not isinstance(prop.prop_val, integer_types):
                 raise IncorrectPropertyValue()
 
             return "0x%x" % prop.prop_val
@@ -339,7 +341,7 @@ class MachineType(QOMType):
                         )
 
                 if isinstance(node, SystemBusDeviceNode):
-                    for idx, mmio in node.mmio_mappings.iteritems():
+                    for idx, mmio in node.mmio_mappings.items():
                         if mmio is not None:
                             self.use_type_name("sysbus_mmio_map")
                             self.use_type_name("SYS_BUS_DEVICE")

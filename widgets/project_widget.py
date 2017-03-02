@@ -1,11 +1,11 @@
-from var_widgets import \
+from .var_widgets import \
     VarMenu, \
     VarTreeview
 
-from close_button_notebook import \
+from .close_button_notebook import \
     CloseButtonNotebook
 
-from machine_widget import \
+from .machine_widget import \
     MachineDescriptionSettingsWidget
 
 from qemu import \
@@ -13,7 +13,7 @@ from qemu import \
     PCIExpressDeviceDescription, \
     MachineNode
 
-from Tkinter import \
+from six.moves.tkinter import \
     NO, \
     PanedWindow
 
@@ -29,35 +29,35 @@ from qemu import \
     DOp_SetAttr, \
     POp_AddDesc
 
-from sysbusdev_description_settings import \
+from .sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
-from pci_description_settings import \
+from .pci_description_settings import \
     PCIEBusDeviceDescriptionSettingsWidget
 
-from tkFont import \
+from six.moves.tkinter_font import \
     Font
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from ttk import \
+from six.moves.tkinter_ttk import \
     Scrollbar
 
-from add_desc_dialog import \
+from .add_desc_dialog import \
     AddDescriptionDialog
 
-from gui_editing import \
+from .gui_editing import \
     GUIPOp_SetBuildPath, \
     POp_SetDescLayout
 
-from popup_helper import \
+from .popup_helper import \
     TkPopupHelper
 
-from tkMessageBox import \
+from six.moves.tkinter_messagebox import \
     showerror
 
-from qdc_gui_signal_helper import \
+from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
 class ReloadBuildPathTask(CoTask):
@@ -190,13 +190,13 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.popup_tv_single = tvm
 
-        for desc_name, lys in self.p.layouts.iteritems():
+        for desc_name, lys in self.p.layouts.items():
             for l in lys.values():
                 if not l.shown:
                     continue
 
                 if l.widget is None:
-                    desc = self.p.find(name = desc_name).next()
+                    desc = next(self.p.find(name = desc_name))
 
                     w = self.gen_widget(desc)
                     try:
@@ -267,7 +267,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def on_delete_description(self):
         item = self.tv_descs.selection()[0]
         name = self.tv_descs.item(item)["text"]
-        desc = self.p.find(name = name).next()
+        desc = next(self.p.find(name = name))
 
         # Layout refreshing is required because the layout of widget
         # representing description being deleted, must be saved too.
@@ -286,7 +286,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         descs_to_del = []
         for item in self.tv_descs.selection():
             name = self.tv_descs.item(item)["text"]
-            descs_to_del.append(self.p.find(name = name).next())
+            descs_to_del.append(next(self.p.find(name = name)))
 
         if descs_to_del:
             # Layout refreshing is required because the layout of widget
@@ -343,9 +343,9 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         if isinstance(op, POp_AddDesc):
             self.tv_descs.update()
 
-            for desc_name, lys in self.p.layouts.iteritems():
+            for desc_name, lys in self.p.layouts.items():
                 try:
-                    self.p.find(name = desc_name).next()
+                    next(self.p.find(name = desc_name))
                 except StopIteration:
                     # removed
                     for l in lys.values():

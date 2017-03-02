@@ -1,4 +1,4 @@
-from formated_string_var import \
+from .formated_string_var import \
     FormatVar
 
 from gettext import \

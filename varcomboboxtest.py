@@ -5,7 +5,7 @@ from widgets import \
     VarTk, \
     VarLabel
 
-from Tkinter import \
+from six.moves.tkinter import \
     StringVar
 
 from random import \

@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-from Tkinter import \
+from six.moves.tkinter import \
     Tk
 
 from common import \
@@ -17,7 +17,7 @@ class CanvasPolygon(Polygon):
         i = iter(points)
         while True:
             try:
-                pts.append(Vector(i.next(), i.next()))
+                pts.append(Vector(next(i), next(i)))
             except StopIteration:
                 break
         points = pts
@@ -30,7 +30,7 @@ class CanvasPolygon(Polygon):
         )
 
     def update(self):
-        apply(self.c.coords, [self.p] + self.GenCoords())
+        self.c.coords(*([self.p] + self.GenCoords()))
 
 class CanvasSegment(Segment):
     def __init__(self, canvas, begin = None, direction = None, **kwargs):
@@ -42,8 +42,8 @@ class CanvasSegment(Segment):
         )
 
     def update(self):
-        apply(self.c.coords, [self.l] + \
-            [self.x, self.y, self.x + self.d.x, self.y + self.d.y]
+        self.c.coords(*([self.l] + \
+            [self.x, self.y, self.x + self.d.x, self.y + self.d.y])
         )
 
 class CrossTest(CanvasDnD):
@@ -137,7 +137,7 @@ class CrossTest(CanvasDnD):
             self.crosses.append(id)
 
     def dnd_moved(self, event):
-        for dp, do in self.drag_points.iteritems():
+        for dp, do in self.drag_points.items():
             coords = self.canvas.coords(dp)[:2]
             do[0].SetPoint(
                 Vector(coords[0] + self.dp_w2, coords[1] + self.dp_w2),

@@ -43,7 +43,7 @@ will never be given control.
 
         for task in self.active_tasks:
             try:
-                ret = task.generator.next()
+                ret = next(task.generator)
             except StopIteration:
                 finished.append(task)
             else:
