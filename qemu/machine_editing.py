@@ -1,7 +1,7 @@
-from qom import \
+from .qom import \
     QOMPropertyValue
 
-from machine_description import \
+from .machine_description import \
     DeviceNode, \
     BusNode, \
     Node, \
@@ -11,7 +11,7 @@ from machine_description import \
     IRQLine, \
     IRQHub
 
-from project_editing import \
+from .project_editing import \
     QemuObjectCreationHelper, \
     DescriptionOperation
 

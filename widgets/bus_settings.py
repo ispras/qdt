@@ -1,4 +1,4 @@
-from settings_window import \
+from .settings_window import \
     SettingsWindow, \
     SettingsWidget
 
@@ -9,7 +9,7 @@ from qemu import \
     MOp_SetChildBus, \
     MachineNodeOperation
 
-from var_widgets import \
+from .var_widgets import \
     VarCheckbutton, \
     VarLabel
 
@@ -20,14 +20,14 @@ from Tkinter import \
 from ttk import \
     Combobox
 
-from device_settings import \
+from .device_settings import \
     DeviceSettingsWidget
 
 from qemu import \
     MOp_SetBusAttr, \
     BusNode
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 class BusSettingsWidget(SettingsWidget):

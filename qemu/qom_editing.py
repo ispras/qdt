@@ -1,4 +1,4 @@
-from project_editing import \
+from .project_editing import \
     DescriptionOperation
 
 from copy import \

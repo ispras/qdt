@@ -5,7 +5,7 @@ from qemu import \
 from common import \
     History
 
-from gui_layout import \
+from .gui_layout import \
     GUILayout
 
 from itertools import \

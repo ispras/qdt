@@ -1,11 +1,11 @@
-from var_widgets import \
+from .var_widgets import \
     VarMenu, \
     VarTreeview
 
-from close_button_notebook import \
+from .close_button_notebook import \
     CloseButtonNotebook
 
-from machine_widget import \
+from .machine_widget import \
     MachineDescriptionSettingsWidget
 
 from qemu import \
@@ -29,35 +29,35 @@ from qemu import \
     DOp_SetAttr, \
     POp_AddDesc
 
-from sysbusdev_description_settings import \
+from .sysbusdev_description_settings import \
     SystemBusDeviceDescriptionSettingsWidget
 
-from pci_description_settings import \
+from .pci_description_settings import \
     PCIEBusDeviceDescriptionSettingsWidget
 
 from tkFont import \
     Font
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
 from ttk import \
     Scrollbar
 
-from add_desc_dialog import \
+from .add_desc_dialog import \
     AddDescriptionDialog
 
-from gui_editing import \
+from .gui_editing import \
     GUIPOp_SetBuildPath, \
     POp_SetDescLayout
 
-from popup_helper import \
+from .popup_helper import \
     TkPopupHelper
 
 from tkMessageBox import \
     showerror
 
-from qdc_gui_signal_helper import \
+from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
 class ReloadBuildPathTask(CoTask):

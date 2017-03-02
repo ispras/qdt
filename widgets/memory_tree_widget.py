@@ -1,4 +1,4 @@
-from var_widgets import \
+from .var_widgets import \
     VarMenu, \
     VarTreeview
 
@@ -12,7 +12,7 @@ from qemu import \
 from common import \
     mlget as _
 
-from popup_helper import \
+from .popup_helper import \
     TkPopupHelper
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):

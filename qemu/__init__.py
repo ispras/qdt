@@ -6,7 +6,7 @@ from source import \
     Structure, \
     add_base_types
 
-from version_description import \
+from .version_description import \
     QVCWasNotInitialized, \
     BadBuildPath, \
     MultipleQVCInitialization, \
@@ -23,7 +23,7 @@ from version_description import \
     load_build_path_list, \
     account_build_path
 
-from pci_ids import \
+from .pci_ids import \
     PCIVendorIdNetherExistsNorCreate, \
     PCIId, \
     PCIVendorId, \
@@ -31,13 +31,13 @@ from pci_ids import \
     PCIClassId, \
     PCIClassification
 
-from sysbusdevice import \
+from .sysbusdevice import \
     SysBusDeviceType
 
-from pcie import \
+from .pcie import \
     PCIEDeviceType
 
-from qom import \
+from .qom import \
     QOMPropertyType, \
     QOMPropertyTypeLink, \
     QOMPropertyTypeString, \
@@ -49,10 +49,10 @@ from qom import \
     QOMDevice, \
     QOMType
 
-from machine import \
+from .machine import \
     MachineType
 
-from machine_description import \
+from .machine_description import \
     Node, \
     MachineNode, \
     BusNode, \
@@ -73,22 +73,22 @@ from machine_description import \
     MemoryRAMNode, \
     MemoryROMNode
 
-from qom_desc import \
+from .qom_desc import \
     QOMDescription
 
-from project import \
+from .project import \
     QProject
 
-from device_description import \
+from .device_description import \
     SysBusDeviceDescription, \
     PCIExpressDeviceDescription
 
-from version import \
+from .version import \
     initialize as qemu_version_initialize, \
     get_vp, \
     get_vs
 
-from machine_editing import \
+from .machine_editing import \
     MachineOperation, \
         MachineNodeOperation, \
             MOp_AddMemChild, \
@@ -126,20 +126,20 @@ from machine_editing import \
                 MOp_SetDevProp, \
         MOp_SetChildBus
 
-from project_editing import \
+from .project_editing import \
     QemuObjectCreationHelper, \
     ProjectOperation, \
         POp_AddDesc, \
             POp_DelDesc, \
         DescriptionOperation
 
-from project_history_tracker import \
+from .project_history_tracker import \
     ProjectHistoryTracker
 
-from qom_editing import \
+from .qom_editing import \
     SetDescriptionReferenceAttribute, \
         DOp_SetPCIIdAttr, \
     DOp_SetAttr
 
-from makefile_patching import \
+from .makefile_patching import \
     patch_makefile

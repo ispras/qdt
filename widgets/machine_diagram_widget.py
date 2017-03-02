@@ -54,22 +54,22 @@ from qemu import \
 from widgets import \
     DeviceSettingsWindow
 
-from irq_settings import \
+from .irq_settings import \
     IRQSettingsWindow
 
-from bus_settings import \
+from .bus_settings import \
     BusSettingsWindow
 
-from popup_helper import \
+from .popup_helper import \
     TkPopupHelper
 
-from cross_dialogs import \
+from .cross_dialogs import \
     asksaveas
 
 from tkMessageBox import \
     showerror
 
-from hotkey import \
+from .hotkey import \
     HotKeyBinding
 
 from canvas2svg import \

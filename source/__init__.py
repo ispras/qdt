@@ -1,4 +1,4 @@
-from model import \
+from .model import \
     Source, \
         Header, \
     AddTypeRefToDefinerException, \
@@ -34,5 +34,5 @@ from model import \
         HeaderFile, \
     SourceTreeContainer
 
-from base_types import \
+from .base_types import \
     add_base_types

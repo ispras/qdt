@@ -4,7 +4,7 @@
 from copy import \
     copy
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
 from Tkinter import \

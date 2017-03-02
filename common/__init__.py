@@ -1,19 +1,19 @@
-from topology import \
+from .topology import \
     sort_topologically, \
     GraphIsNotAcyclic
 
-from pygen import \
+from .pygen import \
     PyGenerator
 
-from ml import \
+from .ml import \
     mlget, \
     ML
 
-from co_dispatcher import \
+from .co_dispatcher import \
     CoTask, \
     CoDispatcher
 
-from inverse_operation import \
+from .inverse_operation import \
     InverseOperation, \
     InitialOperationBackwardIterator, \
     UnimplementedInverseOperation, \
@@ -21,34 +21,34 @@ from inverse_operation import \
     History, \
     HistoryTracker
 
-from class_tools import \
+from .class_tools import \
     get_class, \
     get_class_defaults, \
     gen_class_args
 
-from reflection import \
+from .reflection import \
     get_default_args
 
-from visitor import \
+from .visitor import \
     ObjectVisitor, \
     VisitingIsNotImplemented, \
     BreakVisiting
 
-from search_helper import \
+from .search_helper import \
     co_find_eq
 
-from formated_string_var import \
+from .formated_string_var import \
     FormatedStringChangindException, \
     FormatVar, \
     FormatedStringVar
 
-from extra_math import \
+from .extra_math import \
     Vector, \
     Segment, \
     Polygon, \
     sign
 
-from co_signal import \
+from .co_signal import \
     SignalIsAlreadyAttached, \
     SignalIsNotAttached, \
     SignalDispatcherTask, \

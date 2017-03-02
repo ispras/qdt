@@ -6,7 +6,7 @@ from source import \
     Macro, \
     TypeNotRegistered
 
-from qom import \
+from .qom import \
     QOMDevice, \
     QOMType
 

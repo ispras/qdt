@@ -2,7 +2,7 @@ from common import \
     get_default_args, \
     HistoryTracker
 
-from machine_editing import \
+from .machine_editing import \
     MOp_SetMemNodeAttr, \
     MOp_RemoveMemChild, \
     MOp_DelMemoryNode, \
@@ -18,7 +18,7 @@ from machine_editing import \
     MOp_DelIRQLine, \
     MOp_DelIRQHub
 
-from machine_description import \
+from .machine_description import \
     MemoryAliasNode, \
     MachineNode, \
     DeviceNode, \
@@ -29,7 +29,7 @@ from machine_description import \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
 
-from project_editing import \
+from .project_editing import \
     POp_DelDesc
 
 from common import \

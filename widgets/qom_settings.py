@@ -1,25 +1,25 @@
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
 from Tkinter import \
     BOTH, \
     StringVar
 
-from var_widgets import \
+from .var_widgets import \
     VarLabel, \
     VarButton
 
 from common import \
     mlget as _
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 from qemu import \
     POp_AddDesc, \
     DOp_SetAttr
 
-from qdc_gui_signal_helper import \
+from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):

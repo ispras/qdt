@@ -10,13 +10,13 @@ from os.path import \
 from itertools import \
     count
 
-from machine_description import \
+from .machine_description import \
     MachineNode
 
 from common import \
     co_find_eq
 
-from makefile_patching import \
+from .makefile_patching import \
     patch_makefile
 
 class QProject(object):

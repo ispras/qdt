@@ -1,7 +1,7 @@
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
-from var_widgets import \
+from .var_widgets import \
     VarCombobox
 
 from ttk import \

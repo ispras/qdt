@@ -1,12 +1,12 @@
 import machine
 
-from qom_desc import \
+from .qom_desc import \
     QOMDescription
 
 from itertools import \
     count
 
-from qom import \
+from .qom import \
     QOMPropertyTypeLink
 
 class Node(object):

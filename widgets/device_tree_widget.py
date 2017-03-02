@@ -1,4 +1,4 @@
-from var_widgets import \
+from .var_widgets import \
     VarToplevel, \
     VarTreeview, \
     VarButton, \

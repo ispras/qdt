@@ -1,13 +1,13 @@
-from qom_desc import \
+from .qom_desc import \
     QOMDescription
 
-from sysbusdevice import \
+from .sysbusdevice import \
     SysBusDeviceType
 
-from pcie import \
+from .pcie import \
     PCIEDeviceType
 
-from pci_ids import \
+from .pci_ids import \
     PCIVendorIdNetherExistsNorCreate, \
     PCIId
 

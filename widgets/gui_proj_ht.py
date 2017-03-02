@@ -8,7 +8,7 @@ from qemu import \
 from common import \
     mlget as _
 
-from gui_editing import \
+from .gui_editing import \
     GUIPOp_SetBuildPath
 
 class GUIProjectHistoryTracker(ProjectHistoryTracker):

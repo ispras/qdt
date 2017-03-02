@@ -1,4 +1,4 @@
-from qom import \
+from .qom import \
     QOMPropertyTypeLink, \
     QOMPropertyTypeString, \
     QOMPropertyTypeBoolean, \
@@ -11,7 +11,7 @@ from source import \
     Initializer, \
     Function
 
-from machine_description import \
+from .machine_description import \
     SystemBusDeviceNode, \
     BusNode, \
     SystemBusNode, \
@@ -31,7 +31,7 @@ from common import \
 from os.path import \
     join as join_path
 
-from version import \
+from .version import \
     get_vp
 
 class UnknownMachineNodeType(Exception):

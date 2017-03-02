@@ -13,7 +13,7 @@ from subprocess import \
     check_output, \
     STDOUT
 
-from version import \
+from .version import \
     initialize as initialize_version, \
     get_vp
 
@@ -21,7 +21,7 @@ from os.path import \
     join, \
     isfile
 
-from pci_ids import \
+from .pci_ids import \
     PCIId, \
     PCIClassification
 

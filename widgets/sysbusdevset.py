@@ -13,7 +13,7 @@ from qemu import \
     MOp_AddIOMapping, \
     MOp_SetIOMapping
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 def gen_mapping_string(mapping):

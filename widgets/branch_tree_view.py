@@ -1,7 +1,7 @@
-from tv_width_helper import \
+from .tv_width_helper import \
     TreeviewWidthHelper
 
-from var_widgets import \
+from .var_widgets import \
     VarTreeview
 
 from common import \

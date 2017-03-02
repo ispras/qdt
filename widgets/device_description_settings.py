@@ -1,4 +1,4 @@
-from qom_settings import \
+from .qom_settings import \
     QOMDescriptionSettingsWidget
 
 from qemu import \
@@ -7,26 +7,26 @@ from qemu import \
     POp_AddDesc, \
     DOp_SetAttr
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
 from Tkinter import \
     BOTH, \
     StringVar
 
-from var_widgets import \
+from .var_widgets import \
     VarLabel
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 from common import \
     mlget as _
 
-from obj_ref_var import \
+from .obj_ref_var import \
     ObjRefVar
 
-from pci_id_widget import \
+from .pci_id_widget import \
     PCIIdWidget
 
 class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):

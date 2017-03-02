@@ -1,7 +1,7 @@
-from var_widgets import \
+from .var_widgets import \
     VarTk
 
-from tk_co_dispatcher import \
+from .tk_co_dispatcher import \
     TkCoDispatcher
 
 from common import \

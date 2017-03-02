@@ -1,16 +1,16 @@
-from var_widgets import \
+from .var_widgets import \
     VarLabel, \
     VarButton, \
     VarLabelFrame, \
     VarCheckbutton
 
-from device_tree_widget import \
+from .device_tree_widget import \
     DeviceTreeWidget
 
 from common import \
     mlget as _
 
-from gui_frame import \
+from .gui_frame import \
     GUIFrame
 
 from Tkinter import \
@@ -45,10 +45,10 @@ from itertools import \
     izip, \
     count
 
-from settings_window import \
+from .settings_window import \
     SettingsWidget
 
-from hotkey import \
+from .hotkey import \
     HKEntry
 
 class BusLineDesc(object):

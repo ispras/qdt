@@ -1,4 +1,4 @@
-from device_description_settings import \
+from .device_description_settings import \
     DeviceDescriptionSettingsWidget
 
 from qemu import \

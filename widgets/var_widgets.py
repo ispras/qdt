@@ -282,7 +282,7 @@ if __name__ == "__main__":
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
 
-    from tv_width_helper import \
+    from .tv_width_helper import \
         TreeviewWidthHelper
 
     class TestTV(VarTreeview, TreeviewWidthHelper):

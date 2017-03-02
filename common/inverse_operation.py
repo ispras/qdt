@@ -1,7 +1,7 @@
 from itertools import \
     izip
 
-from ml import \
+from .ml import \
     mlget as _
 
 class UnimplementedInverseOperation(Exception):
