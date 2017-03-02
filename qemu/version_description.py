@@ -251,7 +251,7 @@ class QemuVersionDescription(object):
         if not self.qvc == None:
             raise MultipleQVCInitialization(self.src_path)
 
-        qvc_file_name = "qvc_" + self.commit_sha.decode("utf-8") + ".py"
+        qvc_file_name = u"qvc_" + self.commit_sha + u".py"
         qvc_path = join(self.build_path, qvc_file_name)
 
         if not  isfile(qvc_path):
