@@ -20,19 +20,15 @@ class PCIEDeviceType(QOMDevice):
         vendor,
         device,
         pci_class,
-        char_num = 0,
-        timer_num = 0,
         irq_num = 0,
         mem_bar_num = 1,
         msi_messages_num = 2,
         revision = 0,
         subsys = None,
         subsys_vendor = None,
+        **qomd_kw
     ):
-        super(PCIEDeviceType, self).__init__(name, directory,
-            char_num = char_num,
-            timer_num = timer_num
-        )
+        super(PCIEDeviceType, self).__init__(name, directory, **qomd_kw)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
