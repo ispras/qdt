@@ -1,9 +1,14 @@
 class QOMDescription(object):
-    def __init__(self, name, directory, timer_num = 0, char_num = 0):
+    def __init__(self, name, directory,
+            block_num = 0,
+            timer_num = 0,
+            char_num = 0
+        ):
         self.name = name
         self.directory = directory
         self.timer_num = timer_num
         self.char_num = char_num
+        self.block_num = block_num
         self.project = None
 
     def __children__(self):
