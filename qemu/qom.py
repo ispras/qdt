@@ -145,6 +145,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "BlockBackend*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_DRIVE", state_struct
+    ),
     "CharDriverState*" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_CHR", state_struct
     ),
@@ -171,10 +174,11 @@ type2vmstate = {
 }
 
 class QOMType(object):
-    def __init__(self, name, timer_num = 0, char_num = 0):
+    def __init__(self, name, timer_num = 0, char_num = 0, block_num = 0):
         self.qtn = QemuTypeName(name)
         self.timer_num = timer_num
         self.char_num = char_num
+        self.block_num = block_num
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
 
@@ -196,6 +200,31 @@ class QOMType(object):
         self.add_state_field_h("bool", "var_b1", save = False, prop = True,
             default = True
         )
+
+    # Block driver
+    def block_name(self, index):
+        if self.block_num == 1:
+            return "blk"
+        else:
+            return "blk_%u" % index
+
+    def block_prop_name(self, index):
+        pfx = self.qtn.for_macros + "_"
+        if self.block_num == 1:
+            return pfx + "DRIVE"
+        else:
+            return pfx + "DRIVE_%u" % index
+
+    def block_declare_fields(self):
+        for index in range(self.block_num):
+            f = QOMStateField(
+                Pointer(Type.lookup("BlockBackend")), self.block_name(index),
+                save = False,
+                prop = True
+            )
+            self.add_state_field(f)
+            # override macro name assigned by `add_state_field`
+            f.prop_macro_name = self.block_prop_name(index)
 
     # Character driver
     def char_name(self, index):
@@ -626,11 +655,8 @@ class QOMStateField(object):
         self.default = default
 
 class QOMDevice(QOMType):
-    def __init__(self, name, directory, timer_num = 0, char_num = 0):
-        super(QOMDevice, self).__init__(name,
-            timer_num = timer_num,
-            char_num = char_num
-        )
+    def __init__(self, name, directory, **qom_kw):
+        super(QOMDevice, self).__init__(name, **qom_kw)
 
         self.directory = directory
 

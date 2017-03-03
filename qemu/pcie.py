@@ -20,19 +20,15 @@ class PCIEDeviceType(QOMDevice):
         vendor,
         device,
         pci_class,
-        char_num = 0,
-        timer_num = 0,
         irq_num = 0,
         mem_bar_num = 1,
         msi_messages_num = 2,
         revision = 0,
         subsys = None,
         subsys_vendor = None,
+        **qomd_kw
     ):
-        super(PCIEDeviceType, self).__init__(name, directory,
-            char_num = char_num,
-            timer_num = timer_num
-        )
+        super(PCIEDeviceType, self).__init__(name, directory, **qomd_kw)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
@@ -69,6 +65,8 @@ class PCIEDeviceType(QOMDevice):
         self.timer_declare_fields()
 
         self.char_declare_fields()
+
+        self.block_declare_fields()
 
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
@@ -256,6 +254,21 @@ class PCIEDeviceType(QOMDevice):
     helpers = ", ".join([h.name for h in har_handlers])
                 )
                 realize_used_types.extend(har_handlers)
+
+        if self.block_num > 0:
+            realize_code += "\n"
+            s_is_used = True
+            # actually not, but user probably needed functions from same header
+            realize_used_types.append(Type.lookup("BlockDevOps"))
+
+            for blkN in range(self.block_num):
+                blk_name = self.block_name(blkN)
+                realize_code += """\
+    if (s->%s) {
+        /* TODO: Implement interaction with block driver. */
+    }
+""" % (blk_name
+                )
 
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,

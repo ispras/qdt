@@ -281,6 +281,10 @@ def define_only_qemu_2_6_0_types():
     Header.lookup("hw/pci/pci_host.h").add_reference(osdep_fake_type)
 
     Header.lookup("qemu/typedefs.h").add_types([
+        # BlockBackend is defined in internal block_int.h. Its fields may not
+        # be accessed outside internal code. Methods from block-backend.h must
+        # be used instead.
+        Structure("BlockBackend"),
         Structure("I2CBus") # the structure is defined in .c file
     ]).add_reference(osdep_fake_type)
 
@@ -339,6 +343,12 @@ def define_only_qemu_2_6_0_types():
                 Type.lookup("int").gen_var("event")
             ]
         )
+    ]).add_references([
+        osdep_fake_type
+    ])
+
+    Header.lookup("sysemu/block-backend.h").add_types([
+        Structure("BlockDevOps"),
     ]).add_references([
         osdep_fake_type
     ])
