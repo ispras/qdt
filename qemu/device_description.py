@@ -55,12 +55,7 @@ class SysBusDeviceDescription(QOMDescription):
         gen.gen_end()
 
 class PCIExpressDeviceDescription(QOMDescription):
-    def __init__(self,
-        name,
-        directory,
-        vendor,
-        device,
-        pci_class,
+    def __init__(self, name, directory, vendor, device, pci_class,
         char_num = 0,
         timer_num = 0,
         irq_num = 0,
@@ -71,7 +66,7 @@ class PCIExpressDeviceDescription(QOMDescription):
         subsys_vendor = None
     ):
 
-        QOMDescription.__init__(self, name = name, directory = directory,
+        QOMDescription.__init__(self, name, directory,
             char_num = char_num,
             timer_num = timer_num
         )
