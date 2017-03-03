@@ -145,6 +145,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "BlockBackend*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_DRIVE", state_struct
+    ),
     "CharDriverState*" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_CHR", state_struct
     ),
