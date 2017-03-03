@@ -13,18 +13,14 @@ from .pci_ids import \
 
 class SysBusDeviceDescription(QOMDescription):
     def __init__(self, name, directory,
-        char_num = 0,
-        timer_num = 0,
         out_irq_num = 1,
         in_irq_num = 1,
         mmio_num = 1,
-        pio_num = 0
+        pio_num = 0,
+        **qomd_kw
     ):
 
-        QOMDescription.__init__(self, name, directory,
-            char_num = char_num,
-            timer_num = timer_num
-        )
+        QOMDescription.__init__(self, name, directory, **qomd_kw)
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
         self.mmio_num = mmio_num
