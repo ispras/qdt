@@ -65,6 +65,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
         self.qom_desc_int_attrs = [
+            ("block_num", _("Block driver quantity")),
             ("char_num", _("Character driver quantity")),
             ("timer_num", _("Timer quantity"))
         ]
