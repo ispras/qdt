@@ -30,6 +30,7 @@ class SysBusDeviceDescription(QOMDescription):
         return SysBusDeviceType(
             name = self.name,
             directory = self.directory,
+            block_num = self.block_num,
             char_num = self.char_num,
             timer_num = self.timer_num,
             out_irq_num = self.out_irq_num,
@@ -42,6 +43,7 @@ class SysBusDeviceDescription(QOMDescription):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field('directory = "' + self.directory + '"')
+        gen.gen_field("block_num = " + gen.gen_const(self.block_num))
         gen.gen_field("char_num = " + gen.gen_const(self.char_num))
         gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
         gen.gen_field("out_irq_num = " + str(self.out_irq_num))
