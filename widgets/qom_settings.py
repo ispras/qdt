@@ -65,10 +65,10 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
         # Integer argument editing rows
-        for row, (iattr, text) in enumerate(
+        for row, (attr, text) in enumerate(
             [
-                ("char_quantity", _("Character driver quantity")),
-                ("timer_quantity", _("Timer quantity"))
+                ("char_num", _("Character driver quantity")),
+                ("timer_num", _("Timer quantity"))
             ],
             2
         ):
@@ -81,8 +81,8 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             e = HKEntry(f, textvariable = v)
             e.grid(row = row, column = 1, sticky = "NEWS")
 
-            setattr(self, "var_" + iattr, v)
-            setattr(self, "e_" + iattr, e)
+            setattr(self, "var_" + attr, v)
+            setattr(self, "e_" + attr, e)
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -110,8 +110,8 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __refresh__(self):
         self.var_name.set(self.desc.name)
         self.var_directory.set(self.desc.directory)
-        self.var_timer_quantity.set(str(self.desc.timer_num))
-        self.var_char_quantity.set(str(self.desc.char_num))
+        self.var_timer_num.set(str(self.desc.timer_num))
+        self.var_char_num.set(str(self.desc.char_num))
 
     def __apply__(self):
         if self.pht is None:
@@ -125,12 +125,12 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         if new_dir != self.desc.directory:
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
 
-        for iattr, dattr in [
-            ("char_quantity", "char_num"),
-            ("timer_quantity", "timer_num")
+        for attr in [
+            "char_num",
+            "timer_num"
         ]:
-            v = getattr(self, "var_" + iattr)
-            e = getattr(self, "e_" + iattr)
+            v = getattr(self, "var_" + attr)
+            e = getattr(self, "e_" + attr)
 
             new_val = v.get()
             try:
@@ -140,8 +140,8 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             else:
                 e.config(bg = "white")
 
-            if new_val != getattr(self.desc, dattr):
-                self.pht.stage(DOp_SetAttr, dattr, new_val, self.desc)
+            if new_val != getattr(self.desc, attr):
+                self.pht.stage(DOp_SetAttr, attr, new_val, self.desc)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
