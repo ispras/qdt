@@ -53,6 +53,7 @@ class SysBusDeviceType(QOMDevice):
 
         self.timer_declare_fields()
         self.char_declare_fields()
+        self.block_declare_fields()
 
         self.state_struct = self.gen_state()
 
@@ -114,6 +115,21 @@ class SysBusDeviceType(QOMDevice):
     helpers = ", ".join([h.name for h in har_handlers])
                 )
                 realize_used_types.update(har_handlers)
+
+        if self.block_num > 0:
+            realize_code += "\n"
+            s_is_used = True
+            # actually not, but user probably needed functions from same header
+            realize_used_types.add(Type.lookup("BlockDevOps"))
+
+            for blkN in range(self.block_num):
+                blk_name = self.block_name(blkN)
+                realize_code += """\
+    if (s->%s) {
+        /* TODO: Implement interaction with block driver. */
+    }
+""" % (blk_name
+                )
 
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
