@@ -12,9 +12,7 @@ from .pci_ids import \
     PCIId
 
 class SysBusDeviceDescription(QOMDescription):
-    def __init__(self,
-        name,
-        directory,
+    def __init__(self, name, directory,
         char_num = 0,
         timer_num = 0,
         out_irq_num = 1,
@@ -23,7 +21,7 @@ class SysBusDeviceDescription(QOMDescription):
         pio_num = 0
     ):
 
-        QOMDescription.__init__(self, name = name, directory = directory,
+        QOMDescription.__init__(self, name, directory,
             char_num = char_num,
             timer_num = timer_num
         )
