@@ -64,14 +64,13 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e = HKEntry(f, textvariable = v)
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
+        self.qom_desc_int_attrs = [
+            ("char_num", _("Character driver quantity")),
+            ("timer_num", _("Timer quantity"))
+        ]
+
         # Integer argument editing rows
-        for row, (attr, text) in enumerate(
-            [
-                ("char_num", _("Character driver quantity")),
-                ("timer_num", _("Timer quantity"))
-            ],
-            2
-        ):
+        for row, (attr, text) in enumerate(self.qom_desc_int_attrs, 2):
             f.rowconfigure(row, weight = 0)
 
             l = VarLabel(f, text = text)
@@ -110,8 +109,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __refresh__(self):
         self.var_name.set(self.desc.name)
         self.var_directory.set(self.desc.directory)
-        self.var_timer_num.set(str(self.desc.timer_num))
-        self.var_char_num.set(str(self.desc.char_num))
+
+        for attr, text in self.qom_desc_int_attrs:
+            getattr(self, "var_" + attr).set(getattr(self.desc, attr))
 
     def __apply__(self):
         if self.pht is None:
@@ -125,10 +125,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         if new_dir != self.desc.directory:
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
 
-        for attr in [
-            "char_num",
-            "timer_num"
-        ]:
+        for attr, text in self.qom_desc_int_attrs:
             v = getattr(self, "var_" + attr)
             e = getattr(self, "e_" + attr)
 
