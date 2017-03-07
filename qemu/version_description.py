@@ -628,10 +628,6 @@ class QemuVersionDescription(object):
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 
-
-
-
-
     @staticmethod
     def check_uncommit_change(src_path):
         cmd = ['git', '-C', src_path, 'status']
