@@ -376,7 +376,7 @@ use another way to check this.
         dt_db_fname = join(self.build_path, "dt.json")
         if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname + "...")
-            dt_db_reader = open(dt_db_fname, "rb")
+            dt_db_reader = open(dt_db_fname, "r")
             self.qvc.device_tree = load(dt_db_reader)
             dt_db_reader.close()
             print("Device Tree was loaded from " + dt_db_fname)
