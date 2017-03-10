@@ -84,9 +84,7 @@ from .device_description import \
     PCIExpressDeviceDescription
 
 from .version import \
-    initialize as qemu_version_initialize, \
-    get_vp, \
-    get_vs
+    get_vp
 
 from .machine_editing import \
     MachineOperation, \
