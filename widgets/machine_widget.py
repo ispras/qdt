@@ -66,12 +66,6 @@ class MachineTabsWidget(VarNotebook):
         self.mtw = MemoryTreeWidget(self.mach, self)
         self.add(self.mtw, text = "Memory")
 
-    def gen_layout(self):
-        return self.mdw.gen_layout()
-
-    def set_layout(self, layout):
-        self.mdw.set_layout(layout)
-
 class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, *args, **kw):
         QOMDescriptionSettingsWidget.__init__(self, *args, **kw)
