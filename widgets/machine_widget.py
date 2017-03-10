@@ -18,6 +18,26 @@ from .var_widgets import \
 from common import \
     mlget as _
 
+class MachineWidgetLayout(object):
+    """
+    mtwl = Memory Tree Widget Layout
+    mdwl = Machine Diagram Widget Layout
+    """
+    def __init__(self, mdwl, mtwl, use_tabs = True):
+        self.mdwl, self.mtwl, self.use_tabs = mdwl, mtwl, use_tabs
+
+    def __children__(self):
+        return []
+
+    def __gen_code__(self, g):
+        g.reset_gen(self)
+        g.gen_field("mdwl = ")
+        g.pprint(self.mdwl)
+        g.gen_field("mtwl = ")
+        g.pprint(self.mtwl)
+        g.gen_field("use_tabs = " + g.gen_const(self.use_tabs))
+        g.gen_end()
+
 class MachinePanedWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
