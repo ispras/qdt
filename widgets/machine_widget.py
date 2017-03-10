@@ -116,18 +116,20 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
                 w.set_layout(l)
 
     def gen_layout(self):
-        layout = self.mw.gen_layout()
-
-        try:
-            extra = layout[-1]
-        except KeyError:
-            layout[-1] = extra = {}
-
-        extra["use tabs"] = self.var_tabs.get()
-
-        return layout
+        return MachineWidgetLayout(
+            self.mw.mdw.gen_layout(),
+            self.mw.mtw.gen_layout(),
+            use_tabs = isinstance(self.mw, MachineTabsWidget)
+        )
 
     def set_layout(self, layout):
+        if isinstance(layout, MachineWidgetLayout):
+            self.var_tabs.set(layout.use_tabs)
+            self.mw.mdw.set_layout(layout.mdwl)
+            self.mw.mtw.set_layout(layout.mtwl)
+            return
+
+        # Previous version compatibility
         try:
             extra = layout[-1]
         except KeyError:
@@ -139,8 +141,8 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
                 use_tabs = True
 
         self.var_tabs.set(use_tabs)
-
-        self.mw.set_layout(layout)
+        self.mw.mdw.set_layout(layout)
+        self.mw.mtw.set_layout(None)
 
     def __apply_internal__(self):
         # There is nothing to apply additionally
