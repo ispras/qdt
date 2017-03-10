@@ -99,9 +99,9 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
         if use_tabs != isinstance(self.mw, MachineTabsWidget):
             if self.mw is None:
-                layout = {}
+                layout = [ {}, None ]
             else:
-                layout = self.mw.gen_layout()
+                layout = [ w.gen_layout() for w in [self.mw.mdw, self.mw.mtw] ]
                 self.mw.destroy()
 
             # 'self' is used as master widget (instead of self.settings_fr)
@@ -112,7 +112,8 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             self.mw.pack()
 
-            self.mw.set_layout(layout)
+            for w, l in zip([self.mw.mdw, self.mw.mtw], layout):
+                w.set_layout(l)
 
     def gen_layout(self):
         layout = self.mw.gen_layout()
