@@ -11,6 +11,16 @@ class GUILayout(object):
         self.widget = None
 
         try:
+            (self.opaque.__gen_code__)
+        except AttributeError:
+            pass
+        else:
+            # Serializable object in opaque, no legacy compatibility is needed.
+            self.shown = True if shown is None else shown
+            return
+
+        # Legacy formats compatibility.
+        try:
             cfg = self.opaque[-1]
         except KeyError:
             self.shown = shown if shown is not None else True
@@ -36,7 +46,12 @@ class GUILayout(object):
             self.opaque = self.widget.gen_layout()
 
     def __children__(self):
-        return []
+        try:
+            (self.opaque.__gen_code__)
+        except AttributeError:
+            return []
+        else:
+            return [self.opaque]
 
     def __gen_code__(self, g):
         g.reset_gen(self)
