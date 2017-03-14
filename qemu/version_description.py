@@ -17,6 +17,7 @@ from subprocess import \
     STDOUT
 
 from .version import \
+    QVHDict, \
     initialize as initialize_version, \
     qemu_versions_desc, \
     get_vp
@@ -153,6 +154,22 @@ class QemuVersionCache(object):
         # Create source tree container
         self.stc = SourceTreeContainer()
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
+
+    def co_computing_parameters(self, repo):
+        print("Creating graph of commit's description ...")
+        for ret in self.co_gen_commits_graph(repo):
+            yield ret
+        print("Graph of commit's description was created")
+
+        for ret in self.co_propagete_param():
+            yield ret
+
+        c = self.commit_desc_nodes[repo.head.commit.hexsha]
+        param = self.version_desc = QVHDict()
+        for k, v in c.param_nval.items():
+            param[k] = v
+        for k, v in c.param_oval.items():
+            param[k] = v
 
     def co_propagete_param(self):
         vd = qemu_versions_desc
