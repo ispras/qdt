@@ -35,6 +35,26 @@ def parse_version(ver):
 
     return (major, minor, micro, suffix)
 
+# Callable
+def c(value):
+    return globals()[value]
+
+# Basic
+def b(value):
+    return value
+
+# QEMU Version Heuristic Dictionary
+class QVHDict(dict):
+    def __setitem__(self, key, value):
+        if callable(value):
+            super(QVHDict, self).__setitem__(key, ("c", value.__name__))
+        else:
+            super(QVHDict, self).__setitem__(key, ("b", value))
+
+    def __getitem__(self, key):
+        converter, value = super(QVHDict, self).__getitem__(key)
+        return c(converter)(value)
+
 class QEMUVersionParameterDescription(object):
     def __init__(self, name, new_value, old_value = None):
         self.name = name
