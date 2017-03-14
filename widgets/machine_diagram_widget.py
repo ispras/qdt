@@ -1054,7 +1054,8 @@ IRQ line creation
         p = self.current_popup
 
         self.show_irq_line_settings(self.node2dev[self.highlighted_irq_line],
-            p.winfo_rootx(), p.winfo_rooty()
+            p.winfo_rootx() - self.winfo_rootx(),
+            p.winfo_rooty() - self.winfo_rooty()
         )
 
         # Allow highlighting of another lines when the command was done 
