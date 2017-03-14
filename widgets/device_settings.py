@@ -203,7 +203,7 @@ class PropLineDesc(object):
         if prop_type == QOMPropertyTypeLink:
             var = StringVar()
             keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
-                    for n in [ None ] + self.dsw.mach.id2node.values()
+                    for n in [ None ] + list(self.dsw.mach.id2node.values())
                    ]
 
             ret = Combobox(self.dsw.props_lf,
