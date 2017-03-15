@@ -748,6 +748,19 @@ class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
             self.gen_id_str(self.new_val)
         )
 
+class MOp_SetMemNodeAlias(MachineNodeSetLinkAttributeOperation):
+    def __description__(self):
+        mach = self.find_desc()
+        mem = mach.id2node[self.node_id]
+
+        return _("Redirect memory alias '%s' (%d) from %s to %s.\
+") % (
+            mem.name,
+            self.node_id,
+            self.gen_id_str(self.old_val),
+            self.gen_id_str(self.new_val)
+        )
+
 class MOp_SetBusAttr(MachineDeviceSetAttributeOperation):
     def __description__(self):
         return _("Replace value '%s' of attribute '%s' of bus %d with value \
