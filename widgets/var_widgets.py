@@ -207,7 +207,10 @@ class VarTreeview(Treeview):
         except KeyError:
             pass
         else:
-            for col, v in enumerate(list(values)):
+            if not isinstance(values, (tuple, list)):
+                values = (values,)
+
+            for col, v in enumerate(values):
                 if isinstance(v, Variable):
                     to_track.append((col, v))
                     values[col] = v.get()
