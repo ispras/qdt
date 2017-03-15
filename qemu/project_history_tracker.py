@@ -5,6 +5,7 @@ from common import \
 from .machine_editing import \
     MOp_SetMemNodeAttr, \
     MOp_RemoveMemChild, \
+    MOp_AddMemoryNode, \
     MOp_DelMemoryNode, \
     MOp_SetDevProp, \
     MOp_DelDevProp, \
@@ -205,6 +206,24 @@ class MachineProxyTracker(object):
         self.stage(MOp_RemoveMemChild, child_id, parent_id)
 
         self.set_sequence_description(_("Exclude memory region."))
+
+    def add_memory_node(self, class_name, new_id, **memory_arguments):
+        class2str = {
+           "MemoryNode": "Container",
+           "MemoryAliasNode": "Alias",
+           "MemoryRAMNode": "RAM",
+           "MemoryROMNode": "ROM"
+        }
+
+        if "name" not in memory_arguments:
+            memory_arguments["name"] = class2str[class_name];
+
+        if "size" not in memory_arguments:
+            memory_arguments["size"] = 0xFEED;
+
+        self.stage(MOp_AddMemoryNode, class_name, new_id, **memory_arguments)
+
+        self.set_sequence_description(_("Add memory node."))
 
     def delete_memory_node(self, m_id):
         mem = self.mach.id2node[m_id]
