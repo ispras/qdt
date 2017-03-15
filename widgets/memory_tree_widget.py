@@ -220,10 +220,11 @@ snapshot mode or the command should be disabled too.
 
     def on_b3_press(self, event):
         iid = self.identify_row(event.y)
-        """ TODO: when user clicks over a row, the row should be be selected
+        """ When user clicks over a row, the row should be be selected
         in the tree view. This prevents confusion of row for which the popup
         is shown. """
 
+        self.selection_set(iid)
         try:
             self.selected = self.iid2node[iid]
 
