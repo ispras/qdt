@@ -217,6 +217,8 @@ class VarTreeview(Treeview):
         for col, v in to_track:
             TreeviewCellBinding(self, col, item_iid, v)
 
+        return item_iid
+
 class ComboboxEntryBinding():
     def __init__(self, varcombobox, idx, variable):
         self.vcb = varcombobox
