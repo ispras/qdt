@@ -512,6 +512,12 @@ def initialize(_version_string):
     global version_string
     version_string = _version_string
 
+def initialize_version(qvh_vp):
+    global version_parameters
+    version_parameters = {}
+    for k in qvh_vp.keys():
+        version_parameters[k] = qvh_vp[k]
+
 def get_vp():
     return version_parameters
 
