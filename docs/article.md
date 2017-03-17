@@ -1,4 +1,4 @@
-[//]: # (pandoc article.md --standalone --smart -o article.html)
+[//]: # (pandoc article.md --standalone --smart -o article.docx -o article.html)
 
 # Автоматизация разработки моделей устройств и вычислительных машин для QEMU
 
