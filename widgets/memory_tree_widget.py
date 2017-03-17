@@ -63,12 +63,16 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         p2 = VarMenu(self.winfo_toplevel(), tearoff = 0)
         p3 = VarMenu(self.winfo_toplevel(), tearoff = 0)
 
-        for command in [
-            _("Settings"),
-            _("Delete")
+        for menu in [
+            p0, p1
         ]:
-            p0.add_command(
-                label = command,
+            menu.add_command(
+                label = _("Alias target"),
+                command = self.on_popup_node_alias_target
+            )
+            menu.add_separator()
+            menu.add_command(
+                label = _("Settings"),
                 command = self.on_popup_node_settings
             )
 
@@ -77,19 +81,23 @@ does action immediately then it should be disabled in snapshot mode like this
 command. If a command shows a dialog then either the dialog should support
 snapshot mode or the command should be disabled too.
             """
-            p1.add_command(
-                label = command,
+            menu.add_separator()
+            menu.add_command(
+                label = _("Delete"),
                 command = self.notify_popup_command if self.mht is None else \
                     self.on_popup_node_delete
             )
+        p1.add_separator()
 
         c0 = VarMenu(p1, tearoff = 0)
         c1 = VarMenu(p2, tearoff = 0)
+
+        self.alias_to = None
+
         for memory_type in [
             _("Container"),
             _("RAM"),
-            _("ROM"),
-            _("Alias")
+            _("ROM")
         ]:
             c0.add_command(
                 label = memory_type,
@@ -104,6 +112,15 @@ snapshot mode or the command should be disabled too.
                     memory_type.key_value.lower().replace(" ", "_").\
                         replace("-", "_")
                 )
+            )
+
+        for menu in [
+            c0, c1
+        ]:
+             menu.add_command(
+                label = _("Alias"),
+                command = self.on_add_alias,
+                state = "disabled"
             )
 
         p1.add_cascade(
@@ -123,12 +140,18 @@ snapshot mode or the command should be disabled too.
 
         self.popup_leaf_node = p0
         self.popup_not_leaf_node = p1
+        self.popup_not_leaf_node_submenu = c0
         self.popup_empty = p2
+        self.popup_empty_submenu = c1
         self.popup_temp_node = p3
 
         self.widget_initialization()
 
     def on_popup_node_settings(self):
+        # TODO
+        self.notify_popup_command()
+
+    def on_popup_node_alias_target(self):
         # TODO
         self.notify_popup_command()
 
