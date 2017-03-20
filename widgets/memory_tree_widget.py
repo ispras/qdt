@@ -242,3 +242,9 @@ snapshot mode or the command should be disabled too.
         self.show_popup(event.x_root, event.y_root, popup, self.selected)
 
         # print("on_b3_press")
+
+    def gen_layout(self):
+        return None
+
+    def set_layout(self, layout):
+        assert layout is None

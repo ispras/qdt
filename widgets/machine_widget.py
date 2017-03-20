@@ -18,6 +18,26 @@ from .var_widgets import \
 from common import \
     mlget as _
 
+class MachineWidgetLayout(object):
+    """
+    mtwl = Memory Tree Widget Layout
+    mdwl = Machine Diagram Widget Layout
+    """
+    def __init__(self, mdwl, mtwl, use_tabs = True):
+        self.mdwl, self.mtwl, self.use_tabs = mdwl, mtwl, use_tabs
+
+    def __children__(self):
+        return []
+
+    def __gen_code__(self, g):
+        g.reset_gen(self)
+        g.gen_field("mdwl = ")
+        g.pprint(self.mdwl)
+        g.gen_field("mtwl = ")
+        g.pprint(self.mtwl)
+        g.gen_field("use_tabs = " + g.gen_const(self.use_tabs))
+        g.gen_end()
+
 class MachinePanedWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
         PanedWindow.__init__(self, *args, **kw)
@@ -32,12 +52,6 @@ class MachinePanedWidget(PanedWindow):
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw)
 
-    def gen_layout(self):
-        return self.mdw.gen_layout()
-
-    def set_layout(self, layout):
-        self.mdw.set_layout(layout)
-
 class MachineTabsWidget(VarNotebook):
     def __init__(self, machine_description, *args, **kw):
         VarNotebook.__init__(self, *args, **kw)
@@ -51,12 +65,6 @@ class MachineTabsWidget(VarNotebook):
 
         self.mtw = MemoryTreeWidget(self.mach, self)
         self.add(self.mtw, text = "Memory")
-
-    def gen_layout(self):
-        return self.mdw.gen_layout()
-
-    def set_layout(self, layout):
-        self.mdw.set_layout(layout)
 
 class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, *args, **kw):
@@ -79,9 +87,9 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
         if use_tabs != isinstance(self.mw, MachineTabsWidget):
             if self.mw is None:
-                layout = {}
+                layout = [ {}, None ]
             else:
-                layout = self.mw.gen_layout()
+                layout = [ w.gen_layout() for w in [self.mw.mdw, self.mw.mtw] ]
                 self.mw.destroy()
 
             # 'self' is used as master widget (instead of self.settings_fr)
@@ -92,21 +100,24 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             self.mw.pack()
 
-            self.mw.set_layout(layout)
+            for w, l in zip([self.mw.mdw, self.mw.mtw], layout):
+                w.set_layout(l)
 
     def gen_layout(self):
-        layout = self.mw.gen_layout()
-
-        try:
-            extra = layout[-1]
-        except KeyError:
-            layout[-1] = extra = {}
-
-        extra["use tabs"] = self.var_tabs.get()
-
-        return layout
+        return MachineWidgetLayout(
+            self.mw.mdw.gen_layout(),
+            self.mw.mtw.gen_layout(),
+            use_tabs = isinstance(self.mw, MachineTabsWidget)
+        )
 
     def set_layout(self, layout):
+        if isinstance(layout, MachineWidgetLayout):
+            self.var_tabs.set(layout.use_tabs)
+            self.mw.mdw.set_layout(layout.mdwl)
+            self.mw.mtw.set_layout(layout.mtwl)
+            return
+
+        # Previous version compatibility
         try:
             extra = layout[-1]
         except KeyError:
@@ -118,8 +129,8 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
                 use_tabs = True
 
         self.var_tabs.set(use_tabs)
-
-        self.mw.set_layout(layout)
+        self.mw.mdw.set_layout(layout)
+        self.mw.mtw.set_layout(None)
 
     def __apply_internal__(self):
         # There is nothing to apply additionally

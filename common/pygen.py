@@ -78,11 +78,15 @@ class PyGenerator(object):
 
         for o in objects:
             self.write(self.nameof(o) + " = ")
-            try: 
-                o.__gen_code__(self)
-            except Exception as e:
-                print(e)
+            try:
+                gen_code = o.__gen_code__
+            except AttributeError:
+                print("Object %s of type %s does not provide __gen_code__" % (
+                    str(o), type(o).__name__
+                ))
                 self.line("None")
+            else:
+                gen_code(self)
             self.line()
 
     def gen_const(self, c):
