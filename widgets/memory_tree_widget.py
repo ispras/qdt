@@ -289,6 +289,11 @@ snapshot mode or the command should be disabled too.
                         else:
                             return str(val)
 
+                    if isinstance(m, MemoryLeafNode):
+                        if m.parent and not self.exists(m.parent.id):
+                            unprocessed_mems.append(m)
+                            continue
+
                     parent_id = ""
                     if m.parent and self.exists(m.parent.id):
                         parent_id = m.parent.id
