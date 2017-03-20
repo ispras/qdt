@@ -18,6 +18,9 @@ from .popup_helper import \
 from six import \
     integer_types
 
+from six.moves.tkinter import \
+    TclError
+
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
         VarTreeview.__init__(self, *args, **kw)
@@ -241,7 +244,45 @@ snapshot mode or the command should be disabled too.
         # print("on_b3_press")
 
     def gen_layout(self):
-        return None
+        layout = {}
 
-    def set_layout(self, layout):
-        assert layout is None
+        if not self.get_children():
+            return layout
+
+        for m in self.mach.mems:
+            try:
+                val = bool(self.item(str(m.id), "open"))
+            except TclError:
+                pass
+
+            if val:
+                layout[m.id] = val
+
+        cols_width = {}
+        for col in ("#0",) + self.cget("columns"):
+            cols_width[col] = self.column(col, "width")
+
+        layout[-1] = { "columns width": cols_width }
+
+        return layout
+
+    def set_layout(self, l):
+        layout_bak = self.gen_layout()
+        try:
+            for id, desc in l.items():
+                if id == -1:
+                    try:
+                        cols_width = desc["columns width"]
+                    except KeyError:
+                        cols_width = {}
+
+                    for col, col_width in cols_width.items():
+                        self.column(col, width = col_width)
+
+                    continue
+                if id in self.mach.id2node:
+                    self.item(str(id), open = desc)
+        except:
+            # if new layout is incorrect then restore previous one
+            self.set_layout(layout_bak)
+
