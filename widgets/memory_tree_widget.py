@@ -155,9 +155,6 @@ snapshot mode or the command should be disabled too.
         self.see(self.selected.id)
 
     def widget_initialization(self):
-        self.delete(*self.get_children())
-
-        self.iid2node.clear()
         mems_queue = [m for m in self.mach.mems if not m.parent]
         unprocessed_mems = list(self.mach.mems)
         memtype2str = {
