@@ -123,7 +123,7 @@ snapshot mode or the command should be disabled too.
         self.popup_empty = p2
         self.popup_temp_node = p3
 
-        self.after(0, self.widget_initialization)
+        self.widget_initialization()
 
     def on_popup_node_settings(self):
         # TODO
