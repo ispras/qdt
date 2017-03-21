@@ -379,7 +379,6 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         # snapshot mode without MHT
         if self.mht is not None:
-            self.mht = pht.get_machine_proxy(self.mach)
             self.mht.add_on_changed(self.on_machine_changed)
 
         self.id2node = {}
