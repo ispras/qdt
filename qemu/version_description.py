@@ -698,6 +698,7 @@ use another way to check this.
                                     dict_dt["macro"].append(t.name)
                             else:
                                 dict_dt["macro"] = [t.name]
+                yield True
             if "property" in dict_dt:
                 for dt_property in dict_dt["property"]:
                     dt_property_name = dt_property["name"]
@@ -710,7 +711,7 @@ use another way to check this.
                                             dt_property["macro"].append(t.name)
                                     else:
                                         dt_property["macro"] = [t.name]
+                    yield True
             if "children" in dict_dt:
-                yield True
                 for ret in self.co_add_dt_macro(dict_dt["children"]):
                     yield True
