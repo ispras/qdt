@@ -141,10 +141,13 @@ class PCIClassification(object):
         gen.line(gen.nameof(self) + ".tmp = PCIId.db")
         gen.line("PCIId.db = " + gen.nameof(self))
 
-        for pci_id in self.vendors.values() \
-             + self.devices.values() \
-             + self.classes.values() \
-        :
+        for pci_id in self.vendors.values():
+            pci_id.__gen_code__(gen)
+
+        for pci_id in self.devices.values():
+            pci_id.__gen_code__(gen)
+
+        for pci_id in self.classes.values():
             pci_id.__gen_code__(gen)
 
         gen.line("PCIId.db = " + gen.nameof(self) + ".tmp")
