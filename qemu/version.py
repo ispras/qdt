@@ -7,33 +7,25 @@ from source import \
     Macro, \
     Structure
 
-from six.moves import \
-    range as xrange
+# Callable
+def c(value):
+    return globals()[value]
 
-def parse_version(ver):
-    ver_parts = ver.split(".")
+# Basic
+def b(value):
+    return value
 
-    if ver_parts:
-        major = int(ver_parts.pop(0))
-    else:
-        major = 0
+# QEMU Version Heuristic Dictionary
+class QVHDict(dict):
+    def __setitem__(self, key, value):
+        if callable(value):
+            super(QVHDict, self).__setitem__(key, ("c", value.__name__))
+        else:
+            super(QVHDict, self).__setitem__(key, ("b", value))
 
-    if ver_parts:
-        minor = int(ver_parts.pop(0))
-    else:
-        minor = 0
-
-    if ver_parts:
-        micro = int(ver_parts.pop(0))
-    else:
-        micro = 0
-
-    if ver_parts:
-        suffix = ".".join(ver_parts)
-    else:
-        suffix = ""
-
-    return (major, minor, micro, suffix)
+    def __getitem__(self, key):
+        converter, value = super(QVHDict, self).__getitem__(key)
+        return c(converter)(value)
 
 class QEMUVersionParameterDescription(object):
     def __init__(self, name, new_value, old_value = None):
@@ -41,24 +33,19 @@ class QEMUVersionParameterDescription(object):
         self.new_value = new_value
         self.old_value = old_value
 
-class QEMUVersionDescription(object):
-    def __init__(self, version_string, parameters):
-        self.version = parse_version(version_string)
-        self.parameters = list(parameters)
+    # modification detection code
+    def gen_mdc(self):
+        if callable(self.new_value):
+            nv = self.new_value.__name__
+        else:
+            nv = self.new_value
 
-    def get_parameter(self, name):
-        return self.parameters[name]
+        if callable(self.old_value):
+            ov = self.old_value.__name__
+        else:
+            ov = self.old_value
 
-    def compare(self, version_string):
-        version = parse_version(version_string)
-
-        for i in xrange(0, 3):
-            if self.version[i] != version[i]:
-                return version[i] - self.version[i]
-
-        if self.version[3] == "" and version[3] == "":
-            return 0
-        raise Exception("Lexical comparation of version suffix is not implemented yet!")
+        return self.name + nv + ov
 
 def define_only_qemu_2_6_0_types():
     # According to Qemu inclusion policy, each source file must include
@@ -393,66 +380,40 @@ def define_msi_init_2_6_0():
         )
     )
 
-# Warning! Preserve order!
-qemu_versions = [
-    QEMUVersionDescription(
-        "2.6.0",
+qemu_versions_desc = {
+        u'8c4575472494a5dfedfe05e7b58ca9ce3872ad56':
         [
             QEMUVersionParameterDescription(
                 name = "machine initialization function register type name",
                 new_value = "type_init",
-                old_value = "machine_init" 
+                old_value = "machine_init"
             )
-        ]
-    ),
-    QEMUVersionDescription(
-        "2.6.50",
+        ],
+        u'e8ad4d16808690e9c0d68b140218ca466c9309fc':
         [
             QEMUVersionParameterDescription(
-                # related commit e8ad4d16808690e9c0d68b140218ca466c9309fc
                 name = "qemu types definer",
                 new_value = define_qemu_2_6_5_types,
                 old_value = define_qemu_2_6_0_types,
-            ),
+            )
+        ],
+        u'1108b2f8a939fb5778d384149e2f1b99062a72da':
+        [
             QEMUVersionParameterDescription(
-                # related commit 1108b2f8a939fb5778d384149e2f1b99062a72da
                 name = "msi_init type definer",
                 new_value = define_msi_init_2_6_5,
                 old_value = define_msi_init_2_6_0
             )
         ]
-    )
-]
+}
 
 version_parameters = None
-version_string = None
 
-def initialize(_version_string):
-    parameters = {}
-
-    for qvd in qemu_versions:
-        take_new = qvd.compare(_version_string) >= 0
-
-        for pd in qvd.parameters:
-            if pd.name in parameters.keys():
-                if take_new:
-                    parameters[pd.name] = pd.new_value
-            else:
-                if take_new:
-                    parameters[pd.name] = pd.new_value
-                elif pd.old_value is None:
-                    raise Exception("No old value for parameter '%s' was found." % pd.name)
-                else:
-                    parameters[pd.name] = pd.old_value
-
+def initialize_version(qvh_vp):
     global version_parameters
-    version_parameters = parameters
-
-    global version_string
-    version_string = _version_string
+    version_parameters = {}
+    for k in qvh_vp.keys():
+        version_parameters[k] = qvh_vp[k]
 
 def get_vp():
     return version_parameters
-
-def get_vs():
-    return version_string

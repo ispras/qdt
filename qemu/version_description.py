@@ -1,3 +1,6 @@
+from hashlib import \
+    md5
+
 from source import \
     SourceTreeContainer, \
     Header, \
@@ -17,7 +20,9 @@ from subprocess import \
     STDOUT
 
 from .version import \
-    initialize as initialize_version, \
+    QVHDict, \
+    initialize_version, \
+    qemu_versions_desc, \
     get_vp
 
 from os.path import \
@@ -122,20 +127,291 @@ def qvds_init_cache():
         if not v == None:
             v.init_cache()
 
+class CommitDesc(object):
+    def __init__(self, sha, parents, children):
+        self.sha = sha
+        self.parents = parents
+        self.children = children
+
+        # dict of QEMUVersionParameterDescription new_value parameters
+        self.param_nval = {}
+        # dict of QEMUVersionParameterDescription old_value parameters
+        self.param_oval = {}
+
+        # serial number according to the topological sorting
+        self.num = None
+
 class QemuVersionCache(object):
     current = None
 
     def __init__(self,
                  list_headers = None,
                  device_tree = None,
+                 version_desc = None,
                  pci_classes = None
     ):
         self.device_tree = device_tree
         self.list_headers = list_headers
+        self.version_desc = version_desc
 
         # Create source tree container
         self.stc = SourceTreeContainer()
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
+
+    def co_computing_parameters(self, repo):
+        print("Creating graph of commit's description ...")
+        for ret in self.co_gen_commits_graph(repo):
+            yield ret
+        print("Graph of commit's description was created")
+
+        for ret in self.co_propagete_param():
+            yield ret
+
+        c = self.commit_desc_nodes[repo.head.commit.hexsha]
+        param = self.version_desc = QVHDict()
+        for k, v in c.param_nval.items():
+            param[k] = v
+        for k, v in c.param_oval.items():
+            param[k] = v
+
+    def co_propagete_param(self):
+        vd = qemu_versions_desc
+        vd_list = []
+        for k in vd.keys():
+            if k in self.commit_desc_nodes:
+                vd_list.append((k, self.commit_desc_nodes[k].num))
+
+        sorted_tuple = sorted(vd_list, key = lambda x: x[1])
+        sorted_vd_keys = [t[0] for t in sorted_tuple]
+
+        yield True
+
+        # first, need to propagate the new labels
+        print("Propagation params in graph of commit's description ...")
+        for ret in self.co_propagate_new_param(sorted_vd_keys, vd):
+            yield ret
+        for ret in self.co_propagate_old_param(sorted_vd_keys, vd):
+            yield ret
+        print("Params in graph of commit's description were propagated")
+
+    def co_gen_commits_graph(self, repo):
+        iterations_per_yield = 20
+        commit_desc_nodes = {}
+        # n is serial number according to the topology sorting
+        n = 0
+        # to_enum is used during topological sorting
+        # it contains commit to enumerate
+        to_enum = None
+        # build_stack contains eges represented by tuples
+        # (parent, child), where parent is instance of
+        # git.Commit, child is instance of CommitDesc
+        build_stack = []
+        for head in repo.branches:
+            # skip processed heads
+            if head.commit.hexsha in commit_desc_nodes:
+                continue
+
+            head_desc = CommitDesc(head.commit.hexsha, [], [])
+            commit_desc_nodes[head.commit.hexsha] = head_desc
+            # add edges connected to head being processed
+            for p in head.commit.parents:
+                build_stack.append((p, head_desc))
+
+            while build_stack:
+                parent, child_commit_desc = build_stack.pop()
+
+                try:
+                    parent_desc = commit_desc_nodes[parent.hexsha]
+                except KeyError:
+                    parent_desc = CommitDesc(parent.hexsha, [], [])
+                    commit_desc_nodes[parent.hexsha] = parent_desc
+
+                    if parent.parents:
+                        for p in parent.parents:
+                            build_stack.append((p, parent_desc))
+                    else:
+                        # current edge parent is an elder commit in the tree,
+                        # that is why we should enumerate starting from it
+                        to_enum = parent_desc
+                else:
+                    # the existence of parent_desc means that parent has been
+                    # enumerated before. Hence, we starts enumeration from
+                    # it's child
+                    to_enum = child_commit_desc
+                finally:
+                    parent_desc.children.append(child_commit_desc)
+                    child_commit_desc.parents.append(parent_desc)
+
+                # numbering is performed from the 'to_enum' to either a leaf
+                # commit or a commit just before a merge which have at least
+                # one parent without number (except the commit)
+                while to_enum is not None:
+                    e = to_enum
+                    to_enum = None
+                    # if the number of parents in the commit_desc_nodes
+                    # is equal to the number of parents in the repo,
+                    # then all parents were numbered (added) earlier
+                    # according to the graph building algorithm,
+                    # else we cannot assign number to the commit yet
+                    if len(e.parents) == len(repo.commit(e.sha).parents):
+                        e.num = n
+                        n = n + 1
+                        # according to the algorithm, only one child
+                        # have no number. Other children either have
+                        # been enumerated already or are not added yet
+                        for c in e.children:
+                            if c.num is None:
+                                to_enum = c
+                                break
+
+                    if n % iterations_per_yield == 0:
+                        yield
+
+            if len(commit_desc_nodes) % iterations_per_yield == 0:
+                yield
+
+        self.commit_desc_nodes = commit_desc_nodes
+
+    def co_propagate_new_param(self, sorted_vd_keys, vd):
+        '''This method propagate QEMUVersionParameterDescription.new_value
+        in graph of commits. It must be called before old_value propagation.
+
+        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        vd: qemu_versions_desc
+        '''
+
+        for key in sorted_vd_keys:
+            cur_vd = vd[key]
+            cur_node = self.commit_desc_nodes[key]
+            for vpd in cur_vd:
+                cur_node.param_nval[vpd.name] = vpd.new_value
+
+        yield True
+
+        # vd_keys_set is used to accelerate propagation
+        vd_keys_set = set(sorted_vd_keys)
+
+        # old_val contains all old_value that are in ancestors
+        old_val = {}
+        for key in sorted_vd_keys:
+            stack = [self.commit_desc_nodes[key]]
+            for vpd in vd[key]:
+                try:
+                    old_val[vpd.name].append(vpd.old_value)
+                except KeyError:
+                    old_val[vpd.name] = [vpd.old_value]
+            while stack:
+                cur_node = stack.pop()
+                for c in cur_node.children:
+                    if c.sha in vd_keys_set:
+                        # if the child is vd, only the parameters that are not
+                        # in vd's param_nval are added
+                        for p in cur_node.param_nval:
+                            if p not in c.param_nval:
+                                c.param_nval[p] = cur_node.param_nval[p]
+                        # no need to add element to stack, as it's in the sorted_vd_keys
+                    else:
+                        # the child is't vd
+                        for p in cur_node.param_nval:
+                            if p in c.param_nval:
+                                if cur_node.param_nval[p] != c.param_nval[p]:
+                                    exc_raise = False
+                                    if p in old_val:
+                                        if cur_node.param_nval[p] not in old_val[p]:
+                                            if c.param_nval[p] in old_val[p]:
+                                                c.param_nval[p] = cur_node.param_nval[p]
+                                                stack.append(c)
+                                            else:
+                                                exc_raise = True
+                                    else:
+                                        exc_raise = True
+                                    if exc_raise:
+                                        raise Exception("Contradictory definition of param " \
+"'%s' in commit %s (%s != %s)" % (p, c.sha, cur_node.param_nval[p], c.param_nval[p])
+                                        )
+                            else:
+                                c.param_nval[p] = cur_node.param_nval[p]
+                                stack.append(c)
+
+                yield True
+
+    def co_propagate_old_param(self, sorted_vd_keys, vd):
+        '''This method propagate QEMUVersionParameterDescription.old_value
+        in graph of commits. It must be called after new_value propagation.
+
+        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        vd: qemu_versions_desc
+        '''
+
+        # messages for exceptions
+        msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
+        msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+
+        # starting initialization
+        for key in sorted_vd_keys[::-1]:
+            node = self.commit_desc_nodes[key]
+            cur_vd = vd[key]
+            for parent in node.parents:
+                # propagate old_val from node to their parents
+                # this is necessary if the vd are consecutive
+                for param_name in node.param_oval:
+                    parent.param_oval[param_name] = node.param_oval[param_name]
+                # init old_val of nodes that consist of vd's parents
+                # and check conflicts
+                for param in cur_vd:
+                    if param.name in parent.param_nval:
+                        if parent.param_nval[param.name] != param.old_value:
+                            Exception(msg1 % (
+param.name, parent.sha, param.old_value, parent.param_nval[param.name]
+                            ))
+                    elif param.name in parent.param_oval:
+                        if param.old_value != parent.param_oval[param.name]:
+                            Exception(msg2 % (
+param.name, parent.sha, param.old_value, parent.param_oval[param.name]
+                            ))
+                    else:
+                        parent.param_oval[param.name] = param.old_value
+
+        yield True
+
+        # set is used to accelerate propagation
+        vd_keys_set = set(sorted_vd_keys)
+        visited_vd = set()
+        for key in sorted_vd_keys[::-1]:
+            stack = []
+            # used to avoid multiple processing of one node
+            visited_nodes = set([key])
+            visited_vd.add(key)
+            for p in self.commit_desc_nodes[key].parents:
+                stack.append(p)
+            while stack:
+                cur_node = stack.pop()
+                visited_nodes.add(cur_node.sha)
+
+                for commit in cur_node.parents + cur_node.children:
+                    if commit.sha in visited_nodes:
+                        continue
+                    for param_name in cur_node.param_oval:
+                        if param_name in commit.param_nval:
+                            continue
+                        elif param_name in commit.param_oval:
+                            if commit.param_oval[param_name] != cur_node.param_oval[param_name]:
+                                Exception(msg2 % (
+param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param_name]
+                                ))
+                        else:
+                            commit.param_oval[param_name] = cur_node.param_oval[param_name]
+                            if commit.sha not in vd_keys_set:
+                                stack.append(commit)
+                            # if we have visited vd before, it is necessary
+                            # to propagate the param, otherwise we do it
+                            # in the following iterations of the outer loop
+                            elif commit.sha in visited_vd:
+                                stack.append(commit)
+
+                yield True
 
     def __children__(self):
         return [ self.pci_c ]
@@ -148,6 +424,9 @@ class QemuVersionCache(object):
 
         gen.gen_field("list_headers = ")
         gen.pprint(self.list_headers)
+
+        gen.gen_field("version_desc = ")
+        gen.pprint(self.version_desc)
 
         gen.gen_field("pci_classes = " + gen.nameof(self.pci_c))
 
@@ -254,6 +533,14 @@ class QemuVersionDescription(object):
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
         qvc_path = join(self.build_path, qvc_file_name)
 
+        # calculate hash of qemu_versions_desc
+        vd_h = md5()
+        for k in sorted(qemu_versions_desc):
+            for v in qemu_versions_desc[k]:
+                vd_h.update(str(k + v.gen_mdc()).encode('utf-8'))
+
+        yield True
+
         if not  isfile(qvc_path):
             self.qvc = QemuVersionCache()
 
@@ -269,6 +556,11 @@ class QemuVersionDescription(object):
 
             for ret in self.co_gen_device_tree():
                 yield ret
+
+            # gen version description
+            for ret in self.qvc.co_computing_parameters(self.repo):
+                yield ret
+            self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -286,10 +578,18 @@ class QemuVersionDescription(object):
 
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
 
+            yield True
+
+            if not self.qvc.version_desc["vd_hash"] == vd_h.hexdigest():
+                for ret in self.qvc.co_computing_parameters(self.repo):
+                    yield ret
+                self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
+                PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
+
         yield True
 
-        # select Qemu version parameters according to current version
-        initialize_version(self.qemu_version)
+        # set Qemu version heuristics according to current version
+        initialize_version(self.qvc.version_desc)
 
         yield True
 
@@ -326,10 +626,7 @@ class QemuVersionDescription(object):
                 raise Exception(
 "No QemuVersionCache was loaded from %s." % qvc_path
                 )
-
-
-
-
+            self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 
     @staticmethod
     def check_uncommit_change(src_path):
@@ -376,7 +673,7 @@ use another way to check this.
         dt_db_fname = join(self.build_path, "dt.json")
         if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname + "...")
-            dt_db_reader = open(dt_db_fname, "rb")
+            dt_db_reader = open(dt_db_fname, "r")
             self.qvc.device_tree = load(dt_db_reader)
             dt_db_reader.close()
             print("Device Tree was loaded from " + dt_db_fname)
@@ -401,6 +698,7 @@ use another way to check this.
                                     dict_dt["macro"].append(t.name)
                             else:
                                 dict_dt["macro"] = [t.name]
+                yield True
             if "property" in dict_dt:
                 for dt_property in dict_dt["property"]:
                     dt_property_name = dt_property["name"]
@@ -413,7 +711,7 @@ use another way to check this.
                                             dt_property["macro"].append(t.name)
                                     else:
                                         dt_property["macro"] = [t.name]
+                    yield True
             if "children" in dict_dt:
-                yield True
                 for ret in self.co_add_dt_macro(dict_dt["children"]):
                     yield True

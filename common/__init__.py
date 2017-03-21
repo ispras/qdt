@@ -56,3 +56,6 @@ from .co_signal import \
 
 from .compat import \
     execfile
+
+from .version import \
+    parse_version
