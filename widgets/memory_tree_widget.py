@@ -101,14 +101,16 @@ snapshot mode or the command should be disabled too.
         ]:
             c0.add_command(
                 label = memory_type,
-                command = getattr(self, "on_add_" +
+                command = self.notify_popup_command if self.mht is None else \
+                    getattr(self, "on_add_" +
                     memory_type.key_value.lower().replace(" ", "_").\
                         replace("-", "_")
                 )
             )
             c1.add_command(
                 label = memory_type,
-                command = getattr(self, "on_add_" +
+                command = self.notify_popup_command if self.mht is None else \
+                    getattr(self, "on_add_" +
                     memory_type.key_value.lower().replace(" ", "_").\
                         replace("-", "_")
                 )
@@ -119,7 +121,8 @@ snapshot mode or the command should be disabled too.
         ]:
              menu.add_command(
                 label = _("Alias"),
-                command = self.on_add_alias,
+                command = self.notify_popup_command if self.mht is None else \
+                    self.on_add_alias,
                 state = "disabled"
             )
 
