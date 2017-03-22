@@ -350,7 +350,6 @@ class Header(Source):
 
     @staticmethod
     def co_build_inclusions(dname):
-        yields_total = 0
         Header.yields_per_header = []
 
         ppf = sys.stdout = ParsePrintFilter(sys.stdout)
@@ -360,13 +359,14 @@ class Header(Source):
 
         for entry in listdir(dname):
             for res in Header._build_inclusions_recursive(dname, entry):
-                yields_total += 1
                 yield res
 
         for h in Header.reg.values():
             del h.parsed
 
         sys.stdout = ppf.out
+
+        yields_total = sum(Header.yields_per_header)
 
         print("""Header inclusions build statistic:
     Yields total: %d
@@ -377,7 +377,7 @@ class Header(Source):
     yields_total,
     max(Header.yields_per_header),
     min(Header.yields_per_header),
-    sum(Header.yields_per_header) / float(len(Header.yields_per_header))
+    yields_total / float(len(Header.yields_per_header))
 )
         )
 
