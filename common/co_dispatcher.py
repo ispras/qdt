@@ -31,7 +31,7 @@ will never be given control.
     def __init__(self, max_tasks = -1):
         self.tasks = []
         self.active_tasks = []
-        self.finished_tasks = []
+        self.finished_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
 
@@ -52,7 +52,7 @@ will never be given control.
         for task in finished:
             # print 'Task %s finished' % str(task)
             self.active_tasks.remove(task)
-            self.finished_tasks.append(task)
+            self.finished_tasks.add(task)
             task.on_finished()
 
         return ready
