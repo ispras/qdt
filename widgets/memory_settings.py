@@ -186,7 +186,7 @@ class MemorySettingsWidget(SettingsWidget):
             DeviceSettingsWidget.gen_node_link_text(self.mem.parent)
         )
 
-        for (text, field, _type) in self.fields:
+        for text, field, _type in self.fields:
             var = getattr(self, "var_" + field)
             cur_val = getattr(self.mem, field)
             if _type is int:
