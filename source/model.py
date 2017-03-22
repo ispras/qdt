@@ -298,11 +298,10 @@ class Header(Source):
         full_name = join(start_dir, prefix)
         if (isdir(full_name)):
             for entry in listdir(full_name):
-                for ret in Header._build_inclusions_recursive(
+                yield Header._build_inclusions_recursive(
                     start_dir,
                     join(prefix, entry)
-                ):
-                    yield ret
+                )
         else:
             (name, ext) = splitext(prefix)
             if ext == ".h":
@@ -358,8 +357,7 @@ class Header(Source):
             h.parsed = False
 
         for entry in listdir(dname):
-            for res in Header._build_inclusions_recursive(dname, entry):
-                yield res
+            yield Header._build_inclusions_recursive(dname, entry)
 
         for h in Header.reg.values():
             del h.parsed
