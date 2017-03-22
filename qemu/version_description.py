@@ -265,10 +265,10 @@ class QemuVersionCache(object):
                                 break
 
                     if n % iterations_per_yield == 0:
-                        yield
+                        yield True
 
             if len(commit_desc_nodes) % iterations_per_yield == 0:
-                yield
+                yield True
 
         self.commit_desc_nodes = commit_desc_nodes
 
