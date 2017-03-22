@@ -7,7 +7,12 @@ from qemu import \
     MemoryLeafNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
-    MemoryROMNode
+    MemoryROMNode, \
+    MachineNodeOperation, \
+    MOp_AddMemChild
+
+from .memory_settings import \
+    MemorySettingsWindow
 
 from common import \
     mlget as _
@@ -41,9 +46,7 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
         # snapshot mode without MHT
         if self.mht is not None:
-            pass
-            # TODO: watch machine changes and update map on relevant changes
-            # TODO: remove watching callback
+            self.mht.add_on_changed(self.on_machine_changed)
 
         self.iid2node = {}
         self.selected = None
@@ -148,35 +151,109 @@ snapshot mode or the command should be disabled too.
         self.popup_empty_submenu = c1
         self.popup_temp_node = p3
 
+        self.bind("<Destroy>", self.__on_destroy__, "+")
+
         self.widget_initialization()
 
+    def __on_destroy__(self, *args, **kw):
+        if self.mht is not None:
+            # the listener is assigned only in non-snapshot mode
+            self.mht.remove_on_changed(self.on_machine_changed)
+
+    def on_machine_changed(self, op):
+        if not isinstance(op, MachineNodeOperation):
+            return
+
+        if op.writes_node():
+            if (self.alias_to and self.alias_to.id == -1) or not self.alias_to:
+                self.alias_to = None
+                self.popup_not_leaf_node_submenu.entryconfig(
+                    3,
+                    state = "disabled"
+                )
+                self.popup_empty_submenu.entryconfig(
+                    3,
+                    state = "disabled"
+                )
+
+        l = self.gen_layout()
+        self.delete(*self.get_children())
+        self.iid2node.clear()
+        self.widget_initialization()
+        self.set_layout(l)
+
+        if isinstance(op, MOp_AddMemChild):
+            self.selected = self.mach.id2node[op.child_id]
+
+        if self.selected:
+            if self.selected.id in self.mach.id2node:
+                self.on_select_origin()
+
+    def show_memory_settings(self, mem, x, y):
+        wnd = MemorySettingsWindow(mem, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
     def on_popup_node_settings(self):
-        # TODO
+        p = self.current_popup
+
+        self.show_memory_settings(
+            self.selected,
+            p.winfo_rootx() - self.winfo_rootx(),
+            p.winfo_rooty() - self.winfo_rooty()
+        )
+
         self.notify_popup_command()
 
     def on_popup_node_alias_target(self):
-        # TODO
+        self.alias_to = self.selected
+
+        self.popup_not_leaf_node_submenu.entryconfig(
+            3,
+            state = "normal"
+        )
+        self.popup_empty_submenu.entryconfig(
+            3,
+            state = "normal"
+        )
+
         self.notify_popup_command()
 
     def on_popup_node_delete(self):
-        # TODO
+        self.mht.delete_memory_node(self.selected.id)
+        self.mht.commit()
+
+        self.notify_popup_command()
+
+    def add_memory_node_at_popup(self, class_name):
+        node_id = self.mach.get_free_id()
+
+        memory_arguments = {}
+
+        if class_name == "MemoryAliasNode":
+            memory_arguments = { "alias_to": self.alias_to, "offset": 0x0 }
+
+        self.mht.add_memory_node(class_name, node_id, **memory_arguments)
+        if self.selected:
+            self.mht.stage(MOp_AddMemChild, node_id, self.selected.id)
+        self.mht.commit()
+
         self.notify_popup_command()
 
     def on_add_container(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryNode")
 
     def on_add_ram(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryRAMNode")
 
     def on_add_rom(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryROMNode")
 
     def on_add_alias(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryAliasNode")
 
     def on_select_origin(self):
         self.selection_set(self.selected.id)
