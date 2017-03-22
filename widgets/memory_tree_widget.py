@@ -61,10 +61,12 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
         self.bind("<ButtonPress-3>", self.on_b3_press)
 
-        p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
-        p1 = VarMenu(self.winfo_toplevel(), tearoff = 0)
-        p2 = VarMenu(self.winfo_toplevel(), tearoff = 0)
-        p3 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_leaf_node = p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_not_leaf_node = p1 = VarMenu(self.winfo_toplevel(),
+            tearoff = 0
+        )
+        self.popup_empty = p2 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_temp_node = p3 = VarMenu(self.winfo_toplevel(), tearoff = 0)
 
         for menu in [
             p0, p1
@@ -92,8 +94,8 @@ snapshot mode or the command should be disabled too.
             )
         p1.add_separator()
 
-        c0 = VarMenu(p1, tearoff = 0)
-        c1 = VarMenu(p2, tearoff = 0)
+        self.popup_not_leaf_node_submenu = c0 = VarMenu(p1, tearoff = 0)
+        self.popup_empty_submenu = c1 = VarMenu(p2, tearoff = 0)
 
         self.alias_to = None
 
@@ -143,13 +145,6 @@ snapshot mode or the command should be disabled too.
             label = _("Select origin"),
             command = self.on_select_origin
         )
-
-        self.popup_leaf_node = p0
-        self.popup_not_leaf_node = p1
-        self.popup_not_leaf_node_submenu = c0
-        self.popup_empty = p2
-        self.popup_empty_submenu = c1
-        self.popup_temp_node = p3
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
