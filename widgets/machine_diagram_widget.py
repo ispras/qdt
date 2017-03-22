@@ -797,6 +797,10 @@ IRQ line creation
                 self.canvas.delete(circle_id)
                 del self.dev2node[hub]
                 del self.node2dev[hub_node]
+
+                if self.irq_src == op.node_id:
+                    self.irq_src = None
+                    self.__set_irq_dst_cmd_enabled(False)
             else:
                 # added
                 hub_node = IRQHubCircle(hub)
@@ -932,6 +936,10 @@ IRQ line creation
                 self.canvas.delete(node.text)
                 del self.dev2node[dev]
                 del self.node2dev[node]
+
+                if self.irq_src == op.node_id:
+                    self.irq_src = None
+                    self.__set_irq_dst_cmd_enabled(False)
             else:
                 # added
                 node = NodeBox(dev)
