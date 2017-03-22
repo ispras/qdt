@@ -363,9 +363,9 @@ snapshot mode or the command should be disabled too.
                 val = bool(self.item(str(m.id), "open"))
             except TclError:
                 pass
-
-            if val:
-                layout[m.id] = val
+            else:
+                if val:
+                    layout[m.id] = val
 
         cols_width = {}
         for col in ("#0",) + self.cget("columns"):
