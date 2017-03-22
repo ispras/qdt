@@ -21,10 +21,13 @@ class CoDispatcher(object):
     - Generator yields between 'small' pieces of work. A piece should be small
 enough the user will not noticed lags. 
     - Generator yields True if it has a work to do now.
-    - Generator yields False if it has not a work to do. For instance, if the
-generator waits for something.
+    - Generator yields other generator (or CoTask) when it cannot continue
+until returned one finished. Say, first one _calls_ another.
+    - Generator yields False if it has not a work to do right now. For
+instance, if the generator waits for something (except other generator).
     - Generator raise StopIteration when its work is finished. Finished task
-will never be given control.
+will never be given control. Note that, StopIteration is raised implicitly
+after last statement in the corresponding callable object.
 
     max_task:
         -1 = unlimited
