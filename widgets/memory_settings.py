@@ -47,7 +47,7 @@ class MemorySettingsWidget(SettingsWidget):
 
         l = VarLabel(self, text = _("Region type"))
         l.grid(row = row, column = 0, sticky = "NES")
-        
+
         memtype2str = {
            MemoryNode: _("Container"),
            MemoryAliasNode: _("Alias"),
