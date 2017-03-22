@@ -383,13 +383,12 @@ snapshot mode or the command should be disabled too.
                     try:
                         cols_width = desc["columns width"]
                     except KeyError:
-                        cols_width = {}
+                        continue
 
                     for col, col_width in cols_width.items():
                         self.column(col, width = col_width)
 
-                    continue
-                if id in self.mach.id2node:
+                elif id in self.mach.id2node:
                     self.item(str(id), open = desc)
         except:
             # if new layout is incorrect then restore previous one
