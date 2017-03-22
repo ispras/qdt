@@ -7,7 +7,12 @@ from qemu import \
     MemoryLeafNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
-    MemoryROMNode
+    MemoryROMNode, \
+    MachineNodeOperation, \
+    MOp_AddMemChild
+
+from .memory_settings import \
+    MemorySettingsWindow
 
 from common import \
     mlget as _
@@ -17,6 +22,9 @@ from .popup_helper import \
 
 from six import \
     integer_types
+
+from six.moves.tkinter import \
+    TclError
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
@@ -38,9 +46,7 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
         # snapshot mode without MHT
         if self.mht is not None:
-            pass
-            # TODO: watch machine changes and update map on relevant changes
-            # TODO: remove watching callback
+            self.mht.add_on_changed(self.on_machine_changed)
 
         self.iid2node = {}
         self.selected = None
@@ -55,17 +61,23 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
         self.bind("<ButtonPress-3>", self.on_b3_press)
 
-        p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
-        p1 = VarMenu(self.winfo_toplevel(), tearoff = 0)
-        p2 = VarMenu(self.winfo_toplevel(), tearoff = 0)
-        p3 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_leaf_node = p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_not_leaf_node = p1 = VarMenu(self.winfo_toplevel(),
+            tearoff = 0
+        )
+        self.popup_empty = p2 = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        self.popup_temp_node = p3 = VarMenu(self.winfo_toplevel(), tearoff = 0)
 
-        for command in [
-            _("Settings"),
-            _("Delete")
+        for menu in [
+            p0, p1
         ]:
-            p0.add_command(
-                label = command,
+            menu.add_command(
+                label = _("Alias target"),
+                command = self.on_popup_node_alias_target
+            )
+            menu.add_separator()
+            menu.add_command(
+                label = _("Settings"),
                 command = self.on_popup_node_settings
             )
 
@@ -74,33 +86,49 @@ does action immediately then it should be disabled in snapshot mode like this
 command. If a command shows a dialog then either the dialog should support
 snapshot mode or the command should be disabled too.
             """
-            p1.add_command(
-                label = command,
+            menu.add_separator()
+            menu.add_command(
+                label = _("Delete"),
                 command = self.notify_popup_command if self.mht is None else \
                     self.on_popup_node_delete
             )
+        p1.add_separator()
 
-        c0 = VarMenu(p1, tearoff = 0)
-        c1 = VarMenu(p2, tearoff = 0)
+        self.popup_not_leaf_node_submenu = c0 = VarMenu(p1, tearoff = 0)
+        self.popup_empty_submenu = c1 = VarMenu(p2, tearoff = 0)
+
+        self.alias_to = None
+
         for memory_type in [
             _("Container"),
             _("RAM"),
-            _("ROM"),
-            _("Alias")
+            _("ROM")
         ]:
             c0.add_command(
                 label = memory_type,
-                command = getattr(self, "on_add_" +
+                command = self.notify_popup_command if self.mht is None else \
+                    getattr(self, "on_add_" +
                     memory_type.key_value.lower().replace(" ", "_").\
                         replace("-", "_")
                 )
             )
             c1.add_command(
                 label = memory_type,
-                command = getattr(self, "on_add_" +
+                command = self.notify_popup_command if self.mht is None else \
+                    getattr(self, "on_add_" +
                     memory_type.key_value.lower().replace(" ", "_").\
                         replace("-", "_")
                 )
+            )
+
+        for menu in [
+            c0, c1
+        ]:
+             menu.add_command(
+                label = _("Alias"),
+                command = self.notify_popup_command if self.mht is None else \
+                    self.on_add_alias,
+                state = "disabled"
             )
 
         p1.add_cascade(
@@ -118,46 +146,116 @@ snapshot mode or the command should be disabled too.
             command = self.on_select_origin
         )
 
-        self.popup_leaf_node = p0
-        self.popup_not_leaf_node = p1
-        self.popup_empty = p2
-        self.popup_temp_node = p3
+        self.bind("<Destroy>", self.__on_destroy__, "+")
 
-        self.after(0, self.update)
+        self.widget_initialization()
+
+    def __on_destroy__(self, *args, **kw):
+        if self.mht is not None:
+            # the listener is assigned only in non-snapshot mode
+            self.mht.remove_on_changed(self.on_machine_changed)
+
+    def on_machine_changed(self, op):
+        if not isinstance(op, MachineNodeOperation):
+            return
+
+        if op.writes_node():
+            if (self.alias_to and self.alias_to.id == -1) or not self.alias_to:
+                self.alias_to = None
+                self.popup_not_leaf_node_submenu.entryconfig(
+                    3,
+                    state = "disabled"
+                )
+                self.popup_empty_submenu.entryconfig(
+                    3,
+                    state = "disabled"
+                )
+
+        l = self.gen_layout()
+        self.delete(*self.get_children())
+        self.iid2node.clear()
+        self.widget_initialization()
+        self.set_layout(l)
+
+        if isinstance(op, MOp_AddMemChild):
+            self.selected = self.mach.id2node[op.child_id]
+
+        if self.selected:
+            if self.selected.id in self.mach.id2node:
+                self.on_select_origin()
+
+    def show_memory_settings(self, mem, x, y):
+        wnd = MemorySettingsWindow(mem, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
 
     def on_popup_node_settings(self):
-        # TODO
+        p = self.current_popup
+
+        self.show_memory_settings(
+            self.selected,
+            p.winfo_rootx() - self.winfo_rootx(),
+            p.winfo_rooty() - self.winfo_rooty()
+        )
+
+        self.notify_popup_command()
+
+    def on_popup_node_alias_target(self):
+        self.alias_to = self.selected
+
+        self.popup_not_leaf_node_submenu.entryconfig(
+            3,
+            state = "normal"
+        )
+        self.popup_empty_submenu.entryconfig(
+            3,
+            state = "normal"
+        )
+
         self.notify_popup_command()
 
     def on_popup_node_delete(self):
-        # TODO
+        self.mht.delete_memory_node(self.selected.id)
+        self.mht.commit()
+
+        self.notify_popup_command()
+
+    def add_memory_node_at_popup(self, class_name):
+        node_id = self.mach.get_free_id()
+
+        memory_arguments = {}
+
+        if class_name == "MemoryAliasNode":
+            memory_arguments = { "alias_to": self.alias_to, "offset": 0x0 }
+
+        self.mht.add_memory_node(class_name, node_id, **memory_arguments)
+        if self.selected:
+            self.mht.stage(MOp_AddMemChild, node_id, self.selected.id)
+        self.mht.commit()
+
         self.notify_popup_command()
 
     def on_add_container(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryNode")
 
     def on_add_ram(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryRAMNode")
 
     def on_add_rom(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryROMNode")
 
     def on_add_alias(self):
-        # TODO
-        self.notify_popup_command()
+        self.add_memory_node_at_popup("MemoryAliasNode")
 
     def on_select_origin(self):
         self.selection_set(self.selected.id)
         self.focus(self.selected.id)
         self.see(self.selected.id)
 
-    def update(self):
-        self.delete(*self.get_children())
-
-        self.iid2node.clear()
+    def widget_initialization(self):
         mems_queue = [m for m in self.mach.mems if not m.parent]
         unprocessed_mems = list(self.mach.mems)
         memtype2str = {
@@ -185,6 +283,11 @@ snapshot mode or the command should be disabled too.
                             return hex(val)
                         else:
                             return str(val)
+
+                    if isinstance(m, MemoryLeafNode):
+                        if m.parent and not self.exists(m.parent.id):
+                            unprocessed_mems.append(m)
+                            continue
 
                     parent_id = ""
                     if m.parent and self.exists(m.parent.id):
@@ -220,10 +323,11 @@ snapshot mode or the command should be disabled too.
 
     def on_b3_press(self, event):
         iid = self.identify_row(event.y)
-        """ TODO: when user clicks over a row, the row should be be selected
+        """ When user clicks over a row, the row should be be selected
         in the tree view. This prevents confusion of row for which the popup
         is shown. """
 
+        self.selection_set(iid)
         try:
             self.selected = self.iid2node[iid]
 
@@ -244,7 +348,44 @@ snapshot mode or the command should be disabled too.
         # print("on_b3_press")
 
     def gen_layout(self):
-        return None
+        layout = {}
 
-    def set_layout(self, layout):
-        assert layout is None
+        if not self.get_children():
+            return layout
+
+        for m in self.mach.mems:
+            try:
+                val = bool(self.item(str(m.id), "open"))
+            except TclError:
+                pass
+            else:
+                if val:
+                    layout[m.id] = val
+
+        cols_width = {}
+        for col in ("#0",) + self.cget("columns"):
+            cols_width[col] = self.column(col, "width")
+
+        layout[-1] = { "columns width": cols_width }
+
+        return layout
+
+    def set_layout(self, l):
+        layout_bak = self.gen_layout()
+        try:
+            for id, desc in l.items():
+                if id == -1:
+                    try:
+                        cols_width = desc["columns width"]
+                    except KeyError:
+                        continue
+
+                    for col, col_width in cols_width.items():
+                        self.column(col, width = col_width)
+
+                elif id in self.mach.id2node:
+                    self.item(str(id), open = desc)
+        except:
+            # if new layout is incorrect then restore previous one
+            self.set_layout(layout_bak)
+

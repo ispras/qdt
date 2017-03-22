@@ -107,6 +107,7 @@ from .machine_editing import \
                 MOp_SetMemNodeAttr, \
                 MachineNodeSetLinkAttributeOperation, \
                     MOp_SetIRQEndPoint, \
+                    MOp_SetMemNodeAlias, \
                 MOp_PCIDevSetSlot, \
                 MOp_PCIDevSetFunction, \
                 MOp_PCIDevSetMultifunction, \
