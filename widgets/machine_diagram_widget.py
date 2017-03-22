@@ -943,18 +943,23 @@ IRQ line creation
 
         self.invalidate()
 
+    def __set_irq_dst_cmd_enabled(self, value):
+        state = "normal" if value else DISABLED
+
+        self.popup_single_device.entryconfig(
+            self.irq_dst_cmd_idx,
+            state = state
+        )
+        self.popup_single_irq_hub.entryconfig(
+            self.popup_single_irq_hub_irq_dst_cmd_idx,
+            state = state
+        )
+
     def on_popup_single_device_irq_source(self):
         sid = self.current_popup_tag
         self.irq_src = self.node2dev[self.id2node[sid]].id
 
-        self.popup_single_device.entryconfig(
-            self.irq_dst_cmd_idx,
-            state = "normal"
-        )
-        self.popup_single_irq_hub.entryconfig(
-            self.popup_single_irq_hub_irq_dst_cmd_idx,
-            state = "normal"
-        )
+        self.__set_irq_dst_cmd_enabled(True)
 
         self.notify_popup_command()
 
