@@ -206,12 +206,8 @@ class PyGenerator(object):
             self.write(")")
         elif type(val) in str_able_types:
             self.write(str(val))
-        elif PY2 and isinstance(val, str):
-            val = self.escape(val)
-            self.write("'" + val + "'")
-        elif isinstance(val, text_type):
-            val = self.escape(val)
-            self.write("u'" + val + "'")
+        elif (PY2 and isinstance(val, str)) or isinstance(val, text_type):
+            self.pprint_text(val)
         elif val is None:
             self.write("None")
         else:
