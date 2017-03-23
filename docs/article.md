@@ -1,4 +1,4 @@
-[//]: # (pandoc article.md --standalone --smart -o article.docx -o article.html)
+[//]: # (for t in docx html;do pandoc article.md --standalone --smart -o article.$t;done)
 
 # Автоматизация разработки моделей устройств и вычислительных машин для QEMU
 
