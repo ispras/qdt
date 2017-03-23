@@ -14,20 +14,10 @@ The file is to be a python script such that execution of the file will
 reconstruct the object.
 """
 class PyGenerator(object):
-    escape_characters = {
-        "'": "\\'",
-        '\\': '\\\\'
-    }
-
     def __init__(self, indent = "    "):
         self.indent = indent
 
         self.reset()
-
-    def escape(self, val):
-        for k, v in self.escape_characters.items():
-            val = val.replace(k, v)
-        return val
 
     def reset(self):
         self.obj2name = {}
