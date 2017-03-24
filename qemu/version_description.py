@@ -163,7 +163,7 @@ class QemuVersionCache(object):
         yield self.co_gen_commits_graph(repo)
         print("Graph of commit's description was created")
 
-        yield self.co_propagete_param()
+        yield self.co_propagate_param()
 
         c = self.commit_desc_nodes[repo.head.commit.hexsha]
         param = self.version_desc = QVHDict()
@@ -172,7 +172,7 @@ class QemuVersionCache(object):
         for k, v in c.param_oval.items():
             param[k] = v
 
-    def co_propagete_param(self):
+    def co_propagate_param(self):
         vd = qemu_versions_desc
         vd_list = []
         for k in vd.keys():
