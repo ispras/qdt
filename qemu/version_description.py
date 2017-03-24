@@ -160,12 +160,10 @@ class QemuVersionCache(object):
 
     def co_computing_parameters(self, repo):
         print("Creating graph of commit's description ...")
-        for ret in self.co_gen_commits_graph(repo):
-            yield ret
+        yield self.co_gen_commits_graph(repo)
         print("Graph of commit's description was created")
 
-        for ret in self.co_propagete_param():
-            yield ret
+        yield self.co_propagete_param()
 
         c = self.commit_desc_nodes[repo.head.commit.hexsha]
         param = self.version_desc = QVHDict()
@@ -188,10 +186,8 @@ class QemuVersionCache(object):
 
         # first, need to propagate the new labels
         print("Propagation params in graph of commit's description ...")
-        for ret in self.co_propagate_new_param(sorted_vd_keys, vd):
-            yield ret
-        for ret in self.co_propagate_old_param(sorted_vd_keys, vd):
-            yield ret
+        yield self.co_propagate_new_param(sorted_vd_keys, vd)
+        yield self.co_propagate_old_param(sorted_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
 
     def co_gen_commits_graph(self, repo):
@@ -265,10 +261,10 @@ class QemuVersionCache(object):
                                 break
 
                     if n % iterations_per_yield == 0:
-                        yield
+                        yield True
 
             if len(commit_desc_nodes) % iterations_per_yield == 0:
-                yield
+                yield True
 
         self.commit_desc_nodes = commit_desc_nodes
 
@@ -547,19 +543,16 @@ class QemuVersionDescription(object):
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
             for path in self.include_paths:
-                for ret in Header.co_build_inclusions(path):
-                    yield ret
+                yield Header.co_build_inclusions(path)
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
             yield True
 
-            for ret in self.co_gen_device_tree():
-                yield ret
+            yield self.co_gen_device_tree()
 
             # gen version description
-            for ret in self.qvc.co_computing_parameters(self.repo):
-                yield ret
+            yield self.qvc.co_computing_parameters(self.repo)
             self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
 
             # Search for PCI Ids
@@ -581,8 +574,7 @@ class QemuVersionDescription(object):
             yield True
 
             if not self.qvc.version_desc["vd_hash"] == vd_h.hexdigest():
-                for ret in self.qvc.co_computing_parameters(self.repo):
-                    yield ret
+                yield self.qvc.co_computing_parameters(self.repo)
                 self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
                 PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
 
@@ -680,8 +672,7 @@ use another way to check this.
             yield True
 
             print("Adding macros to device tree ...")
-            for ret in self.co_add_dt_macro(self.qvc.device_tree):
-                yield True
+            yield self.co_add_dt_macro(self.qvc.device_tree)
             print("Macros were added to device tree")
         else:
             self.qvc.device_tree = None

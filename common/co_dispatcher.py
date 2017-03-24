@@ -1,3 +1,6 @@
+from types import \
+    GeneratorType
+
 class CoTask(object):
     def __init__(self, generator):
         self.generator = generator
@@ -18,10 +21,13 @@ class CoDispatcher(object):
     - Generator yields between 'small' pieces of work. A piece should be small
 enough the user will not noticed lags. 
     - Generator yields True if it has a work to do now.
-    - Generator yields False if it has not a work to do. For instance, if the
-generator waits for something.
+    - Generator yields other generator (or CoTask) when it cannot continue
+until returned one finished. Say, first one _calls_ another.
+    - Generator yields False if it has not a work to do right now. For
+instance, if the generator waits for something (except other generator).
     - Generator raise StopIteration when its work is finished. Finished task
-will never be given control.
+will never be given control. Note that, StopIteration is raised implicitly
+after last statement in the corresponding callable object.
 
     max_task:
         -1 = unlimited
@@ -31,13 +37,18 @@ will never be given control.
     def __init__(self, max_tasks = -1):
         self.tasks = []
         self.active_tasks = []
-        self.finished_tasks = []
+        # Contains caller list per each callee.
+        self.callees = {}
+        # Total caller list, I.e. callers = U (callees.values()).
+        self.callers = set()
+        self.finished_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
 
     # poll returns True if at least one task is ready to proceed immediately.
     def poll(self):
         finished = []
+        calls = []
 
         ready = False
 
@@ -47,13 +58,71 @@ will never be given control.
             except StopIteration:
                 finished.append(task)
             else:
-                ready = ret or ready
+                if isinstance(ret, (CoTask, GeneratorType)):
+                    # remember the call
+                    calls.append((task, ret))
+                    ready = True
+                elif ret:
+                    ready = True
 
         for task in finished:
             # print 'Task %s finished' % str(task)
             self.active_tasks.remove(task)
-            self.finished_tasks.append(task)
+            self.finished_tasks.add(task)
             task.on_finished()
+
+            try:
+                callers = self.callees[task]
+            except KeyError:
+                continue
+
+            del self.callees[task]
+            # All callers of finished task may continue execution.
+            for caller in callers:
+                self.callers.remove(caller)
+                self.tasks.insert(0, caller)
+
+        for caller, callee in calls:
+            # Cast callee to CoTask
+            if isinstance(callee, GeneratorType):
+                try:
+                    callee = self.gen2task[callee]
+                except KeyError:
+                    callee = self.gen2task[callee] = CoTask(callee)
+                    callee_is_new = True
+                else:
+                    callee_is_new = False
+            else:
+                callee_is_new = callee.generator not in self.gen2task
+                if callee_is_new:
+                    self.gen2task[callee.generator] = callee
+
+            if not callee_is_new and callee in self.finished_tasks:
+                # Ignore call of finished task.
+                continue
+
+            # A task may call the task which is already called by other task.
+            # So, remember all callers of the callee.
+            try:
+                callers = self.callees[callee]
+            except KeyError:
+                self.callees[callee] = [caller]
+                # First call of the callee.
+                # If callee is not a caller too then it should replace its
+                # caller. Except the callee is not a new task. Because it
+                # is already in task list (should not be scheduled twice).
+                if callee not in self.callers:
+                    if callee_is_new:
+                        self.active_tasks.append(callee)
+            else:
+                # The callee is called multiple times. Hence, it is already
+                # queued. Just account its new caller.
+                callers.append(caller)
+
+            # Caller cannot continue execution until callee finished.
+            self.active_tasks.remove(caller)
+            # Remember all callers.
+            self.callers.add(caller)
 
         return ready
 
