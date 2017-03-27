@@ -26,6 +26,7 @@ from qemu_device_creator import \
     arg_type_directory
 
 from qemu import \
+    qvd_get, \
     MachineNode, \
     __dict__ as qemu_namespace, \
     load_build_path_list, \
@@ -63,6 +64,7 @@ class ProjectGeneration(CoTask):
         CoTask.__init__(self, self.begin())
 
     def begin(self):
+        self.prev_qvd = qvd_get(self.p.build_path).use()
         try:
             self.p.gen_all(self.s)
         except Exception as e:
@@ -81,6 +83,8 @@ class ProjectGeneration(CoTask):
             )
 
     def on_finished(self):
+        if self.prev_qvd is not None:
+            self.prev_qvd.use()
         self.finished = True
         self.sig.emit()
 
