@@ -14,20 +14,10 @@ The file is to be a python script such that execution of the file will
 reconstruct the object.
 """
 class PyGenerator(object):
-    escape_characters = {
-        "'": "\\'",
-        '\\': '\\\\'
-    }
-
     def __init__(self, indent = "    "):
         self.indent = indent
 
         self.reset()
-
-    def escape(self, val):
-        for k, v in self.escape_characters.items():
-            val = val.replace(k, v)
-        return val
 
     def reset(self):
         self.obj2name = {}
@@ -129,6 +119,30 @@ class PyGenerator(object):
 
         self.first_field = True
 
+    def pprint_text(self, text):
+        # Double and single quote count
+        dquote = 0
+        squote = 0
+
+        text_utf8 = text_type('')
+
+        for c in text:
+            if c == '"':
+                dquote += 1
+            elif c == "'":
+                squote += 1
+            elif c == "\\":
+                c = "\\\\"
+
+            text_utf8 += text_type(c)
+
+        if dquote > squote:
+            escaped = text_utf8.replace(u"'", u"\\'")
+            self.write(u"u'" + escaped + u"'")
+        else:
+            escaped = text_utf8.replace(u'"', u'\\"')
+            self.write(u'u"' + escaped + u'"')
+
     def pprint(self, val):
         if isinstance(val, list):
             if not val:
@@ -182,12 +196,8 @@ class PyGenerator(object):
             self.write(")")
         elif type(val) in str_able_types:
             self.write(str(val))
-        elif PY2 and isinstance(val, str):
-            val = self.escape(val)
-            self.write("'" + val + "'")
-        elif isinstance(val, text_type):
-            val = self.escape(val)
-            self.write("u'" + val + "'")
+        elif (PY2 and isinstance(val, str)) or isinstance(val, text_type):
+            self.pprint_text(val)
         elif val is None:
             self.write("None")
         else:
