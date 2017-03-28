@@ -18,6 +18,7 @@
 * SHA1 Secure Hash Algorithm 1
 * TAP ?
 * TCG Tiny code generator
+* TCP Transmission control protocol
 * UDP User datagram protocol
 * USB Universal serial bus
 * АСД абстрактное синтаксическое дерево
@@ -1116,6 +1117,56 @@ static void test_pci_card_class_init(ObjectClass* oc, void* opaque)
 состояния устройства.
 
 ### Символьные устройства
+
+Абстракция "символьное устройство" в QEMU применяется для унификации
+поточного ввода/вывода. Распространённый пример: последовательный порт УАПП,
+который может быть подключён к виртуальному терминалу, завернут в TCP
+соединение, выведен в файл и мн.др. Такая вариативность как раз и достигается
+использованием этой абстракции.
+
+Инструмент позволяет сгенерировать следующую заготовку.
+
+```c
+/* Вызывается для чтения size байт, начиная с адреса buf. */
+static void test_pci_card_chr_read(void* opaque, const uint8_t* buf, int size)
+{
+    __attribute__((unused)) TestPCIcardState *s = TEST_PCI_CARD(opaque);
+}
+
+/* Опрос устройства о количестве байт, которые оно готово принять. */
+static int test_pci_card_chr_can_read(void* opaque)
+{
+    __attribute__((unused)) TestPCIcardState *s = TEST_PCI_CARD(opaque);
+
+    return 0; /* Устройство ещё не реализовано и принимать не может. */
+}
+
+/* Уведомление устройства о событии, произошедшем в канале. */
+static void test_pci_card_chr_event(void* opaque, int event)
+{
+    __attribute__((unused)) TestPCIcardState *s = TEST_PCI_CARD(opaque);
+}
+
+/* Функция реализации объекта. */
+static void test_pci_card_realize(PCIDevice* dev, Error** errp)
+{
+    /* Другой код */
+    /* Наличие назначенного символьного устройства не обязательно. Устройство
+       должно уметь корректно работать без него. */
+    if (s->chr) {
+        /* Регистрация обработчиков. */
+        qemu_chr_add_handlers(s->chr, test_pci_card_chr_can_read, \
+            test_pci_card_chr_read, test_pci_card_chr_event, s);
+    }
+    /* Другой код */
+}
+
+```
+
+Фрагмент кода приведён без изменений, все комментарии добавлены вручную.
+Во фрагменте не приведены добавление поля в структуру объекта и регистрация
+этого поля как _свойства_. Последнее описывается далее.
+
 ### Блочные устройства
 ### Свойства объектов
 
