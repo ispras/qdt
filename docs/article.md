@@ -1103,6 +1103,9 @@ static void test_pci_card_class_init(ObjectClass* oc, void* opaque)
     /* Другой код. */
     /* Регистрация описателя состояния в статической переменной класса. */
     dc->vmsd      = &vmstate_test_pci_card;
+    /* Большой пробел перед = является следствием выравнивания всех
+       присваиваний. В данном случае по следующему коду. */
+    pc->vendor_id = PCI_VENDOR_ID_AMD;
     /* Другой код. */
 }
 ```
@@ -1147,9 +1150,6 @@ static void test_pci_card_class_init(ObjectClass* oc, void* opaque)
     /* Регистрация перечня свойств. Затрагивается шаблон функции конструктора
        касса. */
     dc->props     = test_pci_card_properties;
-    /* Большой пробел перед = является следствием выравнивания всех
-       присваиваний. В данном случае по следующему коду. */
-    pc->vendor_id = PCI_VENDOR_ID_AMD;
     /* Другой код */
 }
 ```
