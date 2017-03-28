@@ -9,6 +9,7 @@
 * CD Compact disc
 * CLI Command line interface
 * IRQ Interrupt request
+* LPC Low pin count
 * MMIO Memory mapped input/output
 * MSI Message signalled interrupt
 * PCI Peripheral component interconnect
@@ -944,6 +945,96 @@ type_init(io_port_80_register_types)
 прерывание. Примеры этого приведены ниже.
 
 #### MMIO и PMIO
+
+Заготовка отображения регистров устройства на память выглядит следующим
+образом. Помимо представленного кода в структуру объекта добавляется поле
+`mmio`.
+```c
+/* Пара функций: обработчики записи в регистр устройства и чтения. */
+static void a20_line_mmio_write(void* opaque, hwaddr addr, uint64_t data, \
+    unsigned size)
+{
+    __attribute__((unused)) A20LineState *s = A20_LINE(opaque);
+
+    switch (addr) {
+    /* Для удобства отладки шаблон предусматривает только генерацию сообщения
+       об обращении к нереализованному регистру. Реализация регистров
+       заключается в добавлении `сase` блоков для обработки доступа к
+       соответствующим смещениям регистров относительно условного стартового
+       адреса. Т.е. одна пара функций может реализовывать сразу несколько
+       регистров. Обычно за условный стартовый адрес принимают адрес регистра с
+       наименьшим смещением. */
+    default:
+        printf("%s: unimplemented write to 0x%"HWADDR_PRIx", size %d, "
+                "value 0x%"PRIx64"\n", __FUNCTION__, addr, size, data);
+        break;
+    }
+}
+
+static uint64_t a20_line_mmio_read(void* opaque, hwaddr addr, unsigned size)
+{
+    __attribute__((unused)) A20LineState *s = A20_LINE(opaque);
+    uint64_t ret = 0; /* Функция чтения должна вернуть что-нибудь. */
+
+    switch (addr) {
+    default:
+        printf("%s: unimplemented read from 0x%"HWADDR_PRIx", size %d\n",
+            __FUNCTION__, addr, size);
+        break;
+    }
+
+    return ret;
+}
+
+/* Параметры одного отображения группируются в специальную структуру. */
+static MemoryRegionOps a20_line_mmio_ops = {
+    .read = a20_line_mmio_read,
+    .write = a20_line_mmio_write
+};
+
+static void a20_line_instance_init(Object* obj)
+{
+    A20LineState *s = A20_LINE(obj);
+    /* Другой код. */
+    /* Инициализация отображения. */
+    memory_region_init_io(&s->mmio, obj, &a20_line_mmio_ops, s, TYPE_A20_LINE, \
+        A20_LINE_MMIO_SIZE);
+    /* Данный вызов регистрирует это отображение именно как MMIO отображение
+       на адресное пространство системную шину. */
+    sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
+    /* Другой код. */
+}
+```
+
+IBM PC совместимые ВМ имеют также шину LPC. По историческим причинам она
+тесно переплетена с системной шиной в QEMU. Эта шина позволяет устройствам
+отображать свои регистры не только на адресное пространство памяти, но и на
+независимое адресное пространство портов ввода/вывода. Этот механизм
+известен как PIO или PMIO. Добавление PMIO-регистров к заготовке устройства
+отличается от добавления MMIO-регистров только способом регистрации
+отображения. Пример регистрации PMIO приведён ниже.
+
+```c
+static void io_port_80_instance_init(Object* obj)
+{
+    /* Другой код. */
+    memory_region_init_io(&s->pio, obj, &io_port_80_pio_ops, s, \
+        TYPE_IO_PORT_80, IO_PORT_80_PIO_SIZE);
+    /* Основное отличие MMIO и PMIO регистров системной шины IBM PC совместимых
+       ВМ заключается в строчке ниже. */
+    sysbus_add_io(SYS_BUS_DEVICE(obj), IO_PORT_80_PIO_ADDR, &s->pio);
+    /* Данный код привязывает отображение к конкретному адресу. В общем случае,
+       привязка возлагается на функцию инициализации ВМ. Но в LPC устройства
+       не поддерживают свободное перемещение по адресам. Протокол шины таков,
+       что мост лишь по ответу устройства понимает, что они присутствует в
+       системе. На какие адреса отвечать --- это решает разработчик
+       устройства. */
+    sysbus_init_ioports(SYS_BUS_DEVICE(obj), IO_PORT_80_PIO_ADDR, \
+        IO_PORT_80_PIO_SIZE);
+    /* Другой код. */
+}
+```
+
 #### Исходящие прерывания
 ### PCI
 #### Идентификация
