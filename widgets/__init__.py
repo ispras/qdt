@@ -130,3 +130,5 @@ from .tk_unbind import \
 
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
+
+from .statusbar import *
