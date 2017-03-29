@@ -135,7 +135,7 @@ after last statement in the corresponding callable object.
                 # is already in task list (should not be scheduled twice).
                 if callee not in self.callers:
                     if callee_is_new:
-                        self.active_tasks.append(callee)
+                        self.__activate__(callee)
             else:
                 # The callee is called multiple times. Hence, it is already
                 # queued. Just account its new caller.
