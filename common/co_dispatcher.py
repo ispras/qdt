@@ -202,6 +202,11 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
+    def __activate__(self, task):
+        # print 'Activating task %s' % str(task)
+        self.active_tasks.append(task)
+        task.on_activated()
+
     def pull(self):
         if not self.tasks:
             return False
@@ -212,16 +217,13 @@ after last statement in the corresponding callable object.
             if added:
                 while self.tasks:
                     task = self.tasks.pop(0)
-                    self.active_tasks.append(task)
-                    task.on_activated()
+                    self.__activate__(task)
         else:
             rest = self.max_tasks - len(self.active_tasks)
             while rest > 0 and self.tasks:
                 rest = rest - 1
                 task = self.tasks.pop(0)
-                # print 'Activating task %s' % str(task)
-                self.active_tasks.append(task)
-                task.on_activated()
+                self.__activate__(task)
                 added = True
 
         return added
