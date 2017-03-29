@@ -104,6 +104,7 @@ from .popup_helper import \
     TkPopupHelper
 
 from .gui_tk import \
+    GUITaskManager, \
     GUITk
 
 from .tv_width_helper import \
