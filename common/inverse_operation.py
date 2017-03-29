@@ -152,7 +152,7 @@ class HistoryTracker(object):
     def unwatch_changed(self, callback):
         self.on_changed_cbs.remove(callback)
 
-    def __notify_on_changed(self, *args, **kw):
+    def __notify_changed(self, *args, **kw):
         """ Because listeners could add and/or remove callbacks during
         notification the listener list should be copied before the process. """
         for cb in list(self.on_changed_cbs):
@@ -182,7 +182,7 @@ class HistoryTracker(object):
                 p.__undo__()
                 p.done = False
 
-                self.__notify_on_changed(p)
+                self.__notify_changed(p)
 
     def undo_sequence(self):
         cur = self.pos
@@ -273,6 +273,6 @@ class HistoryTracker(object):
                 p.__do__()
                 p.done = True
 
-                self.__notify_on_changed(p)
+                self.__notify_changed(p)
 
 
