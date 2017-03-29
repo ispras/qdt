@@ -16,6 +16,9 @@ from six.moves.tkinter import \
     RIGHT as SIDE_RIGHT, \
     LEFT as SIDE_LEFT
 
+from .pack_info_compat import \
+    pack_info
+
 class Statusbar(GUIFrame):
     def __init__(self, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
@@ -47,7 +50,7 @@ the new widget must be added before them.
         sides = [side]
 
         for slave in slaves:
-            sides.append(slave.pack_info()["side"])
+            sides.append(pack_info(slave)["side"])
             slave.pack_forget()
 
         slaves.insert(0, widget)

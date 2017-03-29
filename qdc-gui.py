@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    Statusbar, \
     GUIProjectHistoryTracker, \
     HistoryWindow, \
     askopen, \
@@ -286,6 +287,11 @@ show it else hide it.")
         self.grid_rowconfigure(0, weight=1)
 
         self.set_project(GUIProject() if project is None else project)
+
+        # Status bar
+        self.grid_rowconfigure(1, weight = 0)
+        self.sb = sb = Statusbar(self)
+        sb.grid(row = 1, column = 0, sticky = "NEWS")
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
