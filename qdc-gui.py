@@ -35,6 +35,9 @@ from qemu import \
     account_build_path, \
     QemuVersionDescription
 
+from six.moves.tkinter import \
+    IntVar
+
 from six.moves.cPickle import \
     load as load_cPickled
 
@@ -42,6 +45,7 @@ from os import \
     remove
 
 from common import \
+    FormatVar, \
     execfile, \
     CoSignal, \
     CoTask, \
@@ -293,10 +297,32 @@ show it else hide it.")
         self.sb = sb = Statusbar(self)
         sb.grid(row = 1, column = 0, sticky = "NEWS")
 
+        # Task counters in status bar
+        self.var_tasks = vt = IntVar()
+        self.var_callers = vc = IntVar()
+        self.var_active_tasks = vat = IntVar()
+        self.var_finished_tasks = vft = IntVar()
+        sb.right(_("Background tasks: "))
+        sb.right(FormatVar(value = "%u") % vt, fg = "red")
+        sb.right(FormatVar(value = "%u") % vc, fg = "orange")
+        sb.right(FormatVar(value = "%u") % vat)
+        sb.right(FormatVar(value = "%u") % vft, fg = "grey")
+
+        self.task_manager.watch_activated(self.__on_task_state_changed)
+        self.task_manager.watch_finished(self.__on_task_state_changed)
+        self.task_manager.watch_removed(self.__on_task_state_changed)
+
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
         self.__update_title__()
         self.__check_saved_asterisk__()
+
+    def __on_task_state_changed(self, task):
+        for group in [ "tasks", "callers", "active_tasks", "finished_tasks" ]:
+            var = getattr(self, "var_" + group)
+            cur_val = len(getattr(self.task_manager, group))
+            if cur_val != var.get():
+                var.set(cur_val)
 
     def __on_history_window_destroy__(self, *args, **kw):
         self.var_history_window.trace_vdelete("w",
@@ -457,6 +483,10 @@ in process. Do you want to start cache rebuilding?").get()
             pass
         else:
             del self._project_generation_task
+
+        self.task_manager.unwatch_activated(self.__on_task_state_changed)
+        self.task_manager.unwatch_finished(self.__on_task_state_changed)
+        self.task_manager.unwatch_removed(self.__on_task_state_changed)
 
         self.quit()
 
