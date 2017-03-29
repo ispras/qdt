@@ -87,10 +87,7 @@ after last statement in the corresponding callable object.
                 )
 
         for task in finished:
-            # print 'Task %s finished' % str(task)
-            self.active_tasks.remove(task)
-            self.finished_tasks.add(task)
-            task.on_finished()
+            self.__finish__(task)
 
             try:
                 callers = self.callees[task]
@@ -201,6 +198,12 @@ after last statement in the corresponding callable object.
 
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
+
+    def __finish__(self, task):
+        # print 'Task %s finished' % str(task)
+        self.active_tasks.remove(task)
+        self.finished_tasks.add(task)
+        task.on_finished()
 
     def __activate__(self, task):
         # print 'Activating task %s' % str(task)
