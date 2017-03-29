@@ -371,7 +371,7 @@ show it else hide it.")
             # Project was never been set
             pass
         else:
-            pht.remove_on_changed(self.on_changed)
+            pht.unwatch_changed(self.on_changed)
 
         try:
             self.pw.destroy()
@@ -389,7 +389,7 @@ show it else hide it.")
         self.pw = ProjectWidget(self.proj, self)
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
-        self.pht.add_on_changed(self.on_changed)
+        self.pht.watch_changed(self.on_changed)
         self.chack_undo_redo()
 
     def __saved_asterisk__(self, saved = True):

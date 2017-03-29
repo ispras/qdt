@@ -46,7 +46,7 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
         # snapshot mode without MHT
         if self.mht is not None:
-            self.mht.add_on_changed(self.on_machine_changed)
+            self.mht.watch_changed(self.on_machine_changed)
 
         self.iid2node = {}
         self.selected = None
@@ -154,7 +154,7 @@ snapshot mode or the command should be disabled too.
     def __on_destroy__(self, *args, **kw):
         if self.mht is not None:
             # the listener is assigned only in non-snapshot mode
-            self.mht.remove_on_changed(self.on_machine_changed)
+            self.mht.unwatch_changed(self.on_machine_changed)
 
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):

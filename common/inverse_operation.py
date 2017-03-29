@@ -146,10 +146,10 @@ class HistoryTracker(object):
 
         self.on_changed_cbs = []
 
-    def add_on_changed(self, callback):
+    def watch_changed(self, callback):
         self.on_changed_cbs.append(callback)
 
-    def remove_on_changed(self, callback):
+    def unwatch_changed(self, callback):
         self.on_changed_cbs.remove(callback)
 
     def __notify_on_changed(self, *args, **kw):
