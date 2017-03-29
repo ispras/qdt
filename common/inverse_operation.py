@@ -16,6 +16,9 @@ simple_eq_types = [
     float
 ] + list(integer_types)
 
+from .notifier import \
+    Notifier
+
 def set_touches_entry(X, e):
     for x in X:
         if isinstance(x, tuple):
@@ -139,27 +142,11 @@ class History(object):
         self.root = InitialOperation()
         self.leafs = [self.root]
 
+@Notifier("changed")
 class HistoryTracker(object):
     def __init__(self, history):
         self.history = history
         self.pos = history.leafs[0]
-
-        self.on_changed_cbs = []
-
-    def watch_changed(self, callback):
-        self.on_changed_cbs.append(callback)
-
-    def unwatch_changed(self, callback):
-        self.on_changed_cbs.remove(callback)
-
-    def __notify_changed(self, *args, **kw):
-        """ Because listeners could add and/or remove callbacks during
-        notification the listener list should be copied before the process. """
-        for cb in list(self.on_changed_cbs):
-            if not cb in self.on_changed_cbs:
-                """ The callback has been denied during the loop. """
-                continue
-            cb(*args, **kw)
 
     def undo(self, including = None):
         queue = []
