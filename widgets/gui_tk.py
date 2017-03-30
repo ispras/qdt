@@ -34,7 +34,7 @@ class GUITk(VarTk):
                 pass
 
         VarTk.__init__(self, **kw)
-        self.task_manager = TkCoDispatcher(self, **disp_kw)
+        self.task_manager = GUITaskManager(self, **disp_kw)
 
         self.signal_dispatcher = SignalDispatcherTask()
         self.task_manager.enqueue(self.signal_dispatcher)
