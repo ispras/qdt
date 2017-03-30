@@ -451,6 +451,9 @@ class QVCWasNotInitialized(Exception):
 class QVCIsNotReady(Exception):
     pass
 
+# Iterations Between Yields of Device Tree Macros adding task
+QVD_DTM_IBY = 100
+
 class QemuVersionDescription(object):
     current = None
 
@@ -678,12 +681,19 @@ use another way to check this.
             self.qvc.device_tree = None
 
     def co_add_dt_macro(self, list_dt, text2macros = None):
+        # iterations to yield
+        i2y = QVD_DTM_IBY
+
         if text2macros is None:
             print("Building text to macros mapping...")
 
             text2macros = {}
             for t in self.qvc.stc.reg_type.values():
-                yield True
+                if i2y == 0:
+                    yield True
+                    i2y = QVD_DTM_IBY
+                else:
+                    i2y -= 1
 
                 if not isinstance(t, Macro):
                     continue
@@ -700,7 +710,11 @@ use another way to check this.
 
         # Use the mapping to build "list_dt"
         for dict_dt in list_dt:
-            yield True
+            if i2y == 0:
+                yield True
+                i2y = QVD_DTM_IBY
+            else:
+                i2y -= 1
 
             dt_type = dict_dt["type"]
             dt_type_text = '"' + dt_type + '"'
@@ -724,7 +738,11 @@ use another way to check this.
                 pass # QOM type have no properties
             else:
                 for dt_property in dt_properties:
-                    yield True
+                    if i2y == 0:
+                        yield True
+                        i2y = QVD_DTM_IBY
+                    else:
+                        i2y -= 1
 
                     dt_property_name_text = '"' + dt_property["name"] + '"'
                     try:
