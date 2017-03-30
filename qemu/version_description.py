@@ -704,5 +704,4 @@ use another way to check this.
                                         dt_property["macro"] = [t.name]
                     yield True
             if "children" in dict_dt:
-                for ret in self.co_add_dt_macro(dict_dt["children"]):
-                    yield True
+                yield self.co_add_dt_macro(dict_dt["children"])
