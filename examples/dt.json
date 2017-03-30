@@ -1,8 +1,5 @@
 [
     {
-        "macro": [
-            "TYPE_DEVICE"
-        ],
         "type": "device",
         "children": [
             {
@@ -216,27 +213,15 @@
                 "type": "sd-card"
             },
             {
-                "macro": [
-                    "TYPE_ISA_DEVICE"
-                ],
                 "type": "isa-device",
                 "children": [
                     {
-                        "macro": [
-                            "TYPE_ISA_FDC"
-                        ],
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -274,16 +259,10 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -306,9 +285,6 @@
                         "type": "port92"
                     },
                     {
-                        "macro": [
-                            "PC_MACHINE_VMPORT"
-                        ],
                         "type": "vmport"
                     },
                     {
@@ -324,20 +300,11 @@
                         "type": "i8042"
                     },
                     {
-                        "macro": [
-                            "TYPE_PIT_COMMON"
-                        ],
                         "type": "pit-common",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_KVM_I8254"
-                                ],
                                 "property": [
                                     {
-                                        "macro": [
-                                            "APPLESMC_PROP_IO_BASE"
-                                        ],
                                         "type": 2,
                                         "name": "iobase"
                                     },
@@ -349,14 +316,8 @@
                                 "type": "kvm-pit"
                             },
                             {
-                                "macro": [
-                                    "TYPE_I8254"
-                                ],
                                 "property": [
                                     {
-                                        "macro": [
-                                            "APPLESMC_PROP_IO_BASE"
-                                        ],
                                         "type": 2,
                                         "name": "iobase"
                                     }
@@ -377,16 +338,10 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -400,9 +355,6 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
@@ -422,9 +374,6 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
@@ -436,14 +385,8 @@
                         "type": "isa-debug-exit"
                     },
                     {
-                        "macro": [
-                            "TYPE_TPM_TIS"
-                        ],
                         "property": [
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -466,9 +409,6 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
@@ -477,9 +417,6 @@
                                 "name": "iobase2"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             }
@@ -493,9 +430,6 @@
                                 "name": "ioport"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             }
@@ -506,14 +440,8 @@
                         "type": "ib700"
                     },
                     {
-                        "macro": [
-                            "TYPE_PIC_COMMON"
-                        ],
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
@@ -568,16 +496,10 @@
                                 "name": "version"
                             },
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -602,9 +524,6 @@
                         "type": "pvpanic"
                     },
                     {
-                        "macro": [
-                            "TYPE_MC146818_RTC"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -618,14 +537,8 @@
                         "type": "mc146818rtc"
                     },
                     {
-                        "macro": [
-                            "TYPE_APPLE_SMC"
-                        ],
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
@@ -643,16 +556,10 @@
                                 "name": "freq"
                             },
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -664,14 +571,8 @@
                         "type": "gus"
                     },
                     {
-                        "macro": [
-                            "TYPE_PC_SPEAKER"
-                        ],
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             }
@@ -685,9 +586,6 @@
                                 "name": "ioport"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             }
@@ -697,9 +595,6 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
@@ -718,25 +613,16 @@
                         "type": "hyperv-testdev"
                     },
                     {
-                        "macro": [
-                            "TYPE_ISA_SERIAL"
-                        ],
                         "property": [
                             {
                                 "type": 2,
                                 "name": "index"
                             },
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -758,16 +644,10 @@
                                 "name": "index"
                             },
                             {
-                                "macro": [
-                                    "APPLESMC_PROP_IO_BASE"
-                                ],
                                 "type": 2,
                                 "name": "iobase"
                             },
                             {
-                                "macro": [
-                                    "TYPE_IRQ"
-                                ],
                                 "type": 2,
                                 "name": "irq"
                             },
@@ -781,9 +661,6 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_SCSI_DEVICE"
-                ],
                 "property": [
                     {
                         "type": 2,
@@ -1045,9 +922,6 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_APIC_COMMON"
-                ],
                 "property": [
                     {
                         "type": 2,
@@ -1073,9 +947,6 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_VIRTIO_DEVICE"
-                ],
                 "property": [
                     {
                         "type": 7,
@@ -1097,9 +968,6 @@
                 "type": "virtio-device",
                 "children": [
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_BLK"
-                        ],
                         "property": [
                             {
                                 "type": 0,
@@ -1161,9 +1029,6 @@
                         "type": "virtio-blk-device"
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_RNG"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -1177,9 +1042,6 @@
                         "type": "virtio-rng-device"
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_SERIAL"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -1189,9 +1051,6 @@
                         "type": "virtio-serial-device"
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_BALLOON"
-                        ],
                         "property": [
                             {
                                 "type": 7,
@@ -1201,9 +1060,6 @@
                         "type": "virtio-balloon-device"
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_NET"
-                        ],
                         "property": [
                             {
                                 "type": 7,
@@ -1317,15 +1173,9 @@
                         "type": "virtio-net-device"
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_SCSI_COMMON"
-                        ],
                         "type": "virtio-scsi-common",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_VHOST_SCSI"
-                                ],
                                 "property": [
                                     {
                                         "type": 0,
@@ -1355,9 +1205,6 @@
                                 "type": "vhost-scsi"
                             },
                             {
-                                "macro": [
-                                    "TYPE_VIRTIO_SCSI"
-                                ],
                                 "property": [
                                     {
                                         "type": 2,
@@ -1385,9 +1232,6 @@
                         ]
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_INPUT"
-                        ],
                         "property": [
                             {
                                 "type": 0,
@@ -1397,9 +1241,6 @@
                         "type": "virtio-input-device",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_VIRTIO_INPUT_HOST"
-                                ],
                                 "property": [
                                     {
                                         "type": 0,
@@ -1409,9 +1250,6 @@
                                 "type": "virtio-input-host-device"
                             },
                             {
-                                "macro": [
-                                    "TYPE_VIRTIO_INPUT_HID"
-                                ],
                                 "property": [
                                     {
                                         "type": 0,
@@ -1425,21 +1263,12 @@
                                 "type": "virtio-input-hid-device",
                                 "children": [
                                     {
-                                        "macro": [
-                                            "TYPE_VIRTIO_KEYBOARD"
-                                        ],
                                         "type": "virtio-keyboard-device"
                                     },
                                     {
-                                        "macro": [
-                                            "TYPE_VIRTIO_TABLET"
-                                        ],
                                         "type": "virtio-tablet-device"
                                     },
                                     {
-                                        "macro": [
-                                            "TYPE_VIRTIO_MOUSE"
-                                        ],
                                         "type": "virtio-mouse-device"
                                     }
                                 ]
@@ -1447,9 +1276,6 @@
                         ]
                     },
                     {
-                        "macro": [
-                            "TYPE_VIRTIO_GPU"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -1464,9 +1290,6 @@
                 "type": "qemu,register"
             },
             {
-                "macro": [
-                    "TYPE_USB_DEVICE"
-                ],
                 "property": [
                     {
                         "type": 0,
@@ -1670,9 +1493,6 @@
             {
                 "property": [
                     {
-                        "macro": [
-                            "PC_DIMM_SLOT_PROP"
-                        ],
                         "type": 2,
                         "name": "slot"
                     }
@@ -1680,9 +1500,6 @@
                 "type": "ccid-card"
             },
             {
-                "macro": [
-                    "TYPE_I2C_SLAVE"
-                ],
                 "property": [
                     {
                         "type": 2,
@@ -1692,9 +1509,6 @@
                 "type": "i2c-slave",
                 "children": [
                     {
-                        "macro": [
-                            "TYPE_SMBUS_DEVICE"
-                        ],
                         "type": "smbus-device",
                         "children": [
                             {
@@ -1734,9 +1548,6 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_VIRTIO_SERIAL_PORT"
-                ],
                 "property": [
                     {
                         "type": 2,
@@ -1766,9 +1577,6 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_SYS_BUS_DEVICE"
-                ],
                 "type": "sys-bus-device",
                 "children": [
                     {
@@ -1794,9 +1602,6 @@
                         "type": "kvmvapic"
                     },
                     {
-                        "macro": [
-                            "TYPE_VFIO_PLATFORM"
-                        ],
                         "property": [
                             {
                                 "type": 0,
@@ -1822,9 +1627,6 @@
                         "type": "vfio-platform",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_VFIO_CALXEDA_XGMAC"
-                                ],
                                 "type": "vfio-calxeda-xgmac"
                             },
                             {
@@ -1833,25 +1635,16 @@
                         ]
                     },
                     {
-                        "macro": [
-                            "TYPE_HPET"
-                        ],
                         "property": [
                             {
                                 "type": 2,
                                 "name": "timers"
                             },
                             {
-                                "macro": [
-                                    "PCI_BRIDGE_DEV_PROP_MSI"
-                                ],
                                 "type": 7,
                                 "name": "msi"
                             },
                             {
-                                "macro": [
-                                    "HPET_INTCAP"
-                                ],
                                 "type": 2,
                                 "name": "hpet-intcap"
                             }
@@ -1926,9 +1719,6 @@
                         ]
                     },
                     {
-                        "macro": [
-                            "TYPE_IOAPIC_COMMON"
-                        ],
                         "type": "ioapic-common",
                         "children": [
                             {
@@ -1946,9 +1736,6 @@
                         ]
                     },
                     {
-                        "macro": [
-                            "TYPE_INTEL_IOMMU_DEVICE"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -1958,20 +1745,11 @@
                         "type": "intel-iommu"
                     },
                     {
-                        "macro": [
-                            "TYPE_PCI_HOST_BRIDGE"
-                        ],
                         "type": "pci-host-bridge",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_I440FX_PCI_HOST_BRIDGE"
-                                ],
                                 "property": [
                                     {
-                                        "macro": [
-                                            "PCI_HOST_PROP_PCI_HOLE64_SIZE"
-                                        ],
                                         "type": 2,
                                         "name": "pci-hole64-size"
                                     },
@@ -1983,27 +1761,15 @@
                                 "type": "i440FX-pcihost"
                             },
                             {
-                                "macro": [
-                                    "TYPE_PCIE_HOST_BRIDGE"
-                                ],
                                 "type": "pcie-host-bridge",
                                 "children": [
                                     {
-                                        "macro": [
-                                            "TYPE_Q35_HOST_DEVICE"
-                                        ],
                                         "property": [
                                             {
-                                                "macro": [
-                                                    "PCIE_HOST_MCFG_BASE"
-                                                ],
                                                 "type": 2,
                                                 "name": "MCFG"
                                             },
                                             {
-                                                "macro": [
-                                                    "PCI_HOST_PROP_PCI_HOLE64_SIZE"
-                                                ],
                                                 "type": 2,
                                                 "name": "pci-hole64-size"
                                             },
@@ -2087,9 +1853,6 @@
                         "type": "cfi.pflash01"
                     },
                     {
-                        "macro": [
-                            "TYPE_SYSBUS_SDHCI"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -2125,9 +1888,6 @@
                             {
                                 "property": [
                                     {
-                                        "macro": [
-                                            "APPLESMC_PROP_IO_BASE"
-                                        ],
                                         "type": 2,
                                         "name": "iobase"
                                     },
@@ -2147,14 +1907,8 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_PCI_DEVICE"
-                ],
                 "property": [
                     {
-                        "macro": [
-                            "PC_DIMM_ADDR_PROP"
-                        ],
                         "type": 2,
                         "name": "addr"
                     },
@@ -2280,15 +2034,9 @@
                         "type": "ne2k_pci"
                     },
                     {
-                        "macro": [
-                            "TYPE_I440FX_PCI_DEVICE"
-                        ],
                         "type": "i440FX",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_IGD_PASSTHROUGH_I440FX_PCI_DEVICE"
-                                ],
                                 "type": "igd-passthrough-i440FX"
                             }
                         ]
@@ -2383,9 +2131,6 @@
                         "type": "pxb"
                     },
                     {
-                        "macro": [
-                            "TYPE_PCI_SDHCI"
-                        ],
                         "property": [
                             {
                                 "type": 2,
@@ -2630,9 +2375,6 @@
                         "type": "edu"
                     },
                     {
-                        "macro": [
-                            "TYPE_ICH9_LPC_DEVICE"
-                        ],
                         "property": [
                             {
                                 "type": 7,
@@ -2642,9 +2384,6 @@
                         "type": "ICH9-LPC"
                     },
                     {
-                        "macro": [
-                            "TYPE_MCH_PCI_DEVICE"
-                        ],
                         "type": "mch"
                     },
                     {
@@ -2752,9 +2491,6 @@
                                         "name": "sas_address"
                                     },
                                     {
-                                        "macro": [
-                                            "PCI_BRIDGE_DEV_PROP_MSI"
-                                        ],
                                         "type": 2,
                                         "name": "msi"
                                     },
@@ -2788,9 +2524,6 @@
                                         "name": "sas_address"
                                     },
                                     {
-                                        "macro": [
-                                            "PCI_BRIDGE_DEV_PROP_MSI"
-                                        ],
                                         "type": 2,
                                         "name": "msi"
                                     },
@@ -3000,9 +2733,6 @@
                     {
                         "property": [
                             {
-                                "macro": [
-                                    "PCI_BRIDGE_DEV_PROP_MSI"
-                                ],
                                 "type": 2,
                                 "name": "msi"
                             },
@@ -3059,15 +2789,9 @@
                         "type": "pvscsi"
                     },
                     {
-                        "macro": [
-                            "TYPE_PCI_BRIDGE"
-                        ],
                         "type": "base-pci-bridge",
                         "children": [
                             {
-                                "macro": [
-                                    "TYPE_PCIE_PORT"
-                                ],
                                 "property": [
                                     {
                                         "type": 2,
@@ -3084,18 +2808,12 @@
                                         "type": "x3130-upstream"
                                     },
                                     {
-                                        "macro": [
-                                            "TYPE_PCIE_SLOT"
-                                        ],
                                         "property": [
                                             {
                                                 "type": 2,
                                                 "name": "chassis"
                                             },
                                             {
-                                                "macro": [
-                                                    "PC_DIMM_SLOT_PROP"
-                                                ],
                                                 "type": 2,
                                                 "name": "slot"
                                             }
@@ -3105,9 +2823,6 @@
                                             {
                                                 "property": [
                                                     {
-                                                        "macro": [
-                                                            "COMPAT_PROP_PCP"
-                                                        ],
                                                         "type": 7,
                                                         "name": "power_controller_present"
                                                     }
@@ -3117,9 +2832,6 @@
                                             {
                                                 "property": [
                                                     {
-                                                        "macro": [
-                                                            "COMPAT_PROP_PCP"
-                                                        ],
                                                         "type": 7,
                                                         "name": "power_controller_present"
                                                     }
@@ -3133,23 +2845,14 @@
                             {
                                 "property": [
                                     {
-                                        "macro": [
-                                            "PCI_BRIDGE_DEV_PROP_CHASSIS_NR"
-                                        ],
                                         "type": 2,
                                         "name": "chassis_nr"
                                     },
                                     {
-                                        "macro": [
-                                            "PCI_BRIDGE_DEV_PROP_MSI"
-                                        ],
                                         "type": 2,
                                         "name": "msi"
                                     },
                                     {
-                                        "macro": [
-                                            "PCI_BRIDGE_DEV_PROP_SHPC"
-                                        ],
                                         "type": 7,
                                         "name": "shpc"
                                     }
@@ -3179,23 +2882,14 @@
                                 "name": "smb_io_base"
                             },
                             {
-                                "macro": [
-                                    "ACPI_PM_PROP_S3_DISABLED"
-                                ],
                                 "type": 2,
                                 "name": "disable_s3"
                             },
                             {
-                                "macro": [
-                                    "ACPI_PM_PROP_S4_DISABLED"
-                                ],
                                 "type": 2,
                                 "name": "disable_s4"
                             },
                             {
-                                "macro": [
-                                    "ACPI_PM_PROP_S4_VAL"
-                                ],
                                 "type": 2,
                                 "name": "s4_val"
                             },
@@ -3570,10 +3264,6 @@
                                         "name": "chardev"
                                     },
                                     {
-                                        "macro": [
-                                            "PC_DIMM_SIZE_PROP",
-                                            "BLOCK_OPT_SIZE"
-                                        ],
                                         "type": 0,
                                         "name": "size"
                                     },
@@ -3586,9 +3276,6 @@
                                         "name": "ioeventfd"
                                     },
                                     {
-                                        "macro": [
-                                            "PCI_BRIDGE_DEV_PROP_MSI"
-                                        ],
                                         "type": 7,
                                         "name": "msi"
                                     },
@@ -3653,9 +3340,6 @@
                                 "name": "sas_address"
                             },
                             {
-                                "macro": [
-                                    "PCI_BRIDGE_DEV_PROP_MSI"
-                                ],
                                 "type": 2,
                                 "name": "msi"
                             }
@@ -3698,9 +3382,6 @@
                                 "name": "debug"
                             },
                             {
-                                "macro": [
-                                    "PCI_BRIDGE_DEV_PROP_MSI"
-                                ],
                                 "type": 2,
                                 "name": "msi"
                             },
@@ -3784,15 +3465,9 @@
                 "type": "cpu-core"
             },
             {
-                "macro": [
-                    "TYPE_PCMCIA_CARD"
-                ],
                 "type": "pcmcia-card"
             },
             {
-                "macro": [
-                    "TYPE_CPU"
-                ],
                 "type": "cpu",
                 "children": [
                     {
@@ -3981,28 +3656,16 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_PC_DIMM"
-                ],
                 "property": [
                     {
-                        "macro": [
-                            "PC_DIMM_ADDR_PROP"
-                        ],
                         "type": 2,
                         "name": "addr"
                     },
                     {
-                        "macro": [
-                            "PC_DIMM_NODE_PROP"
-                        ],
                         "type": 2,
                         "name": "node"
                     },
                     {
-                        "macro": [
-                            "PC_DIMM_SLOT_PROP"
-                        ],
                         "type": 2,
                         "name": "slot"
                     }
@@ -4015,14 +3678,8 @@
                 ]
             },
             {
-                "macro": [
-                    "TYPE_IPACK_DEVICE"
-                ],
                 "property": [
                     {
-                        "macro": [
-                            "PC_DIMM_SLOT_PROP"
-                        ],
                         "type": 2,
                         "name": "slot"
                     }

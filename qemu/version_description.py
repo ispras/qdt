@@ -451,6 +451,9 @@ class QVCWasNotInitialized(Exception):
 class QVCIsNotReady(Exception):
     pass
 
+# Iterations Between Yields of Device Tree Macros adding task
+QVD_DTM_IBY = 100
+
 class QemuVersionDescription(object):
     current = None
 
@@ -677,32 +680,88 @@ use another way to check this.
         else:
             self.qvc.device_tree = None
 
-    def co_add_dt_macro(self, list_dt):
+    def co_add_dt_macro(self, list_dt, text2macros = None):
+        # iterations to yield
+        i2y = QVD_DTM_IBY
+
+        if text2macros is None:
+            print("Building text to macros mapping...")
+
+            text2macros = {}
+            for t in self.qvc.stc.reg_type.values():
+                if i2y == 0:
+                    yield True
+                    i2y = QVD_DTM_IBY
+                else:
+                    i2y -= 1
+
+                if not isinstance(t, Macro):
+                    continue
+
+                text = t.text
+                try:
+                    aliases = text2macros[text]
+                except KeyError:
+                    text2macros[text] = [t.name]
+                else:
+                    aliases.append(t.name)
+
+            print("The mapping was built.")
+
+        # Use the mapping to build "list_dt"
         for dict_dt in list_dt:
-            dt_type = dict_dt["type"]
-            for h in self.qvc.stc.reg_header.values():
-                for t in h.types.values():
-                    if isinstance(t, Macro):
-                        if t.text == '"' + dt_type + '"':
-                            if "macro" in dict_dt:
-                                if not t.name in dict_dt["macro"]:
-                                    dict_dt["macro"].append(t.name)
-                            else:
-                                dict_dt["macro"] = [t.name]
+            if i2y == 0:
                 yield True
-            if "property" in dict_dt:
-                for dt_property in dict_dt["property"]:
-                    dt_property_name = dt_property["name"]
-                    for h in self.qvc.stc.reg_header.values():
-                        for t in h.types.values():
-                            if isinstance(t, Macro):
-                                if t.text == '"' + dt_property_name + '"':
-                                    if "macro" in dt_property:
-                                        if not t.name in dt_property["macro"]:
-                                            dt_property["macro"].append(t.name)
-                                    else:
-                                        dt_property["macro"] = [t.name]
-                    yield True
+                i2y = QVD_DTM_IBY
+            else:
+                i2y -= 1
+
+            dt_type = dict_dt["type"]
+            dt_type_text = '"' + dt_type + '"'
+            try:
+                aliases = text2macros[dt_type_text]
+            except KeyError:
+                # No macros for this type
+                if "macro" in dict_dt:
+                    print(
+"No macros for type %s now, removing previous cache..." % dt_type_text
+                    )
+                    del dict_dt["macro"]
+            else:
+                if "macro" in dict_dt:
+                    print("Override macros for type %s" % dt_type_text)
+                dict_dt["macro"] = list(aliases)
+
+            try:
+                dt_properties = dict_dt["property"]
+            except KeyError:
+                pass # QOM type have no properties
+            else:
+                for dt_property in dt_properties:
+                    if i2y == 0:
+                        yield True
+                        i2y = QVD_DTM_IBY
+                    else:
+                        i2y -= 1
+
+                    dt_property_name_text = '"' + dt_property["name"] + '"'
+                    try:
+                        aliases = text2macros[dt_property_name_text]
+                    except KeyError:
+                        # No macros for this property
+                        if "macro" in dt_property:
+                            print(
+"No macros for property %s of type %s, removing previous cache..." % (
+    dt_property_name_text, dt_type_text
+)
+                            )
+                            del dt_property["macro"]
+                        continue
+                    if "macro" in dt_property:
+                        print("Override macros for property %s of type %s" % (
+                            dt_property_name_text, dt_type_text
+                        ))
+                    dt_property["macro"] = list(aliases)
+
             if "children" in dict_dt:
-                for ret in self.co_add_dt_macro(dict_dt["children"]):
-                    yield True
+                yield self.co_add_dt_macro(dict_dt["children"], text2macros)
