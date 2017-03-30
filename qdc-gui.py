@@ -26,6 +26,8 @@ from qemu_device_creator import \
     arg_type_directory
 
 from qemu import \
+    qvd_get, \
+    BadBuildPath, \
     MachineNode, \
     __dict__ as qemu_namespace, \
     load_build_path_list, \
@@ -63,6 +65,7 @@ class ProjectGeneration(CoTask):
         CoTask.__init__(self, self.begin())
 
     def begin(self):
+        self.prev_qvd = qvd_get(self.p.build_path).use()
         try:
             self.p.gen_all(self.s)
         except Exception as e:
@@ -81,6 +84,8 @@ class ProjectGeneration(CoTask):
             )
 
     def on_finished(self):
+        if self.prev_qvd is not None:
+            self.prev_qvd.use()
         self.finished = True
         self.sig.emit()
 
@@ -434,16 +439,6 @@ in process.").get()
                 )
                 return
 
-        qvd = QemuVersionDescription.current
-
-        if qvd is None:
-            showerror(
-                title = _("Generation is impossible").get(),
-                message = _("No Qemu version descriptor is selected. Try to \
-set correct Qemu build path.").get()
-            )
-            return
-
         if not self.proj.build_path:
             showerror(
                 title = _("Generation is impossible").get(),
@@ -451,12 +446,14 @@ set correct Qemu build path.").get()
             )
             return
 
-        if qvd.build_path != self.proj.build_path:
+        try:
+            qvd = qvd_get(self.proj.build_path)
+        except BadBuildPath as e:
             showerror(
-                title = _("Generation is cancelled").get(),
-                message = (_("Qemu build path of current version description '\
-%s' differs from one selected for the project '%s'.") % (
-    qvd.build_path, self.proj.build_path)).get()
+                title = _("Generation is impossible").get(),
+                message = (_("Selected Qemu build path is bad. Reason: %s") % (
+                    e.message
+                )).get()
             )
             return
 

@@ -482,7 +482,7 @@ class QemuVersionDescription(object):
         VERSION_path = join(self.src_path, 'VERSION')
 
         if not  isfile(VERSION_path):
-            raise Exception("{} does not exists\n".format(VERSION_path))
+            raise BadBuildPath("{} does not exists\n".format(VERSION_path))
 
         VERSION_f = open(VERSION_path)
         self.qemu_version = VERSION_f.readline().rstrip("\n")
