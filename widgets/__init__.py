@@ -128,6 +128,8 @@ from .pci_id_widget import \
 from .tk_unbind import \
     unbind
 
+from widgets.pack_info_compat import *
+
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
