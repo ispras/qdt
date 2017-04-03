@@ -1,6 +1,3 @@
-from hashlib import \
-    md5
-
 from source import \
     SourceTreeContainer, \
     Header, \
@@ -24,6 +21,7 @@ from .version import \
     QVHDict, \
     initialize_version, \
     qemu_heuristic_db, \
+    calculate_qh_hash, \
     get_vp
 
 from os.path import \
@@ -532,11 +530,7 @@ class QemuVersionDescription(object):
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
         qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
 
-        # calculate hash of qemu_heuristic_db
-        vd_h = md5()
-        for k in sorted(qemu_heuristic_db):
-            for v in qemu_heuristic_db[k]:
-                vd_h.update(str(k + v.gen_mdc()).encode('utf-8'))
+        qemu_heuristic_hash = calculate_qh_hash()
 
         yield True
 
@@ -556,7 +550,7 @@ class QemuVersionDescription(object):
 
             # gen version description
             yield self.qvc.co_computing_parameters(self.repo)
-            self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
+            self.qvc.version_desc["vd_hash"] = qemu_heuristic_hash
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -576,9 +570,9 @@ class QemuVersionDescription(object):
 
             yield True
 
-            if not self.qvc.version_desc["vd_hash"] == vd_h.hexdigest():
+            if not self.qvc.version_desc["vd_hash"] == qemu_heuristic_hash:
                 yield self.qvc.co_computing_parameters(self.repo)
-                self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
+                self.qvc.version_desc["vd_hash"] = qemu_heuristic_hash
                 PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
 
         yield True
