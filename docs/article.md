@@ -8,6 +8,7 @@
 * BAR Base address registers
 * CD Compact disc
 * CLI Command line interface
+* GPIO general purpose input/output
 * IRQ Interrupt request
 * LPC Low pin count
 * MMIO Memory mapped input/output
@@ -855,6 +856,7 @@ type_init(machine_init_q35_test)
 с учётом реализованной оптимизации достигает нескольких десятков. Это в
 первую очередь связано с тем, что почти каждое устройство имеет свой заголовок.
 
+### GPIO и прерывания
 ### Устройства системной шины
 
 Устройства системной шины являются самыми распространёнными. Интересной
@@ -1041,7 +1043,6 @@ static void io_port_80_instance_init(Object* obj)
 #### Идентификация
 #### BAR
 #### MSI
-### Входящие прерывания
 ### Таймеры
 
 Таймеры используются для отсрочки действия относительно времени ВМ или времени
