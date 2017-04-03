@@ -1,3 +1,6 @@
+from hashlib import \
+    md5
+
 from source import \
     add_base_types, \
     Pointer, \
@@ -427,6 +430,15 @@ qemu_heuristic_db = {
 }
 
 version_parameters = None
+
+# calculate hash of qemu_heuristic_db
+def calculate_qh_hash():
+    vd_h = md5()
+    for k in sorted(qemu_heuristic_db):
+        for v in qemu_heuristic_db[k]:
+            vd_h.update(str(k + v.gen_mdc()).encode('utf-8'))
+
+    return vd_h.hexdigest()
 
 def initialize_version(qvh_vp):
     global version_parameters
