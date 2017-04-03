@@ -530,7 +530,7 @@ class QemuVersionDescription(object):
             raise MultipleQVCInitialization(self.src_path)
 
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
-        qvc_path = join(self.build_path, qvc_file_name)
+        qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
 
         # calculate hash of qemu_versions_desc
         vd_h = md5()
@@ -540,7 +540,7 @@ class QemuVersionDescription(object):
 
         yield True
 
-        if not  isfile(qvc_path):
+        if not isfile(qvc_path):
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
@@ -565,7 +565,7 @@ class QemuVersionDescription(object):
 
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
-            self.load_cache(qvc_path)
+            self.load_cache()
             # make just loaded QVC active
             prev_qvc = self.qvc.use()
 
@@ -597,11 +597,11 @@ class QemuVersionDescription(object):
 
         self.qvc_is_ready = True
 
-    def load_cache(self, qvc_path):
-        if not  isfile(qvc_path):
-            raise Exception("%s does not exists." % qvc_path)
+    def load_cache(self):
+        if not isfile(self.qvc_path):
+            raise Exception("%s does not exists." % self.qvc_path)
         else:
-            print("Loading QVC from " + qvc_path)
+            print("Loading QVC from " + self.qvc_path)
             QemuVersionDescription.check_uncommit_change(self.src_path)
             variables = {}
             context = {
@@ -611,7 +611,7 @@ class QemuVersionDescription(object):
             import qemu
             context.update(qemu.__dict__)
 
-            execfile(qvc_path, context, variables)
+            execfile(self.qvc_path, context, variables)
 
             for v in variables.values():
                 if isinstance(v, QemuVersionCache):
@@ -619,7 +619,7 @@ class QemuVersionDescription(object):
                     break
             else:
                 raise Exception(
-"No QemuVersionCache was loaded from %s." % qvc_path
+"No QemuVersionCache was loaded from %s." % self.qvc_path
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 
