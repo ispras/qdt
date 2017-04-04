@@ -88,7 +88,8 @@ after last statement in the corresponding callable object.
                 try:
                     callee = self.gen2task[callee]
                 except KeyError:
-                    callee = self.gen2task[callee] = CoTask(callee)
+                    callee = CoTask(callee)
+                    self.gen2task[callee.generator] = callee
                     callee_is_new = True
                 else:
                     callee_is_new = False
