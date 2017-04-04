@@ -524,6 +524,12 @@ class QemuVersionDescription(object):
         self.qvc = None
         self.qvc_is_ready = False
 
+    def remove_cache(self):
+        if self.qvc:
+            self.qvc = None
+            self.qvc_is_ready = False
+            remove_file(self.qvc_path)
+
     def co_init_cache(self):
         if not self.qvc == None:
             raise MultipleQVCInitialization(self.src_path)
