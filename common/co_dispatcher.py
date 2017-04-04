@@ -135,11 +135,38 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = self.gen2task[task]
 
-        if task in self.finished_tasks:
+        try:
+            callers = self.callees[task]
+        except KeyError:
+            pass
+        else:
+            del self.callees[task]
+            # Callers of the task cannot continue and must be removed
+            for c in list(callers):
+                del self.callers[c]
+                self.remove(c)
+
+        if task in self.callers:
+            self.callers.remove(task)
+            for callee, callers in self.callees.items():
+                if task in callers:
+                    if len(callers) == 1:
+                        del self.callees[callee]
+                        # The callee is not required by anything now.
+                        if not callee.enqueued:
+                            # The callee was not enqueued explicitly. Hence,
+                            # it was originally called. So, it must be removed
+                            # as useless.
+                            self.remove(callee)
+                    else:
+                        callers.remove(task)
+                    break
+
+        elif task in self.finished_tasks:
             self.finished_tasks.remove(task)
         elif task in self.tasks:
             self.tasks.remove(task)
-        else:
+        elif task in self.active_tasks:
             self.active_tasks.remove(task)
 
         del self.gen2task[task.generator]
