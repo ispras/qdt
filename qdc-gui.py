@@ -165,10 +165,16 @@ show it else hide it.")
                 self.on_save,
                 key_code = 39, # S
                 description = _("Save project.")
+            ),
+            HotKeyBinding(
+                self.rebuild_cache,
+                key_code = 27, # R
+                description = _("Rebuild Cache.")
             )
         ])
 
         hotkeys.add_key_symbols({
+            27: "R",
             43: "H",
             32: "O",
             57: "N",
@@ -246,6 +252,14 @@ show it else hide it.")
             accelerator = hotkeys.get_keycode_string(self.redo)
         )
         self.redo_idx = editmenu.count - 1
+
+        editmenu.add_separator()
+
+        editmenu.add_command(
+            label = _("Rebuild Cache"),
+            command = self.rebuild_cache,
+            accelerator = hotkeys.get_keycode_string(self.rebuild_cache)
+        )
 
         editmenu.add_separator()
 
