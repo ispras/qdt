@@ -402,6 +402,31 @@ show it else hide it.")
     def redo(self):
         self.pht.do_sequence()
 
+    def rebuild_cache(self):
+        try:
+            qvd = qvd_get(self.proj.build_path)
+        except BadBuildPath as e:
+            showerror(
+                title = _("Cache rebuilding is impossible").get(),
+                message = (_("Selected Qemu build path is bad. Reason: %s") % (
+                    e.message
+                )).get()
+            )
+
+        # reload_build_path_task always run at program start
+        # that is why it's in process when it's not in finished_tasks
+        if self.pw.reload_build_path_task not in self.pw.tm.finished_tasks:
+            ans = askyesno(
+                title = _("Cache rebuilding").get(),
+                message = _("Cache building is already \
+in process. Do you want to start cache rebuilding?").get()
+            )
+            if not ans:
+                return
+
+        qvd.remove_cache()
+        self.pw.reload_build_path()
+
     def on_delete(self):
         try:
             """ TODO: Note that it is possible to prevent window to close if a
