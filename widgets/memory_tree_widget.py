@@ -147,6 +147,7 @@ snapshot mode or the command should be disabled too.
         )
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
+        self.bind("<Delete>", self.on_key_delete, "+")
 
         self.widget_initialization()
 
@@ -222,6 +223,22 @@ snapshot mode or the command should be disabled too.
         self.mht.commit()
 
         self.notify_popup_command()
+
+    def on_key_delete(self, event):
+        prev_pos = self.mht.pos
+
+        for node_id in [
+            int(iid) for iid in self.selection() \
+                if "." not in iid # skip pseudo nodes
+        ]:
+            if node_id in self.mach.id2node:
+                # Deletion of a node may cause another node deletion.
+                self.mht.delete_memory_node(node_id)
+
+        if prev_pos != self.mht.pos:
+            self.mht.commit(
+                sequence_description = _("Deletion of selected memory nodes")
+            )
 
     def add_memory_node_at_popup(self, class_name):
         node_id = self.mach.get_free_id()
