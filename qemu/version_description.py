@@ -551,7 +551,7 @@ class QemuVersionDescription(object):
 
             # gen version description
             yield self.qvc.co_computing_parameters(self.repo)
-            self.qvc.version_desc["vd_hash"] = qemu_heuristic_hash
+            self.qvc.version_desc["qh_hash"] = qemu_heuristic_hash
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -574,7 +574,7 @@ class QemuVersionDescription(object):
             # verify that the version_desc is not outdated
             is_outdated = False
             try:
-                checksum = self.qvc.version_desc["vd_hash"]
+                checksum = self.qvc.version_desc["qh_hash"]
             except KeyError:
                 is_outdated = True
             else:
@@ -583,7 +583,7 @@ class QemuVersionDescription(object):
             if is_outdated:
                 remove_file(qvc_path)
                 yield self.qvc.co_computing_parameters(self.repo)
-                self.qvc.version_desc["vd_hash"] = qemu_heuristic_hash
+                self.qvc.version_desc["qh_hash"] = qemu_heuristic_hash
                 PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
 
         yield True
