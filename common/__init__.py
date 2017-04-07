@@ -28,6 +28,7 @@ from .class_tools import \
     gen_class_args
 
 from .reflection import \
+    get_class_total_args, \
     get_default_args
 
 from .visitor import \
