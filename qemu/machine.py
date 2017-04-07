@@ -249,7 +249,7 @@ class MachineType(QOMType):
     def __init__(self, machine):
         super(MachineType, self).__init__(machine.name)
 
-        self.name = machine.name
+        self.desc = "TODO: provide description for " + machine.name
 
         # source file model
         source_path = \
@@ -563,7 +563,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     mc->init = {instance_init};
 """.format(
     type_name = self.qtn.for_id_name,
-    desc = self.name,
+    desc = self.desc,
     instance_init = self.instance_init.name
                 ),
             used_types = [
