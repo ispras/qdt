@@ -16,28 +16,8 @@ from .pci_ids import \
 class SysBusDeviceDescription(ObjectDescription):
     pass
 
+@DescriptionOf(PCIEDeviceType)
 class PCIExpressDeviceDescription(ObjectDescription):
-    def __init__(self, name, directory, vendor, device, pci_class,
-        irq_num = 0,
-        mem_bar_num = 1,
-        msi_messages_num = 2,
-        revision = 0,
-        subsys = None,
-        subsys_vendor = None,
-        **qomd_kw
-    ):
-
-        ObjectDescription.__init__(self, name, directory, **qomd_kw)
-        self.vendor = vendor
-        self.device = device
-        self.pci_class = pci_class
-        self.irq_num = irq_num
-        self.mem_bar_num = mem_bar_num
-        self.msi_messages_num = msi_messages_num
-        self.revision = revision
-        self.subsys = subsys
-        self.subsys_vendor = subsys_vendor
-
     def gen_id_get(self, gen, id):
         if isinstance(id, PCIId):
             id = id.id
