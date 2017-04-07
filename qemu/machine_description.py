@@ -794,6 +794,7 @@ class MachineNode(ObjectDescription):
                 return i
 
     def gen_type(self):
+        self.link()
         return qemu.machine.MachineType(
             machine = self
             )

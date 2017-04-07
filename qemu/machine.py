@@ -249,8 +249,6 @@ class MachineType(QOMType):
     def __init__(self, machine):
         super(MachineType, self).__init__(machine.name)
 
-        machine.link()
-
         self.name = machine.name
 
         # source file model
