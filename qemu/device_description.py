@@ -1,4 +1,5 @@
 from .qom_desc import \
+    DescriptionOf, \
     ObjectDescription
 
 from .sysbusdevice import \
@@ -11,46 +12,9 @@ from .pci_ids import \
     PCIVendorIdNetherExistsNorCreate, \
     PCIId
 
+@DescriptionOf(SysBusDeviceType)
 class SysBusDeviceDescription(ObjectDescription):
-    def __init__(self, name, directory,
-        out_irq_num = 1,
-        in_irq_num = 1,
-        mmio_num = 1,
-        pio_num = 0,
-        **qomd_kw
-    ):
-
-        ObjectDescription.__init__(self, name, directory, **qomd_kw)
-        self.out_irq_num = out_irq_num
-        self.in_irq_num = in_irq_num
-        self.mmio_num = mmio_num
-        self.pio_num = pio_num
-
-    def gen_type(self):
-        return SysBusDeviceType(
-            name = self.name,
-            directory = self.directory,
-            block_num = self.block_num,
-            char_num = self.char_num,
-            timer_num = self.timer_num,
-            out_irq_num = self.out_irq_num,
-            in_irq_num = self.in_irq_num,
-            mmio_num = self.mmio_num,
-            pio_num = self.pio_num
-            )
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('name = "' + self.name + '"')
-        gen.gen_field('directory = "' + self.directory + '"')
-        gen.gen_field("block_num = " + gen.gen_const(self.block_num))
-        gen.gen_field("char_num = " + gen.gen_const(self.char_num))
-        gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
-        gen.gen_field("out_irq_num = " + str(self.out_irq_num))
-        gen.gen_field("in_irq_num = " + str(self.in_irq_num))
-        gen.gen_field("mmio_num = " + str(self.mmio_num))
-        gen.gen_field("pio_num = " + str(self.pio_num))
-        gen.gen_end()
+    pass
 
 class PCIExpressDeviceDescription(ObjectDescription):
     def __init__(self, name, directory, vendor, device, pci_class,
