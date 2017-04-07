@@ -1,4 +1,4 @@
-class QOMDescription(object):
+class ObjectDescription(object):
     def __init__(self, name, directory,
             block_num = 0,
             timer_num = 0,

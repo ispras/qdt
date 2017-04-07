@@ -1,5 +1,5 @@
 from .qom_desc import \
-    QOMDescription
+    ObjectDescription
 
 from .sysbusdevice import \
     SysBusDeviceType
@@ -11,7 +11,7 @@ from .pci_ids import \
     PCIVendorIdNetherExistsNorCreate, \
     PCIId
 
-class SysBusDeviceDescription(QOMDescription):
+class SysBusDeviceDescription(ObjectDescription):
     def __init__(self, name, directory,
         out_irq_num = 1,
         in_irq_num = 1,
@@ -20,7 +20,7 @@ class SysBusDeviceDescription(QOMDescription):
         **qomd_kw
     ):
 
-        QOMDescription.__init__(self, name, directory, **qomd_kw)
+        ObjectDescription.__init__(self, name, directory, **qomd_kw)
         self.out_irq_num = out_irq_num
         self.in_irq_num = in_irq_num
         self.mmio_num = mmio_num
@@ -52,7 +52,7 @@ class SysBusDeviceDescription(QOMDescription):
         gen.gen_field("pio_num = " + str(self.pio_num))
         gen.gen_end()
 
-class PCIExpressDeviceDescription(QOMDescription):
+class PCIExpressDeviceDescription(ObjectDescription):
     def __init__(self, name, directory, vendor, device, pci_class,
         irq_num = 0,
         mem_bar_num = 1,
@@ -63,7 +63,7 @@ class PCIExpressDeviceDescription(QOMDescription):
         **qomd_kw
     ):
 
-        QOMDescription.__init__(self, name, directory, **qomd_kw)
+        ObjectDescription.__init__(self, name, directory, **qomd_kw)
         self.vendor = vendor
         self.device = device
         self.pci_class = pci_class

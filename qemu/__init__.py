@@ -74,7 +74,7 @@ from .machine_description import \
     MemoryROMNode
 
 from .qom_desc import \
-    QOMDescription
+    ObjectDescription
 
 from .project import \
     QProject
