@@ -796,5 +796,11 @@ class MachineNode(ObjectDescription):
     def gen_type(self):
         self.link()
         return qemu.machine.MachineType(
-            machine = self
-            )
+            name = self.name,
+            directory = self.directory,
+            devices = self.devices,
+            buses = self.buses,
+            irqs = self.irqs,
+            mems = self.mems,
+            irq_hubs = self.irq_hubs
+        )

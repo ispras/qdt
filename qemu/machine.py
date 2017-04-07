@@ -246,23 +246,29 @@ class MachineType(QOMType):
     gpio_name = irq[2] if Type.exists(irq[2]) else "\"%s\"" % irq[2]
                 )
 
-    def __init__(self, machine):
-        super(MachineType, self).__init__(machine.name)
+    def __init__(self, name, directory,
+            devices = None,
+            buses = None,
+            irqs = None,
+            mems = None,
+            irq_hubs = None
+        ):
+        super(MachineType, self).__init__(name)
 
-        self.desc = "TODO: provide description for " + machine.name
+        self.desc = "TODO: provide description for " + name
 
         # source file model
         source_path = \
-            join_path("hw", machine.directory,
+            join_path("hw", directory,
                          self.qtn.for_header_name + ".c")
 
         self.source = Source(source_path)
 
-        all_nodes = list(machine.devices)
-        all_nodes.extend(machine.buses)
-        all_nodes.extend(machine.irqs)
-        all_nodes.extend(machine.mems)
-        all_nodes.extend(machine.irq_hubs)
+        all_nodes = list(devices)
+        all_nodes.extend(buses)
+        all_nodes.extend(irqs)
+        all_nodes.extend(mems)
+        all_nodes.extend(irq_hubs)
         all_nodes = sort_topologically(all_nodes)
 
         decl_code = ""
