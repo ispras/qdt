@@ -1,6 +1,6 @@
 from .qom_desc import \
     DescriptionOf, \
-    ObjectDescription
+    QOMDescription
 
 from .sysbusdevice import \
     SysBusDeviceType
@@ -13,11 +13,11 @@ from .pci_ids import \
     PCIId
 
 @DescriptionOf(SysBusDeviceType)
-class SysBusDeviceDescription(ObjectDescription):
+class SysBusDeviceDescription(QOMDescription):
     pass
 
 @DescriptionOf(PCIEDeviceType)
-class PCIExpressDeviceDescription(ObjectDescription):
+class PCIExpressDeviceDescription(QOMDescription):
     def gen_id_get(self, gen, id):
         if isinstance(id, PCIId):
             id = id.id
