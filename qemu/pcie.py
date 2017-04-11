@@ -13,6 +13,10 @@ from .qom import \
 from six.moves import \
     range as xrange
 
+from .pci_ids import \
+    PCIVendorIdNetherExistsNorCreate, \
+    PCIId
+
 class PCIEDeviceType(QOMDevice):
     def __init__(self,
         name,
@@ -42,6 +46,45 @@ class PCIEDeviceType(QOMDevice):
 
         self.subsystem = subsys
         self.subsystem_vendor = subsys_vendor
+
+        # Cast all PCI identifiers to PCIId
+        for attr in [ "vendor", "subsystem_vendor" ]:
+            val = getattr(self, attr)
+            if (val is not None) and (not isinstance(val, PCIId)):
+                try:
+                    val = PCIId.db.get_vendor(name = val)
+                except PCIVendorIdNetherExistsNorCreate:
+                    val = PCIId.db.get_vendor(vid = val)
+            setattr(self, attr, val)
+
+        for attr, vendor in [
+            ("device", self.vendor),
+            ("subsystem", self.subsystem_vendor)
+        ]:
+            val = getattr(self, attr)
+            if  (val is not None) and (not isinstance(val, PCIId)):
+                if vendor is None:
+                    raise Exception("Cannot get %s ID descriptor because of no \
+corresponding vendor is given" % attr
+                    )
+                try:
+                    val = PCIId.db.get_device(name = val,
+                        vendor_name = vendor.name,
+                        vid = vendor.id)
+                except Exception:
+                    val = PCIId.db.get_device(did = val,
+                        vendor_name = vendor.name,
+                        vid = vendor.id)
+            setattr(self, attr, val)
+
+        val = getattr(self, "pci_class")
+        # None is not allowed there
+        if not isinstance(val, PCIId):
+            try:
+                val = PCIId.db.get_class(name = val)
+            except:
+                val = PCIId.db.get_class(cid = val)
+        self.pci_class = val
 
         self.mem_bar_size_macros = []
 

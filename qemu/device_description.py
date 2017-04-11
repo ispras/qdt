@@ -9,7 +9,6 @@ from .pcie import \
     PCIEDeviceType
 
 from .pci_ids import \
-    PCIVendorIdNetherExistsNorCreate, \
     PCIId
 
 @DescriptionOf(SysBusDeviceType)
@@ -54,46 +53,9 @@ class PCIExpressDeviceDescription(QOMDescription):
 
         for attr in ["name", "directory", "timer_num", "irq_num",
             "mem_bar_num", "msi_messages_num", "revision", "char_num",
-            "block_num"
+            "block_num", "vendor", "subsys_vendor", "device", "subsys",
+            "pci_class"
         ]:
             kw[attr] = getattr(self, attr)
-
-        for attr in [ "vendor", "subsys_vendor" ]:
-            val = getattr(self, attr)
-            if (val is not None) and (not isinstance(val, PCIId)):
-                try:
-                    val = PCIId.db.get_vendor(name = val)
-                except PCIVendorIdNetherExistsNorCreate:
-                    val = PCIId.db.get_vendor(vid = val)
-            kw[attr] = val
-
-        for attr, vendor in [
-            ("device", kw["vendor"]),
-            ("subsys", kw["subsys_vendor"])
-        ]:
-            val = getattr(self, attr)
-            if  (val is not None) and (not isinstance(val, PCIId)):
-                if vendor is None:
-                    raise Exception("Cannot get %s ID descriptor because of no \
-corresponding vendor is given" % attr
-                    )
-                try:
-                    val = PCIId.db.get_device(name = val,
-                        vendor_name = vendor.name,
-                        vid = vendor.id)
-                except Exception:
-                    val = PCIId.db.get_device(did = val,
-                        vendor_name = vendor.name,
-                        vid = vendor.id)
-            kw[attr] = val
-
-        val = getattr(self, "pci_class")
-        # None is not allowed there
-        if not isinstance(val, PCIId):
-            try:
-                val = PCIId.db.get_class(name = val)
-            except:
-                val = PCIId.db.get_class(cid = val)
-        kw["pci_class"] = val
 
         return PCIEDeviceType(**kw)
