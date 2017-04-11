@@ -39,9 +39,31 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         f.columnconfigure(0, weight = 0)
         f.columnconfigure(1, weight = 1)
 
+        self.qom_desc_int_attrs = [
+            ("block_num", _("Block driver quantity")),
+            ("char_num", _("Character driver quantity")),
+            ("timer_num", _("Timer quantity"))
+        ]
+
+        # Integer argument editing rows
+        for row, (attr, text) in enumerate(self.qom_desc_int_attrs):
+            f.rowconfigure(row, weight = 0)
+
+            l = VarLabel(f, text = text)
+            l.grid(row = row, column = 0, sticky = "NES")
+
+            v = StringVar()
+            e = HKEntry(f, textvariable = v)
+            e.grid(row = row, column = 1, sticky = "NEWS")
+
+            setattr(self, "var_" + attr, v)
+            setattr(self, "e_" + attr, e)
+
         self.fields = []
 
-        for row, (field, text, val_type) in enumerate(fields_and_names):
+        for row, (field, text, val_type) in enumerate(fields_and_names,
+            row + 1
+        ):
             f.rowconfigure(row, weight = 0)
 
             l = VarLabel(f, text = text)
@@ -116,11 +138,29 @@ class DeviceDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __refresh__(self):
         QOMDescriptionSettingsWidget.__refresh__(self)
 
+        for attr, text in self.qom_desc_int_attrs:
+            getattr(self, "var_" + attr).set(getattr(self.desc, attr))
+
         for f in self.fields:
             self.refresh_field(*f)
 
     def __apply_internal__(self):
         prev_pos = self.pht.pos
+
+        for attr, text in self.qom_desc_int_attrs:
+            v = getattr(self, "var_" + attr)
+            e = getattr(self, "e_" + attr)
+
+            new_val = v.get()
+            try:
+                new_val = int(new_val, base = 0)
+            except ValueError:
+                e.config(bg = "red")
+            else:
+                e.config(bg = "white")
+
+            if new_val != getattr(self.desc, attr):
+                self.pht.stage(DOp_SetAttr, attr, new_val, self.desc)
 
         for field, val_type in self.fields:
             var = getattr(self, "var_" + field)

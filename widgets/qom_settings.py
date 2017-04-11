@@ -64,26 +64,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         e = HKEntry(f, textvariable = v)
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
-        self.qom_desc_int_attrs = [
-            ("block_num", _("Block driver quantity")),
-            ("char_num", _("Character driver quantity")),
-            ("timer_num", _("Timer quantity"))
-        ]
-
-        # Integer argument editing rows
-        for row, (attr, text) in enumerate(self.qom_desc_int_attrs, 2):
-            f.rowconfigure(row, weight = 0)
-
-            l = VarLabel(f, text = text)
-            l.grid(row = row, column = 0, sticky = "NES")
-
-            v = StringVar()
-            e = HKEntry(f, textvariable = v)
-            e.grid(row = row, column = 1, sticky = "NEWS")
-
-            setattr(self, "var_" + attr, v)
-            setattr(self, "e_" + attr, e)
-
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
 
@@ -111,9 +91,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         self.var_name.set(self.desc.name)
         self.var_directory.set(self.desc.directory)
 
-        for attr, text in self.qom_desc_int_attrs:
-            getattr(self, "var_" + attr).set(getattr(self.desc, attr))
-
     def __apply__(self):
         if self.pht is None:
             # snapshot mode
@@ -125,21 +102,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         if new_dir != self.desc.directory:
             self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
-
-        for attr, text in self.qom_desc_int_attrs:
-            v = getattr(self, "var_" + attr)
-            e = getattr(self, "e_" + attr)
-
-            new_val = v.get()
-            try:
-                new_val = int(new_val, base = 0)
-            except ValueError:
-                e.config(bg = "red")
-            else:
-                e.config(bg = "white")
-
-            if new_val != getattr(self.desc, attr):
-                self.pht.stage(DOp_SetAttr, attr, new_val, self.desc)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
