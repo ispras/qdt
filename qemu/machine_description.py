@@ -633,7 +633,8 @@ class MachineNode(ObjectDescription):
         buses = None,
         irqs = None,
         mems = None,
-        irq_hubs = None
+        irq_hubs = None,
+        **compat
     ):
         ObjectDescription.__init__(self, name = name, directory = directory)
 
@@ -649,6 +650,8 @@ class MachineNode(ObjectDescription):
         for n in self.devices + self.buses + self.irqs + self.mems + self.irq_hubs:
             self.assign_id(n)
 
+        self.compat = compat
+
     def __children__(self):
         return ObjectDescription.__children__(self) \
             + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
@@ -657,6 +660,10 @@ class MachineNode(ObjectDescription):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
         gen.gen_field('directory = "' + self.directory + '"')
+        if self.compat:
+            for attr, val in self.compat.items():
+                gen.gen_field(attr + " = ")
+                gen.pprint(val)
         gen.gen_end()
 
         if not self.id2node:
