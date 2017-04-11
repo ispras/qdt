@@ -1,4 +1,5 @@
 from .qom_desc import \
+    DescriptionOf, \
     QOMDescription
 
 from itertools import \
@@ -29,32 +30,8 @@ class NodeHasId(Exception):
 class NodeIdIsAlreadyInUse(Exception):
     pass
 
+@DescriptionOf(MachineType)
 class MachineNode(QOMDescription):
-    def __init__(self,
-        name,
-        directory,
-        devices = None,
-        buses = None,
-        irqs = None,
-        mems = None,
-        irq_hubs = None,
-        **compat
-    ):
-        QOMDescription.__init__(self)
-
-        self.name = name
-        self.directory = directory
-
-        self.devices = [] if devices is None else list(devices)
-        self.buses = [] if buses is None else list(buses)
-        self.irqs = [] if irqs is None else list(irqs)
-        self.mems = [] if mems is None else list(mems)
-        self.irq_hubs = [] if irq_hubs is None else list(irq_hubs)
-
-        self.compat = compat
-
-        self.__description_init__()
-
     def __description_init__(self):
         self.max_id = 0
         self.id2node = {}
@@ -210,14 +187,3 @@ class MachineNode(QOMDescription):
         for i in count(0):
             if not i in self.id2node:
                 return i
-
-    def gen_type(self):
-        return MachineType(
-            name = self.name,
-            directory = self.directory,
-            devices = self.devices,
-            buses = self.buses,
-            irqs = self.irqs,
-            mems = self.mems,
-            irq_hubs = self.irq_hubs
-        )
