@@ -247,11 +247,11 @@ class MachineType(QOMType):
                 )
 
     def __init__(self, name, directory,
-            devices = None,
-            buses = None,
-            irqs = None,
-            mems = None,
-            irq_hubs = None
+            devices = [],
+            buses = [],
+            irqs = [],
+            mems = [],
+            irq_hubs = []
         ):
         super(MachineType, self).__init__(name)
 
