@@ -641,19 +641,23 @@ class MachineNode(QOMDescription):
         self.name = name
         self.directory = directory
 
-        self.max_id = 0
         self.devices = [] if devices is None else list(devices)
         self.buses = [] if buses is None else list(buses)
         self.irqs = [] if irqs is None else list(irqs)
         self.mems = [] if mems is None else list(mems)
         self.irq_hubs = [] if irq_hubs is None else list(irq_hubs)
 
+        self.compat = compat
+
+        self.__description_init__()
+
+    def __description_init__(self):
+        self.max_id = 0
         self.id2node = {}
 
-        for n in self.devices + self.buses + self.irqs + self.mems + self.irq_hubs:
+        for n in self.devices + self.buses + self.irqs + self.mems + \
+        self.irq_hubs:
             self.assign_id(n)
-
-        self.compat = compat
 
     def __children__(self):
         return QOMDescription.__children__(self) \
