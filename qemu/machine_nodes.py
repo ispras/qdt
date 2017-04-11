@@ -38,12 +38,12 @@ class Node(object):
 class BusNode(Node):
     # Devices on bus with None C type will have NULL as bus parameter
     def __init__(self,
-            parent = None,
-            c_type = "BusState",
-            cast = "BUS",
-            child_name = "bus",
-            force_index = True
-            ):
+        parent = None,
+        c_type = "BusState",
+        cast = "BUS",
+        child_name = "bus",
+        force_index = True
+    ):
         Node.__init__(self)
 
         self.c_type = c_type
@@ -64,10 +64,13 @@ class BusNode(Node):
             return [self.parent_device]
 
     def gen_child_name_for_bus(self):
-        if self.parent_device is None or len(self.parent_device.buses) == 1 and not self.force_index:
+        if self.parent_device is None \
+        or len(self.parent_device.buses) == 1 and not self.force_index:
             return self.child_name
         else:
-            return "%s.%u" % (self.child_name, self.parent_device.buses.index(self))
+            return "%s.%u" % (
+                self.child_name, self.parent_device.buses.index(self)
+            )
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -111,7 +114,7 @@ class PCIExpressBusNode(BusNode):
             c_type = "PCIBus",
             cast = "PCI_BUS",
             child_name = "pci"
-            )
+        )
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -128,7 +131,7 @@ class ISABusNode(BusNode):
         BusNode.__init__(self,
             parent = bus_controller,
             child_name = "isa"
-            )
+        )
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "bus_controller":
@@ -145,7 +148,7 @@ class IDEBusNode(BusNode):
         BusNode.__init__(self,
             parent = bus_controller,
             child_name = "ide"
-            )
+        )
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -165,7 +168,7 @@ class I2CBusNode(BusNode):
             cast = None,
             c_type = "I2CBus",
             force_index = False
-            )
+        )
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -180,14 +183,12 @@ class I2CBusNode(BusNode):
 # IRQ line model
 
 class IRQLine(Node):
-    def __init__(self,
-            src_dev,
-            dst_dev,
-            src_irq_idx = 0,
-            dst_irq_idx = 0,
-            src_irq_name = None,
-            dst_irq_name = None
-            ):
+    def __init__(self, src_dev, dst_dev,
+        src_irq_idx = 0,
+        dst_irq_idx = 0,
+        src_irq_name = None,
+        dst_irq_name = None
+    ):
         Node.__init__(self)
 
         # src and dst are tuples (device, index)
@@ -254,7 +255,7 @@ class IRQLine(Node):
                or isinstance(self.dst[0], IRQHub)
 
     def __children__(self):
-        return [self.src[0], self.dst[0]]
+        return [ self.src[0], self.dst[0] ]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -398,11 +399,11 @@ class DeviceNode(Node):
         return getattr(self, arg_name)
 
 class SystemBusDeviceNode(DeviceNode):
-    def __init__(self,
-                 qom_type,
-                 system_bus = None,
-                 mmio = None,
-                 pmio = None):
+    def __init__(self, qom_type,
+        system_bus = None,
+        mmio = None,
+        pmio = None
+    ):
         DeviceNode.__init__(self, qom_type = qom_type, parent = system_bus)
 
         self.mmio_mappings = {}
@@ -489,17 +490,13 @@ class SystemBusDeviceNode(DeviceNode):
         return getattr(self, arg_name)
 
 class PCIExpressDeviceNode(DeviceNode):
-    def __init__(self,
-                 qom_type,
-                 pci_express_bus,
-                 slot,
-                 function,
-                 multifunction = False):
-        DeviceNode.__init__(
-            self,
+    def __init__(self, qom_type, pci_express_bus, slot, function,
+        multifunction = False
+    ):
+        DeviceNode.__init__(self,
             qom_type = qom_type,
             parent = pci_express_bus
-            )
+        )
 
         self.slot = slot
         self.function = function
@@ -533,10 +530,7 @@ class MemoryNodeHasNoSuchParent(Exception):
     pass
 
 class MemoryNode(Node):
-    def __init__(self,
-            name,
-            size,
-            ):
+    def __init__(self, name, size):
         Node.__init__(self)
 
         self.name = name
@@ -594,18 +588,13 @@ class MemoryNode(Node):
             gen.gen_end()
 
 class MemoryLeafNode(MemoryNode):
-    def __init__(self,
-        name,
-        size,
-        ):
-        MemoryNode.__init__(self, name = name, size = size)
-
     def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
         raise MemoryNodeCannotHasChildren()
 
 class MemoryAliasNode(MemoryLeafNode):
     def __init__(self, name, size, alias_to, offset = 0):
-        MemoryLeafNode.__init__(self, name = name, size = size)
+        MemoryLeafNode.__init__(self, name, size)
+
         self.alias_to = alias_to
         self.alias_offset = offset
 
@@ -625,9 +614,7 @@ class MemoryAliasNode(MemoryLeafNode):
         return getattr(self, arg_name)
 
 class MemoryRAMNode(MemoryLeafNode):
-    def __init__(self, name, size):
-        MemoryLeafNode.__init__(self, name = name, size = size)
+    pass
 
 class MemoryROMNode(MemoryLeafNode):
-    def __init__(self, name, size):
-        MemoryLeafNode.__init__(self, name = name, size = size)
+    pass
