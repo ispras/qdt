@@ -385,6 +385,14 @@ def define_msi_init_2_6_0():
     )
 
 qemu_versions_desc = {
+    u'f5f19ee2e448a8442f1974ca1a0b8864486ed25b': [
+        # Q35 for 2.6 uses I8257 for DMA. The device could be used after
+        # patch series followed by commit of the SHA1.
+        QEMUVersionParameterDescription("QDC default project class name",
+            new_value = "Q35Project_2_6_0",
+            old_value = "Q35Project_2_5_0"
+        )
+    ],
     u'8c4575472494a5dfedfe05e7b58ca9ce3872ad56':
     [
         QEMUVersionParameterDescription(
