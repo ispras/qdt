@@ -8,11 +8,8 @@ from os.path import \
     isdir
 
 from qemu import \
+    get_vp, \
     PCIId
-
-from examples import \
-    Q35Project_2_5_0, \
-    Q35Project_2_6_0
 
 from qemu import \
     qvd_load_with_cache
@@ -91,8 +88,9 @@ Use @file to read arguments from 'file' (one per line)
         )
     """
 
-    # TODO: handle example project as QEMU version heuristic
-    project = QProject()
+    exec("from examples import %s as Project\nproject = Project()" % (
+        get_vp()["QDC default project class name"]
+    ))
 
     project.gen_all(qvd.src_path)
 

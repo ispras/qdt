@@ -28,7 +28,11 @@ class QVHDict(dict):
         return c(converter)(value)
 
 class QEMUVersionParameterDescription(object):
-    def __init__(self, name, new_value, old_value = None):
+    def __init__(self, name, new_value = None, old_value = None):
+        if new_value is None and old_value is None:
+            raise ValueError("Attempt to create heuristic '%s' with None as "
+                "both values." % name
+            )
         self.name = name
         self.new_value = new_value
         self.old_value = old_value
@@ -381,30 +385,36 @@ def define_msi_init_2_6_0():
     )
 
 qemu_versions_desc = {
-        u'8c4575472494a5dfedfe05e7b58ca9ce3872ad56':
-        [
-            QEMUVersionParameterDescription(
-                name = "machine initialization function register type name",
-                new_value = "type_init",
-                old_value = "machine_init"
-            )
-        ],
-        u'e8ad4d16808690e9c0d68b140218ca466c9309fc':
-        [
-            QEMUVersionParameterDescription(
-                name = "qemu types definer",
-                new_value = define_qemu_2_6_5_types,
-                old_value = define_qemu_2_6_0_types,
-            )
-        ],
-        u'1108b2f8a939fb5778d384149e2f1b99062a72da':
-        [
-            QEMUVersionParameterDescription(
-                name = "msi_init type definer",
-                new_value = define_msi_init_2_6_5,
-                old_value = define_msi_init_2_6_0
-            )
-        ]
+    u'f5f19ee2e448a8442f1974ca1a0b8864486ed25b': [
+        # Q35 for 2.6 uses I8257 for DMA. The device could be used after
+        # patch series followed by commit of the SHA1.
+        QEMUVersionParameterDescription("QDC default project class name",
+            new_value = "Q35Project_2_6_0",
+            old_value = "Q35Project_2_5_0"
+        )
+    ],
+    u'8c4575472494a5dfedfe05e7b58ca9ce3872ad56':
+    [
+        QEMUVersionParameterDescription(
+            "machine initialization function register type name",
+            new_value = "type_init",
+            old_value = "machine_init"
+        )
+    ],
+    u'e8ad4d16808690e9c0d68b140218ca466c9309fc':
+    [
+        QEMUVersionParameterDescription("qemu types definer",
+            new_value = define_qemu_2_6_5_types,
+            old_value = define_qemu_2_6_0_types,
+        )
+    ],
+    u'1108b2f8a939fb5778d384149e2f1b99062a72da':
+    [
+        QEMUVersionParameterDescription("msi_init type definer",
+            new_value = define_msi_init_2_6_5,
+            old_value = define_msi_init_2_6_0
+        )
+    ]
 }
 
 version_parameters = None

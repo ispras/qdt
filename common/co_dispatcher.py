@@ -184,3 +184,19 @@ after last statement in the corresponding callable object.
 
     def has_work(self):
         return self.tasks or self.active_tasks
+
+# Call coroutine maintaining coroutine calling stack.
+def callco(co):
+    stack = []
+    while True:
+        try:
+            ret = next(co)
+        except StopIteration:
+            try:
+                co = stack.pop()
+            except IndexError:
+                break
+        else:
+            if isinstance(ret, GeneratorType):
+                stack.append(co)
+                co = ret

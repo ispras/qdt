@@ -7,6 +7,7 @@ from source import \
     Macro
 
 from common import \
+    callco, \
     execfile, \
     PyGenerator
 
@@ -512,8 +513,7 @@ class QemuVersionDescription(object):
         return previous
 
     def init_cache(self):
-        for junk in self.co_init_cache():
-            pass
+        callco(self.co_init_cache())
 
     def forget_cache(self):
         if self.qvc is None:

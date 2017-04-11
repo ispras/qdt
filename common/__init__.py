@@ -10,6 +10,7 @@ from .ml import \
     ML
 
 from .co_dispatcher import \
+    callco, \
     CoTask, \
     CoDispatcher
 
