@@ -381,30 +381,30 @@ def define_msi_init_2_6_0():
     )
 
 qemu_versions_desc = {
-        u'8c4575472494a5dfedfe05e7b58ca9ce3872ad56':
-        [
-            QEMUVersionParameterDescription(
-                name = "machine initialization function register type name",
-                new_value = "type_init",
-                old_value = "machine_init"
-            )
-        ],
-        u'e8ad4d16808690e9c0d68b140218ca466c9309fc':
-        [
-            QEMUVersionParameterDescription(
-                name = "qemu types definer",
-                new_value = define_qemu_2_6_5_types,
-                old_value = define_qemu_2_6_0_types,
-            )
-        ],
-        u'1108b2f8a939fb5778d384149e2f1b99062a72da':
-        [
-            QEMUVersionParameterDescription(
-                name = "msi_init type definer",
-                new_value = define_msi_init_2_6_5,
-                old_value = define_msi_init_2_6_0
-            )
-        ]
+    u'8c4575472494a5dfedfe05e7b58ca9ce3872ad56':
+    [
+        QEMUVersionParameterDescription(
+            name = "machine initialization function register type name",
+            new_value = "type_init",
+            old_value = "machine_init"
+        )
+    ],
+    u'e8ad4d16808690e9c0d68b140218ca466c9309fc':
+    [
+        QEMUVersionParameterDescription(
+            name = "qemu types definer",
+            new_value = define_qemu_2_6_5_types,
+            old_value = define_qemu_2_6_0_types,
+        )
+    ],
+    u'1108b2f8a939fb5778d384149e2f1b99062a72da':
+    [
+        QEMUVersionParameterDescription(
+            name = "msi_init type definer",
+            new_value = define_msi_init_2_6_5,
+            old_value = define_msi_init_2_6_0
+        )
+    ]
 }
 
 version_parameters = None
