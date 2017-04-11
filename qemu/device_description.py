@@ -47,15 +47,3 @@ class PCIExpressDeviceDescription(QOMDescription):
         gen.gen_field('subsys_vendor = ')
         self.gen_id_get(gen, self.subsys_vendor)
         gen.gen_end()
-
-    def gen_type(self):
-        kw = {}
-
-        for attr in ["name", "directory", "timer_num", "irq_num",
-            "mem_bar_num", "msi_messages_num", "revision", "char_num",
-            "block_num", "vendor", "subsys_vendor", "device", "subsys",
-            "pci_class"
-        ]:
-            kw[attr] = getattr(self, attr)
-
-        return PCIEDeviceType(**kw)
