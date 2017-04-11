@@ -1,5 +1,3 @@
-import qemu.machine
-
 from .qom_desc import \
     QOMDescription
 
@@ -8,6 +6,9 @@ from itertools import \
 
 from .qom import \
     QOMPropertyTypeLink
+
+from .machine import \
+    MachineType
 
 from .machine_nodes import \
     SystemBusNode, \
@@ -211,7 +212,7 @@ class MachineNode(QOMDescription):
                 return i
 
     def gen_type(self):
-        return qemu.machine.MachineType(
+        return MachineType(
             name = self.name,
             directory = self.directory,
             devices = self.devices,
