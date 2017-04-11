@@ -2,8 +2,12 @@ from types import \
     GeneratorType
 
 class CoTask(object):
-    def __init__(self, generator):
+    def __init__(self,
+                 generator,
+                 enqueued = False
+        ):
         self.generator = generator
+        self.enqueued = enqueued
 
     def on_activated(self):
         # do nothing by default
@@ -146,6 +150,7 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = CoTask(task)
 
+        task.enqueued = True
         self.gen2task[task.generator] = task
 
         self.tasks.append(task)
