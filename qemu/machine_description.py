@@ -1,7 +1,7 @@
 import qemu.machine
 
 from .qom_desc import \
-    ObjectDescription
+    QOMDescription
 
 from itertools import \
     count
@@ -625,7 +625,7 @@ class NodeHasId(Exception):
 class NodeIdIsAlreadyInUse(Exception):
     pass
 
-class MachineNode(ObjectDescription):
+class MachineNode(QOMDescription):
     def __init__(self,
         name,
         directory,
@@ -636,7 +636,10 @@ class MachineNode(ObjectDescription):
         irq_hubs = None,
         **compat
     ):
-        ObjectDescription.__init__(self, name = name, directory = directory)
+        QOMDescription.__init__(self)
+
+        self.name = name
+        self.directory = directory
 
         self.max_id = 0
         self.devices = [] if devices is None else list(devices)
@@ -653,7 +656,7 @@ class MachineNode(ObjectDescription):
         self.compat = compat
 
     def __children__(self):
-        return ObjectDescription.__children__(self) \
+        return QOMDescription.__children__(self) \
             + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
 
     def __gen_code__(self, gen):
