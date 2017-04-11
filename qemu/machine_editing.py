@@ -1,7 +1,7 @@
 from .qom import \
     QOMPropertyValue
 
-from .machine_description import \
+from .machine_nodes import \
     DeviceNode, \
     BusNode, \
     Node, \

@@ -11,7 +11,7 @@ from source import \
     Initializer, \
     Function
 
-from .machine_description import \
+from .machine_nodes import \
     SystemBusDeviceNode, \
     BusNode, \
     SystemBusNode, \

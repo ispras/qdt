@@ -19,9 +19,8 @@ from .machine_editing import \
     MOp_DelIRQLine, \
     MOp_DelIRQHub
 
-from .machine_description import \
+from .machine_nodes import \
     MemoryAliasNode, \
-    MachineNode, \
     DeviceNode, \
     BusNode, \
     IRQHub, \
@@ -29,6 +28,9 @@ from .machine_description import \
     MemoryNode, \
     QOMPropertyTypeLink, \
     SystemBusDeviceNode
+
+from .machine_description import \
+    MachineNode
 
 from .project_editing import \
     POp_DelDesc

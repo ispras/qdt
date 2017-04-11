@@ -49,29 +49,13 @@ from .qom import \
     QOMDevice, \
     QOMType
 
+from .machine_nodes import *
+
 from .machine import \
     MachineType
 
 from .machine_description import \
-    Node, \
-    MachineNode, \
-    BusNode, \
-    I2CBusNode, \
-    SystemBusNode, \
-    SystemBusDeviceNode, \
-    PCIExpressBusNode, \
-    PCIExpressDeviceNode, \
-    ISABusNode, \
-    IDEBusNode, \
-    DeviceNode, \
-    IRQLine, \
-    IRQHub, \
-    MemoryNodeHasNoSuchParent, \
-    MemoryNode, \
-    MemoryLeafNode, \
-    MemoryAliasNode, \
-    MemoryRAMNode, \
-    MemoryROMNode
+    MachineNode
 
 from .qom_desc import \
     DescriptionOf, \
