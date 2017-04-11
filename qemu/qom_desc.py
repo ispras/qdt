@@ -15,19 +15,6 @@ class QOMDescription(object):
     def remove_from_project(self):
         self.project.remove_description(self)
 
-class ObjectDescription(QOMDescription):
-    def __init__(self, name, directory,
-            block_num = 0,
-            timer_num = 0,
-            char_num = 0
-        ):
-        super(ObjectDescription, self).__init__()
-        self.name = name
-        self.directory = directory
-        self.timer_num = timer_num
-        self.char_num = char_num
-        self.block_num = block_num
-
 """
 DescriptionOf decorator is used to extend a class to one that could be used
 as description of QOM type template. Main purpose is to simplify definition

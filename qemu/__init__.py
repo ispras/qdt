@@ -75,8 +75,7 @@ from .machine_description import \
 
 from .qom_desc import \
     DescriptionOf, \
-    QOMDescription, \
-    ObjectDescription
+    QOMDescription
 
 from .project import \
     QProject
