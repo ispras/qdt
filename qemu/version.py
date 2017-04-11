@@ -28,7 +28,11 @@ class QVHDict(dict):
         return c(converter)(value)
 
 class QEMUVersionParameterDescription(object):
-    def __init__(self, name, new_value, old_value = None):
+    def __init__(self, name, new_value = None, old_value = None):
+        if new_value is None and old_value is None:
+            raise ValueError("Attempt to create heuristic '%s' with None as "
+                "both values." % name
+            )
         self.name = name
         self.new_value = new_value
         self.old_value = old_value
