@@ -118,9 +118,10 @@ already in another project.")
 
         if "header" in dev_t.__dict__:
             full_header_path = join(include_path, dev_t.header.path)
+
             if isfile(full_header_path):
                 remove(full_header_path)
-    
+
             header_writer = open(full_header_path,
                 mode = "wb",
                 encoding = "utf-8"
