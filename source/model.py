@@ -1365,24 +1365,34 @@ class StructureDeclaration(SourceChunk):
         """
         References map of structure definition chunks:
 
-                      ____--------> [self references of struct_begin ]
-                     /    ___-----> [ united references of all fields ]
-                    |    /     _--> [ references of struct_end ]
-                    |    |    /
-                    |    |    |
-             ----> struct_begin <-----
-            /           ^             \
-           |            |             |
-          field_0      field_i     field_N
-           ^              ^          ^
-           \              |          /
-            ----------struct_end-----
+              ____--------> [self references of struct_begin ]
+             /    ___-----> [ united references of all fields ]
+            |    /     _--> [ references of struct_end ] == empty
+            |    |    /
+            |    |   |
+           struct_begin
+                ^
+                |
+             field_0
+                ^
+                |
+             field_1
+                ^
+                |
+               ...
+                ^
+                |
+             field_N
+                ^
+                |
+            struct_end
 
         """
 
         field_indent = "{}{}".format(indent, fields_indent)
-        field_chunks = []
         field_refs = []
+        field_chunks = []
+        top_chunk = struct_begin
 
         for f in struct.fields:
             # Note that 0-th chunk is field and rest are its dependencies
@@ -1391,11 +1401,12 @@ class StructureDeclaration(SourceChunk):
 
             field_refs.extend(decl_chunks[1:])
             field_declaration.clean_references()
-            field_declaration.add_reference(struct_begin)
+            field_declaration.add_reference(top_chunk)
             field_chunks.append(field_declaration)
+            top_chunk = field_declaration
 
         struct_begin.add_references(field_refs)
-        struct_end.add_references(field_chunks)
+        struct_end.add_reference(top_chunk)
 
         return [struct_end, struct_begin] + field_chunks
 
