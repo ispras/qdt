@@ -1,5 +1,7 @@
 #!/usr/bin/python2
 
+import examples
+
 from argparse import \
     ArgumentTypeError, \
     ArgumentParser
@@ -88,10 +90,10 @@ Use @file to read arguments from 'file' (one per line)
         )
     """
 
-    exec("from examples import %s as Project\nproject = Project()" % (
+    DefaultProject = getattr(examples,
         get_vp()["QDC default project class name"]
-    ))
-
+    )
+    project = DefaultProject()
     project.gen_all(qvd.src_path)
 
     '''
