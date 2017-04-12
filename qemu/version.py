@@ -393,7 +393,7 @@ def define_msi_init_2_6_0():
         )
     )
 
-qemu_versions_desc = {
+qemu_heuristic_db = {
     u'f5f19ee2e448a8442f1974ca1a0b8864486ed25b': [
         # Q35 for 2.6 uses I8257 for DMA. The device could be used after
         # patch series followed by commit of the SHA1.

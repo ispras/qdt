@@ -23,7 +23,7 @@ from subprocess import \
 from .version import \
     QVHDict, \
     initialize_version, \
-    qemu_versions_desc, \
+    qemu_heuristic_db, \
     get_vp
 
 from os.path import \
@@ -174,7 +174,7 @@ class QemuVersionCache(object):
             param[k] = v
 
     def co_propagate_param(self):
-        vd = qemu_versions_desc
+        vd = qemu_heuristic_db
         vd_list = []
         for k in vd.keys():
             if k in self.commit_desc_nodes:
@@ -273,9 +273,9 @@ class QemuVersionCache(object):
         '''This method propagate QEMUVersionParameterDescription.new_value
         in graph of commits. It must be called before old_value propagation.
 
-        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
         by num of CommitDesc. It's necessary to optimize the graph traversal.
-        vd: qemu_versions_desc
+        vd: qemu_heuristic_db
         '''
 
         for key in sorted_vd_keys:
@@ -337,9 +337,9 @@ class QemuVersionCache(object):
         '''This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
 
-        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
         by num of CommitDesc. It's necessary to optimize the graph traversal.
-        vd: qemu_versions_desc
+        vd: qemu_heuristic_db
         '''
 
         # messages for exceptions
@@ -532,10 +532,10 @@ class QemuVersionDescription(object):
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
         qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
 
-        # calculate hash of qemu_versions_desc
+        # calculate hash of qemu_heuristic_db
         vd_h = md5()
-        for k in sorted(qemu_versions_desc):
-            for v in qemu_versions_desc[k]:
+        for k in sorted(qemu_heuristic_db):
+            for v in qemu_heuristic_db[k]:
                 vd_h.update(str(k + v.gen_mdc()).encode('utf-8'))
 
         yield True
