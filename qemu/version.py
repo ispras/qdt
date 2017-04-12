@@ -344,6 +344,15 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    Header.lookup("hw/isa/isa.h").add_types([
+        Type("IsaDmaTransferHandler")
+    ])
+
+    Header.lookup("hw/isa/i8257.h").add_references([
+        Type.lookup("IsaDmaTransferHandler"),
+        Type.lookup("MemoryRegion")
+    ])
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
