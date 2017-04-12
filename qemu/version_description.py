@@ -5,6 +5,7 @@ from source import \
 
 from common import \
     callco, \
+    remove_file, \
     execfile, \
     PyGenerator
 
@@ -570,7 +571,17 @@ class QemuVersionDescription(object):
 
             yield True
 
-            if not self.qvc.version_desc["vd_hash"] == qemu_heuristic_hash:
+            # verify that the version_desc is not outdated
+            is_outdated = False
+            try:
+                checksum = self.qvc.version_desc["vd_hash"]
+            except KeyError:
+                is_outdated = True
+            else:
+                if not checksum == qemu_heuristic_hash:
+                    is_outdated = True
+            if is_outdated:
+                remove_file(qvc_path)
                 yield self.qvc.co_computing_parameters(self.repo)
                 self.qvc.version_desc["vd_hash"] = qemu_heuristic_hash
                 PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
