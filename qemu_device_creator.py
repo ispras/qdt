@@ -47,6 +47,12 @@ Use @file to read arguments from 'file' (one per line)
         metavar = "header_tree.gv"
         )
 
+    parser.add_argument("--gen-chunk-graphs",
+        action='store_true',
+        help = "also generate Graphviz files with graph of chunks per each "
+        "generated source"
+    )
+
     arguments = parser.parse_args()
 
     try:
@@ -94,7 +100,9 @@ Use @file to read arguments from 'file' (one per line)
         get_vp()["QDC default project class name"]
     )
     project = DefaultProject()
-    project.gen_all(qvd.src_path)
+    project.gen_all(qvd.src_path,
+        with_chunk_graph = arguments.gen_chunk_graphs
+    )
 
     '''
     from pycparser import c_generator, c_ast
