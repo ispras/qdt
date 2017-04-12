@@ -56,17 +56,17 @@ already in another project.")
     def find(self, **kw):
         return co_find_eq(self.descriptions, **kw)
 
-    def gen_all(self, qemu_src):
+    def gen_all(self, qemu_src, **gen_cfg):
         # First, generate all devices, then generate machines
         for desc in self.descriptions:
             if not isinstance(desc, MachineNode):
-                self.gen(desc, qemu_src)
+                self.gen(desc, qemu_src, **gen_cfg)
 
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
-                self.gen(desc, qemu_src)
+                self.gen(desc, qemu_src, **gen_cfg)
 
-    def gen(self, desc, src):
+    def gen(self, desc, src, with_chunk_graph = False):
         dev_t = desc.gen_type()
 
         full_source_path = join(src, dev_t.source.path)
@@ -111,6 +111,9 @@ already in another project.")
         source.generate(source_writer)
         source_writer.close()
 
+        if with_chunk_graph:
+            source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
+
         include_path = join(src, 'include')
 
         if "header" in dev_t.__dict__:
@@ -125,3 +128,6 @@ already in another project.")
             header = dev_t.generate_header()
             header.generate(header_writer)
             header_writer.close()
+
+            if with_chunk_graph:
+                header.gen_chunks_gv_file(full_header_path + ".chunks.gv")
