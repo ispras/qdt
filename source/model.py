@@ -1652,6 +1652,7 @@ digraph Chunks {
         # use 'visited' flag to prevent dead loop in case of inclusion cycle
         for h in Header.reg.values():
             h.visited = False
+            h.root = None
 
         # Dictionary is used for fast lookup HeaderInclusion by Header.
         # Assuming only one inclusion per header.
@@ -1659,15 +1660,19 @@ digraph Chunks {
 
         for ch in self.chunks:
             if type(ch) == HeaderInclusion:
-                included_headers[ch.header] = ch
+                h = ch.header
+                if h in included_headers:
+                    raise RuntimeError("Duplicate inclusions must be removed "
+                        " before inclusion optimization."
+                    )
+                included_headers[h] = ch
                 # root is originally included header.
-                ch.header.root = ch.header
+                h.root = h
 
         stack = list(included_headers)
 
         while stack:
             h = stack.pop()
-            h.visited = True
 
             for sp in h.inclusions:
                 s = Header.lookup(sp)
@@ -1676,15 +1681,41 @@ digraph Chunks {
 included from another one (h.root) then inclusion of s is redundant and must
 be deleted. All references to it must be redirected to inclusion of h (h.root).
                     """
-                    self.remove_dup_chunk(included_headers[h.root], 
-                            included_headers[s])
-                    # The header s was excluded.
-                    del included_headers[s]
+                    redundant = included_headers[s]
+                    substitution = included_headers[h.root]
 
-                if not s.visited:
+                    """ Because the header inclusion graph is not acyclic,
+a header can (transitively) include itself. Then nothing is to be substituted.
+                    """
+                    if redundant is substitution:
+                        continue
+
+                    if redundant.header is not s:
+                        # inclusion of s was already removed as redundant
+                        continue
+
+                    self.remove_dup_chunk(substitution, redundant)
+
+                    """ The inclusion of s was removed but s could transitively
+include another header (s0) too. Then inclusion of any s0 must be removed and
+all references to it must be redirected to inclusion of h. Hence, reference to
+inclusion of h must be remembered. This algorithm keeps it in included_headers
+replacing reference to removed inclusion of s. If s was processed before h then
+there could be several references to inclusion of s in included_headers. All of
+them must be replaced with reference to h. """
+                    for hdr, chunk in included_headers.items():
+                        if chunk is redundant:
+                            included_headers[hdr] = substitution
+
+                if s.root is None:
                     stack.append(s)
                     # Keep reference to originally included header.
                     s.root = h.root
+
+        # Clear runtime variables
+        for h in Header.reg.values():
+            del h.visited
+            del h.root
 
 
     def check_static_function_declarations(self):
