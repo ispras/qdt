@@ -103,20 +103,8 @@ already in another project.")
             obj_var_name, config_flag
         )
 
-        if isfile(full_source_path):
-            remove(full_source_path)
-    
-        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
-        source = dev_t.generate_source()
-        source.generate(source_writer)
-        source_writer.close()
-
-        if with_chunk_graph:
-            source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
-
-        include_path = join(src, 'include')
-
         if "header" in dev_t.__dict__:
+            include_path = join(src, 'include')
             full_header_path = join(include_path, dev_t.header.path)
 
             if isfile(full_header_path):
@@ -132,3 +120,14 @@ already in another project.")
 
             if with_chunk_graph:
                 header.gen_chunks_gv_file(full_header_path + ".chunks.gv")
+
+        if isfile(full_source_path):
+            remove(full_source_path)
+
+        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
+        source = dev_t.generate_source()
+        source.generate(source_writer)
+        source_writer.close()
+
+        if with_chunk_graph:
+            source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
