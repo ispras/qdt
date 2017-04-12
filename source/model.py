@@ -22,6 +22,7 @@ from ply.lex import lex
 from ply.cpp import *
 
 from common import \
+    OrderedSet, \
     ObjectVisitor, \
     BreakVisiting
 
@@ -1042,16 +1043,16 @@ class SourceChunk(object):
         self.name = name
         self.code = code
         self.visited = 0
-        self.users = []
-        self.references = []
+        self.users = set()
+        self.references = set()
         self.source = None
         if not references == None:
             for chunk in references:
                 self.add_reference(chunk)
 
     def add_reference(self, chunk):
-        self.references.append(chunk)
-        chunk.users.append(self)
+        self.references.add(chunk)
+        chunk.users.add(self)
 
     def add_references(self, refs):
         for r in refs:
