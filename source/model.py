@@ -25,6 +25,9 @@ from common import \
     ObjectVisitor, \
     BreakVisiting
 
+from itertools import \
+    count
+
 # Source code models
 
 class Source(object):
@@ -1535,6 +1538,41 @@ class SourceFile:
         self.is_header = is_header
         self.chunks = []
         self.sort_needed = False
+
+    def gen_chunks_graph(self, w):
+        w.write("""\
+digraph Chunks {
+    rankdir=BT;
+    node [shape=polygon fontname=Momospace]
+    edge [style=filled]
+
+"""
+        )
+
+        w.write("    /* Chunks */\n")
+
+        def chunk_node_name(chunk, mapping = {}, counter = count(0)):
+            try:
+                name = mapping[chunk]
+            except KeyError:
+                name = "ch_%u" % next(counter)
+                mapping[chunk] = name
+            return name
+
+        for ch in self.chunks:
+            cnn = chunk_node_name(ch)
+            w.write('\n    %s [label="%s"]\n' % (cnn, ch.name))
+            if ch.references:
+                w.write("        /* References */\n")
+                for ref in ch.references:
+                    w.write("        %s -> %s\n" % (cnn, chunk_node_name(ref)))
+
+        w.write("}\n")
+
+    def gen_chunks_gv_file(self, file_name):
+        f = open(file_name, "w")
+        self.gen_chunks_graph(f)
+        f.close()
 
     def remove_dup_chunk(self, ch, ch_remove):
         for user in list(ch_remove.users):
