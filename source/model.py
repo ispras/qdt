@@ -206,14 +206,28 @@ switching to that mode.
             l = list(self.types.values())
 
         for t in self.types.values():
-            if isinstance(t, TypeReference) or t.definer == self:
-                if type(t) == Function:
-                    if type(self) == Header and (not t.static or not t.inline):
-                        chunks.extend(t.gen_declaration_chunks())
-                    else:
-                        chunks.extend(t.gen_definition_chunks())
+            if isinstance(t, TypeReference):
+                for inc in self.inclusions.values():
+                    if t.name in inc.types:
+                        break
                 else:
-                    chunks.extend(t.gen_chunks())
+                    raise RuntimeError("Any type reference in a file must "
+"be provided by at least one inclusion (%s: %s)" % (self.path, t.name)
+                    )
+                continue
+
+            if t.definer is not self:
+                raise RuntimeError("Type %s is defined in %s but presented in"
+" %s not by a reference." % (t.name, t.definer.path, self.path)
+                )
+
+            if type(t) is Function:
+                if type(self) is Header and (not t.static or not t.inline):
+                    chunks.extend(t.gen_declaration_chunks())
+                else:
+                    chunks.extend(t.gen_definition_chunks())
+            else:
+                chunks.extend(t.gen_chunks())
 
         if type(self) == Header:
             for gv in self.global_variables.values():
