@@ -239,7 +239,7 @@ switching to that mode.
 
         for u in self.usages:
             chunks.extend(u.gen_chunks())
- 
+
         return chunks
 
     def generate(self, inherit_references = False):
