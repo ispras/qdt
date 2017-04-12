@@ -1648,7 +1648,11 @@ digraph Chunks {
             raise Exception("The chunk {} is already in {} ".format(
                 chunk.name, chunk.source.name))
 
-    def optimize_inclusions(self):
+    def optimize_inclusions(self, log = lambda *args, **kw : None):
+        log("-= inclusion optimization started for %s.%s =-" % (
+            (self.name, "h" if self.is_header else "c")
+        ))
+
         # use 'visited' flag to prevent dead loop in case of inclusion cycle
         for h in Header.reg.values():
             h.visited = False
@@ -1669,6 +1673,10 @@ digraph Chunks {
                 # root is originally included header.
                 h.root = h
 
+        log("Originally included:\n"
+            + "\n".join(h.path for h in included_headers)
+        )
+
         stack = list(included_headers)
 
         while stack:
@@ -1688,11 +1696,20 @@ be deleted. All references to it must be redirected to inclusion of h (h.root).
 a header can (transitively) include itself. Then nothing is to be substituted.
                     """
                     if redundant is substitution:
+                        log("Cycle: " + s.path)
                         continue
 
                     if redundant.header is not s:
                         # inclusion of s was already removed as redundant
+                        log("%s includes %s which already substituted by "
+                            "%s" % (h.root.path, s.path, redundant.header.path)
+                        )
                         continue
+
+                    log("%s includes %s, substitute %s with %s" % (
+                        h.root.path, s.path, redundant.header.path,
+                        substitution.header.path
+                    ))
 
                     self.remove_dup_chunk(substitution, redundant)
 
@@ -1717,6 +1734,7 @@ them must be replaced with reference to h. """
             del h.visited
             del h.root
 
+        log("-= inclusion optimization ended =-")
 
     def check_static_function_declarations(self):
         func_dec = {}
