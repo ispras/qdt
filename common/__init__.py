@@ -60,3 +60,5 @@ from .compat import \
 
 from .version import \
     parse_version
+
+from .ordered_set import *
