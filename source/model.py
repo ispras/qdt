@@ -1672,18 +1672,18 @@ digraph Chunks {
             for sp in h.inclusions:
                 s = Header.lookup(sp)
                 if s in included_headers:
-                    # If an originally included header (s) is reached from
-                    # another one, then inclusion of first one should be
-                    # deleted and all references to it should be redirected to
-                    # inclusion of second one.
+                    """ If an originally included header (s) is transitively
+included from another one (h.root) then inclusion of s is redundant and must
+be deleted. All references to it must be redirected to inclusion of h (h.root).
+                    """
                     self.remove_dup_chunk(included_headers[h.root], 
                             included_headers[s])
-                    # The header reached from another one is no more included.
+                    # The header s was excluded.
                     del included_headers[s]
 
                 if not s.visited:
                     stack.append(s)
-                    # Keep track of originally included header.
+                    # Keep reference to originally included header.
                     s.root = h.root
 
 
