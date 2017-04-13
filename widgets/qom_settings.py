@@ -22,6 +22,14 @@ from qemu import \
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
+def validate_int(var, entry):
+    try:
+        (int(var.get(), base = 0))
+    except ValueError:
+        entry.config(bg = "red")
+    else:
+        entry.config(bg = "white")
+
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
@@ -58,9 +66,17 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 v = StringVar()
                 w = HKEntry(f, textvariable = v, state="readonly")
             else:
-                if _input in (str, int):
+                if _input is str:
                     v = StringVar()
                     w = HKEntry(f, textvariable = v)
+                elif _input is int:
+                    v = StringVar()
+                    w = HKEntry(f, textvariable = v)
+
+                    def validate(varname, junk, act, entry = w, var = v):
+                        validate_int(var, entry = entry)
+
+                    v.trace_variable("w", validate)
                 else:
                     raise RuntimeError("Input of QOM template attribute %s of"
                         " type %s is not supported" % (attr, _input.__name__)
@@ -119,7 +135,11 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             new_val = v.get()
 
             if _input is int:
-                new_val = int(new_val, base = 0)
+                try:
+                    new_val = int(new_val, base = 0)
+                except ValueError:
+                    # bad value cannot be applied
+                    continue
 
             if new_val != cur_val:
                 self.pht.stage(DOp_SetAttr, attr, new_val, desc)
