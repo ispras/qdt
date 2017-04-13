@@ -551,7 +551,10 @@ class QOMStateField(object):
 
 class QOMDevice(QOMType):
     __attribute_info__ = {
-        "directory" : { "short": _("Directory"), "input": str }
+        "directory" : { "short": _("Directory"), "input": str },
+        "block_num": { "short": _("Block driver quantity"), "input": int },
+        "char_num": { "short": _("Character driver quantity"), "input": int },
+        "timer_num": { "short": _("Timer quantity"), "input": int }
     }
 
     def __init__(self, name, directory,
