@@ -11,7 +11,7 @@ class FormatedStringChangindException(BaseException):
     pass
 
 # The class just implements % (__mod__) operator for StringVar
-class FormatVar(StringVar):
+class FormatVar(Variable):
     def __mod__(self, args):
 
         if not isinstance(args, tuple):
