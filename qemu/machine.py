@@ -26,6 +26,7 @@ from .machine_nodes import \
     PCIExpressDeviceNode
 
 from common import \
+    mlget as _, \
     sort_topologically
 
 from os.path import \
@@ -105,6 +106,10 @@ class IRQHubLayout(object):
         return self._gen_irq_get(root_name, self.root)
 
 class MachineType(QOMType):
+
+    __attribute_info__ = {
+        "directory" : { "short": _("Directory"), "input": str }
+    }
 
     def reset_generator(self):
         self.device_count = 0
