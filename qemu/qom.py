@@ -15,6 +15,9 @@ from os.path import \
 from six import \
     integer_types
 
+from common import \
+    mlget as _
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -174,6 +177,10 @@ type2vmstate = {
 }
 
 class QOMType(object):
+    __attribute_info__ = {
+        "name" : { "short": _("Name") }
+    }
+
     def __init__(self, name, timer_num = 0, char_num = 0, block_num = 0):
         self.qtn = QemuTypeName(name)
         self.timer_num = timer_num
