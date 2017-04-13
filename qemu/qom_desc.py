@@ -1,6 +1,9 @@
 from common import \
     get_class_total_args
 
+from inspect import \
+    getmro
+
 class QOMDescription(object):
     def __init__(self):
         self.project = None
@@ -25,7 +28,21 @@ def DescriptionOf(QOMTemplate):
     defaults of function 'decorate'."""
     pa, kwa = get_class_total_args(QOMTemplate)
 
-    def decorate(klass, pa = pa, kwa = kwa):
+    """ Given QOM template class, collect attribute information provided by it
+    and its ancestors. """
+    attribute_info = {}
+    Class = QOMTemplate
+    for Class in getmro(Class):
+        try:
+            ai = Class.__attribute_info__
+        except AttributeError:
+            continue
+
+        for attr, info in ai.items():
+            if attr not in attribute_info:
+                attribute_info[attr] = info
+
+    def decorate(klass, pa = pa, kwa = kwa, ai = attribute_info):
         # default method to generate QOM type from description
         def gen_type(self, __class = QOMTemplate, __pa = pa, __kwa = kwa):
             kwa = {}
@@ -96,6 +113,8 @@ def __init__(self, {pa}, {kwa}, **compat):
             klass.gen_type = gen_type
         if "__gen_code__" not in klass.__dict__:
             klass.__gen_code__ = __gen_code__
+
+        klass.__attribute_info__ = ai
 
         return klass
 
