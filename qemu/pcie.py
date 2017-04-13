@@ -17,7 +17,20 @@ from .pci_ids import \
     PCIVendorIdNetherExistsNorCreate, \
     PCIId
 
+from common import \
+    mlget as _
+
 class PCIEDeviceType(QOMDevice):
+    __attribute_info__ = {
+        "irq_num": { "short": _("IRQ pin quantity"), "input" : int },
+        "mem_bar_num": { "short": _("BAR quantity"), "input" : int },
+        "msi_messages_num": {
+            "short": _("MSI message quantity"),
+            "input" : int
+        },
+        "revision": { "short": _("Revision"), "input" : int }
+    }
+
     def __init__(self,
         name,
         directory,
