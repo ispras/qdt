@@ -39,6 +39,9 @@ from .visitor import \
 from .search_helper import \
     co_find_eq
 
+from .variable import \
+    Variable
+
 from .formated_string_var import \
     FormatedStringChangindException, \
     FormatVar, \
