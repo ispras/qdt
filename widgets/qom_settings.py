@@ -58,7 +58,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 v = StringVar()
                 w = HKEntry(f, textvariable = v, state="readonly")
             else:
-                if _input is str:
+                if _input in (str, int):
                     v = StringVar()
                     w = HKEntry(f, textvariable = v)
                 else:
@@ -109,12 +109,17 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         desc = self.desc
         for attr, info in desc.__attribute_info__.items():
-            if "input" not in info: # read-only
+            try:
+                _input = info["input"]
+            except KeyError: # read-only
                 continue
 
             v = getattr(self, "_var_" + attr)
             cur_val = getattr(desc, attr)
             new_val = v.get()
+
+            if _input is int:
+                new_val = int(new_val, base = 0)
 
             if new_val != cur_val:
                 self.pht.stage(DOp_SetAttr, attr, new_val, desc)
