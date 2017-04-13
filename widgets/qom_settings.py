@@ -45,24 +45,29 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(0, weight = 0)
         f.columnconfigure(1, weight = 1)
 
-        f.rowconfigure(0, weight = 0)
+        for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
+            f.rowconfigure(row, weight = 0)
 
-        l = VarLabel(f, text = _("Name"))
-        l.grid(row = 0, column = 0, sticky = "NES")
+            l = VarLabel(f, text = info["short"])
+            l.grid(row = row, column = 0, sticky = "NES")
 
-        v = self.var_name = StringVar()
-        e = HKEntry(f, textvariable = v, state="readonly")
-        e.grid(row = 0, column = 1, sticky = "NEWS")
+            try:
+                _input = info["input"]
+            except KeyError:
+                # attribute is read-only
+                v = StringVar()
+                w = HKEntry(f, textvariable = v, state="readonly")
+            else:
+                if _input is str:
+                    v = StringVar()
+                    w = HKEntry(f, textvariable = v)
+                else:
+                    raise RuntimeError("Input of QOM template attribute %s of"
+                        " type %s is not supported" % (attr, _input.__name__)
+                    )
 
-        # Directory editing row
-        f.rowconfigure(1, weight = 0)
-
-        l = VarLabel(f, text = _("Directory"))
-        l.grid(row = 1, column = 0, sticky = "NES")
-
-        v = self.var_directory = StringVar()
-        e = HKEntry(f, textvariable = v)
-        e.grid(row = 1, column = 1, sticky = "NEWS")
+            w.grid(row = row, column = 1, sticky = "NEWS")
+            setattr(self, "_var_" + attr, v)
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -88,8 +93,12 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         self.bind("<Destroy>", self.__on_destory__, "+")
 
     def __refresh__(self):
-        self.var_name.set(self.desc.name)
-        self.var_directory.set(self.desc.directory)
+        desc = self.desc
+        for attr in desc.__attribute_info__:
+            v = getattr(self, "_var_" + attr)
+            cur_val = getattr(desc, attr)
+            # TODO: check already equal
+            v.set(cur_val)
 
     def __apply__(self):
         if self.pht is None:
@@ -98,10 +107,17 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         prev_pos = self.pht.pos
 
-        new_dir = self.var_directory.get()
+        desc = self.desc
+        for attr, info in desc.__attribute_info__.items():
+            if "input" not in info: # read-only
+                continue
 
-        if new_dir != self.desc.directory:
-            self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
+            v = getattr(self, "_var_" + attr)
+            cur_val = getattr(desc, attr)
+            new_val = v.get()
+
+            if new_val != cur_val:
+                self.pht.stage(DOp_SetAttr, attr, new_val, desc)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
