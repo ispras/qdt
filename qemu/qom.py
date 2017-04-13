@@ -662,6 +662,10 @@ class QOMStateField(object):
         self.default = default
 
 class QOMDevice(QOMType):
+    __attribute_info__ = {
+        "directory" : { "short": _("Directory"), "input": str }
+    }
+
     def __init__(self, name, directory, **qom_kw):
         super(QOMDevice, self).__init__(name, **qom_kw)
 
