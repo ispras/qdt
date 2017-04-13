@@ -181,11 +181,8 @@ class QOMType(object):
         "name" : { "short": _("Name") }
     }
 
-    def __init__(self, name, timer_num = 0, char_num = 0, block_num = 0):
+    def __init__(self, name):
         self.qtn = QemuTypeName(name)
-        self.timer_num = timer_num
-        self.char_num = char_num
-        self.block_num = block_num
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
 
@@ -207,115 +204,6 @@ class QOMType(object):
         self.add_state_field_h("bool", "var_b1", save = False, prop = True,
             default = True
         )
-
-    # Block driver
-    def block_name(self, index):
-        if self.block_num == 1:
-            return "blk"
-        else:
-            return "blk_%u" % index
-
-    def block_prop_name(self, index):
-        pfx = self.qtn.for_macros + "_"
-        if self.block_num == 1:
-            return pfx + "DRIVE"
-        else:
-            return pfx + "DRIVE_%u" % index
-
-    def block_declare_fields(self):
-        for index in range(self.block_num):
-            f = QOMStateField(
-                Pointer(Type.lookup("BlockBackend")), self.block_name(index),
-                save = False,
-                prop = True
-            )
-            self.add_state_field(f)
-            # override macro name assigned by `add_state_field`
-            f.prop_macro_name = self.block_prop_name(index)
-
-    # Character driver
-    def char_name(self, index):
-        if self.char_num == 1:
-            return "chr"
-        else:
-            return "chr_%u" % index
-
-    def char_can_read_name(self, index):
-        return self.qtn.for_id_name + "_" + self.char_name(index) + "_can_read"
-
-    def char_read_name(self, index):
-        return self.qtn.for_id_name + "_" + self.char_name(index) + "_read"
-
-    def char_event_name(self, index):
-        return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
-
-    def char_declare_fields(self):
-        for index in range(self.char_num):
-            self.add_state_field(QOMStateField(
-                Pointer(Type.lookup("CharDriverState")), self.char_name(index),
-                save = False,
-                prop = True
-            ))
-
-    def char_gen_cb(self, proto_name, handler_name, index, source,
-        state_struct, type_cast_macro
-    ):
-        proto = Type.lookup(proto_name)
-        cb = proto.use_as_prototype(handler_name,
-            body = """\
-    __attribute__((unused)) %s *s = %s(opaque);%s
-""" % (
-    state_struct.name,
-    self.type_cast_macro.name,
-    "\n\n    return 0;" \
-    if proto.ret_type not in [ None, Type.lookup("void") ] else "",
-            ),
-            static = True,
-            used_types = set([state_struct, type_cast_macro])
-        )
-        source.add_type(cb)
-        return cb
-
-    def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
-        return [
-            self.char_gen_cb(proto_name, handler_name, index, source,
-                state_struct, type_cast_macro
-            ) for proto_name, handler_name in [
-                ("IOCanReadHandler", self.char_can_read_name(index)),
-                ("IOReadHandler", self.char_read_name(index)),
-                ("IOEventHandler", self.char_event_name(index))
-            ]
-        ]
-
-    # TIMERS
-    def timer_name(self, index):
-        if self.timer_num == 1:
-            return "timer"
-        else:
-            return "timer_%u" % index
-
-    def timer_cb_name(self, index):
-        return self.qtn.for_id_name + "_" + self.timer_name(index) + "_cb"
-
-    def timer_declare_fields(self):
-        for index in range(self.timer_num):
-            self.add_state_field(QOMStateField(
-                Pointer(Type.lookup("QEMUTimer")), self.timer_name(index),
-                save = True
-            ))
-
-    def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
-        timer_cb = Function(self.timer_cb_name(index),
-            body = """\
-    __attribute__((unused)) %s *s = %s(opaque);
-""" % (state_struct.name, self.type_cast_macro.name
-            ),
-            args = [Type.lookup("void").gen_var("opaque", pointer = True)],
-            static = True,
-            used_types = set([state_struct, type_cast_macro])
-        )
-        source.add_type(timer_cb)
-        return timer_cb
 
     def add_state_fields(self, fields):
         for field in fields:
@@ -666,10 +554,18 @@ class QOMDevice(QOMType):
         "directory" : { "short": _("Directory"), "input": str }
     }
 
-    def __init__(self, name, directory, **qom_kw):
+    def __init__(self, name, directory,
+            timer_num = 0,
+            char_num = 0,
+            block_num = 0,
+            **qom_kw
+    ):
         super(QOMDevice, self).__init__(name, **qom_kw)
 
         self.directory = directory
+        self.timer_num = timer_num
+        self.char_num = char_num
+        self.block_num = block_num
 
         # Define header file
         header_path = join("hw", directory, self.qtn.for_header_name + ".h")
@@ -685,3 +581,111 @@ class QOMDevice(QOMType):
     def gen_source(self):
         pass
 
+    # Block driver
+    def block_name(self, index):
+        if self.block_num == 1:
+            return "blk"
+        else:
+            return "blk_%u" % index
+
+    def block_prop_name(self, index):
+        pfx = self.qtn.for_macros + "_"
+        if self.block_num == 1:
+            return pfx + "DRIVE"
+        else:
+            return pfx + "DRIVE_%u" % index
+
+    def block_declare_fields(self):
+        for index in range(self.block_num):
+            f = QOMStateField(
+                Pointer(Type.lookup("BlockBackend")), self.block_name(index),
+                save = False,
+                prop = True
+            )
+            self.add_state_field(f)
+            # override macro name assigned by `add_state_field`
+            f.prop_macro_name = self.block_prop_name(index)
+
+    # Character driver
+    def char_name(self, index):
+        if self.char_num == 1:
+            return "chr"
+        else:
+            return "chr_%u" % index
+
+    def char_can_read_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_can_read"
+
+    def char_read_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_read"
+
+    def char_event_name(self, index):
+        return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
+
+    def char_declare_fields(self):
+        for index in range(self.char_num):
+            self.add_state_field(QOMStateField(
+                Pointer(Type.lookup("CharDriverState")), self.char_name(index),
+                save = False,
+                prop = True
+            ))
+
+    def char_gen_cb(self, proto_name, handler_name, index, source,
+        state_struct, type_cast_macro
+    ):
+        proto = Type.lookup(proto_name)
+        cb = proto.use_as_prototype(handler_name,
+            body = """\
+    __attribute__((unused)) %s *s = %s(opaque);%s
+""" % (
+    state_struct.name,
+    self.type_cast_macro.name,
+    "\n\n    return 0;" \
+    if proto.ret_type not in [ None, Type.lookup("void") ] else "",
+            ),
+            static = True,
+            used_types = set([state_struct, type_cast_macro])
+        )
+        source.add_type(cb)
+        return cb
+
+    def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
+        return [
+            self.char_gen_cb(proto_name, handler_name, index, source,
+                state_struct, type_cast_macro
+            ) for proto_name, handler_name in [
+                ("IOCanReadHandler", self.char_can_read_name(index)),
+                ("IOReadHandler", self.char_read_name(index)),
+                ("IOEventHandler", self.char_event_name(index))
+            ]
+        ]
+
+    # TIMERS
+    def timer_name(self, index):
+        if self.timer_num == 1:
+            return "timer"
+        else:
+            return "timer_%u" % index
+
+    def timer_cb_name(self, index):
+        return self.qtn.for_id_name + "_" + self.timer_name(index) + "_cb"
+
+    def timer_declare_fields(self):
+        for index in range(self.timer_num):
+            self.add_state_field(QOMStateField(
+                Pointer(Type.lookup("QEMUTimer")), self.timer_name(index),
+                save = True
+            ))
+
+    def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
+        timer_cb = Function(self.timer_cb_name(index),
+            body = """\
+    __attribute__((unused)) %s *s = %s(opaque);
+""" % (state_struct.name, self.type_cast_macro.name
+            ),
+            args = [Type.lookup("void").gen_var("opaque", pointer = True)],
+            static = True,
+            used_types = set([state_struct, type_cast_macro])
+        )
+        source.add_type(timer_cb)
+        return timer_cb
