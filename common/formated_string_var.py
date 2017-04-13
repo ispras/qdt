@@ -1,6 +1,11 @@
 from six.moves.tkinter import \
-    Variable, \
+    Variable as TkVariable, \
     StringVar
+
+from .variable import \
+    Variable
+
+variables = (Variable, TkVariable)
 
 class FormatedStringChangindException(BaseException):
     pass
@@ -23,7 +28,7 @@ class FormatedStringVar(StringVar):
         self.fmt_args = fmt_args
 
         for a in ( fmt, ) + fmt_args:
-            if isinstance(a, Variable):
+            if isinstance(a, variables):
                 a.trace_variable("w", self.__on_fmt_arg_changed__)
 
         """ FormatedStringVar.set method forbids setting of self value. But
@@ -41,7 +46,7 @@ temporally replaces self.set with nope lambda to bypass this.
 
     @staticmethod
     def __arg_get__(arg):
-        if isinstance(arg, Variable):
+        if isinstance(arg, variables):
             return arg.get()
         else:
             return arg
@@ -49,7 +54,7 @@ temporally replaces self.set with nope lambda to bypass this.
     def __gen_string__(self):
         fmt = self.fmt
 
-        if isinstance(fmt, Variable):
+        if isinstance(fmt, variables):
             fmt = fmt.get()
 
         args = [ FormatedStringVar.__arg_get__(arg) for arg in self.fmt_args ]
