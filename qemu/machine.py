@@ -38,6 +38,9 @@ from .version import \
 from six import \
     integer_types
 
+from collections import \
+    OrderedDict
+
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
         Exception.__init__(self, t)
@@ -107,9 +110,9 @@ class IRQHubLayout(object):
 
 class MachineType(QOMType):
 
-    __attribute_info__ = {
-        "directory" : { "short": _("Directory"), "input": str }
-    }
+    __attribute_info__ = OrderedDict([
+        ("directory", { "short": _("Directory"), "input": str })
+    ])
 
     def reset_generator(self):
         self.device_count = 0

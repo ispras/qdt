@@ -13,13 +13,16 @@ from source import \
 from common import \
     mlget as _
 
+from collections import \
+    OrderedDict
+
 class SysBusDeviceType(QOMDevice):
-    __attribute_info__ = {
-        "out_irq_num": { "short": _("Output IRQ quantity"), "input": int },
-        "in_irq_num": { "short": _("Input IRQ quantity"), "input": int },
-        "mmio_num": { "short": _("MMIO quantity"), "input": int },
-        "pio_num": { "short": _("PMIO (PIO) quantity"), "input": int }
-    }
+    __attribute_info__ = OrderedDict([
+        ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),
+        ("in_irq_num", { "short": _("Input IRQ quantity"), "input": int }),
+        ("mmio_num", { "short": _("MMIO quantity"), "input": int }),
+        ("pio_num", { "short": _("PMIO (PIO) quantity"), "input": int })
+    ])
 
     def __init__(self,
         name,

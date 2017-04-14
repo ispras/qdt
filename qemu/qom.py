@@ -18,6 +18,9 @@ from six import \
 from common import \
     mlget as _
 
+from collections import \
+    OrderedDict
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -177,9 +180,9 @@ type2vmstate = {
 }
 
 class QOMType(object):
-    __attribute_info__ = {
-        "name" : { "short": _("Name") }
-    }
+    __attribute_info__ = OrderedDict([
+        ("name", { "short": _("Name") })
+    ])
 
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
@@ -550,12 +553,12 @@ class QOMStateField(object):
         self.default = default
 
 class QOMDevice(QOMType):
-    __attribute_info__ = {
-        "directory" : { "short": _("Directory"), "input": str },
-        "block_num": { "short": _("Block driver quantity"), "input": int },
-        "char_num": { "short": _("Character driver quantity"), "input": int },
-        "timer_num": { "short": _("Timer quantity"), "input": int }
-    }
+    __attribute_info__ = OrderedDict([
+        ("directory", { "short": _("Directory"), "input": str }),
+        ("block_num", { "short": _("Block driver quantity"), "input": int }),
+        ("char_num", { "short": _("Character driver quantity"), "input": int }),
+        ("timer_num", { "short": _("Timer quantity"), "input": int })
+    ])
 
     def __init__(self, name, directory,
             timer_num = 0,

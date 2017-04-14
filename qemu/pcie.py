@@ -20,21 +20,24 @@ from .pci_ids import \
 from common import \
     mlget as _
 
+from collections import \
+    OrderedDict
+
 class PCIEDeviceType(QOMDevice):
-    __attribute_info__ = {
-        "vendor": { "short": _("Vendor"), "input" : PCIId },
-        "device": { "short": _("Device"), "input" : PCIId },
-        "pci_class": { "short": _("Class"), "input" : PCIId },
-        "subsys_vendor": { "short": _("Subsystem vendor"), "input" : PCIId },
-        "subsys": { "short":_("Subsystem"), "input" : PCIId },
-        "irq_num": { "short": _("IRQ pin quantity"), "input" : int },
-        "mem_bar_num": { "short": _("BAR quantity"), "input" : int },
-        "msi_messages_num": {
+    __attribute_info__ = OrderedDict([
+        ("vendor", { "short": _("Vendor"), "input" : PCIId }),
+        ("device", { "short": _("Device"), "input" : PCIId }),
+        ("pci_class", { "short": _("Class"), "input" : PCIId }),
+        ("subsys_vendor", { "short": _("Subsystem vendor"), "input" : PCIId }),
+        ("subsys", { "short":_("Subsystem"), "input" : PCIId }),
+        ("irq_num", { "short": _("IRQ pin quantity"), "input" : int }),
+        ("mem_bar_num", { "short": _("BAR quantity"), "input" : int }),
+        ("msi_messages_num", {
             "short": _("MSI message quantity"),
             "input" : int
-        },
-        "revision": { "short": _("Revision"), "input" : int }
-    }
+        }),
+        ("revision", { "short": _("Revision"), "input" : int })
+    ])
 
     def __init__(self,
         name,
