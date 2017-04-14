@@ -153,7 +153,7 @@ during refresh.     """
                     cur_val = ""
                 # use appropriate widget/variable pair
                 if isinstance(cur_val, str):
-                    if type(v) is not StringVar:
+                    if not isinstance(v, StringVar):
                         v = StringVar()
                         setattr(self, "_var_" + attr, v)
 
@@ -165,7 +165,7 @@ during refresh.     """
                         w = HKEntry(frame, textvariable = v)
                         w.grid(row = 0, column = 0, sticky = "NEWS")
                 elif cur_val is None or isinstance(cur_val, PCIId):
-                    if type(v) is not ObjRefVar:
+                    if not isinstance(v, ObjRefVar):
                         v = ObjRefVar()
                         setattr(self, "_var_" + attr, v)
 
