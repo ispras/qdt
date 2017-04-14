@@ -83,9 +83,6 @@ from .qom_settings import \
 from .device_description_settings import \
     DeviceDescriptionSettingsWidget
 
-from .pci_description_settings import \
-    PCIEBusDeviceDescriptionSettingsWidget
-
 from .tk_co_dispatcher import \
     TkCoDispatcher
 
