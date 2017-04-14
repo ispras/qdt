@@ -29,11 +29,8 @@ from qemu import \
     DOp_SetAttr, \
     POp_AddDesc
 
-from .sysbusdev_description_settings import \
-    SystemBusDeviceDescriptionSettingsWidget
-
-from .pci_description_settings import \
-    PCIEBusDeviceDescriptionSettingsWidget
+from .qom_settings import \
+    QOMDescriptionSettingsWidget
 
 from six.moves.tkinter_font import \
     Font
@@ -449,14 +446,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
             w = MachineDescriptionSettingsWidget(desc, self)
-        elif isinstance(desc, SysBusDeviceDescription):
-            w = SystemBusDeviceDescriptionSettingsWidget(desc, self)
-        elif isinstance(desc, PCIExpressDeviceDescription):
-            w = PCIEBusDeviceDescriptionSettingsWidget(desc, self)
         else:
-            raise Exception("No widget exists for description %s of type %s." %
-                    (desc.name, type(desc).__name__)
-                )
+            w = QOMDescriptionSettingsWidget(desc, self)
         return w
 
     def add_description(self):
