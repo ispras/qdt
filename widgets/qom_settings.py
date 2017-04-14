@@ -240,7 +240,12 @@ during refresh.     """
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
 
-        self.__apply_internal__()
+        try:
+            apply_internal = self.__apply_internal__
+        except AttributeError: # apply logic extension is optional
+            pass
+        else:
+            apply_internal()
 
         self.pht.commit()
 
