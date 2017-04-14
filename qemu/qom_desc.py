@@ -4,6 +4,9 @@ from common import \
 from inspect import \
     getmro
 
+from collections import \
+    OrderedDict
+
 class QOMDescription(object):
     def __init__(self):
         self.project = None
@@ -29,8 +32,8 @@ def DescriptionOf(QOMTemplate):
     pa, kwa = get_class_total_args(QOMTemplate)
 
     """ Given QOM template class, collect attribute information provided by it
-    and its ancestors. """
-    attribute_info = {}
+    and its ancestors. Order is significant. Child attributes must be below."""
+    attribute_info = OrderedDict()
     Class = QOMTemplate
     for Class in getmro(Class):
         try:
@@ -38,9 +41,15 @@ def DescriptionOf(QOMTemplate):
         except AttributeError:
             continue
 
-        for attr, info in ai.items():
+        """ Reverse order of Class attributes to preserve it with respect to
+        final reversion. """
+        for attr, info in reversed(ai.items()):
             if attr not in attribute_info:
                 attribute_info[attr] = info
+
+    # Because a child is processed before its parent, the attributes are
+    # collected in reverse order.
+    attribute_info = OrderedDict(reversed(attribute_info.items()))
 
     def decorate(klass, pa = pa, kwa = kwa, ai = attribute_info):
         # default method to generate QOM type from description
