@@ -16,11 +16,19 @@ from .hotkey import \
     HKEntry
 
 from qemu import \
+    PCIId, \
     POp_AddDesc, \
+    DOp_SetPCIIdAttr, \
     DOp_SetAttr
 
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
+
+from .obj_ref_var import \
+    ObjRefVar
+
+from .pci_id_widget import \
+    PCIIdWidget
 
 def validate_int(var, entry):
     try:
@@ -53,6 +61,8 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(0, weight = 0)
         f.columnconfigure(1, weight = 1)
 
+        have_pciid = False
+
         for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
 
@@ -77,6 +87,16 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                         validate_int(var, entry = entry)
 
                     v.trace_variable("w", validate)
+                elif _input is PCIId:
+                    have_pciid = True
+                    """ Value of PCI Id could be presented either by PCIId
+object or by a string. So the actual widget/variable pair will be assigned
+during refresh.     """
+                    v = None
+                    w = GUIFrame(f)
+                    w.grid()
+                    w.rowconfigure(0, weight = 1)
+                    w.columnconfigure(0, weight = 1)
                 else:
                     raise RuntimeError("Input of QOM template attribute %s of"
                         " type %s is not supported" % (attr, _input.__name__)
@@ -109,11 +129,54 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         self.bind("<Destroy>", self.__on_destory__, "+")
 
+        self.__have_pciid = have_pciid
+        if have_pciid:
+            self.qsig_watch("qvd_switched", self.__on_qvd_switched)
+
+    def __on_qvd_switched(self):
+        self.__refresh__()
+
     def __refresh__(self):
         desc = self.desc
-        for attr in desc.__attribute_info__:
-            v = getattr(self, "_var_" + attr)
+        for attr, info in desc.__attribute_info__.items():
+            try:
+                _input = info["input"]
+            except KeyError:
+                _input = None
+
             cur_val = getattr(desc, attr)
+            v = getattr(self, "_var_" + attr)
+
+            if _input is PCIId:
+                if not PCIId.db.built and cur_val is None:
+                    # use string values only without database
+                    cur_val = ""
+                # use appropriate widget/variable pair
+                if isinstance(cur_val, str):
+                    if type(v) is not StringVar:
+                        v = StringVar()
+                        setattr(self, "_var_" + attr, v)
+
+                        # Fill frame with appropriate widget
+                        frame = getattr(self, "_w_" + attr)
+                        for w in frame.winfo_children():
+                            w.destroy()
+
+                        w = HKEntry(frame, textvariable = v)
+                        w.grid(row = 0, column = 0, sticky = "NEWS")
+                elif cur_val is None or isinstance(cur_val, PCIId):
+                    if type(v) is not ObjRefVar:
+                        v = ObjRefVar()
+                        setattr(self, "_var_" + attr, v)
+
+                        frame = getattr(self, "_w_" + attr)
+
+                        for w in frame.winfo_children():
+                            w.destroy()
+
+                        w = PCIIdWidget(v, frame)
+                        w.grid(row = 0, column = 0, sticky = "NEWS")
+
             # TODO: check already equal
             v.set(cur_val)
 
@@ -135,15 +198,44 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             cur_val = getattr(desc, attr)
             new_val = v.get()
 
-            if _input is int:
-                try:
-                    new_val = int(new_val, base = 0)
-                except ValueError:
-                    # bad value cannot be applied
-                    continue
+            if _input is PCIId:
+                if new_val == "":
+                    new_val = None
 
-            if new_val != cur_val:
-                self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                if isinstance(new_val, str): # handle new string value
+                    # Was type of value changed?
+                    if isinstance(cur_val, str):
+                        if new_val != cur_val:
+                            self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                    else:
+                        """ Yes. Current value must first become the None and
+                        then become the new string value. """
+                        if cur_val is not None:
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, None, desc)
+                        self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                else: # Handle new value as PCIId (None equivalent to a PCIId)
+                    if cur_val is None or isinstance(cur_val, PCIId):
+                        if cur_val is not new_val:
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
+                                desc
+                            )
+                    else:
+                        """ Current string value must first be replaced with
+                        None and then set to new PCIId value. """
+                        self.pht.stage(DOp_SetAttr, attr, None, desc)
+                        if new_val is not None:
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
+                                desc
+                            )
+            else:
+                if _input is int:
+                    try:
+                        new_val = int(new_val, base = 0)
+                    except ValueError: # bad value cannot be applied
+                        continue
+
+                if new_val != cur_val:
+                    self.pht.stage(DOp_SetAttr, attr, new_val, desc)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
@@ -168,6 +260,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __on_destory__(self, *args, **kw):
         if self.pht is not None:
             self.pht.remove_on_changed(self.__on_changed__)
+
+        if self.__have_pciid:
+            self.qsig_unwatch("qvd_switched", self.__on_qvd_switched)
 
     def __on_apply__(self):
         self.__apply__()
