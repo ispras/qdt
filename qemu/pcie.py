@@ -22,6 +22,11 @@ from common import \
 
 class PCIEDeviceType(QOMDevice):
     __attribute_info__ = {
+        "vendor": { "short": _("Vendor"), "input" : PCIId },
+        "device": { "short": _("Device"), "input" : PCIId },
+        "pci_class": { "short": _("Class"), "input" : PCIId },
+        "subsys_vendor": { "short": _("Subsystem vendor"), "input" : PCIId },
+        "subsys": { "short":_("Subsystem"), "input" : PCIId },
         "irq_num": { "short": _("IRQ pin quantity"), "input" : int },
         "mem_bar_num": { "short": _("BAR quantity"), "input" : int },
         "msi_messages_num": {
