@@ -84,6 +84,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_var_" + attr, v)
+            setattr(self, "_w_" + attr, w)
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
