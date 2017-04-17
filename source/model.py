@@ -38,6 +38,25 @@ class Source(object):
         self.inclusions = {}
         self.global_variables = {}
         self.usages = []
+        self.references = set()
+
+    def add_reference(self, ref):
+        if not isinstance(ref, Type):
+            raise Exception('Trying to add source reference '
+                            'which is not a Type object')
+        if isinstance(ref, TypeReference):
+            raise Exception("""Source reference may not be TypeReference.
+ Only original types are allowed."""
+            )
+        self.references.add(ref)
+
+        return self
+
+    def add_references(self, refs):
+        for ref in refs:
+            self.add_reference(ref)
+
+        return self
 
     def add_usage(self, usage):
         TypeFixerVisitor(self, usage).visit()
@@ -423,29 +442,11 @@ class Header(Source):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
-        self.references = set()
 
         if path in Header.reg:
             raise Exception("Header %s is already registered" % path)
 
         Header.reg[path] = self
-
-    def add_reference(self, ref):
-        if not isinstance(ref, Type):
-            raise Exception('Trying to add header reference which is not a Type object')
-        if isinstance(ref, TypeReference):
-            raise Exception("""Header reference may not be TypeReference.
- Only original types are allowed."""
-            )
-        self.references.add(ref)
-
-        return self
-
-    def add_references(self, refs):
-        for ref in refs:
-            self.add_reference(ref)
-
-        return self
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
