@@ -1,5 +1,7 @@
 #!/usr/bin/python2
 
+import examples
+
 from argparse import \
     ArgumentTypeError, \
     ArgumentParser
@@ -45,6 +47,12 @@ Use @file to read arguments from 'file' (one per line)
         metavar = "header_tree.gv"
         )
 
+    parser.add_argument("--gen-chunk-graphs",
+        action='store_true',
+        help = "also generate Graphviz files with graph of chunks per each "
+        "generated source"
+    )
+
     arguments = parser.parse_args()
 
     try:
@@ -88,11 +96,13 @@ Use @file to read arguments from 'file' (one per line)
         )
     """
 
-    exec("from examples import %s as Project\nproject = Project()" % (
+    DefaultProject = getattr(examples,
         get_vp()["QDC default project class name"]
-    ))
-
-    project.gen_all(qvd.src_path)
+    )
+    project = DefaultProject()
+    project.gen_all(qvd.src_path,
+        with_chunk_graph = arguments.gen_chunk_graphs
+    )
 
     '''
     from pycparser import c_generator, c_ast

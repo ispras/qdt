@@ -22,8 +22,12 @@ from ply.lex import lex
 from ply.cpp import *
 
 from common import \
+    OrderedSet, \
     ObjectVisitor, \
     BreakVisiting
+
+from itertools import \
+    count
 
 # Source code models
 
@@ -203,14 +207,28 @@ switching to that mode.
             l = list(self.types.values())
 
         for t in self.types.values():
-            if isinstance(t, TypeReference) or t.definer == self:
-                if type(t) == Function:
-                    if type(self) == Header and (not t.static or not t.inline):
-                        chunks.extend(t.gen_declaration_chunks())
-                    else:
-                        chunks.extend(t.gen_definition_chunks())
+            if isinstance(t, TypeReference):
+                for inc in self.inclusions.values():
+                    if t.name in inc.types:
+                        break
                 else:
-                    chunks.extend(t.gen_chunks())
+                    raise RuntimeError("Any type reference in a file must "
+"be provided by at least one inclusion (%s: %s)" % (self.path, t.name)
+                    )
+                continue
+
+            if t.definer is not self:
+                raise RuntimeError("Type %s is defined in %s but presented in"
+" %s not by a reference." % (t.name, t.definer.path, self.path)
+                )
+
+            if type(t) is Function:
+                if type(self) is Header and (not t.static or not t.inline):
+                    chunks.extend(t.gen_declaration_chunks())
+                else:
+                    chunks.extend(t.gen_definition_chunks())
+            else:
+                chunks.extend(t.gen_chunks())
 
         if type(self) == Header:
             for gv in self.global_variables.values():
@@ -221,7 +239,7 @@ switching to that mode.
 
         for u in self.usages:
             chunks.extend(u.gen_chunks())
- 
+
         return chunks
 
     def generate(self, inherit_references = False):
@@ -1025,16 +1043,16 @@ class SourceChunk(object):
         self.name = name
         self.code = code
         self.visited = 0
-        self.users = []
-        self.references = []
+        self.users = set()
+        self.references = set()
         self.source = None
         if not references == None:
             for chunk in references:
                 self.add_reference(chunk)
 
     def add_reference(self, chunk):
-        self.references.append(chunk)
-        chunk.users.append(self)
+        self.references.add(chunk)
+        chunk.users.add(self)
 
     def add_references(self, refs):
         for r in refs:
@@ -1348,24 +1366,34 @@ class StructureDeclaration(SourceChunk):
         """
         References map of structure definition chunks:
 
-                      ____--------> [self references of struct_begin ]
-                     /    ___-----> [ united references of all fields ]
-                    |    /     _--> [ references of struct_end ]
-                    |    |    /
-                    |    |    |
-             ----> struct_begin <-----
-            /           ^             \
-           |            |             |
-          field_0      field_i     field_N
-           ^              ^          ^
-           \              |          /
-            ----------struct_end-----
+              ____--------> [self references of struct_begin ]
+             /    ___-----> [ united references of all fields ]
+            |    /     _--> [ references of struct_end ] == empty
+            |    |    /
+            |    |   |
+           struct_begin
+                ^
+                |
+             field_0
+                ^
+                |
+             field_1
+                ^
+                |
+               ...
+                ^
+                |
+             field_N
+                ^
+                |
+            struct_end
 
         """
 
         field_indent = "{}{}".format(indent, fields_indent)
-        field_chunks = []
         field_refs = []
+        field_chunks = []
+        top_chunk = struct_begin
 
         for f in struct.fields:
             # Note that 0-th chunk is field and rest are its dependencies
@@ -1374,11 +1402,12 @@ class StructureDeclaration(SourceChunk):
 
             field_refs.extend(decl_chunks[1:])
             field_declaration.clean_references()
-            field_declaration.add_reference(struct_begin)
+            field_declaration.add_reference(top_chunk)
             field_chunks.append(field_declaration)
+            top_chunk = field_declaration
 
         struct_begin.add_references(field_refs)
-        struct_end.add_references(field_chunks)
+        struct_end.add_reference(top_chunk)
 
         return [struct_end, struct_begin] + field_chunks
 
@@ -1536,6 +1565,41 @@ class SourceFile:
         self.chunks = []
         self.sort_needed = False
 
+    def gen_chunks_graph(self, w):
+        w.write("""\
+digraph Chunks {
+    rankdir=BT;
+    node [shape=polygon fontname=Momospace]
+    edge [style=filled]
+
+"""
+        )
+
+        w.write("    /* Chunks */\n")
+
+        def chunk_node_name(chunk, mapping = {}, counter = count(0)):
+            try:
+                name = mapping[chunk]
+            except KeyError:
+                name = "ch_%u" % next(counter)
+                mapping[chunk] = name
+            return name
+
+        for ch in self.chunks:
+            cnn = chunk_node_name(ch)
+            w.write('\n    %s [label="%s"]\n' % (cnn, ch.name))
+            if ch.references:
+                w.write("        /* References */\n")
+                for ref in ch.references:
+                    w.write("        %s -> %s\n" % (cnn, chunk_node_name(ref)))
+
+        w.write("}\n")
+
+    def gen_chunks_gv_file(self, file_name):
+        f = open(file_name, "w")
+        self.gen_chunks_graph(f)
+        f.close()
+
     def remove_dup_chunk(self, ch, ch_remove):
         for user in list(ch_remove.users):
             user.del_reference(ch_remove)
@@ -1596,10 +1660,15 @@ class SourceFile:
             raise Exception("The chunk {} is already in {} ".format(
                 chunk.name, chunk.source.name))
 
-    def optimize_inclusions(self):
+    def optimize_inclusions(self, log = lambda *args, **kw : None):
+        log("-= inclusion optimization started for %s.%s =-" % (
+            (self.name, "h" if self.is_header else "c")
+        ))
+
         # use 'visited' flag to prevent dead loop in case of inclusion cycle
         for h in Header.reg.values():
             h.visited = False
+            h.root = None
 
         # Dictionary is used for fast lookup HeaderInclusion by Header.
         # Assuming only one inclusion per header.
@@ -1607,33 +1676,77 @@ class SourceFile:
 
         for ch in self.chunks:
             if type(ch) == HeaderInclusion:
-                included_headers[ch.header] = ch
+                h = ch.header
+                if h in included_headers:
+                    raise RuntimeError("Duplicate inclusions must be removed "
+                        " before inclusion optimization."
+                    )
+                included_headers[h] = ch
                 # root is originally included header.
-                ch.header.root = ch.header
+                h.root = h
+
+        log("Originally included:\n"
+            + "\n".join(h.path for h in included_headers)
+        )
 
         stack = list(included_headers)
 
         while stack:
             h = stack.pop()
-            h.visited = True
 
             for sp in h.inclusions:
                 s = Header.lookup(sp)
                 if s in included_headers:
-                    # If an originally included header (s) is reached from
-                    # another one, then inclusion of first one should be
-                    # deleted and all references to it should be redirected to
-                    # inclusion of second one.
-                    self.remove_dup_chunk(included_headers[h.root], 
-                            included_headers[s])
-                    # The header reached from another one is no more included.
-                    del included_headers[s]
+                    """ If an originally included header (s) is transitively
+included from another one (h.root) then inclusion of s is redundant and must
+be deleted. All references to it must be redirected to inclusion of h (h.root).
+                    """
+                    redundant = included_headers[s]
+                    substitution = included_headers[h.root]
 
-                if not s.visited:
+                    """ Because the header inclusion graph is not acyclic,
+a header can (transitively) include itself. Then nothing is to be substituted.
+                    """
+                    if redundant is substitution:
+                        log("Cycle: " + s.path)
+                        continue
+
+                    if redundant.header is not s:
+                        # inclusion of s was already removed as redundant
+                        log("%s includes %s which already substituted by "
+                            "%s" % (h.root.path, s.path, redundant.header.path)
+                        )
+                        continue
+
+                    log("%s includes %s, substitute %s with %s" % (
+                        h.root.path, s.path, redundant.header.path,
+                        substitution.header.path
+                    ))
+
+                    self.remove_dup_chunk(substitution, redundant)
+
+                    """ The inclusion of s was removed but s could transitively
+include another header (s0) too. Then inclusion of any s0 must be removed and
+all references to it must be redirected to inclusion of h. Hence, reference to
+inclusion of h must be remembered. This algorithm keeps it in included_headers
+replacing reference to removed inclusion of s. If s was processed before h then
+there could be several references to inclusion of s in included_headers. All of
+them must be replaced with reference to h. """
+                    for hdr, chunk in included_headers.items():
+                        if chunk is redundant:
+                            included_headers[hdr] = substitution
+
+                if s.root is None:
                     stack.append(s)
-                    # Keep track of originally included header.
+                    # Keep reference to originally included header.
                     s.root = h.root
 
+        # Clear runtime variables
+        for h in Header.reg.values():
+            del h.visited
+            del h.root
+
+        log("-= inclusion optimization ended =-")
 
     def check_static_function_declarations(self):
         func_dec = {}
