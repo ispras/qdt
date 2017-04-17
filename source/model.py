@@ -181,13 +181,21 @@ switching to that mode.
             assert(isinstance(self, Header))
 
         chunks = []
+        ref_list = []
+
+        if isinstance(self, Header):
+            for user in self.includers:
+                for ref in user.references:
+                    if ref.definer not in user.inclusions:
+                        ref_list.append(TypeReference(ref))
+
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
         # loop iteration. values() returns generator in Python 3.x, which
         # must be explicitly enrolled to a list. Though is it redundant
-        # copy operation in Pyhton 2.x.
-        l = list(self.types.values())
+        # copy operation in Python 2.x.
+        l = list(self.types.values()) + ref_list
 
         while True:
             for t in l:
@@ -223,7 +231,7 @@ switching to that mode.
             if not replaced:
                 break
             # Preserve current types list. See the comment above.
-            l = list(self.types.values())
+            l = list(self.types.values()) + ref_list
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
@@ -252,6 +260,9 @@ switching to that mode.
         if type(self) == Header:
             for gv in self.global_variables.values():
                 chunks.extend(gv.gen_declaration_chunks(extern = True))
+            for r in ref_list:
+                chunks.extend(r.gen_chunks())
+
         elif type(self) == Source:
             for gv in self.global_variables.values():
                 chunks.extend(gv.get_definition_chunks())
