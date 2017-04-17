@@ -53,7 +53,7 @@ class QEMUVersionParameterDescription(object):
 
 def define_only_qemu_2_6_0_types():
     # According to Qemu inclusion policy, each source file must include
-    # qemu/osdep.h. This could be meet using different ways. For now add a
+    # qemu/osdep.h. This could be met using different ways. For now add a
     # reference to a fake type inside osdep.h.
     # TODO: the tweak must be handled using version API.
     osdep_fake_type = Type("FAKE_TYPE_IN_QEMU_OSDEP")

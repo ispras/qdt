@@ -38,6 +38,25 @@ class Source(object):
         self.inclusions = {}
         self.global_variables = {}
         self.usages = []
+        self.references = set()
+
+    def add_reference(self, ref):
+        if not isinstance(ref, Type):
+            raise Exception('Trying to add source reference '
+                            'which is not a Type object')
+        if isinstance(ref, TypeReference):
+            raise Exception("""Source reference may not be TypeReference.
+ Only original types are allowed."""
+            )
+        self.references.add(ref)
+
+        return self
+
+    def add_references(self, refs):
+        for ref in refs:
+            self.add_reference(ref)
+
+        return self
 
     def add_usage(self, usage):
         TypeFixerVisitor(self, usage).visit()
@@ -162,13 +181,21 @@ switching to that mode.
             assert(isinstance(self, Header))
 
         chunks = []
+        ref_list = []
+
+        if isinstance(self, Header):
+            for user in self.includers:
+                for ref in user.references:
+                    if ref.definer not in user.inclusions:
+                        ref_list.append(TypeReference(ref))
+
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
         # loop iteration. values() returns generator in Python 3.x, which
         # must be explicitly enrolled to a list. Though is it redundant
-        # copy operation in Pyhton 2.x.
-        l = list(self.types.values())
+        # copy operation in Python 2.x.
+        l = list(self.types.values()) + ref_list
 
         while True:
             for t in l:
@@ -204,7 +231,7 @@ switching to that mode.
             if not replaced:
                 break
             # Preserve current types list. See the comment above.
-            l = list(self.types.values())
+            l = list(self.types.values()) + ref_list
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
@@ -233,6 +260,9 @@ switching to that mode.
         if type(self) == Header:
             for gv in self.global_variables.values():
                 chunks.extend(gv.gen_declaration_chunks(extern = True))
+            for r in ref_list:
+                chunks.extend(r.gen_chunks())
+
         elif type(self) == Source:
             for gv in self.global_variables.values():
                 chunks.extend(gv.get_definition_chunks())
@@ -423,29 +453,11 @@ class Header(Source):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
-        self.references = set()
 
         if path in Header.reg:
             raise Exception("Header %s is already registered" % path)
 
         Header.reg[path] = self
-
-    def add_reference(self, ref):
-        if not isinstance(ref, Type):
-            raise Exception('Trying to add header reference which is not a Type object')
-        if isinstance(ref, TypeReference):
-            raise Exception("""Header reference may not be TypeReference.
- Only original types are allowed."""
-            )
-        self.references.add(ref)
-
-        return self
-
-    def add_references(self, refs):
-        for ref in refs:
-            self.add_reference(ref)
-
-        return self
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
