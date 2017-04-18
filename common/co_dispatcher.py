@@ -175,7 +175,11 @@ after last statement in the corresponding callable object.
     def enqueue(self, task):
         # just generator can define a task
         if not isinstance(task, CoTask):
-            task = CoTask(task)
+            try:
+                # The task may be added by a call already.
+                task = self.gen2task[task]
+            except KeyError:
+                task = CoTask(task)
 
         task.enqueued = True
         self.gen2task[task.generator] = task
