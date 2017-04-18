@@ -154,9 +154,8 @@ after last statement in the corresponding callable object.
                 del self.callees[callee]
                 # The callee is not required by anything now.
                 if not callee.enqueued:
-                    # The callee was not enqueued explicitly. Hence,
-                    # it was originally called. So, it must be removed
-                    # as useless.
+                    # The callee was not enqueued explicitly. Hence, it was
+                    # originally called. So, it must be removed as useless.
                     self.remove(callee)
             else:
                 callers.remove(task)
