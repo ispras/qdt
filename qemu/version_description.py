@@ -160,9 +160,9 @@ class QemuVersionCache(object):
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
     def co_computing_parameters(self, repo):
-        print("Creating graph of commit's description ...")
+        print("Build QEMU Git graph ...")
         yield self.co_build_git_graph(repo)
-        print("Graph of commit's description was created")
+        print("QEMU Git graph was built")
 
         yield self.co_propagate_param()
 
