@@ -192,7 +192,9 @@ class QemuVersionCache(object):
         print("Params in graph of commit's description were propagated")
 
     def co_gen_commits_graph(self, repo):
-        iterations_per_yield = 20
+        # iterations to yield
+        i2y = QVD_GGB_IBT
+
         commit_desc_nodes = {}
         # n is serial number according to the topology sorting
         n = 0
@@ -239,6 +241,12 @@ class QemuVersionCache(object):
                     parent_desc.children.append(child_commit_desc)
                     child_commit_desc.parents.append(parent_desc)
 
+                if i2y <= 0:
+                    yield True
+                    i2y = QVD_GGB_IBT
+                else:
+                    i2y -= 1
+
                 # numbering is performed from the 'to_enum' to either a leaf
                 # commit or a commit just before a merge which have at least
                 # one parent without number (except the commit)
@@ -261,11 +269,11 @@ class QemuVersionCache(object):
                                 to_enum = c
                                 break
 
-                    if n % iterations_per_yield == 0:
+                    if i2y <= 0:
                         yield True
-
-            if len(commit_desc_nodes) % iterations_per_yield == 0:
-                yield True
+                        i2y = QVD_GGB_IBT
+                    else:
+                        i2y -= 1
 
         self.commit_desc_nodes = commit_desc_nodes
 
@@ -472,6 +480,8 @@ class QVCWasNotInitialized(Exception):
 class QVCIsNotReady(Exception):
     pass
 
+# Iterations Between Yields of Git Graph Building task
+QVD_GGB_IBT = 100
 # Iterations Between Yields of Device Tree Macros adding task
 QVD_DTM_IBY = 100
 # Iterations Between Yields of Heuristic Propagation task
