@@ -44,7 +44,7 @@ after last statement in the corresponding callable object.
         # Contains caller list per each callee.
         self.callees = {}
         # Total caller list, I.e. callers = U (callees.values()).
-        self.callers = set()
+        self.callers = {}
         self.finished_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
@@ -83,7 +83,7 @@ after last statement in the corresponding callable object.
             del self.callees[task]
             # All callers of finished task may continue execution.
             for caller in callers:
-                self.callers.remove(caller)
+                del self.callers[caller]
                 self.tasks.insert(0, caller)
 
         for caller, callee in calls:
@@ -127,7 +127,7 @@ after last statement in the corresponding callable object.
             # Caller cannot continue execution until callee finished.
             self.active_tasks.remove(caller)
             # Remember all callers.
-            self.callers.add(caller)
+            self.callers[caller] = callee
 
         return ready
 
@@ -147,7 +147,7 @@ after last statement in the corresponding callable object.
                 self.remove(c)
 
         if task in self.callers:
-            self.callers.remove(task)
+            del self.callers[task]
             for callee, callers in self.callees.items():
                 if task in callers:
                     if len(callers) == 1:
