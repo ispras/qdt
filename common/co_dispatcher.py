@@ -147,20 +147,19 @@ after last statement in the corresponding callable object.
                 self.remove(c)
 
         if task in self.callers:
-            del self.callers[task]
-            for callee, callers in self.callees.items():
-                if task in callers:
-                    if len(callers) == 1:
-                        del self.callees[callee]
-                        # The callee is not required by anything now.
-                        if not callee.enqueued:
-                            # The callee was not enqueued explicitly. Hence,
-                            # it was originally called. So, it must be removed
-                            # as useless.
-                            self.remove(callee)
-                    else:
-                        callers.remove(task)
-                    break
+            callee = self.callers.pop(task)
+            callers = self.callees[callee]
+
+            if len(callers) == 1:
+                del self.callees[callee]
+                # The callee is not required by anything now.
+                if not callee.enqueued:
+                    # The callee was not enqueued explicitly. Hence,
+                    # it was originally called. So, it must be removed
+                    # as useless.
+                    self.remove(callee)
+            else:
+                callers.remove(task)
 
         elif task in self.finished_tasks:
             self.finished_tasks.remove(task)
