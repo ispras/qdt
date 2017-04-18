@@ -161,7 +161,7 @@ class QemuVersionCache(object):
 
     def co_computing_parameters(self, repo):
         print("Creating graph of commit's description ...")
-        yield self.co_gen_commits_graph(repo)
+        yield self.co_build_git_graph(repo)
         print("Graph of commit's description was created")
 
         yield self.co_propagate_param()
@@ -191,7 +191,7 @@ class QemuVersionCache(object):
         yield self.co_propagate_old_param(sorted_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
 
-    def co_gen_commits_graph(self, repo):
+    def co_build_git_graph(self, repo):
         # iterations to yield
         i2y = QVD_GGB_IBT
 
