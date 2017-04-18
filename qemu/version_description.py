@@ -278,13 +278,20 @@ class QemuVersionCache(object):
         vd: qemu_versions_desc
         '''
 
+        # iterations to yield
+        i2y = QVD_HP_IBY
+
         for key in sorted_vd_keys:
             cur_vd = vd[key]
             cur_node = self.commit_desc_nodes[key]
             for vpd in cur_vd:
                 cur_node.param_nval[vpd.name] = vpd.new_value
 
-        yield True
+            if i2y == 0:
+                yield True
+                i2y = QVD_HP_IBY
+            else:
+                i2y -= 1
 
         # vd_keys_set is used to accelerate propagation
         vd_keys_set = set(sorted_vd_keys)
@@ -331,7 +338,11 @@ class QemuVersionCache(object):
                                 c.param_nval[p] = cur_node.param_nval[p]
                                 stack.append(c)
 
-                yield True
+                if i2y == 0:
+                    yield True
+                    i2y = QVD_HP_IBY
+                else:
+                    i2y -= 1
 
     def co_propagate_old_param(self, sorted_vd_keys, vd):
         '''This method propagate QEMUVersionParameterDescription.old_value
@@ -345,6 +356,9 @@ class QemuVersionCache(object):
         # messages for exceptions
         msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
         msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+
+        # iterations to yield
+        i2y = QVD_HP_IBY
 
         # starting initialization
         for key in sorted_vd_keys[::-1]:
@@ -371,7 +385,10 @@ param.name, parent.sha, param.old_value, parent.param_oval[param.name]
                     else:
                         parent.param_oval[param.name] = param.old_value
 
-        yield True
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
 
         # set is used to accelerate propagation
         vd_keys_set = set(sorted_vd_keys)
@@ -408,7 +425,10 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
                             elif commit.sha in visited_vd:
                                 stack.append(commit)
 
-                yield True
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
 
     def __children__(self):
         return [ self.pci_c ]
@@ -454,6 +474,8 @@ class QVCIsNotReady(Exception):
 
 # Iterations Between Yields of Device Tree Macros adding task
 QVD_DTM_IBY = 100
+# Iterations Between Yields of Heuristic Propagation task
+QVD_HP_IBY = 100
 
 class QemuVersionDescription(object):
     current = None
