@@ -56,6 +56,8 @@ string searching during each AddDescriptionDialog creation. """
         v = self.var_name = StringVar()
         e = self.e_name = HKEntry(self, textvariable = v)
         e.grid(row = 0, column = 1, sticky = "NEWS")
+        # Set input focus to description name entry initially.
+        e.focus_set()
 
         v.trace_variable("w", self.on_var_name_write)
         if self.pht is not None:
