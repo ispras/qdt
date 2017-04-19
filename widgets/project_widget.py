@@ -415,11 +415,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                     w.set_layout(l.opaque)
                 except:
                     continue
-                else:
-                    l.widget = w
-                    break
+                break
             else:
                 l = self.p.add_layout(desc.name, w.gen_layout())
+            # The layout now is represented on the widget
+            l.widget = w
 
             l.shown = True
 
