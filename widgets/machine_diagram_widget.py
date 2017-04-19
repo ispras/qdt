@@ -1225,6 +1225,11 @@ IRQ line creation
     def on_add_common_device(self):
         self.add_device_at_popup("DeviceNode")
 
+    def get_bus_labels(self, bus_type_name):
+        for bl in self.buslabels:
+            if type(bl.node).__name__ == bus_type_name:
+                yield bl
+
     def on_add_system_bus_device(self):
         self.add_device_at_popup("SystemBusDeviceNode")
 
