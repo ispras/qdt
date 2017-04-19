@@ -396,11 +396,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             return
 
         name = self.tv_descs.item(item)["text"]
-
-        for desc in self.p.descriptions:
-            if desc.name == name:
-                break
-
+        desc = next(self.p.find(name = name))
         layouts = sorted(
             self.p.get_layout_objects(desc.name),
             key = lambda l : l.lid
