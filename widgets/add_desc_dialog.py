@@ -11,6 +11,7 @@ from .var_widgets import \
     VarCombobox
 
 from six.moves.tkinter import \
+    END, \
     StringVar
 
 from six.moves.tkinter_messagebox import \
@@ -63,6 +64,8 @@ string searching during each AddDescriptionDialog creation. """
         if self.pht is not None:
             # do not generate name in demo mode
             v.set(self.pht.p.gen_uniq_desc_name())
+            # autoselect default name to speed up its customization
+            e.selection_range(0, END)
 
         self.rowconfigure(1, weight = 0)
         l = VarLabel(self, text = _("Description kind"))
