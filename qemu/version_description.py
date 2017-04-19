@@ -1,6 +1,3 @@
-from hashlib import \
-    md5
-
 from source import \
     SourceTreeContainer, \
     Header, \
@@ -8,6 +5,7 @@ from source import \
 
 from common import \
     callco, \
+    remove_file, \
     execfile, \
     PyGenerator
 
@@ -23,7 +21,8 @@ from subprocess import \
 from .version import \
     QVHDict, \
     initialize_version, \
-    qemu_versions_desc, \
+    qemu_heuristic_db, \
+    calculate_qh_hash, \
     get_vp
 
 from os.path import \
@@ -174,7 +173,7 @@ class QemuVersionCache(object):
             param[k] = v
 
     def co_propagate_param(self):
-        vd = qemu_versions_desc
+        vd = qemu_heuristic_db
         vd_list = []
         for k in vd.keys():
             if k in self.commit_desc_nodes:
@@ -273,9 +272,9 @@ class QemuVersionCache(object):
         '''This method propagate QEMUVersionParameterDescription.new_value
         in graph of commits. It must be called before old_value propagation.
 
-        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
         by num of CommitDesc. It's necessary to optimize the graph traversal.
-        vd: qemu_versions_desc
+        vd: qemu_heuristic_db
         '''
 
         for key in sorted_vd_keys:
@@ -337,9 +336,9 @@ class QemuVersionCache(object):
         '''This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
 
-        sorted_vd_keys: keys of qemu_versions_desc sorted in ascending order
+        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
         by num of CommitDesc. It's necessary to optimize the graph traversal.
-        vd: qemu_versions_desc
+        vd: qemu_heuristic_db
         '''
 
         # messages for exceptions
@@ -525,22 +524,24 @@ class QemuVersionDescription(object):
         self.qvc = None
         self.qvc_is_ready = False
 
+    def remove_cache(self):
+        if self.qvc:
+            self.qvc = None
+            self.qvc_is_ready = False
+            remove_file(self.qvc_path)
+
     def co_init_cache(self):
         if not self.qvc == None:
             raise MultipleQVCInitialization(self.src_path)
 
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
-        qvc_path = join(self.build_path, qvc_file_name)
+        qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
 
-        # calculate hash of qemu_versions_desc
-        vd_h = md5()
-        for k in sorted(qemu_versions_desc):
-            for v in qemu_versions_desc[k]:
-                vd_h.update(str(k + v.gen_mdc()).encode('utf-8'))
+        qemu_heuristic_hash = calculate_qh_hash()
 
         yield True
 
-        if not  isfile(qvc_path):
+        if not isfile(qvc_path):
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
@@ -556,7 +557,7 @@ class QemuVersionDescription(object):
 
             # gen version description
             yield self.qvc.co_computing_parameters(self.repo)
-            self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
+            self.qvc.version_desc["qh_hash"] = qemu_heuristic_hash
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -565,7 +566,7 @@ class QemuVersionDescription(object):
 
             PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
         else:
-            self.load_cache(qvc_path)
+            self.load_cache()
             # make just loaded QVC active
             prev_qvc = self.qvc.use()
 
@@ -576,9 +577,19 @@ class QemuVersionDescription(object):
 
             yield True
 
-            if not self.qvc.version_desc["vd_hash"] == vd_h.hexdigest():
+            # verify that the version_desc is not outdated
+            is_outdated = False
+            try:
+                checksum = self.qvc.version_desc["qh_hash"]
+            except KeyError:
+                is_outdated = True
+            else:
+                if not checksum == qemu_heuristic_hash:
+                    is_outdated = True
+            if is_outdated:
+                remove_file(qvc_path)
                 yield self.qvc.co_computing_parameters(self.repo)
-                self.qvc.version_desc["vd_hash"] = vd_h.hexdigest()
+                self.qvc.version_desc["qh_hash"] = qemu_heuristic_hash
                 PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
 
         yield True
@@ -597,11 +608,11 @@ class QemuVersionDescription(object):
 
         self.qvc_is_ready = True
 
-    def load_cache(self, qvc_path):
-        if not  isfile(qvc_path):
-            raise Exception("%s does not exists." % qvc_path)
+    def load_cache(self):
+        if not isfile(self.qvc_path):
+            raise Exception("%s does not exists." % self.qvc_path)
         else:
-            print("Loading QVC from " + qvc_path)
+            print("Loading QVC from " + self.qvc_path)
             QemuVersionDescription.check_uncommit_change(self.src_path)
             variables = {}
             context = {
@@ -611,7 +622,7 @@ class QemuVersionDescription(object):
             import qemu
             context.update(qemu.__dict__)
 
-            execfile(qvc_path, context, variables)
+            execfile(self.qvc_path, context, variables)
 
             for v in variables.values():
                 if isinstance(v, QemuVersionCache):
@@ -619,7 +630,7 @@ class QemuVersionDescription(object):
                     break
             else:
                 raise Exception(
-"No QemuVersionCache was loaded from %s." % qvc_path
+"No QemuVersionCache was loaded from %s." % self.qvc_path
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 

@@ -2,8 +2,12 @@ from types import \
     GeneratorType
 
 class CoTask(object):
-    def __init__(self, generator):
+    def __init__(self,
+                 generator,
+                 enqueued = False
+        ):
         self.generator = generator
+        self.enqueued = enqueued
 
     def on_activated(self):
         # do nothing by default
@@ -40,7 +44,7 @@ after last statement in the corresponding callable object.
         # Contains caller list per each callee.
         self.callees = {}
         # Total caller list, I.e. callers = U (callees.values()).
-        self.callers = set()
+        self.callers = {}
         self.finished_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
@@ -79,7 +83,7 @@ after last statement in the corresponding callable object.
             del self.callees[task]
             # All callers of finished task may continue execution.
             for caller in callers:
-                self.callers.remove(caller)
+                del self.callers[caller]
                 self.tasks.insert(0, caller)
 
         for caller, callee in calls:
@@ -88,7 +92,8 @@ after last statement in the corresponding callable object.
                 try:
                     callee = self.gen2task[callee]
                 except KeyError:
-                    callee = self.gen2task[callee] = CoTask(callee)
+                    callee = CoTask(callee)
+                    self.gen2task[callee.generator] = callee
                     callee_is_new = True
                 else:
                     callee_is_new = False
@@ -122,7 +127,7 @@ after last statement in the corresponding callable object.
             # Caller cannot continue execution until callee finished.
             self.active_tasks.remove(caller)
             # Remember all callers.
-            self.callers.add(caller)
+            self.callers[caller] = callee
 
         return ready
 
@@ -130,11 +135,36 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = self.gen2task[task]
 
-        if task in self.finished_tasks:
+        try:
+            callers = self.callees[task]
+        except KeyError:
+            pass
+        else:
+            del self.callees[task]
+            # Callers of the task cannot continue and must be removed
+            for c in list(callers):
+                del self.callers[c]
+                self.remove(c)
+
+        if task in self.callers:
+            callee = self.callers.pop(task)
+            callers = self.callees[callee]
+
+            if len(callers) == 1:
+                del self.callees[callee]
+                # The callee is not required by anything now.
+                if not callee.enqueued:
+                    # The callee was not enqueued explicitly. Hence, it was
+                    # originally called. So, it must be removed as useless.
+                    self.remove(callee)
+            else:
+                callers.remove(task)
+
+        elif task in self.finished_tasks:
             self.finished_tasks.remove(task)
         elif task in self.tasks:
             self.tasks.remove(task)
-        else:
+        elif task in self.active_tasks:
             self.active_tasks.remove(task)
 
         del self.gen2task[task.generator]
@@ -143,8 +173,13 @@ after last statement in the corresponding callable object.
     def enqueue(self, task):
         # just generator can define a task
         if not isinstance(task, CoTask):
-            task = CoTask(task)
+            try:
+                # The task may be added by a call already.
+                task = self.gen2task[task]
+            except KeyError:
+                task = CoTask(task)
 
+        task.enqueued = True
         self.gen2task[task.generator] = task
 
         self.tasks.append(task)
