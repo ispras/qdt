@@ -1,6 +1,11 @@
 from types import \
     GeneratorType
 
+from time import \
+    time
+
+import sys
+
 class CoTask(object):
     def __init__(self,
                  generator,
@@ -58,16 +63,28 @@ after last statement in the corresponding callable object.
 
         for task in self.active_tasks:
             try:
+                t0 = time()
+
                 ret = next(task.generator)
             except StopIteration:
+                t1 = time()
+
                 finished.append(task)
             else:
+                t1 = time()
+
                 if isinstance(ret, (CoTask, GeneratorType)):
                     # remember the call
                     calls.append((task, ret))
                     ready = True
                 elif ret:
                     ready = True
+
+            ti = t1 - t0
+            if ti > 0.05:
+                sys.stderr.write("Task %s consumed %f sec during iteration\n"
+                    % (task.generator.__name__, ti)
+                )
 
         for task in finished:
             # print 'Task %s finished' % str(task)

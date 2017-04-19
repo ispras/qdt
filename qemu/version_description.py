@@ -159,9 +159,9 @@ class QemuVersionCache(object):
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
     def co_computing_parameters(self, repo):
-        print("Creating graph of commit's description ...")
-        yield self.co_gen_commits_graph(repo)
-        print("Graph of commit's description was created")
+        print("Build QEMU Git graph ...")
+        yield self.co_build_git_graph(repo)
+        print("QEMU Git graph was built")
 
         yield self.co_propagate_param()
 
@@ -190,8 +190,10 @@ class QemuVersionCache(object):
         yield self.co_propagate_old_param(sorted_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
 
-    def co_gen_commits_graph(self, repo):
-        iterations_per_yield = 20
+    def co_build_git_graph(self, repo):
+        # iterations to yield
+        i2y = QVD_GGB_IBT
+
         commit_desc_nodes = {}
         # n is serial number according to the topology sorting
         n = 0
@@ -238,6 +240,12 @@ class QemuVersionCache(object):
                     parent_desc.children.append(child_commit_desc)
                     child_commit_desc.parents.append(parent_desc)
 
+                if i2y <= 0:
+                    yield True
+                    i2y = QVD_GGB_IBT
+                else:
+                    i2y -= 1
+
                 # numbering is performed from the 'to_enum' to either a leaf
                 # commit or a commit just before a merge which have at least
                 # one parent without number (except the commit)
@@ -260,11 +268,11 @@ class QemuVersionCache(object):
                                 to_enum = c
                                 break
 
-                    if n % iterations_per_yield == 0:
+                    if i2y <= 0:
                         yield True
-
-            if len(commit_desc_nodes) % iterations_per_yield == 0:
-                yield True
+                        i2y = QVD_GGB_IBT
+                    else:
+                        i2y -= 1
 
         self.commit_desc_nodes = commit_desc_nodes
 
@@ -277,13 +285,20 @@ class QemuVersionCache(object):
         vd: qemu_heuristic_db
         '''
 
+        # iterations to yield
+        i2y = QVD_HP_IBY
+
         for key in sorted_vd_keys:
             cur_vd = vd[key]
             cur_node = self.commit_desc_nodes[key]
             for vpd in cur_vd:
                 cur_node.param_nval[vpd.name] = vpd.new_value
 
-        yield True
+            if i2y == 0:
+                yield True
+                i2y = QVD_HP_IBY
+            else:
+                i2y -= 1
 
         # vd_keys_set is used to accelerate propagation
         vd_keys_set = set(sorted_vd_keys)
@@ -330,7 +345,11 @@ class QemuVersionCache(object):
                                 c.param_nval[p] = cur_node.param_nval[p]
                                 stack.append(c)
 
-                yield True
+                if i2y == 0:
+                    yield True
+                    i2y = QVD_HP_IBY
+                else:
+                    i2y -= 1
 
     def co_propagate_old_param(self, sorted_vd_keys, vd):
         '''This method propagate QEMUVersionParameterDescription.old_value
@@ -344,6 +363,9 @@ class QemuVersionCache(object):
         # messages for exceptions
         msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
         msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+
+        # iterations to yield
+        i2y = QVD_HP_IBY
 
         # starting initialization
         for key in sorted_vd_keys[::-1]:
@@ -370,7 +392,10 @@ param.name, parent.sha, param.old_value, parent.param_oval[param.name]
                     else:
                         parent.param_oval[param.name] = param.old_value
 
-        yield True
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
 
         # set is used to accelerate propagation
         vd_keys_set = set(sorted_vd_keys)
@@ -407,7 +432,10 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
                             elif commit.sha in visited_vd:
                                 stack.append(commit)
 
-                yield True
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
 
     def __children__(self):
         return [ self.pci_c ]
@@ -451,8 +479,12 @@ class QVCWasNotInitialized(Exception):
 class QVCIsNotReady(Exception):
     pass
 
+# Iterations Between Yields of Git Graph Building task
+QVD_GGB_IBT = 100
 # Iterations Between Yields of Device Tree Macros adding task
 QVD_DTM_IBY = 100
+# Iterations Between Yields of Heuristic Propagation task
+QVD_HP_IBY = 100
 
 class QemuVersionDescription(object):
     current = None
