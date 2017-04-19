@@ -1209,7 +1209,7 @@ IRQ line creation
     def on_add_bus_i2c(self):
         self.add_bus_at_popup("I2CBusNode")
 
-    def add_device_at_popup(self, class_name):
+    def add_device_at_popup(self, class_name, bus = None):
         p = self.current_popup
         x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
                p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
@@ -1218,6 +1218,8 @@ IRQ line creation
 
         self.mht.add_device(class_name, node_id)
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
+        if bus:
+            self.mht.stage(MOp_SetDevParentBus, bus, node_id)
         self.mht.commit()
 
         self.notify_popup_command()
