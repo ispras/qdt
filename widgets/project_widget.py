@@ -396,14 +396,14 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             return
 
         name = self.tv_descs.item(item)["text"]
-        desc = next(self.p.find(name = name))
         layouts = sorted(
-            self.p.get_layout_objects(desc.name),
+            self.p.get_layout_objects(name),
             key = lambda l : l.lid
         )
         widgets = [ l.widget for l in layouts if l.widget is not None ]
 
         if not widgets:
+            desc = next(self.p.find(name = name))
             w = self.gen_widget(desc)
 
             for l in layouts:
