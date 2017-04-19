@@ -1239,6 +1239,11 @@ IRQ line creation
         )
         return ranged_bls[0] if ranged_bls else None
 
+    def get_bus_at_popup(self, bus_type_name):
+        bl = self.get_bus_label_at_popup(bus_type_name)
+
+        return None if bl is None else bl.node
+
     def on_add_system_bus_device(self):
         self.add_device_at_popup("SystemBusDeviceNode")
 
