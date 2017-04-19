@@ -62,3 +62,6 @@ from .version import \
     parse_version
 
 from .ordered_set import *
+
+from .os_wrappers import \
+    remove_file
