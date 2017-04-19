@@ -413,15 +413,15 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                     continue
                 break
             else:
-                l = self.p.add_layout(desc.name, w.gen_layout())
+                l = self.p.add_layout(name, w.gen_layout())
             # The layout now is represented on the widget
             l.widget = w
 
             l.shown = True
 
-            self.nb_descriptions.add(w, text = desc.name)
+            self.nb_descriptions.add(w, text = name)
             for tab_id in self.nb_descriptions.tabs():
-                if self.nb_descriptions.tab(tab_id)["text"] == desc.name:
+                if self.nb_descriptions.tab(tab_id)["text"] == name:
                     break
             self.nb_descriptions.select(tab_id)
         else:
