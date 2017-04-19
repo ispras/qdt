@@ -973,8 +973,8 @@ class MOp_SetDevQOMType(MachineNodeOperation):
         dev.qom_type = self.old_type_name
 
     def __description__(self):
-        return _("Change %s QOM type to '%s'.") % (
-            self.gen_id_str(self.node_id), self.new_type_name
+        return _("Change QOM type of device (%u) from '%s' to '%s'.") % (
+            self.node_id, self.old_type_name, self.new_type_name
         )
 
 class MachineDevicePropertyOperation(MachineNodeOperation):
