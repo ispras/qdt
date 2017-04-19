@@ -1247,10 +1247,14 @@ IRQ line creation
         return None if bl is None else bl.node
 
     def on_add_system_bus_device(self):
-        self.add_device_at_popup("SystemBusDeviceNode")
+        self.add_device_at_popup("SystemBusDeviceNode",
+            bus = self.get_bus_at_popup("SystemBusNode")
+        )
 
     def on_add_pci_e_function(self):
-        self.add_device_at_popup("PCIExpressDeviceNode")
+        self.add_device_at_popup("PCIExpressDeviceNode",
+            bus = self.get_bus_at_popup("PCIExpressBusNode")
+        )
 
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
