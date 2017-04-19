@@ -1230,6 +1230,15 @@ IRQ line creation
             if type(bl.node).__name__ == bus_type_name:
                 yield bl
 
+    def get_bus_label_at_popup(self, bus_type_name):
+        x = self.current_popup.winfo_rootx() - self.winfo_rootx() \
+            + self.canvas.canvasx(0)
+
+        ranged_bls = sorted(self.get_bus_labels(bus_type_name),
+            key = lambda n : abs(n.busline.x - x)
+        )
+        return ranged_bls[0] if ranged_bls else None
+
     def on_add_system_bus_device(self):
         self.add_device_at_popup("SystemBusDeviceNode")
 
