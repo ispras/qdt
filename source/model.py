@@ -29,6 +29,9 @@ from common import \
 from itertools import \
     count
 
+# Used for sys.stdout recovery
+sys_stdout_recovery = sys.stdout
+
 # Source code models
 
 class Source(object):
@@ -399,7 +402,8 @@ class Header(Source):
     def co_build_inclusions(dname):
         Header.yields_per_header = []
 
-        ppf = sys.stdout = ParsePrintFilter(sys.stdout)
+        if not isinstance(sys.stdout, ParsePrintFilter):
+            sys.stdout = ParsePrintFilter(sys.stdout)
 
         for h in Header.reg.values():
             h.parsed = False
@@ -410,7 +414,7 @@ class Header(Source):
         for h in Header.reg.values():
             del h.parsed
 
-        sys.stdout = ppf.out
+        sys.stdout = sys_stdout_recovery
 
         yields_total = sum(Header.yields_per_header)
 
