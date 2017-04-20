@@ -618,29 +618,43 @@ class DeviceSettingsWidget(SettingsWidget):
         if not self.dev.qom_type == qom:
             self.mht.stage(MOp_SetDevQOMType, qom, self.dev.id)
 
-        for p, desc in self.prop2field.items():
+        # Do property removing before addition to prevent conflicts of
+        # property recreation.
+        for p in self.dev.properties:
+            if not p in self.prop2field:
+                self.mht.stage(MOp_DelDevProp, p, self.dev.id)
+
+        for p, desc in list(self.prop2field.items()):
             cur_name, cur_type, cur_val = desc.get_current_name(), \
                 desc.get_current_type(), desc.get_current_val()
 
-            try:
-                dev_p = self.dev.properties[cur_name]
-                if not (
-                        dev_p.prop_type == cur_type 
-                    and dev_p.prop_val == cur_val
+            if p in self.dev.properties.values():
+                if cur_name != p.prop_name:
+                    # Name of property was changed. Recreate it.
+                    new_p = QOMPropertyValue(cur_type, cur_name, cur_val)
+
+                    self.mht.stage(MOp_DelDevProp, p, self.dev.id)
+                    self.mht.stage(MOp_AddDevProp, new_p, self.dev.id)
+
+                    del self.prop2field[p]
+                    self.prop2field[new_p] = desc
+                    desc.prop = new_p
+
+                elif not (
+                        p.prop_type == cur_type
+                    and p.prop_val == cur_val
                 ):
                     self.mht.stage(
                         MOp_SetDevProp,
                         cur_type,
                         cur_val,
-                        dev_p,
+                        p,
                         self.dev.id
                     )
-            except KeyError:
+            else:
+                # A completely new property. It was added using
+                # the 'Add' button.
                 self.mht.stage(MOp_AddDevProp, p, self.dev.id)
-
-        for p in self.dev.properties:
-            if not p in self.prop2field:
-                self.mht.stage(MOp_DelDevProp, p, self.dev.id)
 
         new_buses = self.get_selected_child_buses()
 
