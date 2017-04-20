@@ -89,6 +89,9 @@ def qvd_create(path):
     return qvd
 
 def qvd_get(path):
+    if path is None:
+        raise BadBuildPath("Build path is None.")
+
     try:
         qvd = qvd_reg[path]
     except KeyError:

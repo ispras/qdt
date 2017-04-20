@@ -426,6 +426,7 @@ show it else hide it.")
                     e.message
                 )).get()
             )
+            return
 
         # reload_build_path_task always run at program start
         # that is why it's in process when it's not in finished_tasks
