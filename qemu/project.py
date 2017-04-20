@@ -64,6 +64,7 @@ already in another project.")
 
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
+                desc.link()
                 self.gen(desc, qemu_src, **gen_cfg)
 
     def gen(self, desc, src, with_chunk_graph = False):
