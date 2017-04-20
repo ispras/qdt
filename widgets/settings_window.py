@@ -127,6 +127,11 @@ class SettingsWindow(VarToplevel):
         # http://effbot.org/tkinterbook/wm.htm#Tkinter.Wm.attributes-method
         self.attributes("-topmost", 1)
 
+        self.bind("<Escape>", self.on_escape, "+")
+
+    def on_escape(self, event):
+        self.destroy()
+
     def refresh(self):
         self.sw.refresh()
 
