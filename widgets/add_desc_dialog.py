@@ -85,6 +85,11 @@ string searching during each AddDescriptionDialog creation. """
         b = VarButton(self, text = _("Add"), command = self.on_add)
         b.grid(row = 2, column = 0, columns = 2, sticky = "NES")
 
+        self.bind("<Escape>", self.on_escape, "+")
+
+    def on_escape(self, event):
+        self.destroy()
+
     def on_var_name_write(self, *args):
         self.check_name()
 
