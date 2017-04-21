@@ -34,7 +34,7 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
         )
         self.column("description", stretch = False, width = 0)
 
-        self.guipht.add_on_changed(self.__on_operation__)
+        self.guipht.watch_changed(self.__on_operation__)
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
@@ -62,7 +62,7 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
     def __on_destroy__(self, *args):
         self.sequence_ml.trace_vdelete("w", self.__sequence_ml)
         self.description_ml.trace_vdelete("w", self.__description_ml)
-        self.guipht.remove_on_changed(self.__on_operation__)
+        self.guipht.unwatch_changed(self.__on_operation__)
 
         try:
             self.after_cancel(self.__refresh_after)

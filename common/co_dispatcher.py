@@ -87,10 +87,7 @@ after last statement in the corresponding callable object.
                 )
 
         for task in finished:
-            # print 'Task %s finished' % str(task)
-            self.active_tasks.remove(task)
-            self.finished_tasks.add(task)
-            task.on_finished()
+            self.__finish__(task)
 
             try:
                 callers = self.callees[task]
@@ -135,7 +132,7 @@ after last statement in the corresponding callable object.
                 # is already in task list (should not be scheduled twice).
                 if callee not in self.callers:
                     if callee_is_new:
-                        self.active_tasks.append(callee)
+                        self.__activate__(callee)
             else:
                 # The callee is called multiple times. Hence, it is already
                 # queued. Just account its new caller.
@@ -202,6 +199,17 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
+    def __finish__(self, task):
+        # print 'Task %s finished' % str(task)
+        self.active_tasks.remove(task)
+        self.finished_tasks.add(task)
+        task.on_finished()
+
+    def __activate__(self, task):
+        # print 'Activating task %s' % str(task)
+        self.active_tasks.append(task)
+        task.on_activated()
+
     def pull(self):
         if not self.tasks:
             return False
@@ -212,16 +220,13 @@ after last statement in the corresponding callable object.
             if added:
                 while self.tasks:
                     task = self.tasks.pop(0)
-                    self.active_tasks.append(task)
-                    task.on_activated()
+                    self.__activate__(task)
         else:
             rest = self.max_tasks - len(self.active_tasks)
             while rest > 0 and self.tasks:
                 rest = rest - 1
                 task = self.tasks.pop(0)
-                # print 'Activating task %s' % str(task)
-                self.active_tasks.append(task)
-                task.on_activated()
+                self.__activate__(task)
                 added = True
 
         return added

@@ -65,3 +65,5 @@ from .ordered_set import *
 
 from .os_wrappers import \
     remove_file
+
+from .notifier import *

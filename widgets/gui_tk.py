@@ -5,7 +5,22 @@ from .tk_co_dispatcher import \
     TkCoDispatcher
 
 from common import \
+    Notifier, \
     SignalDispatcherTask
+
+@Notifier("activated", "finished", "removed")
+class GUITaskManager(TkCoDispatcher):
+    def __activate__(self, task):
+        TkCoDispatcher.__activate__(self, task)
+        self.__notify_activated(task)
+
+    def __finish__(self, task):
+        TkCoDispatcher.__finish__(self, task)
+        self.__notify_finished(task)
+
+    def remove(self, task):
+        TkCoDispatcher.remove(self, task)
+        self.__notify_removed(task)
 
 class GUITk(VarTk):
 
@@ -19,7 +34,7 @@ class GUITk(VarTk):
                 pass
 
         VarTk.__init__(self, **kw)
-        self.task_manager = TkCoDispatcher(self, **disp_kw)
+        self.task_manager = GUITaskManager(self, **disp_kw)
 
         self.signal_dispatcher = SignalDispatcherTask()
         self.task_manager.enqueue(self.signal_dispatcher)

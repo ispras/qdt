@@ -379,7 +379,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         # snapshot mode without MHT
         if self.mht is not None:
-            self.mht.add_on_changed(self.on_machine_changed)
+            self.mht.watch_changed(self.on_machine_changed)
 
         self.id2node = {}
         self.node2id = {}
@@ -682,7 +682,7 @@ IRQ line creation
         self.var_physical_layout.set(False)
         if self.mht is not None:
             # the listener is not assigned in snapshot mode
-            self.mht.remove_on_changed(self.on_machine_changed)
+            self.mht.unwatch_changed(self.on_machine_changed)
 
         try:
             self.after_cancel(self._update_selection_marks_onece)

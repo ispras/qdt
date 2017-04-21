@@ -142,7 +142,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         # snapshot mode without PHT
         if self.pht is not None:
-            self.pht.add_on_changed(self.on_project_changed)
+            self.pht.watch_changed(self.on_project_changed)
 
         try:
             self.tm = self.winfo_toplevel().task_manager
@@ -227,7 +227,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
     def __on_destroy__(self, event):
         if self.pht is not None:
-            self.pht.remove_on_changed(self.on_project_changed)
+            self.pht.unwatch_changed(self.on_project_changed)
 
         try:
             self.after_cancel(self.__account_build_path)

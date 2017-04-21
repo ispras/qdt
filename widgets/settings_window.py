@@ -22,7 +22,7 @@ class SettingsWidget(GUIFrame):
             self.mht = None
 
         if self.mht is not None:
-            self.mht.add_on_changed(self.on_changed)
+            self.mht.watch_changed(self.on_changed)
 
         self.mach = machine
 
@@ -37,13 +37,13 @@ class SettingsWidget(GUIFrame):
             # apply have no effect in snapshot mode
             return
 
-        self.mht.remove_on_changed(self.on_changed)
+        self.mht.unwatch_changed(self.on_changed)
 
         self.__apply_internal__()
 
         self.mht.commit()
 
-        self.mht.add_on_changed(self.on_changed)
+        self.mht.watch_changed(self.on_changed)
 
     def find_node_by_link_text(self, text):
         nid = text.split(":")[0]
@@ -60,7 +60,7 @@ class SettingsWidget(GUIFrame):
     def __on_destroy__(self, *args):
         if self.mht is not None:
             # the listener is not assigned in snapshot mode
-            self.mht.remove_on_changed(self.on_changed)
+            self.mht.unwatch_changed(self.on_changed)
 
         try:
             self.after_cancel(self.refresh_after)

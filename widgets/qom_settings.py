@@ -34,7 +34,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         # shapshot mode without PHT
         if self.pht is not None:
-            self.pht.add_on_changed(self.__on_changed__)
+            self.pht.watch_changed(self.__on_changed__)
 
         sf = self.settings_fr = GUIFrame(self)
         sf.pack(fill = BOTH, expand = False)
@@ -163,7 +163,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
     def __on_destory__(self, *args, **kw):
         if self.pht is not None:
-            self.pht.remove_on_changed(self.__on_changed__)
+            self.pht.unwatch_changed(self.__on_changed__)
 
     def __on_apply__(self):
         self.__apply__()

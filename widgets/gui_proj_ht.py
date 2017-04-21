@@ -20,7 +20,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         for op in self.get_branch():
             self.on_operation(op)
 
-        self.add_on_changed(self.on_operation)
+        self.watch_changed(self.on_operation)
 
         # use initial operation description as description of its sequence
         self.sequence_strings = {
