@@ -80,15 +80,6 @@ from .add_desc_dialog import \
 from .qom_settings import \
     QOMDescriptionSettingsWidget
 
-from .device_description_settings import \
-    DeviceDescriptionSettingsWidget
-
-from .sysbusdev_description_settings import \
-    SystemBusDeviceDescriptionSettingsWidget
-
-from .pci_description_settings import \
-    PCIEBusDeviceDescriptionSettingsWidget
-
 from .tk_co_dispatcher import \
     TkCoDispatcher
 

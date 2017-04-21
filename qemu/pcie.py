@@ -13,7 +13,32 @@ from .qom import \
 from six.moves import \
     range as xrange
 
+from .pci_ids import \
+    PCIVendorIdNetherExistsNorCreate, \
+    PCIId
+
+from common import \
+    mlget as _
+
+from collections import \
+    OrderedDict
+
 class PCIEDeviceType(QOMDevice):
+    __attribute_info__ = OrderedDict([
+        ("vendor", { "short": _("Vendor"), "input" : PCIId }),
+        ("device", { "short": _("Device"), "input" : PCIId }),
+        ("pci_class", { "short": _("Class"), "input" : PCIId }),
+        ("subsys_vendor", { "short": _("Subsystem vendor"), "input" : PCIId }),
+        ("subsys", { "short":_("Subsystem"), "input" : PCIId }),
+        ("irq_num", { "short": _("IRQ pin quantity"), "input" : int }),
+        ("mem_bar_num", { "short": _("BAR quantity"), "input" : int }),
+        ("msi_messages_num", {
+            "short": _("MSI message quantity"),
+            "input" : int
+        }),
+        ("revision", { "short": _("Revision"), "input" : int })
+    ])
+
     def __init__(self,
         name,
         directory,
@@ -42,6 +67,45 @@ class PCIEDeviceType(QOMDevice):
 
         self.subsystem = subsys
         self.subsystem_vendor = subsys_vendor
+
+        # Cast all PCI identifiers to PCIId
+        for attr in [ "vendor", "subsystem_vendor" ]:
+            val = getattr(self, attr)
+            if (val is not None) and (not isinstance(val, PCIId)):
+                try:
+                    val = PCIId.db.get_vendor(name = val)
+                except PCIVendorIdNetherExistsNorCreate:
+                    val = PCIId.db.get_vendor(vid = val)
+            setattr(self, attr, val)
+
+        for attr, vendor in [
+            ("device", self.vendor),
+            ("subsystem", self.subsystem_vendor)
+        ]:
+            val = getattr(self, attr)
+            if  (val is not None) and (not isinstance(val, PCIId)):
+                if vendor is None:
+                    raise Exception("Cannot get %s ID descriptor because of no \
+corresponding vendor is given" % attr
+                    )
+                try:
+                    val = PCIId.db.get_device(name = val,
+                        vendor_name = vendor.name,
+                        vid = vendor.id)
+                except Exception:
+                    val = PCIId.db.get_device(did = val,
+                        vendor_name = vendor.name,
+                        vid = vendor.id)
+            setattr(self, attr, val)
+
+        val = getattr(self, "pci_class")
+        # None is not allowed there
+        if not isinstance(val, PCIId):
+            try:
+                val = PCIId.db.get_class(name = val)
+            except:
+                val = PCIId.db.get_class(cid = val)
+        self.pci_class = val
 
         self.mem_bar_size_macros = []
 

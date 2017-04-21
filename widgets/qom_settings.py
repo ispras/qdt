@@ -16,11 +16,27 @@ from .hotkey import \
     HKEntry
 
 from qemu import \
+    PCIId, \
     POp_AddDesc, \
+    DOp_SetPCIIdAttr, \
     DOp_SetAttr
 
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
+
+from .obj_ref_var import \
+    ObjRefVar
+
+from .pci_id_widget import \
+    PCIIdWidget
+
+def validate_int(var, entry):
+    try:
+        (int(var.get(), base = 0))
+    except ValueError:
+        entry.config(bg = "red")
+    else:
+        entry.config(bg = "white")
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
@@ -45,44 +61,50 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(0, weight = 0)
         f.columnconfigure(1, weight = 1)
 
-        f.rowconfigure(0, weight = 0)
+        have_pciid = False
 
-        l = VarLabel(f, text = _("Name"))
-        l.grid(row = 0, column = 0, sticky = "NES")
-
-        v = self.var_name = StringVar()
-        e = HKEntry(f, textvariable = v, state="readonly")
-        e.grid(row = 0, column = 1, sticky = "NEWS")
-
-        # Directory editing row
-        f.rowconfigure(1, weight = 0)
-
-        l = VarLabel(f, text = _("Directory"))
-        l.grid(row = 1, column = 0, sticky = "NES")
-
-        v = self.var_directory = StringVar()
-        e = HKEntry(f, textvariable = v)
-        e.grid(row = 1, column = 1, sticky = "NEWS")
-
-        self.qom_desc_int_attrs = [
-            ("block_num", _("Block driver quantity")),
-            ("char_num", _("Character driver quantity")),
-            ("timer_num", _("Timer quantity"))
-        ]
-
-        # Integer argument editing rows
-        for row, (attr, text) in enumerate(self.qom_desc_int_attrs, 2):
+        for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
 
-            l = VarLabel(f, text = text)
+            l = VarLabel(f, text = info["short"])
             l.grid(row = row, column = 0, sticky = "NES")
 
-            v = StringVar()
-            e = HKEntry(f, textvariable = v)
-            e.grid(row = row, column = 1, sticky = "NEWS")
+            try:
+                _input = info["input"]
+            except KeyError:
+                # attribute is read-only
+                v = StringVar()
+                w = HKEntry(f, textvariable = v, state="readonly")
+            else:
+                if _input is str:
+                    v = StringVar()
+                    w = HKEntry(f, textvariable = v)
+                elif _input is int:
+                    v = StringVar()
+                    w = HKEntry(f, textvariable = v)
 
-            setattr(self, "var_" + attr, v)
-            setattr(self, "e_" + attr, e)
+                    def validate(varname, junk, act, entry = w, var = v):
+                        validate_int(var, entry = entry)
+
+                    v.trace_variable("w", validate)
+                elif _input is PCIId:
+                    have_pciid = True
+                    """ Value of PCI Id could be presented either by PCIId
+object or by a string. So the actual widget/variable pair will be assigned
+during refresh.     """
+                    v = None
+                    w = GUIFrame(f)
+                    w.grid()
+                    w.rowconfigure(0, weight = 1)
+                    w.columnconfigure(0, weight = 1)
+                else:
+                    raise RuntimeError("Input of QOM template attribute %s of"
+                        " type %s is not supported" % (attr, _input.__name__)
+                    )
+
+            w.grid(row = row, column = 1, sticky = "NEWS")
+            setattr(self, "_var_" + attr, v)
+            setattr(self, "_w_" + attr, w)
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -107,12 +129,64 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         self.bind("<Destroy>", self.__on_destory__, "+")
 
-    def __refresh__(self):
-        self.var_name.set(self.desc.name)
-        self.var_directory.set(self.desc.directory)
+        self.__have_pciid = have_pciid
+        if have_pciid:
+            self.qsig_watch("qvd_switched", self.__on_qvd_switched)
 
-        for attr, text in self.qom_desc_int_attrs:
-            getattr(self, "var_" + attr).set(getattr(self.desc, attr))
+    def __on_qvd_switched(self):
+        self.__refresh__()
+
+    def __refresh__(self):
+        desc = self.desc
+        for attr, info in desc.__attribute_info__.items():
+            try:
+                _input = info["input"]
+            except KeyError:
+                _input = None
+
+            cur_val = getattr(desc, attr)
+            v = getattr(self, "_var_" + attr)
+
+            if _input is PCIId:
+                if not PCIId.db.built and cur_val is None:
+                    # use string values only without database
+                    cur_val = ""
+                # use appropriate widget/variable pair
+                if isinstance(cur_val, str):
+                    if not isinstance(v, StringVar):
+                        v = StringVar()
+                        setattr(self, "_var_" + attr, v)
+
+                        # Fill frame with appropriate widget
+                        frame = getattr(self, "_w_" + attr)
+                        for w in frame.winfo_children():
+                            w.destroy()
+
+                        w = HKEntry(frame, textvariable = v)
+                        w.grid(row = 0, column = 0, sticky = "NEWS")
+                elif cur_val is None or isinstance(cur_val, PCIId):
+                    if not isinstance(v, ObjRefVar):
+                        v = ObjRefVar()
+                        setattr(self, "_var_" + attr, v)
+
+                        frame = getattr(self, "_w_" + attr)
+
+                        for w in frame.winfo_children():
+                            w.destroy()
+
+                        w = PCIIdWidget(v, frame)
+                        w.grid(row = 0, column = 0, sticky = "NEWS")
+
+            widget_val = v.get()
+
+            if _input is int:
+                try:
+                    widget_val = int(widget_val, base = 0)
+                except ValueError:
+                    widget_val = None
+
+            if widget_val != cur_val:
+                v.set(cur_val)
 
     def __apply__(self):
         if self.pht is None:
@@ -121,30 +195,65 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
         prev_pos = self.pht.pos
 
-        new_dir = self.var_directory.get()
-
-        if new_dir != self.desc.directory:
-            self.pht.stage(DOp_SetAttr, "directory", new_dir, self.desc) 
-
-        for attr, text in self.qom_desc_int_attrs:
-            v = getattr(self, "var_" + attr)
-            e = getattr(self, "e_" + attr)
-
-            new_val = v.get()
+        desc = self.desc
+        for attr, info in desc.__attribute_info__.items():
             try:
-                new_val = int(new_val, base = 0)
-            except ValueError:
-                e.config(bg = "red")
-            else:
-                e.config(bg = "white")
+                _input = info["input"]
+            except KeyError: # read-only
+                continue
 
-            if new_val != getattr(self.desc, attr):
-                self.pht.stage(DOp_SetAttr, attr, new_val, self.desc)
+            v = getattr(self, "_var_" + attr)
+            cur_val = getattr(desc, attr)
+            new_val = v.get()
+
+            if _input is PCIId:
+                if new_val == "":
+                    new_val = None
+
+                if isinstance(new_val, str): # handle new string value
+                    # Was type of value changed?
+                    if isinstance(cur_val, str):
+                        if new_val != cur_val:
+                            self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                    else:
+                        """ Yes. Current value must first become the None and
+                        then become the new string value. """
+                        if cur_val is not None:
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, None, desc)
+                        self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                else: # Handle new value as PCIId (None equivalent to a PCIId)
+                    if cur_val is None or isinstance(cur_val, PCIId):
+                        if cur_val is not new_val:
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
+                                desc
+                            )
+                    else:
+                        """ Current string value must first be replaced with
+                        None and then set to new PCIId value. """
+                        self.pht.stage(DOp_SetAttr, attr, None, desc)
+                        if new_val is not None:
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
+                                desc
+                            )
+            else:
+                if _input is int:
+                    try:
+                        new_val = int(new_val, base = 0)
+                    except ValueError: # bad value cannot be applied
+                        continue
+
+                if new_val != cur_val:
+                    self.pht.stage(DOp_SetAttr, attr, new_val, desc)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
 
-        self.__apply_internal__()
+        try:
+            apply_internal = self.__apply_internal__
+        except AttributeError: # apply logic extension is optional
+            pass
+        else:
+            apply_internal()
 
         self.pht.commit()
 
@@ -164,6 +273,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __on_destory__(self, *args, **kw):
         if self.pht is not None:
             self.pht.unwatch_changed(self.__on_changed__)
+
+        if self.__have_pciid:
+            self.qsig_unwatch("qvd_switched", self.__on_qvd_switched)
 
     def __on_apply__(self):
         self.__apply__()

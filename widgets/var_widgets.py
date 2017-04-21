@@ -6,13 +6,18 @@ from six.moves.tkinter import \
     Button, \
     LabelFrame, \
     Checkbutton, \
-    Variable, \
+    Variable as TkVariable, \
     StringVar
 
 from six.moves.tkinter_ttk import \
     Notebook, \
     Combobox, \
     Treeview
+
+from common import \
+    Variable
+
+variables = (Variable, TkVariable)
 
 class VarCheckbutton(Checkbutton):
     def __init__(self, *args, **kw):
@@ -211,7 +216,7 @@ class VarTreeview(Treeview):
                 values = (values,)
 
             for col, v in enumerate(values):
-                if isinstance(v, Variable):
+                if isinstance(v, variables):
                     to_track.append((col, v))
                     values[col] = v.get()
 

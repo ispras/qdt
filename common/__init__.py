@@ -28,6 +28,7 @@ from .class_tools import \
     gen_class_args
 
 from .reflection import \
+    get_class_total_args, \
     get_default_args
 
 from .visitor import \
@@ -37,6 +38,9 @@ from .visitor import \
 
 from .search_helper import \
     co_find_eq
+
+from .variable import \
+    Variable
 
 from .formated_string_var import \
     FormatedStringChangindException, \

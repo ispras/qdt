@@ -1,4 +1,5 @@
 from .qom_desc import \
+    DescriptionOf, \
     QOMDescription
 
 from .sysbusdevice import \
@@ -8,72 +9,14 @@ from .pcie import \
     PCIEDeviceType
 
 from .pci_ids import \
-    PCIVendorIdNetherExistsNorCreate, \
     PCIId
 
+@DescriptionOf(SysBusDeviceType)
 class SysBusDeviceDescription(QOMDescription):
-    def __init__(self, name, directory,
-        out_irq_num = 1,
-        in_irq_num = 1,
-        mmio_num = 1,
-        pio_num = 0,
-        **qomd_kw
-    ):
+    pass
 
-        QOMDescription.__init__(self, name, directory, **qomd_kw)
-        self.out_irq_num = out_irq_num
-        self.in_irq_num = in_irq_num
-        self.mmio_num = mmio_num
-        self.pio_num = pio_num
-
-    def gen_type(self):
-        return SysBusDeviceType(
-            name = self.name,
-            directory = self.directory,
-            block_num = self.block_num,
-            char_num = self.char_num,
-            timer_num = self.timer_num,
-            out_irq_num = self.out_irq_num,
-            in_irq_num = self.in_irq_num,
-            mmio_num = self.mmio_num,
-            pio_num = self.pio_num
-            )
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('name = "' + self.name + '"')
-        gen.gen_field('directory = "' + self.directory + '"')
-        gen.gen_field("block_num = " + gen.gen_const(self.block_num))
-        gen.gen_field("char_num = " + gen.gen_const(self.char_num))
-        gen.gen_field("timer_num = " + gen.gen_const(self.timer_num))
-        gen.gen_field("out_irq_num = " + str(self.out_irq_num))
-        gen.gen_field("in_irq_num = " + str(self.in_irq_num))
-        gen.gen_field("mmio_num = " + str(self.mmio_num))
-        gen.gen_field("pio_num = " + str(self.pio_num))
-        gen.gen_end()
-
+@DescriptionOf(PCIEDeviceType)
 class PCIExpressDeviceDescription(QOMDescription):
-    def __init__(self, name, directory, vendor, device, pci_class,
-        irq_num = 0,
-        mem_bar_num = 1,
-        msi_messages_num = 2,
-        revision = 0,
-        subsys = None,
-        subsys_vendor = None,
-        **qomd_kw
-    ):
-
-        QOMDescription.__init__(self, name, directory, **qomd_kw)
-        self.vendor = vendor
-        self.device = device
-        self.pci_class = pci_class
-        self.irq_num = irq_num
-        self.mem_bar_num = mem_bar_num
-        self.msi_messages_num = msi_messages_num
-        self.revision = revision
-        self.subsys = subsys
-        self.subsys_vendor = subsys_vendor
-
     def gen_id_get(self, gen, id):
         if isinstance(id, PCIId):
             id = id.id
@@ -104,52 +47,3 @@ class PCIExpressDeviceDescription(QOMDescription):
         gen.gen_field('subsys_vendor = ')
         self.gen_id_get(gen, self.subsys_vendor)
         gen.gen_end()
-
-    def gen_type(self):
-        kw = {}
-
-        for attr in ["name", "directory", "timer_num", "irq_num",
-            "mem_bar_num", "msi_messages_num", "revision", "char_num",
-            "block_num"
-        ]:
-            kw[attr] = getattr(self, attr)
-
-        for attr in [ "vendor", "subsys_vendor" ]:
-            val = getattr(self, attr)
-            if (val is not None) and (not isinstance(val, PCIId)):
-                try:
-                    val = PCIId.db.get_vendor(name = val)
-                except PCIVendorIdNetherExistsNorCreate:
-                    val = PCIId.db.get_vendor(vid = val)
-            kw[attr] = val
-
-        for attr, vendor in [
-            ("device", kw["vendor"]),
-            ("subsys", kw["subsys_vendor"])
-        ]:
-            val = getattr(self, attr)
-            if  (val is not None) and (not isinstance(val, PCIId)):
-                if vendor is None:
-                    raise Exception("Cannot get %s ID descriptor because of no \
-corresponding vendor is given" % attr
-                    )
-                try:
-                    val = PCIId.db.get_device(name = val,
-                        vendor_name = vendor.name,
-                        vid = vendor.id)
-                except Exception:
-                    val = PCIId.db.get_device(did = val,
-                        vendor_name = vendor.name,
-                        vid = vendor.id)
-            kw[attr] = val
-
-        val = getattr(self, "pci_class")
-        # None is not allowed there
-        if not isinstance(val, PCIId):
-            try:
-                val = PCIId.db.get_class(name = val)
-            except:
-                val = PCIId.db.get_class(cid = val)
-        kw["pci_class"] = val
-
-        return PCIEDeviceType(**kw)

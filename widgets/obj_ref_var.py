@@ -22,6 +22,8 @@ class ObjRefVar(IntVar):
 
         self.set = tmp
 
+        self.set(None)
+
     def set(self, value):
         h = hash(value)
         try:
