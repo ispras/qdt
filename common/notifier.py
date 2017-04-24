@@ -2,40 +2,44 @@ __all__ = [
     "Notifier"
 ]
 
+# "Function factory" approach is used to meet "late binding" problem.
+# http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop/
+
+def gen_event_helpers(wrapped_init, cb_list_name):
+    # Wrapper for constructor that adds callback list to each instance
+    def init_wrapper(self, *args, **kw):
+        """ Define callback list before calling of original __init__ to allow
+        it assign watchers. """
+        setattr(self, cb_list_name, [])
+
+        wrapped_init(self, *args, **kw)
+
+    def add_callback(self, callback):
+        getattr(self, cb_list_name).append(callback)
+
+    def remove_callback(self, callback):
+        getattr(self, cb_list_name).remove(callback)
+
+    def notify(self, *args, **kw):
+        callbacks = getattr(self, cb_list_name)
+        """ Because listeners could add and/or remove callbacks during
+        notification, the listener list should be copied before the process. """
+        for callback in list(callbacks):
+            # Callback denial does not take effect during current notification.
+            callback(*args, **kw)
+
+    return init_wrapper, add_callback, remove_callback, notify
+
 def Notifier(*events):
     def add_events(klass, events = events):
         for event in events:
             cb_list_name = "_" + klass.__name__ + "__" + event
 
-            # Wrapper for constructor that adds callback list to each instance
-            """ XXX: Assume that neither constructor nor any event hander have
-            keyword argument with name __wrapped_init__ or __cb_list_name. Then
-            apply a dark magic. """
-            def __init_wrapper__(self, *args,
-                __wrapped_init__ = klass.__init__,
-                __cb_list_name = cb_list_name, **kw
-            ):
-                __wrapped_init__(self, *args, **kw)
-                setattr(self, __cb_list_name, list())
+            __init_wrapper__, add_callback, remove_callback, __notify = \
+                gen_event_helpers(klass.__init__, cb_list_name
+            )
 
             klass.__init__ = __init_wrapper__
-            # Define utility functions for current event
-            def add_callback(self, callback, __cb_list_name = cb_list_name):
-                getattr(self, __cb_list_name).append(callback)
-
-            def remove_callback(self, callback, __cb_list_name = cb_list_name):
-                getattr(self, __cb_list_name).remove(callback)
-
-            def __notify(self, *args, __cb_list_name = cb_list_name, **kw):
-                callbacks = getattr(self, __cb_list_name)
-                """ Because listeners could add and/or remove callbacks during
-                notification, the listener list should be copied before
-                the process. """
-                for callback in list(callbacks):
-                    # Callback denial does not take effect during current
-                    # notification.
-                    callback(*args, **kw)
-
             setattr(klass, "watch_" + event, add_callback)
             setattr(klass, "unwatch_" + event, remove_callback)
 
