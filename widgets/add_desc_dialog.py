@@ -89,6 +89,12 @@ string searching during each AddDescriptionDialog creation. """
 
         self.bind("<Escape>", self.on_escape, "+")
 
+        # corresponds to 'Enter' key
+        self.bind("<Return>", self.on_enter, "+")
+
+    def on_enter(self, *args):
+        self.on_add()
+
     def on_escape(self, event):
         self.destroy()
 
