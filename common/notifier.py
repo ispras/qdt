@@ -33,6 +33,7 @@ def gen_event_helpers(wrapped_init, cb_list_name):
 def Notifier(*events):
     def add_events(klass, events = events):
         for event in events:
+            # Callback list is private.
             cb_list_name = "_" + klass.__name__ + "__" + event
 
             __init_wrapper__, add_callback, remove_callback, __notify = \
