@@ -654,7 +654,8 @@ class DeviceSettingsWidget(SettingsWidget):
             else:
                 # A completely new property. It was added using
                 # the 'Add' button.
-                self.mht.stage(MOp_AddDevProp, p, self.dev.id)
+                new_p = QOMPropertyValue(cur_type, cur_name, cur_val)
+                self.mht.stage(MOp_AddDevProp, new_p, self.dev.id)
 
         new_buses = self.get_selected_child_buses()
 
