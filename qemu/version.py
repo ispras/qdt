@@ -45,12 +45,12 @@ class QEMUVersionParameterDescription(object):
         if callable(self.new_value):
             nv = self.new_value.__name__
         else:
-            nv = self.new_value
+            nv = str(self.new_value)
 
         if callable(self.old_value):
             ov = self.old_value.__name__
         else:
-            ov = self.old_value
+            ov = str(self.old_value)
 
         return self.name + nv + ov
 
