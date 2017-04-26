@@ -189,7 +189,7 @@ corresponding vendor is given" % attr
         self.pci_class_macro = self.pci_class.find_macro()
 
         realize_code = ''
-        realize_used_types = []
+        realize_used_types = set()
         realize_used_globals = []
         s_is_used = False
 
@@ -197,12 +197,11 @@ corresponding vendor is given" % attr
 
         if self.mem_bar_num > 0:
             s_is_used = True
-            realize_used_types.extend([
+            realize_used_types.update([
                 Type.lookup("sysbus_init_mmio"),
                 Type.lookup("memory_region_init_io"),
                 Type.lookup("Object")
-                ]
-            )
+            ])
 
         for barN in range(0, self.mem_bar_num):
             size_macro = Macro(
@@ -210,7 +209,7 @@ corresponding vendor is given" % attr
                 text = "0x%X" % mem_bar_def_size)
 
             self.header.add_type(size_macro)
-            realize_used_types.append(size_macro)
+            realize_used_types.add(size_macro)
 
             component = self.get_Ith_mem_bar_id_component(barN)
 
@@ -295,10 +294,10 @@ corresponding vendor is given" % attr
                    == Pointer(Pointer(Type.lookup("Error"))) else ""
             )
 
-            realize_used_types.extend(msi_types)
-            realize_used_types.append(msi_init_type)
+            realize_used_types.update(msi_types)
+            realize_used_types.add(msi_init_type)
 
-        realize_used_types.append(self.state_struct)
+        realize_used_types.add(self.state_struct)
 
         if self.char_num > 0:
             if get_vp()["v2.8 chardev"]:
@@ -310,7 +309,7 @@ corresponding vendor is given" % attr
                 char_name_fmt = "s->%s"
                 extra_args = ""
 
-            realize_used_types.extend([Type.lookup(helper_name)])
+            realize_used_types.add(Type.lookup(helper_name))
             realize_code += "\n"
             s_is_used = True
 
@@ -329,13 +328,13 @@ corresponding vendor is given" % attr
     helpers = ", ".join([h.name for h in har_handlers]),
     extra_args = extra_args
                 )
-                realize_used_types.extend(har_handlers)
+                realize_used_types.update(har_handlers)
 
         if self.block_num > 0:
             realize_code += "\n"
             s_is_used = True
             # actually not, but user probably needed functions from same header
-            realize_used_types.append(Type.lookup("BlockDevOps"))
+            realize_used_types.add(Type.lookup("BlockDevOps"))
 
             for blkN in range(self.block_num):
                 blk_name = self.block_name(blkN)
