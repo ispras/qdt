@@ -11,6 +11,7 @@ from .var_widgets import \
     VarCombobox
 
 from six.moves.tkinter import \
+    END, \
     StringVar
 
 from six.moves.tkinter_messagebox import \
@@ -56,11 +57,15 @@ string searching during each AddDescriptionDialog creation. """
         v = self.var_name = StringVar()
         e = self.e_name = HKEntry(self, textvariable = v)
         e.grid(row = 0, column = 1, sticky = "NEWS")
+        # Set input focus to description name entry initially.
+        e.focus_set()
 
         v.trace_variable("w", self.on_var_name_write)
         if self.pht is not None:
             # do not generate name in demo mode
             v.set(self.pht.p.gen_uniq_desc_name())
+            # autoselect default name to speed up its customization
+            e.selection_range(0, END)
 
         self.rowconfigure(1, weight = 0)
         l = VarLabel(self, text = _("Description kind"))
@@ -86,6 +91,12 @@ string searching during each AddDescriptionDialog creation. """
         b.grid(row = 2, column = 0, columns = 2, sticky = "NES")
 
         self.bind("<Escape>", self.on_escape, "+")
+
+        # corresponds to 'Enter' key
+        self.bind("<Return>", self.on_enter, "+")
+
+    def on_enter(self, *args):
+        self.on_add()
 
     def on_escape(self, event):
         self.destroy()

@@ -3,6 +3,7 @@ from common import \
     ML as _
 
 from six.moves.tkinter import \
+    END, \
     Entry
 
 class HKEntry(Entry):
@@ -15,6 +16,17 @@ class HKEntry(Entry):
         if event.keycode == 29: # prevent paste on Ctrl + Y
             self.event_generate("<<Control-Y-Breaked>>")
             return "break"
+        elif event.keycode == 38: # Ctrl-A: select all
+            self.selection_range(0, END)
+            # No more actions may perform
+            return "break"
+        elif event.keycode == 55: # Ctrl-V: insert text from buffer
+            if self.select_present():
+                # Remove a selected text during insertion. It is equivalent
+                # to replacement of a selected text with the text being
+                # inserted, because the insertion cursor cannot be outside a
+                # selected text.
+                self.delete("sel.first", "sel.last")
 
 class HotKeyBinding(object):
     def __init__(self, callback, key_code, description = None):
