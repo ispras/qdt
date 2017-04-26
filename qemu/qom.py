@@ -730,3 +730,81 @@ class QOMDevice(QOMType):
         )
         source.add_type(timer_cb)
         return timer_cb
+
+    # 'realize' method generation
+    def gen_realize(self, dev_type_name,
+        code = "",
+        s_is_used = False,
+        used_types = [],
+        used_globals = []
+    ):
+        total_used_types = set([self.state_struct, self.type_cast_macro])
+        total_used_types.update(used_types)
+
+        if self.char_num > 0:
+            if get_vp()["v2.8 chardev"]:
+                helper_name = "qemu_chr_fe_set_handlers"
+                char_name_fmt = "&s->%s"
+                extra_args = ", NULL, true"
+            else:
+                helper_name = "qemu_chr_add_handlers"
+                char_name_fmt = "s->%s"
+                extra_args = ""
+
+            total_used_types.add(Type.lookup(helper_name))
+            code += "\n"
+            s_is_used = True
+
+            for chrN in range(self.char_num):
+                chr_name = self.char_name(chrN)
+                har_handlers = self.char_gen_handlers(chrN, self.source,
+                    self.state_struct, self.type_cast_macro
+                )
+                code += """\
+    if ({chr_name}) {{
+        {helper_name}({chr_name}, {helpers}, s{extra_args});
+    }}
+""".format(
+    helper_name = helper_name,
+    chr_name = char_name_fmt % chr_name,
+    helpers = ", ".join([h.name for h in har_handlers]),
+    extra_args = extra_args
+                )
+                total_used_types.update(har_handlers)
+
+        if self.block_num > 0:
+            code += "\n"
+            s_is_used = True
+            # actually not, but user probably needed functions from same header
+            total_used_types.add(Type.lookup("BlockDevOps"))
+
+            for blkN in range(self.block_num):
+                blk_name = self.block_name(blkN)
+                code += """\
+    if (s->%s) {
+        /* TODO: Implement interaction with block driver. */
+    }
+""" % (blk_name
+                )
+
+        fn = Function(
+            name = "%s_realize" % self.qtn.for_id_name,
+            body = """\
+    {unused}{Struct} *s = {UPPER}(dev);
+{extra_code}\
+""".format(
+        unused = "" if s_is_used else "__attribute__((unused)) ",
+        Struct = self.state_struct.name,
+        UPPER = self.type_cast_macro.name,
+        extra_code = code
+            ),
+            args = [
+                Type.lookup(dev_type_name).gen_var("dev", pointer = True),
+                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
+            ],
+            static = True,
+            used_types = total_used_types,
+            used_globals = used_globals
+        )
+
+        return fn
