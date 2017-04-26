@@ -161,7 +161,8 @@ class SysBusDeviceType(QOMDevice):
         self.device_realize = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
-    {unused}{Struct} *s = {UPPER}(dev);{extra_code}
+    {unused}{Struct} *s = {UPPER}(dev);
+{extra_code}\
 """.format(
         unused = "" if s_is_used else "__attribute__((unused)) ",
         Struct = self.state_struct.name,
