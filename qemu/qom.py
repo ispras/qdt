@@ -412,6 +412,26 @@ class QOMType(object):
         total_used_types = set([state_struct, type_cast_macro])
         total_used_types.update(used_types)
 
+        if self.timer_num > 0:
+            total_used_types.update([
+                Type.lookup("QEMU_CLOCK_VIRTUAL"),
+                Type.lookup("timer_new_ns")
+            ])
+            s_is_used = True
+            code += "\n"
+
+            for timerN in range(self.timer_num):
+                cb = self.timer_gen_cb(timerN, self.source, state_struct,
+                    self.type_cast_macro
+                )
+
+                total_used_types.add(cb)
+
+                code += """\
+    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+""" % (self.timer_name(timerN), cb.name,
+                )
+
         fn = Function(
             name = self.gen_instance_init_name(),
             body = """\
