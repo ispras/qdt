@@ -122,7 +122,7 @@ corresponding vendor is given" % attr
 
         for barN in xrange(0, self.mem_bar_num):
             self.add_state_field_h("MemoryRegion",
-                self.get_Ith_mem_bar_name(irqN),
+                self.get_Ith_mem_bar_name(barN),
                 save = False
             )
 

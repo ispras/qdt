@@ -370,37 +370,6 @@ class QemuVersionCache(object):
         # iterations to yield
         i2y = QVD_HP_IBY
 
-        # starting initialization
-        for key in sorted_vd_keys[::-1]:
-            node = self.commit_desc_nodes[key]
-            cur_vd = vd[key]
-            for parent in node.parents:
-                # propagate old_val from node to their parents
-                # this is necessary if the vd are consecutive
-                for param_name in node.param_oval:
-                    parent.param_oval[param_name] = node.param_oval[param_name]
-                # init old_val of nodes that consist of vd's parents
-                # and check conflicts
-                for param in cur_vd:
-                    if param.name in parent.param_nval:
-                        if parent.param_nval[param.name] != param.old_value:
-                            Exception(msg1 % (
-param.name, parent.sha, param.old_value, parent.param_nval[param.name]
-                            ))
-                    elif param.name in parent.param_oval:
-                        if param.old_value != parent.param_oval[param.name]:
-                            Exception(msg2 % (
-param.name, parent.sha, param.old_value, parent.param_oval[param.name]
-                            ))
-                    else:
-                        parent.param_oval[param.name] = param.old_value
-
-                i2y -= 1
-                if not i2y:
-                    yield True
-                    i2y = QVD_HP_IBY
-
-        # set is used to accelerate propagation
         vd_keys_set = set(sorted_vd_keys)
         visited_vd = set()
         for key in sorted_vd_keys[::-1]:
@@ -408,8 +377,45 @@ param.name, parent.sha, param.old_value, parent.param_oval[param.name]
             # used to avoid multiple processing of one node
             visited_nodes = set([key])
             visited_vd.add(key)
-            for p in self.commit_desc_nodes[key].parents:
+
+            cur_vd = vd[key]
+
+            node = self.commit_desc_nodes[key]
+            for p in node.parents:
                 stack.append(p)
+
+                # propagate old_val from node to their parents
+                p.param_oval.update()
+                for param, oval in node.param_oval.items():
+                    try:
+                        other = p.param_oval[param]
+                    except KeyError:
+                        p.param_oval[param] = oval
+                    else:
+                        if other != oval:
+                            raise Exception(msg2 % (param, p.sha, oval, other))
+
+                # init old_val of nodes that consist of vd's parents
+                # and check conflicts
+                for param in cur_vd:
+                    if param.name in p.param_nval:
+                        if p.param_nval[param.name] != param.old_value:
+                            Exception(msg1 % (
+param.name, p.sha, param.old_value, p.param_nval[param.name]
+                            ))
+                    elif param.name in p.param_oval:
+                        if param.old_value != p.param_oval[param.name]:
+                            Exception(msg2 % (
+param.name, p.sha, param.old_value, p.param_oval[param.name]
+                            ))
+                    else:
+                        p.param_oval[param.name] = param.old_value
+
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
+
             while stack:
                 cur_node = stack.pop()
                 visited_nodes.add(cur_node.sha)

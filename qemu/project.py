@@ -1,10 +1,13 @@
 from os import \
+    makedirs, \
     remove
 
 from os.path import \
+    split, \
     join, \
     basename, \
     splitext, \
+    isdir, \
     isfile
 
 from itertools import \
@@ -107,6 +110,11 @@ already in another project.")
         if "header" in dev_t.__dict__:
             include_path = join(src, 'include')
             full_header_path = join(include_path, dev_t.header.path)
+
+            # Create intermediate directories
+            header_dir = split(full_header_path)[0]
+            if not isdir(header_dir):
+                makedirs(header_dir)
 
             if isfile(full_header_path):
                 remove(full_header_path)
