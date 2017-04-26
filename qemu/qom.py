@@ -409,6 +409,9 @@ class QOMType(object):
     ):
         type_cast_macro = Type.lookup(self.qtn.for_macros)
 
+        total_used_types = set([state_struct, type_cast_macro])
+        total_used_types.update(used_types)
+
         fn = Function(
             name = self.gen_instance_init_name(),
             body = """\
@@ -424,7 +427,7 @@ class QOMType(object):
             args = [
                 Type.lookup("Object").gen_var("obj", pointer = True)
             ],
-            used_types = [state_struct, type_cast_macro] + used_types,
+            used_types = total_used_types,
             used_globals = used_globals
         )
 
