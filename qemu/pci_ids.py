@@ -231,7 +231,7 @@ assigned different value %s / %s." % (name, c.id, cid)
 
     def get_device(self, name = None, vendor_name = None, did = None, 
             vid = None):
-        if not did == None and not type(did) == str:
+        if did is not None and not type(did) == str:
             raise Exception("Device id must be a string")
 
         if vid is not None:
@@ -284,29 +284,29 @@ assigned different value %s / %s." % (name, c.id, cid)
         return d
 
     def get_vendor(self, name = None, vid = None):
-        if not vid == None and not type(vid) == str:
+        if vid is not None and not type(vid) == str:
             raise Exception("Vendor id must be a string")
 
-        if not name == None:
+        if name is not None:
             try:
                 v = self.vendors[name]
-                if not vid == None and not v.id == vid:
+                if vid is not None and not v.id == vid:
                     raise PCIVendorIdMismatch("Vendor %s, Id: %s/%s" %
                             name, v.id, vid)
             except:
-                if not vid == None:
+                if vid is not None:
                     v = PCIVendorId(name, vid)
                 else:
                     raise PCIVendorIdNetherExistsNorCreate("Vendor %s does not\
  exists and cannot be created because of no id is specified" % name)
             return v
-        elif not vid == None:
+        elif vid is not None:
             v = None
             for ven in self.vendors.values():
                 if ven.id == vid:
                     v = ven
                     break
-            if v == None:
+            if v is None:
                 raise PCIVendorIdNetherExistsNorCreate("No vendor with id %s\
  was found and no one can be created because of no name is\
  specified" % id)

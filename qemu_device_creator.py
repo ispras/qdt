@@ -63,7 +63,7 @@ Use @file to read arguments from 'file' (one per line)
 
     qvd.use()
 
-    if not arguments.gen_header_tree == None:
+    if arguments.gen_header_tree is not None:
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
     test_device = PCIId.db.get_device(name = "AMD_LANCE",

@@ -409,9 +409,9 @@ corresponding vendor is given" % attr
            vendor_macro = self.vendor_macro.name,
            device_macro = self.device_macro.name,
            pci_class_macro = self.pci_class_macro.name,
-           subsys_id = '' if self.subsystem_macro == None else ("""
+           subsys_id = '' if self.subsystem_macro is None else ("""
     pc->subsystem_id        = %s;""" % self.subsystem_macro.name),
-           subsys_vid = '' if self.subsystem_vendor_macro == None else ("""
+           subsys_vid = '' if self.subsystem_vendor_macro is None else ("""
     pc->subsystem_vendor_id = %s;""" % self.subsystem_vendor_macro.name),
            pad = '          ' if self.subsystem_vendor_macro else ''
     ),
