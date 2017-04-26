@@ -328,16 +328,25 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    if get_vp()["v2.8 chardev"]:
+        chardev_types = [
+            Function("qemu_chr_fe_set_handlers"),
+            Structure("CharBackend")
+        ]
+    else:
+        chardev_types = [
+            Function("qemu_chr_add_handlers"),
+            Structure("CharDriverState")
+        ]
+
     Header.lookup("sysemu/char.h").add_types([
-        Function("qemu_chr_add_handlers"),
-        Structure("CharDriverState"),
         Function("IOEventHandler",
             args = [
                 Pointer(Type.lookup("void")).gen_var("opaque"),
                 Type.lookup("int").gen_var("event")
             ]
         )
-    ]).add_references([
+    ] + chardev_types).add_references([
         osdep_fake_type
     ])
 
@@ -398,6 +407,13 @@ def define_msi_init_2_6_0():
     )
 
 qemu_heuristic_db = {
+    u'82878dac6fcd16cb4fa47266bcd3dd03df436dae' : [
+        # It is the last commit in the series significantly changing char API.
+        QEMUVersionParameterDescription("v2.8 chardev",
+            new_value = True,
+            old_value = False
+        )
+    ],
     u'bd36a618ccb61ea0fddb92e75f3754c4e1a7fbfe' : [
         # This commit renames DMA_transfer_handler to IsaDmaTransferHandler
         # adding the corresponding reverence.

@@ -23,6 +23,9 @@ from common import \
 from collections import \
     OrderedDict
 
+from .version import \
+    get_vp
+
 class PCIEDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
@@ -298,9 +301,16 @@ corresponding vendor is given" % attr
         realize_used_types.append(self.state_struct)
 
         if self.char_num > 0:
-            realize_used_types.extend([
-                Type.lookup("qemu_chr_add_handlers")
-            ])
+            if get_vp()["v2.8 chardev"]:
+                helper_name = "qemu_chr_fe_set_handlers"
+                char_name_fmt = "&s->%s"
+                extra_args = ", NULL, true"
+            else:
+                helper_name = "qemu_chr_add_handlers"
+                char_name_fmt = "s->%s"
+                extra_args = ""
+
+            realize_used_types.extend([Type.lookup(helper_name)])
             realize_code += "\n"
             s_is_used = True
 
@@ -310,12 +320,14 @@ corresponding vendor is given" % attr
                     self.state_struct, self.type_cast_macro
                 )
                 realize_code += """\
-    if (s->{chr_name}) {{
-        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
+    if ({chr_name}) {{
+        {helper_name}({chr_name}, {helpers}, s{extra_args});
     }}
 """.format(
-    chr_name = chr_name,
-    helpers = ", ".join([h.name for h in har_handlers])
+    helper_name = helper_name,
+    chr_name = char_name_fmt % chr_name,
+    helpers = ", ".join([h.name for h in har_handlers]),
+    extra_args = extra_args
                 )
                 realize_used_types.extend(har_handlers)
 

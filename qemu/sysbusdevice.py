@@ -16,6 +16,9 @@ from common import \
 from collections import \
     OrderedDict
 
+from .version import \
+    get_vp
+
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),
@@ -110,7 +113,16 @@ class SysBusDeviceType(QOMDevice):
         realize_used_types = set([self.state_struct])
 
         if self.char_num > 0:
-            realize_used_types.add(Type.lookup("qemu_chr_add_handlers"))
+            if get_vp()["v2.8 chardev"]:
+                helper_name = "qemu_chr_fe_set_handlers"
+                char_name_fmt = "&s->%s"
+                extra_args = ", NULL, true"
+            else:
+                helper_name = "qemu_chr_add_handlers"
+                char_name_fmt = "s->%s"
+                extra_args = ""
+
+            realize_used_types.add(Type.lookup(helper_name))
             realize_code += "\n"
             s_is_used = True
 
@@ -120,12 +132,14 @@ class SysBusDeviceType(QOMDevice):
                     self.state_struct, self.type_cast_macro
                 )
                 realize_code += """\
-    if (s->{chr_name}) {{
-        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
+    if ({chr_name}) {{
+        {helper_name}({chr_name}, {helpers}, s{extra_args});
     }}
 """.format(
-    chr_name = chr_name,
-    helpers = ", ".join([h.name for h in har_handlers])
+    helper_name = helper_name,
+    chr_name = char_name_fmt % chr_name,
+    helpers = ", ".join([h.name for h in har_handlers]),
+    extra_args = extra_args
                 )
                 realize_used_types.update(har_handlers)
 

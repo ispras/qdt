@@ -21,6 +21,9 @@ from common import \
 from collections import \
     OrderedDict
 
+from .version import \
+    get_vp
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -154,7 +157,12 @@ type2prop = {
     "BlockBackend*" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_DRIVE", state_struct
     ),
+    # before QEMU 2.7
     "CharDriverState*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_CHR", state_struct
+    ),
+    # after QEMU 2.8
+    "CharBackend" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_CHR", state_struct
     ),
     "bool" : lambda field, state_struct: gen_prop_declaration(field,
@@ -629,9 +637,13 @@ class QOMDevice(QOMType):
         return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
 
     def char_declare_fields(self):
+        field_type = (Type.lookup("CharBackend") if get_vp()["v2.8 chardev"]
+            else Pointer(Type.lookup("CharDriverState"))
+        )
+
         for index in range(self.char_num):
             self.add_state_field(QOMStateField(
-                Pointer(Type.lookup("CharDriverState")), self.char_name(index),
+                field_type, self.char_name(index),
                 save = False,
                 prop = True
             ))
