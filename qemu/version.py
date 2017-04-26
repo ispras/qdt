@@ -351,10 +351,11 @@ def define_only_qemu_2_6_0_types():
         Type("IsaDmaTransferHandler")
     ])
 
-    Header.lookup("hw/isa/i8257.h").add_references([
-        Type.lookup("IsaDmaTransferHandler"),
-        Type.lookup("MemoryRegion")
-    ])
+    if get_vp()["include/hw/isa/i8257.h have IsaDmaTransferHandler reference"]:
+        Header.lookup("hw/isa/i8257.h").add_references([
+            Type.lookup("IsaDmaTransferHandler"),
+            Type.lookup("MemoryRegion")
+        ])
 
 def define_qemu_2_6_5_types():
     add_base_types()
@@ -397,6 +398,15 @@ def define_msi_init_2_6_0():
     )
 
 qemu_heuristic_db = {
+    u'bd36a618ccb61ea0fddb92e75f3754c4e1a7fbfe' : [
+        # This commit renames DMA_transfer_handler to IsaDmaTransferHandler
+        # adding the corresponding reverence.
+        QEMUVersionParameterDescription(
+            "include/hw/isa/i8257.h have IsaDmaTransferHandler reference",
+            new_value = True,
+            old_value = False
+        )
+    ],
     u'f5f19ee2e448a8442f1974ca1a0b8864486ed25b': [
         # Q35 for 2.6 uses I8257 for DMA. The device could be used after
         # patch series followed by commit of the SHA1.
