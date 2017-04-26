@@ -352,7 +352,7 @@ class DeviceSettingsWidget(SettingsWidget):
         b.grid(row = 0, column = 2, sticky = "EW")
         # Check for device tree
         bp = self.mach.project.build_path
-        if bp == None:
+        if bp is None:
             b["state"] = "disabled"
         else:
             try:
@@ -360,7 +360,7 @@ class DeviceSettingsWidget(SettingsWidget):
             except Exception:
                 b["state"] = "disabled"
             else:
-                if qvd == None or \
+                if qvd is None or \
                    qvd.qvc == None or \
                    qvd.qvc.device_tree == None:
                     b["state"] = "disabled"

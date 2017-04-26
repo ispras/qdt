@@ -80,7 +80,7 @@ def qvd_create(path):
 
     qvd = qvd_reg[path]
 
-    if qvd == None:
+    if qvd is None:
         qvd = QemuVersionDescription(path)
     else:
         raise Exception("Multiple Qemu version descriptions for %s." % path)
@@ -110,7 +110,7 @@ def qvd_get_registered(path):
 
 def qvds_load():
     for k, v in qvd_reg.items():
-        if v == None:
+        if v is None:
             qvd_reg[k] = QemuVersionDescription(k)
 
 def qvd_load_with_cache(build_path):
@@ -120,14 +120,14 @@ def qvd_load_with_cache(build_path):
 
 def qvds_load_with_cache():
     for k, v in qvd_reg.items():
-        if v == None:
+        if v is None:
             qvd_reg[k] = QemuVersionDescription(k)
         qvd = qvd_reg[k]
         qvd.init_cache()
 
 def qvds_init_cache():
     for v in qvd_reg.values():
-        if not v == None:
+        if v is not None:
             v.init_cache()
 
 class CommitDesc(object):
@@ -544,7 +544,7 @@ class QemuVersionDescription(object):
 
     # The method made the description active
     def use(self):
-        if self.qvc == None:
+        if self.qvc is None:
             self.init_cache()
         self.qvc.use()
 
@@ -572,7 +572,7 @@ class QemuVersionDescription(object):
             remove_file(self.qvc_path)
 
     def co_init_cache(self):
-        if not self.qvc == None:
+        if self.qvc is not None:
             raise MultipleQVCInitialization(self.src_path)
 
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"

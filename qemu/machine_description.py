@@ -120,7 +120,7 @@ class MachineNode(QOMDescription):
                     raise MultipleSystemBusesInMachine()
 
         # No system bus: create one
-        if self.sysbus == None:
+        if self.sysbus is None:
             self.sysbus = SystemBusNode()
             self.add_node(self.sysbus)
 

@@ -33,7 +33,7 @@ class QProject(object):
 
         if not descriptions is None:
             for d in descriptions:
-                if not d.project == None:
+                if d.project is not None:
                     raise Exception("The description '" + d.name + "' is \
 already in another project.")
                 else:

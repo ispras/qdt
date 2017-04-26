@@ -578,7 +578,7 @@ of incomplete type {}.".format(name, self.name))
                 array_size = array_size)
 
     def get_definers(self):
-        if self.definer == None:
+        if self.definer is None:
             return []
         else:
             return [self.definer]
@@ -658,12 +658,12 @@ class Structure(Type):
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete=False)
         self.fields = []
-        if not fields == None:
+        if fields is not None:
             for v in fields:
                 self.append_field(v)
 
     def get_definers(self):
-        if self.definer == None:
+        if self.definer is None:
             raise Exception("Getting definers for structure {} that \
 is not added to a source", self.name)
 
@@ -712,7 +712,7 @@ class Function(Type):
         self.static = static
         self.inline = inline
         self.body = body
-        self.ret_type = Type.lookup("void") if ret_type == None else ret_type
+        self.ret_type = Type.lookup("void") if ret_type is None else ret_type
         self.args = args
         self.used_types = set(used_types)
         self.used_globals = used_globals
@@ -861,9 +861,9 @@ class Macro(Type):
 
     def gen_dict(self):
         res = {"name" : self.name}
-        if not self.text == None:
+        if self.text is not None:
             res["text"] = self.text
-        if not self.args == None:
+        if self.args is not None:
             res["args"] = self.args
 
         return res
@@ -1062,7 +1062,7 @@ class SourceChunk(object):
         self.users = set()
         self.references = set()
         self.source = None
-        if not references == None:
+        if references is not None:
             for chunk in references:
                 self.add_reference(chunk)
 
@@ -1142,7 +1142,7 @@ class HeaderInclusion(SourceChunk):
 
 class MacroDefinition(SourceChunk):
     def __init__(self, macro, indent = ""):
-        if macro.args == None:
+        if macro.args is None:
             args_txt = ""
         else:
             args_txt = "("
@@ -1156,7 +1156,7 @@ class MacroDefinition(SourceChunk):
                 indent,
                 macro.name,
                 args_txt,
-                "" if macro.text == None else " %s" % macro.text)
+                "" if macro.text is None else " %s" % macro.text)
             )
 
         self.macro = macro
@@ -1457,7 +1457,7 @@ def gen_array_declaration(array_size):
 
 def gen_function_declaration_string(indent, function, pointer_name = None,
                                     array_size = None):
-    if function.args == None:
+    if function.args is None:
         args = "void"
     else:
         args = ""
@@ -1484,7 +1484,7 @@ def gen_function_declaration_string(indent, function, pointer_name = None,
 def gen_function_decl_ref_chunks(function):
     references = function.ret_type.gen_defining_chunk_list() 
 
-    if not function.args == None:
+    if function.args is not None:
         for a in function.args:
             references.extend(a.type.gen_defining_chunk_list())
 
@@ -1535,7 +1535,7 @@ class FunctionDefinition(SourceChunk):
         return [ch] + refs
 
     def __init__(self, function, indent = "", append_nl = True):
-        body = " {}" if function.body == None else "\n{\n%s}" % function.body
+        body = " {}" if function.body is None else "\n{\n%s}" % function.body
 
         if append_nl:
             body +="\n"
@@ -1665,7 +1665,7 @@ digraph Chunks {
             self.add_chunk(ch)
 
     def add_chunk(self, chunk):
-        if chunk.source == None:
+        if chunk.source is None:
             self.sort_needed = True
             self.chunks.append(chunk)
 
