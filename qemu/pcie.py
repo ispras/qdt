@@ -297,70 +297,9 @@ corresponding vendor is given" % attr
             realize_used_types.update(msi_types)
             realize_used_types.add(msi_init_type)
 
-        realize_used_types.add(self.state_struct)
-
-        if self.char_num > 0:
-            if get_vp()["v2.8 chardev"]:
-                helper_name = "qemu_chr_fe_set_handlers"
-                char_name_fmt = "&s->%s"
-                extra_args = ", NULL, true"
-            else:
-                helper_name = "qemu_chr_add_handlers"
-                char_name_fmt = "s->%s"
-                extra_args = ""
-
-            realize_used_types.add(Type.lookup(helper_name))
-            realize_code += "\n"
-            s_is_used = True
-
-            for chrN in range(self.char_num):
-                chr_name = self.char_name(chrN)
-                har_handlers = self.char_gen_handlers(chrN, self.source,
-                    self.state_struct, self.type_cast_macro
-                )
-                realize_code += """\
-    if ({chr_name}) {{
-        {helper_name}({chr_name}, {helpers}, s{extra_args});
-    }}
-""".format(
-    helper_name = helper_name,
-    chr_name = char_name_fmt % chr_name,
-    helpers = ", ".join([h.name for h in har_handlers]),
-    extra_args = extra_args
-                )
-                realize_used_types.update(har_handlers)
-
-        if self.block_num > 0:
-            realize_code += "\n"
-            s_is_used = True
-            # actually not, but user probably needed functions from same header
-            realize_used_types.add(Type.lookup("BlockDevOps"))
-
-            for blkN in range(self.block_num):
-                blk_name = self.block_name(blkN)
-                realize_code += """\
-    if (s->%s) {
-        /* TODO: Implement interaction with block driver. */
-    }
-""" % (blk_name
-                )
-
-        self.device_realize = Function(
-            name = "%s_realize" % self.qtn.for_id_name,
-            body = """\
-    {unused}{Struct} *s = {UPPER}(dev);
-{extra_code}\
-""".format(
-        unused = "" if s_is_used else "__attribute__((unused)) ",
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        extra_code = realize_code
-            ),
-            args = [
-                Type.lookup("PCIDevice").gen_var("dev", pointer = True),
-                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
-            ],
-            static = True,
+        self.device_realize = self.gen_realize("PCIDevice",
+            code = realize_code,
+            s_is_used = s_is_used,
             used_types = realize_used_types,
             used_globals = realize_used_globals
         )
