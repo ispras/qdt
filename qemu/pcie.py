@@ -446,12 +446,12 @@ Type.lookup("void").gen_var("opaque", True),
             )
         self.source.add_type(self.class_init)
 
-        instance_init_used_types = []
+        instance_init_used_types = set()
         instance_init_code = ""
         s_is_used = False
 
         if self.timer_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("QEMU_CLOCK_VIRTUAL"),
                 Type.lookup("timer_new_ns")
             ])
@@ -463,7 +463,7 @@ Type.lookup("void").gen_var("opaque", True),
                     self.type_cast_macro
                 )
 
-                instance_init_used_types.append(cb)
+                instance_init_used_types.add(cb)
 
                 instance_init_code += """\
     s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
