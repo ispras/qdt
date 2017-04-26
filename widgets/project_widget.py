@@ -64,8 +64,8 @@ class ReloadBuildPathTask(CoTask):
         CoTask.__init__(self, generator = self.begin())
 
     def begin(self):
-        if self.qvd is None:
-            yield self.qvd.co_init_cach
+        if self.qvd.qvc is None:
+            yield self.qvd.co_init_cache()
 
     def on_finished(self):
         self.qvd.use()
