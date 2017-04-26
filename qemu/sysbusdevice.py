@@ -168,14 +168,14 @@ class SysBusDeviceType(QOMDevice):
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
         extra_code = realize_code
-        ),
+            ),
             args = [
-                Type.lookup("DeviceState").gen_var("dev", True),
-                Pointer(Type.lookup("Error")).gen_var("errp", True)
-                ],
+                Type.lookup("DeviceState").gen_var("dev", pointer = True),
+                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
+            ],
             static = True,
             used_types = realize_used_types
-            )
+        )
         self.source.add_type(self.device_realize)
 
         s_is_used = False
