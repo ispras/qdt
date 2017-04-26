@@ -179,18 +179,17 @@ class SysBusDeviceType(QOMDevice):
 
         s_is_used = False
         instance_init_code = ''
-        instance_init_used_types = []
+        instance_init_used_types = set()
         instance_init_used_globals = []
 
         mmio_def_size = 0x100
 
         if self.mmio_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("sysbus_init_mmio"),
                 Type.lookup("memory_region_init_io"),
                 Type.lookup("Object")
-                ]
-            )
+            ])
 
         for mmioN in range(0, self.mmio_num):
             size_macro = Macro(
@@ -198,7 +197,7 @@ class SysBusDeviceType(QOMDevice):
                 text = "0x%X" % mmio_def_size)
 
             self.header.add_type(size_macro)
-            instance_init_used_types.append(size_macro)
+            instance_init_used_types.add(size_macro)
 
             component = self.get_Ith_mmio_id_component(mmioN)
 
@@ -252,13 +251,12 @@ class SysBusDeviceType(QOMDevice):
         pio_cur_addres = 0x1000
 
         if self.pio_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("sysbus_add_io"),
                 Type.lookup("memory_region_init_io"),
                 Type.lookup("Object"),
                 Type.lookup("sysbus_init_ioports")
-                ]
-            )
+            ])
 
         for pioN in range(0, self.pio_num):
             size_macro = Macro(
@@ -270,7 +268,7 @@ class SysBusDeviceType(QOMDevice):
             pio_cur_addres += pio_def_size
 
             self.header.add_types([size_macro, address_macro])
-            instance_init_used_types.extend([size_macro, address_macro])
+            instance_init_used_types.update([size_macro, address_macro])
 
             component = self.get_Ith_pio_id_component(pioN)
 
@@ -323,10 +321,10 @@ class SysBusDeviceType(QOMDevice):
             s_is_used = True
 
         if self.out_irq_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("qemu_irq"),
                 Type.lookup("sysbus_init_irq")
-                ])
+            ])
 
             instance_init_code += "\n"
 
@@ -366,15 +364,15 @@ use_as_prototype(
     irqs = in_irq_macro.name
 )
 
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 self.irq_handler,
                 in_irq_macro,
                 Type.lookup("qdev_init_gpio_in"),
                 Type.lookup("DEVICE")
-                ])
+            ])
 
         if self.timer_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("QEMU_CLOCK_VIRTUAL"),
                 Type.lookup("timer_new_ns")
             ])
@@ -386,7 +384,7 @@ use_as_prototype(
                     self.type_cast_macro
                 )
 
-                instance_init_used_types.append(cb)
+                instance_init_used_types.add(cb)
 
                 instance_init_code += """\
     s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
