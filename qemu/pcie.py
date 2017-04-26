@@ -355,14 +355,15 @@ corresponding vendor is given" % attr
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
         extra_code = realize_code
-    ),
+            ),
             args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True),
-                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)],
+                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
+            ],
             static = True,
             used_types = realize_used_types,
             used_globals = realize_used_globals
-            )
+        )
         self.source.add_type(self.device_realize)
 
         exit_code = ""
