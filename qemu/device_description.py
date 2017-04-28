@@ -4,8 +4,7 @@ from .qom_desc import \
 
 from .sysbusdevice import *
 
-from .pcie import \
-    PCIEDeviceType
+from .pcie import *
 
 @DescriptionOf(SysBusDeviceType)
 class SysBusDeviceDescription(QOMDescription):

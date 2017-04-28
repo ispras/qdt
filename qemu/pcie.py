@@ -1,3 +1,5 @@
+__all__ = [ "PCIEDeviceType" ]
+
 from source import \
     Pointer, \
     Type, \

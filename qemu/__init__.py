@@ -33,8 +33,7 @@ from .pci_ids import \
 
 from .sysbusdevice import *
 
-from .pcie import \
-    PCIEDeviceType
+from .pcie import *
 
 from .qom import \
     QOMPropertyType, \
