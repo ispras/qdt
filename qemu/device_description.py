@@ -4,6 +4,6 @@ from .qom_desc import \
 
 from .pcie import *
 
-@DescriptionOf(PCIEDeviceType)
+@DescriptionOf(PCIExpressDeviceType)
 class PCIExpressDeviceDescription(QOMDescription):
     pass

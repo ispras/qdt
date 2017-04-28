@@ -1,4 +1,4 @@
-__all__ = [ "PCIEDeviceType" ]
+__all__ = [ "PCIExpressDeviceType" ]
 
 from source import \
     Pointer, \
@@ -25,7 +25,7 @@ from common import \
 from collections import \
     OrderedDict
 
-class PCIEDeviceType(QOMDevice):
+class PCIExpressDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
         ("device", { "short": _("Device"), "input" : PCIId }),
@@ -55,7 +55,7 @@ class PCIEDeviceType(QOMDevice):
         subsys_vendor = None,
         **qomd_kw
     ):
-        super(PCIEDeviceType, self).__init__(name, directory, **qomd_kw)
+        super(PCIExpressDeviceType, self).__init__(name, directory, **qomd_kw)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
