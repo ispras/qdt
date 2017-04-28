@@ -4,10 +4,8 @@ from .qom import \
 
 from source import \
     Macro, \
-    Source, \
     Initializer, \
     Function, \
-    Pointer, \
     Type
 
 from common import \
@@ -15,9 +13,6 @@ from common import \
 
 from collections import \
     OrderedDict
-
-from .version import \
-    get_vp
 
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
