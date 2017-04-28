@@ -23,9 +23,6 @@ from common import \
 from collections import \
     OrderedDict
 
-from .version import \
-    get_vp
-
 class PCIEDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
