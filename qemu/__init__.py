@@ -31,8 +31,7 @@ from .pci_ids import \
     PCIClassId, \
     PCIClassification
 
-from .sysbusdevice import \
-    SysBusDeviceType
+from .sysbusdevice import *
 
 from .pcie import \
     PCIEDeviceType

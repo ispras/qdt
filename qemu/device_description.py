@@ -2,8 +2,7 @@ from .qom_desc import \
     DescriptionOf, \
     QOMDescription
 
-from .sysbusdevice import \
-    SysBusDeviceType
+from .sysbusdevice import *
 
 from .pcie import \
     PCIEDeviceType
