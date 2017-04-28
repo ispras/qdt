@@ -16,6 +16,10 @@ from common import \
 from collections import \
     OrderedDict
 
+from .qom_desc import \
+    Describable
+
+@Describable
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),

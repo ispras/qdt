@@ -64,7 +64,6 @@ from .project import \
     QProject
 
 from .device_description import \
-    SysBusDeviceDescription, \
     PCIExpressDeviceDescription
 
 from .version import \
