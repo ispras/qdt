@@ -7,6 +7,9 @@ from inspect import \
 from collections import \
     OrderedDict
 
+from sys import \
+    modules
+
 class QOMDescription(object):
     def __init__(self):
         self.project = None
@@ -20,6 +23,36 @@ class QOMDescription(object):
 
     def remove_from_project(self):
         self.project.remove_description(self)
+
+"""
+GUI may edit only QOM templates which have the corresponding description
+wrapper. The 'Describable' decorator for QOM template class automatically
+creates and exports such wrapper.
+
+See
+http://stackoverflow.com/questions/15247075/how-can-i-dynamically-create-derived-classes-from-a-base-class
+about dynamic class creation
+
+This decorator is only compatible with __all__ list based module name export.
+"""
+def Describable(QOMTemplate):
+    desc_name = QOMTemplate.__name__.replace("Type", "Description")
+
+    tmp_class = type(desc_name, (QOMDescription,), {})
+    # decorate new description class
+    desc_class = DescriptionOf(QOMTemplate)(tmp_class)
+
+    # get module of the template
+    module = __all__ = modules[QOMTemplate.__module__]
+
+    # add the description class to same module as template
+    module.__dict__[desc_name] = desc_class
+
+    # export the description class
+    module.__all__.append(desc_name)
+
+    # The template is not actually changed.
+    return QOMTemplate
 
 """
 DescriptionOf decorator is used to extend a class to one that could be used

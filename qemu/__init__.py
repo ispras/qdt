@@ -56,6 +56,7 @@ from .machine_description import \
     MachineNode
 
 from .qom_desc import \
+    Describable, \
     DescriptionOf, \
     QOMDescription
 
