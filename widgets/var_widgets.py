@@ -47,6 +47,18 @@ class VarLabelFrame(LabelFrame):
 
 class VarLabel(Label):
     def __init__(self, *args, **kw):
+        # "textvariable" argument has same effect to VarLabel as "text"
+        try:
+            var = kw.pop("textvariable")
+        except KeyError:
+            pass
+        else:
+            if "text" in kw:
+                raise RuntimeError('"text" and "textvariable" '
+                    'arguments cannot be passed together to a VarLabel'
+                )
+            kw["text"] = var
+
         if "text" in kw:
             self.text_var = kw.pop("text")
             kw["text"] = self.text_var.get()
