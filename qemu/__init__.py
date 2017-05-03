@@ -63,9 +63,6 @@ from .qom_desc import \
 from .project import \
     QProject
 
-from .device_description import \
-    PCIExpressDeviceDescription
-
 from .version import \
     get_vp
 

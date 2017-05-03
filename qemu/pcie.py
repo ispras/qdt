@@ -25,6 +25,10 @@ from common import \
 from collections import \
     OrderedDict
 
+from .qom_desc import \
+    Describable
+
+@Describable
 class PCIExpressDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
