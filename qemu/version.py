@@ -485,7 +485,61 @@ def machine_register_2_5(mach):
     mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
 def machine_register_2_6(mach):
-    machine_register_2_5(mach)
+    # machine class definition function
+    mach.class_init = Function(
+        name = "machine_%s_class_init" % mach.qtn.for_id_name,
+        static = True,
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("ObjectClass").gen_var("oc", pointer = True),
+            Type.lookup("void").gen_var("opaque", pointer = True)
+        ],
+        body = """\
+    MachineClass *mc = MACHINE_CLASS(oc);
+
+    mc->desc = \"{desc}\";
+    mc->init = {instance_init};
+""".format(
+    desc = mach.desc,
+    instance_init = mach.instance_init.name
+        ),
+        used_types = [
+            Type.lookup("MachineClass"),
+            Type.lookup("MACHINE_CLASS"),
+            mach.instance_init
+        ]
+    )
+    mach.source.add_type(mach.class_init)
+
+    # machine type definition structure
+    type_machine_macro = Type.lookup("TYPE_MACHINE")
+    type_machine_type_name_macro = Type.lookup("MACHINE_TYPE_NAME")
+
+    mach.type_info = Type.lookup("TypeInfo").gen_var(
+        name = "machine_type_%s" % mach.qtn.for_id_name,
+        static = True,
+        initializer = Initializer({
+                "name" : type_machine_type_name_macro.gen_usage_string(
+                    Initializer({
+                        "machinename" : '"%s"' % mach.qtn.for_id_name
+                    })
+                ),
+                "parent" : type_machine_macro,
+                "class_init" : mach.class_init
+            },
+            used_types = [ type_machine_type_name_macro ]
+        )
+    )
+    mach.source.add_global_variable(mach.type_info)
+
+    # machine type registration function
+    mach.type_reg_func = mach.gen_register_types_fn(mach.type_info)
+    mach.source.add_type(mach.type_reg_func)
+
+    # Main machine registration macro
+    machine_init_def = Type.lookup("type_init").gen_var()
+    machine_init_def_args = Initializer({ "function": mach.type_reg_func })
+    mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
 qemu_heuristic_db = {
     u'0e6aac87fd0f5db2be57c36c03d67388577208a7' : [
