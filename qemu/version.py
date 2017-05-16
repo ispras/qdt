@@ -2,6 +2,7 @@ from hashlib import \
     md5
 
 from source import \
+    Initializer, \
     add_base_types, \
     Pointer, \
     Header,\
@@ -405,6 +406,85 @@ def define_msi_init_2_6_0():
             ]
         )
     )
+
+def machine_register_2_5(mach):
+    # machine class definition function
+    mach.class_init = Function(
+        name = "machine_%s_class_init" % mach.qtn.for_id_name,
+        static = True,
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("ObjectClass").gen_var("oc", pointer = True),
+            Type.lookup("void").gen_var("opaque", pointer = True)
+        ],
+        body = """\
+    MachineClass *mc = MACHINE_CLASS(oc);
+
+    mc->name = \"{type_name}\";
+    mc->desc = \"{desc}\";
+    mc->init = {instance_init};
+""".format(
+    type_name = mach.qtn.for_id_name,
+    desc = mach.desc,
+    instance_init = mach.instance_init.name
+        ),
+        used_types = [
+            Type.lookup("MachineClass"),
+            Type.lookup("MACHINE_CLASS"),
+            mach.instance_init
+        ]
+    )
+    mach.source.add_type(mach.class_init)
+
+    # machine type definition structure
+    type_machine_macro = Type.lookup("TYPE_MACHINE")
+    type_machine_suf_macro = Type.lookup("TYPE_MACHINE_SUFFIX")
+
+    mach.type_info = Type.lookup("TypeInfo").gen_var(
+        name = "machine_type_%s" % mach.qtn.for_id_name,
+        static = True,
+        initializer = Initializer(
+            code = """{{
+    .name = \"{id}\" {suf},
+    .parent = {parent},
+    .class_init = {class_init}
+}}""".format(
+    id = mach.qtn.for_id_name,
+    suf = type_machine_suf_macro.name,
+    parent = type_machine_macro.name,
+    class_init = mach.class_init.name
+            ),
+            used_types = [
+                type_machine_suf_macro,
+                type_machine_macro,
+                mach.class_init
+            ]
+        )
+    )
+    mach.source.add_global_variable(mach.type_info)
+
+    # machine type registration function
+    mach.type_reg_func = Function(
+        name = "machine_init_%s" % mach.qtn.for_id_name,
+        body = """\
+    type_register(&{type_info});
+""".format(
+    type_info = mach.type_info.name
+        ),
+        static = True,
+        used_types = [Type.lookup("type_register")],
+        used_globals = [mach.type_info]
+    )
+    mach.source.add_type(mach.type_reg_func)
+
+    # Main machine registration macro
+    def_type = get_vp()["machine initialization function register type name"]
+    machine_init_def = Type.lookup(def_type).gen_var()
+    machine_init_def_args = Initializer(
+        code = {"function": mach.type_reg_func.name},
+        used_types = [mach.type_reg_func]
+    )
+    mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
 qemu_heuristic_db = {
     u'82878dac6fcd16cb4fa47266bcd3dd03df436dae' : [
