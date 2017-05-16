@@ -450,17 +450,13 @@ def machine_register_2_5(mach):
     mach.type_info = Type.lookup("TypeInfo").gen_var(
         name = "machine_type_%s" % mach.qtn.for_id_name,
         static = True,
-        initializer = Initializer(
-            code = """{{
-    .name = \"{id}\" {suf},
-    .parent = {parent},
-    .class_init = {class_init}
-}}""".format(
-    id = mach.qtn.for_id_name,
-    suf = type_machine_suf_macro.name,
-    parent = type_machine_macro.name,
-    class_init = mach.class_init.name
-            ),
+        initializer = Initializer({
+                "name" : '"%s" %s' % (mach.qtn.for_id_name,
+                    type_machine_suf_macro.name
+                ),
+                "parent" : type_machine_macro,
+                "class_init" : mach.class_init
+            },
             used_types = [
                 type_machine_suf_macro,
                 type_machine_macro,
