@@ -1291,8 +1291,9 @@ class VariableDefinition(SourceChunk):
     def __init__(self, var, indent="", append_nl = True):
         init_code = ''
         if var.initializer is not None:
+            raw_code = var.type.gen_usage_string(var.initializer)
             # add indent to initializer code
-            init_code_lines = var.initializer.code.split('\n')
+            init_code_lines = raw_code.split('\n')
             init_code = " = " + init_code_lines[0]
             for line in init_code_lines[1:]:
                 init_code += "\n" + indent + line
