@@ -715,20 +715,9 @@ is not added to a source", self.name)
         fields_code = []
         for f in self.fields:
             try:
-                val = code[f.name]
+                val_str = init[f.name]
             except KeyError: # no initializer for this field
                 continue
-
-            # adjust initializer value
-            if isinstance(val, (string_types, text_type, binary_type)):
-                val_str = val
-            elif isinstance(val, Type):
-                val_str = val.name
-            else:
-                raise TypeError("Unsupported initializer type '%s' for field"
-                    " '%s' of structure '%s'" % (type(val).__name__, f.name,
-                    self.name
-                ))
             fields_code.append("    .%s = %s" % (f.name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
