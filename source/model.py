@@ -946,6 +946,21 @@ class Initializer():
             icv.visit()
             self.used_types.update(icv.used_types)
 
+    def __getitem__(self, key):
+        val = self.code[key]
+
+        # adjust initializer value
+        if isinstance(val, (string_types, text_type, binary_type)):
+            val_str = val
+        elif isinstance(val, Type):
+            val_str = val.name
+        else:
+            raise TypeError("Unsupported initializer entry type '%s'"
+                % type(val).__name__
+            )
+
+        return val_str
+
     __type_references__ = ["used_types", "used_variables"]
 
 class Variable():
