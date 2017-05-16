@@ -925,6 +925,8 @@ class Initializer():
         self.code = code
         self.used_types = set(used_types)
         self.used_variables = used_variables
+        if isinstance(code, dict):
+            self.__type_references__ = self.__type_references__ + ["code"]
 
     __type_references__ = ["used_types", "used_variables"]
 
