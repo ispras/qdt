@@ -472,5 +472,9 @@ def initialize_version(qvh_vp):
     for k in qvh_vp.keys():
         version_parameters[k] = qvh_vp[k]
 
-def get_vp():
-    return version_parameters
+def get_vp(heuristic_name = None):
+    if heuristic_name is None: # legacy behaviour
+        return version_parameters
+    else:
+        return version_parameters[heuristic_name]
+
