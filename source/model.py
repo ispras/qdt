@@ -874,13 +874,8 @@ class Macro(Type):
     def gen_usage_string(self, init = None):
         if self.args is None:
             return self.name
-        elif self.args:
-            arg_val = "(";
-            for a in self.args[:-1]:
-                arg_val += init.code[a] + ", "
-            arg_val += init.code[self.args[-1]] + ")"
         else:
-            arg_val = "()"
+            arg_val = "(" + ", ".join(init[a] for a in self.args) + ")"
 
         return "%s%s" % (self.name, arg_val)
 
