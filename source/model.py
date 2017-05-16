@@ -593,6 +593,11 @@ of incomplete type {}.".format(name, self.name))
         else:
             return self.gen_chunks()
 
+    def gen_usage_string(self, initializer):
+        # Usage string for an initializer is code of the initializer. It is
+        # legacy behaviour.
+        return initializer.code
+
     def __eq__(self, other):
         if isinstance(other, TypeReference):
             return other.type == self
