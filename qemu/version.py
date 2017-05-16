@@ -480,8 +480,7 @@ def machine_register_2_5(mach):
     def_type = get_vp()["machine initialization function register type name"]
     machine_init_def = Type.lookup(def_type).gen_var()
     machine_init_def_args = Initializer(
-        code = {"function": mach.type_reg_func.name},
-        used_types = [mach.type_reg_func]
+        code = { "function": mach.type_reg_func }
     )
     mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
