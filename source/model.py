@@ -919,6 +919,19 @@ class Macro(Type):
 
 # Data models
 
+class InitCodeVisitor(ObjectVisitor):
+    def __init__(self, code):
+        super(InitCodeVisitor, self).__init__(code,
+            field_name = "__type_references__"
+        )
+        self.used_types = set()
+
+    def on_visit(self):
+        cur = self.cur
+        if isinstance(cur, Type):
+            self.used_types.add(cur)
+            raise BreakVisiting()
+
 class Initializer():
     #code is string for variables and dictionary for macros
     def __init__(self, code, used_types = [], used_variables = []):
@@ -927,6 +940,11 @@ class Initializer():
         self.used_variables = used_variables
         if isinstance(code, dict):
             self.__type_references__ = self.__type_references__ + ["code"]
+
+            # automatically get types used in the code
+            icv = InitCodeVisitor(code)
+            icv.visit()
+            self.used_types.update(icv.used_types)
 
     __type_references__ = ["used_types", "used_variables"]
 
