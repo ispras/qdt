@@ -29,6 +29,9 @@ from common import \
 from itertools import \
     count
 
+from six import \
+    string_types, text_type, binary_type
+
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
 
@@ -696,6 +699,39 @@ is not added to a source", self.name)
 
     def gen_chunks(self):
         return StructureDeclaration.gen_chunks(self)
+
+    def gen_usage_string(self, init):
+        if init is None:
+            return "{ 0 };" # zero structure initializer by default
+
+        code = init.code
+        if not isinstance(code, dict):
+            # Support for legacy initializers
+            return code
+
+        # Use entries of given dict to initialize fields. Field name is used
+        # as entry key.
+
+        fields_code = []
+        for f in self.fields:
+            try:
+                val = code[f.name]
+            except KeyError: # no initializer for this field
+                continue
+
+            # adjust initializer value
+            if isinstance(val, (string_types, text_type, binary_type)):
+                val_str = val
+            elif isinstance(val, Type):
+                val_str = val.name
+            else:
+                raise TypeError("Unsupported initializer type '%s' for field"
+                    " '%s' of structure '%s'" % (type(val).__name__, f.name,
+                    self.name
+                ))
+            fields_code.append("    .%s = %s" % (f.name, val_str))
+
+        return "{\n" + ",\n".join(fields_code) + "\n}";
 
     __type_references__ = ["fields"]
 
