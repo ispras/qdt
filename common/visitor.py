@@ -100,19 +100,20 @@ traversing is skipped using BreakVisiting exception (including replacement).
         self.path.pop()
         self.cur = self.path[-1][0]
 
-    def __visit_fields__(self):
+    def __visit_fields__(self, obj):
         try:
-            visitable_list = getattr(self.cur, self.field_name)
+            visitable_list = getattr(obj, self.field_name)
         except AttributeError:
             pass
         else:
             for attribute_name in visitable_list:
-                attr = getattr(self.cur, attribute_name)
+                attr = getattr(obj, attribute_name)
                 self.__push__(attr, attribute_name)
                 self.__visit__(attr)
                 self.__pop__()
 
-    visit = __visit_fields__
+    def visit(self):
+        self.__visit_fields__(self.cur)
 
     def __visit__(self, attr):
         if isinstance(attr, list):
@@ -127,7 +128,7 @@ traversing is skipped using BreakVisiting exception (including replacement).
             except BreakVisiting:
                 return
 
-            self.__visit_fields__()
+            self.__visit_fields__(attr)
         else:
             raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
 type '%s is not implemented" % (self.path[-1][1], type(attr).name)
