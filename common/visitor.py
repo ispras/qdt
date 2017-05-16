@@ -116,6 +116,11 @@ traversing is skipped using BreakVisiting exception (including replacement).
         self.__visit_fields__(self.cur)
 
     def __visit__(self, attr):
+        try:
+            self.on_visit()
+        except BreakVisiting:
+            return
+
         if isinstance(attr, list):
             self.__visit_list__(attr)
         elif isinstance(attr, dict):
@@ -123,11 +128,6 @@ traversing is skipped using BreakVisiting exception (including replacement).
         elif isinstance(attr, set):
             self.__visit_set__(attr)
         elif isinstance(attr, object):
-            try:
-                self.on_visit()
-            except BreakVisiting:
-                return
-
             self.__visit_fields__(attr)
         else:
             raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
