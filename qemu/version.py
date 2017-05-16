@@ -457,11 +457,7 @@ def machine_register_2_5(mach):
                 "parent" : type_machine_macro,
                 "class_init" : mach.class_init
             },
-            used_types = [
-                type_machine_suf_macro,
-                type_machine_macro,
-                mach.class_init
-            ]
+            used_types = [ type_machine_suf_macro ]
         )
     )
     mach.source.add_global_variable(mach.type_info)
