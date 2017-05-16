@@ -129,7 +129,7 @@ traversing is skipped using BreakVisiting exception (including replacement).
         elif isinstance(attr, set):
             self.__visit_set_attribute__(attr)
         elif isinstance(attr, object):
-            self.__visit_object_attribute__(attr)
+            self.__visit_current__()
         else:
             raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
 type '%s is not implemented" % (attribute_name, type(attr).name)
@@ -141,9 +141,6 @@ type '%s is not implemented" % (attribute_name, type(attr).name)
             self.__push__(e, None) # objects in a set are not named.
             self.__visit_current__()
             self.__pop__()
-
-    def __visit_object_attribute__(self, attr):
-        self.__visit_current__()
 
     def __visit_list_attribute__(self, attr):
         for i, e in enumerate(attr):
