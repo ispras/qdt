@@ -4,7 +4,7 @@ class BreakVisiting(Exception):
 class VisitingIsNotImplemented(Exception):
     pass
 
-class ObjectVisitor():
+class ObjectVisitor(object):
     """
     The class defines common interface to traverse an object tree.
 
