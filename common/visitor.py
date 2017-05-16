@@ -113,7 +113,7 @@ traversing is skipped using BreakVisiting exception (including replacement).
                 self.__pop__()
 
     def visit(self):
-        self.__visit_fields__(self.cur)
+        self.__visit_items__(self.cur)
 
     def __visit_items__(self, attr):
         if isinstance(attr, list):
