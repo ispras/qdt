@@ -139,17 +139,17 @@ type '%s is not implemented" % (self.path[-1][1], type(attr).name)
     def __visit_set__(self, attr):
         for e in attr:
             self.__push__(e, None) # objects in a set are not named.
-            self.__visit_current__()
+            self.__visit__(e)
             self.__pop__()
 
     def __visit_list__(self, attr):
         for i, e in enumerate(attr):
             self.__push__(e, i)
-            self.__visit_current__()
+            self.__visit__(e)
             self.__pop__()
 
     def __visit_dictionary__(self, attr):
         for k, e in attr.items():
             self.__push__(e, k)
-            self.__visit_current__()
+            self.__visit__(e)
             self.__pop__()
