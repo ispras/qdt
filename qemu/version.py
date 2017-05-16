@@ -486,6 +486,9 @@ def machine_register_2_5(mach):
     )
     mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
+def machine_register_2_6(mach):
+    machine_register_2_5(mach)
+
 qemu_heuristic_db = {
     u'82878dac6fcd16cb4fa47266bcd3dd03df436dae' : [
         # It is the last commit in the series significantly changing char API.
