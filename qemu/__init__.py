@@ -31,11 +31,9 @@ from .pci_ids import \
     PCIClassId, \
     PCIClassification
 
-from .sysbusdevice import \
-    SysBusDeviceType
+from .sysbusdevice import *
 
-from .pcie import \
-    PCIEDeviceType
+from .pcie import *
 
 from .qom import \
     QOMPropertyType, \
@@ -58,15 +56,12 @@ from .machine_description import \
     MachineNode
 
 from .qom_desc import \
+    Describable, \
     DescriptionOf, \
     QOMDescription
 
 from .project import \
     QProject
-
-from .device_description import \
-    SysBusDeviceDescription, \
-    PCIExpressDeviceDescription
 
 from .version import \
     get_vp

@@ -1,13 +1,13 @@
+__all__ = [ "SysBusDeviceType" ]
+
 from .qom import \
     QOMDevice, \
     QOMType
 
 from source import \
     Macro, \
-    Source, \
     Initializer, \
     Function, \
-    Pointer, \
     Type
 
 from common import \
@@ -16,6 +16,10 @@ from common import \
 from collections import \
     OrderedDict
 
+from .qom_desc import \
+    Describable
+
+@Describable
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),
@@ -105,78 +109,22 @@ class SysBusDeviceType(QOMDevice):
 
         self.source.add_type(self.device_reset) 
 
-        s_is_used = False
-        realize_code = ""
-        realize_used_types = set([self.state_struct])
-
-        if self.char_num > 0:
-            realize_used_types.add(Type.lookup("qemu_chr_add_handlers"))
-            realize_code += "\n"
-            s_is_used = True
-
-            for chrN in range(self.char_num):
-                chr_name = self.char_name(chrN)
-                har_handlers = self.char_gen_handlers(chrN, self.source,
-                    self.state_struct, self.type_cast_macro
-                )
-                realize_code += """\
-    if (s->{chr_name}) {{
-        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
-    }}
-""".format(
-    chr_name = chr_name,
-    helpers = ", ".join([h.name for h in har_handlers])
-                )
-                realize_used_types.update(har_handlers)
-
-        if self.block_num > 0:
-            realize_code += "\n"
-            s_is_used = True
-            # actually not, but user probably needed functions from same header
-            realize_used_types.add(Type.lookup("BlockDevOps"))
-
-            for blkN in range(self.block_num):
-                blk_name = self.block_name(blkN)
-                realize_code += """\
-    if (s->%s) {
-        /* TODO: Implement interaction with block driver. */
-    }
-""" % (blk_name
-                )
-
-        self.device_realize = Function(
-            name = "%s_realize" % self.qtn.for_id_name,
-            body = """\
-    {unused}{Struct} *s = {UPPER}(dev);{extra_code}
-""".format(
-        unused = "" if s_is_used else "__attribute__((unused)) ",
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        extra_code = realize_code
-        ),
-            args = [
-                Type.lookup("DeviceState").gen_var("dev", True),
-                Pointer(Type.lookup("Error")).gen_var("errp", True)
-                ],
-            static = True,
-            used_types = realize_used_types
-            )
+        self.device_realize = self.gen_realize("DeviceState")
         self.source.add_type(self.device_realize)
 
         s_is_used = False
         instance_init_code = ''
-        instance_init_used_types = []
+        instance_init_used_types = set()
         instance_init_used_globals = []
 
         mmio_def_size = 0x100
 
         if self.mmio_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("sysbus_init_mmio"),
                 Type.lookup("memory_region_init_io"),
                 Type.lookup("Object")
-                ]
-            )
+            ])
 
         for mmioN in range(0, self.mmio_num):
             size_macro = Macro(
@@ -184,7 +132,7 @@ class SysBusDeviceType(QOMDevice):
                 text = "0x%X" % mmio_def_size)
 
             self.header.add_type(size_macro)
-            instance_init_used_types.append(size_macro)
+            instance_init_used_types.add(size_macro)
 
             component = self.get_Ith_mmio_id_component(mmioN)
 
@@ -238,13 +186,12 @@ class SysBusDeviceType(QOMDevice):
         pio_cur_addres = 0x1000
 
         if self.pio_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("sysbus_add_io"),
                 Type.lookup("memory_region_init_io"),
                 Type.lookup("Object"),
                 Type.lookup("sysbus_init_ioports")
-                ]
-            )
+            ])
 
         for pioN in range(0, self.pio_num):
             size_macro = Macro(
@@ -256,7 +203,7 @@ class SysBusDeviceType(QOMDevice):
             pio_cur_addres += pio_def_size
 
             self.header.add_types([size_macro, address_macro])
-            instance_init_used_types.extend([size_macro, address_macro])
+            instance_init_used_types.update([size_macro, address_macro])
 
             component = self.get_Ith_pio_id_component(pioN)
 
@@ -309,10 +256,10 @@ class SysBusDeviceType(QOMDevice):
             s_is_used = True
 
         if self.out_irq_num > 0:
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 Type.lookup("qemu_irq"),
                 Type.lookup("sysbus_init_irq")
-                ])
+            ])
 
             instance_init_code += "\n"
 
@@ -352,32 +299,12 @@ use_as_prototype(
     irqs = in_irq_macro.name
 )
 
-            instance_init_used_types.extend([
+            instance_init_used_types.update([
                 self.irq_handler,
                 in_irq_macro,
                 Type.lookup("qdev_init_gpio_in"),
                 Type.lookup("DEVICE")
-                ])
-
-        if self.timer_num > 0:
-            instance_init_used_types.extend([
-                Type.lookup("QEMU_CLOCK_VIRTUAL"),
-                Type.lookup("timer_new_ns")
             ])
-            s_is_used = True
-            instance_init_code += "\n"
-
-            for timerN in range(self.timer_num):
-                cb = self.timer_gen_cb(timerN, self.source, self.state_struct,
-                    self.type_cast_macro
-                )
-
-                instance_init_used_types.append(cb)
-
-                instance_init_code += """\
-    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
-""" % (self.timer_name(timerN), cb.name,
-                )
 
         self.instance_init = self.gen_instance_init_fn(self.state_struct,
             code = instance_init_code,

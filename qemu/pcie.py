@@ -1,3 +1,5 @@
+__all__ = [ "PCIExpressDeviceType" ]
+
 from source import \
     Pointer, \
     Type, \
@@ -23,7 +25,11 @@ from common import \
 from collections import \
     OrderedDict
 
-class PCIEDeviceType(QOMDevice):
+from .qom_desc import \
+    Describable
+
+@Describable
+class PCIExpressDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
         ("device", { "short": _("Device"), "input" : PCIId }),
@@ -53,7 +59,7 @@ class PCIEDeviceType(QOMDevice):
         subsys_vendor = None,
         **qomd_kw
     ):
-        super(PCIEDeviceType, self).__init__(name, directory, **qomd_kw)
+        super(PCIExpressDeviceType, self).__init__(name, directory, **qomd_kw)
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
@@ -186,7 +192,7 @@ corresponding vendor is given" % attr
         self.pci_class_macro = self.pci_class.find_macro()
 
         realize_code = ''
-        realize_used_types = []
+        realize_used_types = set()
         realize_used_globals = []
         s_is_used = False
 
@@ -194,12 +200,11 @@ corresponding vendor is given" % attr
 
         if self.mem_bar_num > 0:
             s_is_used = True
-            realize_used_types.extend([
+            realize_used_types.update([
                 Type.lookup("sysbus_init_mmio"),
                 Type.lookup("memory_region_init_io"),
                 Type.lookup("Object")
-                ]
-            )
+            ])
 
         for barN in range(0, self.mem_bar_num):
             size_macro = Macro(
@@ -207,7 +212,7 @@ corresponding vendor is given" % attr
                 text = "0x%X" % mem_bar_def_size)
 
             self.header.add_type(size_macro)
-            realize_used_types.append(size_macro)
+            realize_used_types.add(size_macro)
 
             component = self.get_Ith_mem_bar_id_component(barN)
 
@@ -292,66 +297,15 @@ corresponding vendor is given" % attr
                    == Pointer(Pointer(Type.lookup("Error"))) else ""
             )
 
-            realize_used_types.extend(msi_types)
-            realize_used_types.append(msi_init_type)
+            realize_used_types.update(msi_types)
+            realize_used_types.add(msi_init_type)
 
-        realize_used_types.append(self.state_struct)
-
-        if self.char_num > 0:
-            realize_used_types.extend([
-                Type.lookup("qemu_chr_add_handlers")
-            ])
-            realize_code += "\n"
-            s_is_used = True
-
-            for chrN in range(self.char_num):
-                chr_name = self.char_name(chrN)
-                har_handlers = self.char_gen_handlers(chrN, self.source,
-                    self.state_struct, self.type_cast_macro
-                )
-                realize_code += """\
-    if (s->{chr_name}) {{
-        qemu_chr_add_handlers(s->{chr_name}, {helpers}, s);
-    }}
-""".format(
-    chr_name = chr_name,
-    helpers = ", ".join([h.name for h in har_handlers])
-                )
-                realize_used_types.extend(har_handlers)
-
-        if self.block_num > 0:
-            realize_code += "\n"
-            s_is_used = True
-            # actually not, but user probably needed functions from same header
-            realize_used_types.append(Type.lookup("BlockDevOps"))
-
-            for blkN in range(self.block_num):
-                blk_name = self.block_name(blkN)
-                realize_code += """\
-    if (s->%s) {
-        /* TODO: Implement interaction with block driver. */
-    }
-""" % (blk_name
-                )
-
-        self.device_realize = Function(
-            name = "%s_realize" % self.qtn.for_id_name,
-            body = """\
-    {unused}{Struct} *s = {UPPER}(dev);
-{extra_code}\
-""".format(
-        unused = "" if s_is_used else "__attribute__((unused)) ",
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        extra_code = realize_code
-    ),
-            args = [
-                Type.lookup("PCIDevice").gen_var("dev", pointer = True),
-                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)],
-            static = True,
+        self.device_realize = self.gen_realize("PCIDevice",
+            code = realize_code,
+            s_is_used = s_is_used,
             used_types = realize_used_types,
             used_globals = realize_used_globals
-            )
+        )
         self.source.add_type(self.device_realize)
 
         exit_code = ""
@@ -435,29 +389,9 @@ Type.lookup("void").gen_var("opaque", True),
             )
         self.source.add_type(self.class_init)
 
-        instance_init_used_types = []
+        instance_init_used_types = set()
         instance_init_code = ""
         s_is_used = False
-
-        if self.timer_num > 0:
-            instance_init_used_types.extend([
-                Type.lookup("QEMU_CLOCK_VIRTUAL"),
-                Type.lookup("timer_new_ns")
-            ])
-            s_is_used = True
-            instance_init_code += "\n"
-
-            for timerN in range(self.timer_num):
-                cb = self.timer_gen_cb(timerN, self.source, self.state_struct,
-                    self.type_cast_macro
-                )
-
-                instance_init_used_types.append(cb)
-
-                instance_init_code += """\
-    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
-""" % (self.timer_name(timerN), cb.name,
-                )
 
         self.instance_init = self.gen_instance_init_fn(self.state_struct,
             code = instance_init_code,

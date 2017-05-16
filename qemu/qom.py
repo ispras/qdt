@@ -21,6 +21,9 @@ from common import \
 from collections import \
     OrderedDict
 
+from .version import \
+    get_vp
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -154,7 +157,12 @@ type2prop = {
     "BlockBackend*" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_DRIVE", state_struct
     ),
+    # before QEMU 2.7
     "CharDriverState*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_CHR", state_struct
+    ),
+    # after QEMU 2.8
+    "CharBackend" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_CHR", state_struct
     ),
     "bool" : lambda field, state_struct: gen_prop_declaration(field,
@@ -401,6 +409,29 @@ class QOMType(object):
     ):
         type_cast_macro = Type.lookup(self.qtn.for_macros)
 
+        total_used_types = set([state_struct, type_cast_macro])
+        total_used_types.update(used_types)
+
+        if self.timer_num > 0:
+            total_used_types.update([
+                Type.lookup("QEMU_CLOCK_VIRTUAL"),
+                Type.lookup("timer_new_ns")
+            ])
+            s_is_used = True
+            code += "\n"
+
+            for timerN in range(self.timer_num):
+                cb = self.timer_gen_cb(timerN, self.source, state_struct,
+                    self.type_cast_macro
+                )
+
+                total_used_types.add(cb)
+
+                code += """\
+    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+""" % (self.timer_name(timerN), cb.name,
+                )
+
         fn = Function(
             name = self.gen_instance_init_name(),
             body = """\
@@ -416,7 +447,7 @@ class QOMType(object):
             args = [
                 Type.lookup("Object").gen_var("obj", pointer = True)
             ],
-            used_types = [state_struct, type_cast_macro] + used_types,
+            used_types = total_used_types,
             used_globals = used_globals
         )
 
@@ -629,9 +660,13 @@ class QOMDevice(QOMType):
         return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
 
     def char_declare_fields(self):
+        field_type = (Type.lookup("CharBackend") if get_vp()["v2.8 chardev"]
+            else Pointer(Type.lookup("CharDriverState"))
+        )
+
         for index in range(self.char_num):
             self.add_state_field(QOMStateField(
-                Pointer(Type.lookup("CharDriverState")), self.char_name(index),
+                field_type, self.char_name(index),
                 save = False,
                 prop = True
             ))
@@ -695,3 +730,81 @@ class QOMDevice(QOMType):
         )
         source.add_type(timer_cb)
         return timer_cb
+
+    # 'realize' method generation
+    def gen_realize(self, dev_type_name,
+        code = "",
+        s_is_used = False,
+        used_types = [],
+        used_globals = []
+    ):
+        total_used_types = set([self.state_struct, self.type_cast_macro])
+        total_used_types.update(used_types)
+
+        if self.char_num > 0:
+            if get_vp()["v2.8 chardev"]:
+                helper_name = "qemu_chr_fe_set_handlers"
+                char_name_fmt = "&s->%s"
+                extra_args = ", NULL, true"
+            else:
+                helper_name = "qemu_chr_add_handlers"
+                char_name_fmt = "s->%s"
+                extra_args = ""
+
+            total_used_types.add(Type.lookup(helper_name))
+            code += "\n"
+            s_is_used = True
+
+            for chrN in range(self.char_num):
+                chr_name = self.char_name(chrN)
+                har_handlers = self.char_gen_handlers(chrN, self.source,
+                    self.state_struct, self.type_cast_macro
+                )
+                code += """\
+    if ({chr_name}) {{
+        {helper_name}({chr_name}, {helpers}, s{extra_args});
+    }}
+""".format(
+    helper_name = helper_name,
+    chr_name = char_name_fmt % chr_name,
+    helpers = ", ".join([h.name for h in har_handlers]),
+    extra_args = extra_args
+                )
+                total_used_types.update(har_handlers)
+
+        if self.block_num > 0:
+            code += "\n"
+            s_is_used = True
+            # actually not, but user probably needed functions from same header
+            total_used_types.add(Type.lookup("BlockDevOps"))
+
+            for blkN in range(self.block_num):
+                blk_name = self.block_name(blkN)
+                code += """\
+    if (s->%s) {
+        /* TODO: Implement interaction with block driver. */
+    }
+""" % (blk_name
+                )
+
+        fn = Function(
+            name = "%s_realize" % self.qtn.for_id_name,
+            body = """\
+    {unused}{Struct} *s = {UPPER}(dev);
+{extra_code}\
+""".format(
+        unused = "" if s_is_used else "__attribute__((unused)) ",
+        Struct = self.state_struct.name,
+        UPPER = self.type_cast_macro.name,
+        extra_code = code
+            ),
+            args = [
+                Type.lookup(dev_type_name).gen_var("dev", pointer = True),
+                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
+            ],
+            static = True,
+            used_types = total_used_types,
+            used_globals = used_globals
+        )
+
+        return fn

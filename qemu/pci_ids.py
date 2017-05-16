@@ -44,6 +44,9 @@ class PCIId(object):
     def __children__(self):
         return []
 
+    def __str__(self):
+        return '"%s"' % self.id
+
 class PCIVendorId (PCIId):
     def __init__(self, vendor_name, vendor_id):
         if vendor_name in PCIId.db.vendors.keys():
