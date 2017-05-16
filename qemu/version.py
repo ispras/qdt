@@ -490,6 +490,15 @@ def machine_register_2_6(mach):
     machine_register_2_5(mach)
 
 qemu_heuristic_db = {
+    u'0e6aac87fd0f5db2be57c36c03d67388577208a7' : [
+        # It is actually last commit touching the way of machine registration.
+        # There is no reason to make more fine grained history decomposition.
+        QEMUVersionParameterDescription(
+            "machine type register template generator",
+            new_value = machine_register_2_6,
+            old_value = machine_register_2_5
+        )
+    ],
     u'82878dac6fcd16cb4fa47266bcd3dd03df436dae' : [
         # It is the last commit in the series significantly changing char API.
         QEMUVersionParameterDescription("v2.8 chardev",
