@@ -77,7 +77,14 @@ def define_only_qemu_2_6_0_types():
     Header.lookup("qom/object.h").add_types([
         Type("ObjectClass", False),
         Type("Object", False),
-        Type("TypeInfo", False),
+        Structure("TypeInfo",
+            fields = [
+                # These are required fields only
+                Pointer(Type.lookup("const char")).gen_var("name"),
+                Pointer(Type.lookup("const char")).gen_var("parent"),
+                Pointer(Type.lookup("void")).gen_var("class_init")
+            ]
+        ),
         Type("Type", False),
         Type("TypeImpl", False),
         Function(name = "type_register_static",
