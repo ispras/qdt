@@ -99,6 +99,7 @@ def define_only_qemu_2_6_0_types():
                 Type.lookup("TypeInfo").gen_var("info", pointer = True)
             ]
         ),
+        Function("object_get_typename"),
         Function("object_property_set_str"),
         Function("object_property_set_link"),
         Function("object_property_set_bool"),
@@ -373,6 +374,59 @@ def define_only_qemu_2_6_0_types():
             Type.lookup("IsaDmaTransferHandler"),
             Type.lookup("MemoryRegion")
         ])
+
+    Header.lookup("net/net.h").add_types([
+        Type("qemu_macaddr_default_if_unset"),
+        Type("qemu_format_nic_info_str"),
+        Type("qemu_new_nic"),
+        Type("qemu_del_nic"),
+        Type("qemu_get_queue"),
+        Structure("NICConf"),
+        Type("NICState"),
+        Type("NetClientState"),
+        Function("NetCanReceive",
+            ret_type = Type.lookup("int"),
+            args = [
+                Pointer(Type.lookup("NetClientState")).gen_var("nc")
+            ]
+        ),
+        Function("NetReceive",
+            ret_type = Type.lookup("ssize_t"),
+            args = [
+                Pointer(Type.lookup("NetClientState")).gen_var("nc"),
+                Pointer(Type.lookup("const uint8_t")).gen_var("buf"),
+                Type.lookup("size_t").gen_var("size")
+            ]
+        ),
+        Function("LinkStatusChanged",
+            args = [
+                Pointer(Type.lookup("NetClientState")).gen_var("nc")
+            ]
+        ),
+        Function("NetCleanup",
+            args = [
+                Pointer(Type.lookup("NetClientState")).gen_var("nc")
+            ]
+        ),
+        Structure("NetClientInfo",
+            fields = [
+                # "type" field type is enum NetClientDriver, but enum is not
+                # supported by model
+                Type.lookup("int").gen_var("type"),
+                Type.lookup("size_t").gen_var("size"),
+                Type.lookup("NetReceive").gen_var("receive"),
+                Type.lookup("NetCanReceive").gen_var("can_receive"),
+                Type.lookup("NetCleanup").gen_var("cleanup"),
+                Type.lookup("LinkStatusChanged").gen_var("link_status_changed")
+                # There are other fields but they are not needed.
+            ]
+        ),
+        Macro("NET_CLIENT_DRIVER_NIC") # This is an enum item actually. It
+        # is defined in auto generated "qapi-types.h" which is not presented in
+        # registry but is included by "net.h" indirectly.
+    ]).add_references([
+        osdep_fake_type
+    ])
 
 def define_qemu_2_6_5_types():
     add_base_types()
