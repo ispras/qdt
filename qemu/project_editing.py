@@ -277,8 +277,6 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
 
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, desc_name, *args, **kw):
-        if not "directory" in kw:
-            kw["directory"] = ""
         kw["name"] = desc_name
 
         QemuObjectCreationHelper.__init__(self, arg_name_prefix = "desc_")
