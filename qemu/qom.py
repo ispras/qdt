@@ -251,6 +251,8 @@ class QOMType(object):
         for field in self.state_fields:
             if not field.prop:
                 continue
+            if field.prop_macro_name is None:
+                continue
 
             t = Macro(field.prop_macro_name, text = field.prop_name)
             source.add_type(t)
