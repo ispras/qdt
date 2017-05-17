@@ -95,18 +95,19 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     default_default = None
 ):
     decl_macro = Type.lookup(decl_macro_name)
-    name_macro = Type.lookup(field.prop_macro_name)
     used_types = set([decl_macro])
     bool_true = Type.lookup("true")
     bool_false = Type.lookup("false")
 
     init_code = {
         "_f" : field.name,
-        "_n" : name_macro,
         "_s" : state_struct,
     }
 
-    init_code["_name"] = init_code["_n"]
+    if field.prop_macro_name is not None:
+        init_code["_n"] = Type.lookup(field.prop_macro_name)
+        init_code["_name"] = init_code["_n"]
+
     init_code["_state"] = init_code["_s"]
     init_code["_field"] = init_code["_f"]
 
