@@ -20,6 +20,7 @@ def add_base_types():
         , Type(name = "uint32_t", incomplete = False, base = False)
         , Type(name = "uint16_t", incomplete = False, base = False)
         , Type(name = "uint8_t", incomplete = False, base = False)
+        , Type(name = "const uint8_t", incomplete = False, base = False)
         , Type(name = "uintptr_t", incomplete = False, base = False)
         , Type(name = "int64_t", incomplete = False, base = False)
         , Type(name = "int32_t", incomplete = False, base = False)
@@ -53,6 +54,7 @@ def add_base_types():
         h = Header("stdio.h", is_global=True)
 
     h.add_types([
+        Type("ssize_t", incomplete = False, base = False),
         Function("printf")
         ])
 
