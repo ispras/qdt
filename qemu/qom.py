@@ -110,6 +110,10 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     init_code["_state"] = init_code["_s"]
     init_code["_field"] = init_code["_f"]
 
+    # _conf is name of argument of macro DEFINE_NIC_PROPERTIES that
+    # corresponds to structure filed name
+    init_code["_conf"] = init_code["_f"]
+
     if default_default is not None:
         if field.default is None:
             val = default_default
@@ -149,6 +153,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "NICConf" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_NIC_PROPERTIES", state_struct
+    ),
     "BlockBackend*" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_DRIVE", state_struct
     ),
