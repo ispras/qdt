@@ -280,7 +280,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
             kw["directory"] = ""
         kw["name"] = desc_name
 
-        QemuObjectCreationHelper.__init__(self, "desc_")
+        QemuObjectCreationHelper.__init__(self, arg_name_prefix = "desc_")
         self.nc = desc_class_name
         self.pop_args_from_dict(kw)
         ProjectOperation.__init__(self, *args, **kw)
