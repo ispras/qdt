@@ -157,6 +157,7 @@ string searching during each AddDescriptionDialog creation. """
             directory = "pci"
 
         self.pht.stage(POp_AddDesc, class_name, cur_name,
+            name = cur_name,
             directory = directory
         )
         self.pht.commit(
