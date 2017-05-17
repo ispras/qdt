@@ -2,6 +2,8 @@ from .gui_frame import \
     GUIFrame
 
 from six.moves.tkinter import \
+    Checkbutton, \
+    BooleanVar, \
     BOTH, \
     StringVar
 
@@ -97,6 +99,9 @@ during refresh.     """
                     w.grid()
                     w.rowconfigure(0, weight = 1)
                     w.columnconfigure(0, weight = 1)
+                elif _input is bool:
+                    v = BooleanVar()
+                    w = Checkbutton(f, variable = v)
                 else:
                     raise RuntimeError("Input of QOM template attribute %s of"
                         " type %s is not supported" % (attr, _input.__name__)
