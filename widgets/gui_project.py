@@ -13,6 +13,9 @@ from itertools import \
 
 class GUIProject(QProject):
     def __init__(self, layouts = [], build_path = None, **kw):
+        # Any description in GUI project has a serial number.
+        self.__count = count(0)
+
         QProject.__init__(self, **kw)
 
         self.build_path = build_path
@@ -118,3 +121,18 @@ exists." % (l.lid, l.desc_name)
         gen.pop_indent()
         gen.write("]")
         gen.gen_end()
+
+    def add_description(self, desc, with_sn = None):
+        if hasattr(desc, "__sn__"):
+            raise RuntimeError("The description has a serial number already")
+
+        if with_sn is None:
+            with_sn = next(self.__count)
+
+        desc.__sn__ = with_sn
+
+        QProject.add_description(self, desc)
+
+    def remove_description(self, desc):
+        QProject.remove_description(self, desc)
+        del desc.__sn__
