@@ -597,6 +597,7 @@ class QOMDevice(QOMType):
     ])
 
     def __init__(self, name, directory,
+            nic_num = 0,
             timer_num = 0,
             char_num = 0,
             block_num = 0,
@@ -605,6 +606,7 @@ class QOMDevice(QOMType):
         super(QOMDevice, self).__init__(name, **qom_kw)
 
         self.directory = directory
+        self.nic_num = nic_num
         self.timer_num = timer_num
         self.char_num = char_num
         self.block_num = block_num
@@ -815,3 +817,75 @@ class QOMDevice(QOMType):
         )
 
         return fn
+
+    # NICs
+
+    def nic_name(self, index):
+        if self.nic_num == 1:
+            return "nic"
+        else:
+            return "nic_%u" % index
+
+    def nic_conf_name(self, index):
+        return self.nic_name(index) + "_conf"
+
+    def net_client_info_name(self, index):
+        return self.qtn.for_id_name + "_" + self.nic_name(index) + "_info"
+
+    def nic_helper_name(self, helper, index):
+        return "%s_%s_%s" % (
+            self.qtn.for_id_name, self.nic_name(index), helper
+        )
+
+    def nic_declare_field(self, index):
+        self.add_state_field(
+            QOMStateField(
+                Pointer(Type.lookup("NICState")), self.nic_name(index),
+                save = False
+            )
+        )
+        f = QOMStateField(
+            Type.lookup("NICConf"), self.nic_conf_name(index),
+            save = False,
+            prop = True
+        )
+        self.add_state_field(f)
+        # NIC properties have standard names
+        f.prop_macro_name = None
+
+    def nic_declare_fields(self):
+        for i in range(self.nic_num):
+            self.nic_declare_field(i)
+
+    def gen_nic_helper(self, helper, cbtn, index):
+        cbt = Type.lookup(cbtn)
+        return cbt.use_as_prototype(
+            self.nic_helper_name(helper, index),
+            body = "    return 0;\n" if cbt.ret_type.name != "void" else "",
+            static = True,
+            used_types = [ Type.lookup(self.struct_name) ]
+        )
+
+    def gen_net_client_info(self, index):
+        code = {}
+        for helper_name, cbtn in [
+            ("can_receive", "NetCanReceive"),
+            ("receive", "NetReceive"),
+            ("link_status_changed", "LinkStatusChanged"),
+            ("cleanup", "NetCleanup")
+        ]:
+            helper = self.gen_nic_helper(helper_name, cbtn, index)
+            self.source.add_type(helper)
+            code[helper_name] = helper
+
+        code["type"] = Type.lookup("NET_CLIENT_DRIVER_NIC")
+        types = set([Type.lookup("NICState")] + list(code.values()))
+        code["size"] = "sizeof(NICState)"
+
+        init = Initializer(code, used_types = types)
+
+        return Type.lookup("NetClientInfo").gen_var(
+            self.net_client_info_name(index),
+            initializer = init,
+            static = True
+        )
