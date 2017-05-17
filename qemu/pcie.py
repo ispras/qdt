@@ -138,6 +138,8 @@ corresponding vendor is given" % attr
 
         self.block_declare_fields()
 
+        self.nic_declare_fields()
+
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
@@ -317,6 +319,17 @@ corresponding vendor is given" % attr
     msi_uninit(dev);
 """
             exit_used_types.append(Type.lookup("msi_uninit"))
+
+        if self.nic_num > 0:
+            exit_code += "\n"
+            exit_used_s = True
+
+            del_nic = Type.lookup("qemu_del_nic")
+            exit_used_types.append(del_nic)
+
+            for nicN in xrange(self.nic_num):
+                nic_name = self.nic_name(nicN)
+                exit_code += "    %s(s->%s);\n" % (del_nic.name, nic_name)
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
