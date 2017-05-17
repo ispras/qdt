@@ -50,10 +50,9 @@ def basic_import_helper(val, helper):
 class QemuObjectCreationHelper(object):
     """ The class helps implement Qemu model object creation operations. It
     automates handling of arguments for __init__ method of created objects.
-    The helper class __init__ method gets lists of handled class __init__
-    arguments. Then it moves them from kw dictionary to self. They are stored
-    within tuples
-    as attributes of the helper class instance. Names of the attributes are
+    The class provides helpers to get handled class __init__ argument lists.
+    Arguments are stored as attributes of the helper class instance. Each
+    argument is represented by a tuple. Names of those tuples are
     built using user defined prefix and names of corresponding handled class
     __init__ arguments. The 'new' method of the helper class creates object of
     handled class with this arguments.
@@ -61,13 +60,15 @@ class QemuObjectCreationHelper(object):
     Supported argument value types are:
         bool
         int
-        long
+        long (Py2 only)
         str
-        unicode
+        basestring (Py2 only)
+        unicode (Py2 only)
+        bytes (Py3 only)
     None values are imported too.
 
     Argument describing tuple consists of:
-        0: original argument value tuple
+        0: type of original argument value
         1: an internal value that codes original one
     For supported types the internal value is just copy of original one.
 
