@@ -105,9 +105,7 @@ slot of the tuple) is not restricted.
     for basic_type in basic_types:
         value_import_helpers[basic_type] = basic_import_helper
 
-    def __init__(self, class_name, kw, arg_name_prefix = ""):
-        self.nc = class_name
-
+    def __init__(self, arg_name_prefix = ""):
         if arg_name_prefix and arg_name_prefix[0] == '_':
             """
             If attribute is set like o.__my_attr. The getattr(o, "__my_attr")
@@ -120,7 +118,6 @@ _MyClassName__my_attr in this case. It is Python internals...
             )
 
         self.prefix = arg_name_prefix
-        self.pop_args_from_dict(kw)
 
     @property
     def nc(self):
@@ -283,7 +280,9 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
             kw["directory"] = ""
         kw["name"] = desc_name
 
-        QemuObjectCreationHelper.__init__(self, desc_class_name, kw, "desc_")
+        QemuObjectCreationHelper.__init__(self, "desc_")
+        self.nc = desc_class_name
+        self.pop_args_from_dict(kw)
         ProjectOperation.__init__(self, *args, **kw)
 
         self.name = desc_name
