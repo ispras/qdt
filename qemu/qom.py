@@ -736,6 +736,8 @@ class QOMDevice(QOMType):
         total_used_types = set([self.state_struct, self.type_cast_macro])
         total_used_types.update(used_types)
 
+        total_used_globals = list(used_globals)
+
         if self.char_num > 0:
             if get_vp()["v2.8 chardev"]:
                 helper_name = "qemu_chr_fe_set_handlers"
@@ -799,7 +801,7 @@ class QOMDevice(QOMType):
             ],
             static = True,
             used_types = total_used_types,
-            used_globals = used_globals
+            used_globals = total_used_globals
         )
 
         return fn
