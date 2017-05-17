@@ -262,9 +262,7 @@ during refresh.     """
             return
 
         if isinstance(op, POp_AddDesc):
-            try:
-                next(self.pht.p.find(name = self.desc.name))
-            except StopIteration:
+            if not hasattr(self.desc, "__sn__"):
                 # the operation removes current description
                 return
 

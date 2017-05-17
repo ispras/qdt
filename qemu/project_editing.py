@@ -276,22 +276,25 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
                 setattr(self, self.prefix + n, valdesc)
 
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
-    def __init__(self, desc_class_name, desc_name, *args, **kw):
+    def __init__(self, desc_class_name, serial_number, *args, **kw):
         QemuObjectCreationHelper.__init__(self, arg_name_prefix = "desc_")
         self.nc = desc_class_name
         self.pop_args_from_dict(kw)
         ProjectOperation.__init__(self, *args, **kw)
 
-        self.name = desc_name
+        self.sn = serial_number
 
     def __backup__(self):
-        pass
+        self.name = self.export_value(*self.desc_name)
 
     def __do__(self):
-        self.p.add_description(self.new())
+        desc = self.new()
+        self.p.add_description(desc, with_sn = self.sn)
+        # Update serial number for reverse operation action
+        self.sn = desc.__sn__
 
     def __undo__(self):
-        desc = next(self.p.find(name = self.name))
+        desc = next(self.p.find(__sn__ = self.sn))
 
         """ It is unexpected way to type independently check for the description
         is empty. """
@@ -302,7 +305,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
 
     def __write_set__(self):
         return ProjectOperation.__write_set__(self) + [
-            str(self.name)
+            str(self.sn)
         ]
 
     def get_kind_str(self):
@@ -322,12 +325,13 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         )
 
 class POp_DelDesc(POp_AddDesc):
-    def __init__(self, desc_name, *args, **kw):
-        POp_AddDesc.__init__(self, "QOMDescription", desc_name, *args, **kw)
+    def __init__(self, serial_number, *args, **kw):
+        POp_AddDesc.__init__(self, "QOMDescription", serial_number, *args, **kw)
 
     def __backup__(self):
-        desc = next(self.p.find(name = self.name))
+        desc = next(self.p.find(__sn__ = self.sn))
         self.set_with_origin(desc)
+        self.name = desc.name
 
     __do__ = POp_AddDesc.__undo__
     __undo__ = POp_AddDesc.__do__

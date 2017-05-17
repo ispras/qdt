@@ -349,5 +349,5 @@ class ProjectHistoryTracker(HistoryTracker):
             mht = MachineProxyTracker(self, desc)
             mht.delete_ids(list(desc.id2node.keys()))
 
-        self.stage(POp_DelDesc, desc.name)
+        self.stage(POp_DelDesc, desc.__sn__)
         self.set_sequence_description(_("Delete description '%s'.") % desc.name)
