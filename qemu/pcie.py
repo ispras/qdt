@@ -31,6 +31,8 @@ from .qom_desc import \
 @Describable
 class PCIExpressDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
+        # Note that multiple NIC generation is not implemented yet.
+        ("nic_num", { "short": _("Network interface"), "input": bool }),
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
         ("device", { "short": _("Device"), "input" : PCIId }),
         ("pci_class", { "short": _("Class"), "input" : PCIId }),
