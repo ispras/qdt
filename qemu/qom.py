@@ -796,6 +796,49 @@ class QOMDevice(QOMType):
 """ % (blk_name
                 )
 
+        if self.nic_num > 0:
+            code += "\n"
+            s_is_used = True
+
+            def_mac = Type.lookup("qemu_macaddr_default_if_unset")
+            fmt_info = Type.lookup("qemu_format_nic_info_str")
+            obj_tn = Type.lookup("object_get_typename")
+            obj_cast = Type.lookup("OBJECT")
+            def_cast = Type.lookup("DEVICE")
+            new_nic = Type.lookup("qemu_new_nic")
+            get_queue = Type.lookup("qemu_get_queue")
+
+            total_used_types.update([def_mac, fmt_info, obj_tn, obj_cast,
+                def_cast, new_nic, get_queue
+            ])
+
+            for nicN in range(self.nic_num):
+                conf_name = self.nic_conf_name(nicN)
+                nic_name = self.nic_name(nicN)
+                info = self.gen_net_client_info(nicN)
+
+                self.source.add_global_variable(info)
+                total_used_globals.append(info)
+
+                code += """\
+    {def_mac}(&s->{conf_name}.macaddr);
+    s->{nic_name} = {new_nic}(&{info}, &s->{conf_name},
+                              {obj_tn}({obj_cast}(s)),
+                              {def_cast}(s)->id, s);
+    {fmt_info}({get_queue}(s->{nic_name}), s->{conf_name}.macaddr.a);
+""".format(
+    def_mac = def_mac.name,
+    conf_name = conf_name,
+    nic_name = nic_name,
+    new_nic = new_nic.name,
+    info = info.name,
+    obj_tn = obj_tn.name,
+    obj_cast = obj_cast.name,
+    def_cast = def_cast.name,
+    fmt_info = fmt_info.name,
+    get_queue = get_queue.name
+                )
+
         fn = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
