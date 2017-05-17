@@ -120,17 +120,7 @@ _MyClassName__my_attr in this case. It is Python internals...
             )
 
         self.prefix = arg_name_prefix
-
-        for n in self.al + self.kwl:
-            if n in kw:
-                val = kw.pop(n)
-                try:
-                    valdesc = self.import_value(val)
-                except QemuObjectCreationHelper.CannotImport:
-                    raise Exception("""Import values from kw is only supported
-for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
-                    )
-                setattr(self, self.prefix + n, valdesc)
+        self.pop_args_from_dict(kw)
 
     @property
     def nc(self):
@@ -271,6 +261,21 @@ arguments then it is skipped.
         self.nc = type(origin).__name__
 
         self.import_argument_values(origin)
+
+    """ pop_args_from_dict imports values for arguments from given dictionary
+'argvals'. Corresponding entries is removed from 'argvals'.
+    """
+    def pop_args_from_dict(self, argvals):
+        for n in self.al + self.kwl:
+            if n in argvals:
+                val = argvals.pop(n)
+                try:
+                    valdesc = self.import_value(val)
+                except QemuObjectCreationHelper.CannotImport:
+                    raise Exception("""Import values from kw is only supported
+for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
+                    )
+                setattr(self, self.prefix + n, valdesc)
 
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, desc_name, *args, **kw):
