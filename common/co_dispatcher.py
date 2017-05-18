@@ -88,6 +88,10 @@ after last statement in the corresponding callable object.
                 t1 = time()
 
                 finished.append(task)
+            except Exception as e:
+                t1 = time()
+
+                self.__failed__(task, e)
             else:
                 t1 = time()
 
