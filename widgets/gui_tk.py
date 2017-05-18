@@ -18,6 +18,10 @@ class GUITaskManager(TkCoDispatcher):
         TkCoDispatcher.__finish__(self, task)
         self.__notify_finished(task)
 
+    def __failed__(self, task, exception):
+        TkCoDispatcher.__failed__(self, task, exception)
+        self.__notify_failed(task)
+
     def remove(self, task):
         TkCoDispatcher.remove(self, task)
         self.__notify_removed(task)
