@@ -100,6 +100,7 @@ class QDCGUIWindow(GUITk):
 
         for signame in [
             "generation_finished",
+            "qvd_failed",
             "qvd_switched"
         ]:
             s = CoSignal()
