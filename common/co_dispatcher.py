@@ -22,6 +22,10 @@ class CoTask(object):
         # do nothing by default
         pass
 
+    def on_failed(self):
+        # do nothing by default
+        pass
+
 class CoDispatcher(object):
     """
     The dispatcher for coroutine task.
