@@ -461,16 +461,18 @@ show it else hide it.")
             )
             return
 
-        # reload_build_path_task always run at program start
-        # that is why it's in process when it's not in finished_tasks
-        if self.pw.reload_build_path_task not in self.pw.tm.finished_tasks:
-            ans = askyesno(
-                title = _("Cache rebuilding").get(),
-                message = _("Cache building is already \
+        # if 'reload_build_path_task' is not failed
+        if hasattr(self.pw, 'reload_build_path_task'):
+            # reload_build_path_task always run at program start that is why
+            # it's in process when it's not in finished_tasks and not failed
+            if self.pw.reload_build_path_task not in self.pw.tm.finished_tasks:
+                ans = askyesno(
+                    title = _("Cache rebuilding").get(),
+                    message = _("Cache building is already \
 in process. Do you want to start cache rebuilding?").get()
-            )
-            if not ans:
-                return
+                )
+                if not ans:
+                    return
 
         qvd.remove_cache()
         self.pw.reload_build_path()
