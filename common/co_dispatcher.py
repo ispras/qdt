@@ -171,16 +171,7 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = self.gen2task[task]
 
-        try:
-            callers = self.callees[task]
-        except KeyError:
-            pass
-        else:
-            del self.callees[task]
-            # Callers of the task cannot continue and must be removed
-            for c in list(callers):
-                del self.callers[c]
-                self.remove(c)
+        self.__cancel_callers(task)
 
         if task in self.callers:
             callee = self.callers.pop(task)
