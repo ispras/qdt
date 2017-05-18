@@ -654,7 +654,6 @@ class QemuVersionDescription(object):
             raise Exception("%s does not exists." % self.qvc_path)
         else:
             print("Loading QVC from " + self.qvc_path)
-            QemuVersionDescription.check_uncommit_change(self.src_path)
             variables = {}
             context = {
                 "QemuVersionCache": QemuVersionCache
@@ -674,29 +673,6 @@ class QemuVersionDescription(object):
 "No QemuVersionCache was loaded from %s." % self.qvc_path
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
-
-    @staticmethod
-    def check_uncommit_change(src_path):
-        cmd = ['git', '-C', src_path, 'status']
-        p = Popen(cmd, stderr = PIPE, stdout = PIPE)
-        p.wait()
-        if p.returncode:
-            raise Exception("`git status` failed with code %d" % p.returncode)
-
-        """ TODO: either set up corresponding locale settings before command or
-use another way to check this.
-        """
-        """
-        if "Changes to be committed" in status:
-            print("WARNING! " + \
-                  src_path + " has changes that need to be committed.")
-
-        if "Changes not staged for commit" in status:
-            print("WARNING! " + src_path + ": changes not staged for commit.")
-
-        if "Untracked files" in status:
-            print("WARNING! " + src_path + " has untracked files.")
-        """
 
     @staticmethod
     def ch_lookup(config_host, parameter):
