@@ -6,6 +6,16 @@ from time import \
 
 import sys
 
+class FailedCallee(RuntimeError):
+    def __init__(self, callee):
+        super(FailedCallee, self).__init__()
+        self.callee = callee
+
+class CancelledCallee(RuntimeError):
+    def __init__(self, callee):
+        super(CancelledCallee, self).__init__()
+        self.callee = callee
+
 class CoTask(object):
     def __init__(self,
                  generator,
