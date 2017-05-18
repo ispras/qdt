@@ -223,6 +223,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
+        self.qsig_watch("qvd_failed", self.__on_qvd_failed)
         self.qsig_watch("qvd_switched", self.on_qvd_switched)
         self.qsig_watch("generation_finished", self.on_generation_finished)
 
@@ -240,6 +241,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         except AttributeError:
             pass
 
+        self.qsig_unwatch("qvd_failed", self.__on_qvd_failed)
         self.qsig_unwatch("qvd_switched", self.on_qvd_switched)
         self.qsig_unwatch("generation_finished", self.on_generation_finished)
 
