@@ -26,6 +26,7 @@ from .version import \
     get_vp
 
 from os.path import \
+    sep, \
     join, \
     isfile
 
@@ -502,6 +503,8 @@ QVD_GGB_IBY = 100
 QVD_DTM_IBY = 100
 # Iterations Between Yields of Heuristic Propagation task
 QVD_HP_IBY = 100
+# Iterations Between Yields of Check Untracked Files task
+QVD_CUF_IBY = 100
 
 class QemuVersionDescription(object):
     current = None
@@ -591,6 +594,8 @@ class QemuVersionDescription(object):
         yield True
 
         if not isfile(qvc_path):
+            yield self.co_check_untracked_files()
+
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
@@ -681,6 +686,20 @@ class QemuVersionDescription(object):
 "No QemuVersionCache was loaded from %s." % self.qvc_path
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
+
+    def co_check_untracked_files(self):
+        i2y = QVD_CUF_IBY
+        for path in self.repo.untracked_files:
+            abs_path = join(self.src_path, path)
+            for include in self.include_paths:
+                if abs_path.startswith(include + sep):
+                    raise ProcessingUntrackedFile(path)
+
+                if i2y == 0:
+                    yield True
+                    i2y = QVD_CUF_IBY
+                else:
+                    i2y -= 1
 
     @staticmethod
     def ch_lookup(config_host, parameter):
