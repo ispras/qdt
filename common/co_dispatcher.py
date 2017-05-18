@@ -217,6 +217,32 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
+    def __cancel_callers(self, task):
+        try:
+            callers = self.callees[task]
+        except KeyError:
+            pass
+        else:
+            del self.callees[task]
+            # Callers of the task cannot continue and must be removed
+            if task.exception is None:
+                except_cls = CancelledCallee
+            else:
+                except_cls = FailedCallee
+            for c in list(callers):
+                del self.callers[c]
+                self.__failed__(c, except_cls(task))
+
+    def __failed__(self, task, exception):
+        if not isinstance(task, CoTask):
+            task = self.gen2task[task]
+
+        task.exception = exception
+        self.failed_tasks.add(task)
+        task.on_failed()
+
+        self.__cancel_callers(task)
+
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)
         self.active_tasks.remove(task)
