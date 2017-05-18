@@ -503,6 +503,8 @@ QVD_GGB_IBY = 100
 QVD_DTM_IBY = 100
 # Iterations Between Yields of Heuristic Propagation task
 QVD_HP_IBY = 100
+# Iterations Between Yields of Check Modified Files task
+QVD_CMF_IBY = 100
 # Iterations Between Yields of Check Untracked Files task
 QVD_CUF_IBY = 100
 
@@ -605,7 +607,7 @@ class QemuVersionDescription(object):
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
-            yield True
+            yield self.co_check_modified_files()
 
             yield self.co_gen_device_tree()
 
@@ -628,6 +630,8 @@ class QemuVersionDescription(object):
                 yield True
 
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
+
+                yield self.co_check_modified_files()
 
             yield True
 
@@ -686,6 +690,28 @@ class QemuVersionDescription(object):
 "No QemuVersionCache was loaded from %s." % self.qvc_path
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
+
+    def co_check_modified_files(self):
+        # A diff between the index and the working tree
+        modified_files = set()
+        for e in self.repo.index.diff(None):
+            abs_path = join(self.src_path, e.a_rawpath)
+            for include in self.include_paths:
+                if abs_path.startswith(include + sep):
+                    modified_files.add(abs_path[len(include)+1:])
+
+        yield True
+
+        i2y = QVD_CMF_IBY
+        for e in self.qvc.list_headers:
+            if e['path'] in modified_files:
+                raise ProcessingModifiedFile(e['path'])
+
+            if i2y == 0:
+                yield True
+                i2y = QVD_CMF_IBY
+            else:
+                i2y -= 1
 
     def co_check_untracked_files(self):
         i2y = QVD_CUF_IBY
