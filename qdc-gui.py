@@ -310,6 +310,7 @@ show it else hide it.")
 
         self.task_manager.watch_activated(self.__on_task_state_changed)
         self.task_manager.watch_finished(self.__on_task_state_changed)
+        self.task_manager.watch_failed(self.__on_task_state_changed)
         self.task_manager.watch_removed(self.__on_task_state_changed)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
@@ -487,6 +488,7 @@ in process. Do you want to start cache rebuilding?").get()
 
         self.task_manager.unwatch_activated(self.__on_task_state_changed)
         self.task_manager.unwatch_finished(self.__on_task_state_changed)
+        self.task_manager.unwatch_failed(self.__on_task_state_changed)
         self.task_manager.unwatch_removed(self.__on_task_state_changed)
 
         self.quit()
