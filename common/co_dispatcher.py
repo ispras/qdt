@@ -55,6 +55,7 @@ after last statement in the corresponding callable object.
         # Total caller list, I.e. callers = U (callees.values()).
         self.callers = {}
         self.finished_tasks = set()
+        self.failed_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
 
