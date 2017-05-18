@@ -202,6 +202,8 @@ after last statement in the corresponding callable object.
             self.tasks.remove(task)
         elif task in self.active_tasks:
             self.active_tasks.remove(task)
+        elif task in self.failed_tasks:
+            self.failed_tasks.remove(tasks)
 
         del self.gen2task[task.generator]
         # print 'Task %s was removed' % str(task)
