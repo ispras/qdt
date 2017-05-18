@@ -195,7 +195,7 @@ class QemuVersionCache(object):
 
     def co_build_git_graph(self, repo):
         # iterations to yield
-        i2y = QVD_GGB_IBT
+        i2y = QVD_GGB_IBY
 
         commit_desc_nodes = {}
         # n is serial number according to the topology sorting
@@ -245,7 +245,7 @@ class QemuVersionCache(object):
 
                 if i2y <= 0:
                     yield True
-                    i2y = QVD_GGB_IBT
+                    i2y = QVD_GGB_IBY
                 else:
                     i2y -= 1
 
@@ -273,7 +273,7 @@ class QemuVersionCache(object):
 
                     if i2y <= 0:
                         yield True
-                        i2y = QVD_GGB_IBT
+                        i2y = QVD_GGB_IBY
                     else:
                         i2y -= 1
 
@@ -489,7 +489,7 @@ class QVCIsNotReady(Exception):
     pass
 
 # Iterations Between Yields of Git Graph Building task
-QVD_GGB_IBT = 100
+QVD_GGB_IBY = 100
 # Iterations Between Yields of Device Tree Macros adding task
 QVD_DTM_IBY = 100
 # Iterations Between Yields of Heuristic Propagation task
