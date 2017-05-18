@@ -40,6 +40,14 @@ bp_file_name = "build_path_list"
 
 qvd_reg = {}
 
+class ProcessingUntrackedFile(RuntimeError):
+    def __init__(self, file_name):
+        super(ProcessingUntrackedFile, self).__init__(file_name)
+
+class ProcessingModifiedFile(RuntimeError):
+    def __init__(self, file_name):
+        super(ProcessingModifiedFile, self).__init__(file_name)
+
 def load_build_path_list():
     if not isfile(bp_file_name):
         return

@@ -7,6 +7,8 @@ from source import \
     add_base_types
 
 from .version_description import \
+    ProcessingUntrackedFile, \
+    ProcessingModifiedFile, \
     QVCWasNotInitialized, \
     BadBuildPath, \
     MultipleQVCInitialization, \
