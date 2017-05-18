@@ -14,6 +14,9 @@ class CoTask(object):
         self.generator = generator
         self.enqueued = enqueued
 
+        # Contains the exception if task has failed
+        self.exception = None
+
     def on_activated(self):
         # do nothing by default
         pass
