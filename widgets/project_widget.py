@@ -19,9 +19,12 @@ from six.moves.tkinter import \
 
 from common import \
     CoTask, \
+    FailedCallee, \
     mlget as _
 
 from qemu import \
+    ProcessingModifiedFile, \
+    ProcessingUntrackedFile, \
     MultipleQVCInitialization, \
     BadBuildPath, \
     qvd_get, \
@@ -70,6 +73,9 @@ class ReloadBuildPathTask(CoTask):
     def on_finished(self):
         self.qvd.use()
         self.pw.qsig_emit("qvd_switched")
+
+    def on_failed(self):
+        self.pw.qsig_emit("qvd_failed")
 
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
@@ -217,6 +223,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
+        self.qsig_watch("qvd_failed", self.__on_qvd_failed)
         self.qsig_watch("qvd_switched", self.on_qvd_switched)
         self.qsig_watch("generation_finished", self.on_generation_finished)
 
@@ -234,6 +241,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         except AttributeError:
             pass
 
+        self.qsig_unwatch("qvd_failed", self.__on_qvd_failed)
         self.qsig_unwatch("qvd_switched", self.on_qvd_switched)
         self.qsig_unwatch("generation_finished", self.on_generation_finished)
 
@@ -451,6 +459,33 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_objects()
+
+    def __on_qvd_failed(self):
+        e = self.reload_build_path_task.exception
+        while isinstance(e, FailedCallee):
+            e = e.callee.exception
+
+        if isinstance(e, ProcessingUntrackedFile):
+            showerror(
+                title = _("Cache building is impossible").get(),
+                message = (_("Source has untracked file: %s.") % (
+                    e.message
+                )).get()
+            )
+        elif isinstance(e, ProcessingModifiedFile):
+            showerror(
+                title = _("Cache building is impossible").get(),
+                message = (_("Source has modified file: %s.") % (
+                    e.message
+                )).get()
+            )
+        else:
+            showerror(
+                title = _("QVD failed").get(),
+                message = _("QVD loading is failed").get()
+            )
+
+        del self.reload_build_path_task
 
     def on_generation_finished(self):
         pht = self.pht

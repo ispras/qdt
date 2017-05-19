@@ -8,7 +8,7 @@ from common import \
     Notifier, \
     SignalDispatcherTask
 
-@Notifier("activated", "finished", "removed")
+@Notifier("activated", "finished", 'failed', "removed")
 class GUITaskManager(TkCoDispatcher):
     def __activate__(self, task):
         TkCoDispatcher.__activate__(self, task)
@@ -17,6 +17,10 @@ class GUITaskManager(TkCoDispatcher):
     def __finish__(self, task):
         TkCoDispatcher.__finish__(self, task)
         self.__notify_finished(task)
+
+    def __failed__(self, task, exception):
+        TkCoDispatcher.__failed__(self, task, exception)
+        self.__notify_failed(task)
 
     def remove(self, task):
         TkCoDispatcher.remove(self, task)

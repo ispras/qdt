@@ -6,6 +6,16 @@ from time import \
 
 import sys
 
+class FailedCallee(RuntimeError):
+    def __init__(self, callee):
+        super(FailedCallee, self).__init__()
+        self.callee = callee
+
+class CancelledCallee(RuntimeError):
+    def __init__(self, callee):
+        super(CancelledCallee, self).__init__()
+        self.callee = callee
+
 class CoTask(object):
     def __init__(self,
                  generator,
@@ -14,11 +24,18 @@ class CoTask(object):
         self.generator = generator
         self.enqueued = enqueued
 
+        # Contains the exception if task has failed
+        self.exception = None
+
     def on_activated(self):
         # do nothing by default
         pass
 
     def on_finished(self):
+        # do nothing by default
+        pass
+
+    def on_failed(self):
         # do nothing by default
         pass
 
@@ -51,6 +68,7 @@ after last statement in the corresponding callable object.
         # Total caller list, I.e. callers = U (callees.values()).
         self.callers = {}
         self.finished_tasks = set()
+        self.failed_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
 
@@ -70,6 +88,10 @@ after last statement in the corresponding callable object.
                 t1 = time()
 
                 finished.append(task)
+            except Exception as e:
+                t1 = time()
+
+                self.__failed__(task, e)
             else:
                 t1 = time()
 
@@ -149,16 +171,7 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = self.gen2task[task]
 
-        try:
-            callers = self.callees[task]
-        except KeyError:
-            pass
-        else:
-            del self.callees[task]
-            # Callers of the task cannot continue and must be removed
-            for c in list(callers):
-                del self.callers[c]
-                self.remove(c)
+        self.__cancel_callers(task, CancelledCallee(task))
 
         if task in self.callers:
             callee = self.callers.pop(task)
@@ -180,6 +193,8 @@ after last statement in the corresponding callable object.
             self.tasks.remove(task)
         elif task in self.active_tasks:
             self.active_tasks.remove(task)
+        elif task in self.failed_tasks:
+            self.failed_tasks.remove(task)
 
         del self.gen2task[task.generator]
         # print 'Task %s was removed' % str(task)
@@ -198,6 +213,24 @@ after last statement in the corresponding callable object.
 
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
+
+    def __cancel_callers(self, task, reason):
+        try:
+            callers = self.callees.pop(task)
+        except KeyError:
+            pass
+        else:
+            # Callers of the task cannot continue and must be removed
+            for c in list(callers):
+                del self.callers[c]
+                self.__failed__(c, reason)
+
+    def __failed__(self, task, exception):
+        task.exception = exception
+        self.failed_tasks.add(task)
+        task.on_failed()
+
+        self.__cancel_callers(task, FailedCallee(task))
 
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)

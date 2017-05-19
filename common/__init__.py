@@ -11,6 +11,8 @@ from .ml import \
 
 from .co_dispatcher import \
     callco, \
+    FailedCallee, \
+    CancelledCallee, \
     CoTask, \
     CoDispatcher
 

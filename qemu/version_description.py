@@ -26,6 +26,7 @@ from .version import \
     get_vp
 
 from os.path import \
+    sep, \
     join, \
     isfile
 
@@ -39,6 +40,14 @@ from git import \
 bp_file_name = "build_path_list"
 
 qvd_reg = {}
+
+class ProcessingUntrackedFile(RuntimeError):
+    def __init__(self, file_name):
+        super(ProcessingUntrackedFile, self).__init__(file_name)
+
+class ProcessingModifiedFile(RuntimeError):
+    def __init__(self, file_name):
+        super(ProcessingModifiedFile, self).__init__(file_name)
 
 def load_build_path_list():
     if not isfile(bp_file_name):
@@ -195,7 +204,7 @@ class QemuVersionCache(object):
 
     def co_build_git_graph(self, repo):
         # iterations to yield
-        i2y = QVD_GGB_IBT
+        i2y = QVD_GGB_IBY
 
         commit_desc_nodes = {}
         # n is serial number according to the topology sorting
@@ -245,7 +254,7 @@ class QemuVersionCache(object):
 
                 if i2y <= 0:
                     yield True
-                    i2y = QVD_GGB_IBT
+                    i2y = QVD_GGB_IBY
                 else:
                     i2y -= 1
 
@@ -273,7 +282,7 @@ class QemuVersionCache(object):
 
                     if i2y <= 0:
                         yield True
-                        i2y = QVD_GGB_IBT
+                        i2y = QVD_GGB_IBY
                     else:
                         i2y -= 1
 
@@ -489,11 +498,15 @@ class QVCIsNotReady(Exception):
     pass
 
 # Iterations Between Yields of Git Graph Building task
-QVD_GGB_IBT = 100
+QVD_GGB_IBY = 100
 # Iterations Between Yields of Device Tree Macros adding task
 QVD_DTM_IBY = 100
 # Iterations Between Yields of Heuristic Propagation task
 QVD_HP_IBY = 100
+# Iterations Between Yields of Check Modified Files task
+QVD_CMF_IBY = 100
+# Iterations Between Yields of Check Untracked Files task
+QVD_CUF_IBY = 100
 
 class QemuVersionDescription(object):
     current = None
@@ -583,6 +596,8 @@ class QemuVersionDescription(object):
         yield True
 
         if not isfile(qvc_path):
+            yield self.co_check_untracked_files()
+
             self.qvc = QemuVersionCache()
 
             # make new QVC active and begin construction
@@ -592,7 +607,7 @@ class QemuVersionDescription(object):
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
-            yield True
+            yield self.co_check_modified_files()
 
             yield self.co_gen_device_tree()
 
@@ -654,7 +669,6 @@ class QemuVersionDescription(object):
             raise Exception("%s does not exists." % self.qvc_path)
         else:
             print("Loading QVC from " + self.qvc_path)
-            QemuVersionDescription.check_uncommit_change(self.src_path)
             variables = {}
             context = {
                 "QemuVersionCache": QemuVersionCache
@@ -675,28 +689,41 @@ class QemuVersionDescription(object):
                 )
             self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 
-    @staticmethod
-    def check_uncommit_change(src_path):
-        cmd = ['git', '-C', src_path, 'status']
-        p = Popen(cmd, stderr = PIPE, stdout = PIPE)
-        p.wait()
-        if p.returncode:
-            raise Exception("`git status` failed with code %d" % p.returncode)
+    def co_check_modified_files(self):
+        # A diff between the index and the working tree
+        modified_files = set()
+        for e in self.repo.index.diff(None):
+            abs_path = join(self.src_path, e.a_rawpath)
+            for include in self.include_paths:
+                if abs_path.startswith(include + sep):
+                    modified_files.add(abs_path[len(include)+1:])
 
-        """ TODO: either set up corresponding locale settings before command or
-use another way to check this.
-        """
-        """
-        if "Changes to be committed" in status:
-            print("WARNING! " + \
-                  src_path + " has changes that need to be committed.")
+        yield True
 
-        if "Changes not staged for commit" in status:
-            print("WARNING! " + src_path + ": changes not staged for commit.")
+        i2y = QVD_CMF_IBY
+        for e in self.qvc.list_headers:
+            if e['path'] in modified_files:
+                raise ProcessingModifiedFile(e['path'])
 
-        if "Untracked files" in status:
-            print("WARNING! " + src_path + " has untracked files.")
-        """
+            if i2y == 0:
+                yield True
+                i2y = QVD_CMF_IBY
+            else:
+                i2y -= 1
+
+    def co_check_untracked_files(self):
+        i2y = QVD_CUF_IBY
+        for path in self.repo.untracked_files:
+            abs_path = join(self.src_path, path)
+            for include in self.include_paths:
+                if abs_path.startswith(include + sep):
+                    raise ProcessingUntrackedFile(path)
+
+                if i2y == 0:
+                    yield True
+                    i2y = QVD_CUF_IBY
+                else:
+                    i2y -= 1
 
     @staticmethod
     def ch_lookup(config_host, parameter):
