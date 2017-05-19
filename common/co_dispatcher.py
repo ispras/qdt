@@ -216,11 +216,10 @@ after last statement in the corresponding callable object.
 
     def __cancel_callers(self, task):
         try:
-            callers = self.callees[task]
+            callers = self.callees.pop(task)
         except KeyError:
             pass
         else:
-            del self.callees[task]
             # Callers of the task cannot continue and must be removed
             if task.exception is None:
                 except_cls = CancelledCallee
