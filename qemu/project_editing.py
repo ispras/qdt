@@ -50,10 +50,9 @@ def basic_import_helper(val, helper):
 class QemuObjectCreationHelper(object):
     """ The class helps implement Qemu model object creation operations. It
     automates handling of arguments for __init__ method of created objects.
-    The helper class __init__ method gets lists of handled class __init__
-    arguments. Then it moves them from kw dictionary to self. They are stored
-    within tuples
-    as attributes of the helper class instance. Names of the attributes are
+    The class provides helpers to get handled class __init__ argument lists.
+    Arguments are stored as attributes of the helper class instance. Each
+    argument is represented by a tuple. Names of those tuples are
     built using user defined prefix and names of corresponding handled class
     __init__ arguments. The 'new' method of the helper class creates object of
     handled class with this arguments.
@@ -61,13 +60,15 @@ class QemuObjectCreationHelper(object):
     Supported argument value types are:
         bool
         int
-        long
+        long (Py2 only)
         str
-        unicode
+        basestring (Py2 only)
+        unicode (Py2 only)
+        bytes (Py3 only)
     None values are imported too.
 
     Argument describing tuple consists of:
-        0: original argument value tuple
+        0: type of original argument value
         1: an internal value that codes original one
     For supported types the internal value is just copy of original one.
 
@@ -105,9 +106,7 @@ slot of the tuple) is not restricted.
     for basic_type in basic_types:
         value_import_helpers[basic_type] = basic_import_helper
 
-    def __init__(self, class_name, kw, arg_name_prefix = ""):
-        self.nc = class_name
-
+    def __init__(self, arg_name_prefix = ""):
         if arg_name_prefix and arg_name_prefix[0] == '_':
             """
             If attribute is set like o.__my_attr. The getattr(o, "__my_attr")
@@ -120,17 +119,6 @@ _MyClassName__my_attr in this case. It is Python internals...
             )
 
         self.prefix = arg_name_prefix
-
-        for n in self.al + self.kwl:
-            if n in kw:
-                val = kw.pop(n)
-                try:
-                    valdesc = self.import_value(val)
-                except QemuObjectCreationHelper.CannotImport:
-                    raise Exception("""Import values from kw is only supported
-for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
-                    )
-                setattr(self, self.prefix + n, valdesc)
 
     @property
     def nc(self):
@@ -272,25 +260,41 @@ arguments then it is skipped.
 
         self.import_argument_values(origin)
 
-class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
-    def __init__(self, desc_class_name, desc_name, *args, **kw):
-        if not "directory" in kw:
-            kw["directory"] = ""
-        kw["name"] = desc_name
+    """ pop_args_from_dict imports values for arguments from given dictionary
+'argvals'. Corresponding entries is removed from 'argvals'.
+    """
+    def pop_args_from_dict(self, argvals):
+        for n in self.al + self.kwl:
+            if n in argvals:
+                val = argvals.pop(n)
+                try:
+                    valdesc = self.import_value(val)
+                except QemuObjectCreationHelper.CannotImport:
+                    raise Exception("""Import values from kw is only supported
+for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
+                    )
+                setattr(self, self.prefix + n, valdesc)
 
-        QemuObjectCreationHelper.__init__(self, desc_class_name, kw, "desc_")
+class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
+    def __init__(self, desc_class_name, serial_number, *args, **kw):
+        QemuObjectCreationHelper.__init__(self, arg_name_prefix = "desc_")
+        self.nc = desc_class_name
+        self.pop_args_from_dict(kw)
         ProjectOperation.__init__(self, *args, **kw)
 
-        self.name = desc_name
+        self.sn = serial_number
 
     def __backup__(self):
-        pass
+        self.name = self.export_value(*self.desc_name)
 
     def __do__(self):
-        self.p.add_description(self.new())
+        desc = self.new()
+        self.p.add_description(desc, with_sn = self.sn)
+        # Update serial number for reverse operation action
+        self.sn = desc.__sn__
 
     def __undo__(self):
-        desc = next(self.p.find(name = self.name))
+        desc = next(self.p.find(__sn__ = self.sn))
 
         """ It is unexpected way to type independently check for the description
         is empty. """
@@ -301,7 +305,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
 
     def __write_set__(self):
         return ProjectOperation.__write_set__(self) + [
-            str(self.name)
+            str(self.sn)
         ]
 
     def get_kind_str(self):
@@ -321,12 +325,13 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         )
 
 class POp_DelDesc(POp_AddDesc):
-    def __init__(self, desc_name, *args, **kw):
-        POp_AddDesc.__init__(self, "QOMDescription", desc_name, *args, **kw)
+    def __init__(self, serial_number, *args, **kw):
+        POp_AddDesc.__init__(self, "QOMDescription", serial_number, *args, **kw)
 
     def __backup__(self):
-        desc = next(self.p.find(name = self.name))
+        desc = next(self.p.find(__sn__ = self.sn))
         self.set_with_origin(desc)
+        self.name = desc.name
 
     __do__ = POp_AddDesc.__undo__
     __undo__ = POp_AddDesc.__do__

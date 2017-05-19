@@ -40,9 +40,8 @@ already in another project.")
                     self.add_description(d)
 
     def add_description(self, desc):
-        if desc:
-            desc.project = self
-            self.descriptions.append(desc)
+        desc.project = self
+        self.descriptions.append(desc)
 
     def remove_description(self, desc):
         self.descriptions.remove(desc)

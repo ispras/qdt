@@ -156,7 +156,9 @@ string searching during each AddDescriptionDialog creation. """
             class_name = "PCIExpressDeviceDescription"
             directory = "pci"
 
-        self.pht.stage(POp_AddDesc, class_name, cur_name,
+        self.pht.stage(POp_AddDesc, class_name,
+            None, # Automatic serial number
+            name = cur_name,
             directory = directory
         )
         self.pht.commit(

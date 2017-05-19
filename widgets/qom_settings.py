@@ -260,11 +260,9 @@ during refresh.     """
     def __on_changed__(self, op, *args, **kw):
         if not op.writes(self.desc.name):
             return
- 
+
         if isinstance(op, POp_AddDesc):
-            try:
-                next(self.pht.p.find(name = self.desc.name))
-            except StopIteration:
+            if not hasattr(self.desc, "__sn__"):
                 # the operation removes current description
                 return
 
