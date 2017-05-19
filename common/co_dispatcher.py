@@ -171,7 +171,7 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = self.gen2task[task]
 
-        self.__cancel_callers(task)
+        self.__cancel_callers(task, CancelledCallee(task))
 
         if task in self.callers:
             callee = self.callers.pop(task)
@@ -214,27 +214,23 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
-    def __cancel_callers(self, task):
+    def __cancel_callers(self, task, reason):
         try:
             callers = self.callees.pop(task)
         except KeyError:
             pass
         else:
             # Callers of the task cannot continue and must be removed
-            if task.exception is None:
-                exc = CancelledCallee(task)
-            else:
-                exc = FailedCallee(task)
             for c in list(callers):
                 del self.callers[c]
-                self.__failed__(c, exc)
+                self.__failed__(c, reason)
 
     def __failed__(self, task, exception):
         task.exception = exception
         self.failed_tasks.add(task)
         task.on_failed()
 
-        self.__cancel_callers(task)
+        self.__cancel_callers(task, FailedCallee(task))
 
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)
