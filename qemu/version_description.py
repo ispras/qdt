@@ -631,8 +631,6 @@ class QemuVersionDescription(object):
 
                 self.qvc.stc.load_header_db(self.qvc.list_headers)
 
-                yield self.co_check_modified_files()
-
             yield True
 
             # verify that the version_desc is not outdated
