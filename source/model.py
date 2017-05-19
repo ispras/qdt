@@ -29,6 +29,9 @@ from common import \
 from itertools import \
     count
 
+from six import \
+    string_types, text_type, binary_type
+
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
 
@@ -593,6 +596,11 @@ of incomplete type {}.".format(name, self.name))
         else:
             return self.gen_chunks()
 
+    def gen_usage_string(self, initializer):
+        # Usage string for an initializer is code of the initializer. It is
+        # legacy behaviour.
+        return initializer.code
+
     def __eq__(self, other):
         if isinstance(other, TypeReference):
             return other.type == self
@@ -691,6 +699,28 @@ is not added to a source", self.name)
 
     def gen_chunks(self):
         return StructureDeclaration.gen_chunks(self)
+
+    def gen_usage_string(self, init):
+        if init is None:
+            return "{ 0 };" # zero structure initializer by default
+
+        code = init.code
+        if not isinstance(code, dict):
+            # Support for legacy initializers
+            return code
+
+        # Use entries of given dict to initialize fields. Field name is used
+        # as entry key.
+
+        fields_code = []
+        for f in self.fields:
+            try:
+                val_str = init[f.name]
+            except KeyError: # no initializer for this field
+                continue
+            fields_code.append("    .%s = %s" % (f.name, val_str))
+
+        return "{\n" + ",\n".join(fields_code) + "\n}";
 
     __type_references__ = ["fields"]
 
@@ -844,13 +874,8 @@ class Macro(Type):
     def gen_usage_string(self, init = None):
         if self.args is None:
             return self.name
-        elif self.args:
-            arg_val = "(";
-            for a in self.args[:-1]:
-                arg_val += init.code[a] + ", "
-            arg_val += init.code[self.args[-1]] + ")"
         else:
-            arg_val = "()"
+            arg_val = "(" + ", ".join(init[a] for a in self.args) + ")"
 
         return "%s%s" % (self.name, arg_val)
 
@@ -878,12 +903,47 @@ class Macro(Type):
 
 # Data models
 
+class InitCodeVisitor(ObjectVisitor):
+    def __init__(self, code):
+        super(InitCodeVisitor, self).__init__(code,
+            field_name = "__type_references__"
+        )
+        self.used_types = set()
+
+    def on_visit(self):
+        cur = self.cur
+        if isinstance(cur, Type):
+            self.used_types.add(cur)
+            raise BreakVisiting()
+
 class Initializer():
     #code is string for variables and dictionary for macros
     def __init__(self, code, used_types = [], used_variables = []):
         self.code = code
         self.used_types = set(used_types)
         self.used_variables = used_variables
+        if isinstance(code, dict):
+            self.__type_references__ = self.__type_references__ + ["code"]
+
+            # automatically get types used in the code
+            icv = InitCodeVisitor(code)
+            icv.visit()
+            self.used_types.update(icv.used_types)
+
+    def __getitem__(self, key):
+        val = self.code[key]
+
+        # adjust initializer value
+        if isinstance(val, (string_types, text_type, binary_type)):
+            val_str = val
+        elif isinstance(val, Type):
+            val_str = val.name
+        else:
+            raise TypeError("Unsupported initializer entry type '%s'"
+                % type(val).__name__
+            )
+
+        return val_str
 
     __type_references__ = ["used_types", "used_variables"]
 
@@ -1286,8 +1346,9 @@ class VariableDefinition(SourceChunk):
     def __init__(self, var, indent="", append_nl = True):
         init_code = ''
         if var.initializer is not None:
+            raw_code = var.type.gen_usage_string(var.initializer)
             # add indent to initializer code
-            init_code_lines = var.initializer.code.split('\n')
+            init_code_lines = raw_code.split('\n')
             init_code = " = " + init_code_lines[0]
             for line in init_code_lines[1:]:
                 init_code += "\n" + indent + line

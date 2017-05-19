@@ -364,11 +364,8 @@ Type.lookup("void").gen_var("opaque", True),
 
         type_init_var = Type.lookup("type_init").gen_var()
         type_init_usage_init = Initializer(
-            code = {
-                "function": self.register_types.name },
-            used_types = [
-                self.register_types]
-            )
+            code = { "function": self.register_types }
+        )
         self.source.add_usage(
             type_init_var.gen_usage(type_init_usage_init)
             )

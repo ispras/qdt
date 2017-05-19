@@ -2,6 +2,7 @@ from hashlib import \
     md5
 
 from source import \
+    Initializer, \
     add_base_types, \
     Pointer, \
     Header,\
@@ -76,7 +77,14 @@ def define_only_qemu_2_6_0_types():
     Header.lookup("qom/object.h").add_types([
         Type("ObjectClass", False),
         Type("Object", False),
-        Type("TypeInfo", False),
+        Structure("TypeInfo",
+            fields = [
+                # These are required fields only
+                Pointer(Type.lookup("const char")).gen_var("name"),
+                Pointer(Type.lookup("const char")).gen_var("parent"),
+                Pointer(Type.lookup("void")).gen_var("class_init")
+            ]
+        ),
         Type("Type", False),
         Type("TypeImpl", False),
         Function(name = "type_register_static",
@@ -406,7 +414,143 @@ def define_msi_init_2_6_0():
         )
     )
 
+def machine_register_2_5(mach):
+    # machine class definition function
+    mach.class_init = Function(
+        name = "machine_%s_class_init" % mach.qtn.for_id_name,
+        static = True,
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("ObjectClass").gen_var("oc", pointer = True),
+            Type.lookup("void").gen_var("opaque", pointer = True)
+        ],
+        body = """\
+    MachineClass *mc = MACHINE_CLASS(oc);
+
+    mc->name = \"{type_name}\";
+    mc->desc = \"{desc}\";
+    mc->init = {instance_init};
+""".format(
+    type_name = mach.qtn.for_id_name,
+    desc = mach.desc,
+    instance_init = mach.instance_init.name
+        ),
+        used_types = [
+            Type.lookup("MachineClass"),
+            Type.lookup("MACHINE_CLASS"),
+            mach.instance_init
+        ]
+    )
+    mach.source.add_type(mach.class_init)
+
+    # machine type definition structure
+    type_machine_macro = Type.lookup("TYPE_MACHINE")
+    type_machine_suf_macro = Type.lookup("TYPE_MACHINE_SUFFIX")
+
+    mach.type_info = Type.lookup("TypeInfo").gen_var(
+        name = "machine_type_%s" % mach.qtn.for_id_name,
+        static = True,
+        initializer = Initializer({
+                "name" : '"%s" %s' % (mach.qtn.for_id_name,
+                    type_machine_suf_macro.name
+                ),
+                "parent" : type_machine_macro,
+                "class_init" : mach.class_init
+            },
+            used_types = [ type_machine_suf_macro ]
+        )
+    )
+    mach.source.add_global_variable(mach.type_info)
+
+    # machine type registration function
+    mach.type_reg_func = Function(
+        name = "machine_init_%s" % mach.qtn.for_id_name,
+        body = """\
+    type_register(&{type_info});
+""".format(
+    type_info = mach.type_info.name
+        ),
+        static = True,
+        used_types = [Type.lookup("type_register")],
+        used_globals = [mach.type_info]
+    )
+    mach.source.add_type(mach.type_reg_func)
+
+    # Main machine registration macro
+    def_type = get_vp()["machine initialization function register type name"]
+    machine_init_def = Type.lookup(def_type).gen_var()
+    machine_init_def_args = Initializer(
+        code = { "function": mach.type_reg_func }
+    )
+    mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
+
+def machine_register_2_6(mach):
+    # machine class definition function
+    mach.class_init = Function(
+        name = "machine_%s_class_init" % mach.qtn.for_id_name,
+        static = True,
+        ret_type = Type.lookup("void"),
+        args = [
+            Type.lookup("ObjectClass").gen_var("oc", pointer = True),
+            Type.lookup("void").gen_var("opaque", pointer = True)
+        ],
+        body = """\
+    MachineClass *mc = MACHINE_CLASS(oc);
+
+    mc->desc = \"{desc}\";
+    mc->init = {instance_init};
+""".format(
+    desc = mach.desc,
+    instance_init = mach.instance_init.name
+        ),
+        used_types = [
+            Type.lookup("MachineClass"),
+            Type.lookup("MACHINE_CLASS"),
+            mach.instance_init
+        ]
+    )
+    mach.source.add_type(mach.class_init)
+
+    # machine type definition structure
+    type_machine_macro = Type.lookup("TYPE_MACHINE")
+    type_machine_type_name_macro = Type.lookup("MACHINE_TYPE_NAME")
+
+    mach.type_info = Type.lookup("TypeInfo").gen_var(
+        name = "machine_type_%s" % mach.qtn.for_id_name,
+        static = True,
+        initializer = Initializer({
+                "name" : type_machine_type_name_macro.gen_usage_string(
+                    Initializer({
+                        "machinename" : '"%s"' % mach.qtn.for_id_name
+                    })
+                ),
+                "parent" : type_machine_macro,
+                "class_init" : mach.class_init
+            },
+            used_types = [ type_machine_type_name_macro ]
+        )
+    )
+    mach.source.add_global_variable(mach.type_info)
+
+    # machine type registration function
+    mach.type_reg_func = mach.gen_register_types_fn(mach.type_info)
+    mach.source.add_type(mach.type_reg_func)
+
+    # Main machine registration macro
+    machine_init_def = Type.lookup("type_init").gen_var()
+    machine_init_def_args = Initializer({ "function": mach.type_reg_func })
+    mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
+
 qemu_heuristic_db = {
+    u'0e6aac87fd0f5db2be57c36c03d67388577208a7' : [
+        # It is actually last commit touching the way of machine registration.
+        # There is no reason to make more fine grained history decomposition.
+        QEMUVersionParameterDescription(
+            "machine type register template generator",
+            new_value = machine_register_2_6,
+            old_value = machine_register_2_5
+        )
+    ],
     u'82878dac6fcd16cb4fa47266bcd3dd03df436dae' : [
         # It is the last commit in the series significantly changing char API.
         QEMUVersionParameterDescription("v2.8 chardev",
@@ -472,5 +616,9 @@ def initialize_version(qvh_vp):
     for k in qvh_vp.keys():
         version_parameters[k] = qvh_vp[k]
 
-def get_vp():
-    return version_parameters
+def get_vp(heuristic_name = None):
+    if heuristic_name is None: # legacy behaviour
+        return version_parameters
+    else:
+        return version_parameters[heuristic_name]
+

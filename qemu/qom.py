@@ -96,14 +96,14 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
 ):
     decl_macro = Type.lookup(decl_macro_name)
     name_macro = Type.lookup(field.prop_macro_name)
-    used_types = set([decl_macro, name_macro, state_struct])
+    used_types = set([decl_macro])
     bool_true = Type.lookup("true")
     bool_false = Type.lookup("false")
 
     init_code = {
-        "_n" : name_macro.name,
-        "_s" : state_struct.name,
         "_f" : field.name,
+        "_n" : name_macro,
+        "_s" : state_struct,
     }
 
     init_code["_name"] = init_code["_n"]
@@ -122,17 +122,12 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
             except TypeNotRegistered:
                 val = '"%s"' % val
             else:
-                if not isinstance(val_macro, Macro):
-                    val = '"%s"' % val
-                else:
-                    used_types.add(val_macro)
+                val = val_macro
         elif isinstance(val, bool):
             if val:
-                val = "true"
-                used_types.add(bool_true)
+                val = bool_true
             else:
-                val = "false"
-                used_types.add(bool_false)
+                val = bool_false
         elif isinstance(val, integer_types):
             if field.type.name[0] == "u":
                 val = "0x%X" % val

@@ -4,7 +4,7 @@ class BreakVisiting(Exception):
 class VisitingIsNotImplemented(Exception):
     pass
 
-class ObjectVisitor():
+class ObjectVisitor(object):
     """
     The class defines common interface to traverse an object tree.
 
@@ -100,65 +100,57 @@ traversing is skipped using BreakVisiting exception (including replacement).
         self.path.pop()
         self.cur = self.path[-1][0]
 
-    def __visit_fields__(self):
+    def __visit_fields__(self, obj):
         try:
-            visitable_list = getattr(self.cur, self.field_name)
+            visitable_list = getattr(obj, self.field_name)
         except AttributeError:
             pass
         else:
             for attribute_name in visitable_list:
-                self.__visit__(attribute_name)
+                attr = getattr(obj, attribute_name)
+                self.__push__(attr, attribute_name)
+                self.__visit__(attr)
+                self.__pop__()
 
-    visit = __visit_fields__
+    def visit(self):
+        self.__visit_items__(self.cur)
 
-    def __visit_current__(self):
+    def __visit_items__(self, attr):
+        if isinstance(attr, list):
+            self.__visit_list__(attr)
+        elif isinstance(attr, dict):
+            self.__visit_dictionary__(attr)
+        elif isinstance(attr, set):
+            self.__visit_set__(attr)
+        elif isinstance(attr, object):
+            self.__visit_fields__(attr)
+        else:
+            raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
+type '%s is not implemented" % (self.path[-1][1], type(attr).name)
+            )
+
+    def __visit__(self, attr):
         try:
             self.on_visit()
         except BreakVisiting:
             return
-
-        self.__visit_fields__()
-
-    def __visit__(self, attribute_name):
-        attr = getattr(self.cur, attribute_name)
-        if isinstance(attr, list):
-            self.__visit_list_attribute__(attr, attribute_name)
-        elif isinstance(attr, dict):
-            self.__visit_dictionary_attribute__(attr, attribute_name)
-        elif isinstance(attr, set):
-            self.__visit_set_attribute__(attr, attribute_name)
-        elif isinstance(attr, object):
-            self.__visit_object_attribute__(attr, attribute_name)
         else:
-            raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
-type '%s is not implemented" % (attribute_name, type(attr).name)
-            )
+            self.__visit_items__(attr)
 
-    def __visit_set_attribute__(self, attr, attribute_name):
-        self.__push__(attr, attribute_name)
+    def __visit_set__(self, attr):
         for e in attr:
             self.__push__(e, None) # objects in a set are not named.
-            self.__visit_current__()
+            self.__visit__(e)
             self.__pop__()
-        self.__pop__()
 
-    def __visit_object_attribute__(self, attr, attribute_name):
-        self.__push__(attr, attribute_name)
-        self.__visit_current__()
-        self.__pop__()
-
-    def __visit_list_attribute__(self, attr, attribute_name):
-        self.__push__(attr, attribute_name)
+    def __visit_list__(self, attr):
         for i, e in enumerate(attr):
             self.__push__(e, i)
-            self.__visit_current__()
+            self.__visit__(e)
             self.__pop__()
-        self.__pop__()
 
-    def __visit_dictionary_attribute__(self, attr, attribute_name):
-        self.__push__(attr, attribute_name)
+    def __visit_dictionary__(self, attr):
         for k, e in attr.items():
             self.__push__(e, k)
-            self.__visit_current__()
+            self.__visit__(e)
             self.__pop__()
-        self.__pop__()
