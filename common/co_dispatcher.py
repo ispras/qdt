@@ -222,12 +222,12 @@ after last statement in the corresponding callable object.
         else:
             # Callers of the task cannot continue and must be removed
             if task.exception is None:
-                except_cls = CancelledCallee
+                exc = CancelledCallee(task)
             else:
-                except_cls = FailedCallee
+                exc = FailedCallee(task)
             for c in list(callers):
                 del self.callers[c]
-                self.__failed__(c, except_cls(task))
+                self.__failed__(c, exc)
 
     def __failed__(self, task, exception):
         task.exception = exception
