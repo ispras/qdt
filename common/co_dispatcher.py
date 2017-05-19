@@ -230,9 +230,6 @@ after last statement in the corresponding callable object.
                 self.__failed__(c, except_cls(task))
 
     def __failed__(self, task, exception):
-        if not isinstance(task, CoTask):
-            task = self.gen2task[task]
-
         task.exception = exception
         self.failed_tasks.add(task)
         task.on_failed()
