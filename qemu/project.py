@@ -69,12 +69,38 @@ already in another project.")
                 desc.link()
                 self.gen(desc, qemu_src, **gen_cfg)
 
+    def make_src_dirs(self, full_path):
+        tail, head = split(full_path)
+
+        parent_Makefile_obj = join(tail, "Makefile.objs")
+
+        if not isdir(full_path):
+            # Make parent directories.
+            if not isfile(parent_Makefile_obj):
+                """ Some times, an existing directory (with Makefile.objs)
+                will be reached. Then the recursion stops. """
+                self.make_src_dirs(tail)
+
+            # Make required directory.
+            makedirs(full_path)
+
+        # Ensure that made directory is registered in the QEMU build system.
+        patch_makefile(parent_Makefile_obj, head + "/", "obj", "y")
+
+        # Add empty Makefile.objs if no one exists.
+        Makefile_obj = join(full_path, "Makefile.objs")
+        if not isfile(Makefile_obj):
+            open(Makefile_obj, "w").close()
+
     def gen(self, desc, src, with_chunk_graph = False):
         dev_t = desc.gen_type()
 
         full_source_path = join(src, dev_t.source.path)
 
-        source_base_name = basename(full_source_path)
+        source_directory, source_base_name = split(full_source_path)
+
+        self.make_src_dirs(source_directory)
+
         (source_name, source_ext) = splitext(source_base_name)
         object_base_name = source_name + ".o"
 
