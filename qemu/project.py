@@ -28,6 +28,15 @@ from codecs import \
 from collections import \
     defaultdict
 
+""" TODO: Selection of configuration flag and accumulator variable
+name is Qemu version specific. Version API must be used there. """
+
+obj_var_names = defaultdict(lambda : "obj")
+obj_var_names["pci"] = "common-obj"
+
+config_flags = defaultdict(lambda: "y")
+config_flags["pci"] = "$(CONFIG_PCI)"
+
 class QProject(object):
     def __init__(self,
         descriptions = None
@@ -110,15 +119,6 @@ already in another project.")
         hw_path = join(src, "hw")
         class_hw_path = join(hw_path, desc.directory)
         Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
-
-        """ TODO: Selection of configuration flag and accumulator variable
-        name is Qemu version specific. Version API must be used there. """
-
-        obj_var_names = defaultdict(lambda : "obj")
-        obj_var_names["pci"] = "common-obj"
-
-        config_flags = defaultdict(lambda: "y")
-        config_flags["pci"] = "$(CONFIG_PCI)"
 
         patch_makefile(Makefile_objs_class_path, object_base_name,
             obj_var_names[desc.directory], config_flags[desc.directory]
