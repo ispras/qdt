@@ -103,8 +103,11 @@ already in another project.")
             # Make required directory.
             makedirs(full_path)
 
+        parent_dir = split(tail)[1]
+
         # Ensure that made directory is registered in the QEMU build system.
-        patch_makefile(parent_Makefile_obj, head + "/", "obj", "y")
+        patch_makefile(parent_Makefile_obj, head + "/",
+            obj_var_names[parent_dir], config_flags[parent_dir])
 
         # Add empty Makefile.objs if no one exists.
         Makefile_obj = join(full_path, "Makefile.objs")
