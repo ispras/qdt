@@ -25,6 +25,9 @@ from .makefile_patching import \
 from codecs import \
     open
 
+from collections import \
+    defaultdict
+
 class QProject(object):
     def __init__(self,
         descriptions = None
@@ -111,25 +114,14 @@ already in another project.")
         """ TODO: Selection of configuration flag and accumulator variable
         name is Qemu version specific. Version API must be used there. """
 
-        obj_var_names = {
-            "pci" : "common-obj"
-        }
-        config_flags = {
-            "pci" : "$(CONFIG_PCI)"
-        }
+        obj_var_names = defaultdict(lambda : "obj")
+        obj_var_names["pci"] = "common-obj"
 
-        try:
-            obj_var_name = obj_var_names[desc.directory]
-        except KeyError:
-            obj_var_name = "obj"
-
-        try:
-            config_flag = config_flags[desc.directory]
-        except KeyError:
-            config_flag = "y"
+        config_flags = defaultdict(lambda: "y")
+        config_flags["pci"] = "$(CONFIG_PCI)"
 
         patch_makefile(Makefile_objs_class_path, object_base_name,
-            obj_var_name, config_flag
+            obj_var_names[desc.directory], config_flags[desc.directory]
         )
 
         if "header" in dev_t.__dict__:
