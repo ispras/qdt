@@ -103,15 +103,18 @@ already in another project.")
             # Make required directory.
             makedirs(full_path)
 
-        parent_dir = split(tail)[1]
-
-        # Ensure that made directory is registered in the QEMU build system.
-        patch_makefile(parent_Makefile_obj, head + "/",
-            obj_var_names[parent_dir], config_flags[parent_dir])
-
         # Add empty Makefile.objs if no one exists.
         Makefile_obj = join(full_path, "Makefile.objs")
         if not isfile(Makefile_obj):
+            # Ensure that the directory is registered in the QEMU build system.
+            # There is the assumption that a directory with Makefile is
+            # always registered. So, do it only when Makefile is just being
+            # created.
+            parent_dir = split(tail)[1]
+            patch_makefile(parent_Makefile_obj, head + "/",
+                obj_var_names[parent_dir], config_flags[parent_dir]
+            )
+
             open(Makefile_obj, "w").close()
 
     def gen(self, desc, src, with_chunk_graph = False):
