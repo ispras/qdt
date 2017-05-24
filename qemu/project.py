@@ -33,9 +33,16 @@ name is Qemu version specific. Version API must be used there. """
 
 obj_var_names = defaultdict(lambda : "obj")
 obj_var_names["pci"] = "common-obj"
+obj_var_names["hw"] = "devices-dirs"
 
 config_flags = defaultdict(lambda: "y")
 config_flags["pci"] = "$(CONFIG_PCI)"
+config_flags["hw"] = "$(CONFIG_SOFTMMU)"
+
+""" Note that different subdirectories and modules could be registered in "hw"
+using other settings. But as this tool generates devices only. So, the settings
+is chosen this way.
+"""
 
 class QProject(object):
     def __init__(self,
