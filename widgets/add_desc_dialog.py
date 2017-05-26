@@ -5,7 +5,6 @@ from .hotkey import \
     HKEntry
 
 from .var_widgets import \
-    VarToplevel, \
     VarLabel, \
     VarButton, \
     VarCombobox
@@ -20,7 +19,10 @@ from six.moves.tkinter_messagebox import \
 from qemu import \
     POp_AddDesc
 
-class AddDescriptionDialog(VarToplevel):
+from .gui_dialog import \
+    GUIDialog
+
+class AddDescriptionDialog(GUIDialog):
     initialized = False
 
     # If project_history_tracker is None than the window works in demo mode.
@@ -36,12 +38,10 @@ string searching during each AddDescriptionDialog creation. """
 
             AddDescriptionDialog.initialized = True
 
-        VarToplevel.__init__(self, *args, **kw)
+        GUIDialog.__init__(self, *args, **kw)
 
         self.title(_("Description creation"))
 
-        self.transient(self.master)
-        self.grab_set()
         self.focus()
 
         self.grid()
