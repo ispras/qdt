@@ -118,6 +118,8 @@ from .history_window import \
 from .pci_id_widget import \
     PCIIdWidget
 
+from .gui_error import *
+
 from .tk_unbind import \
     unbind
 
