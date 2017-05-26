@@ -98,9 +98,13 @@ class MemorySettingsWidget(SettingsWidget):
                 )
             else:
                 l.grid(row = row, column = 0, sticky = "NES")
+                l.gi = l.grid_info()
                 w.grid(row = row, column = 1, sticky = "NEWS")
+            w.gi = w.grid_info()
             row += 1
 
+            if l:
+                setattr(self, "l_" + field, l)
             setattr(self, "w_" + field, w)
             setattr(self, "var_" + field, v)
 
@@ -114,6 +118,10 @@ class MemorySettingsWidget(SettingsWidget):
                 state = "readonly"
             )
             self.cb_alias_to.grid(row = row, column = 1, sticky = "NEWS")
+
+        if not mem.parent:
+            self.l_offset.grid_forget()
+            self.w_offset.grid_forget()
 
     def __apply_internal__(self):
         prev_pos = self.mht.pos
@@ -136,6 +144,13 @@ class MemorySettingsWidget(SettingsWidget):
                 self.mht.stage(MOp_RemoveMemChild, self.mem.id, cur_parent_id)
             if not new_parent_id == -1:
                 self.mht.stage(MOp_AddMemChild, self.mem.id, new_parent_id)
+
+            if not cur_parent_id == -1 and new_parent_id == -1:
+                self.l_offset.grid_forget()
+                self.w_offset.grid_forget()
+            if cur_parent_id == -1 and not new_parent_id == -1:
+                self.l_offset.grid(self.l_offset.gi)
+                self.w_offset.grid(self.w_offset.gi)
 
         for text, field, _type in self.fields:
             new_val = getattr(self, "var_" + field).get()
