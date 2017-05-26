@@ -22,22 +22,13 @@ from qemu import \
 from .gui_dialog import \
     GUIDialog
 
-class AddDescriptionDialog(GUIDialog):
-    initialized = False
+msg_title = _("Description creation error")
+msg_name = _("Name '%s' is incorrect or already in use.")
+msg_empty_name = _("Name is empty.")
 
+class AddDescriptionDialog(GUIDialog):
     # If project_history_tracker is None than the window works in demo mode.
     def __init__(self, project_history_tracker = None, *args, **kw):
-        if not AddDescriptionDialog.initialized:
-            """ String caching is not actually necessary after ML was replaced
-with mlget because no memory leak will take place. But it still helps avoid
-string searching during each AddDescriptionDialog creation. """
-            AddDescriptionDialog.msg_title = _("Description creation error")
-            AddDescriptionDialog.msg_name = \
-                _("Name '%s' is incorrect or already in use.")
-            AddDescriptionDialog.msg_empty_name = _("Name is empty.")
-
-            AddDescriptionDialog.initialized = True
-
         GUIDialog.__init__(self, *args, **kw)
 
         self.title(_("Description creation"))
@@ -126,14 +117,12 @@ string searching during each AddDescriptionDialog creation. """
     def on_add(self):
         cur_name = self.var_name.get()
         if not cur_name:
-            showerror(AddDescriptionDialog.msg_title.get(),
-                AddDescriptionDialog.msg_empty_name.get(),
+            showerror(msg_title.get(), msg_empty_name.get(),
                 parent = self
             )
             return
         elif not self.check_name():
-            showerror(AddDescriptionDialog.msg_title.get(),
-                AddDescriptionDialog.msg_name.get() % cur_name,
+            showerror(msg_title.get(), msg_name.get() % cur_name,
                 parent = self
             )
             return
