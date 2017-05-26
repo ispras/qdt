@@ -89,6 +89,9 @@ class ProjectGeneration(CoTask):
             )
 
     def on_finished(self):
+        self.__finalize()
+
+    def __finalize(self):
         if self.prev_qvd is not None:
             self.prev_qvd.use()
         self.finished = True
