@@ -71,22 +71,22 @@ class ProjectGeneration(CoTask):
 
     def begin(self):
         self.prev_qvd = qvd_get(self.p.build_path).use()
-        try:
-            self.p.gen_all(self.s)
-        except Exception as e:
-            yield True
 
-            showerror(
-                title = _("Generation failed").get(),
-                message = (_("Exception: '%s'.") % str(e)).get()
-            )
-        else:
-            yield True
+        self.p.gen_all(self.s)
 
-            showinfo(
-                title = _("Generation completed").get(),
-                message = _("No errors were reported.").get()
-            )
+        yield True
+
+        showinfo(
+            title = _("Generation completed").get(),
+            message = _("No errors were reported.").get()
+        )
+
+    def on_failed(self):
+        showerror(
+            title = _("Generation failed").get(),
+            message = (_("Exception: '%s'.") % str(self.exception)).get()
+        )
+        self.__finalize()
 
     def on_finished(self):
         self.__finalize()
