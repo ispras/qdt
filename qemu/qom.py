@@ -95,20 +95,25 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     default_default = None
 ):
     decl_macro = Type.lookup(decl_macro_name)
-    name_macro = Type.lookup(field.prop_macro_name)
     used_types = set([decl_macro])
     bool_true = Type.lookup("true")
     bool_false = Type.lookup("false")
 
     init_code = {
         "_f" : field.name,
-        "_n" : name_macro,
         "_s" : state_struct,
     }
 
-    init_code["_name"] = init_code["_n"]
+    if field.prop_macro_name is not None:
+        init_code["_n"] = Type.lookup(field.prop_macro_name)
+        init_code["_name"] = init_code["_n"]
+
     init_code["_state"] = init_code["_s"]
     init_code["_field"] = init_code["_f"]
+
+    # _conf is name of argument of macro DEFINE_NIC_PROPERTIES that
+    # corresponds to structure filed name
+    init_code["_conf"] = init_code["_f"]
 
     if default_default is not None:
         if field.default is None:
@@ -149,6 +154,9 @@ def declare_int(ctn, prop_macro):
     )
 
 type2prop = {
+    "NICConf" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_NIC_PROPERTIES", state_struct
+    ),
     "BlockBackend*" : lambda field, state_struct: gen_prop_declaration(
         field, "DEFINE_PROP_DRIVE", state_struct
     ),
@@ -243,6 +251,8 @@ class QOMType(object):
     def gen_property_macros(self, source):
         for field in self.state_fields:
             if not field.prop:
+                continue
+            if field.prop_macro_name is None:
                 continue
 
             t = Macro(field.prop_macro_name, text = field.prop_name)
@@ -587,6 +597,7 @@ class QOMDevice(QOMType):
     ])
 
     def __init__(self, name, directory,
+            nic_num = 0,
             timer_num = 0,
             char_num = 0,
             block_num = 0,
@@ -595,6 +606,7 @@ class QOMDevice(QOMType):
         super(QOMDevice, self).__init__(name, **qom_kw)
 
         self.directory = directory
+        self.nic_num = nic_num
         self.timer_num = timer_num
         self.char_num = char_num
         self.block_num = block_num
@@ -736,6 +748,8 @@ class QOMDevice(QOMType):
         total_used_types = set([self.state_struct, self.type_cast_macro])
         total_used_types.update(used_types)
 
+        total_used_globals = list(used_globals)
+
         if self.char_num > 0:
             if get_vp()["v2.8 chardev"]:
                 helper_name = "qemu_chr_fe_set_handlers"
@@ -782,6 +796,49 @@ class QOMDevice(QOMType):
 """ % (blk_name
                 )
 
+        if self.nic_num > 0:
+            code += "\n"
+            s_is_used = True
+
+            def_mac = Type.lookup("qemu_macaddr_default_if_unset")
+            fmt_info = Type.lookup("qemu_format_nic_info_str")
+            obj_tn = Type.lookup("object_get_typename")
+            obj_cast = Type.lookup("OBJECT")
+            def_cast = Type.lookup("DEVICE")
+            new_nic = Type.lookup("qemu_new_nic")
+            get_queue = Type.lookup("qemu_get_queue")
+
+            total_used_types.update([def_mac, fmt_info, obj_tn, obj_cast,
+                def_cast, new_nic, get_queue
+            ])
+
+            for nicN in range(self.nic_num):
+                conf_name = self.nic_conf_name(nicN)
+                nic_name = self.nic_name(nicN)
+                info = self.gen_net_client_info(nicN)
+
+                self.source.add_global_variable(info)
+                total_used_globals.append(info)
+
+                code += """\
+    {def_mac}(&s->{conf_name}.macaddr);
+    s->{nic_name} = {new_nic}(&{info}, &s->{conf_name},
+                              {obj_tn}({obj_cast}(s)),
+                              {def_cast}(s)->id, s);
+    {fmt_info}({get_queue}(s->{nic_name}), s->{conf_name}.macaddr.a);
+""".format(
+    def_mac = def_mac.name,
+    conf_name = conf_name,
+    nic_name = nic_name,
+    new_nic = new_nic.name,
+    info = info.name,
+    obj_tn = obj_tn.name,
+    obj_cast = obj_cast.name,
+    def_cast = def_cast.name,
+    fmt_info = fmt_info.name,
+    get_queue = get_queue.name
+                )
+
         fn = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
@@ -799,7 +856,79 @@ class QOMDevice(QOMType):
             ],
             static = True,
             used_types = total_used_types,
-            used_globals = used_globals
+            used_globals = total_used_globals
         )
 
         return fn
+
+    # NICs
+
+    def nic_name(self, index):
+        if self.nic_num == 1:
+            return "nic"
+        else:
+            return "nic_%u" % index
+
+    def nic_conf_name(self, index):
+        return self.nic_name(index) + "_conf"
+
+    def net_client_info_name(self, index):
+        return self.qtn.for_id_name + "_" + self.nic_name(index) + "_info"
+
+    def nic_helper_name(self, helper, index):
+        return "%s_%s_%s" % (
+            self.qtn.for_id_name, self.nic_name(index), helper
+        )
+
+    def nic_declare_field(self, index):
+        self.add_state_field(
+            QOMStateField(
+                Pointer(Type.lookup("NICState")), self.nic_name(index),
+                save = False
+            )
+        )
+        f = QOMStateField(
+            Type.lookup("NICConf"), self.nic_conf_name(index),
+            save = False,
+            prop = True
+        )
+        self.add_state_field(f)
+        # NIC properties have standard names
+        f.prop_macro_name = None
+
+    def nic_declare_fields(self):
+        for i in range(self.nic_num):
+            self.nic_declare_field(i)
+
+    def gen_nic_helper(self, helper, cbtn, index):
+        cbt = Type.lookup(cbtn)
+        return cbt.use_as_prototype(
+            self.nic_helper_name(helper, index),
+            body = "    return 0;\n" if cbt.ret_type.name != "void" else "",
+            static = True,
+            used_types = [ Type.lookup(self.struct_name) ]
+        )
+
+    def gen_net_client_info(self, index):
+        code = {}
+        for helper_name, cbtn in [
+            ("can_receive", "NetCanReceive"),
+            ("receive", "NetReceive"),
+            ("link_status_changed", "LinkStatusChanged"),
+            ("cleanup", "NetCleanup")
+        ]:
+            helper = self.gen_nic_helper(helper_name, cbtn, index)
+            self.source.add_type(helper)
+            code[helper_name] = helper
+
+        code["type"] = Type.lookup("NET_CLIENT_DRIVER_NIC")
+        types = set([Type.lookup("NICState")] + list(code.values()))
+        code["size"] = "sizeof(NICState)"
+
+        init = Initializer(code, used_types = types)
+
+        return Type.lookup("NetClientInfo").gen_var(
+            self.net_client_info_name(index),
+            initializer = init,
+            static = True
+        )
