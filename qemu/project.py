@@ -78,16 +78,20 @@ already in another project.")
     def find(self, **kw):
         return co_find_eq(self.descriptions, **kw)
 
-    def gen_all(self, qemu_src, **gen_cfg):
+    """ Backward compatibility wrapper for co_gen_all """
+    def gen_all(self, *args, **kw):
+        callco(self.co_gen_all(*args, **kw))
+
+    def co_gen_all(self, qemu_src, **gen_cfg):
         # First, generate all devices, then generate machines
         for desc in self.descriptions:
             if not isinstance(desc, MachineNode):
-                self.gen(desc, qemu_src, **gen_cfg)
+                yield self.co_gen(desc, qemu_src, **gen_cfg)
 
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
                 desc.link()
-                self.gen(desc, qemu_src, **gen_cfg)
+                yield self.co_gen(desc, qemu_src, **gen_cfg)
 
     def make_src_dirs(self, full_path):
         tail, head = split(full_path)
