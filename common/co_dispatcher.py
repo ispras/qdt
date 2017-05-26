@@ -26,6 +26,8 @@ class CoTask(object):
 
         # Contains the exception if task has failed
         self.exception = None
+        # Regular exceptions also have a traceback
+        self.traceback = None
 
     def on_activated(self):
         # do nothing by default
@@ -91,6 +93,7 @@ after last statement in the corresponding callable object.
             except Exception as e:
                 t1 = time()
 
+                task.traceback = sys.exc_info()[2]
                 self.__failed__(task, e)
             else:
                 t1 = time()
