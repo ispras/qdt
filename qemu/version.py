@@ -133,7 +133,7 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type.lookup("uint64_t"),
             args = [
                 Type.lookup("void").gen_var("opaque", pointer = True),
-                Type.lookup("hwaddr").gen_var("addr"),
+                Type.lookup("hwaddr").gen_var("offset"),
                 Type.lookup("unsigned").gen_var("size")
             ]
         ),
@@ -141,8 +141,8 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type.lookup("void"),
             args = [
                 Type.lookup("void").gen_var("opaque", pointer = True),
-                Type.lookup("hwaddr").gen_var("addr"),
-                Type.lookup("uint64_t").gen_var("data"),
+                Type.lookup("hwaddr").gen_var("offset"),
+                Type.lookup("uint64_t").gen_var("value"),
                 Type.lookup("unsigned").gen_var("size")
             ]
         ),
