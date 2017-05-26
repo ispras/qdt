@@ -99,7 +99,7 @@ class QDCGUIWindow(GUITk):
         GUITk.__init__(self, wait_msec = 1)
 
         for signame in [
-            "generation_finished",
+            "qvc_dirtied",
             "qvd_failed",
             "qvd_switched"
         ]:
@@ -549,7 +549,7 @@ later.").get()
         self._project_generation_task = ProjectGeneration(
             self.proj,
             qvd.src_path,
-            self.sig_generation_finished
+            self.sig_qvc_dirtied
         )
         self.task_manager.enqueue(self._project_generation_task)
 

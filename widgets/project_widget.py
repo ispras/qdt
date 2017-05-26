@@ -225,7 +225,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.qsig_watch("qvd_failed", self.__on_qvd_failed)
         self.qsig_watch("qvd_switched", self.on_qvd_switched)
-        self.qsig_watch("generation_finished", self.on_generation_finished)
+        self.qsig_watch("qvc_dirtied", self.on_qvc_dirtied)
 
     def __on_destroy__(self, event):
         if self.pht is not None:
@@ -243,7 +243,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.qsig_unwatch("qvd_failed", self.__on_qvd_failed)
         self.qsig_unwatch("qvd_switched", self.on_qvd_switched)
-        self.qsig_unwatch("generation_finished", self.on_generation_finished)
+        self.qsig_unwatch("qvc_dirtied", self.on_qvc_dirtied)
 
     def on_tv_b3(self, event):
         # select appropriate menu
@@ -487,7 +487,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         del self.reload_build_path_task
 
-    def on_generation_finished(self):
+    def on_qvc_dirtied(self):
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_values()
