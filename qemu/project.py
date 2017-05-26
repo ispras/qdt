@@ -17,6 +17,7 @@ from .machine_description import \
     MachineNode
 
 from common import \
+    callco, \
     co_find_eq
 
 from .makefile_patching import \
@@ -117,7 +118,11 @@ already in another project.")
 
             open(Makefile_obj, "w").close()
 
-    def gen(self, desc, src, with_chunk_graph = False):
+    """ Backward compatibility wrapper for co_gen """
+    def gen(self, *args, **kw):
+        callco(self.co_gen(*args, **kw))
+
+    def co_gen(self, desc, src, with_chunk_graph = False):
         dev_t = desc.gen_type()
 
         full_source_path = join(src, dev_t.source.path)
@@ -125,6 +130,8 @@ already in another project.")
         source_directory, source_base_name = split(full_source_path)
 
         self.make_src_dirs(source_directory)
+
+        yield True
 
         (source_name, source_ext) = splitext(source_base_name)
         object_base_name = source_name + ".o"
@@ -136,6 +143,8 @@ already in another project.")
         patch_makefile(Makefile_objs_class_path, object_base_name,
             obj_var_names[desc.directory], config_flags[desc.directory]
         )
+
+        yield True
 
         if "header" in dev_t.__dict__:
             include_path = join(src, 'include')
@@ -149,24 +158,39 @@ already in another project.")
             if isfile(full_header_path):
                 remove(full_header_path)
 
+            yield True
+
             header_writer = open(full_header_path,
                 mode = "wb",
                 encoding = "utf-8"
             )
             header = dev_t.generate_header()
+
+            yield True
+
             header.generate(header_writer)
             header_writer.close()
 
             if with_chunk_graph:
+                yield True
                 header.gen_chunks_gv_file(full_header_path + ".chunks.gv")
+
+        yield True
 
         if isfile(full_source_path):
             remove(full_source_path)
 
+        yield True
+
         source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
         source = dev_t.generate_source()
+
+        yield True
+
         source.generate(source_writer)
         source_writer.close()
 
         if with_chunk_graph:
+            yield True
+
             source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
