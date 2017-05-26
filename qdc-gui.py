@@ -75,16 +75,15 @@ class ProjectGeneration(CoTask):
 
         yield self.p.co_gen_all(self.s)
 
-        showinfo(
-            title = _("Generation completed").get(),
-            message = _("No errors were reported.").get()
-        )
-
     def on_failed(self):
         TaskErrorDialog(_("Generation failed"), self)
         self.__finalize()
 
     def on_finished(self):
+        showinfo(
+            title = _("Generation completed").get(),
+            message = _("No errors were reported.").get()
+        )
         self.__finalize()
 
     def __finalize(self):
