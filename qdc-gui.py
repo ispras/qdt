@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    TaskErrorDialog, \
     Statusbar, \
     GUIProjectHistoryTracker, \
     HistoryWindow, \
@@ -82,10 +83,7 @@ class ProjectGeneration(CoTask):
         )
 
     def on_failed(self):
-        showerror(
-            title = _("Generation failed").get(),
-            message = (_("Exception: '%s'.") % str(self.exception)).get()
-        )
+        TaskErrorDialog(_("Generation failed"), self)
         self.__finalize()
 
     def on_finished(self):
