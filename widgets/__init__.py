@@ -24,6 +24,8 @@ from .hotkey import \
 from .obj_ref_var import \
     ObjRefVar
 
+from .gui_dialog import *
+
 from .device_settings import \
     DeviceSettingsWidget
 
