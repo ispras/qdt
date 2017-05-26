@@ -25,6 +25,25 @@ from .makefile_patching import \
 from codecs import \
     open
 
+from collections import \
+    defaultdict
+
+""" TODO: Selection of configuration flag and accumulator variable
+name is Qemu version specific. Version API must be used there. """
+
+obj_var_names = defaultdict(lambda : "obj")
+obj_var_names["pci"] = "common-obj"
+obj_var_names["hw"] = "devices-dirs"
+
+config_flags = defaultdict(lambda: "y")
+config_flags["pci"] = "$(CONFIG_PCI)"
+config_flags["hw"] = "$(CONFIG_SOFTMMU)"
+
+""" Note that different subdirectories and modules could be registered in "hw"
+using other settings. But as this tool generates devices only. So, the settings
+is chosen this way.
+"""
+
 class QProject(object):
     def __init__(self,
         descriptions = None
@@ -69,12 +88,44 @@ already in another project.")
                 desc.link()
                 self.gen(desc, qemu_src, **gen_cfg)
 
+    def make_src_dirs(self, full_path):
+        tail, head = split(full_path)
+
+        parent_Makefile_obj = join(tail, "Makefile.objs")
+
+        if not isdir(full_path):
+            # Make parent directories.
+            if not isfile(parent_Makefile_obj):
+                """ Some times, an existing directory (with Makefile.objs)
+                will be reached. Then the recursion stops. """
+                self.make_src_dirs(tail)
+
+            # Make required directory.
+            makedirs(full_path)
+
+        # Add empty Makefile.objs if no one exists.
+        Makefile_obj = join(full_path, "Makefile.objs")
+        if not isfile(Makefile_obj):
+            # Ensure that the directory is registered in the QEMU build system.
+            # There is the assumption that a directory with Makefile is
+            # always registered. So, do it only when Makefile is just being
+            # created.
+            parent_dir = split(tail)[1]
+            patch_makefile(parent_Makefile_obj, head + "/",
+                obj_var_names[parent_dir], config_flags[parent_dir]
+            )
+
+            open(Makefile_obj, "w").close()
+
     def gen(self, desc, src, with_chunk_graph = False):
         dev_t = desc.gen_type()
 
         full_source_path = join(src, dev_t.source.path)
 
-        source_base_name = basename(full_source_path)
+        source_directory, source_base_name = split(full_source_path)
+
+        self.make_src_dirs(source_directory)
+
         (source_name, source_ext) = splitext(source_base_name)
         object_base_name = source_name + ".o"
 
@@ -82,28 +133,8 @@ already in another project.")
         class_hw_path = join(hw_path, desc.directory)
         Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
 
-        """ TODO: Selection of configuration flag and accumulator variable
-        name is Qemu version specific. Version API must be used there. """
-
-        obj_var_names = {
-            "pci" : "common-obj"
-        }
-        config_flags = {
-            "pci" : "$(CONFIG_PCI)"
-        }
-
-        try:
-            obj_var_name = obj_var_names[desc.directory]
-        except KeyError:
-            obj_var_name = "obj"
-
-        try:
-            config_flag = config_flags[desc.directory]
-        except KeyError:
-            config_flag = "y"
-
         patch_makefile(Makefile_objs_class_path, object_base_name,
-            obj_var_name, config_flag
+            obj_var_names[desc.directory], config_flags[desc.directory]
         )
 
         if "header" in dev_t.__dict__:
