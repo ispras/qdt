@@ -465,25 +465,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         while isinstance(e, FailedCallee):
             e = e.callee.exception
 
-        if isinstance(e, ProcessingUntrackedFile):
-            showerror(
-                title = _("Cache building is impossible").get(),
-                message = (_("Source has untracked file: %s.") % (
-                    e.message
-                )).get()
-            )
-        elif isinstance(e, ProcessingModifiedFile):
-            showerror(
-                title = _("Cache building is impossible").get(),
-                message = (_("Source has modified file: %s.") % (
-                    e.message
-                )).get()
-            )
-        else:
-            showerror(
-                title = _("QVD failed").get(),
-                message = _("QVD loading is failed").get()
-            )
+        showerror(
+            title = _("QVD loading failed").get(),
+            message = str(e)
+        )
 
         del self.reload_build_path_task
 
