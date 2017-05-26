@@ -73,9 +73,7 @@ class ProjectGeneration(CoTask):
     def begin(self):
         self.prev_qvd = qvd_get(self.p.build_path).use()
 
-        self.p.gen_all(self.s)
-
-        yield True
+        yield self.p.co_gen_all(self.s)
 
         showinfo(
             title = _("Generation completed").get(),
