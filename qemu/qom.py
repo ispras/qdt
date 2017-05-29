@@ -520,26 +520,29 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro):
-        return Type.lookup("MemoryRegionOps_read").use_as_prototype(
+        read = Type.lookup("MemoryRegionOps_read")
+        return read.use_as_prototype(
             name = name,
             static = True,
             body = """\
     __attribute__((unused)) {Struct} *s = {UPPER}(opaque);
     uint64_t ret = 0;
 
-    switch (addr) {{
+    switch ({offset}) {{
     default:
         printf("%s: unimplemented read from 0x%"HWADDR_PRIx", size %d\\n",
-            __FUNCTION__, addr, size);
+            __FUNCTION__, {offset}, size);
         break;
     }}
 
     return ret;
 """.format(
+    offset = read.args[1].name,
     Struct = struct_name,
     UPPER = type_cast_macro
 ),
         used_types = [
+            read.args[1].type,
             Type.lookup("uint64_t"),
             Type.lookup("printf"),
             Type.lookup("HWADDR_PRIx")
@@ -548,23 +551,28 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro):
-        return Type.lookup("MemoryRegionOps_write").use_as_prototype(
+        write = Type.lookup("MemoryRegionOps_write")
+        return write.use_as_prototype(
             name = name,
             static = True,
             body = """\
     __attribute__((unused)) {Struct} *s = {UPPER}(opaque);
 
-    switch (addr) {{
+    switch ({offset}) {{
     default:
         printf("%s: unimplemented write to 0x%"HWADDR_PRIx", size %d, "
-                "value 0x%"PRIx64"\\n", __FUNCTION__, addr, size, data);
+                "value 0x%"PRIx64"\\n", __FUNCTION__, {offset}, size, {value});
         break;
     }}
 """.format(
+    offset = write.args[1].name,
+    value = write.args[2].name,
     Struct = struct_name,
     UPPER = type_cast_macro
 ),
             used_types = [
+                write.args[1].type,
+                write.args[2].type,
                 Type.lookup("uint64_t"),
                 Type.lookup("printf"),
                 Type.lookup("HWADDR_PRIx"),
