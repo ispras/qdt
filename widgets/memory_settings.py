@@ -98,9 +98,13 @@ class MemorySettingsWidget(SettingsWidget):
                 )
             else:
                 l.grid(row = row, column = 0, sticky = "NES")
+                l.gi = l.grid_info()
                 w.grid(row = row, column = 1, sticky = "NEWS")
+            w.gi = w.grid_info()
             row += 1
 
+            if l:
+                setattr(self, "l_" + field, l)
             setattr(self, "w_" + field, w)
             setattr(self, "var_" + field, v)
 
@@ -114,6 +118,10 @@ class MemorySettingsWidget(SettingsWidget):
                 state = "readonly"
             )
             self.cb_alias_to.grid(row = row, column = 1, sticky = "NEWS")
+
+        if not mem.parent:
+            self.l_offset.grid_forget()
+            self.w_offset.grid_forget()
 
     def __apply_internal__(self):
         prev_pos = self.mht.pos
@@ -209,6 +217,13 @@ class MemorySettingsWidget(SettingsWidget):
             self.var_alias_to.set(
                 DeviceSettingsWidget.gen_node_link_text(self.mem.alias_to)
             )
+
+        if self.mem.parent is None:
+            self.l_offset.grid_forget()
+            self.w_offset.grid_forget()
+        else:
+            self.l_offset.grid(self.l_offset.gi)
+            self.w_offset.grid(self.w_offset.gi)
 
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
