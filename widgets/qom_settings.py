@@ -132,7 +132,7 @@ during refresh.     """
 
         self.after(0, self.__refresh__)
 
-        self.bind("<Destroy>", self.__on_destory__, "+")
+        self.bind("<Destroy>", self.__on_destroy__, "+")
 
         self.__have_pciid = have_pciid
         if have_pciid:
@@ -273,7 +273,7 @@ during refresh.     """
 
         self.__refresh__()
 
-    def __on_destory__(self, *args, **kw):
+    def __on_destroy__(self, *args, **kw):
         if self.pht is not None:
             self.pht.unwatch_changed(self.__on_changed__)
 
