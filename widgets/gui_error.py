@@ -15,6 +15,7 @@ from six.moves.tkinter import \
     BOTH, \
     ON, \
     END, \
+    NONE, \
     Scrollbar
 
 from .gui_text import \
@@ -37,7 +38,7 @@ class TaskErrorWidget(GUIFrame):
 
         # Text itself
         self.columnconfigure(0, weight = 1)
-        t = GUIText(master = self, state = READONLY)
+        t = GUIText(master = self, state = READONLY, wrap = NONE)
         t.grid(row = 0, column = 0, sticky = "NESW")
 
         # Vertical scrollbar
