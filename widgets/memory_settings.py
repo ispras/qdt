@@ -145,13 +145,6 @@ class MemorySettingsWidget(SettingsWidget):
             if not new_parent_id == -1:
                 self.mht.stage(MOp_AddMemChild, self.mem.id, new_parent_id)
 
-            if not cur_parent_id == -1 and new_parent_id == -1:
-                self.l_offset.grid_forget()
-                self.w_offset.grid_forget()
-            if cur_parent_id == -1 and not new_parent_id == -1:
-                self.l_offset.grid(self.l_offset.gi)
-                self.w_offset.grid(self.w_offset.gi)
-
         for text, field, _type in self.fields:
             new_val = getattr(self, "var_" + field).get()
             if _type is int:
@@ -224,6 +217,13 @@ class MemorySettingsWidget(SettingsWidget):
             self.var_alias_to.set(
                 DeviceSettingsWidget.gen_node_link_text(self.mem.alias_to)
             )
+
+        if self.mem.parent is None:
+            self.l_offset.grid_forget()
+            self.w_offset.grid_forget()
+        else:
+            self.l_offset.grid(self.l_offset.gi)
+            self.w_offset.grid(self.w_offset.gi)
 
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
