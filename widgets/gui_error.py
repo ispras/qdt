@@ -13,9 +13,11 @@ from six.moves.tkinter import \
     BOTH, \
     ON, \
     END, \
-    DISABLED, \
-    Text, \
     Scrollbar
+
+from .gui_text import \
+    GUIText, \
+    READONLY
 
 from traceback import \
     format_exception
@@ -33,7 +35,7 @@ class TaskErrorWidget(GUIFrame):
 
         # Text itself
         self.columnconfigure(0, weight = 1)
-        t = Text(master = self)
+        t = GUIText(master = self, state = READONLY)
         t.grid(row = 0, column = 0, sticky = "NESW")
 
         # Scrollbar
@@ -64,8 +66,6 @@ class TaskErrorWidget(GUIFrame):
             ))
 
         t.insert(END, "".join(lines))
-
-        t.config(state = DISABLED) # forbid editing
 
 class TaskErrorDialog(GUIDialog):
     def __init__(self, title, task):
