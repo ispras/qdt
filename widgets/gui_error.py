@@ -10,6 +10,8 @@ from .gui_dialog import \
     GUIDialog
 
 from six.moves.tkinter import \
+    VERTICAL, \
+    HORIZONTAL, \
     BOTH, \
     ON, \
     END, \
@@ -38,14 +40,21 @@ class TaskErrorWidget(GUIFrame):
         t = GUIText(master = self, state = READONLY)
         t.grid(row = 0, column = 0, sticky = "NESW")
 
-        # Scrollbar
+        # Vertical scrollbar
         self.columnconfigure(1, weight = 0)
-        sb = Scrollbar(master = self)
-        sb.grid(row = 0, column = 1, sticky = "NESW")
+        vsb = Scrollbar(master = self, orient = VERTICAL)
+        vsb.grid(row = 0, column = 1, sticky = "NESW")
 
-        # Bind scrollbar and text
-        t.config(yscrollcommand = sb.set)
-        sb.config(command = t.yview)
+        # Horizontal scrollbar
+        self.rowconfigure(1, weight = 0)
+        hsb = Scrollbar(master = self, orient = HORIZONTAL)
+        hsb.grid(row = 1, column = 0, sticky = "NESW")
+
+        # Bind scrollbars and text
+        t.config(yscrollcommand = vsb.set)
+        vsb.config(command = t.yview)
+        t.config(xscrollcommand = hsb.set)
+        hsb.config(command = t.xview)
 
         task_traceback = []
 
