@@ -626,7 +626,7 @@ IRQ line creation
         )
         self.popup_multiple = p
 
-        self.bind("<Destroy>", self.__on_destory__, "+")
+        self.bind("<Destroy>", self.__on_destroy__, "+")
 
         self.ph_launch()
 
@@ -678,7 +678,7 @@ IRQ line creation
             handler(tdev, x, y)
             break
 
-    def __on_destory__(self, *args, **kw):
+    def __on_destroy__(self, *args, **kw):
         self.var_physical_layout.set(False)
         if self.mht is not None:
             # the listener is not assigned in snapshot mode
