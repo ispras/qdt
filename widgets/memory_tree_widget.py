@@ -60,6 +60,7 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.heading("type", text = _("Type"))
 
         self.bind("<ButtonPress-3>", self.on_b3_press)
+        self.bind("<Double-Button-1>", self.on_b1_double)
 
         self.popup_leaf_node = p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
         self.popup_not_leaf_node = p1 = VarMenu(self.winfo_toplevel(),
@@ -363,6 +364,24 @@ snapshot mode or the command should be disabled too.
         self.show_popup(event.x_root, event.y_root, popup, self.selected)
 
         # print("on_b3_press")
+
+    def on_b1_double(self, event):
+        iid = self.identify_row(event.y)
+
+        try:
+            self.selected = self.iid2node[iid]
+        except:
+            if "." in iid:
+                self.selected = self.iid2node[iid.split(".", 1)[0]]
+            else:
+                self.selected = None
+
+        if self.selected:
+            self.show_memory_settings(self.selected, event.x, event.y)
+
+        # print("on_b1_double")
+
+        return "break"
 
     def gen_layout(self):
         layout = {}
