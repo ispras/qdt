@@ -60,6 +60,9 @@ from six.moves.tkinter_messagebox import \
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
+from .gui_error import \
+    TaskErrorDialog
+
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
@@ -225,7 +228,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.qsig_watch("qvd_failed", self.__on_qvd_failed)
         self.qsig_watch("qvd_switched", self.on_qvd_switched)
-        self.qsig_watch("generation_finished", self.on_generation_finished)
+        self.qsig_watch("qvc_dirtied", self.on_qvc_dirtied)
 
     def __on_destroy__(self, event):
         if self.pht is not None:
@@ -243,7 +246,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.qsig_unwatch("qvd_failed", self.__on_qvd_failed)
         self.qsig_unwatch("qvd_switched", self.on_qvd_switched)
-        self.qsig_unwatch("generation_finished", self.on_generation_finished)
+        self.qsig_unwatch("qvc_dirtied", self.on_qvc_dirtied)
 
     def on_tv_b3(self, event):
         # select appropriate menu
@@ -461,33 +464,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             pht.all_pci_ids_2_objects()
 
     def __on_qvd_failed(self):
-        e = self.reload_build_path_task.exception
-        while isinstance(e, FailedCallee):
-            e = e.callee.exception
-
-        if isinstance(e, ProcessingUntrackedFile):
-            showerror(
-                title = _("Cache building is impossible").get(),
-                message = (_("Source has untracked file: %s.") % (
-                    e.message
-                )).get()
-            )
-        elif isinstance(e, ProcessingModifiedFile):
-            showerror(
-                title = _("Cache building is impossible").get(),
-                message = (_("Source has modified file: %s.") % (
-                    e.message
-                )).get()
-            )
-        else:
-            showerror(
-                title = _("QVD failed").get(),
-                message = _("QVD loading is failed").get()
-            )
+        TaskErrorDialog(_("QVD loading failed"), self.reload_build_path_task)
 
         del self.reload_build_path_task
 
-    def on_generation_finished(self):
+    def on_qvc_dirtied(self):
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_values()

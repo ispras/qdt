@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    TaskErrorDialog, \
     Statusbar, \
     GUIProjectHistoryTracker, \
     HistoryWindow, \
@@ -71,24 +72,21 @@ class ProjectGeneration(CoTask):
 
     def begin(self):
         self.prev_qvd = qvd_get(self.p.build_path).use()
-        try:
-            self.p.gen_all(self.s)
-        except Exception as e:
-            yield True
 
-            showerror(
-                title = _("Generation failed").get(),
-                message = (_("Exception: '%s'.") % str(e)).get()
-            )
-        else:
-            yield True
+        yield self.p.co_gen_all(self.s)
 
-            showinfo(
-                title = _("Generation completed").get(),
-                message = _("No errors were reported.").get()
-            )
+    def on_failed(self):
+        TaskErrorDialog(_("Generation failed"), self)
+        self.__finalize()
 
     def on_finished(self):
+        showinfo(
+            title = _("Generation completed").get(),
+            message = _("No errors were reported.").get()
+        )
+        self.__finalize()
+
+    def __finalize(self):
         if self.prev_qvd is not None:
             self.prev_qvd.use()
         self.finished = True
@@ -99,7 +97,7 @@ class QDCGUIWindow(GUITk):
         GUITk.__init__(self, wait_msec = 1)
 
         for signame in [
-            "generation_finished",
+            "qvc_dirtied",
             "qvd_failed",
             "qvd_switched"
         ]:
@@ -549,7 +547,7 @@ later.").get()
         self._project_generation_task = ProjectGeneration(
             self.proj,
             qvd.src_path,
-            self.sig_generation_finished
+            self.sig_qvc_dirtied
         )
         self.task_manager.enqueue(self._project_generation_task)
 

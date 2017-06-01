@@ -24,6 +24,8 @@ from .hotkey import \
 from .obj_ref_var import \
     ObjRefVar
 
+from .gui_dialog import *
+
 from .device_settings import \
     DeviceSettingsWidget
 
@@ -104,6 +106,8 @@ from .tv_width_helper import \
 from .gui_proj_ht import \
     GUIProjectHistoryTracker
 
+from .gui_text import *
+
 from .branch_tree_view import \
     BranchTreeview
 
@@ -115,6 +119,8 @@ from .history_window import \
 
 from .pci_id_widget import \
     PCIIdWidget
+
+from .gui_error import *
 
 from .tk_unbind import \
     unbind
