@@ -14,64 +14,6 @@ from re import \
 from itertools import \
     count
 
-class Line(object):
-    def __init__(self, line):
-        self.pieces = [str(line)]
-        self.mapping = [(0, len(line), 0)]
-
-    def patch(self, start, end, subst):
-        mi = iter(self.mapping)
-        pi = iter(self.pieces)
-
-        new_mappings = []
-        new_pieces = []
-
-        for m in mi:
-            if m[1] <= start:
-                new_mappings.append(m)
-                new_pieces.append(next(pi))
-
-        if m[0] == start:
-            pass
-        else:
-            pass
-
-        """
-        mi = iter(self.mapping)
-
-        new_mappings = []
-
-        for first_mapping in mi:
-            if first_mapping[1] > start:
-                break
-            new_mappings.append(first_mapping)
-        else:
-            return
-
-        if end < first_mapping[0]:
-            for last_mapping in mi:
-                if end <= last_mapping[0]:
-                    break
-                new_mappings.append(last_mapping)
-        else:
-            last_mapping = first_mapping
-
-        ps = self.pieces
-        self.pieces = \
-            ps[:first_mapping[2]] + [str(substr)] + ps[last_mapping[2]:]
-
-        new_mapping = (first_mapping[0], last_mapping[1], first_mapping[2])
-
-        new_mappings.append(new_mapping)
-        for idx, m in enumerate(mi, start = new_mapping[2] + 1):
-            new_mappings.append((m[0], m[1], idx))
-        """
-
-        print("123")
-
-    def __str__(self):
-        return "".join(self.pieces)
-
 class PosInfo(object):
     def __init__(self, row, start, end, m):
         self.row, self.start, self.end, self.m = row, start, end, m
