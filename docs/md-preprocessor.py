@@ -298,6 +298,41 @@ if __name__ == "__main__":
 
         lines[row] = line
 
+    # sort sources by reference order
+    ref_anchors = [ a for a in anchors.values() if \
+        a.type == "ref" and a.substitution is not None
+    ]
+
+    ref_anchors = sorted(ref_anchors, key = lambda a : int(a.substitution))
+
+    min_row = len(lines)
+
+    a_lines = []
+    for a in ref_anchors:
+        if a.row < min_row:
+            min_row = a.row
+
+        for row in count(a.row):
+            for other_a in ref_anchors:
+                if other_a is a:
+                    continue
+                if other_a.row == row:
+                    # other anchor reached
+                    break
+            else:
+                # this row does not belong to other anchor
+                try:
+                    line = lines[row]
+                except IndexError:
+                    # EOF reached
+                    break
+                a_lines.append(line)
+                continue
+            # other anchor reached (see above)
+            break
+
+    lines = lines[:min_row] + a_lines
+
     for l in lines:
         out_file.write(str(l))
 
