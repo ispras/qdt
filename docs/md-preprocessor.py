@@ -179,13 +179,7 @@ if __name__ == "__main__":
                 anchors[m.group("name")] = AnchorInfo(row, start, col, m)
 
                 log(str(row) + "." + str(start) + " anchor : "
-                    + m.group("prefix") + "|"
-                    + m.group("quote") + "|"
-                    + m.group("name") + "|"
-                    + m.group("quote") + "|"
-                    + m.group("infix") + "|"
-                    + m.group("substitution") + "|"
-                    + m.group("suffix")
+                    + str(m.groupdict())
                 )
                 continue
 
@@ -196,11 +190,7 @@ if __name__ == "__main__":
                 references.append(RefInfo(row, start, col, m))
 
                 log(str(row) + "." + str(start) + " reference : "
-                    + m.group("prefix") + "|"
-                    + m.group("substitution") + "|"
-                    + m.group("infix") + "|"
-                    + m.group("name") + "|"
-                    + m.group("suffix")
+                    + str(m.groupdict())
                 )
                 continue
 
