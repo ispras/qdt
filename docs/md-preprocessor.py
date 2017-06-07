@@ -215,10 +215,10 @@ if __name__ == "__main__":
         la = len(ref.anchors)
         if ref.type == "rel":
             if la == 0:
-                log("no anchors found for relative reference " + ref.id)
+                log("no anchors found for relative reference " + ref.tag)
             elif la > 1:
                 log("too many (%u) anchors found for relative reference %s" % (
-                    la, ref.id
+                    la, ref.tag
                 ))
 
             a = ref.anchors[0]
@@ -231,10 +231,10 @@ if __name__ == "__main__":
                 ref.substitution = "ниже"
         elif ref.type == "ref":
             if la == 0:
-                log("no anchors found for reference " + ref.id)
+                log("no anchors found for reference " + ref.tag)
             elif la > 1:
                 log("too many (%u) anchors found for reference %s" % (
-                    la, ref.id
+                    la, ref.tag
                 ))
 
             a = ref.anchors[0]
