@@ -148,14 +148,14 @@ if __name__ == "__main__":
 (?P<name>.*?)\
 (?P=quote)\
 (?P<infix> *>[^\$<]*)\
-(?P<substitution>\$?)\
+(?P<substitution1>\$?)\
 (?P<suffix>[^<]*< */ *a *>)\
 """
     )
 
     reference = compile("""\
 (?P<prefix>\[)\
-(?P<substitution>\$?)\
+(?P<substitution1>\$?)\
 (?P<infix>]\(#)\
 (?P<name>[^\)]+)\
 (?P<suffix>\))\
@@ -279,12 +279,17 @@ if __name__ == "__main__":
                 continue
 
             m = pi.m
-            if not m.group("substitution"):
-                continue
 
-            line = line[:m.start("substitution")] \
-                    + pi.substitution \
-                    + line[m.end("substitution"):]
+            for s in count(1):
+                subst = "substitution%u" % s
+                try:
+                    g = m.group(subst)
+                except IndexError:
+                    break
+                if g:
+                    line = line[:m.start(subst)] \
+                        + pi.substitution \
+                        + line[m.end(subst):]
 
         lines[row] = line
 
