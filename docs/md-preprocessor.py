@@ -288,9 +288,13 @@ if __name__ == "__main__":
             if pi.substitution is None:
                 continue
 
-            line = line[:pi.m.start("substitution")] \
+            m = pi.m
+            if not m.group("substitution"):
+                continue
+
+            line = line[:m.start("substitution")] \
                     + pi.substitution \
-                    + line[pi.m.end("substitution"):]
+                    + line[m.end("substitution"):]
 
         lines[row] = line
 
