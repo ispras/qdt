@@ -348,7 +348,7 @@ def define_only_qemu_2_6_0_types():
             Structure("CharDriverState")
         ]
 
-    Header.lookup("sysemu/char.h").add_types([
+    Header.lookup(get_vp("header with IOEventHandler")).add_types([
         Function("IOEventHandler",
             args = [
                 Pointer(Type.lookup("void")).gen_var("opaque"),
