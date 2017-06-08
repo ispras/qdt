@@ -1,4 +1,4 @@
-[//]: # (python md-preprocessor.py -o tmp.md article.md && for t in docx html; do pandoc tmp.md --standalone --smart -o article.$t;done)
+[//]: # (for img in *.svg; do convert -density 150 "$img" "${img%.svg}.png" ; done && python md-preprocessor.py -o tmp.md article.md && for t in docx html; do pandoc tmp.md --standalone --smart -o article.$t;done)
 
 <!--
 Перед подачей в pandoc статься должна быть предобработана сценарием
@@ -2170,7 +2170,7 @@ GNS3 [[$](#ref.GNS3)], который использует Dynamips для эм�
 сформулирована их взаимосвязь в рамках ВМ C2621XM. Схема ВМ представлена на
 рисунке [$](#pic.C2621XM).
 
-![Рисунок <a name="pic.C2621XM">$</a> --- Схема маршрутизатора C2621XM](C2600.svg)
+![Рисунок <a name="pic.C2621XM">$</a> --- Схема маршрутизатора C2621XM](C2600.png)
 
 ## Заключение
 ## Использованные источники
