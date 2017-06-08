@@ -190,12 +190,16 @@ if __name__ == "__main__":
             ref.substitution = a.substitution
         elif ref.type == "pic":
             pass
+        elif ref.type == "tbl":
+            pass
         elif ref.type is not None:
             log("unknown reference type %s at %u.%u" % (
                 ref.type, ref.row, ref.start
             ))
 
     picture_num_gen = count(1)
+    table_num_gen = count(1)
+
     for a in anchors.values():
         if a.type == "rel":
             pass
@@ -203,6 +207,10 @@ if __name__ == "__main__":
             pass
         elif a.type == "pic":
             a.substitution = str(next(picture_num_gen))
+            for ref in a.references:
+                ref.substitution = a.substitution
+        elif a.type == "tbl":
+            a.substitution = str(next(table_num_gen))
             for ref in a.references:
                 ref.substitution = a.substitution
         elif a.type is not None:
