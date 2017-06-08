@@ -1,4 +1,4 @@
-[//]: # (for img in *.svg; do convert -density 150 "$img" "${img%.svg}.png" ; done && python md-preprocessor.py -o tmp.md article.md && for t in doc html; do pandoc tmp.md --standalone --smart -o article.$t;done)
+[//]: # (make)
 
 <!--
 Перед подачей в pandoc статься должна быть предобработана сценарием
