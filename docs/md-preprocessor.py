@@ -14,6 +14,9 @@ from re import \
 from itertools import \
     count
 
+from collections import \
+    OrderedDict
+
 class PosInfo(object):
     def __init__(self, row, start, end, m):
         self.row, self.start, self.end, self.m = row, start, end, m
@@ -106,7 +109,7 @@ if __name__ == "__main__":
 """
     )
 
-    anchors = {}
+    anchors = OrderedDict()
     references = []
     lines = []
 
