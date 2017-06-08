@@ -406,7 +406,7 @@ _интерфейсную_.
     * `PCIExpressDeviceDescription`
     * `MachineNode`
 
-`QOMDescription` является базовым классом. Он не предназначенный для
+`QOMDescription` является базовым классом. Он не предназначен для
 использования.
 
 `SysBusDeviceDescription` описывает устройство на системной шине.
