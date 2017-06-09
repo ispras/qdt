@@ -9,6 +9,7 @@ from source import \
     Source, \
     Type, \
     Initializer, \
+    TypeNotRegistered, \
     Function
 
 from .machine_nodes import \
@@ -518,6 +519,26 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 """.format(
     irq_name = var_name,
     dst_name = self.gen_name_for_device(irq[0]),
+    dst_index = irq[1],
+            )
+        else:
+            gpio_name = irq[2]
+            try:
+                gpio_name_type = Type.lookup(gpio_name)
+            except TypeNotRegistered:
+                gpio_name = '"%s"' % gpio_name
+            else:
+                self.use_type(gpio_name_type)
+
+            irq_get = Type.lookup("qdev_get_gpio_in_named")
+            self.use_type(irq_get)
+            return """\
+    {irq_name} = {irq_get}(DEVICE({dst_name}), {gpio_name}, {dst_index});
+""".format(
+    irq_name = var_name,
+    irq_get = irq_get.name,
+    dst_name = self.gen_name_for_device(irq[0]),
+    gpio_name = gpio_name,
     dst_index = irq[1],
             )
 
