@@ -267,6 +267,7 @@ def define_only_qemu_2_6_0_types():
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False),
         Function("pci_create_multifunction"),
+        Type("PCIIOMMUFunc"),
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/msi.h").add_types([
@@ -280,8 +281,10 @@ def define_only_qemu_2_6_0_types():
 
     Header.lookup("hw/pci/pci_bus.h").add_types([
         Type("PCIBus", incomplete = True)
-    ]).add_reference(osdep_fake_type)
-
+    ]).add_references([
+        Type.lookup("PCIIOMMUFunc"),
+        osdep_fake_type
+    ])
     Header.lookup("hw/pci/pci_host.h").add_reference(osdep_fake_type)
 
     Header.lookup("qemu/typedefs.h").add_types([
