@@ -246,6 +246,7 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_get_child_bus"),
         Structure(name = "BusState"),
         Function(name = "qdev_get_gpio_in"),
+        Function(name = "qdev_get_gpio_in_named"),
         Function(name = "qdev_connect_gpio_out"),
         Function(name = "qdev_connect_gpio_out_named")
     ]).add_reference(osdep_fake_type)
