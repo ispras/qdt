@@ -348,7 +348,7 @@ def define_only_qemu_2_6_0_types():
             Structure("CharDriverState")
         ]
 
-    Header.lookup("sysemu/char.h").add_types([
+    Header.lookup(get_vp("header with IOEventHandler")).add_types([
         Function("IOEventHandler",
             args = [
                 Pointer(Type.lookup("void")).gen_var("opaque"),
@@ -649,6 +649,13 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("msi_init type definer",
             new_value = define_msi_init_2_6_5,
             old_value = define_msi_init_2_6_0
+        )
+    ],
+    u'4d43a603c71d0eb92534bc82b72933f329d8a64c':
+    [
+        QEMUVersionParameterDescription("header with IOEventHandler",
+            new_value = "chardev/char-fe.h",
+            old_value = "sysemu/char.h"
         )
     ]
 }
