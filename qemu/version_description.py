@@ -379,9 +379,8 @@ class QemuVersionCache(object):
         vd: qemu_heuristic_db
         '''
 
-        # messages for exceptions
-        msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
-        msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+        # message for exceptions
+        msg = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
 
         # iterations to yield
         i2y = QVD_HP_IBY
@@ -407,7 +406,7 @@ class QemuVersionCache(object):
                         p.param_oval[param] = oval
                     else:
                         if other != oval:
-                            raise Exception(msg2 % (param, p.sha, oval, other))
+                            raise Exception(msg % (param, p.sha, oval, other))
 
                 # init old_val of nodes that consist of vd's parents
                 # and check conflicts
@@ -430,7 +429,7 @@ class QemuVersionCache(object):
                             continue
                         elif param_name in commit.param_oval:
                             if commit.param_oval[param_name] != cur_node.param_oval[param_name]:
-                                raise Exception(msg2 % (
+                                raise Exception(msg % (
 param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param_name]
                                 ))
                         else:
