@@ -223,7 +223,7 @@ class QemuVersionCache(object):
         # (parent, child), where parent is instance of
         # git.Commit, child is instance of CommitDesc
         build_stack = []
-        for head in repo.branches:
+        for head in repo.references:
             # skip processed heads
             if head.commit.hexsha in commit_desc_nodes:
                 continue
