@@ -416,12 +416,12 @@ class QemuVersionCache(object):
                 for param in cur_vd:
                     if param.name in p.param_nval:
                         if p.param_nval[param.name] != param.old_value:
-                            Exception(msg1 % (
+                            raise Exception(msg1 % (
 param.name, p.sha, param.old_value, p.param_nval[param.name]
                             ))
                     elif param.name in p.param_oval:
                         if param.old_value != p.param_oval[param.name]:
-                            Exception(msg2 % (
+                            raise Exception(msg2 % (
 param.name, p.sha, param.old_value, p.param_oval[param.name]
                             ))
                     else:
@@ -444,7 +444,7 @@ param.name, p.sha, param.old_value, p.param_oval[param.name]
                             continue
                         elif param_name in commit.param_oval:
                             if commit.param_oval[param_name] != cur_node.param_oval[param_name]:
-                                Exception(msg2 % (
+                                raise Exception(msg2 % (
 param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param_name]
                                 ))
                         else:
