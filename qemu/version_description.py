@@ -394,8 +394,6 @@ class QemuVersionCache(object):
             visited_nodes = set([key])
             visited_vd.add(key)
 
-            cur_vd = vd[key]
-
             node = self.commit_desc_nodes[key]
             for p in node.parents:
                 stack.append(p)
@@ -413,19 +411,7 @@ class QemuVersionCache(object):
 
                 # init old_val of nodes that consist of vd's parents
                 # and check conflicts
-                for param in cur_vd:
-                    if param.name in p.param_nval:
-                        if p.param_nval[param.name] != param.old_value:
-                            raise Exception(msg1 % (
-param.name, p.sha, param.old_value, p.param_nval[param.name]
-                            ))
-                    elif param.name in p.param_oval:
-                        if param.old_value != p.param_oval[param.name]:
-                            raise Exception(msg2 % (
-param.name, p.sha, param.old_value, p.param_oval[param.name]
-                            ))
-                    else:
-                        p.param_oval[param.name] = param.old_value
+                self.init_commit_old_val(p, vd[key])
 
                 i2y -= 1
                 if not i2y:
@@ -461,6 +447,25 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
                 if not i2y:
                     yield True
                     i2y = QVD_HP_IBY
+
+    def init_commit_old_val(self, commit, vd):
+        # messages for exceptions
+        msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
+        msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+
+        for param in vd:
+            if param.name in commit.param_nval:
+                if commit.param_nval[param.name] != param.old_value:
+                     raise Exception(msg1 % (
+param.name, commit.sha, param.old_value, commit.param_nval[param.name]
+                    ))
+            elif param.name in commit.param_oval:
+                if commit.param_oval[param.name] != param.old_value:
+                    raise Exception(msg2 % (
+param.name, commit.sha, param.old_value, commit.param_oval[param.name]
+                    ))
+            else:
+                commit.param_oval[param.name] = param.old_value
 
     def __children__(self):
         return [ self.pci_c ]
