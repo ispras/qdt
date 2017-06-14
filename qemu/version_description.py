@@ -194,9 +194,14 @@ class QemuVersionCache(object):
     def co_propagate_param(self):
         vd = qemu_heuristic_db
         vd_list = []
+
+        unknown_vd_keys = set()
         for k in vd.keys():
             if k in self.commit_desc_nodes:
                 vd_list.append((k, self.commit_desc_nodes[k].num))
+            else:
+                unknown_vd_keys.add(k)
+                print("WARNING: Unknown SHA1 %s in QEMU heuristic database" % k)
 
         sorted_tuple = sorted(vd_list, key = lambda x: x[1])
         sorted_vd_keys = [t[0] for t in sorted_tuple]
@@ -206,7 +211,7 @@ class QemuVersionCache(object):
         # first, need to propagate the new labels
         print("Propagation params in graph of commit's description ...")
         yield self.co_propagate_new_param(sorted_vd_keys, vd)
-        yield self.co_propagate_old_param(sorted_vd_keys, vd)
+        yield self.co_propagate_old_param(sorted_vd_keys, unknown_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
 
     def co_build_git_graph(self, repo):
@@ -370,12 +375,15 @@ class QemuVersionCache(object):
                 else:
                     i2y -= 1
 
-    def co_propagate_old_param(self, sorted_vd_keys, vd):
+    def co_propagate_old_param(self, sorted_vd_keys, unknown_vd_keys, vd):
         '''This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
 
         sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
         by num of CommitDesc. It's necessary to optimize the graph traversal.
+
+        unknown_vd_keys: set of keys which are not in commit_desc_nodes.
+
         vd: qemu_heuristic_db
         '''
 
@@ -384,6 +392,17 @@ class QemuVersionCache(object):
 
         # iterations to yield
         i2y = QVD_HP_IBY
+
+        # Assume unknown SHA1 corresponds to an ancestor of a known node.
+        # Therefore, old value must be used for all commits.
+        for commit in self.commit_desc_nodes.values():
+            for vd_keys in unknown_vd_keys:
+                self.init_commit_old_val(commit, vd[vd_keys])
+
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
 
         vd_keys_set = set(sorted_vd_keys)
         visited_vd = set()
