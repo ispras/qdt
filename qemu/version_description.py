@@ -194,9 +194,14 @@ class QemuVersionCache(object):
     def co_propagate_param(self):
         vd = qemu_heuristic_db
         vd_list = []
+
+        unknown_vd_keys = set()
         for k in vd.keys():
             if k in self.commit_desc_nodes:
                 vd_list.append((k, self.commit_desc_nodes[k].num))
+            else:
+                unknown_vd_keys.add(k)
+                print("WARNING: Unknown SHA1 %s in QEMU heuristic database" % k)
 
         sorted_tuple = sorted(vd_list, key = lambda x: x[1])
         sorted_vd_keys = [t[0] for t in sorted_tuple]
@@ -206,7 +211,7 @@ class QemuVersionCache(object):
         # first, need to propagate the new labels
         print("Propagation params in graph of commit's description ...")
         yield self.co_propagate_new_param(sorted_vd_keys, vd)
-        yield self.co_propagate_old_param(sorted_vd_keys, vd)
+        yield self.co_propagate_old_param(sorted_vd_keys, unknown_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
 
     def co_build_git_graph(self, repo):
@@ -223,7 +228,7 @@ class QemuVersionCache(object):
         # (parent, child), where parent is instance of
         # git.Commit, child is instance of CommitDesc
         build_stack = []
-        for head in repo.branches:
+        for head in repo.references:
             # skip processed heads
             if head.commit.hexsha in commit_desc_nodes:
                 continue
@@ -370,21 +375,34 @@ class QemuVersionCache(object):
                 else:
                     i2y -= 1
 
-    def co_propagate_old_param(self, sorted_vd_keys, vd):
+    def co_propagate_old_param(self, sorted_vd_keys, unknown_vd_keys, vd):
         '''This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
 
         sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
         by num of CommitDesc. It's necessary to optimize the graph traversal.
+
+        unknown_vd_keys: set of keys which are not in commit_desc_nodes.
+
         vd: qemu_heuristic_db
         '''
 
-        # messages for exceptions
-        msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
-        msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+        # message for exceptions
+        msg = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
 
         # iterations to yield
         i2y = QVD_HP_IBY
+
+        # Assume unknown SHA1 corresponds to an ancestor of a known node.
+        # Therefore, old value must be used for all commits.
+        for commit in self.commit_desc_nodes.values():
+            for vd_keys in unknown_vd_keys:
+                self.init_commit_old_val(commit, vd[vd_keys])
+
+                i2y -= 1
+                if not i2y:
+                    yield True
+                    i2y = QVD_HP_IBY
 
         vd_keys_set = set(sorted_vd_keys)
         visited_vd = set()
@@ -393,8 +411,6 @@ class QemuVersionCache(object):
             # used to avoid multiple processing of one node
             visited_nodes = set([key])
             visited_vd.add(key)
-
-            cur_vd = vd[key]
 
             node = self.commit_desc_nodes[key]
             for p in node.parents:
@@ -409,23 +425,11 @@ class QemuVersionCache(object):
                         p.param_oval[param] = oval
                     else:
                         if other != oval:
-                            raise Exception(msg2 % (param, p.sha, oval, other))
+                            raise Exception(msg % (param, p.sha, oval, other))
 
                 # init old_val of nodes that consist of vd's parents
                 # and check conflicts
-                for param in cur_vd:
-                    if param.name in p.param_nval:
-                        if p.param_nval[param.name] != param.old_value:
-                            Exception(msg1 % (
-param.name, p.sha, param.old_value, p.param_nval[param.name]
-                            ))
-                    elif param.name in p.param_oval:
-                        if param.old_value != p.param_oval[param.name]:
-                            Exception(msg2 % (
-param.name, p.sha, param.old_value, p.param_oval[param.name]
-                            ))
-                    else:
-                        p.param_oval[param.name] = param.old_value
+                self.init_commit_old_val(p, vd[key])
 
                 i2y -= 1
                 if not i2y:
@@ -444,7 +448,7 @@ param.name, p.sha, param.old_value, p.param_oval[param.name]
                             continue
                         elif param_name in commit.param_oval:
                             if commit.param_oval[param_name] != cur_node.param_oval[param_name]:
-                                Exception(msg2 % (
+                                raise Exception(msg % (
 param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param_name]
                                 ))
                         else:
@@ -461,6 +465,25 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
                 if not i2y:
                     yield True
                     i2y = QVD_HP_IBY
+
+    def init_commit_old_val(self, commit, vd):
+        # messages for exceptions
+        msg1 = "Conflict with param '%s' in commit %s (old_val (%s) != new_val (%s))"
+        msg2 = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
+
+        for param in vd:
+            if param.name in commit.param_nval:
+                if commit.param_nval[param.name] != param.old_value:
+                     raise Exception(msg1 % (
+param.name, commit.sha, param.old_value, commit.param_nval[param.name]
+                    ))
+            elif param.name in commit.param_oval:
+                if commit.param_oval[param.name] != param.old_value:
+                    raise Exception(msg2 % (
+param.name, commit.sha, param.old_value, commit.param_oval[param.name]
+                    ))
+            else:
+                commit.param_oval[param.name] = param.old_value
 
     def __children__(self):
         return [ self.pci_c ]
