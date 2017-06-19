@@ -7,7 +7,8 @@ from six.moves import \
 
 from six.moves.tkinter import \
     BooleanVar, \
-    DISABLED
+    DISABLED, \
+    ALL
 
 from math import \
     sqrt, \
@@ -377,6 +378,16 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             hotkeys.add_key_symbols({
                 41: "F"
             })
+            hotkeys.add_binding(
+                HotKeyBinding(
+                    self.on_diagram_centering,
+                    key_code = 54, # C
+                    description = _("Centering of machine diagram.")
+                )
+            )
+            hotkeys.add_key_symbols({
+                54: "C"
+            })
 
         try:
             pht = self.winfo_toplevel().pht
@@ -580,6 +591,15 @@ IRQ line creation
             find_args["accelerator"] = \
                 hotkeys.get_keycode_string(self.on_diagram_finding)
         p.add_command(**find_args)
+
+        centering_args = {
+            "label" : _("Diagram centering"),
+            "command" : self.on_diagram_centering
+        }
+        if hotkeys is not None:
+            centering_args["accelerator"] = \
+                hotkeys.get_keycode_string(self.on_diagram_centering)
+        p.add_command(**centering_args)
 
         self.popup_empty_no_selected = p
 
@@ -785,6 +805,28 @@ IRQ line creation
         self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
+
+    def on_diagram_centering(self, *args):
+        bbox = self.canvas.bbox(ALL)
+        if bbox is not None:
+            x, y = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+            elem = self.canvas.find_closest(x, y)
+            if len(elem) == 1:
+                x1, y1, x2, y2 = self.canvas.bbox(elem)
+
+                x = self.canvas.canvasx(0) \
+                  + self.canvas.winfo_width() / 2 - (x1 + x2) / 2
+                y = self.canvas.canvasy(0) \
+                  + self.canvas.winfo_height() / 2 - (y1 + y2) / 2
+
+                self.canvas.scan_mark(0, 0)
+                self.canvas.scan_dragto(int(x), int(y), gain = 1)
+
+                # cancel current physic iteration if moved
+                self.invalidate()
+                self.select_point = None
+                self.canvas.delete(self.select_frame)
+                self.select_frame = None
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
