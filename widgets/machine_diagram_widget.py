@@ -10,7 +10,8 @@ from six.moves.tkinter import \
     DISABLED
 
 from math import \
-    sqrt
+    sqrt, \
+    hypot
 
 from random import \
     random
@@ -366,6 +367,16 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             hotkeys.add_key_symbols({
                 26: "E"
             })
+            hotkeys.add_binding(
+                HotKeyBinding(
+                    self.on_diagram_finding,
+                    key_code = 41, # F
+                    description = _("Finding of machine diagram.")
+                )
+            )
+            hotkeys.add_key_symbols({
+                41: "F"
+            })
 
         try:
             pht = self.winfo_toplevel().pht
@@ -561,6 +572,15 @@ IRQ line creation
                 hotkeys.get_keycode_string(self.on_export_diagram)
         p.add_command(**export_args)
 
+        find_args = {
+            "label" : _("Diagram finding"),
+            "command" : self.on_diagram_finding
+        }
+        if hotkeys is not None:
+            find_args["accelerator"] = \
+                hotkeys.get_keycode_string(self.on_diagram_finding)
+        p.add_command(**find_args)
+
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -739,6 +759,32 @@ IRQ line creation
                 title = _("Export error").get(),
                 message = (_("Unexpected file extension %s") % ext).get()
             )
+
+    def on_diagram_finding(self, *args):
+        ids = self.canvas.find_withtag("DnD")
+        if len(ids) == 0:
+            return
+
+        sx = self.canvas.canvasx(self.canvas.winfo_width() / 2)
+        sy = self.canvas.canvasy(self.canvas.winfo_height() / 2)
+
+        bboxes = map(lambda id: self.canvas.bbox(id), ids)
+        centers = map(lambda b: ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2), bboxes)
+        x0, y0 = min(centers, key = lambda a: hypot(a[0] - sx, a[1] - sy))
+
+        x = self.canvas.canvasx(0) \
+          + self.canvas.winfo_width() / 2 - x0
+        y = self.canvas.canvasy(0) \
+          + self.canvas.winfo_height() / 2 - y0
+
+        self.canvas.scan_mark(0, 0)
+        self.canvas.scan_dragto(int(x), int(y), gain = 1)
+
+        # cancel current physic iteration if moved
+        self.invalidate()
+        self.select_point = None
+        self.canvas.delete(self.select_frame)
+        self.select_frame = None
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
