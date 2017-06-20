@@ -1015,7 +1015,7 @@ I2CBusNode, DeviceNode, SystemBusDeviceNode, PCIExpressDeviceNode`,
 IRQLine, IRQHub, MemoryNode, MemoryLeafNode, MemoryAliasNode, MemoryRAMNode,
 MemoryROMNode +-->
 
-### Формат файлов
+#### Формат файлов
 
 Настройки генерации устройств и ВМ собраны в единый _проект_. Проект
 описывается классом `QProject` (QEMU project). При работе с ГИ используется
