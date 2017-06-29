@@ -358,34 +358,26 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         except AttributeError:
             hotkeys = None
         else:
-            hotkeys.add_binding(
+            hotkeys.add_bindings([
                 HotKeyBinding(
                     self.on_export_diagram,
                     key_code = 26, # E
                     description = _("Export of machine diagram.")
-                )
-            )
-            hotkeys.add_key_symbols({
-                26: "E"
-            })
-            hotkeys.add_binding(
+                ),
                 HotKeyBinding(
                     self.on_diagram_finding,
                     key_code = 41, # F
                     description = _("Finding of machine diagram.")
-                )
-            )
-            hotkeys.add_key_symbols({
-                41: "F"
-            })
-            hotkeys.add_binding(
+                ),
                 HotKeyBinding(
                     self.on_diagram_centering,
                     key_code = 54, # C
                     description = _("Centering of machine diagram.")
                 )
-            )
+            ])
             hotkeys.add_key_symbols({
+                26: "E",
+                41: "F",
                 54: "C"
             })
 
