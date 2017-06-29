@@ -8,6 +8,9 @@ from six.moves import \
     range as xrange, \
     tkinter as tk
 
+from six import \
+    integer_types
+
 from .var_widgets import \
     VarLabelFrame, \
     VarLabel, \
@@ -69,9 +72,9 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
 
             if isinstance(cur_val, bool):
                 pass
-            elif isinstance(cur_val, int) or isinstance(cur_val, long):
+            elif isinstance(cur_val, integer_types):
                 try:
-                    new_val = long(new_val, base = 0)
+                    new_val = int(new_val, base = 0)
                 except ValueError:
                     pass
 
