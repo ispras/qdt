@@ -1849,6 +1849,8 @@ FormatVar +-->
 комментариями, которые на самом деле не генерируются.
 Такие комментарии только многострочные и начинаются с двух звёздочек
 (`/** **/`) вместо одной, необходимой по синтаксису.
+В целях экономии места повторяющиеся фрагменты кода заменены их названием в
+комментариях следующего вида: `/** -= заменённый фрагмент =- **/`.
 Все остальные комментарии следует считать генерируемыми инструментом.
 
 Во многих примерах не приведены директивы `include`.
@@ -1932,12 +1934,12 @@ static void a20_line_irq_handler(void* opaque, int n, int level)
 
 static void a20_line_instance_init(Object* obj)
 {
-    /** Другой код **/
+    /** -= другой код =- **/
     /** При регистрации обработчика указывается количество входящих прерываний.
     Макрос A20_LINE_IN_IRQ_NUM, определяющий их количество, определен в
     заголовке устройства. **/
     qdev_init_gpio_in(DEVICE(obj), a20_line_irq_handler, A20_LINE_IN_IRQ_NUM);
-    /** Другой код **/
+    /** -= другой код =- **/
 }
 ```
 <!--+ пример GPIO, применение атрибута unused +-->
@@ -1969,7 +1971,7 @@ static void a20_line_instance_init(Object* obj)
 typedef struct _IOPort80State {
     /** Структура объекта родительского класса всегда первая. **/
     SysBusDevice parent_obj;
-    /** Другие поля. **/
+    /** -= другие поля =- **/
 } IOPort80State;
 
 #endif /* INCLUDE_IO_PORT_80_H */
@@ -2103,13 +2105,13 @@ static MemoryRegionOps a20_line_mmio_ops = {
 static void a20_line_instance_init(Object* obj)
 {
     A20LineState *s = A20_LINE(obj);
-    /** Другой код. **/
+    /** -= другой код =- **/
     /** Инициализация участка памяти, соответствующего регистру. **/
     memory_region_init_io(&s->mmio, obj, &a20_line_mmio_ops, s, TYPE_A20_LINE, \
         A20_LINE_MMIO_SIZE);
     /** Регистрация данного участка памяти именно как MMIO регистр. **/
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
-    /** Другой код. **/
+    /** -= другой код =- **/
 }
 ```
 
@@ -2120,7 +2122,7 @@ static void a20_line_instance_init(Object* obj)
 ```c
 static void io_port_80_instance_init(Object* obj)
 {
-    /** Другой код. **/
+    /** -= другой код =- **/
     memory_region_init_io(&s->pio, obj, &io_port_80_pio_ops, s, \
         TYPE_IO_PORT_80, IO_PORT_80_PIO_SIZE);
     /** Основное отличие MMIO и PMIO регистров системной шины IBM PC
@@ -2133,7 +2135,7 @@ static void io_port_80_instance_init(Object* obj)
     в системе. На какие адреса отвечать решает разработчик устройства. **/
     sysbus_init_ioports(SYS_BUS_DEVICE(obj), IO_PORT_80_PIO_ADDR, \
         IO_PORT_80_PIO_SIZE);
-    /** Другой код. **/
+    /** -= другой код =- **/
 }
 ```
 <!--+ примеры заготовок MMIO и PMIO регистров +-->
@@ -2151,12 +2153,12 @@ static void io_port_80_instance_init(Object* obj)
 static void io_port_f0_instance_init(Object* obj)
 {
     IOPortF0State *s = IO_PORT_F0(obj);
-    /** Другой код **/
+    /** -= другой код =- **/
     /** Регистрация одного исходящего прерывания, соответствующего полю out_irq.
     В случае регистрации нескольких прерываний важен порядок, так как
     используется неявная нумерация. **/
     sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->out_irq);
-    /** Другой код **/
+    /** -= другой код =- **/
 }
 ```
 <!--+ пример заготовки исходящего прерывания устройства системной шины +-->
