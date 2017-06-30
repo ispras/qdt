@@ -163,6 +163,7 @@ if __name__ == "__main__":
         if ref.type == "rel":
             if la == 0:
                 log("no anchors found for relative reference " + ref.tag)
+                continue
             elif la > 1:
                 log("too many (%u) anchors found for relative reference %s" % (
                     la, ref.tag
@@ -179,6 +180,7 @@ if __name__ == "__main__":
         elif ref.type == "ref":
             if la == 0:
                 log("no anchors found for reference " + ref.tag)
+                continue
             elif la > 1:
                 log("too many (%u) anchors found for reference %s" % (
                     la, ref.tag
