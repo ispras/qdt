@@ -1630,10 +1630,17 @@ def deep_first_sort(chunk, new_chunks):
     new_chunks.append(chunk)
 
 def source_chunk_key(ch):
-    if type(ch) == HeaderInclusion:
-        return 0
-    else:
-        return 1
+    try:
+        return {
+            HeaderInclusion: 0,
+            StructureDeclaration: 1,
+            VariableDeclaration: 2,
+            VariableDefinition: 3,
+            FunctionDeclaration: 5,
+            FunctionDefinition: 6
+        }[type(ch)]
+    except KeyError:
+        return 4
 
 class SourceFile:
     def __init__(self, name, is_header=False):
