@@ -1633,14 +1633,13 @@ def source_chunk_key(ch):
     try:
         return {
             HeaderInclusion: 0,
-            StructureDeclaration: 1,
-            VariableDeclaration: 2,
-            VariableDefinition: 3,
-            FunctionDeclaration: 5,
-            FunctionDefinition: 6
+            MacroDefinition: 1,
+            StructureDeclaration: 2,
+            VariableDeclaration: 3,
+            FunctionDeclaration: 4,
         }[type(ch)]
     except KeyError:
-        return 4
+        return 5
 
 class SourceFile:
     def __init__(self, name, is_header=False):
