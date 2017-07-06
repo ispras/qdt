@@ -97,7 +97,7 @@ class SysBusDeviceType(QOMDevice):
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(dev);
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
 """.format(
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
@@ -153,8 +153,8 @@ class SysBusDeviceType(QOMDevice):
             ops_init = Initializer(
                 used_types = [read_func, write_func],
                 code = """{{
-    .read = {read},
-    .write = {write}
+    .read@b=@s{read},
+    .write@b=@s{write}
 }}""".format (
     read = read_func.name,
     write = write_func.name
@@ -172,8 +172,9 @@ class SysBusDeviceType(QOMDevice):
             instance_init_used_globals.append(ops)
 
             instance_init_code += """
-    memory_region_init_io(&s->{mmio}, obj, &{ops}, s, TYPE_{UPPER}, {size});
-    sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->{mmio});
+    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@sTYPE_{UPPER},\
+@s{size});
+    sysbus_init_mmio(@aSYS_BUS_DEVICE(obj),@s&s->{mmio});
 """.format(
     mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
@@ -224,8 +225,8 @@ class SysBusDeviceType(QOMDevice):
             ops_init = Initializer(
                 used_types = [read_func, write_func],
                 code = """{{
-    .read = {read},
-    .write = {write}
+    .read@b=@s{read},
+    .write@b=@s{write}
 }}""".format (
     read = read_func.name,
     write = write_func.name
@@ -243,9 +244,10 @@ class SysBusDeviceType(QOMDevice):
             instance_init_used_globals.append(ops)
 
             instance_init_code += """
-    memory_region_init_io(&s->{pio}, obj, &{ops}, s, TYPE_{UPPER}, {size});
-    sysbus_add_io(SYS_BUS_DEVICE(obj), {addr}, &s->{pio});
-    sysbus_init_ioports(SYS_BUS_DEVICE(obj), {addr}, {size});
+    memory_region_init_io(@a&s->{pio},@sobj,@s&{ops},@ss,@sTYPE_{UPPER},\
+@s{size});
+    sysbus_add_io(@aSYS_BUS_DEVICE(obj),@s{addr},@s&s->{pio});
+    sysbus_init_ioports(@aSYS_BUS_DEVICE(obj),@s{addr},@s{size});
 """.format(
     pio = self.get_Ith_io_name(pioN),
     ops = self.gen_Ith_pio_ops_name(pioN),
@@ -265,7 +267,7 @@ class SysBusDeviceType(QOMDevice):
 
             for irqN in range(0, self.out_irq_num):
                 instance_init_code += """\
-    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->%s);
+    sysbus_init_irq(@aSYS_BUS_DEVICE(obj),@s&s->%s);
 """ % self.get_Ith_irq_name(irqN)
 
         if self.in_irq_num > 0:
@@ -277,7 +279,7 @@ use_as_prototype(
                     self.state_struct,
                     self.type_cast_macro],
                 body =  """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(opaque);
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
 """.format(
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
@@ -293,7 +295,7 @@ use_as_prototype(
             self.header.add_type(in_irq_macro)
 
             instance_init_code += """
-    qdev_init_gpio_in(DEVICE(obj), {handler}, {irqs});
+    qdev_init_gpio_in(@aDEVICE(obj),@s{handler},@s{irqs});
 """.format(
     handler = self.irq_handler.name,
     irqs = in_irq_macro.name
@@ -327,12 +329,12 @@ use_as_prototype(
         self.class_init = Function(
             name = "%s_class_init" % self.qtn.for_id_name, 
             body = """\
-    DeviceClass *dc = DEVICE_CLASS(oc);
+    DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
 
-    dc->realize = {dev}_realize;
-    dc->reset   = {dev}_reset;
-    dc->vmsd    = &vmstate_{dev};
-    dc->props   = {dev}_properties;
+    dc->realize@b=@s{dev}_realize;
+    dc->reset@b@b@b=@s{dev}_reset;
+    dc->vmsd@b@b@b@b=@s&vmstate_{dev};
+    dc->props@b@b@b=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),
