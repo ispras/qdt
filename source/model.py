@@ -771,11 +771,11 @@ class Function(Type):
             self.name + '.body',
             self.body,
             self.ret_type,
-            list(self.args),
+            self.args,
             self.static,
             self.inline,
             [self],
-            list(self.used_globals)
+            self.used_globals
         )
         CopyFixerVisitor(new_f).visit()
         return new_f
