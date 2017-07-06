@@ -33,14 +33,18 @@ $. <a name="preffix.MyName">$</a>
 * CD Compact disc
 * CLI Command line interface
 * EEPROM Electrically erasable programmable ROM
+* GNU GNU's Not Unix!
 * GPIO general purpose input/output
+* GPL General Public License
 * ICH I/O Controller Hub
 * ICMP Internet control message protocol
 * IRQ Interrupt request
+* JSON JavaScript Object Notation
 * LPC Low pin count
 * MMIO Memory mapped input/output
 * MSI Message signalled interrupt
 * MSI-X Extended MSI
+* PCap Packet Capture
 * PCI Peripheral component interconnect
 * QOM QEMU object model
 * ROM Read-only memory
@@ -95,9 +99,9 @@ $. <a name="preffix.MyName">$</a>
     * интерфейс отладки программной среды гостевой ВВМ (по протоколу remote GDB
     [[$](#ref.remote_GDB)]);
     * сохранение и загрузка состояния ВВМ (_snapshot_);
-    * дублирование сетевого трафика в PCAP[[$](#ref.PCAP)];
+    * дублирование сетевого трафика в PCap;
     * программный интерфейс контроля работы ВВМ --- QMP (QEMU Monitor Protocol),
-    использующий формат на JSON[[$](#ref.JSON)];
+    использующий формат на JSON;
     * ручной командно-ориентированный интерфейс контроля работы ВВМ --- HMP
     (Human Monitor Protocol);
 
