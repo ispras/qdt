@@ -3017,7 +3017,10 @@ $. <a name="ref.Tkinter"></a>Страница библиотеки для соз
 $. <a name="ref.PyCParser"></a>Страница библиотека PyCParser на GitHub.
 "https://github.com/eliben/pycparser", 20.03.2017.
 
-$. <a name="ref.DetReplay"></a>_Что-нибудь про детерминированное воспроизведение_
+$. <a name="ref.DetReplay"></a>V. Yu. Efimov, K. A. Batuzov, V. A. Padaryan,
+A. I. Avetisyan. Features of the deterministic replay in the case of a
+minimum device set. Programming and Computer Software, April 2016, Volume 42,
+Issue 3, pp 174–186.
 
 $. <a name="ref.Dynamips"></a>Руководство по работе с Dynamips.
 "http://www.iteasypass.com/Dynamips.htm", 30.06.2017.
@@ -3029,7 +3032,8 @@ $. <a name="ref.MPC860"></a>Руководство пользователя дл
 серии MPC860. "http://www.nxp.com/docs/en/reference-manual/MPC860UM.pdf",
 30.06.2017
 
-$. <a name="ref.Python"></a>_Что-нибудь про Python_.
+$. <a name="ref.Python"></a>Сайт о языке программирования Python.
+"https://www.python.org/", 06.07.2017.
 
 $. <a name="ref.DBT"></a>_Что-нибудь про дин. дв. трансляцию_.
 
