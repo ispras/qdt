@@ -771,11 +771,11 @@ class Function(Type):
             self.name + '.body',
             self.body,
             self.ret_type,
-            list(self.args),
+            self.args,
             self.static,
             self.inline,
             [self],
-            list(self.used_globals)
+            self.used_globals
         )
         CopyFixerVisitor(new_f).visit()
         return new_f
@@ -1038,14 +1038,9 @@ class CopyFixerVisitor(ObjectVisitor):
 
     def on_visit(self):
         t = self.cur
-        if isinstance(t, Variable) or \
-            isinstance(t, Usage) or \
-            isinstance(t, Initializer) or \
+        if not isinstance(t, Type) or \
             (isinstance(t, Pointer) and not t.is_named):
             new_t = copy(t)
-            if isinstance(t, Initializer):
-                new_t.used_variables = list(t.used_variables)
-                new_t.used_types = set(t.used_types)
             try:
                 self.replace(new_t)
             except BreakVisiting:
