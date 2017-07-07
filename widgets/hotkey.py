@@ -81,10 +81,7 @@ class HotKey(object):
 
     def add_binding(self, binding):
         kc = binding.kc
-        if kc in self.keys2bindings:
-            self.keys2bindings[kc].append(binding)
-        else:
-            self.keys2bindings[kc] = [binding]
+        self.keys2bindings.setdefault(kc, []).append(binding)
 
         self.update_name(binding)
 
