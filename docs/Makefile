@@ -2,7 +2,7 @@ extensions := doc html pdf
 
 all: $(foreach ext,$(extensions),article.$(ext))
 
-$(foreach ext,$(extensions),article.$(ext)) : C2600.png main.png
+$(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
 
 clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
