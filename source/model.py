@@ -1184,6 +1184,12 @@ class SourceChunk(object):
             indents.append(len(indent))
             tmp_indent = indent
 
+            """
+            1. cut off indent of the line
+            2. surround non-slash spaces with ' ' moving them to separated words
+            3. split the line onto words
+            4. replace any non-breaking space with a regular space in each word
+            """
             words = list(filter(None, map(
                 lambda a: re_nbs.sub('\\1 ', a),
                 re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' ')).split(' ')
