@@ -1202,6 +1202,8 @@ class SourceChunk(object):
                     no_slash = 1
                     continue
 
+                """ split the word onto anchor control sequences and n-grams
+                around them """
                 subwords = list(filter(None, chain(*map(
                     lambda a: re_can.split(a),
                     re_anc.split(word)
