@@ -1247,7 +1247,7 @@ class SourceChunk(object):
                 word_indent = ll - len(line_indent) - len(word)
                 for ind in subword_indents:
                     indents.append(word_indent + ind)
-                tmp_indent = "" if not indents else " " * indents[-1]
+                tmp_indent = " " * indents[-1] if indents else ""
                 slash = True
 
             code += '\n'
