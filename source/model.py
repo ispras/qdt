@@ -1195,7 +1195,7 @@ class SourceChunk(object):
                 re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' ')).split(' ')
             )))
 
-            ll = 0
+            ll = 0 # line length
             last_word = len(words) - 1
             for idx2, word in enumerate(words):
                 if word == nss:
