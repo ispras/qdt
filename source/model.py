@@ -1202,9 +1202,10 @@ class SourceChunk(object):
                     no_slash = 1
                     continue
 
-                subwords = list(filter(None, chain(*map(lambda a:
-                           re_can.split(a),
-                           re_anc.split(word)))))
+                subwords = list(filter(None, chain(*map(
+                    lambda a: re_can.split(a),
+                    re_anc.split(word)
+                ))))
                 word = ''
                 subword_indents = []
                 for subword in subwords:
