@@ -1232,7 +1232,7 @@ class SourceChunk(object):
                         r = 0
                     else:
                         r = 2
-                    if 1 + r + len(word) + ll > max_cols:
+                    if ll + 1 + len(word) + r > max_cols:
                         if no_slash == 0:
                             code += ' \\'
                         code += '\n' + line_indent + tmp_indent + word
