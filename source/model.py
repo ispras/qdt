@@ -1184,9 +1184,10 @@ class SourceChunk(object):
             indents.append(len(indent))
             tmp_indent = indent
 
-            words = list(filter(None, map(lambda a: re_nbs.sub('\\1 ', a),
-                    re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' '))
-                    .split(' '))))
+            words = list(filter(None, map(
+                lambda a: re_nbs.sub('\\1 ', a),
+                re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' ')).split(' ')
+            )))
 
             ll = 0
             last_word = len(words) - 1
