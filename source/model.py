@@ -1199,7 +1199,7 @@ class SourceChunk(object):
             last_word = len(words) - 1
             for idx2, word in enumerate(words):
                 if word == nss:
-                    no_slash = 1
+                    slash = False
                     continue
 
                 """ split the word onto anchor control sequences and n-grams
@@ -1233,7 +1233,7 @@ class SourceChunk(object):
                     else:
                         r = 2
                     if ll + 1 + len(word) + r > max_cols:
-                        if no_slash == 0:
+                        if slash:
                             code += ' \\'
                         code += '\n' + line_indent + tmp_indent + word
                         ll = len(line_indent) + len(tmp_indent) + len(word)
@@ -1248,7 +1248,7 @@ class SourceChunk(object):
                 for ind in subword_indents:
                     indents.append(word_indent + ind)
                 tmp_indent = "" if not indents else " " * indents[-1]
-                no_slash = 0
+                slash = True
 
             code += '\n'
 
