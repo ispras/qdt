@@ -89,6 +89,14 @@ class HotKey(object):
         for b in bindings:
             self.add_binding(b)
 
+    def delete_binding(self, binding):
+        kc = binding.kc
+        self.keys2bindings[kc].remove(binding)
+
+    def delete_bindings(self, bindings):
+        for b in bindings:
+            self.delete_binding(b)
+
     def get_keycode_string(self, callback):
         if callback in self.cb2names:
             return self.cb2names[callback]
