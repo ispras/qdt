@@ -1413,7 +1413,7 @@ class StructureDeclarationBegin(SourceChunk):
         super(StructureDeclarationBegin, self).__init__(
             name="Beginning of structure {} declaration".format(struct.name),
             code="""\
-{indent}typedef struct _{struct_name} {{
+{indent}typedef struct {struct_name} {{
 """.format(
                 indent=indent,
                 struct_name=struct.name
