@@ -32,8 +32,15 @@ from itertools import \
 from six import \
     string_types, text_type, binary_type
 
+from re import \
+    compile
+
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
+
+macro_forbidden = compile("[^0-9A-Z_]")
+def to_macro_name(s):
+    return macro_forbidden.sub('_', s.upper())
 
 # Source code models
 
@@ -1413,7 +1420,7 @@ class StructureDeclarationBegin(SourceChunk):
         super(StructureDeclarationBegin, self).__init__(
             name="Beginning of structure {} declaration".format(struct.name),
             code="""\
-{indent}typedef struct _{struct_name} {{
+{indent}typedef struct {struct_name} {{
 """.format(
                 indent=indent,
                 struct_name=struct.name
@@ -1896,7 +1903,7 @@ them must be replaced with reference to h. """
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
-""".format(name = self.name.upper()))
+""".format(name = to_macro_name(self.name)))
 
         prev_header = False
 
@@ -1917,8 +1924,8 @@ them must be replaced with reference to h. """
 
         if self.is_header:
             writer.write("""\
-#endif /* INCLUDE_{}_H */
-""".format(self.name.upper()))
+#endif /* INCLUDE_{name}_H */
+""".format(name = to_macro_name(self.name)))
 
 class HeaderFile(SourceFile):
     def __init__(self, name):
