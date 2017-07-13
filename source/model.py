@@ -773,7 +773,10 @@ class Function(Type):
         return Function(name, body, self.ret_type, self.args, static, inline,
             used_types)
 
-    def gen_body(self):
+    def gen_body(self, used_types = None, used_globals = None):
+        new_used_types = [self]
+        new_used_types.extend([] if used_types is None else used_types)
+        new_used_globals = [] if used_globals is None else used_globals
         new_f = Function(
             self.name + '.body',
             self.body,
@@ -781,8 +784,8 @@ class Function(Type):
             self.args,
             self.static,
             self.inline,
-            [self],
-            self.used_globals
+            new_used_types,
+            new_used_globals
         )
         CopyFixerVisitor(new_f).visit()
         return new_f
