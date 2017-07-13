@@ -38,6 +38,9 @@ from .pci_ids import \
 from git import \
     Repo
 
+from six import \
+    u
+
 bp_file_name = "build_path_list"
 
 qvd_reg = {}
@@ -723,7 +726,7 @@ class QemuVersionDescription(object):
         # A diff between the index and the working tree
         modified_files = set()
         for e in self.repo.index.diff(None):
-            abs_path = join(self.src_path, e.a_rawpath)
+            abs_path = join(u(self.src_path), e.a_path)
             for include in self.include_paths:
                 if abs_path.startswith(include + sep):
                     modified_files.add(abs_path[len(include)+1:])
