@@ -1174,72 +1174,73 @@ class SourceChunk(object):
             clear_line = re_clr.sub('\\1', re_anc.sub('\\1', re_can.sub('\\1',
                          re_nbs.sub('\\1 ', re_nss.sub('\\1 ', line)))))
 
-            if len(clear_line) > max_cols:
-                line_no_indent_len = len(line) - len(line.lstrip(' '))
-                line_indent = line[:line_no_indent_len]
-                indents = []
-                indents.append(len(indent))
-                tmp_indent = indent
-
-                words = list(filter(None, map(lambda a: re_nbs.sub('\\1 ', a),
-                        re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' '))
-                        .split(' '))))
-
-                ll = 0
-                last_word = len(words) - 1
-                for idx2, word in enumerate(words):
-                    if word == nss:
-                        no_slash = 1
-                        continue
-
-                    subwords = list(filter(None, chain(*map(lambda a:
-                               re_can.split(a),
-                               re_anc.split(word)))))
-                    word = ''
-                    subword_indents = []
-                    for subword in subwords:
-                        if subword == anc:
-                            subword_indents.append(len(word))
-                        elif subword == can:
-                            if subword_indents:
-                                subword_indents.pop()
-                            else:
-                                try:
-                                    indents.pop()
-                                except IndexError:
-                                    raise Exception('Trying to pop indent '
-                                                    'anchor from empty stack')
-                        else:
-                            word += re_clr.sub('\\1', subword)
-
-                    if ll > 0:
-                        # The variable r reserves characters for ' \\'
-                        # that can be added after current word
-                        if idx2 == last_word or words[idx2 + 1] == nss:
-                            r = 0
-                        else:
-                            r = 2
-                        if 1 + r + len(word) + ll > max_cols:
-                            if no_slash == 0:
-                                code += ' \\'
-                            code += '\n' + line_indent + tmp_indent + word
-                            ll = len(line_indent) + len(tmp_indent) + len(word)
-                        else:
-                            code += ' ' + word
-                            ll += 1 + len(word)
-                    else:
-                        code += line_indent + word
-                        ll += len(line_indent) + len(word)
-
-                    word_indent = ll - len(line_indent) - len(word)
-                    for ind in subword_indents:
-                        indents.append(word_indent + ind)
-                    tmp_indent = "" if not indents else " " * indents[-1]
-                    no_slash = 0
-
-                code += '\n'
-            else:
+            if len(clear_line) <= max_cols:
                 code += clear_line + '\n'
+                continue
+
+            line_no_indent_len = len(line) - len(line.lstrip(' '))
+            line_indent = line[:line_no_indent_len]
+            indents = []
+            indents.append(len(indent))
+            tmp_indent = indent
+
+            words = list(filter(None, map(lambda a: re_nbs.sub('\\1 ', a),
+                    re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' '))
+                    .split(' '))))
+
+            ll = 0
+            last_word = len(words) - 1
+            for idx2, word in enumerate(words):
+                if word == nss:
+                    no_slash = 1
+                    continue
+
+                subwords = list(filter(None, chain(*map(lambda a:
+                           re_can.split(a),
+                           re_anc.split(word)))))
+                word = ''
+                subword_indents = []
+                for subword in subwords:
+                    if subword == anc:
+                        subword_indents.append(len(word))
+                    elif subword == can:
+                        if subword_indents:
+                            subword_indents.pop()
+                        else:
+                            try:
+                                indents.pop()
+                            except IndexError:
+                                raise Exception('Trying to pop indent '
+                                                'anchor from empty stack')
+                    else:
+                        word += re_clr.sub('\\1', subword)
+
+                if ll > 0:
+                    # The variable r reserves characters for ' \\'
+                    # that can be added after current word
+                    if idx2 == last_word or words[idx2 + 1] == nss:
+                        r = 0
+                    else:
+                        r = 2
+                    if 1 + r + len(word) + ll > max_cols:
+                        if no_slash == 0:
+                            code += ' \\'
+                        code += '\n' + line_indent + tmp_indent + word
+                        ll = len(line_indent) + len(tmp_indent) + len(word)
+                    else:
+                        code += ' ' + word
+                        ll += 1 + len(word)
+                else:
+                    code += line_indent + word
+                    ll += len(line_indent) + len(word)
+
+                word_indent = ll - len(line_indent) - len(word)
+                for ind in subword_indents:
+                    indents.append(word_indent + ind)
+                tmp_indent = "" if not indents else " " * indents[-1]
+                no_slash = 0
+
+            code += '\n'
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
