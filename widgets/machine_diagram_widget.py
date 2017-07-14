@@ -354,11 +354,11 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             self.task_manager = None
 
         try:
-            hotkeys = toplevel.hk
+            self.hk = hotkeys = toplevel.hk
         except AttributeError:
-            hotkeys = None
+            self.hk = hotkeys = None
         else:
-            hotkeys.add_bindings([
+            self.bindings = [
                 HotKeyBinding(
                     self.on_export_diagram,
                     key_code = 26, # E
@@ -374,7 +374,8 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
                     key_code = 54, # C
                     description = _("Centering of machine diagram.")
                 )
-            ])
+            ]
+            hotkeys.add_bindings(self.bindings)
             hotkeys.add_key_symbols({
                 26: "E",
                 41: "F",
@@ -658,6 +659,8 @@ IRQ line creation
         )
         self.popup_multiple = p
 
+        self.bind("<FocusIn>", self.__on_focus_in__, "+")
+        self.bind("<FocusOut>", self.__on_focus_out__, "+")
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
         self.ph_launch()
@@ -710,6 +713,14 @@ IRQ line creation
             handler(tdev, x, y)
             break
 
+    def __on_focus_in__(self, *args, **kw):
+        for binding in self.bindings:
+            binding.enabled = True
+
+    def __on_focus_out__(self, *args, **kw):
+        for binding in self.bindings:
+            binding.enabled = False
+
     def __on_destroy__(self, *args, **kw):
         self.var_physical_layout.set(False)
         if self.mht is not None:
@@ -720,6 +731,9 @@ IRQ line creation
             self.after_cancel(self._update_selection_marks_onece)
         except AttributeError:
             pass
+
+        if self.hk:
+            self.hk.delete_bindings(self.bindings)
 
     def on_export_diagram(self, *args):
         file_name = asksaveas(
