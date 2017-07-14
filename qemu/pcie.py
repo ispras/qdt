@@ -256,8 +256,8 @@ corresponding vendor is given" % attr
             realize_used_globals.append(ops)
 
             realize_code += """
-    memory_region_init_io(&s->{bar}, OBJECT(dev), &{ops}, s, TYPE_{UPPER}, {size});
-    pci_register_bar(&s->parent_obj, {barN}, PCI_BASE_ADDRESS_SPACE_MEMORY, &s->{bar});
+    memory_region_init_io(@a&s->{bar},@sOBJECT(dev),@s&{ops},@ss,@sTYPE_{UPPER},@s{size});
+    pci_register_bar(@a&s->parent_obj,@s{barN},@sPCI_BASE_ADDRESS_SPACE_MEMORY,@s&s->{bar});
 """.format(
     barN = barN,
     bar = self.get_Ith_mem_bar_name(barN),
@@ -339,10 +339,10 @@ corresponding vendor is given" % attr
             static = True,
             used_types = exit_used_types,
             body = """\
-    {unused}{Struct} *s = {UPPER}(dev);
+    {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if exit_used_s else "__attribute__((unused)) ",
+        unused = "" if exit_used_s else "__attribute__((unused))@b",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
         extra_code = exit_code
@@ -362,27 +362,27 @@ corresponding vendor is given" % attr
         self.class_init = Function(
             name = "%s_class_init" % self.qtn.for_id_name, 
             body = """\
-    DeviceClass *dc = DEVICE_CLASS(oc);
-    PCIDeviceClass *pc = PCI_DEVICE_CLASS(oc);
+    DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
+    PCIDeviceClass@b*pc@b=@sPCI_DEVICE_CLASS(oc);
 
-    pc->realize   {pad}= {dev}_realize;
-    pc->exit      {pad}= {dev}_exit;
-    pc->vendor_id {pad}= {vendor_macro};
-    pc->device_id {pad}= {device_macro};
-    pc->class_id  {pad}= {pci_class_macro};{subsys_id}{subsys_vid}
-    pc->revision  {pad}= {revision};
-    dc->vmsd      {pad}= &vmstate_{dev};
-    dc->props     {pad}= {dev}_properties;
+    pc->realize@b@b@b{pad}=@s{dev}_realize;
+    pc->exit@b@b@b@b@b@b{pad}=@s{dev}_exit;
+    pc->vendor_id@b{pad}=@s{vendor_macro};
+    pc->device_id@b{pad}=@s{device_macro};
+    pc->class_id@b@b{pad}=@s{pci_class_macro};{subsys_id}{subsys_vid}
+    pc->revision@b@b{pad}=@s{revision};
+    dc->vmsd@b@b@b@b@b@b{pad}=@s&vmstate_{dev};
+    dc->props@b@b@b@b@b{pad}=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name,
            revision = self.revision,
            vendor_macro = self.vendor_macro.name,
            device_macro = self.device_macro.name,
            pci_class_macro = self.pci_class_macro.name,
            subsys_id = '' if self.subsystem_macro is None else ("""
-    pc->subsystem_id        = %s;""" % self.subsystem_macro.name),
+    pc->subsystem_id@b@b@b@b@b@b@b@b=@s%s;""" % self.subsystem_macro.name),
            subsys_vid = '' if self.subsystem_vendor_macro is None else ("""
-    pc->subsystem_vendor_id = %s;""" % self.subsystem_vendor_macro.name),
-           pad = '          ' if self.subsystem_vendor_macro else ''
+    pc->subsystem_vendor_id@b=@s%s;""" % self.subsystem_vendor_macro.name),
+           pad = '@b@b@b@b@b@b@b@b@b@b' if self.subsystem_vendor_macro else ''
     ),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),

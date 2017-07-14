@@ -319,9 +319,9 @@ class QOMType(object):
     def gen_vmstate_initializer(self, state_struct):
         type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
         code = ("""{
-    .name = %s,
-    .version_id = 1,
-    .fields = (VMStateField[]) {""" % type_macro.name
+    .name@b=@s%s,
+    .version_id@b=@s1,
+    .fields@b=@s(VMStateField[])@b{""" % type_macro.name
         )
 
         used_macros = set()
@@ -433,20 +433,20 @@ class QOMType(object):
                 total_used_types.add(cb)
 
                 code += """\
-    s->%s = timer_new_ns(QEMU_CLOCK_VIRTUAL, %s, s);
+    s->%s@b=@stimer_new_ns(@aQEMU_CLOCK_VIRTUAL,@s%s,@ss);
 """ % (self.timer_name(timerN), cb.name,
                 )
 
         fn = Function(
             name = self.gen_instance_init_name(),
             body = """\
-    {used}{Struct} *s = {UPPER}(obj);
+    {used}{Struct}@b*s@b=@s{UPPER}(obj);
 {extra_code}\
 """.format(
     Struct = state_struct.name,
     UPPER = type_cast_macro.name,
     extra_code = code,
-    used = "" if s_is_used else "__attribute__((unused)) "
+    used = "" if s_is_used else "__attribute__((unused))@b"
             ),
             static = True,
             args = [
@@ -477,11 +477,11 @@ class QOMType(object):
         # Type info initializer
         tii = Initializer(
             code = """{{
-    .name          = TYPE_{UPPER},
-    .parent        = {parent_tn},
-    .instance_size = sizeof({Struct}),
-    .instance_init = {instance_init},
-    .class_init    = {class_init}
+    .name@b@b@b@b@b@b@b@b@b@b=@sTYPE_{UPPER},
+    .parent@b@b@b@b@b@b@b@b=@s{parent_tn},
+    .instance_size@b=@ssizeof({Struct}),
+    .instance_init@b=@s{instance_init},
+    .class_init@b@b@b@b=@s{class_init}
 }}""".format(
     UPPER = self.qtn.for_macros,
     parent_tn = ('"%s"' % parent_tn) if parent_macro is None \
@@ -525,17 +525,17 @@ class QOMType(object):
             name = name,
             static = True,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(opaque);
-    uint64_t ret = 0;
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
+    uint64_t@bret@b=@s0;
 
-    switch ({offset}) {{
+    switch@b({offset})@b{{
     default:
-        printf("%s: unimplemented read from 0x%"HWADDR_PRIx", size %d\\n",
-            __FUNCTION__, {offset}, size);
+        printf(@a"%s:@bunimplemented@bread@bfrom@b0x%"HWADDR_PRIx",@bsize@b%d\
+\\n",@s__FUNCTION__,@s{offset},@ssize);
         break;
     }}
 
-    return ret;
+    return@sret;
 """.format(
     offset = read.args[1].name,
     Struct = struct_name,
@@ -556,12 +556,13 @@ class QOMType(object):
             name = name,
             static = True,
             body = """\
-    __attribute__((unused)) {Struct} *s = {UPPER}(opaque);
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
 
-    switch ({offset}) {{
+    switch@b({offset})@b{{
     default:
-        printf("%s: unimplemented write to 0x%"HWADDR_PRIx", size %d, "
-                "value 0x%"PRIx64"\\n", __FUNCTION__, {offset}, size, {value});
+        printf(@a"%s:@bunimplemented@bwrite@bto@b0x%"HWADDR_PRIx",@bsize@b%d,@b"
+               @a"value@b0x%"PRIx64"\\n",@s__FUNCTION__,@s{offset},@ssize,\
+@s{value});
         break;
     }}
 """.format(
@@ -692,7 +693,7 @@ class QOMDevice(QOMType):
         proto = Type.lookup(proto_name)
         cb = proto.use_as_prototype(handler_name,
             body = """\
-    __attribute__((unused)) %s *s = %s(opaque);%s
+    __attribute__((unused))@b%s@b*s@b=@s%s(opaque);%s
 """ % (
     state_struct.name,
     self.type_cast_macro.name,
@@ -736,7 +737,7 @@ class QOMDevice(QOMType):
     def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
         timer_cb = Function(self.timer_cb_name(index),
             body = """\
-    __attribute__((unused)) %s *s = %s(opaque);
+    __attribute__((unused))@b%s@b*s@b=@s%s(opaque);
 """ % (state_struct.name, self.type_cast_macro.name
             ),
             args = [Type.lookup("void").gen_var("opaque", pointer = True)],
@@ -762,7 +763,7 @@ class QOMDevice(QOMType):
             if get_vp()["v2.8 chardev"]:
                 helper_name = "qemu_chr_fe_set_handlers"
                 char_name_fmt = "&s->%s"
-                extra_args = ", NULL, true"
+                extra_args = ",@sNULL,@strue"
             else:
                 helper_name = "qemu_chr_add_handlers"
                 char_name_fmt = "s->%s"
@@ -778,13 +779,13 @@ class QOMDevice(QOMType):
                     self.state_struct, self.type_cast_macro
                 )
                 code += """\
-    if ({chr_name}) {{
-        {helper_name}({chr_name}, {helpers}, s{extra_args});
+    if@b({chr_name})@b{{
+        {helper_name}(@a{chr_name},@s{helpers},@ss{extra_args});
     }}
 """.format(
     helper_name = helper_name,
     chr_name = char_name_fmt % chr_name,
-    helpers = ", ".join([h.name for h in har_handlers]),
+    helpers = ",@s".join([h.name for h in har_handlers]),
     extra_args = extra_args
                 )
                 total_used_types.update(har_handlers)
@@ -798,8 +799,8 @@ class QOMDevice(QOMType):
             for blkN in range(self.block_num):
                 blk_name = self.block_name(blkN)
                 code += """\
-    if (s->%s) {
-        /* TODO: Implement interaction with block driver. */
+    if@b(s->%s)@b{
+        /*@sTODO:@sImplement@sinteraction@swith@sblock@sdriver.@c@s*/
     }
 """ % (blk_name
                 )
@@ -830,10 +831,9 @@ class QOMDevice(QOMType):
 
                 code += """\
     {def_mac}(&s->{conf_name}.macaddr);
-    s->{nic_name} = {new_nic}(&{info}, &s->{conf_name},
-                              {obj_tn}({obj_cast}(s)),
-                              {def_cast}(s)->id, s);
-    {fmt_info}({get_queue}(s->{nic_name}), s->{conf_name}.macaddr.a);
+    s->{nic_name}@b=@s{new_nic}(@a&{info},@s&s->{conf_name},@s{obj_tn}\
+({obj_cast}(s)),@s{def_cast}(s)->id,@ss);
+    {fmt_info}(@a{get_queue}(s->{nic_name}),@ss->{conf_name}.macaddr.a);
 """.format(
     def_mac = def_mac.name,
     conf_name = conf_name,
@@ -850,10 +850,10 @@ class QOMDevice(QOMType):
         fn = Function(
             name = "%s_realize" % self.qtn.for_id_name,
             body = """\
-    {unused}{Struct} *s = {UPPER}(dev);
+    {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if s_is_used else "__attribute__((unused)) ",
+        unused = "" if s_is_used else "__attribute__((unused))@b",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
         extra_code = code

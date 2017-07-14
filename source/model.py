@@ -13,6 +13,12 @@ from copy import \
 
 import sys
 
+from re import \
+    compile
+
+from itertools import \
+    chain
+
 # PLY`s C preprocessor is used for several QEMU code analysis
 ply = join(split(split(__file__)[0])[0], "ply")
 if ply not in sys.path:
@@ -805,7 +811,7 @@ class Pointer(Type):
         if not self.is_named:
             name = _type.name + '*'
             if const:
-                name = "const " + name
+                name = "const@b" + name
 
         # do not add nameless pointers to type registry
         if self.is_named:
@@ -885,7 +891,7 @@ class Macro(Type):
         if self.args is None:
             return self.name
         else:
-            arg_val = "(" + ", ".join(init[a] for a in self.args) + ")"
+            arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + ")"
 
         return "%s%s" % (self.name, arg_val)
 
@@ -1147,45 +1153,114 @@ class SourceChunk(object):
         for r in list(self.references):
             self.del_reference(r)
 
-    def check_cols_fix_up(self, max_cols = 80, indent='    '):
+    def check_cols_fix_up(self, max_cols = 80, indent = '    '):
+        anc = '@a' # indent anchor
+        can = '@c' # cancel indent anchor
+        nbs = '@b' # non-breaking space
+        nss = '@s' # non-slash space
+
+        common_re = '(?<!@)((?:@@)*)({})'
+        re_anc = compile(common_re.format(anc))
+        re_can = compile(common_re.format(can))
+        re_nbs = compile(common_re.format(nbs))
+        re_nss = compile(common_re.format(nss))
+        re_clr = compile('@(.|$)')
+
         lines = self.code.split('\n')
         code = ''
-        auto_new_line = ' \\\n{}'.format(indent)
         last_line = len(lines) - 1
 
-        for idx, line in enumerate(lines):
-            if idx == last_line and len(line) == 0:
+        for idx1, line in enumerate(lines):
+            if idx1 == last_line and len(line) == 0:
                 break;
 
-            if len(line) > max_cols:
-                line_no_indent_len = len(line) - len(line.lstrip(' '))
-                line_indent = line[:line_no_indent_len]
+            clear_line = re_clr.sub('\\1', re_anc.sub('\\1', re_can.sub('\\1',
+                         re_nbs.sub('\\1 ', re_nss.sub('\\1 ', line)))))
 
-                words = line.lstrip(' ').split(' ')
+            if len(clear_line) <= max_cols:
+                code += clear_line + '\n'
+                continue
 
-                ll = 0
-                for word in words:
-                    if ll > 0:
-                        # The variable r reserves characters for auto new
-                        # line ' \\' that can be added after current word 
-                        if word == words[-1]:
-                            r = 0
+            line_no_indent_len = len(line) - len(line.lstrip(' '))
+            line_indent = line[:line_no_indent_len]
+            indents = []
+            indents.append(len(indent))
+            tmp_indent = indent
+
+            """
+            1. cut off indent of the line
+            2. surround non-slash spaces with ' ' moving them to separated words
+            3. split the line onto words
+            4. replace any non-breaking space with a regular space in each word
+            """
+            words = list(filter(None, map(
+                lambda a: re_nbs.sub('\\1 ', a),
+                re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' ')).split(' ')
+            )))
+
+            ll = 0 # line length
+            last_word = len(words) - 1
+            for idx2, word in enumerate(words):
+                if word == nss:
+                    slash = False
+                    continue
+
+                """ split the word onto anchor control sequences and n-grams
+                around them """
+                subwords = list(filter(None, chain(*map(
+                    lambda a: re_can.split(a),
+                    re_anc.split(word)
+                ))))
+                word = ''
+                subword_indents = []
+                for subword in subwords:
+                    if subword == anc:
+                        subword_indents.append(len(word))
+                    elif subword == can:
+                        if subword_indents:
+                            subword_indents.pop()
                         else:
-                            r = 2
-                        if 1 + r + len(word) + ll > max_cols:
-                            code += auto_new_line + line_indent + word
-                            ll = len(indent) + len(line_indent) + len(word)
-                        else:
-                            code += ' ' + word
-                            ll += 1 + len(word)
+                            try:
+                                indents.pop()
+                            except IndexError:
+                                raise Exception('Trying to pop indent '
+                                                'anchor from empty stack')
                     else:
-                        code += line_indent + word
-                        ll += len(line_indent) + len(word)
-                code += '\n'
-            else:
-                code += line + '\n'
+                        word += re_clr.sub('\\1', subword)
 
-        self.code = code
+                if ll > 0:
+                    # The variable r reserves characters for ' \\'
+                    # that can be added after current word
+                    if idx2 == last_word or words[idx2 + 1] == nss:
+                        r = 0
+                    else:
+                        r = 2
+                    """ If the line will be broken _after_ this word, its length
+may be still longer than max_cols because of safe breaking (' \'). If so, brake
+the line _before_ this word. Safe breaking is presented by 'r' variable in
+the expression which is 0 if safe breaking is not required after this word.
+                    """
+                    if ll + 1 + len(word) + r > max_cols:
+                        if slash:
+                            code += ' \\'
+                        code += '\n' + line_indent + tmp_indent + word
+                        ll = len(line_indent) + len(tmp_indent) + len(word)
+                    else:
+                        code += ' ' + word
+                        ll += 1 + len(word)
+                else:
+                    code += line_indent + word
+                    ll += len(line_indent) + len(word)
+
+                word_indent = ll - len(line_indent) - len(word)
+                for ind in subword_indents:
+                    indents.append(word_indent + ind)
+                tmp_indent = " " * indents[-1] if indents else ""
+                slash = True
+
+            code += '\n'
+
+        self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
 class HeaderInclusion(SourceChunk):
     def __init__(self, header):
@@ -1236,10 +1311,10 @@ class PointerTypeDeclaration(SourceChunk):
         name = 'Definition of pointer to type' + self.type.name
 
         if type(self.type) == Function:
-            code = 'typedef ' + gen_function_declaration_string('', self.type, def_name)
+            code = 'typedef@b' + gen_function_declaration_string('', self.type, def_name)
             code += ';\n'
         else:
-            code = 'typedef ' + self.type.name + ' ' + def_name
+            code = 'typedef@b' + self.type.name + '@b' + def_name
 
         super(PointerTypeDeclaration, self).__init__(name, code)
 
@@ -1267,18 +1342,18 @@ class PointerVariableDeclaration(SourceChunk):
 {indent}{extern}{decl_str};
 """.format(
                 indent = indent,
-                extern = "extern " if extern else "",
+                extern = "extern@b" if extern else "",
                 decl_str = gen_function_declaration_string('', t, var.name,
                                                            var.array_size)
                 )
         else:
             code = """\
-{indent}{extern}{type_name} *{var_name};
+{indent}{extern}{type_name}@b*{var_name};
 """.format(
                 indent = indent,
                 type_name = t.name,
                 var_name = var.name,
-                extern = "extern " if extern else ""
+                extern = "extern@b" if extern else ""
             )
         super(PointerVariableDeclaration, self).__init__(
             name = "Declaration of pointer {} to type {}".format(
@@ -1317,13 +1392,13 @@ class VariableDeclaration(SourceChunk):
                 var.type.name
                 ),
             code = """\
-{indent}{extern}{type_name} {var_name}{array_decl};
+{indent}{extern}{type_name}@b{var_name}{array_decl};
 """.format(
         indent = indent,
         type_name = var.type.name,
         var_name = var.name,
         array_decl =  gen_array_declaration(var.array_size),
-        extern = "extern " if extern else ""
+        extern = "extern@b" if extern else ""
     )
             )
         self.variable = var
@@ -1354,7 +1429,7 @@ class VariableDefinition(SourceChunk):
             raw_code = var.type.gen_usage_string(var.initializer)
             # add indent to initializer code
             init_code_lines = raw_code.split('\n')
-            init_code = " = " + init_code_lines[0]
+            init_code = "@b=@b" + init_code_lines[0]
             for line in init_code_lines[1:]:
                 init_code += "\n" + indent + line
 
@@ -1364,10 +1439,10 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{type_name} {var_name}{array_decl}{init};{nl}
+{indent}{static}{type_name}@b{var_name}{array_decl}{init};{nl}
 """.format(
         indent = indent,
-        static = "static " if var.static else "",
+        static = "static@b" if var.static else "",
         type_name = var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
@@ -1423,7 +1498,7 @@ class StructureDeclarationBegin(SourceChunk):
         super(StructureDeclarationBegin, self).__init__(
             name="Beginning of structure {} declaration".format(struct.name),
             code="""\
-{indent}typedef struct {struct_name} {{
+{indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
                 indent=indent,
                 struct_name=struct.name
@@ -1501,7 +1576,7 @@ class StructureDeclaration(SourceChunk):
         super(StructureDeclaration, self).__init__(
             name = "Ending of structure {} declaration".format(struct.name),
             code = """\
-{indent}}} {struct_name};{nl}
+{indent}}}@b{struct_name};{nl}
 """.format(
     indent = indent,
     struct_name = struct.name,
@@ -1528,20 +1603,20 @@ def gen_function_declaration_string(indent, function, pointer_name = None,
     else:
         args = ""
         for a in function.args:
-            args += a.type.name + " " + a.name
+            args += a.type.name + "@b" + a.name
             if not a == function.args[-1]:
-                args += ", "
+                args += ",@s"
 
     if function.name.find('.body') != -1:
         decl_name = function.name[:-5]
     else:
         decl_name = function.name
 
-    return "{indent}{static}{inline}{ret_type}{name}({args})".format(
+    return "{indent}{static}{inline}{ret_type}{name}(@a{args})".format(
         indent = indent,
-        static = "static " if function.static else "",
-        inline = "inline " if function.inline else "",
-        ret_type = function.ret_type.name + " ",
+        static = "static@b" if function.static else "",
+        inline = "inline@b" if function.inline else "",
+        ret_type = function.ret_type.name + "@b",
         name = decl_name if pointer_name is None else ('(*' + pointer_name +
                                                        gen_array_declaration(array_size) + ')'),
         args = args
