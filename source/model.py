@@ -808,7 +808,7 @@ class Pointer(Type):
         if not self.is_named:
             name = _type.name + '*'
             if const:
-                name = "const " + name
+                name = "const@b" + name
 
         # do not add nameless pointers to type registry
         if self.is_named:
@@ -888,7 +888,7 @@ class Macro(Type):
         if self.args is None:
             return self.name
         else:
-            arg_val = "(" + ", ".join(init[a] for a in self.args) + ")"
+            arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + ")"
 
         return "%s%s" % (self.name, arg_val)
 
@@ -1292,10 +1292,10 @@ class PointerTypeDeclaration(SourceChunk):
         name = 'Definition of pointer to type' + self.type.name
 
         if type(self.type) == Function:
-            code = 'typedef ' + gen_function_declaration_string('', self.type, def_name)
+            code = 'typedef@b' + gen_function_declaration_string('', self.type, def_name)
             code += ';\n'
         else:
-            code = 'typedef ' + self.type.name + ' ' + def_name
+            code = 'typedef@b' + self.type.name + '@b' + def_name
 
         super(PointerTypeDeclaration, self).__init__(name, code)
 
@@ -1323,18 +1323,18 @@ class PointerVariableDeclaration(SourceChunk):
 {indent}{extern}{decl_str};
 """.format(
                 indent = indent,
-                extern = "extern " if extern else "",
+                extern = "extern@b" if extern else "",
                 decl_str = gen_function_declaration_string('', t, var.name,
                                                            var.array_size)
                 )
         else:
             code = """\
-{indent}{extern}{type_name} *{var_name};
+{indent}{extern}{type_name}@b*{var_name};
 """.format(
                 indent = indent,
                 type_name = t.name,
                 var_name = var.name,
-                extern = "extern " if extern else ""
+                extern = "extern@b" if extern else ""
             )
         super(PointerVariableDeclaration, self).__init__(
             name = "Declaration of pointer {} to type {}".format(
@@ -1373,13 +1373,13 @@ class VariableDeclaration(SourceChunk):
                 var.type.name
                 ),
             code = """\
-{indent}{extern}{type_name} {var_name}{array_decl};
+{indent}{extern}{type_name}@b{var_name}{array_decl};
 """.format(
         indent = indent,
         type_name = var.type.name,
         var_name = var.name,
         array_decl =  gen_array_declaration(var.array_size),
-        extern = "extern " if extern else ""
+        extern = "extern@b" if extern else ""
     )
             )
         self.variable = var
@@ -1410,7 +1410,7 @@ class VariableDefinition(SourceChunk):
             raw_code = var.type.gen_usage_string(var.initializer)
             # add indent to initializer code
             init_code_lines = raw_code.split('\n')
-            init_code = " = " + init_code_lines[0]
+            init_code = "@b=@b" + init_code_lines[0]
             for line in init_code_lines[1:]:
                 init_code += "\n" + indent + line
 
@@ -1420,10 +1420,10 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{type_name} {var_name}{array_decl}{init};{nl}
+{indent}{static}{type_name}@b{var_name}{array_decl}{init};{nl}
 """.format(
         indent = indent,
-        static = "static " if var.static else "",
+        static = "static@b" if var.static else "",
         type_name = var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
@@ -1479,7 +1479,7 @@ class StructureDeclarationBegin(SourceChunk):
         super(StructureDeclarationBegin, self).__init__(
             name="Beginning of structure {} declaration".format(struct.name),
             code="""\
-{indent}typedef struct {struct_name} {{
+{indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
                 indent=indent,
                 struct_name=struct.name
@@ -1557,7 +1557,7 @@ class StructureDeclaration(SourceChunk):
         super(StructureDeclaration, self).__init__(
             name = "Ending of structure {} declaration".format(struct.name),
             code = """\
-{indent}}} {struct_name};{nl}
+{indent}}}@b{struct_name};{nl}
 """.format(
     indent = indent,
     struct_name = struct.name,
@@ -1584,20 +1584,20 @@ def gen_function_declaration_string(indent, function, pointer_name = None,
     else:
         args = ""
         for a in function.args:
-            args += a.type.name + " " + a.name
+            args += a.type.name + "@b" + a.name
             if not a == function.args[-1]:
-                args += ", "
+                args += ",@s"
 
     if function.name.find('.body') != -1:
         decl_name = function.name[:-5]
     else:
         decl_name = function.name
 
-    return "{indent}{static}{inline}{ret_type}{name}({args})".format(
+    return "{indent}{static}{inline}{ret_type}{name}(@a{args})".format(
         indent = indent,
-        static = "static " if function.static else "",
-        inline = "inline " if function.inline else "",
-        ret_type = function.ret_type.name + " ",
+        static = "static@b" if function.static else "",
+        inline = "inline@b" if function.inline else "",
+        ret_type = function.ret_type.name + "@b",
         name = decl_name if pointer_name is None else ('(*' + pointer_name +
                                                        gen_array_declaration(array_size) + ')'),
         args = args
