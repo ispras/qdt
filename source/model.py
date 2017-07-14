@@ -1232,6 +1232,11 @@ class SourceChunk(object):
                         r = 0
                     else:
                         r = 2
+                    """ If the line will be broken _after_ this word, its length
+may be still longer than max_cols because of safe breaking (' \'). If so, brake
+the line _before_ this word. Safe breaking is presented by 'r' variable in
+the expression which is 0 if safe breaking is not required after this word.
+                    """
                     if ll + 1 + len(word) + r > max_cols:
                         if slash:
                             code += ' \\'
