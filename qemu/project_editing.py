@@ -350,4 +350,4 @@ class DescriptionOperation(ProjectOperation):
         self.sn = description.__sn__
 
     def find_desc(self):
-        return next(self.p.find(name = self.desc_name))
+        return next(self.p.find(__sn__ = self.sn))
