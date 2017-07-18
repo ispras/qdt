@@ -221,18 +221,17 @@ class MOp_AddMemoryNode(MachineNodeAdding):
         if "MemoryNode" in self.nc:
             return _("container")
         elif "MemoryAliasNode" in self.nc:
-            mach = self.find_desc()
-
-            aliased_id = self.node__alias_to[1]
-
+            aliased = self.get_arg("alias_to")
+            # TODO: offset is keyword argument, cannot be obtained by get_arg
             aliased_offset = self.node__offset[1]
+
             if isinstance(aliased_offset, integer_types):
                 aliased_offset = "0x%X" % aliased_offset
             else:
                 aliased_offset = str(aliased_offset)
 
             return _("alias of %s (%d) with offset %s") % (
-                mach.id2node[aliased_id].name, aliased_id,
+                aliased.name, aliased.id,
                 aliased_offset
             )
         elif "MemoryRAMNode" in self.nc:
@@ -243,7 +242,7 @@ class MOp_AddMemoryNode(MachineNodeAdding):
             return "!"
 
     def __description__(self):
-        name = self.node__name[1]
+        name = self.get_arg("name")
         return _("Create memory region %s (%d) of kind %s.") % (
             name, self.node_id,
             self.get_kind_str()
@@ -256,7 +255,7 @@ class MOp_DelMemoryNode(MachineNodeDeletion, MOp_AddMemoryNode):
     __do__ =  MOp_AddMemoryNode.__undo__
 
     def __description__(self):
-        name = self.node__name[1]
+        name = self.get_arg("name")
         return _("Delete memory region %s (%d) of kind %s.") % (
             name, self.node_id,
             self.get_kind_str()
@@ -306,7 +305,7 @@ class MOp_AddDevice(MachineNodeAdding):
         return _("Create %s (%d) of type '%s'.") % (
             self.get_kind_str(),
             self.node_id,
-            self.node__qom_type[1]
+            self.get_arg("qom_type")
         )
 
 class MOp_DelDevice(MOp_AddDevice):
@@ -324,7 +323,7 @@ class MOp_DelDevice(MOp_AddDevice):
         return _("Delete %s (%d) of type '%s'.") % (
             self.get_kind_str(),
             self.node_id,
-            self.node__qom_type[1]
+            self.get_arg("qom_type")
         )
 
 class MOp_AddBus(MachineNodeAdding):
