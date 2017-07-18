@@ -347,6 +347,7 @@ class DescriptionOperation(ProjectOperation):
         ProjectOperation.__init__(self, *args, **kw)
 
         self.desc_name = str(description.name)
+        self.sn = description.__sn__
 
     def find_desc(self):
         return next(self.p.find(name = self.desc_name))
