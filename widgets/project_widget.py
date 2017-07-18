@@ -9,8 +9,6 @@ from .machine_widget import \
     MachineDescriptionSettingsWidget
 
 from qemu import \
-    SysBusDeviceDescription, \
-    PCIExpressDeviceDescription, \
     MachineNode
 
 from six.moves.tkinter import \
@@ -19,13 +17,9 @@ from six.moves.tkinter import \
 
 from common import \
     CoTask, \
-    FailedCallee, \
     mlget as _
 
 from qemu import \
-    ProcessingModifiedFile, \
-    ProcessingUntrackedFile, \
-    MultipleQVCInitialization, \
     BadBuildPath, \
     qvd_get, \
     qvd_load_with_cache, \
