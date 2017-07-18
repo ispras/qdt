@@ -312,8 +312,6 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __do__(self):
         desc = self.new()
         self.p.add_description(desc, with_sn = self.sn)
-        # Update serial number for reverse operation action
-        self.sn = desc.__sn__
 
     def __undo__(self):
         desc = next(self.p.find(__sn__ = self.sn))
