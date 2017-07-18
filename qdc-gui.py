@@ -289,8 +289,6 @@ show it else hide it.")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.set_project(GUIProject() if project is None else project)
-
         # Status bar
         self.grid_rowconfigure(1, weight = 0)
         self.sb = sb = Statusbar(self)
@@ -313,6 +311,8 @@ show it else hide it.")
         self.task_manager.watch_removed(self.__on_task_state_changed)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
+
+        self.set_project(GUIProject() if project is None else project)
 
         self.__update_title__()
         self.__check_saved_asterisk__()
