@@ -122,12 +122,15 @@ exists." % (l.lid, l.desc_name)
         gen.write("]")
         gen.gen_end()
 
+    def next_serial_number(self):
+        return next(self.__count)
+
     def add_description(self, desc, with_sn = None):
         if hasattr(desc, "__sn__"):
             raise RuntimeError("The description has a serial number already")
 
         if with_sn is None:
-            with_sn = next(self.__count)
+            with_sn = self.next_serial_number()
 
         desc.__sn__ = with_sn
 
