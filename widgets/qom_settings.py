@@ -201,6 +201,8 @@ during refresh.     """
         prev_pos = self.pht.pos
 
         desc = self.desc
+        desc_sn = desc.__sn__
+
         for attr, info in desc.__attribute_info__.items():
             try:
                 _input = info["input"]
@@ -219,26 +221,28 @@ during refresh.     """
                     # Was type of value changed?
                     if isinstance(cur_val, str):
                         if new_val != cur_val:
-                            self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                            self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
                     else:
                         """ Yes. Current value must first become the None and
                         then become the new string value. """
                         if cur_val is not None:
-                            self.pht.stage(DOp_SetPCIIdAttr, attr, None, desc)
-                        self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                            self.pht.stage(DOp_SetPCIIdAttr, attr, None,
+                                desc_sn
+                            )
+                        self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
                 else: # Handle new value as PCIId (None equivalent to a PCIId)
                     if cur_val is None or isinstance(cur_val, PCIId):
                         if cur_val is not new_val:
                             self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
-                                desc
+                                desc_sn
                             )
                     else:
                         """ Current string value must first be replaced with
                         None and then set to new PCIId value. """
-                        self.pht.stage(DOp_SetAttr, attr, None, desc)
+                        self.pht.stage(DOp_SetAttr, attr, None, desc_sn)
                         if new_val is not None:
                             self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
-                                desc
+                                desc_sn
                             )
             else:
                 if _input is int:
@@ -248,7 +252,7 @@ during refresh.     """
                         continue
 
                 if new_val != cur_val:
-                    self.pht.stage(DOp_SetAttr, attr, new_val, desc)
+                    self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
