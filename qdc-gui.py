@@ -59,6 +59,7 @@ from six.moves.tkinter import \
     StringVar
 
 from six.moves.tkinter_messagebox import \
+    askyesnocancel, \
     showinfo, \
     askyesno, \
     showerror
@@ -489,6 +490,25 @@ in process. Do you want to start cache rebuilding?").get()
         self.pw.reload_build_path()
 
     def on_delete(self):
+        if self.title_not_saved_asterisk.get() == "*":
+            resp = askyesnocancel(
+                title = self.title_suffix.get(),
+                message = _(
+                    "Current project has unsaved changes."
+                    " Would you like to save it?"
+                    "\n\nNote that a backup is always saved with name"
+                    " project.py in current working directory."
+                ).get()
+            )
+            if resp is None:
+                return
+            if resp:
+                self.on_save()
+
+                if self.title_not_saved_asterisk.get() == "*":
+                    # user canceled saving during on_save
+                    return
+
         try:
             """ TODO: Note that it is possible to prevent window to close if a
             generation task is in process. But is it really needed? """
