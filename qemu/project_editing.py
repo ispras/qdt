@@ -294,7 +294,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         self.sn = serial_number
 
     def __backup__(self):
-        self.name = self.export_value(*self.desc_name)
+        pass
 
     def __do__(self):
         desc = self.new()
@@ -340,7 +340,6 @@ class POp_DelDesc(POp_AddDesc):
     def __backup__(self):
         desc = next(self.p.find(__sn__ = self.sn))
         self.set_with_origin(desc)
-        self.name = desc.name
 
     __do__ = POp_AddDesc.__undo__
     __undo__ = POp_AddDesc.__do__
