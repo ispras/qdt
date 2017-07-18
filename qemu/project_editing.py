@@ -149,6 +149,14 @@ _MyClassName__my_attr in this case. It is Python internals...
                 return helper(val, self)
         return val
 
+    def get_arg(self, name):
+        try:
+            valdesc = getattr(self, self.prefix + name)
+        except AttributeError:
+            return None
+        else:
+            return self.export_value(*valdesc)
+
     def new(self):
         segments = self._nc.split(".")
         module, class_name = ".".join(segments[:-1]), segments[-1]
@@ -156,13 +164,7 @@ _MyClassName__my_attr in this case. It is Python internals...
 
         args = []
         for n in self.al:
-            try:
-                valdesc = getattr(self, self.prefix + n)
-            except AttributeError:
-                val = None
-            else:
-                val = self.export_value(*valdesc)
-            args.append(val)
+            args.append(self.get_arg(n))
 
         kw = {}
         for n in self.kwl:
