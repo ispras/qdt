@@ -90,15 +90,16 @@ def gen_pci_id_str(pci_id):
 class DOp_SetPCIIdAttr(SetDescriptionReferenceAttribute):
 
     def __description__(self):
+        name = self.find_desc().name
         if self.old_val is None:
             return _("Set '%s' of '%s' to %s") % (
-                self.attr, self.desc_name, gen_pci_id_str(self.val)
+                self.attr, name, gen_pci_id_str(self.val)
             )
         elif self.val is None:
-            return _("Reset '%s' of '%s'.") % (self.attr, self.desc_name)
+            return _("Reset '%s' of '%s'.") % (self.attr, name)
         else:
             return _("Change '%s' of '%s' from %s to %s") % (
-                self.attr, self.desc_name,
+                self.attr, name,
                 gen_pci_id_str(self.old_val),
                 gen_pci_id_str(self.val)
             )
