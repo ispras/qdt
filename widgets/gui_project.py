@@ -14,7 +14,7 @@ from itertools import \
 class GUIProject(QProject):
     def __init__(self, layouts = [], build_path = None, **kw):
         # Any description in GUI project has a serial number.
-        self.__count = count(0)
+        self.__next_id = 0
 
         QProject.__init__(self, **kw)
 
@@ -123,7 +123,9 @@ exists." % (l.lid, l.desc_name)
         gen.gen_end()
 
     def next_serial_number(self):
-        return next(self.__count)
+        ret = self.__next_id
+        self.__next_id = ret + 1
+        return ret
 
     def add_description(self, desc, with_sn = None):
         if hasattr(desc, "__sn__"):
@@ -131,6 +133,8 @@ exists." % (l.lid, l.desc_name)
 
         if with_sn is None:
             with_sn = self.next_serial_number()
+        elif with_sn >= self.__next_id:
+            self.__next_id = with_sn + 1
 
         desc.__sn__ = with_sn
 
