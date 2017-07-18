@@ -146,7 +146,7 @@ class AddDescriptionDialog(GUIDialog):
             directory = "pci"
 
         self.pht.stage(POp_AddDesc, class_name,
-            None, # Automatic serial number
+            self.pht.p.next_serial_number(),
             name = cur_name,
             directory = directory
         )
