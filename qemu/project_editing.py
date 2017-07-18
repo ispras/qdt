@@ -275,6 +275,15 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
                     )
                 setattr(self, self.prefix + n, valdesc)
 
+class DescriptionOperation(ProjectOperation):
+    def __init__(self, description, *args, **kw):
+        ProjectOperation.__init__(self, *args, **kw)
+
+        self.sn = description.__sn__
+
+    def find_desc(self):
+        return next(self.p.find(__sn__ = self.sn))
+
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, serial_number, *args, **kw):
         QemuObjectCreationHelper.__init__(self, arg_name_prefix = "desc_")
@@ -341,12 +350,3 @@ class POp_DelDesc(POp_AddDesc):
             self.name,
             self.get_kind_str()
         )
-
-class DescriptionOperation(ProjectOperation):
-    def __init__(self, description, *args, **kw):
-        ProjectOperation.__init__(self, *args, **kw)
-
-        self.sn = description.__sn__
-
-    def find_desc(self):
-        return next(self.p.find(__sn__ = self.sn))
