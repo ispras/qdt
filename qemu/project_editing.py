@@ -329,7 +329,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
 
     def __description__(self):
         return _("'%s' QOM object addition (%s).") % (
-            self.name,
+            self.desc_name[1],
             self.get_kind_str()
         )
 
@@ -347,6 +347,6 @@ class POp_DelDesc(POp_AddDesc):
 
     def __description__(self):
         return _("'%s' QOM object deletion (%s).") % (
-            self.name,
+            self.desc_name[1],
             self.get_kind_str()
         )
