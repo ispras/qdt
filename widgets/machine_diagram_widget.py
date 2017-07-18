@@ -853,6 +853,9 @@ IRQ line creation
         self.shown_irq_node = None
 
     def on_machine_changed(self, op):
+        if not isinstance(op, MachineNodeOperation):
+            return
+
         if isinstance(op, MOp_SetDevQOMType):
             dev = self.mach.id2node[op.node_id]
             node = self.dev2node[dev]
