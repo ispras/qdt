@@ -856,6 +856,9 @@ IRQ line creation
         if not isinstance(op, MachineNodeOperation):
             return
 
+        if op.sn != self.mach.__sn__:
+            return
+
         if isinstance(op, MOp_SetDevQOMType):
             dev = self.mach.id2node[op.node_id]
             node = self.dev2node[dev]
