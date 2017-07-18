@@ -16,6 +16,12 @@ from six import \
 from importlib import \
     import_module
 
+from qemu import \
+    QOMDescription
+
+from traceback import \
+    print_stack
+
 class ProjectOperation(InverseOperation):
     def __init__(self, project, *args, **kw):
         InverseOperation.__init__(self, *args, **kw)
@@ -276,10 +282,17 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
                 setattr(self, self.prefix + n, valdesc)
 
 class DescriptionOperation(ProjectOperation):
-    def __init__(self, description, *args, **kw):
+    def __init__(self, serial_number, *args, **kw):
         ProjectOperation.__init__(self, *args, **kw)
 
-        self.sn = description.__sn__
+        # Backward compatibility
+        if isinstance(serial_number, QOMDescription):
+            print("Use serial number for description identification!")
+            print("QOMDescription was used there:")
+            print_stack()
+            serial_number = serial_number.__sn__
+
+        self.sn = serial_number
 
     def find_desc(self):
         return next(self.p.find(__sn__ = self.sn))
