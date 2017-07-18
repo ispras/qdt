@@ -21,12 +21,12 @@ class DOp_SetAttr(DescriptionOperation):
 
     def __read_set__(self):
         return DescriptionOperation.__read_set__(self) + [
-            str(self.desc_name)
+            self.sn
         ]
 
     def __write_set__(self):
         return DescriptionOperation.__write_set__(self) + [
-            (str(self.desc_name), str(self.attr))
+            (self.sn, str(self.attr))
         ]
 
     def __backup__(self):
@@ -56,12 +56,12 @@ class SetDescriptionReferenceAttribute(DescriptionOperation):
     def __read_set__(self):
         # Note that new referenced value is probably to be in read set.
         return DescriptionOperation.__read_set__(self) + [
-            str(self.desc_name)
+            self.sn
         ]
 
     def __write_set__(self):
         return DescriptionOperation.__write_set__(self) + [
-            (str(self.desc_name), str(self.attr))
+            (self.sn, str(self.attr))
         ]
 
     def __backup__(self):

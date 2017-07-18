@@ -263,13 +263,13 @@ during refresh.     """
         self.pht.commit()
 
     def __on_changed__(self, op, *args, **kw):
-        if not op.writes(self.desc.name):
-            return
-
         if isinstance(op, POp_AddDesc):
             if not hasattr(self.desc, "__sn__"):
                 # the operation removes current description
                 return
+
+        if not op.writes(self.desc.__sn__):
+            return
 
         self.__refresh__()
 
