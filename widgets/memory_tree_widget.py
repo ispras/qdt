@@ -161,6 +161,9 @@ snapshot mode or the command should be disabled too.
         if not isinstance(op, MachineNodeOperation):
             return
 
+        if op.sn != self.mach.__sn__:
+            return
+
         if op.writes_node():
             if (self.alias_to and self.alias_to.id == -1) or not self.alias_to:
                 self.alias_to = None
