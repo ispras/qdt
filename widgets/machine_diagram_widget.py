@@ -443,6 +443,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.dragged = []
 
         self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
+        self.b3_press_point = (-1, -1)
         self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
 
         self.canvas.bind("<Double-Button-1>", self.on_b1_double, "+")
@@ -1503,6 +1504,8 @@ IRQ line creation
             return
 
         mx, my = event.x, event.y
+        self.b3_press_point = (mx, my)
+
         x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
 
         touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
