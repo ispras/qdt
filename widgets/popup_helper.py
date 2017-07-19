@@ -12,9 +12,9 @@ class TkPopupHelper(Misc):
 
         toplevel = self.winfo_toplevel()
         if toplevel is not None:
-            toplevel.bind("<Button-1>", self.tk_popup_helper_on_b1, "+")
+            toplevel.bind("<Button-1>", self.__hide_on_mouse, "+")
 
-    def tk_popup_helper_on_b1(self, event):
+    def __hide_on_mouse(self, event):
         self.hide_popup()
 
     def tk_popup_helper_cleanup(self):
