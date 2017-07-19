@@ -1509,54 +1509,6 @@ IRQ line creation
         mx, my = event.x, event.y
         self.b3_press_point = (mx, my)
 
-        x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
-
-        touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
-
-        touched_ids = self.sort_ids_by_priority(touched_ids)
-
-        for tid in touched_ids:
-            if not "DnD" in self.canvas.gettags(tid):
-                continue
-            if not tid in self.id2node:
-                continue
-
-            shift = self.shift_pressed()
-            if shift:
-                if not tid in self.selected:
-                    self.selected.append(tid)
-                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
-            else:
-                if not tid in self.selected:
-                    self.selected = [tid]
-                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
-
-            # touched node
-            tnode = self.id2node[tid]
-
-            if not tnode in self.node2dev:
-                break
-
-            # touched device, etc..
-            tdev = self.node2dev[tnode]
-            popup = None
-
-            if len(self.selected) == 1:
-                if isinstance(tdev, DeviceNode):
-                    popup = self.popup_single_device
-                elif isinstance(tdev, IRQHub):
-                    popup = self.popup_single_irq_hub
-                elif isinstance(tdev, BusNode):
-                    popup = self.popup_single_bus
-                tag = tid
-            else:
-                popup = self.popup_multiple
-                tag = list(self.selected)
-
-            if popup:
-                self.show_popup(event.x_root, event.y_root, popup, tag)
-                return
-
         # prepare for dragging of all
         self.begin_drag_all = True
         self.dragging_all = False
@@ -1579,7 +1531,14 @@ IRQ line creation
 
         self.update_highlighted_irq_line()
 
-        if (not self.all_were_dragged) and self.highlighted_irq_line:
+        if self.all_were_dragged:
+            return
+        # else: show popup menu
+
+        x, y = self.canvas.canvasx(event.x), \
+               self.canvas.canvasy(event.y)
+
+        if self.highlighted_irq_line:
             self.circle_to_be_deleted = None
 
             if self.shown_irq_circle:
@@ -1603,9 +1562,6 @@ IRQ line creation
                     else "normal"
             )
 
-            x, y = self.canvas.canvasx(event.x), \
-                   self.canvas.canvasy(event.y)
-
             self.stop_circle_preview()
 
             if self.circle_to_be_deleted:
@@ -1613,22 +1569,69 @@ IRQ line creation
             else:
                 tag = self.highlighted_irq_line
 
-            self.show_popup(event.x_root, event.y_root, self.popup_irq_line,
-                tag)
+            popup = self.popup_irq_line
+        else:
+            touched_ids = self.canvas.find_overlapping(
+                x - 3, y - 3,
+                x + 3, y + 3
+            )
 
-            return
+            if touched_ids:
+                touched_ids = self.sort_ids_by_priority(touched_ids)
+                popup = None
 
-        if not self.all_were_dragged:
-            if self.selected:
-                self.selected = []
-                self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+                for tid in touched_ids:
+                    if not "DnD" in self.canvas.gettags(tid):
+                        continue
+                    if not tid in self.id2node:
+                        continue
 
-            x, y = self.canvas.canvasx(event.x), \
-                   self.canvas.canvasy(event.y)
+                    shift = self.shift_pressed()
+                    if shift:
+                        if not tid in self.selected:
+                            self.selected.append(tid)
+                            self.event_generate(
+                                MachineDiagramWidget.EVENT_SELECT
+                            )
+                    else:
+                        if not tid in self.selected:
+                            self.selected = [tid]
+                            self.event_generate(
+                                MachineDiagramWidget.EVENT_SELECT
+                            )
 
-            if not self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3):
-                self.show_popup(event.x_root, event.y_root,
-                    self.popup_empty_no_selected)
+                    # touched node
+                    tnode = self.id2node[tid]
+
+                    if not tnode in self.node2dev:
+                        break
+
+                    # touched device, etc..
+                    tdev = self.node2dev[tnode]
+
+                    if len(self.selected) == 1:
+                        if isinstance(tdev, DeviceNode):
+                            popup = self.popup_single_device
+                        elif isinstance(tdev, IRQHub):
+                            popup = self.popup_single_irq_hub
+                        elif isinstance(tdev, BusNode):
+                            popup = self.popup_single_bus
+                        tag = tid
+                    else:
+                        popup = self.popup_multiple
+                        tag = list(self.selected)
+            else:
+                if self.selected:
+                    self.selected = []
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+
+                popup = self.popup_empty_no_selected
+                tag = None
+
+        if popup:
+            self.show_popup(event.x_root, event.y_root, popup, tag)
+        else:
+            self.hide_popup()
 
     def update_highlighted_irq_line(self):
         x, y = self.last_canvas_mouse
@@ -1712,6 +1715,7 @@ IRQ line creation
                 )
                 self.master.config(cursor = "fleur")
                 self.begin_drag_all = False
+                self.hide_popup()
 
         if not self.dragging_all:
             return
