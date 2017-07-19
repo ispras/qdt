@@ -1520,6 +1520,7 @@ IRQ line creation
         self.b3_press_point = (mx, my)
 
         # Shift + right button press => delete IRQ line circle
+        self.circle_was_deleted = False
         if self.shift_pressed():
             self.update_highlighted_irq_line()
 
@@ -1528,6 +1529,7 @@ IRQ line creation
                     *self.__line_and_node_idx_of_shown_irq_circle()
                 )
                 self.invalidate()
+                self.circle_was_deleted = True
                 return
 
         # prepare for dragging of all
@@ -1552,7 +1554,7 @@ IRQ line creation
 
         self.update_highlighted_irq_line()
 
-        if self.all_were_dragged:
+        if self.all_were_dragged or self.circle_was_deleted:
             return
         # else: show popup menu
 
