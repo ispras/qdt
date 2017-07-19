@@ -330,6 +330,8 @@ class IRQLine(object):
         self.circles = []
         self.lines = []
 
+DRAG_GAP = 5
+
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
@@ -452,6 +454,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.canvas.bind("<Motion>", self.motion_all)
         self.last_canvas_mouse = (0, 0)
 
+        self.begin_drag_all = False
         self.dragging_all = False
         self.all_were_dragged = False
 
@@ -1554,17 +1557,24 @@ IRQ line creation
                 self.show_popup(event.x_root, event.y_root, popup, tag)
                 return
 
-        #print("on_b3_press")
-        event.widget.scan_mark(int(x), int(y))
-        self.dragging_all = True
-        self.master.config(cursor = "fleur")
+        # prepare for dragging of all
+        self.begin_drag_all = True
+        self.dragging_all = False
         self.all_were_dragged = False
+        #print("on_b3_press")
 
     def on_b3_release(self, event):
         #print("on_b3_release")
         for n in self.nodes + self.buslabels + self.circles:
             n.static = False
-        self.dragging_all = False
+
+        # reset dragging of all
+        if self.dragging_all:
+            self.dragging_all = False
+            # begin_drag_all is already False
+        else:
+            self.begin_drag_all = False
+
         self.master.config(cursor = "")
 
         self.update_highlighted_irq_line()
@@ -1686,6 +1696,22 @@ IRQ line creation
         # If IRQ line popup menu is showed, then do not change IRQ highlighting
         if not self.current_popup == self.popup_irq_line:
             self.update_highlighted_irq_line()
+
+        # if user moved mouse far enough then begin dragging of all
+        if self.begin_drag_all:
+            b3pp = self.b3_press_point
+
+            dx = abs(mx - b3pp[0])
+            dy = abs(my - b3pp[1])
+            # Use Manchester metric to speed up the check
+            if dx + dy > DRAG_GAP:
+                self.dragging_all = True
+                event.widget.scan_mark(
+                    int(self.canvas.canvasx(b3pp[0])),
+                    int(self.canvas.canvasy(b3pp[1]))
+                )
+                self.master.config(cursor = "fleur")
+                self.begin_drag_all = False
 
         if not self.dragging_all:
             return
