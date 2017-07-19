@@ -856,6 +856,16 @@ IRQ line creation
         self.shown_irq_circle = None
         self.shown_irq_node = None
 
+    def __line_and_node_idx_of_shown_irq_circle(self):
+        shown_irq_node = self.shown_irq_node
+
+        for l in self.irq_lines:
+            for idx, c in enumerate(l.circles):
+                if c is shown_irq_node:
+                    return (l, idx)
+
+        raise RuntimeError("Cannot lookup line and node index for shown circle")
+
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):
             return
@@ -1514,15 +1524,11 @@ IRQ line creation
             self.update_highlighted_irq_line()
 
             if self.highlighted_irq_line and self.shown_irq_circle:
-                shown_irq_node = self.shown_irq_node
-
-                # get line and index of node corresponding to shown circle
-                for l in self.irq_lines:
-                    for idx, c in enumerate(l.circles):
-                        if c is shown_irq_node:
-                            self.irq_line_delete_circle(l, idx)
-                            self.invalidate()
-                            return
+                self.irq_line_delete_circle(
+                    *self.__line_and_node_idx_of_shown_irq_circle()
+                )
+                self.invalidate()
+                return
 
         # prepare for dragging of all
         self.begin_drag_all = True
@@ -1555,17 +1561,8 @@ IRQ line creation
 
         if self.highlighted_irq_line:
             if self.shown_irq_circle:
-                shown_irq_node = self.shown_irq_node
-
-                for l in self.irq_lines:
-                    for idx, c in enumerate(l.circles):
-                        if c is shown_irq_node:
-                            self.circle_to_be_deleted = (l, idx)
-                            break
-                    else:
-                        continue
-                    break
-                # One and only one pair of line and index must be found.
+                self.circle_to_be_deleted = \
+                    self.__line_and_node_idx_of_shown_irq_circle()
             else:
                 self.circle_to_be_deleted = None
 
