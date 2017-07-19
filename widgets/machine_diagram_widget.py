@@ -1502,7 +1502,8 @@ IRQ line creation
         if self.dragging or self.select_point:
             return
 
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        mx, my = event.x, event.y
+        x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
 
         touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
 
