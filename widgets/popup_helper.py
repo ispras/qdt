@@ -1,4 +1,5 @@
 from six.moves.tkinter import \
+    TclError, \
     Misc
 
 class DoShow(BaseException):
@@ -69,9 +70,24 @@ operator (except None).
         if show:
             self.current_popup_tag = tag
             try:
-                popup.tk_popup(x, y)
+                try:
+                    popup.tk_popup(x, y)
+                except TclError as e:
+                    """ If Shift is held then an error raised with message:
+'grab failed: another application has grab'. The menu is known to work this
+case. So, hide this error.
+                    """
+                    """ XXX: It's likely that the string is not localized and
+                    will remain constant. """
+                    if not str(e).startswith("grab failed"):
+                        raise e
             except:
-                pass
+                print("Cannot show popup!")
+                # ensure that the menu remains hidden
+                try:
+                    popup.unpost()
+                except:
+                    pass
             else:
                 self.current_popup = popup
             finally:
