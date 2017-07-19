@@ -15,9 +15,7 @@ class TkPopupHelper(Misc):
             toplevel.bind("<Button-1>", self.tk_popup_helper_on_b1, "+")
 
     def tk_popup_helper_on_b1(self, event):
-        if self.current_popup:
-            self.current_popup.unpost()
-            self.tk_popup_helper_cleanup()
+        self.hide_popup()
 
     def tk_popup_helper_cleanup(self):
         self.current_popup = None
@@ -80,3 +78,8 @@ operator (except None).
                 popup.grab_release()
         else:
             self.current_popup_tag = None
+
+    def hide_popup(self):
+        if self.current_popup:
+            self.current_popup.unpost()
+            self.tk_popup_helper_cleanup()
