@@ -1650,7 +1650,8 @@ IRQ line creation
         self.motion(event)
         #print("motion_all")
 
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        mx, my = event.x, event.y
+        x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
         self.last_canvas_mouse = x, y
 
         if self.select_point:
