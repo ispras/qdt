@@ -1509,6 +1509,21 @@ IRQ line creation
         mx, my = event.x, event.y
         self.b3_press_point = (mx, my)
 
+        # Shift + right button press => delete IRQ line circle
+        if self.shift_pressed():
+            self.update_highlighted_irq_line()
+
+            if self.highlighted_irq_line and self.shown_irq_circle:
+                shown_irq_node = self.shown_irq_node
+
+                # get line and index of node corresponding to shown circle
+                for l in self.irq_lines:
+                    for idx, c in enumerate(l.circles):
+                        if c is shown_irq_node:
+                            self.irq_line_delete_circle(l, idx)
+                            self.invalidate()
+                            return
+
         # prepare for dragging of all
         self.begin_drag_all = True
         self.dragging_all = False
@@ -1539,22 +1554,20 @@ IRQ line creation
                self.canvas.canvasy(event.y)
 
         if self.highlighted_irq_line:
-            self.circle_to_be_deleted = None
-
             if self.shown_irq_circle:
+                shown_irq_node = self.shown_irq_node
+
                 for l in self.irq_lines:
                     for idx, c in enumerate(l.circles):
-                        if c == self.shown_irq_node:
-                            if self.shift_pressed():
-                                self.irq_line_delete_circle(l, idx)
-                                self.invalidate()
-                                return
-                            else:
-                                self.circle_to_be_deleted = (l, idx)
+                        if c is shown_irq_node:
+                            self.circle_to_be_deleted = (l, idx)
                             break
                     else:
                         continue
                     break
+                # One and only one pair of line and index must be found.
+            else:
+                self.circle_to_be_deleted = None
 
             self.popup_irq_line.entryconfig(
                 self.on_popup_irq_line_delete_point_idx,
