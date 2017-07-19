@@ -64,6 +64,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         )
 
     def pci_ids_2_objects(self, desc):
+        desc_sn = desc.__sn__
         for attr in [ "vendor", "subsys_vendor" ]:
             val = getattr(desc, attr)
             if (val is not None) and (not isinstance(val, PCIId)):
@@ -73,8 +74,8 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
                     # no vendor id with such value is registered
                     continue
 
-                self.stage(DOp_SetAttr, attr, None, desc)
-                self.stage(DOp_SetPCIIdAttr, attr, val, desc)
+                self.stage(DOp_SetAttr, attr, None, desc_sn)
+                self.stage(DOp_SetPCIIdAttr, attr, val, desc_sn)
 
         self.commit(new_sequence = False)
 
@@ -107,8 +108,8 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
                             # No device id with such value is registered
                             continue
 
-                self.stage(DOp_SetAttr, attr, None, desc)
-                self.stage(DOp_SetPCIIdAttr, attr, val, desc)
+                self.stage(DOp_SetAttr, attr, None, desc_sn)
+                self.stage(DOp_SetPCIIdAttr, attr, val, desc_sn)
 
         val = getattr(desc, "pci_class")
         if (val is not None) and (not isinstance(val, PCIId)):
@@ -121,8 +122,8 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
                     # no class id with such value is registered
                     return
 
-            self.stage(DOp_SetAttr, "pci_class", None, desc)
-            self.stage(DOp_SetPCIIdAttr, "pci_class", val, desc)
+            self.stage(DOp_SetAttr, "pci_class", None, desc_sn)
+            self.stage(DOp_SetPCIIdAttr, "pci_class", val, desc_sn)
 
     def all_pci_ids_2_values(self):
         for pci_desc in self.p.descriptions:
@@ -136,6 +137,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         )
 
     def pci_ids_2_values(self, desc):
+        desc_sn = desc.__sn__
         for attr in [
             "vendor",
             "subsys_vendor",
@@ -147,8 +149,8 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
             if (val is not None) and isinstance(val, PCIId):
                 val = val.id
 
-                self.stage(DOp_SetPCIIdAttr, attr, None, desc)
-                self.stage(DOp_SetAttr, attr, val, desc)
+                self.stage(DOp_SetPCIIdAttr, attr, None, desc_sn)
+                self.stage(DOp_SetAttr, attr, val, desc_sn)
 
     def set_build_path(self, path):
         if self.p.build_path == path:
