@@ -88,7 +88,7 @@ class PhObject(object):
             # "physics" parameters
             x = 200, y = 200,
             vx = 0, vy = 0,
-            w = 50, h = 50, spacing = 10,
+            spacing = 10,
             # the node cannot be moved by engine if static
             static = False
         ):
