@@ -130,6 +130,8 @@ class PhBox(PhObject):
         return True
 
     def touches_vline(self, l):
+        """ Checks collision with a vertical line.
+        Spacing of the line is ignored. """
         self_spacing = self.spacing
         if self.x - self_spacing > l.x:
             return False
