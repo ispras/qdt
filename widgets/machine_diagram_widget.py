@@ -115,6 +115,28 @@ class PhBox(PhObject):
             return False
         return True
 
+    def touches_conn(self, c):
+        if self.y - self.spacing > c.y:
+            return False
+        if self.y + self.height + self.spacing < c.y:
+            return False
+        if self.x + self.width + self.spacing < c.x:
+            return False
+        if self.x - self.spacing > c.x + c.width:
+            return False
+        return True
+
+    def touches(self, l):
+        if self.x - self.spacing > l.x:
+            return False
+        if self.x + self.width + self.spacing < l.x:
+            return False
+        if self.y - self.spacing > l.y + l.height:
+            return False
+        if self.y + self.height + self.spacing < l.y:
+            return False
+        return True
+
 class PhCircle(PhObject):
     def __init__(self, r = 10, **kw):
         PhObject.__init__(self, **kw)
@@ -212,28 +234,6 @@ class NodeBox(PhBox):
             x = self.x + self.width/2
             y = self.y + self.height/2
         return x, y
-
-    def touches_conn(self, c):
-        if self.y - self.spacing > c.y:
-            return False
-        if self.y + self.height + self.spacing < c.y:
-            return False
-        if self.x + self.width + self.spacing < c.x:
-            return False
-        if self.x - self.spacing > c.x + c.width:
-            return False
-        return True
-
-    def touches(self, l):
-        if self.x - self.spacing > l.x:
-            return False
-        if self.x + self.width + self.spacing < l.x:
-            return False
-        if self.y - self.spacing > l.y + l.height:
-            return False
-        if self.y + self.height + self.spacing < l.y:
-            return False
-        return True
 
 class BusLine(PhBox):
     def __init__(self, bl):
