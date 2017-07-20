@@ -174,15 +174,15 @@ class PhCircle(PhObject):
         return sqrt(dx * dx + dy * dy) \
             < c.r + c.spacing + self.r + self.spacing
 
-    def overlaps_box(self, n):
+    def overlaps_box(self, b):
         # it is not a precise check
-        if self.x + self.r * 2 + self.spacing < n.x - n.spacing:
+        if self.x + self.r * 2 + self.spacing < b.x - b.spacing:
             return False
-        if self.y + self.r * 2 + self.spacing < n.y - n.spacing:
+        if self.y + self.r * 2 + self.spacing < b.y - b.spacing:
             return False
-        if n.x + n.width + n.spacing < self.x - self.spacing:
+        if b.x + b.width + b.spacing < self.x - self.spacing:
             return False
-        if n.y + n.height + n.spacing < self.y - self.spacing:
+        if b.y + b.height + b.spacing < self.y - self.spacing:
             return False
         return True
 
