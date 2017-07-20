@@ -1040,7 +1040,15 @@ class Variable():
 
     def gen_declaration_chunks(self, indent="", extern = False):
         if isinstance(self.type, Pointer) and not self.type.is_named:
-            return PointerVariableDeclaration.gen_chunks(self, indent, extern)
+            ch = PointerVariableDeclaration(self, indent, extern)
+
+            if isinstance(self.type.type, Function):
+                refs = gen_function_decl_ref_chunks(self.type.type)
+            else:
+                refs = self.type.type.gen_defining_chunk_list()
+            ch.add_references(refs)
+
+            return [ch] + refs
         else:
             return VariableDeclaration.gen_chunks(self, indent, extern)
 
@@ -1388,18 +1396,6 @@ class PointerTypeDeclaration(SourceChunk):
         return self.type
 
 class PointerVariableDeclaration(SourceChunk):
-    @staticmethod
-    def gen_chunks(var, indent="", extern=False):
-        ch = PointerVariableDeclaration(var, indent, extern)
-
-        if isinstance(var.type.type, Function):
-            refs = gen_function_decl_ref_chunks(var.type.type)
-        else:
-            refs = var.type.type.gen_defining_chunk_list()
-        ch.add_references(refs)
-
-        return [ch] + refs
-
     def __init__(self, var, indent="", extern = False):
         self.var = var
         t = var.type.type
