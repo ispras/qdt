@@ -175,6 +175,8 @@ class PhCircle(PhObject):
             < c.r + c.spacing + self.r + self.spacing
 
     def overlaps_box(self, b):
+        """ Checks collision with a box. This circle is accounted as a `PhBox`
+        with width == height == r * 2. """
         self_spacing = self.spacing
         b_spacing = b.spacing
         d = self.r * 2
