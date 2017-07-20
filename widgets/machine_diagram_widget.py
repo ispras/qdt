@@ -115,7 +115,7 @@ class PhBox(PhObject):
             return False
         return True
 
-    def touches_conn(self, c):
+    def touches_hline(self, c):
         self_spacing = self.spacing
         if self.y - self_spacing > c.y:
             return False
@@ -2279,7 +2279,7 @@ IRQ line creation
                 if n.conn == c:
                     continue
 
-                if not n.touches_conn(c):
+                if not n.touches_hline(c):
                     continue
 
                 h2 = n.height / 2
