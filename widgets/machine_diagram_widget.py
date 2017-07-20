@@ -129,7 +129,7 @@ class PhBox(PhObject):
             return False
         return True
 
-    def touches(self, l):
+    def touches_vline(self, l):
         self_spacing = self.spacing
         if self.x - self_spacing > l.x:
             return False
@@ -2250,7 +2250,7 @@ IRQ line creation
             yield
 
             for b in self.buses:
-                if not n.touches(b):
+                if not n.touches_vline(b):
                     continue
 
                 if n == b.buslabel:
