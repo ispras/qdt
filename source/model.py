@@ -816,6 +816,8 @@ class Function(Type):
     def gen_declaration_chunks(self):
         return FunctionDeclaration.gen_chunks(self)
 
+    gen_chunks = gen_declaration_chunks
+
     def gen_definition_chunks(self):
         indent = ""
         ch = FunctionDefinition(self, indent)
@@ -825,9 +827,6 @@ class Function(Type):
 
         ch.add_references(refs)
         return [ch] + refs
-
-    def gen_chunks(self):
-        return FunctionDeclaration.gen_chunks(self)
 
     def use_as_prototype(self,
         name,
