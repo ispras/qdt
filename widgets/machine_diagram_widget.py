@@ -144,16 +144,16 @@ class PhBox(PhObject):
             return False
         return True
 
-    def crosses_vline(self, b):
+    def crosses_vline(self, l):
         """ Checks collision with a vertical line when self is a horizontal
         line (height == 0). Spacing is ignored for both lines. """
-        if self.x > b.x:
+        if self.x > l.x:
             return False
-        if self.y < b.y:
+        if self.y < l.y:
             return False
-        if self.x + self.width < b.x:
+        if self.x + self.width < l.x:
             return False
-        if b.y + b.height < self.y:
+        if l.y + l.height < self.y:
             return False
         return True
 
