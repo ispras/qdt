@@ -102,16 +102,16 @@ class PhBox(PhObject):
         PhObject.__init__(self, **kw)
         self.width, self.height = w, h
 
-    def overlaps_box(self, n):
-        n_spacing = n.spacing
+    def overlaps_box(self, b):
+        b_spacing = b.spacing
         self_spacing = self.spacing
-        if n.x - n_spacing > self.x + self.width + self_spacing:
+        if b.x - b_spacing > self.x + self.width + self_spacing:
             return False
-        if n.x + n.width + n_spacing < self.x - self_spacing:
+        if b.x + b.width + b_spacing < self.x - self_spacing:
             return False
-        if n.y - n_spacing > self.y + self.height + self_spacing:
+        if b.y - b_spacing > self.y + self.height + self_spacing:
             return False
-        if n.y + n.height + n_spacing < self.y - self_spacing:
+        if b.y + b.height + b_spacing < self.y - self_spacing:
             return False
         return True
 
