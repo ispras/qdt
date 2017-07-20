@@ -116,6 +116,8 @@ class PhBox(PhObject):
         return True
 
     def touches_hline(self, c):
+        """ Checks collision with a horizontal line.
+        Spacing of the line is ignored. """
         self_spacing = self.spacing
         if self.y - self_spacing > c.y:
             return False
