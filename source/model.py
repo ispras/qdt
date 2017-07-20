@@ -1047,10 +1047,21 @@ class Variable():
             else:
                 refs = self.type.type.gen_defining_chunk_list()
             ch.add_references(refs)
-
-            return [ch] + refs
         else:
-            return VariableDeclaration.gen_chunks(self, indent, extern)
+            t = self.type if not isinstance(self.type, TypeReference)\
+                else self.type.type
+
+            if type(t) == Macro:
+                u = VariableUsage.gen_chunks(self, indent = indent)
+                ch = u[0]
+                refs = u[1:]
+            else:
+                ch = VariableDeclaration(self, indent, extern)
+                refs = self.type.gen_defining_chunk_list()
+
+            ch.add_references(refs)
+
+        return [ch] + refs
 
     def get_definition_chunks(self, indent=""):
         return VariableDefinition.gen_chunks(self, indent)
@@ -1430,23 +1441,6 @@ class PointerVariableDeclaration(SourceChunk):
 
 
 class VariableDeclaration(SourceChunk):
-    @staticmethod
-    def gen_chunks(var, indent = "", extern = False):
-        t = var.type if not isinstance(var.type, TypeReference)\
-            else var.type.type
-
-        if type(t) == Macro:
-            u = VariableUsage.gen_chunks(var, indent = indent)
-            ch = u[0]
-            refs = u[1:]
-        else:
-            ch = VariableDeclaration(var, indent, extern)
-            refs = var.type.gen_defining_chunk_list()
-
-        ch.add_references(refs)
-
-        return [ch] + refs
-
     def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(
             name = "Variable {} of type {} declaration".format(
