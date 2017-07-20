@@ -175,14 +175,17 @@ class PhCircle(PhObject):
             < c.r + c.spacing + self.r + self.spacing
 
     def overlaps_box(self, b):
+        self_spacing = self.spacing
+        b_spacing = b.spacing
+        d = self.r * 2
         # it is not a precise check
-        if self.x + self.r * 2 + self.spacing < b.x - b.spacing:
+        if self.x + d + self_spacing < b.x - b_spacing:
             return False
-        if self.y + self.r * 2 + self.spacing < b.y - b.spacing:
+        if self.y + d + self_spacing < b.y - b_spacing:
             return False
-        if b.x + b.width + b.spacing < self.x - self.spacing:
+        if b.x + b.width + b_spacing < self.x - self_spacing:
             return False
-        if b.y + b.height + b.spacing < self.y - self.spacing:
+        if b.y + b.height + b_spacing < self.y - self_spacing:
             return False
         return True
 
