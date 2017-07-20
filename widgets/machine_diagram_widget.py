@@ -144,7 +144,7 @@ class PhBox(PhObject):
             return False
         return True
 
-    def crosses(self, b):
+    def crosses_vline(self, b):
         if self.x > b.x:
             return False
         if self.y < b.y:
