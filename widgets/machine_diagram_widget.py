@@ -102,7 +102,7 @@ class PhBox(PhObject):
         PhObject.__init__(self, **kw)
         self.width, self.height = w, h
 
-    def overlaps(self, n):
+    def overlaps_box(self, n):
         n_spacing = n.spacing
         self_spacing = self.spacing
         if n.x - n_spacing > self.x + self.width + self_spacing:
@@ -2192,7 +2192,7 @@ IRQ line creation
 
         for idx, n in enumerate(nbl):
             for n1 in nbl[idx + 1:]:
-                if not n.overlaps(n1):
+                if not n.overlaps_box(n1):
                     continue
 
                 w2 = n.width / 2
