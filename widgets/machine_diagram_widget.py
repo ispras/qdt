@@ -103,13 +103,15 @@ class PhBox(PhObject):
         self.width, self.height = w, h
 
     def overlaps(self, n):
-        if n.x - n.spacing > self.x + self.width + self.spacing:
+        n_spacing = n.spacing
+        self_spacing = self.spacing
+        if n.x - n_spacing > self.x + self.width + self_spacing:
             return False
-        if n.x + n.width + n.spacing < self.x - self.spacing:
+        if n.x + n.width + n_spacing < self.x - self_spacing:
             return False
-        if n.y - n.spacing > self.y + self.height + self.spacing:
+        if n.y - n_spacing > self.y + self.height + self_spacing:
             return False
-        if n.y + n.height + n.spacing < self.y - self.spacing:
+        if n.y + n.height + n_spacing < self.y - self_spacing:
             return False
         return True
 
