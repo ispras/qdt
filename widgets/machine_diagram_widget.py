@@ -103,6 +103,7 @@ class PhBox(PhObject):
         self.width, self.height = w, h
 
     def overlaps_box(self, b):
+        """ Checks collision with a box. """
         b_spacing = b.spacing
         self_spacing = self.spacing
         if b.x - b_spacing > self.x + self.width + self_spacing:
