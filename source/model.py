@@ -714,7 +714,7 @@ is not added to a source", self.name)
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureDeclarationBegin.gen_chunks(self, indent)[0]
+        struct_begin = StructureDeclarationBegin(self, indent)
 
         struct_end = StructureDeclaration(self, fields_indent, indent, True)
 
@@ -1541,11 +1541,6 @@ class VariableUsage(SourceChunk):
         return self.variable
 
 class StructureDeclarationBegin(SourceChunk):
-    @staticmethod
-    def gen_chunks(struct, indent = ""):
-        ch = StructureDeclarationBegin(struct, indent)
-        return [ch]
-
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(
