@@ -155,6 +155,24 @@ class PhCircle(PhObject):
         PhObject.__init__(self, **kw)
         self.r = r
 
+    def overlaps_circle(self, c):
+        dx = c.x + c.r - (self.x + self.r)
+        dy = c.y + c.r - (self.y + self.r)
+        return sqrt(dx * dx + dy * dy) \
+            < c.r + c.spacing + self.r + self.spacing
+
+    def overlaps_node(self, n):
+        # it is not a precise check
+        if self.x + self.r * 2 + self.spacing < n.x - n.spacing:
+            return False
+        if self.y + self.r * 2 + self.spacing < n.y - n.spacing:
+            return False
+        if n.x + n.width + n.spacing < self.x - self.spacing:
+            return False
+        if n.y + n.height + n.spacing < self.y - self.spacing:
+            return False
+        return True
+
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
@@ -284,24 +302,6 @@ class NodeCircle(PhCircle):
             spacing = 0
         )
         self.offset = [0, 0]
-
-    def overlaps_circle(self, c):
-        dx = c.x + c.r - (self.x + self.r)
-        dy = c.y + c.r - (self.y + self.r)
-        return sqrt( dx * dx + dy * dy ) \
-            < c.r + c.spacing + self.r + self.spacing
-
-    def overlaps_node(self, n):
-        # it is not a precise check 
-        if self.x + self.r * 2 + self.spacing < n.x - n.spacing: 
-            return False
-        if self.y + self.r * 2 + self.spacing < n.y - n.spacing: 
-            return False
-        if n.x + n.width + n.spacing < self.x - self.spacing:
-            return False
-        if n.y + n.height + n.spacing < self.y - self.spacing:
-            return False
-        return True
 
 class IRQPathCircle(NodeCircle):
     def __init__(self, line):
