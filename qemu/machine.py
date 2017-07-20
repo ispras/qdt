@@ -391,6 +391,11 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                             )
 
             elif isinstance(node, IRQHub):
+                if len(node.irqs) < 1:
+                    # Nothing to do for detached IRQ hub
+                    skip_nl = True
+                    continue
+
                 self.use_type_name("qemu_irq")
 
                 hub_in_name = self.gen_name_for_irq(node)
