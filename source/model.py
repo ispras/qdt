@@ -814,7 +814,14 @@ class Function(Type):
         self.used_globals = used_globals
 
     def gen_declaration_chunks(self):
-        return FunctionDeclaration.gen_chunks(self)
+        indent = ""
+        ch = FunctionDeclaration(self, indent)
+
+        refs = gen_function_decl_ref_chunks(self)
+
+        ch.add_references(refs)
+
+        return [ch] + refs
 
     gen_chunks = gen_declaration_chunks
 
@@ -1639,16 +1646,6 @@ def gen_function_def_ref_chunks(f):
     return references
 
 class FunctionDeclaration(SourceChunk):
-    @staticmethod
-    def gen_chunks(function, indent = ""):
-        ch = FunctionDeclaration(function, indent)
-
-        refs = gen_function_decl_ref_chunks(function)
-
-        ch.add_references(refs)
-
-        return [ch] + refs
-
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(
             name = "Declaration of function %s" % function.name,
