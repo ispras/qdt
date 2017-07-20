@@ -128,13 +128,14 @@ class PhBox(PhObject):
         return True
 
     def touches(self, l):
-        if self.x - self.spacing > l.x:
+        self_spacing = self.spacing
+        if self.x - self_spacing > l.x:
             return False
-        if self.x + self.width + self.spacing < l.x:
+        if self.x + self.width + self_spacing < l.x:
             return False
-        if self.y - self.spacing > l.y + l.height:
+        if self.y - self_spacing > l.y + l.height:
             return False
-        if self.y + self.height + self.spacing < l.y:
+        if self.y + self.height + self_spacing < l.y:
             return False
         return True
 
