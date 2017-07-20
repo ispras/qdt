@@ -164,6 +164,7 @@ class PhBox(PhObject):
         return True
 
 class PhCircle(PhObject):
+    """ Circle. Size is given as radius (r). """
     def __init__(self, r = 10, **kw):
         PhObject.__init__(self, **kw)
         self.r = r
