@@ -1064,7 +1064,20 @@ class Variable():
         return [ch] + refs
 
     def get_definition_chunks(self, indent=""):
-        return VariableDefinition.gen_chunks(self, indent)
+        append_nl = True
+        ch = VariableDefinition(self, indent, append_nl)
+
+        refs = self.type.gen_defining_chunk_list()
+        if self.initializer is not None:
+            for v in self.initializer.used_variables:
+                # Note that 0-th chunk is variable and rest are its dependencies
+                refs.append(v.get_definition_chunks()[0])
+
+            for t in self.initializer.used_types:
+                refs.extend(t.gen_defining_chunk_list())
+
+        ch.add_references(refs)
+        return [ch] + refs
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
@@ -1463,22 +1476,6 @@ class VariableDeclaration(SourceChunk):
         return self.variable
 
 class VariableDefinition(SourceChunk):
-    @staticmethod
-    def gen_chunks(var, indent="", append_nl = True):
-        ch = VariableDefinition(var, indent, append_nl)
-
-        refs = var.type.gen_defining_chunk_list()
-        if var.initializer is not None:
-            for v in var.initializer.used_variables:
-                # Note that 0-th chunk is variable and rest are its dependencies
-                refs.append(v.get_definition_chunks()[0])
-
-            for t in var.initializer.used_types:
-                refs.extend(t.gen_defining_chunk_list())
-
-        ch.add_references(refs)
-        return [ch] + refs
-
     def __init__(self, var, indent="", append_nl = True):
         init_code = ''
         if var.initializer is not None:
