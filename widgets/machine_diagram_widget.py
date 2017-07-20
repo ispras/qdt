@@ -102,6 +102,8 @@ class PhObject(object):
         self.static = static
 
 class PhBox(PhObject):
+    """ Axis aligned box or vertical line (width == 0) or horizontal line
+    (height == 0). """
     def __init__(self, w = 50, h = 50, **kw):
         PhObject.__init__(self, **kw)
         self.width, self.height = w, h
