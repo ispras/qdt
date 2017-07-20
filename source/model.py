@@ -711,7 +711,60 @@ is not added to a source", self.name)
         self.append_field_t(Type.lookup(type_name), name, pointer)
 
     def gen_chunks(self):
-        return StructureDeclaration.gen_chunks(self)
+        fields_indent = "    "
+        indent = ""
+
+        struct_begin = StructureDeclarationBegin.gen_chunks(self, indent)[0]
+
+        struct_end = StructureDeclaration(self, fields_indent, indent, True)
+
+        """
+        References map of structure definition chunks:
+
+              ____--------> [self references of struct_begin ]
+             /    ___-----> [ united references of all fields ]
+            |    /     _--> [ references of struct_end ] == empty
+            |    |    /
+            |    |   |
+           struct_begin
+                ^
+                |
+             field_0
+                ^
+                |
+             field_1
+                ^
+                |
+               ...
+                ^
+                |
+             field_N
+                ^
+                |
+            struct_end
+
+        """
+
+        field_indent = "{}{}".format(indent, fields_indent)
+        field_refs = []
+        field_chunks = []
+        top_chunk = struct_begin
+
+        for f in self.fields:
+            # Note that 0-th chunk is field and rest are its dependencies
+            decl_chunks = f.gen_declaration_chunks(field_indent)
+            field_declaration = decl_chunks[0]
+
+            field_refs.extend(decl_chunks[1:])
+            field_declaration.clean_references()
+            field_declaration.add_reference(top_chunk)
+            field_chunks.append(field_declaration)
+            top_chunk = field_declaration
+
+        struct_begin.add_references(field_refs)
+        struct_end.add_reference(top_chunk)
+
+        return [struct_end, struct_begin] + field_chunks
 
     def gen_usage_string(self, init):
         if init is None:
@@ -1509,65 +1562,6 @@ class StructureDeclarationBegin(SourceChunk):
         return self.structure
 
 class StructureDeclaration(SourceChunk):
-    @staticmethod
-    def gen_chunks(struct,
-        fields_indent = "    ",
-        indent = "",
-        append_nl = True
-    ):
-        struct_begin = StructureDeclarationBegin.gen_chunks(struct, indent)[0]
-
-        struct_end = StructureDeclaration(struct, fields_indent, indent,
-            append_nl)
-
-        """
-        References map of structure definition chunks:
-
-              ____--------> [self references of struct_begin ]
-             /    ___-----> [ united references of all fields ]
-            |    /     _--> [ references of struct_end ] == empty
-            |    |    /
-            |    |   |
-           struct_begin
-                ^
-                |
-             field_0
-                ^
-                |
-             field_1
-                ^
-                |
-               ...
-                ^
-                |
-             field_N
-                ^
-                |
-            struct_end
-
-        """
-
-        field_indent = "{}{}".format(indent, fields_indent)
-        field_refs = []
-        field_chunks = []
-        top_chunk = struct_begin
-
-        for f in struct.fields:
-            # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = f.gen_declaration_chunks(field_indent)
-            field_declaration = decl_chunks[0]
-
-            field_refs.extend(decl_chunks[1:])
-            field_declaration.clean_references()
-            field_declaration.add_reference(top_chunk)
-            field_chunks.append(field_declaration)
-            top_chunk = field_declaration
-
-        struct_begin.add_references(field_refs)
-        struct_end.add_reference(top_chunk)
-
-        return [struct_end, struct_begin] + field_chunks
-
     def get_origin(self):
         return self.structure
 
