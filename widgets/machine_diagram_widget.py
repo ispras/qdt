@@ -139,6 +139,17 @@ class PhBox(PhObject):
             return False
         return True
 
+    def crosses(self, b):
+        if self.x > b.x:
+            return False
+        if self.y < b.y:
+            return False
+        if self.x + self.width < b.x:
+            return False
+        if b.y + b.height < self.y:
+            return False
+        return True
+
 class PhCircle(PhObject):
     def __init__(self, r = 10, **kw):
         PhObject.__init__(self, **kw)
@@ -266,17 +277,6 @@ class ConnectionLine(PhBox):
         self.y = self.dev_node.y + self.dev_node.height / 2
         self.x = min([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2])
         self.width = max([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2]) - self.x
-
-    def crosses(self, b):
-        if self.x > b.x:
-            return False
-        if self.y < b.y:
-            return False
-        if self.x + self.width < b.x:
-            return False
-        if b.y + b.height < self.y:
-            return False
-        return True
 
 class NodeCircle(PhCircle):
     def __init__(self):
