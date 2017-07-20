@@ -84,6 +84,10 @@ from canvas2svg import \
     saveall as saveall2svg
 
 class PhObject(object):
+    """ This is a point (x, y) in a 2D Euclidean space. It has velocity
+    (vx, vy) and spacing along both X-axis and Y-axis. The spacing is accounted
+    during collision detection. The point could be static. While an object is
+    static, the physical simulator does not moves it. """
     def __init__(self,
             # "physics" parameters
             x = 200, y = 200,
