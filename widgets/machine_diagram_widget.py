@@ -174,7 +174,7 @@ class PhCircle(PhObject):
         return sqrt(dx * dx + dy * dy) \
             < c.r + c.spacing + self.r + self.spacing
 
-    def overlaps_node(self, n):
+    def overlaps_box(self, n):
         # it is not a precise check
         if self.x + self.r * 2 + self.spacing < n.x - n.spacing:
             return False
@@ -2309,7 +2309,7 @@ IRQ line creation
             yield
 
             for hub in self.circles:
-                if not hub.overlaps_node(n):
+                if not hub.overlaps_box(n):
                     continue
 
                 w2 = n.width / 2
