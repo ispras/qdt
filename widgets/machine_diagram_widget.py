@@ -169,6 +169,7 @@ class PhCircle(PhObject):
         self.r = r
 
     def overlaps_circle(self, c):
+        """ Checks collision with a circle. """
         dx = c.x + c.r - (self.x + self.r)
         dy = c.y + c.r - (self.y + self.r)
         return sqrt(dx * dx + dy * dy) \
