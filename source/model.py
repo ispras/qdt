@@ -817,7 +817,14 @@ class Function(Type):
         return FunctionDeclaration.gen_chunks(self)
 
     def gen_definition_chunks(self):
-        return FunctionDefinition.gen_chunks(self)
+        indent = ""
+        ch = FunctionDefinition(self, indent)
+
+        refs = gen_function_decl_ref_chunks(self) + \
+               gen_function_def_ref_chunks(self)
+
+        ch.add_references(refs)
+        return [ch] + refs
 
     def gen_chunks(self):
         return FunctionDeclaration.gen_chunks(self)
@@ -1654,16 +1661,6 @@ class FunctionDeclaration(SourceChunk):
         return self.function
 
 class FunctionDefinition(SourceChunk):
-    @staticmethod
-    def gen_chunks(function, indent = "", append_nl = True):
-        ch = FunctionDefinition(function, indent)
-
-        refs = gen_function_decl_ref_chunks(function) + \
-               gen_function_def_ref_chunks(function)
-
-        ch.add_references(refs)
-        return [ch] + refs
-
     def __init__(self, function, indent = "", append_nl = True):
         body = " {}" if function.body is None else "\n{\n%s}" % function.body
 
