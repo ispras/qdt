@@ -102,6 +102,17 @@ class PhBox(PhObject):
         PhObject.__init__(self, **kw)
         self.width, self.height = w, h
 
+    def overlaps(self, n):
+        if n.x - n.spacing > self.x + self.width + self.spacing:
+            return False
+        if n.x + n.width + n.spacing < self.x - self.spacing:
+            return False
+        if n.y - n.spacing > self.y + self.height + self.spacing:
+            return False
+        if n.y + n.height + n.spacing < self.y - self.spacing:
+            return False
+        return True
+
 class PhCircle(PhObject):
     def __init__(self, r = 10, **kw):
         PhObject.__init__(self, **kw)
@@ -199,17 +210,6 @@ class NodeBox(PhBox):
             x = self.x + self.width/2
             y = self.y + self.height/2
         return x, y
-
-    def overlaps(self, n):
-        if n.x - n.spacing > self.x + self.width + self.spacing:
-            return False
-        if n.x + n.width + n.spacing < self.x - self.spacing:
-            return False
-        if n.y - n.spacing > self.y + self.height + self.spacing:
-            return False
-        if n.y + n.height + n.spacing < self.y - self.spacing:
-            return False
-        return True
 
     def touches_conn(self, c):
         if self.y - self.spacing > c.y:
