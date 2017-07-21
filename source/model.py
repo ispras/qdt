@@ -764,7 +764,7 @@ class Structure(Type):
 
         """
 
-        field_indent = "{}{}".format(indent, fields_indent)
+        field_indent = indent + fields_indent
         field_refs = []
         field_chunks = []
         top_chunk = struct_begin
