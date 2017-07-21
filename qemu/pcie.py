@@ -232,6 +232,8 @@ corresponding vendor is given" % attr
                     type_cast_macro = self.type_cast_macro.name
                 )
 
+            write_func.extra_references = {read_func}
+
             self.source.add_types([read_func, write_func])
 
             ops_init = Initializer(
