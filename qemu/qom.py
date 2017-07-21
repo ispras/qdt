@@ -1,4 +1,5 @@
 from source import \
+    line_origins, \
     Source, \
     Header, \
     Structure, \
@@ -707,7 +708,7 @@ class QOMDevice(QOMType):
         return cb
 
     def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
-        return [
+        ret = [
             self.char_gen_cb(proto_name, handler_name, index, source,
                 state_struct, type_cast_macro
             ) for proto_name, handler_name in [
@@ -716,6 +717,11 @@ class QOMDevice(QOMType):
                 ("IOEventHandler", self.char_event_name(index))
             ]
         ]
+
+        # Define handler relative order: can read, read, event
+        line_origins(ret)
+
+        return ret
 
     # TIMERS
     def timer_name(self, index):
