@@ -376,7 +376,9 @@ Type.lookup("void").gen_var("opaque", True),
             type_init_var.gen_usage(type_init_usage_init)
             )
 
-
+        # order life cycle functions
+        self.device_realize.extra_references = {self.instance_init}
+        self.device_reset.extra_references = {self.device_realize}
 
     def generate_header(self):
         #header = HeaderFile(self.qtn.get_header_name())
