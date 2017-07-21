@@ -61,11 +61,12 @@ class Source(object):
 
     def add_reference(self, ref):
         if not isinstance(ref, Type):
-            raise Exception('Trying to add source reference '
-                            'which is not a Type object')
+            raise ValueError("Trying to add source reference which is not a"
+                " type"
+            )
         if isinstance(ref, TypeReference):
-            raise Exception("""Source reference may not be TypeReference.
- Only original types are allowed."""
+            raise ValueError("Source reference may not be TypeReference."
+                "Only original types are allowed."
             )
         self.references.add(ref)
 
@@ -86,8 +87,9 @@ class Source(object):
 
     def add_global_variable(self, var):
         if var.name in self.global_variables:
-            raise Exception("Variable with name %s is already in file %s"
-                % (var.name, self.name))
+            raise RuntimeError("Variable with name %s is already in file %s"
+                % (var.name, self.name)
+            )
 
         TypeFixerVisitor(self, var).visit()
 
@@ -96,8 +98,9 @@ class Source(object):
             if s == self:
                 continue
             if not type(s) == Header:
-                raise Exception("Attempt to define variable %s whose type \
-is defined in non-header file %s" % (var.name, s.path))
+                raise RuntimeError("Attempt to define variable %s whose type "
+                    " is defined in non-header file %s" % (var.name, s.path)
+                )
             self.add_inclusion(s)
         # Auto add definers for types used by variable initializer
         if type(self) is Source:
@@ -107,13 +110,13 @@ is defined in non-header file %s" % (var.name, s.path))
                         if s == self:
                             continue
                         if not type(s) == Header:
-                            raise Exception("Attempt to define variable {var} \
-whose initializer code uses type {t} defined in non-header file {file}".format(
-    var = var.name,
-    t = t.name,
-    file = s.path
-)
-                            )
+                            raise RuntimeError("Attempt to define variable"
+                                " {var} whose initializer code uses type {t}"
+                                " defined in non-header file {file}".format(
+                                var = var.name,
+                                t = t.name,
+                                file = s.path
+                            ))
                         self.add_inclusion(s)
 
         self.global_variables[var.name] = var
@@ -122,8 +125,9 @@ whose initializer code uses type {t} defined in non-header file {file}".format(
 
     def add_inclusion(self, header):
         if not type(header) == Header:
-            raise Exception("Inclusion of non-header file {} is forbidden"
-                .format(header.path))
+            raise ValueError("Inclusion of a non-header file is forbidden (%s)"
+                % header.path
+            )
 
         if not header.path in self.inclusions:
             self.inclusions[header.path] = header
@@ -139,8 +143,9 @@ whose initializer code uses type {t} defined in non-header file {file}".format(
                     pass
 
             if self in header.includers:
-                raise Exception("Header %s is in %s includers but does not \
-includes it" % (self.path, header.path))
+                raise RuntimeError("Header %s is among includers of %s but does"
+                    " not includes it" % (self.path, header.path)
+                )
 
             header.includers.append(self)
 
@@ -152,9 +157,12 @@ includes it" % (self.path, header.path))
             if type(t) == TypeReference:
                 # To check incomplete type case
                 if not t.type.definer == type_ref.type.definer:
-                    raise Exception("""Conflict reference to type {} \
-found in source {}. The type is defined both in {} and {}.\
-""".format(t.name, self.path, type_ref.type.definer.path, t.type.definer.path))
+                    raise RuntimeError("Conflict reference to type %s found in"
+                        " source %s. The type is defined both in %s and %s"
+                        % (t.name, self.path, type_ref.type.definer.path,
+                            t.type.definer.path
+                        )
+                    )
             # To make more conflicts checking
             return False
 
@@ -169,8 +177,9 @@ found in source {}. The type is defined both in {} and {}.\
 
     def add_type(self, _type):
         if type(_type) == TypeReference:
-            raise Exception("""A type reference ({}) cannot be 
-added to a source ({}) externally""".format(_type.name, self.path))
+            raise ValueError("A type reference (%s) cannot be added to a"
+                " source (%s) externally" % (_type.name, self.path)
+            )
 
         TypeFixerVisitor(self, _type).visit()
 
@@ -182,9 +191,10 @@ added to a source ({}) externally""".format(_type.name, self.path))
             if s == self:
                 continue
             if not type(s) == Header:
-                raise Exception("Attempt to define structure {} that has \
-a field of a type defined in another non-header file {}.".format(
-    _type.name, s.path))
+                raise ValueError("Attempt to define structure %s that has a"
+                    " field of a type defined in another non-header file %s."
+                    % (_type.name, s.path)
+                )
             self.add_inclusion(s)
 
         return self
@@ -465,8 +475,7 @@ class Header(Source):
     @staticmethod
     def lookup(path):
         if not path in Header.reg:
-            raise Exception("Header with path %s is not registered"
-                % path)
+            raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[path] 
 
     def __init__(self, path, is_global=False):
@@ -475,14 +484,16 @@ class Header(Source):
         self.includers = []
 
         if path in Header.reg:
-            raise Exception("Header %s is already registered" % path)
+            raise RuntimeError("Header %s is already registered" % path)
 
         Header.reg[path] = self
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
-            raise AddTypeRefToDefinerException("Adding type %s reference to \
-file %s defining the type" % (type_ref.type.name, self.path))
+            raise AddTypeRefToDefinerException("Adding a type reference (%s) to"
+                " a file (%s) defining the type"
+                % (type_ref.type.name, self.path)
+            )
 
         # Preventing infinite recursion by header inclusion loop
         if super(Header, self)._add_type_recursive(type_ref):
@@ -554,7 +565,8 @@ class Type(object):
     def lookup(name):
         if not name in Type.reg:
             raise TypeNotRegistered("Type with name %s is not registered"
-                % name)
+                % name
+            )
         return Type.reg[name]
 
     @staticmethod
@@ -572,7 +584,7 @@ class Type(object):
         self.base = base
 
         if name in Type.reg:
-            raise Exception("Type %s is already registered" % name)
+            raise RuntimeError("Type %s is already registered" % name)
 
         Type.reg[name] = self
 
@@ -580,8 +592,9 @@ class Type(object):
                 static = False, array_size = None):
         if self.incomplete:
             if not pointer:
-                raise Exception("Cannon create non-pointer variable {} \
-of incomplete type {}.".format(name, self.name))
+                raise ValueError("Cannon create non-pointer variable %s"
+                    " of incomplete type %s." % (name, self.name)
+                )
 
         if pointer:
             pt = Pointer(self)
@@ -600,8 +613,9 @@ of incomplete type {}.".format(name, self.name))
             return [self.definer]
 
     def gen_chunks(self):
-        raise Exception("Attempt to generate source chunks for type {}"
-            .format(self.name))
+        raise ValueError("Attempt to generate source chunks for stub"
+            " type %s" % self.name
+        )
 
     def gen_defining_chunk_list(self):
         if self.base:
@@ -627,8 +641,9 @@ of incomplete type {}.".format(name, self.name))
 class TypeReference(Type):
     def __init__(self, _type):
         if type(_type) == TypeReference:
-            raise Exception("Cannot create type reference to type \
-reference {}.".format(_type.name))
+            raise ValueError("Attempt to create type reference to"
+                " another type reference %s." % _type.name
+            )
 
         #super(TypeReference, self).__init__(_type.name, _type.incomplete)
         self.name = _type.name
@@ -643,8 +658,9 @@ reference {}.".format(_type.name))
 
     def gen_chunks(self):
         if self.definer_references is None:
-            raise Exception("""Attempt to generate chunks for %s type reference\
- without the type reference adjusting pass""" % self.name
+            raise RuntimeError("Attempt to generate chunks for reference to"
+                " type %s without the type reference adjusting"
+                " pass." % self.name
             )
 
         inc = HeaderInclusion(self.type.definer)
@@ -660,8 +676,9 @@ reference {}.".format(_type.name))
 
     def gen_var(self, name, pointer = False, initializer = None,
             static = False):
-        raise Exception("""Attempt to generate variable of type %s by
- reference""" % self.type.name)
+        raise ValueError("Attempt to generate variable of type %s"
+            " using a reference" % self.type.name
+        )
 
     def gen_usage_string(self, initializer):
         # redirect to referenced type
@@ -685,8 +702,9 @@ class Structure(Type):
 
     def get_definers(self):
         if self.definer is None:
-            raise Exception("Getting definers for structure {} that \
-is not added to a source", self.name)
+            raise RuntimeError("Getting definers for structure %s that is not"
+                " added to a source", self.name
+            )
 
         definers = [self.definer]
 
@@ -699,8 +717,9 @@ is not added to a source", self.name)
     def append_field(self, variable):
         for f in self.fields:
             if f.name == variable.name:
-                raise Exception("""Field with name {} already exists
- in structure {}""".format(f.name, self.name))
+                raise RuntimeError("A field with name %s already exists in"
+                    " the structure %s" % (f.name, self.name)
+                )
 
         self.fields.append(variable)
 
@@ -1288,8 +1307,9 @@ class SourceChunk(object):
                             try:
                                 indents.pop()
                             except IndexError:
-                                raise Exception('Trying to pop indent '
-                                                'anchor from empty stack')
+                                raise RuntimeError("Trying to pop indent"
+                                    " anchor from empty stack"
+                                )
                     else:
                         word += re_clr.sub('\\1', subword)
 
@@ -1639,7 +1659,7 @@ def deep_first_sort(chunk, new_chunks):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
-            raise Exception("A loop is found in source chunk references")
+            raise RuntimeError("A loop is found in source chunk references")
         deep_first_sort(ch, new_chunks)
 
     chunk.visited = 2
@@ -1756,8 +1776,9 @@ digraph Chunks {
             for ref in chunk.references:
                 self.add_chunk(ref)
         elif not chunk.source == self:
-            raise Exception("The chunk {} is already in {} ".format(
-                chunk.name, chunk.source.name))
+            raise RuntimeError("The chunk %s is already in %s"
+                % (chunk.name, chunk.source.name)
+            )
 
     def optimize_inclusions(self, log = lambda *args, **kw : None):
         log("-= inclusion optimization started for %s.%s =-" % (
@@ -1969,8 +1990,7 @@ class SourceTreeContainer(object):
 
     def header_lookup(self, path):
         if not path in self.reg_header:
-            raise Exception("Header with path %s is not registered"
-                % path)
+            raise RuntimeError("Header with path %s is not registered" % path)
         return self.reg_header[path]
 
     def gen_header_inclusion_dot_file(self, dot_file_name):
