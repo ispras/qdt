@@ -1161,7 +1161,7 @@ class CopyFixerVisitor(ObjectVisitor):
                 pass
 
         else:
-            raise BreakVisiting
+            raise BreakVisiting()
 
 # Function and instruction models
 
