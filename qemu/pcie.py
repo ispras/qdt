@@ -436,6 +436,9 @@ Type.lookup("void").gen_var("opaque", True),
             type_init_var.gen_usage(type_init_usage_init)
             )
 
+        # order life cycle functions
+        self.device_exit.extra_references = {self.device_realize}
+
     def generate_header(self):
         # TODO: current value of inherit_references is dictated by Qemu coding
         # policy. Hence, version API must be used there.
