@@ -803,7 +803,7 @@ class Structure(Type):
                 val_str = init[f.name]
             except KeyError: # no initializer for this field
                 continue
-            fields_code.append("    .%s = %s" % (f.name, val_str))
+            fields_code.append("    .%s@b=@s%s" % (f.name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
 
