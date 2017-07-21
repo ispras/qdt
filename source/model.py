@@ -694,7 +694,7 @@ class TypeReference(Type):
 
 class Structure(Type):
     def __init__(self, name, fields = None):
-        super(Structure, self).__init__(name, incomplete=False)
+        super(Structure, self).__init__(name, incomplete = False)
         self.fields = []
         if fields is not None:
             for v in fields:
