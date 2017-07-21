@@ -148,6 +148,8 @@ class SysBusDeviceType(QOMDevice):
                     type_cast_macro = self.type_cast_macro.name
                     )
 
+            write_func.extra_references = {read_func}
+
             self.source.add_types([read_func, write_func])
 
             ops_init = Initializer(
@@ -219,6 +221,8 @@ class SysBusDeviceType(QOMDevice):
                     struct_name = self.state_struct.name, 
                     type_cast_macro = self.type_cast_macro.name
                     )
+
+            write_func.extra_references = {read_func}
 
             self.source.add_types([read_func, write_func])
 
