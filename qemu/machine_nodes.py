@@ -339,6 +339,9 @@ class PropList(dict):
         for prop in props:
             self.append(prop)
 
+    def keys(self):
+        return self.__names.__iter__()
+
     def __iter__(self):
         return self.values().__iter__()
 
