@@ -13,6 +13,7 @@ from source import \
     Function
 
 from .machine_nodes import \
+    Node, \
     SystemBusDeviceNode, \
     BusNode, \
     SystemBusNode, \
@@ -81,7 +82,7 @@ class IRQHubLayout(object):
         self.gen = generator
         self.hub = hub
 
-    def _gen_irq_get(self, parent_name, node):
+    def _gen_irq_get(self, parent_name, node, inner_base):
         if isinstance(node, IRQLine):
             # leaf
             return ("", self.gen.gen_irq_get(node.dst, parent_name))
@@ -89,11 +90,24 @@ class IRQHubLayout(object):
             # inner node
             self.gen.use_type_name("qemu_irq_split")
 
-            child1 = self.gen.provide_name_for_irq(node[0])
-            child2 = self.gen.provide_name_for_irq(node[1])
+            left = node[0]
+            if isinstance(left, Node):
+                child1 = self.gen.provide_name_for_node(left, "irq")
+            else:
+                child1 = self.gen.provide_name_for_node(left,
+                    inner_base + "_l"
+                )
 
-            child1_code = self._gen_irq_get(child1, node[0])
-            child2_code = self._gen_irq_get(child2, node[1])
+            right = node[1]
+            if isinstance(right, Node):
+                child2 = self.gen.provide_name_for_node(right, "irq")
+            else:
+                child2 = self.gen.provide_name_for_node(right,
+                    inner_base + "_r"
+                )
+
+            child1_code = self._gen_irq_get(child1, left, inner_base + "_l")
+            child2_code = self._gen_irq_get(child2, right, inner_base + "_r")
 
             decl_code = "    qemu_irq %s;\n" % child1
             decl_code += "    qemu_irq %s;\n" % child2
@@ -110,7 +124,7 @@ class IRQHubLayout(object):
 
     def gen_irq_get(self):
         root_name = self.gen.provide_name_for_irq(self.hub)
-        return self._gen_irq_get(root_name, self.root)
+        return self._gen_irq_get(root_name, self.root, root_name)
 
 class MachineType(QOMType):
     __attribute_info__ = OrderedDict([
