@@ -456,40 +456,16 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
             return name
 
     def gen_name_for_device(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "dev_%u" % next(self.alias_counters.setdefault("dev", count(0)))
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
+        return self.gen_name_for_node(node, "dev")
 
     def gen_name_for_bus(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "bus_%u" % next(self.alias_counters.setdefault("bus", count(0)))
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
+        return self.gen_name_for_node(node, "bus")
 
     def gen_name_for_irq(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "irq_%u" % next(self.alias_counters.setdefault("irq", count(0)))
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
+        return self.gen_name_for_node(node, "irq")
 
     def gen_name_for_mem(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "mem_%u" % next(self.alias_counters.setdefault("mem", count(0)))
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
+        return self.gen_name_for_node(node, "mem")
 
     def gen_prop_val(self, prop):
         if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
