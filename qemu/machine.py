@@ -425,7 +425,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 decl_code += "    qemu_irq %s;\n" % hub_in_name
 
-                hubl = IRQHubLayout(node, self)
+                hubl = self.provide_hub_layout(node)
 
                 code = hubl.gen_irq_get()
                 decl_code += code[0]
@@ -453,6 +453,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     def reset_generator(self):
         self.node_map = {}
         self.init_used_types = []
+        self.hub_layouts = {}
         self.provide_node_names()
 
     def use_type(self, t):
@@ -594,6 +595,14 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     src_index = irq[1],
     gpio_name = irq[2] if Type.exists(irq[2]) else "\"%s\"" % irq[2]
                 )
+
+    def provide_hub_layout(self, hub):
+        try:
+            return self.hub_layouts[hub]
+        except KeyError:
+            hubl = IRQHubLayout(hub, self)
+            self.hub_layouts[hub] = hubl
+            return hubl
 
     def generate_source(self):
         return self.source.generate()
