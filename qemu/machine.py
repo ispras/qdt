@@ -95,7 +95,7 @@ class IRQHubLayout(object):
             children_names = []
 
             for child, side in zip(node, ["_l", "_r"]):
-                if isinstance(child, Node):
+                if isinstance(child, IRQLine):
                     child_name = self.gen.node_map[child]
                 else:
                     child_name = self.gen.provide_name_for_node(child,
