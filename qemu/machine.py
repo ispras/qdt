@@ -481,18 +481,6 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
             return name
 
-    def provide_name_for_device(self, node):
-        return self.provide_name_for_node(node, "dev")
-
-    def provide_name_for_bus(self, node):
-        return self.provide_name_for_node(node, "bus")
-
-    def provide_name_for_irq(self, node):
-        return self.provide_name_for_node(node, "irq")
-
-    def provide_name_for_mem(self, node):
-        return self.provide_name_for_node(node, "mem")
-
     def provide_node_names(self):
         for base, nodes in [
             ("dev", self.devices),
