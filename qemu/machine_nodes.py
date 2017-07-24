@@ -30,6 +30,9 @@ from six.moves import \
 from .qom import \
     QOMPropertyTypeLink
 
+from bisect import \
+    insort
+
 class Node(object):
     def __init__(self):
         self.id = -1
@@ -320,11 +323,17 @@ class DevicePropertyDefinition(object):
 class PropList(dict):
     def __init__(self, original = None, *args, **kw):
         dict.__init__(original if original else {}, *args, **kw)
+        self.__names = []
 
     def append(self, prop):
         # It is defined that a property descriptor have property name.
         # Hence the key for a property in dict could be got automatically.
         self[prop.prop_name] = prop
+
+    def __setitem__(self, name, prop):
+        if name not in self:
+            insort(self.__names, name)
+        return dict.__setitem__(self, name, prop)
 
     def extend(self, props):
         for prop in props:
@@ -332,6 +341,10 @@ class PropList(dict):
 
     def __iter__(self):
         return self.values().__iter__()
+
+    def __delitem__(self, name):
+        self.__names.remove(name)
+        return dict.__delitem__(self, name)
 
 class DeviceNode(Node):
     def __init__(self, qom_type, parent = None, **kw):
