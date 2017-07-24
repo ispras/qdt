@@ -453,6 +453,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     def reset_generator(self):
         self.node_map = {}
         self.init_used_types = []
+        self.provide_node_names()
 
     def use_type(self, t):
         if t in self.init_used_types:
@@ -491,6 +492,17 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
     def provide_name_for_mem(self, node):
         return self.provide_name_for_node(node, "mem")
+
+    def provide_node_names(self):
+        for base, nodes in [
+            ("dev", self.devices),
+            ("bus", self.buses),
+            ("irq", self.irqs),
+            ("irq", self.irq_hubs),
+            ("mem", self.mems)
+        ]:
+            for n in nodes:
+                self.provide_name_for_node(n, base)
 
     def gen_prop_val(self, prop):
         if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
