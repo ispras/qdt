@@ -92,7 +92,7 @@ class IRQHubLayout(object):
 
             left = node[0]
             if isinstance(left, Node):
-                child1 = self.gen.provide_name_for_node(left, "irq")
+                child1 = self.gen.node_map[left]
             else:
                 child1 = self.gen.provide_name_for_node(left,
                     inner_base + "_l"
@@ -100,7 +100,7 @@ class IRQHubLayout(object):
 
             right = node[1]
             if isinstance(right, Node):
-                child2 = self.gen.provide_name_for_node(right, "irq")
+                child2 = self.gen.node_map[right]
             else:
                 child2 = self.gen.provide_name_for_node(right,
                     inner_base + "_r"
