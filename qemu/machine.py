@@ -446,6 +446,8 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         self.use_type(t)
 
     def provide_name_for_node(self, node, base):
+        """ Returns name of variable for given node. Does generate and remember
+        a new name if required. """
         try:
             return self.node_map[node]
         except KeyError:
