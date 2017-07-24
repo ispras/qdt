@@ -90,6 +90,8 @@ class IRQHubLayout(object):
             # inner node
             self.gen.use_type_name("qemu_irq_split")
 
+            decl_code = ""
+
             left = node[0]
             if isinstance(left, Node):
                 child1 = self.gen.node_map[left]
@@ -109,7 +111,7 @@ class IRQHubLayout(object):
             child1_code = self._gen_irq_get(child1, left, inner_base + "_l")
             child2_code = self._gen_irq_get(child2, right, inner_base + "_r")
 
-            decl_code = "    qemu_irq %s;\n" % child1
+            decl_code += "    qemu_irq %s;\n" % child1
             decl_code += "    qemu_irq %s;\n" % child2
 
             def_code =  """\
