@@ -343,7 +343,11 @@ class PropList(dict):
         return self.__names.__iter__()
 
     def __iter__(self):
-        return self.values().__iter__()
+        return self.__iterator()
+
+    def __iterator(self):
+        for name in self.keys():
+            yield self[name]
 
     def __delitem__(self, name):
         self.__names.remove(name)
