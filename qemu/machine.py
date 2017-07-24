@@ -445,6 +445,16 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         t = Type.lookup(name)
         self.use_type(t)
 
+    def gen_name_for_node(self, node, base):
+        try:
+            return self.node_map[node]
+        except KeyError:
+            number = next(self.alias_counters.setdefault(base, count(0)))
+            name = base + "_%u" % number
+            self.node_map[name] = node
+            self.node_map[node] = name
+            return name
+
     def gen_name_for_device(self, node):
         if node in self.node_map.keys():
             return self.node_map[node]
