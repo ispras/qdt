@@ -42,6 +42,9 @@ from six import \
 from collections import \
     OrderedDict
 
+from itertools import \
+    count
+
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
         Exception.__init__(self, t)
@@ -428,12 +431,10 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         get_vp("machine type register template generator")(self)
 
     def reset_generator(self):
-        self.device_count = 0
-        self.bus_count = 0
-        self.irq_count = 0
-        self.mem_count = 0
         self.node_map = {}
         self.init_used_types = []
+        # Use counter to avoid same names for different nodes
+        self.alias_counters = {}
 
     def use_type(self, t):
         if t in self.init_used_types:
@@ -448,8 +449,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         if node in self.node_map.keys():
             return self.node_map[node]
 
-        ret = "dev_%u" % self.device_count
-        self.device_count += 1
+        ret = "dev_%u" % next(self.alias_counters.setdefault("dev", count(0)))
         self.node_map[ret] = node
         self.node_map[node] = ret
         return ret
@@ -458,8 +458,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         if node in self.node_map.keys():
             return self.node_map[node]
 
-        ret = "bus_%u" % self.bus_count
-        self.bus_count += 1
+        ret = "bus_%u" % next(self.alias_counters.setdefault("bus", count(0)))
         self.node_map[ret] = node
         self.node_map[node] = ret
         return ret
@@ -468,8 +467,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         if node in self.node_map.keys():
             return self.node_map[node]
 
-        ret = "irq_%u" % self.irq_count
-        self.irq_count += 1
+        ret = "irq_%u" % next(self.alias_counters.setdefault("irq", count(0)))
         self.node_map[ret] = node
         self.node_map[node] = ret
         return ret
@@ -478,8 +476,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         if node in self.node_map.keys():
             return self.node_map[node]
 
-        ret = "mem_%u" % self.mem_count
-        self.mem_count += 1
+        ret = "mem_%u" % next(self.alias_counters.setdefault("mem", count(0)))
         self.node_map[ret] = node
         self.node_map[node] = ret
         return ret
