@@ -94,33 +94,21 @@ class IRQHubLayout(object):
             def_code = ""
             children_names = []
 
-            left = node[0]
-            if isinstance(left, Node):
-                child1 = self.gen.node_map[left]
-            else:
-                child1 = self.gen.provide_name_for_node(left,
-                    inner_base + "_l"
+            for child, side in zip(node, ["_l", "_r"]):
+                if isinstance(child, Node):
+                    child_name = self.gen.node_map[child]
+                else:
+                    child_name = self.gen.provide_name_for_node(child,
+                        inner_base + side
+                    )
+                children_names.append(child_name)
+
+                child_code = self._gen_irq_get(child_name, child,
+                    inner_base + side
                 )
 
-            right = node[1]
-            if isinstance(right, Node):
-                child2 = self.gen.node_map[right]
-            else:
-                child2 = self.gen.provide_name_for_node(right,
-                    inner_base + "_r"
-                )
-
-            child1_code = self._gen_irq_get(child1, left, inner_base + "_l")
-            child2_code = self._gen_irq_get(child2, right, inner_base + "_r")
-
-            decl_code += child1_code[0] + "    qemu_irq %s;\n" % child1
-            decl_code += child2_code[0] + "    qemu_irq %s;\n" % child2
-
-            children_names.append(child1)
-            children_names.append(child2)
-
-            def_code += child1_code[1]
-            def_code += child2_code[1]
+                decl_code += child_code[0] + "    qemu_irq %s;\n" % child_name
+                def_code += child_code[1]
 
             def_code += """\
     {parent_name} = qemu_irq_split({children});
