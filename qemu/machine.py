@@ -465,10 +465,15 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         try:
             return self.node_map[node]
         except KeyError:
-            number = next(self.alias_counters.setdefault(base, count(0)))
-            name = base + "_%u" % number
+            if base in self.node_map:
+                name = base + "_%u" % node.id
+            else:
+                # do not use suffix with id for first node with such base
+                name = base
+
             self.node_map[name] = node
             self.node_map[node] = name
+
             return name
 
     def provide_name_for_device(self, node):
