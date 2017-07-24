@@ -89,8 +89,8 @@ class IRQHubLayout(object):
             # inner node
             self.gen.use_type_name("qemu_irq_split")
 
-            child1 = self.gen.gen_name_for_irq(node[0])
-            child2 = self.gen.gen_name_for_irq(node[1])
+            child1 = self.gen.provide_name_for_irq(node[0])
+            child2 = self.gen.provide_name_for_irq(node[1])
 
             child1_code = self._gen_irq_get(child1, node[0])
             child2_code = self._gen_irq_get(child2, node[1])
@@ -109,7 +109,7 @@ class IRQHubLayout(object):
                     child1_code[1] + child2_code[1] + def_code)
 
     def gen_irq_get(self):
-        root_name = self.gen.gen_name_for_irq(self.hub)
+        root_name = self.gen.provide_name_for_irq(self.hub)
         return self._gen_irq_get(root_name, self.root)
 
 class MachineType(QOMType):
@@ -161,7 +161,7 @@ class MachineType(QOMType):
                 if Type.exists(node.qom_type):
                     self.use_type_name(node.qom_type)
 
-                dev_name = self.gen_name_for_device(node)
+                dev_name = self.provide_name_for_device(node)
 
                 props_code = ""
                 for p in node.properties:
@@ -193,7 +193,7 @@ class MachineType(QOMType):
     qdev_init_nofail(DEVICE({dev_name}));
 """.format(
     dev_name = dev_name,
-    bus_name = self.gen_name_for_bus(node.parent_bus),
+    bus_name = self.provide_name_for_bus(node.parent_bus),
     qom_type = node.qom_type if Type.exists(node.qom_type) else "\"%s\"" % node.qom_type,
     props_code = props_code,
     multifunction = "true" if node.multifunction else "false",
@@ -210,7 +210,7 @@ class MachineType(QOMType):
     qdev_init_nofail({dev_name});
 """.format(
     dev_name = dev_name,
-    bus_name = "NULL" if (node.parent_bus is None ) or isinstance(node.parent_bus, SystemBusNode) else "BUS(%s)" % self.gen_name_for_bus(node.parent_bus),
+    bus_name = "NULL" if (node.parent_bus is None) or isinstance(node.parent_bus, SystemBusNode) else "BUS(%s)" % self.provide_name_for_bus(node.parent_bus),
     qom_type = node.qom_type if Type.exists(node.qom_type) else "\"%s\"" % node.qom_type,
     props_code = props_code
                         )
@@ -239,7 +239,7 @@ class MachineType(QOMType):
                     if len(bus.devices) == 0:
                         continue
 
-                    bus_name = self.gen_name_for_bus(bus)
+                    bus_name = self.provide_name_for_bus(bus)
                     try:
                         if isinstance(bus, PCIExpressBusNode):
                             if isinstance(node, SystemBusDeviceNode):
@@ -292,7 +292,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 self.use_type_name(node.c_type)
 
-                bus_name = self.gen_name_for_bus(node)
+                bus_name = self.provide_name_for_bus(node)
 
                 decl_code += "    %s *%s;\n" % (node.c_type, bus_name)
             elif isinstance(node, IRQLine):
@@ -304,7 +304,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 self.use_type_name("qemu_irq")
 
-                irq_name = self.gen_name_for_irq(node)
+                irq_name = self.provide_name_for_irq(node)
 
                 decl_code += "    qemu_irq %s;\n" % irq_name
 
@@ -317,7 +317,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                 if Type.exists(node.name):
                     self.use_type_name(node.name)
 
-                mem_name = self.gen_name_for_mem(node)
+                mem_name = self.provide_name_for_mem(node)
 
                 decl_code += "    MemoryRegion *%s;\n" % mem_name
 
@@ -334,7 +334,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     mem_name = mem_name,
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
     size = node.size,
-    orig = self.gen_name_for_mem(node.alias_to),
+    orig = self.provide_name_for_mem(node.alias_to),
     offset = node.alias_offset
                     )
                 elif    isinstance(node, MemoryRAMNode) \
@@ -401,7 +401,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 self.use_type_name("qemu_irq")
 
-                hub_in_name = self.gen_name_for_irq(node)
+                hub_in_name = self.provide_name_for_irq(node)
 
                 decl_code += "    qemu_irq %s;\n" % hub_in_name
 
@@ -445,7 +445,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
         t = Type.lookup(name)
         self.use_type(t)
 
-    def gen_name_for_node(self, node, base):
+    def provide_name_for_node(self, node, base):
         try:
             return self.node_map[node]
         except KeyError:
@@ -455,17 +455,17 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
             self.node_map[node] = name
             return name
 
-    def gen_name_for_device(self, node):
-        return self.gen_name_for_node(node, "dev")
+    def provide_name_for_device(self, node):
+        return self.provide_name_for_node(node, "dev")
 
-    def gen_name_for_bus(self, node):
-        return self.gen_name_for_node(node, "bus")
+    def provide_name_for_bus(self, node):
+        return self.provide_name_for_node(node, "bus")
 
-    def gen_name_for_irq(self, node):
-        return self.gen_name_for_node(node, "irq")
+    def provide_name_for_irq(self, node):
+        return self.provide_name_for_node(node, "irq")
 
-    def gen_name_for_mem(self, node):
-        return self.gen_name_for_node(node, "mem")
+    def provide_name_for_mem(self, node):
+        return self.provide_name_for_node(node, "mem")
 
     def gen_prop_val(self, prop):
         if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
@@ -506,7 +506,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     {irq_name} = qdev_get_gpio_in(DEVICE({dst_name}), {dst_index});
 """.format(
     irq_name = var_name,
-    dst_name = self.gen_name_for_device(irq[0]),
+    dst_name = self.provide_name_for_device(irq[0]),
     dst_index = irq[1],
             )
         else:
@@ -525,7 +525,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 """.format(
     irq_name = var_name,
     irq_get = irq_get.name,
-    dst_name = self.gen_name_for_device(irq[0]),
+    dst_name = self.provide_name_for_device(irq[0]),
     gpio_name = gpio_name,
     dst_index = irq[1],
             )
@@ -539,7 +539,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     qdev_connect_gpio_out(DEVICE({src_name}), {src_index}, {irq_name});
 """.format(
     irq_name = var_name,
-    src_name = self.gen_name_for_device(irq[0]),
+    src_name = self.provide_name_for_device(irq[0]),
     src_index = irq[1]
             )
         else:
@@ -552,7 +552,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     sysbus_connect_irq(SYS_BUS_DEVICE({src_name}), {src_index}, {irq_name});
 """.format(
     irq_name = var_name,
-    src_name = self.gen_name_for_device(irq[0]),
+    src_name = self.provide_name_for_device(irq[0]),
     src_index = irq[1]
                 )
             else:
@@ -565,7 +565,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     qdev_connect_gpio_out_named(DEVICE({src_name}), {gpio_name}, {src_index}, {irq_name});
 """.format(
     irq_name = var_name,
-    src_name = self.gen_name_for_device(irq[0]),
+    src_name = self.provide_name_for_device(irq[0]),
     src_index = irq[1],
     gpio_name = irq[2] if Type.exists(irq[2]) else "\"%s\"" % irq[2]
                 )
