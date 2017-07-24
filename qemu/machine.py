@@ -447,8 +447,6 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     def reset_generator(self):
         self.node_map = {}
         self.init_used_types = []
-        # Use counter to avoid same names for different nodes
-        self.alias_counters = {}
 
     def use_type(self, t):
         if t in self.init_used_types:
