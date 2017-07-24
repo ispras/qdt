@@ -91,6 +91,7 @@ class IRQHubLayout(object):
             self.gen.use_type_name("qemu_irq_split")
 
             decl_code = ""
+            children_names = []
 
             left = node[0]
             if isinstance(left, Node):
@@ -114,12 +115,14 @@ class IRQHubLayout(object):
             decl_code += "    qemu_irq %s;\n" % child1
             decl_code += "    qemu_irq %s;\n" % child2
 
+            children_names.append(child1)
+            children_names.append(child2)
+
             def_code =  """\
-    {parent_name} = qemu_irq_split({child1}, {child2});
+    {parent_name} = qemu_irq_split({children});
 """.format(
     parent_name = parent_name,
-    child1 = child1,
-    child2 = child2
+    children = ", ".join(children_names)
                     )
             return (child1_code[0] + child2_code[0] + decl_code,
                     child1_code[1] + child2_code[1] + def_code)
