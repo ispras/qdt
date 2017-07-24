@@ -142,6 +142,12 @@ class MachineType(QOMType):
 
         self.desc = "TODO: provide description for " + name
 
+        self.devices = devices
+        self.buses = buses
+        self.irqs = irqs
+        self.mems = mems
+        self.irq_hubs = irq_hubs
+
         # source file model
         source_path = \
             join_path("hw", directory,
