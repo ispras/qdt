@@ -535,6 +535,11 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
     def gen_irq_get(self, irq, var_name):
         dst = irq[0]
+        if isinstance(dst, IRQHub):
+            raise RuntimeError("Cannot get an IRQ from a hub (%u)."
+                " A hub _is_ an IRQ itself." % dst.id
+            )
+
         self.use_type_name("DEVICE")
 
         if irq[2] is None:
