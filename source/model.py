@@ -712,7 +712,7 @@ class Type(object):
         if self.base:
             return []
         else:
-            return self.gen_chunks()
+            return self.gen_chunks(generator = generator)
 
     def gen_usage_string(self, initializer):
         # Usage string for an initializer is code of the initializer. It is
@@ -758,9 +758,13 @@ class TypeReference(Type):
 
         refs = []
         for r in self.definer_references:
-            refs.extend(r.gen_defining_chunk_list())
+            if generator is None:
+                refs.extend(r.gen_defining_chunk_list())
+            else:
+                refs.extend(generator.provide_chunks(r))
 
         inc.add_references(refs)
+
         return [inc] + refs
 
     gen_defining_chunk_list = gen_chunks
@@ -862,7 +866,11 @@ class Structure(Type):
 
         for f in self.fields:
             # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = f.gen_declaration_chunks(field_indent)
+            if generator is None:
+                decl_chunks = f.gen_declaration_chunks(field_indent)
+            else:
+                decl_chunks = generator.provide_chunks(f, indent = field_indent)
+
             field_declaration = decl_chunks[0]
 
             field_refs.extend(decl_chunks[1:])
@@ -927,7 +935,7 @@ class Function(Type):
         indent = ""
         ch = FunctionDeclaration(self, indent)
 
-        refs = gen_function_decl_ref_chunks(self)
+        refs = gen_function_decl_ref_chunks(self, generator = generator)
 
         ch.add_references(refs)
 
@@ -939,8 +947,8 @@ class Function(Type):
         indent = ""
         ch = FunctionDefinition(self, indent)
 
-        refs = gen_function_decl_ref_chunks(self) + \
-               gen_function_def_ref_chunks(self)
+        refs = gen_function_decl_ref_chunks(self, generator = generator) + \
+               gen_function_def_ref_chunks(self, generator = generator)
 
         ch.add_references(refs)
         return [ch] + refs
@@ -1025,9 +1033,14 @@ class Pointer(Type):
     def gen_chunks(self, generator = None):
         # strip function definition chunk, its references is only needed
         if isinstance(self.type, Function):
-            refs = gen_function_decl_ref_chunks(self.type)
+            refs = gen_function_decl_ref_chunks(self.type,
+                generator = generator
+            )
         else:
-            refs = self.type.gen_defining_chunk_list()
+            if generator is None:
+                refs = self.type.gen_defining_chunk_list()
+            else:
+                refs = generator.provide_chunks(self.type)
 
         if self.is_named:
             ch = PointerTypeDeclaration(self.type, self.name)
@@ -1157,21 +1170,31 @@ class Variable():
             ch = PointerVariableDeclaration(self, indent, extern)
 
             if isinstance(self.type.type, Function):
-                refs = gen_function_decl_ref_chunks(self.type.type)
+                refs = gen_function_decl_ref_chunks(self.type.type,
+                    generator = generator
+                )
             else:
-                refs = self.type.type.gen_defining_chunk_list()
+                if generator is None:
+                    refs = self.type.type.gen_defining_chunk_list()
+                else:
+                    refs = generator.provide_chunks(self.type.type)
             ch.add_references(refs)
         else:
             t = self.type if not isinstance(self.type, TypeReference)\
                 else self.type.type
 
             if type(t) == Macro:
-                u = VariableUsage.gen_chunks(self, indent = indent)
+                u = VariableUsage.gen_chunks(self, indent = indent,
+                    generator = generator
+                )
                 ch = u[0]
                 refs = u[1:]
             else:
                 ch = VariableDeclaration(self, indent, extern)
-                refs = self.type.gen_defining_chunk_list()
+                if generator is None:
+                    refs = self.type.gen_defining_chunk_list()
+                else:
+                    refs = generator.provide_chunks(self.type)
 
             ch.add_references(refs)
 
@@ -1181,14 +1204,26 @@ class Variable():
         append_nl = True
         ch = VariableDefinition(self, indent, append_nl)
 
-        refs = self.type.gen_defining_chunk_list()
-        if self.initializer is not None:
-            for v in self.initializer.used_variables:
-                # Note that 0-th chunk is variable and rest are its dependencies
-                refs.append(v.get_definition_chunks()[0])
+        if generator is None:
+            refs = self.type.gen_defining_chunk_list()
+        else:
+            refs = generator.provide_chunks(self.type)
 
-            for t in self.initializer.used_types:
-                refs.extend(t.gen_defining_chunk_list())
+        if self.initializer is not None:
+            if generator is None:
+                for v in self.initializer.used_variables:
+                    refs.append(v.get_definition_chunks()[0])
+
+                for t in self.initializer.used_types:
+                    refs.extend(t.gen_defining_chunk_list())
+            else:
+                for v in self.initializer.used_variables:
+                    """ Note that 0-th chunk is variable and rest are its
+                    dependencies """
+                    refs.append(generator.provide_chunks(v)[0])
+
+                for t in self.initializer.used_types:
+                    refs.extend(generator.provide_chunks(t))
 
         ch.add_references(refs)
         return [ch] + refs
@@ -1285,7 +1320,9 @@ class Usage():
         self.initalizer = initializer
 
     def gen_chunks(self, generator = None):
-        ret = VariableUsage.gen_chunks(self.variable, self.initalizer)
+        ret = VariableUsage.gen_chunks(self.variable, self.initalizer,
+            generator = generator
+        )
         # do not add semicolon after macro usage
         if not (type(self.variable.type) == Macro \
             or isinstance(self.variable.type, TypeReference) and \
@@ -1577,16 +1614,26 @@ class VariableUsage(SourceChunk):
     def gen_chunks(var, initializer = None, indent = "", generator = None):
         ch = VariableUsage(var, initializer, indent)
 
-        refs = var.type.gen_defining_chunk_list()
+        if generator is None:
+            refs = var.type.gen_defining_chunk_list()
+        else:
+            refs = generator.provide_chunks(var.type)
 
         if initializer is not None:
-            for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
-                refs.append(v.get_definition_chunks()[0])
+            if generator is None:
+                for v in initializer.used_variables:
+                    refs.append(v.get_definition_chunks()[0])
 
-            for t in initializer.used_types:
-                refs.extend(t.gen_defining_chunk_list())
+                for t in initializer.used_types:
+                    refs.extend(t.gen_defining_chunk_list())
+            else:
+                for v in initializer.used_variables:
+                    """ Note that 0-th chunk is variable and rest are its
+                    dependencies """
+                    refs.append(generator.provide_chunks(v)[0])
+
+                for t in initializer.used_types:
+                    refs.extend(generator.provide_chunks(t))
 
         ch.add_references(refs)
         return [ch] + refs
@@ -1667,23 +1714,36 @@ def gen_function_declaration_string(indent, function, pointer_name = None,
     )
 
 def gen_function_decl_ref_chunks(function, generator = None):
-    references = function.ret_type.gen_defining_chunk_list() 
+    if generator is None:
+        references = function.ret_type.gen_defining_chunk_list()
+    else:
+        references = generator.provide_chunks(function.ret_type)
 
     if function.args is not None:
-        for a in function.args:
-            references.extend(a.type.gen_defining_chunk_list())
+        if generator is None:
+            for a in function.args:
+                references.extend(a.type.gen_defining_chunk_list())
+        else:
+            for a in function.args:
+                references.extend(generator.provide_chunks(a.type))
 
     return references
 
 def gen_function_def_ref_chunks(f, generator = None):
     references = []
 
-    for t in f.used_types:
-        references.extend(t.gen_defining_chunk_list())
+    if generator is None:
+        for t in f.used_types:
+            references.extend(t.gen_defining_chunk_list())
 
-    for g in f.used_globals:
-        # Note that 0-th chunk is the global and rest are its dependencies
-        references.append(g.get_definition_chunks()[0])
+        for g in f.used_globals:
+            references.append(g.get_definition_chunks()[0])
+    else:
+        for t in f.used_types:
+            references.extend(generator.provide_chunks(t))
+        for g in f.used_globals:
+            # Note that 0-th chunk is the global and rest are its dependencies
+            references.append(generator.provide_chunks(g)[0])
 
     return references
 
