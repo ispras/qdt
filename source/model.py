@@ -266,7 +266,6 @@ switching to that mode.
         if inherit_references:
             assert(isinstance(self, Header))
 
-        chunks = []
         ref_list = []
 
         if isinstance(self, Header):
@@ -319,6 +318,8 @@ switching to that mode.
             # Preserve current types list. See the comment above.
             l = list(self.types.values()) + ref_list
 
+        gen = ChunkGenerator(for_header = type(self) is Header)
+
         for t in self.types.values():
             if isinstance(t, TypeReference):
                 for inc in self.inclusions.values():
@@ -335,26 +336,19 @@ switching to that mode.
 " %s not by a reference." % (t.name, t.definer.path, self.path)
                 )
 
-            if type(t) is Function:
-                if type(self) is Header and (not t.static or not t.inline):
-                    chunks.extend(t.gen_declaration_chunks())
-                else:
-                    chunks.extend(t.gen_definition_chunks())
-            else:
-                chunks.extend(t.gen_chunks())
+            gen.provide_chunks(t)
+
+        for gv in self.global_variables.values():
+            gen.provide_chunks(gv)
 
         if type(self) == Header:
-            for gv in self.global_variables.values():
-                chunks.extend(gv.gen_declaration_chunks(extern = True))
             for r in ref_list:
-                chunks.extend(r.gen_chunks())
-
-        elif type(self) == Source:
-            for gv in self.global_variables.values():
-                chunks.extend(gv.get_definition_chunks())
+                gen.provide_chunks(r)
 
         for u in self.usages:
-            chunks.extend(u.gen_chunks())
+            gen.provide_chunks(u)
+
+        chunks = gen.get_all_chunks()
 
         # Account extra references
         origin2chunks = {}
