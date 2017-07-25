@@ -534,6 +534,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
             raise UnknownPropertyType()
 
     def gen_irq_get(self, irq, var_name):
+        dst = irq[0]
         self.use_type_name("DEVICE")
 
         if irq[2] is None:
@@ -543,7 +544,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     {irq_name} = qdev_get_gpio_in(DEVICE({dst_name}), {dst_index});
 """.format(
     irq_name = var_name,
-    dst_name = self.node_map[irq[0]],
+    dst_name = self.node_map[dst],
     dst_index = irq[1],
             )
         else:
@@ -562,7 +563,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 """.format(
     irq_name = var_name,
     irq_get = irq_get.name,
-    dst_name = self.node_map[irq[0]],
+    dst_name = self.node_map[dst],
     gpio_name = gpio_name,
     dst_index = irq[1],
             )
