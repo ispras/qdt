@@ -48,6 +48,55 @@ macro_forbidden = compile("[^0-9A-Z_]")
 def to_macro_name(s):
     return macro_forbidden.sub('_', s.upper())
 
+# Code generation model
+class ChunkGenerator(object):
+    """ Maintains context of source code chunks generation precess."""
+    def __init__(self, for_header = False):
+        self.origin2chunks = {}
+        self.for_header = for_header
+        """ Tracking of recursive calls of `provide_chunks`. Currently used only
+        to generate "extern" keyword for global variables in header. """
+        self.stack = []
+
+    def provide_chunks(self, origin, **kw):
+        """ Given origin the method returns chunk list generating it on first
+        access. """
+        kw["generator"] = self
+        try:
+            chunks = self.origin2chunks[origin]
+        except KeyError:
+            self.stack.append(origin)
+
+            if isinstance(origin, Function):
+                if self.for_header and (not origin.static or not origin.inline):
+                    chunks = origin.gen_declaration_chunks(**kw)
+                else:
+                    chunks = origin.gen_definition_chunks(**kw)
+            elif isinstance(origin, Variable):
+                if self.for_header and len(self.stack) == 1:
+                    kw["extern"] = True
+                    chunks = origin.gen_declaration_chunks(**kw)
+                else:
+                    chunks = origin.get_definition_chunks(**kw)
+            else:
+                chunks = origin.gen_defining_chunk_list(**kw)
+
+            self.stack.pop()
+
+            self.origin2chunks[origin] = chunks
+
+        return chunks
+
+    def get_all_chunks(self):
+        res = set()
+
+        for chunks in self.origin2chunks.values():
+            for chunk in chunks:
+                if chunk not in res:
+                    res.add(chunk)
+
+        return list(res)
+
 # Source code models
 
 class Source(object):
