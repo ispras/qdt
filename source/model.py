@@ -1299,6 +1299,8 @@ class Usage():
 
         return ret 
 
+    gen_defining_chunk_list = gen_chunks
+
     __type_references__ = ["variable", "initalizer"]
 
 # Source code instances
