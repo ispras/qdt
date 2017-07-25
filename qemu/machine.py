@@ -115,7 +115,7 @@ class IRQHubLayout(object):
 """.format(
     parent_name = parent_name,
     children = ", ".join(children_names)
-                    )
+            )
             return (decl_code, def_code)
 
     def gen_irq_get(self):
