@@ -85,7 +85,18 @@ class IRQHubLayout(object):
     def _gen_irq_get(self, parent_name, node, inner_base):
         if isinstance(node, IRQLine):
             # leaf
-            return ("", self.gen.gen_irq_get(node.dst, parent_name))
+            dst = node.dst
+            if isinstance(dst[0], IRQHub):
+                """ Declaration and definition of destination hub must be
+                already generated. A hub (its root) is an IRQ line. So, use
+                initialize self IRQ with IRQ of the destination hub. """
+                def_code = "    {parent_name}@b=@s{child_name};\n".format(
+                    parent_name = parent_name,
+                    child_name = self.gen.node_map[dst[0]],
+                )
+                return ("", def_code)
+            else:
+                return ("", self.gen.gen_irq_get(dst, parent_name))
         else:
             # inner node
             self.gen.use_type_name("qemu_irq_split")
@@ -427,8 +438,12 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                 decl_code += code[0]
                 def_code += code[1]
 
-                for src in [ irq for irq in node.irqs if irq.dst[0] == node ]:
-                    def_code += self.gen_irq_connect(src.src, hub_in_name)
+                for in_irq in [irq for irq in node.irqs if irq.dst[0] == node]:
+                    src = in_irq.src
+                    if isinstance(src[0], IRQHub):
+                        # A source hub does connects to this hub by itself
+                        continue
+                    def_code += self.gen_irq_connect(src, hub_in_name)
             else:
                 raise UnknownMachineNodeType(str(type(node)))
 
