@@ -304,12 +304,12 @@ switching to that mode.
 
         # Build mapping
         for ch in chunks:
-            origin = ch.get_origin()
+            origin = ch.origin
             origin2chunks.setdefault(origin, []).append(ch)
 
         # link chunks
         for ch in chunks:
-            origin = ch.get_origin()
+            origin = ch.origin
 
             """ Any object that could be an origin of chunk may provide an
 iterable container of extra references. A reference must be another origin.
@@ -1738,7 +1738,7 @@ digraph Chunks {
                 if not type(ch) == t:
                     continue
 
-                origin = ch.get_origin()
+                origin = ch.origin
 
                 try:
                     ech = exists[origin]
