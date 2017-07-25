@@ -1382,9 +1382,6 @@ the expression which is 0 if safe breaking is not required after this word.
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
-    def get_origin(self):
-        return self.origin
-
 class HeaderInclusion(SourceChunk):
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
