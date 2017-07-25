@@ -575,6 +575,11 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
     def gen_irq_connect(self, irq, var_name):
         src = irq[0]
+        if isinstance(src, IRQHub):
+            raise RuntimeError("Cannot connect an IRQ to a hub (%u)."
+                " A hub does use each its IRQ by itself." % src.id
+            )
+
         if irq[2] is None:
             self.use_type_name("DEVICE")
             self.use_type_name("qdev_connect_gpio_out")
