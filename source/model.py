@@ -1091,7 +1091,7 @@ class Variable():
         self.static = static
         self.array_size = array_size
 
-    def gen_declaration_chunks(self, indent="", extern = False):
+    def gen_declaration_chunks(self, indent = "", extern = False):
         if isinstance(self.type, Pointer) and not self.type.is_named:
             ch = PointerVariableDeclaration(self, indent, extern)
 
