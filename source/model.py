@@ -1244,9 +1244,9 @@ class Usage():
 
 class SourceChunk(object):
     def __init__(self, name, code, references = None):
-        # visited is used during deep first sort
         self.name = name
         self.code = code
+        # visited is used during depth-first sort
         self.visited = 0
         self.users = set()
         self.references = set()
