@@ -301,7 +301,15 @@ class IRQHub(Node):
             )
 
     def __children__(self):
-        return []
+        referenced_hubs = []
+        for line in self.irqs:
+            dst = line.dst_node
+            if dst is self:
+                continue
+            if isinstance(dst, IRQHub):
+                referenced_hubs.append(dst)
+
+        return sorted(referenced_hubs, key = lambda h : h.id)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
