@@ -574,6 +574,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
             )
 
     def gen_irq_connect(self, irq, var_name):
+        src = irq[0]
         if irq[2] is None:
             self.use_type_name("DEVICE")
             self.use_type_name("qdev_connect_gpio_out")
@@ -582,7 +583,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     qdev_connect_gpio_out(DEVICE({src_name}), {src_index}, {irq_name});
 """.format(
     irq_name = var_name,
-    src_name = self.node_map[irq[0]],
+    src_name = self.node_map[src],
     src_index = irq[1]
             )
         else:
@@ -595,7 +596,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     sysbus_connect_irq(SYS_BUS_DEVICE({src_name}), {src_index}, {irq_name});
 """.format(
     irq_name = var_name,
-    src_name = self.node_map[irq[0]],
+    src_name = self.node_map[src],
     src_index = irq[1]
                 )
             else:
@@ -608,7 +609,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     qdev_connect_gpio_out_named(DEVICE({src_name}), {gpio_name}, {src_index}, {irq_name});
 """.format(
     irq_name = var_name,
-    src_name = self.node_map[irq[0]],
+    src_name = self.node_map[src],
     src_index = irq[1],
     gpio_name = irq[2] if Type.exists(irq[2]) else "\"%s\"" % irq[2]
                 )
