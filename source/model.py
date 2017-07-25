@@ -1243,7 +1243,8 @@ class Usage():
 # Source code instances
 
 class SourceChunk(object):
-    def __init__(self, name, code, references = None):
+    def __init__(self, origin, name, code, references = None):
+        self.origin = origin
         self.name = name
         self.code = code
         # visited is used during depth-first sort
@@ -1381,9 +1382,12 @@ the expression which is 0 if safe breaking is not required after this word.
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
+    def get_origin(self):
+        return self.origin
+
 class HeaderInclusion(SourceChunk):
     def __init__(self, header):
-        super(HeaderInclusion, self).__init__(
+        super(HeaderInclusion, self).__init__(header,
             name = "Header {} inclusion".format(header.path),
             references=[],
             code = """\
@@ -1396,9 +1400,6 @@ class HeaderInclusion(SourceChunk):
             )
         self.header = header
 
-    def get_origin(self):
-        return self.header
-
 class MacroDefinition(SourceChunk):
     def __init__(self, macro, indent = ""):
         if macro.args is None:
@@ -1409,7 +1410,7 @@ class MacroDefinition(SourceChunk):
                 args_txt += a + ", "
             args_txt += macro.args[-1] + ")"
 
-        super(MacroDefinition, self).__init__(
+        super(MacroDefinition, self).__init__(macro,
             name = "Definition of macro %s" % macro.name,
             code = "%s#define %s%s%s" % (
                 indent,
@@ -1419,9 +1420,6 @@ class MacroDefinition(SourceChunk):
             )
 
         self.macro = macro
-
-    def get_origin(self):
-        return self.macro
 
 class PointerTypeDeclaration(SourceChunk):
     def __init__(self, _type, def_name):
@@ -1435,10 +1433,7 @@ class PointerTypeDeclaration(SourceChunk):
         else:
             code = 'typedef@b' + self.type.name + '@b' + def_name
 
-        super(PointerTypeDeclaration, self).__init__(name, code)
-
-    def get_origin(self):
-        return self.type
+        super(PointerTypeDeclaration, self).__init__(_type, name, code)
 
 class PointerVariableDeclaration(SourceChunk):
     def __init__(self, var, indent="", extern = False):
@@ -1462,7 +1457,7 @@ class PointerVariableDeclaration(SourceChunk):
                 var_name = var.name,
                 extern = "extern@b" if extern else ""
             )
-        super(PointerVariableDeclaration, self).__init__(
+        super(PointerVariableDeclaration, self).__init__(var,
             name = "Declaration of pointer {} to type {}".format(
                 var.name,
                 t.name
@@ -1470,13 +1465,9 @@ class PointerVariableDeclaration(SourceChunk):
             code = code
         )
 
-    def get_origin(self):
-        return self.var
-
-
 class VariableDeclaration(SourceChunk):
     def __init__(self, var, indent="", extern = False):
-        super(VariableDeclaration, self).__init__(
+        super(VariableDeclaration, self).__init__(var,
             name = "Variable {} of type {} declaration".format(
                 var.name,
                 var.type.name
@@ -1493,9 +1484,6 @@ class VariableDeclaration(SourceChunk):
             )
         self.variable = var
 
-    def get_origin(self):
-        return self.variable
-
 class VariableDefinition(SourceChunk):
     def __init__(self, var, indent="", append_nl = True):
         init_code = ''
@@ -1508,8 +1496,7 @@ class VariableDefinition(SourceChunk):
                 init_code += "\n" + indent + line
 
         self.variable = var
-
-        super(VariableDefinition, self).__init__(
+        super(VariableDefinition, self).__init__(var,
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
@@ -1524,9 +1511,6 @@ class VariableDefinition(SourceChunk):
         nl = "\n" if append_nl else ""
     )
             )
-
-    def get_origin(self):
-        return self.variable
 
 class VariableUsage(SourceChunk):
     @staticmethod
@@ -1548,7 +1532,7 @@ class VariableUsage(SourceChunk):
         return [ch] + refs
 
     def __init__(self, var, initializer = None, indent = ""):
-        super(VariableUsage, self).__init__(
+        super(VariableUsage, self).__init__(var,
             name = "Usage of variable of type %s" % var.type.name,
             code = indent + var.type.gen_usage_string(initializer)
         )
@@ -1557,14 +1541,10 @@ class VariableUsage(SourceChunk):
         self.indent = indent
         self.initializer = initializer
 
-
-    def get_origin(self):
-        return self.variable
-
 class StructureDeclarationBegin(SourceChunk):
     def __init__(self, struct, indent):
         self.structure = struct
-        super(StructureDeclarationBegin, self).__init__(
+        super(StructureDeclarationBegin, self).__init__(struct,
             name="Beginning of structure {} declaration".format(struct.name),
             code="""\
 {indent}typedef@bstruct@b{struct_name}@b{{
@@ -1574,16 +1554,10 @@ class StructureDeclarationBegin(SourceChunk):
             )
         )
 
-    def get_origin(self):
-        return self.structure
-
 class StructureDeclaration(SourceChunk):
-    def get_origin(self):
-        return self.structure
-
     def __init__(self, struct, fields_indent="    ", indent="",
                  append_nl = True):
-        super(StructureDeclaration, self).__init__(
+        super(StructureDeclaration, self).__init__(struct,
             name = "Ending of structure {} declaration".format(struct.name),
             code = """\
 {indent}}}@b{struct_name};{nl}
@@ -1655,14 +1629,11 @@ def gen_function_def_ref_chunks(f):
 
 class FunctionDeclaration(SourceChunk):
     def __init__(self, function, indent = ""):
-        super(FunctionDeclaration, self).__init__(
+        super(FunctionDeclaration, self).__init__(function,
             name = "Declaration of function %s" % function.name,
             code = "%s;" % gen_function_declaration_string(indent, function)
             )
         self.function = function
-
-    def get_origin(self):
-        return self.function
 
 class FunctionDefinition(SourceChunk):
     def __init__(self, function, indent = "", append_nl = True):
@@ -1671,7 +1642,7 @@ class FunctionDefinition(SourceChunk):
         if append_nl:
             body +="\n"
 
-        super(FunctionDefinition, self).__init__(
+        super(FunctionDefinition, self).__init__(function,
             name = "Definition of function %s" % function.name,
             code = "{dec}{body}\n".format(
                 dec = gen_function_declaration_string(indent, function),
@@ -1679,9 +1650,6 @@ class FunctionDefinition(SourceChunk):
                 )
             )
         self.function = function
-
-    def get_origin(self):
-        return self.function
 
 def deep_first_sort(chunk, new_chunks):
     # visited: 
