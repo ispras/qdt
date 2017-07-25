@@ -1116,7 +1116,7 @@ class Variable():
 
         return [ch] + refs
 
-    def get_definition_chunks(self, indent=""):
+    def get_definition_chunks(self, indent = ""):
         append_nl = True
         ch = VariableDefinition(self, indent, append_nl)
 
