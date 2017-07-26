@@ -755,7 +755,7 @@ class TypeReference(Type):
 
         inc.add_references(refs)
 
-        return [inc] + refs
+        return [inc]
 
     gen_defining_chunk_list = gen_chunks
 
@@ -851,7 +851,6 @@ class Structure(Type):
 
         field_indent = indent + fields_indent
         field_refs = []
-        field_chunks = []
         top_chunk = struct_begin
 
         for f in self.fields:
@@ -860,16 +859,15 @@ class Structure(Type):
 
             field_declaration = decl_chunks[0]
 
-            field_refs.extend(decl_chunks[1:])
+            field_refs.extend(list(field_declaration.references))
             field_declaration.clean_references()
             field_declaration.add_reference(top_chunk)
-            field_chunks.append(field_declaration)
             top_chunk = field_declaration
 
         struct_begin.add_references(field_refs)
         struct_end.add_reference(top_chunk)
 
-        return [struct_end, struct_begin] + field_chunks
+        return [struct_end, struct_begin]
 
     def gen_usage_string(self, init):
         if init is None:
@@ -926,7 +924,7 @@ class Function(Type):
 
         ch.add_references(refs)
 
-        return [ch] + refs
+        return [ch]
 
     gen_chunks = gen_declaration_chunks
 
@@ -938,7 +936,7 @@ class Function(Type):
                gen_function_def_ref_chunks(self, generator)
 
         ch.add_references(refs)
-        return [ch] + refs
+        return [ch]
 
     def use_as_prototype(self,
         name,
@@ -1018,13 +1016,13 @@ class Pointer(Type):
             return self.type.get_definers()
 
     def gen_chunks(self, generator):
-        # strip function definition chunk, its references is only needed
-        if isinstance(self.type, Function):
-            refs = gen_function_decl_ref_chunks(self.type, generator)
-        else:
-            refs = generator.provide_chunks(self.type)
-
         if self.is_named:
+            # strip function definition chunk, its references is only needed
+            if isinstance(self.type, Function):
+                refs = gen_function_decl_ref_chunks(self.type, generator)
+            else:
+                refs = generator.provide_chunks(self.type)
+
             ch = PointerTypeDeclaration(self.type, self.name)
 
             """ 'typedef' does not require refererenced types to be visible.
@@ -1033,9 +1031,9 @@ chunk. The references is to be added to 'users' of the 'typedef'.
         """
             ch.add_references(refs)
 
-            return [ch] + refs
+            return [ch]
         else:
-            return refs
+            return []
 
     def __hash__(self):
         stars = "*"
@@ -1170,7 +1168,7 @@ class Variable():
                 refs = generator.provide_chunks(self.type)
                 ch.add_references(refs)
 
-        return [ch] + refs
+        return [ch]
 
     def get_definition_chunks(self, generator, indent = ""):
         append_nl = True
@@ -1188,7 +1186,7 @@ class Variable():
                 refs.extend(generator.provide_chunks(t))
 
         ch.add_references(refs)
-        return [ch] + refs
+        return [ch]
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
@@ -1285,6 +1283,7 @@ class Usage():
         ret = VariableUsage.gen_chunks(self.variable, generator,
             self.initalizer
         )
+        ret = ret[:1]
         # do not add semicolon after macro usage
         if not (type(self.variable.type) == Macro \
             or isinstance(self.variable.type, TypeReference) and \
@@ -1296,7 +1295,7 @@ class Usage():
                 references = ret)
             ret.insert(0, term_chunk)
 
-        return ret 
+        return ret
 
     gen_defining_chunk_list = gen_chunks
 
@@ -1588,7 +1587,7 @@ class VariableUsage(SourceChunk):
                 refs.extend(generator.provide_chunks(t))
 
         ch.add_references(refs)
-        return [ch] + refs
+        return [ch]
 
     def __init__(self, var, initializer = None, indent = ""):
         super(VariableUsage, self).__init__(var,
