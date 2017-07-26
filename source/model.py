@@ -1160,7 +1160,6 @@ class Variable():
             if type(t) == Macro:
                 u = VariableUsage.gen_chunks(self, generator, indent = indent)
                 ch = u[0]
-                refs = u[1:]
                 """ Note that references are already added to the chunk by
                 VariableUsage.gen_chunks """
             else:
