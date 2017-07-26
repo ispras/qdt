@@ -1294,7 +1294,7 @@ class Usage():
                 name = "Variable %s usage terminator" % self.variable.name,
                 code = ";\n",
                 references = ret)
-            ret.append(term_chunk)
+            ret.insert(0, term_chunk)
 
         return ret 
 
