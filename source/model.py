@@ -1163,11 +1163,12 @@ class Variable():
                 u = VariableUsage.gen_chunks(self, generator, indent = indent)
                 ch = u[0]
                 refs = u[1:]
+                """ Note that references are already added to the chunk by
+                VariableUsage.gen_chunks """
             else:
                 ch = VariableDeclaration(self, indent, extern)
                 refs = generator.provide_chunks(self.type)
-
-            ch.add_references(refs)
+                ch.add_references(refs)
 
         return [ch] + refs
 
