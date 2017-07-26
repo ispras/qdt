@@ -55,7 +55,8 @@ class ChunkGenerator(object):
         self.origin2chunks = {}
         self.for_header = for_header
         """ Tracking of recursive calls of `provide_chunks`. Currently used only
-        to generate "extern" keyword for global variables in header. """
+        to generate "extern" keyword for global variables in header and to
+        distinguish structure fields and normal variables. """
         self.stack = []
 
     def provide_chunks(self, origin, **kw):
@@ -73,11 +74,18 @@ class ChunkGenerator(object):
                 else:
                     chunks = origin.gen_definition_chunks(**kw)
             elif isinstance(origin, Variable):
-                if self.for_header and len(self.stack) == 1:
-                    kw["extern"] = True
-                    chunks = origin.gen_declaration_chunks(**kw)
+                if len(self.stack) == 1:
+                    if self.for_header:
+                        kw["extern"] = True
+                        chunks = origin.gen_declaration_chunks(**kw)
+                    else:
+                        chunks = origin.get_definition_chunks(**kw)
                 else:
-                    chunks = origin.get_definition_chunks(**kw)
+                    if isinstance(self.stack[-2], Structure):
+                        # structure fields
+                        chunks = origin.gen_declaration_chunks(**kw)
+                    else:
+                        chunks = origin.get_definition_chunks(**kw)
             else:
                 chunks = origin.gen_defining_chunk_list(**kw)
 
