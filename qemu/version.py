@@ -244,7 +244,18 @@ def define_only_qemu_2_6_0_types():
                 Type.lookup("int").gen_var("n")
             ]
         ),
-        Function(name = "DeviceRealize"),
+        Pointer(
+            Function(
+                name = "device_realize pointee",
+                args = [
+                    Type.lookup("DeviceState").gen_var("dev", pointer = True),
+                    Pointer(Type.lookup("Error")).gen_var("errp",
+                        pointer = True
+                    )
+                ]
+            ),
+            name = "DeviceRealize",
+        ),
         Function(name = "qdev_create"),
         Function(name = "qdev_init_nofail"),
         Function(name = "qdev_get_child_bus"),
