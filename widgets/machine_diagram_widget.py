@@ -1304,6 +1304,9 @@ IRQ line creation
     def on_key_release(self, event):
         self.key_state[event.keycode] = False
 
+    def __alt_is_held(self):
+        return self.__key_is_held(64) or self.__key_is_held(108)
+
     def __shift_is_held(self):
         return self.__key_is_held(50) or self.__key_is_held(62)
 
