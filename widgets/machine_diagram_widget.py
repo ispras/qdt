@@ -1304,7 +1304,7 @@ IRQ line creation
     def on_key_release(self, event):
         self.key_state[event.keycode] = False
 
-    def shift_pressed(self):
+    def __shift_is_held(self):
         return self.__key_is_held(50) or self.__key_is_held(62)
 
     def on_b1_press(self, event):
@@ -1391,7 +1391,7 @@ IRQ line creation
                 if not self.select_by_frame:
                     break
 
-        shift = self.shift_pressed()
+        shift = self.__shift_is_held()
 
         if not touched_ids:
             if not shift:
@@ -1433,7 +1433,7 @@ IRQ line creation
 
         # Shift + right button press => delete IRQ line circle
         self.circle_was_deleted = False
-        if self.shift_pressed():
+        if self.__shift_is_held():
             self.update_highlighted_irq_line()
 
             if self.highlighted_irq_line and self.shown_irq_circle:
@@ -1510,7 +1510,7 @@ IRQ line creation
                     if not tid in self.id2node:
                         continue
 
-                    shift = self.shift_pressed()
+                    shift = self.__shift_is_held()
                     if shift:
                         if not tid in self.selected:
                             self.selected.append(tid)
@@ -1682,7 +1682,7 @@ IRQ line creation
         # moving of non-selected item while other are selected
         if self.selected:
             if not id in self.selected:
-                if self.shift_pressed():
+                if self.__shift_is_held():
                     self.selected.append(id)
                 else:
                     self.selected = []
