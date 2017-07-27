@@ -1292,6 +1292,50 @@ IRQ line creation
             bus = self.get_bus_at_popup("PCIExpressBusNode")
         )
 
+    def __create_mesh(self, wx1, wy1, wx2, wy2):
+        c = self.canvas
+        m = self.mesh_step
+
+        x1, y1 = (
+            int(c.canvasx(wx1, gridspacing = m)),
+            int(c.canvasy(wy1, gridspacing = m))
+        )
+        x2, y2 = (
+            int(c.canvasx(wx2, gridspacing = m)),
+            int(c.canvasy(wy2, gridspacing = m))
+        )
+
+        # small step requires special handling
+        if m >= 15:
+            dash = (5, m - 5)
+            dashoffset = 2
+        elif m >= 6:
+            dash = (3, m - 3)
+            dashoffset = 1
+        else:
+            if m == 1:
+                m = 5
+            elif m == 2:
+                m = 4
+            dash = (1, m - 1)
+            dashoffset = 0
+
+        kw = {
+            "dash" : dash,
+            "tags" : "mesh",
+            "fill" : "blue",
+            "dashoffset" : dashoffset
+        }
+
+        cl = c.create_line
+        for x in xrange(x1, x2 + 1, m):
+            cl(x, y1, x, y2, **kw)
+
+        for y in xrange(y1, y2 + 1, m):
+            cl(x1, y, x2, y, **kw)
+
+        c.lower("mesh")
+
     def __key_is_held(self, code):
         try:
             return self.key_state[code]
