@@ -1305,17 +1305,7 @@ IRQ line creation
         self.key_state[event.keycode] = False
 
     def shift_pressed(self):
-        try:
-            if self.key_state[50]:
-                return True
-        except:
-            pass
-        try:
-            if self.key_state[62]:
-                return True
-        except:
-            pass
-        return False
+        return self.__key_is_held(50) or self.__key_is_held(62)
 
     def on_b1_press(self, event):
         event.widget.focus_set()
