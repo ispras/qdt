@@ -1292,6 +1292,12 @@ IRQ line creation
             bus = self.get_bus_at_popup("PCIExpressBusNode")
         )
 
+    def __key_is_held(self, code):
+        try:
+            return self.key_state[code]
+        except KeyError:
+            return False
+
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
 
