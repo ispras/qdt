@@ -1604,7 +1604,7 @@ IRQ line creation
                     tnode = self.id2node[tid]
 
                     if not tnode in self.node2dev:
-                        break
+                        continue
 
                     # touched device, etc..
                     tdev = self.node2dev[tnode]
@@ -1616,10 +1616,17 @@ IRQ line creation
                             popup = self.popup_single_irq_hub
                         elif isinstance(tdev, BusNode):
                             popup = self.popup_single_bus
+                        else:
+                            continue
                         tag = tid
+                        break
                     else:
                         popup = self.popup_multiple
                         tag = list(self.selected)
+                        break
+                else:
+                    popup = self.popup_empty_no_selected
+                    tag = None
             else:
                 if self.selected:
                     self.selected = []
