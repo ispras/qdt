@@ -76,7 +76,6 @@ class CanvasDnD(GUIFrame):
                 continue
             if "fixed_y" in c.gettags(self.dnd_dragged) and idx % 2 == 1:
                 continue
-            #print idx, xy[idx % 2], anchors[idx % 2]
             points[idx] = dxy[idx % 2] + points[idx]
     
         #print points
