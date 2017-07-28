@@ -70,6 +70,8 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, *args, **kw):
         QOMDescriptionSettingsWidget.__init__(self, *args, **kw)
 
+        self.mw = None
+
         self.var_tabs = v = BooleanVar()
         self.buttons_fr.columnconfigure(2, weight = 0)
         chb = VarCheckbutton(self.buttons_fr,
@@ -79,7 +81,6 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         chb.grid(row = 0, column = 2, sticky = "NEWS")
         v.trace_variable("w", self.__on_tabs__)
 
-        self.mw = None
         self.var_tabs.set(True)
 
     def __on_tabs__(self, *args):
