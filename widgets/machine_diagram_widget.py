@@ -764,6 +764,8 @@ IRQ line creation
         self.canvas.delete(self.select_frame)
         self.select_frame = None
 
+        self.__repaint_mesh()
+
     def on_diagram_centering(self, *args):
         ids = self.canvas.find_withtag("DnD")
         if len(ids) == 0:
@@ -790,6 +792,8 @@ IRQ line creation
         self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
+
+        self.__repaint_mesh()
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
