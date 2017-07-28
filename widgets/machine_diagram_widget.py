@@ -376,6 +376,8 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.last_canvas_mouse = (0, 0)
 
         self.display_mesh = False
+        self.canvas.bind("<Configure>", self.__on_resize, "+")
+
         if self.mesh_step > MAX_MESH_STEP:
             self.mesh_step = MAX_MESH_STEP
         elif self.mesh_step < MIN_MESH_STEP:
@@ -1357,6 +1359,9 @@ IRQ line creation
                 -m, -m,
                 c.winfo_width() + m, c.winfo_height() + m
             )
+
+    def __on_resize(self, *args):
+        self.__repaint_mesh()
 
     def __key_is_held(self, code):
         try:
