@@ -2836,6 +2836,7 @@ IRQ line creation
             ]
 
         layout[-1] = {
+            "mesh step": self.mesh_step,
             "physical layout": self.var_physical_layout.get(),
             "IRQ lines points": irqs
         }
@@ -2847,6 +2848,18 @@ IRQ line creation
         try:
             for id, desc in l.items():
                 if id == -1:
+                    try:
+                        step = desc["mesh step"]
+                    except KeyError:
+                        pass
+                    else:
+                        if step < MIN_MESH_STEP:
+                            step = MIN_MESH_STEP
+                        elif step > MAX_MESH_STEP:
+                            step = MAX_MESH_STEP
+
+                        self.mesh_step = step
+
                     try:
                         self.var_physical_layout.set(desc["physical layout"])
                     except KeyError:
