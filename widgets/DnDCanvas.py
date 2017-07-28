@@ -61,9 +61,9 @@ class CanvasDnD(GUIFrame):
             return
 
         self.master.config(cursor = "fleur")
-        cnv = event.widget
+        c = event.widget
 
-        xy = cnv.canvasx(event.x), cnv.canvasy(event.y)
+        xy = c.canvasx(event.x), c.canvasy(event.y)
         points = event.widget.coords(self.dnd_dragged)
         anchors = copy(points[:2])
         offset = self.off
@@ -75,9 +75,9 @@ class CanvasDnD(GUIFrame):
         #print str(points) + " - " + str(self.off)
 
         for idx in range(len(points)):
-            if "fixed_x" in cnv.gettags(self.dnd_dragged) and idx % 2 == 0:
+            if "fixed_x" in c.gettags(self.dnd_dragged) and idx % 2 == 0:
                 continue
-            if "fixed_y" in cnv.gettags(self.dnd_dragged) and idx % 2 == 1:
+            if "fixed_y" in c.gettags(self.dnd_dragged) and idx % 2 == 1:
                 continue
             #print idx, xy[idx % 2], anchors[idx % 2]
             points[idx] = dxy[idx % 2] + points[idx]
