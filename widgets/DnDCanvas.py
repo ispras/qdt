@@ -64,7 +64,7 @@ class CanvasDnD(GUIFrame):
         c = event.widget
 
         xy = c.canvasx(event.x), c.canvasy(event.y)
-        points = event.widget.coords(self.dnd_dragged)
+        points = c.coords(self.dnd_dragged)
         anchors = copy(points[:2])
         offset = self.off
         dxy = (
@@ -84,7 +84,7 @@ class CanvasDnD(GUIFrame):
     
         #print points
 
-        event.widget.coords(*([self.dnd_dragged] + points))
+        c.coords(*([self.dnd_dragged] + points))
 
         self.event_generate('<<DnDMoved>>')
 
