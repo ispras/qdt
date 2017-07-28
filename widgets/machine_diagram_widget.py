@@ -2867,6 +2867,7 @@ IRQ line creation
             ]
 
         layout[-1] = {
+            "show mesh": self.var_show_mesh.get(),
             "mesh step": self.mesh_step,
             "physical layout": self.var_physical_layout.get(),
             "IRQ lines points": irqs
@@ -2879,6 +2880,11 @@ IRQ line creation
         try:
             for id, desc in l.items():
                 if id == -1:
+                    try:
+                        self.var_show_mesh.set(desc["show mesh"])
+                    except KeyError:
+                        pass
+
                     try:
                         step = desc["mesh step"]
                     except KeyError:
