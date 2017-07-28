@@ -66,6 +66,11 @@ class CanvasDnD(GUIFrame):
         xy = cnv.canvasx(event.x), cnv.canvasy(event.y)
         points = event.widget.coords(self.dnd_dragged)
         anchors = copy(points[:2])
+        offset = self.off
+        dxy = (
+            xy[0] - (anchors[0] + offset[0]),
+            xy[1] - (anchors[1] + offset[1]),
+        )
 
         #print str(points) + " - " + str(self.off)
 
@@ -75,10 +80,7 @@ class CanvasDnD(GUIFrame):
             if "fixed_y" in cnv.gettags(self.dnd_dragged) and idx % 2 == 1:
                 continue
             #print idx, xy[idx % 2], anchors[idx % 2]
-            mouse = xy[idx % 2]
-            zone = anchors[idx % 2]
-            offset = self.off[idx % 2]
-            points[idx] = mouse - offset - zone + points[idx]
+            points[idx] = dxy[idx % 2] + points[idx]
     
         #print points
 
