@@ -375,6 +375,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.canvas.bind("<Motion>", self.motion_all)
         self.last_canvas_mouse = (0, 0)
 
+        self.display_mesh = False
         if self.mesh_step > MAX_MESH_STEP:
             self.mesh_step = MAX_MESH_STEP
         elif self.mesh_step < MIN_MESH_STEP:
@@ -1355,8 +1356,28 @@ IRQ line creation
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
 
+        alt = self.__alt_is_held()
+
+        self.display_mesh = alt
+
+        if self.display_mesh:
+            c = self.canvas
+            m = self.mesh_step
+
+            self.__create_mesh(
+                -m, -m,
+                c.winfo_width() + m, c.winfo_height() + m
+            )
+
     def on_key_release(self, event):
         self.key_state[event.keycode] = False
+
+        alt = self.__alt_is_held()
+
+        self.display_mesh = alt
+
+        if not self.display_mesh:
+            self.canvas.delete("mesh")
 
     def __alt_is_held(self):
         return self.__key_is_held(64) or self.__key_is_held(108)
@@ -1707,6 +1728,16 @@ IRQ line creation
 
         if not self.dragging_all:
             return
+
+        # Repaint the mesh
+        if self.display_mesh:
+            c = self.canvas
+            m = self.mesh_step
+            c.delete("mesh")
+            self.__create_mesh(
+                -m, -m,
+                c.winfo_width() + m, c.winfo_height() + m
+            )
 
         event.widget.scan_dragto(
             int(event.widget.canvasx(event.x)),
