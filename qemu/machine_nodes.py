@@ -42,9 +42,10 @@ class BusNode(Node):
         c_type = "BusState",
         cast = "BUS",
         child_name = "bus",
-        force_index = True
+        force_index = True,
+        **kw
     ):
-        Node.__init__(self)
+        Node.__init__(self, **kw)
 
         self.c_type = c_type
         self.cast = cast
@@ -92,9 +93,9 @@ class BusNode(Node):
         return getattr(self, arg_name)
 
 class SystemBusNode(BusNode):
-    def __init__(self):
+    def __init__(self, **kw):
         # Assume, the system bus has no parent
-        BusNode.__init__(self, parent = None)
+        BusNode.__init__(self, parent = None, **kw)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -108,12 +109,13 @@ class SystemBusNode(BusNode):
             )
 
 class PCIExpressBusNode(BusNode):
-    def __init__(self, host_bridge):
+    def __init__(self, host_bridge, **kw):
         BusNode.__init__(self,
             parent = host_bridge,
             c_type = "PCIBus",
             cast = "PCI_BUS",
-            child_name = "pci"
+            child_name = "pci",
+            **kw
         )
 
     def __gen_code__(self, gen):
@@ -127,10 +129,11 @@ class PCIExpressBusNode(BusNode):
         return getattr(self, arg_name)
 
 class ISABusNode(BusNode):
-    def __init__(self, bus_controller):
+    def __init__(self, bus_controller, **kw):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "isa"
+            child_name = "isa",
+            **kw
         )
 
     def __get_init_arg_val__(self, arg_name):
@@ -144,10 +147,11 @@ class ISABusNode(BusNode):
         gen.gen_end()
 
 class IDEBusNode(BusNode):
-    def __init__(self, bus_controller):
+    def __init__(self, bus_controller, **kw):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "ide"
+            child_name = "ide",
+            **kw
         )
 
     def __gen_code__(self, gen):
@@ -161,13 +165,14 @@ class IDEBusNode(BusNode):
         return getattr(self, arg_name)
 
 class I2CBusNode(BusNode):
-    def __init__(self, bus_controller):
+    def __init__(self, bus_controller, **kw):
         BusNode.__init__(self,
             parent = bus_controller,
             child_name = "i2c",
             cast = None,
             c_type = "I2CBus",
-            force_index = False
+            force_index = False,
+            **kw
         )
 
     def __gen_code__(self, gen):
@@ -187,9 +192,10 @@ class IRQLine(Node):
         src_irq_idx = 0,
         dst_irq_idx = 0,
         src_irq_name = None,
-        dst_irq_name = None
+        dst_irq_name = None,
+        **kw
     ):
-        Node.__init__(self)
+        Node.__init__(self, **kw)
 
         # src and dst are tuples (device, index)
         self.src = [src_dev, src_irq_idx, src_irq_name]
@@ -272,8 +278,8 @@ class IRQLine(Node):
         gen.gen_end()
 
 class IRQHub(Node):
-    def __init__(self, srcs, dsts):
-        Node.__init__(self)
+    def __init__(self, srcs, dsts, **kw):
+        Node.__init__(self, **kw)
 
         self.irqs = []
 
@@ -328,8 +334,8 @@ class PropList(dict):
         return self.values().__iter__()
 
 class DeviceNode(Node):
-    def __init__(self, qom_type, parent = None):
-        Node.__init__(self)
+    def __init__(self, qom_type, parent = None, **kw):
+        Node.__init__(self, **kw)
 
         self.qom_type = qom_type
         self.parent_bus = parent
@@ -402,9 +408,14 @@ class SystemBusDeviceNode(DeviceNode):
     def __init__(self, qom_type,
         system_bus = None,
         mmio = None,
-        pmio = None
+        pmio = None,
+        **kw
     ):
-        DeviceNode.__init__(self, qom_type = qom_type, parent = system_bus)
+        DeviceNode.__init__(self,
+            qom_type = qom_type,
+            parent = system_bus,
+            **kw
+        )
 
         self.mmio_mappings = {}
         self.pmio_mappings = {}
@@ -491,11 +502,13 @@ class SystemBusDeviceNode(DeviceNode):
 
 class PCIExpressDeviceNode(DeviceNode):
     def __init__(self, qom_type, pci_express_bus, slot, function,
-        multifunction = False
+        multifunction = False,
+        **kw
     ):
         DeviceNode.__init__(self,
             qom_type = qom_type,
-            parent = pci_express_bus
+            parent = pci_express_bus,
+            **kw
         )
 
         self.slot = slot
@@ -530,8 +543,8 @@ class MemoryNodeHasNoSuchParent(Exception):
     pass
 
 class MemoryNode(Node):
-    def __init__(self, name, size):
-        Node.__init__(self)
+    def __init__(self, name, size, **kw):
+        Node.__init__(self, **kw)
 
         self.name = name
         self.size = size
@@ -592,8 +605,8 @@ class MemoryLeafNode(MemoryNode):
         raise MemoryNodeCannotHasChildren()
 
 class MemoryAliasNode(MemoryLeafNode):
-    def __init__(self, name, size, alias_to, offset = 0):
-        MemoryLeafNode.__init__(self, name, size)
+    def __init__(self, name, size, alias_to, offset = 0, **kw):
+        MemoryLeafNode.__init__(self, name, size, **kw)
 
         self.alias_to = alias_to
         self.alias_offset = offset
