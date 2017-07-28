@@ -375,6 +375,11 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.canvas.bind("<Motion>", self.motion_all)
         self.last_canvas_mouse = (0, 0)
 
+        if self.mesh_step > MAX_MESH_STEP:
+            self.mesh_step = MAX_MESH_STEP
+        elif self.mesh_step < MIN_MESH_STEP:
+            self.mesh_step = MIN_MESH_STEP
+
         self.begin_drag_all = False
         self.dragging_all = False
         self.all_were_dragged = False
