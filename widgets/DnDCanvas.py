@@ -14,7 +14,8 @@ from six.moves.tkinter import \
 
 class CanvasDnD(GUIFrame):
     def __init__(self, master,
-            id_priority_sort_function = lambda ids : ids
+            id_priority_sort_function = lambda ids : ids,
+            mesh_step = 20
         ):
 
         GUIFrame.__init__ (self, master)
@@ -28,6 +29,8 @@ class CanvasDnD(GUIFrame):
 
         self.canvas.pack(expand = 1, fill = BOTH)
 
+        self.align = False
+        self.mesh_step = mesh_step
         self.dragging = False
         self.off = None
         self.canvas.bind("<ButtonPress-1>", self.down, "+")
@@ -67,9 +70,29 @@ class CanvasDnD(GUIFrame):
         points = c.coords(self.dnd_dragged)
 
         offset = self.off
+
+        if self.align:
+            new_pos = (
+                xy[0] - offset[0],
+                xy[1] - offset[1],
+            )
+
+            m = self.mesh_step
+            aligned_pos = (
+                int(new_pos[0] / m) * m,
+                int(new_pos[1] / m) * m
+            )
+
+            align_gain = (
+                aligned_pos[0] - new_pos[0],
+                aligned_pos[1] - new_pos[1]
+            )
+        else:
+            align_gain = (0, 0)
+
         dxy = (
-            xy[0] - (points[0] + offset[0]),
-            xy[1] - (points[1] + offset[1]),
+            xy[0] - (points[0] + offset[0]) + align_gain[0],
+            xy[1] - (points[1] + offset[1]) + align_gain[1]
         )
 
         #print str(points) + " - " + str(self.off)
