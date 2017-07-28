@@ -39,6 +39,8 @@ from .device_tree_widget import \
     DeviceTreeWidget
 
 from .machine_diagram_widget import \
+    MIN_MESH_STEP, \
+    MAX_MESH_STEP, \
     MachineDiagramWidget
 
 from .memory_tree_widget import \

@@ -248,6 +248,11 @@ class IRQLine(object):
 
 DRAG_GAP = 5
 
+# limitation of the mesh drawing algorithm
+MIN_MESH_STEP = 1
+# limitation of Canvas.create_line.dash
+MAX_MESH_STEP = 260
+
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
