@@ -62,6 +62,21 @@ def define_only_qemu_2_6_0_types():
     # TODO: the tweak must be handled using version API.
     osdep_fake_type = Type("FAKE_TYPE_IN_QEMU_OSDEP")
 
+    if not get_vp("tcg_enabled is macro"):
+        Header.lookup("qemu-common.h").add_types([
+            Function("tcg_enabled",
+                     ret_type = Type.lookup("bool")
+            )
+        ])
+
+    Header.lookup("tcg.h").add_types([
+        Type("TCGv_i32"),
+        Type("TCGv_i64"),
+        Type("TCGv_ptr"),
+        Type("TCGv_env"),
+        Type("TCGv")
+    ])
+
     Header.lookup("qemu/osdep.h").add_types([
         osdep_fake_type
     ])
@@ -110,8 +125,25 @@ def define_only_qemu_2_6_0_types():
         Type("CPUState", False),
         Type("CPUClass", False),
         Type("vaddr", False),
-        Type("MMUAccessType", False)
+        Type("MMUAccessType", False),
+        Function("qemu_init_vcpu",
+                 args = [
+                     Type.lookup("CPUState").gen_var("cpu", pointer = True)
+                 ]
+        )
     ]).add_reference(osdep_fake_type)
+
+    Header.lookup("qapi/error.h").add_types([
+        Type("Error")
+    ]).add_reference(osdep_fake_type)
+
+    Header.lookup("disas/bfd.h").add_types([
+        Type("disassemble_info", False)
+    ])
+
+    Header.lookup("qemu/fprintf-fn.h").add_types([
+        Type("fprintf_function", False)
+    ])
 
     Header.lookup("exec/exec-all.h").add_types([
         Type("TranslationBlock", False),
@@ -124,7 +156,13 @@ def define_only_qemu_2_6_0_types():
                      Type.lookup('uintptr_t').gen_var('retaddr')
                  ],
                  used_types = []
-                 )
+        ),
+        Function("cpu_exec_init",
+                 args = [
+                     Type.lookup("CPUState").gen_var("cs", pointer = True),
+                     Pointer(Pointer(Type.lookup("Error"))).gen_var("errp")
+                 ]
+        )
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/memory.h").add_types([
@@ -226,10 +264,6 @@ def define_only_qemu_2_6_0_types():
             ]
         ),
         Function("qemu_irq_split")
-    ]).add_reference(osdep_fake_type)
-
-    Header.lookup("qapi/error.h").add_types([
-        Type("Error")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/qdev-core.h").add_types([
@@ -671,6 +705,13 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("header with IOEventHandler",
             new_value = "chardev/char-fe.h",
             old_value = "sysemu/char.h"
+        )
+    ],
+    u'8e2b72990e9dc80ab3ff19717f45fec839bbcbc2':
+    [
+        QEMUVersionParameterDescription("tcg_enabled is macro",
+            new_value = True,
+            old_value = False
         )
     ]
 }
