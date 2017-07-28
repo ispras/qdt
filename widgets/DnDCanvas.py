@@ -4,6 +4,9 @@
 from .gui_frame import \
     GUIFrame
 
+from six.moves import \
+    range as xrange
+
 from six.moves.tkinter import \
     Canvas, \
     RIDGE, \
@@ -74,11 +77,11 @@ class CanvasDnD(GUIFrame):
         tags = c.gettags(self.dnd_dragged)
 
         if "fixed_x" not in tags:
-            for idx in range(0, len(points), 2):
+            for idx in xrange(0, len(points), 2):
                 points[idx] = dxy[0] + points[idx]
 
         if "fixed_y" not in tags:
-            for idx in range(1, len(points), 2):
+            for idx in xrange(1, len(points), 2):
                 points[idx] = dxy[1] + points[idx]
 
         #print points
