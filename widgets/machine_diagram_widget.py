@@ -284,6 +284,11 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         else:
             self.bindings = [
                 HotKeyBinding(
+                    self.__switch_show_mesh,
+                    key_code = 58, # M
+                    description = _("Show/hide mesh.")
+                ),
+                HotKeyBinding(
                     self.on_export_diagram,
                     key_code = 26, # E
                     description = _("Export of machine diagram.")
@@ -301,6 +306,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             ]
             hotkeys.add_bindings(self.bindings)
             hotkeys.add_key_symbols({
+                58: "M",
                 26: "E",
                 41: "F",
                 54: "C"
@@ -534,6 +540,10 @@ IRQ line creation
             "label": _("Show mesh"),
             "variable": self.var_show_mesh
         }
+        if hotkeys is not None:
+            show_mesh_args["accelerator"] = hotkeys.get_keycode_string(
+                self.__switch_show_mesh
+            )
         p.add_checkbutton(**show_mesh_args)
 
         self.popup_empty_no_selected = p
@@ -1312,6 +1322,9 @@ IRQ line creation
         self.add_device_at_popup("PCIExpressDeviceNode",
             bus = self.get_bus_at_popup("PCIExpressBusNode")
         )
+
+    def __switch_show_mesh(self):
+        self.var_show_mesh.set(not self.var_show_mesh.get())
 
     def __check_show_mesh(self, alt):
         show = (alt or self.var_show_mesh.get())
