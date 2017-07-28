@@ -1374,6 +1374,7 @@ IRQ line creation
 
         alt = self.__alt_is_held()
 
+        self.align = alt
         self.display_mesh = alt
 
         if self.display_mesh:
@@ -1390,6 +1391,7 @@ IRQ line creation
 
         alt = self.__alt_is_held()
 
+        self.align = alt
         self.display_mesh = alt
 
         if not self.display_mesh:
