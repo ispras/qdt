@@ -1305,6 +1305,23 @@ IRQ line creation
             bus = self.get_bus_at_popup("PCIExpressBusNode")
         )
 
+    def __check_show_mesh(self, alt):
+        show = alt
+
+        if self.display_mesh != show:
+            self.display_mesh = show
+
+            c = self.canvas
+            if show:
+                m = self.mesh_step
+
+                self.__create_mesh(
+                    -m, -m,
+                    c.winfo_width() + m, c.winfo_height() + m
+                )
+            else:
+                c.delete("mesh")
+
     def __create_mesh(self, wx1, wy1, wx2, wy2):
         c = self.canvas
         m = self.mesh_step
@@ -1375,16 +1392,8 @@ IRQ line creation
         alt = self.__alt_is_held()
 
         self.align = alt
-        self.display_mesh = alt
 
-        if self.display_mesh:
-            c = self.canvas
-            m = self.mesh_step
-
-            self.__create_mesh(
-                -m, -m,
-                c.winfo_width() + m, c.winfo_height() + m
-            )
+        self.__check_show_mesh(alt)
 
     def on_key_release(self, event):
         self.key_state[event.keycode] = False
@@ -1392,10 +1401,8 @@ IRQ line creation
         alt = self.__alt_is_held()
 
         self.align = alt
-        self.display_mesh = alt
 
-        if not self.display_mesh:
-            self.canvas.delete("mesh")
+        self.__check_show_mesh(alt)
 
     def __alt_is_held(self):
         return self.__key_is_held(64) or self.__key_is_held(108)
