@@ -494,15 +494,15 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
             return name
 
     def provide_node_names(self):
-        for base, nodes in [
-            ("dev", self.devices),
-            ("bus", self.buses),
-            ("irq", self.irqs),
-            ("irq", self.irq_hubs),
-            ("mem", self.mems)
+        for nodes in [
+            self.devices,
+            self.buses,
+            self.irqs,
+            self.irq_hubs,
+            self.mems
         ]:
             for n in nodes:
-                self.provide_name_for_node(n, base)
+                self.provide_name_for_node(n, n.var_base)
 
     def gen_prop_val(self, prop):
         if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
