@@ -12,12 +12,6 @@ from .model import \
     Initializer, \
     Variable, \
     Usage, \
-    Operand, \
-        VariableOperand, \
-    Operator, \
-        BinaryOperator, \
-            AssignmentOperator, \
-    CodeNode, \
     SourceChunk, \
         HeaderInclusion, \
         MacroDefinition, \
@@ -36,3 +30,7 @@ from .model import \
 
 from .base_types import \
     add_base_types
+
+from .code import *
+
+from .tools import *

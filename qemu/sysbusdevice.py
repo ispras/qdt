@@ -148,6 +148,8 @@ class SysBusDeviceType(QOMDevice):
                     type_cast_macro = self.type_cast_macro.name
                     )
 
+            write_func.extra_references = {read_func}
+
             self.source.add_types([read_func, write_func])
 
             ops_init = Initializer(
@@ -219,6 +221,8 @@ class SysBusDeviceType(QOMDevice):
                     struct_name = self.state_struct.name, 
                     type_cast_macro = self.type_cast_macro.name
                     )
+
+            write_func.extra_references = {read_func}
 
             self.source.add_types([read_func, write_func])
 
@@ -372,7 +376,9 @@ Type.lookup("void").gen_var("opaque", True),
             type_init_var.gen_usage(type_init_usage_init)
             )
 
-
+        # order life cycle functions
+        self.device_realize.extra_references = {self.instance_init}
+        self.device_reset.extra_references = {self.device_realize}
 
     def generate_header(self):
         #header = HeaderFile(self.qtn.get_header_name())

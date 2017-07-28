@@ -232,6 +232,8 @@ corresponding vendor is given" % attr
                     type_cast_macro = self.type_cast_macro.name
                 )
 
+            write_func.extra_references = {read_func}
+
             self.source.add_types([read_func, write_func])
 
             ops_init = Initializer(
@@ -433,6 +435,9 @@ Type.lookup("void").gen_var("opaque", True),
         self.source.add_usage(
             type_init_var.gen_usage(type_init_usage_init)
             )
+
+        # order life cycle functions
+        self.device_exit.extra_references = {self.device_realize}
 
     def generate_header(self):
         # TODO: current value of inherit_references is dictated by Qemu coding

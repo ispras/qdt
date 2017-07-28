@@ -1,4 +1,5 @@
 from source import \
+    line_origins, \
     Source, \
     Header, \
     Structure, \
@@ -707,7 +708,7 @@ class QOMDevice(QOMType):
         return cb
 
     def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
-        return [
+        ret = [
             self.char_gen_cb(proto_name, handler_name, index, source,
                 state_struct, type_cast_macro
             ) for proto_name, handler_name in [
@@ -716,6 +717,11 @@ class QOMDevice(QOMType):
                 ("IOEventHandler", self.char_event_name(index))
             ]
         ]
+
+        # Define handler relative order: can read, read, event
+        line_origins(ret)
+
+        return ret
 
     # TIMERS
     def timer_name(self, index):
@@ -918,16 +924,21 @@ class QOMDevice(QOMType):
         )
 
     def gen_net_client_info(self, index):
+        helpers = []
         code = {}
         for helper_name, cbtn in [
+            ("link_status_changed", "LinkStatusChanged"),
             ("can_receive", "NetCanReceive"),
             ("receive", "NetReceive"),
-            ("link_status_changed", "LinkStatusChanged"),
             ("cleanup", "NetCleanup")
         ]:
             helper = self.gen_nic_helper(helper_name, cbtn, index)
             self.source.add_type(helper)
+            helpers.append(helper)
             code[helper_name] = helper
+
+        # Define relative order of helpers: link, can recv, recv, cleanup
+        line_origins(helpers)
 
         code["type"] = Type.lookup("NET_CLIENT_DRIVER_NIC")
         types = set([Type.lookup("NICState")] + list(code.values()))
