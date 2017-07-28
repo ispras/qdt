@@ -71,13 +71,16 @@ class CanvasDnD(GUIFrame):
 
         #print str(points) + " - " + str(self.off)
 
-        for idx in range(len(points)):
-            if "fixed_x" in c.gettags(self.dnd_dragged) and idx % 2 == 0:
-                continue
-            if "fixed_y" in c.gettags(self.dnd_dragged) and idx % 2 == 1:
-                continue
-            points[idx] = dxy[idx % 2] + points[idx]
-    
+        tags = c.gettags(self.dnd_dragged)
+
+        if "fixed_x" not in tags:
+            for idx in range(0, len(points), 2):
+                points[idx] = dxy[0] + points[idx]
+
+        if "fixed_y" not in tags:
+            for idx in range(1, len(points), 2):
+                points[idx] = dxy[1] + points[idx]
+
         #print points
 
         c.coords(*([self.dnd_dragged] + points))
