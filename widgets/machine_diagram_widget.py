@@ -1347,6 +1347,17 @@ IRQ line creation
 
         c.lower("mesh")
 
+    def __repaint_mesh(self):
+        # Repaint the mesh
+        if self.display_mesh:
+            c = self.canvas
+            m = self.mesh_step
+            c.delete("mesh")
+            self.__create_mesh(
+                -m, -m,
+                c.winfo_width() + m, c.winfo_height() + m
+            )
+
     def __key_is_held(self, code):
         try:
             return self.key_state[code]
@@ -1729,15 +1740,7 @@ IRQ line creation
         if not self.dragging_all:
             return
 
-        # Repaint the mesh
-        if self.display_mesh:
-            c = self.canvas
-            m = self.mesh_step
-            c.delete("mesh")
-            self.__create_mesh(
-                -m, -m,
-                c.winfo_width() + m, c.winfo_height() + m
-            )
+        self.__repaint_mesh()
 
         event.widget.scan_dragto(
             int(event.widget.canvasx(event.x)),
