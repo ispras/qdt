@@ -116,22 +116,20 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             self.var_tabs.set(layout.use_tabs)
             self.mw.mdw.set_layout(layout.mdwl)
             self.mw.mtw.set_layout(layout.mtwl)
-            return
-
-        # Previous version compatibility
-        try:
-            extra = layout[-1]
-        except KeyError:
-            use_tabs = True
-        else:
+        else: # Previous version compatibility
             try:
-                use_tabs = extra.pop("use tabs")
+                extra = layout[-1]
             except KeyError:
                 use_tabs = True
+            else:
+                try:
+                    use_tabs = extra.pop("use tabs")
+                except KeyError:
+                    use_tabs = True
 
-        self.var_tabs.set(use_tabs)
-        self.mw.mdw.set_layout(layout)
-        self.mw.mtw.set_layout(None)
+            self.var_tabs.set(use_tabs)
+            self.mw.mdw.set_layout(layout)
+            self.mw.mtw.set_layout(None)
 
     def __apply_internal__(self):
         # There is nothing to apply additionally
