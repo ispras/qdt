@@ -528,6 +528,14 @@ IRQ line creation
                 hotkeys.get_keycode_string(self.on_diagram_centering)
         p.add_command(**centering_args)
 
+        self.var_show_mesh = BooleanVar()
+        self.var_show_mesh.trace_variable("w", self.__on_show_mesh)
+        show_mesh_args = {
+            "label": _("Show mesh"),
+            "variable": self.var_show_mesh
+        }
+        p.add_checkbutton(**show_mesh_args)
+
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -1306,7 +1314,7 @@ IRQ line creation
         )
 
     def __check_show_mesh(self, alt):
-        show = alt
+        show = (alt or self.var_show_mesh.get())
 
         if self.display_mesh != show:
             self.display_mesh = show
@@ -1321,6 +1329,9 @@ IRQ line creation
                 )
             else:
                 c.delete("mesh")
+
+    def __on_show_mesh(self, *args):
+        self.__check_show_mesh(self.__alt_is_held())
 
     def __create_mesh(self, wx1, wy1, wx2, wy2):
         c = self.canvas
