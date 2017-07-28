@@ -61,7 +61,7 @@ class CanvasDnD(GUIFrame):
             return
 
         self.master.config(cursor = "fleur")
-        c = event.widget
+        c = self.canvas
 
         xy = c.canvasx(event.x), c.canvasy(event.y)
         points = c.coords(self.dnd_dragged)
