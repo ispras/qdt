@@ -1,9 +1,6 @@
 #!/usr/bin/python2
 # based on http://code.activestate.com/lists/python-list/281562/
 
-from copy import \
-    copy
-
 from .gui_frame import \
     GUIFrame
 
@@ -65,11 +62,11 @@ class CanvasDnD(GUIFrame):
 
         xy = c.canvasx(event.x), c.canvasy(event.y)
         points = c.coords(self.dnd_dragged)
-        anchors = copy(points[:2])
+
         offset = self.off
         dxy = (
-            xy[0] - (anchors[0] + offset[0]),
-            xy[1] - (anchors[1] + offset[1]),
+            xy[0] - (points[0] + offset[0]),
+            xy[1] - (points[1] + offset[1]),
         )
 
         #print str(points) + " - " + str(self.off)
