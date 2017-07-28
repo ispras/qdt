@@ -147,13 +147,13 @@ def define_only_qemu_2_6_0_types():
 
     Header.lookup("exec/exec-all.h").add_types([
         Type("TranslationBlock", False),
-        Function('tlb_fill',
+        Function("tlb_fill",
                  args = [
-                     Type.lookup('CPUState').gen_var('cs', pointer=True),
-                     Type.lookup('target_ulong').gen_var('addr'),
-                     Type.lookup('MMUAccessType').gen_var('access_type'),
-                     Type.lookup('int').gen_var('mmu_idx'),
-                     Type.lookup('uintptr_t').gen_var('retaddr')
+                     Type.lookup("CPUState").gen_var("cs", pointer = True),
+                     Type.lookup("target_ulong").gen_var("addr"),
+                     Type.lookup("MMUAccessType").gen_var("access_type"),
+                     Type.lookup("int").gen_var("mmu_idx"),
+                     Type.lookup("uintptr_t").gen_var("retaddr")
                  ],
                  used_types = []
         ),
