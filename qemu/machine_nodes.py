@@ -34,8 +34,11 @@ from bisect import \
     insort
 
 class Node(object):
-    def __init__(self):
+    def __init__(self, var_base = None):
         self.id = -1
+        if var_base is None:
+            raise NotImplementedError("No default base for variable name")
+        self.var_base = var_base
 
 # bus models
 class BusNode(Node):
@@ -46,9 +49,10 @@ class BusNode(Node):
         cast = "BUS",
         child_name = "bus",
         force_index = True,
+        var_base = "bus",
         **kw
     ):
-        Node.__init__(self, **kw)
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.c_type = c_type
         self.cast = cast
@@ -196,9 +200,10 @@ class IRQLine(Node):
         dst_irq_idx = 0,
         src_irq_name = None,
         dst_irq_name = None,
+        var_base = "irq",
         **kw
     ):
-        Node.__init__(self, **kw)
+        Node.__init__(self, var_base = var_base, **kw)
 
         # src and dst are lists (device, index, GPIO name) or (hub, 0, None)
         self.src = [src_dev, src_irq_idx, src_irq_name]
@@ -281,8 +286,8 @@ class IRQLine(Node):
         gen.gen_end()
 
 class IRQHub(Node):
-    def __init__(self, srcs, dsts, **kw):
-        Node.__init__(self, **kw)
+    def __init__(self, srcs, dsts, var_base = "irq", **kw):
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.irqs = []
 
@@ -362,8 +367,8 @@ class PropList(dict):
         return dict.__delitem__(self, name)
 
 class DeviceNode(Node):
-    def __init__(self, qom_type, parent = None, **kw):
-        Node.__init__(self, **kw)
+    def __init__(self, qom_type, parent = None, var_base = "dev", **kw):
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.qom_type = qom_type
         self.parent_bus = parent
@@ -571,8 +576,8 @@ class MemoryNodeHasNoSuchParent(Exception):
     pass
 
 class MemoryNode(Node):
-    def __init__(self, name, size, **kw):
-        Node.__init__(self, **kw)
+    def __init__(self, name, size, var_base = "mem", **kw):
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.name = name
         self.size = size
