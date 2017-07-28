@@ -49,7 +49,7 @@ class CanvasDnD(GUIFrame):
         self.dnd_dragged = touched[0]
 
         offset = event.widget.coords(self.dnd_dragged)
-        self.off = [x - offset[0], y - offset[1]]
+        self.off = (x - offset[0], y - offset[1])
 
         #print str((x,y)) + " - " + str(self.off)
 
