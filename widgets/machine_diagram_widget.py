@@ -1593,7 +1593,11 @@ IRQ line creation
 
         self.update_highlighted_irq_line()
 
-        if self.all_were_dragged or self.circle_was_deleted:
+        if self.all_were_dragged:
+            self.__repaint_mesh()
+            return
+
+        if self.circle_was_deleted:
             return
         # else: show popup menu
 
