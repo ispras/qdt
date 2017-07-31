@@ -156,11 +156,11 @@ class MachineType(QOMType):
         self.irq_hubs = irq_hubs
 
         # source file model
-        source_path = join_path("hw", directory,
+        self.source_path = join_path("hw", directory,
             self.qtn.for_header_name + ".c"
         )
 
-        self.source = Source(source_path)
+        self.source = Source(self.source_path)
 
         all_nodes = sort_topologically(
             self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
