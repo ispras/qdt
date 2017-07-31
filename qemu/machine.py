@@ -162,12 +162,9 @@ class MachineType(QOMType):
 
         self.source = Source(source_path)
 
-        all_nodes = list(self.devices)
-        all_nodes.extend(self.buses)
-        all_nodes.extend(self.irqs)
-        all_nodes.extend(self.mems)
-        all_nodes.extend(self.irq_hubs)
-        all_nodes = sort_topologically(all_nodes)
+        all_nodes = sort_topologically(
+            self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
+        )
 
         decl_code = ""
         def_code = ""
