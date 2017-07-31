@@ -2,9 +2,6 @@ from .var_widgets import \
     VarButton, \
     VarToplevel
 
-from six.moves.tkinter import \
-    Frame
-
 from common import \
     mlget as _
 
