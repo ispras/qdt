@@ -5,8 +5,12 @@ from common import \
     mlget as _
 
 from six.moves import \
-    range as xrange, \
-    tkinter as tk
+    range as xrange
+
+from six.moves.tkinter import \
+    BOTH, \
+    StringVar, \
+    BooleanVar
 
 from six import \
     integer_types
@@ -26,7 +30,7 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
         DeviceSettingsWidget.__init__(self, *args, **kw)
 
         lf = VarLabelFrame(self, text = _("PCI"))
-        lf.pack(fill = tk.BOTH, expand = False)
+        lf.pack(fill = BOTH, expand = False)
 
         lf.columnconfigure(0, weight = 0)
         lf.columnconfigure(1, weight = 1)
@@ -36,18 +40,18 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
         l = VarLabel(lf, text = _("Slot (Device number)"))
         l.grid(row = 0, column = 0, sticky = "NES")
 
-        self.var_slot = tk.StringVar()
+        self.var_slot = StringVar()
         e = HKEntry(lf, textvariable = self.var_slot)
         e.grid(row = 0, column = 1, sticky = "NEWS")
 
         l = VarLabel(lf, text = _("Function number"))
         l.grid(row = 1, column = 0, sticky = "NES")
 
-        self.var_function = tk.StringVar()
+        self.var_function = StringVar()
         e = HKEntry(lf, textvariable = self.var_function)
         e.grid(row = 1, column = 1, sticky = "NEWS")
 
-        self.var_multifunction = tk.BooleanVar()
+        self.var_multifunction = BooleanVar()
         chb = VarCheckbutton(lf,
             variable = self.var_multifunction,
             text = _("multifunction")
