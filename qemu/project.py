@@ -129,12 +129,6 @@ already in another project.")
     def co_gen(self, desc, src, with_chunk_graph = False):
         dev_t = desc.gen_type()
 
-        full_source_path = join(src, dev_t.source.path)
-
-        source_directory, source_base_name = split(full_source_path)
-
-        self.make_src_dirs(source_directory)
-
         if "header" in dev_t.__dict__:
             yield True
 
@@ -168,17 +162,26 @@ already in another project.")
 
         yield True
 
-        if isfile(full_source_path):
-            remove(full_source_path)
-
-        yield True
-
-        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
         source = dev_t.generate_source()
 
         yield True
 
+        full_source_path = join(src, dev_t.source.path)
+        source_directory, source_base_name = split(full_source_path)
+
+        if isfile(full_source_path):
+            remove(full_source_path)
+
+        self.make_src_dirs(source_directory)
+
+        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
+
+        yield True
+
         source.generate(source_writer)
+
+        yield True
+
         source_writer.close()
 
         if with_chunk_graph:
