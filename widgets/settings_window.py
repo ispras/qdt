@@ -13,7 +13,7 @@ from .gui_frame import \
 
 class SettingsWidget(GUIFrame):
     def __init__(self, machine, *args, **kw):
-        Frame.__init__(self, *args, **kw)
+        GUIFrame.__init__(self, *args, **kw)
 
         try:
             self.mht = self.winfo_toplevel().mht
