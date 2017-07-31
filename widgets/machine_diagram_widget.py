@@ -2,11 +2,16 @@ from widgets import \
     VarMenu, \
     CanvasDnD
 
+from six import \
+    text_type, \
+    binary_type
+
 from six.moves import \
     reduce, \
     range as xrange
 
 from six.moves.tkinter import \
+    StringVar, \
     BooleanVar, \
     DISABLED, \
     ALL
@@ -365,6 +370,10 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.irq_circle_preview = None
 
         self.update()
+
+        # the cache with VarString of node variable names
+        self.mach.node_id2var_name = {}
+        self.__update_var_names()
 
         self.bind('<<DnDMoved>>', self.dnd_moved, "+")
         self.bind('<<DnDDown>>', self.dnd_down, "+")
@@ -880,6 +889,8 @@ IRQ line creation
                 self.node2dev[hub_node] = hub
 
                 self.add_irq_hub(hub_node)
+
+            self.__update_var_names()
         elif isinstance(op, MOp_DelIRQLine):
             # Assuming MOp_AddIRQLine is child class of MOp_DelIRQLine
             try:
@@ -920,6 +931,8 @@ IRQ line creation
                 self.node2dev[irq_node] = irq
 
                 self.add_irq_line(irq_node)
+
+            self.__update_var_names()
         elif isinstance(op, MachineNodeSetLinkAttributeOperation):
             dev = self.mach.id2node[op.node_id]
             if isinstance(dev, QIRQLine):
@@ -984,6 +997,8 @@ IRQ line creation
                 self.node2dev[node] = bus
 
                 self.add_buslabel(node)
+
+            self.__update_var_names()
         elif isinstance(op, MOp_AddDevice) or isinstance(op, MOp_DelDevice):
             try:
                 dev = self.mach.id2node[op.node_id]
@@ -1019,6 +1034,8 @@ IRQ line creation
                 self.node2dev[node] = dev
 
                 self.add_node(node, False)
+
+            self.__update_var_names()
 
         self.invalidate()
 
@@ -1880,6 +1897,23 @@ IRQ line creation
         for n in self.dragged:
             n.static = False
         self.dragged = []
+
+    def __update_var_names(self):
+        t = self.mach.gen_type()
+
+        # provide names for variables of all nodes
+        t.reset_generator()
+
+        ni2vn = self.mach.node_id2var_name
+
+        for n, v in t.node_map.items():
+            if isinstance(n, (text_type, binary_type)):
+                continue
+
+            nid = n.id
+            sv = ni2vn.setdefault(nid, StringVar())
+            if sv.get() != v:
+                sv.set(v)
 
     def update(self):
         irqs = list(self.mach.irqs)
