@@ -84,7 +84,7 @@ class SettingsWindow(VarToplevel):
 
         self.rowconfigure(1, weight = 0)
 
-        fr = Frame(self)
+        fr = GUIFrame(self)
         fr.grid(
             row = 1,
             column = 0,
