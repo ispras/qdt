@@ -1,4 +1,5 @@
 from .var_widgets import \
+    VarLabel, \
     VarButton, \
     VarToplevel
 
@@ -7,6 +8,12 @@ from common import \
 
 from .gui_frame import \
     GUIFrame
+
+from .hotkey import \
+    HKEntry
+
+from six.moves.tkinter import \
+    BOTH
 
 class SettingsWidget(GUIFrame):
     def __init__(self, node, machine, *args, **kw):
@@ -23,6 +30,29 @@ class SettingsWidget(GUIFrame):
 
         self.node = node
         self.mach = machine
+
+        self.node_fr = fr = GUIFrame(self)
+        fr.pack(fill = BOTH, expand = False)
+        fr.rowconfigure(0, weight = 0)
+        fr.columnconfigure(0, weight = 0)
+        fr.columnconfigure(1, weight = 1)
+
+        VarLabel(fr,
+            text = _("Name of variable")
+        ).grid(
+            row = 0,
+            column = 0,
+            sticky = "NSW"
+        )
+
+        HKEntry(fr,
+            text = machine.node_id2var_name[node.id],
+            state = "readonly"
+        ).grid(
+            row = 0,
+            column = 1,
+            sticky = "NESW"
+        )
 
         self.refresh_after = self.after(0, self.__refresh_single__)
 
