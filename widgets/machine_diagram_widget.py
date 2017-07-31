@@ -3,6 +3,7 @@ from widgets import \
     CanvasDnD
 
 from six.moves import \
+    reduce, \
     range as xrange
 
 from six.moves.tkinter import \
@@ -813,26 +814,31 @@ IRQ line creation
         self.select_frame = None
 
     def on_diagram_centering(self, *args):
-        bbox = self.canvas.bbox(ALL)
-        if bbox is not None:
-            x, y = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
-            elem = self.canvas.find_closest(x, y)
-            if len(elem) == 1:
-                x1, y1, x2, y2 = self.canvas.bbox(elem)
+        ids = self.canvas.find_withtag("DnD")
+        if len(ids) == 0:
+            return
 
-                x = self.canvas.canvasx(0) \
-                  + self.canvas.winfo_width() / 2 - (x1 + x2) / 2
-                y = self.canvas.canvasy(0) \
-                  + self.canvas.winfo_height() / 2 - (y1 + y2) / 2
+        x1, y1, x2, y2 = reduce(
+            lambda a, b: (
+                min(a[0], b[0]), min(a[1], b[1]),
+                max(a[2], b[2]), max(a[3], b[3])
+            ),
+            map(lambda id: self.canvas.bbox(id), ids)
+        )
 
-                self.canvas.scan_mark(0, 0)
-                self.canvas.scan_dragto(int(x), int(y), gain = 1)
+        x = self.canvas.canvasx(0) \
+          + self.canvas.winfo_width() / 2 - (x1 + x2) / 2
+        y = self.canvas.canvasy(0) \
+          + self.canvas.winfo_height() / 2 - (y1 + y2) / 2
 
-                # cancel current physic iteration if moved
-                self.invalidate()
-                self.select_point = None
-                self.canvas.delete(self.select_frame)
-                self.select_frame = None
+        self.canvas.scan_mark(0, 0)
+        self.canvas.scan_dragto(int(x), int(y), gain = 1)
+
+        # cancel current physic iteration if moved
+        self.invalidate()
+        self.select_point = None
+        self.canvas.delete(self.select_frame)
+        self.select_frame = None
 
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
