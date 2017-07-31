@@ -34,18 +34,27 @@ from .device_settings import \
 from .hotkey import \
     HKEntry
 
+from .gui_frame import \
+    GUIFrame
+
 class MemorySettingsWidget(SettingsWidget):
     def __init__(self, mem, *args, **kw):
         SettingsWidget.__init__(self, *args, **kw)
 
         self.mem = mem
 
-        self.columnconfigure(0, weight = 0)
-        self.columnconfigure(1, weight = 1)
+        self.columnconfigure(0, weight = 1)
         self.rowconfigure(0, weight = 0)
+
+        self.mem_fr = fr = GUIFrame(self)
+        fr.grid(row = 0, column = 0, sticky = "NESW")
+
+        fr.columnconfigure(0, weight = 0)
+        fr.columnconfigure(1, weight = 1)
+        fr.rowconfigure(0, weight = 0)
         row = 0
 
-        l = VarLabel(self, text = _("Region type"))
+        l = VarLabel(fr, text = _("Region type"))
         l.grid(row = row, column = 0, sticky = "NES")
 
         memtype2str = {
@@ -55,15 +64,15 @@ class MemorySettingsWidget(SettingsWidget):
            MemoryROMNode: _("ROM")
         }
 
-        l = VarLabel(self, text = memtype2str[ type(mem) ])
+        l = VarLabel(fr, text = memtype2str[ type(mem) ])
         l.grid(row = row, column = 1, sticky = "NEWS")
         row += 1
 
-        l = VarLabel(self, text = _("Parent region"))
+        l = VarLabel(fr, text = _("Parent region"))
         l.grid(row = row, column = 0, sticky = "NES")
 
         self.var_parent = StringVar()
-        self.cb_parent = Combobox(self,
+        self.cb_parent = Combobox(fr,
             textvariable = self.var_parent,
             state = "readonly"
         )
@@ -85,13 +94,13 @@ class MemorySettingsWidget(SettingsWidget):
             if _type is bool:
                 l = None
                 v = BooleanVar()
-                w = VarCheckbutton(self, text = text, variable = v)
+                w = VarCheckbutton(fr, text = text, variable = v)
             else:
-                l = VarLabel(self, text = text)
+                l = VarLabel(fr, text = text)
                 v = StringVar()
-                w = HKEntry(self, textvariable = v)
+                w = HKEntry(fr, textvariable = v)
 
-            self.rowconfigure(row, weight = 0)
+            fr.rowconfigure(row, weight = 0)
             if l is None:
                 w.grid(row = row, column = 0, sticky = "NWS",
                     columnspan = 2
@@ -109,11 +118,11 @@ class MemorySettingsWidget(SettingsWidget):
             setattr(self, "var_" + field, v)
 
         if type(mem) is MemoryAliasNode:
-            l = VarLabel(self, text = _("Alias region"))
+            l = VarLabel(fr, text = _("Alias region"))
             l.grid(row = row, column = 0, sticky = "NES")
 
             self.var_alias_to = StringVar()
-            self.cb_alias_to = Combobox(self,
+            self.cb_alias_to = Combobox(fr,
                 textvariable = self.var_alias_to,
                 state = "readonly"
             )
