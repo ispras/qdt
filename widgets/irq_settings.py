@@ -34,7 +34,7 @@ from .hotkey import \
 
 class IRQSettingsWidget(SettingsWidget):
     def __init__(self, irq, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, irq, *args, **kw)
 
         self.irq = irq
 

@@ -9,7 +9,7 @@ from .gui_frame import \
     GUIFrame
 
 class SettingsWidget(GUIFrame):
-    def __init__(self, machine, *args, **kw):
+    def __init__(self, node, machine, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
         try:
@@ -21,6 +21,7 @@ class SettingsWidget(GUIFrame):
         if self.mht is not None:
             self.mht.watch_changed(self.on_changed)
 
+        self.node = node
         self.mach = machine
 
         self.refresh_after = self.after(0, self.__refresh_single__)

@@ -322,7 +322,7 @@ class DeviceSettingsWidget(SettingsWidget):
     }
 
     def __init__(self, device, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, device, *args, **kw)
         self.dev = device
 
         common_fr = GUIFrame(self)

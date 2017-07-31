@@ -36,7 +36,7 @@ from .gui_frame import \
 
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, bus, *args, **kw)
 
         self.bus = bus
 

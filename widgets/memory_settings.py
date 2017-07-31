@@ -40,7 +40,7 @@ from .gui_frame import \
 
 class MemorySettingsWidget(SettingsWidget):
     def __init__(self, mem, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, mem, *args, **kw)
 
         self.mem = mem
 
