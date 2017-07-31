@@ -51,9 +51,8 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             lf = VarLabelFrame(
                 self, text = mio[1]
             )
-            lf.grid(row = row, column = 0, sticky = "NEWS")
+            lf.pack(fill = tk.BOTH, expand = False)
             lf.columnconfigure(0, weight = 1)
-            self.rowconfigure(row, weight = 1)
 
             fr = GUIFrame(lf)
             fr.grid(row = 0, column = 0, sticky = "NEWS")

@@ -21,6 +21,7 @@ from six.moves import \
     range as xrange
 
 from six.moves.tkinter import \
+    BOTH, \
     StringVar, \
     BooleanVar, \
     OptionMenu
@@ -324,15 +325,8 @@ class DeviceSettingsWidget(SettingsWidget):
         SettingsWidget.__init__(self, *args, **kw)
         self.dev = device
 
-        self.columnconfigure(0, weight = 1)
-
-        self.rowconfigure(0, weight = 0)
         common_fr = GUIFrame(self)
-        common_fr.grid(
-            row = 0,
-            column = 0,
-            sticky = "NEWS"
-        )
+        common_fr.pack(fill = BOTH, expand = False)
         common_fr.columnconfigure(0, weight = 0)
         common_fr.columnconfigure(1, weight = 1)
 
@@ -379,8 +373,6 @@ class DeviceSettingsWidget(SettingsWidget):
         self.bus_cb.grid(row = 1, column = 1, sticky = "EW")
         common_fr.rowconfigure(1, weight = 0)
 
-        self.rowconfigure(1, weight = 1)
-
         self.buses_lf = lf = VarLabelFrame(
             common_fr,
             text = _("Child buses")
@@ -392,15 +384,10 @@ class DeviceSettingsWidget(SettingsWidget):
 
         self.child_buses_rows = []
 
-        self.props_lf = VarLabelFrame(
-            self,
+        self.props_lf = VarLabelFrame(self,
             text = _("Properties")
         )
-        self.props_lf.grid(
-            row = 1,
-            column = 0,
-            sticky = "NEWS"
-        )
+        self.props_lf.pack(fill = BOTH, expand = False)
         self.props_lf.columnconfigure(0, weight = 1)
         self.props_lf.columnconfigure(1, weight = 0)
         self.props_lf.columnconfigure(2, weight = 1)

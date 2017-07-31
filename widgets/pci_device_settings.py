@@ -26,7 +26,7 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
         DeviceSettingsWidget.__init__(self, *args, **kw)
 
         lf = VarLabelFrame(self, text = _("PCI"))
-        lf.grid(row = 2, column = 0, sticky = "NEWS")
+        lf.pack(fill = tk.BOTH, expand = False)
 
         lf.columnconfigure(0, weight = 0)
         lf.columnconfigure(1, weight = 1)

@@ -22,6 +22,7 @@ from qemu import \
     MOp_SetMemNodeAlias
 
 from six.moves.tkinter import \
+    BOTH, \
     StringVar, \
     BooleanVar
 
@@ -43,11 +44,8 @@ class MemorySettingsWidget(SettingsWidget):
 
         self.mem = mem
 
-        self.columnconfigure(0, weight = 1)
-        self.rowconfigure(0, weight = 0)
-
         self.mem_fr = fr = GUIFrame(self)
-        fr.grid(row = 0, column = 0, sticky = "NESW")
+        fr.pack(fill = BOTH, expand = False)
 
         fr.columnconfigure(0, weight = 0)
         fr.columnconfigure(1, weight = 1)

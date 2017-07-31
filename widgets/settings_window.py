@@ -23,8 +23,6 @@ class SettingsWidget(GUIFrame):
 
         self.mach = machine
 
-        self.grid()
-
         self.refresh_after = self.after(0, self.__refresh_single__)
 
         self.bind("<Destroy>", self.__on_destroy__)

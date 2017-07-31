@@ -20,6 +20,7 @@ from six.moves import \
     range as xrange
 
 from six.moves.tkinter import \
+    BOTH, \
     StringVar
 
 from six.moves.tkinter_ttk import \
@@ -37,16 +38,12 @@ class IRQSettingsWidget(SettingsWidget):
 
         self.irq = irq
 
-        self.columnconfigure(0, weight = 1)
-
-        for lf_row, (pfx, txt) in enumerate([
+        for pfx, txt in [
             ("src_", _("Source")),
             ("dst_", _("Destination"))
-        ]):
-            self.rowconfigure(lf_row, weight = 0)
-
+        ]:
             lf = VarLabelFrame(self, text = txt)
-            lf.grid(row = lf_row, column = 0, sticky = "NEW")
+            lf.pack(fill = BOTH, expand = False)
 
             lf.columnconfigure(0, weight = 0)
             lf.columnconfigure(1, weight = 1)
