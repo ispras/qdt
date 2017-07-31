@@ -171,8 +171,8 @@ already in another project.")
 
         if isfile(full_source_path):
             remove(full_source_path)
-
-        self.make_src_dirs(source_directory)
+        else:
+            self.make_src_dirs(source_directory)
 
         source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
 
