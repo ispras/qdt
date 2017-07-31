@@ -21,6 +21,9 @@ from qemu import \
 from .hotkey import \
     HKEntry
 
+from .gui_frame import \
+    GUIFrame
+
 def gen_mapping_string(mapping):
     if mapping is None:
         return ""
@@ -52,13 +55,13 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             lf.columnconfigure(0, weight = 1)
             self.rowconfigure(row, weight = 1)
 
-            fr = tk.Frame(lf)
+            fr = GUIFrame(lf)
             fr.grid(row = 0, column = 0, sticky = "NEWS")
             lf.rowconfigure(0, weight = 1)
             fr.columnconfigure(0, weight = 0)
             fr.columnconfigure(1, weight = 1)
 
-            bt_fr = tk.Frame(lf)
+            bt_fr = GUIFrame(lf)
             bt_fr.grid(row = 1, column = 0, sticky = "NEWS")
             lf.rowconfigure(1, weight = 0)
 
