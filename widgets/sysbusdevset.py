@@ -10,8 +10,12 @@ from six import \
     integer_types
 
 from six.moves import \
-    range as xrange, \
-    tkinter as tk
+    range as xrange
+
+from six.moves.tkinter import \
+    BOTH, \
+    Label, \
+    StringVar
 
 from qemu import \
     MOp_DelIOMapping, \
@@ -51,7 +55,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             lf = VarLabelFrame(
                 self, text = mio[1]
             )
-            lf.pack(fill = tk.BOTH, expand = False)
+            lf.pack(fill = BOTH, expand = False)
             lf.columnconfigure(0, weight = 1)
 
             fr = GUIFrame(lf)
@@ -89,10 +93,10 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
 
         row = len(rows)
 
-        l = tk.Label(grid, text = str(row) + ":")
+        l = Label(grid, text = str(row) + ":")
         l.grid(row = row, column = 0, sticky = "NES")
 
-        v = tk.StringVar()
+        v = StringVar()
         e = HKEntry(grid, textvariable = v)
         e.grid(row = row, column = 1, sticky = "NEWS")
 
