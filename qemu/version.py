@@ -74,7 +74,9 @@ def define_only_qemu_2_6_0_types():
         Type("TCGv_i64"),
         Type("TCGv_ptr"),
         Type("TCGv_env"),
-        Type("TCGv")
+        Type("TCGv"),
+        Function("tcg_global_mem_new_i32"),
+        Function("tcg_global_mem_new_i64"),
     ])
 
     Header.lookup("qemu/osdep.h").add_types([
@@ -87,6 +89,13 @@ def define_only_qemu_2_6_0_types():
 
     Header.lookup("exec/cpu-defs.h").add_types([
         Type("target_ulong", False),
+    ])
+
+    Header.lookup("exec/cpu_ldst.h").add_types([
+        Function("cpu_ldub_code", ret_type = Type.lookup("uint8_t")),
+        Function("cpu_lduw_code", ret_type = Type.lookup("uint16_t")),
+        Function("cpu_ldl_code", ret_type = Type.lookup("uint32_t")),
+        Function("cpu_ldq_code", ret_type = Type.lookup("uint64_t")),
     ])
 
     Header.lookup("qom/object.h").add_types([
@@ -118,7 +127,10 @@ def define_only_qemu_2_6_0_types():
         Function("object_property_set_str"),
         Function("object_property_set_link"),
         Function("object_property_set_bool"),
-        Function("object_property_set_int")
+        Function("object_property_set_int"),
+        Function("object_class_by_name"),
+        Function("object_class_dynamic_cast"),
+        Function("object_class_is_abstract")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("qom/cpu.h").add_types([
@@ -130,7 +142,10 @@ def define_only_qemu_2_6_0_types():
                  args = [
                      Type.lookup("CPUState").gen_var("cpu", pointer = True)
                  ]
-        )
+        ),
+        Function("cpu_exec_realizefn"),
+        Function("cpu_reset"),
+        Function("cpu_generic_init")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("qapi/error.h").add_types([
@@ -162,7 +177,11 @@ def define_only_qemu_2_6_0_types():
                      Type.lookup("CPUState").gen_var("cs", pointer = True),
                      Pointer(Pointer(Type.lookup("Error"))).gen_var("errp")
                  ]
-        )
+        ),
+        Function("gen_intermediate_code"),
+        Function("cpu_restore_state"),
+        Function("cpu_loop_exit"),
+        Function("tlb_set_page")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/memory.h").add_types([
