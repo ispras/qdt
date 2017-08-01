@@ -89,8 +89,6 @@ class PyGenerator(object):
                 return "0x%0x" % c
         elif isinstance(c, str):
             return "\"" + c + "\""
-        elif isinstance(c, bool):
-            return "True" if c else "False"
         else:
             return str(c)
 
