@@ -1136,10 +1136,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_irq_line_settings(self, irq, x, y):
-        wnd = IRQSettingsWindow(self.mach, self.mht, self,
-            # The window requires descriptor of widget, not a machine node.
-            irq = self.dev2node[irq]
-        )
+        wnd = IRQSettingsWindow(self.mach, self.mht, self, irq = irq)
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))

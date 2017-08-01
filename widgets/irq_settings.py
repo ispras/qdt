@@ -110,7 +110,7 @@ class IRQSettingsWidget(SettingsWidget):
     def __apply_internal__(self):
         prev_pos = self.mht.pos
 
-        irq = self.irq.node
+        irq = self.irq
 
         for pfx in [ "src", "dst" ]:
             var = getattr(self, pfx + "_node_var")
@@ -167,8 +167,7 @@ class IRQSettingsWidget(SettingsWidget):
             cb.config(values = nodes)
 
             # IRQ line end (source or destination)
-            end_widget = getattr(self.irq, pfx)
-            end_node = end_widget.node
+            end_node = getattr(self.irq, pfx)[0]
             node_text = DeviceSettingsWidget.gen_node_link_text(end_node)
             node_var = getattr(self, pfx + "_node_var")
             node_var.set(node_text)
@@ -178,7 +177,7 @@ class IRQSettingsWidget(SettingsWidget):
                 name_var = getattr(self, pfx + "_name_var")
 
                 # IRQ descriptor in machine description
-                end_desc = getattr(self.irq.node, pfx)
+                end_desc = getattr(self.irq, pfx)
 
                 index_var.set(str(end_desc[1]))
 
@@ -192,12 +191,12 @@ class IRQSettingsWidget(SettingsWidget):
             return
 
         if op.writes_node():
-            if not self.irq.node.id in self.mach.id2node:
+            if not self.irq.id in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
         elif isinstance(op, MOp_SetIRQAttr):
-            if op.node_id == self.irq.node.id:
+            if op.node_id == self.irq.id:
                 self.refresh()
 
 class IRQSettingsWindow(SettingsWindow):
