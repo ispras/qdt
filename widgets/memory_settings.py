@@ -243,7 +243,7 @@ class MemorySettingsWidget(SettingsWidget):
 
 class MemorySettingsWindow(SettingsWindow):
     def __init__(self, mem, *args, **kw):
-        SettingsWindow.__init__(self, *args, **kw)
+        SettingsWindow.__init__(self, mem, *args, **kw)
 
         self.title(_("Memory settings"))
 

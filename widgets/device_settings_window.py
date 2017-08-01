@@ -17,7 +17,7 @@ class DeviceSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):
         device = kw.pop("device")
 
-        SettingsWindow.__init__(self, *args, **kw)
+        SettingsWindow.__init__(self, device, *args, **kw)
 
         self.title(_("Device settings"))
 

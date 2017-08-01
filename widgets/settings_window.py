@@ -94,9 +94,13 @@ class SettingsWidget(GUIFrame):
             pass
 
 class SettingsWindow(VarToplevel):
-    def __init__(self, machine, machine_history_tracker = None, *args, **kw):
+    def __init__(self, node, machine,
+            machine_history_tracker = None,
+            *args, **kw
+        ):
         VarToplevel.__init__(self, *args, **kw)
 
+        self.node = node
         self.mach = machine
         self.mht = machine_history_tracker
 

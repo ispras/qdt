@@ -160,7 +160,7 @@ class BusSettingsWidget(SettingsWidget):
 
 class BusSettingsWindow(SettingsWindow):
     def __init__(self, bus, *args, **kw):
-        SettingsWindow.__init__(self, *args, **kw)
+        SettingsWindow.__init__(self, bus, *args, **kw)
 
         self.title(_("Bus settings"))
 

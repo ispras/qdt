@@ -203,7 +203,7 @@ class IRQSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):
         irq = kw.pop("irq")
 
-        SettingsWindow.__init__(self, *args, **kw)
+        SettingsWindow.__init__(self, irq, *args, **kw)
 
         self.title(_("IRQ line settings"))
 
