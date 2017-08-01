@@ -4,6 +4,7 @@ from .var_widgets import \
     VarToplevel
 
 from common import \
+    FormatVar, \
     mlget as _
 
 from .gui_frame import \
@@ -98,9 +99,12 @@ class SettingsWindow(VarToplevel):
             machine_history_tracker = None,
             *args, **kw
         ):
+        """ Toplevel.__init__ calls `title` which requires the attribute `node`
+        to be initialized already. """
+        self.node = node
+
         VarToplevel.__init__(self, *args, **kw)
 
-        self.node = node
         self.mach = machine
         self.mht = machine_history_tracker
 
@@ -158,6 +162,14 @@ class SettingsWindow(VarToplevel):
         self.attributes("-topmost", 1)
 
         self.bind("<Escape>", self.on_escape, "+")
+
+    def title(self, stringvar = None):
+        """ Add the prefix with node ID. """
+        if stringvar is None:
+            return VarToplevel.title(self, stringvar = stringvar)
+
+        title = FormatVar("(%u) %%s" % self.node.id) % stringvar
+        return VarToplevel.title(self, stringvar = title)
 
     def on_escape(self, event):
         self.destroy()
