@@ -1,5 +1,5 @@
-from common import \
-    topology
+from .topology import \
+    sort_topologically
 
 from six import \
     PY2, \
@@ -64,7 +64,7 @@ class PyGenerator(object):
         self.w = writer
         self.reset()
 
-        objects = topology.sort_topologically([root])
+        objects = sort_topologically([root])
 
         for o in objects:
             self.write(self.nameof(o) + " = ")
