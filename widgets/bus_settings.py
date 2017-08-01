@@ -30,21 +30,29 @@ from qemu import \
 from .hotkey import \
     HKEntry
 
+from .gui_frame import \
+    GUIFrame
+
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):
         SettingsWidget.__init__(self, *args, **kw)
 
         self.bus = bus
 
-        self.columnconfigure(0, weight = 0)
-        self.columnconfigure(1, weight = 1)
+        self.columnconfigure(0, weight = 1)
         self.rowconfigure(0, weight = 0)
+        self.bus_fr = fr = GUIFrame(self)
+        fr.grid(row = 0, column = 0, sticky = "NESW")
 
-        l = VarLabel(self, text = _("Parent device"))
+        fr.columnconfigure(0, weight = 0)
+        fr.columnconfigure(1, weight = 1)
+        fr.rowconfigure(0, weight = 0)
+
+        l = VarLabel(fr, text = _("Parent device"))
         l.grid(row = 0, column = 0, sticky = "NES")
 
         self.var_parent = StringVar()
-        self.cb_parent = Combobox(self,
+        self.cb_parent = Combobox(fr,
             textvariable = self.var_parent,
             state = "readonly"
         )
@@ -62,15 +70,15 @@ class BusSettingsWidget(SettingsWidget):
         # Common bus type
         for row, (text, field, _type) in enumerate(self.fields, start = 1):
             if _type is str:
-                l = VarLabel(self, text = text)
+                l = VarLabel(fr, text = text)
                 v = StringVar()
-                w = HKEntry(self, textvariable = v)
+                w = HKEntry(fr, textvariable = v)
             elif _type is bool:
                 l = None
                 v = BooleanVar()
-                w = VarCheckbutton(self, text = text, variable = v)
+                w = VarCheckbutton(fr, text = text, variable = v)
 
-            self.rowconfigure(row, weight = 0)
+            fr.rowconfigure(row, weight = 0)
             if l is None:
                 w.grid(row = row, column = 0, sticky = "NEWS",
                     columnspan = 2
