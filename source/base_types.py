@@ -1,7 +1,8 @@
 from .model import \
     Type, \
     Header, \
-    Function
+    Function, \
+    Macro
 
 def add_base_types():
     Type(name = "void", incomplete = True, base = True)
@@ -35,6 +36,7 @@ def add_base_types():
 
     h.add_types([
         Type(name = "size_t", incomplete = False, base = False),
+        Macro("offsetof")
     ])
 
     try:
@@ -55,7 +57,9 @@ def add_base_types():
 
     h.add_types([
         Type("ssize_t", incomplete = False, base = False),
-        Function("printf")
+        Function("printf"),
+        Function("fprintf"),
+        Type("FILE")
         ])
 
     try:
