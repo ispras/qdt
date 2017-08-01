@@ -1,10 +1,20 @@
-from .topology import \
-    sort_topologically
-
 from six import \
     PY2, \
     text_type, \
     integer_types
+
+if __name__ == "__main__":
+    from topology import \
+        sort_topologically
+
+    from reflection import \
+        get_class_total_args
+else:
+    from .topology import \
+        sort_topologically
+
+    from .reflection import \
+        get_class_total_args
 
 str_able_types = [bool, float] + list(integer_types)
 
@@ -200,3 +210,21 @@ class PyGenerator(object):
             self.write("None")
         else:
             self.write(self.obj2name[val])
+
+if __name__ == "__main__":
+    from sys import stdout
+
+    g = PyGenerator()
+
+    class Writer():
+        def write(self, val):
+            stdout.write(str(type(val)) + " : " + repr(val) + "\n")
+
+    g.w = Writer()
+
+    g.pprint_text("String in default encoding")
+    g.line()
+    g.pprint_text(u"Unicode string")
+    g.line()
+    g.pprint_text(b"ASCII string")
+    g.line()
