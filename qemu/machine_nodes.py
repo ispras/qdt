@@ -85,11 +85,11 @@ class BusNode(Node):
         if self.parent_device:
             gen.gen_field("parent = " + gen.nameof(self.parent_device))
         if not self.c_type == "BusState":
-            gen.gen_field('c_type = "' + self.c_type + '"')
+            gen.gen_field('c_type = ' + gen.gen_const(self.c_type))
         if not self.cast == "BUS":
-            gen.gen_field('cast = "' + self.cast + '"')
+            gen.gen_field('cast = ' + gen.gen_const(self.cast))
         if not self.child_name == "bus":
-            gen.gen_field('child_name = "' + self.child_name + '"')
+            gen.gen_field('child_name = ' + gen.gen_const(self.child_name))
         if not self.force_index:
             gen.gen_field("force_index = False")
         gen.gen_end()
@@ -280,9 +280,9 @@ class IRQLine(Node):
         if self.dst[1] != 0:
             gen.gen_field("dst_irq_idx = " + gen.gen_const(self.dst[1]))
         if self.src[2]:
-            gen.gen_field('src_irq_name = "' + self.src[2] + '"')
+            gen.gen_field('src_irq_name = ' + gen.gen_const(self.src[2]))
         if self.dst[2]:
-            gen.gen_field('dst_irq_name = "' + self.dst[2] + '"')
+            gen.gen_field('dst_irq_name = ' + gen.gen_const(self.dst[2]))
         gen.gen_end()
 
 class IRQHub(Node):
@@ -406,15 +406,15 @@ class DeviceNode(Node):
         for p in self.properties:
             gen.gen_field(
                 "QOMPropertyValue(" + p.prop_type.__name__
-                + ', "' + p.prop_name
-                + '", ' + self.gen_prop_val(gen, p)
+                + ', ' + gen.gen_const(p.prop_name)
+                + ', ' + self.gen_prop_val(gen, p)
                 + ")"
             )
         gen.gen_end(suffix = "])")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field('qom_type = "' + self.qom_type + '"')
+        gen.gen_field('qom_type = ' + gen.gen_const(self.qom_type))
         if self.parent_bus:
             gen.gen_field("parent = " + gen.nameof(self.parent_bus))
         gen.gen_end()
@@ -463,7 +463,7 @@ class SystemBusDeviceNode(DeviceNode):
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field('qom_type = "' + self.qom_type + '"')
+        gen.gen_field('qom_type = ' + gen.gen_const(self.qom_type))
         if self.parent_bus:
             gen.gen_field("system_bus = " + gen.nameof(self.parent_bus))
 
@@ -550,7 +550,7 @@ class PCIExpressDeviceNode(DeviceNode):
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field('qom_type = "' + self.qom_type + '"')
+        gen.gen_field('qom_type = ' + gen.gen_const(self.qom_type))
         gen.gen_field("pci_express_bus = " + gen.nameof(self.parent_bus))
         gen.gen_field("slot = " + gen.gen_const(self.slot))
         gen.gen_field("function = " + gen.gen_const(self.function))
@@ -616,7 +616,7 @@ class MemoryNode(Node):
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field('name = "' + self.name + '"')
+        gen.gen_field('name = ' + gen.gen_const(self.name))
         gen.gen_field("size = " + gen.gen_const(self.size))
         gen.gen_end()
         self.gen_parent_attachment(gen)
@@ -646,7 +646,7 @@ class MemoryAliasNode(MemoryLeafNode):
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field('name = "' + self.name + '"')
+        gen.gen_field('name = ' + gen.gen_const(self.name))
         gen.gen_field("size = " + gen.gen_const(self.size))
         gen.gen_field("alias_to = " + gen.nameof(self.alias_to))
         gen.gen_field("offset = " + gen.gen_const(self.alias_offset))
