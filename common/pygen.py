@@ -1,6 +1,7 @@
 from six import \
     PY2, \
     text_type, \
+    binary_type, \
     integer_types
 
 if __name__ == "__main__":
@@ -97,22 +98,38 @@ class PyGenerator(object):
                 return "%d" % c
             else:
                 return "0x%0x" % c
-        elif isinstance(c, str):
+        elif isinstance(c, (binary_type, text_type)):
+            normalized = ""
+            prefix = ""
             # Double and single quote count
             dquote = 0
             squote = 0
             for ch in c:
-                if ch == '"':
-                    dquote += 1
-                elif ch == "'":
-                    squote += 1
+                code = ch if isinstance(ch, int) else ord(ch)
+
+                if code > 0xFFFF: # 4-byte unicode
+                    prefix = "u"
+                    normalized += "\\U%08x" % code
+                elif code > 0xFF: # 2-byte unicode
+                    prefix = "u"
+                    normalized += "\\u%04x" % code
+                elif code > 127: # non-ASCII code
+                    normalized += "\\x%02x" % code
+                elif code == 92: # \
+                    normalized += "\\\\"
+                else:
+                    if code == 34: # "
+                        dquote += 1
+                    elif code == 38: # '
+                        squote += 1
+                    normalized += chr(code)
 
             if dquote > squote:
-                escaped = c.replace("'", "\\'")
-                return "'" + escaped + "'"
+                escaped = normalized.replace("'", "\\'")
+                return prefix + "'" + escaped + "'"
             else:
-                escaped = c.replace('"', '\\"')
-                return '"' + escaped + '"'
+                escaped = normalized.replace('"', '\\"')
+                return prefix + '"' + escaped + '"'
         else:
             return str(c)
 
