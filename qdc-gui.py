@@ -368,7 +368,7 @@ show it else hide it.")
                 + self.title_suffix.get()
         )
 
-    def chack_undo_redo(self):
+    def check_undo_redo(self):
         can_do = self.pht.can_do()
 
         self.hk.set_enabled(self.redo, can_do)
@@ -422,7 +422,7 @@ show it else hide it.")
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
         self.pht.watch_changed(self.on_changed)
-        self.chack_undo_redo()
+        self.check_undo_redo()
 
     def __saved_asterisk__(self, saved = True):
         if saved:
@@ -439,7 +439,7 @@ show it else hide it.")
             self.__saved_asterisk__(False)
 
     def on_changed(self, *args, **kw):
-        self.chack_undo_redo()
+        self.check_undo_redo()
         self.__check_saved_asterisk__()
 
     def undo(self):
