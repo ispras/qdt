@@ -258,6 +258,11 @@ MIN_MESH_STEP = 1
 # limitation of Canvas.create_line.dash
 MAX_MESH_STEP = 260
 
+LAYOUT_SHOW_MESH = "show mesh"
+LAYOUT_MESH_STEP = "mesh step"
+LAYOUT_DYNAMIC = "physical layout" # this name difference is a legacy issue
+LAYOUT_IRQ_LINES_POINTS = "IRQ lines points"
+
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
@@ -2906,10 +2911,10 @@ IRQ line creation
             ]
 
         layout[-1] = {
-            "show mesh": self.var_show_mesh.get(),
-            "mesh step": self.mesh_step,
-            "physical layout": self.var_physical_layout.get(),
-            "IRQ lines points": irqs
+            LAYOUT_SHOW_MESH        : self.var_show_mesh.get(),
+            LAYOUT_MESH_STEP        : self.mesh_step,
+            LAYOUT_DYNAMIC          : self.var_physical_layout.get(),
+            LAYOUT_IRQ_LINES_POINTS : irqs
         }
 
         return layout
@@ -2920,12 +2925,12 @@ IRQ line creation
             for id, desc in l.items():
                 if id == -1:
                     try:
-                        self.var_show_mesh.set(desc["show mesh"])
+                        self.var_show_mesh.set(desc[LAYOUT_SHOW_MESH])
                     except KeyError:
                         pass
 
                     try:
-                        step = desc["mesh step"]
+                        step = desc[LAYOUT_MESH_STEP]
                     except KeyError:
                         pass
                     else:
@@ -2937,12 +2942,12 @@ IRQ line creation
                         self.mesh_step = step
 
                     try:
-                        self.var_physical_layout.set(desc["physical layout"])
+                        self.var_physical_layout.set(desc[LAYOUT_DYNAMIC])
                     except KeyError:
                         pass
 
                     try:
-                        irqs = desc["IRQ lines points"]
+                        irqs = desc[LAYOUT_IRQ_LINES_POINTS]
                     except KeyError:
                         irqs = {}
 
