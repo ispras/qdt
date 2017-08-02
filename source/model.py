@@ -1082,9 +1082,9 @@ class Macro(Type):
     def new_from_dict(_dict):
         return Macro(
             name = _dict["name"],
-            args = None if not "args" in _dict else _dict["args"],
-            text = None if not "text" in _dict else _dict["text"]
-            )
+            args = _dict["args"] if "args" in _dict else None,
+            text = _dict["text"] if "text" in _dict else None
+        )
 
 # Data models
 
