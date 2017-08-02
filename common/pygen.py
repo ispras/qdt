@@ -16,7 +16,7 @@ else:
     from .reflection import \
         get_class_total_args
 
-str_able_types = [bool, float] + list(integer_types)
+str_able_types = (float,) + integer_types
 
 """
 PyGenerator provides an interface for saving an object to the file.
@@ -202,7 +202,9 @@ class PyGenerator(object):
             self.pop_indent()
             self.line()
             self.write(")")
-        elif type(val) in str_able_types:
+        elif isinstance(val, bool):
+            self.write("True" if val else "False")
+        elif isinstance(val, str_able_types):
             self.write(str(val))
         elif (PY2 and isinstance(val, str)) or isinstance(val, text_type):
             self.pprint_text(val)
