@@ -148,9 +148,9 @@ already in another project.")
             obj_var_names[desc.directory], config_flags[desc.directory]
         )
 
-        yield True
-
         if "header" in dev_t.__dict__:
+            yield True
+
             include_path = join(src, 'include')
             full_header_path = join(include_path, dev_t.header.path)
 
