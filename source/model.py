@@ -1045,6 +1045,10 @@ chunk. The references is to be added to 'users' of the 'typedef'.
 
     __type_references__ = ["type"]
 
+HDB_MACRO_NAME = "name"
+HDB_MACRO_TEXT = "text"
+HDB_MACRO_ARGS = "args"
+
 class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):
@@ -1070,20 +1074,20 @@ class Macro(Type):
             )
 
     def gen_dict(self):
-        res = {"name" : self.name}
+        res = {HDB_MACRO_NAME : self.name}
         if self.text is not None:
-            res["text"] = self.text
+            res[HDB_MACRO_TEXT] = self.text
         if self.args is not None:
-            res["args"] = self.args
+            res[HDB_MACRO_ARGS] = self.args
 
         return res
 
     @staticmethod
     def new_from_dict(_dict):
         return Macro(
-            name = _dict["name"],
-            args = _dict["args"] if "args" in _dict else None,
-            text = _dict["text"] if "text" in _dict else None
+            name = _dict[HDB_MACRO_NAME],
+            args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
+            text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
 
 # Data models
@@ -2026,6 +2030,11 @@ class HeaderFile(SourceFile):
 
 #Source tree container
 
+HDB_HEADER_PATH = "path"
+HDB_HEADER_IS_GLOBAL = "is_global"
+HDB_HEADER_INCLUSIONS = "inclusions"
+HDB_HEADER_MACROS = "macros"
+
 class SourceTreeContainer(object):
     current = None
 
@@ -2085,44 +2094,44 @@ digraph HeaderInclusion {
     def load_header_db(self, list_headers):
         # Create all headers
         for dict_h in list_headers:
-            path = dict_h["path"]
+            path = dict_h[HDB_HEADER_PATH]
             if not path in self.reg_header:
                 Header(
-                       path = dict_h["path"],
-                       is_global = dict_h["is_global"])
+                       path = dict_h[HDB_HEADER_PATH],
+                       is_global = dict_h[HDB_HEADER_IS_GLOBAL])
             else:
                 # Check if existing header equals the one from database?
                 pass
 
         # Set up inclusions
         for dict_h in list_headers:
-            path = dict_h["path"]
+            path = dict_h[HDB_HEADER_PATH]
             h = self.header_lookup(path)
 
-            for inc in dict_h["inclusions"]:
+            for inc in dict_h[HDB_HEADER_INCLUSIONS]:
                 i = self.header_lookup(inc)
                 h.add_inclusion(i)
 
-            for m in dict_h["macros"]:
+            for m in dict_h[HDB_HEADER_MACROS]:
                 h.add_type(Macro.new_from_dict(m))
 
     def create_header_db(self):
         list_headers = []
         for h in self.reg_header.values():
             dict_h = {}
-            dict_h["path"] = h.path
-            dict_h["is_global"] = h.is_global
+            dict_h[HDB_HEADER_PATH] = h.path
+            dict_h[HDB_HEADER_IS_GLOBAL] = h.is_global
 
             inc_list = []
             for i in h.inclusions.values():
                 inc_list.append(i.path)
-            dict_h["inclusions"] = inc_list
+            dict_h[HDB_HEADER_INCLUSIONS] = inc_list
 
             macro_list = []
             for t in h.types.values():
                 if type(t) == Macro:
                     macro_list.append(t.gen_dict())
-            dict_h["macros"] = macro_list
+            dict_h[HDB_HEADER_MACROS] = macro_list
 
             list_headers.append(dict_h)
 
