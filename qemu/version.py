@@ -184,6 +184,11 @@ def define_only_qemu_2_6_0_types():
         Function("tlb_set_page")
     ]).add_reference(osdep_fake_type)
 
+    Header.lookup("exec/gen-icount.h").add_types([
+        Function("gen_tb_start"),
+        Function("gen_tb_end")
+    ])
+
     Header.lookup("exec/memory.h").add_types([
         Type("MemoryRegion", False),
         Function(name = "MemoryRegionOps_read",
