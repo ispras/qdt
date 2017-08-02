@@ -98,7 +98,21 @@ class PyGenerator(object):
             else:
                 return "0x%0x" % c
         elif isinstance(c, str):
-            return "\"" + c + "\""
+            # Double and single quote count
+            dquote = 0
+            squote = 0
+            for ch in c:
+                if ch == '"':
+                    dquote += 1
+                elif ch == "'":
+                    squote += 1
+
+            if dquote > squote:
+                escaped = c.replace("'", "\\'")
+                return "'" + escaped + "'"
+            else:
+                escaped = c.replace('"', '\\"')
+                return '"' + escaped + '"'
         else:
             return str(c)
 
