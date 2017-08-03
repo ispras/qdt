@@ -510,8 +510,16 @@ class SystemBusDeviceNode(DeviceNode):
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "system_bus":
             arg_name = "parent_bus"
-        elif arg_name == "mmio" or arg_name == "pmio":
-            return None
+        elif arg_name == "mmio":
+            if self.mmio_mappings:
+                return list(iter_mappings(self.mmio_mappings))
+            else:
+                return None
+        elif arg_name == "pmio":
+            if self.pmio_mappings:
+                return list(iter_mappings(self.pmio_mappings))
+            else:
+                return None
         return getattr(self, arg_name)
 
 class PCIExpressDeviceNode(DeviceNode):
