@@ -286,24 +286,26 @@ class IRQLine(Node):
         gen.gen_end()
 
 class IRQHub(Node):
-    def __init__(self, srcs, dsts, var_base = "irq", **kw):
+    def __init__(self, srcs = None, dsts = None, var_base = "irq", **kw):
         Node.__init__(self, var_base = var_base, **kw)
 
         self.irqs = []
 
-        for end in srcs:
-            IRQLine(
-                end[0], self,
-                src_irq_idx = end[1], dst_irq_idx = 0,
-                src_irq_name = end[2], dst_irq_name = None
-            )
+        if srcs:
+            for end in srcs:
+                IRQLine(
+                    end[0], self,
+                    src_irq_idx = end[1], dst_irq_idx = 0,
+                    src_irq_name = end[2], dst_irq_name = None
+                )
 
-        for end in dsts:
-            IRQLine(
-                self, end[0],
-                src_irq_idx = 0, dst_irq_idx = end[1],
-                src_irq_name = None, dst_irq_name = end[2]
-            )
+        if dsts:
+            for end in dsts:
+                IRQLine(
+                    self, end[0],
+                    src_irq_idx = 0, dst_irq_idx = end[1],
+                    src_irq_name = None, dst_irq_name = end[2]
+                )
 
     def __children__(self):
         referenced_hubs = []
