@@ -318,6 +318,21 @@ class IRQHub(Node):
 
         return sorted(referenced_hubs, key = lambda h : h.id)
 
+    def __get_init_arg_val__(self, arg_name):
+        """ This method alwaus returns [] (empty list) for `srcs` and `dsts`
+        arguments because of next reasons.
+        - During backing a hub up for a reversible operation they are always
+        empty by reversible operation mechanism design.
+        - During loading a hub from a Python script they will be rebuilt by
+        instantiation of corresponding `IRQLine` objects. So, they must be
+        empty preventing IRQ line duplication.
+        - Older versions of the tool assume they are positional arguments and
+        never `None`-valued. So, they must present and be exactly empty lists.
+        """
+        if arg_name in ["srcs", "dsts"]:
+            return []
+        return getattr(self, arg_name)
+
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         # Sources and destinations will be set during loading of
