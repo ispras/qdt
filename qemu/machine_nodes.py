@@ -205,84 +205,98 @@ class IRQLine(Node):
     ):
         Node.__init__(self, var_base = var_base, **kw)
 
-        # src and dst are lists (device, index, GPIO name) or (hub, 0, None)
-        self.src = [src_dev, src_irq_idx, src_irq_name]
-        self.dst = [dst_dev, dst_irq_idx, dst_irq_name]
+        # source node (device or hub)
+        self.src_dev = src_dev
+        self.src_irq_idx = src_irq_idx # GPIO index
+        self.src_irq_name = src_irq_name # GPIO name
+
+        # destination node
+        self.dst_dev = dst_dev
+        self.dst_irq_idx = dst_irq_idx
+        self.dst_irq_name = dst_irq_name
 
         src_dev.irqs.append(self)
         dst_dev.irqs.append(self)
 
     @property
+    def src(self):
+        return (self.src_dev, self.src_irq_idx, self.src_irq_name)
+
+    @property
+    def dst(self):
+        return (self.dst_dev, self.dst_irq_idx, self.dst_irq_name)
+
+    @property
     def src_node(self):
-        return self.src[0]
+        return self.src_dev
 
     @src_node.setter
     def src_node(self, value):
-        self.src[0].irqs.remove(self)
-        self.src[0] = value
+        self.src_dev.irqs.remove(self)
+        self.src_dev = value
         value.irqs.append(self)
 
     @property
     def dst_node(self):
-        return self.dst[0]
+        return self.dst_dev
 
     @dst_node.setter
     def dst_node(self, value):
-        self.dst[0].irqs.remove(self)
-        self.dst[0] = value
+        self.dst_dev.irqs.remove(self)
+        self.dst_dev = value
         value.irqs.append(self)
 
     @property
     def src_index(self):
-        return self.src[1]
+        return self.src_irq_idx
 
     @src_index.setter
     def src_index(self, value):
-        self.src[1] = value
+        self.src_irq_idx = value
 
     @property
     def dst_index(self):
-        return self.dst[1]
+        return self.dst_irq_idx
 
     @dst_index.setter
     def dst_index(self, value):
-        self.dst[1] = value
+        self.dst_irq_idx = value
 
     @property
     def src_name(self):
-        return self.src[2]
+        return self.src_irq_name
 
     @src_name.setter
     def src_name(self, value):
-        self.src[2] = value
+        self.src_irq_name = value
 
     @property
     def dst_name(self):
-        return self.dst[2]
+        return self.dst_irq_name
 
     @dst_name.setter
     def dst_name(self, value):
-        self.dst[2] = value
+        self.dst_irq_name = value
 
     def hub_ended(self):
-        return    isinstance(self.src[0], IRQHub) \
-               or isinstance(self.dst[0], IRQHub)
+        return    isinstance(self.src_dev, IRQHub) \
+               or isinstance(self.dst_dev, IRQHub)
 
     def __children__(self):
-        return [ self.src[0], self.dst[0] ]
+        return [ self.src_dev, self.dst_dev ]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_field("src_dev = " + gen.nameof(self.src[0]))
-        gen.gen_field("dst_dev = " + gen.nameof(self.dst[0]))
-        if self.src[1] != 0:
-            gen.gen_field("src_irq_idx = " + gen.gen_const(self.src[1]))
-        if self.dst[1] != 0:
-            gen.gen_field("dst_irq_idx = " + gen.gen_const(self.dst[1]))
-        if self.src[2]:
-            gen.gen_field('src_irq_name = ' + gen.gen_const(self.src[2]))
-        if self.dst[2]:
-            gen.gen_field('dst_irq_name = ' + gen.gen_const(self.dst[2]))
+        gen.gen_field("src_dev = " + gen.nameof(self.src_dev))
+        gen.gen_field("dst_dev = " + gen.nameof(self.dst_dev))
+        if self.src_irq_idx != 0:
+            gen.gen_field("src_irq_idx = " + gen.gen_const(self.src_irq_idx))
+        if self.dst_irq_idx != 0:
+            gen.gen_field("dst_irq_idx = " + gen.gen_const(self.dst_irq_idx))
+        if self.src_irq_name:
+            gen.gen_field('src_irq_name = ' + gen.gen_const(self.src_irq_name))
+        if self.dst_irq_name:
+            gen.gen_field('dst_irq_name = ' + gen.gen_const(self.dst_irq_name))
         gen.gen_end()
 
 class IRQHub(Node):
