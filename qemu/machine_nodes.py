@@ -197,7 +197,7 @@ class IRQLine(Node):
     ):
         Node.__init__(self, **kw)
 
-        # src and dst are tuples (device, index)
+        # src and dst are lists (device, index, GPIO name) or (hub, 0, None)
         self.src = [src_dev, src_irq_idx, src_irq_name]
         self.dst = [dst_dev, dst_irq_idx, dst_irq_name]
 
