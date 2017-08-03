@@ -475,40 +475,12 @@ class SystemBusDeviceNode(DeviceNode):
             gen.gen_field("system_bus = " + gen.nameof(self.parent_bus))
 
         if self.mmio_mappings:
-            gen.gen_field("mmio = [")
-            gen.line()
-            gen.push_indent()
-            prev_idx = -1
-            for idx, mmio in self.mmio_mappings.items():
-                for none_idx in xrange(prev_idx + 1, idx):
-                    if none_idx > 0:
-                        gen.line(",")
-                    gen.write("None")
-                prev_idx = idx
-                if idx > 0:
-                    gen.line(",")
-                gen.write(gen.gen_const(mmio))
-            gen.line()
-            gen.pop_indent()
-            gen.write("]")
+            gen.gen_field("mmio = ")
+            gen.pprint(list(iter_mappings(self.mmio_mappings)))
 
         if self.pmio_mappings:
-            gen.gen_field("pmio = [")
-            gen.line()
-            gen.push_indent()
-            prev_idx = -1
-            for idx, pmio in self.pmio_mappings.items():
-                for none_idx in xrange(prev_idx + 1, idx):
-                    if none_idx > 0:
-                        gen.line(",")
-                    gen.write("None")
-                prev_idx = idx
-                if idx > 0:
-                    gen.line(",")
-                gen.write(gen.gen_const(pmio))
-            gen.line()
-            gen.pop_indent()
-            gen.write("]")
+            gen.gen_field("pmio = ")
+            gen.pprint(list(iter_mappings(self.pmio_mappings)))
 
         gen.gen_end()
         self.gen_props(gen)
