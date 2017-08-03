@@ -437,6 +437,13 @@ class DeviceNode(Node):
             arg_name = "parent_bus"
         return getattr(self, arg_name)
 
+def iter_mappings(mapping):
+    for idx in xrange(0, max(mapping.keys()) + 1):
+        try:
+            yield mapping[idx]
+        except KeyError:
+            yield None
+
 class SystemBusDeviceNode(DeviceNode):
     def __init__(self, qom_type,
         system_bus = None,
