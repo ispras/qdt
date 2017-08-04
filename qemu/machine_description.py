@@ -91,9 +91,9 @@ class MachineNode(QOMDescription):
                         self.add_node(dev)
 
             for irq in self.irqs:
-                if not irq.src[0] in self.devices + self.irq_hubs:
+                if not irq.src_dev in self.devices + self.irq_hubs:
                     self.add_node(irq.src[0])
-                if not irq.dst[0] in self.devices + self.irq_hubs:
+                if not irq.dst_dev in self.devices + self.irq_hubs:
                     self.add_node(irq.dst[0])
 
             for mem in self.mems:
