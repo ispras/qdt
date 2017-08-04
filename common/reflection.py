@@ -2,6 +2,9 @@ from inspect import \
     getmro, \
     getargspec
 
+from collections import \
+    OrderedDict
+
 # http://stackoverflow.com/questions/12627118/get-a-function-arguments-default-value
 def get_default_args(func):
     """
@@ -17,7 +20,7 @@ def get_class_total_args(Class):
     # positional arguments
     total_pa = []
     # keyword arguments
-    total_kwa = {}
+    total_kwa = OrderedDict()
 
     """ Assume that **keywords argument is used to pass keyword arguments
     to parent classes. As soon as *varargs argument is used to pass
@@ -63,7 +66,7 @@ def get_class_total_args(Class):
                 break
 
         if merge_kwa and kwargs_count:
-            kwa = dict(zip(args[-kwargs_count:], defaults))
+            kwa = OrderedDict(zip(args[-kwargs_count:], defaults))
 
             for key, val in kwa.items():
                 if key not in total_kwa:
