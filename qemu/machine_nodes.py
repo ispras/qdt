@@ -116,12 +116,17 @@ class SystemBusNode(BusNode):
             )
 
 class PCIExpressBusNode(BusNode):
-    def __init__(self, host_bridge, **kw):
+    def __init__(self, host_bridge,
+        c_type = "PCIBus",
+        cast = "PCI_BUS",
+        child_name = "pci",
+        **kw
+    ):
         BusNode.__init__(self,
             parent = host_bridge,
-            c_type = "PCIBus",
-            cast = "PCI_BUS",
-            child_name = "pci",
+            c_type = c_type,
+            cast = cast,
+            child_name = child_name,
             **kw
         )
 
@@ -136,10 +141,10 @@ class PCIExpressBusNode(BusNode):
         return getattr(self, arg_name)
 
 class ISABusNode(BusNode):
-    def __init__(self, bus_controller, **kw):
+    def __init__(self, bus_controller, child_name = "isa", **kw):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "isa",
+            child_name = child_name,
             **kw
         )
 
@@ -154,10 +159,10 @@ class ISABusNode(BusNode):
         gen.gen_end()
 
 class IDEBusNode(BusNode):
-    def __init__(self, bus_controller, **kw):
+    def __init__(self, bus_controller, child_name = "ide", **kw):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "ide",
+            child_name = child_name,
             **kw
         )
 
@@ -172,13 +177,19 @@ class IDEBusNode(BusNode):
         return getattr(self, arg_name)
 
 class I2CBusNode(BusNode):
-    def __init__(self, bus_controller, **kw):
+    def __init__(self, bus_controller,
+        child_name = "i2c",
+        cast = None,
+        c_type = "I2CBus",
+        force_index = False,
+        **kw
+    ):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "i2c",
-            cast = None,
-            c_type = "I2CBus",
-            force_index = False,
+            child_name = child_name,
+            cast = cast,
+            c_type = c_type,
+            force_index = force_index,
             **kw
         )
 
