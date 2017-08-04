@@ -1969,8 +1969,8 @@ IRQ line creation
             if irq in self.dev2node:
                 continue
 
-            src = self.dev2node[irq.src[0]]
-            dst = self.dev2node[irq.dst[0]]
+            src = self.dev2node[irq.src_dev]
+            dst = self.dev2node[irq.dst_dev]
 
             line = IRQLine(irq, src, dst)
 
