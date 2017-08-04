@@ -150,6 +150,56 @@ class PyGenerator(object):
             self.line(",")
             self.write(string)
 
+    def gen_args(self, obj, pa_names = False):
+        """
+            Given object, this method generates positional and keyword argument
+        assignments for `__init__` method of object's class. Lists of arguments
+        are gathered in method resolution order (MRO).
+        See `get_class_total_args` for details.
+
+            A value for assignment is searched in the object by argument name
+        using built-in `getattr`. If it is not such trivial, the class must
+        define `__get_init_arg_val__`. Given an argument name, it must either
+        return the value or raise an `AttributeError`.
+
+            Keyword assignment is only generated when the value differs from the
+        default.  Both `is` and `==` operators are used to compare values. `is`
+        is used first (optimization).
+
+            If an `AttributeError` raised for a _keyword_ argument name, the
+        argument assignment is skipped. Positional argument assignments cannot
+        be skipped.
+
+        pa_names
+            whether positional arguments to be generated with names.
+        """
+
+        pal, kwal = get_class_total_args(type(obj))
+
+        try:
+            get_val = type(obj).__get_init_arg_val__
+        except AttributeError:
+            get_val = getattr
+
+        for pa in pal:
+            v = get_val(obj, pa)
+            self.gen_field((pa + " = ") if pa_names else "")
+            self.pprint(v)
+
+        for kwa, default in kwal.items():
+            try:
+                v = get_val(obj, kwa)
+            except AttributeError:
+                # If value cannot be obtained, skip the argument generation
+                continue
+
+            # generate only arguments with non-default values
+            if (v is default) or (v == default):
+                continue
+
+            self.gen_field(kwa + " = ")
+            self.pprint(v)
+
     def gen_end(self, suffix = ")"):
         if not self.first_field:
             self.line()
