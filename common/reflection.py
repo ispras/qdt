@@ -37,8 +37,11 @@ def get_class_total_args(Class):
 
         kwargs_count = 0 if defaults is None else  len(defaults)
 
-        pa = args[:-kwargs_count]
-        pa = pa[1:] # exclude 'self'
+        # slice from index 1 to exclude 'self'
+        if kwargs_count > 0:
+            pa = args[1:-kwargs_count]
+        else:
+            pa = args[1:]
 
         if merge_pa and pa:
             if total_pa:
