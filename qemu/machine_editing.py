@@ -658,6 +658,12 @@ class MachineNodeSetAttributeOperation(MachineNodeOperation):
             self.gen_val_str(self.new_val)
         )
 
+class MOp_SetNodeVarNameBase(MachineNodeSetAttributeOperation):
+    def __init__(self, new_base, *args, **kw):
+        super(MOp_SetNodeVarNameBase, self).__init__("var_base", new_base,
+            *args, **kw
+        )
+
 class MOp_SetMemNodeAttr(MachineNodeSetAttributeOperation):
     pass
 
