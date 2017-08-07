@@ -127,6 +127,8 @@ class BusSettingsWidget(SettingsWidget):
             )
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         values = [
             DeviceSettingsWidget.gen_node_link_text(dev) for dev \
                 in ( self.mach.devices + [ None ] )

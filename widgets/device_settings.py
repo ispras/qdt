@@ -496,6 +496,8 @@ class DeviceSettingsWidget(SettingsWidget):
         return ret
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         self.qom_type_var.set(self.dev.qom_type)
 
         for p, desc in self.prop2field.items():

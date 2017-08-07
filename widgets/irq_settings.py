@@ -159,6 +159,8 @@ class IRQSettingsWidget(SettingsWidget):
             self.mht.set_sequence_description(_("IRQ line configuration."))
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         nodes = [ DeviceSettingsWidget.gen_node_link_text(node) \
             for node in self.mach.devices + self.mach.irq_hubs ]
 

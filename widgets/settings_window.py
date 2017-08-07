@@ -59,6 +59,9 @@ class SettingsWidget(GUIFrame):
 
         self.bind("<Destroy>", self.__on_destroy__)
 
+    def refresh(self):
+        pass
+
     def apply(self):
         if self.mht is None:
             # apply have no effect in snapshot mode

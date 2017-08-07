@@ -186,6 +186,8 @@ class MemorySettingsWidget(SettingsWidget):
             )
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         values = [
             DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
                 [ mem for mem in self.mach.mems if (
