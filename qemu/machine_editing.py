@@ -650,30 +650,16 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
             return str(val)
 
     def __description__(self):
-        mach = self.find_desc()
-        dev = mach.id2node[self.node_id]
-
-        return _("Replace value '%s' of attribute '%s' of device %s (%d) with \
-value '%s'.") % (
+        return _("Replace value '%s' of attribute '%s' of %s with value '%s'."
+        ) % (
             self.gen_val_str(self.old_val),
             self.attr,
-            dev.qom_type, self.node_id,
+            self.gen_id_str(self.node_id),
             self.gen_val_str(self.new_val)
         )
 
 class MOp_SetMemNodeAttr(MachineDeviceSetAttributeOperation):
-
-    def __description__(self):
-        mach = self.find_desc()
-        mem = mach.id2node[self.node_id]
-
-        return _("Replace value '%s' of attribute '%s' of memory node %s (%d) \
-with value '%s'.") % (
-            self.gen_val_str(self.old_val),
-            self.attr,
-            mem.name, self.node_id,
-            self.gen_val_str(self.new_val)
-        )
+    pass
 
 class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
@@ -723,17 +709,7 @@ class MOp_PCIDevSetMultifunction(MachineDeviceSetAttributeOperation):
         )
 
 class MOp_SetIRQAttr(MachineDeviceSetAttributeOperation):
-    def __description__(self):
-        mach = self.find_desc()
-        dev = mach.id2node[self.node_id]
-
-        return _("Replace value '%s' of attribute '%s' of IRQ line %d with \
-value '%s'.") % (
-            self.gen_val_str(self.old_val),
-            self.attr,
-            self.node_id,
-            self.gen_val_str(self.new_val)
-        )
+    pass
 
 class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
     def __description__(self):
@@ -763,14 +739,7 @@ class MOp_SetMemNodeAlias(MachineNodeSetLinkAttributeOperation):
         )
 
 class MOp_SetBusAttr(MachineDeviceSetAttributeOperation):
-    def __description__(self):
-        return _("Replace value '%s' of attribute '%s' of bus %d with value \
-'%s'.") % (
-            self.gen_val_str(self.old_val),
-            self.attr,
-            self.node_id,
-            self.gen_val_str(self.new_val)
-        )
+    pass
 
 class MachineIOMappingOperation(MachineNodeOperation):
     def __init__(self, mio, idx, *args, **kw):
