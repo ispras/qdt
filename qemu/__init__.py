@@ -125,3 +125,5 @@ from .qom_editing import \
 
 from .makefile_patching import \
     patch_makefile
+
+from .qom_hierarchy import *
