@@ -53,6 +53,7 @@ from qemu import \
     MOp_SetChildBus, \
     BusNode, \
     IRQLine as QIRQLine, \
+    MOp_SetNodeVarNameBase, \
     MachineNodeSetLinkAttributeOperation, \
     MOp_AddIRQLine, \
     MOp_DelIRQLine, \
@@ -1040,6 +1041,8 @@ IRQ line creation
 
                 self.add_node(node, False)
 
+            self.__update_var_names()
+        elif isinstance(op, MOp_SetNodeVarNameBase):
             self.__update_var_names()
 
         self.invalidate()
