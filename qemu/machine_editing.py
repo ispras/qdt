@@ -618,13 +618,13 @@ class MachineNodeSetAttributeOperation(MachineNodeOperation):
         self.new_val = deepcopy(new_value)
 
     def __backup__(self):
-        dev = self.mach.id2node[self.node_id]
-        val = getattr(dev, self.attr)
+        node = self.mach.id2node[self.node_id]
+        val = getattr(node, self.attr)
         self.old_val = deepcopy(val)
 
     def __do__(self):
-        dev = self.mach.id2node[self.node_id]
-        setattr(dev, self.attr, deepcopy(self.new_val))
+        node = self.mach.id2node[self.node_id]
+        setattr(node, self.attr, deepcopy(self.new_val))
 
     def __undo__(self):
         dev = self.mach.id2node[self.node_id]
