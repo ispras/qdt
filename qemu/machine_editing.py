@@ -610,7 +610,7 @@ class MOp_DelIRQHub(MOp_AddIRQHub):
     def __description__(self):
         return _("Delete IRQ hub (%d).") % self.node_id
 
-class MachineDeviceSetAttributeOperation(MachineNodeOperation):
+class MachineNodeSetAttributeOperation(MachineNodeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
 
@@ -658,12 +658,12 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
             self.gen_val_str(self.new_val)
         )
 
-class MOp_SetMemNodeAttr(MachineDeviceSetAttributeOperation):
+class MOp_SetMemNodeAttr(MachineNodeSetAttributeOperation):
     pass
 
-class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
+class MachineNodeSetLinkAttributeOperation(MachineNodeSetAttributeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             attribute_name,
             new_value.id,
             *args, **kw
@@ -687,28 +687,28 @@ class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
     def gen_val_str(self, val):
         return self.gen_id_str(val)
 
-class MOp_PCIDevSetSlot(MachineDeviceSetAttributeOperation):
+class MOp_PCIDevSetSlot(MachineNodeSetAttributeOperation):
     def __init__(self, slot, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             "slot", slot,
             *args, **kw
         )
 
-class MOp_PCIDevSetFunction(MachineDeviceSetAttributeOperation):
+class MOp_PCIDevSetFunction(MachineNodeSetAttributeOperation):
     def __init__(self, function, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             "function", function,
             *args, **kw
         )
 
-class MOp_PCIDevSetMultifunction(MachineDeviceSetAttributeOperation):
+class MOp_PCIDevSetMultifunction(MachineNodeSetAttributeOperation):
     def __init__(self, multifunction, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             "multifunction", multifunction,
             *args, **kw
         )
 
-class MOp_SetIRQAttr(MachineDeviceSetAttributeOperation):
+class MOp_SetIRQAttr(MachineNodeSetAttributeOperation):
     pass
 
 class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
@@ -738,7 +738,7 @@ class MOp_SetMemNodeAlias(MachineNodeSetLinkAttributeOperation):
             self.gen_id_str(self.new_val)
         )
 
-class MOp_SetBusAttr(MachineDeviceSetAttributeOperation):
+class MOp_SetBusAttr(MachineNodeSetAttributeOperation):
     pass
 
 class MachineIOMappingOperation(MachineNodeOperation):

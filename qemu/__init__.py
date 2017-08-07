@@ -85,7 +85,7 @@ from .machine_editing import \
                 MOp_AddIRQLine, \
             MOp_AddIRQHub, \
                 MOp_DelIRQHub, \
-            MachineDeviceSetAttributeOperation, \
+            MachineNodeSetAttributeOperation, \
                 MOp_SetMemNodeAttr, \
                 MachineNodeSetLinkAttributeOperation, \
                     MOp_SetIRQEndPoint, \
