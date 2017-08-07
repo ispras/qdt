@@ -14,7 +14,11 @@ from .hotkey import \
     HKEntry
 
 from six.moves.tkinter import \
+    StringVar, \
     BOTH
+
+from qemu import \
+    MOp_SetNodeVarNameBase
 
 class SettingsWidget(GUIFrame):
     def __init__(self, node, machine, *args, **kw):
@@ -34,14 +38,33 @@ class SettingsWidget(GUIFrame):
 
         self.node_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
-        fr.rowconfigure(0, weight = 0)
         fr.columnconfigure(0, weight = 0)
         fr.columnconfigure(1, weight = 1)
 
+        # variable name base editing
+        fr.rowconfigure(0, weight = 0)
+        VarLabel(fr,
+            text = _("Variable name base")
+        ).grid(
+            row = 0,
+            column = 0,
+            sticky = "NSW"
+        )
+
+        self.v_var_base = v = StringVar()
+        HKEntry(fr,
+            textvariable = v
+        ).grid(
+            row = 0,
+            column = 1,
+            sticky = "NESW"
+        )
+
+        fr.rowconfigure(1, weight = 0)
         VarLabel(fr,
             text = _("Name of variable")
         ).grid(
-            row = 0,
+            row = 1,
             column = 0,
             sticky = "NSW"
         )
@@ -50,7 +73,7 @@ class SettingsWidget(GUIFrame):
             text = machine.node_id2var_name[node.id],
             state = "readonly"
         ).grid(
-            row = 0,
+            row = 1,
             column = 1,
             sticky = "NESW"
         )
@@ -60,7 +83,7 @@ class SettingsWidget(GUIFrame):
         self.bind("<Destroy>", self.__on_destroy__)
 
     def refresh(self):
-        pass
+        self.v_var_base.set(self.node.var_base)
 
     def apply(self):
         if self.mht is None:
@@ -70,6 +93,10 @@ class SettingsWidget(GUIFrame):
         self.mht.unwatch_changed(self.on_changed)
 
         prev_pos = self.mht.pos
+
+        new_var_base = self.v_var_base.get()
+        if new_var_base != self.node.var_base:
+            self.mht.stage(MOp_SetNodeVarNameBase, new_var_base, self.node.id)
 
         self.__apply_internal__()
 
