@@ -110,8 +110,6 @@ class BusSettingsWidget(SettingsWidget):
             else:
                 self.mht.append_child_bus(new_parent_id, self.bus.id)
 
-        prev_pos = self.mht.pos
-
         for (text, field, _type) in self.fields:
             new_val = getattr(self, "var_" + field).get()
             cur_val = getattr(self.bus, field)
@@ -121,10 +119,9 @@ class BusSettingsWidget(SettingsWidget):
 
             self.mht.stage(MOp_SetBusAttr, field, new_val, self.bus.id)
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(
-                _("Bus %d configuration.") % self.bus.id
-            )
+        self.mht.set_sequence_description(
+            _("Bus %d configuration.") % self.bus.id
+        )
 
     def refresh(self):
         SettingsWidget.refresh(self)

@@ -108,8 +108,6 @@ class IRQSettingsWidget(SettingsWidget):
                     w.config(state = "disabled")
 
     def __apply_internal__(self):
-        prev_pos = self.mht.pos
-
         irq = self.irq
 
         for pfx in [ "src", "dst" ]:
@@ -155,8 +153,7 @@ class IRQSettingsWidget(SettingsWidget):
                         irq.id
                     )
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(_("IRQ line configuration."))
+        self.mht.set_sequence_description(_("IRQ line configuration."))
 
     def refresh(self):
         SettingsWidget.refresh(self)

@@ -595,8 +595,6 @@ class DeviceSettingsWidget(SettingsWidget):
         return ret
 
     def __apply_internal__(self):
-        prev_pos = self.mht.pos
-
         # apply parent bus
         new_bus_text = self.bus_var.get()
         new_bus = self.find_node_by_link_text(new_bus_text)
@@ -691,5 +689,4 @@ class DeviceSettingsWidget(SettingsWidget):
                 new_bus
             )
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(_("Device configuration."))
+        self.mht.set_sequence_description(_("Device configuration."))

@@ -156,8 +156,6 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
     def __apply_internal__(self):
         DeviceSettingsWidget.__apply_internal__(self)
 
-        prev_pos = self.mht.pos
-
         for mio in [ "mmio", "pmio" ]:
             rows = getattr(self, mio + "_rows")
             mappings = getattr(self.dev, mio + "_mappings")
@@ -189,10 +187,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
                     self.dev.id
                 )
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(
-                _("System bus device configuration.")
-            )
+        self.mht.set_sequence_description(_("System bus device configuration."))
 
     def on_del_mmio(self):
         self.on_del("mmio")

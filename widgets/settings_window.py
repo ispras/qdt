@@ -69,9 +69,13 @@ class SettingsWidget(GUIFrame):
 
         self.mht.unwatch_changed(self.on_changed)
 
+        prev_pos = self.mht.pos
+
         self.__apply_internal__()
 
-        self.mht.commit()
+        if prev_pos is not self.mht.pos:
+            # sequence description must be set during __apply_internal__
+            self.mht.commit()
 
         self.mht.watch_changed(self.on_changed)
 

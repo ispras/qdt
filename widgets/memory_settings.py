@@ -131,8 +131,6 @@ class MemorySettingsWidget(SettingsWidget):
             self.w_offset.grid_forget()
 
     def __apply_internal__(self):
-        prev_pos = self.mht.pos
-
         new_parent = self.find_node_by_link_text(self.var_parent.get())
         cur_parent = self.mem.parent
 
@@ -178,12 +176,11 @@ class MemorySettingsWidget(SettingsWidget):
                     new_alias_to,
                     self.mem.id)
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(
-                _("Memory '%s' (%d) configuration.") % (
-                    self.mem.name, self.mem.id
-                )
+        self.mht.set_sequence_description(
+            _("Memory '%s' (%d) configuration.") % (
+                self.mem.name, self.mem.id
             )
+        )
 
     def refresh(self):
         SettingsWidget.refresh(self)
