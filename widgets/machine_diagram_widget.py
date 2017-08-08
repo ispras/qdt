@@ -95,6 +95,9 @@ from canvas2svg import \
 from .irq_hub_settings import \
     IRQHubSettingsWindow
 
+from itertools import \
+    count
+
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
@@ -1093,21 +1096,25 @@ IRQ line creation
             irq_id
         )
 
-        # automatically set GPIO names at the ends of that new IRQ line
+        # auto set GPIO names and indices at the ends of that new IRQ line
         project = self.mht.pht.p
         try:
             qom_tree = project.qom_tree
         except AttributeError:
-            pass # no QOM tree available
-        else:
-            for node_id, attr_name in [
-                (irq_src, "src_irq_name"),
-                (irq_dst, "dst_irq_name")
-            ]:
-                node = self.mach.id2node[node_id]
-                if not isinstance(node, DeviceNode):
-                    continue
+            qom_tree = None # no QOM tree available
 
+        for node_id, prefix in [
+            (irq_src, "src"),
+            (irq_dst, "dst")
+        ]:
+            node = self.mach.id2node[node_id]
+            if not isinstance(node, DeviceNode):
+                continue
+
+            gpio_name = None
+            attr_name = prefix + "_irq_name"
+
+            if qom_tree is not None: # cannot choice GPIO name without QOM tree
                 name = node.qom_type
 
                 # try to find such type in tree
@@ -1138,6 +1145,24 @@ IRQ line creation
                             break
 
                     t = t.parent
+
+            # find and assign free GPIO index
+            attr_dev = prefix + "_dev"
+            attr_idx = prefix + "_irq_idx"
+            for idx in count(0):
+                for irq in node.irqs:
+                    if getattr(irq, attr_dev) is not node:
+                        continue # opposite IRQ direction
+                    if getattr(irq, attr_name) != gpio_name:
+                        continue # other GPIO name
+                    if idx == getattr(irq, attr_idx):
+                        break
+                else:
+                    # free idx found, assign it
+                    if idx != 0: # default value
+                        self.mht.stage(MOp_SetIRQAttr, attr_idx, idx, irq_id)
+                    break
+                # this idx is already used
 
         self.mht.commit(sequence_description = _("Add IRQ line."))
 
