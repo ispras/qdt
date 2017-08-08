@@ -57,6 +57,7 @@ from qemu import \
     MachineNodeSetLinkAttributeOperation, \
     MOp_AddIRQLine, \
     MOp_DelIRQLine, \
+    MOp_SetIRQAttr, \
     MachineNodeOperation, \
     MOp_AddIRQHub, \
     MOp_SetDevParentBus, \
@@ -1068,15 +1069,66 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_device_irq_destination(self):
+        irq_src = self.irq_src
+
         did = self.current_popup_tag
         irq_dst = self.node2dev[self.id2node[did]].id
 
+        irq_id = self.mach.get_free_id()
+
         self.mht.stage(
             MOp_AddIRQLine,
-            self.irq_src, irq_dst,
+            irq_src, irq_dst,
             0, 0, None, None,
-            self.mach.get_free_id()
+            irq_id
         )
+
+        # automatically set GPIO names at the ends of that new IRQ line
+        project = self.mht.pht.p
+        try:
+            qom_tree = project.qom_tree
+        except AttributeError:
+            pass # no QOM tree available
+        else:
+            for node_id, attr_name in [
+                (irq_src, "src_irq_name"),
+                (irq_dst, "dst_irq_name")
+            ]:
+                node = self.mach.id2node[node_id]
+                if not isinstance(node, DeviceNode):
+                    continue
+
+                name = node.qom_type
+
+                # try to find such type in tree
+                for t in next(qom_tree.find(name = "device")).descendants():
+                    if name == t.name:
+                        break
+                    try:
+                        if name in t.macro:
+                            break
+                    except AttributeError:
+                        pass
+                else:
+                    t = None
+
+                # try to find GPIO names for this type
+                while t:
+                    try:
+                        gpios = t.gpio_names
+                    except AttributeError:
+                        pass
+                    else:
+                        if gpios:
+                            gpio_name = gpios[0]
+                            # a GPIO name is found, assign it
+                            self.mht.stage(MOp_SetIRQAttr, attr_name,
+                                gpio_name, irq_id
+                            )
+                            break
+
+                    t = t.parent
+
         self.mht.commit(sequence_description = _("Add IRQ line."))
 
         self.notify_popup_command()
