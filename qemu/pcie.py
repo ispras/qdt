@@ -329,21 +329,21 @@ corresponding vendor is given" % attr
         self.source.add_type(self.device_realize)
 
         code = ""
-        used_types = [self.state_struct]
+        used_types = set([self.state_struct])
         used_s = False
 
         if self.msi_messages_num > 0 :
             code += """
     msi_uninit(dev);
 """
-            used_types.append(Type.lookup("msi_uninit"))
+            used_types.add(Type.lookup("msi_uninit"))
 
         if self.nic_num > 0:
             code += "\n"
             used_s = True
 
             del_nic = Type.lookup("qemu_del_nic")
-            used_types.append(del_nic)
+            used_types.add(del_nic)
 
             for nicN in xrange(self.nic_num):
                 nic_name = self.nic_name(nicN)
