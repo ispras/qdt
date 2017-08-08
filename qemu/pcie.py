@@ -349,6 +349,21 @@ corresponding vendor is given" % attr
                 nic_name = self.nic_name(nicN)
                 code += "    %s(s->%s);\n" % (del_nic.name, nic_name)
 
+        if self.timer_num > 0:
+            used_s = True
+            code += "\n"
+            used_types.update([
+                Type.lookup("timer_del"),
+                Type.lookup("timer_free")
+            ])
+
+            for timerN in range(self.timer_num):
+                code += """    timer_del(s->{timerN});
+    timer_free(s->{timerN});
+""".format(
+timerN = self.timer_name(timerN)
+                )
+
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
             args = [Type.lookup("PCIDevice").gen_var("dev", pointer = True)],
