@@ -328,40 +328,40 @@ corresponding vendor is given" % attr
         )
         self.source.add_type(self.device_realize)
 
-        exit_code = ""
-        exit_used_types = [self.state_struct]
-        exit_used_s = False
+        code = ""
+        used_types = [self.state_struct]
+        used_s = False
 
         if self.msi_messages_num > 0 :
-            exit_code += """
+            code += """
     msi_uninit(dev);
 """
-            exit_used_types.append(Type.lookup("msi_uninit"))
+            used_types.append(Type.lookup("msi_uninit"))
 
         if self.nic_num > 0:
-            exit_code += "\n"
-            exit_used_s = True
+            code += "\n"
+            used_s = True
 
             del_nic = Type.lookup("qemu_del_nic")
-            exit_used_types.append(del_nic)
+            used_types.append(del_nic)
 
             for nicN in xrange(self.nic_num):
                 nic_name = self.nic_name(nicN)
-                exit_code += "    %s(s->%s);\n" % (del_nic.name, nic_name)
+                code += "    %s(s->%s);\n" % (del_nic.name, nic_name)
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
             args = [Type.lookup("PCIDevice").gen_var("dev", pointer = True)],
             static = True,
-            used_types = exit_used_types,
+            used_types = used_types,
             body = """\
     {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if exit_used_s else "__attribute__((unused))@b",
+        unused = "" if used_s else "__attribute__((unused))@b",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
-        extra_code = exit_code
+        extra_code = code
     )
         )
         self.source.add_type(self.device_exit)
