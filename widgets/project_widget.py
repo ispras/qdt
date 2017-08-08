@@ -342,17 +342,20 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         if isinstance(op, POp_AddDesc):
             self.tv_descs.update()
 
-            for desc_name, lys in self.p.layouts.items():
+            desc_name = op.get_arg("name")
+            try:
+                desc = next(self.p.find(name = desc_name))
+            except StopIteration: # removed
                 try:
-                    next(self.p.find(name = desc_name))
-                except StopIteration:
-                    # removed
+                    lys = self.p.layouts[desc_name]
+                except KeyError:
+                    pass
+                else:
                     for l in lys.values():
                         if l.widget is not None:
                             l.widget.destroy()
                             l.widget = None
                             l.shown = False
-                    break
         elif isinstance(op, DOp_SetAttr):
             self.tv_descs.update()
         elif isinstance(op, POp_SetDescLayout):
