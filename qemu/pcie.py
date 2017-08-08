@@ -161,6 +161,20 @@ corresponding vendor is given" % attr
             )
         self.header.add_type(self.type_cast_macro)
 
+        self.device_reset = Function(
+        "%s_reset" % self.qtn.for_id_name,
+            body = """\
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
+""".format(
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+            ),
+            args = [Type.lookup("DeviceState").gen_var("dev", True)],
+            static = True,
+            used_types = [self.state_struct]
+        )
+        self.source.add_type(self.device_reset)
+
         self.vendor_macro = self.vendor.find_macro()
 
         if self.subsystem_vendor and self.subsystem:
@@ -368,6 +382,7 @@ corresponding vendor is given" % attr
     PCIDeviceClass@b*pc@b=@sPCI_DEVICE_CLASS(oc);
 
     pc->realize@b@b@b{pad}=@s{dev}_realize;
+    dc->reset@b@b@b@b@b{pad}=@s{dev}_reset;
     pc->exit@b@b@b@b@b@b{pad}=@s{dev}_exit;
     pc->vendor_id@b{pad}=@s{vendor_macro};
     pc->device_id@b{pad}=@s{device_macro};
@@ -395,6 +410,7 @@ Type.lookup("void").gen_var("opaque", True),
                 Type.lookup("DeviceClass"),
                 Type.lookup("PCIDeviceClass"),
                 self.device_realize,
+                self.device_reset,
                 self.device_exit,
                 self.vendor_macro,
                 self.device_macro,
@@ -437,7 +453,8 @@ Type.lookup("void").gen_var("opaque", True),
             )
 
         # order life cycle functions
-        self.device_exit.extra_references = {self.device_realize}
+        self.device_reset.extra_references = {self.device_realize}
+        self.device_exit.extra_references = {self.device_reset}
 
     def generate_header(self):
         # TODO: current value of inherit_references is dictated by Qemu coding
