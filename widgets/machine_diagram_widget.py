@@ -92,6 +92,9 @@ from canvas2svg import \
     SEGMENT_TO_PATH, \
     saveall as saveall2svg
 
+from .irq_hub_settings import \
+    IRQHubSettingsWindow
+
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
@@ -595,6 +598,11 @@ IRQ line creation
             command = self.notify_popup_command if self.mht is None else \
                 self.on_popup_single_irq_hub_irq_destination,
             state = "disabled"
+        )
+        p.add_separator()
+        p.add_command(
+            label = _("Settings"),
+            command = self.on_popup_irq_hub_settings
         )
         p.add_separator()
         p.add_command(
@@ -1130,6 +1138,28 @@ IRQ line creation
                     t = t.parent
 
         self.mht.commit(sequence_description = _("Add IRQ line."))
+
+        self.notify_popup_command()
+
+    def show_irq_hub_settings(self, hub, x, y):
+        wnd = IRQHubSettingsWindow(hub, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
+    def on_popup_irq_hub_settings(self):
+        id = self.current_popup_tag
+
+        x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+        x, y = self.canvas.coords(id)[-2:]
+        x = x - x0
+        y = y - y0
+
+        hub = self.node2dev[self.id2node[id]]
+
+        self.show_irq_hub_settings(hub, x, y)
 
         self.notify_popup_command()
 
