@@ -2,9 +2,6 @@ from .var_widgets import \
     VarButton, \
     VarToplevel
 
-from six.moves.tkinter import \
-    Frame
-
 from common import \
     mlget as _
 
@@ -13,7 +10,7 @@ from .gui_frame import \
 
 class SettingsWidget(GUIFrame):
     def __init__(self, machine, *args, **kw):
-        Frame.__init__(self, *args, **kw)
+        GUIFrame.__init__(self, *args, **kw)
 
         try:
             self.mht = self.winfo_toplevel().mht
@@ -84,7 +81,7 @@ class SettingsWindow(VarToplevel):
 
         self.rowconfigure(1, weight = 0)
 
-        fr = Frame(self)
+        fr = GUIFrame(self)
         fr.grid(
             row = 1,
             column = 0,

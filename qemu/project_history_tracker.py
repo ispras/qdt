@@ -231,7 +231,8 @@ class MachineProxyTracker(object):
         mem = self.mach.id2node[m_id]
 
         # delete all aliases to the memory node
-        for n in self.mach.id2node.values():
+        # Copy list to avoid runtime error on dict changed during iteration.
+        for n in list(self.mach.id2node.values()):
             if isinstance(n, MemoryAliasNode):
                 if n.alias_to is mem:
                     self.delete_memory_node(n.id)

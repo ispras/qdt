@@ -16,7 +16,6 @@ class CanvasDnD(GUIFrame):
     def __init__(self, master,
             id_priority_sort_function = lambda ids : ids
         ):
-        self.master = master
 
         GUIFrame.__init__ (self, master)
         self.canvas = Canvas (self, 

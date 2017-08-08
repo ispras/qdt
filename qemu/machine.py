@@ -200,7 +200,7 @@ class MachineType(QOMType):
                 else:
                     self.use_type_name("DeviceState")
                     self.use_type_name("qdev_create")
-    
+
                     decl_code += "    DeviceState *%s;\n" % dev_name
                     def_code += """\
     {dev_name} = qdev_create({bus_name}, {qom_type});{props_code}
@@ -328,7 +328,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                     def_code += """\
     memory_region_init_alias({mem_name}, NULL, {dbg_name}, {orig}, {offset}, {size});
 """.format(
-    mem_name = mem_name, 
+    mem_name = mem_name,
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
     size = node.size,
     orig = self.gen_name_for_mem(node.alias_to),

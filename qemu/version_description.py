@@ -50,14 +50,14 @@ class ProcessingUntrackedFile(RuntimeError):
         super(ProcessingUntrackedFile, self).__init__(file_name)
 
     def __str__(self):
-        return (_("Source has untracked file: %s.") % self.message).get()
+        return (_("Source has untracked file: %s.") % self.args[0]).get()
 
 class ProcessingModifiedFile(RuntimeError):
     def __init__(self, file_name):
         super(ProcessingModifiedFile, self).__init__(file_name)
 
     def __str__(self):
-        return (_("Source has modified file: %s.") % self.message).get()
+        return (_("Source has modified file: %s.") % self.args[0]).get()
 
 def load_build_path_list():
     if not isfile(bp_file_name):
