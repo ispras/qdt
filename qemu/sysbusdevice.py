@@ -327,6 +327,21 @@ use_as_prototype(
         used_s = False
         used_types = set([self.state_struct, self.type_cast_macro])
 
+        if self.timer_num > 0:
+            used_s = True
+            code += "\n"
+            used_types.update([
+                Type.lookup("timer_del"),
+                Type.lookup("timer_free")
+            ])
+
+            for timerN in range(self.timer_num):
+                code += """    timer_del(s->{timerN});
+    timer_free(s->{timerN});
+""".format(
+timerN = self.timer_name(timerN)
+                )
+
         self.device_unrealize = Function(
             self.qtn.for_id_name + "_unrealize",
             args = [
