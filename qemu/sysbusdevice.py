@@ -5,6 +5,7 @@ from .qom import \
     QOMType
 
 from source import \
+    Pointer, \
     Macro, \
     Initializer, \
     Function, \
@@ -321,6 +322,29 @@ use_as_prototype(
 
         self.source.add_type(self.instance_init)
 
+        # `unrealized` method code generation
+        code = ""
+        used_s = False
+        used_types = set([self.state_struct, self.type_cast_macro])
+
+        self.device_unrealize = Function(
+            self.qtn.for_id_name + "_unrealize",
+            args = [
+                Pointer(Type.lookup("DeviceState")).gen_var("dev"),
+                Pointer(Pointer(Type.lookup("Error"))).gen_var("errp")
+            ],
+            static = True,
+            used_types = used_types,
+            body = "    {unused}{Struct}@b*s@b=@s{CAST}(dev);\n"
+            "{extra_code}".format(
+unused = "" if used_s else "__attribute__((unused))@b",
+Struct = self.state_struct.name,
+CAST = self.type_cast_macro.name,
+extra_code = code
+            )
+        )
+        self.source.add_type(self.device_unrealize)
+
         self.vmstate = self.gen_vmstate_var(self.state_struct)
 
         self.source.add_global_variable(self.vmstate)
@@ -335,10 +359,11 @@ use_as_prototype(
             body = """\
     DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
 
-    dc->realize@b=@s{dev}_realize;
-    dc->reset@b@b@b=@s{dev}_reset;
-    dc->vmsd@b@b@b@b=@s&vmstate_{dev};
-    dc->props@b@b@b=@s{dev}_properties;
+    dc->realize@b@b@b=@s{dev}_realize;
+    dc->reset@b@b@b@b@b=@s{dev}_reset;
+    dc->unrealize@b=@s{dev}_unrealize;
+    dc->vmsd@b@b@b@b@b@b=@s&vmstate_{dev};
+    dc->props@b@b@b@b@b=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),
@@ -348,7 +373,9 @@ Type.lookup("void").gen_var("opaque", True),
             used_types = [
                 Type.lookup("DeviceClass"),
                 self.device_realize,
-                self.device_reset],
+                self.device_reset,
+                self.device_unrealize
+            ],
             used_globals = [
                     self.vmstate,
                     self.properties
@@ -379,6 +406,7 @@ Type.lookup("void").gen_var("opaque", True),
         # order life cycle functions
         self.device_realize.extra_references = {self.instance_init}
         self.device_reset.extra_references = {self.device_realize}
+        self.device_unrealize.extra_references = {self.device_reset}
 
     def generate_header(self):
         #header = HeaderFile(self.qtn.get_header_name())
