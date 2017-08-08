@@ -133,3 +133,5 @@ from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
 from .statusbar import *
+
+from .irq_hub_settings import *
