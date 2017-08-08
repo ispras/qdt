@@ -491,7 +491,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         # convert device tree to more convenient form
         qvc = qvd_get(self.p.build_path).qvc
-        self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+        qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+
+        next(qt.find(name = "sys-bus-device")).gpio_names = [
+            "SYSBUS_DEVICE_GPIO_IRQ"
+        ]
 
         # extend QOM tree with types from project
         for d in self.p.descriptions:
