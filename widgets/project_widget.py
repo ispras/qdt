@@ -69,7 +69,7 @@ class ReloadBuildPathTask(CoTask):
 
     def on_finished(self):
         self.qvd.use()
-        self.pw.qsig_emit("qvd_switched")
+        self.pw.qsig_emit("qvc_available")
 
     def on_failed(self):
         self.pw.qsig_emit("qvd_failed")
@@ -221,7 +221,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
         self.qsig_watch("qvd_failed", self.__on_qvd_failed)
-        self.qsig_watch("qvd_switched", self.on_qvd_switched)
+        self.qsig_watch("qvc_available", self.on_qvc_available)
         self.qsig_watch("qvc_dirtied", self.on_qvc_dirtied)
 
     def __on_destroy__(self, event):
@@ -239,7 +239,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             pass
 
         self.qsig_unwatch("qvd_failed", self.__on_qvd_failed)
-        self.qsig_unwatch("qvd_switched", self.on_qvd_switched)
+        self.qsig_unwatch("qvc_available", self.on_qvc_available)
         self.qsig_unwatch("qvc_dirtied", self.on_qvc_dirtied)
 
     def on_tv_b3(self, event):
@@ -452,7 +452,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def add_description(self):
         AddDescriptionDialog(self.pht, self.winfo_toplevel())
 
-    def on_qvd_switched(self):
+    def on_qvc_available(self):
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_objects()

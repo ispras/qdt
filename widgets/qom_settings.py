@@ -136,9 +136,9 @@ during refresh.     """
 
         self.__have_pciid = have_pciid
         if have_pciid:
-            self.qsig_watch("qvd_switched", self.__on_qvd_switched)
+            self.qsig_watch("qvc_available", self.__on_qvc_available)
 
-    def __on_qvd_switched(self):
+    def __on_qvc_available(self):
         self.__refresh__()
 
     def __refresh__(self):
@@ -282,7 +282,7 @@ during refresh.     """
             self.pht.unwatch_changed(self.__on_changed__)
 
         if self.__have_pciid:
-            self.qsig_unwatch("qvd_switched", self.__on_qvd_switched)
+            self.qsig_unwatch("qvc_available", self.__on_qvc_available)
 
     def __on_apply__(self):
         self.__apply__()

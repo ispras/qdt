@@ -101,7 +101,7 @@ class QDCGUIWindow(GUITk):
         for signame in [
             "qvc_dirtied",
             "qvd_failed",
-            "qvd_switched"
+            "qvc_available"
         ]:
             s = CoSignal()
             s.attach(self.signal_dispatcher)
