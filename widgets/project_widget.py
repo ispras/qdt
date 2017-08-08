@@ -20,6 +20,11 @@ from common import \
     mlget as _
 
 from qemu import \
+    QType, \
+    QemuTypeName, \
+    SysBusDeviceDescription, \
+    PCIExpressDeviceType, \
+    from_legacy_dict, \
     BadBuildPath, \
     qvd_get, \
     qvd_load_with_cache, \
@@ -356,6 +361,17 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                             l.widget.destroy()
                             l.widget = None
                             l.shown = False
+
+                try:
+                    qt = self.p.qom_tree
+                except AttributeError:
+                    pass
+                else:
+                    qtn = QemuTypeName(desc_name)
+                    t = next(qt.find(name = qtn.for_id_name))
+                    t.unparent()
+            else: # added
+                self.__add_qtype_for_description(desc)
         elif isinstance(op, DOp_SetAttr):
             self.tv_descs.update()
         elif isinstance(op, POp_SetDescLayout):
@@ -455,10 +471,31 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def add_description(self):
         AddDescriptionDialog(self.pht, self.winfo_toplevel())
 
+    def __add_qtype_for_description(self, desc):
+        parent = self.p.qom_tree
+
+        if isinstance(desc, SysBusDeviceDescription):
+            parent = next(parent.find(name = "sys-bus-device"))
+        elif isinstance(desc, PCIExpressDeviceType):
+            parent = next(parent.find(name = "pci-device"))
+
+        qtn = QemuTypeName(desc.name)
+        QType(qtn.for_id_name, parent).macro = [
+            "TYPE_" + qtn.for_macros
+        ]
+
     def on_qvc_available(self):
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_objects()
+
+        # convert device tree to more convenient form
+        qvc = qvd_get(self.p.build_path).qvc
+        self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+
+        # extend QOM tree with types from project
+        for d in self.p.descriptions:
+            self.__add_qtype_for_description(d)
 
     def __on_qvd_failed(self):
         TaskErrorDialog(_("QVD loading failed"), self.reload_build_path_task)
@@ -466,6 +503,9 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         del self.reload_build_path_task
 
     def on_qvc_dirtied(self):
+        # QOM tree is not actual now
+        del self.p.qom_tree
+
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_values()
