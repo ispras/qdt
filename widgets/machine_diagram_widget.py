@@ -677,6 +677,8 @@ IRQ line creation
                 handler = self.show_bus_settings
             elif isinstance(tdev, QIRQLine):
                 handler = self.show_irq_line_settings
+            elif isinstance(tdev, IRQHub):
+                handler = self.show_irq_hub_settings
 
             if handler is None:
                 continue
