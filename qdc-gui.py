@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    GUIPOp_SetBuildPath, \
     TaskErrorDialog, \
     Statusbar, \
     GUIProjectHistoryTracker, \
@@ -294,6 +295,10 @@ show it else hide it.")
         self.sb = sb = Statusbar(self)
         sb.grid(row = 1, column = 0, sticky = "NEWS")
 
+        # QEMU build path displaying
+        self.var_qemu_build_path = StringVar()
+        sb.left(self.var_qemu_build_path)
+
         # Task counters in status bar
         self.var_tasks = vt = IntVar()
         self.var_callers = vc = IntVar()
@@ -421,6 +426,8 @@ show it else hide it.")
         self.pw = ProjectWidget(self.proj, self)
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
+        self.update_qemu_build_path(project.build_path)
+
         self.pht.watch_changed(self.on_changed)
         self.check_undo_redo()
 
@@ -438,9 +445,14 @@ show it else hide it.")
         else:
             self.__saved_asterisk__(False)
 
-    def on_changed(self, *args, **kw):
+    def on_changed(self, op, *args, **kw):
         self.check_undo_redo()
         self.__check_saved_asterisk__()
+
+        if isinstance(op, GUIPOp_SetBuildPath):
+            proj = self.proj
+            if op.p is proj:
+                self.update_qemu_build_path(proj.build_path)
 
     def undo(self):
         self.pht.undo_sequence()
@@ -655,6 +667,12 @@ all changes are saved. """
                 title = _("Project loading failed").get(),
                 message = str(e)
             )
+
+    def update_qemu_build_path(self, bp):
+        if bp is None:
+            self.var_qemu_build_path.set(_("No QEMU build path selected").get())
+        else:
+            self.var_qemu_build_path.set("QEMU: " + bp)
 
 def main():
     parser = ArgumentParser()
