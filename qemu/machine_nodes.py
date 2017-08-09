@@ -110,6 +110,7 @@ class PCIExpressBusNode(BusNode):
         c_type = "PCIBus",
         cast = "PCI_BUS",
         child_name = "pci",
+        var_base = "pci",
         **kw
     ):
         BusNode.__init__(self,
@@ -117,6 +118,7 @@ class PCIExpressBusNode(BusNode):
             c_type = c_type,
             cast = cast,
             child_name = child_name,
+            var_base = var_base,
             **kw
         )
 
@@ -126,10 +128,15 @@ class PCIExpressBusNode(BusNode):
         return getattr(self, arg_name)
 
 class ISABusNode(BusNode):
-    def __init__(self, bus_controller, child_name = "isa", **kw):
+    def __init__(self, bus_controller,
+        child_name = "isa",
+        var_base = "isa",
+        **kw
+    ):
         BusNode.__init__(self,
             parent = bus_controller,
             child_name = child_name,
+            var_base = var_base,
             **kw
         )
 
@@ -139,10 +146,16 @@ class ISABusNode(BusNode):
         return getattr(self, arg_name)
 
 class IDEBusNode(BusNode):
-    def __init__(self, bus_controller, child_name = "ide", **kw):
+    def __init__(self,
+            bus_controller,
+            child_name = "ide",
+            var_base = "ide",
+            **kw
+        ):
         BusNode.__init__(self,
             parent = bus_controller,
             child_name = child_name,
+            var_base = var_base,
             **kw
         )
 
@@ -157,6 +170,7 @@ class I2CBusNode(BusNode):
         cast = None,
         c_type = "I2CBus",
         force_index = False,
+        var_base = "i2c",
         **kw
     ):
         BusNode.__init__(self,
@@ -165,6 +179,7 @@ class I2CBusNode(BusNode):
             cast = cast,
             c_type = c_type,
             force_index = force_index,
+            var_base = var_base,
             **kw
         )
 
