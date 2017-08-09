@@ -153,6 +153,13 @@ class IRQSettingsWidget(SettingsWidget):
 
                 cur_val = getattr(irq, pfx + "_" +attr)
 
+                if attr is "irq_idx":
+                    cur_type = type(cur_val)
+                    try: # to preserve current value type
+                        new_val = cur_type(new_val)
+                    except ValueError:
+                        cur_val = str(cur_val)
+
                 if not new_val == cur_val:
                     self.mht.stage(
                         MOp_SetIRQAttr,
