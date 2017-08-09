@@ -410,6 +410,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             self.mesh_step.set(MAX_MESH_STEP)
         elif self.mesh_step.get() < MIN_MESH_STEP:
             self.mesh_step.set(MIN_MESH_STEP)
+        self.mesh_step.trace_variable("w", self.__on_mesh_step)
 
         self.begin_drag_all = False
         self.dragging_all = False
@@ -1524,6 +1525,9 @@ IRQ line creation
             cl(x1, y, x2, y, **kw)
 
         c.lower("mesh")
+
+    def __on_mesh_step(self, *args):
+        self.__repaint_mesh()
 
     def __repaint_mesh(self):
         # Repaint the mesh
