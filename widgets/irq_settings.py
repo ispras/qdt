@@ -63,23 +63,23 @@ class IRQSettingsWidget(SettingsWidget):
             )
             node_cb.grid(row = 0, column = 1, sticky = "NEW")
 
-            index_l = VarLabel(lf, text = _("GPIO index"))
-            index_l.grid(row = 1, column = 0, sticky = "NE")
+            irq_idx_l = VarLabel(lf, text = _("GPIO index"))
+            irq_idx_l.grid(row = 1, column = 0, sticky = "NE")
 
-            index_var = StringVar()
-            index_e = HKEntry(lf, textvariable = index_var)
-            index_e.grid(row = 1, column = 1, sticky = "NEW")
+            irq_idx_var = StringVar()
+            irq_idx_e = HKEntry(lf, textvariable = irq_idx_var)
+            irq_idx_e.grid(row = 1, column = 1, sticky = "NEW")
 
-            name_l = VarLabel(lf, text = _("GPIO name"))
-            name_l.grid(row = 2, column = 0, sticky = "NE")
+            irq_name_l = VarLabel(lf, text = _("GPIO name"))
+            irq_name_l.grid(row = 2, column = 0, sticky = "NE")
 
-            name_var = StringVar()
-            name_e = HKEntry(lf, textvariable = name_var)
-            name_e.grid(row = 2, column = 1, sticky = "NEW")
+            irq_name_var = StringVar()
+            irq_name_e = HKEntry(lf, textvariable = irq_name_var)
+            irq_name_e.grid(row = 2, column = 1, sticky = "NEW")
 
             for v in ["lf", "node_var", "node_cb",
-                      "index_l", "index_e", "index_var", 
-                      "name_l", "name_e", "name_var"]:
+                      "irq_idx_l", "irq_idx_e", "irq_idx_var",
+                      "irq_name_l", "irq_name_e", "irq_name_var"]:
                 setattr(self, pfx + v, locals()[v])
 
     def on_node_text_changed(self, *args):
@@ -93,12 +93,12 @@ class IRQSettingsWidget(SettingsWidget):
             node = self.find_node_by_link_text(node_text)
             node_is_device = isinstance(node, DeviceNode)
 
-            index_l = getattr(self, pfx + "_index_l")
-            index_e = getattr(self, pfx + "_index_e")
-            name_l = getattr(self, pfx + "_name_l")
-            name_e = getattr(self, pfx + "_name_e")
+            irq_idx_l = getattr(self, pfx + "_irq_idx_l")
+            irq_idx_e = getattr(self, pfx + "_irq_idx_e")
+            irq_name_l = getattr(self, pfx + "_irq_name_l")
+            irq_name_e = getattr(self, pfx + "_irq_name_e")
 
-            dev_widgets = [index_l, index_e, name_l, name_e]
+            dev_widgets = [irq_idx_l, irq_idx_e, irq_name_l, irq_name_e]
 
             if node_is_device:
                 for w in dev_widgets:
@@ -120,12 +120,12 @@ class IRQSettingsWidget(SettingsWidget):
                 # if end node type is changed then reset index and name
                 if isinstance(new_val, DeviceNode) \
                    and not isinstance(cur_val, DeviceNode):
-                    getattr(self, pfx + "_index_var").set("0")
-                    getattr(self, pfx + "_name_var").set("")
+                    getattr(self, pfx + "_irq_idx_var").set("0")
+                    getattr(self, pfx + "_irq_name_var").set("")
                 elif isinstance(new_val, IRQHub) \
                      and not isinstance(cur_val, IRQHub):
-                    getattr(self, pfx + "_index_var").set("")
-                    getattr(self, pfx + "_name_var").set("")
+                    getattr(self, pfx + "_irq_idx_var").set("")
+                    getattr(self, pfx + "_irq_name_var").set("")
 
                 self.mht.stage(
                     MOp_SetIRQEndPoint,
@@ -134,11 +134,11 @@ class IRQSettingsWidget(SettingsWidget):
                     irq.id
                 )
 
-            for attr in [ "index", "name" ]:
+            for attr in [ "irq_idx", "irq_name" ]:
                 var = getattr(self, pfx + "_" + attr + "_var")
                 new_val = var.get()
                 if not new_val:
-                    if attr is "index":
+                    if attr is "irq_idx":
                         new_val = 0
                     else:
                         new_val = None
@@ -172,18 +172,18 @@ class IRQSettingsWidget(SettingsWidget):
             node_var.set(node_text)
 
             if isinstance(end_node, DeviceNode):
-                index_var = getattr(self, pfx + "_index_var")
-                name_var = getattr(self, pfx + "_name_var")
+                irq_idx_var = getattr(self, pfx + "_irq_idx_var")
+                irq_name_var = getattr(self, pfx + "_irq_name_var")
 
                 # IRQ descriptor in machine description
                 irq_idx = getattr(self.irq, pfx + "_irq_idx")
-                index_var.set(str(irq_idx))
+                irq_idx_var.set(str(irq_idx))
 
                 irq_name = getattr(self.irq, pfx + "_irq_name")
                 if irq_name is not None:
-                    name_var.set(str(irq_name))
+                    irq_name_var.set(str(irq_name))
                 else:
-                    name_var.set("")
+                    irq_name_var.set("")
 
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
