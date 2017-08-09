@@ -308,12 +308,12 @@ corresponding vendor is given" % attr
             s_is_used = True
 
             realize_code += """
-    msi_init(dev, %s, %s, %s, %s%s);
+    msi_init(dev,@s%s,@s%s,@s%s,@s%s%s);
 """ % (msi_cap_offset.gen_usage_string(),
        msi_vectors.gen_usage_string(),
        msi_64bit.gen_usage_string(),
        msi_masking.gen_usage_string(),
-       ", errp" if msi_init_type.args[-1].type \
+       ",@serrp" if msi_init_type.args[-1].type \
                    == Pointer(Pointer(Type.lookup("Error"))) else ""
             )
 
