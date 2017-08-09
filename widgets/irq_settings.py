@@ -13,7 +13,6 @@ from qemu import \
     MOp_SetIRQAttr, \
     MOp_SetIRQEndPoint, \
     MachineNodeOperation, \
-    IRQHub, \
     DeviceNode
 
 from six.moves import \
@@ -83,6 +82,8 @@ class IRQSettingsWidget(SettingsWidget):
                 setattr(self, pfx + v, locals()[v])
 
     def on_node_text_changed(self, *args):
+        irq = self.irq
+
         for pfx in [ "src", "dst" ]:
             node_var = getattr(self, pfx + "_node_var")
             node_text = node_var.get()
@@ -100,12 +101,29 @@ class IRQSettingsWidget(SettingsWidget):
 
             dev_widgets = [irq_idx_l, irq_idx_e, irq_name_l, irq_name_e]
 
-            if node_is_device:
-                for w in dev_widgets:
-                    w.config(state = "normal")
-            else:
-                for w in dev_widgets:
-                    w.config(state = "disabled")
+            if getattr(self, pfx + "_is_device") != node_is_device:
+                setattr(self, pfx + "_is_device", node_is_device)
+
+                # node kind was changed
+                if node_is_device:
+                    for w in dev_widgets:
+                        w.config(state = "normal")
+
+                    irq_idx = getattr(irq, pfx + "_irq_idx")
+                    getattr(self, pfx + "_irq_idx_var").set(str(irq_idx))
+
+                    irq_name = getattr(irq, pfx + "_irq_name")
+                    if irq_name is None:
+                        irq_name = ""
+
+                    getattr(self, pfx + "_irq_name_var").set(irq_name)
+
+                else:
+                    for w in dev_widgets:
+                        w.config(state = "disabled")
+
+                    getattr(self, pfx + "_irq_idx_var").set("")
+                    getattr(self, pfx + "_irq_name_var").set("")
 
     def __apply_internal__(self):
         irq = self.irq
@@ -117,16 +135,6 @@ class IRQSettingsWidget(SettingsWidget):
             cur_val = getattr(irq, pfx + "_node")
 
             if not new_val == cur_val:
-                # if end node type is changed then reset index and name
-                if isinstance(new_val, DeviceNode) \
-                   and not isinstance(cur_val, DeviceNode):
-                    getattr(self, pfx + "_irq_idx_var").set("0")
-                    getattr(self, pfx + "_irq_name_var").set("")
-                elif isinstance(new_val, IRQHub) \
-                     and not isinstance(cur_val, IRQHub):
-                    getattr(self, pfx + "_irq_idx_var").set("")
-                    getattr(self, pfx + "_irq_name_var").set("")
-
                 self.mht.stage(
                     MOp_SetIRQEndPoint,
                     pfx + "_node",
@@ -169,21 +177,14 @@ class IRQSettingsWidget(SettingsWidget):
             end_node = getattr(self.irq, pfx + "_dev")
             node_text = DeviceSettingsWidget.gen_node_link_text(end_node)
             node_var = getattr(self, pfx + "_node_var")
+
+            is_device = isinstance(end_node, DeviceNode)
+            """ Intentionally invert value of `[src/dst]_is_device` to cause
+            `on_node_text_changed` to update index and name fields in course of
+            `node_var` setting trace call. """
+            setattr(self, pfx + "_is_device", not is_device)
+
             node_var.set(node_text)
-
-            if isinstance(end_node, DeviceNode):
-                irq_idx_var = getattr(self, pfx + "_irq_idx_var")
-                irq_name_var = getattr(self, pfx + "_irq_name_var")
-
-                # IRQ descriptor in machine description
-                irq_idx = getattr(self.irq, pfx + "_irq_idx")
-                irq_idx_var.set(str(irq_idx))
-
-                irq_name = getattr(self.irq, pfx + "_irq_name")
-                if irq_name is not None:
-                    irq_name_var.set(str(irq_name))
-                else:
-                    irq_name_var.set("")
 
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
