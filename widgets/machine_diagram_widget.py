@@ -406,10 +406,10 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.display_mesh = False
         self.canvas.bind("<Configure>", self.__on_resize, "+")
 
-        if self.mesh_step > MAX_MESH_STEP:
-            self.mesh_step = MAX_MESH_STEP
-        elif self.mesh_step < MIN_MESH_STEP:
-            self.mesh_step = MIN_MESH_STEP
+        if self.mesh_step.get() > MAX_MESH_STEP:
+            self.mesh_step.set(MAX_MESH_STEP)
+        elif self.mesh_step.get() < MIN_MESH_STEP:
+            self.mesh_step.set(MIN_MESH_STEP)
 
         self.begin_drag_all = False
         self.dragging_all = False
@@ -1469,7 +1469,7 @@ IRQ line creation
 
             c = self.canvas
             if show:
-                m = self.mesh_step
+                m = self.mesh_step.get()
 
                 self.__create_mesh(
                     -m, -m,
@@ -1483,7 +1483,7 @@ IRQ line creation
 
     def __create_mesh(self, wx1, wy1, wx2, wy2):
         c = self.canvas
-        m = self.mesh_step
+        m = self.mesh_step.get()
 
         x1, y1 = (
             int(c.canvasx(wx1, gridspacing = m)),
@@ -1529,7 +1529,7 @@ IRQ line creation
         # Repaint the mesh
         if self.display_mesh:
             c = self.canvas
-            m = self.mesh_step
+            m = self.mesh_step.get()
             c.delete("mesh")
             self.__create_mesh(
                 -m, -m,
@@ -3024,7 +3024,7 @@ IRQ line creation
 
         layout[-1] = {
             LAYOUT_SHOW_MESH        : self.var_show_mesh.get(),
-            LAYOUT_MESH_STEP        : self.mesh_step,
+            LAYOUT_MESH_STEP        : self.mesh_step.get(),
             LAYOUT_DYNAMIC          : self.var_physical_layout.get(),
             LAYOUT_IRQ_LINES_POINTS : irqs
         }
@@ -3051,7 +3051,7 @@ IRQ line creation
                         elif step > MAX_MESH_STEP:
                             step = MAX_MESH_STEP
 
-                        self.mesh_step = step
+                        self.mesh_step.set(step)
 
                     try:
                         self.var_physical_layout.set(desc[LAYOUT_DYNAMIC])

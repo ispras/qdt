@@ -134,7 +134,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             step = MAX_MESH_STEP
             self.var_mesh_step.set(MAX_MESH_STEP)
 
-        self.mw.mdw.mesh_step = step
+        self.mw.mdw.mesh_step.set(step)
 
     def __on_tabs__(self, *args):
         use_tabs = self.var_tabs.get()
@@ -157,7 +157,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             for w, l in zip([self.mw.mdw, self.mw.mtw], layout):
                 w.set_layout(l)
 
-            self.var_mesh_step.set(self.mw.mdw.mesh_step)
+            self.var_mesh_step.set(self.mw.mdw.mesh_step.get())
 
     def gen_layout(self):
         return MachineWidgetLayout(
@@ -186,7 +186,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             self.mw.mdw.set_layout(layout)
             self.mw.mtw.set_layout(None)
 
-        self.var_mesh_step.set(self.mw.mdw.mesh_step)
+        self.var_mesh_step.set(self.mw.mdw.mesh_step.get())
 
     def __apply_internal__(self):
         # There is nothing to apply additionally

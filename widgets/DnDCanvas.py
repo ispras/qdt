@@ -8,6 +8,7 @@ from six.moves import \
     range as xrange
 
 from six.moves.tkinter import \
+    IntVar, \
     Canvas, \
     RIDGE, \
     BOTH
@@ -30,7 +31,7 @@ class CanvasDnD(GUIFrame):
         self.canvas.pack(expand = 1, fill = BOTH)
 
         self.align = False
-        self.mesh_step = mesh_step
+        self.mesh_step = IntVar(value = mesh_step)
         self.dragging = False
         self.off = None
         self.canvas.bind("<ButtonPress-1>", self.down, "+")
@@ -77,7 +78,7 @@ class CanvasDnD(GUIFrame):
                 xy[1] - offset[1],
             )
 
-            m = self.mesh_step
+            m = self.mesh_step.get()
             aligned_pos = (
                 int(new_pos[0] / m) * m,
                 int(new_pos[1] / m) * m
