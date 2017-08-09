@@ -62,7 +62,7 @@ class MachineNode(QOMDescription):
         for id, node in self.id2node.items():
             gen.line(pfx + gen.nameof(node) + ", with_id = " + str(id) + ")")
 
-    def link(self):
+    def link(self, handle_system_bus = True):
         self.added = True
 
         # Travel throw all trees, incrementally adding nodes to machine arrays
@@ -108,28 +108,29 @@ class MachineNode(QOMDescription):
                     if not irq in self.irqs:
                         self.add_node(irq)
 
-        # A machine should have only one system bus
-        sysbus = None
+        if handle_system_bus:
+            # A machine should have only one system bus
+            sysbus = None
 
-        # Find out system
-        for bus in self.buses:
-            if isinstance(bus, SystemBusNode):
-                if sysbus is None:
-                    sysbus = bus
-                elif not sysbus == bus:
-                    raise MultipleSystemBusesInMachine()
+            # Find out system
+            for bus in self.buses:
+                if isinstance(bus, SystemBusNode):
+                    if sysbus is None:
+                        sysbus = bus
+                    elif not sysbus == bus:
+                        raise MultipleSystemBusesInMachine()
 
-        # No system bus: create one
-        if sysbus is None:
-            sysbus = SystemBusNode()
-            self.add_node(sysbus)
+            # No system bus: create one
+            if sysbus is None:
+                sysbus = SystemBusNode()
+                self.add_node(sysbus)
 
-        # Attach all system bus devices to the system bus
-        for dev in self.devices:
-            if isinstance(dev, SystemBusDeviceNode):
-                if not dev.parent_bus:
-                    dev.parent_bus = sysbus
-                    sysbus.devices.append(dev)
+            # Attach all system bus devices to the system bus
+            for dev in self.devices:
+                if isinstance(dev, SystemBusDeviceNode):
+                    if not dev.parent_bus:
+                        dev.parent_bus = sysbus
+                        sysbus.devices.append(dev)
 
     def has_node(self, n):
         if isinstance(n, DeviceNode):
