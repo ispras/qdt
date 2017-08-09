@@ -33,7 +33,7 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         VarTreeview.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
 
-        mach_desc.link()
+        mach_desc.link(handle_system_bus = False)
 
         self.mach = mach_desc
         try:
