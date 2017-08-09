@@ -134,7 +134,7 @@ class IRQSettingsWidget(SettingsWidget):
 
             cur_val = getattr(irq, pfx + "_node")
 
-            if not new_val == cur_val:
+            if new_val is not cur_val:
                 self.mht.stage(
                     MOp_SetIRQEndPoint,
                     pfx + "_node",
