@@ -285,7 +285,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         else:
             self.node_font = node_font
 
-        mach_desc.link()
+        mach_desc.link(handle_system_bus = False)
 
         self.mach = mach_desc
 
