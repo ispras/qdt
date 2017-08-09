@@ -109,27 +109,27 @@ class MachineNode(QOMDescription):
                         self.add_node(irq)
 
         # A machine should have only one system bus
-        self.sysbus = None
+        sysbus = None
 
         # Find out system
         for bus in self.buses:
             if isinstance(bus, SystemBusNode):
-                if self.sysbus is None:
-                    self.sysbus = bus
-                elif not self.sysbus == bus:
+                if sysbus is None:
+                    sysbus = bus
+                elif not sysbus == bus:
                     raise MultipleSystemBusesInMachine()
 
         # No system bus: create one
-        if self.sysbus is None:
-            self.sysbus = SystemBusNode()
-            self.add_node(self.sysbus)
+        if sysbus is None:
+            sysbus = SystemBusNode()
+            self.add_node(sysbus)
 
         # Attach all system bus devices to the system bus
         for dev in self.devices:
             if isinstance(dev, SystemBusDeviceNode):
                 if not dev.parent_bus:
-                    dev.parent_bus = self.sysbus
-                    self.sysbus.devices.append(dev)
+                    dev.parent_bus = sysbus
+                    sysbus.devices.append(dev)
 
     def has_node(self, n):
         if isinstance(n, DeviceNode):
