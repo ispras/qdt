@@ -135,19 +135,6 @@ already in another project.")
 
         self.make_src_dirs(source_directory)
 
-        yield True
-
-        (source_name, source_ext) = splitext(source_base_name)
-        object_base_name = source_name + ".o"
-
-        hw_path = join(src, "hw")
-        class_hw_path = join(hw_path, desc.directory)
-        Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
-
-        patch_makefile(Makefile_objs_class_path, object_base_name,
-            obj_var_names[desc.directory], config_flags[desc.directory]
-        )
-
         if "header" in dev_t.__dict__:
             yield True
 
@@ -198,3 +185,16 @@ already in another project.")
             yield True
 
             source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
+
+        yield True
+
+        (source_name, source_ext) = splitext(source_base_name)
+        object_base_name = source_name + ".o"
+
+        hw_path = join(src, "hw")
+        class_hw_path = join(hw_path, desc.directory)
+        Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
+
+        patch_makefile(Makefile_objs_class_path, object_base_name,
+            obj_var_names[desc.directory], config_flags[desc.directory]
+        )
