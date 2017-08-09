@@ -166,7 +166,7 @@ class IRQSettingsWidget(SettingsWidget):
             cb.config(values = nodes)
 
             # IRQ line end (source or destination)
-            end_node = getattr(self.irq, pfx)[0]
+            end_node = getattr(self.irq, pfx + "_dev")
             node_text = DeviceSettingsWidget.gen_node_link_text(end_node)
             node_var = getattr(self, pfx + "_node_var")
             node_var.set(node_text)
@@ -176,12 +176,12 @@ class IRQSettingsWidget(SettingsWidget):
                 name_var = getattr(self, pfx + "_name_var")
 
                 # IRQ descriptor in machine description
-                end_desc = getattr(self.irq, pfx)
+                irq_idx = getattr(self.irq, pfx + "_irq_idx")
+                index_var.set(str(irq_idx))
 
-                index_var.set(str(end_desc[1]))
-
-                if end_desc[2] is not None:
-                    name_var.set(str(end_desc[2]))
+                irq_name = getattr(self.irq, pfx + "_irq_name")
+                if irq_name is not None:
+                    name_var.set(str(irq_name))
                 else:
                     name_var.set("")
 
