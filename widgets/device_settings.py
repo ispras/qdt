@@ -30,6 +30,7 @@ from six.moves.tkinter_ttk import \
     Combobox
 
 from qemu import \
+    QemuTypeName, \
     BusNode, \
     IRQLine, \
     IRQHub, \
@@ -305,6 +306,11 @@ class PropLineDesc(object):
         self.v_val = var_p_val
         self.bt_del = bt_del
 
+def qom_type_to_var_base(qom_type):
+    type_base = qom_type[5:] if qom_type[0:5] == "TYPE_" else qom_type
+    qtn = QemuTypeName(type_base)
+    return qtn.for_id_name
+
 class DeviceSettingsWidget(SettingsWidget):
     EVENT_BUS_SELECTED = "<<DSWBusSelected>>"
 
@@ -335,6 +341,7 @@ class DeviceSettingsWidget(SettingsWidget):
         l = VarLabel(common_fr, text = _("QOM type"))
         v = self.qom_type_var = StringVar()
         e = HKEntry(common_fr, textvariable = v)
+        v.trace_variable("w", self.__on_qom_type_var_changed)
 
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
@@ -409,6 +416,24 @@ class DeviceSettingsWidget(SettingsWidget):
             bld.delete()
 
         SettingsWidget.__on_destroy__(self, *args)
+
+    def __on_qom_type_var_changed(self, *args):
+        vvb = self.v_var_base
+        vb = vvb.get()
+
+        try:
+            prev_qt = self.__prev_qom_type
+        except AttributeError:
+            # QOM type was not edited yet
+            prev_qt = self.node.qom_type
+
+        if vb == "dev" or vb == qom_type_to_var_base(prev_qt):
+            """ If current variable name base is default or corresponds to
+            previous QOM type name then auto suggest new variable name base
+            with account of just entered QOM type. """
+            qt = self.qom_type_var.get()
+            vvb.set(qom_type_to_var_base(qt))
+            self.__prev_qom_type = qt
 
     def on_parent_bus_var_changed(self, *args):
         self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
