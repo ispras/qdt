@@ -333,8 +333,8 @@ class DeviceSettingsWidget(SettingsWidget):
         common_fr.rowconfigure(0, weight = 0)
 
         l = VarLabel(common_fr, text = _("QOM type"))
-        self.qom_type_var = StringVar()
-        e = HKEntry(common_fr, textvariable = self.qom_type_var)
+        v = self.qom_type_var = StringVar()
+        e = HKEntry(common_fr, textvariable = v)
 
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
