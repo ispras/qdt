@@ -369,6 +369,8 @@ extra_code = code
 
         self.source.add_global_variable(self.properties)
 
+        self.vmstate.extra_references = {self.properties}
+
         self.class_init = Function(
             name = "%s_class_init" % self.qtn.for_id_name, 
             body = """\
