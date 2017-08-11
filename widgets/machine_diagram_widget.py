@@ -2712,6 +2712,7 @@ IRQ line creation
 
     def ph_process_irq_line(self, l):
         changed = False
+        hand_layout = not self.var_physical_layout.get()
 
         for i, seg in enumerate(l.lines):
             if i == 0:
@@ -2740,11 +2741,13 @@ IRQ line creation
 
             # Do not change lines during dragging it could delete currently
             # dragged circle
+            # Do not change circles if dynamic layout is turned off.
             line_circles = len(l.circles)
 
             if not (   self.dragging 
                     or changed 
                     or self.irq_circle_per_line_limit <= line_circles
+                    or hand_layout
                 ):
                 dx = x1 - x0
                 dy = y1 - y0
