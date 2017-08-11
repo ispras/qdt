@@ -1,6 +1,7 @@
 __all__ = [ "PCIExpressDeviceType" ]
 
 from source import \
+    line_origins, \
     Pointer, \
     Type, \
     Function, \
@@ -160,6 +161,12 @@ corresponding vendor is given" % attr
 )
             )
         self.header.add_type(self.type_cast_macro)
+
+        line_origins([
+            self.type_name_macros,
+            self.type_cast_macro,
+            self.state_struct
+        ])
 
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
