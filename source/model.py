@@ -1307,6 +1307,8 @@ class Usage():
 # Source code instances
 
 class SourceChunk(object):
+    weight = 5
+
     def __init__(self, origin, name, code, references = None):
         self.origin = origin
         self.name = name
@@ -1450,6 +1452,8 @@ the expression which is 0 if safe breaking is not required after this word.
         return source_chunk_key(self) < source_chunk_key(other)
 
 class HeaderInclusion(SourceChunk):
+    weight = 0
+
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
             name = "Header {} inclusion".format(header.path),
@@ -1465,6 +1469,8 @@ class HeaderInclusion(SourceChunk):
         self.header = header
 
 class MacroDefinition(SourceChunk):
+    weight = 1
+
     def __init__(self, macro, indent = ""):
         if macro.args is None:
             args_txt = ""
@@ -1530,6 +1536,8 @@ class PointerVariableDeclaration(SourceChunk):
         )
 
 class VariableDeclaration(SourceChunk):
+    weight = 3
+
     def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(var,
             name = "Variable {} of type {} declaration".format(
@@ -1606,6 +1614,8 @@ class VariableUsage(SourceChunk):
         self.initializer = initializer
 
 class StructureDeclarationBegin(SourceChunk):
+    weight = 2
+
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
@@ -1691,6 +1701,8 @@ def gen_function_def_ref_chunks(f, generator):
     return references
 
 class FunctionDeclaration(SourceChunk):
+    weight = 4
+
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
             name = "Declaration of function %s" % function.name,
