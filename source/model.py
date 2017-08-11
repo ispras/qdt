@@ -1307,6 +1307,12 @@ class Usage():
 # Source code instances
 
 class SourceChunk(object):
+    """
+`weight` is used during coarse chunk sorting. Chunks with less `weight` value
+    are moved to the top of the file. Then all chunks are ordered topologically
+    (with respect to inter-chunk references). But chunks which is not linked
+    by references will preserve `weight`-based order.
+    """
     weight = 5
 
     def __init__(self, origin, name, code, references = None):
