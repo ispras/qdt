@@ -1711,7 +1711,7 @@ class FunctionDefinition(SourceChunk):
             )
         self.function = function
 
-def deep_first_sort(chunk, new_chunks):
+def depth_first_sort(chunk, new_chunks):
     # visited: 
     # 0 - not visited
     # 1 - visited
@@ -1722,7 +1722,7 @@ def deep_first_sort(chunk, new_chunks):
             continue
         if ch.visited == 1:
             raise RuntimeError("A loop is found in source chunk references")
-        deep_first_sort(ch, new_chunks)
+        depth_first_sort(ch, new_chunks)
 
     chunk.visited = 2
     new_chunks.append(chunk)
@@ -1818,7 +1818,7 @@ digraph Chunks {
         # topology sorting
         for chunk in self.chunks:
             if not chunk.visited == 2:
-                deep_first_sort(chunk, new_chunks)
+                depth_first_sort(chunk, new_chunks)
 
         for chunk in new_chunks:
             chunk.visited = 0
