@@ -5,6 +5,7 @@ from .qom import \
     QOMType
 
 from source import \
+    line_origins, \
     Pointer, \
     Macro, \
     Initializer, \
@@ -94,6 +95,12 @@ class SysBusDeviceType(QOMDevice):
             )
 
         self.header.add_type(self.type_cast_macro)
+
+        line_origins([
+            self.type_name_macros,
+            self.type_cast_macro,
+            self.state_struct
+        ])
 
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
