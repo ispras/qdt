@@ -1748,18 +1748,6 @@ def depth_first_sort(chunk, new_chunks):
     chunk.visited = 2
     new_chunks.append(chunk)
 
-def source_chunk_key(ch):
-    try:
-        return {
-            HeaderInclusion: 0,
-            MacroDefinition: 1,
-            StructureDeclaration: 2,
-            VariableDeclaration: 3,
-            FunctionDeclaration: 4,
-        }[type(ch)]
-    except KeyError:
-        return 5
-
 class SourceFile:
     def __init__(self, name, is_header=False):
         self.name = name
