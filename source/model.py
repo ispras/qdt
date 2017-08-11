@@ -2057,10 +2057,6 @@ them must be replaced with reference to h. """
 #endif /* INCLUDE_{name}_H */
 """.format(name = to_macro_name(self.name)))
 
-class HeaderFile(SourceFile):
-    def __init__(self, name):
-        super(HeaderFile, self).__init__(name = name, is_header=True)
-
 #Source tree container
 
 HDB_HEADER_PATH = "path"
