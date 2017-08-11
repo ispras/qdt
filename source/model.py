@@ -1792,9 +1792,16 @@ digraph Chunks {
                 mapping[chunk] = name
             return name
 
+        upper_cnn = None
         for ch in self.chunks:
             cnn = chunk_node_name(ch)
             w.write('\n    %s [label="%s"]\n' % (cnn, ch.name))
+
+            # invisible edges provides vertical order like in the output file
+            if upper_cnn is not None:
+                w.write('\n    %s -> %s [style=invis]\n' % (cnn, upper_cnn))
+            upper_cnn = cnn
+
             if ch.references:
                 w.write("        /* References */\n")
                 for ref in ch.references:
