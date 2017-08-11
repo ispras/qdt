@@ -1474,6 +1474,23 @@ class HeaderInclusion(SourceChunk):
             )
         self.header = header
 
+    def __lt__(self, other):
+        """ During coarse chunk sorting <global> header inclusions are moved to
+        the top of "local". Same headers are ordered by path. """
+        if isinstance(other, HeaderInclusion):
+            shdr = self.header
+            ohdr = other.header
+
+            sg = shdr.is_global
+            og = ohdr.is_global
+            if sg == og:
+                return shdr.path < ohdr.path
+            else:
+                # If self `is_global` flag is greater then order weight is less.
+                return sg > og
+        else:
+            return super(HeaderInclusion, self).__lt__(other)
+
 class MacroDefinition(SourceChunk):
     weight = 1
 
