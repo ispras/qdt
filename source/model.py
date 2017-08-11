@@ -1446,6 +1446,9 @@ the expression which is 0 if safe breaking is not required after this word.
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
+    def __lt__(self, other):
+        return source_chunk_key(self) < source_chunk_key(other)
+
 class HeaderInclusion(SourceChunk):
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
@@ -1984,7 +1987,7 @@ them must be replaced with reference to h. """
         self.optimize_inclusions()
 
         # semantic sort
-        self.chunks.sort(key = source_chunk_key)
+        self.chunks.sort()
 
         self.sort_chunks()
 
