@@ -215,6 +215,8 @@ class SysBusDeviceType(QOMDevice):
             pio_cur_addres += pio_def_size
 
             self.header.add_types([size_macro, address_macro])
+            self.pio_size_macros.append(size_macro)
+            self.pio_address_macros.append(address_macro)
             instance_init_used_types.update([size_macro, address_macro])
 
             component = self.get_Ith_pio_id_component(pioN)
