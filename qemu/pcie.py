@@ -172,20 +172,6 @@ corresponding vendor is given" % attr
             self.state_struct
         ])
 
-        self.device_reset = Function(
-        "%s_reset" % self.qtn.for_id_name,
-            body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
-""".format(
-    Struct = self.state_struct.name,
-    UPPER = self.type_cast_macro.name,
-            ),
-            args = [Type.lookup("DeviceState").gen_var("dev", True)],
-            static = True,
-            used_types = [self.state_struct]
-        )
-        self.source.add_type(self.device_reset)
-
         self.vendor_macro = self.vendor.find_macro()
 
         if self.subsystem_vendor and self.subsystem:
@@ -239,6 +225,20 @@ corresponding vendor is given" % attr
 
             self.mem_bar_size_macros.append(size_macro)
             self.header.add_type(size_macro)
+
+        self.device_reset = Function(
+        "%s_reset" % self.qtn.for_id_name,
+            body = """\
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
+""".format(
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+            ),
+            args = [Type.lookup("DeviceState").gen_var("dev", True)],
+            static = True,
+            used_types = [self.state_struct]
+        )
+        self.source.add_type(self.device_reset)
 
         realize_code = ''
         realize_used_types = set()
