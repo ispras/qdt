@@ -81,18 +81,18 @@ class SysBusDeviceType(QOMDevice):
         self.type_name_macros = Macro(
             name = "TYPE_%s" % self.qtn.for_macros,
             text = '"%s"' % self.qtn.for_id_name
-            )
+        )
 
         self.header.add_type(self.type_name_macros)
 
         self.type_cast_macro = Macro(
-            name = self.qtn.for_macros, 
+            name = self.qtn.for_macros,
             args = ["obj"],
             text = "OBJECT_CHECK({Struct}, (obj), TYPE_{UPPER})".format(
     UPPER = self.qtn.for_macros,
     Struct = self.struct_name
 )
-            )
+        )
 
         self.header.add_type(self.type_cast_macro)
 
@@ -107,15 +107,15 @@ class SysBusDeviceType(QOMDevice):
             body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
 """.format(
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        ),
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+            ),
             args = [Type.lookup("DeviceState").gen_var("dev", True)],
             static = True,
             used_types = [self.state_struct]
-            )
+        )
 
-        self.source.add_type(self.device_reset) 
+        self.source.add_type(self.device_reset)
 
         self.device_realize = self.gen_realize("DeviceState")
         self.source.add_type(self.device_realize)
@@ -137,7 +137,8 @@ class SysBusDeviceType(QOMDevice):
         for mmioN in range(0, self.mmio_num):
             size_macro = Macro(
                 name = self.gen_Ith_mmio_size_macro_name(mmioN),
-                text = "0x%X" % mmio_def_size)
+                text = "0x%X" % mmio_def_size
+            )
 
             self.header.add_type(size_macro)
             instance_init_used_types.add(size_macro)
@@ -145,16 +146,16 @@ class SysBusDeviceType(QOMDevice):
             component = self.get_Ith_mmio_id_component(mmioN)
 
             read_func = QOMType.gen_mmio_read(
-                    name = self.qtn.for_id_name + "_" + component + "_read",
-                    struct_name = self.state_struct.name, 
-                    type_cast_macro = self.type_cast_macro.name
-                    ) 
+                name = self.qtn.for_id_name + "_" + component + "_read",
+                struct_name = self.state_struct.name,
+                type_cast_macro = self.type_cast_macro.name
+            )
 
             write_func = QOMType.gen_mmio_write(
-                    name = self.qtn.for_id_name + "_" + component + "_write",
-                    struct_name = self.state_struct.name, 
-                    type_cast_macro = self.type_cast_macro.name
-                    )
+                name = self.qtn.for_id_name + "_" + component + "_write",
+                struct_name = self.state_struct.name,
+                type_cast_macro = self.type_cast_macro.name
+            )
 
             write_func.extra_references = {read_func}
 
@@ -219,16 +220,16 @@ class SysBusDeviceType(QOMDevice):
             component = self.get_Ith_pio_id_component(pioN)
 
             read_func = QOMType.gen_mmio_read(
-                    name = self.qtn.for_id_name + "_" + component + "_read",
-                    struct_name = self.state_struct.name, 
-                    type_cast_macro = self.type_cast_macro.name
-                    ) 
+                name = self.qtn.for_id_name + "_" + component + "_read",
+                struct_name = self.state_struct.name,
+                type_cast_macro = self.type_cast_macro.name
+            )
 
             write_func = QOMType.gen_mmio_write(
-                    name = self.qtn.for_id_name + "_" + component + "_write",
-                    struct_name = self.state_struct.name, 
-                    type_cast_macro = self.type_cast_macro.name
-                    )
+                name = self.qtn.for_id_name + "_" + component + "_write",
+                struct_name = self.state_struct.name,
+                type_cast_macro = self.type_cast_macro.name
+            )
 
             write_func.extra_references = {read_func}
 
@@ -242,7 +243,7 @@ class SysBusDeviceType(QOMDevice):
 }}""".format (
     read = read_func.name,
     write = write_func.name
-)
+                )
             )
 
             ops = Type.lookup("MemoryRegionOps").gen_var(
@@ -266,7 +267,7 @@ class SysBusDeviceType(QOMDevice):
     UPPER = self.qtn.for_macros,
     size = size_macro.name,
     addr = address_macro.name
-)
+            )
             s_is_used = True
 
         if self.out_irq_num > 0:
@@ -289,20 +290,22 @@ use_as_prototype(
                 static = True,
                 used_types = [
                     self.state_struct,
-                    self.type_cast_macro],
-                body =  """\
+                    self.type_cast_macro
+                ],
+                body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
 """.format(
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
-        )   )
+                )
+            )
 
             self.source.add_type(self.irq_handler)
 
             in_irq_macro = Macro(
                 name = "%s_IN_IRQ_NUM" % self.qtn.for_macros,
                 text = "%d" % self.in_irq_num
-                )
+            )
 
             self.header.add_type(in_irq_macro)
 
@@ -311,7 +314,7 @@ use_as_prototype(
 """.format(
     handler = self.irq_handler.name,
     irqs = in_irq_macro.name
-)
+            )
 
             instance_init_used_types.update([
                 self.irq_handler,
@@ -379,7 +382,7 @@ extra_code = code
         self.vmstate.extra_references = {self.properties}
 
         self.class_init = Function(
-            name = "%s_class_init" % self.qtn.for_id_name, 
+            name = "%s_class_init" % self.qtn.for_id_name,
             body = """\
     DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
 
