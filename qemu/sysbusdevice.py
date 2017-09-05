@@ -443,7 +443,7 @@ Type.lookup("void").gen_var("opaque", True),
         # policy. Hence, version API must be used there.
         header_source = self.header.generate(inherit_references = True)
 
-        return header_source;
+        return header_source
 
     def generate_source(self):
         return self.source.generate()
