@@ -250,6 +250,7 @@ corresponding vendor is given" % attr
                 text = "0x%X" % mem_bar_def_size
             )
 
+            self.mem_bar_size_macros.append(size_macro)
             self.header.add_type(size_macro)
             realize_used_types.add(size_macro)
 
