@@ -229,12 +229,21 @@ corresponding vendor is given" % attr
 
         self.pci_class_macro = self.pci_class.find_macro()
 
+        mem_bar_def_size = 0x100
+
+        for barN in range(0, self.mem_bar_num):
+            size_macro = Macro(
+                name = self.gen_Ith_mem_bar_size_macro_name(barN),
+                text = "0x%X" % mem_bar_def_size
+            )
+
+            self.mem_bar_size_macros.append(size_macro)
+            self.header.add_type(size_macro)
+
         realize_code = ''
         realize_used_types = set()
         realize_used_globals = []
         s_is_used = False
-
-        mem_bar_def_size = 0x100
 
         if self.mem_bar_num > 0:
             s_is_used = True
@@ -245,13 +254,7 @@ corresponding vendor is given" % attr
             ])
 
         for barN in range(0, self.mem_bar_num):
-            size_macro = Macro(
-                name = self.gen_Ith_mem_bar_size_macro_name(barN),
-                text = "0x%X" % mem_bar_def_size
-            )
-
-            self.mem_bar_size_macros.append(size_macro)
-            self.header.add_type(size_macro)
+            size_macro = self.mem_bar_size_macros[barN]
             realize_used_types.add(size_macro)
 
             component = self.get_Ith_mem_bar_id_component(barN)
