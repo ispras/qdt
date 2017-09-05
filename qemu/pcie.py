@@ -252,6 +252,8 @@ corresponding vendor is given" % attr
             ]
             self.header.add_types(self.msi_types)
 
+        self.gen_property_macros(self.header)
+
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
@@ -415,7 +417,6 @@ corresponding vendor is given" % attr
 
         self.source.add_global_variable(self.vmstate)
 
-        self.gen_property_macros(self.header)
         self.properties = self.gen_properties_global(self.state_struct)
 
         self.source.add_global_variable(self.properties)
