@@ -147,6 +147,7 @@ corresponding vendor is given" % attr
 
         self.nic_declare_fields()
 
+    def generate_header(self):
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
@@ -254,6 +255,11 @@ corresponding vendor is given" % attr
 
         self.gen_property_macros(self.header)
 
+        # TODO: current value of inherit_references is dictated by Qemu coding
+        # policy. Hence, version API must be used there.
+        return self.header.generate(inherit_references = True)
+
+    def generate_source(self):
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
@@ -505,12 +511,6 @@ Type.lookup("void").gen_var("opaque", True),
         self.device_reset.extra_references = {self.device_realize}
         self.device_exit.extra_references = {self.device_reset}
 
-    def generate_header(self):
-        # TODO: current value of inherit_references is dictated by Qemu coding
-        # policy. Hence, version API must be used there.
-        return self.header.generate(inherit_references = True)
-
-    def generate_source(self):
         return self.source.generate()
 
     def get_Ith_mem_bar_id_component(self, i):
