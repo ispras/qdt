@@ -74,6 +74,7 @@ class SysBusDeviceType(QOMDevice):
         self.char_declare_fields()
         self.block_declare_fields()
 
+    def generate_header(self):
         self.state_struct = self.gen_state()
 
         self.header.add_type(self.state_struct)
@@ -102,6 +103,50 @@ class SysBusDeviceType(QOMDevice):
             self.state_struct
         ])
 
+        mmio_def_size = 0x100
+        for mmioN in range(0, self.mmio_num):
+            size_macro = Macro(
+                name = self.gen_Ith_mmio_size_macro_name(mmioN),
+                text = "0x%X" % mmio_def_size
+            )
+
+            self.header.add_type(size_macro)
+            self.mmio_size_macros.append(size_macro)
+
+        pio_def_size = 0x4
+        pio_cur_addres = 0x1000
+
+        for pioN in range(0, self.pio_num):
+            size_macro = Macro(
+                name = self.gen_Ith_pio_size_macro_name(pioN),
+                text = "0x%X" % pio_def_size)
+            address_macro = Macro(
+                name = self.gen_Ith_pio_address_macro_name(pioN),
+                text = "0x%X" % pio_cur_addres)
+            pio_cur_addres += pio_def_size
+
+            self.header.add_types([size_macro, address_macro])
+
+            self.pio_size_macros.append(size_macro)
+            self.pio_address_macros.append(address_macro)
+
+        if self.in_irq_num > 0:
+            self.in_irq_macro = Macro(
+                name = "%s_IN_IRQ_NUM" % self.qtn.for_macros,
+                text = "%d" % self.in_irq_num
+            )
+
+            self.header.add_type(self.in_irq_macro)
+
+        self.gen_property_macros(self.header)
+
+        # TODO: current value of inherit_references is dictated by Qemu coding
+        # policy. Hence, version API must be used there.
+        header_source = self.header.generate(inherit_references = True)
+
+        return header_source
+
+    def generate_source(self):
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
@@ -125,8 +170,6 @@ class SysBusDeviceType(QOMDevice):
         instance_init_used_types = set()
         instance_init_used_globals = []
 
-        mmio_def_size = 0x100
-
         if self.mmio_num > 0:
             instance_init_used_types.update([
                 Type.lookup("sysbus_init_mmio"),
@@ -135,14 +178,7 @@ class SysBusDeviceType(QOMDevice):
             ])
 
         for mmioN in range(0, self.mmio_num):
-            size_macro = Macro(
-                name = self.gen_Ith_mmio_size_macro_name(mmioN),
-                text = "0x%X" % mmio_def_size
-            )
-
-            self.header.add_type(size_macro)
-            self.mmio_size_macros.append(size_macro)
-
+            size_macro = self.mmio_size_macros[mmioN]
             instance_init_used_types.add(size_macro)
 
             component = self.get_Ith_mmio_id_component(mmioN)
@@ -196,9 +232,6 @@ class SysBusDeviceType(QOMDevice):
 )
             s_is_used = True
 
-        pio_def_size = 0x4
-        pio_cur_addres = 0x1000
-
         if self.pio_num > 0:
             instance_init_used_types.update([
                 Type.lookup("sysbus_add_io"),
@@ -208,17 +241,8 @@ class SysBusDeviceType(QOMDevice):
             ])
 
         for pioN in range(0, self.pio_num):
-            size_macro = Macro(
-                name = self.gen_Ith_pio_size_macro_name(pioN),
-                text = "0x%X" % pio_def_size)
-            address_macro = Macro(
-                name = self.gen_Ith_pio_address_macro_name(pioN),
-                text = "0x%X" % pio_cur_addres)
-            pio_cur_addres += pio_def_size
-
-            self.header.add_types([size_macro, address_macro])
-            self.pio_size_macros.append(size_macro)
-            self.pio_address_macros.append(address_macro)
+            size_macro = self.pio_size_macros[pioN]
+            address_macro = self.pio_address_macros[pioN]
             instance_init_used_types.update([size_macro, address_macro])
 
             component = self.get_Ith_pio_id_component(pioN)
@@ -306,13 +330,6 @@ use_as_prototype(
 
             self.source.add_type(self.irq_handler)
 
-            self.in_irq_macro = Macro(
-                name = "%s_IN_IRQ_NUM" % self.qtn.for_macros,
-                text = "%d" % self.in_irq_num
-            )
-
-            self.header.add_type(self.in_irq_macro)
-
             instance_init_code += """
     qdev_init_gpio_in(@aDEVICE(obj),@s{handler},@s{irqs});
 """.format(
@@ -378,7 +395,6 @@ extra_code = code
 
         self.source.add_global_variable(self.vmstate)
 
-        self.gen_property_macros(self.header)
         self.properties = self.gen_properties_global(self.state_struct)
 
         self.source.add_global_variable(self.properties)
@@ -439,14 +455,6 @@ Type.lookup("void").gen_var("opaque", True),
         self.device_reset.extra_references = {self.device_realize}
         self.device_unrealize.extra_references = {self.device_reset}
 
-    def generate_header(self):
-        # TODO: current value of inherit_references is dictated by Qemu coding
-        # policy. Hence, version API must be used there.
-        header_source = self.header.generate(inherit_references = True)
-
-        return header_source
-
-    def generate_source(self):
         return self.source.generate()
 
     def get_Ith_mmio_id_component(self, i):
