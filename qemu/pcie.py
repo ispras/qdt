@@ -226,6 +226,32 @@ corresponding vendor is given" % attr
             self.mem_bar_size_macros.append(size_macro)
             self.header.add_type(size_macro)
 
+        if self.msi_messages_num > 0 :
+            self.msi_cap_offset = Macro(
+                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
+                text = "0x48"
+            )
+            self.msi_vectors = Macro(
+                name = "%s_MSI_VECTORS" % self.qtn.for_macros,
+                text = "%u" % self.msi_messages_num
+            )
+            self.msi_64bit = Macro(
+                name = "%s_MSI_64BIT" % self.qtn.for_macros,
+                text = "1"
+            )
+            self.msi_masking = Macro(
+                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
+                text = "1"
+            )
+
+            self.msi_types = [
+                self.msi_cap_offset,
+                self.msi_vectors,
+                self.msi_64bit,
+                self.msi_masking
+            ]
+            self.header.add_types(self.msi_types)
+
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
@@ -308,31 +334,6 @@ corresponding vendor is given" % attr
             )
 
         if self.msi_messages_num > 0 :
-            self.msi_cap_offset = Macro(
-                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
-                text = "0x48"
-            )
-            self.msi_vectors = Macro(
-                name = "%s_MSI_VECTORS" % self.qtn.for_macros,
-                text = "%u" % self.msi_messages_num
-            )
-            self.msi_64bit = Macro(
-                name = "%s_MSI_64BIT" % self.qtn.for_macros,
-                text = "1"
-            )
-            self.msi_masking = Macro(
-                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
-                text = "1"
-            )
-
-            self.msi_types = [
-                self.msi_cap_offset,
-                self.msi_vectors,
-                self.msi_64bit,
-                self.msi_masking
-            ]
-            self.header.add_types(self.msi_types)
-
             msi_init_type = Type.lookup("msi_init")
             s_is_used = True
 
