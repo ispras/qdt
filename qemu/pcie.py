@@ -122,10 +122,6 @@ corresponding vendor is given" % attr
 
         self.mem_bar_size_macros = []
 
-        """
-        There is too many code same as in SysBusDeviceType constructor...
-        """
-
         self.add_state_field_h("PCIDevice", "parent_obj")
 
         for irqN in range(0, self.irq_num):
