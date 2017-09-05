@@ -141,6 +141,8 @@ class SysBusDeviceType(QOMDevice):
             )
 
             self.header.add_type(size_macro)
+            self.mmio_size_macros.append(size_macro)
+
             instance_init_used_types.add(size_macro)
 
             component = self.get_Ith_mmio_id_component(mmioN)
