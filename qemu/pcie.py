@@ -308,45 +308,45 @@ corresponding vendor is given" % attr
             )
 
         if self.msi_messages_num > 0 :
-            msi_cap_offset = Macro(
+            self.msi_cap_offset = Macro(
                 name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
                 text = "0x48"
             )
-            msi_vectors = Macro(
+            self.msi_vectors = Macro(
                 name = "%s_MSI_VECTORS" % self.qtn.for_macros,
                 text = "%u" % self.msi_messages_num
             )
-            msi_64bit = Macro(
+            self.msi_64bit = Macro(
                 name = "%s_MSI_64BIT" % self.qtn.for_macros,
                 text = "1"
             )
-            msi_masking = Macro(
+            self.msi_masking = Macro(
                 name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
                 text = "1"
             )
 
-            msi_types = [
-                msi_cap_offset,
-                msi_vectors,
-                msi_64bit,
-                msi_masking
+            self.msi_types = [
+                self.msi_cap_offset,
+                self.msi_vectors,
+                self.msi_64bit,
+                self.msi_masking
             ]
-            self.header.add_types(msi_types)
+            self.header.add_types(self.msi_types)
 
             msi_init_type = Type.lookup("msi_init")
             s_is_used = True
 
             realize_code += """
     msi_init(dev,@s%s,@s%s,@s%s,@s%s%s);
-""" % (msi_cap_offset.gen_usage_string(),
-       msi_vectors.gen_usage_string(),
-       msi_64bit.gen_usage_string(),
-       msi_masking.gen_usage_string(),
+""" % (self.msi_cap_offset.gen_usage_string(),
+       self.msi_vectors.gen_usage_string(),
+       self.msi_64bit.gen_usage_string(),
+       self.msi_masking.gen_usage_string(),
        ",@serrp" if msi_init_type.args[-1].type \
                    == Pointer(Pointer(Type.lookup("Error"))) else ""
             )
 
-            realize_used_types.update(msi_types)
+            realize_used_types.update(self.msi_types)
             realize_used_types.add(msi_init_type)
 
         self.device_realize = self.gen_realize("PCIDevice",
