@@ -725,7 +725,10 @@ class QemuVersionDescription(object):
     def co_check_modified_files(self):
         # A diff between the index and the working tree
         modified_files = set()
-        for e in self.repo.index.diff(None):
+
+        # index.diff(None) --- diff index against working copy
+        # index.diff('HEAD') --- diff index against current HEAD tree
+        for e in self.repo.index.diff(None) + self.repo.index.diff('HEAD'):
             abs_path = join(u(self.src_path), e.a_path)
             for include in self.include_paths:
                 if abs_path.startswith(include + sep):
