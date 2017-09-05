@@ -440,9 +440,6 @@ Type.lookup("void").gen_var("opaque", True),
         self.device_unrealize.extra_references = {self.device_reset}
 
     def generate_header(self):
-        #header = HeaderFile(self.qtn.get_header_name())
-        #header.add_chunk(StructureDeclaration(state_struct))
-
         # TODO: current value of inherit_references is dictated by Qemu coding
         # policy. Hence, version API must be used there.
         header_source = self.header.generate(inherit_references = True)
