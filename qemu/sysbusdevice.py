@@ -306,23 +306,23 @@ use_as_prototype(
 
             self.source.add_type(self.irq_handler)
 
-            in_irq_macro = Macro(
+            self.in_irq_macro = Macro(
                 name = "%s_IN_IRQ_NUM" % self.qtn.for_macros,
                 text = "%d" % self.in_irq_num
             )
 
-            self.header.add_type(in_irq_macro)
+            self.header.add_type(self.in_irq_macro)
 
             instance_init_code += """
     qdev_init_gpio_in(@aDEVICE(obj),@s{handler},@s{irqs});
 """.format(
     handler = self.irq_handler.name,
-    irqs = in_irq_macro.name
+    irqs = self.in_irq_macro.name
             )
 
             instance_init_used_types.update([
                 self.irq_handler,
-                in_irq_macro,
+                self.in_irq_macro,
                 Type.lookup("qdev_init_gpio_in"),
                 Type.lookup("DEVICE")
             ])
