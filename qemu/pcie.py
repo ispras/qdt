@@ -247,6 +247,9 @@ corresponding vendor is given" % attr
                 self.msi_64bit,
                 self.msi_masking
             ]
+
+            line_origins(self.msi_types)
+
             self.header.add_types(self.msi_types)
 
         self.gen_property_macros(self.header)
