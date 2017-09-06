@@ -1762,7 +1762,7 @@ def depth_first_sort(chunk, new_chunks):
     # 1 - visited
     # 2 - added to new_chunks
     chunk.visited = 1
-    for ch in chunk.references:
+    for ch in sorted(chunk.references):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
