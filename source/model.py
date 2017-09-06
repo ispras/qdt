@@ -1455,7 +1455,14 @@ the expression which is 0 if safe breaking is not required after this word.
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
     def __lt__(self, other):
-        return type(self).weight < type(other).weight
+        sw = type(self).weight
+        ow = type(other).weight
+        if sw < ow:
+            return True
+        elif sw > ow:
+            return False
+        else:
+            return self.name < other.name
 
 class HeaderInclusion(SourceChunk):
     weight = 0
