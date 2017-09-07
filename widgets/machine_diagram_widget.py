@@ -2,11 +2,16 @@ from widgets import \
     VarMenu, \
     CanvasDnD
 
+from six import \
+    text_type, \
+    binary_type
+
 from six.moves import \
     reduce, \
     range as xrange
 
 from six.moves.tkinter import \
+    StringVar, \
     BooleanVar, \
     DISABLED, \
     ALL
@@ -31,6 +36,8 @@ from os.path import \
     splitext
 
 from common import \
+    PhBox, \
+    PhCircle, \
     Vector, \
     Segment, \
     Polygon, \
@@ -46,9 +53,11 @@ from qemu import \
     MOp_SetChildBus, \
     BusNode, \
     IRQLine as QIRQLine, \
+    MOp_SetNodeVarNameBase, \
     MachineNodeSetLinkAttributeOperation, \
     MOp_AddIRQLine, \
     MOp_DelIRQLine, \
+    MOp_SetIRQAttr, \
     MachineNodeOperation, \
     MOp_AddIRQHub, \
     MOp_SetDevParentBus, \
@@ -83,29 +92,11 @@ from canvas2svg import \
     SEGMENT_TO_PATH, \
     saveall as saveall2svg
 
-class PhObject(object):
-    def __init__(self,
-            # "physics" parameters
-            x = 200, y = 200,
-            vx = 0, vy = 0,
-            w = 50, h = 50, spacing = 10,
-            # the node cannot be moved by engine if static
-            static = False
-        ):
-        self.x, self.y = x, y
-        self.vx, self.vy = vx, vy
-        self.spacing = spacing
-        self.static = static
+from .irq_hub_settings import \
+    IRQHubSettingsWindow
 
-class PhBox(PhObject):
-    def __init__(self, w = 50, h = 50, **kw):
-        PhObject.__init__(self, **kw)
-        self.width, self.height = w, h
-
-class PhCircle(PhObject):
-    def __init__(self, r = 10, **kw):
-        PhObject.__init__(self, **kw)
-        self.r = r
+from itertools import \
+    count
 
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):
@@ -200,39 +191,6 @@ class NodeBox(PhBox):
             y = self.y + self.height/2
         return x, y
 
-    def overlaps(self, n):
-        if n.x - n.spacing > self.x + self.width + self.spacing:
-            return False
-        if n.x + n.width + n.spacing < self.x - self.spacing:
-            return False
-        if n.y - n.spacing > self.y + self.height + self.spacing:
-            return False
-        if n.y + n.height + n.spacing < self.y - self.spacing:
-            return False
-        return True
-
-    def touches_conn(self, c):
-        if self.y - self.spacing > c.y:
-            return False
-        if self.y + self.height + self.spacing < c.y:
-            return False
-        if self.x + self.width + self.spacing < c.x:
-            return False
-        if self.x - self.spacing > c.x + c.width:
-            return False
-        return True
-
-    def touches(self, l):
-        if self.x - self.spacing > l.x:
-            return False
-        if self.x + self.width + self.spacing < l.x:
-            return False
-        if self.y - self.spacing > l.y + l.height:
-            return False
-        if self.y + self.height + self.spacing < l.y:
-            return False
-        return True
-
 class BusLine(PhBox):
     def __init__(self, bl):
         PhBox.__init__(self,
@@ -263,41 +221,12 @@ class ConnectionLine(PhBox):
         self.x = min([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2])
         self.width = max([self.bus_node.x, self.dev_node.x + self.dev_node.width / 2]) - self.x
 
-    def crosses(self, b):
-        if self.x > b.x:
-            return False
-        if self.y < b.y:
-            return False
-        if self.x + self.width < b.x:
-            return False
-        if b.y + b.height < self.y:
-            return False
-        return True
-
 class NodeCircle(PhCircle):
     def __init__(self):
         PhCircle.__init__(self,
             spacing = 0
         )
         self.offset = [0, 0]
-
-    def overlaps_circle(self, c):
-        dx = c.x + c.r - (self.x + self.r)
-        dy = c.y + c.r - (self.y + self.r)
-        return sqrt( dx * dx + dy * dy ) \
-            < c.r + c.spacing + self.r + self.spacing
-
-    def overlaps_node(self, n):
-        # it is not a precise check 
-        if self.x + self.r * 2 + self.spacing < n.x - n.spacing: 
-            return False
-        if self.y + self.r * 2 + self.spacing < n.y - n.spacing: 
-            return False
-        if n.x + n.width + n.spacing < self.x - self.spacing:
-            return False
-        if n.y + n.height + n.spacing < self.y - self.spacing:
-            return False
-        return True
 
 class IRQPathCircle(NodeCircle):
     def __init__(self, line):
@@ -330,6 +259,18 @@ class IRQLine(object):
         self.circles = []
         self.lines = []
 
+DRAG_GAP = 5
+
+# limitation of the mesh drawing algorithm
+MIN_MESH_STEP = 1
+# limitation of Canvas.create_line.dash
+MAX_MESH_STEP = 260
+
+LAYOUT_SHOW_MESH = "show mesh"
+LAYOUT_MESH_STEP = "mesh step"
+LAYOUT_DYNAMIC = "physical layout" # this name difference is a legacy issue
+LAYOUT_IRQ_LINES_POINTS = "IRQ lines points"
+
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
@@ -344,7 +285,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         else:
             self.node_font = node_font
 
-        mach_desc.link()
+        mach_desc.link(handle_system_bus = False)
 
         self.mach = mach_desc
 
@@ -360,6 +301,11 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             self.hk = hotkeys = None
         else:
             self.bindings = [
+                HotKeyBinding(
+                    self.__switch_show_mesh,
+                    key_code = 58, # M
+                    description = _("Show/hide mesh.")
+                ),
                 HotKeyBinding(
                     self.on_export_diagram,
                     key_code = 26, # E
@@ -378,6 +324,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             ]
             hotkeys.add_bindings(self.bindings)
             hotkeys.add_key_symbols({
+                58: "M",
                 26: "E",
                 41: "F",
                 54: "C"
@@ -437,12 +384,17 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         self.update()
 
+        # the cache with VarString of node variable names
+        self.mach.node_id2var_name = {}
+        self.__update_var_names()
+
         self.bind('<<DnDMoved>>', self.dnd_moved, "+")
         self.bind('<<DnDDown>>', self.dnd_down, "+")
         self.bind('<<DnDUp>>', self.dnd_up, "+")
         self.dragged = []
 
         self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
+        self.b3_press_point = (-1, -1)
         self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
 
         self.canvas.bind("<Double-Button-1>", self.on_b1_double, "+")
@@ -451,6 +403,16 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.canvas.bind("<Motion>", self.motion_all)
         self.last_canvas_mouse = (0, 0)
 
+        self.display_mesh = False
+        self.canvas.bind("<Configure>", self.__on_resize, "+")
+
+        if self.mesh_step.get() > MAX_MESH_STEP:
+            self.mesh_step.set(MAX_MESH_STEP)
+        elif self.mesh_step.get() < MIN_MESH_STEP:
+            self.mesh_step.set(MIN_MESH_STEP)
+        self.mesh_step.trace_variable("w", self.__on_mesh_step)
+
+        self.begin_drag_all = False
         self.dragging_all = False
         self.all_were_dragged = False
 
@@ -595,6 +557,18 @@ IRQ line creation
                 hotkeys.get_keycode_string(self.on_diagram_centering)
         p.add_command(**centering_args)
 
+        self.var_show_mesh = BooleanVar()
+        self.var_show_mesh.trace_variable("w", self.__on_show_mesh)
+        show_mesh_args = {
+            "label": _("Show mesh"),
+            "variable": self.var_show_mesh
+        }
+        if hotkeys is not None:
+            show_mesh_args["accelerator"] = hotkeys.get_keycode_string(
+                self.__switch_show_mesh
+            )
+        p.add_checkbutton(**show_mesh_args)
+
         self.popup_empty_no_selected = p
 
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
@@ -628,6 +602,11 @@ IRQ line creation
             command = self.notify_popup_command if self.mht is None else \
                 self.on_popup_single_irq_hub_irq_destination,
             state = "disabled"
+        )
+        p.add_separator()
+        p.add_command(
+            label = _("Settings"),
+            command = self.on_popup_irq_hub_settings
         )
         p.add_separator()
         p.add_command(
@@ -702,6 +681,8 @@ IRQ line creation
                 handler = self.show_bus_settings
             elif isinstance(tdev, QIRQLine):
                 handler = self.show_irq_line_settings
+            elif isinstance(tdev, IRQHub):
+                handler = self.show_irq_hub_settings
 
             if handler is None:
                 continue
@@ -813,6 +794,8 @@ IRQ line creation
         self.canvas.delete(self.select_frame)
         self.select_frame = None
 
+        self.__repaint_mesh()
+
     def on_diagram_centering(self, *args):
         ids = self.canvas.find_withtag("DnD")
         if len(ids) == 0:
@@ -840,6 +823,8 @@ IRQ line creation
         self.canvas.delete(self.select_frame)
         self.select_frame = None
 
+        self.__repaint_mesh()
+
     def on_var_physical_layout(self, *args):
         if self.var_physical_layout.get():
             if not self.ph_is_running():
@@ -852,8 +837,21 @@ IRQ line creation
         self.shown_irq_circle = None
         self.shown_irq_node = None
 
+    def __line_and_node_idx_of_shown_irq_circle(self):
+        shown_irq_node = self.shown_irq_node
+
+        for l in self.irq_lines:
+            for idx, c in enumerate(l.circles):
+                if c is shown_irq_node:
+                    return (l, idx)
+
+        raise RuntimeError("Cannot lookup line and node index for shown circle")
+
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):
+            return
+
+        if op.sn != self.mach.__sn__:
             return
 
         if isinstance(op, MOp_SetDevQOMType):
@@ -912,6 +910,8 @@ IRQ line creation
                 self.node2dev[hub_node] = hub
 
                 self.add_irq_hub(hub_node)
+
+            self.__update_var_names()
         elif isinstance(op, MOp_DelIRQLine):
             # Assuming MOp_AddIRQLine is child class of MOp_DelIRQLine
             try:
@@ -952,6 +952,8 @@ IRQ line creation
                 self.node2dev[irq_node] = irq
 
                 self.add_irq_line(irq_node)
+
+            self.__update_var_names()
         elif isinstance(op, MachineNodeSetLinkAttributeOperation):
             dev = self.mach.id2node[op.node_id]
             if isinstance(dev, QIRQLine):
@@ -1016,6 +1018,8 @@ IRQ line creation
                 self.node2dev[node] = bus
 
                 self.add_buslabel(node)
+
+            self.__update_var_names()
         elif isinstance(op, MOp_AddDevice) or isinstance(op, MOp_DelDevice):
             try:
                 dev = self.mach.id2node[op.node_id]
@@ -1052,6 +1056,10 @@ IRQ line creation
 
                 self.add_node(node, False)
 
+            self.__update_var_names()
+        elif isinstance(op, MOp_SetNodeVarNameBase):
+            self.__update_var_names()
+
         self.invalidate()
 
     def __set_irq_dst_cmd_enabled(self, value):
@@ -1075,16 +1083,111 @@ IRQ line creation
         self.notify_popup_command()
 
     def on_popup_single_device_irq_destination(self):
+        irq_src = self.irq_src
+
         did = self.current_popup_tag
         irq_dst = self.node2dev[self.id2node[did]].id
 
+        irq_id = self.mach.get_free_id()
+
         self.mht.stage(
             MOp_AddIRQLine,
-            self.irq_src, irq_dst,
+            irq_src, irq_dst,
             0, 0, None, None,
-            self.mach.get_free_id()
+            irq_id
         )
+
+        # auto set GPIO names and indices at the ends of that new IRQ line
+        project = self.mht.pht.p
+        try:
+            qom_tree = project.qom_tree
+        except AttributeError:
+            qom_tree = None # no QOM tree available
+
+        for node_id, prefix in [
+            (irq_src, "src"),
+            (irq_dst, "dst")
+        ]:
+            node = self.mach.id2node[node_id]
+            if not isinstance(node, DeviceNode):
+                continue
+
+            gpio_name = None
+            attr_name = prefix + "_irq_name"
+
+            if qom_tree is not None: # cannot choice GPIO name without QOM tree
+                name = node.qom_type
+
+                # try to find such type in tree
+                for t in next(qom_tree.find(name = "device")).descendants():
+                    if name == t.name:
+                        break
+                    try:
+                        if name in t.macro:
+                            break
+                    except AttributeError:
+                        pass
+                else:
+                    t = None
+
+                # try to find GPIO names for this type
+                while t:
+                    try:
+                        gpios = t.gpio_names
+                    except AttributeError:
+                        pass
+                    else:
+                        if gpios:
+                            gpio_name = gpios[0]
+                            # a GPIO name is found, assign it
+                            self.mht.stage(MOp_SetIRQAttr, attr_name,
+                                gpio_name, irq_id
+                            )
+                            break
+
+                    t = t.parent
+
+            # find and assign free GPIO index
+            attr_dev = prefix + "_dev"
+            attr_idx = prefix + "_irq_idx"
+            for idx in count(0):
+                for irq in node.irqs:
+                    if getattr(irq, attr_dev) is not node:
+                        continue # opposite IRQ direction
+                    if getattr(irq, attr_name) != gpio_name:
+                        continue # other GPIO name
+                    if idx == getattr(irq, attr_idx):
+                        break
+                else:
+                    # free idx found, assign it
+                    if idx != 0: # default value
+                        self.mht.stage(MOp_SetIRQAttr, attr_idx, idx, irq_id)
+                    break
+                # this idx is already used
+
         self.mht.commit(sequence_description = _("Add IRQ line."))
+
+        self.notify_popup_command()
+
+    def show_irq_hub_settings(self, hub, x, y):
+        wnd = IRQHubSettingsWindow(hub, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
+    def on_popup_irq_hub_settings(self):
+        id = self.current_popup_tag
+
+        x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+        x, y = self.canvas.coords(id)[-2:]
+        x = x - x0
+        y = y - y0
+
+        hub = self.node2dev[self.id2node[id]]
+
+        self.show_irq_hub_settings(hub, x, y)
 
         self.notify_popup_command()
 
@@ -1151,10 +1254,7 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_irq_line_settings(self, irq, x, y):
-        wnd = IRQSettingsWindow(self.mach, self.mht, self,
-            # The window requires descriptor of widget, not a machine node.
-            irq = self.dev2node[irq]
-        )
+        wnd = IRQSettingsWindow(self.mach, self.mht, self, irq = irq)
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1359,24 +1459,119 @@ IRQ line creation
             bus = self.get_bus_at_popup("PCIExpressBusNode")
         )
 
+    def __switch_show_mesh(self):
+        self.var_show_mesh.set(not self.var_show_mesh.get())
+
+    def __check_show_mesh(self, alt):
+        show = (alt or self.var_show_mesh.get())
+
+        if self.display_mesh != show:
+            self.display_mesh = show
+
+            c = self.canvas
+            if show:
+                m = self.mesh_step.get()
+
+                self.__create_mesh(
+                    -m, -m,
+                    c.winfo_width() + m, c.winfo_height() + m
+                )
+            else:
+                c.delete("mesh")
+
+    def __on_show_mesh(self, *args):
+        self.__check_show_mesh(self.__alt_is_held())
+
+    def __create_mesh(self, wx1, wy1, wx2, wy2):
+        c = self.canvas
+        m = self.mesh_step.get()
+
+        x1, y1 = (
+            int(c.canvasx(wx1, gridspacing = m)),
+            int(c.canvasy(wy1, gridspacing = m))
+        )
+        x2, y2 = (
+            int(c.canvasx(wx2, gridspacing = m)),
+            int(c.canvasy(wy2, gridspacing = m))
+        )
+
+        # small step requires special handling
+        if m >= 15:
+            dash = (5, m - 5)
+            dashoffset = 2
+        elif m >= 6:
+            dash = (3, m - 3)
+            dashoffset = 1
+        else:
+            if m == 1:
+                m = 5
+            elif m == 2:
+                m = 4
+            dash = (1, m - 1)
+            dashoffset = 0
+
+        kw = {
+            "dash" : dash,
+            "tags" : "mesh",
+            "fill" : "blue",
+            "dashoffset" : dashoffset
+        }
+
+        cl = c.create_line
+        for x in xrange(x1, x2 + 1, m):
+            cl(x, y1, x, y2, **kw)
+
+        for y in xrange(y1, y2 + 1, m):
+            cl(x1, y, x2, y, **kw)
+
+        c.lower("mesh")
+
+    def __on_mesh_step(self, *args):
+        self.__repaint_mesh()
+
+    def __repaint_mesh(self):
+        # Repaint the mesh
+        if self.display_mesh:
+            c = self.canvas
+            m = self.mesh_step.get()
+            c.delete("mesh")
+            self.__create_mesh(
+                -m, -m,
+                c.winfo_width() + m, c.winfo_height() + m
+            )
+
+    def __on_resize(self, *args):
+        self.__repaint_mesh()
+
+    def __key_is_held(self, code):
+        try:
+            return self.key_state[code]
+        except KeyError:
+            return False
+
     def on_key_press(self, event):
         self.key_state[event.keycode] = True
+
+        alt = self.__alt_is_held()
+
+        self.align = alt
+
+        self.__check_show_mesh(alt)
 
     def on_key_release(self, event):
         self.key_state[event.keycode] = False
 
-    def shift_pressed(self):
-        try:
-            if self.key_state[50]:
-                return True
-        except:
-            pass
-        try:
-            if self.key_state[62]:
-                return True
-        except:
-            pass
-        return False
+        alt = self.__alt_is_held()
+
+        self.align = alt
+
+        self.__check_show_mesh(alt)
+
+    def __alt_is_held(self):
+        return self.__key_is_held(64) or self.__key_is_held(108)
+
+    def __shift_is_held(self):
+        return self.__key_is_held(50) or self.__key_is_held(62)
 
     def on_b1_press(self, event):
         event.widget.focus_set()
@@ -1462,7 +1657,7 @@ IRQ line creation
                 if not self.select_by_frame:
                     break
 
-        shift = self.shift_pressed()
+        shift = self.__shift_is_held()
 
         if not touched_ids:
             if not shift:
@@ -1499,95 +1694,67 @@ IRQ line creation
         if self.dragging or self.select_point:
             return
 
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        mx, my = event.x, event.y
+        self.b3_press_point = (mx, my)
 
-        touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+        # Shift + right button press => delete IRQ line circle
+        self.circle_was_deleted = False
+        if self.__shift_is_held():
+            self.update_highlighted_irq_line()
 
-        touched_ids = self.sort_ids_by_priority(touched_ids)
-
-        for tid in touched_ids:
-            if not "DnD" in self.canvas.gettags(tid):
-                continue
-            if not tid in self.id2node:
-                continue
-
-            shift = self.shift_pressed()
-            if shift:
-                if not tid in self.selected:
-                    self.selected.append(tid)
-                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
-            else:
-                if not tid in self.selected:
-                    self.selected = [tid]
-                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
-
-            # touched node
-            tnode = self.id2node[tid]
-
-            if not tnode in self.node2dev:
-                break
-
-            # touched device, etc..
-            tdev = self.node2dev[tnode]
-            popup = None
-
-            if len(self.selected) == 1:
-                if isinstance(tdev, DeviceNode):
-                    popup = self.popup_single_device
-                elif isinstance(tdev, IRQHub):
-                    popup = self.popup_single_irq_hub
-                elif isinstance(tdev, BusNode):
-                    popup = self.popup_single_bus
-                tag = tid
-            else:
-                popup = self.popup_multiple
-                tag = list(self.selected)
-
-            if popup:
-                self.show_popup(event.x_root, event.y_root, popup, tag)
+            if self.highlighted_irq_line and self.shown_irq_circle:
+                self.irq_line_delete_circle(
+                    *self.__line_and_node_idx_of_shown_irq_circle()
+                )
+                self.invalidate()
+                self.circle_was_deleted = True
                 return
 
-        #print("on_b3_press")
-        event.widget.scan_mark(int(x), int(y))
-        self.dragging_all = True
-        self.master.config(cursor = "fleur")
+        # prepare for dragging of all
+        self.begin_drag_all = True
+        self.dragging_all = False
         self.all_were_dragged = False
+        #print("on_b3_press")
 
     def on_b3_release(self, event):
         #print("on_b3_release")
         for n in self.nodes + self.buslabels + self.circles:
             n.static = False
-        self.dragging_all = False
+
+        # reset dragging of all
+        if self.dragging_all:
+            self.dragging_all = False
+            # begin_drag_all is already False
+        else:
+            self.begin_drag_all = False
+
         self.master.config(cursor = "")
 
         self.update_highlighted_irq_line()
 
-        if (not self.all_were_dragged) and self.highlighted_irq_line:
-            self.circle_to_be_deleted = None
+        if self.all_were_dragged:
+            self.__repaint_mesh()
+            return
 
+        if self.circle_was_deleted:
+            return
+        # else: show popup menu
+
+        x, y = self.canvas.canvasx(event.x), \
+               self.canvas.canvasy(event.y)
+
+        if self.highlighted_irq_line:
             if self.shown_irq_circle:
-                for l in self.irq_lines:
-                    for idx, c in enumerate(l.circles):
-                        if c == self.shown_irq_node:
-                            if self.shift_pressed():
-                                self.irq_line_delete_circle(l, idx)
-                                self.invalidate()
-                                return
-                            else:
-                                self.circle_to_be_deleted = (l, idx)
-                            break
-                    else:
-                        continue
-                    break
+                self.circle_to_be_deleted = \
+                    self.__line_and_node_idx_of_shown_irq_circle()
+            else:
+                self.circle_to_be_deleted = None
 
             self.popup_irq_line.entryconfig(
                 self.on_popup_irq_line_delete_point_idx,
                 state = "disabled" if self.circle_to_be_deleted is None \
                     else "normal"
             )
-
-            x, y = self.canvas.canvasx(event.x), \
-                   self.canvas.canvasy(event.y)
 
             self.stop_circle_preview()
 
@@ -1596,22 +1763,76 @@ IRQ line creation
             else:
                 tag = self.highlighted_irq_line
 
-            self.show_popup(event.x_root, event.y_root, self.popup_irq_line,
-                tag)
+            popup = self.popup_irq_line
+        else:
+            touched_ids = self.canvas.find_overlapping(
+                x - 3, y - 3,
+                x + 3, y + 3
+            )
 
-            return
+            if touched_ids:
+                touched_ids = self.sort_ids_by_priority(touched_ids)
+                popup = None
 
-        if not self.all_were_dragged:
-            if self.selected:
-                self.selected = []
-                self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+                for tid in touched_ids:
+                    if not "DnD" in self.canvas.gettags(tid):
+                        continue
+                    if not tid in self.id2node:
+                        continue
 
-            x, y = self.canvas.canvasx(event.x), \
-                   self.canvas.canvasy(event.y)
+                    shift = self.__shift_is_held()
+                    if shift:
+                        if not tid in self.selected:
+                            self.selected.append(tid)
+                            self.event_generate(
+                                MachineDiagramWidget.EVENT_SELECT
+                            )
+                    else:
+                        if not tid in self.selected:
+                            self.selected = [tid]
+                            self.event_generate(
+                                MachineDiagramWidget.EVENT_SELECT
+                            )
 
-            if not self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3):
-                self.show_popup(event.x_root, event.y_root,
-                    self.popup_empty_no_selected)
+                    # touched node
+                    tnode = self.id2node[tid]
+
+                    if not tnode in self.node2dev:
+                        continue
+
+                    # touched device, etc..
+                    tdev = self.node2dev[tnode]
+
+                    if len(self.selected) == 1:
+                        if isinstance(tdev, DeviceNode):
+                            popup = self.popup_single_device
+                        elif isinstance(tdev, IRQHub):
+                            popup = self.popup_single_irq_hub
+                        elif isinstance(tdev, BusNode):
+                            popup = self.popup_single_bus
+                        else:
+                            continue
+                        tag = tid
+                        break
+                    else:
+                        popup = self.popup_multiple
+                        tag = list(self.selected)
+                        break
+                else:
+                    popup = self.popup_empty_no_selected
+                    tag = None
+            else:
+                if self.selected:
+                    self.selected = []
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+
+                popup = self.popup_empty_no_selected
+                tag = None
+
+        if popup:
+            self.show_popup(event.x_root, event.y_root, popup, tag)
+        else:
+            self.hide_popup()
 
     def update_highlighted_irq_line(self):
         x, y = self.last_canvas_mouse
@@ -1643,7 +1864,8 @@ IRQ line creation
         self.motion(event)
         #print("motion_all")
 
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        mx, my = event.x, event.y
+        x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
         self.last_canvas_mouse = x, y
 
         if self.select_point:
@@ -1679,8 +1901,27 @@ IRQ line creation
         if not self.current_popup == self.popup_irq_line:
             self.update_highlighted_irq_line()
 
+        # if user moved mouse far enough then begin dragging of all
+        if self.begin_drag_all:
+            b3pp = self.b3_press_point
+
+            dx = abs(mx - b3pp[0])
+            dy = abs(my - b3pp[1])
+            # Use Manchester metric to speed up the check
+            if dx + dy > DRAG_GAP:
+                self.dragging_all = True
+                event.widget.scan_mark(
+                    int(self.canvas.canvasx(b3pp[0])),
+                    int(self.canvas.canvasy(b3pp[1]))
+                )
+                self.master.config(cursor = "fleur")
+                self.begin_drag_all = False
+                self.hide_popup()
+
         if not self.dragging_all:
             return
+
+        self.__repaint_mesh()
 
         event.widget.scan_dragto(
             int(event.widget.canvasx(event.x)),
@@ -1713,7 +1954,7 @@ IRQ line creation
         # moving of non-selected item while other are selected
         if self.selected:
             if not id in self.selected:
-                if self.shift_pressed():
+                if self.__shift_is_held():
                     self.selected.append(id)
                 else:
                     self.selected = []
@@ -1775,6 +2016,23 @@ IRQ line creation
             n.static = False
         self.dragged = []
 
+    def __update_var_names(self):
+        t = self.mach.gen_type()
+
+        # provide names for variables of all nodes
+        t.reset_generator()
+
+        ni2vn = self.mach.node_id2var_name
+
+        for n, v in t.node_map.items():
+            if isinstance(n, (text_type, binary_type)):
+                continue
+
+            nid = n.id
+            sv = ni2vn.setdefault(nid, StringVar())
+            if sv.get() != v:
+                sv.set(v)
+
     def update(self):
         irqs = list(self.mach.irqs)
 
@@ -1827,8 +2085,8 @@ IRQ line creation
             if irq in self.dev2node:
                 continue
 
-            src = self.dev2node[irq.src[0]]
-            dst = self.dev2node[irq.dst[0]]
+            src = self.dev2node[irq.src_dev]
+            dst = self.dev2node[irq.dst_dev]
 
             line = IRQLine(irq, src, dst)
 
@@ -2127,7 +2385,7 @@ IRQ line creation
 
         for idx, n in enumerate(nbl):
             for n1 in nbl[idx + 1:]:
-                if not n.overlaps(n1):
+                if not n.overlaps_box(n1):
                     continue
 
                 w2 = n.width / 2
@@ -2187,7 +2445,7 @@ IRQ line creation
             yield
 
             for b in self.buses:
-                if not n.touches(b):
+                if not n.touches_vline(b):
                     continue
 
                 if n == b.buslabel:
@@ -2218,7 +2476,7 @@ IRQ line creation
                 if n.conn == c:
                     continue
 
-                if not n.touches_conn(c):
+                if not n.touches_hline(c):
                     continue
 
                 h2 = n.height / 2
@@ -2235,7 +2493,7 @@ IRQ line creation
             yield
 
             for hub in self.circles:
-                if not hub.overlaps_node(n):
+                if not hub.overlaps_box(n):
                     continue
 
                 w2 = n.width / 2
@@ -2454,6 +2712,7 @@ IRQ line creation
 
     def ph_process_irq_line(self, l):
         changed = False
+        hand_layout = not self.var_physical_layout.get()
 
         for i, seg in enumerate(l.lines):
             if i == 0:
@@ -2482,11 +2741,13 @@ IRQ line creation
 
             # Do not change lines during dragging it could delete currently
             # dragged circle
+            # Do not change circles if dynamic layout is turned off.
             line_circles = len(l.circles)
 
             if not (   self.dragging 
                     or changed 
                     or self.irq_circle_per_line_limit <= line_circles
+                    or hand_layout
                 ):
                 dx = x1 - x0
                 dy = y1 - y0
@@ -2769,8 +3030,10 @@ IRQ line creation
             ]
 
         layout[-1] = {
-            "physical layout": self.var_physical_layout.get(),
-            "IRQ lines points": irqs
+            LAYOUT_SHOW_MESH        : self.var_show_mesh.get(),
+            LAYOUT_MESH_STEP        : self.mesh_step.get(),
+            LAYOUT_DYNAMIC          : self.var_physical_layout.get(),
+            LAYOUT_IRQ_LINES_POINTS : irqs
         }
 
         return layout
@@ -2781,12 +3044,29 @@ IRQ line creation
             for id, desc in l.items():
                 if id == -1:
                     try:
-                        self.var_physical_layout.set(desc["physical layout"])
+                        self.var_show_mesh.set(desc[LAYOUT_SHOW_MESH])
                     except KeyError:
                         pass
 
                     try:
-                        irqs = desc["IRQ lines points"]
+                        step = desc[LAYOUT_MESH_STEP]
+                    except KeyError:
+                        pass
+                    else:
+                        if step < MIN_MESH_STEP:
+                            step = MIN_MESH_STEP
+                        elif step > MAX_MESH_STEP:
+                            step = MAX_MESH_STEP
+
+                        self.mesh_step.set(step)
+
+                    try:
+                        self.var_physical_layout.set(desc[LAYOUT_DYNAMIC])
+                    except KeyError:
+                        pass
+
+                    try:
+                        irqs = desc[LAYOUT_IRQ_LINES_POINTS]
                     except KeyError:
                         irqs = {}
 

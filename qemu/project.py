@@ -129,25 +129,6 @@ already in another project.")
     def co_gen(self, desc, src, with_chunk_graph = False):
         dev_t = desc.gen_type()
 
-        full_source_path = join(src, dev_t.source.path)
-
-        source_directory, source_base_name = split(full_source_path)
-
-        self.make_src_dirs(source_directory)
-
-        yield True
-
-        (source_name, source_ext) = splitext(source_base_name)
-        object_base_name = source_name + ".o"
-
-        hw_path = join(src, "hw")
-        class_hw_path = join(hw_path, desc.directory)
-        Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
-
-        patch_makefile(Makefile_objs_class_path, object_base_name,
-            obj_var_names[desc.directory], config_flags[desc.directory]
-        )
-
         if "header" in dev_t.__dict__:
             yield True
 
@@ -181,20 +162,42 @@ already in another project.")
 
         yield True
 
-        if isfile(full_source_path):
-            remove(full_source_path)
-
-        yield True
-
-        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
         source = dev_t.generate_source()
 
         yield True
 
+        full_source_path = join(src, dev_t.source.path)
+        source_directory, source_base_name = split(full_source_path)
+
+        if isfile(full_source_path):
+            remove(full_source_path)
+        else:
+            self.make_src_dirs(source_directory)
+
+        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
+
+        yield True
+
         source.generate(source_writer)
+
+        yield True
+
         source_writer.close()
 
         if with_chunk_graph:
             yield True
 
             source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
+
+        yield True
+
+        (source_name, source_ext) = splitext(source_base_name)
+        object_base_name = source_name + ".o"
+
+        hw_path = join(src, "hw")
+        class_hw_path = join(hw_path, desc.directory)
+        Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
+
+        patch_makefile(Makefile_objs_class_path, object_base_name,
+            obj_var_names[desc.directory], config_flags[desc.directory]
+        )

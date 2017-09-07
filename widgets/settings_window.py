@@ -1,15 +1,27 @@
 from .var_widgets import \
+    VarLabel, \
     VarButton, \
     VarToplevel
 
 from common import \
+    FormatVar, \
     mlget as _
 
 from .gui_frame import \
     GUIFrame
 
+from .hotkey import \
+    HKEntry
+
+from six.moves.tkinter import \
+    StringVar, \
+    BOTH
+
+from qemu import \
+    MOp_SetNodeVarNameBase
+
 class SettingsWidget(GUIFrame):
-    def __init__(self, machine, *args, **kw):
+    def __init__(self, node, machine, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
         try:
@@ -21,13 +33,57 @@ class SettingsWidget(GUIFrame):
         if self.mht is not None:
             self.mht.watch_changed(self.on_changed)
 
+        self.node = node
         self.mach = machine
 
-        self.grid()
+        self.node_fr = fr = GUIFrame(self)
+        fr.pack(fill = BOTH, expand = False)
+        fr.columnconfigure(0, weight = 0)
+        fr.columnconfigure(1, weight = 1)
+
+        # variable name base editing
+        fr.rowconfigure(0, weight = 0)
+        VarLabel(fr,
+            text = _("Variable name base")
+        ).grid(
+            row = 0,
+            column = 0,
+            sticky = "NSW"
+        )
+
+        self.v_var_base = v = StringVar()
+        HKEntry(fr,
+            textvariable = v
+        ).grid(
+            row = 0,
+            column = 1,
+            sticky = "NESW"
+        )
+
+        fr.rowconfigure(1, weight = 0)
+        VarLabel(fr,
+            text = _("Name of variable")
+        ).grid(
+            row = 1,
+            column = 0,
+            sticky = "NSW"
+        )
+
+        HKEntry(fr,
+            text = machine.node_id2var_name[node.id],
+            state = "readonly"
+        ).grid(
+            row = 1,
+            column = 1,
+            sticky = "NESW"
+        )
 
         self.refresh_after = self.after(0, self.__refresh_single__)
 
         self.bind("<Destroy>", self.__on_destroy__)
+
+    def refresh(self):
+        self.v_var_base.set(self.node.var_base)
 
     def apply(self):
         if self.mht is None:
@@ -36,9 +92,17 @@ class SettingsWidget(GUIFrame):
 
         self.mht.unwatch_changed(self.on_changed)
 
+        prev_pos = self.mht.pos
+
+        new_var_base = self.v_var_base.get()
+        if new_var_base != self.node.var_base:
+            self.mht.stage(MOp_SetNodeVarNameBase, new_var_base, self.node.id)
+
         self.__apply_internal__()
 
-        self.mht.commit()
+        if prev_pos is not self.mht.pos:
+            # sequence description must be set during __apply_internal__
+            self.mht.commit()
 
         self.mht.watch_changed(self.on_changed)
 
@@ -65,7 +129,14 @@ class SettingsWidget(GUIFrame):
             pass
 
 class SettingsWindow(VarToplevel):
-    def __init__(self, machine, machine_history_tracker = None, *args, **kw):
+    def __init__(self, node, machine,
+            machine_history_tracker = None,
+            *args, **kw
+        ):
+        """ Toplevel.__init__ calls `title` which requires the attribute `node`
+        to be initialized already. """
+        self.node = node
+
         VarToplevel.__init__(self, *args, **kw)
 
         self.mach = machine
@@ -125,6 +196,14 @@ class SettingsWindow(VarToplevel):
         self.attributes("-topmost", 1)
 
         self.bind("<Escape>", self.on_escape, "+")
+
+    def title(self, stringvar = None):
+        """ Add the prefix with node ID. """
+        if stringvar is None:
+            return VarToplevel.title(self, stringvar = stringvar)
+
+        title = FormatVar("(%u) %%s" % self.node.id) % stringvar
+        return VarToplevel.title(self, stringvar = title)
 
     def on_escape(self, event):
         self.destroy()

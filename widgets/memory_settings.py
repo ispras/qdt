@@ -22,6 +22,7 @@ from qemu import \
     MOp_SetMemNodeAlias
 
 from six.moves.tkinter import \
+    BOTH, \
     StringVar, \
     BooleanVar
 
@@ -34,18 +35,24 @@ from .device_settings import \
 from .hotkey import \
     HKEntry
 
+from .gui_frame import \
+    GUIFrame
+
 class MemorySettingsWidget(SettingsWidget):
     def __init__(self, mem, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, mem, *args, **kw)
 
         self.mem = mem
 
-        self.columnconfigure(0, weight = 0)
-        self.columnconfigure(1, weight = 1)
-        self.rowconfigure(0, weight = 0)
+        self.mem_fr = fr = GUIFrame(self)
+        fr.pack(fill = BOTH, expand = False)
+
+        fr.columnconfigure(0, weight = 0)
+        fr.columnconfigure(1, weight = 1)
+        fr.rowconfigure(0, weight = 0)
         row = 0
 
-        l = VarLabel(self, text = _("Region type"))
+        l = VarLabel(fr, text = _("Region type"))
         l.grid(row = row, column = 0, sticky = "NES")
 
         memtype2str = {
@@ -55,15 +62,15 @@ class MemorySettingsWidget(SettingsWidget):
            MemoryROMNode: _("ROM")
         }
 
-        l = VarLabel(self, text = memtype2str[ type(mem) ])
+        l = VarLabel(fr, text = memtype2str[ type(mem) ])
         l.grid(row = row, column = 1, sticky = "NEWS")
         row += 1
 
-        l = VarLabel(self, text = _("Parent region"))
+        l = VarLabel(fr, text = _("Parent region"))
         l.grid(row = row, column = 0, sticky = "NES")
 
         self.var_parent = StringVar()
-        self.cb_parent = Combobox(self,
+        self.cb_parent = Combobox(fr,
             textvariable = self.var_parent,
             state = "readonly"
         )
@@ -85,13 +92,13 @@ class MemorySettingsWidget(SettingsWidget):
             if _type is bool:
                 l = None
                 v = BooleanVar()
-                w = VarCheckbutton(self, text = text, variable = v)
+                w = VarCheckbutton(fr, text = text, variable = v)
             else:
-                l = VarLabel(self, text = text)
+                l = VarLabel(fr, text = text)
                 v = StringVar()
-                w = HKEntry(self, textvariable = v)
+                w = HKEntry(fr, textvariable = v)
 
-            self.rowconfigure(row, weight = 0)
+            fr.rowconfigure(row, weight = 0)
             if l is None:
                 w.grid(row = row, column = 0, sticky = "NWS",
                     columnspan = 2
@@ -109,11 +116,11 @@ class MemorySettingsWidget(SettingsWidget):
             setattr(self, "var_" + field, v)
 
         if type(mem) is MemoryAliasNode:
-            l = VarLabel(self, text = _("Alias region"))
+            l = VarLabel(fr, text = _("Alias region"))
             l.grid(row = row, column = 0, sticky = "NES")
 
             self.var_alias_to = StringVar()
-            self.cb_alias_to = Combobox(self,
+            self.cb_alias_to = Combobox(fr,
                 textvariable = self.var_alias_to,
                 state = "readonly"
             )
@@ -124,8 +131,6 @@ class MemorySettingsWidget(SettingsWidget):
             self.w_offset.grid_forget()
 
     def __apply_internal__(self):
-        prev_pos = self.mht.pos
-
         new_parent = self.find_node_by_link_text(self.var_parent.get())
         cur_parent = self.mem.parent
 
@@ -171,14 +176,15 @@ class MemorySettingsWidget(SettingsWidget):
                     new_alias_to,
                     self.mem.id)
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(
-                _("Memory '%s' (%d) configuration.") % (
-                    self.mem.name, self.mem.id
-                )
+        self.mht.set_sequence_description(
+            _("Memory '%s' (%d) configuration.") % (
+                self.mem.name, self.mem.id
             )
+        )
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         values = [
             DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
                 [ mem for mem in self.mach.mems if (
@@ -236,7 +242,7 @@ class MemorySettingsWidget(SettingsWidget):
 
 class MemorySettingsWindow(SettingsWindow):
     def __init__(self, mem, *args, **kw):
-        SettingsWindow.__init__(self, *args, **kw)
+        SettingsWindow.__init__(self, mem, *args, **kw)
 
         self.title(_("Memory settings"))
 

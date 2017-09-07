@@ -1045,6 +1045,10 @@ chunk. The references is to be added to 'users' of the 'typedef'.
 
     __type_references__ = ["type"]
 
+HDB_MACRO_NAME = "name"
+HDB_MACRO_TEXT = "text"
+HDB_MACRO_ARGS = "args"
+
 class Macro(Type):
     # args is list of strings
     def __init__(self, name, args = None, text=None):
@@ -1070,21 +1074,21 @@ class Macro(Type):
             )
 
     def gen_dict(self):
-        res = {"name" : self.name}
+        res = {HDB_MACRO_NAME : self.name}
         if self.text is not None:
-            res["text"] = self.text
+            res[HDB_MACRO_TEXT] = self.text
         if self.args is not None:
-            res["args"] = self.args
+            res[HDB_MACRO_ARGS] = self.args
 
         return res
 
     @staticmethod
     def new_from_dict(_dict):
         return Macro(
-            name = _dict["name"],
-            args = None if not "args" in _dict else _dict["args"],
-            text = None if not "text" in _dict else _dict["text"]
-            )
+            name = _dict[HDB_MACRO_NAME],
+            args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
+            text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
+        )
 
 # Data models
 
@@ -1303,6 +1307,14 @@ class Usage():
 # Source code instances
 
 class SourceChunk(object):
+    """
+`weight` is used during coarse chunk sorting. Chunks with less `weight` value
+    are moved to the top of the file. Then all chunks are ordered topologically
+    (with respect to inter-chunk references). But chunks which is not linked
+    by references will preserve `weight`-based order.
+    """
+    weight = 5
+
     def __init__(self, origin, name, code, references = None):
         self.origin = origin
         self.name = name
@@ -1442,7 +1454,19 @@ the expression which is 0 if safe breaking is not required after this word.
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
+    def __lt__(self, other):
+        sw = type(self).weight
+        ow = type(other).weight
+        if sw < ow:
+            return True
+        elif sw > ow:
+            return False
+        else:
+            return self.name < other.name
+
 class HeaderInclusion(SourceChunk):
+    weight = 0
+
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
             name = "Header {} inclusion".format(header.path),
@@ -1457,7 +1481,26 @@ class HeaderInclusion(SourceChunk):
             )
         self.header = header
 
+    def __lt__(self, other):
+        """ During coarse chunk sorting <global> header inclusions are moved to
+        the top of "local". Same headers are ordered by path. """
+        if isinstance(other, HeaderInclusion):
+            shdr = self.header
+            ohdr = other.header
+
+            sg = shdr.is_global
+            og = ohdr.is_global
+            if sg == og:
+                return shdr.path < ohdr.path
+            else:
+                # If self `is_global` flag is greater then order weight is less.
+                return sg > og
+        else:
+            return super(HeaderInclusion, self).__lt__(other)
+
 class MacroDefinition(SourceChunk):
+    weight = 1
+
     def __init__(self, macro, indent = ""):
         if macro.args is None:
             args_txt = ""
@@ -1523,6 +1566,8 @@ class PointerVariableDeclaration(SourceChunk):
         )
 
 class VariableDeclaration(SourceChunk):
+    weight = 3
+
     def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(var,
             name = "Variable {} of type {} declaration".format(
@@ -1599,6 +1644,8 @@ class VariableUsage(SourceChunk):
         self.initializer = initializer
 
 class StructureDeclarationBegin(SourceChunk):
+    weight = 2
+
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
@@ -1684,6 +1731,8 @@ def gen_function_def_ref_chunks(f, generator):
     return references
 
 class FunctionDeclaration(SourceChunk):
+    weight = 4
+
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
             name = "Declaration of function %s" % function.name,
@@ -1707,33 +1756,21 @@ class FunctionDefinition(SourceChunk):
             )
         self.function = function
 
-def deep_first_sort(chunk, new_chunks):
+def depth_first_sort(chunk, new_chunks):
     # visited: 
     # 0 - not visited
     # 1 - visited
     # 2 - added to new_chunks
     chunk.visited = 1
-    for ch in chunk.references:
+    for ch in sorted(chunk.references):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
             raise RuntimeError("A loop is found in source chunk references")
-        deep_first_sort(ch, new_chunks)
+        depth_first_sort(ch, new_chunks)
 
     chunk.visited = 2
     new_chunks.append(chunk)
-
-def source_chunk_key(ch):
-    try:
-        return {
-            HeaderInclusion: 0,
-            MacroDefinition: 1,
-            StructureDeclaration: 2,
-            VariableDeclaration: 3,
-            FunctionDeclaration: 4,
-        }[type(ch)]
-    except KeyError:
-        return 5
 
 class SourceFile:
     def __init__(self, name, is_header=False):
@@ -1762,9 +1799,16 @@ digraph Chunks {
                 mapping[chunk] = name
             return name
 
+        upper_cnn = None
         for ch in self.chunks:
             cnn = chunk_node_name(ch)
             w.write('\n    %s [label="%s"]\n' % (cnn, ch.name))
+
+            # invisible edges provides vertical order like in the output file
+            if upper_cnn is not None:
+                w.write('\n    %s -> %s [style=invis]\n' % (cnn, upper_cnn))
+            upper_cnn = cnn
+
             if ch.references:
                 w.write("        /* References */\n")
                 for ref in ch.references:
@@ -1814,7 +1858,7 @@ digraph Chunks {
         # topology sorting
         for chunk in self.chunks:
             if not chunk.visited == 2:
-                deep_first_sort(chunk, new_chunks)
+                depth_first_sort(chunk, new_chunks)
 
         for chunk in new_chunks:
             chunk.visited = 0
@@ -1980,7 +2024,7 @@ them must be replaced with reference to h. """
         self.optimize_inclusions()
 
         # semantic sort
-        self.chunks.sort(key = source_chunk_key)
+        self.chunks.sort()
 
         self.sort_chunks()
 
@@ -2020,11 +2064,12 @@ them must be replaced with reference to h. """
 #endif /* INCLUDE_{name}_H */
 """.format(name = to_macro_name(self.name)))
 
-class HeaderFile(SourceFile):
-    def __init__(self, name):
-        super(HeaderFile, self).__init__(name = name, is_header=True)
-
 #Source tree container
+
+HDB_HEADER_PATH = "path"
+HDB_HEADER_IS_GLOBAL = "is_global"
+HDB_HEADER_INCLUSIONS = "inclusions"
+HDB_HEADER_MACROS = "macros"
 
 class SourceTreeContainer(object):
     current = None
@@ -2085,44 +2130,44 @@ digraph HeaderInclusion {
     def load_header_db(self, list_headers):
         # Create all headers
         for dict_h in list_headers:
-            path = dict_h["path"]
+            path = dict_h[HDB_HEADER_PATH]
             if not path in self.reg_header:
                 Header(
-                       path = dict_h["path"],
-                       is_global = dict_h["is_global"])
+                       path = dict_h[HDB_HEADER_PATH],
+                       is_global = dict_h[HDB_HEADER_IS_GLOBAL])
             else:
                 # Check if existing header equals the one from database?
                 pass
 
         # Set up inclusions
         for dict_h in list_headers:
-            path = dict_h["path"]
+            path = dict_h[HDB_HEADER_PATH]
             h = self.header_lookup(path)
 
-            for inc in dict_h["inclusions"]:
+            for inc in dict_h[HDB_HEADER_INCLUSIONS]:
                 i = self.header_lookup(inc)
                 h.add_inclusion(i)
 
-            for m in dict_h["macros"]:
+            for m in dict_h[HDB_HEADER_MACROS]:
                 h.add_type(Macro.new_from_dict(m))
 
     def create_header_db(self):
         list_headers = []
         for h in self.reg_header.values():
             dict_h = {}
-            dict_h["path"] = h.path
-            dict_h["is_global"] = h.is_global
+            dict_h[HDB_HEADER_PATH] = h.path
+            dict_h[HDB_HEADER_IS_GLOBAL] = h.is_global
 
             inc_list = []
             for i in h.inclusions.values():
                 inc_list.append(i.path)
-            dict_h["inclusions"] = inc_list
+            dict_h[HDB_HEADER_INCLUSIONS] = inc_list
 
             macro_list = []
             for t in h.types.values():
                 if type(t) == Macro:
                     macro_list.append(t.gen_dict())
-            dict_h["macros"] = macro_list
+            dict_h[HDB_HEADER_MACROS] = macro_list
 
             list_headers.append(dict_h)
 

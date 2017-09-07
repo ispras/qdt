@@ -16,6 +16,12 @@ from six import \
 from importlib import \
     import_module
 
+from qemu import \
+    QOMDescription
+
+from traceback import \
+    print_stack
+
 class ProjectOperation(InverseOperation):
     def __init__(self, project, *args, **kw):
         InverseOperation.__init__(self, *args, **kw)
@@ -143,6 +149,14 @@ _MyClassName__my_attr in this case. It is Python internals...
                 return helper(val, self)
         return val
 
+    def get_arg(self, name):
+        try:
+            valdesc = getattr(self, self.prefix + name)
+        except AttributeError:
+            return None
+        else:
+            return self.export_value(*valdesc)
+
     def new(self):
         segments = self._nc.split(".")
         module, class_name = ".".join(segments[:-1]), segments[-1]
@@ -150,13 +164,7 @@ _MyClassName__my_attr in this case. It is Python internals...
 
         args = []
         for n in self.al:
-            try:
-                valdesc = getattr(self, self.prefix + n)
-            except AttributeError:
-                val = None
-            else:
-                val = self.export_value(*valdesc)
-            args.append(val)
+            args.append(self.get_arg(n))
 
         kw = {}
         for n in self.kwl:
@@ -275,6 +283,22 @@ for types: %s""" % ", ".join(t.__name__ for t in self.value_import_helpers)
                     )
                 setattr(self, self.prefix + n, valdesc)
 
+class DescriptionOperation(ProjectOperation):
+    def __init__(self, serial_number, *args, **kw):
+        ProjectOperation.__init__(self, *args, **kw)
+
+        # Backward compatibility
+        if isinstance(serial_number, QOMDescription):
+            print("Use serial number for description identification!")
+            print("QOMDescription was used there:")
+            print_stack()
+            serial_number = serial_number.__sn__
+
+        self.sn = serial_number
+
+    def find_desc(self):
+        return next(self.p.find(__sn__ = self.sn))
+
 class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
     def __init__(self, desc_class_name, serial_number, *args, **kw):
         QemuObjectCreationHelper.__init__(self, arg_name_prefix = "desc_")
@@ -285,13 +309,11 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
         self.sn = serial_number
 
     def __backup__(self):
-        self.name = self.export_value(*self.desc_name)
+        pass
 
     def __do__(self):
         desc = self.new()
         self.p.add_description(desc, with_sn = self.sn)
-        # Update serial number for reverse operation action
-        self.sn = desc.__sn__
 
     def __undo__(self):
         desc = next(self.p.find(__sn__ = self.sn))
@@ -320,7 +342,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
 
     def __description__(self):
         return _("'%s' QOM object addition (%s).") % (
-            self.name,
+            self.get_arg("name"),
             self.get_kind_str()
         )
 
@@ -331,22 +353,12 @@ class POp_DelDesc(POp_AddDesc):
     def __backup__(self):
         desc = next(self.p.find(__sn__ = self.sn))
         self.set_with_origin(desc)
-        self.name = desc.name
 
     __do__ = POp_AddDesc.__undo__
     __undo__ = POp_AddDesc.__do__
 
     def __description__(self):
         return _("'%s' QOM object deletion (%s).") % (
-            self.name,
+            self.get_arg("name"),
             self.get_kind_str()
         )
-
-class DescriptionOperation(ProjectOperation):
-    def __init__(self, description, *args, **kw):
-        ProjectOperation.__init__(self, *args, **kw)
-
-        self.desc_name = str(description.name)
-
-    def find_desc(self):
-        return next(self.p.find(name = self.desc_name))

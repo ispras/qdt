@@ -1,4 +1,5 @@
 from six.moves.tkinter import \
+    TclError, \
     Misc
 
 class DoShow(BaseException):
@@ -12,12 +13,10 @@ class TkPopupHelper(Misc):
 
         toplevel = self.winfo_toplevel()
         if toplevel is not None:
-            toplevel.bind("<Button-1>", self.tk_popup_helper_on_b1, "+")
+            toplevel.bind("<Button-1>", self.__hide_on_mouse, "+")
 
-    def tk_popup_helper_on_b1(self, event):
-        if self.current_popup:
-            self.current_popup.unpost()
-            self.tk_popup_helper_cleanup()
+    def __hide_on_mouse(self, event):
+        self.hide_popup()
 
     def tk_popup_helper_cleanup(self):
         self.current_popup = None
@@ -71,12 +70,32 @@ operator (except None).
         if show:
             self.current_popup_tag = tag
             try:
-                popup.tk_popup(x, y)
+                try:
+                    popup.tk_popup(x, y)
+                except TclError as e:
+                    """ If Shift is held then an error raised with message:
+'grab failed: another application has grab'. The menu is known to work this
+case. So, hide this error.
+                    """
+                    """ XXX: It's likely that the string is not localized and
+                    will remain constant. """
+                    if not str(e).startswith("grab failed"):
+                        raise e
             except:
-                pass
+                print("Cannot show popup!")
+                # ensure that the menu remains hidden
+                try:
+                    popup.unpost()
+                except:
+                    pass
             else:
                 self.current_popup = popup
             finally:
                 popup.grab_release()
         else:
             self.current_popup_tag = None
+
+    def hide_popup(self):
+        if self.current_popup:
+            self.current_popup.unpost()
+            self.tk_popup_helper_cleanup()

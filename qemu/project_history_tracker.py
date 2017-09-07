@@ -46,7 +46,7 @@ class MachineProxyTracker(object):
     def stage(self, op_class, *op_args, **op_kw):
         return self.pht.stage(
             op_class,
-            *(op_args + (self.mach,)),
+            *(op_args + (self.mach.__sn__,)),
             **op_kw
         )
 

@@ -10,8 +10,12 @@ from six import \
     integer_types
 
 from six.moves import \
-    range as xrange, \
-    tkinter as tk
+    range as xrange
+
+from six.moves.tkinter import \
+    BOTH, \
+    Label, \
+    StringVar
 
 from qemu import \
     MOp_DelIOMapping, \
@@ -51,9 +55,8 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             lf = VarLabelFrame(
                 self, text = mio[1]
             )
-            lf.grid(row = row, column = 0, sticky = "NEWS")
+            lf.pack(fill = BOTH, expand = False)
             lf.columnconfigure(0, weight = 1)
-            self.rowconfigure(row, weight = 1)
 
             fr = GUIFrame(lf)
             fr.grid(row = 0, column = 0, sticky = "NEWS")
@@ -90,10 +93,10 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
 
         row = len(rows)
 
-        l = tk.Label(grid, text = str(row) + ":")
+        l = Label(grid, text = str(row) + ":")
         l.grid(row = row, column = 0, sticky = "NES")
 
-        v = tk.StringVar()
+        v = StringVar()
         e = HKEntry(grid, textvariable = v)
         e.grid(row = row, column = 1, sticky = "NEWS")
 
@@ -153,8 +156,6 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
     def __apply_internal__(self):
         DeviceSettingsWidget.__apply_internal__(self)
 
-        prev_pos = self.mht.pos
-
         for mio in [ "mmio", "pmio" ]:
             rows = getattr(self, mio + "_rows")
             mappings = getattr(self.dev, mio + "_mappings")
@@ -186,10 +187,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
                     self.dev.id
                 )
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(
-                _("System bus device configuration.")
-            )
+        self.mht.set_sequence_description(_("System bus device configuration."))
 
     def on_del_mmio(self):
         self.on_del("mmio")

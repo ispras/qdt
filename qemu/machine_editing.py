@@ -221,18 +221,17 @@ class MOp_AddMemoryNode(MachineNodeAdding):
         if "MemoryNode" in self.nc:
             return _("container")
         elif "MemoryAliasNode" in self.nc:
-            mach = self.find_desc()
-
-            aliased_id = self.node__alias_to[1]
-
+            aliased = self.get_arg("alias_to")
+            # TODO: offset is keyword argument, cannot be obtained by get_arg
             aliased_offset = self.node__offset[1]
+
             if isinstance(aliased_offset, integer_types):
                 aliased_offset = "0x%X" % aliased_offset
             else:
                 aliased_offset = str(aliased_offset)
 
             return _("alias of %s (%d) with offset %s") % (
-                mach.id2node[aliased_id].name, aliased_id,
+                aliased.name, aliased.id,
                 aliased_offset
             )
         elif "MemoryRAMNode" in self.nc:
@@ -243,7 +242,7 @@ class MOp_AddMemoryNode(MachineNodeAdding):
             return "!"
 
     def __description__(self):
-        name = self.node__name[1]
+        name = self.get_arg("name")
         return _("Create memory region %s (%d) of kind %s.") % (
             name, self.node_id,
             self.get_kind_str()
@@ -256,7 +255,7 @@ class MOp_DelMemoryNode(MachineNodeDeletion, MOp_AddMemoryNode):
     __do__ =  MOp_AddMemoryNode.__undo__
 
     def __description__(self):
-        name = self.node__name[1]
+        name = self.get_arg("name")
         return _("Delete memory region %s (%d) of kind %s.") % (
             name, self.node_id,
             self.get_kind_str()
@@ -306,7 +305,7 @@ class MOp_AddDevice(MachineNodeAdding):
         return _("Create %s (%d) of type '%s'.") % (
             self.get_kind_str(),
             self.node_id,
-            self.node__qom_type[1]
+            self.get_arg("qom_type")
         )
 
 class MOp_DelDevice(MOp_AddDevice):
@@ -324,7 +323,7 @@ class MOp_DelDevice(MOp_AddDevice):
         return _("Delete %s (%d) of type '%s'.") % (
             self.get_kind_str(),
             self.node_id,
-            self.node__qom_type[1]
+            self.get_arg("qom_type")
         )
 
 class MOp_AddBus(MachineNodeAdding):
@@ -611,7 +610,7 @@ class MOp_DelIRQHub(MOp_AddIRQHub):
     def __description__(self):
         return _("Delete IRQ hub (%d).") % self.node_id
 
-class MachineDeviceSetAttributeOperation(MachineNodeOperation):
+class MachineNodeSetAttributeOperation(MachineNodeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
         MachineNodeOperation.__init__(self, *args, **kw)
 
@@ -619,13 +618,13 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
         self.new_val = deepcopy(new_value)
 
     def __backup__(self):
-        dev = self.mach.id2node[self.node_id]
-        val = getattr(dev, self.attr)
+        node = self.mach.id2node[self.node_id]
+        val = getattr(node, self.attr)
         self.old_val = deepcopy(val)
 
     def __do__(self):
-        dev = self.mach.id2node[self.node_id]
-        setattr(dev, self.attr, deepcopy(self.new_val))
+        node = self.mach.id2node[self.node_id]
+        setattr(node, self.attr, deepcopy(self.new_val))
 
     def __undo__(self):
         dev = self.mach.id2node[self.node_id]
@@ -651,34 +650,26 @@ class MachineDeviceSetAttributeOperation(MachineNodeOperation):
             return str(val)
 
     def __description__(self):
-        mach = self.find_desc()
-        dev = mach.id2node[self.node_id]
-
-        return _("Replace value '%s' of attribute '%s' of device %s (%d) with \
-value '%s'.") % (
+        return _("Replace value '%s' of attribute '%s' of %s with value '%s'."
+        ) % (
             self.gen_val_str(self.old_val),
             self.attr,
-            dev.qom_type, self.node_id,
+            self.gen_id_str(self.node_id),
             self.gen_val_str(self.new_val)
         )
 
-class MOp_SetMemNodeAttr(MachineDeviceSetAttributeOperation):
-
-    def __description__(self):
-        mach = self.find_desc()
-        mem = mach.id2node[self.node_id]
-
-        return _("Replace value '%s' of attribute '%s' of memory node %s (%d) \
-with value '%s'.") % (
-            self.gen_val_str(self.old_val),
-            self.attr,
-            mem.name, self.node_id,
-            self.gen_val_str(self.new_val)
+class MOp_SetNodeVarNameBase(MachineNodeSetAttributeOperation):
+    def __init__(self, new_base, *args, **kw):
+        super(MOp_SetNodeVarNameBase, self).__init__("var_base", new_base,
+            *args, **kw
         )
 
-class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
+class MOp_SetMemNodeAttr(MachineNodeSetAttributeOperation):
+    pass
+
+class MachineNodeSetLinkAttributeOperation(MachineNodeSetAttributeOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             attribute_name,
             new_value.id,
             *args, **kw
@@ -702,39 +693,29 @@ class MachineNodeSetLinkAttributeOperation(MachineDeviceSetAttributeOperation):
     def gen_val_str(self, val):
         return self.gen_id_str(val)
 
-class MOp_PCIDevSetSlot(MachineDeviceSetAttributeOperation):
+class MOp_PCIDevSetSlot(MachineNodeSetAttributeOperation):
     def __init__(self, slot, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             "slot", slot,
             *args, **kw
         )
 
-class MOp_PCIDevSetFunction(MachineDeviceSetAttributeOperation):
+class MOp_PCIDevSetFunction(MachineNodeSetAttributeOperation):
     def __init__(self, function, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             "function", function,
             *args, **kw
         )
 
-class MOp_PCIDevSetMultifunction(MachineDeviceSetAttributeOperation):
+class MOp_PCIDevSetMultifunction(MachineNodeSetAttributeOperation):
     def __init__(self, multifunction, *args, **kw):
-        MachineDeviceSetAttributeOperation.__init__(self,
+        MachineNodeSetAttributeOperation.__init__(self,
             "multifunction", multifunction,
             *args, **kw
         )
 
-class MOp_SetIRQAttr(MachineDeviceSetAttributeOperation):
-    def __description__(self):
-        mach = self.find_desc()
-        dev = mach.id2node[self.node_id]
-
-        return _("Replace value '%s' of attribute '%s' of IRQ line %d with \
-value '%s'.") % (
-            self.gen_val_str(self.old_val),
-            self.attr,
-            self.node_id,
-            self.gen_val_str(self.new_val)
-        )
+class MOp_SetIRQAttr(MachineNodeSetAttributeOperation):
+    pass
 
 class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
     def __description__(self):
@@ -763,15 +744,8 @@ class MOp_SetMemNodeAlias(MachineNodeSetLinkAttributeOperation):
             self.gen_id_str(self.new_val)
         )
 
-class MOp_SetBusAttr(MachineDeviceSetAttributeOperation):
-    def __description__(self):
-        return _("Replace value '%s' of attribute '%s' of bus %d with value \
-'%s'.") % (
-            self.gen_val_str(self.old_val),
-            self.attr,
-            self.node_id,
-            self.gen_val_str(self.new_val)
-        )
+class MOp_SetBusAttr(MachineNodeSetAttributeOperation):
+    pass
 
 class MachineIOMappingOperation(MachineNodeOperation):
     def __init__(self, mio, idx, *args, **kw):

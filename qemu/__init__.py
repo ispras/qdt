@@ -85,7 +85,8 @@ from .machine_editing import \
                 MOp_AddIRQLine, \
             MOp_AddIRQHub, \
                 MOp_DelIRQHub, \
-            MachineDeviceSetAttributeOperation, \
+            MachineNodeSetAttributeOperation, \
+                MOp_SetNodeVarNameBase, \
                 MOp_SetMemNodeAttr, \
                 MachineNodeSetLinkAttributeOperation, \
                     MOp_SetIRQEndPoint, \
@@ -124,3 +125,5 @@ from .qom_editing import \
 
 from .makefile_patching import \
     patch_makefile
+
+from .qom_hierarchy import *

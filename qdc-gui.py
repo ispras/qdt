@@ -5,6 +5,7 @@ from examples import \
     Q35MachineNode_2_6_0
 
 from widgets import \
+    GUIPOp_SetBuildPath, \
     TaskErrorDialog, \
     Statusbar, \
     GUIProjectHistoryTracker, \
@@ -58,6 +59,7 @@ from six.moves.tkinter import \
     StringVar
 
 from six.moves.tkinter_messagebox import \
+    askyesnocancel, \
     showinfo, \
     askyesno, \
     showerror
@@ -99,7 +101,7 @@ class QDCGUIWindow(GUITk):
         for signame in [
             "qvc_dirtied",
             "qvd_failed",
-            "qvd_switched"
+            "qvc_available"
         ]:
             s = CoSignal()
             s.attach(self.signal_dispatcher)
@@ -289,12 +291,14 @@ show it else hide it.")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.set_project(GUIProject() if project is None else project)
-
         # Status bar
         self.grid_rowconfigure(1, weight = 0)
         self.sb = sb = Statusbar(self)
         sb.grid(row = 1, column = 0, sticky = "NEWS")
+
+        # QEMU build path displaying
+        self.var_qemu_build_path = StringVar()
+        sb.left(self.var_qemu_build_path)
 
         # Task counters in status bar
         self.var_tasks = vt = IntVar()
@@ -313,6 +317,8 @@ show it else hide it.")
         self.task_manager.watch_removed(self.__on_task_state_changed)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
+
+        self.set_project(GUIProject() if project is None else project)
 
         self.__update_title__()
         self.__check_saved_asterisk__()
@@ -421,6 +427,8 @@ show it else hide it.")
         self.pw = ProjectWidget(self.proj, self)
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
+        self.update_qemu_build_path(project.build_path)
+
         self.pht.watch_changed(self.on_changed)
         self.check_undo_redo()
 
@@ -438,9 +446,14 @@ show it else hide it.")
         else:
             self.__saved_asterisk__(False)
 
-    def on_changed(self, *args, **kw):
+    def on_changed(self, op, *args, **kw):
         self.check_undo_redo()
         self.__check_saved_asterisk__()
+
+        if isinstance(op, GUIPOp_SetBuildPath):
+            proj = self.proj
+            if op.p is proj:
+                self.update_qemu_build_path(proj.build_path)
 
     def undo(self):
         self.pht.undo_sequence()
@@ -477,6 +490,25 @@ in process. Do you want to start cache rebuilding?").get()
         self.pw.reload_build_path()
 
     def on_delete(self):
+        if self.title_not_saved_asterisk.get() == "*":
+            resp = askyesnocancel(
+                title = self.title_suffix.get(),
+                message = _(
+                    "Current project has unsaved changes."
+                    " Would you like to save it?"
+                    "\n\nNote that a backup is always saved with name"
+                    " project.py in current working directory."
+                ).get()
+            )
+            if resp is None:
+                return
+            if resp:
+                self.on_save()
+
+                if self.title_not_saved_asterisk.get() == "*":
+                    # user canceled saving during on_save
+                    return
+
         try:
             """ TODO: Note that it is possible to prevent window to close if a
             generation task is in process. But is it really needed? """
@@ -655,6 +687,12 @@ all changes are saved. """
                 title = _("Project loading failed").get(),
                 message = str(e)
             )
+
+    def update_qemu_build_path(self, bp):
+        if bp is None:
+            self.var_qemu_build_path.set(_("No QEMU build path selected").get())
+        else:
+            self.var_qemu_build_path.set("QEMU: " + bp)
 
 def main():
     parser = ArgumentParser()

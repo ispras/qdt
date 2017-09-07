@@ -69,7 +69,11 @@ from .version import \
 
 from .ordered_set import *
 
+from .legacy import *
+
 from .os_wrappers import \
     remove_file
 
 from .notifier import *
+
+from .mechanics import *

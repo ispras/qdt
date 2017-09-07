@@ -14,6 +14,7 @@ from .var_widgets import \
     VarLabel
 
 from six.moves.tkinter import \
+    BOTH, \
     BooleanVar, \
     StringVar
 
@@ -30,21 +31,27 @@ from qemu import \
 from .hotkey import \
     HKEntry
 
+from .gui_frame import \
+    GUIFrame
+
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, bus, *args, **kw)
 
         self.bus = bus
 
-        self.columnconfigure(0, weight = 0)
-        self.columnconfigure(1, weight = 1)
-        self.rowconfigure(0, weight = 0)
+        self.bus_fr = fr = GUIFrame(self)
+        fr.pack(fill = BOTH, expand = False)
 
-        l = VarLabel(self, text = _("Parent device"))
+        fr.columnconfigure(0, weight = 0)
+        fr.columnconfigure(1, weight = 1)
+        fr.rowconfigure(0, weight = 0)
+
+        l = VarLabel(fr, text = _("Parent device"))
         l.grid(row = 0, column = 0, sticky = "NES")
 
         self.var_parent = StringVar()
-        self.cb_parent = Combobox(self,
+        self.cb_parent = Combobox(fr,
             textvariable = self.var_parent,
             state = "readonly"
         )
@@ -62,15 +69,15 @@ class BusSettingsWidget(SettingsWidget):
         # Common bus type
         for row, (text, field, _type) in enumerate(self.fields, start = 1):
             if _type is str:
-                l = VarLabel(self, text = text)
+                l = VarLabel(fr, text = text)
                 v = StringVar()
-                w = HKEntry(self, textvariable = v)
+                w = HKEntry(fr, textvariable = v)
             elif _type is bool:
                 l = None
                 v = BooleanVar()
-                w = VarCheckbutton(self, text = text, variable = v)
+                w = VarCheckbutton(fr, text = text, variable = v)
 
-            self.rowconfigure(row, weight = 0)
+            fr.rowconfigure(row, weight = 0)
             if l is None:
                 w.grid(row = row, column = 0, sticky = "NEWS",
                     columnspan = 2
@@ -103,8 +110,6 @@ class BusSettingsWidget(SettingsWidget):
             else:
                 self.mht.append_child_bus(new_parent_id, self.bus.id)
 
-        prev_pos = self.mht.pos
-
         for (text, field, _type) in self.fields:
             new_val = getattr(self, "var_" + field).get()
             cur_val = getattr(self.bus, field)
@@ -114,12 +119,13 @@ class BusSettingsWidget(SettingsWidget):
 
             self.mht.stage(MOp_SetBusAttr, field, new_val, self.bus.id)
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(
-                _("Bus %d configuration.") % self.bus.id
-            )
+        self.mht.set_sequence_description(
+            _("Bus %d configuration.") % self.bus.id
+        )
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         values = [
             DeviceSettingsWidget.gen_node_link_text(dev) for dev \
                 in ( self.mach.devices + [ None ] )
@@ -153,7 +159,7 @@ class BusSettingsWidget(SettingsWidget):
 
 class BusSettingsWindow(SettingsWindow):
     def __init__(self, bus, *args, **kw):
-        SettingsWindow.__init__(self, *args, **kw)
+        SettingsWindow.__init__(self, bus, *args, **kw)
 
         self.title(_("Bus settings"))
 

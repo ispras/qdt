@@ -1,6 +1,7 @@
 __all__ = [ "PCIExpressDeviceType" ]
 
 from source import \
+    line_origins, \
     Pointer, \
     Type, \
     Function, \
@@ -97,13 +98,17 @@ class PCIExpressDeviceType(QOMDevice):
 corresponding vendor is given" % attr
                     )
                 try:
-                    val = PCIId.db.get_device(name = val,
+                    val = PCIId.db.get_device(
+                        name = val,
                         vendor_name = vendor.name,
-                        vid = vendor.id)
+                        vid = vendor.id
+                    )
                 except Exception:
-                    val = PCIId.db.get_device(did = val,
+                    val = PCIId.db.get_device(
+                        did = val,
                         vendor_name = vendor.name,
-                        vid = vendor.id)
+                        vid = vendor.id
+                    )
             setattr(self, attr, val)
 
         val = getattr(self, "pci_class")
@@ -116,10 +121,6 @@ corresponding vendor is given" % attr
         self.pci_class = val
 
         self.mem_bar_size_macros = []
-
-        """
-        There is too many code same as in SysBusDeviceType constructor...
-        """
 
         self.add_state_field_h("PCIDevice", "parent_obj")
 
@@ -142,13 +143,14 @@ corresponding vendor is given" % attr
 
         self.nic_declare_fields()
 
+    def generate_header(self):
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
         self.type_name_macros = Macro(
             name = "TYPE_%s" % self.qtn.for_macros,
             text = '"%s"' % self.qtn.for_id_name
-            )
+        )
         self.header.add_type(self.type_name_macros)
 
         self.type_cast_macro = Macro(
@@ -157,9 +159,15 @@ corresponding vendor is given" % attr
             text = "OBJECT_CHECK({Struct}, (obj), TYPE_{UPPER})".format(
     UPPER = self.qtn.for_macros,
     Struct = self.struct_name
-)
             )
+        )
         self.header.add_type(self.type_cast_macro)
+
+        line_origins([
+            self.type_name_macros,
+            self.type_cast_macro,
+            self.state_struct
+        ])
 
         self.vendor_macro = self.vendor.find_macro()
 
@@ -172,10 +180,14 @@ corresponding vendor is given" % attr
             self.device_macro = self.device.find_macro()
         except TypeNotRegistered:
             # TODO: add device id macro to pci_ids.h
-            self.header.add_type(Macro(
+            self.header.add_type(
+                Macro(
                     name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
-                            self.device.name), 
-                    text = self.device.id))
+                            self.device.name
+                    ),
+                    text = self.device.id
+                )
+            )
 
             self.device_macro = self.device.find_macro()
 
@@ -184,10 +196,15 @@ corresponding vendor is given" % attr
                 self.subsystem_macro = self.subsystem.find_macro()
             except TypeNotRegistered:
                 # TODO: add device id macro to pci_ids.h
-                self.header.add_type(Macro(
-                    name = "PCI_DEVICE_ID_%s_%s" % (self.subsystem_vendor.name,
-                            self.subsystem.name), 
-                    text = self.subsystem.id))
+                self.header.add_type(
+                    Macro(
+                        name = "PCI_DEVICE_ID_%s_%s" % (
+                            self.subsystem_vendor.name,
+                            self.subsystem.name
+                        ),
+                        text = self.subsystem.id
+                    )
+                )
 
                 self.subsystem_macro = self.subsystem.find_macro()
         else:
@@ -195,12 +212,71 @@ corresponding vendor is given" % attr
 
         self.pci_class_macro = self.pci_class.find_macro()
 
+        mem_bar_def_size = 0x100
+
+        for barN in range(0, self.mem_bar_num):
+            size_macro = Macro(
+                name = self.gen_Ith_mem_bar_size_macro_name(barN),
+                text = "0x%X" % mem_bar_def_size
+            )
+
+            self.mem_bar_size_macros.append(size_macro)
+            self.header.add_type(size_macro)
+
+        if self.msi_messages_num > 0 :
+            self.msi_cap_offset = Macro(
+                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
+                text = "0x48"
+            )
+            self.msi_vectors = Macro(
+                name = "%s_MSI_VECTORS" % self.qtn.for_macros,
+                text = "%u" % self.msi_messages_num
+            )
+            self.msi_64bit = Macro(
+                name = "%s_MSI_64BIT" % self.qtn.for_macros,
+                text = "1"
+            )
+            self.msi_masking = Macro(
+                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
+                text = "1"
+            )
+
+            self.msi_types = [
+                self.msi_cap_offset,
+                self.msi_vectors,
+                self.msi_64bit,
+                self.msi_masking
+            ]
+
+            line_origins(self.msi_types)
+
+            self.header.add_types(self.msi_types)
+
+        self.gen_property_macros(self.header)
+
+        # TODO: current value of inherit_references is dictated by Qemu coding
+        # policy. Hence, version API must be used there.
+        return self.header.generate(inherit_references = True)
+
+    def generate_source(self):
+        self.device_reset = Function(
+        "%s_reset" % self.qtn.for_id_name,
+            body = """\
+    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
+""".format(
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+            ),
+            args = [Type.lookup("DeviceState").gen_var("dev", True)],
+            static = True,
+            used_types = [self.state_struct]
+        )
+        self.source.add_type(self.device_reset)
+
         realize_code = ''
         realize_used_types = set()
         realize_used_globals = []
         s_is_used = False
-
-        mem_bar_def_size = 0x100
 
         if self.mem_bar_num > 0:
             s_is_used = True
@@ -211,26 +287,22 @@ corresponding vendor is given" % attr
             ])
 
         for barN in range(0, self.mem_bar_num):
-            size_macro = Macro(
-                name = self.gen_Ith_mem_bar_size_macro_name(barN),
-                text = "0x%X" % mem_bar_def_size)
-
-            self.header.add_type(size_macro)
+            size_macro = self.mem_bar_size_macros[barN]
             realize_used_types.add(size_macro)
 
             component = self.get_Ith_mem_bar_id_component(barN)
 
             read_func = QOMType.gen_mmio_read(
-                    name = self.qtn.for_id_name + "_" + component + "_read",
-                    struct_name = self.state_struct.name, 
-                    type_cast_macro = self.type_cast_macro.name
-                ) 
+                name = self.qtn.for_id_name + "_" + component + "_read",
+                struct_name = self.state_struct.name,
+                type_cast_macro = self.type_cast_macro.name
+            )
 
             write_func = QOMType.gen_mmio_write(
-                    name = self.qtn.for_id_name + "_" + component + "_write",
-                    struct_name = self.state_struct.name, 
-                    type_cast_macro = self.type_cast_macro.name
-                )
+                name = self.qtn.for_id_name + "_" + component + "_write",
+                struct_name = self.state_struct.name,
+                type_cast_macro = self.type_cast_macro.name
+            )
 
             write_func.extra_references = {read_func}
 
@@ -244,7 +316,7 @@ corresponding vendor is given" % attr
 }}""".format (
     read = read_func.name,
     write = write_func.name
-)
+                )
             )
 
             ops = Type.lookup("MemoryRegionOps").gen_var(
@@ -266,44 +338,23 @@ corresponding vendor is given" % attr
     ops = self.gen_Ith_mem_bar_ops_name(barN),
     UPPER = self.qtn.for_macros,
     size = size_macro.name
-)
+            )
 
         if self.msi_messages_num > 0 :
-            msi_cap_offset = Macro(
-                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros
-                , text = "0x48")
-            msi_vectors = Macro(
-                name = "%s_MSI_VECTORS" % self.qtn.for_macros
-                , text = "%u" % self.msi_messages_num)
-            msi_64bit = Macro(
-                name = "%s_MSI_64BIT" % self.qtn.for_macros
-                , text = "1")
-            msi_masking = Macro(
-                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros
-                , text = "1")
-
-            msi_types = [
-                msi_cap_offset,
-                msi_vectors,
-                msi_64bit,
-                msi_masking
-                ]
-            self.header.add_types(msi_types)
-
             msi_init_type = Type.lookup("msi_init")
             s_is_used = True
 
             realize_code += """
-    msi_init(dev, %s, %s, %s, %s%s);
-""" % (msi_cap_offset.gen_usage_string(),
-       msi_vectors.gen_usage_string(),
-       msi_64bit.gen_usage_string(),
-       msi_masking.gen_usage_string(),
-       ", errp" if msi_init_type.args[-1].type \
+    msi_init(dev,@s%s,@s%s,@s%s,@s%s%s);
+""" % (self.msi_cap_offset.gen_usage_string(),
+       self.msi_vectors.gen_usage_string(),
+       self.msi_64bit.gen_usage_string(),
+       self.msi_masking.gen_usage_string(),
+       ",@serrp" if msi_init_type.args[-1].type \
                    == Pointer(Pointer(Type.lookup("Error"))) else ""
             )
 
-            realize_used_types.update(msi_types)
+            realize_used_types.update(self.msi_types)
             realize_used_types.add(msi_init_type)
 
         self.device_realize = self.gen_realize("PCIDevice",
@@ -314,41 +365,56 @@ corresponding vendor is given" % attr
         )
         self.source.add_type(self.device_realize)
 
-        exit_code = ""
-        exit_used_types = [self.state_struct]
-        exit_used_s = False
+        code = ""
+        used_types = set([self.state_struct])
+        used_s = False
 
-        if self.msi_messages_num > 0 :
-            exit_code += """
+        if self.msi_messages_num > 0:
+            code += """
     msi_uninit(dev);
 """
-            exit_used_types.append(Type.lookup("msi_uninit"))
+            used_types.add(Type.lookup("msi_uninit"))
 
         if self.nic_num > 0:
-            exit_code += "\n"
-            exit_used_s = True
+            code += "\n"
+            used_s = True
 
             del_nic = Type.lookup("qemu_del_nic")
-            exit_used_types.append(del_nic)
+            used_types.add(del_nic)
 
             for nicN in xrange(self.nic_num):
                 nic_name = self.nic_name(nicN)
-                exit_code += "    %s(s->%s);\n" % (del_nic.name, nic_name)
+                code += "    %s(s->%s);\n" % (del_nic.name, nic_name)
+
+        if self.timer_num > 0:
+            used_s = True
+            code += "\n"
+            used_types.update([
+                Type.lookup("timer_del"),
+                Type.lookup("timer_free")
+            ])
+
+            for timerN in range(self.timer_num):
+                code += """    timer_del(s->{timerN});
+    timer_free(s->{timerN});
+""".format(
+    timerN = self.timer_name(timerN)
+                )
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
             args = [Type.lookup("PCIDevice").gen_var("dev", pointer = True)],
             static = True,
-            used_types = exit_used_types,
+            used_types = used_types,
             body = """\
     {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if exit_used_s else "__attribute__((unused))@b",
+        unused = "" if used_s else "__attribute__((unused))@b",
         Struct = self.state_struct.name,
         UPPER = self.type_cast_macro.name,
-        extra_code = exit_code
-    )
+        extra_code = code
+            )
         )
         self.source.add_type(self.device_exit)
 
@@ -356,10 +422,11 @@ corresponding vendor is given" % attr
 
         self.source.add_global_variable(self.vmstate)
 
-        self.gen_property_macros(self.header)
         self.properties = self.gen_properties_global(self.state_struct)
 
         self.source.add_global_variable(self.properties)
+
+        self.vmstate.extra_references = {self.properties}
 
         self.class_init = Function(
             name = "%s_class_init" % self.qtn.for_id_name, 
@@ -368,6 +435,7 @@ corresponding vendor is given" % attr
     PCIDeviceClass@b*pc@b=@sPCI_DEVICE_CLASS(oc);
 
     pc->realize@b@b@b{pad}=@s{dev}_realize;
+    dc->reset@b@b@b@b@b{pad}=@s{dev}_reset;
     pc->exit@b@b@b@b@b@b{pad}=@s{dev}_exit;
     pc->vendor_id@b{pad}=@s{vendor_macro};
     pc->device_id@b{pad}=@s{device_macro};
@@ -376,16 +444,16 @@ corresponding vendor is given" % attr
     dc->vmsd@b@b@b@b@b@b{pad}=@s&vmstate_{dev};
     dc->props@b@b@b@b@b{pad}=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name,
-           revision = self.revision,
-           vendor_macro = self.vendor_macro.name,
-           device_macro = self.device_macro.name,
-           pci_class_macro = self.pci_class_macro.name,
-           subsys_id = '' if self.subsystem_macro is None else ("""
+    revision = self.revision,
+    vendor_macro = self.vendor_macro.name,
+    device_macro = self.device_macro.name,
+    pci_class_macro = self.pci_class_macro.name,
+    subsys_id = '' if self.subsystem_macro is None else ("""
     pc->subsystem_id@b@b@b@b@b@b@b@b=@s%s;""" % self.subsystem_macro.name),
-           subsys_vid = '' if self.subsystem_vendor_macro is None else ("""
+    subsys_vid = '' if self.subsystem_vendor_macro is None else ("""
     pc->subsystem_vendor_id@b=@s%s;""" % self.subsystem_vendor_macro.name),
-           pad = '@b@b@b@b@b@b@b@b@b@b' if self.subsystem_vendor_macro else ''
-    ),
+    pad = '@b@b@b@b@b@b@b@b@b@b' if self.subsystem_vendor_macro else ''
+            ),
             args = [
 Type.lookup("ObjectClass").gen_var("oc", True),
 Type.lookup("void").gen_var("opaque", True),
@@ -395,15 +463,17 @@ Type.lookup("void").gen_var("opaque", True),
                 Type.lookup("DeviceClass"),
                 Type.lookup("PCIDeviceClass"),
                 self.device_realize,
+                self.device_reset,
                 self.device_exit,
                 self.vendor_macro,
                 self.device_macro,
-                self.pci_class_macro],
+                self.pci_class_macro
+            ],
             used_globals = [
-                    self.vmstate,
-                    self.properties
-                ]
-            )
+                self.vmstate,
+                self.properties
+            ]
+        )
         self.source.add_type(self.class_init)
 
         instance_init_used_types = set()
@@ -434,17 +504,12 @@ Type.lookup("void").gen_var("opaque", True),
         )
         self.source.add_usage(
             type_init_var.gen_usage(type_init_usage_init)
-            )
+        )
 
         # order life cycle functions
-        self.device_exit.extra_references = {self.device_realize}
+        self.device_reset.extra_references = {self.device_realize}
+        self.device_exit.extra_references = {self.device_reset}
 
-    def generate_header(self):
-        # TODO: current value of inherit_references is dictated by Qemu coding
-        # policy. Hence, version API must be used there.
-        return self.header.generate(inherit_references = True)
-
-    def generate_source(self):
         return self.source.generate()
 
     def get_Ith_mem_bar_id_component(self, i):

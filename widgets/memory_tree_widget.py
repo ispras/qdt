@@ -26,12 +26,14 @@ from six import \
 from six.moves.tkinter import \
     TclError
 
+LAYOUT_COLUMNS_WIDTH = "columns width"
+
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
         VarTreeview.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
 
-        mach_desc.link()
+        mach_desc.link(handle_system_bus = False)
 
         self.mach = mach_desc
         try:
@@ -159,6 +161,9 @@ snapshot mode or the command should be disabled too.
 
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):
+            return
+
+        if op.sn != self.mach.__sn__:
             return
 
         if op.writes_node():
@@ -402,7 +407,7 @@ snapshot mode or the command should be disabled too.
         for col in ("#0",) + self.cget("columns"):
             cols_width[col] = self.column(col, "width")
 
-        layout[-1] = { "columns width": cols_width }
+        layout[-1] = { LAYOUT_COLUMNS_WIDTH : cols_width }
 
         return layout
 
@@ -412,7 +417,7 @@ snapshot mode or the command should be disabled too.
             for id, desc in l.items():
                 if id == -1:
                     try:
-                        cols_width = desc["columns width"]
+                        cols_width = desc[LAYOUT_COLUMNS_WIDTH]
                     except KeyError:
                         continue
 

@@ -25,7 +25,6 @@ from .model import \
         FunctionDeclaration, \
         FunctionDefinition, \
     SourceFile, \
-        HeaderFile, \
     SourceTreeContainer
 
 from .base_types import \

@@ -13,6 +13,7 @@ from source import \
     Function
 
 from .machine_nodes import \
+    Node, \
     SystemBusDeviceNode, \
     BusNode, \
     SystemBusNode, \
@@ -41,6 +42,9 @@ from six import \
 
 from collections import \
     OrderedDict
+
+from itertools import \
+    count
 
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
@@ -78,36 +82,56 @@ class IRQHubLayout(object):
         self.gen = generator
         self.hub = hub
 
-    def _gen_irq_get(self, parent_name, node):
+    def _gen_irq_get(self, parent_name, node, inner_base):
         if isinstance(node, IRQLine):
             # leaf
-            return ("", self.gen.gen_irq_get(node.dst, parent_name))
+            dst = node.dst
+            if isinstance(dst[0], IRQHub):
+                """ Declaration and definition of destination hub must be
+                already generated. A hub (its root) is an IRQ line. So, use
+                initialize self IRQ with IRQ of the destination hub. """
+                def_code = "    {parent_name}@b=@s{child_name};\n".format(
+                    parent_name = parent_name,
+                    child_name = self.gen.node_map[dst[0]],
+                )
+                return ("", def_code)
+            else:
+                return ("", self.gen.gen_irq_get(dst, parent_name))
         else:
             # inner node
             self.gen.use_type_name("qemu_irq_split")
 
-            child1 = self.gen.gen_name_for_irq(node[0])
-            child2 = self.gen.gen_name_for_irq(node[1])
+            decl_code = ""
+            def_code = ""
+            children_names = []
 
-            child1_code = self._gen_irq_get(child1, node[0])
-            child2_code = self._gen_irq_get(child2, node[1])
+            for child, side in zip(node, ["_l", "_r"]):
+                if isinstance(child, IRQLine):
+                    child_name = self.gen.node_map[child]
+                else:
+                    child_name = self.gen.provide_name_for_node(child,
+                        inner_base + side
+                    )
+                children_names.append(child_name)
 
-            decl_code = "    qemu_irq %s;\n" % child1
-            decl_code += "    qemu_irq %s;\n" % child2
+                child_code = self._gen_irq_get(child_name, child,
+                    inner_base + side
+                )
 
-            def_code =  """\
-    {parent_name} = qemu_irq_split({child1}, {child2});
+                decl_code += child_code[0] + "    qemu_irq %s;\n" % child_name
+                def_code += child_code[1]
+
+            def_code += """\
+    {parent_name} = qemu_irq_split({children});
 """.format(
     parent_name = parent_name,
-    child1 = child1,
-    child2 = child2
-                    )
-            return (child1_code[0] + child2_code[0] + decl_code,
-                    child1_code[1] + child2_code[1] + def_code)
+    children = ", ".join(children_names)
+            )
+            return (decl_code, def_code)
 
     def gen_irq_get(self):
-        root_name = self.gen.gen_name_for_irq(self.hub)
-        return self._gen_irq_get(root_name, self.root)
+        root_name = self.gen.node_map[self.hub]
+        return self._gen_irq_get(root_name, self.root, root_name)
 
 class MachineType(QOMType):
     __attribute_info__ = OrderedDict([
@@ -125,19 +149,189 @@ class MachineType(QOMType):
 
         self.desc = "TODO: provide description for " + name
 
+        self.devices = devices
+        self.buses = buses
+        self.irqs = irqs
+        self.mems = mems
+        self.irq_hubs = irq_hubs
+
         # source file model
-        source_path = \
-            join_path("hw", directory,
-                         self.qtn.for_header_name + ".c")
+        self.source_path = join_path("hw", directory,
+            self.qtn.for_header_name + ".c"
+        )
 
-        self.source = Source(source_path)
+    def reset_generator(self):
+        self.node_map = {}
+        self.init_used_types = []
+        self.hub_layouts = {}
+        self.provide_node_names()
 
-        all_nodes = list(devices)
-        all_nodes.extend(buses)
-        all_nodes.extend(irqs)
-        all_nodes.extend(mems)
-        all_nodes.extend(irq_hubs)
-        all_nodes = sort_topologically(all_nodes)
+    def use_type(self, t):
+        if t in self.init_used_types:
+            return
+        self.init_used_types.append(t)
+
+    def use_type_name(self, name):
+        t = Type.lookup(name)
+        self.use_type(t)
+
+    def provide_name_for_node(self, node, base):
+        """ Returns name of variable for given node. Does generate and remember
+        a new name if required. """
+        try:
+            return self.node_map[node]
+        except KeyError:
+            if base in self.node_map:
+                name = base + "_%u" % node.id
+            else:
+                # do not use suffix with id for first node with such base
+                name = base
+
+            self.node_map[name] = node
+            self.node_map[node] = name
+
+            return name
+
+    def provide_node_names(self):
+        for nodes in [
+            self.devices,
+            self.buses,
+            self.irqs,
+            self.irq_hubs,
+            self.mems
+        ]:
+            for n in nodes:
+                self.provide_name_for_node(n, n.var_base)
+
+    def gen_prop_val(self, prop):
+        if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
+            self.use_type_name(prop.prop_val)
+            return prop.prop_val
+        if prop.prop_type == QOMPropertyTypeString:
+            return "\"%s\"" % str(prop.prop_val)
+        elif prop.prop_type == QOMPropertyTypeBoolean:
+            if not isinstance(prop.prop_val, bool):
+                raise IncorrectPropertyValue()
+
+            self.use_type_name("bool")
+            return "true" if prop.prop_val else "false"
+        elif prop.prop_type == QOMPropertyTypeInteger:
+            if not isinstance(prop.prop_val, integer_types):
+                raise IncorrectPropertyValue()
+
+            return "0x%x" % prop.prop_val
+        elif prop.prop_type == QOMPropertyTypeLink:
+            if prop.prop_val is None:
+                self.use_type_name("NULL")
+
+                return "NULL"
+            else:
+                self.use_type_name("OBJECT")
+
+                return "OBJECT(%s)" % self.node_map[prop.prop_val]
+        else:
+            raise UnknownPropertyType()
+
+    def gen_irq_get(self, irq, var_name):
+        dst = irq[0]
+        if isinstance(dst, IRQHub):
+            raise RuntimeError("Cannot get an IRQ from a hub (%u)."
+                " A hub _is_ an IRQ itself." % dst.id
+            )
+
+        self.use_type_name("DEVICE")
+
+        if irq[2] is None:
+            self.use_type_name("qdev_get_gpio_in")
+
+            return """\
+    {irq_name} = qdev_get_gpio_in(DEVICE({dst_name}), {dst_index});
+""".format(
+    irq_name = var_name,
+    dst_name = self.node_map[dst],
+    dst_index = irq[1],
+            )
+        else:
+            gpio_name = irq[2]
+            try:
+                gpio_name_type = Type.lookup(gpio_name)
+            except TypeNotRegistered:
+                gpio_name = '"%s"' % gpio_name
+            else:
+                self.use_type(gpio_name_type)
+
+            irq_get = Type.lookup("qdev_get_gpio_in_named")
+            self.use_type(irq_get)
+            return """\
+    {irq_name} = {irq_get}(DEVICE({dst_name}), {gpio_name}, {dst_index});
+""".format(
+    irq_name = var_name,
+    irq_get = irq_get.name,
+    dst_name = self.node_map[dst],
+    gpio_name = gpio_name,
+    dst_index = irq[1],
+            )
+
+    def gen_irq_connect(self, irq, var_name):
+        src = irq[0]
+        if isinstance(src, IRQHub):
+            raise RuntimeError("Cannot connect an IRQ to a hub (%u)."
+                " A hub does use each its IRQ by itself." % src.id
+            )
+
+        if irq[2] is None:
+            self.use_type_name("DEVICE")
+            self.use_type_name("qdev_connect_gpio_out")
+
+            return """\
+    qdev_connect_gpio_out(DEVICE({src_name}), {src_index}, {irq_name});
+""".format(
+    irq_name = var_name,
+    src_name = self.node_map[src],
+    src_index = irq[1]
+            )
+        else:
+            sysbus_name = Type.lookup("SYSBUS_DEVICE_GPIO_IRQ").text
+            if sysbus_name == "\"%s\"" % irq[2] or "SYSBUS_DEVICE_GPIO_IRQ" == irq[2]:
+                self.use_type_name("sysbus_connect_irq")
+                self.use_type_name("SYS_BUS_DEVICE")
+
+                return """\
+    sysbus_connect_irq(SYS_BUS_DEVICE({src_name}), {src_index}, {irq_name});
+""".format(
+    irq_name = var_name,
+    src_name = self.node_map[src],
+    src_index = irq[1]
+                )
+            else:
+                self.use_type_name("DEVICE")
+                self.use_type_name("qdev_connect_gpio_out_named")
+                if Type.exists(irq[2]):
+                    self.use_type_name(irq[2])
+
+                return """\
+    qdev_connect_gpio_out_named(DEVICE({src_name}), {gpio_name}, {src_index}, {irq_name});
+""".format(
+    irq_name = var_name,
+    src_name = self.node_map[src],
+    src_index = irq[1],
+    gpio_name = irq[2] if Type.exists(irq[2]) else "\"%s\"" % irq[2]
+                )
+
+    def provide_hub_layout(self, hub):
+        try:
+            return self.hub_layouts[hub]
+        except KeyError:
+            hubl = IRQHubLayout(hub, self)
+            self.hub_layouts[hub] = hubl
+            return hubl
+
+    def generate_source(self):
+        self.source = Source(self.source_path)
+
+        all_nodes = sort_topologically(
+            self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
+        )
 
         decl_code = ""
         def_code = ""
@@ -158,7 +352,7 @@ class MachineType(QOMType):
                 if Type.exists(node.qom_type):
                     self.use_type_name(node.qom_type)
 
-                dev_name = self.gen_name_for_device(node)
+                dev_name = self.node_map[node]
 
                 props_code = ""
                 for p in node.properties:
@@ -190,7 +384,7 @@ class MachineType(QOMType):
     qdev_init_nofail(DEVICE({dev_name}));
 """.format(
     dev_name = dev_name,
-    bus_name = self.gen_name_for_bus(node.parent_bus),
+    bus_name = self.node_map[node.parent_bus],
     qom_type = node.qom_type if Type.exists(node.qom_type) else "\"%s\"" % node.qom_type,
     props_code = props_code,
     multifunction = "true" if node.multifunction else "false",
@@ -207,7 +401,7 @@ class MachineType(QOMType):
     qdev_init_nofail({dev_name});
 """.format(
     dev_name = dev_name,
-    bus_name = "NULL" if (node.parent_bus is None ) or isinstance(node.parent_bus, SystemBusNode) else "BUS(%s)" % self.gen_name_for_bus(node.parent_bus),
+    bus_name = "NULL" if (node.parent_bus is None) or isinstance(node.parent_bus, SystemBusNode) else "BUS(%s)" % self.node_map[node.parent_bus],
     qom_type = node.qom_type if Type.exists(node.qom_type) else "\"%s\"" % node.qom_type,
     props_code = props_code
                         )
@@ -236,7 +430,7 @@ class MachineType(QOMType):
                     if len(bus.devices) == 0:
                         continue
 
-                    bus_name = self.gen_name_for_bus(bus)
+                    bus_name = self.node_map[bus]
                     try:
                         if isinstance(bus, PCIExpressBusNode):
                             if isinstance(node, SystemBusDeviceNode):
@@ -289,7 +483,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 self.use_type_name(node.c_type)
 
-                bus_name = self.gen_name_for_bus(node)
+                bus_name = self.node_map[node]
 
                 decl_code += "    %s *%s;\n" % (node.c_type, bus_name)
             elif isinstance(node, IRQLine):
@@ -301,7 +495,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 self.use_type_name("qemu_irq")
 
-                irq_name = self.gen_name_for_irq(node)
+                irq_name = self.node_map[node]
 
                 decl_code += "    qemu_irq %s;\n" % irq_name
 
@@ -314,7 +508,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                 if Type.exists(node.name):
                     self.use_type_name(node.name)
 
-                mem_name = self.gen_name_for_mem(node)
+                mem_name = self.node_map[node]
 
                 decl_code += "    MemoryRegion *%s;\n" % mem_name
 
@@ -331,7 +525,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     mem_name = mem_name,
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
     size = node.size,
-    orig = self.gen_name_for_mem(node.alias_to),
+    orig = self.node_map[node.alias_to],
     offset = node.alias_offset
                     )
                 elif    isinstance(node, MemoryRAMNode) \
@@ -398,18 +592,22 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 self.use_type_name("qemu_irq")
 
-                hub_in_name = self.gen_name_for_irq(node)
+                hub_in_name = self.node_map[node]
 
                 decl_code += "    qemu_irq %s;\n" % hub_in_name
 
-                hubl = IRQHubLayout(node, self)
+                hubl = self.provide_hub_layout(node)
 
                 code = hubl.gen_irq_get()
                 decl_code += code[0]
                 def_code += code[1]
 
-                for src in [ irq for irq in node.irqs if irq.dst[0] == node ]:
-                    def_code += self.gen_irq_connect(src.src, hub_in_name)
+                for in_irq in [irq for irq in node.irqs if irq.dst[0] == node]:
+                    src = in_irq.src
+                    if isinstance(src[0], IRQHub):
+                        # A source hub does connects to this hub by itself
+                        continue
+                    def_code += self.gen_irq_connect(src, hub_in_name)
             else:
                 raise UnknownMachineNodeType(str(type(node)))
 
@@ -427,165 +625,4 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
         get_vp("machine type register template generator")(self)
 
-    def reset_generator(self):
-        self.device_count = 0
-        self.bus_count = 0
-        self.irq_count = 0
-        self.mem_count = 0
-        self.node_map = {}
-        self.init_used_types = []
-
-    def use_type(self, t):
-        if t in self.init_used_types:
-            return
-        self.init_used_types.append(t)
-
-    def use_type_name(self, name):
-        t = Type.lookup(name)
-        self.use_type(t)
-
-    def gen_name_for_device(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "dev_%u" % self.device_count
-        self.device_count += 1
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
-
-    def gen_name_for_bus(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "bus_%u" % self.bus_count
-        self.bus_count += 1
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
-
-    def gen_name_for_irq(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "irq_%u" % self.irq_count
-        self.irq_count += 1
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
-
-    def gen_name_for_mem(self, node):
-        if node in self.node_map.keys():
-            return self.node_map[node]
-
-        ret = "mem_%u" % self.mem_count
-        self.mem_count += 1
-        self.node_map[ret] = node
-        self.node_map[node] = ret
-        return ret
-
-    def gen_prop_val(self, prop):
-        if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
-            self.use_type_name(prop.prop_val)
-            return prop.prop_val
-        if prop.prop_type == QOMPropertyTypeString:
-            return "\"%s\"" % str(prop.prop_val)
-        elif prop.prop_type == QOMPropertyTypeBoolean:
-            if not isinstance(prop.prop_val, bool):
-                raise IncorrectPropertyValue()
-
-            self.use_type_name("bool")
-            return "true" if prop.prop_val else "false"
-        elif prop.prop_type == QOMPropertyTypeInteger:
-            if not isinstance(prop.prop_val, integer_types):
-                raise IncorrectPropertyValue()
-
-            return "0x%x" % prop.prop_val
-        elif prop.prop_type == QOMPropertyTypeLink:
-            if prop.prop_val is None:
-                self.use_type_name("NULL")
-
-                return "NULL"
-            else:
-                self.use_type_name("OBJECT")
-
-                return "OBJECT(%s)" % self.node_map[prop.prop_val]
-        else:
-            raise UnknownPropertyType()
-
-    def gen_irq_get(self, irq, var_name):
-        self.use_type_name("DEVICE")
-
-        if irq[2] is None:
-            self.use_type_name("qdev_get_gpio_in")
-
-            return """\
-    {irq_name} = qdev_get_gpio_in(DEVICE({dst_name}), {dst_index});
-""".format(
-    irq_name = var_name,
-    dst_name = self.gen_name_for_device(irq[0]),
-    dst_index = irq[1],
-            )
-        else:
-            gpio_name = irq[2]
-            try:
-                gpio_name_type = Type.lookup(gpio_name)
-            except TypeNotRegistered:
-                gpio_name = '"%s"' % gpio_name
-            else:
-                self.use_type(gpio_name_type)
-
-            irq_get = Type.lookup("qdev_get_gpio_in_named")
-            self.use_type(irq_get)
-            return """\
-    {irq_name} = {irq_get}(DEVICE({dst_name}), {gpio_name}, {dst_index});
-""".format(
-    irq_name = var_name,
-    irq_get = irq_get.name,
-    dst_name = self.gen_name_for_device(irq[0]),
-    gpio_name = gpio_name,
-    dst_index = irq[1],
-            )
-
-    def gen_irq_connect(self, irq, var_name):
-        if irq[2] is None:
-            self.use_type_name("DEVICE")
-            self.use_type_name("qdev_connect_gpio_out")
-
-            return """\
-    qdev_connect_gpio_out(DEVICE({src_name}), {src_index}, {irq_name});
-""".format(
-    irq_name = var_name,
-    src_name = self.gen_name_for_device(irq[0]),
-    src_index = irq[1]
-            )
-        else:
-            sysbus_name = Type.lookup("SYSBUS_DEVICE_GPIO_IRQ").text
-            if sysbus_name == "\"%s\"" % irq[2] or "SYSBUS_DEVICE_GPIO_IRQ" == irq[2]:
-                self.use_type_name("sysbus_connect_irq")
-                self.use_type_name("SYS_BUS_DEVICE")
-
-                return """\
-    sysbus_connect_irq(SYS_BUS_DEVICE({src_name}), {src_index}, {irq_name});
-""".format(
-    irq_name = var_name,
-    src_name = self.gen_name_for_device(irq[0]),
-    src_index = irq[1]
-                )
-            else:
-                self.use_type_name("DEVICE")
-                self.use_type_name("qdev_connect_gpio_out_named")
-                if Type.exists(irq[2]):
-                    self.use_type_name(irq[2])
-
-                return """\
-    qdev_connect_gpio_out_named(DEVICE({src_name}), {gpio_name}, {src_index}, {irq_name});
-""".format(
-    irq_name = var_name,
-    src_name = self.gen_name_for_device(irq[0]),
-    src_index = irq[1],
-    gpio_name = irq[2] if Type.exists(irq[2]) else "\"%s\"" % irq[2]
-                )
-
-    def generate_source(self):
         return self.source.generate()

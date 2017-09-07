@@ -1,12 +1,23 @@
-from .topology import \
-    sort_topologically
-
 from six import \
     PY2, \
     text_type, \
+    binary_type, \
     integer_types
 
-str_able_types = [bool, float] + list(integer_types)
+if __name__ == "__main__":
+    from topology import \
+        sort_topologically
+
+    from reflection import \
+        get_class_total_args
+else:
+    from .topology import \
+        sort_topologically
+
+    from .reflection import \
+        get_class_total_args
+
+const_types = (float, text_type, binary_type, bool) + integer_types
 
 """
 PyGenerator provides an interface for saving an object to the file.
@@ -87,8 +98,38 @@ class PyGenerator(object):
                 return "%d" % c
             else:
                 return "0x%0x" % c
-        elif isinstance(c, str):
-            return "\"" + c + "\""
+        elif isinstance(c, (binary_type, text_type)):
+            normalized = ""
+            prefix = ""
+            # Double and single quote count
+            dquote = 0
+            squote = 0
+            for ch in c:
+                code = ch if isinstance(ch, int) else ord(ch)
+
+                if code > 0xFFFF: # 4-byte unicode
+                    prefix = "u"
+                    normalized += "\\U%08x" % code
+                elif code > 0xFF: # 2-byte unicode
+                    prefix = "u"
+                    normalized += "\\u%04x" % code
+                elif code > 127: # non-ASCII code
+                    normalized += "\\x%02x" % code
+                elif code == 92: # \
+                    normalized += "\\\\"
+                else:
+                    if code == 34: # "
+                        dquote += 1
+                    elif code == 38: # '
+                        squote += 1
+                    normalized += chr(code)
+
+            if dquote > squote:
+                escaped = normalized.replace("'", "\\'")
+                return prefix + "'" + escaped + "'"
+            else:
+                escaped = normalized.replace('"', '\\"')
+                return prefix + '"' + escaped + '"'
         else:
             return str(c)
 
@@ -108,6 +149,56 @@ class PyGenerator(object):
         else:
             self.line(",")
             self.write(string)
+
+    def gen_args(self, obj, pa_names = False):
+        """
+            Given object, this method generates positional and keyword argument
+        assignments for `__init__` method of object's class. Lists of arguments
+        are gathered in method resolution order (MRO).
+        See `get_class_total_args` for details.
+
+            A value for assignment is searched in the object by argument name
+        using built-in `getattr`. If it is not such trivial, the class must
+        define `__get_init_arg_val__`. Given an argument name, it must either
+        return the value or raise an `AttributeError`.
+
+            Keyword assignment is only generated when the value differs from the
+        default.  Both `is` and `==` operators are used to compare values. `is`
+        is used first (optimization).
+
+            If an `AttributeError` raised for a _keyword_ argument name, the
+        argument assignment is skipped. Positional argument assignments cannot
+        be skipped.
+
+        pa_names
+            whether positional arguments to be generated with names.
+        """
+
+        pal, kwal = get_class_total_args(type(obj))
+
+        try:
+            get_val = type(obj).__get_init_arg_val__
+        except AttributeError:
+            get_val = getattr
+
+        for pa in pal:
+            v = get_val(obj, pa)
+            self.gen_field((pa + " = ") if pa_names else "")
+            self.pprint(v)
+
+        for kwa, default in kwal.items():
+            try:
+                v = get_val(obj, kwa)
+            except AttributeError:
+                # If value cannot be obtained, skip the argument generation
+                continue
+
+            # generate only arguments with non-default values
+            if (v is default) or (v == default):
+                continue
+
+            self.gen_field(kwa + " = ")
+            self.pprint(v)
 
     def gen_end(self, suffix = ")"):
         if not self.first_field:
@@ -192,11 +283,27 @@ class PyGenerator(object):
             self.pop_indent()
             self.line()
             self.write(")")
-        elif type(val) in str_able_types:
-            self.write(str(val))
-        elif (PY2 and isinstance(val, str)) or isinstance(val, text_type):
-            self.pprint_text(val)
+        elif isinstance(val, const_types):
+            self.write(self.gen_const(val))
         elif val is None:
             self.write("None")
         else:
             self.write(self.obj2name[val])
+
+if __name__ == "__main__":
+    from sys import stdout
+
+    g = PyGenerator()
+
+    class Writer():
+        def write(self, val):
+            stdout.write(str(type(val)) + " : " + repr(val) + "\n")
+
+    g.w = Writer()
+
+    g.pprint_text("String in default encoding")
+    g.line()
+    g.pprint_text(u"Unicode string")
+    g.line()
+    g.pprint_text(b"ASCII string")
+    g.line()

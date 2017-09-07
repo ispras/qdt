@@ -21,6 +21,7 @@ from six.moves import \
     range as xrange
 
 from six.moves.tkinter import \
+    BOTH, \
     StringVar, \
     BooleanVar, \
     OptionMenu
@@ -29,6 +30,7 @@ from six.moves.tkinter_ttk import \
     Combobox
 
 from qemu import \
+    QemuTypeName, \
     BusNode, \
     IRQLine, \
     IRQHub, \
@@ -304,6 +306,11 @@ class PropLineDesc(object):
         self.v_val = var_p_val
         self.bt_del = bt_del
 
+def qom_type_to_var_base(qom_type):
+    type_base = qom_type[5:] if qom_type[0:5] == "TYPE_" else qom_type
+    qtn = QemuTypeName(type_base)
+    return qtn.for_id_name
+
 class DeviceSettingsWidget(SettingsWidget):
     EVENT_BUS_SELECTED = "<<DSWBusSelected>>"
 
@@ -321,26 +328,20 @@ class DeviceSettingsWidget(SettingsWidget):
     }
 
     def __init__(self, device, *args, **kw):
-        SettingsWidget.__init__(self, *args, **kw)
+        SettingsWidget.__init__(self, device, *args, **kw)
         self.dev = device
 
-        self.columnconfigure(0, weight = 1)
-
-        self.rowconfigure(0, weight = 0)
         common_fr = GUIFrame(self)
-        common_fr.grid(
-            row = 0,
-            column = 0,
-            sticky = "NEWS"
-        )
+        common_fr.pack(fill = BOTH, expand = False)
         common_fr.columnconfigure(0, weight = 0)
         common_fr.columnconfigure(1, weight = 1)
 
         common_fr.rowconfigure(0, weight = 0)
 
         l = VarLabel(common_fr, text = _("QOM type"))
-        self.qom_type_var = StringVar()
-        e = HKEntry(common_fr, textvariable = self.qom_type_var)
+        v = self.qom_type_var = StringVar()
+        e = HKEntry(common_fr, textvariable = v)
+        v.trace_variable("w", self.__on_qom_type_var_changed)
 
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
@@ -379,8 +380,6 @@ class DeviceSettingsWidget(SettingsWidget):
         self.bus_cb.grid(row = 1, column = 1, sticky = "EW")
         common_fr.rowconfigure(1, weight = 0)
 
-        self.rowconfigure(1, weight = 1)
-
         self.buses_lf = lf = VarLabelFrame(
             common_fr,
             text = _("Child buses")
@@ -392,15 +391,10 @@ class DeviceSettingsWidget(SettingsWidget):
 
         self.child_buses_rows = []
 
-        self.props_lf = VarLabelFrame(
-            self,
+        self.props_lf = VarLabelFrame(self,
             text = _("Properties")
         )
-        self.props_lf.grid(
-            row = 1,
-            column = 0,
-            sticky = "NEWS"
-        )
+        self.props_lf.pack(fill = BOTH, expand = False)
         self.props_lf.columnconfigure(0, weight = 1)
         self.props_lf.columnconfigure(1, weight = 0)
         self.props_lf.columnconfigure(2, weight = 1)
@@ -422,6 +416,24 @@ class DeviceSettingsWidget(SettingsWidget):
             bld.delete()
 
         SettingsWidget.__on_destroy__(self, *args)
+
+    def __on_qom_type_var_changed(self, *args):
+        vvb = self.v_var_base
+        vb = vvb.get()
+
+        try:
+            prev_qt = self.__prev_qom_type
+        except AttributeError:
+            # QOM type was not edited yet
+            prev_qt = self.node.qom_type
+
+        if vb == "dev" or vb == qom_type_to_var_base(prev_qt):
+            """ If current variable name base is default or corresponds to
+            previous QOM type name then auto suggest new variable name base
+            with account of just entered QOM type. """
+            qt = self.qom_type_var.get()
+            vvb.set(qom_type_to_var_base(qt))
+            self.__prev_qom_type = qt
 
     def on_parent_bus_var_changed(self, *args):
         self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
@@ -509,6 +521,8 @@ class DeviceSettingsWidget(SettingsWidget):
         return ret
 
     def refresh(self):
+        SettingsWidget.refresh(self)
+
         self.qom_type_var.set(self.dev.qom_type)
 
         for p, desc in self.prop2field.items():
@@ -606,8 +620,6 @@ class DeviceSettingsWidget(SettingsWidget):
         return ret
 
     def __apply_internal__(self):
-        prev_pos = self.mht.pos
-
         # apply parent bus
         new_bus_text = self.bus_var.get()
         new_bus = self.find_node_by_link_text(new_bus_text)
@@ -702,5 +714,4 @@ class DeviceSettingsWidget(SettingsWidget):
                 new_bus
             )
 
-        if prev_pos is not self.mht.pos:
-            self.mht.set_sequence_description(_("Device configuration."))
+        self.mht.set_sequence_description(_("Device configuration."))

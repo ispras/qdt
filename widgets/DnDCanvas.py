@@ -1,20 +1,22 @@
 #!/usr/bin/python2
 # based on http://code.activestate.com/lists/python-list/281562/
 
-from copy import \
-    copy
-
 from .gui_frame import \
     GUIFrame
 
+from six.moves import \
+    range as xrange
+
 from six.moves.tkinter import \
+    IntVar, \
     Canvas, \
     RIDGE, \
     BOTH
 
 class CanvasDnD(GUIFrame):
     def __init__(self, master,
-            id_priority_sort_function = lambda ids : ids
+            id_priority_sort_function = lambda ids : ids,
+            mesh_step = 20
         ):
 
         GUIFrame.__init__ (self, master)
@@ -28,6 +30,8 @@ class CanvasDnD(GUIFrame):
 
         self.canvas.pack(expand = 1, fill = BOTH)
 
+        self.align = False
+        self.mesh_step = IntVar(value = mesh_step)
         self.dragging = False
         self.off = None
         self.canvas.bind("<ButtonPress-1>", self.down, "+")
@@ -49,7 +53,7 @@ class CanvasDnD(GUIFrame):
         self.dnd_dragged = touched[0]
 
         offset = event.widget.coords(self.dnd_dragged)
-        self.off = [x - offset[0], y - offset[1]]
+        self.off = (x - offset[0], y - offset[1])
 
         #print str((x,y)) + " - " + str(self.off)
 
@@ -61,28 +65,52 @@ class CanvasDnD(GUIFrame):
             return
 
         self.master.config(cursor = "fleur")
-        cnv = event.widget
+        c = self.canvas
 
-        xy = cnv.canvasx(event.x), cnv.canvasy(event.y)
-        points = event.widget.coords(self.dnd_dragged)
-        anchors = copy(points[:2])
+        xy = c.canvasx(event.x), c.canvasy(event.y)
+        points = c.coords(self.dnd_dragged)
+
+        offset = self.off
+
+        if self.align:
+            new_pos = (
+                xy[0] - offset[0],
+                xy[1] - offset[1],
+            )
+
+            m = self.mesh_step.get()
+            aligned_pos = (
+                int(new_pos[0] / m) * m,
+                int(new_pos[1] / m) * m
+            )
+
+            align_gain = (
+                aligned_pos[0] - new_pos[0],
+                aligned_pos[1] - new_pos[1]
+            )
+        else:
+            align_gain = (0, 0)
+
+        dxy = (
+            xy[0] - (points[0] + offset[0]) + align_gain[0],
+            xy[1] - (points[1] + offset[1]) + align_gain[1]
+        )
 
         #print str(points) + " - " + str(self.off)
 
-        for idx in range(len(points)):
-            if "fixed_x" in cnv.gettags(self.dnd_dragged) and idx % 2 == 0:
-                continue
-            if "fixed_y" in cnv.gettags(self.dnd_dragged) and idx % 2 == 1:
-                continue
-            #print idx, xy[idx % 2], anchors[idx % 2]
-            mouse = xy[idx % 2]
-            zone = anchors[idx % 2]
-            offset = self.off[idx % 2]
-            points[idx] = mouse - offset - zone + points[idx]
-    
+        tags = c.gettags(self.dnd_dragged)
+
+        if "fixed_x" not in tags:
+            for idx in xrange(0, len(points), 2):
+                points[idx] = dxy[0] + points[idx]
+
+        if "fixed_y" not in tags:
+            for idx in xrange(1, len(points), 2):
+                points[idx] = dxy[1] + points[idx]
+
         #print points
 
-        event.widget.coords(*([self.dnd_dragged] + points))
+        c.coords(*([self.dnd_dragged] + points))
 
         self.event_generate('<<DnDMoved>>')
 

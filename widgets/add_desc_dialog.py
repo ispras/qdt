@@ -17,6 +17,7 @@ from six.moves.tkinter_messagebox import \
     showerror
 
 from qemu import \
+    MOp_AddBus, \
     POp_AddDesc
 
 from .gui_dialog import \
@@ -145,11 +146,19 @@ class AddDescriptionDialog(GUIDialog):
             class_name = "PCIExpressDeviceDescription"
             directory = "pci"
 
-        self.pht.stage(POp_AddDesc, class_name,
-            None, # Automatic serial number
+        add_op = self.pht.stage(POp_AddDesc, class_name,
+            self.pht.p.next_serial_number(),
             name = cur_name,
             directory = directory
         )
+
+        if kind == 1:
+            # automatically create system bus in the machine
+            self.pht.stage(MOp_AddBus, "SystemBusNode",
+                0, # id for the bus
+                add_op.sn # serial number of machine description
+            )
+
         self.pht.commit(
             sequence_description = _("Add description '%s'.") % cur_name
         )

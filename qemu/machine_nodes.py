@@ -30,9 +30,20 @@ from six.moves import \
 from .qom import \
     QOMPropertyTypeLink
 
+from bisect import \
+    insort
+
 class Node(object):
-    def __init__(self):
+    def __init__(self, var_base = None):
         self.id = -1
+        if var_base is None:
+            raise NotImplementedError("No default base for variable name")
+        self.var_base = var_base
+
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_args(self, pa_names = True)
+        gen.gen_end()
 
 # bus models
 class BusNode(Node):
@@ -43,9 +54,10 @@ class BusNode(Node):
         cast = "BUS",
         child_name = "bus",
         force_index = True,
+        var_base = "bus",
         **kw
     ):
-        Node.__init__(self, **kw)
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.c_type = c_type
         self.cast = cast
@@ -73,20 +85,6 @@ class BusNode(Node):
                 self.child_name, self.parent_device.buses.index(self)
             )
 
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        if self.parent_device:
-            gen.gen_field("parent = " + gen.nameof(self.parent_device))
-        if not self.c_type == "BusState":
-            gen.gen_field('c_type = "' + self.c_type + '"')
-        if not self.cast == "BUS":
-            gen.gen_field('cast = "' + self.cast + '"')
-        if not self.child_name == "bus":
-            gen.gen_field('child_name = "' + self.child_name + '"')
-        if not self.force_index:
-            gen.gen_field("force_index = False")
-        gen.gen_end()
-
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "parent":
             arg_name = "parent_device"
@@ -98,8 +96,7 @@ class SystemBusNode(BusNode):
         BusNode.__init__(self, parent = None, **kw)
 
     def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_end()
+        super(SystemBusNode, self).__gen_code__(gen)
         if self.parent_device:
             # Note that a system bus cannot have parent device by design. But,
             # if user really want problems with code generator then it is
@@ -109,19 +106,21 @@ class SystemBusNode(BusNode):
             )
 
 class PCIExpressBusNode(BusNode):
-    def __init__(self, host_bridge, **kw):
+    def __init__(self, host_bridge,
+        c_type = "PCIBus",
+        cast = "PCI_BUS",
+        child_name = "pci",
+        var_base = "pci",
+        **kw
+    ):
         BusNode.__init__(self,
             parent = host_bridge,
-            c_type = "PCIBus",
-            cast = "PCI_BUS",
-            child_name = "pci",
+            c_type = c_type,
+            cast = cast,
+            child_name = child_name,
+            var_base = var_base,
             **kw
         )
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field("host_bridge = " + gen.nameof(self.parent_device))
-        gen.gen_end()
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "host_bridge":
@@ -129,10 +128,15 @@ class PCIExpressBusNode(BusNode):
         return getattr(self, arg_name)
 
 class ISABusNode(BusNode):
-    def __init__(self, bus_controller, **kw):
+    def __init__(self, bus_controller,
+        child_name = "isa",
+        var_base = "isa",
+        **kw
+    ):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "isa",
+            child_name = child_name,
+            var_base = var_base,
             **kw
         )
 
@@ -141,23 +145,19 @@ class ISABusNode(BusNode):
             arg_name = "parent_device"
         return getattr(self, arg_name)
 
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field("bus_controller = " + gen.nameof(self.parent_device))
-        gen.gen_end()
-
 class IDEBusNode(BusNode):
-    def __init__(self, bus_controller, **kw):
+    def __init__(self,
+            bus_controller,
+            child_name = "ide",
+            var_base = "ide",
+            **kw
+        ):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "ide",
+            child_name = child_name,
+            var_base = var_base,
             **kw
         )
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field("bus_controller = " + gen.nameof(self.parent_device))
-        gen.gen_end()
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "bus_controller":
@@ -165,20 +165,23 @@ class IDEBusNode(BusNode):
         return getattr(self, arg_name)
 
 class I2CBusNode(BusNode):
-    def __init__(self, bus_controller, **kw):
+    def __init__(self, bus_controller,
+        child_name = "i2c",
+        cast = None,
+        c_type = "I2CBus",
+        force_index = False,
+        var_base = "i2c",
+        **kw
+    ):
         BusNode.__init__(self,
             parent = bus_controller,
-            child_name = "i2c",
-            cast = None,
-            c_type = "I2CBus",
-            force_index = False,
+            child_name = child_name,
+            cast = cast,
+            c_type = c_type,
+            force_index = force_index,
+            var_base = var_base,
             **kw
         )
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field("bus_controller = " + gen.nameof(self.parent_device))
-        gen.gen_end()
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "bus_controller":
@@ -193,119 +196,106 @@ class IRQLine(Node):
         dst_irq_idx = 0,
         src_irq_name = None,
         dst_irq_name = None,
+        var_base = "irq",
         **kw
     ):
-        Node.__init__(self, **kw)
+        Node.__init__(self, var_base = var_base, **kw)
 
-        # src and dst are lists (device, index, GPIO name) or (hub, 0, None)
-        self.src = [src_dev, src_irq_idx, src_irq_name]
-        self.dst = [dst_dev, dst_irq_idx, dst_irq_name]
+        # source node (device or hub)
+        self.src_dev = src_dev
+        self.src_irq_idx = src_irq_idx # GPIO index
+        self.src_irq_name = src_irq_name # GPIO name
+
+        # destination node
+        self.dst_dev = dst_dev
+        self.dst_irq_idx = dst_irq_idx
+        self.dst_irq_name = dst_irq_name
 
         src_dev.irqs.append(self)
         dst_dev.irqs.append(self)
 
     @property
+    def src(self):
+        return (self.src_dev, self.src_irq_idx, self.src_irq_name)
+
+    @property
+    def dst(self):
+        return (self.dst_dev, self.dst_irq_idx, self.dst_irq_name)
+
+    @property
     def src_node(self):
-        return self.src[0]
+        return self.src_dev
 
     @src_node.setter
     def src_node(self, value):
-        self.src[0].irqs.remove(self)
-        self.src[0] = value
+        self.src_dev.irqs.remove(self)
+        self.src_dev = value
         value.irqs.append(self)
 
     @property
     def dst_node(self):
-        return self.dst[0]
+        return self.dst_dev
 
     @dst_node.setter
     def dst_node(self, value):
-        self.dst[0].irqs.remove(self)
-        self.dst[0] = value
+        self.dst_dev.irqs.remove(self)
+        self.dst_dev = value
         value.irqs.append(self)
 
-    @property
-    def src_index(self):
-        return self.src[1]
-
-    @src_index.setter
-    def src_index(self, value):
-        self.src[1] = value
-
-    @property
-    def dst_index(self):
-        return self.dst[1]
-
-    @dst_index.setter
-    def dst_index(self, value):
-        self.dst[1] = value
-
-    @property
-    def src_name(self):
-        return self.src[2]
-
-    @src_name.setter
-    def src_name(self, value):
-        self.src[2] = value
-
-    @property
-    def dst_name(self):
-        return self.dst[2]
-
-    @dst_name.setter
-    def dst_name(self, value):
-        self.dst[2] = value
-
     def hub_ended(self):
-        return    isinstance(self.src[0], IRQHub) \
-               or isinstance(self.dst[0], IRQHub)
+        return    isinstance(self.src_dev, IRQHub) \
+               or isinstance(self.dst_dev, IRQHub)
 
     def __children__(self):
-        return [ self.src[0], self.dst[0] ]
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field("src_dev = " + gen.nameof(self.src[0]))
-        gen.gen_field("dst_dev = " + gen.nameof(self.dst[0]))
-        if self.src[1] != 0:
-            gen.gen_field("src_irq_idx = " + gen.gen_const(self.src[1]))
-        if self.dst[1] != 0:
-            gen.gen_field("dst_irq_idx = " + gen.gen_const(self.dst[1]))
-        if self.src[2]:
-            gen.gen_field('src_irq_name = "' + self.src[2] + '"')
-        if self.dst[2]:
-            gen.gen_field('dst_irq_name = "' + self.dst[2] + '"')
-        gen.gen_end()
+        return [ self.src_dev, self.dst_dev ]
 
 class IRQHub(Node):
-    def __init__(self, srcs, dsts, **kw):
-        Node.__init__(self, **kw)
+    def __init__(self, srcs = None, dsts = None, var_base = "irq", **kw):
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.irqs = []
 
-        for end in srcs:
-            IRQLine(
-                end[0], self,
-                src_irq_idx = end[1], dst_irq_idx = 0,
-                src_irq_name = end[2], dst_irq_name = None
-            )
+        if srcs:
+            for end in srcs:
+                IRQLine(
+                    end[0], self,
+                    src_irq_idx = end[1], dst_irq_idx = 0,
+                    src_irq_name = end[2], dst_irq_name = None
+                )
 
-        for end in dsts:
-            IRQLine(
-                self, end[0],
-                src_irq_idx = 0, dst_irq_idx = end[1],
-                src_irq_name = None, dst_irq_name = end[2]
-            )
+        if dsts:
+            for end in dsts:
+                IRQLine(
+                    self, end[0],
+                    src_irq_idx = 0, dst_irq_idx = end[1],
+                    src_irq_name = None, dst_irq_name = end[2]
+                )
 
     def __children__(self):
-        return []
+        referenced_hubs = []
+        for line in self.irqs:
+            dst = line.dst_node
+            if dst is self:
+                continue
+            if isinstance(dst, IRQHub):
+                referenced_hubs.append(dst)
 
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        # Sources and destinations will be set during loading of
-        # corresponding IRQ lines.
-        gen.write("srcs = [], dsts = []")
-        gen.gen_end()
+        return sorted(referenced_hubs, key = lambda h : h.id)
+
+    def __get_init_arg_val__(self, arg_name):
+        """ This method alwaus returns [] (empty list) for `srcs` and `dsts`
+        arguments because of next reasons.
+        - During backing a hub up for a reversible operation they are always
+        empty by reversible operation mechanism design.
+        - During loading a hub from a Python script they will be rebuilt by
+        instantiation of corresponding `IRQLine` objects. So, they must be
+        empty preventing IRQ line duplication.
+        - Older versions of the tool assume they are positional arguments and
+        never `None`-valued. So, they must present and be exactly empty lists.
+        """
+        if arg_name in ["srcs", "dsts"]:
+            return []
+        return getattr(self, arg_name)
 
 # QObject property model
 
@@ -320,22 +310,39 @@ class DevicePropertyDefinition(object):
 class PropList(dict):
     def __init__(self, original = None, *args, **kw):
         dict.__init__(original if original else {}, *args, **kw)
+        self.__names = []
 
     def append(self, prop):
         # It is defined that a property descriptor have property name.
         # Hence the key for a property in dict could be got automatically.
         self[prop.prop_name] = prop
 
+    def __setitem__(self, name, prop):
+        if name not in self:
+            insort(self.__names, name)
+        return dict.__setitem__(self, name, prop)
+
     def extend(self, props):
         for prop in props:
             self.append(prop)
 
+    def keys(self):
+        return self.__names.__iter__()
+
     def __iter__(self):
-        return self.values().__iter__()
+        return self.__iterator()
+
+    def __iterator(self):
+        for name in self.keys():
+            yield self[name]
+
+    def __delitem__(self, name):
+        self.__names.remove(name)
+        return dict.__delitem__(self, name)
 
 class DeviceNode(Node):
-    def __init__(self, qom_type, parent = None, **kw):
-        Node.__init__(self, **kw)
+    def __init__(self, qom_type, parent = None, var_base = "dev", **kw):
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.qom_type = qom_type
         self.parent_bus = parent
@@ -373,18 +380,14 @@ class DeviceNode(Node):
         for p in self.properties:
             gen.gen_field(
                 "QOMPropertyValue(" + p.prop_type.__name__
-                + ', "' + p.prop_name
-                + '", ' + self.gen_prop_val(gen, p)
+                + ', ' + gen.gen_const(p.prop_name)
+                + ', ' + self.gen_prop_val(gen, p)
                 + ")"
             )
         gen.gen_end(suffix = "])")
 
     def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('qom_type = "' + self.qom_type + '"')
-        if self.parent_bus:
-            gen.gen_field("parent = " + gen.nameof(self.parent_bus))
-        gen.gen_end()
+        super(DeviceNode, self).__gen_code__(gen)
         self.gen_props(gen)
 
     def __children__(self):
@@ -403,6 +406,13 @@ class DeviceNode(Node):
         if arg_name == "parent":
             arg_name = "parent_bus"
         return getattr(self, arg_name)
+
+def iter_mappings(mapping):
+    for idx in xrange(0, max(mapping.keys()) + 1):
+        try:
+            yield mapping[idx]
+        except KeyError:
+            yield None
 
 class SystemBusDeviceNode(DeviceNode):
     def __init__(self, qom_type,
@@ -428,52 +438,8 @@ class SystemBusDeviceNode(DeviceNode):
             for index, port in enumerate(pmio):
                 self.add_port_mapping(port, index)
 
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('qom_type = "' + self.qom_type + '"')
-        if self.parent_bus:
-            gen.gen_field("system_bus = " + gen.nameof(self.parent_bus))
-
-        if self.mmio_mappings:
-            gen.gen_field("mmio = [")
-            gen.line()
-            gen.push_indent()
-            prev_idx = -1
-            for idx, mmio in self.mmio_mappings.items():
-                for none_idx in xrange(prev_idx + 1, idx):
-                    if none_idx > 0:
-                        gen.line(",")
-                    gen.write("None")
-                prev_idx = idx
-                if idx > 0:
-                    gen.line(",")
-                gen.write(gen.gen_const(mmio))
-            gen.line()
-            gen.pop_indent()
-            gen.write("]")
-
-        if self.pmio_mappings:
-            gen.gen_field("pmio = [")
-            gen.line()
-            gen.push_indent()
-            prev_idx = -1
-            for idx, pmio in self.pmio_mappings.items():
-                for none_idx in xrange(prev_idx + 1, idx):
-                    if none_idx > 0:
-                        gen.line(",")
-                    gen.write("None")
-                prev_idx = idx
-                if idx > 0:
-                    gen.line(",")
-                gen.write(gen.gen_const(pmio))
-            gen.line()
-            gen.pop_indent()
-            gen.write("]")
-
-        gen.gen_end()
-        self.gen_props(gen)
-
     def add_memory_mapping(self, address, index = 0):
+        """ Adds MMIO at first empty slot starting from index """
         for idx in count(index):
             if not idx in self.mmio_mappings:
                 break
@@ -484,6 +450,7 @@ class SystemBusDeviceNode(DeviceNode):
         del self.mmio_mappings[index]
 
     def add_port_mapping(self, port, index = 0):
+        """ Adds PMIO at first empty slot starting from index """
         for idx in count(index):
             if not idx in self.pmio_mappings:
                 break
@@ -496,8 +463,16 @@ class SystemBusDeviceNode(DeviceNode):
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "system_bus":
             arg_name = "parent_bus"
-        elif arg_name == "mmio" or arg_name == "pmio":
-            return None
+        elif arg_name == "mmio":
+            if self.mmio_mappings:
+                return list(iter_mappings(self.mmio_mappings))
+            else:
+                return None
+        elif arg_name == "pmio":
+            if self.pmio_mappings:
+                return list(iter_mappings(self.pmio_mappings))
+            else:
+                return None
         return getattr(self, arg_name)
 
 class PCIExpressDeviceNode(DeviceNode):
@@ -514,17 +489,6 @@ class PCIExpressDeviceNode(DeviceNode):
         self.slot = slot
         self.function = function
         self.multifunction = multifunction
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('qom_type = "' + self.qom_type + '"')
-        gen.gen_field("pci_express_bus = " + gen.nameof(self.parent_bus))
-        gen.gen_field("slot = " + gen.gen_const(self.slot))
-        gen.gen_field("function = " + gen.gen_const(self.function))
-        if self.multifunction:
-            gen.gen_field("multifunction = True")
-        gen.gen_end()
-        self.gen_props(gen)
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "pci_express_bus":
@@ -543,8 +507,8 @@ class MemoryNodeHasNoSuchParent(Exception):
     pass
 
 class MemoryNode(Node):
-    def __init__(self, name, size, **kw):
-        Node.__init__(self, **kw)
+    def __init__(self, name, size, var_base = "mem", **kw):
+        Node.__init__(self, var_base = var_base, **kw)
 
         self.name = name
         self.size = size
@@ -582,10 +546,7 @@ class MemoryNode(Node):
         self.children.remove(child)
 
     def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('name = "' + self.name + '"')
-        gen.gen_field("size = " + gen.gen_const(self.size))
-        gen.gen_end()
+        super(MemoryNode, self).__gen_code__(gen)
         self.gen_parent_attachment(gen)
 
     def gen_parent_attachment(self, gen):
@@ -610,16 +571,6 @@ class MemoryAliasNode(MemoryLeafNode):
 
         self.alias_to = alias_to
         self.alias_offset = offset
-
-    def __gen_code__(self, gen):
-        gen.reset_gen(self)
-        gen.gen_field('name = "' + self.name + '"')
-        gen.gen_field("size = " + gen.gen_const(self.size))
-        gen.gen_field("alias_to = " + gen.nameof(self.alias_to))
-        gen.gen_field("offset = " + gen.gen_const(self.alias_offset))
-        gen.gen_end()
-
-        self.gen_parent_attachment(gen)
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "offset":

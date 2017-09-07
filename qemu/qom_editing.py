@@ -21,12 +21,12 @@ class DOp_SetAttr(DescriptionOperation):
 
     def __read_set__(self):
         return DescriptionOperation.__read_set__(self) + [
-            str(self.desc_name)
+            self.sn
         ]
 
     def __write_set__(self):
         return DescriptionOperation.__write_set__(self) + [
-            (str(self.desc_name), str(self.attr))
+            (self.sn, str(self.attr))
         ]
 
     def __backup__(self):
@@ -39,9 +39,10 @@ class DOp_SetAttr(DescriptionOperation):
         setattr(self.find_desc(), self.attr, dcp(self.old_val))
 
     def __description__(self):
+        name = self.find_desc().name
         return _("Set '%s' of '%s' to '%s'.") % (
             self.attr,
-            self.desc_name,
+            name,
             str(self.val)
         )
 
@@ -55,12 +56,12 @@ class SetDescriptionReferenceAttribute(DescriptionOperation):
     def __read_set__(self):
         # Note that new referenced value is probably to be in read set.
         return DescriptionOperation.__read_set__(self) + [
-            str(self.desc_name)
+            self.sn
         ]
 
     def __write_set__(self):
         return DescriptionOperation.__write_set__(self) + [
-            (str(self.desc_name), str(self.attr))
+            (self.sn, str(self.attr))
         ]
 
     def __backup__(self):
@@ -90,15 +91,16 @@ def gen_pci_id_str(pci_id):
 class DOp_SetPCIIdAttr(SetDescriptionReferenceAttribute):
 
     def __description__(self):
+        name = self.find_desc().name
         if self.old_val is None:
             return _("Set '%s' of '%s' to %s") % (
-                self.attr, self.desc_name, gen_pci_id_str(self.val)
+                self.attr, name, gen_pci_id_str(self.val)
             )
         elif self.val is None:
-            return _("Reset '%s' of '%s'.") % (self.attr, self.desc_name)
+            return _("Reset '%s' of '%s'.") % (self.attr, name)
         else:
             return _("Change '%s' of '%s' from %s to %s") % (
-                self.attr, self.desc_name,
+                self.attr, name,
                 gen_pci_id_str(self.old_val),
                 gen_pci_id_str(self.val)
             )
