@@ -4,6 +4,7 @@ from source import \
     Macro
 
 from common import \
+    CommitDesc, \
     mlget as _, \
     callco, \
     remove_file, \
@@ -148,15 +149,6 @@ def qvds_init_cache():
     for v in qvd_reg.values():
         if v is not None:
             v.init_cache()
-
-class CommitDesc(object):
-    def __init__(self, sha, parents, children):
-        self.sha = sha
-        self.parents = parents
-        self.children = children
-
-        # serial number according to the topological sorting
-        self.num = None
 
 class QemuCommitDesc(CommitDesc):
     def __init__(self, sha, parents, children):
