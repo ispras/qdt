@@ -77,3 +77,5 @@ from .os_wrappers import \
 from .notifier import *
 
 from .mechanics import *
+
+from .git_tools import *

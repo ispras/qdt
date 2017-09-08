@@ -4,6 +4,7 @@ from source import \
     Macro
 
 from common import \
+    CommitDesc, \
     mlget as _, \
     callco, \
     remove_file, \
@@ -149,19 +150,14 @@ def qvds_init_cache():
         if v is not None:
             v.init_cache()
 
-class CommitDesc(object):
+class QemuCommitDesc(CommitDesc):
     def __init__(self, sha, parents, children):
-        self.sha = sha
-        self.parents = parents
-        self.children = children
+        super(QemuCommitDesc, self).__init__(sha, parents, children)
 
         # dict of QEMUVersionParameterDescription new_value parameters
         self.param_nval = {}
         # dict of QEMUVersionParameterDescription old_value parameters
         self.param_oval = {}
-
-        # serial number according to the topological sorting
-        self.num = None
 
 class QemuVersionCache(object):
     current = None
@@ -182,7 +178,8 @@ class QemuVersionCache(object):
 
     def co_computing_parameters(self, repo):
         print("Build QEMU Git graph ...")
-        yield self.co_build_git_graph(repo)
+        self.commit_desc_nodes = {}
+        yield QemuCommitDesc.co_build_git_graph(repo, self.commit_desc_nodes)
         print("QEMU Git graph was built")
 
         yield self.co_propagate_param()
@@ -217,98 +214,13 @@ class QemuVersionCache(object):
         yield self.co_propagate_old_param(sorted_vd_keys, unknown_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
 
-    def co_build_git_graph(self, repo):
-        # iterations to yield
-        i2y = QVD_GGB_IBY
-
-        commit_desc_nodes = {}
-        # n is serial number according to the topology sorting
-        n = 0
-        # to_enum is used during topological sorting
-        # it contains commit to enumerate
-        to_enum = None
-        # build_stack contains eges represented by tuples
-        # (parent, child), where parent is instance of
-        # git.Commit, child is instance of CommitDesc
-        build_stack = []
-        for head in repo.references:
-            # skip processed heads
-            if head.commit.hexsha in commit_desc_nodes:
-                continue
-
-            head_desc = CommitDesc(head.commit.hexsha, [], [])
-            commit_desc_nodes[head.commit.hexsha] = head_desc
-            # add edges connected to head being processed
-            for p in head.commit.parents:
-                build_stack.append((p, head_desc))
-
-            while build_stack:
-                parent, child_commit_desc = build_stack.pop()
-
-                try:
-                    parent_desc = commit_desc_nodes[parent.hexsha]
-                except KeyError:
-                    parent_desc = CommitDesc(parent.hexsha, [], [])
-                    commit_desc_nodes[parent.hexsha] = parent_desc
-
-                    if parent.parents:
-                        for p in parent.parents:
-                            build_stack.append((p, parent_desc))
-                    else:
-                        # current edge parent is an elder commit in the tree,
-                        # that is why we should enumerate starting from it
-                        to_enum = parent_desc
-                else:
-                    # the existence of parent_desc means that parent has been
-                    # enumerated before. Hence, we starts enumeration from
-                    # it's child
-                    to_enum = child_commit_desc
-                finally:
-                    parent_desc.children.append(child_commit_desc)
-                    child_commit_desc.parents.append(parent_desc)
-
-                if i2y <= 0:
-                    yield True
-                    i2y = QVD_GGB_IBY
-                else:
-                    i2y -= 1
-
-                # numbering is performed from the 'to_enum' to either a leaf
-                # commit or a commit just before a merge which have at least
-                # one parent without number (except the commit)
-                while to_enum is not None:
-                    e = to_enum
-                    to_enum = None
-                    # if the number of parents in the commit_desc_nodes
-                    # is equal to the number of parents in the repo,
-                    # then all parents were numbered (added) earlier
-                    # according to the graph building algorithm,
-                    # else we cannot assign number to the commit yet
-                    if len(e.parents) == len(repo.commit(e.sha).parents):
-                        e.num = n
-                        n = n + 1
-                        # according to the algorithm, only one child
-                        # have no number. Other children either have
-                        # been enumerated already or are not added yet
-                        for c in e.children:
-                            if c.num is None:
-                                to_enum = c
-                                break
-
-                    if i2y <= 0:
-                        yield True
-                        i2y = QVD_GGB_IBY
-                    else:
-                        i2y -= 1
-
-        self.commit_desc_nodes = commit_desc_nodes
-
     def co_propagate_new_param(self, sorted_vd_keys, vd):
         '''This method propagate QEMUVersionParameterDescription.new_value
         in graph of commits. It must be called before old_value propagation.
 
         sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        by num of QemuCommitDesc. It's necessary to optimize the graph
+        traversal.
         vd: qemu_heuristic_db
         '''
 
@@ -383,7 +295,8 @@ class QemuVersionCache(object):
         in graph of commits. It must be called after new_value propagation.
 
         sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        by num of QemuCommitDesc. It's necessary to optimize the graph
+        traversal.
 
         unknown_vd_keys: set of keys which are not in commit_desc_nodes.
 
@@ -530,8 +443,6 @@ class QVCWasNotInitialized(Exception):
 class QVCIsNotReady(Exception):
     pass
 
-# Iterations Between Yields of Git Graph Building task
-QVD_GGB_IBY = 100
 # Iterations Between Yields of Device Tree Macros adding task
 QVD_DTM_IBY = 100
 # Iterations Between Yields of Heuristic Propagation task
