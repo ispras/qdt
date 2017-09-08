@@ -149,7 +149,7 @@ def qvds_init_cache():
         if v is not None:
             v.init_cache()
 
-class CommitDesc(object):
+class QemuCommitDesc(object):
     def __init__(self, sha, parents, children):
         self.sha = sha
         self.parents = parents
@@ -229,14 +229,14 @@ class QemuVersionCache(object):
         to_enum = None
         # build_stack contains eges represented by tuples
         # (parent, child), where parent is instance of
-        # git.Commit, child is instance of CommitDesc
+        # git.Commit, child is instance of QemuCommitDesc
         build_stack = []
         for head in repo.references:
             # skip processed heads
             if head.commit.hexsha in commit_desc_nodes:
                 continue
 
-            head_desc = CommitDesc(head.commit.hexsha, [], [])
+            head_desc = QemuCommitDesc(head.commit.hexsha, [], [])
             commit_desc_nodes[head.commit.hexsha] = head_desc
             # add edges connected to head being processed
             for p in head.commit.parents:
@@ -248,7 +248,7 @@ class QemuVersionCache(object):
                 try:
                     parent_desc = commit_desc_nodes[parent.hexsha]
                 except KeyError:
-                    parent_desc = CommitDesc(parent.hexsha, [], [])
+                    parent_desc = QemuCommitDesc(parent.hexsha, [], [])
                     commit_desc_nodes[parent.hexsha] = parent_desc
 
                     if parent.parents:
@@ -308,7 +308,8 @@ class QemuVersionCache(object):
         in graph of commits. It must be called before old_value propagation.
 
         sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        by num of QemuCommitDesc. It's necessary to optimize the graph
+        traversal.
         vd: qemu_heuristic_db
         '''
 
@@ -383,7 +384,8 @@ class QemuVersionCache(object):
         in graph of commits. It must be called after new_value propagation.
 
         sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of CommitDesc. It's necessary to optimize the graph traversal.
+        by num of QemuCommitDesc. It's necessary to optimize the graph
+        traversal.
 
         unknown_vd_keys: set of keys which are not in commit_desc_nodes.
 
