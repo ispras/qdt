@@ -14,12 +14,6 @@ from common import \
 from json import \
     load
 
-from subprocess import \
-    Popen, \
-    PIPE, \
-    check_output, \
-    STDOUT
-
 from .version import \
     QVHDict, \
     initialize_version, \
