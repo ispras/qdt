@@ -178,7 +178,8 @@ class QemuVersionCache(object):
 
     def co_computing_parameters(self, repo):
         print("Build QEMU Git graph ...")
-        yield self.co_build_git_graph(repo)
+        self.commit_desc_nodes = {}
+        yield QemuCommitDesc.co_build_git_graph(repo, self.commit_desc_nodes)
         print("QEMU Git graph was built")
 
         yield self.co_propagate_param()
