@@ -116,7 +116,7 @@ class Source(object):
         self.references = set()
 
     def add_reference(self, ref):
-        if not isinstance(ref, Type):
+        if not isinstance(ref, Type) and not isinstance(ref, Variable):
             raise ValueError("Trying to add source reference which is not a"
                 " type"
             )
