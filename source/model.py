@@ -273,6 +273,8 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
+        tf = TypeFixerVisitor(self, self.global_variables)
+        tf.visit()
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
@@ -969,7 +971,7 @@ class Function(Type):
         return Variable(name = name, _type = self, 
                 initializer = initializer, static = static)
 
-    __type_references__ = ["ret_type", "args", "used_types", "used_globals"]
+    __type_references__ = ["ret_type", "args", "used_types"]
 
 class Pointer(Type):
     def __init__(self, _type, name=None, const = False):
