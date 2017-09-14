@@ -77,6 +77,11 @@ def define_only_qemu_2_6_0_types():
         Type("TCGv"),
         Function("tcg_global_mem_new_i32"),
         Function("tcg_global_mem_new_i64"),
+        Function("tcg_op_buf_full")
+    ])
+
+    Header.lookup("tcg-op.h").add_types([
+        Function("tcg_gen_insn_start")
     ])
 
     Header.lookup("qemu/osdep.h").add_types([
