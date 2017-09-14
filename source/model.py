@@ -83,6 +83,9 @@ class ChunkGenerator(object):
                     if isinstance(self.stack[-2], Structure):
                         # structure fields
                         chunks = origin.gen_declaration_chunks(self, **kw)
+                    elif isinstance(self.stack[-2], Enumeration):
+                        kw["enum"] = True
+                        chunks = origin.get_definition_chunks(self, **kw)
                     else:
                         chunks = origin.get_definition_chunks(self, **kw)
             else:
@@ -895,6 +898,59 @@ class Structure(Type):
 
     __type_references__ = ["fields"]
 
+
+class Enumeration(Type):
+    def __init__(self,
+                 type_name,
+                 elems_dict,
+                 enum_name = ""
+                 ):
+        super(Enumeration, self).__init__(type_name)
+        self.elems = []
+        self.enum_name = enum_name
+        for key, val in elems_dict.items():
+            self.elems.append(
+                Variable(key, Type.lookup("int"),
+                         initializer=Initializer(str(val)))
+            )
+
+        self.elems.sort(key = lambda x: int(x.initializer.code))
+
+    def get_field(self, name):
+        for e in self.elems:
+            if name == e.name:
+                return e
+        return None
+
+    def gen_chunks(self, generator):
+        fields_indent = " " * 4
+        indent = ""
+
+        enum_begin = EnumerationDeclarationBegin(self, indent)
+        enum_end = EnumerationDeclaration(self, indent)
+
+        field_indent = indent + fields_indent
+        field_refs = []
+        top_chunk = enum_begin
+
+        for f in self.elems:
+            # Note that 0-th chunk is field and rest are its dependencies
+            decl_chunks = generator.provide_chunks(f, indent = field_indent)
+
+            field_declaration = decl_chunks[0]
+
+            field_refs.extend(list(field_declaration.references))
+            field_declaration.clean_references()
+            field_declaration.add_reference(top_chunk)
+            top_chunk = field_declaration
+
+        enum_begin.add_references(field_refs)
+        enum_end.add_reference(top_chunk)
+
+        return [enum_end, enum_begin]
+
+    __type_references__ = ["elems"]
+
 class Function(Type):
     def __init__(self,
             name,
@@ -1175,9 +1231,9 @@ class Variable():
 
         return [ch]
 
-    def get_definition_chunks(self, generator, indent = ""):
+    def get_definition_chunks(self, generator, indent = "", enum = False):
         append_nl = True
-        ch = VariableDefinition(self, indent, append_nl)
+        ch = VariableDefinition(self, indent, append_nl, enum)
 
         refs = generator.provide_chunks(self.type)
 
@@ -1568,7 +1624,7 @@ class PointerVariableDeclaration(SourceChunk):
         )
 
 class VariableDeclaration(SourceChunk):
-    weight = 3
+    weight = 4
 
     def __init__(self, var, indent="", extern = False):
         super(VariableDeclaration, self).__init__(var,
@@ -1589,7 +1645,9 @@ class VariableDeclaration(SourceChunk):
         self.variable = var
 
 class VariableDefinition(SourceChunk):
-    def __init__(self, var, indent="", append_nl = True):
+    weight = 5
+
+    def __init__(self, var, indent="", append_nl = True, enum = False):
         init_code = ''
         if var.initializer is not None:
             raw_code = var.type.gen_usage_string(var.initializer)
@@ -1604,14 +1662,15 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{type_name}@b{var_name}{array_decl}{init};{nl}
+{indent}{static}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
-        type_name = var.type.name,
+        type_name = "" if enum else var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
         init = init_code,
+        separ = "," if enum else ";",
         nl = "\n" if append_nl else ""
     )
             )
@@ -1676,6 +1735,30 @@ class StructureDeclaration(SourceChunk):
 
         self.structure = struct
 
+class EnumerationDeclarationBegin(SourceChunk):
+    def __init__(self, enum, indent = ""):
+        self.enum = enum
+        super(EnumerationDeclarationBegin, self).__init__(
+            enum,
+            name="Beginning of enumeration {} declaration".format(
+                enum.enum_name),
+            code="""\
+{indent}enum@b{enum_name}@b{{
+""".format(indent=indent, enum_name=enum.enum_name)
+        )
+
+class EnumerationDeclaration(SourceChunk):
+    weight = 3
+
+    def __init__(self, enum, indent = ""):
+        super(EnumerationDeclaration, self).__init__(
+            enum,
+            name = "Ending of enumeration {} declaration".format(enum.enum_name),
+            code = """\
+{indent}}};\n
+""".format(indent = indent, enum_name = enum.enum_name)
+        )
+
 def gen_array_declaration(array_size):
     if array_size is not None:
         if array_size == 0:
@@ -1733,7 +1816,7 @@ def gen_function_def_ref_chunks(f, generator):
     return references
 
 class FunctionDeclaration(SourceChunk):
-    weight = 4
+    weight = 6
 
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
