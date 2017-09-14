@@ -1646,8 +1646,6 @@ class VariableUsage(SourceChunk):
         self.initializer = initializer
 
 class StructureDeclarationBegin(SourceChunk):
-    weight = 2
-
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
@@ -1661,6 +1659,8 @@ class StructureDeclarationBegin(SourceChunk):
         )
 
 class StructureDeclaration(SourceChunk):
+    weight = 2
+
     def __init__(self, struct, fields_indent="    ", indent="",
                  append_nl = True):
         super(StructureDeclaration, self).__init__(struct,
