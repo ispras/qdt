@@ -1,7 +1,6 @@
 from .topology import *
 
-from .pygen import \
-    PyGenerator
+from .pygen import *
 
 from .ml import \
     mlget, \

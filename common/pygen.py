@@ -1,3 +1,7 @@
+__all__ = [
+    "PyGenerator"
+]
+
 from six import (
     text_type,
     binary_type,
