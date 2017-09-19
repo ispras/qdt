@@ -1,20 +1,26 @@
-from six import \
-    text_type, \
-    binary_type, \
+from six import (
+    text_type,
+    binary_type,
     integer_types
+)
 
 if __name__ == "__main__":
-    from topology import \
+    from sys import (
+        stdout
+    )
+    from topology import (
         sort_topologically
-
-    from reflection import \
+    )
+    from reflection import (
         get_class_total_args
+    )
 else:
-    from .topology import \
+    from .topology import (
         sort_topologically
-
-    from .reflection import \
+    )
+    from .reflection import (
         get_class_total_args
+    )
 
 const_types = (float, text_type, binary_type, bool) + integer_types
 
@@ -290,8 +296,6 @@ class PyGenerator(object):
             self.write(self.obj2name[val])
 
 if __name__ == "__main__":
-    from sys import stdout
-
     g = PyGenerator()
 
     class Writer():
