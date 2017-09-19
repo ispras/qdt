@@ -1,9 +1,11 @@
-from inspect import \
-    getmro, \
+from inspect import (
+    getmro,
     getargspec
+)
 
-from collections import \
+from collections import (
     OrderedDict
+)
 
 # http://stackoverflow.com/questions/12627118/get-a-function-arguments-default-value
 def get_default_args(func):
