@@ -29,9 +29,7 @@ from .class_tools import \
     get_class_defaults, \
     gen_class_args
 
-from .reflection import \
-    get_class_total_args, \
-    get_default_args
+from .reflection import *
 
 from .visitor import \
     ObjectVisitor, \
