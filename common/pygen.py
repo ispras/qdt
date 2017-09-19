@@ -1,5 +1,4 @@
 from six import \
-    PY2, \
     text_type, \
     binary_type, \
     integer_types
