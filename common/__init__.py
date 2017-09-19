@@ -1,6 +1,4 @@
-from .topology import \
-    sort_topologically, \
-    GraphIsNotAcyclic
+from .topology import *
 
 from .pygen import \
     PyGenerator
