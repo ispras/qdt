@@ -110,6 +110,7 @@ class PyGenerator(object):
         elif isinstance(c, (binary_type, text_type)):
             normalized = ""
             prefix = ""
+            multiline = False
             # Double and single quote count
             dquote = 0
             squote = 0
@@ -131,14 +132,18 @@ class PyGenerator(object):
                         dquote += 1
                     elif code == 38: # '
                         squote += 1
+                    elif code == 0x0A or code == 0x0D:
+                        multiline = True
                     normalized += chr(code)
 
             if dquote > squote:
                 escaped = normalized.replace("'", "\\'")
-                return prefix + "'" + escaped + "'"
+                quotes = "'''" if multiline else "'"
+                return prefix + quotes + escaped + quotes
             else:
                 escaped = normalized.replace('"', '\\"')
-                return prefix + '"' + escaped + '"'
+                quotes = '"""' if multiline else '"'
+                return prefix + quotes + escaped + quotes
         else:
             return str(c)
 
