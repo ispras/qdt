@@ -8,7 +8,7 @@ __all__ = [
 # The method should return list of objects, to which an edge exists, or [], if
 # the object is leaf.
 
-# __dfs_visited__: 
+# __dfs_visited__:
 # AttributeError - not visited
 # 1 - under processing
 # 2 - processed
