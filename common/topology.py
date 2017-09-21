@@ -21,8 +21,8 @@ def dfs(node):
         if node.__dfs_visited__ == 1:
             raise GraphIsNotAcyclic
         # This is not actually needed
-        #elif node.__dfs_visited__ == 2:
-        #    raise StopIteration
+        # elif node.__dfs_visited__ == 2:
+        #     raise StopIteration
     except AttributeError:
         node.__dfs_visited__ = 1
         for n in node.__dfs_children__():
