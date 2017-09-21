@@ -13,7 +13,7 @@ __all__ = [
 # 1 - under processing
 # 2 - processed
 
-class GraphIsNotAcyclic(Exception):
+class GraphIsNotAcyclic(ValueError):
     pass
 
 def dfs(node):
