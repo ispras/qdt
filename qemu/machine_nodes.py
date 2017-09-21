@@ -70,7 +70,7 @@ class BusNode(Node):
         self.child_name = child_name
         self.force_index = force_index
 
-    def __children__(self):
+    def __dfs_children__(self):
         if self.parent_device is None:
             return []
         else:
@@ -246,7 +246,7 @@ class IRQLine(Node):
         return    isinstance(self.src_dev, IRQHub) \
                or isinstance(self.dst_dev, IRQHub)
 
-    def __children__(self):
+    def __dfs_children__(self):
         return [ self.src_dev, self.dst_dev ]
 
 class IRQHub(Node):
@@ -271,7 +271,7 @@ class IRQHub(Node):
                     src_irq_name = None, dst_irq_name = end[2]
                 )
 
-    def __children__(self):
+    def __dfs_children__(self):
         referenced_hubs = []
         for line in self.irqs:
             dst = line.dst_node
@@ -390,7 +390,7 @@ class DeviceNode(Node):
         super(DeviceNode, self).__gen_code__(gen)
         self.gen_props(gen)
 
-    def __children__(self):
+    def __dfs_children__(self):
         if self.parent_bus is None:
             ret = []
         else:
@@ -523,7 +523,7 @@ class MemoryNode(Node):
         self.alias_to = None
         self.alias_offset = 0
 
-    def __children__(self):
+    def __dfs_children__(self):
         if self.alias_to is not None:
             return [self.alias_to]
         return [] if self.parent is None else [self.parent]

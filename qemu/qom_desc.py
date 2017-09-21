@@ -14,7 +14,7 @@ class QOMDescription(object):
     def __init__(self):
         self.project = None
 
-    def __children__(self):
+    def __dfs_children__(self):
         return []
 
     def gen_type(self):

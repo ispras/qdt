@@ -25,7 +25,7 @@ def dfs(node):
         #    raise StopIteration
     except AttributeError:
         node.__dfs_visited__ = 1
-        for n in node.__children__():
+        for n in node.__dfs_children__():
             for nn in dfs(n):
                 yield nn
         node.__dfs_visited__ = 2

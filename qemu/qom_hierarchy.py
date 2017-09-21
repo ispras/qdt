@@ -60,7 +60,7 @@ class QType(object):
             yield t
 
     # Python serialization
-    def __children__(self):
+    def __dfs_children__(self):
         # This only means that the parent must be serialized first
         p = self.parent
         return [] if p is None else [p]

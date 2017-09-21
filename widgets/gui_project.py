@@ -102,7 +102,7 @@ exists." % (l.lid, l.desc_name)
             l for ld in self.layouts.values() for l in ld.values()
         ]
 
-    def __children__(self):
+    def __dfs_children__(self):
         return list(self.descriptions) + self.get_all_layouts()
 
     def __gen_code__(self, gen):

@@ -35,7 +35,7 @@ class MachineWidgetLayout(object):
     def __init__(self, mdwl, mtwl, use_tabs = True):
         self.mdwl, self.mtwl, self.use_tabs = mdwl, mtwl, use_tabs
 
-    def __children__(self):
+    def __dfs_children__(self):
         return []
 
     def __gen_code__(self, g):

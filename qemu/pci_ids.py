@@ -41,7 +41,7 @@ class PCIId(object):
     def find_macro(self):
         raise Exception("The virtual method is not implemented.")
 
-    def __children__(self):
+    def __dfs_children__(self):
         return []
 
     def __str__(self):
@@ -156,7 +156,7 @@ class PCIClassification(object):
         gen.line("PCIId.db = " + gen.nameof(self) + ".tmp")
         gen.line("del " + gen.nameof(self) + ".tmp")
 
-    def __children__(self):
+    def __dfs_children__(self):
         return []
 
     def gen_uniq_vid(self):

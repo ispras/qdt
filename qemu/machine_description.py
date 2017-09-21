@@ -40,8 +40,8 @@ class MachineNode(QOMDescription):
         self.irq_hubs:
             self.assign_id(n)
 
-    def __children__(self):
-        return QOMDescription.__children__(self) \
+    def __dfs_children__(self):
+        return QOMDescription.__dfs_children__(self) \
             + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
 
     def __gen_code__(self, gen):
