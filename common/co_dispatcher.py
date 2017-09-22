@@ -1,9 +1,9 @@
-from types import \
+from types import (
     GeneratorType
-
-from time import \
+)
+from time import (
     time
-
+)
 import sys
 
 class FailedCallee(RuntimeError):
