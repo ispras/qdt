@@ -1,4 +1,4 @@
-extensions := doc html pdf
+extensions := docx html pdf
 
 all: $(foreach ext,$(extensions),article.$(ext))
 
@@ -18,7 +18,7 @@ define do_pandoc
 	$(1)
 endef
 
-%.doc : %.pmd
+%.docx : %.pmd
 	$(call do_pandoc, $<, $@)
 
 %.html : %.pmd
