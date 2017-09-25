@@ -1,6 +1,6 @@
 extensions := docx html pdf
 
-all: $(foreach ext,$(extensions),article.$(ext))
+all: $(foreach ext,$(extensions),article.$(ext)) report.pdf
 
 $(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
 
@@ -8,6 +8,7 @@ clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
 	rm -f *.pmd
 	rm -f *.png
+	rm -f $(foreach ext,pdf aux log nav out snm toc,report.$(ext))
 
 define do_pandoc
 	pandoc \
@@ -36,4 +37,7 @@ endef
 
 %.png : %.svg
 	convert -density 150 $< $@
+
+report.pdf : report.tex
+	pdflatex $< $@
 
