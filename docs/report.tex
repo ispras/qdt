@@ -77,6 +77,7 @@
 \usepackage{latexsym}
 \usepackage{subfig}
 \usepackage{tikz}
+\usepackage{dirtree}
 \usetikzlibrary{positioning,arrows}
 %\lstset{basicstyle=\ttfamily,language=lisp}
 
@@ -240,7 +241,25 @@ obj43 = SysBusDeviceDescription(
 
 
 
-\begin{frame}{API настройки генерации машины}
+\begin{frame}[fragile]{API компоновки вычислительной машины}
+
+\dirtree{%
+.1 Node .
+    .2 BusNode .
+        .3 SystemBusNode .
+        .3 PCIExpressBusNode .
+        .3 [ISA, IDE, I2C]BusNode .
+    .2 DeviceNode .
+        .3 SystemBusDeviceNode .
+        .3 PCIExpressDeviceNode .
+    .2 IRQLine .
+    .2 IRQHub .
+    .2 MemoryNode .
+        .3 MemoryLeafNode .
+            .4 MemoryAliasNode .
+            .4 MemoryRAMNode .
+            .4 MemoryROMNode .
+}
 \end{frame}
 
 
