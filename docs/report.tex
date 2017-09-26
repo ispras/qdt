@@ -135,6 +135,12 @@
 
 
 
+\begin{frame}{Процесс разработки}
+\includegraphics[width=\linewidth]{workflow.png}
+\end{frame}
+
+
+
 \begin{frame}{Устройство}
 
 \begin{itemize}
@@ -204,7 +210,32 @@ PCI(E)           & out IRQ (INTx) \\
 
 
 \begin{frame}{ГИ настройки генерации устройства}
-Скрин
+\begin{center}
+PCI Fast Ethernet контроллер из С2600
+\end{center}
+\includegraphics[width=\linewidth]{AM79C971.jpg}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Код настройки генерации устройства}
+
+\lstset{language=Python}
+\begin{lstlisting}
+obj43 = SysBusDeviceDescription(
+    name = "CISCO remote",
+    directory = "char",
+    out_irq_num = 0,
+    in_irq_num = 0,
+    mmio_num = 0x1,
+    pio_num = 0,
+    nic_num = 0,
+    timer_num = 0,
+    char_num = 0x1,
+    block_num = 0x1
+)
+\end{lstlisting}
+
 \end{frame}
 
 
@@ -214,8 +245,41 @@ PCI(E)           & out IRQ (INTx) \\
 
 
 
-\begin{frame}{ГИ настройки генерации машины}
-Скрин
+\begin{frame}{Схема вычислительной машины}
+\begin{center}
+\includegraphics[height=0.9\textheight]{C2600.png}
+\end{center}
+\end{frame}
+
+
+
+\begin{frame}{ГИ настройки интеграции устройства}
+\includegraphics[height=0.9\textheight]{REMOTE.jpg}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Код настройки интеграции устройства}
+
+\lstset{language=Python}
+\begin{lstlisting}
+obj3 = SystemBusDeviceNode(
+    qom_type = "TYPE_CISCO_REMOTE",
+    system_bus = obj1,
+    mmio = [ 0xf6000000 ]
+)
+obj3.properties.extend([
+    QOMPropertyValue(QOMPropertyTypeString,
+        "chardev", "serial2"),
+    QOMPropertyValue(QOMPropertyTypeString,
+        "eeprom_c2600_mb", "eeprom-c2600-mb"),
+    QOMPropertyValue(QOMPropertyTypeLink,
+        "nvram", obj2),
+    QOMPropertyValue(QOMPropertyTypeInteger,
+        "remote_cpu_type", 0x2)
+])
+\end{lstlisting}
+
 \end{frame}
 
 
