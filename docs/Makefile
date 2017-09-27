@@ -42,6 +42,7 @@ endef
 	dot -Tpng -Gdpi=300 $< -o $@
 
 report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
-REMOTE.jpg generation.png
+REMOTE.jpg generation.png workflow-old.png device-model.png \
+c2600_pci_c_chunks.png
 	pdflatex $< $@
 

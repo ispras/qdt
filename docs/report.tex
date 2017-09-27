@@ -137,18 +137,25 @@
 
 
 \begin{frame}{Процесс разработки}
-\includegraphics[width=\linewidth]{workflow.png}
+\begin{center}
+\includegraphics[height=0.8\textheight]{workflow-old.png}
+\end{center}
 \end{frame}
 
 
 
 \begin{frame}{Устройство}
 
+\begin{minipage}{0.6\textwidth}
+\includegraphics[width=\linewidth]{device-model.png}
+\end{minipage}
+\begin{minipage}{0.38\textwidth}
 \begin{itemize}
 \item Развитый обобщающий API
 \item Много формального интерфейсного кода
 \item Индивидуальный код сосредоточен в чётко определённых местах
 \end{itemize}
+\end{minipage}
 
 \begin{center}
 Можно по краткому перечню параметров сгенерировать сравнительно большую
@@ -173,6 +180,12 @@
 работоспособную модель.
 \end{center}
 
+\end{frame}
+
+
+
+\begin{frame}{Предлагаемый процесс разработки}
+\includegraphics[width=\linewidth]{workflow.png}
 \end{frame}
 
 
@@ -310,11 +323,37 @@ obj3.properties.extend([
 
 
 \begin{frame}{Модель языка программирования}
+\dirtree{%
+.1 object .
+    .2 Source\ \ \ \ \ \ \ \ \ \ \ \ \ - контейнер.
+        .3 Header.
+    .2 Type .
+        .3 Structure\ \ \ \ \ \ \ - для Си.
+        .3 Function .
+        .3 Pointer .
+        .3 Enumeration .
+        .3 Macro\ \ \ \ \ \ \ \ \ \ \ - для препроцессора.
+        .3 TypeReference\ \ \ - межфайловая связь.
+    .2 Variable\ \ \ \ \ \ \ \ \ \ \ - Type + имя.
+    .2 Initializer\ \ \ \ \ \ \ \ \ \ \ \ \{ + начальное значение \}.
+    .2 Usage\ \ \ \ \ \ \ \ \ \ \ \ \ \ - Type/Variable + Initializer.
+}
 \end{frame}
 
 
 
 \begin{frame}{Модель файла с исходным кодом}
+\begin{minipage}{0.61\textwidth}
+\includegraphics[width=\linewidth]{c2600_pci_c_chunks.png}
+\end{minipage}
+\begin{minipage}{0.37\textwidth}
+\begin{itemize}
+\item Топологическая сортировка
+\item Семантическая сортировка
+\item Оптимизация количества включаемых заголовков (транзитивное сокращение
+графа включения)
+\end{itemize}
+\end{minipage}
 \end{frame}
 
 
