@@ -44,5 +44,6 @@ endef
 report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
 REMOTE.jpg generation.png workflow-old.png device-model.png \
 c2600_pci_c_chunks.png
+	pdflatex $< $@ # two step generation
 	pdflatex $< $@
 
