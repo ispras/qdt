@@ -95,7 +95,7 @@
 
 \institute[]{ИСП РАН}
 
-\date[]{число месяц  2017}
+\date[]{11 октября 2017}
 
 \begin{document}
 
@@ -125,7 +125,7 @@
 \begin{itemize}
 \item поиск в исследуемом процессе автоматизируемых этапов;
 \item разработка и реализация методов автоматизации;
-\item повышение удобства и эффективности реализованного инструмента.
+\item повышение удобства использования реализованного инструмента.
 \end{itemize}
 \end{frame}
 
@@ -144,7 +144,7 @@
 
 
 
-\begin{frame}{Устройство}
+\begin{frame}{Особенности разработки устройства}
 
 \begin{minipage}{0.6\textwidth}
 \includegraphics[width=\linewidth]{device-model.png}
@@ -166,7 +166,7 @@
 
 
 
-\begin{frame}{Вычислительная машина}
+\begin{frame}{Особенности разработки ВМ}
 
 \begin{itemize}
 \item Декларативный характер определения
@@ -200,7 +200,7 @@
 
 
 
-\begin{frame}{API настройки генерации устройства}
+\begin{frame}{Возможности настройки генерации устройства}
 \begin{center}
 \begin{tabular}{l|r}
 Класс устройства & Настройки \\
@@ -278,9 +278,15 @@ obj43 = SysBusDeviceDescription(
 
 
 \begin{frame}{Схема вычислительной машины}
-\begin{center}
-\includegraphics[height=0.9\textheight]{C2600.png}
-\end{center}
+\begin{minipage}[b]{0.71\textwidth}
+\includegraphics[width=\linewidth]{machine-example.png}
+\vfill
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.24\textwidth}
+\vfill
+\includegraphics[width=\linewidth]{legend.png}
+\end{minipage}
 \end{frame}
 
 
@@ -316,6 +322,26 @@ obj3.properties.extend([
 
 
 
+\begin{frame}{Требования к генерируемому коду:}
+\begin{itemize}
+\item синтаксическая корректность~--- возможность сразу после генерации
+сосредоточиться на написании индивидуальной части кода;
+\begin{itemize}
+\item подключены все заголовки;
+\item правильный порядок фрагментов кода;
+\end{itemize}
+\item соответствие стилю программирования~--- минимизация количества времени,
+требуемого на последующий рефакторинг;
+\begin{itemize}
+\item соблюдены отступы и правила переноса;
+\item соблюдены соглашения об именовании символов;
+\item семантическая группировка фрагментов кода.
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+
 \begin{frame}{Устройство генератора}
 \includegraphics[height=0.9\textheight]{generation.png}
 \end{frame}
@@ -342,6 +368,11 @@ obj3.properties.extend([
 
 
 
+\begin{frame}{Пример}
+\end{frame}
+
+
+
 \begin{frame}{Модель файла с исходным кодом}
 \begin{minipage}{0.61\textwidth}
 \includegraphics[width=\linewidth]{c2600_pci_c_chunks.png}
@@ -363,12 +394,12 @@ obj3.properties.extend([
 
 
 
-\section{Примеры}
+\section{Примеры применения инструмента}
 \frame{\sectionpagekb}
 
 
 
-\begin{frame}{С2600 (C2621XM)}
+\begin{frame}{Криптомаршрутизатор С2600 (C2621XM)}
 Описание
 \end{frame}
 
@@ -386,7 +417,7 @@ obj3.properties.extend([
 
 
 
-\begin{frame}{Intel Q35}
+\begin{frame}{PC на базе Intel Q35}
 Описание
 \end{frame}
 
@@ -403,29 +434,6 @@ obj3.properties.extend([
 \end{frame}
 
 
-
-\begin{frame}{Слайд с таблицей}
-\begin{itemize}
-\item ...,
-\end{itemize}
-
-\begin{center}
-{\Large\color{structure.fg} Результаты} \\
-\begin{tabular}{|r|c|c|c|}
-\hline
-Тест & без & с & \% \\
- & оптимизаций & оптимизациями & \\
-\hline
-a & 1 & 2 & \color{green!40!black}{3} \\
-b & 4 & 5 & 63 \\
-c & 237 & 123485 & 0.1 \\
-d & 237 & 2241 & \color{green!40!black}{3} \\
-e & 15 & 15 & \color{green!40!black}{1} \\
-\hline
-\end{tabular}
-\end{center}
-
-\end{frame}
 
 \begin{frame}{Слайд с диаграммами}
 \vskip8pt
@@ -443,18 +451,6 @@ e & 15 & 15 & \color{green!40!black}{1} \\
 \end{frame}
 
 
-
-\begin{frame}{Слайд с нумерацией}
-\begin{enumerate}
-\item\label{strat_all} пункт
-\item\label{strat_sync} ...
-\item\label{strat_none} ...
-\end{enumerate}
-
-\vskip.5cm
-
-Отступ
-\end{frame}
 
 \begin{frame}{Слайд с определениями}
 \begin{mydef}
