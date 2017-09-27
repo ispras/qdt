@@ -395,12 +395,25 @@ obj3.properties.extend([
 
 
 \section{Примеры применения инструмента}
-\frame{\sectionpagekb}
+\begin{frame}
+\sectionpagekb
+\begin{itemize}
+\item PC на базе Intel Q35
+\item Криптомаршрутизатор СISCO серии 2600 (C2621XM)
+\end{itemize}
+\end{frame}
 
 
 
-\begin{frame}{Криптомаршрутизатор С2600 (C2621XM)}
-Описание
+\begin{frame}{PC на базе Intel Q35}
+\begin{itemize}
+\item Реализация Q35 уже имеется в QEMU и является одной из самых сложных.
+\item Цель эксперимента~--- убедиться в эквивалентности предельных возможностей
+предлагаемого метода (по сравнению с классическим, ручным).
+\item Многие устройства в QEMU уже присутствовали.
+\item Остальные были реализованы в соответствии с действующими требованиями
+QEMU при помощи инструмента.
+\end{itemize}
 \end{frame}
 
 
@@ -417,14 +430,22 @@ obj3.properties.extend([
 
 
 
-\begin{frame}{PC на базе Intel Q35}
-Описание
+\begin{frame}{Криптомаршрутизатор С2600 (C2621XM)}
+\begin{itemize}
+\item За основу взята реализация из Dynamips.
+\item CPU PowerPC MPC860 изначально реализован из поддержки полносистемного
+режима.
+\item Машина и все устройства (кроме CPU) были реализованы с помощью
+инструмента.
+\end{itemize}
 \end{frame}
 
 
 
-\begin{frame}{}
-Схема
+\begin{frame}{Схема C2621XM}
+\begin{center}
+\includegraphics[height=0.8\textheight]{C2600.png}
+\end{center}
 \end{frame}
 
 
