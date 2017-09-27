@@ -38,6 +38,9 @@ endef
 %.png : %.svg
 	convert -density 150 $< $@
 
+%.png : %.gv
+	dot -Tpng -Gdpi=300 $< -o $@
+
 report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
 REMOTE.jpg generation.png
 	pdflatex $< $@
