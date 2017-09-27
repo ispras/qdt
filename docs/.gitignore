@@ -1,4 +1,4 @@
-article.doc
+article.docx
 article.html
 article.pdf
 C2600.png
@@ -11,4 +11,10 @@ report.out
 report.pdf
 report.snm
 report.toc
+report.vrb
+device-model.png
+generation.png
+workflow.png
+workflow-old.png
+c2600_pci_c_chunks.png
 
