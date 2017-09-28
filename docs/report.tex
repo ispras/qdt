@@ -132,11 +132,17 @@
 
 
 \section{Подход к автоматизации}
-\frame{\sectionpagekb}
+\begin{frame}
+\sectionpagekb
+\begin{itemize}
+\item Процесс до автоматизации и его особенности
+\item Автоматизированный процесс
+\end{itemize}
+\end{frame}
 
 
 
-\begin{frame}{Процесс разработки}
+\begin{frame}{Процесс разработки до автоматизации}
 \begin{center}
 \includegraphics[height=0.8\textheight]{workflow-old.png}
 \end{center}
@@ -191,7 +197,16 @@
 
 
 \section{Разработанный инструмент}
-\frame{\sectionpagekb}
+\begin{frame}{}
+\sectionpagekb
+\begin{itemize}
+\item Архитектура
+\item Возможности
+\item Графический интерфейс пользователя (GUI) и API
+\item Особенности генерации кода
+\item Обратная связь из QEMU
+\end{itemize}
+\end{frame}{}
 
 
 \begin{frame}{}
@@ -223,7 +238,7 @@ PCI(E)           & out IRQ (INTx) \\
 
 
 
-\begin{frame}{ГИ настройки генерации устройства}
+\begin{frame}{GUI настройки генерации устройства}
 \begin{center}
 PCI Fast Ethernet контроллер из С2600
 \end{center}
@@ -291,7 +306,7 @@ obj43 = SysBusDeviceDescription(
 
 
 
-\begin{frame}{ГИ настройки интеграции устройства}
+\begin{frame}{GUI настройки интеграции устройства}
 \includegraphics[height=0.9\textheight]{REMOTE.jpg}
 \end{frame}
 
@@ -368,7 +383,12 @@ obj3.properties.extend([
 
 
 
-\begin{frame}{Пример}
+\begin{frame}{Пример модели исходного кода}
+Устройство с одним регистром\\
+\vfill
+\begin{center}
+\includegraphics[height=0.75\textheight]{source-example.png}
+\end{center}
 \end{frame}
 
 
@@ -419,13 +439,31 @@ QEMU при помощи инструмента.
 
 
 \begin{frame}{}
-Схема
+\begin{center}
+\includegraphics[height=\textheight]{Q35-h.png}
+\end{center}
 \end{frame}
 
 
 
-\begin{frame}{}
-Статистика
+\begin{frame}{Статистика*}
+\begin{center}
+\begin{tabular}{l|lll}
+Этап         & Затронуто & Вставлено & Удалено \\
+             & файлов    & строк     & строк   \\
+\hline
+Подготовка** & 4         & 42        & 31      \\
+Генерация    & 8         & 599       & 0       \\
+Реализация   & 5         & 142       & 93***   \\
+Суммарно     & 12        & 789       & 31      \\
+\end{tabular}
+\end{center}
+\vfill
+\it{*Статистика собрана с помощью git diff.}\\
+\it{**Перенос необходимых символов в заголовочные файлы,
+объявление глобальных переменных.}\\
+\it{***Количество удаленных при реализации строк близко к количеству строк,
+которые потребовалось исправить в сгенерированном коде.}
 \end{frame}
 
 
@@ -433,8 +471,8 @@ QEMU при помощи инструмента.
 \begin{frame}{Криптомаршрутизатор С2600 (C2621XM)}
 \begin{itemize}
 \item За основу взята реализация из Dynamips.
-\item CPU PowerPC MPC860 изначально реализован из поддержки полносистемного
-режима.
+\item CPU PowerPC MPC860 изначально реализован без поддержки полносистемной
+эмуляции.
 \item Машина и все устройства (кроме CPU) были реализованы с помощью
 инструмента.
 \end{itemize}
@@ -450,111 +488,68 @@ QEMU при помощи инструмента.
 
 
 
-\begin{frame}{}
-Статистика
-\end{frame}
-
-
-
-\begin{frame}{Слайд с диаграммами}
-\vskip8pt
-\begin{tabular}{cc}
-До изменений & После изменений \\
-\resizebox{0.46\linewidth}{!}{
-\begin{tikzpicture}
-\pie{4.42/нехватка, 37.31/конец ББ, 58.27/вызовы}
-\end{tikzpicture}} &
-\resizebox{0.46\linewidth}{!}{
-\begin{tikzpicture}
-\pie{0.51/нехватка, 38.69/конец ББ, 60.80/вызовы}
-\end{tikzpicture}}
-\end{tabular}
-\end{frame}
-
-
-
-\begin{frame}{Слайд с определениями}
-\begin{mydef}
-Определение 1
-\end{mydef}
-\begin{mydef}
-Определение 1
-\end{mydef}
-\end{frame}
-
-\begin{frame}{Слайд с графом}
+\begin{frame}{Статистика}
 \begin{center}
-\resizebox{!}{0.85\textheight}{%
-\begin{tikzpicture}[scale = 0.6]
-	\draw[very thick] (3,20) rectangle (7,25);
-	\draw[very thick] (3,23.5) -- (7, 23.5);
-	\node at (5,24.15){BB4};
-	\node at (5,22.75){var};
+\begin{tabular}{l|lll}
+Этап         & Затронуто & Вставлено & Удалено \\
+             & файлов    & строк     & строк   \\
+\hline
+Подготовка*  & 8         & 128       & 35      \\
+Генерация    & 37        & 2186      & 0       \\
+Реализация   & 31        & 4747      & 419     \\
+Суммарно     & 45        & 6642      & 35      \\
+\end{tabular}
+\end{center}
+\vfill
+\it{*MMU, спец. регистры и прерывания CPU, идентификаторы PCI.}
+\end{frame}
 
-	\draw[very thick] (0,0) rectangle (4,5);
-	\draw[very thick] (0,3.5) -- (4, 3.5);
-	\node at (2,4.15){BB2};
-	\node at (2,2.75){var};
 
-	\draw[very thick] (0,10) rectangle (4,15);
-	\draw[very thick] (0,13.5) -- (4, 13.5);
-	\node at (2,14.15){BB0};
-	\node at (2,12.75){var};
 
-	\draw[very thick] (6,0) rectangle (10,5);
-	\draw[very thick] (6,3.5) -- (10, 3.5);
-	\node at (8,4.15){BB3};
-	\node at (8,2.75){var};
+\begin{frame}{Статистика*}
+\begin{center}
+\begin{tabular}{l|ll}
+Устройство        & Объём конфигурации & Сгенерировано \\
+\hline
+MPC860\_IC        & 6                  & 125           \\
+C2600\_PCI\_HOST  & 6                  & 133           \\
+C2600\_PCI        & 7                  & 82            \\
+NS16552           & 7                  & 181           \\
+C2600\_IO\_FPGA   & 8                  & 137           \\
+CISCO\_REMOTE     & 7                  & 152           \\
+AM79C971          & 12                 & 175           \\
+\end{tabular}
+\end{center}
+\vfill
+\it{*Объём кода приведён в строках.}
+\end{frame}
 
-	\draw[very thick] (6,10) rectangle (10,15);
-	\draw[very thick] (6,13.5) -- (10, 13.5);
-	\node at (8,14.15){BB1};
-	\node at (8,12.75){var};
 
-	\draw[very thick,->,>=stealth',purple] (2,10) -- (2,5);
-	\draw[very thick,->,>=stealth',purple] (8,10) -- (2,5);
-	\draw[very thick,->,>=stealth',purple] (8,10) -- (8,5);
-	\draw[very thick,->,>=stealth',blue] (5,20) -- (2,15);
-	\draw[very thick,->,>=stealth',blue] (5,20) -- (8,15);
-\end{tikzpicture}
-}
+
+\section{Результаты}
+\begin{frame}
+\sectionpagekb
+\vfill
+\begin{itemize}
+\item Автоматизирован начальный этап разработки машины
+\item Настройка генерации осуществляется на языке Python
+\item Объём настройки генерации заготовки устройства в 11-25 раз больше объёма
+сгенерированной заготовки
+\item Разработан GUI, в т.ч. с визуализацией машины в виде схемы
+\item Поддерживается разработка машин сложности, сравнимой с Intel Q35
+\item Доля сгенерированного кода составляет от \(1/4\) до \(3/4\) в зависимости
+от количества уже реализованных устройств
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+\begin{center}
+Спасибо за внимание
 \end{center}
 \end{frame}
 
-\begin{frame}{}
-\begin{block}{Слайд с алгоритмом}
-\begin{algorithmic}
-\Procedure{Combined-Reg-Alloc}{$TB$}
-	\ForAll{$b\in B(TB)$}\Comment{Начальная инициализация}
-		\State $b^{pre}\gets \varnothing$
-		\State $b^{post}\gets \varnothing$
-	\EndFor
-	\ForAll{$J\in \mathbb{J}(TB)$}\Comment{Основной цикл}
-		\State $regmap\gets$ \textsc{Compute-Register-Mapping}($J$)
-		\ForAll{$(src, dst)\in J$}
-			\State $src^{post}\gets regmap$
-			\State $dst^{pre}\gets regmap$
-		\EndFor
-	\EndFor
-	\ForAll{$b\in B(TB)$}
-		\State \textsc{Local-Reg-Alloc}($b$)
-	\EndFor
-\EndProcedure
-\end{algorithmic}
-\end{block}
-\end{frame}
 
-\begin{frame}{Текущее состояние}
-\end{frame}
-
-\begin{frame}{Экспериментальные результаты}
-\center
-\end{frame}
-
-\section{Результаты}
-\frame{\sectionpagekb}
-
-\begin{frame}{Результаты}
-\end{frame}
 
 \end{document}
