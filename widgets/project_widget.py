@@ -23,7 +23,7 @@ from qemu import \
     QType, \
     QemuTypeName, \
     SysBusDeviceDescription, \
-    PCIExpressDeviceType, \
+    PCIExpressDeviceDescription, \
     from_legacy_dict, \
     BadBuildPath, \
     qvd_get, \
@@ -476,7 +476,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         if isinstance(desc, SysBusDeviceDescription):
             parent = next(parent.find(name = "sys-bus-device"))
-        elif isinstance(desc, PCIExpressDeviceType):
+        elif isinstance(desc, PCIExpressDeviceDescription):
             parent = next(parent.find(name = "pci-device"))
 
         qtn = QemuTypeName(desc.name)
