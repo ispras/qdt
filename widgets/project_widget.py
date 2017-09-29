@@ -23,7 +23,7 @@ from qemu import \
     QType, \
     QemuTypeName, \
     SysBusDeviceDescription, \
-    PCIExpressDeviceType, \
+    PCIExpressDeviceDescription, \
     from_legacy_dict, \
     BadBuildPath, \
     qvd_get, \
@@ -472,11 +472,16 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         AddDescriptionDialog(self.pht, self.winfo_toplevel())
 
     def __add_qtype_for_description(self, desc):
-        parent = self.p.qom_tree
+        proj = self.p
+
+        try:
+            parent = proj.qom_tree
+        except AttributeError: # QOM tree is not available without QEMU source
+            return
 
         if isinstance(desc, SysBusDeviceDescription):
             parent = next(parent.find(name = "sys-bus-device"))
-        elif isinstance(desc, PCIExpressDeviceType):
+        elif isinstance(desc, PCIExpressDeviceDescription):
             parent = next(parent.find(name = "pci-device"))
 
         qtn = QemuTypeName(desc.name)
