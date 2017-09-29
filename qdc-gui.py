@@ -605,7 +605,15 @@ later.").get()
 
     def save_project_to_file(self, file_name):
         self.pw.refresh_layouts()
-        PyGenerator().serialize(open(file_name, "wb"), self.proj)
+
+        project = self.proj
+
+        # Ensure that all machine nodes are in corresponding lists
+        for d in project.descriptions:
+            if isinstance(d, MachineNode):
+                d.link(handle_system_bus = False)
+
+        PyGenerator().serialize(open(file_name, "wb"), project)
 
         self.set_current_file_name(file_name)
         self.saved_operation = self.pht.pos
