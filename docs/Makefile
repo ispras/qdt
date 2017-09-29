@@ -43,7 +43,7 @@ endef
 
 report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
 REMOTE.jpg generation.png workflow-old.png device-model.png source-example.png \
-c2600_pci_c_chunks.png machine-example.png legend.png Q35-h.png
+c2600_pci_c_chunks.png machine-example.png legend.png Q35-h.png heuristics.png
 	pdflatex $< $@ # two step generation
 	pdflatex $< $@
 
