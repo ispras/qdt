@@ -1,6 +1,6 @@
 extensions := docx html pdf
 
-all: $(foreach ext,$(extensions),article.$(ext)) report.pdf
+all: $(foreach ext,$(extensions),article.$(ext)) report.pdf isp-article.html
 
 $(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
 
