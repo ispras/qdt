@@ -1242,11 +1242,12 @@ None (Python) --->
 При описании содержимого файла используются следующие классы.
 
 * `Type`
-    * `TypeReference`
     * `Structure`
     * `Function`
+    * `Enumeration`
     * `Pointer`
     * `Macro`
+    * `TypeReference`
 * `Initializer`
 * `Variable`
 * `Usage`
