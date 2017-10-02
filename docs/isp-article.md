@@ -2972,7 +2972,7 @@ IOAPIC и PCI HOST;
 Тестирование состояло из загрузки ОС Windows7 и запуска Internet Explorer с
 последующим открытием страницы `google.com`.
 
-## CISCO C2600 из Dynamips
+## CISCO 2600 из Dynamips
 
 Одним из примеров применения инструмента был маршрутизатор C2621XM серии
 C2600 (CISCO).
