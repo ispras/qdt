@@ -726,8 +726,7 @@ class QemuVersionDescription(object):
         # A diff between the index and the working tree
         modified_files = set()
 
-        # index.diff(None) --- diff index against working copy
-        # index.diff('HEAD') --- diff index against current HEAD tree
+        # index.diff(None) returns diff between index and working directory
         for e in self.repo.index.diff(None) + self.repo.index.diff('HEAD'):
             abs_path = join(u(self.src_path), e.a_path)
             for include in self.include_paths:
