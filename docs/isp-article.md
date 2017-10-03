@@ -943,6 +943,8 @@ PCI, MSI, QEMU, PCI Express, устройство PCI, функция PCI --->
 и прочих параметров генерации.
 Совместно объекты классов-потомков `QOMDescription` образуют
 _проект_ (`QProject`), аккумулирующий данные для генерации кода.
+В функцию классов описывающих проект, устройства, ВМ и её состав входит
+сохранение этой информации в файл.
 <!--+ QOMDescription, SysBusDeviceDescription, PCIExpressDeviceDescription,
 MachineNode, QProject +-->
 
@@ -1062,11 +1064,6 @@ MachineNode, QProject +-->
 он перенаправляет запросы, и ссылку на него.
 -->
 
-Основными функциями всех классов, предоставляемых интерфейсом использования
-шаблонов (включая потомков `QOMDescription`), являются:
-
-* хранение параметров генератора,
-* сохранение параметров в файл и обратно.
 <!--+ Node, BusNode. SystemBusNode, PCIExpressBusNode, ISABusNode, IDEBusNode,
 I2CBusNode, DeviceNode, SystemBusDeviceNode, PCIExpressDeviceNode`,
 IRQLine, IRQHub, MemoryNode, MemoryLeafNode, MemoryAliasNode, MemoryRAMNode,
