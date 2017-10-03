@@ -924,10 +924,7 @@ PCI, MSI, QEMU, PCI Express, устройство PCI, функция PCI --->
     * `MachineNode`
 
 `QOMDescription` является базовым классом. Он не предназначен для
-использования.
-
-`SysBusDeviceDescription` описывает устройство на системной шине.
-
+использования. `SysBusDeviceDescription` описывает устройство на системной шине.
 `PCIExpressDeviceDescription` описывает PCI устройство QEMU.
 
 Напомним, что PCI-_устройство_ в QEMU соответствует одной _функции_ реального
