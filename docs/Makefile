@@ -33,7 +33,7 @@ endef
 	) || true
 
 %.pmd : %.md
-	python md-preprocessor.py -o $@ $< > /dev/null
+	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
 %.png : %.svg
 	convert -density 150 $< $@
