@@ -9,6 +9,7 @@ clean:
 	rm -f *.pmd
 	rm -f *.png
 	rm -f $(foreach ext,pdf aux log nav out snm toc,report.$(ext))
+	rm -f isp-article.html
 
 define do_pandoc
 	pandoc \
