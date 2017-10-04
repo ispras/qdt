@@ -247,11 +247,12 @@ if __name__ == "__main__":
                 except IndexError:
                     break
                 if g:
-                    line = line[:m.start(subst)] \
-                        + pi.substitution \
+                    new_line = (line[:m.start(subst)]
+                        + pi.substitution
                         + line[m.end(subst):]
+                    )
 
-        lines[row] = line
+                    lines[row] = new_line
 
     # sort sources by reference order
     ref_anchors = [ a for a in anchors.values() if \
