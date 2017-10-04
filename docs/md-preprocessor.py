@@ -247,10 +247,16 @@ if __name__ == "__main__":
                 except IndexError:
                     break
                 if g:
-                    new_line = (line[:m.start(subst)]
-                        + pi.substitution
-                        + line[m.end(subst):]
-                    )
+                    if ispras:
+                        new_line = (line[:m.start("prefix")]
+                            + pi.substitution
+                            + line[m.end("suffix"):]
+                        )
+                    else:
+                        new_line = (line[:m.start(subst)]
+                            + pi.substitution
+                            + line[m.end(subst):]
+                        )
 
                     lines[row] = new_line
 
