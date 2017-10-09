@@ -1,30 +1,23 @@
-from .qom import \
-    QOMPropertyValue
-
-from .machine_nodes import \
-    DeviceNode, \
-    BusNode, \
-    Node, \
-    MemoryNode, \
-    MemoryAliasNode, \
-    MemoryROMNode, \
-    MemoryRAMNode, \
-    QOMPropertyTypeLink, \
-    IRQLine, \
+from .qom import QOMPropertyValue
+from .machine_nodes import (
+    DeviceNode,
+    BusNode,
+    Node,
+    MemoryNode,
+    MemoryAliasNode,
+    MemoryROMNode,
+    MemoryRAMNode,
+    QOMPropertyTypeLink,
+    IRQLine,
     IRQHub
-
-from .project_editing import \
-    QemuObjectCreationHelper, \
+)
+from .project_editing import (
+    QemuObjectCreationHelper,
     DescriptionOperation
-
-from copy import \
-    deepcopy
-
-from common import \
-    mlget as _
-
-from six import \
-    integer_types
+)
+from copy import deepcopy
+from common import mlget as _
+from six import integer_types
 
 class MachineOperation(DescriptionOperation):
     def __init__(self, machine_description, *args, **kw):
