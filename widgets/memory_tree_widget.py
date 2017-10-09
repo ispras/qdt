@@ -317,7 +317,7 @@ snapshot mode or the command should be disabled too.
                         parent_id = m.parent.id
 
                     self.insert(parent_id, "end",
-                        iid = m.id,
+                        iid = str(m.id),
                         text = m.name,
                         values = (
                             m.id,
