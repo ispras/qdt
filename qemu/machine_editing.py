@@ -7,6 +7,8 @@ from .machine_nodes import \
     Node, \
     MemoryNode, \
     MemoryAliasNode, \
+    MemoryROMNode, \
+    MemoryRAMNode, \
     QOMPropertyTypeLink, \
     IRQLine, \
     IRQHub
@@ -218,9 +220,9 @@ class MOp_AddMemoryNode(MachineNodeAdding):
         mem.id = -1
 
     def get_kind_str(self):
-        if "MemoryNode" in self.nc:
+        if MemoryNode.__name__ in self.nc:
             return _("container")
-        elif "MemoryAliasNode" in self.nc:
+        elif MemoryAliasNode.__name__ in self.nc:
             aliased = self.get_arg("alias_to")
             # TODO: offset is keyword argument, cannot be obtained by get_arg
             aliased_offset = self.node__offset[1]
@@ -234,9 +236,9 @@ class MOp_AddMemoryNode(MachineNodeAdding):
                 aliased.name, aliased.id,
                 aliased_offset
             )
-        elif "MemoryRAMNode" in self.nc:
+        elif MemoryRAMNode.__name__ in self.nc:
             return _("RAM")
-        elif "MemoryROMNode" in self.nc:
+        elif MemoryROMNode.__name__ in self.nc:
             return _("ROM")
         else:
             return "!"
