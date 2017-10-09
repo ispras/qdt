@@ -1,0 +1,87 @@
+digraph Chunks {
+    rankdir=BT;
+    node [shape=polygon fontname=Momospace]
+    edge [style=filled]
+
+    /* Chunks */
+
+    ch_0 [label="Header qemu/osdep.h inclusion"]
+
+    ch_1 [label="Header hw/ppc/mpc860/c2600_pci.h inclusion"]
+
+    ch_1 -> ch_0 [style=invis]
+        /* References */
+        ch_1 -> ch_0
+
+    ch_2 [label="Definition of function c2600_pci_realize"]
+
+    ch_2 -> ch_1 [style=invis]
+        /* References */
+        ch_2 -> ch_1
+
+    ch_3 [label="Definition of function c2600_pci_reset"]
+
+    ch_3 -> ch_2 [style=invis]
+        /* References */
+        ch_3 -> ch_2
+        ch_3 -> ch_1
+
+    ch_4 [label="Definition of function c2600_pci_exit"]
+
+    ch_4 -> ch_3 [style=invis]
+        /* References */
+        ch_4 -> ch_3
+        ch_4 -> ch_1
+
+    ch_5 [label="Variable c2600_pci_properties of type Property definition"]
+
+    ch_5 -> ch_4 [style=invis]
+        /* References */
+        ch_5 -> ch_1
+
+    ch_6 [label="Variable vmstate_c2600_pci of type VMStateDescription definition"]
+
+    ch_6 -> ch_5 [style=invis]
+        /* References */
+        ch_6 -> ch_5
+        ch_6 -> ch_1
+
+    ch_7 [label="Definition of function c2600_pci_class_init"]
+
+    ch_7 -> ch_6 [style=invis]
+        /* References */
+        ch_7 -> ch_3
+        ch_7 -> ch_5
+        ch_7 -> ch_1
+        ch_7 -> ch_4
+        ch_7 -> ch_2
+        ch_7 -> ch_6
+
+    ch_8 [label="Definition of function c2600_pci_instance_init"]
+
+    ch_8 -> ch_7 [style=invis]
+        /* References */
+        ch_8 -> ch_1
+
+    ch_9 [label="Variable c2600_pci_info of type TypeInfo definition"]
+
+    ch_9 -> ch_8 [style=invis]
+        /* References */
+        ch_9 -> ch_1
+        ch_9 -> ch_7
+        ch_9 -> ch_8
+
+    ch_10 [label="Definition of function c2600_pci_register_types"]
+
+    ch_10 -> ch_9 [style=invis]
+        /* References */
+        ch_10 -> ch_1
+        ch_10 -> ch_9
+
+    ch_11 [label="Usage of variable of type type_init"]
+
+    ch_11 -> ch_10 [style=invis]
+        /* References */
+        ch_11 -> ch_10
+        ch_11 -> ch_1
+}

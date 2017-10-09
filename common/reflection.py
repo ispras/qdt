@@ -1,9 +1,16 @@
-from inspect import \
-    getmro, \
-    getargspec
+__all__ = [
+    "get_default_args",
+    "get_class_total_args"
+]
 
-from collections import \
+from inspect import (
+    getmro,
+    getargspec
+)
+
+from collections import (
     OrderedDict
+)
 
 # http://stackoverflow.com/questions/12627118/get-a-function-arguments-default-value
 def get_default_args(func):

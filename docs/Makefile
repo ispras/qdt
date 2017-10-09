@@ -1,6 +1,6 @@
-extensions := doc html pdf
+extensions := docx html pdf
 
-all: $(foreach ext,$(extensions),article.$(ext))
+all: $(foreach ext,$(extensions),article.$(ext)) report.pdf isp-article.html
 
 $(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
 
@@ -8,6 +8,8 @@ clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
 	rm -f *.pmd
 	rm -f *.png
+	rm -f $(foreach ext,pdf aux log nav out snm toc,report.$(ext))
+	rm -f isp-article.html
 
 define do_pandoc
 	pandoc \
@@ -18,7 +20,7 @@ define do_pandoc
 	$(1)
 endef
 
-%.doc : %.pmd
+%.docx : %.pmd
 	$(call do_pandoc, $<, $@)
 
 %.html : %.pmd
@@ -32,8 +34,17 @@ endef
 	) || true
 
 %.pmd : %.md
-	python md-preprocessor.py -o $@ $< > /dev/null
+	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
 %.png : %.svg
 	convert -density 150 $< $@
+
+%.png : %.gv
+	dot -Tpng -Gdpi=300 $< -o $@
+
+report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
+REMOTE.jpg generation.png workflow-old.png device-model.png source-example.png \
+c2600_pci_c_chunks.png machine-example.png legend.png Q35-h.png heuristics.png
+	pdflatex $< $@ # two step generation
+	pdflatex $< $@
 

@@ -14,12 +14,6 @@ from common import \
 from json import \
     load
 
-from subprocess import \
-    Popen, \
-    PIPE, \
-    check_output, \
-    STDOUT
-
 from .version import \
     QVHDict, \
     initialize_version, \
@@ -401,7 +395,7 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
             else:
                 commit.param_oval[param.name] = param.old_value
 
-    def __children__(self):
+    def __dfs_children__(self):
         return [ self.pci_c ]
 
     def __gen_code__(self, gen):

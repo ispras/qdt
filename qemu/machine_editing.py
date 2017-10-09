@@ -1,28 +1,23 @@
-from .qom import \
-    QOMPropertyValue
-
-from .machine_nodes import \
-    DeviceNode, \
-    BusNode, \
-    Node, \
-    MemoryNode, \
-    MemoryAliasNode, \
-    QOMPropertyTypeLink, \
-    IRQLine, \
+from .qom import QOMPropertyValue
+from .machine_nodes import (
+    DeviceNode,
+    BusNode,
+    Node,
+    MemoryNode,
+    MemoryAliasNode,
+    MemoryROMNode,
+    MemoryRAMNode,
+    QOMPropertyTypeLink,
+    IRQLine,
     IRQHub
-
-from .project_editing import \
-    QemuObjectCreationHelper, \
+)
+from .project_editing import (
+    QemuObjectCreationHelper,
     DescriptionOperation
-
-from copy import \
-    deepcopy
-
-from common import \
-    mlget as _
-
-from six import \
-    integer_types
+)
+from copy import deepcopy
+from common import mlget as _
+from six import integer_types
 
 class MachineOperation(DescriptionOperation):
     def __init__(self, machine_description, *args, **kw):
@@ -218,9 +213,9 @@ class MOp_AddMemoryNode(MachineNodeAdding):
         mem.id = -1
 
     def get_kind_str(self):
-        if "MemoryNode" in self.nc:
+        if MemoryNode.__name__ in self.nc:
             return _("container")
-        elif "MemoryAliasNode" in self.nc:
+        elif MemoryAliasNode.__name__ in self.nc:
             aliased = self.get_arg("alias_to")
             # TODO: offset is keyword argument, cannot be obtained by get_arg
             aliased_offset = self.node__offset[1]
@@ -234,9 +229,9 @@ class MOp_AddMemoryNode(MachineNodeAdding):
                 aliased.name, aliased.id,
                 aliased_offset
             )
-        elif "MemoryRAMNode" in self.nc:
+        elif MemoryRAMNode.__name__ in self.nc:
             return _("RAM")
-        elif "MemoryROMNode" in self.nc:
+        elif MemoryROMNode.__name__ in self.nc:
             return _("ROM")
         else:
             return "!"

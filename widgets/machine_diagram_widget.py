@@ -49,6 +49,7 @@ from qemu import \
     MOp_AddDevice, \
     MOp_DelDevice, \
     MOp_AddBus, \
+    MOp_AddMemoryNode, \
     MOp_DelBus, \
     MOp_SetChildBus, \
     BusNode, \
@@ -1058,6 +1059,8 @@ IRQ line creation
 
             self.__update_var_names()
         elif isinstance(op, MOp_SetNodeVarNameBase):
+            self.__update_var_names()
+        elif isinstance(op, MOp_AddMemoryNode):
             self.__update_var_names()
 
         self.invalidate()

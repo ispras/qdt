@@ -65,8 +65,11 @@ if __name__ == "__main__":
     ap = ArgumentParser()
     ap.add_argument("in_file_name", nargs = "?", metavar = "in-file-name")
     ap.add_argument("--out-file-name", "-o", nargs = "?")
+    ap.add_argument("--ispras", action = 'store_true')
 
     args = ap.parse_args()
+
+    ispras = args.ispras
 
     try:
         in_file_name = args.in_file_name
@@ -244,11 +247,18 @@ if __name__ == "__main__":
                 except IndexError:
                     break
                 if g:
-                    line = line[:m.start(subst)] \
-                        + pi.substitution \
-                        + line[m.end(subst):]
+                    if ispras:
+                        new_line = (line[:m.start("prefix")]
+                            + pi.substitution
+                            + line[m.end("suffix"):]
+                        )
+                    else:
+                        new_line = (line[:m.start(subst)]
+                            + pi.substitution
+                            + line[m.end(subst):]
+                        )
 
-        lines[row] = line
+                    lines[row] = new_line
 
     # sort sources by reference order
     ref_anchors = [ a for a in anchors.values() if \
@@ -284,6 +294,38 @@ if __name__ == "__main__":
             break
 
     lines = lines[:min_row] + a_lines
+
+    # automatic chapter enumeration
+    if ispras:
+        levels = [0]
+
+        for idx, l in enumerate(list(lines)):
+            if l[0] != "#":
+                continue
+            if "$" not in l:
+                continue
+
+            parts = l.split("$")
+
+            current = len(levels)
+
+            line_level = len(parts) - 1
+
+            for tmp in range(current, line_level):
+                levels.append(0)
+
+            for tmp in range(line_level, current):
+                levels.pop()
+
+            levels[line_level - 1] += 1
+
+            new_line = ""
+            for p, l in zip(parts, levels):
+                new_line += p + str(l)
+
+            new_line += parts[-1]
+
+            lines[idx] = new_line
 
     for l in lines:
         out_file.write(str(l))

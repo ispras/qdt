@@ -45,7 +45,7 @@ class GUILayout(object):
         if self.widget:
             self.opaque = self.widget.gen_layout()
 
-    def __children__(self):
+    def __dfs_children__(self):
         try:
             (self.opaque.__gen_code__)
         except AttributeError:
