@@ -117,6 +117,7 @@ class Source(object):
         self.global_variables = {}
         self.usages = []
         self.references = set()
+        self.protection = False
 
     def add_reference(self, ref):
         if not isinstance(ref, Type) and not isinstance(ref, Variable):
@@ -396,7 +397,9 @@ order does not meet all requirements.
         source_basename = basename(self.path)
         name = splitext(source_basename)[0]
 
-        file = SourceFile(name, type(self) == Header)
+        file = SourceFile(name, type(self) == Header,
+            protection = self.protection
+        )
 
         file.add_chunks(self.gen_chunks(inherit_references))
 
@@ -567,10 +570,11 @@ class Header(Source):
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[path] 
 
-    def __init__(self, path, is_global=False):
+    def __init__(self, path, is_global=False, protection = True):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
+        self.protection = protection
 
         if path in Header.reg:
             raise RuntimeError("Header %s is already registered" % path)
