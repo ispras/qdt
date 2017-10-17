@@ -1858,11 +1858,12 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.append(chunk)
 
 class SourceFile:
-    def __init__(self, name, is_header=False):
+    def __init__(self, name, is_header=False, protection = True):
         self.name = name
         self.is_header = is_header
         self.chunks = []
         self.sort_needed = False
+        self.protection = protection
 
     def gen_chunks_graph(self, w):
         w.write("""\
@@ -2121,7 +2122,7 @@ them must be replaced with reference to h. """
     )
             )
 
-        if self.is_header:
+        if self.is_header and self.protection:
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
@@ -2144,7 +2145,7 @@ them must be replaced with reference to h. """
                 writer.write("/* source chunk {} */\n".format(chunk.name))
             writer.write(chunk.code)
 
-        if self.is_header:
+        if self.is_header and self.protection:
             writer.write("""\
 #endif /* INCLUDE_{name}_H */
 """.format(name = to_macro_name(self.name)))
