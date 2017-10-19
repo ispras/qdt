@@ -8,12 +8,10 @@ from .qom import (
 from source import (
     Source,
     Type,
-    Initializer,
     TypeNotRegistered,
     Function
 )
 from .machine_nodes import (
-    Node,
     SystemBusDeviceNode,
     BusNode,
     SystemBusNode,
@@ -39,8 +37,6 @@ from .version import get_vp
 from six import integer_types
 
 from collections import OrderedDict
-
-from itertools import count
 
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):
