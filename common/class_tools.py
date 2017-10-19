@@ -1,8 +1,6 @@
-from importlib import \
-    import_module
+from importlib import import_module
 
-from .reflection import \
-    get_default_args
+from .reflection import get_default_args
 
 def get_class(full_class_name):
     segments = full_class_name.split(".")

@@ -1,11 +1,10 @@
-from six import \
-    integer_types
+from six import integer_types
 
-from six.moves import \
-    zip
+from six.moves import zip
 
-from .ml import \
-    mlget as _
+from .ml import mlget as _
+
+from .notifier import Notifier
 
 class UnimplementedInverseOperation(Exception):
     pass
@@ -15,9 +14,6 @@ simple_eq_types = [
     str,
     float
 ] + list(integer_types)
-
-from .notifier import \
-    Notifier
 
 def set_touches_entry(X, e):
     for x in X:
