@@ -117,6 +117,7 @@ class Source(object):
         self.global_variables = {}
         self.usages = []
         self.references = set()
+        self.protection = False
 
     def add_reference(self, ref):
         if not isinstance(ref, Type) and not isinstance(ref, Variable):
@@ -396,7 +397,9 @@ order does not meet all requirements.
         source_basename = basename(self.path)
         name = splitext(source_basename)[0]
 
-        file = SourceFile(name, type(self) == Header)
+        file = SourceFile(name, type(self) == Header,
+            protection = self.protection
+        )
 
         file.add_chunks(self.gen_chunks(inherit_references))
 
@@ -567,10 +570,11 @@ class Header(Source):
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[path] 
 
-    def __init__(self, path, is_global=False):
+    def __init__(self, path, is_global=False, protection = True):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
+        self.protection = protection
 
         if path in Header.reg:
             raise RuntimeError("Header %s is already registered" % path)
@@ -1858,11 +1862,12 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.append(chunk)
 
 class SourceFile:
-    def __init__(self, name, is_header=False):
+    def __init__(self, name, is_header=False, protection = True):
         self.name = name
         self.is_header = is_header
         self.chunks = []
         self.sort_needed = False
+        self.protection = protection
 
     def gen_chunks_graph(self, w):
         w.write("""\
@@ -2121,7 +2126,7 @@ them must be replaced with reference to h. """
     )
             )
 
-        if self.is_header:
+        if self.is_header and self.protection:
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
@@ -2144,7 +2149,7 @@ them must be replaced with reference to h. """
                 writer.write("/* source chunk {} */\n".format(chunk.name))
             writer.write(chunk.code)
 
-        if self.is_header:
+        if self.is_header and self.protection:
             writer.write("""\
 #endif /* INCLUDE_{name}_H */
 """.format(name = to_macro_name(self.name)))
