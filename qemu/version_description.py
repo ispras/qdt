@@ -381,7 +381,7 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
         for param in vd:
             if param.name in commit.param_nval:
                 if commit.param_nval[param.name] != param.old_value:
-                     raise Exception(msg1 % (
+                    raise Exception(msg1 % (
 param.name, commit.sha, param.old_value, commit.param_nval[param.name]
                     ))
             elif param.name in commit.param_oval:
