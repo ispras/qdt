@@ -1,23 +1,19 @@
-from os import \
-    listdir
+from os import listdir
 
-from os.path import \
-    basename, \
-    splitext, \
-    split, \
-    join, \
+from os.path import (
+    basename,
+    splitext,
+    split,
+    join,
     isdir
-
-from copy import \
-    copy
+)
+from copy import copy
 
 import sys
 
-from re import \
-    compile
+from re import compile
 
-from itertools import \
-    chain
+from itertools import chain
 
 # PLY`s C preprocessor is used for several QEMU code analysis
 ply = join(split(split(__file__)[0])[0], "ply")
@@ -27,16 +23,18 @@ if ply not in sys.path:
 from ply.lex import lex
 from ply.cpp import *
 
-from common import \
-    OrderedSet, \
-    ObjectVisitor, \
+from common import (
+    OrderedSet,
+    ObjectVisitor,
     BreakVisiting
+)
+from itertools import count
 
-from itertools import \
-    count
-
-from six import \
-    string_types, text_type, binary_type
+from six import (
+    string_types,
+    text_type,
+    binary_type
+)
 
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
