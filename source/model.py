@@ -38,9 +38,6 @@ from itertools import \
 from six import \
     string_types, text_type, binary_type
 
-from re import \
-    compile
-
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
 
