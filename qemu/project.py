@@ -5,7 +5,6 @@ from os import (
 from os.path import (
     split,
     join,
-    basename,
     splitext,
     isdir,
     isfile
