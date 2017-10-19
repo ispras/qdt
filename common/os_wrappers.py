@@ -1,8 +1,6 @@
-from os import \
-    remove
+from os import remove
 
-from errno import \
-    ENOENT
+from errno import ENOENT
 
 def remove_file(file_name):
     try:

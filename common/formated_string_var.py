@@ -1,9 +1,8 @@
-from six.moves.tkinter import \
-    Variable as TkVariable, \
+from six.moves.tkinter import (
+    Variable as TkVariable,
     StringVar
-
-from .variable import \
-    Variable
+)
+from .variable import Variable
 
 variables = (Variable, TkVariable)
 
