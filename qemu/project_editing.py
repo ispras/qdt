@@ -1,5 +1,6 @@
 from common import \
     mlget as _, \
+    get_class, \
     gen_class_args, \
     get_class_defaults, \
     InverseOperation
@@ -13,14 +14,13 @@ from six import \
     text_type, \
     integer_types
 
-from importlib import \
-    import_module
-
 from qemu import \
     QOMDescription
 
 from traceback import \
     print_stack
+
+from copy import copy
 
 class ProjectOperation(InverseOperation):
     def __init__(self, project, *args, **kw):
@@ -153,15 +153,17 @@ _MyClassName__my_attr in this case. It is Python internals...
         try:
             valdesc = getattr(self, self.prefix + name)
         except AttributeError:
-            return None
+            if name in self.kwl:
+                # Default values are not stored. So, get it from the class.
+                def_kwl = get_class_defaults(self._nc)
+                val = def_kwl[name]
+                return copy(val)
+            else:
+                return None
         else:
             return self.export_value(*valdesc)
 
     def new(self):
-        segments = self._nc.split(".")
-        module, class_name = ".".join(segments[:-1]), segments[-1]
-        Class = getattr(import_module(module), class_name)
-
         args = []
         for n in self.al:
             args.append(self.get_arg(n))
@@ -176,6 +178,7 @@ _MyClassName__my_attr in this case. It is Python internals...
                 val = self.export_value(*valdesc)
                 kw[n] = val
 
+        Class = get_class(self._nc)
         return Class(*args, **kw)
 
     class CannotImport (Exception):

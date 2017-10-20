@@ -217,8 +217,7 @@ class MOp_AddMemoryNode(MachineNodeAdding):
             return _("container")
         elif MemoryAliasNode.__name__ in self.nc:
             aliased = self.get_arg("alias_to")
-            # TODO: offset is keyword argument, cannot be obtained by get_arg
-            aliased_offset = self.node__offset[1]
+            aliased_offset = self.get_arg("offset")
 
             if isinstance(aliased_offset, integer_types):
                 aliased_offset = "0x%X" % aliased_offset
