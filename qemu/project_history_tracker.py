@@ -212,6 +212,7 @@ class MachineProxyTracker(object):
     def add_memory_node(self, class_name, new_id, **memory_arguments):
         class2str = {
            "MemoryNode": "Container",
+           "MemorySASNode": "System address space",
            "MemoryAliasNode": "Alias",
            "MemoryRAMNode": "RAM",
            "MemoryROMNode": "ROM"
