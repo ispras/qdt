@@ -44,7 +44,8 @@ from .machine_diagram_widget import \
     MachineDiagramWidget
 
 from .memory_tree_widget import \
-    MemoryTreeWidget
+    MemoryTreeWidget, \
+    MultipleSASInMachine
 
 from .pci_device_settings import \
     PCIDeviceSettingsWidget
