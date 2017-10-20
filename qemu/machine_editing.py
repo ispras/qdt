@@ -7,6 +7,7 @@ from .machine_nodes import (
     MemoryAliasNode,
     MemoryROMNode,
     MemoryRAMNode,
+    MemorySASNode,
     QOMPropertyTypeLink,
     IRQLine,
     IRQHub
@@ -232,6 +233,8 @@ class MOp_AddMemoryNode(MachineNodeAdding):
             return _("RAM")
         elif MemoryROMNode.__name__ in self.nc:
             return _("ROM")
+        elif MemorySASNode.__name__ in self.nc:
+            return _("system address space")
         else:
             return "!"
 
