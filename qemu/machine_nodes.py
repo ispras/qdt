@@ -19,7 +19,8 @@ __all__ = [
                 "MemoryRAMNode",
                 "MemoryROMNode",
     # Exceptions
-    "MemoryNodeHasNoSuchParent"
+    "MemoryNodeHasNoSuchParent",
+    "MemorySASNodeCanNotHaveParent"
 ]
 
 from itertools import \
@@ -507,6 +508,9 @@ class MemoryNodeCannotHasChildren(Exception):
 class MemoryNodeHasNoSuchParent(Exception):
     pass
 
+class MemorySASNodeCanNotHaveParent(Exception):
+    pass
+
 class MemoryNode(Node):
     def __init__(self, name, size, var_base = "mem", **kw):
         Node.__init__(self, var_base = var_base, **kw)
@@ -532,6 +536,9 @@ class MemoryNode(Node):
     def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
         if child.parent is not None:
             raise MemoryNodeAlreadyHasParent()
+
+        if isinstance(child, MemorySASNode):
+            raise MemorySASNodeCanNotHaveParent()
 
         child.offset = offset
         child.may_overlap = may_overlap
