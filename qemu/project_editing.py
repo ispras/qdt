@@ -20,6 +20,8 @@ from qemu import \
 from traceback import \
     print_stack
 
+from copy import copy
+
 class ProjectOperation(InverseOperation):
     def __init__(self, project, *args, **kw):
         InverseOperation.__init__(self, *args, **kw)
@@ -151,7 +153,13 @@ _MyClassName__my_attr in this case. It is Python internals...
         try:
             valdesc = getattr(self, self.prefix + name)
         except AttributeError:
-            return None
+            if name in self.kwl:
+                # Default values are not stored. So, get it from the class.
+                def_kwl = get_class_defaults(self._nc)
+                val = def_kwl[name]
+                return copy(val)
+            else:
+                return None
         else:
             return self.export_value(*valdesc)
 
