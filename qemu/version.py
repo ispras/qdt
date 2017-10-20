@@ -194,6 +194,10 @@ def define_only_qemu_2_6_0_types():
         Function("gen_tb_end")
     ])
 
+    Header.lookup("exec/address-spaces.h").add_types([
+        Function("get_system_memory")
+    ]).add_reference(osdep_fake_type)
+
     Header.lookup("exec/memory.h").add_types([
         Type("MemoryRegion", False),
         Function(name = "MemoryRegionOps_read",
