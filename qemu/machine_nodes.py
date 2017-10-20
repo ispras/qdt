@@ -13,6 +13,7 @@ __all__ = [
             "SystemBusDeviceNode",
             "PCIExpressDeviceNode",
         "MemoryNode",
+            "MemorySASNode",
             "MemoryLeafNode",
                 "MemoryAliasNode",
                 "MemoryRAMNode",
@@ -560,6 +561,10 @@ class MemoryNode(Node):
             if self.priority != 0:
                 gen.gen_field("priority = " + gen.gen_const(self.priority))
             gen.gen_end()
+
+class MemorySASNode(MemoryNode):
+    def __init__(self, name, size = None, **kw):
+        MemoryNode.__init__(self, name, size, **kw)
 
 class MemoryLeafNode(MemoryNode):
     def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
