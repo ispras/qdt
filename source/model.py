@@ -1239,11 +1239,12 @@ class Initializer():
 
 class Variable():
     def __init__(self, name, _type, initializer = None, static = False,
-                 array_size = None):
+                 const = False, array_size = None):
         self.name = name
         self.type = _type
         self.initializer = initializer
         self.static = static
+        self.const = const
         self.array_size = array_size
 
     def gen_declaration_chunks(self, generator,
@@ -1652,9 +1653,10 @@ class PointerVariableDeclaration(SourceChunk):
                 )
         else:
             code = """\
-{indent}{extern}{type_name}@b*{var_name};
+{indent}{extern}{const}{type_name}@b*{var_name};
 """.format(
                 indent = indent,
+                const = "const@b" if var.const else "",
                 type_name = t.name,
                 var_name = var.name,
                 extern = "extern@b" if extern else ""
@@ -1677,9 +1679,10 @@ class VariableDeclaration(SourceChunk):
                 var.type.name
                 ),
             code = """\
-{indent}{extern}{type_name}@b{var_name}{array_decl};
+{indent}{extern}{const}{type_name}@b{var_name}{array_decl};
 """.format(
         indent = indent,
+        const = "const@b" if var.const else "",
         type_name = var.type.name,
         var_name = var.name,
         array_decl =  gen_array_declaration(var.array_size),
@@ -1706,10 +1709,11 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
+{indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
+        const = "const@b" if var.const else "",
         type_name = "" if enum else var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
