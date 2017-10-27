@@ -13,12 +13,14 @@ __all__ = [
             "SystemBusDeviceNode",
             "PCIExpressDeviceNode",
         "MemoryNode",
+            "MemorySASNode",
             "MemoryLeafNode",
                 "MemoryAliasNode",
                 "MemoryRAMNode",
                 "MemoryROMNode",
     # Exceptions
-    "MemoryNodeHasNoSuchParent"
+    "MemoryNodeHasNoSuchParent",
+    "MemorySASNodeCanNotHaveParent"
 ]
 
 from itertools import \
@@ -506,6 +508,9 @@ class MemoryNodeCannotHasChildren(Exception):
 class MemoryNodeHasNoSuchParent(Exception):
     pass
 
+class MemorySASNodeCanNotHaveParent(Exception):
+    pass
+
 class MemoryNode(Node):
     def __init__(self, name, size, var_base = "mem", **kw):
         Node.__init__(self, var_base = var_base, **kw)
@@ -531,6 +536,9 @@ class MemoryNode(Node):
     def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
         if child.parent is not None:
             raise MemoryNodeAlreadyHasParent()
+
+        if isinstance(child, MemorySASNode):
+            raise MemorySASNodeCanNotHaveParent()
 
         child.offset = offset
         child.may_overlap = may_overlap
@@ -560,6 +568,10 @@ class MemoryNode(Node):
             if self.priority != 0:
                 gen.gen_field("priority = " + gen.gen_const(self.priority))
             gen.gen_end()
+
+class MemorySASNode(MemoryNode):
+    def __init__(self, name, size = None, **kw):
+        MemoryNode.__init__(self, name, size, **kw)
 
 class MemoryLeafNode(MemoryNode):
     def add_child(self, child, offset = 0, may_overlap = True, priority = 1):

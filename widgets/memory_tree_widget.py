@@ -4,11 +4,13 @@ from .var_widgets import \
 
 from qemu import \
     MemoryNode, \
+    MemorySASNode, \
     MemoryLeafNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
     MemoryROMNode, \
     MachineNodeOperation, \
+    MOp_AddMemoryNode, \
     MOp_AddMemChild
 
 from .memory_settings import \
@@ -27,6 +29,9 @@ from six.moves.tkinter import \
     TclError
 
 LAYOUT_COLUMNS_WIDTH = "columns width"
+
+class MultipleSASInMachine(Exception):
+    pass
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
@@ -134,6 +139,22 @@ snapshot mode or the command should be disabled too.
                 state = "disabled"
             )
 
+        sas = None
+
+        for mem in self.mach.mems:
+            if isinstance(mem, MemorySASNode):
+                if sas is None:
+                    sas = mem
+                elif not sas == mem:
+                    raise MultipleSASInMachine()
+
+        c1.add_command(
+            label = _("SAS"),
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_add_sas,
+            state = "normal" if sas is None else "disabled"
+        )
+
         p1.add_cascade(
             label = _("Add node"),
             menu = c0
@@ -176,6 +197,20 @@ snapshot mode or the command should be disabled too.
                 self.popup_empty_submenu.entryconfig(
                     3,
                     state = "disabled"
+                )
+
+            # Only one SAS is allowed.
+            # Hence, turn off the popup menu command if one is exists.
+            if isinstance(op, MOp_AddMemoryNode) and \
+               MemorySASNode.__name__ in op.nc:
+                state = "disabled"
+                try:
+                    mem = self.mach.id2node[op.node_id]
+                except KeyError:
+                    state = "normal"
+                self.popup_empty_submenu.entryconfig(
+                    4,
+                    state = state
                 )
 
         l = self.gen_layout()
@@ -264,6 +299,9 @@ snapshot mode or the command should be disabled too.
     def on_add_container(self):
         self.add_memory_node_at_popup("MemoryNode")
 
+    def on_add_sas(self):
+        self.add_memory_node_at_popup("MemorySASNode")
+
     def on_add_ram(self):
         self.add_memory_node_at_popup("MemoryRAMNode")
 
@@ -283,6 +321,7 @@ snapshot mode or the command should be disabled too.
         unprocessed_mems = list(self.mach.mems)
         memtype2str = {
            MemoryNode: "Container",
+           MemorySASNode : "System address space",
            MemoryAliasNode: "Alias",
            MemoryRAMNode: "RAM",
            MemoryROMNode: "ROM"
@@ -321,8 +360,8 @@ snapshot mode or the command should be disabled too.
                         text = m.name,
                         values = (
                             m.id,
-                            hwaddr_val(m.offset) if parent_id != "" else "--",
-                            hwaddr_val(m.size),
+                            "--" if parent_id == "" else hwaddr_val(m.offset),
+                            "--" if m.size is None else hwaddr_val(m.size),
                             memtype2str[type(m)]
                         )
                     )

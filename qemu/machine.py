@@ -20,6 +20,7 @@ from .machine_nodes import \
     PCIExpressBusNode, \
     IRQHub, \
     MemoryNode, \
+    MemorySASNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
     MemoryROMNode, \
@@ -512,7 +513,12 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
 
                 decl_code += "    MemoryRegion *%s;\n" % mem_name
 
-                def_code += "    %s = g_new(MemoryRegion, 1);\n" % mem_name
+                if isinstance(node, MemorySASNode):
+                    self.use_type_name("get_system_memory")
+
+                    def_code += "    %s = get_system_memory();\n" % mem_name
+                else:
+                    def_code += "    %s = g_new(MemoryRegion, 1);\n" % mem_name
 
                 if isinstance(node, MemoryAliasNode):
                     self.use_type_name("memory_region_init_alias")
@@ -541,7 +547,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
     size = node.size
                     )
-                else:
+                elif not isinstance(node, MemorySASNode):
                     self.use_type_name("memory_region_init")
 
                     def_code += """\

@@ -212,6 +212,7 @@ class MachineProxyTracker(object):
     def add_memory_node(self, class_name, new_id, **memory_arguments):
         class2str = {
            "MemoryNode": "Container",
+           "MemorySASNode": "System address space",
            "MemoryAliasNode": "Alias",
            "MemoryRAMNode": "RAM",
            "MemoryROMNode": "ROM"
@@ -220,7 +221,7 @@ class MachineProxyTracker(object):
         if "name" not in memory_arguments:
             memory_arguments["name"] = class2str[class_name];
 
-        if "size" not in memory_arguments:
+        if "MemorySASNode" not in class_name and "size" not in memory_arguments:
             memory_arguments["size"] = 0xFEED;
 
         self.stage(MOp_AddMemoryNode, class_name, new_id, **memory_arguments)

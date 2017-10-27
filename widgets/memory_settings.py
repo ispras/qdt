@@ -12,6 +12,7 @@ from .var_widgets import \
 from qemu import \
     MachineNodeOperation, \
     MemoryNode, \
+    MemorySASNode, \
     MemoryLeafNode, \
     MemoryAliasNode, \
     MemoryRAMNode, \
@@ -57,6 +58,7 @@ class MemorySettingsWidget(SettingsWidget):
 
         memtype2str = {
            MemoryNode: _("Container"),
+           MemorySASNode: _("SAS"),
            MemoryAliasNode: _("Alias"),
            MemoryRAMNode: _("RAM"),
            MemoryROMNode: _("ROM")
@@ -66,16 +68,17 @@ class MemorySettingsWidget(SettingsWidget):
         l.grid(row = row, column = 1, sticky = "NEWS")
         row += 1
 
-        l = VarLabel(fr, text = _("Parent region"))
-        l.grid(row = row, column = 0, sticky = "NES")
+        if not isinstance(mem, MemorySASNode):
+            l = VarLabel(fr, text = _("Parent region"))
+            l.grid(row = row, column = 0, sticky = "NES")
 
-        self.var_parent = StringVar()
-        self.cb_parent = Combobox(fr,
-            textvariable = self.var_parent,
-            state = "readonly"
-        )
-        self.cb_parent.grid(row = row, column = 1, sticky = "NEWS")
-        row += 1
+            self.var_parent = StringVar()
+            self.cb_parent = Combobox(fr,
+                textvariable = self.var_parent,
+                state = "readonly"
+            )
+            self.cb_parent.grid(row = row, column = 1, sticky = "NEWS")
+            row += 1
 
         self.fields = [
             (_("Name"), "name", str),
@@ -87,6 +90,9 @@ class MemorySettingsWidget(SettingsWidget):
 
         if type(mem) is MemoryAliasNode:
             self.fields.extend([ (_("Alias offset"), "alias_offset", int) ])
+
+        if isinstance(mem, MemorySASNode):
+            self.fields = [(_("Name"), "name", str)]
 
         for text, field, _type in self.fields:
             if _type is bool:
@@ -126,29 +132,35 @@ class MemorySettingsWidget(SettingsWidget):
             )
             self.cb_alias_to.grid(row = row, column = 1, sticky = "NEWS")
 
-        if not mem.parent:
-            self.l_offset.grid_forget()
-            self.w_offset.grid_forget()
+        if not isinstance(mem, MemorySASNode):
+            if not mem.parent:
+                self.l_offset.grid_forget()
+                self.w_offset.grid_forget()
 
     def __apply_internal__(self):
-        new_parent = self.find_node_by_link_text(self.var_parent.get())
-        cur_parent = self.mem.parent
+        if not isinstance(self.mem, MemorySASNode):
+            new_parent = self.find_node_by_link_text(self.var_parent.get())
+            cur_parent = self.mem.parent
 
-        if new_parent is None:
-            new_parent_id = -1
-        else:
-            new_parent_id = new_parent.id
+            if new_parent is None:
+                new_parent_id = -1
+            else:
+                new_parent_id = new_parent.id
 
-        if cur_parent is None:
-            cur_parent_id = -1
-        else:
-            cur_parent_id = cur_parent.id
+            if cur_parent is None:
+                cur_parent_id = -1
+            else:
+                cur_parent_id = cur_parent.id
 
-        if not new_parent_id == cur_parent_id:
-            if not cur_parent_id == -1:
-                self.mht.stage(MOp_RemoveMemChild, self.mem.id, cur_parent_id)
-            if not new_parent_id == -1:
-                self.mht.stage(MOp_AddMemChild, self.mem.id, new_parent_id)
+            if not new_parent_id == cur_parent_id:
+                if not cur_parent_id == -1:
+                    self.mht.stage(
+                        MOp_RemoveMemChild,
+                        self.mem.id,
+                        cur_parent_id
+                    )
+                if not new_parent_id == -1:
+                    self.mht.stage(MOp_AddMemChild, self.mem.id, new_parent_id)
 
         for text, field, _type in self.fields:
             new_val = getattr(self, "var_" + field).get()
@@ -185,20 +197,21 @@ class MemorySettingsWidget(SettingsWidget):
     def refresh(self):
         SettingsWidget.refresh(self)
 
-        values = [
-            DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
-                [ mem for mem in self.mach.mems if (
-                    not isinstance(mem, MemoryLeafNode)
-                    and mem != self.mem )
-                ] + [ None ]
+        if not isinstance(self.mem, MemorySASNode):
+            values = [
+                DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
+                    [ mem for mem in self.mach.mems if (
+                        not isinstance(mem, MemoryLeafNode)
+                        and mem != self.mem )
+                    ] + [ None ]
+                )
+            ]
+
+            self.cb_parent.config(values = values)
+
+            self.var_parent.set(
+                DeviceSettingsWidget.gen_node_link_text(self.mem.parent)
             )
-        ]
-
-        self.cb_parent.config(values = values)
-
-        self.var_parent.set(
-            DeviceSettingsWidget.gen_node_link_text(self.mem.parent)
-        )
 
         for text, field, _type in self.fields:
             var = getattr(self, "var_" + field)
@@ -224,12 +237,13 @@ class MemorySettingsWidget(SettingsWidget):
                 DeviceSettingsWidget.gen_node_link_text(self.mem.alias_to)
             )
 
-        if self.mem.parent is None:
-            self.l_offset.grid_forget()
-            self.w_offset.grid_forget()
-        else:
-            self.l_offset.grid(self.l_offset.gi)
-            self.w_offset.grid(self.w_offset.gi)
+        if not isinstance(self.mem, MemorySASNode):
+            if self.mem.parent is None:
+                self.l_offset.grid_forget()
+                self.w_offset.grid_forget()
+            else:
+                self.l_offset.grid(self.l_offset.gi)
+                self.w_offset.grid(self.w_offset.gi)
 
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
