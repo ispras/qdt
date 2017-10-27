@@ -381,7 +381,7 @@ class MachineType(QOMType):
 
                     decl_code += "    PCIDevice *%s;\n" % dev_name
                     def_code += """\
-    {dev_name} = pci_create_multifunction({bus_name}, PCI_DEVFN({slot}, {func}), {multifunction}, {qom_type});{props_code}
+    {dev_name} = pci_create_multifunction(@a{bus_name},@sPCI_DEVFN({slot},@s{func}),@s{multifunction},@s{qom_type});{props_code}
     qdev_init_nofail(DEVICE({dev_name}));
 """.format(
     dev_name = dev_name,
