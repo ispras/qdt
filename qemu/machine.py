@@ -123,10 +123,10 @@ class IRQHubLayout(object):
                 def_code += child_code[1]
 
             def_code += """\
-    {parent_name} = qemu_irq_split({children});
+    {parent_name} = qemu_irq_split(@a{children});
 """.format(
     parent_name = parent_name,
-    children = ", ".join(children_names)
+    children = ",@s".join(children_names)
             )
             return (decl_code, def_code)
 
@@ -246,7 +246,7 @@ class MachineType(QOMType):
             self.use_type_name("qdev_get_gpio_in")
 
             return """\
-    {irq_name} = qdev_get_gpio_in(DEVICE({dst_name}), {dst_index});
+    {irq_name} = qdev_get_gpio_in(@aDEVICE({dst_name}),@s{dst_index});
 """.format(
     irq_name = var_name,
     dst_name = self.node_map[dst],
@@ -264,7 +264,7 @@ class MachineType(QOMType):
             irq_get = Type.lookup("qdev_get_gpio_in_named")
             self.use_type(irq_get)
             return """\
-    {irq_name} = {irq_get}(DEVICE({dst_name}), {gpio_name}, {dst_index});
+    {irq_name} = {irq_get}(@aDEVICE({dst_name}),@s{gpio_name},@s{dst_index});
 """.format(
     irq_name = var_name,
     irq_get = irq_get.name,
@@ -285,7 +285,7 @@ class MachineType(QOMType):
             self.use_type_name("qdev_connect_gpio_out")
 
             return """\
-    qdev_connect_gpio_out(DEVICE({src_name}), {src_index}, {irq_name});
+    qdev_connect_gpio_out(@aDEVICE({src_name}),@s{src_index},@s{irq_name});
 """.format(
     irq_name = var_name,
     src_name = self.node_map[src],
@@ -298,7 +298,7 @@ class MachineType(QOMType):
                 self.use_type_name("SYS_BUS_DEVICE")
 
                 return """\
-    sysbus_connect_irq(SYS_BUS_DEVICE({src_name}), {src_index}, {irq_name});
+    sysbus_connect_irq(@aSYS_BUS_DEVICE({src_name}),@s{src_index},@s{irq_name});
 """.format(
     irq_name = var_name,
     src_name = self.node_map[src],
@@ -311,7 +311,7 @@ class MachineType(QOMType):
                     self.use_type_name(irq[2])
 
                 return """\
-    qdev_connect_gpio_out_named(DEVICE({src_name}), {gpio_name}, {src_index}, {irq_name});
+    qdev_connect_gpio_out_named(@aDEVICE({src_name}),@s{gpio_name},@s{src_index},@s{irq_name});
 """.format(
     irq_name = var_name,
     src_name = self.node_map[src],
@@ -365,7 +365,7 @@ class MachineType(QOMType):
                         self.use_type_name(p.prop_val)
 
                     props_code += """
-    {set_func}(OBJECT({dev_name}), {value}, {prop_name}, NULL);\
+    {set_func}(@aOBJECT({dev_name}),@s{value},@s{prop_name},@sNULL);\
 """.format(
     set_func = p.prop_type.set_f,
     dev_name = dev_name,
@@ -398,7 +398,7 @@ class MachineType(QOMType):
 
                     decl_code += "    DeviceState *%s;\n" % dev_name
                     def_code += """\
-    {dev_name} = qdev_create({bus_name}, {qom_type});{props_code}
+    {dev_name} = qdev_create(@a{bus_name},@s{qom_type});{props_code}
     qdev_init_nofail({dev_name});
 """.format(
     dev_name = dev_name,
@@ -420,7 +420,7 @@ class MachineType(QOMType):
                                 mmio_val = "0x%x" % mmio
 
                             def_code += """\
-    sysbus_mmio_map(SYS_BUS_DEVICE({dev_name}), {idx}, {mmio_val});
+    sysbus_mmio_map(@aSYS_BUS_DEVICE({dev_name}),@s{idx},@s{mmio_val});
 """.format(
     dev_name = dev_name,
     idx = idx,
@@ -467,7 +467,7 @@ class MachineType(QOMType):
     bus_name = bus_name,
     bus_cast = ("(%s *) %%s" % bus.c_type) if bus.cast is None else ("%s(%%s)" % bus.cast),
                             ) % """\
-qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
+qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
 """.format(
     bridge_name = dev_name,
     bus_child_name = bus.gen_child_name_for_bus(),
@@ -526,7 +526,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                         self.use_type_name(node.alias_offset)
 
                     def_code += """\
-    memory_region_init_alias({mem_name}, NULL, {dbg_name}, {orig}, {offset}, {size});
+    memory_region_init_alias(@a{mem_name},@sNULL,@s{dbg_name},@s{orig},@s{offset},@s{size});
 """.format(
     mem_name = mem_name,
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
@@ -540,7 +540,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                     self.use_type_name("vmstate_register_ram_global")
 
                     def_code += """\
-    memory_region_init_ram({mem_name}, NULL, {dbg_name}, {size}, NULL);
+    memory_region_init_ram(@a{mem_name},@sNULL,@s{dbg_name},@s{size},@sNULL);
     vmstate_register_ram_global({mem_name});
 """.format(
     mem_name = mem_name,
@@ -551,7 +551,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                     self.use_type_name("memory_region_init")
 
                     def_code += """\
-    memory_region_init({mem_name}, NULL, {dbg_name}, {size});
+    memory_region_init(@a{mem_name},@sNULL,@s{dbg_name},@s{size});
 """.format(
     mem_name = mem_name,
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
@@ -569,7 +569,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                             self.use_type_name(node.priority)
 
                         def_code += """\
-    memory_region_add_subregion_overlap({parent_name}, {offset}, {child}, {priority});
+    memory_region_add_subregion_overlap(@a{parent_name},@s{offset},@s{child},@s{priority});
 """.format(
     parent_name = self.node_map[node.parent],
     offset = node.offset,
@@ -583,7 +583,7 @@ qdev_get_child_bus(DEVICE({bridge_name}), "{bus_child_name}")\
                             self.use_type_name(node.priority)
 
                         def_code += """\
-    memory_region_add_subregion({parent_name}, {offset}, {child});
+    memory_region_add_subregion(@a{parent_name},@s{offset},@s{child});
 """.format(
     parent_name = self.node_map[node.parent],
     offset = node.offset,
