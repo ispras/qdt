@@ -2093,8 +2093,10 @@ them must be replaced with reference to h. """
                 self.remove_dup_chunk(ch, prev_ch)
                 func_dec[f] = ch
 
-    def generate(self, writer, gen_debug_comments=False, 
-                 append_nl_after_headers = True):
+    def generate(self, writer,
+        gen_debug_comments = False,
+        append_nl_after_headers = True
+    ):
         self.remove_chunks_with_same_origin([
             HeaderInclusion,
             VariableDefinition,
@@ -2107,7 +2109,7 @@ them must be replaced with reference to h. """
             PointerTypeDeclaration,
             PointerVariableDeclaration,
             VariableUsage
-            ])
+        ])
 
         self.check_static_function_declarations()
 
@@ -2120,23 +2122,20 @@ them must be replaced with reference to h. """
 
         self.sort_chunks()
 
-        writer.write("""/* {}.{} */
-""".format(
-    self.name,
-    "h" if self.is_header else "c"
-    )
-            )
+        writer.write(
+            "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
+        )
 
         if self.is_header and self.protection:
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
-""".format(name = to_macro_name(self.name)))
+""".format(name = to_macro_name(self.name))
+            )
 
         prev_header = False
 
         for chunk in self.chunks:
-
             if isinstance(chunk, HeaderInclusion):
                 prev_header = True
             else:
@@ -2147,13 +2146,13 @@ them must be replaced with reference to h. """
             chunk.check_cols_fix_up()
 
             if gen_debug_comments:
-                writer.write("/* source chunk {} */\n".format(chunk.name))
+                writer.write("/* source chunk %s */\n" % chunk.name)
             writer.write(chunk.code)
 
         if self.is_header and self.protection:
-            writer.write("""\
-#endif /* INCLUDE_{name}_H */
-""".format(name = to_macro_name(self.name)))
+            writer.write(
+                "#endif /* INCLUDE_%s_H */\n" % to_macro_name(self.name)
+            )
 
 #Source tree container
 
