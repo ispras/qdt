@@ -29,7 +29,7 @@ class OrderedSet(MutableSet):
     def discard(self, key):
         if key in self.map:
             key, prev, _next = self.map.pop(key)
-            prev[2] = next
+            prev[2] = _next
             _next[1] = prev
 
     def __iter__(self):
