@@ -1859,13 +1859,15 @@ def depth_first_sort(chunk, new_chunks):
         depth_first_sort(ch, new_chunks)
 
     chunk.visited = 2
-    new_chunks.append(chunk)
+    new_chunks.add(chunk)
 
 class SourceFile:
     def __init__(self, name, is_header=False, protection = True):
         self.name = name
         self.is_header = is_header
-        self.chunks = []
+        # Note that, chunk order is significant while one reference per chunk
+        # is enough.
+        self.chunks = OrderedSet()
         self.sort_needed = False
         self.protection = protection
 
@@ -1944,7 +1946,7 @@ digraph Chunks {
         if not self.sort_needed:
             return
 
-        new_chunks = []
+        new_chunks = OrderedSet()
         # topology sorting
         for chunk in self.chunks:
             if not chunk.visited == 2:
@@ -1962,7 +1964,7 @@ digraph Chunks {
     def add_chunk(self, chunk):
         if chunk.source is None:
             self.sort_needed = True
-            self.chunks.append(chunk)
+            self.chunks.add(chunk)
 
             # Also add referenced chunks into the source
             for ref in chunk.references:
@@ -2114,7 +2116,7 @@ them must be replaced with reference to h. """
         self.optimize_inclusions()
 
         # semantic sort
-        self.chunks.sort()
+        self.chunks = OrderedSet(sorted(self.chunks))
 
         self.sort_chunks()
 
