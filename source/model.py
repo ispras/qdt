@@ -1859,13 +1859,15 @@ def depth_first_sort(chunk, new_chunks):
         depth_first_sort(ch, new_chunks)
 
     chunk.visited = 2
-    new_chunks.append(chunk)
+    new_chunks.add(chunk)
 
 class SourceFile:
     def __init__(self, name, is_header=False, protection = True):
         self.name = name
         self.is_header = is_header
-        self.chunks = []
+        # Note that, chunk order is significant while one reference per chunk
+        # is enough.
+        self.chunks = OrderedSet()
         self.sort_needed = False
         self.protection = protection
 
@@ -1944,7 +1946,7 @@ digraph Chunks {
         if not self.sort_needed:
             return
 
-        new_chunks = []
+        new_chunks = OrderedSet()
         # topology sorting
         for chunk in self.chunks:
             if not chunk.visited == 2:
@@ -1962,7 +1964,7 @@ digraph Chunks {
     def add_chunk(self, chunk):
         if chunk.source is None:
             self.sort_needed = True
-            self.chunks.append(chunk)
+            self.chunks.add(chunk)
 
             # Also add referenced chunks into the source
             for ref in chunk.references:
@@ -2091,8 +2093,10 @@ them must be replaced with reference to h. """
                 self.remove_dup_chunk(ch, prev_ch)
                 func_dec[f] = ch
 
-    def generate(self, writer, gen_debug_comments=False, 
-                 append_nl_after_headers = True):
+    def generate(self, writer,
+        gen_debug_comments = False,
+        append_nl_after_headers = True
+    ):
         self.remove_chunks_with_same_origin([
             HeaderInclusion,
             VariableDefinition,
@@ -2105,7 +2109,7 @@ them must be replaced with reference to h. """
             PointerTypeDeclaration,
             PointerVariableDeclaration,
             VariableUsage
-            ])
+        ])
 
         self.check_static_function_declarations()
 
@@ -2114,28 +2118,24 @@ them must be replaced with reference to h. """
         self.optimize_inclusions()
 
         # semantic sort
-        self.chunks.sort()
+        self.chunks = OrderedSet(sorted(self.chunks))
 
         self.sort_chunks()
 
-        writer.write("""
-/* {}.{} */
-""".format(
-    self.name,
-    "h" if self.is_header else "c"
-    )
-            )
+        writer.write(
+            "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
+        )
 
         if self.is_header and self.protection:
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
-""".format(name = to_macro_name(self.name)))
+""".format(name = to_macro_name(self.name))
+            )
 
         prev_header = False
 
         for chunk in self.chunks:
-
             if isinstance(chunk, HeaderInclusion):
                 prev_header = True
             else:
@@ -2146,13 +2146,13 @@ them must be replaced with reference to h. """
             chunk.check_cols_fix_up()
 
             if gen_debug_comments:
-                writer.write("/* source chunk {} */\n".format(chunk.name))
+                writer.write("/* source chunk %s */\n" % chunk.name)
             writer.write(chunk.code)
 
         if self.is_header and self.protection:
-            writer.write("""\
-#endif /* INCLUDE_{name}_H */
-""".format(name = to_macro_name(self.name)))
+            writer.write(
+                "#endif /* INCLUDE_%s_H */\n" % to_macro_name(self.name)
+            )
 
 #Source tree container
 
