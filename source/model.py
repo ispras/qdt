@@ -2120,8 +2120,7 @@ them must be replaced with reference to h. """
 
         self.sort_chunks()
 
-        writer.write("""
-/* {}.{} */
+        writer.write("""/* {}.{} */
 """.format(
     self.name,
     "h" if self.is_header else "c"
