@@ -56,14 +56,7 @@ for l in langs:
         ] + locale_files
     )
 
-    if not isfile(join(directory, "qdc.po")):
-        call(
-            [   "mv",
-                join(directory, "messages.po"),
-                join(directory, "qdc.po")
-            ]
-        )
-    else:
+    if isfile(join(directory, "qdc.po")):
         call(
             [   "msgmerge",
                 "-U",
@@ -74,6 +67,13 @@ for l in langs:
         call(
             [   "rm",
                 join(directory, "messages.po")
+            ]
+        )
+    else:
+        call(
+            [   "mv",
+                join(directory, "messages.po"),
+                join(directory, "qdc.po")
             ]
         )
 
