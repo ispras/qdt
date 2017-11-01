@@ -16,32 +16,32 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
-#: widgets/device_settings.py:262 widgets/machine_diagram_widget.py:436
-#: widgets/sysbusdevset.py:67
+#: widgets/device_settings.py:290 widgets/machine_diagram_widget.py:476
+#: widgets/sysbusdevset.py:78
 msgid "Delete"
 msgstr "Удалить"
 
-#: widgets/device_settings.py:315
+#: widgets/device_settings.py:341
 msgid "QOM type"
 msgstr "Тип QOM"
 
-#: widgets/device_settings.py:323 widgets/device_tree_widget.py:81
+#: widgets/device_settings.py:350 widgets/device_tree_widget.py:72
 msgid "Select"
 msgstr "Выбрать"
 
-#: widgets/device_settings.py:329
+#: widgets/device_settings.py:370
 msgid "Parent bus"
 msgstr "Родительская шина"
 
-#: widgets/device_settings.py:346
+#: widgets/device_settings.py:385
 msgid "Child buses"
 msgstr "Дочерние шины"
 
-#: widgets/device_settings.py:357
+#: widgets/device_settings.py:395
 msgid "Properties"
 msgstr "Свойства"
 
-#: widgets/device_settings.py:372 widgets/sysbusdevset.py:61
+#: widgets/device_settings.py:406 widgets/sysbusdevset.py:72
 msgid "Add"
 msgstr "Добавить"
 
@@ -49,27 +49,27 @@ msgstr "Добавить"
 msgid "Device settings"
 msgstr "Установки устройства"
 
-#: widgets/device_tree_widget.py:34
+#: widgets/device_tree_widget.py:25
 msgid "Device Tree"
 msgstr "Дерево устройств"
 
-#: widgets/device_tree_widget.py:54
+#: widgets/device_tree_widget.py:45
 msgid "Devices"
 msgstr "Устройства"
 
-#: widgets/device_tree_widget.py:55
+#: widgets/device_tree_widget.py:46
 msgid "Macros"
 msgstr "Макросы"
 
-#: widgets/device_tree_widget.py:87
+#: widgets/device_tree_widget.py:78
 msgid "Select QOM type"
 msgstr "Выбор типа QOM"
 
-#: widgets/irq_settings.py:39
+#: widgets/irq_settings.py:41
 msgid "Source"
 msgstr "Передатчик"
 
-#: widgets/irq_settings.py:40
+#: widgets/irq_settings.py:42
 msgid "Destination"
 msgstr "Приёмник"
 
@@ -85,112 +85,112 @@ msgstr "Индекс GPIO"
 msgid "GPIO name"
 msgstr "Имя GPIO"
 
-#: widgets/irq_settings.py:202
+#: widgets/irq_settings.py:215
 msgid "IRQ line settings"
 msgstr "Установки линии IRQ"
 
-#: widgets/machine_diagram_widget.py:398 widgets/machine_diagram_widget.py:444
+#: widgets/machine_diagram_widget.py:460 widgets/machine_diagram_widget.py:597
 msgid "IRQ source"
 msgstr "Передатчик IRQ"
 
-#: widgets/machine_diagram_widget.py:403 widgets/machine_diagram_widget.py:449
+#: widgets/machine_diagram_widget.py:465 widgets/machine_diagram_widget.py:602
 msgid "IRQ destination"
 msgstr "Приёмник IRQ"
 
-#: widgets/machine_diagram_widget.py:409 widgets/machine_diagram_widget.py:432
-#: widgets/machine_diagram_widget.py:458
+#: widgets/machine_diagram_widget.py:471 widgets/machine_diagram_widget.py:583
+#: widgets/machine_diagram_widget.py:609 widgets/machine_diagram_widget.py:623
 msgid "Settings"
 msgstr "Установки"
 
-#: widgets/machine_diagram_widget.py:416
+#: widgets/machine_diagram_widget.py:484
 msgid "Add IRQ hub"
 msgstr "Добавить узел IRQ"
 
-#: widgets/machine_diagram_widget.py:420
+#: widgets/machine_diagram_widget.py:530
 msgid "Dynamic layout"
 msgstr "Динамическое размещение"
 
-#: widgets/machine_diagram_widget.py:427
+#: widgets/machine_diagram_widget.py:577
 msgid "Delete point"
 msgstr "Удалить точку"
 
-#: widgets/pci_device_settings.py:20
+#: widgets/pci_device_settings.py:32
 msgid "PCI"
 msgstr ""
 
-#: widgets/pci_device_settings.py:28
+#: widgets/pci_device_settings.py:40
 msgid "Slot (Device number)"
 msgstr "Слот (номер устройства)"
 
-#: widgets/pci_device_settings.py:35
+#: widgets/pci_device_settings.py:47
 msgid "Function number"
 msgstr "Номер функции"
 
-#: widgets/pci_device_settings.py:45
+#: widgets/pci_device_settings.py:57
 msgid "multifunction"
 msgstr "многофункциональное"
 
-#: widgets/settings_window.py:84
+#: widgets/settings_window.py:167
 msgid "Refresh"
 msgstr "Освежить"
 
-#: widgets/settings_window.py:93
+#: widgets/settings_window.py:176
 msgid "Apply"
 msgstr "Применить"
 
-#: widgets/settings_window.py:102
+#: widgets/settings_window.py:185
 msgid "OK"
 msgstr "ОК"
 
-#: widgets/sysbusdevset.py:41
+#: widgets/sysbusdevset.py:53
 msgid "MMIO Mappings"
 msgstr "Отображения MMIO"
 
-#: widgets/sysbusdevset.py:42
+#: widgets/sysbusdevset.py:54
 msgid "PMIO Mappings"
 msgstr "Отображения PMIO"
 
-#: widgets/hotkey.py:66
+#: widgets/hotkey.py:104
 msgid "Unassigned"
 msgstr "Не назначено"
 
-#: widgets/bus_settings.py:27
+#: widgets/bus_settings.py:164
 msgid "Bus settings"
 msgstr "Установки шины"
 
-#: qdc-gui.py:28
+#: qdc-gui.py:110
 msgid "Qemu device creator GUI"
 msgstr "ГИ генератора устройств Qemu"
 
-#: qdc-gui.py:36
+#: qdc-gui.py:158
 msgid "Shutdown the application."
 msgstr "Завершить приложение."
 
-#: qdc-gui.py:41
+#: qdc-gui.py:163
 msgid "Revert previous editing."
 msgstr "Отменить изменения."
 
-#: qdc-gui.py:46
+#: qdc-gui.py:168
 msgid "Make reverted editing again."
 msgstr "Повторить отменённые изменения."
 
-#: qdc-gui.py:55
+#: qdc-gui.py:241
 msgid "Quit"
 msgstr "Выход"
 
-#: qdc-gui.py:59
+#: qdc-gui.py:245
 msgid "File"
 msgstr "Файл"
 
-#: qdc-gui.py:63 history-test.py:102
+#: qdc-gui.py:249 history-test.py:102
 msgid "Undo"
 msgstr "Отменить"
 
-#: qdc-gui.py:70 history-test.py:107
+#: qdc-gui.py:256 history-test.py:107
 msgid "Redo"
 msgstr "Повторить"
 
-#: qdc-gui.py:76 history-test.py:111
+#: qdc-gui.py:285 history-test.py:111
 msgid "Edit"
 msgstr "Правка"
 
