@@ -41,7 +41,7 @@ for l in langs:
         ] + files
     )
 
-    if not isfile(directory + "qdc.po"):
+    if not isfile(join(directory, "qdc.po")):
         call(
             [   "mv",
                 join(directory, "messages.po"),
