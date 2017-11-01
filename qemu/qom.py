@@ -58,6 +58,39 @@ class QOMPropertyValue(object):
         self.prop_name = prop_name
         self.prop_val = prop_val
 
+def qtn_char(c):
+    # low ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"] high
+    if c < "0":
+        # low
+        return False
+    # ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"] high
+    if "z" < c:
+        # high
+        return False
+    # ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"]
+    if c < "A":
+        # ["0"; "9"] middle0
+        return c <= "9"
+    # ["A", "Z"] middle1 ["a"; "z"]
+    if "Z" < c:
+        # middle1 ["a"; "z"]
+        return "A" <= c
+    # ["A", "Z"]
+    return True
+
+# Replacements for characters
+qtn_id_char_map = {
+    "/" : ""
+    # default : c if qtn_char(c) else "_"
+}
+
+qtn_struct_char_map = {
+    # default : c if qtn_char(c) else ""
+}
+
+qtn_macro_char_map = qtn_id_char_map
+# same default
+
 class QemuTypeName(object):
     def __init__(self, name):
         self.name = name
@@ -70,23 +103,31 @@ class QemuTypeName(object):
     def name(self, value):
         self._name = value.strip()
 
-        lower_name = self._name.lower();
-        tmp = '_'.join(lower_name.split())
-        tmp = '_'.join(tmp.split('-'))
-        tmp = ''.join(tmp.split('/'))
+        tmp = ""
+        for c in self._name.lower():
+            if c in qtn_id_char_map:
+                tmp += qtn_id_char_map[c]
+            else:
+                tmp += c if qtn_char(c) else "_"
 
         self.for_id_name = tmp
         self.for_header_name = tmp
 
-        tmp =''.join(self._name.split())
-        tmp =''.join(tmp.split('/'))
-        tmp =''.join(tmp.split('-'))
+        tmp = ""
+        for c in self._name:
+            if c in qtn_struct_char_map:
+                tmp += qtn_struct_char_map[c]
+            else:
+                tmp += c if qtn_char(c) else ""
+
         self.for_struct_name = tmp
 
-        upper_name = self._name.upper()
-        tmp = '_'.join(upper_name.split())
-        tmp = '_'.join(tmp.split('-'))
-        tmp = ''.join(tmp.split('/'))
+        tmp = ""
+        for c in self._name.upper():
+            if c in qtn_macro_char_map:
+                tmp += qtn_macro_char_map[c]
+            else:
+                tmp += c if qtn_char(c) else "_"
 
         self.for_macros = tmp
 
