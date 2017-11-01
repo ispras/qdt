@@ -39,6 +39,8 @@ for root, dirs, files in walk(root_dir):
 
         locale_files.append(file_name[root_prefix_len:])
 
+locale_files.sort()
+
 langs = [
     "ru_RU"
 ]
