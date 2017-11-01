@@ -10,6 +10,7 @@ from .var_widgets import \
     VarLabel
 
 from qemu import \
+    QemuTypeName, \
     MachineNodeOperation, \
     MemoryNode, \
     MemorySASNode, \
@@ -38,6 +39,11 @@ from .hotkey import \
 
 from .gui_frame import \
     GUIFrame
+
+def name_to_var_base(name):
+    type_base = "sas" if "System address space" in name else name
+    qtn = QemuTypeName(type_base)
+    return qtn.for_id_name
 
 class MemorySettingsWidget(SettingsWidget):
     def __init__(self, mem, *args, **kw):
@@ -120,6 +126,8 @@ class MemorySettingsWidget(SettingsWidget):
                 setattr(self, "l_" + field, l)
             setattr(self, "w_" + field, w)
             setattr(self, "var_" + field, v)
+
+        self.var_name.trace_variable("w", self.__on_name_var_changed)
 
         if type(mem) is MemoryAliasNode:
             l = VarLabel(fr, text = _("Alias region"))
@@ -253,6 +261,24 @@ class MemorySettingsWidget(SettingsWidget):
             self.destroy()
         else:
             self.refresh()
+
+    def __on_name_var_changed(self, *args):
+        vvb = self.v_var_base
+        vb = vvb.get()
+
+        try:
+            prev_n = self.__prev_name
+        except AttributeError:
+            # name was not edited yet
+            prev_n = self.mem.name
+
+        if vb == "mem" or vb == name_to_var_base(prev_n):
+            """ If current variable name base is default or corresponds to
+            previous name then auto suggest new variable name base
+            with account of just entered name. """
+            n = self.var_name.get()
+            vvb.set(name_to_var_base(n))
+            self.__prev_name = n
 
 class MemorySettingsWindow(SettingsWindow):
     def __init__(self, mem, *args, **kw):
