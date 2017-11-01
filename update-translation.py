@@ -18,7 +18,10 @@ locale_files = []
 
 ml_pattern = compile(" mlget +as +_[, \n]")
 
-for root, dirs, files in walk(dirname(__file__)):
+root_dir = dirname(__file__)
+root_prefix_len = len(root_dir) + 1
+
+for root, dirs, files in walk(root_dir):
     for file in files:
         if file[-3:] != ".py":
             continue
@@ -34,7 +37,7 @@ for root, dirs, files in walk(dirname(__file__)):
         else:
             continue
 
-        locale_files.append(file_name)
+        locale_files.append(file_name[root_prefix_len:])
 
 langs = [
     "ru_RU"
