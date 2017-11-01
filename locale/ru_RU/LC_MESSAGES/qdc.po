@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"PO-Revision-Date:  2016-09-30 17:29+0300\n"
+"PO-Revision-Date:  2017-11-01 21:00+0300\n"
 "Last-Translator: Efimov Vasily <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
@@ -16,8 +16,161 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
+#: common/inverse_operation.py:104
+#, python-format
+msgid "Reversible operation with unimplemented description (class %s)."
+msgstr "Обратимая операция без описания (класс %s)."
+
+#: common/inverse_operation.py:131
+msgid "The beginning of known history."
+msgstr "Ничало известной истории."
+
+#: qemu/machine.py:139 qemu/qom.py:603 widgets/project_widget.py:96
+msgid "Directory"
+msgstr "Папка"
+
+#: qemu/machine_editing.py:82
+#, python-format
+msgid "device '%s'"
+msgstr "устройство '%s'"
+
+#: qemu/machine_editing.py:84
+#, python-format
+msgid "bus '%s'"
+msgstr "шина '%s'"
+
+#: qemu/machine_editing.py:86
+#, python-format
+msgid "memory region '%s'"
+msgstr "участок памяти '%s'"
+
+#: qemu/machine_editing.py:88
+msgid "IRQ line"
+msgstr "линия IRQ"
+
+#: qemu/machine_editing.py:90
+msgid "IRQ hub"
+msgstr "концентратор IRQ"
+
+#: qemu/machine_editing.py:92
+msgid "node"
+msgstr "узел"
+
+#: qemu/machine_editing.py:132
+#, python-format
+msgid "Include memory region %s (%d) to %s (%d)."
+msgstr "Вложить участок памяти %s (%d) в %s (%d)."
+
+#: qemu/machine_editing.py:144
+#, python-format
+msgid "Exclude memory region %s (%d) from %s (%d)."
+msgstr "Исключить участок памяти %s (%d) из %s (%d)."
+
+#: qemu/machine_editing.py:218
+msgid "container"
+msgstr "контейнер"
+
+#: qemu/machine_editing.py:237
+msgid "system address space"
+msgstr "системное адресное пространство"
+
+#: qemu/machine_editing.py:243
+#, python-format
+msgid "Create memory region %s (%d) of kind %s."
+msgstr "Создать участок памяти %s (%d), вид: %s."
+
+#: qemu/machine_editing.py:256
+#, python-format
+msgid "Delete memory region %s (%d) of kind %s."
+msgstr "Удалить участок памяти %s (%d), вид: %s."
+
+#: qemu/machine_editing.py:297
+msgid "PCI(E) function"
+msgstr "функция PCI(E)"
+
+#: qemu/machine_editing.py:299
+msgid "generic device"
+msgstr "обобщённое устройство"
+
+#: qemu/machine_editing.py:302
+#, python-format
+msgid "Create %s (%d) of type '%s'."
+msgstr "Создать %s (%d) типа '%s'."
+
+#: qemu/machine_editing.py:320
+#, python-format
+msgid "Delete %s (%d) of type '%s'."
+msgstr "Удалить %s (%d) of type '%s'."
+
+#: qemu/machine_editing.py:348
+msgid "system bus"
+msgstr "системная шина"
+
+#: qemu/machine_editing.py:350
+msgid "PCI(E) bus"
+msgstr "шина PCI(E)"
+
+#: qemu/machine_editing.py:352
+msgid "ISA bus"
+msgstr "шина ISA"
+
+#: qemu/machine_editing.py:354
+msgid "IDE bus"
+msgstr "шина IDE"
+
+#: qemu/machine_editing.py:356
+msgid "I2C bus"
+msgstr "шина I2C"
+
+#: qemu/machine_editing.py:361
+#, python-format
+msgid "Create %s (%d)."
+msgstr "Создать %s (%d)."
+
+#: qemu/machine_editing.py:380
+#, python-format
+msgid "Delete %s (%d)."
+msgstr "Удалить %s (%d)."
+
+#: qemu/machine_editing.py:453
+#, python-format
+msgid "Make device %s (%d) a controller of bus %s (%d) with index %d."
+msgstr "Сделать устройство %s (%d) контроллером шины %s (%d) с индексом %d."
+
+#: qemu/machine_editing.py:460
+#, python-format
+msgid "Disconnect bus %s (%d) from index %d of controller %s (%d)."
+msgstr "Отсоединить шину %s (%d) с индексом %d от контроллера %s (%d)."
+
+#: qemu/machine_editing.py:532
+#, python-format
+msgid "IRQ hub (%d)"
+msgstr "концентратор IRQ (%d)"
+
+#: qemu/machine_editing.py:537
+#, python-format
+msgid "Delete IRQ line (%d) from %s to %s."
+msgstr "Удалить линию IRQ (%d) от %s к %s."
+
+#: qemu/machine_editing.py:567
+#, python-format
+msgid "Create IRQ line (%d) from %s to %s."
+msgstr "Создать линию IRQ (%d) от %s к %s."
+
+#: qemu/machine_editing.py:598
+#, python-format
+msgid "Create IRQ hub (%d)."
+msgstr "Создать концентратор IRQ (%d)."
+
+#: qemu/machine_editing.py:608
+#, python-format
+msgid "Delete IRQ hub (%d)."
+msgstr "Удалить концентратор IRQ (%d)."
+
 #: widgets/device_settings.py:290 widgets/machine_diagram_widget.py:476
-#: widgets/sysbusdevset.py:78
+#: widgets/sysbusdevset.py:78 widgets/machine_diagram_widget.py:588
+#: widgets/machine_diagram_widget.py:614 widgets/machine_diagram_widget.py:628
+#: widgets/machine_diagram_widget.py:637 widgets/memory_tree_widget.py:99
 msgid "Delete"
 msgstr "Удалить"
 
@@ -99,6 +252,7 @@ msgstr "Приёмник IRQ"
 
 #: widgets/machine_diagram_widget.py:471 widgets/machine_diagram_widget.py:583
 #: widgets/machine_diagram_widget.py:609 widgets/machine_diagram_widget.py:623
+#: widgets/memory_tree_widget.py:88
 msgid "Settings"
 msgstr "Установки"
 
@@ -110,9 +264,82 @@ msgstr "Добавить узел IRQ"
 msgid "Dynamic layout"
 msgstr "Динамическое размещение"
 
+#: widgets/machine_diagram_widget.py:564
+msgid "Show mesh"
+msgstr "Показать сетку"
+
 #: widgets/machine_diagram_widget.py:577
 msgid "Delete point"
 msgstr "Удалить точку"
+
+#: widgets/machine_diagram_widget.py:768
+msgid "Export error"
+msgstr "Ошибка экспорта"
+
+#: widgets/machine_diagram_widget.py:769
+#, python-format
+msgid "Unexpected file extension %s"
+msgstr "Неожиданное расширение файла %s"
+
+#: widgets/machine_diagram_widget.py:1171
+msgid "Add IRQ line."
+msgstr "Добавить линию IRQ."
+
+#: widgets/machine_diagram_widget.py:1382
+msgid "IRQ hub creation."
+msgstr "Cоздание концентратора IRQ."
+
+#: widgets/machine_widget.py:87
+msgid "Use tabs"
+msgstr "Вкладки"
+
+#: widgets/machine_widget.py:104
+msgid "Mesh step:"
+msgstr "Шаг сетки"
+
+#: widgets/memory_settings.py:62
+msgid "Region type"
+msgstr "Тип участка"
+
+#: widgets/memory_settings.py:78
+msgid "Parent region"
+msgstr "участок-родитель"
+
+#: widgets/memory_settings.py:91 widgets/memory_tree_widget.py:66
+msgid "Size"
+msgstr "Размер"
+
+#: widgets/memory_settings.py:92 widgets/memory_tree_widget.py:65
+msgid "Offset"
+msgstr "Смещение"
+
+#: widgets/memory_settings.py:93
+msgid "May overlap"
+msgstr "Может перекрываться"
+
+#: widgets/memory_settings.py:94
+msgid "Priority"
+msgstr "Приоритет"
+
+#: widgets/memory_settings.py:287
+msgid "Memory settings"
+msgstr "Настройки памяти"
+
+#: widgets/memory_tree_widget.py:67
+msgid "Type"
+msgstr "Тип"
+
+#: widgets/memory_tree_widget.py:159 widgets/memory_tree_widget.py:164
+msgid "Add node"
+msgstr "Добавить узел"
+
+#: widgets/memory_tree_widget.py:281
+msgid "Deletion of selected memory nodes"
+msgstr "Удаление выбранных узлов памяти"
+
+#: widgets/memory_tree_widget.py:336
+msgid "LOOP"
+msgstr "ЦИКЛ"
 
 #: widgets/pci_device_settings.py:32
 msgid "PCI"
@@ -130,17 +357,65 @@ msgstr "Номер функции"
 msgid "multifunction"
 msgstr "многофункциональное"
 
-#: widgets/settings_window.py:167
+#: widgets/pci_device_settings.py:92
+msgid "PCI device configuration."
+msgstr "Настройка PCI-устройства."
+
+#: widgets/settings_window.py:47
+msgid "Variable name base"
+msgstr "Основа имени переменной"
+
+#: widgets/settings_window.py:65
+msgid "Name of variable"
+msgstr "Имя переменной"
+
+#: widgets/settings_window.py:167 widgets/qom_settings.py:128
 msgid "Refresh"
 msgstr "Освежить"
 
-#: widgets/settings_window.py:176
+#: widgets/settings_window.py:176 widgets/qom_settings.py:122
 msgid "Apply"
 msgstr "Применить"
 
 #: widgets/settings_window.py:185
 msgid "OK"
 msgstr "ОК"
+
+#: widgets/qom_settings.py:258
+msgid "QOM object configuration."
+msgstr "настройка объекта QOM."
+
+#: widgets/pci_id_widget.py:66
+msgid "PCI class code"
+msgstr "код PCI-класса"
+
+#: widgets/pci_id_widget.py:67
+msgid "Vendor ID"
+msgstr "ID производителя"
+
+#: widgets/pci_id_widget.py:68
+msgid "Device ID"
+msgstr "ID устройства"
+
+#: widgets/pci_id_widget.py:69
+msgid "Not specified"
+msgstr "Не указано"
+
+#: widgets/project_widget.py:188
+msgid "Delete description"
+msgstr "Удалить описание"
+
+#: widgets/project_widget.py:305
+msgid "Selected descriptions deletion"
+msgstr "Удаление выбранных описаний"
+
+#: widgets/project_widget.py:331 widgets/project_widget.py:341
+msgid "Bad build path"
+msgstr "Плохой путь сборки"
+
+#: widgets/project_widget.py:510
+msgid "QVD loading failed"
+msgstr "Загрузка QVD не удалась"
 
 #: widgets/sysbusdevset.py:53
 msgid "MMIO Mappings"
@@ -154,13 +429,62 @@ msgstr "Отображения PMIO"
 msgid "Unassigned"
 msgstr "Не назначено"
 
+#: widgets/bus_settings.py:50
+msgid "Parent device"
+msgstr "Устройство-родитель"
+
+#: widgets/bus_settings.py:66
+msgid "Always show index"
+msgstr "Всегда показывать индекс"
+
+#: widgets/bus_settings.py:123
+#, python-format
+msgid "Bus %d configuration."
+msgstr "Настройка шины %d."
+
 #: widgets/bus_settings.py:164
 msgid "Bus settings"
 msgstr "Установки шины"
 
+#: qdc-gui.py:81
+msgid "Generation failed"
+msgstr "Генерация не удалась"
+
+#: qdc-gui.py:86
+msgid "Generation completed"
+msgstr "Генерация завершена"
+
+#: qdc-gui.py:87
+msgid "No errors were reported."
+msgstr "Сообщений об ошибках не было."
+
 #: qdc-gui.py:110
 msgid "Qemu device creator GUI"
 msgstr "ГИ генератора устройств Qemu"
+
+#: qdc-gui.py:127
+msgid "If operation history window is hidden then show it else hide it."
+msgstr "Если окно истории операция скрыто, то показать его, а иначе - скрыть."
+
+#: qdc-gui.py:133
+msgid "Load project from file."
+msgstr "Загрузить проект из файла."
+
+#: qdc-gui.py:138
+msgid "Create new project."
+msgstr "Создать новый проект."
+
+#: qdc-gui.py:143
+msgid "Add description to the project"
+msgstr "Добавить описание в проект"
+
+#: qdc-gui.py:148
+msgid "Set Qemu build path for the project"
+msgstr "Задать путь сборки QEMU для проекта"
+
+#: qdc-gui.py:153
+msgid "Launch code generation"
+msgstr "Запустить генерацию кода"
 
 #: qdc-gui.py:158
 msgid "Shutdown the application."
@@ -173,6 +497,134 @@ msgstr "Отменить изменения."
 #: qdc-gui.py:168
 msgid "Make reverted editing again."
 msgstr "Повторить отменённые изменения."
+
+#: qdc-gui.py:173
+msgid "Save project."
+msgstr "Сохранить проект."
+
+#: qdc-gui.py:178
+msgid "Rebuild Cache."
+msgstr "Перестроить кэш."
+
+#: qdc-gui.py:201 widgets/project_widget.py:180
+msgid "Add description"
+msgstr "Добавить описание"
+
+#: qdc-gui.py:206
+msgid "Set Qemu build path"
+msgstr "Задать путь сборки QEMU"
+
+#: qdc-gui.py:213
+msgid "Generate"
+msgstr "Сгенерировать"
+
+#: qdc-gui.py:221
+msgid "New project"
+msgstr "Новый проект"
+
+#: qdc-gui.py:226
+msgid "Save"
+msgstr "Сохранить"
+
+#: qdc-gui.py:231
+msgid "Save project as..."
+msgstr "Сохранить проект как..."
+
+#: qdc-gui.py:235
+msgid "Load"
+msgstr "Загрузить"
+
+#: qdc-gui.py:265
+msgid "Rebuild Cache"
+msgstr "Перестроить кэш"
+
+#: qdc-gui.py:280
+msgid "Editing history window"
+msgstr "Окно истории редактирования"
+
+#: qdc-gui.py:308
+msgid "Background tasks: "
+msgstr "Фоновые задачи:"
+
+#: qdc-gui.py:469
+msgid "Cache rebuilding is impossible"
+msgstr "Перестроение кэша невозможно"
+
+#: qdc-gui.py:470 qdc-gui.py:565
+#, python-format
+msgid "Selected Qemu build path is bad. Reason: %s"
+msgstr "Выбран плохой путь сборки QEMU. Подробности: %s"
+
+#: qdc-gui.py:482
+msgid "Cache rebuilding"
+msgstr "Перестроение кэша"
+
+#: qdc-gui.py:483
+msgid ""
+"Cache building is already in process. Do you want to start cache rebuilding?"
+msgstr "Построение кэша уже выполняется. Вы точно хотите начать перестроение "
+"кэша?"
+
+#: qdc-gui.py:497
+msgid ""
+"Current project has unsaved changes. Would you like to save it?\n"
+"\n"
+"Note that a backup is always saved with name project.py in current working "
+"directory."
+msgstr "Данный проект имеет не сохранённые изменения. Хотите ли Вы сохранить "
+"проект?"
+"\n"
+"Замечание: резервная копия проекта в любом случае будет сохранена в текущей "
+"папке под именем project.py."
+
+#: qdc-gui.py:533
+msgid "Select Qemu build path"
+msgstr "Выбрать путь сборки QEMU"
+
+#: qdc-gui.py:547 qdc-gui.py:573
+msgid "Generation is cancelled"
+msgstr "Генерация отменена"
+
+#: qdc-gui.py:548
+msgid "At least one generation task is already in process."
+msgstr "Как минимум одна генерация уже выполняется."
+
+#: qdc-gui.py:555 qdc-gui.py:564
+msgid "Generation is impossible"
+msgstr "Генерация невозможна"
+
+#: qdc-gui.py:556
+msgid "No Qemu build path is set for the project."
+msgstr "Для проекта не задан путь сборки QEMU."
+
+#: qdc-gui.py:574
+msgid "Qemu version cache is not ready yet. Try later."
+msgstr "Кэш версии QEMU ещё не готов. Попробуйте позже."
+
+#: qdc-gui.py:633
+msgid "Cannot save project"
+msgstr "Невозможно сохранить проект"
+
+#: qdc-gui.py:642
+msgid "Save project"
+msgstr "Сохранить проект"
+
+#: qdc-gui.py:663
+msgid "Current project has unsaved changes. They will be lost. Continue?"
+msgstr "В текущем проекте есть не сохранённые изменения. Они будут потеряны. "
+"Продолжить?"
+
+#: qdc-gui.py:685
+msgid "Load project"
+msgstr "Загрузить проект"
+
+#: qdc-gui.py:695
+msgid "Project loading failed"
+msgstr "Не удалось загрузить проект"
+
+#: qdc-gui.py:701
+msgid "No QEMU build path selected"
+msgstr "Путь сборки QEMU не выбран"
 
 #: qdc-gui.py:241
 msgid "Quit"
