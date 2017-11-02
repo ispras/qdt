@@ -464,7 +464,7 @@ index %d.") % (
                 mach.id2node[self.dev_id].qom_type, self.dev_id
             )
         else:
-            return _("Replace bus %s (%d) with %s (%d) in controller %s (%d)\
+            return _("Replace bus %s (%d) with %s (%d) in controller %s (%d) \
 at index %d.") % (
                 mach.id2node[self.prev_bus_id].child_name, self.prev_bus_id,
                 mach.id2node[self.bus_id].child_name, self.bus_id,
