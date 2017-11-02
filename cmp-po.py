@@ -72,7 +72,10 @@ if __name__ == "__main__":
 
             msgid = eval(msgid_code)
 
-            po_content[msgid] = po_record
+            if msgid in po_content:
+                print('Double record "%s" in file "%s"' % (msgid, pos[i]))
+            else:
+                po_content[msgid] = po_record
 
             po_record = []
 
