@@ -1,3 +1,6 @@
 [submodule "ply"]
 	path = ply
 	url = git@github.com:laerreal/ply.git
+[submodule "canvas2svg"]
+	path = canvas2svg
+	url = https://github.com/WojciechMula/canvas2svg.git
