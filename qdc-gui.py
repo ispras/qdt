@@ -124,7 +124,7 @@ class QDCGUIWindow(GUITk):
             HotKeyBinding(
                 self.invert_history_window,
                 key_code = 43, # H
-                description = _("If operation history window is hidden then \
+                description = _("If editing history window is hidden then \
 show it else hide it.")
             ),
             HotKeyBinding(
