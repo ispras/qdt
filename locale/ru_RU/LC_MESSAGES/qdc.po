@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"PO-Revision-Date:  2017-11-01 21:24+0300\n"
+"PO-Revision-Date:  2017-11-28 17:00+0300\n"
 "Last-Translator: Efimov Vasily <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
@@ -23,7 +23,7 @@ msgstr "Обратимая операция без описания (класс 
 
 #: common/inverse_operation.py:131
 msgid "The beginning of known history."
-msgstr "Ничало известной истории."
+msgstr "Начало известной истории."
 
 #: history-test.py:92
 msgid "Edit history test"
@@ -530,7 +530,7 @@ msgstr "Тип участка"
 
 #: widgets/memory_settings.py:78
 msgid "Parent region"
-msgstr "участок-родитель"
+msgstr "Участок-родитель"
 
 #: widgets/memory_settings.py:91 widgets/memory_tree_widget.py:66
 msgid "Size"
