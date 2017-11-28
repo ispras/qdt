@@ -58,8 +58,9 @@ msgid "Qemu device creator GUI"
 msgstr "ГИ генератора устройств Qemu"
 
 #: qdc-gui.py:127
-msgid "If operation history window is hidden then show it else hide it."
-msgstr "Если окно истории операция скрыто, то показать его, а иначе - скрыть."
+msgid "If editing history window is hidden then show it else hide it."
+msgstr ""
+"Если окно истории редактирования скрыто, то показать его, а иначе - скрыть."
 
 #: qdc-gui.py:133
 msgid "Load project from file."
