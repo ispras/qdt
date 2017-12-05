@@ -1,11 +1,3 @@
-from source import \
-    Header, \
-    Type, \
-    Function, \
-    Macro, \
-    Structure, \
-    add_base_types
-
 from .version_description import \
     ProcessingUntrackedFile, \
     ProcessingModifiedFile, \
