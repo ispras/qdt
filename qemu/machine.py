@@ -1,3 +1,7 @@
+__all__ = [
+    "MachineType"
+]
+
 from .qom import (
     QOMPropertyTypeLink,
     QOMPropertyTypeString,

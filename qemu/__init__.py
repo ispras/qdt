@@ -16,8 +16,7 @@ from .qom import *
 
 from .machine_nodes import *
 
-from .machine import \
-    MachineType
+from .machine import *
 
 from .machine_description import \
     MachineNode
