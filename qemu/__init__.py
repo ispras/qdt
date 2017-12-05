@@ -18,8 +18,7 @@ from .qom_desc import *
 
 from .project import *
 
-from .version import \
-    get_vp
+from .version import *
 
 from .machine_editing import \
     MachineOperation, \
