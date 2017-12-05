@@ -2,9 +2,7 @@ from .topology import *
 
 from .pygen import *
 
-from .ml import \
-    mlget, \
-    ML
+from .ml import *
 
 from .co_dispatcher import *
 
