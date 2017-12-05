@@ -14,15 +14,15 @@ from .pcie import *
 
 from .qom import \
     QOMPropertyType, \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeString, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
+        QOMPropertyTypeLink, \
+        QOMPropertyTypeString, \
+        QOMPropertyTypeBoolean, \
+        QOMPropertyTypeInteger, \
     QOMPropertyValue, \
     QOMStateField, \
     QemuTypeName, \
-    QOMDevice, \
-    QOMType
+    QOMType, \
+        QOMDevice
 
 from .machine_nodes import *
 
