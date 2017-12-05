@@ -1,5 +1,8 @@
 __all__ = [
     "PCIVendorIdNetherExistsNorCreate"
+  , "PCIVendorIdAlreadyExists"
+  , "PCIDeviceIdAlreadyExists"
+  , "PCIVendorIdMismatch"
   , "PCIId"
       , "PCIVendorId"
       , "PCIDeviceId"
