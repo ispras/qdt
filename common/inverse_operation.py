@@ -15,7 +15,7 @@ from .ml import mlget as _
 
 from .notifier import Notifier
 
-class UnimplementedInverseOperation(Exception):
+class UnimplementedInverseOperation(NotImplementedError):
     pass
 
 simple_eq_types = [
