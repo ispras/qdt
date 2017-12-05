@@ -8,10 +8,7 @@ from .co_dispatcher import *
 
 from .inverse_operation import *
 
-from .class_tools import \
-    get_class, \
-    get_class_defaults, \
-    gen_class_args
+from .class_tools import *
 
 from .reflection import *
 
