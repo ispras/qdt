@@ -1,3 +1,9 @@
+__all__ = [
+    "ObjectVisitor"
+  , "BreakVisiting"
+  , "VisitingIsNotImplemented"
+]
+
 class BreakVisiting(Exception):
     pass
 

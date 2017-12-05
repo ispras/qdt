@@ -12,10 +12,7 @@ from .class_tools import *
 
 from .reflection import *
 
-from .visitor import \
-    ObjectVisitor, \
-    VisitingIsNotImplemented, \
-    BreakVisiting
+from .visitor import *
 
 from .search_helper import \
     co_find_eq
