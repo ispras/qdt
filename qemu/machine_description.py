@@ -1,3 +1,7 @@
+__all__ = [
+    "MachineNode"
+]
+
 from .qom_desc import (
     DescriptionOf,
     QOMDescription
