@@ -18,8 +18,7 @@ from .machine_nodes import *
 
 from .machine import *
 
-from .machine_description import \
-    MachineNode
+from .machine_description import *
 
 from .qom_desc import \
     Describable, \
