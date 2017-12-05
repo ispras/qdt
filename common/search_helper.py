@@ -1,3 +1,7 @@
+__all__ = [
+    "co_find_eq"
+]
+
 def co_find_eq(iterable, **request):
     for i in iterable:
         for attr, val in request.items():

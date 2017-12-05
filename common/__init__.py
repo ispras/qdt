@@ -14,8 +14,7 @@ from .reflection import *
 
 from .visitor import *
 
-from .search_helper import \
-    co_find_eq
+from .search_helper import *
 
 from .variable import \
     Variable
