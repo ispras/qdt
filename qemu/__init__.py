@@ -22,8 +22,7 @@ from .machine_description import *
 
 from .qom_desc import *
 
-from .project import \
-    QProject
+from .project import *
 
 from .version import \
     get_vp

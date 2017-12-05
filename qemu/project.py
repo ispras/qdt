@@ -1,3 +1,7 @@
+__all__ = [
+    "QProject"
+]
+
 from os import (
     makedirs,
     remove
