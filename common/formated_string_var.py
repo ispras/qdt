@@ -6,7 +6,7 @@ from .variable import Variable
 
 variables = (Variable, TkVariable)
 
-class FormatedStringChangindException(BaseException):
+class FormatedStringChangindException(TypeError):
     pass
 
 # The class just implements % (__mod__) operator for StringVar
