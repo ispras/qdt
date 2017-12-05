@@ -20,11 +20,7 @@ from .variable import *
 
 from .formated_string_var import *
 
-from .extra_math import \
-    Vector, \
-    Segment, \
-    Polygon, \
-    sign
+from .extra_math import *
 
 from .co_signal import \
     SignalIsAlreadyAttached, \
