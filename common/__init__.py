@@ -22,11 +22,7 @@ from .formated_string_var import *
 
 from .extra_math import *
 
-from .co_signal import \
-    SignalIsAlreadyAttached, \
-    SignalIsNotAttached, \
-    SignalDispatcherTask, \
-    CoSignal
+from .co_signal import *
 
 from .compat import \
     execfile
