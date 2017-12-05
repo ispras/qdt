@@ -1,7 +1,7 @@
 class BreakVisiting(Exception):
     pass
 
-class VisitingIsNotImplemented(Exception):
+class VisitingIsNotImplemented(NotImplementedError):
     pass
 
 class ObjectVisitor(object):
