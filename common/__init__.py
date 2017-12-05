@@ -24,8 +24,7 @@ from .extra_math import *
 
 from .co_signal import *
 
-from .compat import \
-    execfile
+from .compat import *
 
 from .version import \
     parse_version
