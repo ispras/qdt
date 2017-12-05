@@ -1,3 +1,10 @@
+__all__ = [
+    "SignalIsAlreadyAttached"
+  , "SignalIsNotAttached"
+  , "SignalDispatcherTask"
+  , "CoSignal"
+]
+
 from .co_dispatcher import CoTask
 
 class SignalIsAlreadyAttached(RuntimeError):
