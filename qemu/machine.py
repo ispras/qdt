@@ -42,23 +42,23 @@ from six import integer_types
 
 from collections import OrderedDict
 
-class UnknownMachineNodeType(Exception):
-    def __init__(self, t):
-        Exception.__init__(self, t)
+class UnknownMachineNodeType(ValueError):
+    pass
 
-class UnknownBusBridgeType(Exception):
+class UnknownBusBridgeType(ValueError):
     def __init__(self, primary_bus, secondary_bus):
-        Exception.__init__(self, "%s <-> %s" % (str(type(primary_bus)), str(type(secondary_bus))))
+        super(UnknownBusBridgeType, self).__init__(
+            "%s <-> %s" % (str(type(primary_bus)), str(type(secondary_bus)))
+        )
 
-class IncorrectPropertyValue(Exception):
+class IncorrectPropertyValue(ValueError):
     pass
 
-class UnknownPropertyType(Exception):
+class UnknownPropertyType(ValueError):
     pass
 
-class UnknownMemoryNodeType(Exception):
-    def __init__(self, t):
-        Exception.__init__(self, t)
+class UnknownMemoryNodeType(ValueError):
+    pass
 
 class IRQHubLayout(object):
     def __init__(self, hub, generator):
