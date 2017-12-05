@@ -1,9 +1,9 @@
 from .co_dispatcher import CoTask
 
-class SignalIsAlreadyAttached(Exception):
+class SignalIsAlreadyAttached(RuntimeError):
     pass
 
-class SignalIsNotAttached(Exception):
+class SignalIsNotAttached(RuntimeError):
     pass
 
 class SignalDispatcherTask(CoTask):
