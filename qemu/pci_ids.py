@@ -1,3 +1,12 @@
+__all__ = [
+    "PCIVendorIdNetherExistsNorCreate"
+  , "PCIId"
+      , "PCIVendorId"
+      , "PCIDeviceId"
+      , "PCIClassId"
+  , "PCIClassification"
+]
+
 from re import compile
 
 from source import (
