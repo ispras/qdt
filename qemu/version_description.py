@@ -423,14 +423,13 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
 class BadBuildPath(ValueError):
     pass
 
-class MultipleQVCInitialization(Exception):
-    def __init__(self, path):
-        Exception.__init__(self, path)
-
-class QVCWasNotInitialized(Exception):
+class MultipleQVCInitialization(RuntimeError):
     pass
 
-class QVCIsNotReady(Exception):
+class QVCWasNotInitialized(RuntimeError):
+    pass
+
+class QVCIsNotReady(RuntimeError):
     pass
 
 # Iterations Between Yields of Device Tree Macros adding task
