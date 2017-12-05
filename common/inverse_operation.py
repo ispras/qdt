@@ -1,5 +1,6 @@
 __all__ = [
     "InverseOperation"
+      , "InitialOperation"
   , "InitialOperationBackwardIterator"
   , "UnimplementedInverseOperation"
   , "InitialOperationCall"
