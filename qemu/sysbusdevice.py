@@ -16,9 +16,9 @@ from common import mlget as _
 
 from collections import OrderedDict
 
-from .qom_desc import Describable
+from .qom_desc import describable
 
-@Describable
+@describable
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),

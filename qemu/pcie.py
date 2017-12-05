@@ -23,9 +23,9 @@ from common import mlget as _
 
 from collections import OrderedDict
 
-from .qom_desc import Describable
+from .qom_desc import describable
 
-@Describable
+@describable
 class PCIExpressDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         # Note that multiple NIC generation is not implemented yet.
