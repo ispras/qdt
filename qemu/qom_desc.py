@@ -1,6 +1,6 @@
 __all__ = [
     "QOMDescription"
-  , "Describable"
+  , "describable"
   , "DescriptionOf"
 ]
 
@@ -28,7 +28,7 @@ class QOMDescription(object):
 
 """
 GUI may edit only QOM templates which have the corresponding description
-wrapper. The 'Describable' decorator for QOM template class automatically
+wrapper. The 'describable' decorator for QOM template class automatically
 creates and exports such wrapper.
 
 See
@@ -37,7 +37,7 @@ about dynamic class creation
 
 This decorator is only compatible with __all__ list based module name export.
 """
-def Describable(QOMTemplate):
+def describable(QOMTemplate):
     desc_name = QOMTemplate.__name__.replace("Type", "Description")
 
     tmp_class = type(desc_name, (QOMDescription,), {})
