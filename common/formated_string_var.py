@@ -1,3 +1,9 @@
+__all__ = [
+    "FormatedStringChangindException"
+  , "FormatVar"
+  , "FormatedStringVar"
+]
+
 from six.moves.tkinter import (
     Variable as TkVariable,
     StringVar
