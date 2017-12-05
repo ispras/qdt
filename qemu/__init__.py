@@ -1,12 +1,6 @@
 from .version_description import *
 
-from .pci_ids import \
-    PCIVendorIdNetherExistsNorCreate, \
-    PCIId, \
-        PCIVendorId, \
-        PCIDeviceId, \
-        PCIClassId, \
-    PCIClassification
+from .pci_ids import *
 
 from .sysbusdevice import *
 
