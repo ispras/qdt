@@ -26,8 +26,7 @@ from .co_signal import *
 
 from .compat import *
 
-from .version import \
-    parse_version
+from .version import *
 
 from .ordered_set import *
 

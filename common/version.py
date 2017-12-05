@@ -1,3 +1,7 @@
+__all__ = [
+    "parse_version"
+]
+
 def parse_version(ver):
     ver_parts = ver.split(".")
 
