@@ -1,3 +1,7 @@
+__all__ = [
+    "remove_file"
+]
+
 from os import remove
 
 from errno import ENOENT

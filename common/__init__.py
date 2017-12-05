@@ -32,8 +32,7 @@ from .ordered_set import *
 
 from .legacy import *
 
-from .os_wrappers import \
-    remove_file
+from .os_wrappers import *
 
 from .notifier import *
 
