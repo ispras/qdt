@@ -1,5 +1,8 @@
 __all__ = [
     "MachineNode"
+  , "MultipleSystemBusesInMachine"
+  , "NodeHasId"
+  , "NodeIdIsAlreadyInUse"
 ]
 
 from .qom_desc import (
