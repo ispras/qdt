@@ -1,27 +1,26 @@
-from qemu import \
-    QProject, \
-    SysBusDeviceDescription, \
-    MachineNode, \
-    MemoryNode, \
-    MemoryRAMNode, \
-    MemoryROMNode, \
-    IRQLine, \
-    IRQHub, \
-    DeviceNode, \
-    PCIExpressDeviceNode, \
-    SystemBusDeviceNode, \
-    PCIExpressBusNode, \
-    ISABusNode, \
-    IDEBusNode, \
-    I2CBusNode, \
-    QOMPropertyValue, \
-    QOMPropertyTypeInteger, \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeBoolean, \
+from qemu import (
+    QProject,
+    SysBusDeviceDescription,
+    MachineNode,
+    MemoryNode,
+    MemoryRAMNode,
+    MemoryROMNode,
+    IRQLine,
+    IRQHub,
+    DeviceNode,
+    PCIExpressDeviceNode,
+    SystemBusDeviceNode,
+    PCIExpressBusNode,
+    ISABusNode,
+    IDEBusNode,
+    I2CBusNode,
+    QOMPropertyValue,
+    QOMPropertyTypeInteger,
+    QOMPropertyTypeLink,
+    QOMPropertyTypeBoolean,
     QOMPropertyTypeString
-
-from six.moves import \
-    range as xrange
+)
+from six.moves import range as xrange
 
 def Q35MachineNode_2_5_0():
     self = MachineNode("q35_test", "i386")
