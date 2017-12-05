@@ -1,5 +1,10 @@
 __all__ = [
     "MachineType"
+  , "UnknownMachineNodeType"
+  , "UnknownBusBridgeType"
+  , "IncorrectPropertyValue"
+  , "UnknownPropertyType"
+  , "UnknownMemoryNodeType"
 ]
 
 from .qom import (
