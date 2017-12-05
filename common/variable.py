@@ -1,4 +1,6 @@
-__all__ = [ "Variable" ]
+__all__ = [
+    "Variable"
+]
 
 # Tk variable emulation class
 # TODO: use Notifier for feedback

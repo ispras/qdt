@@ -16,8 +16,7 @@ from .visitor import *
 
 from .search_helper import *
 
-from .variable import \
-    Variable
+from .variable import *
 
 from .formated_string_var import \
     FormatedStringChangindException, \
