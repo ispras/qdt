@@ -6,13 +6,7 @@ from .ml import *
 
 from .co_dispatcher import *
 
-from .inverse_operation import \
-    InverseOperation, \
-    InitialOperationBackwardIterator, \
-    UnimplementedInverseOperation, \
-    InitialOperationCall, \
-    History, \
-    HistoryTracker
+from .inverse_operation import *
 
 from .class_tools import \
     get_class, \
