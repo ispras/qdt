@@ -1,24 +1,23 @@
-from common import \
-    mlget as _, \
-    get_class, \
-    gen_class_args, \
+from common import (
+    mlget as _,
+    get_class,
+    gen_class_args,
     get_class_defaults, \
     InverseOperation
+)
+from inspect import getmro
 
-from inspect import \
-    getmro
-
-from six import \
-    binary_type, \
-    string_types, \
-    text_type, \
+from six import (
+    binary_type,
+    string_types,
+    text_type,
     integer_types
+)
+from importlib import import_module
 
-from qemu import \
-    QOMDescription
+from qemu import QOMDescription
 
-from traceback import \
-    print_stack
+from traceback import print_stack
 
 from copy import copy
 

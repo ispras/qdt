@@ -1,29 +1,24 @@
-from source import \
-    line_origins, \
-    Source, \
-    Header, \
-    Structure, \
-    TypeNotRegistered, \
-    Initializer, \
-    Function, \
-    Macro, \
-    Pointer, \
+from source import (
+    line_origins,
+    Source,
+    Header,
+    Structure,
+    TypeNotRegistered,
+    Initializer,
+    Function,
+    Macro,
+    Pointer,
     Type
+)
+from os.path import join
 
-from os.path import \
-    join
+from six import integer_types
 
-from six import \
-    integer_types
+from common import mlget as _
 
-from common import \
-    mlget as _
+from collections import OrderedDict
 
-from collections import \
-    OrderedDict
-
-from .version import \
-    get_vp
+from .version import get_vp
 
 # properties
 class QOMPropertyType(object):
