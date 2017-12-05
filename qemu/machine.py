@@ -427,7 +427,7 @@ class MachineType(QOMType):
     mmio_val = mmio_val
                     )
 
-                for bus_idx, bus in enumerate(node.buses):
+                for bus in node.buses:
                     if len(bus.devices) == 0:
                         continue
 
