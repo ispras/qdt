@@ -397,13 +397,26 @@ class MachineType(QOMType):
                     self.use_type_name("qdev_create")
 
                     decl_code += "    DeviceState *%s;\n" % dev_name
+
+                    if ((node.parent_bus is None)
+                        or isinstance(node.parent_bus, SystemBusNode)
+                    ):
+                        bus_name = "NULL"
+                    else:
+                        bus_name = "BUS(%s)" % self.node_map[node.parent_bus]
+
+                    if Type.exists(node.qom_type):
+                        qom_type = node.qom_type
+                    else:
+                        qom_type = "\"%s\"" % node.qom_type
+
                     def_code += """\
     {dev_name} = qdev_create(@a{bus_name},@s{qom_type});{props_code}
     qdev_init_nofail({dev_name});
 """.format(
     dev_name = dev_name,
-    bus_name = "NULL" if (node.parent_bus is None) or isinstance(node.parent_bus, SystemBusNode) else "BUS(%s)" % self.node_map[node.parent_bus],
-    qom_type = node.qom_type if Type.exists(node.qom_type) else "\"%s\"" % node.qom_type,
+    bus_name = bus_name,
+    qom_type = qom_type,
     props_code = props_code
                         )
 
