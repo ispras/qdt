@@ -420,9 +420,8 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         QemuVersionCache.current = self
         return previous
 
-class BadBuildPath(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
+class BadBuildPath(ValueError):
+    pass
 
 class MultipleQVCInitialization(Exception):
     def __init__(self, path):
