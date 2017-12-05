@@ -39,7 +39,7 @@ def Describable(QOMTemplate):
     desc_class = DescriptionOf(QOMTemplate)(tmp_class)
 
     # get module of the template
-    module = __all__ = modules[QOMTemplate.__module__]
+    module = modules[QOMTemplate.__module__]
 
     # add the description class to same module as template
     module.__dict__[desc_name] = desc_class
