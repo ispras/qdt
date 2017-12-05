@@ -109,7 +109,7 @@ class InverseOperation(object):
         return _("Reversible operation with unimplemented description \
 (class %s).") % type(self).__name__
 
-class InitialOperationCall(Exception):
+class InitialOperationCall(TypeError):
     pass
 
 class InitialOperation(InverseOperation):
