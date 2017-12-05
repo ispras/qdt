@@ -16,7 +16,7 @@ from .qom import (
 from six.moves import range as xrange
 
 from .pci_ids import (
-    PCIVendorIdNetherExistsNorCreate,
+    PCIVendorIdNetherExistsNorCreated,
     PCIId
 )
 from common import mlget as _
@@ -79,7 +79,7 @@ class PCIExpressDeviceType(QOMDevice):
             if (val is not None) and (not isinstance(val, PCIId)):
                 try:
                     val = PCIId.db.get_vendor(name = val)
-                except PCIVendorIdNetherExistsNorCreate:
+                except PCIVendorIdNetherExistsNorCreated:
                     val = PCIId.db.get_vendor(vid = val)
             setattr(self, attr, val)
 
