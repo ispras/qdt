@@ -20,10 +20,7 @@ from .machine import *
 
 from .machine_description import *
 
-from .qom_desc import \
-    Describable, \
-    DescriptionOf, \
-    QOMDescription
+from .qom_desc import *
 
 from .project import \
     QProject

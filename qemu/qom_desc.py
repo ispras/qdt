@@ -1,3 +1,9 @@
+__all__ = [
+    "QOMDescription"
+  , "Describable"
+  , "DescriptionOf"
+]
+
 from common import get_class_total_args
 
 from inspect import getmro
