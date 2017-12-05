@@ -19,13 +19,13 @@ from .machine_nodes import (
 )
 
 # machine model
-class MultipleSystemBusesInMachine(Exception):
+class MultipleSystemBusesInMachine(RuntimeError):
     pass
 
-class NodeHasId(Exception):
+class NodeHasId(RuntimeError):
     pass
 
-class NodeIdIsAlreadyInUse(Exception):
+class NodeIdIsAlreadyInUse(RuntimeError):
     pass
 
 @DescriptionOf(MachineType)
