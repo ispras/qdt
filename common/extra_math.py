@@ -1,3 +1,10 @@
+__all__ = [
+    "Vector"
+      , "Segment"
+  , "Polygon"
+  , "sign"
+]
+
 from copy import deepcopy as dcp
 
 from math import sqrt
