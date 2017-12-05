@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 from .qom_desc import (
-    DescriptionOf,
+    descriptionOf,
     QOMDescription
 )
 from itertools import count
@@ -35,7 +35,7 @@ class NodeHasId(RuntimeError):
 class NodeIdIsAlreadyInUse(RuntimeError):
     pass
 
-@DescriptionOf(MachineType)
+@descriptionOf(MachineType)
 class MachineNode(QOMDescription):
     def __description_init__(self):
         self.max_id = 0

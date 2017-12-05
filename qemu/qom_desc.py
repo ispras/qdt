@@ -1,7 +1,7 @@
 __all__ = [
     "QOMDescription"
   , "describable"
-  , "DescriptionOf"
+  , "descriptionOf"
 ]
 
 from common import get_class_total_args
@@ -42,7 +42,7 @@ def describable(QOMTemplate):
 
     tmp_class = type(desc_name, (QOMDescription,), {})
     # decorate new description class
-    desc_class = DescriptionOf(QOMTemplate)(tmp_class)
+    desc_class = descriptionOf(QOMTemplate)(tmp_class)
 
     # get module of the template
     module = modules[QOMTemplate.__module__]
@@ -57,11 +57,11 @@ def describable(QOMTemplate):
     return QOMTemplate
 
 """
-DescriptionOf decorator is used to extend a class to one that could be used
+descriptionOf decorator is used to extend a class to one that could be used
 as description of QOM type template. Main purpose is to simplify definition
 of QOM type template description classes.
 """
-def DescriptionOf(QOMTemplate):
+def descriptionOf(QOMTemplate):
     """ Get arguments of QOM type template initializer and save them in
     defaults of function 'decorate'."""
     pa, kwa = get_class_total_args(QOMTemplate)
