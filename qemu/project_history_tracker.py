@@ -1,42 +1,39 @@
-from common import \
-    get_default_args, \
+from common import (
+    get_default_args,
     HistoryTracker
-
-from .machine_editing import \
-    MOp_SetMemNodeAttr, \
-    MOp_RemoveMemChild, \
-    MOp_AddMemoryNode, \
-    MOp_DelMemoryNode, \
-    MOp_SetDevProp, \
-    MOp_DelDevProp, \
-    MOp_DelIOMapping, \
-    MOp_AddDevice, \
-    MOp_DelDevice, \
-    MOp_AddBus, \
-    MOp_DelBus, \
-    MOp_SetChildBus, \
-    MOp_SetDevParentBus, \
-    MOp_DelIRQLine, \
+)
+from .machine_editing import (
+    MOp_SetMemNodeAttr,
+    MOp_RemoveMemChild,
+    MOp_AddMemoryNode,
+    MOp_DelMemoryNode,
+    MOp_SetDevProp,
+    MOp_DelDevProp,
+    MOp_DelIOMapping,
+    MOp_AddDevice,
+    MOp_DelDevice,
+    MOp_AddBus,
+    MOp_DelBus,
+    MOp_SetChildBus,
+    MOp_SetDevParentBus,
+    MOp_DelIRQLine,
     MOp_DelIRQHub
-
-from .machine_nodes import \
-    MemoryAliasNode, \
-    DeviceNode, \
-    BusNode, \
-    IRQHub, \
-    IRQLine, \
-    MemoryNode, \
-    QOMPropertyTypeLink, \
+)
+from .machine_nodes import (
+    MemoryAliasNode,
+    DeviceNode,
+    BusNode,
+    IRQHub,
+    IRQLine,
+    MemoryNode,
+    QOMPropertyTypeLink,
     SystemBusDeviceNode
+)
+from .machine_description import MachineNode
 
-from .machine_description import \
-    MachineNode
+from .project_editing import POp_DelDesc
 
-from .project_editing import \
-    POp_DelDesc
-
-from common import \
-    mlget as _
+from common import mlget as _
 
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):

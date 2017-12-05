@@ -1,24 +1,22 @@
-from .qom_desc import \
-    DescriptionOf, \
+from .qom_desc import (
+    DescriptionOf,
     QOMDescription
+)
+from itertools import count
 
-from itertools import \
-    count
+from .qom import QOMPropertyTypeLink
 
-from .qom import \
-    QOMPropertyTypeLink
+from .machine import MachineType
 
-from .machine import \
-    MachineType
-
-from .machine_nodes import \
-    SystemBusNode, \
-    SystemBusDeviceNode, \
-    DeviceNode, \
-    BusNode, \
-    IRQLine, \
-    IRQHub, \
+from .machine_nodes import (
+    SystemBusNode,
+    SystemBusDeviceNode,
+    DeviceNode,
+    BusNode,
+    IRQLine,
+    IRQHub,
     MemoryNode
+)
 
 # machine model
 class MultipleSystemBusesInMachine(Exception):

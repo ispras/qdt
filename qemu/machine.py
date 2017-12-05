@@ -1,51 +1,46 @@
-from .qom import \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeString, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
+from .qom import (
+    QOMPropertyTypeLink,
+    QOMPropertyTypeString,
+    QOMPropertyTypeBoolean,
+    QOMPropertyTypeInteger,
     QOMType
-
-from source import \
-    Source, \
-    Type, \
-    Initializer, \
-    TypeNotRegistered, \
+)
+from source import (
+    Source,
+    Type,
+    Initializer,
+    TypeNotRegistered,
     Function
-
-from .machine_nodes import \
-    Node, \
-    SystemBusDeviceNode, \
-    BusNode, \
-    SystemBusNode, \
-    PCIExpressBusNode, \
-    IRQHub, \
-    MemoryNode, \
-    MemorySASNode, \
-    MemoryAliasNode, \
-    MemoryRAMNode, \
-    MemoryROMNode, \
-    DeviceNode, \
-    IRQLine, \
+)
+from .machine_nodes import (
+    Node,
+    SystemBusDeviceNode,
+    BusNode,
+    SystemBusNode,
+    PCIExpressBusNode,
+    IRQHub,
+    MemoryNode,
+    MemorySASNode,
+    MemoryAliasNode,
+    MemoryRAMNode,
+    MemoryROMNode,
+    DeviceNode,
+    IRQLine,
     PCIExpressDeviceNode
-
-from common import \
-    mlget as _, \
+)
+from common import (
+    mlget as _,
     sort_topologically
+)
+from os.path import join as join_path
 
-from os.path import \
-    join as join_path
+from .version import get_vp
 
-from .version import \
-    get_vp
+from six import integer_types
 
-from six import \
-    integer_types
+from collections import OrderedDict
 
-from collections import \
-    OrderedDict
-
-from itertools import \
-    count
+from itertools import count
 
 class UnknownMachineNodeType(Exception):
     def __init__(self, t):

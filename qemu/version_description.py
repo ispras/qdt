@@ -1,40 +1,37 @@
-from source import \
-    SourceTreeContainer, \
-    Header, \
+from source import (
+    SourceTreeContainer,
+    Header,
     Macro
-
-from common import \
-    CommitDesc, \
-    mlget as _, \
-    callco, \
-    remove_file, \
-    execfile, \
+)
+from common import (
+    CommitDesc,
+    mlget as _,
+    callco,
+    remove_file,
+    execfile,
     PyGenerator
+)
+from json import load
 
-from json import \
-    load
-
-from .version import \
-    QVHDict, \
-    initialize_version, \
-    qemu_heuristic_db, \
-    calculate_qh_hash, \
+from .version import (
+    QVHDict,
+    initialize_version,
+    qemu_heuristic_db,
+    calculate_qh_hash,
     get_vp
-
-from os.path import \
-    sep, \
-    join, \
+)
+from os.path import (
+    sep,
+    join,
     isfile
-
-from .pci_ids import \
-    PCIId, \
+)
+from .pci_ids import (
+    PCIId,
     PCIClassification
+)
+from git import Repo
 
-from git import \
-    Repo
-
-from six import \
-    u
+from six import u
 
 bp_file_name = "build_path_list"
 

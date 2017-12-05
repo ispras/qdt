@@ -1,15 +1,12 @@
-from re import \
-    compile
+from re import compile
 
-from source import \
-    Type, \
+from source import (
+    Type,
     Macro
+)
+from common import co_find_eq
 
-from common import \
-    co_find_eq
-
-from six.moves import \
-    range as xrange
+from six.moves import range as xrange
 
 re_pci_vendor = compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = compile("PCI_DEVICE_ID_([A-Z0-9_]+)")

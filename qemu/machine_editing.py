@@ -1,4 +1,5 @@
 from .qom import QOMPropertyValue
+
 from .machine_nodes import (
     DeviceNode,
     BusNode,
@@ -17,7 +18,9 @@ from .project_editing import (
     DescriptionOperation
 )
 from copy import deepcopy
+
 from common import mlget as _
+
 from six import integer_types
 
 class MachineOperation(DescriptionOperation):

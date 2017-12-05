@@ -1,14 +1,10 @@
-from common import \
-    get_class_total_args
+from common import get_class_total_args
 
-from inspect import \
-    getmro
+from inspect import getmro
 
-from collections import \
-    OrderedDict
+from collections import OrderedDict
 
-from sys import \
-    modules
+from sys import modules
 
 class QOMDescription(object):
     def __init__(self):

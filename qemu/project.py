@@ -1,33 +1,28 @@
-from os import \
-    makedirs, \
+from os import (
+    makedirs,
     remove
-
-from os.path import \
-    split, \
-    join, \
-    basename, \
-    splitext, \
-    isdir, \
+)
+from os.path import (
+    split,
+    join,
+    basename,
+    splitext,
+    isdir,
     isfile
+)
+from itertools import count
 
-from itertools import \
-    count
+from .machine_description import MachineNode
 
-from .machine_description import \
-    MachineNode
-
-from common import \
-    callco, \
+from common import (
+    callco,
     co_find_eq
+)
+from .makefile_patching import patch_makefile
 
-from .makefile_patching import \
-    patch_makefile
+from codecs import open
 
-from codecs import \
-    open
-
-from collections import \
-    defaultdict
+from collections import defaultdict
 
 """ TODO: Selection of configuration flag and accumulator variable
 name is Qemu version specific. Version API must be used there. """
