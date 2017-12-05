@@ -1,3 +1,16 @@
+__all__ = [
+    "QOMPropertyType"
+      , "QOMPropertyTypeLink"
+      , "QOMPropertyTypeString"
+      , "QOMPropertyTypeBoolean"
+      , "QOMPropertyTypeInteger"
+  , "QOMPropertyValue"
+  , "QOMStateField"
+  , "QemuTypeName"
+  , "QOMType"
+      , "QOMDevice"
+]
+
 from source import (
     line_origins,
     Source,

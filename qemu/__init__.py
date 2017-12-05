@@ -12,17 +12,7 @@ from .sysbusdevice import *
 
 from .pcie import *
 
-from .qom import \
-    QOMPropertyType, \
-        QOMPropertyTypeLink, \
-        QOMPropertyTypeString, \
-        QOMPropertyTypeBoolean, \
-        QOMPropertyTypeInteger, \
-    QOMPropertyValue, \
-    QOMStateField, \
-    QemuTypeName, \
-    QOMType, \
-        QOMDevice
+from .qom import *
 
 from .machine_nodes import *
 
