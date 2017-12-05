@@ -21,16 +21,16 @@ re_pci_vendor = compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
 re_pci_class = compile("PCI_CLASS_([A-Z0-9_]+)")
 
-class PCIVendorIdAlreadyExists (Exception):
+class PCIVendorIdAlreadyExists(RuntimeError):
     pass
 
-class PCIDeviceIdAlreadyExists (Exception):
+class PCIDeviceIdAlreadyExists(RuntimeError):
     pass
 
-class PCIVendorIdNetherExistsNorCreate(Exception):
+class PCIVendorIdNetherExistsNorCreate(RuntimeError):
     pass
 
-class PCIVendorIdMismatch(Exception):
+class PCIVendorIdMismatch(ValueError):
     pass
 
 """
