@@ -161,3 +161,10 @@ Now you can launch the GUI.
 ./qdc-gui.py
 ```
 
+### Basic device stub generation
+
+### Basic machine draft generation
+
+### Combining
+
+### Q35 Machine
