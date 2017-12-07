@@ -29,12 +29,14 @@ def main():
         default = '.',
         type = arg_type_directory,
         metavar = 'path_to_qemu_build',
+        help = "Override QEMU build path of the project."
     )
 
     parser.add_argument(
         '--gen-header-tree',
         default = None,
-        metavar = "header_tree.gv"
+        metavar = "header_tree.gv",
+        help = "Output QEMU header inclusion graph in Graphviz format."
     )
 
     parser.add_argument("--gen-chunk-graphs",
