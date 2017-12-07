@@ -11,7 +11,11 @@ from qemu import \
     MemoryROMNode, \
     MachineNodeOperation, \
     MOp_AddMemoryNode, \
-    MOp_AddMemChild
+    MOp_DelMemoryNode, \
+    MOp_AddMemChild, \
+    MOp_RemoveMemChild, \
+    MOp_SetMemNodeAlias, \
+    MOp_SetMemNodeAttr
 
 from .memory_settings import \
     MemorySettingsWindow
@@ -32,6 +36,12 @@ LAYOUT_COLUMNS_WIDTH = "columns width"
 
 class MultipleSASInMachine(Exception):
     pass
+
+def hwaddr_val(val):
+    if isinstance(val, integer_types):
+        return hex(val)
+    else:
+        return str(val)
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
@@ -68,6 +78,14 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.heading("offset", text = _("Offset"))
         self.heading("size", text = _("Size"))
         self.heading("type", text = _("Type"))
+
+        self.memtype2str = {
+           MemoryNode: "Container",
+           MemorySASNode : "System address space",
+           MemoryAliasNode: "Alias",
+           MemoryRAMNode: "RAM",
+           MemoryROMNode: "ROM"
+        }
 
         self.bind("<ButtonPress-3>", self.on_b3_press)
         self.bind("<Double-Button-1>", self.on_b1_double)
@@ -216,11 +234,48 @@ snapshot mode or the command should be disabled too.
                     state = state
                 )
 
-        l = self.gen_layout()
-        self.delete(*self.get_children())
-        self.iid2node.clear()
-        self.widget_initialization()
-        self.set_layout(l)
+        if isinstance(op, MOp_SetMemNodeAttr):
+            mem = self.mach.id2node[op.node_id]
+            val = getattr(mem, op.attr)
+
+            self.item(str(mem.id),
+                text = mem.name,
+                values = (
+                    mem.id,
+                    hwaddr_val(mem.offset) if mem.parent else "--",
+                    "--" if mem.size is None else hwaddr_val(mem.size),
+                    self.memtype2str[type(mem)]
+                )
+            )
+
+            if isinstance(mem, MemoryAliasNode):
+                self.item(str(mem.alias_to.id) + "." + str(mem.id),
+                    text = mem.alias_to.name,
+                    values = ("", hwaddr_val(mem.alias_offset),)
+                )
+
+            if op.attr is "name":
+                for n in self.mach.id2node.values():
+                    if isinstance(n, MemoryAliasNode):
+                        if n.alias_to is mem:
+                            self.item(
+                                str(n.alias_to.id) + "." + str(n.id),
+                                text = val
+                            )
+        elif isinstance(op,
+            (
+                MOp_AddMemChild,
+                MOp_RemoveMemChild,
+                MOp_AddMemoryNode,
+                MOp_DelMemoryNode,
+                MOp_SetMemNodeAlias
+            )
+        ):
+            l = self.gen_layout()
+            self.delete(*self.get_children())
+            self.iid2node.clear()
+            self.widget_initialization()
+            self.set_layout(l)
 
         if isinstance(op, MOp_AddMemChild):
             self.selected = self.mach.id2node[op.child_id]
@@ -322,13 +377,6 @@ snapshot mode or the command should be disabled too.
     def widget_initialization(self):
         mems_queue = [m for m in self.mach.mems if not m.parent]
         unprocessed_mems = list(self.mach.mems)
-        memtype2str = {
-           MemoryNode: "Container",
-           MemorySASNode : "System address space",
-           MemoryAliasNode: "Alias",
-           MemoryRAMNode: "RAM",
-           MemoryROMNode: "ROM"
-        }
 
         while unprocessed_mems:
             while mems_queue:
@@ -343,12 +391,6 @@ snapshot mode or the command should be disabled too.
                         tags = ("loop")
                     )
                 else:
-                    def hwaddr_val(val):
-                        if isinstance(val, integer_types):
-                            return hex(val)
-                        else:
-                            return str(val)
-
                     if isinstance(m, MemoryLeafNode):
                         if m.parent and not self.exists(m.parent.id):
                             unprocessed_mems.append(m)
@@ -365,7 +407,7 @@ snapshot mode or the command should be disabled too.
                             m.id,
                             hwaddr_val(m.offset) if m.parent else "--",
                             "--" if m.size is None else hwaddr_val(m.size),
-                            memtype2str[type(m)]
+                            self.memtype2str[type(m)]
                         )
                     )
 
