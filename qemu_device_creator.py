@@ -19,14 +19,9 @@ def arg_type_directory(string):
 
 def main():
     parser = ArgumentParser(
-        description = '''
-The program generates device model stub file inside QEMU source tree and
-register it as needed.
-        ''',
-        fromfile_prefix_chars = '@',
-        epilog = '''
-Use @file to read arguments from 'file' (one per line) 
-        '''
+        description = "QEMU Project Generator\n"
+        "The tool generates source files inside QEMU source tree according to"
+        "settings read from project script."
     )
 
     parser.add_argument(
