@@ -68,5 +68,7 @@ Use @file to read arguments from 'file' (one per line)
         with_chunk_graph = arguments.gen_chunk_graphs
     )
 
+    return 0
+
 if __name__ == '__main__':
     main()
