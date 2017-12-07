@@ -112,6 +112,26 @@ sudo pip3 install six
 
 Now the all environment prerequisites are satisfied.
 
+### Debian Linux
+
+Debian 7.11 environment preparation is same as the one for Ubuntu 14.04
+except for several specifics.
+
+- `apt-get` command must be used everywhere instead of `apt`
+
+- Python 3.2 grammar version is too old and does not supported by the toolset.
+I.e. only Python 2 can be used.
+
+- `python-pip` package is too old.
+Hence, consider
+[another](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy)
+way to install `pip`.
+
+```bash
+wget https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+```
+
 ### Installation
 
 QDT is suddenly required a QEMU to work with.
