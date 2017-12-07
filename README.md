@@ -70,7 +70,7 @@ Both 2.7 and 3.4 grammar are supported.
 
 ### Ubuntu Linux
 
-Ubuntu 14.04 is already shipped with both Python version.
+Ubuntu 14.04 is already shipped with both 2.x and 3.x Python.
 But several prerequisites are not installed by default.
 
 Tkinter is used as GUI back-end.
