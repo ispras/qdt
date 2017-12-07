@@ -113,6 +113,17 @@ sudo pip3 install six
 
 Now the all environment prerequisites are satisfied.
 
+### Debian Linux
+
+Debian 7.11 environment preparation is same as the one for Ubuntu 14.04
+except for several specifics.
+
+- `apt-get` command must be used everywhere instead of `apt`
+
+- Python 3 is not installed by default.
+Therefore, it must be installed either explicitly or automatically, in course
+of other prerequisite installation.
+
 ### Installation
 
 QDT is suddenly required a QEMU to work with.
