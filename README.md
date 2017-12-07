@@ -196,6 +196,79 @@ Just check it works and close the main windows without saving the project.
 
 ### Basic device stub generation
 
+To generate a device stub the two steps should be made.
+
+1. Create a Python script with generation parameters.
+2. Pass the script to the command line generator tool `qemu_device_creator.py`.
+
+Simple `basic-device.py` script content is listed below.
+
+```python
+uart_desc = SysBusDeviceDescription(
+    # name =
+    "UART",
+    # directory =
+    "char"
+)
+p = QProject([uart_desc])
+```
+
+No imports are required.
+The generator will provide all necessary names by self.
+
+`SysBusDeviceDescription` class is a container for parameters of system
+bus device generation.
+There are only two parameters provided.
+
+- `name` is a base for generation of new QOM type name, macro, function names
+and so on.
+It will be transformed according to C syntax and QEMU coding style.
+See resulting code if interesting.
+
+- `directory` is the name of subdirectories in "hw" and "include/hw".
+Generated module and header will be placed in corresponding subdirectories.
+Note that devices are grouped according to semantic.
+
+Note that `name` and `directory` arguments are actually commented out by
+`#` prefix.
+This means that they are positional and those names can be skipped.
+A Keyword argument is always set using its name across this manual.
+
+All generation parameters must be packed in a project (`QProject`).
+The generator expects one `QProject` in the input script.
+
+Now the device model stub can be generated.
+
+*Note that during first launch the generator will analyze QEMU sources.*
+It is a time-consuming operation.
+A few minutes are commonly required to complete.
+The result of this analyze will be cached in the build directory.
+An analyze is required each time the QEMU version (HEAD) changes.
+
+```bash
+cd ..
+qdt/qemu_device_creator.py -b ./build basic-device.py
+```
+
+Take note of `-b` (`--qemu-build`) argument.
+It specifies a path that points to QEMU build directory.
+This way the generator may realize where the QEMU is.
+
+Now look at the changes on QEMU sources.
+
+```bash
+cd src
+git status
+```
+
+Two new files should be created:
+
+- `hw/char/uart.c`
+- `include/hw/char/uart.h`
+
+Also `hw/char/Makefile.objs` file should be changed.
+QDT registered new device in QEMU build system.
+
 ### Basic machine draft generation
 
 ### Simple composite project
