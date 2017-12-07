@@ -39,8 +39,8 @@ def main():
 
     parser.add_argument("--gen-chunk-graphs",
         action = 'store_true',
-        help = "also generate Graphviz files with graph of chunks per each "
-        "generated source"
+        help = "Generate Graphviz files with graph of chunks per each "
+        "generated source."
     )
 
     arguments = parser.parse_args()
