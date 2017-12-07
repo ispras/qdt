@@ -92,9 +92,10 @@ Note that `idle-python` package name suffix corresponds to the Python version.
 sudo apt install python-pip python3-pip
 ```
 
-QDT may adapt to changes in QEMU infrastructure.
-It uses Git history to determine current version of the emulator.
-The repository is analyzed using `gitpython` library.
+QDT adapts to changes in QEMU infrastructure.
+It has a set of heuristics referring to specific commits in Git history.
+`gitpython` library is used to analyze Git graph and get effective heuristics.
+for the current QEMU version
 
 ```bash
 sudo pip install gitpython
