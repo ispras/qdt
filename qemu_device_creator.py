@@ -9,6 +9,7 @@ from argparse import (
 from os.path import isdir
 from qemu import get_vp
 from qemu import qvd_load_with_cache
+from traceback import print_exc
 
 def arg_type_directory(string):
     if not isdir(string):
@@ -51,8 +52,9 @@ Use @file to read arguments from 'file' (one per line)
 
     try:
         qvd = qvd_load_with_cache(arguments.qemu_build)
-    except Exception as e:
-        print("QVD load filed: " + str(e) + "\n")
+    except:
+        print("QVD loading failed")
+        print_exc()
         return -1
 
     qvd.use()
