@@ -43,8 +43,34 @@ def hwaddr_val(val):
     else:
         return str(val)
 
+class RegionInfo(VarMenu):
+    def __init__(self, parent):
+        VarMenu.__init__(self, parent, tearoff = 0)
+        self.add_command()
+        self.displayed = False
+        self.padding = 10
+
+    def show(self, event):
+        if not self.displayed:
+            self.displayed = True
+            self.post(event.x_root + self.padding, event.y_root)
+
+    def hide(self):
+        if self.displayed:
+            self.displayed = False
+            self.unpost()
+
+    def move(self, event):
+        if self.displayed:
+            self.post(event.x_root + self.padding, event.y_root)
+
+    def set_text(self, text):
+        self.entryconfig(0, label = text)
+
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
+        if "selectmode" not in kw:
+            kw["selectmode"] = "browse"
         VarTreeview.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
 
@@ -68,8 +94,16 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.iid2node = {}
         self.selected = None
 
+        self.selected_iid = None
+        self.old_parent = None
+        self.old_index = None
+        self.parents_stack = []
+        self.sas_dnd = False
+        self.hover = RegionInfo(self)
+
         self.tag_configure("loop", foreground = "red")
         self.tag_configure("alias", foreground = "grey")
+        self.tag_configure("places", foreground = "green")
 
         self["columns"] = ("id", "offset", "size", "type")
 
@@ -89,6 +123,9 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
         self.bind("<ButtonPress-3>", self.on_b3_press)
         self.bind("<Double-Button-1>", self.on_b1_double)
+        self.bind("<Shift-ButtonPress-1>", self.on_shift_b1_press)
+        self.bind("<ButtonRelease-1>", self.on_b1_release)
+        self.bind("<B1-Motion>", self.on_b1_move)
 
         self.popup_leaf_node = p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
         self.popup_not_leaf_node = p1 = VarMenu(self.winfo_toplevel(),
@@ -426,6 +463,9 @@ snapshot mode or the command should be disabled too.
                 mems_queue = [unprocessed_mems[0]]
 
     def on_b3_press(self, event):
+        if self.selected_iid:
+            return
+
         iid = self.identify_row(event.y)
         """ When user clicks over a row, the row should be be selected
         in the tree view. This prevents confusion of row for which the popup
@@ -472,6 +512,149 @@ snapshot mode or the command should be disabled too.
         # print("on_b1_double")
 
         return "break"
+
+    def on_shift_b1_press(self, event):
+        iid = self.identify_row(event.y)
+        if "." in iid: # skip pseudo nodes
+            return
+        self.selected_iid = iid
+        self.sas_dnd = type(self.iid2node[iid]) is MemorySASNode
+        self.old_parent = self.parent(iid)
+        self.old_index = self.index(iid)
+        self.hover.set_text(self.item(iid)["text"])
+        self.hover.show(event)
+        self.detach(iid)
+        self.selection_remove(self.selection())
+        self.focus(None)
+
+    def on_b1_release(self, event):
+        selected = self.selected_iid
+        if not selected:
+            return
+
+        iid = self.identify_row(event.y)
+        old_placed = False
+        if "-place" in iid:
+            new_parent = self.parent(iid)
+            self.reattach(selected, new_parent, self.index(iid))
+
+            try:
+                new_parent_id = int(new_parent)
+            except ValueError:
+                new_parent_id = -1
+
+            try:
+                cur_parent_id = int(self.old_parent)
+            except ValueError:
+                cur_parent_id = -1
+
+            if not new_parent_id == cur_parent_id:
+                mem_id = int(selected)
+                if not cur_parent_id == -1:
+                    self.mht.stage(MOp_RemoveMemChild, mem_id, cur_parent_id)
+                if not new_parent_id == -1:
+                    self.mht.stage(MOp_AddMemChild, mem_id, new_parent_id)
+
+            mem = self.iid2node[selected]
+            self.mht.commit(sequence_description =
+                _("Memory '%s' (%d) configuration.") % (
+                    mem.name, mem.id
+                )
+            )
+        else:
+            old_placed = True
+
+        while self.parents_stack:
+            pst = self.parents_stack.pop()
+            if self.exists(pst + "-up-place"):
+                self.delete(pst + "-up-place")
+            if self.exists(pst + "-down-place"):
+                self.delete(pst + "-down-place")
+        if self.exists("child-place"):
+            self.delete("child-place")
+        self.hover.hide()
+
+        if old_placed:
+            self.reattach(selected, self.old_parent, self.old_index)
+        self.see(selected)
+        self.focus(selected)
+        self.selection_set(selected)
+
+        self.selected_iid = None
+        self.sas_dnd =  False
+
+    def on_b1_move(self, event):
+        if not self.selected_iid:
+            return
+
+        self.hover.move(event)
+
+        iid = self.identify_row(event.y)
+        self.focus(iid)
+        self.selection_set(iid)
+        parents_stack = self.parents_stack
+
+        #start moving from empty place
+        if iid == "" and not parents_stack:
+            try:
+                iid = self.get_children()[-1]
+            except IndexError:
+                pass
+
+        if  iid == "" \
+            or "." in iid and ".loop" not in iid \
+            or "-place" in iid \
+            or parents_stack and parents_stack[-1] == iid \
+            or self.sas_dnd and self.parent(iid) != "":
+            return
+
+        parents_stack_cur = []
+        cur_iid = iid
+        while cur_iid != "":
+            parents_stack_cur.append(cur_iid)
+            cur_iid = self.parent(cur_iid)
+        parents_stack_cur.reverse()
+
+        diff = 0
+        for i, (old, new) in enumerate(zip(parents_stack, parents_stack_cur)):
+            if old != new:
+                diff = i
+                break
+        for pst in parents_stack[diff:]:
+            if self.exists(pst + "-up-place"):
+                self.delete(pst + "-up-place")
+            if self.exists(pst + "-down-place"):
+                self.delete(pst + "-down-place")
+        if self.exists("child-place"):
+            self.delete("child-place")
+        for pst in parents_stack_cur[diff:]:
+            par = self.parent(pst)
+            ind = self.index(pst)
+            self.insert(par, ind + 1,
+                iid = pst + "-down-place",
+                text = "HERE",
+                tags = ("places")
+            )
+        if parents_stack_cur:
+            pst = parents_stack_cur[-1]
+            par = self.parent(pst)
+            ind = self.index(pst)
+            self.insert(par, ind,
+                iid = pst + "-up-place",
+                text = "HERE",
+                tags = ("places")
+            )
+            self.see(pst + "-up-place")
+            if not self.sas_dnd \
+               and "." not in pst \
+               and type(self.iid2node[pst]) is MemoryNode:
+                self.insert(pst, 0,
+                    iid = "child-place",
+                    text = "HERE",
+                    tags = ("places")
+                )
+                self.see("child-place")
+        self.parents_stack = parents_stack_cur
 
     def gen_layout(self):
         layout = {}
