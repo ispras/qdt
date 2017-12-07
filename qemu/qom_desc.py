@@ -76,13 +76,13 @@ def DescriptionOf(QOMTemplate):
 
         """ Reverse order of Class attributes to preserve it with respect to
         final reversion. """
-        for attr, info in reversed(ai.items()):
+        for attr, info in reversed(list(ai.items())):
             if attr not in attribute_info:
                 attribute_info[attr] = info
 
     # Because a child is processed before its parent, the attributes are
     # collected in reverse order.
-    attribute_info = OrderedDict(reversed(attribute_info.items()))
+    attribute_info = OrderedDict(reversed(list(attribute_info.items())))
 
     def decorate(klass, pa = pa, kwa = kwa, ai = attribute_info):
         # default method to generate QOM type from description
