@@ -360,7 +360,7 @@ snapshot mode or the command should be disabled too.
                         text = m.name,
                         values = (
                             m.id,
-                            "--" if parent_id == "" else hwaddr_val(m.offset),
+                            hwaddr_val(m.offset) if m.parent else "--",
                             "--" if m.size is None else hwaddr_val(m.size),
                             memtype2str[type(m)]
                         )
