@@ -104,37 +104,5 @@ Use @file to read arguments from 'file' (one per line)
         with_chunk_graph = arguments.gen_chunk_graphs
     )
 
-    '''
-    from pycparser import c_generator, c_ast
-    from pycparser.c_ast import FuncDef, ParamList, PtrDecl, TypeDecl,\
-        IdentifierType, FuncDecl, FileAST, Constant
-
-    type_void = TypeDecl("opaque", [], IdentifierType(["void"]))
-    type_hwaddr = TypeDecl("offset", [], IdentifierType(["hwaddr"]))
-    type_unsigned = TypeDecl("size", [], IdentifierType(["unsigned"]))
-    type_void_ptr = PtrDecl([], type_void)
-    type_uint64_t = TypeDecl("mmio_write", [], IdentifierType(["uint64_t"]))
-
-    f_type_args = ParamList([
-        c_ast.Decl(None, [], [], [], type_void_ptr, None, None),
-        c_ast.Decl(None, [], [], [], type_hwaddr, None, None),
-        c_ast.Decl(None, [], [], [], type_unsigned, None, None)
-        ])
-    f_type_ret = type_uint64_t
-    f_type_decl = FuncDecl(f_type_args, f_type_ret)
-    f_decl = c_ast.Decl(None, [], [], [], f_type_decl, None, None)
-
-    f_body = c_ast.Compound([
-        c_ast.Return(Constant(None, "0"))
-        ])
-
-    mmio_w_f = FuncDef(f_decl, [], f_body)
-
-    ast = FileAST([mmio_w_f])
-
-    generator = c_generator.CGenerator()
-    print(generator.visit(ast))
-    '''
-
 if __name__ == '__main__':
     main()
