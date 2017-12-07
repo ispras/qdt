@@ -165,7 +165,7 @@ Note that, several dependencies of QDT are embedded as submodules.
 
 ```bash
 cd ..
-git clone http://nasredin.intra.ispras.ru:3000/qemu/qdt.git qdt
+git clone http://nasredin.intra.ispras.ru:3000/qemu/qdt.git
 cd qdt
 git submodule init
 git submodule update --recursive
