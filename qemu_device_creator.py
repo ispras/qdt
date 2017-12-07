@@ -7,9 +7,11 @@ from argparse import (
     ArgumentParser
 )
 from os.path import isdir
-from qemu import get_vp
 from qemu import qvd_load_with_cache
+from common import execfile
 from traceback import print_exc
+
+import qdt
 
 def arg_type_directory(string):
     if not isdir(string):
@@ -46,10 +48,41 @@ def main():
         "generated source."
     )
 
+    parser.add_argument(
+        "script",
+        help = "A Python script containing definition of a project to generate."
+    )
+
     arguments = parser.parse_args()
 
+    script = arguments.script
+
+    loaded = {}
     try:
-        qvd = qvd_load_with_cache(arguments.qemu_build)
+        execfile(script, qdt.__dict__, loaded)
+    except:
+        print("Cannot load configuration from '%s'" % script)
+        print_exc()
+        return -1
+
+    for v in loaded.values():
+        if isinstance(v, qdt.QProject):
+            project = v
+            break
+    else:
+        print("Script '%s' does not define a project to generate." % script)
+        return -1
+
+    try:
+        qemu_build_path = project.build_path
+    except:
+        qemu_build_path = arguments.qemu_build
+    else:
+        if not qemu_build_path:
+            qemu_build_path = arguments.qemu_build
+
+    try:
+        qvd = qvd_load_with_cache(qemu_build_path)
     except:
         print("QVD loading failed")
         print_exc()
@@ -60,10 +93,6 @@ def main():
     if arguments.gen_header_tree is not None:
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
-    DefaultProject = getattr(examples,
-        get_vp()["QDC default project class name"]
-    )
-    project = DefaultProject()
     project.gen_all(qvd.src_path,
         with_chunk_graph = arguments.gen_chunk_graphs
     )
