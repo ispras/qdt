@@ -28,7 +28,7 @@ def main():
         '--qemu-build', '-b',
         default = '.',
         type = arg_type_directory,
-        metavar = 'path_to_qemu_build',
+        metavar = "/path/to/qemu/build/directory",
         help = "Override QEMU build path of the project."
     )
 
