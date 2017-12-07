@@ -2,18 +2,13 @@
 
 import examples
 
-from argparse import \
-    ArgumentTypeError, \
+from argparse import (
+    ArgumentTypeError,
     ArgumentParser
-
-from os.path import \
-    isdir
-
-from qemu import \
-    get_vp
-
-from qemu import \
-    qvd_load_with_cache
+)
+from os.path import isdir
+from qemu import get_vp
+from qemu import qvd_load_with_cache
 
 def arg_type_directory(string):
     if not isdir(string):
