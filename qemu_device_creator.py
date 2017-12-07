@@ -18,31 +18,31 @@ def arg_type_directory(string):
 
 def main():
     parser = ArgumentParser(
-        description='''
+        description = '''
 The program generates device model stub file inside QEMU source tree and
 register it as needed.
         ''',
-        fromfile_prefix_chars='@',
-        epilog='''
+        fromfile_prefix_chars = '@',
+        epilog = '''
 Use @file to read arguments from 'file' (one per line) 
         '''
-        )
+    )
 
     parser.add_argument(
         '--qemu-build', '-b',
         default = '.',
-        type=arg_type_directory,
-        metavar='path_to_qemu_build',
-        )
+        type = arg_type_directory,
+        metavar = 'path_to_qemu_build',
+    )
 
     parser.add_argument(
         '--gen-header-tree',
         default = None,
         metavar = "header_tree.gv"
-        )
+    )
 
     parser.add_argument("--gen-chunk-graphs",
-        action='store_true',
+        action = 'store_true',
         help = "also generate Graphviz files with graph of chunks per each "
         "generated source"
     )
