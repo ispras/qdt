@@ -73,4 +73,4 @@ Use @file to read arguments from 'file' (one per line)
     return 0
 
 if __name__ == '__main__':
-    main()
+    exit(main())
