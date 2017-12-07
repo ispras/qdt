@@ -124,31 +124,42 @@ def DescriptionOf(QOMTemplate):
             kwargs.append("%s = %s" % (arg, repr(default)))
             assignments.append("self.%s = %s" % (arg, val))
 
-        # Template for __init__
-        init_code = """
+        def gen_init(
+            # just save values of local variables
+            pa = pa,
+            kwargs = kwargs,
+            assignments = assignments,
+            klass = klass,
+            QOMDescription = QOMDescription
+        ):
+            # Template for __init__
+            init_code = """
 def __init__(self, {pa}, {kwa}, **compat):
     QOMDescription.__init__(self)
     self.compat = compat
     {assignments}{description_init}
 """
 
-        init_code = init_code.format(
-            pa = ", ".join(pa),
-            kwa = ", ".join(kwargs),
-            assignments = "\n    ".join(assignments),
-            # Description class may provide __description_init__ method
-            # that performs some extra post-initialization.
-            description_init = "\n\n    self.__description_init__()" \
-                if "__description_init__" in klass.__dict__ else ""
-        )
+            init_code = init_code.format(
+                pa = ", ".join(pa),
+                kwa = ", ".join(kwargs),
+                assignments = "\n    ".join(assignments),
+                # Description class may provide __description_init__ method
+                # that performs some extra post-initialization.
+                description_init = "\n\n    self.__description_init__()" \
+                    if "__description_init__" in klass.__dict__ else ""
+            )
 
-        # __init__ method will be searched in locals
-        _locals = {}
-        # Only one global name is required to define __init__: QOMDescription
-        exec(init_code, { "QOMDescription" : QOMDescription }, _locals)
+            # __init__ method will be searched in locals
+            _locals = {}
+            # Only one global name is required to
+            # define __init__: QOMDescription
+            exec(init_code, { "QOMDescription" : QOMDescription }, _locals)
+
+            return _locals["__init__"]
 
         # Override initializer.
-        klass.__init__ = _locals["__init__"]
+        klass.__init__ = gen_init()
 
         # Do not override gen_type and __gen_code__ if provided
         if "gen_type" not in klass.__dict__:
