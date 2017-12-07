@@ -124,6 +124,14 @@ except for several specifics.
 Therefore, it must be installed either explicitly or automatically, in course
 of other prerequisite installation.
 
+- `python-pip` package version is too old.
+Hence, `pip` must be installed [alternatively](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy):
+
+```bash
+wget https://bootstrap.pypa.io/get-pip.py
+python get-pip.py
+```
+
 ### Installation
 
 QDT is suddenly required a QEMU to work with.
