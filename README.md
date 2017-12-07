@@ -89,7 +89,7 @@ Note that `idle-python` package name suffix corresponds to the Python version.
 `pip` is required to install several prerequesites.
 
 ```bash
-sudo apt install python-pip python-pip3
+sudo apt install python-pip python3-pip
 ```
 
 QDT may adapt to changes in QEMU infrastructure.
