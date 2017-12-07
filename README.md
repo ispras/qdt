@@ -7,16 +7,15 @@ QEMU.
 
 - A device stub generator.
 - A graphical editor representing a machine schematically.
-It outputs a machine draft.
-- A common graphical user interface aiding in generation of both a device
-and a machine.
+It able to generate a machine draft.
+- A common graphical user interface integrating both device and machine
+generators.
 
 *Current implementation limitations*:
 
 - The device stub generator supports system bus and PCI(E) bus device
 generation only.
-- The machine draft generator does not automate CLI argument accounting in a
-machine model.
+- The machine draft generator does not generate CLI argument accounting.
 A developer have to implement it manually if required.
 - A CPU instantiation is also too specific and not fully supported.
 Therefore, a developer have to handle it after generation.
@@ -24,7 +23,7 @@ Therefore, a developer have to handle it after generation.
 not supported by machine graphical editor.
 But a developer still can use device stub generator to update implementation
 of such devices.
-After that, those devices are supported by the editor.
+After that, those devices do become supported by the editor.
 
 ### Device stub generation overview
 
@@ -40,7 +39,7 @@ The GUI does simplify the setting of those parameters.
 
 Generated device stubs are registered in QEMU build system and ready to
 compile.
-A developer may concentrate on the device specifics implementation.
+A developer may immediately concentrate on the device specifics implementation.
 
 ### Machine draft generation overview
 
@@ -50,13 +49,14 @@ The function is a sequence of device, bus, IRQ and memory instantiations.
 QEMU provides common API to instantiate and interconnect those machine nodes.
 Of course there is some auxilary code in the module.
 The toolset uses an object model describing the content of a machine.
-Each class of this model describes corresponding node of a machine.
+Each class of this model describes corresponding machine node.
 There is a graphical editor which provides a schematic visualization of
 machine content.
-The editor contains a generator producing a module draft for the machine.
+The editor is paired with a generator producing a module draft for the machine
+represented in the editor.
 
 A generated machine draft contains most of the machine code.
-It includes the initialization function and all the auxilary code.
+It includes the initialization function and most of the auxilary code.
 The draft is also registered in QEMU build system and ready to build.
 
 ## Getting started
@@ -71,6 +71,8 @@ Both 2.7 and 3.4 grammar are supported.
 ### Ubuntu Linux
 
 Ubuntu 14.04 is already shipped with both Python version.
+But several prerequisites are not installed by default.
+
 Tkinter is used as GUI back-end.
 Hence install:
 
@@ -86,33 +88,35 @@ sudo apt install idle-python2.7 idle-python3.4
 
 Note that `idle-python` package name suffix corresponds to the Python version.
 
-`pip` is required to install several prerequesites.
+`pip` is required to install several prerequisites.
 
 ```bash
 sudo apt install python-pip python3-pip
 ```
 
 QDT adapts to changes in QEMU infrastructure.
-It has a set of heuristics referring to specific commits in Git history.
-`gitpython` library is used to analyze Git graph and get effective heuristics.
-for the current QEMU version
+It has a set of heuristics referring to specific commits in QEMU Git history.
+`gitpython` package is used to analyze Git graph and get effective heuristics
+for the current QEMU version.
 
 ```bash
 sudo pip install gitpython
 sudo pip3 install gitpython
 ```
 
-`six` library is used to handle 2.x and 3.x Python version differences.
+`six` package is used to handle 2.x and 3.x Python version differences.
 
 ```bash
 sudo pip install six
 sudo pip3 install six
 ```
 
+Now the all environment prerequisites are satisfied.
+
 ### Installation
 
-QEMU Development Toolkit is suddenly required a QEMU to work with.
-So, the first get its sources.
+QDT is suddenly required a QEMU to work with.
+So, the first objective is to get its sources.
 
 ```bash
 mkdir qemu
@@ -124,9 +128,9 @@ git submodule init
 git submodule update --recursive
 ```
 
-QDT works with a build directory.
-Hence, QEMU have to be configured first.
-Of course, the QEMU build dependencies have to to be satisfied first.
+The toolset works with a build directory.
+Hence, QEMU build system have to be configured.
+Of course, the QEMU build dependencies must be satisfied first.
 
 ```bash
 sudo apt-get build-dep qemu
@@ -145,7 +149,7 @@ cd build
 The target list is shorted to speed up consequent building.
 QDT is not limited to i386 CPU architecture.
 
-It is time to get QDT.
+It is time to get QDT itself.
 Note that, several dependencies of QDT are embedded as submodules.
 
 ```bash
@@ -163,6 +167,8 @@ Now you can launch the GUI.
 ```
 
 An example project of Intel Q35 machine will be automatically loaded.
+Do nothing if you wish to pass consequent examples without troubles.
+Just check it works and close the main windows without saving the project.
 
 ### Basic device stub generation
 
