@@ -161,6 +161,8 @@ Now you can launch the GUI.
 ./qdc-gui.py
 ```
 
+An example project of Intel Q35 machine will be automatically loaded.
+
 ### Basic device stub generation
 
 ### Basic machine draft generation
