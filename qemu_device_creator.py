@@ -25,22 +25,23 @@ def main():
     )
 
     parser.add_argument(
-        '--qemu-build', '-b',
-        default = '.',
+        "--qemu-build", "-b",
+        default = ".",
         type = arg_type_directory,
         metavar = "/path/to/qemu/build/directory",
         help = "Override QEMU build path of the project."
     )
 
     parser.add_argument(
-        '--gen-header-tree',
+        "--gen-header-tree",
         default = None,
         metavar = "header_tree.gv",
         help = "Output QEMU header inclusion graph in Graphviz format."
     )
 
-    parser.add_argument("--gen-chunk-graphs",
-        action = 'store_true',
+    parser.add_argument(
+        "--gen-chunk-graphs",
+        action = "store_true",
         help = "Generate Graphviz files with graph of chunks per each "
         "generated source."
     )
