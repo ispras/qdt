@@ -10,8 +10,7 @@ from os.path import \
     isdir
 
 from qemu import \
-    get_vp, \
-    PCIId
+    get_vp
 
 from qemu import \
     qvd_load_with_cache
@@ -65,36 +64,6 @@ Use @file to read arguments from 'file' (one per line)
 
     if arguments.gen_header_tree is not None:
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
-
-    test_device = PCIId.db.get_device(name = "AMD_LANCE",
-            vendor_name = "AMD", did = "0x2000")
-
-    """
-    project = QProject(
-        descriptions = [
-                q35_macine,
-                PCIExpressDeviceDescription(
-                    name = "Test PCI NIC",
-                    directory = "net",
-                    vendor = "AMD",
-                    device = test_device,
-                    subsys = test_device,
-                    subsys_vendor = "AMD",
-                    pci_class = "NETWORK_ETHERNET",
-                    mem_bar_num = 1,
-                    msi_messages_num = 2
-                ),
-                SysBusDeviceDescription(
-                    name = "Dynamips MPC860 CPCR",
-                    directory = "intc",
-                    out_irq_num = 0,
-                    mmio_num = 1,
-                    pio_num = 0,
-                    in_irq_num = 0
-                )
-            ] 
-        )
-    """
 
     DefaultProject = getattr(examples,
         get_vp()["QDC default project class name"]
