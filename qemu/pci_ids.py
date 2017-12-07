@@ -217,18 +217,34 @@ class PCIClassification(object):
     def gen_device_key(vendor_name, device_name):
         return vendor_name + "_" + device_name
 
-    def get_class(self, name, cid = None):
-        try:
-            c = self.classes[name]
-            if cid is not None and c.id != cid:
-                raise Exception("PCI class ID  %s already exists but is \
-assigned different value %s / %s." % (name, c.id, cid)
+    def get_class(self, name = None, cid = None):
+        if name is None:
+            if not isinstance(cid, str):
+                raise ValueError("Class ID value must be a string")
+
+            tmp = self.find_classes(id = cid)
+            try:
+                c = next(tmp)
+            except StopIteration:
+                raise Exception("There is no known class ID for value %s and"
+                    " no one can be created because of the name is not"
+                    " given" % cid
                 )
-        except KeyError:
-            if cid is None:
-                raise Exception("Unknown PCI class %s" % name)
-            else:
-                c = PCIClassId(name, cid)
+        else:
+            try:
+                c = self.classes[name]
+                if cid is not None and c.id != cid:
+                    raise Exception("PCI class ID  %s already exists but is "
+                        "assigned different value %s / %s." % (name, c.id, cid)
+                    )
+            except KeyError:
+                if cid is None:
+                    raise Exception("There is no known class ID with name %s"
+                        " and no one can be created because of the value is"
+                        " not given" % name
+                    )
+                else:
+                    c = PCIClassId(name, cid)
 
         return c
 
