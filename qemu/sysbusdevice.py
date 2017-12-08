@@ -33,9 +33,9 @@ class SysBusDeviceType(QOMDevice):
     def __init__(self,
         name,
         directory,
-        out_irq_num = 1,
+        out_irq_num = 0,
         in_irq_num = 0,
-        mmio_num = 1, 
+        mmio_num = 0,
         pio_num = 0,
         **qomd_kw
     ):
