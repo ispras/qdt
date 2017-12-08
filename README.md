@@ -66,7 +66,7 @@ The draft is also registered in QEMU build system and ready to build.
 *but it is an objective.*
 
 The toolset is written in Python.
-Both 2.7 and 3.4 grammar are supported.
+Both 2.7.3+ and 3.3+ versions are supported.
 
 ### Ubuntu Linux
 
