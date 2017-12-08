@@ -194,3 +194,10 @@ An example project of Intel Q35 machine will be automatically loaded.
 Do nothing if you wish to pass consequent examples without troubles.
 Just check it works and close the main windows without saving the project.
 
+### Basic device stub generation
+
+### Basic machine draft generation
+
+### Simple composite project
+
+### Q35 Machine
