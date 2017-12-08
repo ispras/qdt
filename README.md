@@ -61,7 +61,7 @@ The draft is also registered in QEMU build system and ready to build.
 
 ## Getting started
 
-- *This manual is tested on Ubuntu 14.04.*
+- *This manual is tested on Ubuntu 14.04 and Debian 7.11.*
 - *Compatibility with MS Windows OSes are not tested yet*
 *but it is an objective.*
 
