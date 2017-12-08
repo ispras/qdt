@@ -128,7 +128,7 @@ Hence, `pip` must be installed [alternatively](https://unix.stackexchange.com/qu
 
 ```bash
 wget https://bootstrap.pypa.io/get-pip.py
-python get-pip.py
+sudo python get-pip.py
 ```
 
 ### Installation
