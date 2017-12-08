@@ -124,7 +124,9 @@ Therefore, it must be installed either explicitly or automatically, in course
 of other prerequisite installation.
 
 - `python-pip` and `python3-pip` packages are too old.
-Hence, `pip` must be installed [alternatively](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy).
+Hence, consider
+[another](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy)
+way to install `pip`.
 
 ```bash
 wget https://bootstrap.pypa.io/get-pip.py
