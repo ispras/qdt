@@ -296,4 +296,196 @@ So, the new machine is registered in QEMU build system.
 
 ### Simple composite project
 
+Now consider a very simple moxie CPU one UART machine with 1 KiB of RAM.
+The UART is very simple too.
+It has only one register.
+And any data written to that register will be printed to its channel.
+A UART with only that functionality is a transmitter only actually...
+
+The script `one-uart-machine.py` is a composition of previous two scripts
+with several significant improvements.
+
+```python
+# UART stub generation settings
+# -----------------------------
+uart_desc = SysBusDeviceDescription("UART", "char",
+    mmio_num = 1,
+    char_num = 1
+)
+
+# One UART machine generation settings
+# ------------------------------------
+
+# UART instantiation and interconnection
+uart = SystemBusDeviceNode(
+    # TYPE_UART is a macro corresponding to new device "UART"
+    # qom_type =
+    "TYPE_UART",
+    # A base for generation of name of variable pointing to UART instance
+    var_base = "uart",
+    # the UART is follows the RAM
+    mmio = [ 0x2000 ]
+)
+# Note that `uart` variable is related to the same device as `uart_desc`.
+# But `uart_desc` describes the UART from within while `uart` does it
+# externally, from the machine point of view.
+
+# The UART has one slot for a "character device" (chardev). The chardev is a
+# full-duplex bytewise FIFO. Normally, it corresponds to a serial interface
+# inside a guest OS. By default QEMU instantiates a Virtual Terminal Emulator
+# to use it at opposite side of a chardev. The default name is "serial0".
+# A VTS is connected to UART using a property. The one named "chr" is
+# added to UART device stub with "UART_CHR" macro alias. The property
+# assignment below will result in connection between the UART instance and
+# the VTE.
+uart.properties.append(
+    QOMPropertyValue(QOMPropertyTypeString, "UART_CHR", "serial0")
+)
+
+# System address space is the root of memory hierarchy of any QEMU machine
+sas = MemorySASNode(
+    # name =
+    "System address space"
+)
+
+# RAM instantiation
+ram = MemoryRAMNode(
+    # name =
+    "RAM",
+    # size =
+    0x1000,
+    var_base = "ram"
+)
+# Include RAM into system address space at offset 0x1000. It is default reset
+# program counter value. I.e. it is an entry point.
+sas.add_child(ram, offset = 0x1000)
+
+mach = MachineNode("One UART machine", "moxie",
+    devices = [uart],
+    mems = [sas]
+)
+# Note that not all machine nodes must be explicitly passed to MachineNode
+# object. The generator can lookup other nodes if they are binded with
+# explicitly added nodes by any way.
+# For instance, `ram` is included into `sas` and will be accounted implicitly.
+
+p = QProject([mach, uart_desc])
+```
+
+After passing of this script to the generator the same files will be
+changed and added as in previous two examples.
+
+Yet another steps is required to make this machine working.
+
+#### Implement UART
+
+This UART is very simple.
+It just prints a byte written to its register.
+Open `hw/char/uart.c` module with any editor.
+Then replace `uart_mmio_write` function implementation with code listed below.
+
+```c
+static void uart_mmio_write(void* opaque, hwaddr offset, uint64_t value,
+                            unsigned size)
+{
+    UARTState *s = UART(opaque);
+    uint8_t buf[1] = { (uint8_t) value };
+    qemu_chr_fe_write(&s->chr, buf, 1);
+}
+```
+
+Now the UART is ready.
+
+#### Instantiate Moxie CPU
+
+A CPU instantiation is frequently architecture specific.
+As a result, it is not supported by machine draft generator yet.
+Therefore, there is only one absent part of the machine - its CPU.
+
+Add the line listed below to the beginning of machine initialization function
+`init_one_uart_machine` in file `hw/moxie/one_uart_machine.c`.
+
+```c
+    cpu_moxie_init("MoxieLite-moxie-cpu");
+```
+
+Of course, the corresponding header must be included too.
+
+```c
+#include "cpu.h"
+```
+
+Now the machine has the CPU.
+
+#### Loading guest code
+
+There are many ways to load guest binary code into RAM.
+The simplest one is to just read it from a RAW file.
+QEMU CLI provides few ways to pass a file name to a machine.
+The `-kernel` argument will be used there.
+Append the code below to the machine initialization function to support
+RAW file loading.
+
+```c
+    FILE *f = fopen(machine->kernel_filename, "rb");
+    fread(memory_region_get_ram_ptr(ram), 1, 4096, f);
+    fclose(f);
+```
+
+Now an arbitrary guest can be loaded into the machine.
+_Note that this straightforward guest loading technique should not be used in_
+_a real machine model_.
+
+#### Building QEMU
+
+At this moment the machine is implemented.
+Go to the build directory and make it.
+
+```bash
+cd ../build
+make
+```
+
+Ask QEMU for list of available machines to check if all is good.
+
+```bash
+moxie-softmmu/qemu-system-moxie -machine ?
+```
+
+The line `one_uart_machine     TODO: provide description for One UART machine`
+must present in the output.
+`one_uart_machine` is the name of just created machine model.
+
+#### Easier than "Hello, World!"
+
+Consider a program that writes a character to the FIFO of the UART.
+
+```
+00001000: inc   $r0, 0xA0          # move `@` ASCII code to r0 register
+                                   # (r0 equals to zero at startup)
+00001002: sta.b 0x00002000, $r0    # write r0 to UART register
+00001008: jmpa  0x00001008         # fall into infinite loop
+```
+
+Reminder that the entry point is 0x1000.
+A binary code
+[corresponding](http://moxielogic.org/blog/pages/architecture.html)
+to that assembly code has been obtained manually.
+The command below will produce a RAW file `simple.bin` containing this
+program.
+
+```bash
+echo -ne "\x80\xA0\x1F\x00\x00\x00\x20\x00\x1A\x00\x00\x00\x10\x08" > simple.bin
+```
+
+Now the program can be launched in the virtual machine.
+
+```bash
+moxie-softmmu/qemu-system-moxie -M one_uart_machine -kernel simple.bin
+```
+
+Switch to `serial0` VTE to check its output.
+Ctrl-Alt-2 accelerator can be used to do it.
+The only one character "`@`" must be in the output.
+
 ### Q35 Machine
