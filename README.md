@@ -74,13 +74,13 @@ Ubuntu 14.04 is already shipped with both 2.x and 3.x Python.
 But several prerequisites are not installed by default.
 
 Tkinter is used as GUI back-end.
-Hence install:
+Hence install.
 
 ```bash
 sudo apt install python-tk python3-tk
 ```
 
-`idlelib` is also involved:
+`idlelib` is also involved.
 
 ```bash
 sudo apt install idle-python2.7 idle-python3.4
@@ -125,7 +125,7 @@ Therefore, it must be installed either explicitly or automatically, in course
 of other prerequisite installation.
 
 - `python-pip` package version is too old.
-Hence, `pip` must be installed [alternatively](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy):
+Hence, `pip` must be installed [alternatively](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy).
 
 ```bash
 wget https://bootstrap.pypa.io/get-pip.py
