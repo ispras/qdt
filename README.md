@@ -74,7 +74,6 @@ Ubuntu 14.04 is already shipped with both 2.x and 3.x Python.
 But several prerequisites are not installed by default.
 
 Tkinter is used as GUI back-end.
-Hence install.
 
 ```bash
 sudo apt install python-tk python3-tk
