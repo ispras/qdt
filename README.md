@@ -119,11 +119,10 @@ except for several specifics.
 
 - `apt-get` command must be used everywhere instead of `apt`
 
-- Python 3 is not installed by default.
-Therefore, it must be installed either explicitly or automatically, in course
-of other prerequisite installation.
+- Python 3.2 grammar version is too old and does not supported by the toolset.
+I.e. only Python 2 can be used.
 
-- `python-pip` and `python3-pip` packages are too old.
+- `python-pip` package is too old.
 Hence, consider
 [another](https://unix.stackexchange.com/questions/182308/install-python-pip-in-debian-wheezy)
 way to install `pip`.
