@@ -30,6 +30,14 @@ from six.moves.tkinter import \
 
 LAYOUT_COLUMNS_WIDTH = "columns width"
 
+memtype2str = {
+    MemoryNode: "Container",
+    MemorySASNode : "System address space",
+    MemoryAliasNode: "Alias",
+    MemoryRAMNode: "RAM",
+    MemoryROMNode: "ROM"
+}
+
 class MultipleSASInMachine(Exception):
     pass
 
@@ -329,13 +337,6 @@ snapshot mode or the command should be disabled too.
     def widget_initialization(self):
         mems_queue = [m for m in self.mach.mems if not m.parent]
         unprocessed_mems = list(self.mach.mems)
-        memtype2str = {
-           MemoryNode: "Container",
-           MemorySASNode : "System address space",
-           MemoryAliasNode: "Alias",
-           MemoryRAMNode: "RAM",
-           MemoryROMNode: "ROM"
-        }
 
         while unprocessed_mems:
             while mems_queue:
