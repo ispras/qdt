@@ -262,6 +262,29 @@ QDT registered new device in QEMU build system.
 
 ### Basic machine draft generation
 
+Basic machine draft generation is very similar to device stub generation.
+
+Simple `basic-machine.py` script is listed below.
+
+```python
+mach = MachineNode(
+    # name =
+    "One UART machine",
+    # directory =
+    "moxie"
+)
+p = QProject([mach])
+```
+
+The main difference is usage of `MachineNode` instead of
+`SysBusDeviceDescription`.
+
+After generation the only one file appeared: `hw/moxie/one_uart_machine.c`.
+A machine module is normally presented by only the module.
+A header is not required.
+Of course, `hw/moxie/Makefile.objs` file is changed too.
+So, the new machine is registered in QEMU build system.
+
 ### Simple composite project
 
 ### Q35 Machine
