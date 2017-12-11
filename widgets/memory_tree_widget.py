@@ -58,6 +58,9 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.iid2node = {}
         self.selected = None
 
+        self.tag_configure("loop", foreground = "red")
+        self.tag_configure("alias", foreground = "grey")
+
         self["columns"] = ("id", "offset", "size", "type")
 
         self.heading("#0", text = _("Name"))
@@ -380,9 +383,6 @@ snapshot mode or the command should be disabled too.
 
             if unprocessed_mems:
                 mems_queue = [unprocessed_mems[0]]
-
-        self.tag_configure("loop", foreground = "red")
-        self.tag_configure("alias", foreground = "grey")
 
     def on_b3_press(self, event):
         iid = self.identify_row(event.y)
