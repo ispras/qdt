@@ -132,7 +132,7 @@ snapshot mode or the command should be disabled too.
         for menu in [
             c0, c1
         ]:
-             menu.add_command(
+            menu.add_command(
                 label = _("Alias"),
                 command = self.notify_popup_command if self.mht is None else \
                     self.on_add_alias,
@@ -201,8 +201,9 @@ snapshot mode or the command should be disabled too.
 
             # Only one SAS is allowed.
             # Hence, turn off the popup menu command if one is exists.
-            if isinstance(op, MOp_AddMemoryNode) and \
-               MemorySASNode.__name__ in op.nc:
+            if (isinstance(op, MOp_AddMemoryNode)
+            and MemorySASNode.__name__ in op.nc
+            ):
                 state = "disabled"
                 try:
                     mem = self.mach.id2node[op.node_id]
