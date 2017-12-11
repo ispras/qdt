@@ -54,6 +54,30 @@ def hwaddr_val(val):
     else:
         return str(val)
 
+class DraggedLabel(VarMenu):
+    def __init__(self, parent):
+        VarMenu.__init__(self, parent, tearoff = 0)
+        self.add_command()
+        self.displayed = False
+        self.padding = 10
+
+    def show(self, event):
+        if not self.displayed:
+            self.displayed = True
+            self.post(event.x_root + self.padding, event.y_root)
+
+    def hide(self):
+        if self.displayed:
+            self.displayed = False
+            self.unpost()
+
+    def move(self, event):
+        if self.displayed:
+            self.post(event.x_root + self.padding, event.y_root)
+
+    def set_text(self, text):
+        self.entryconfig(0, label = text)
+
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
         VarTreeview.__init__(self, *args, **kw)
@@ -86,8 +110,16 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.iid2node = {}
         self.selected = None
 
+        self.selected_iid = None
+        self.old_parent = None
+        self.old_index = None
+        self.highlighted_path = []
+        self.sas_dnd = False
+        self.dragged_label = DraggedLabel(self)
+
         self.tag_configure("loop", foreground = "red")
         self.tag_configure("alias", foreground = "grey")
+        self.tag_configure("places", foreground = "green")
 
         self["columns"] = ("id", "offset", "size", "type")
 
@@ -199,6 +231,8 @@ snapshot mode or the command should be disabled too.
         )
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
+        self.bind("<B1-Motion>", self.on_b1_move)
+        self.bind("<ButtonRelease-1>", self.on_b1_release)
 
         self.enable_hotkeys()
 
@@ -498,6 +532,170 @@ snapshot mode or the command should be disabled too.
         # print("on_b1_double")
 
         return "break"
+
+    def on_b1_release(self, event):
+        selected = self.selected_iid
+        if not selected:
+            return
+
+        iid = self.identify_row(event.y)
+        old_placed = False
+        if "-place" in iid:
+            new_parent = self.parent(iid)
+            self.reattach(selected, new_parent, self.index(iid))
+
+            try:
+                new_parent_id = int(new_parent)
+            except ValueError:
+                new_parent_id = -1
+
+            try:
+                cur_parent_id = int(self.old_parent)
+            except ValueError:
+                cur_parent_id = -1
+
+            if not new_parent_id == cur_parent_id:
+                mem_id = int(selected)
+                if not cur_parent_id == -1:
+                    self.mht.stage(MOp_RemoveMemChild, mem_id, cur_parent_id)
+                if not new_parent_id == -1:
+                    self.mht.stage(MOp_AddMemChild, mem_id, new_parent_id)
+
+            mem = self.iid2node[selected]
+            self.mht.commit(sequence_description =
+                _("Memory '%s' (%d) configuration.") % (
+                    mem.name, mem.id
+                )
+            )
+        else:
+            old_placed = True
+
+        while self.highlighted_path:
+            p = self.highlighted_path.pop()
+            if self.exists(p + "-up-place"):
+                self.delete(p + "-up-place")
+            if self.exists(p + "-down-place"):
+                self.delete(p + "-down-place")
+
+        if self.exists("child-place"):
+            self.delete("child-place")
+
+        self.dragged_label.hide()
+
+        if old_placed:
+            self.reattach(selected, self.old_parent, self.old_index)
+
+        self.see(selected)
+        self.focus(selected)
+        self.selection_set(selected)
+
+        self.selected_iid = None
+        self.sas_dnd =  False
+        self.enable_hotkeys()
+
+    def on_b1_move(self, event):
+        if not self.selected_iid:
+            iid = self.identify_row(event.y)
+
+            if ("." in iid # skip pseudo nodes
+            or iid == ""   # skip empty place
+            ):
+                return
+
+            self.disable_hotkeys()
+
+            self.selected_iid = iid
+            self.sas_dnd = type(self.iid2node[iid]) is MemorySASNode
+            self.old_parent = self.parent(iid)
+            self.old_index = self.index(iid)
+
+            self.dragged_label.set_text(self.item(iid)["text"])
+            self.dragged_label.show(event)
+
+            self.detach(iid)
+            self.selection_remove(self.selection())
+            self.focus(None)
+
+        self.dragged_label.move(event)
+
+        iid = self.identify_row(event.y)
+        self.focus(iid)
+        self.selection_set(iid)
+
+        highlighted_path = self.highlighted_path
+
+        # start moving from empty place
+        if iid == "" and not highlighted_path:
+            try:
+                iid = self.get_children()[-1]
+            except IndexError:
+                pass
+
+        if (iid == ""
+        or "." in iid and ".loop" not in iid
+        or "-place" in iid
+        or highlighted_path and highlighted_path[-1] == iid
+        or self.sas_dnd and self.parent(iid) != ""
+        ):
+            return
+
+        highlighted_path_cur = []
+        cur_iid = iid
+        while cur_iid != "":
+            highlighted_path_cur.append(cur_iid)
+            cur_iid = self.parent(cur_iid)
+        highlighted_path_cur.reverse()
+
+        diff = 0
+        for diff, (old, new) in enumerate(
+        zip(highlighted_path, highlighted_path_cur)
+        ):
+            if old != new:
+                break
+
+        for p in highlighted_path[diff:]:
+            if self.exists(p + "-up-place"):
+                self.delete(p + "-up-place")
+            if self.exists(p + "-down-place"):
+                self.delete(p + "-down-place")
+
+        if self.exists("child-place"):
+            self.delete("child-place")
+
+        for p in highlighted_path_cur[diff:]:
+            par = self.parent(p)
+            ind = self.index(p)
+
+            self.insert(par, ind + 1,
+                iid = p + "-down-place",
+                text = "HERE",
+                tags = ("places")
+            )
+
+        if highlighted_path_cur:
+            p = highlighted_path_cur[-1]
+            par = self.parent(p)
+            ind = self.index(p)
+
+            self.insert(par, ind,
+                iid = p + "-up-place",
+                text = "HERE",
+                tags = ("places")
+            )
+            self.see(p + "-up-place")
+
+            if (not self.sas_dnd
+            and "." not in p
+            and type(self.iid2node[p]) is MemoryNode
+            ):
+                self.insert(p, 0,
+                    iid = "child-place",
+                    text = "HERE",
+                    tags = ("places")
+                )
+                self.see("child-place")
+
+        self.highlighted_path = highlighted_path_cur
 
     def gen_layout(self):
         layout = {}
