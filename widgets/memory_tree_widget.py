@@ -11,7 +11,11 @@ from qemu import \
     MemoryROMNode, \
     MachineNodeOperation, \
     MOp_AddMemoryNode, \
-    MOp_AddMemChild
+    MOp_DelMemoryNode, \
+    MOp_AddMemChild, \
+    MOp_RemoveMemChild, \
+    MOp_SetMemNodeAlias, \
+    MOp_SetMemNodeAttr
 
 from .memory_settings import \
     MemorySettingsWindow
@@ -231,11 +235,48 @@ snapshot mode or the command should be disabled too.
                     state = state
                 )
 
-        l = self.gen_layout()
-        self.delete(*self.get_children())
-        self.iid2node.clear()
-        self.widget_initialization()
-        self.set_layout(l)
+        if isinstance(op, MOp_SetMemNodeAttr):
+            mem = self.mach.id2node[op.node_id]
+            val = getattr(mem, op.attr)
+
+            self.item(str(mem.id),
+                text = mem.name,
+                values = (
+                    mem.id,
+                    hwaddr_val(mem.offset) if mem.parent else "--",
+                    "--" if mem.size is None else hwaddr_val(mem.size),
+                    memtype2str[type(mem)]
+                )
+            )
+
+            if isinstance(mem, MemoryAliasNode):
+                self.item(str(mem.alias_to.id) + "." + str(mem.id),
+                    text = mem.alias_to.name,
+                    values = ("", hwaddr_val(mem.alias_offset),)
+                )
+
+            if op.attr is "name":
+                for n in self.mach.id2node.values():
+                    if isinstance(n, MemoryAliasNode):
+                        if n.alias_to is mem:
+                            self.item(
+                                str(n.alias_to.id) + "." + str(n.id),
+                                text = val
+                            )
+        elif isinstance(op,
+            (
+                MOp_AddMemChild,
+                MOp_RemoveMemChild,
+                MOp_AddMemoryNode,
+                MOp_DelMemoryNode,
+                MOp_SetMemNodeAlias
+            )
+        ):
+            l = self.gen_layout()
+            self.delete(*self.get_children())
+            self.iid2node.clear()
+            self.widget_initialization()
+            self.set_layout(l)
 
         if isinstance(op, MOp_AddMemChild):
             self.selected = self.mach.id2node[op.child_id]
