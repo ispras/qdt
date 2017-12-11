@@ -32,6 +32,9 @@ from six import \
 from six.moves.tkinter import \
     TclError
 
+from .tk_unbind import \
+    unbind
+
 LAYOUT_COLUMNS_WIDTH = "columns width"
 
 memtype2str = {
@@ -59,8 +62,15 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         mach_desc.link(handle_system_bus = False)
 
         self.mach = mach_desc
+
+        toplevel = self.winfo_toplevel()
         try:
-            pht = self.winfo_toplevel().pht
+            self.hk = toplevel.hk
+        except AttributeError:
+            self.hk = None
+
+        try:
+            pht = toplevel.pht
         except AttributeError:
             self.mht = None
         else:
@@ -86,9 +96,6 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.heading("offset", text = _("Offset"))
         self.heading("size", text = _("Size"))
         self.heading("type", text = _("Type"))
-
-        self.bind("<ButtonPress-3>", self.on_b3_press)
-        self.bind("<Double-Button-1>", self.on_b1_double)
 
         self.popup_leaf_node = p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
         self.popup_not_leaf_node = p1 = VarMenu(self.winfo_toplevel(),
@@ -192,7 +199,8 @@ snapshot mode or the command should be disabled too.
         )
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
-        self.bind("<Delete>", self.on_key_delete, "+")
+
+        self.enable_hotkeys()
 
         self.widget_initialization()
 
@@ -200,6 +208,22 @@ snapshot mode or the command should be disabled too.
         if self.mht is not None:
             # the listener is assigned only in non-snapshot mode
             self.mht.unwatch_changed(self.on_machine_changed)
+
+    def disable_hotkeys(self):
+        if self.hk:
+            self.hk.disable_hotkeys()
+
+        self.unbind("<ButtonPress-3>")
+        self.unbind("<Double-Button-1>")
+        unbind(self, "<Delete>", self._on_key_delete)
+
+    def enable_hotkeys(self):
+        if self.hk:
+            self.hk.enable_hotkeys()
+
+        self.bind("<ButtonPress-3>", self.on_b3_press)
+        self.bind("<Double-Button-1>", self.on_b1_double)
+        self._on_key_delete = self.bind("<Delete>", self.on_key_delete, "+")
 
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):
