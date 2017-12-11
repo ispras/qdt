@@ -33,6 +33,12 @@ LAYOUT_COLUMNS_WIDTH = "columns width"
 class MultipleSASInMachine(Exception):
     pass
 
+def hwaddr_val(val):
+    if isinstance(val, integer_types):
+        return hex(val)
+    else:
+        return str(val)
+
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
         VarTreeview.__init__(self, *args, **kw)
@@ -344,12 +350,6 @@ snapshot mode or the command should be disabled too.
                         tags = ("loop")
                     )
                 else:
-                    def hwaddr_val(val):
-                        if isinstance(val, integer_types):
-                            return hex(val)
-                        else:
-                            return str(val)
-
                     if isinstance(m, MemoryLeafNode):
                         if m.parent and not self.exists(m.parent.id):
                             unprocessed_mems.append(m)
