@@ -422,7 +422,12 @@ snapshot mode or the command should be disabled too.
                 self.selected = None
 
         if self.selected:
-            self.show_memory_settings(self.selected, event.x, event.y)
+            if (self.identify_element(event.x, event.y) == 'Treeitem.indicator'
+            and self.get_children(iid)
+            ):
+                self.item(iid, open = not self.item(iid, "open"))
+            else:
+                self.show_memory_settings(self.selected, event.x, event.y)
 
         # print("on_b1_double")
 
