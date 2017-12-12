@@ -358,19 +358,15 @@ def Q35MachineNode_2_6_0():
 def old_devices():
     return [
         SysBusDeviceDescription(
-            name = "I/O Port 80",
-            directory = "i386",
+            "I/O Port 80", # name
+            "i386", # directory
             pio_num = 1
         ),
-        SysBusDeviceDescription(
-            name = "I/O Port F0",
-            directory = "i386",
+        SysBusDeviceDescription("I/O Port F0", "i386",
             out_irq_num = 1,
             pio_num = 1
         ),
-        SysBusDeviceDescription(
-            name = "A20 Line",
-            directory = "i386",
+        SysBusDeviceDescription("A20 Line", "i386",
             in_irq_num = 1
         )
     ]
