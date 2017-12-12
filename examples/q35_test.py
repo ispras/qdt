@@ -371,14 +371,8 @@ def old_devices():
         )
     ]
 
-class Q35Project_2_5_0(QProject):
-    def __init__(self):
-        QProject.__init__(self, old_devices() + [
-            Q35MachineNode_2_5_0()
-            ])
+def Q35Project_2_5_0():
+    return QProject(old_devices() + [Q35MachineNode_2_5_0()])
 
-class Q35Project_2_6_0(QProject):
-    def __init__(self):
-        QProject.__init__(self, old_devices() + [
-            Q35MachineNode_2_6_0()
-            ])
+def Q35Project_2_6_0():
+    return QProject(old_devices() + [Q35MachineNode_2_6_0()])
