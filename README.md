@@ -519,3 +519,10 @@ script in current working directory for backup.
 So, do *not* use such name for real project scripts.
 
 ### Q35 Machine
+
+There is a complex project example: Intel Q35 chipset based PC machine.
+The project is based on `q35` machine implementation in QEMU.
+
+```bash
+qdt/qdc-gui.py qdt/examples/q35-for-q2.6.py
+```
