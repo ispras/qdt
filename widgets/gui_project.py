@@ -143,3 +143,16 @@ exists." % (l.lid, l.desc_name)
     def remove_description(self, desc):
         QProject.remove_description(self, desc)
         del desc.__sn__
+
+    @staticmethod
+    def from_qproject(qproj):
+        guiproj = GUIProject()
+        for d in list(qproj.descriptions):
+            d.remove_from_project()
+
+            if isinstance(d, MachineNode):
+                d.link()
+
+            guiproj.add_description(d)
+
+        return guiproj
