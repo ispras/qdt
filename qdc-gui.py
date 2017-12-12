@@ -712,12 +712,18 @@ def main():
         metavar = 'path_to_qemu_build',
         )
 
+    parser.add_argument("script",
+        default = "project.py",
+        nargs = "?",
+        help = "Load project from a script."
+    )
+
     arguments = parser.parse_args()
 
     root = QDCGUIWindow()
 
     try:
-        root.load_project_from_file("project.py")
+        root.load_project_from_file(arguments.script)
     except Exception as e:
         print("Project load filed: " + str(e) + "\n")
 
