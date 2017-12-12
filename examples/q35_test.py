@@ -361,26 +361,18 @@ class Q35Project_2_5_0(QProject):
             SysBusDeviceDescription(
                 name = "I/O Port 80",
                 directory = "i386",
-                out_irq_num = 0,
-                in_irq_num = 0,
-                mmio_num = 0,
                 pio_num = 1 
                 ),
             SysBusDeviceDescription(
                 name = "I/O Port F0",
                 directory = "i386",
                 out_irq_num = 1,
-                in_irq_num = 0,
-                mmio_num = 0,
                 pio_num = 1 
                 ),
             SysBusDeviceDescription(
                 name = "A20 Line",
                 directory = "i386",
-                out_irq_num = 0,
                 in_irq_num = 1,
-                mmio_num = 0,
-                pio_num = 0 
                 ),
             Q35MachineNode_2_5_0()
             ])
@@ -391,26 +383,18 @@ class Q35Project_2_6_0(QProject):
             SysBusDeviceDescription(
                 name = "I/O Port 80",
                 directory = "i386",
-                out_irq_num = 0,
-                in_irq_num = 0,
-                mmio_num = 0,
                 pio_num = 1 
                 ),
             SysBusDeviceDescription(
                 name = "I/O Port F0",
                 directory = "i386",
                 out_irq_num = 1,
-                in_irq_num = 0,
-                mmio_num = 0,
                 pio_num = 1 
                 ),
             SysBusDeviceDescription(
                 name = "A20 Line",
                 directory = "i386",
-                out_irq_num = 0,
                 in_irq_num = 1,
-                mmio_num = 0,
-                pio_num = 0 
                 ),
             Q35MachineNode_2_6_0()
             ])
