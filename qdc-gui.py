@@ -29,6 +29,7 @@ from qemu_device_creator import \
     arg_type_directory
 
 from qemu import \
+    QProject, \
     qvd_get, \
     BadBuildPath, \
     MachineNode, \
@@ -593,11 +594,17 @@ later.").get()
         except Exception as e:
             raise e
         else:
+            qproj = None
             for v in loaded_variables.values():
                 if isinstance(v, GUIProject):
                     break
+                elif qproj is None and isinstance(v, QProject):
+                    qproj = v
             else:
-                raise Exception("No GUI project object was loaded")
+                if qproj:
+                    v = GUIProject.from_qproject(qproj)
+                else:
+                    raise Exception("No project object was loaded")
 
             self.set_project(v)
             self.set_current_file_name(file_name)
