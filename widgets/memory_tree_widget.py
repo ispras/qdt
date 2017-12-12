@@ -232,7 +232,6 @@ snapshot mode or the command should be disabled too.
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
         self.bind("<B1-Motion>", self.on_b1_move)
-        self.bind("<ButtonRelease-1>", self.on_b1_release)
 
         self.enable_hotkeys()
 
@@ -534,9 +533,9 @@ snapshot mode or the command should be disabled too.
         return "break"
 
     def on_b1_release(self, event):
+        self.unbind("<ButtonRelease-1>")
+
         selected = self.selected_iid
-        if not selected:
-            return
 
         iid = self.identify_row(event.y)
         old_placed = False
@@ -615,6 +614,8 @@ snapshot mode or the command should be disabled too.
             self.detach(iid)
             self.selection_remove(self.selection())
             self.focus(None)
+
+            self.bind("<ButtonRelease-1>", self.on_b1_release)
 
         self.dragged_label.move(event)
 
