@@ -595,13 +595,14 @@ later.").get()
         else:
             for v in loaded_variables.values():
                 if isinstance(v, GUIProject):
-                    self.set_project(v)
-                    self.set_current_file_name(file_name)
-                    self.saved_operation = self.pht.pos
-                    self.__check_saved_asterisk__()
                     break
             else:
                 raise Exception("No GUI project object was loaded")
+
+            self.set_project(v)
+            self.set_current_file_name(file_name)
+            self.saved_operation = self.pht.pos
+            self.__check_saved_asterisk__()
 
     def save_project_to_file(self, file_name):
         self.pw.refresh_layouts()
