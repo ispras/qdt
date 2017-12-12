@@ -233,6 +233,9 @@ snapshot mode or the command should be disabled too.
         self.bind("<Destroy>", self.__on_destroy__, "+")
         self.bind("<B1-Motion>", self.on_b1_move)
 
+        self.b1_press_point = None
+        self.bind("<ButtonPress-1>", self.on_b1_press, "+")
+
         self.enable_hotkeys()
 
         self.widget_initialization()
@@ -531,6 +534,9 @@ snapshot mode or the command should be disabled too.
         # print("on_b1_double")
 
         return "break"
+
+    def on_b1_press(self, event):
+        self.b1_press_point = event.x, event.y
 
     def on_b1_release(self, event):
         self.unbind("<ButtonRelease-1>")
