@@ -110,7 +110,7 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.iid2node = {}
         self.selected = None
 
-        self.selected_iid = None
+        self.dragged_iid = None
         self.old_parent = None
         self.old_index = None
         self.highlighted_path = []
@@ -535,13 +535,13 @@ snapshot mode or the command should be disabled too.
     def on_b1_release(self, event):
         self.unbind("<ButtonRelease-1>")
 
-        selected = self.selected_iid
+        dragged = self.dragged_iid
 
         iid = self.identify_row(event.y)
         old_placed = False
         if "-place" in iid:
             new_parent = self.parent(iid)
-            self.reattach(selected, new_parent, self.index(iid))
+            self.reattach(dragged, new_parent, self.index(iid))
 
             try:
                 new_parent_id = int(new_parent)
@@ -554,13 +554,13 @@ snapshot mode or the command should be disabled too.
                 cur_parent_id = -1
 
             if not new_parent_id == cur_parent_id:
-                mem_id = int(selected)
+                mem_id = int(dragged)
                 if not cur_parent_id == -1:
                     self.mht.stage(MOp_RemoveMemChild, mem_id, cur_parent_id)
                 if not new_parent_id == -1:
                     self.mht.stage(MOp_AddMemChild, mem_id, new_parent_id)
 
-            mem = self.iid2node[selected]
+            mem = self.iid2node[dragged]
             self.mht.commit(sequence_description =
                 _("Memory '%s' (%d) configuration.") % (
                     mem.name, mem.id
@@ -582,18 +582,18 @@ snapshot mode or the command should be disabled too.
         self.dragged_label.hide()
 
         if old_placed:
-            self.reattach(selected, self.old_parent, self.old_index)
+            self.reattach(dragged, self.old_parent, self.old_index)
 
-        self.see(selected)
-        self.focus(selected)
-        self.selection_set(selected)
+        self.see(dragged)
+        self.focus(dragged)
+        self.selection_set(dragged)
 
-        self.selected_iid = None
+        self.dragged_iid = None
         self.sas_dnd =  False
         self.enable_hotkeys()
 
     def on_b1_move(self, event):
-        if not self.selected_iid:
+        if not self.dragged_iid:
             iid = self.identify_row(event.y)
 
             if ("." in iid # skip pseudo nodes
@@ -603,7 +603,7 @@ snapshot mode or the command should be disabled too.
 
             self.disable_hotkeys()
 
-            self.selected_iid = iid
+            self.dragged_iid = iid
             self.sas_dnd = type(self.iid2node[iid]) is MemorySASNode
             self.old_parent = self.parent(iid)
             self.old_index = self.index(iid)
