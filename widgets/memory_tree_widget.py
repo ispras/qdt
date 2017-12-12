@@ -562,7 +562,7 @@ snapshot mode or the command should be disabled too.
 
             mem = self.iid2node[dragged]
             self.mht.commit(sequence_description =
-                _("Memory '%s' (%d) configuration.") % (
+                _("Moving of memory '%s' (%d).") % (
                     mem.name, mem.id
                 )
             )
