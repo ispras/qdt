@@ -54,6 +54,8 @@ def hwaddr_val(val):
     else:
         return str(val)
 
+DRAG_THRESHOLD = 15
+
 class DraggedLabel(VarMenu):
     def __init__(self, parent):
         VarMenu.__init__(self, parent, tearoff = 0)
@@ -600,7 +602,16 @@ snapshot mode or the command should be disabled too.
 
     def on_b1_move(self, event):
         if not self.dragged_iid:
-            iid = self.identify_row(event.y)
+            b1pp = self.b1_press_point
+
+            pos = event.x, event.y
+
+            # Ignore small mouse motions. They can be provided by a vibration
+            # during a double click or something else.
+            if abs(pos[0] - b1pp[0]) + abs(pos[1] - b1pp[1]) <= DRAG_THRESHOLD:
+                return
+
+            iid = self.identify_row(b1pp[1])
 
             if ("." in iid # skip pseudo nodes
             or iid == ""   # skip empty place
