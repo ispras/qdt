@@ -40,6 +40,7 @@ class HotKey(object):
         self.keys2bindings = {}
         self.keys2sym = {}
         self.cb2names = {}
+        self.disabled = False
 
         root.bind_all("<Control-Key>", self.on_ctrl_key)
         root.bind_all("<<Control-Y-Breaked>>", self.on_ctrl_y_breaked)
@@ -57,6 +58,9 @@ class HotKey(object):
                 self.update_name(binding)
 
     def process_ctrl_key(self, keycode, keysym):
+        if self.disabled:
+            return
+
         kc = keycode
 
         if not (kc in self.keys2sym and self.keys2sym[kc] == keysym):
@@ -123,3 +127,9 @@ class HotKey(object):
             self.cb2names[cb].set(name)
         else:
             self.cb2names[cb] = _(name)
+
+    def disable_hotkeys(self):
+        self.disabled = True
+
+    def enable_hotkeys(self):
+        self.disabled = False

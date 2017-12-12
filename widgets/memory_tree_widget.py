@@ -11,7 +11,11 @@ from qemu import \
     MemoryROMNode, \
     MachineNodeOperation, \
     MOp_AddMemoryNode, \
-    MOp_AddMemChild
+    MOp_DelMemoryNode, \
+    MOp_AddMemChild, \
+    MOp_RemoveMemChild, \
+    MOp_SetMemNodeAlias, \
+    MOp_SetMemNodeAttr
 
 from .memory_settings import \
     MemorySettingsWindow
@@ -28,10 +32,53 @@ from six import \
 from six.moves.tkinter import \
     TclError
 
+from .tk_unbind import \
+    unbind
+
 LAYOUT_COLUMNS_WIDTH = "columns width"
+
+memtype2str = {
+    MemoryNode: "Container",
+    MemorySASNode : "System address space",
+    MemoryAliasNode: "Alias",
+    MemoryRAMNode: "RAM",
+    MemoryROMNode: "ROM"
+}
 
 class MultipleSASInMachine(Exception):
     pass
+
+def hwaddr_val(val):
+    if isinstance(val, integer_types):
+        return hex(val)
+    else:
+        return str(val)
+
+DRAG_THRESHOLD = 15
+
+class DraggedLabel(VarMenu):
+    def __init__(self, parent):
+        VarMenu.__init__(self, parent, tearoff = 0)
+        self.add_command()
+        self.displayed = False
+        self.padding = 10
+
+    def show(self, event):
+        if not self.displayed:
+            self.displayed = True
+            self.post(event.x_root + self.padding, event.y_root)
+
+    def hide(self):
+        if self.displayed:
+            self.displayed = False
+            self.unpost()
+
+    def move(self, event):
+        if self.displayed:
+            self.post(event.x_root + self.padding, event.y_root)
+
+    def set_text(self, text):
+        self.entryconfig(0, label = text)
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
     def __init__(self, mach_desc, *args, **kw):
@@ -41,8 +88,15 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         mach_desc.link(handle_system_bus = False)
 
         self.mach = mach_desc
+
+        toplevel = self.winfo_toplevel()
         try:
-            pht = self.winfo_toplevel().pht
+            self.hk = toplevel.hk
+        except AttributeError:
+            self.hk = None
+
+        try:
+            pht = toplevel.pht
         except AttributeError:
             self.mht = None
         else:
@@ -58,6 +112,17 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.iid2node = {}
         self.selected = None
 
+        self.dragged_iid = None
+        self.old_parent = None
+        self.old_index = None
+        self.highlighted_path = []
+        self.sas_dnd = False
+        self.dragged_label = DraggedLabel(self)
+
+        self.tag_configure("loop", foreground = "red")
+        self.tag_configure("alias", foreground = "grey")
+        self.tag_configure("places", foreground = "green")
+
         self["columns"] = ("id", "offset", "size", "type")
 
         self.heading("#0", text = _("Name"))
@@ -65,9 +130,6 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         self.heading("offset", text = _("Offset"))
         self.heading("size", text = _("Size"))
         self.heading("type", text = _("Type"))
-
-        self.bind("<ButtonPress-3>", self.on_b3_press)
-        self.bind("<Double-Button-1>", self.on_b1_double)
 
         self.popup_leaf_node = p0 = VarMenu(self.winfo_toplevel(), tearoff = 0)
         self.popup_not_leaf_node = p1 = VarMenu(self.winfo_toplevel(),
@@ -132,7 +194,7 @@ snapshot mode or the command should be disabled too.
         for menu in [
             c0, c1
         ]:
-             menu.add_command(
+            menu.add_command(
                 label = _("Alias"),
                 command = self.notify_popup_command if self.mht is None else \
                     self.on_add_alias,
@@ -171,7 +233,12 @@ snapshot mode or the command should be disabled too.
         )
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
-        self.bind("<Delete>", self.on_key_delete, "+")
+        self.bind("<B1-Motion>", self.on_b1_move)
+
+        self.b1_press_point = None
+        self.bind("<ButtonPress-1>", self.on_b1_press, "+")
+
+        self.enable_hotkeys()
 
         self.widget_initialization()
 
@@ -179,6 +246,22 @@ snapshot mode or the command should be disabled too.
         if self.mht is not None:
             # the listener is assigned only in non-snapshot mode
             self.mht.unwatch_changed(self.on_machine_changed)
+
+    def disable_hotkeys(self):
+        if self.hk:
+            self.hk.disable_hotkeys()
+
+        self.unbind("<ButtonPress-3>")
+        self.unbind("<Double-Button-1>")
+        unbind(self, "<Delete>", self.__on_key_delete)
+
+    def enable_hotkeys(self):
+        if self.hk:
+            self.hk.enable_hotkeys()
+
+        self.bind("<ButtonPress-3>", self.on_b3_press)
+        self.bind("<Double-Button-1>", self.on_b1_double)
+        self.__on_key_delete = self.bind("<Delete>", self.on_key_delete, "+")
 
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):
@@ -201,8 +284,9 @@ snapshot mode or the command should be disabled too.
 
             # Only one SAS is allowed.
             # Hence, turn off the popup menu command if one is exists.
-            if isinstance(op, MOp_AddMemoryNode) and \
-               MemorySASNode.__name__ in op.nc:
+            if (isinstance(op, MOp_AddMemoryNode)
+            and MemorySASNode.__name__ in op.nc
+            ):
                 state = "disabled"
                 try:
                     mem = self.mach.id2node[op.node_id]
@@ -213,11 +297,48 @@ snapshot mode or the command should be disabled too.
                     state = state
                 )
 
-        l = self.gen_layout()
-        self.delete(*self.get_children())
-        self.iid2node.clear()
-        self.widget_initialization()
-        self.set_layout(l)
+        if isinstance(op, MOp_SetMemNodeAttr):
+            mem = self.mach.id2node[op.node_id]
+            val = getattr(mem, op.attr)
+
+            self.item(str(mem.id),
+                text = mem.name,
+                values = (
+                    mem.id,
+                    hwaddr_val(mem.offset) if mem.parent else "--",
+                    "--" if mem.size is None else hwaddr_val(mem.size),
+                    memtype2str[type(mem)]
+                )
+            )
+
+            if isinstance(mem, MemoryAliasNode):
+                self.item(str(mem.alias_to.id) + "." + str(mem.id),
+                    text = mem.alias_to.name,
+                    values = ("", hwaddr_val(mem.alias_offset),)
+                )
+
+            if op.attr is "name":
+                for n in self.mach.id2node.values():
+                    if isinstance(n, MemoryAliasNode):
+                        if n.alias_to is mem:
+                            self.item(
+                                str(n.alias_to.id) + "." + str(n.id),
+                                text = val
+                            )
+        elif isinstance(op,
+            (
+                MOp_AddMemChild,
+                MOp_RemoveMemChild,
+                MOp_AddMemoryNode,
+                MOp_DelMemoryNode,
+                MOp_SetMemNodeAlias
+            )
+        ):
+            l = self.gen_layout()
+            self.delete(*self.get_children())
+            self.iid2node.clear()
+            self.widget_initialization()
+            self.set_layout(l)
 
         if isinstance(op, MOp_AddMemChild):
             self.selected = self.mach.id2node[op.child_id]
@@ -319,13 +440,6 @@ snapshot mode or the command should be disabled too.
     def widget_initialization(self):
         mems_queue = [m for m in self.mach.mems if not m.parent]
         unprocessed_mems = list(self.mach.mems)
-        memtype2str = {
-           MemoryNode: "Container",
-           MemorySASNode : "System address space",
-           MemoryAliasNode: "Alias",
-           MemoryRAMNode: "RAM",
-           MemoryROMNode: "ROM"
-        }
 
         while unprocessed_mems:
             while mems_queue:
@@ -340,12 +454,6 @@ snapshot mode or the command should be disabled too.
                         tags = ("loop")
                     )
                 else:
-                    def hwaddr_val(val):
-                        if isinstance(val, integer_types):
-                            return hex(val)
-                        else:
-                            return str(val)
-
                     if isinstance(m, MemoryLeafNode):
                         if m.parent and not self.exists(m.parent.id):
                             unprocessed_mems.append(m)
@@ -360,7 +468,7 @@ snapshot mode or the command should be disabled too.
                         text = m.name,
                         values = (
                             m.id,
-                            "--" if parent_id == "" else hwaddr_val(m.offset),
+                            hwaddr_val(m.offset) if m.parent else "--",
                             "--" if m.size is None else hwaddr_val(m.size),
                             memtype2str[type(m)]
                         )
@@ -379,9 +487,6 @@ snapshot mode or the command should be disabled too.
 
             if unprocessed_mems:
                 mems_queue = [unprocessed_mems[0]]
-
-        self.tag_configure("loop", foreground = "red")
-        self.tag_configure("alias", foreground = "grey")
 
     def on_b3_press(self, event):
         iid = self.identify_row(event.y)
@@ -421,11 +526,194 @@ snapshot mode or the command should be disabled too.
                 self.selected = None
 
         if self.selected:
-            self.show_memory_settings(self.selected, event.x, event.y)
+            if (self.identify_element(event.x, event.y) == 'Treeitem.indicator'
+            and self.get_children(iid)
+            ):
+                self.item(iid, open = not self.item(iid, "open"))
+            else:
+                self.show_memory_settings(self.selected, event.x, event.y)
 
         # print("on_b1_double")
 
         return "break"
+
+    def on_b1_press(self, event):
+        self.b1_press_point = event.x, event.y
+
+    def on_b1_release(self, event):
+        self.unbind("<ButtonRelease-1>")
+
+        dragged = self.dragged_iid
+
+        iid = self.identify_row(event.y)
+        old_placed = False
+        if "-place" in iid:
+            new_parent = self.parent(iid)
+            self.reattach(dragged, new_parent, self.index(iid))
+
+            try:
+                new_parent_id = int(new_parent)
+            except ValueError:
+                new_parent_id = -1
+
+            try:
+                cur_parent_id = int(self.old_parent)
+            except ValueError:
+                cur_parent_id = -1
+
+            if not new_parent_id == cur_parent_id:
+                mem_id = int(dragged)
+                if not cur_parent_id == -1:
+                    self.mht.stage(MOp_RemoveMemChild, mem_id, cur_parent_id)
+                if not new_parent_id == -1:
+                    self.mht.stage(MOp_AddMemChild, mem_id, new_parent_id)
+
+            mem = self.iid2node[dragged]
+            self.mht.commit(sequence_description =
+                _("Moving of memory '%s' (%d).") % (
+                    mem.name, mem.id
+                )
+            )
+        else:
+            old_placed = True
+
+        while self.highlighted_path:
+            p = self.highlighted_path.pop()
+            if self.exists(p + "-up-place"):
+                self.delete(p + "-up-place")
+            if self.exists(p + "-down-place"):
+                self.delete(p + "-down-place")
+
+        if self.exists("child-place"):
+            self.delete("child-place")
+
+        self.dragged_label.hide()
+
+        if old_placed:
+            self.reattach(dragged, self.old_parent, self.old_index)
+
+        self.see(dragged)
+        self.focus(dragged)
+        self.selection_set(dragged)
+
+        self.dragged_iid = None
+        self.sas_dnd =  False
+        self.enable_hotkeys()
+
+    def on_b1_move(self, event):
+        if not self.dragged_iid:
+            b1pp = self.b1_press_point
+
+            pos = event.x, event.y
+
+            # Ignore small mouse motions. They can be provided by a vibration
+            # during a double click or something else.
+            if abs(pos[0] - b1pp[0]) + abs(pos[1] - b1pp[1]) <= DRAG_THRESHOLD:
+                return
+
+            iid = self.identify_row(b1pp[1])
+
+            if ("." in iid # skip pseudo nodes
+            or iid == ""   # skip empty place
+            ):
+                return
+
+            self.disable_hotkeys()
+
+            self.dragged_iid = iid
+            self.sas_dnd = type(self.iid2node[iid]) is MemorySASNode
+            self.old_parent = self.parent(iid)
+            self.old_index = self.index(iid)
+
+            self.dragged_label.set_text(self.item(iid)["text"])
+            self.dragged_label.show(event)
+
+            self.detach(iid)
+            self.selection_remove(self.selection())
+            self.focus(None)
+
+            self.bind("<ButtonRelease-1>", self.on_b1_release)
+
+        self.dragged_label.move(event)
+
+        iid = self.identify_row(event.y)
+        self.focus(iid)
+        self.selection_set(iid)
+
+        highlighted_path = self.highlighted_path
+
+        # start moving from empty place
+        if iid == "" and not highlighted_path:
+            try:
+                iid = self.get_children()[-1]
+            except IndexError:
+                pass
+
+        if (iid == ""
+        or "." in iid and ".loop" not in iid
+        or "-place" in iid
+        or highlighted_path and highlighted_path[-1] == iid
+        or self.sas_dnd and self.parent(iid) != ""
+        ):
+            return
+
+        highlighted_path_cur = []
+        cur_iid = iid
+        while cur_iid != "":
+            highlighted_path_cur.append(cur_iid)
+            cur_iid = self.parent(cur_iid)
+        highlighted_path_cur.reverse()
+
+        diff = 0
+        for diff, (old, new) in enumerate(
+        zip(highlighted_path, highlighted_path_cur)
+        ):
+            if old != new:
+                break
+
+        for p in highlighted_path[diff:]:
+            if self.exists(p + "-up-place"):
+                self.delete(p + "-up-place")
+            if self.exists(p + "-down-place"):
+                self.delete(p + "-down-place")
+
+        if self.exists("child-place"):
+            self.delete("child-place")
+
+        for p in highlighted_path_cur[diff:]:
+            par = self.parent(p)
+            ind = self.index(p)
+
+            self.insert(par, ind + 1,
+                iid = p + "-down-place",
+                text = "HERE",
+                tags = ("places")
+            )
+
+        if highlighted_path_cur:
+            p = highlighted_path_cur[-1]
+            par = self.parent(p)
+            ind = self.index(p)
+
+            self.insert(par, ind,
+                iid = p + "-up-place",
+                text = "HERE",
+                tags = ("places")
+            )
+            self.see(p + "-up-place")
+
+            if (not self.sas_dnd
+            and "." not in p
+            and type(self.iid2node[p]) is MemoryNode
+            ):
+                self.insert(p, 0,
+                    iid = "child-place",
+                    text = "HERE",
+                    tags = ("places")
+                )
+                self.see("child-place")
+
+        self.highlighted_path = highlighted_path_cur
 
     def gen_layout(self):
         layout = {}
