@@ -249,7 +249,7 @@ snapshot mode or the command should be disabled too.
 
         self.unbind("<ButtonPress-3>")
         self.unbind("<Double-Button-1>")
-        unbind(self, "<Delete>", self._on_key_delete)
+        unbind(self, "<Delete>", self.__on_key_delete)
 
     def enable_hotkeys(self):
         if self.hk:
@@ -257,7 +257,7 @@ snapshot mode or the command should be disabled too.
 
         self.bind("<ButtonPress-3>", self.on_b3_press)
         self.bind("<Double-Button-1>", self.on_b1_double)
-        self._on_key_delete = self.bind("<Delete>", self.on_key_delete, "+")
+        self.__on_key_delete = self.bind("<Delete>", self.on_key_delete, "+")
 
     def on_machine_changed(self, op):
         if not isinstance(op, MachineNodeOperation):
