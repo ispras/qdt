@@ -355,46 +355,34 @@ def Q35MachineNode_2_6_0():
     # for 2.6.0 call isa_bus_dma(isa_bus, ISADMA(isa_dma_1), ISADMA(isa_dma_2));
     return self
 
+def old_devices():
+    return [
+        SysBusDeviceDescription(
+            name = "I/O Port 80",
+            directory = "i386",
+            pio_num = 1
+        ),
+        SysBusDeviceDescription(
+            name = "I/O Port F0",
+            directory = "i386",
+            out_irq_num = 1,
+            pio_num = 1
+        ),
+        SysBusDeviceDescription(
+            name = "A20 Line",
+            directory = "i386",
+            in_irq_num = 1
+        )
+    ]
+
 class Q35Project_2_5_0(QProject):
     def __init__(self):
-        QProject.__init__(self, [
-            SysBusDeviceDescription(
-                name = "I/O Port 80",
-                directory = "i386",
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "I/O Port F0",
-                directory = "i386",
-                out_irq_num = 1,
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "A20 Line",
-                directory = "i386",
-                in_irq_num = 1,
-                ),
+        QProject.__init__(self, old_devices() + [
             Q35MachineNode_2_5_0()
             ])
 
 class Q35Project_2_6_0(QProject):
     def __init__(self):
-        QProject.__init__(self, [
-            SysBusDeviceDescription(
-                name = "I/O Port 80",
-                directory = "i386",
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "I/O Port F0",
-                directory = "i386",
-                out_irq_num = 1,
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "A20 Line",
-                directory = "i386",
-                in_irq_num = 1,
-                ),
+        QProject.__init__(self, old_devices() + [
             Q35MachineNode_2_6_0()
             ])
