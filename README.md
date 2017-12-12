@@ -488,4 +488,34 @@ Switch to `serial0` VTE to check its output.
 Ctrl-Alt-2 accelerator can be used to do it.
 The only one character "`@`" must be in the output.
 
+### The GUI
+
+It is time to look at the one UART machine using the GUI.
+
+```bash
+cd ..
+qdt/qdc-gui.py one-uart-machine.py -b ./build
+```
+
+Note that QEMU build directory path can be specified with GUI.
+`Ctrl-B` accelerator raises a directory selection dialog allowing a user to
+select the path.
+
+![Screenshot of GUI](docs/en_US.UTF-8/README/one-uart-machine-gui.png)
+
+The generation process can be started using `Ctrl-G` accelerator.
+
+Be careful, if you save the project in same file (including `Ctrl-S`
+accelerator) its content will be fully regenerated.
+Only code logic will be preserved.
+I.e. the comments will be lost.
+Code formatting will not be preserved too while will be pretty.
+Several GUI specific code will be added too.
+Of course, a script produced by the GUI is compatible with the CLI generator
+front-end.
+
+Also note that the GUI always saves last opened project in `project.py`
+script in current working directory for backup.
+So, do *not* use such name for real project scripts.
+
 ### Q35 Machine
