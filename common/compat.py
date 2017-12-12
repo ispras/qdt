@@ -1,23 +1,13 @@
+def execfile(filename, globals = None, locals = None):
+    f = open(filename, "rb")
+    content = f.read()
+    f.close()
+    obj = compile(content, filename, "exec")
 
-"""
-The module defines set of compatibility items which are not implemented in Six.
-"""
+    if globals is None:
+        globals = {}
 
-from six import \
-    PY3, \
-    PY2
+    globals["__file__"] = filename
+    globals["__name__"] = "__main__"
 
-if PY3:
-    def execfile(filename, globals = None, locals = None):
-        f = open(filename, "rb")
-        content = f.read()
-        f.close()
-        obj = compile(content, filename, "exec")
-        exec(content, globals, locals)
-
-    pass
-elif PY2:
-    execfile = execfile
-    pass
-else:
-    raise Exception("Unknown Python version.")
+    exec(content, globals, locals)
