@@ -61,14 +61,19 @@ The draft is also registered in QEMU build system and ready to build.
 
 ## Getting started
 
+The toolset is written in Python.
+Both 2.7.3+ and 3.3+ versions are supported.
+
+### Environment preparation
+
 - *This manual is tested on Ubuntu 14.04 and Debian 7.11.*
 - *Compatibility with MS Windows OSes are not tested yet*
 *but it is an objective.*
 
-The toolset is written in Python.
-Both 2.7.3+ and 3.3+ versions are supported.
+There is a briefly guide to environment preparation for several OSes.
+A clear OS installation is taken as the start point.
 
-### Ubuntu Linux
+#### Ubuntu Linux
 
 Ubuntu 14.04 is already shipped with both 2.x and 3.x Python.
 But several prerequisites are not installed by default.
@@ -112,7 +117,7 @@ sudo pip3 install six
 
 Now the all environment prerequisites are satisfied.
 
-### Debian Linux
+#### Debian Linux
 
 Debian 7.11 environment preparation is same as the one for Ubuntu 14.04
 except for several specifics.
