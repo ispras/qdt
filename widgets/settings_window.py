@@ -1,24 +1,21 @@
-from .var_widgets import \
-    VarLabel, \
-    VarButton, \
+from .var_widgets import (
+    VarLabel,
+    VarButton,
     VarToplevel
-
-from common import \
-    FormatVar, \
+)
+from common import (
+    FormatVar,
     mlget as _
+)
+from .gui_frame import GUIFrame
 
-from .gui_frame import \
-    GUIFrame
+from .hotkey import HKEntry
 
-from .hotkey import \
-    HKEntry
-
-from six.moves.tkinter import \
-    StringVar, \
+from six.moves.tkinter import (
+    StringVar,
     BOTH
-
-from qemu import \
-    MOp_SetNodeVarNameBase
+)
+from qemu import MOp_SetNodeVarNameBase
 
 class SettingsWidget(GUIFrame):
     def __init__(self, node, machine, *args, **kw):

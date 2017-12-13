@@ -1,35 +1,30 @@
-from .settings_window import \
-    SettingsWidget, \
+from .settings_window import (
+    SettingsWidget,
     SettingsWindow
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
-
-from .var_widgets import \
-    VarLabelFrame, \
+from .var_widgets import (
+    VarLabelFrame,
     VarLabel
-
-from qemu import \
-    MOp_SetIRQAttr, \
-    MOp_SetIRQEndPoint, \
-    MachineNodeOperation, \
+)
+from qemu import (
+    MOp_SetIRQAttr,
+    MOp_SetIRQEndPoint,
+    MachineNodeOperation,
     DeviceNode
+)
+from six.moves import range as xrange
 
-from six.moves import \
-    range as xrange
-
-from six.moves.tkinter import \
-    BOTH, \
+from six.moves.tkinter import (
+    BOTH,
     StringVar
+)
+from six.moves.tkinter_ttk import Combobox
 
-from six.moves.tkinter_ttk import \
-    Combobox
+from .device_settings import DeviceSettingsWidget
 
-from .device_settings import \
-    DeviceSettingsWidget
-
-from .hotkey import \
-    HKEntry
+from .hotkey import HKEntry
 
 class IRQSettingsWidget(SettingsWidget):
     def __init__(self, irq, *args, **kw):

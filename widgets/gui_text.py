@@ -5,9 +5,10 @@ __all__ = [
 
 # based on http://tkinter.unpythonic.net/wiki/ReadOnlyText
 
-from six.moves.tkinter import \
-    Text, \
+from six.moves.tkinter import (
+    Text,
     NORMAL
+)
 
 READONLY = "readonly"
 

@@ -3,31 +3,29 @@ __all__ = [
     "TaskErrorDialog"
 ]
 
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
-from .gui_dialog import \
-    GUIDialog
+from .gui_dialog import GUIDialog
 
-from six.moves.tkinter import \
-    VERTICAL, \
-    HORIZONTAL, \
-    BOTH, \
-    ON, \
-    END, \
-    NONE, \
+from six.moves.tkinter import (
+    VERTICAL,
+    HORIZONTAL,
+    BOTH,
+    ON,
+    END,
+    NONE,
     Scrollbar
-
-from .gui_text import \
-    GUIText, \
+)
+from .gui_text import (
+    GUIText,
     READONLY
+)
+from traceback import format_exception
 
-from traceback import \
-    format_exception
-
-from common import \
-    CancelledCallee, \
+from common import (
+    CancelledCallee,
     FailedCallee
+)
 
 class TaskErrorWidget(GUIFrame):
     def __init__(self, task, **kw):

@@ -1,14 +1,10 @@
-from .branch_tree_view import \
-    BranchTreeview
+from .branch_tree_view import BranchTreeview
 
-from .var_widgets import \
-    VarToplevel
+from .var_widgets import VarToplevel
 
-from six.moves.tkinter_ttk import \
-    Scrollbar
+from six.moves.tkinter_ttk import Scrollbar
 
-from common import \
-    mlget as _
+from common import mlget as _
 
 class HistoryWindow(VarToplevel):
     def __init__(self, gui_project_history_tracker, *args, **kw):

@@ -1,36 +1,31 @@
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
-from six.moves.tkinter import \
-    Checkbutton, \
-    BooleanVar, \
-    BOTH, \
+from six.moves.tkinter import (
+    Checkbutton,
+    BooleanVar,
+    BOTH,
     StringVar
+)
 
-from .var_widgets import \
-    VarLabel, \
+from .var_widgets import (
+    VarLabel,
     VarButton
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
+from .hotkey import HKEntry
 
-from .hotkey import \
-    HKEntry
-
-from qemu import \
-    PCIId, \
-    POp_AddDesc, \
-    DOp_SetPCIIdAttr, \
+from qemu import (
+    PCIId,
+    POp_AddDesc,
+    DOp_SetPCIIdAttr,
     DOp_SetAttr
+)
+from .qdc_gui_signal_helper import QDCGUISignalHelper
 
-from .qdc_gui_signal_helper import \
-    QDCGUISignalHelper
+from .obj_ref_var import ObjRefVar
 
-from .obj_ref_var import \
-    ObjRefVar
-
-from .pci_id_widget import \
-    PCIIdWidget
+from .pci_id_widget import PCIIdWidget
 
 def validate_int(var, entry):
     try:

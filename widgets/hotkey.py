@@ -1,10 +1,10 @@
 # ML should be used there (instead of mlget) because the key will be modified
-from common import \
-    mlget as _
+from common import mlget as _
 
-from six.moves.tkinter import \
-    END, \
+from six.moves.tkinter import (
+    END,
     Entry
+)
 
 class HKEntry(Entry):
     def __init__(self, *args, **kw):

@@ -1,66 +1,55 @@
-from .var_widgets import \
-    VarMenu, \
+from .var_widgets import (
+    VarMenu,
     VarTreeview
+)
+from .close_button_notebook import CloseButtonNotebook
 
-from .close_button_notebook import \
-    CloseButtonNotebook
+from .machine_widget import MachineDescriptionSettingsWidget
 
-from .machine_widget import \
-    MachineDescriptionSettingsWidget
+from qemu import MachineNode
 
-from qemu import \
-    MachineNode
-
-from six.moves.tkinter import \
-    NO, \
+from six.moves.tkinter import (
+    NO,
     PanedWindow
+)
 
-from common import \
-    CoTask, \
+from common import (
+    CoTask,
     mlget as _
-
-from qemu import \
-    QType, \
-    QemuTypeName, \
-    SysBusDeviceDescription, \
-    PCIExpressDeviceDescription, \
-    from_legacy_dict, \
-    BadBuildPath, \
-    qvd_get, \
-    qvd_load_with_cache, \
-    DOp_SetAttr, \
+)
+from qemu import (
+    QType,
+    QemuTypeName,
+    SysBusDeviceDescription,
+    PCIExpressDeviceDescription,
+    from_legacy_dict,
+    BadBuildPath,
+    qvd_get,
+    qvd_load_with_cache,
+    DOp_SetAttr,
     POp_AddDesc
+)
+from .qom_settings import QOMDescriptionSettingsWidget
 
-from .qom_settings import \
-    QOMDescriptionSettingsWidget
+from six.moves.tkinter_font import Font
 
-from six.moves.tkinter_font import \
-    Font
+from .gui_frame import GUIFrame
 
-from .gui_frame import \
-    GUIFrame
+from six.moves.tkinter_ttk import Scrollbar
 
-from six.moves.tkinter_ttk import \
-    Scrollbar
+from .add_desc_dialog import AddDescriptionDialog
 
-from .add_desc_dialog import \
-    AddDescriptionDialog
-
-from .gui_editing import \
-    GUIPOp_SetBuildPath, \
+from .gui_editing import (
+    GUIPOp_SetBuildPath,
     POp_SetDescLayout
+)
+from .popup_helper import TkPopupHelper
 
-from .popup_helper import \
-    TkPopupHelper
+from six.moves.tkinter_messagebox import showerror
 
-from six.moves.tkinter_messagebox import \
-    showerror
+from .qdc_gui_signal_helper import QDCGUISignalHelper
 
-from .qdc_gui_signal_helper import \
-    QDCGUISignalHelper
-
-from .gui_error import \
-    TaskErrorDialog
+from .gui_error import TaskErrorDialog
 
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
