@@ -2,22 +2,19 @@ __all__ = [
     "Statusbar"
 ]
 
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
-from .var_widgets import \
-    VarLabel
+from .var_widgets import VarLabel
 
-from six.moves.tkinter import \
-    Label, \
-    SUNKEN as RELIEF_SUNKEN, \
-    W as ANCHOR_W, \
-    X as FILL_X, \
-    RIGHT as SIDE_RIGHT, \
+from six.moves.tkinter import (
+    Label,
+    SUNKEN as RELIEF_SUNKEN,
+    W as ANCHOR_W,
+    X as FILL_X,
+    RIGHT as SIDE_RIGHT,
     LEFT as SIDE_LEFT
-
-from .pack_info_compat import \
-    pack_info
+)
+from .pack_info_compat import pack_info
 
 class Statusbar(GUIFrame):
     def __init__(self, *args, **kw):

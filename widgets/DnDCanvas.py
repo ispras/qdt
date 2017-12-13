@@ -1,17 +1,16 @@
 #!/usr/bin/python2
 # based on http://code.activestate.com/lists/python-list/281562/
 
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
-from six.moves import \
-    range as xrange
+from six.moves import range as xrange
 
-from six.moves.tkinter import \
-    IntVar, \
-    Canvas, \
-    RIDGE, \
+from six.moves.tkinter import (
+    IntVar,
+    Canvas,
+    RIDGE,
     BOTH
+)
 
 class CanvasDnD(GUIFrame):
     def __init__(self, master,

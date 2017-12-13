@@ -1,5 +1,4 @@
-from sys import \
-    version_info as v
+from sys import version_info as v
 
 __all__ = ["pack_info"]
 

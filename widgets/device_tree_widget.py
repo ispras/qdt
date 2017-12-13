@@ -1,21 +1,18 @@
-from .var_widgets import \
-    VarToplevel, \
-    VarTreeview, \
-    VarButton, \
+from .var_widgets import (
+    VarToplevel,
+    VarTreeview,
+    VarButton,
     VarLabelFrame
+)
+from qemu import qvd_get_registered
 
-from qemu import \
-    qvd_get_registered
+from six.moves.tkinter_ttk import Scrollbar
 
-from six.moves.tkinter_ttk import \
-    Scrollbar
-
-from six.moves.tkinter import \
-    Radiobutton, \
+from six.moves.tkinter import (
+    Radiobutton,
     StringVar
-
-from common import \
-    mlget as _
+)
+from common import mlget as _
 
 class DeviceTreeWidget(VarToplevel):
     def __init__(self, root, *args, **kw):

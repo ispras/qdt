@@ -1,27 +1,23 @@
-from common import \
-    mlget as _
+from common import mlget as _
 
-from .hotkey import \
-    HKEntry
+from .hotkey import HKEntry
 
-from .var_widgets import \
-    VarLabel, \
-    VarButton, \
+from .var_widgets import (
+    VarLabel,
+    VarButton,
     VarCombobox
-
-from six.moves.tkinter import \
-    END, \
+)
+from six.moves.tkinter import (
+    END,
     StringVar
+)
+from six.moves.tkinter_messagebox import showerror
 
-from six.moves.tkinter_messagebox import \
-    showerror
-
-from qemu import \
-    MOp_AddBus, \
+from qemu import (
+    MOp_AddBus,
     POp_AddDesc
-
-from .gui_dialog import \
-    GUIDialog
+)
+from .gui_dialog import GUIDialog
 
 msg_title = _("Description creation error")
 msg_name = _("Name '%s' is incorrect or already in use.")

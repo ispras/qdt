@@ -1,6 +1,7 @@
-from six.moves.tkinter import \
-    TclError, \
+from six.moves.tkinter import (
+    TclError,
     Misc
+)
 
 class DoShow(BaseException):
     def __init__(self, show):

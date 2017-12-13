@@ -1,8 +1,6 @@
-from common import \
-    CoDispatcher
+from common import CoDispatcher
 
-from time import \
-    time
+from time import time
 
 import sys
 

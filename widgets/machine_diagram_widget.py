@@ -1,103 +1,89 @@
-from widgets import \
-    VarMenu, \
+from widgets import (
+    VarMenu,
     CanvasDnD
-
-from six import \
-    text_type, \
+)
+from six import (
+    text_type,
     binary_type
-
-from six.moves import \
-    reduce, \
+)
+from six.moves import (
+    reduce,
     range as xrange
-
-from six.moves.tkinter import \
-    StringVar, \
-    BooleanVar, \
-    DISABLED, \
+)
+from six.moves.tkinter import (
+    StringVar,
+    BooleanVar,
+    DISABLED,
     ALL
-
-from math import \
-    sqrt, \
+)
+from math import (
+    sqrt,
     hypot
+)
+from random import random
 
-from random import \
-    random
+from time import time
 
-from time import \
-    time
+from sys import float_info
 
-from sys import \
-    float_info
+from os import remove
 
-from os import \
-    remove
+from os.path import splitext
 
-from os.path import \
-    splitext
-
-from common import \
-    PhBox, \
-    PhCircle, \
-    Vector, \
-    Segment, \
-    Polygon, \
-    mlget as _, \
+from common import (
+    PhBox,
+    PhCircle,
+    Vector,
+    Segment,
+    Polygon,
+    mlget as _,
     sign
-
-from qemu import \
-    MOp_SetBusAttr, \
-    MOp_AddDevice, \
-    MOp_DelDevice, \
-    MOp_AddBus, \
-    MOp_AddMemoryNode, \
-    MOp_DelBus, \
-    MOp_SetChildBus, \
-    BusNode, \
-    IRQLine as QIRQLine, \
-    MOp_SetNodeVarNameBase, \
-    MachineNodeSetLinkAttributeOperation, \
-    MOp_AddIRQLine, \
-    MOp_DelIRQLine, \
-    MOp_SetIRQAttr, \
-    MachineNodeOperation, \
-    MOp_AddIRQHub, \
-    MOp_SetDevParentBus, \
-    MOp_SetDevQOMType, \
-    Node, \
-    DeviceNode, \
+)
+from qemu import (
+    MOp_SetBusAttr,
+    MOp_AddDevice,
+    MOp_DelDevice,
+    MOp_AddBus,
+    MOp_AddMemoryNode,
+    MOp_DelBus,
+    MOp_SetChildBus,
+    BusNode,
+    IRQLine as QIRQLine,
+    MOp_SetNodeVarNameBase,
+    MachineNodeSetLinkAttributeOperation,
+    MOp_AddIRQLine,
+    MOp_DelIRQLine,
+    MOp_SetIRQAttr,
+    MachineNodeOperation,
+    MOp_AddIRQHub,
+    MOp_SetDevParentBus,
+    MOp_SetDevQOMType,
+    Node,
+    DeviceNode,
     IRQHub
+)
+from widgets import DeviceSettingsWindow
 
-from widgets import \
-    DeviceSettingsWindow
+from .irq_settings import IRQSettingsWindow
 
-from .irq_settings import \
-    IRQSettingsWindow
+from .bus_settings import BusSettingsWindow
 
-from .bus_settings import \
-    BusSettingsWindow
+from .popup_helper import TkPopupHelper
 
-from .popup_helper import \
-    TkPopupHelper
+from .cross_dialogs import asksaveas
 
-from .cross_dialogs import \
-    asksaveas
+from six.moves.tkinter_messagebox import showerror
 
-from six.moves.tkinter_messagebox import \
-    showerror
+from .hotkey import HotKeyBinding
 
-from .hotkey import \
-    HotKeyBinding
-
-from canvas2svg import \
-    configure as svg_configure, \
-    SEGMENT_TO_PATH, \
+from canvas2svg import (
+    configure as svg_configure,
+    SEGMENT_TO_PATH,
     saveall as saveall2svg
+)
+from .irq_hub_settings import IRQHubSettingsWindow
 
-from .irq_hub_settings import \
-    IRQHubSettingsWindow
-
-from itertools import \
-    count
+from itertools import count
 
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):

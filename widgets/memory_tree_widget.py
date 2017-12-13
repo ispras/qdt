@@ -1,36 +1,31 @@
-from .var_widgets import \
-    VarMenu, \
+from .var_widgets import (
+    VarMenu, 
     VarTreeview
-
-from qemu import \
-    MemoryNode, \
-    MemorySASNode, \
-    MemoryLeafNode, \
-    MemoryAliasNode, \
-    MemoryRAMNode, \
-    MemoryROMNode, \
-    MachineNodeOperation, \
-    MOp_AddMemoryNode, \
-    MOp_DelMemoryNode, \
-    MOp_AddMemChild, \
-    MOp_RemoveMemChild, \
-    MOp_SetMemNodeAlias, \
+)
+from qemu import (
+    MemoryNode,
+    MemorySASNode,
+    MemoryLeafNode,
+    MemoryAliasNode,
+    MemoryRAMNode,
+    MemoryROMNode,
+    MachineNodeOperation,
+    MOp_AddMemoryNode,
+    MOp_DelMemoryNode,
+    MOp_AddMemChild,
+    MOp_RemoveMemChild,
+    MOp_SetMemNodeAlias,
     MOp_SetMemNodeAttr
+)
+from .memory_settings import MemorySettingsWindow
 
-from .memory_settings import \
-    MemorySettingsWindow
+from common import mlget as _
 
-from common import \
-    mlget as _
+from .popup_helper import TkPopupHelper
 
-from .popup_helper import \
-    TkPopupHelper
+from six import integer_types
 
-from six import \
-    integer_types
-
-from six.moves.tkinter import \
-    TclError
+from six.moves.tkinter import TclError
 
 from .tk_unbind import \
     unbind

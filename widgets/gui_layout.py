@@ -1,5 +1,4 @@
-from copy import \
-    deepcopy
+from copy import deepcopy
 
 class GUILayout(object):
     def __init__(self, desc_name, opaque, shown = None):

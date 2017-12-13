@@ -1,11 +1,8 @@
-from .tv_width_helper import \
-    TreeviewWidthHelper
+from .tv_width_helper import TreeviewWidthHelper
 
-from .var_widgets import \
-    VarTreeview
+from .var_widgets import VarTreeview
 
-from common import \
-    mlget as _
+from common import mlget as _
 
 class BranchTreeview(VarTreeview, TreeviewWidthHelper):
     def __init__(self, gui_project_history_tracker, *args, **kw):

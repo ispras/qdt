@@ -1,32 +1,27 @@
-from widgets import \
-    DeviceSettingsWidget, \
-    VarLabelFrame, \
+from widgets import (
+    DeviceSettingsWidget,
+    VarLabelFrame,
     VarButton
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
+from six import integer_types
 
-from six import \
-    integer_types
+from six.moves import range as xrange
 
-from six.moves import \
-    range as xrange
-
-from six.moves.tkinter import \
-    BOTH, \
-    Label, \
+from six.moves.tkinter import (
+    BOTH,
+    Label,
     StringVar
-
-from qemu import \
-    MOp_DelIOMapping, \
-    MOp_AddIOMapping, \
+)
+from qemu import (
+    MOp_DelIOMapping,
+    MOp_AddIOMapping,
     MOp_SetIOMapping
+)
+from .hotkey import HKEntry
 
-from .hotkey import \
-    HKEntry
-
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
 def gen_mapping_string(mapping):
     if mapping is None:

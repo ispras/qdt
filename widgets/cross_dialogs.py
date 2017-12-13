@@ -1,10 +1,10 @@
-from common import \
-    mlget as _
+from common import mlget as _
 
-from six.moves.tkinter_tkfiledialog import \
-    askdirectory as tk_askdirector, \
-    askopenfilename, \
+from six.moves.tkinter_tkfiledialog import (
+    askdirectory as tk_askdirector,
+    askopenfilename,
     asksaveasfilename
+)
 
 class CrossSaveAsDialog(object):
     def __init__(self, filetypes = None, title = None):
