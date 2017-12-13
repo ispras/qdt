@@ -27,8 +27,7 @@ from six import integer_types
 
 from six.moves.tkinter import TclError
 
-from .tk_unbind import \
-    unbind
+from .tk_unbind import unbind
 
 LAYOUT_COLUMNS_WIDTH = "columns width"
 
