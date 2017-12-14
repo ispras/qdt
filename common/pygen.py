@@ -278,7 +278,12 @@ class PyGenerator(object):
         elif val is None:
             self.write("None")
         else:
-            self.write(self.obj2name[val])
+            o2n = self.obj2name
+            if val in o2n:
+                s = o2n[val]
+            else:
+                s = repr(val)
+            self.write(s)
 
 if __name__ == "__main__":
     g = PyGenerator()
