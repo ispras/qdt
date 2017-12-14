@@ -570,7 +570,7 @@ class MemorySASNode(MemoryNode):
         MemoryNode.__init__(self, name, size, **kw)
 
 class MemoryLeafNode(MemoryNode):
-    def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
+    def add_child(self, *args, **kw):
         raise MemoryNodeCannotHasChildren()
 
 class MemoryAliasNode(MemoryLeafNode):
