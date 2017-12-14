@@ -1,3 +1,7 @@
+from source import (
+    CINT,
+    CSTR
+)
 from qemu import (
     QProject
 
