@@ -222,30 +222,6 @@ class PyGenerator(object):
 
         self.first_field = True
 
-    def pprint_text(self, text):
-        # Double and single quote count
-        dquote = 0
-        squote = 0
-
-        text_utf8 = text_type('')
-
-        for c in text:
-            if c == '"':
-                dquote += 1
-            elif c == "'":
-                squote += 1
-            elif c == "\\":
-                c = "\\\\"
-
-            text_utf8 += text_type(c)
-
-        if dquote > squote:
-            escaped = text_utf8.replace(u"'", u"\\'")
-            self.write(u"u'" + escaped + u"'")
-        else:
-            escaped = text_utf8.replace(u'"', u'\\"')
-            self.write(u'u"' + escaped + u'"')
-
     def pprint(self, val):
         if isinstance(val, list):
             if not val:
@@ -312,10 +288,3 @@ if __name__ == "__main__":
             stdout.write(str(type(val)) + " : " + repr(val) + "\n")
 
     g.w = Writer()
-
-    g.pprint_text("String in default encoding")
-    g.line()
-    g.pprint_text(u"Unicode string")
-    g.line()
-    g.pprint_text(b"ASCII string")
-    g.line()
