@@ -5,6 +5,9 @@ from source import (
 from qemu import (
     QProject
 
+# I/O regions register definition
+  , Register
+
 # System bus device stub generation settings
   , SysBusDeviceDescription
 
