@@ -24,6 +24,8 @@ from .qom_desc import (
     describable
 )
 
+from copy import deepcopy as dcp
+
 @describable
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
@@ -40,6 +42,8 @@ class SysBusDeviceType(QOMDevice):
         in_irq_num = 0,
         mmio_num = 0,
         pio_num = 0,
+        mmio = None,
+        pio = None,
         **qomd_kw
     ):
 
@@ -54,6 +58,9 @@ class SysBusDeviceType(QOMDevice):
         self.pio_size_macros = []
         self.pio_address_macros = []
 
+        self.mmio = {} if mmio is None else dcp(mmio);
+        self.pio = {} if pio is None else dcp(pio);
+
         self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
 
         for irqN in range(0, self.out_irq_num):
@@ -66,12 +73,14 @@ class SysBusDeviceType(QOMDevice):
                 self.get_Ith_mmio_name(mmioN),
                 save = False
             )
+            self.add_fields_for_regs(self.mmio.get(mmioN, list()))
 
         for ioN in range(0, self.pio_num):
             self.add_state_field_h("MemoryRegion",
                 self.get_Ith_io_name(ioN),
                 save = False
             )
+            self.add_fields_for_regs(self.pio.get(ioN, list()))
 
         self.timer_declare_fields()
         self.char_declare_fields()
@@ -189,13 +198,15 @@ class SysBusDeviceType(QOMDevice):
             read_func = QOMType.gen_mmio_read(
                 name = self.qtn.for_id_name + "_" + component + "_read",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.mmio.get(mmioN, None)
             )
 
             write_func = QOMType.gen_mmio_write(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.mmio.get(mmioN, None)
             )
 
             write_func.extra_references = {read_func}
@@ -253,13 +264,15 @@ class SysBusDeviceType(QOMDevice):
             read_func = QOMType.gen_mmio_read(
                 name = self.qtn.for_id_name + "_" + component + "_read",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.pio.get(pioN, None)
             )
 
             write_func = QOMType.gen_mmio_write(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.pio.get(pioN, None)
             )
 
             write_func.extra_references = {read_func}
