@@ -571,10 +571,8 @@ class QOMType(object):
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro):
         read = Type.lookup("MemoryRegionOps_read")
-        return read.use_as_prototype(
-            name = name,
-            static = True,
-            body = """\
+
+        body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
     uint64_t@bret@b=@s0;
 
@@ -590,7 +588,12 @@ class QOMType(object):
     offset = read.args[1].name,
     Struct = struct_name,
     UPPER = type_cast_macro
-            ),
+        )
+
+        return read.use_as_prototype(
+            name = name,
+            static = True,
+            body = body,
             used_types = [
                 read.args[1].type,
                 Type.lookup("uint64_t"),
