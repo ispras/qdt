@@ -740,7 +740,7 @@ class QOMType(object):
         return fn
 
     @staticmethod
-    def gen_mmio_read(name, struct_name, type_cast_macro):
+    def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
         read = Type.lookup("MemoryRegionOps_read")
 
         used_types = set([
@@ -750,11 +750,19 @@ class QOMType(object):
             Type.lookup("HWADDR_PRIx")
         ])
 
+        context = {
+            "s_is_used": False
+        }
+
+        regs = "" if regs is None else ("\n" + gen_reg_cases(regs, "r",
+            used_types, read.args[1].name, None, context
+        ))
+
         body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
+    {unused}{Struct}@b*s@b=@s{UPPER}(opaque);
     uint64_t@bret@b=@s0;
 
-    switch@b({offset})@b{{
+    switch@b({offset})@b{{{regs}
     default:
         printf(@a"%s:@bunimplemented@bread@bfrom@b0x%"HWADDR_PRIx",@bsize@b%d\
 \\n",@s__FUNCTION__,@s{offset},@ssize);
@@ -763,6 +771,8 @@ class QOMType(object):
 
     return@sret;
 """.format(
+    regs = regs,
+    unused = "" if context["s_is_used"] else "__attribute__((unused))@b",
     offset = read.args[1].name,
     Struct = struct_name,
     UPPER = type_cast_macro
@@ -776,7 +786,7 @@ class QOMType(object):
         )
 
     @staticmethod
-    def gen_mmio_write(name, struct_name, type_cast_macro):
+    def gen_mmio_write(name, struct_name, type_cast_macro, regs = None):
         write = Type.lookup("MemoryRegionOps_write")
 
         used_types = set([
@@ -788,10 +798,18 @@ class QOMType(object):
             Type.lookup("PRIx64")
         ])
 
-        body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
+        context = {
+            "s_is_used": False
+        }
 
-    switch@b({offset})@b{{
+        regs = "" if regs is None else ("\n" + gen_reg_cases(regs, "w",
+            used_types, write.args[1].name, write.args[2].name, context
+        ))
+
+        body = """\
+    {unused}{Struct}@b*s@b=@s{UPPER}(opaque);
+
+    switch@b({offset})@b{{{regs}
     default:
         printf(@a"%s:@bunimplemented@bwrite@bto@b0x%"HWADDR_PRIx",@bsize@b%d,@b"
                @a"value@b0x%"PRIx64"\\n",@s__FUNCTION__,@s{offset},@ssize,\
@@ -799,6 +817,8 @@ class QOMType(object):
         break;
     }}
 """.format(
+    regs = regs,
+    unused = "" if context["s_is_used"] else "__attribute__((unused))@b",
     offset = write.args[1].name,
     value = write.args[2].name,
     Struct = struct_name,
