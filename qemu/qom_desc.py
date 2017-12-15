@@ -102,7 +102,8 @@ def descriptionOf(QOMTemplate):
 
             for attr in __pa + __kwa:
                 val = getattr(self, attr)
-                gen.gen_field("%s = %s" % (attr, gen.gen_const(val)))
+                gen.gen_field(attr + " = ")
+                gen.pprint(val)
 
             if self.compat:
                 for attr, val in self.compat.items():
