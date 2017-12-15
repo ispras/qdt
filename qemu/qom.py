@@ -9,9 +9,11 @@ __all__ = [
   , "QemuTypeName"
   , "QOMType"
       , "QOMDevice"
+  , "Register"
 ]
 
 from source import (
+    CINT,
     line_origins,
     Source,
     Header,
@@ -245,6 +247,57 @@ type2vmstate = {
     "QEMUTimer*" : "VMSTATE_TIMER_PTR",
     "PCIDevice" : "VMSTATE_PCI_DEVICE"
 }
+
+class Register(object):
+    def __init__(self, size,
+        name = None,
+        access = "rw",
+        reset = 0,
+        full_name = None,
+        # write mask (None corresponds 0b11...11. I.e. all bits are writable).
+        wmask = None
+    ):
+        self.size, self.name, self.access = size, name, access
+        self.reset = CINT(reset, 16, size)
+        self.full_name = full_name
+
+        if wmask is None:
+            wmask = (1 << (size * 8)) - 1
+        self.wmask = CINT(wmask, 2, size * 8)
+
+    def __repr__(self, *args, **kwargs):
+        # TODO: adapt and utilize PyGenerator.gen_args for this use case
+
+        ret = type(self).__name__
+        size = self.size
+
+        ret += "(" + repr(size)
+
+        name = self.name
+        if name is not None:
+            ret += ", name = " + repr(name)
+
+        access = self.access
+        if access != "rw":
+            ret += ", access = " + repr(access)
+
+        reset = self.reset
+        if reset != CINT(0, 16, size):
+            ret += ", reset = " + repr(reset)
+
+        fn = self.full_name
+        if fn is not None:
+            ret += ", full_name = " + repr(fn)
+
+        wm = self.wmask
+        if (wm.v != (1 << (size * 8)) - 1
+        or  wm.b != 2
+        or  wm.d != size * 8
+        ):
+            ret += ", wmask = " + repr(wm)
+
+        ret += ")"
+        return ret
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
