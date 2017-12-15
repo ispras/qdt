@@ -41,6 +41,9 @@ from collections import (
 from .version import (
     get_vp
 )
+from math import (
+    log
+)
 
 # properties
 class QOMPropertyType(object):
@@ -302,6 +305,96 @@ class Register(object):
 
         ret += ")"
         return ret
+
+def get_reg_range(regs):
+    return sum(reg.size for reg in regs)
+
+def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
+    indent = "    ",
+    case_indent = "    "
+):
+    reg_range = get_reg_range(regs)
+
+    digits = int(log(reg_range, 16)) + 1
+    off_fmt = "0x%%0%dX" % digits
+
+    cases = []
+    offset = 0
+
+    fprintf = None
+    hwaddr_pri = None
+
+    for reg in regs:
+        size = reg.size
+        if size == 1:
+            case = indent + "case %s:" % (off_fmt % offset)
+        else:
+            case = indent + "case %s ... %s:" % (
+                off_fmt % offset,
+                off_fmt % (offset + size - 1)
+            )
+        offset += size
+
+        name = reg.name
+        if name is not None:
+            case += " /* %s */" % name
+
+        case += "\n" + indent
+
+        if access in reg.access:
+            qtn = QemuTypeName(name)
+
+            if access == "r":
+                case += case_indent + "ret@b=@ss->%s;" % qtn.for_id_name
+                context["s_is_used"] = True
+
+                case += "\n" + indent
+            elif access == "w":
+                wm = reg.wmask
+                if wm.v == (1 << (size * 8)) - 1:
+                    # write mask does not affect the value being assigned
+                    case += case_indent + "s->%s@b=@s%s;" % (
+                        qtn.for_id_name,
+                        val_name
+                    )
+                    context["s_is_used"] = True
+
+                    case += "\n" + indent
+                elif wm.v:
+                    case += case_indent + ("s->{reg}@b=@s({val}@s&@s{mask})"
+                        "@s|@b(s->{reg}@b&@b~{mask});".format(
+                            reg = qtn.for_id_name,
+                            val = val_name,
+                            mask = wm.__c__()
+                        )
+                    )
+                    context["s_is_used"] = True
+
+                    case += "\n" + indent
+        else:
+            if fprintf is None:
+                fprintf = Type.lookup("fprintf");
+                hwaddr_pri = Type.lookup("HWADDR_PRIx")
+
+            case += case_indent + ('%s(@astderr,@s"%%s: %s 0x%%0%d"%s"\\n",'
+                                   '@s__FUNCTION__,@s%s);'
+            ) % (
+                fprintf.name,
+                "Reading from" if access == "r" else "Writing to",
+                digits,
+                hwaddr_pri.name,
+                offset_name
+            )
+            case += "\n" + indent
+
+        case += case_indent + "break;\n"
+
+        cases.append(case)
+
+    if fprintf:
+        used_types.add(fprintf)
+
+    return "\n".join(cases)
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
