@@ -605,10 +605,8 @@ class QOMType(object):
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro):
         write = Type.lookup("MemoryRegionOps_write")
-        return write.use_as_prototype(
-            name = name,
-            static = True,
-            body = """\
+
+        body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
 
     switch@b({offset})@b{{
@@ -623,7 +621,12 @@ class QOMType(object):
     value = write.args[2].name,
     Struct = struct_name,
     UPPER = type_cast_macro
-            ),
+        )
+
+        return write.use_as_prototype(
+            name = name,
+            static = True,
+            body = body,
             used_types = [
                 write.args[1].type,
                 write.args[2].type,
