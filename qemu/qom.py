@@ -572,6 +572,13 @@ class QOMType(object):
     def gen_mmio_read(name, struct_name, type_cast_macro):
         read = Type.lookup("MemoryRegionOps_read")
 
+        used_types = [
+            read.args[1].type,
+            Type.lookup("uint64_t"),
+            Type.lookup("printf"),
+            Type.lookup("HWADDR_PRIx")
+        ]
+
         body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
     uint64_t@bret@b=@s0;
@@ -594,12 +601,7 @@ class QOMType(object):
             name = name,
             static = True,
             body = body,
-            used_types = [
-                read.args[1].type,
-                Type.lookup("uint64_t"),
-                Type.lookup("printf"),
-                Type.lookup("HWADDR_PRIx")
-            ]
+            used_types = used_types
         )
 
     @staticmethod
