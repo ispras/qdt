@@ -91,15 +91,15 @@ class MemorySettingsWidget(SettingsWidget):
             row += 1
 
         self.fields = [
-            (_("Name"), "name", str),
-            (_("Size"), "size", int),
-            (_("Offset"), "offset", int),
+            (_("Name"), "name", CConst),
+            (_("Size"), "size", CConst),
+            (_("Offset"), "offset", CConst),
             (_("May overlap"), "may_overlap", bool),
-            (_("Priority"), "priority", int)
+            (_("Priority"), "priority", CConst)
         ]
 
         if type(mem) is MemoryAliasNode:
-            self.fields.extend([ (_("Alias offset"), "alias_offset", int) ])
+            self.fields.extend([ (_("Alias offset"), "alias_offset", CConst) ])
 
         if isinstance(mem, MemorySASNode):
             self.fields = [(_("Name"), "name", str)]
@@ -279,7 +279,7 @@ class MemorySettingsWidget(SettingsWidget):
             prev_n = self.__prev_name
         except AttributeError:
             # name was not edited yet
-            prev_n = self.mem.name
+            prev_n = self.mem.name.v
 
         if vb == "mem" or vb == name_to_var_base(prev_n):
             """ If current variable name base is default or corresponds to
