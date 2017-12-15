@@ -623,7 +623,7 @@ class QOMType(object):
     value = write.args[2].name,
     Struct = struct_name,
     UPPER = type_cast_macro
-),
+            ),
             used_types = [
                 write.args[1].type,
                 write.args[2].type,
