@@ -31,6 +31,10 @@ from collections import (
 from .qom_desc import (
     describable
 )
+from copy import (
+    deepcopy as dcp
+)
+
 
 @describable
 class PCIExpressDeviceType(QOMDevice):
@@ -63,6 +67,7 @@ class PCIExpressDeviceType(QOMDevice):
         revision = 0,
         subsys = None,
         subsys_vendor = None,
+        bars = None,
         **qomd_kw
     ):
         super(PCIExpressDeviceType, self).__init__(name, directory, **qomd_kw)
@@ -79,6 +84,8 @@ class PCIExpressDeviceType(QOMDevice):
 
         self.subsystem = subsys
         self.subsystem_vendor = subsys_vendor
+
+        self.bars = {} if bars is None else dcp(bars)
 
         # Cast all PCI identifiers to PCIId
         for attr in [ "vendor", "subsystem_vendor" ]:
@@ -298,13 +305,15 @@ corresponding vendor is given" % attr
             read_func = QOMType.gen_mmio_read(
                 name = self.qtn.for_id_name + "_" + component + "_read",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.bars.get(barN, None)
             )
 
             write_func = QOMType.gen_mmio_write(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.bars.get(barN, None)
             )
 
             write_func.extra_references = {read_func}
