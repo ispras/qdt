@@ -606,14 +606,14 @@ class QOMType(object):
     def gen_mmio_write(name, struct_name, type_cast_macro):
         write = Type.lookup("MemoryRegionOps_write")
 
-        used_types = [
+        used_types = set([
             write.args[1].type,
             write.args[2].type,
             Type.lookup("uint64_t"),
             Type.lookup("printf"),
             Type.lookup("HWADDR_PRIx"),
             Type.lookup("PRIx64")
-        ]
+        ])
 
         body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
