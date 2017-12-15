@@ -590,13 +590,13 @@ class QOMType(object):
     offset = read.args[1].name,
     Struct = struct_name,
     UPPER = type_cast_macro
-),
-        used_types = [
-            read.args[1].type,
-            Type.lookup("uint64_t"),
-            Type.lookup("printf"),
-            Type.lookup("HWADDR_PRIx")
-        ]
+            ),
+            used_types = [
+                read.args[1].type,
+                Type.lookup("uint64_t"),
+                Type.lookup("printf"),
+                Type.lookup("HWADDR_PRIx")
+            ]
         )
 
     @staticmethod
