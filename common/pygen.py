@@ -220,6 +220,11 @@ class PyGenerator(object):
 
         self.first_field = True
 
+    def gen_code(self, obj, pa_names = False, suffix = ")"):
+        self.reset_gen(obj)
+        self.gen_args(obj, pa_names = pa_names)
+        self.gen_end(suffix = suffix)
+
     def pprint(self, val):
         if isinstance(val, list):
             if not val:
