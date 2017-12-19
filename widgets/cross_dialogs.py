@@ -6,6 +6,8 @@ from six.moves.tkinter_tkfiledialog import (
     asksaveasfilename
 )
 
+from six.moves.tkinter_messagebox import askyesno as tk_askyesno
+
 class CrossDialog(object):
     def __init__(self, master):
         self.master = master
@@ -23,6 +25,20 @@ class CrossDialog(object):
         finally:
             if hk:
                 hk.enable_hotkeys()
+
+class CrossAskYesNoDialog(CrossDialog):
+    def __init__(self, master, title, message):
+        super(CrossAskYesNoDialog, self).__init__(master)
+        self.title, self.message = title, message
+
+    def __ask__(self):
+        return tk_askyesno(
+            title = self.title.get(),
+            message = self.message.get()
+        )
+
+def askyesno(*args, **kw):
+    return CrossAskYesNoDialog(*args, **kw).ask()
 
 class CrossSaveAsDialog(CrossDialog):
     def __init__(self, master, filetypes = None, title = None):

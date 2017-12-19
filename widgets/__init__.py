@@ -89,6 +89,8 @@ from .tk_co_dispatcher import \
     TkCoDispatcher
 
 from .cross_dialogs import \
+    CrossAskYesNoDialog, \
+        askyesno, \
     CrossDirectoryDialog, \
         askdirectory, \
     CrossOpenDialog, \
