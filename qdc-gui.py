@@ -527,7 +527,7 @@ in process. Do you want to start cache rebuilding?").get()
         d = AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
-        dir = askdirectory(title = _("Select Qemu build path"))
+        dir = askdirectory(self, title = _("Select Qemu build path"))
         if not dir:
             return
 
@@ -642,7 +642,8 @@ later.").get()
         self.save_project_to_file(file_name)
 
     def on_save_as(self):
-        fname = asksaveas([(_("QDC GUI Project defining script"), ".py")],
+        fname = asksaveas(self,
+            [(_("QDC GUI Project defining script"), ".py")],
             title = _("Save project")
         )
 
@@ -685,7 +686,7 @@ all changes are saved. """
         if not self.check_unsaved():
             return
 
-        fname = askopen([(_("QDC GUI Project defining script"), ".py")],
+        fname = askopen(self, [(_("QDC GUI Project defining script"), ".py")],
             title = _("Load project")
         )
 

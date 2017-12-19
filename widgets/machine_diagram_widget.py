@@ -705,7 +705,7 @@ IRQ line creation
             self.hk.delete_bindings(self.bindings)
 
     def on_export_diagram(self, *args):
-        file_name = asksaveas(
+        file_name = asksaveas(self,
             [
                 ((_("Scalable Vector Graphics image"), ".svg")),
                 ((_("Postscript image"), ".ps"))
