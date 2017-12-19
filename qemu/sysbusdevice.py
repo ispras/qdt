@@ -115,11 +115,10 @@ class SysBusDeviceType(QOMDevice):
             self.state_struct
         ])
 
-        mmio_def_size = 0x100
         for mmioN in range(0, self.mmio_num):
             size_macro = Macro(
                 name = self.gen_Ith_mmio_size_macro_name(mmioN),
-                text = "0x%X" % mmio_def_size
+                text = self.gen_mmio_size(self.mmio.get(mmioN, None))
             )
 
             self.header.add_type(size_macro)
