@@ -145,7 +145,7 @@ class PyGenerator(object):
                 quotes = '"""' if multiline else '"'
                 return prefix + quotes + escaped + quotes
         else:
-            return str(c)
+            return repr(c)
 
     def reset_gen(self, obj):
         self.reset_gen_common(type(obj).__name__ + "(")
