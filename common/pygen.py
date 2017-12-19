@@ -100,9 +100,7 @@ class PyGenerator(object):
             self.line()
 
     def gen_const(self, c):
-        if isinstance(c, bool):
-            return "True" if c else "False"
-        elif isinstance(c, integer_types):
+        if isinstance(c, integer_types):
             if c <= 0:
                 return "%d" % c
             else:
