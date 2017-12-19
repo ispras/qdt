@@ -6,7 +6,9 @@ from six.moves.tkinter_tkfiledialog import (
     asksaveasfilename
 )
 
-class CrossSaveAsDialog(object):
+class CrossDialog(object): pass
+
+class CrossSaveAsDialog(CrossDialog):
     def __init__(self, filetypes = None, title = None):
         self.title = _("Save as") if title is None else title
 
@@ -27,7 +29,7 @@ class CrossSaveAsDialog(object):
 def asksaveas(*args, **kw):
     return CrossSaveAsDialog(*args, **kw).ask()
 
-class CrossOpenDialog(object):
+class CrossOpenDialog(CrossDialog):
     def __init__(self, filetypes = None, title = None):
         self.title = _("Open file") if title is None else title
 
@@ -48,7 +50,7 @@ class CrossOpenDialog(object):
 def askopen(*args, **kw):
     return CrossOpenDialog(*args, **kw).ask()
 
-class CrossDirectoryDialog(object):
+class CrossDirectoryDialog(CrossDialog):
     def __init__(self, title = None):
         self.title = _("Select directory") if title is None else title
 
