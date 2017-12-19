@@ -187,7 +187,14 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                     continue
 
                 if l.widget is None:
-                    desc = next(self.p.find(name = desc_name))
+                    try:
+                        desc = next(self.p.find(name = desc_name))
+                    except StopIteration:
+                        # Ignore layouts for lost descriptions.
+                        # It is frequent situation after manual project
+                        # editing. I.e. a user was probably changed name of the
+                        # description.
+                        continue
 
                     w = self.gen_widget(desc)
                     try:
