@@ -11,7 +11,18 @@ class CrossDialog(object):
         self.master = master
 
     def ask(self):
-        return self.__ask__()
+        try:
+            hk = self.master.winfo_toplevel().hk
+        except:
+            hk = None
+        else:
+            hk.disable_hotkeys()
+
+        try:
+            return self.__ask__()
+        finally:
+            if hk:
+                hk.enable_hotkeys()
 
 class CrossSaveAsDialog(CrossDialog):
     def __init__(self, master, filetypes = None, title = None):
