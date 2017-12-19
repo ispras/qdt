@@ -832,6 +832,14 @@ class QOMType(object):
             used_types = used_types
         )
 
+    @staticmethod
+    def gen_mmio_size(regs):
+        if regs is None:
+            return CINT(0x100, 16, 3) # legacy default
+        else:
+            reg_range = get_reg_range(regs)
+            digits = int(log(reg_range, 16)) + 1
+            return CINT(reg_range, 16, digits)
 
 class QOMStateField(object):
     def __init__(self, ftype, name,
