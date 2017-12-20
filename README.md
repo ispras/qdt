@@ -104,15 +104,15 @@ It has a set of heuristics referring to specific commits in QEMU Git history.
 for the current QEMU version.
 
 ```bash
-sudo pip install gitpython
-sudo pip3 install gitpython
+sudo pip install --upgrade gitpython
+sudo pip3 install --upgrade gitpython
 ```
 
 `six` package is used to handle 2.x and 3.x Python version differences.
 
 ```bash
-sudo pip install six
-sudo pip3 install six
+sudo pip install --upgrade six
+sudo pip3 install --upgrade six
 ```
 
 Now the all environment prerequisites are satisfied.
