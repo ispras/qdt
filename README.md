@@ -254,7 +254,7 @@ The result of this analyze will be cached in the build directory.
 An analyze is required each time the QEMU version (HEAD) changes.
 
 ```bash
-~/qemu$
+~/qemu/qdt$
 
 cd ..
 qdt/qemu_device_creator.py -b ./build basic-device.py
