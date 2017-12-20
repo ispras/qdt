@@ -143,6 +143,8 @@ QDT is suddenly required a QEMU to work with.
 So, the first objective is to get its sources.
 
 ```bash
+~$
+
 mkdir qemu
 cd qemu
 git clone git://git.qemu.org/qemu.git src
@@ -164,6 +166,8 @@ A good practice is to use out-of-source tree build.
 And this manual follows it.
 
 ```bash
+~/qemu/src$
+
 cd ..
 mkdir build
 cd build
@@ -177,6 +181,8 @@ It is time to get QDT itself.
 Note that, several dependencies of QDT are embedded as submodules.
 
 ```bash
+~/qemu/build$
+
 cd ..
 git clone http://nasredin.intra.ispras.ru:3000/qemu/qdt.git
 cd qdt
@@ -187,6 +193,8 @@ git submodule update --recursive
 Now you can launch the GUI.
 
 ```bash
+~/qemu/qdt$
+
 ./qdc-gui.py
 ```
 
@@ -246,6 +254,8 @@ The result of this analyze will be cached in the build directory.
 An analyze is required each time the QEMU version (HEAD) changes.
 
 ```bash
+~/qemu$
+
 cd ..
 qdt/qemu_device_creator.py -b ./build basic-device.py
 ```
@@ -257,6 +267,8 @@ This way the generator may realize where the QEMU is.
 Now look at the changes on QEMU sources.
 
 ```bash
+~/qemu$
+
 cd src
 git status
 ```
@@ -442,6 +454,8 @@ At this moment the machine is implemented.
 Go to the build directory and make it.
 
 ```bash
+~/qemu/src$
+
 cd ../build
 make
 ```
@@ -449,6 +463,8 @@ make
 Ask QEMU for list of available machines to check if all is good.
 
 ```bash
+~/qemu/build$
+
 moxie-softmmu/qemu-system-moxie -machine ?
 ```
 
@@ -475,12 +491,16 @@ The command below will produce a RAW file `simple.bin` containing this
 program.
 
 ```bash
+~/qemu/build$
+
 echo -ne "\x80\xA0\x1F\x00\x00\x00\x20\x00\x1A\x00\x00\x00\x10\x08" > simple.bin
 ```
 
 Now the program can be launched in the virtual machine.
 
 ```bash
+~/qemu/build$
+
 moxie-softmmu/qemu-system-moxie -M one_uart_machine -kernel simple.bin
 ```
 
@@ -493,6 +513,8 @@ The only one character "`@`" must be in the output.
 It is time to look at the one UART machine using the GUI.
 
 ```bash
+~/qemu/build$
+
 cd ..
 qdt/qdc-gui.py one-uart-machine.py -b ./build
 ```
@@ -524,5 +546,7 @@ There is a complex project example: Intel Q35 chipset based PC machine.
 The project is based on `q35` machine implementation in QEMU.
 
 ```bash
+~/qemu$
+
 qdt/qdc-gui.py qdt/examples/q35-for-q2.6.py
 ```
