@@ -29,6 +29,7 @@ from qemu_device_creator import \
     arg_type_directory
 
 from qemu import \
+    QProject, \
     qvd_get, \
     BadBuildPath, \
     MachineNode, \
@@ -593,15 +594,22 @@ later.").get()
         except Exception as e:
             raise e
         else:
+            qproj = None
             for v in loaded_variables.values():
                 if isinstance(v, GUIProject):
-                    self.set_project(v)
-                    self.set_current_file_name(file_name)
-                    self.saved_operation = self.pht.pos
-                    self.__check_saved_asterisk__()
                     break
+                elif qproj is None and isinstance(v, QProject):
+                    qproj = v
             else:
-                raise Exception("No GUI project object was loaded")
+                if qproj:
+                    v = GUIProject.from_qproject(qproj)
+                else:
+                    raise Exception("No project object was loaded")
+
+            self.set_project(v)
+            self.set_current_file_name(file_name)
+            self.saved_operation = self.pht.pos
+            self.__check_saved_asterisk__()
 
     def save_project_to_file(self, file_name):
         self.pw.refresh_layouts()
@@ -712,12 +720,18 @@ def main():
         metavar = 'path_to_qemu_build',
         )
 
+    parser.add_argument("script",
+        default = "project.py",
+        nargs = "?",
+        help = "Load project from a script."
+    )
+
     arguments = parser.parse_args()
 
     root = QDCGUIWindow()
 
     try:
-        root.load_project_from_file("project.py")
+        root.load_project_from_file(arguments.script)
     except Exception as e:
         print("Project load filed: " + str(e) + "\n")
 

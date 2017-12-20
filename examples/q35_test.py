@@ -355,62 +355,24 @@ def Q35MachineNode_2_6_0():
     # for 2.6.0 call isa_bus_dma(isa_bus, ISADMA(isa_dma_1), ISADMA(isa_dma_2));
     return self
 
-class Q35Project_2_5_0(QProject):
-    def __init__(self):
-        QProject.__init__(self, [
-            SysBusDeviceDescription(
-                name = "I/O Port 80",
-                directory = "i386",
-                out_irq_num = 0,
-                in_irq_num = 0,
-                mmio_num = 0,
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "I/O Port F0",
-                directory = "i386",
-                out_irq_num = 1,
-                in_irq_num = 0,
-                mmio_num = 0,
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "A20 Line",
-                directory = "i386",
-                out_irq_num = 0,
-                in_irq_num = 1,
-                mmio_num = 0,
-                pio_num = 0 
-                ),
-            Q35MachineNode_2_5_0()
-            ])
+def old_devices():
+    return [
+        SysBusDeviceDescription(
+            "I/O Port 80", # name
+            "i386", # directory
+            pio_num = 1
+        ),
+        SysBusDeviceDescription("I/O Port F0", "i386",
+            out_irq_num = 1,
+            pio_num = 1
+        ),
+        SysBusDeviceDescription("A20 Line", "i386",
+            in_irq_num = 1
+        )
+    ]
 
-class Q35Project_2_6_0(QProject):
-    def __init__(self):
-        QProject.__init__(self, [
-            SysBusDeviceDescription(
-                name = "I/O Port 80",
-                directory = "i386",
-                out_irq_num = 0,
-                in_irq_num = 0,
-                mmio_num = 0,
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "I/O Port F0",
-                directory = "i386",
-                out_irq_num = 1,
-                in_irq_num = 0,
-                mmio_num = 0,
-                pio_num = 1 
-                ),
-            SysBusDeviceDescription(
-                name = "A20 Line",
-                directory = "i386",
-                out_irq_num = 0,
-                in_irq_num = 1,
-                mmio_num = 0,
-                pio_num = 0 
-                ),
-            Q35MachineNode_2_6_0()
-            ])
+def Q35Project_2_5_0():
+    return QProject(old_devices() + [Q35MachineNode_2_5_0()])
+
+def Q35Project_2_6_0():
+    return QProject(old_devices() + [Q35MachineNode_2_6_0()])

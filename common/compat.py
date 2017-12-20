@@ -1,23 +1,30 @@
+from sys import path as py_path
+from os.path import split
+from os import getcwd
 
-"""
-The module defines set of compatibility items which are not implemented in Six.
-"""
+def execfile(filename, globals = None, locals = None):
+    f = open(filename, "rb")
+    content = f.read()
+    f.close()
 
-from six import \
-    PY3, \
-    PY2
+    if globals is None:
+        globals = {}
 
-if PY3:
-    def execfile(filename, globals = None, locals = None):
-        f = open(filename, "rb")
-        content = f.read()
-        f.close()
-        obj = compile(content, filename, "exec")
+    globals["__file__"] = filename
+    globals["__name__"] = "__main__"
+
+    file_path = split(filename)[0]
+
+    if not file_path:
+        file_path = getcwd()
+
+    new_path = file_path not in py_path
+
+    if new_path:
+        py_path.append(file_path)
+
+    try:
         exec(content, globals, locals)
-
-    pass
-elif PY2:
-    execfile = execfile
-    pass
-else:
-    raise Exception("Unknown Python version.")
+    finally:
+        if new_path:
+            py_path.remove(file_path)
