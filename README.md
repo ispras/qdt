@@ -440,8 +440,10 @@ RAW file loading.
 
 ```c
     FILE *f = fopen(machine->kernel_filename, "rb");
-    fread(memory_region_get_ram_ptr(ram), 1, 4096, f);
-    fclose(f);
+    if (f) {
+        assert(fread(memory_region_get_ram_ptr(ram), 1, 4096, f));
+        fclose(f);
+    }
 ```
 
 Now an arbitrary guest can be loaded into the machine.
