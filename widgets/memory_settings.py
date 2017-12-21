@@ -176,12 +176,7 @@ class MemorySettingsWidget(SettingsWidget):
 
         for text, field, _type in self.fields:
             new_val = getattr(self, "var_" + field).get()
-            if _type is int:
-                try:
-                    new_val = int(new_val, base = 0)
-                except ValueError:
-                    pass
-            elif _type is CConst:
+            if _type is CConst:
                 try:
                     new_val = CConst.parse(new_val)
                 except:
@@ -233,12 +228,6 @@ class MemorySettingsWidget(SettingsWidget):
         for text, field, _type in self.fields:
             var = getattr(self, "var_" + field)
             cur_val = getattr(self.mem, field)
-            if _type is int:
-                try:
-                    cur_val = hex(cur_val)
-                except TypeError:
-                    pass
-
             var.set(cur_val)
 
         if type(self.mem) is MemoryAliasNode:
