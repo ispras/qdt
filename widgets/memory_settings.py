@@ -40,6 +40,9 @@ from .hotkey import (
 from .gui_frame import (
     GUIFrame
 )
+from source import (
+    CConst
+)
 
 def name_to_var_base(name):
     type_base = "sas" if "System address space" in name else name
@@ -178,6 +181,11 @@ class MemorySettingsWidget(SettingsWidget):
                     new_val = int(new_val, base = 0)
                 except ValueError:
                     pass
+            elif _type is CConst:
+                try:
+                    new_val = CConst.parse(new_val)
+                except:
+                    continue
 
             cur_val = getattr(self.mem, field)
 
