@@ -105,12 +105,12 @@ exists." % (l.lid, l.desc_name)
         )
 
     def __dfs_children__(self):
-        return list(self.descriptions) + self.get_all_layouts()
+        return list(self.descriptions) + self.get_all_layouts_sorted()
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_field("layouts = ")
-        gen.pprint(self.get_all_layouts())
+        gen.pprint(self.get_all_layouts_sorted())
         gen.gen_field("build_path = " + gen.gen_const(self.build_path))
         gen.gen_field("descriptions = ")
         gen.pprint(self.descriptions)
