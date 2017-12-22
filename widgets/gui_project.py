@@ -99,6 +99,11 @@ exists." % (l.lid, l.desc_name)
             l for ld in self.layouts.values() for l in ld.values()
         ]
 
+    def get_all_layouts_sorted(self):
+        return sorted(self.get_all_layouts(),
+            key = lambda l: (l.desc_name, l.lid)
+        )
+
     def __dfs_children__(self):
         return list(self.descriptions) + self.get_all_layouts()
 
