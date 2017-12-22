@@ -44,8 +44,9 @@ class PyGenerator(object):
     def reset(self):
         self.obj2name = {}
         self.name2obj = {}
+        self.name_counter = {}
+
         self.current_indent = ""
-        self.max_name = 0
         self.new_line = False
 
     def line(self, suffix = ""):
@@ -80,21 +81,17 @@ class PyGenerator(object):
             try:
                 var_base = obj.__var_base__
             except AttributeError:
-                for i in count(self.max_name):
-                    name = "obj%u" % i
+                var_base = "obj"
+            else:
+                var_base = var_base()
+
+            name = var_base
+
+            if name in self.name2obj:
+                for i in self.name_counter.setdefault(var_base, count(0)):
+                    name = "%s%d" % (var_base, i)
                     if name not in self.name2obj:
                         break
-
-                self.max_name = i + 1
-            else:
-                name = var_base()
-                var_base = name
-
-                if name in self.name2obj:
-                    for i in count(0):
-                        name = "%s%d" % (var_base, i)
-                        if name not in self.name2obj:
-                            break
 
             self.obj2name[obj] = name
             self.name2obj[name] = obj
