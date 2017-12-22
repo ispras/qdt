@@ -41,6 +41,7 @@ class PyGenerator(object):
 
     def reset(self):
         self.obj2name = {}
+        self.name2obj = {}
         self.current_indent = ""
         self.max_name = 0
         self.new_line = False
@@ -76,7 +77,9 @@ class PyGenerator(object):
         if not obj in self.obj2name:
             name = "obj%u" % self.max_name
             self.max_name = self.max_name + 1
+
             self.obj2name[obj] = name
+            self.name2obj[name] = obj
 
         return self.obj2name[obj]
 
