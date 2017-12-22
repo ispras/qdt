@@ -12,9 +12,14 @@ from collections import OrderedDict
 
 from sys import modules
 
+from .qom import QemuTypeName
+
 class QOMDescription(object):
     def __init__(self):
         self.project = None
+
+    def __var_base__(self):
+        return QemuTypeName(self.name).for_id_name
 
     def __dfs_children__(self):
         return []
