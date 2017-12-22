@@ -184,7 +184,7 @@ Note that, several dependencies of QDT are embedded as submodules.
 ~/qemu/build$
 
 cd ..
-git clone http://nasredin.intra.ispras.ru:3000/qemu/qdt.git
+git clone https://github.com/ispras/qdt.git
 cd qdt
 git submodule init
 git submodule update --recursive
