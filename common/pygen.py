@@ -8,6 +8,8 @@ from six import (
     integer_types
 )
 
+from itertools import count
+
 if __name__ == "__main__":
     from sys import (
         stdout
@@ -75,8 +77,20 @@ class PyGenerator(object):
             return "None"
 
         if not obj in self.obj2name:
-            name = "obj%u" % self.max_name
-            self.max_name = self.max_name + 1
+            try:
+                var_base = obj.__var_base__
+            except AttributeError:
+                name = "obj%u" % self.max_name
+                self.max_name = self.max_name + 1
+            else:
+                name = var_base()
+                var_base = name
+
+                if name in self.name2obj:
+                    for i in count(0):
+                        name = "%s%d" % (var_base, i)
+                        if name not in self.name2obj:
+                            break
 
             self.obj2name[obj] = name
             self.name2obj[name] = obj
