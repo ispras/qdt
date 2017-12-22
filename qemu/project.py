@@ -199,3 +199,6 @@ already in another project.")
         patch_makefile(Makefile_objs_class_path, object_base_name,
             obj_var_names[desc.directory], config_flags[desc.directory]
         )
+
+    def __var_base__(self):
+        return "project"
