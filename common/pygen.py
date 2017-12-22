@@ -80,8 +80,12 @@ class PyGenerator(object):
             try:
                 var_base = obj.__var_base__
             except AttributeError:
-                name = "obj%u" % self.max_name
-                self.max_name = self.max_name + 1
+                for i in count(self.max_name):
+                    name = "obj%u" % i
+                    if name not in self.name2obj:
+                        break
+
+                self.max_name = i + 1
             else:
                 name = var_base()
                 var_base = name
