@@ -265,11 +265,13 @@ class PyGenerator(object):
             self.line("{")
             self.push_indent()
             if val:
-                k, v = list(val.items())[0]
+                items = sorted(val.items(), key = lambda t : t[0])
+
+                k, v = items[0]
                 self.pprint(k)
                 self.write(": ")
                 self.pprint(v)
-                for k, v in list(val.items())[1:]:
+                for k, v in items[1:]:
                     self.line(",")
                     self.pprint(k)
                     self.write(": ")
