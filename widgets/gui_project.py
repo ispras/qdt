@@ -107,16 +107,8 @@ exists." % (l.lid, l.desc_name)
         gen.gen_field("layouts = ")
         gen.pprint(self.get_all_layouts())
         gen.gen_field("build_path = " + gen.gen_const(self.build_path))
-        gen.gen_field("descriptions = [")
-        gen.line()
-        gen.push_indent()
-        for i, desc in enumerate(self.descriptions):
-            if i > 0:
-                gen.line(",")
-            gen.write(gen.nameof(desc))
-        gen.line()
-        gen.pop_indent()
-        gen.write("]")
+        gen.gen_field("descriptions = ")
+        gen.pprint(self.descriptions)
         gen.gen_end()
 
     def next_serial_number(self):
