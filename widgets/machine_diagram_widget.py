@@ -1586,9 +1586,14 @@ IRQ line creation
                 """ IRQ Line circles could discourage another nodes dragging,
                 especially related IRQ hub nodes. Hence, make IRQ line circles
                 less priority. """
-                ret = 2
+                ret = 1
                 """ There is no meaningful reason to distribute other nodes
                 priorities such way. So, just try and watch what will happen. """
+            elif isinstance(n, IRQLine):
+                # The id corresponds to arrow of a highlighted IRQ line.
+                # Sometimes an IRQ path circle is shown for different (not
+                # currently highlighted) line.
+                ret = 2
             elif isinstance(n, IRQHubCircle):
                 ret =  3
             else:
