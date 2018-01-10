@@ -1989,7 +1989,13 @@ IRQ line creation
         id = self.dnd_dragged
 
         if id == self.irq_circle_preview:
-            self.circle_preview_to_irq(self.highlighted_irq_line)
+            self.tmp_irq_circle = (
+                self.highlighted_irq_line,
+                self.circle_preview_to_irq(self.highlighted_irq_line),
+                self.last_canvas_mouse[0], self.last_canvas_mouse[1]
+            )
+        else:
+            self.tmp_irq_circle = None
 
         if id == self.shown_irq_circle:
             node = self.shown_irq_node
@@ -2013,6 +2019,22 @@ IRQ line creation
         for n in self.dragged:
             n.static = False
         self.dragged = []
+
+        tirq = self.tmp_irq_circle
+        if tirq is not None:
+            # If new IRQ line point was not dragged far enough then remove it.
+            if not self.ph_is_running():
+                # During dynamic laying out point removal is automated.
+                lcm = self.last_canvas_mouse
+                dx = abs(tirq[2] - lcm[0])
+                dy = abs(tirq[3] - lcm[1])
+                # Use Manchester metric to speed up the check
+                if dx + dy <= DRAG_GAP:
+                    self.irq_line_delete_circle(tirq[0], tirq[1])
+                    self.invalidate()
+                    self.update_highlighted_irq_line()
+
+            self.tmp_irq_circle = None
 
     def __update_var_names(self):
         t = self.mach.gen_type()
