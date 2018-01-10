@@ -636,6 +636,10 @@ IRQ line creation
         """ Double-click handler for 1-st (left) mouse button. """
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+
+        if self.highlighted_irq_line:
+            touched_ids += (self.highlighted_irq_line.arrow,)
+
         touched_ids = self.sort_ids_by_priority(touched_ids)
 
         for tid in touched_ids:
