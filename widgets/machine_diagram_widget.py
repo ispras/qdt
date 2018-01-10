@@ -639,9 +639,6 @@ IRQ line creation
         touched_ids = self.sort_ids_by_priority(touched_ids)
 
         for tid in touched_ids:
-            if not "DnD" in self.canvas.gettags(tid):
-                continue
-
             if tid == self.shown_irq_circle:
                 # special lookup for IRQ lines
                 tnode = self.shown_irq_node.line
