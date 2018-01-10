@@ -32,6 +32,9 @@ class IRQSettingsWidget(SettingsWidget):
 
         self.irq = irq
 
+        # just an initial value. Use default.
+        self.__prev_var_base = "irq"
+
         for pfx, txt in [
             ("src_", _("Source")),
             ("dst_", _("Destination"))
@@ -50,6 +53,7 @@ class IRQSettingsWidget(SettingsWidget):
 
             node_var = StringVar()
             node_var.trace_variable("w", self.on_node_text_changed)
+            node_var.trace_variable("w", self.__auto_var_base)
             node_cb = Combobox(lf,
                 textvariable = node_var,
                 values = [],
@@ -61,6 +65,7 @@ class IRQSettingsWidget(SettingsWidget):
             irq_idx_l.grid(row = 1, column = 0, sticky = "NE")
 
             irq_idx_var = StringVar()
+            irq_idx_var.trace_variable("w", self.__auto_var_base)
             irq_idx_e = HKEntry(lf, textvariable = irq_idx_var)
             irq_idx_e.grid(row = 1, column = 1, sticky = "NEW")
 
@@ -200,6 +205,42 @@ class IRQSettingsWidget(SettingsWidget):
         elif isinstance(op, MOp_SetIRQAttr):
             if op.node_id == self.irq.id:
                 self.refresh()
+
+    def __auto_var_base(self, *args):
+        vvb = self.v_var_base
+        vb = vvb.get()
+
+        if vb == "irq" or vb == self.__prev_var_base:
+            # If variable base is default or equal to previously auto suggested
+            # value then suggest a new base again.
+            vb = self.get_auto_irq_var_base()
+            vvb.set(vb)
+            self.__prev_var_base = vb
+
+    def get_auto_irq_var_base(self):
+        try:
+            node_id2var_name = self.mach.node_id2var_name
+        except AttributeError:
+            return "irq"
+
+        if self.src_node_var.get() == "" or self.dst_node_var.get() == "":
+            return "irq"
+
+        try:
+            src_idx = int(self.src_irq_idx_var.get())
+            dst_idx = int(self.dst_irq_idx_var.get())
+        except ValueError:
+            return "irq"
+
+        src_id = self.find_node_by_link_text(self.src_node_var.get()).id
+        dst_id = self.find_node_by_link_text(self.dst_node_var.get()).id
+
+        return "irq_%s_%u_to_%s_%u" % (
+            node_id2var_name[src_id].get(),
+            src_idx,
+            node_id2var_name[dst_id].get(),
+            dst_idx,
+        )
 
 class IRQSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):
