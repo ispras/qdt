@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from .qom import (
+    QemuTypeName,
     QOMDevice,
     QOMType
 )
@@ -159,13 +160,42 @@ class SysBusDeviceType(QOMDevice):
         return header_source
 
     def generate_source(self):
+        s_is_used = False
+
+        all_regs = []
+        for idx, regs in self.mmio.items():
+            if idx >= self.mmio_num:
+                continue
+            all_regs.extend(regs)
+        for idx, regs in self.pio.items():
+            if idx >= self.pio_num:
+                continue
+            all_regs.extend(regs)
+
+        reg_resets = []
+
+        for reg in all_regs:
+            name = reg.name
+            if name is None or name == "gap":
+                continue
+            qtn = QemuTypeName(name)
+
+            s_is_used = True
+
+            reg_resets.append("s->%s@b=@s%s;" % (
+                qtn.for_id_name,
+                reg.reset.__c__()
+            ))
+
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
+    {unused}{Struct}@b*s@b=@s{UPPER}(dev);{reset}
 """.format(
+    unused = "" if s_is_used else "__attribute__((unused))@b",
     Struct = self.state_struct.name,
     UPPER = self.type_cast_macro.name,
+    reset = "\n\n    " + "\n    ".join(reg_resets) if reg_resets else ""
             ),
             args = [Type.lookup("DeviceState").gen_var("dev", True)],
             static = True,
