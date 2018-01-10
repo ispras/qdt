@@ -3,6 +3,7 @@ __all__ = [
       , "Segment"
   , "Polygon"
   , "sign"
+  , "is_pow2"
 ]
 
 from copy import (
@@ -137,3 +138,9 @@ class Polygon(object):
 
 def sign(x):
     return 1 if x >= 0 else -1
+
+# See:
+# http://code.activestate.com/recipes/577514-chek-if-a-number-is-a-power-of-two/
+def is_pow2(x):
+    return ((x & (x - 1)) == 0) and x != 0
+
