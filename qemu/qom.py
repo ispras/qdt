@@ -234,6 +234,11 @@ type2prop = {
     )
 }
 
+type2vmstate = {
+    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
+    "PCIDevice" : "VMSTATE_PCI_DEVICE"
+}
+
 for U in ["", "U"]:
     for bits in ["8", "16", "32", "64"]:
         # macro suffix
@@ -243,10 +248,7 @@ for U in ["", "U"]:
 
         declare_int(ctn, "DEFINE_PROP_" + msfx)
 
-type2vmstate = {
-    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
-    "PCIDevice" : "VMSTATE_PCI_DEVICE"
-}
+        type2vmstate[ctn] = "VMSTATE_" + msfx
 
 class Register(object):
     def __init__(self, size,
