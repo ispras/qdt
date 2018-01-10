@@ -926,6 +926,9 @@ IRQ line creation
 
                 del self.node2dev[line]
                 del self.dev2node[irq]
+
+                del self.id2node[line.arrow]
+                del self.node2id[line]
             else:
                 src = self.dev2node[irq.src[0]]
                 dst = self.dev2node[irq.dst[0]]
@@ -2909,6 +2912,9 @@ IRQ line creation
         )
         line.arrow = id
         self.canvas.lower(id)
+
+        self.id2node[id] = line
+        self.node2id[line] = id
 
         self.irq_lines.append(line)
 
