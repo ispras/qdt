@@ -2171,11 +2171,15 @@ IRQ line creation
             if d < nearest[1]:
                 nearest = (idx, d)
 
-        self.shown_irq_node = self.irq_line_add_circle(irql, nearest[0], x, y)
+        idx = nearest[0]
+
+        self.shown_irq_node = self.irq_line_add_circle(irql, idx, x, y)
         self.shown_irq_circle = self.irq_circle_preview
 
         self.irq_circle_preview = None
         self.stop_circle_preview()
+
+        return idx
 
     def process_irq_circles(self):
         total_circles = 0
