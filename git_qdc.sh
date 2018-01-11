@@ -65,7 +65,7 @@ BranchExists=`_git show-ref "$1"`
 #echo "$BranchExists"
 
 if [ "$BranchExists" == "" ] ; then
-    echo "Creating new device."
+    echo "First generation."
 
     if _git branch "$1" ; then
         if _git checkout "$1" ; then
@@ -103,7 +103,7 @@ Automatic update will fail. Manual recovery is needed!"
         echo "Failed create branch with name '$1'."
     fi
 else
-    echo "Updating device."
+    echo "Update."
 
     TmpBranch="${1}_QDC_tmp"
 
