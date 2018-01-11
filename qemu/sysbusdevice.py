@@ -225,19 +225,36 @@ class SysBusDeviceType(QOMDevice):
 
             component = self.get_Ith_mmio_id_component(mmioN)
 
+            regs = self.mmio.get(mmioN, None)
+
             read_func = QOMType.gen_mmio_read(
                 name = self.qtn.for_id_name + "_" + component + "_read",
                 struct_name = self.state_struct.name,
                 type_cast_macro = self.type_cast_macro.name,
-                regs = self.mmio.get(mmioN, None)
+                regs = regs
             )
 
             write_func = QOMType.gen_mmio_write(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 struct_name = self.state_struct.name,
                 type_cast_macro = self.type_cast_macro.name,
-                regs = self.mmio.get(mmioN, None)
+                regs = regs
             )
+
+            impl = ""
+
+            if regs:
+                reg_sizes = set(reg.size for reg in regs)
+
+                size = regs[0].size # note that all sizes are equal
+
+                if len(reg_sizes) == 1 and size < 8: # 8 is max size by impl.
+                    impl = """,
+    .impl = {{
+        .max_access_size = {size}
+    }}""".format(
+    size = size
+                    )
 
             write_func.extra_references = {read_func}
 
@@ -247,10 +264,11 @@ class SysBusDeviceType(QOMDevice):
                 used_types = [read_func, write_func],
                 code = """{{
     .read@b=@s{read},
-    .write@b=@s{write}
+    .write@b=@s{write}{impl}
 }}""".format (
     read = read_func.name,
-    write = write_func.name
+    write = write_func.name,
+    impl = impl
 )
             )
 
