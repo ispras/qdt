@@ -63,6 +63,7 @@ if ! [ "${GitStatus}" == "" ] ; then
 fi
 
 Tag="${1}_QDC"
+StartTag="${Tag}_start"
 DirName=`dirname "$0"`
 QDC="$DirName/$QDCSuffix"
 
@@ -74,6 +75,13 @@ BranchExists=`_git show-ref "$1"`
 
 if [ "$BranchExists" == "" ] ; then
     echo "First generation."
+
+    if _git tag "$StartTag" ; then
+        echo "Start tag has been set ($StartTag)."
+    else
+        echo "Cannot set start tag ($StartTag)."
+        exit 1
+    fi
 
     if _git branch "$1" ; then
         if _git checkout "$1" ; then
