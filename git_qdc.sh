@@ -72,7 +72,7 @@ if [ "$BranchExists" == "" ] ; then
                             exit 0
                         else
                             echo "Cannot create auxilliary tag '$Tag'. \
-Automatic update cannot be used again. Manual recovery is needed!"
+Automatic update will fail. Manual recovery is needed!"
                         fi
                     else
                         echo "Cannot commit generated code."
@@ -124,7 +124,7 @@ Else there are some unexpected case. Manual solution is required in both cases."
                                     exit 0
                                 else
                                     echo "Cannot create new auxilliary tag \
-'$Tag'. Automatic update cannot be used again. Manual recovery is needed!"
+'$Tag'. Automatic update will fail. Manual recovery is needed!"
                                 fi
                             else
                                 echo "Cannot remove previous auxilliary tag \
