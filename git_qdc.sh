@@ -122,17 +122,17 @@ Automatic update will fail. Manual recovery is needed!"
 else
     echo "Update."
 
-    TmpBranch="${1}_QDC_tmp"
+    NewBase="${1}_QDC_tmp"
     PreviousBase="${1}_QDC_tmp2"
 
     if _git checkout "$StartTag" ; then
-        if _git branch "$TmpBranch" ; then
-            if _git checkout "$TmpBranch" ; then
+        if _git branch "$NewBase" ; then
+            if _git checkout "$NewBase" ; then
                 if python "$QDC" "$2" ; then
                     if _git add -A ; then
                         if _git commit -m "$Msg" ; then
 if _git checkout -b "$PreviousBase" "$LastTag" ; then
-    if _git cherry-pick --strategy-option theirs "$TmpBranch" ; then
+    if _git cherry-pick --strategy-option theirs "$NewBase" ; then
         if _git rebase --onto "$PreviousBase" "$LastTag" "$CurrentBranch" ; then
             echo "Automatic update have done."
         else
@@ -152,14 +152,14 @@ will fail. Manual recovery is needed!"
 update will be confused. Manual recovery is needed!"
         fi
         _git checkout "$CurrentBranch"
-        _git branch -D "$TmpBranch"
+        _git branch -D "$NewBase"
         _git branch -D "$PreviousBase"
         exit 0
     else
         echo "Cannot cherry pick new version of base onto old base."
         _git merge --abort
     fi
-    _git checkout "$TmpBranch"
+    _git checkout "$NewBase"
     _git branch -D "$PreviousBase"
 fi
                         else
@@ -176,11 +176,11 @@ fi
                 git clean -f 
                 _git checkout "$CurrentBranch"
             else
-                echo "Cannot switch to temporary branch '$TmpBranch'."
+                echo "Cannot switch to temporary branch '$NewBase'."
             fi
-            _git branch -d "$TmpBranch"
+            _git branch -d "$NewBase"
         else
-            echo "Cannot create temporary branch '$TmpBranch'."
+            echo "Cannot create branch for new base '$NewBase'."
         fi
         _git checkout "$CurrentBranch"
     else
