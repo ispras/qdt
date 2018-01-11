@@ -124,8 +124,8 @@ else
                                         echo "Conflict? If yes then you should \
 resolve it then execute 'git rebase --continue' (see Git's message above). \
 Else there are some unexpected case. Manual solution is required in both cases."
-                                        _git branch -d "$TmpBranch"
                                     fi
+                                    _git branch -d "$TmpBranch"
                                     exit 0
                                 else
                                     echo "Cannot create new auxilliary tag \
