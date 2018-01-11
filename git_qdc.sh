@@ -38,6 +38,14 @@ if ! [ -f "$2" ] ; then
     exit 1
 fi
 
+if [ "$3" == "" ] ; then
+    echo "No commit message was provided (3-rd argument). Default one will be \
+used."
+    Msg="QDC auto commit"
+else
+    Msg="$3"
+fi
+
 if ! [[ "$1" =~ $BranchRegEx ]] ; then
     echo "Branch name '$1' does not matches '$BranchRegEx'."
     exit 1
@@ -71,7 +79,7 @@ if [ "$BranchExists" == "" ] ; then
         if _git checkout "$1" ; then
             if python "$QDC" "$2" ; then
                 if _git add -A ; then
-                    if _git commit -m "QDC auto commit" ; then
+                    if _git commit -m "$Msg" ; then
                         if _git tag "$Tag" ; then
                             echo "Success"
                             exit 0
@@ -112,7 +120,7 @@ else
             if _git checkout "$TmpBranch" ; then
                 if python "$QDC" "$2" ; then
                     if _git add -A ; then
-                        if _git commit -m "QDC auto commit" ; then
+                        if _git commit -m "$Msg" ; then
                             # Move tag
                             if _git tag -d "$Tag" ; then
                                 if _git tag "$Tag" ; then
