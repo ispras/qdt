@@ -29,7 +29,12 @@ BranchRegEx="^[a-zA-Z_][a-zA-Z_0-9]*$"
 PrevPWD=`pwd`
 
 if [ "$1" == "" ] ; then
-    echo "A branch must be specified."
+    echo "A branch must be specified (1-st argument)."
+    exit 1
+fi
+
+if ! [ -f "$2" ] ; then
+    echo "A project file must be specified (2-nd argument)."
     exit 1
 fi
 
@@ -64,7 +69,7 @@ if [ "$BranchExists" == "" ] ; then
 
     if _git branch "$1" ; then
         if _git checkout "$1" ; then
-            if python2 "$QDC" -q "$QemuSrc" ; then
+            if python "$QDC" "$2" ; then
                 if _git add -A ; then
                     if _git commit -m "QDC auto commit" ; then
                         if _git tag "$Tag" ; then
@@ -105,7 +110,7 @@ else
     if _git checkout "$Tag" ; then
         if _git branch "$TmpBranch" ; then
             if _git checkout "$TmpBranch" ; then
-                if python2 "$QDC" -q "$QemuSrc" ; then
+                if python "$QDC" "$2" ; then
                     if _git add -A ; then
                         if _git commit -m "QDC auto commit" ; then
                             # Move tag
