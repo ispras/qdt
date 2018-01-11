@@ -64,6 +64,7 @@ fi
 
 Tag="${1}_QDC"
 StartTag="${Tag}_start"
+LastTag="${Tag}_last"
 DirName=`dirname "$0"`
 QDC="$DirName/$QDCSuffix"
 
@@ -88,11 +89,11 @@ if [ "$BranchExists" == "" ] ; then
             if python "$QDC" "$2" ; then
                 if _git add -A ; then
                     if _git commit -m "$Msg" ; then
-                        if _git tag "$Tag" ; then
+                        if _git tag "$LastTag" ; then
                             echo "Success"
                             exit 0
                         else
-                            echo "Cannot create auxilliary tag '$Tag'. \
+                            echo "Cannot create auxilliary tag '$LastTag'. \
 Automatic update will fail. Manual recovery is needed!"
                         fi
                     else
@@ -122,35 +123,45 @@ else
     echo "Update."
 
     TmpBranch="${1}_QDC_tmp"
+    PreviousBase="${1}_QDC_tmp2"
 
-    if _git checkout "$Tag" ; then
+    if _git checkout "$StartTag" ; then
         if _git branch "$TmpBranch" ; then
             if _git checkout "$TmpBranch" ; then
                 if python "$QDC" "$2" ; then
                     if _git add -A ; then
                         if _git commit -m "$Msg" ; then
-                            # Move tag
-                            if _git tag -d "$Tag" ; then
-                                if _git tag "$Tag" ; then
-                                    if _git rebase "$TmpBranch" \
-                                                        "$CurrentBranch" ; then
-                                        echo "Automatic update have done."
-                                    else
-                                        # Is there a conflict ?
-                                        echo "Conflict? If yes then you should \
+if _git checkout -b "$PreviousBase" "$LastTag" ; then
+    if _git cherry-pick --strategy-option theirs "$TmpBranch" ; then
+        if _git rebase --onto "$PreviousBase" "$LastTag" "$CurrentBranch" ; then
+            echo "Automatic update have done."
+        else
+            # Is there a conflict ?
+            echo "Conflict? If yes then you should \
 resolve it then execute 'git rebase --continue' (see Git's message above). \
 Else there are some unexpected case. Manual solution is required in both cases."
-                                    fi
-                                    _git branch -d "$TmpBranch"
-                                    exit 0
-                                else
-                                    echo "Cannot create new auxilliary tag \
-'$Tag'. Automatic update will fail. Manual recovery is needed!"
-                                fi
-                            else
-                                echo "Cannot remove previous auxilliary tag \
-'$Tag'."
-                            fi
+        fi
+        # Move tag
+        if _git tag -d "$LastTag" ; then
+            if ! _git tag "$LastTag" "$PreviousBase" ; then
+                echo "Cannot create new auxilliary tag '$LastTag'. Next update \
+will fail. Manual recovery is needed!"
+            fi
+        else
+            echo "Cannot remove previous auxilliary tag '$LastTag'. Next \
+update will be confused. Manual recovery is needed!"
+        fi
+        _git checkout "$CurrentBranch"
+        _git branch -D "$TmpBranch"
+        _git branch -D "$PreviousBase"
+        exit 0
+    else
+        echo "Cannot cherry pick new version of base onto old base."
+        _git merge --abort
+    fi
+    _git checkout "$TmpBranch"
+    _git branch -D "$PreviousBase"
+fi
                         else
                             echo "Cannot commit newly generated code."
                         fi
@@ -173,7 +184,7 @@ Else there are some unexpected case. Manual solution is required in both cases."
         fi
         _git checkout "$CurrentBranch"
     else
-        echo "Cannot checkout auxilliary tag '$Tag'."
+        echo "Cannot checkout start tag '$StartTag'."
     fi
 fi
 
