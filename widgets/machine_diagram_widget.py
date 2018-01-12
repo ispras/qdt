@@ -1126,7 +1126,10 @@ IRQ line creation
                 # try to find GPIO names for this type
                 while t:
                     try:
-                        gpios = t.gpio_names
+                        if prefix == "src":
+                            gpios = t.out_gpio_names
+                        else:
+                            gpios = t.in_gpio_names
                     except AttributeError:
                         pass
                     else:

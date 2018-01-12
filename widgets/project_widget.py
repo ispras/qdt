@@ -494,7 +494,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         qvc = qvd_get(self.p.build_path).qvc
         qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
 
-        next(qt.find(name = "sys-bus-device")).gpio_names = [
+        # Note that system bus device have no standard name for input IRQ.
+        next(qt.find(name = "sys-bus-device")).out_gpio_names = [
             "SYSBUS_DEVICE_GPIO_IRQ"
         ]
 
