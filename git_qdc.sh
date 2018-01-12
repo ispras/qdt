@@ -133,7 +133,7 @@ else
                         if _git commit -m "$Msg" ; then
 if _git checkout -b "$PreviousBase" "$LastTag" ; then
     if _git cherry-pick --strategy-option theirs "$NewBase" ; then
-        if _git rebase --onto "$PreviousBase" "$LastTag" "$CurrentBranch" ; then
+        if _git rebase --onto "$PreviousBase" "$LastTag" "$1" ; then
             echo "Automatic update have done."
         else
             # Is there a conflict ?
