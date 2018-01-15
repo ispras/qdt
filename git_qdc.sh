@@ -135,6 +135,7 @@ if _git checkout -b "$PreviousBase" "$LastTag" ; then
     if _git cherry-pick --strategy-option theirs "$NewBase" ; then
         if _git rebase --onto "$PreviousBase" "$LastTag" "$1" ; then
             echo "Automatic update have done."
+            Checkout="yes"
         else
             # Is there a conflict ?
             echo "Conflict? If yes then you should \
@@ -151,7 +152,10 @@ will fail. Manual recovery is needed!"
             echo "Cannot remove previous auxilliary tag '$LastTag'. Next \
 update will be confused. Manual recovery is needed!"
         fi
-        _git checkout "$CurrentBranch"
+        # Do not check current branch out if there is a conflict.
+        if [ "$Checkout" == "yes" ] ; then
+            _git checkout "$CurrentBranch"
+        fi
         _git branch -D "$NewBase"
         _git branch -D "$PreviousBase"
         exit 0
