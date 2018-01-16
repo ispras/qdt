@@ -32,9 +32,6 @@ class IRQSettingsWidget(SettingsWidget):
 
         self.irq = irq
 
-        # just an initial value. Use default.
-        self.__prev_var_base = "irq"
-
         for pfx, txt in [
             ("src_", _("Source")),
             ("dst_", _("Destination"))
@@ -53,7 +50,6 @@ class IRQSettingsWidget(SettingsWidget):
 
             node_var = StringVar()
             node_var.trace_variable("w", self.on_node_text_changed)
-            node_var.trace_variable("w", self.__auto_var_base)
             node_cb = Combobox(lf,
                 textvariable = node_var,
                 values = [],
@@ -65,7 +61,6 @@ class IRQSettingsWidget(SettingsWidget):
             irq_idx_l.grid(row = 1, column = 0, sticky = "NE")
 
             irq_idx_var = StringVar()
-            irq_idx_var.trace_variable("w", self.__auto_var_base)
             irq_idx_e = HKEntry(lf, textvariable = irq_idx_var)
             irq_idx_e.grid(row = 1, column = 1, sticky = "NEW")
 
@@ -80,6 +75,33 @@ class IRQSettingsWidget(SettingsWidget):
                       "irq_idx_l", "irq_idx_e", "irq_idx_var",
                       "irq_name_l", "irq_name_e", "irq_name_var"]:
                 setattr(self, pfx + v, locals()[v])
+
+        self.__auto_var_base_cbs = None
+        self.v_var_base.trace_variable("w", self.__on_var_base)
+
+    def __on_var_base(self, *args):
+        cbs = self.__auto_var_base_cbs
+
+        if cbs is None:
+            if self.v_var_base.get() == self.get_auto_irq_var_base():
+                self.__auto_var_base_cbs = (
+                    self.src_node_var.trace_variable("w", self.__auto_var_base),
+                    self.dst_node_var.trace_variable("w", self.__auto_var_base),
+                    self.src_irq_idx_var.trace_variable("w",
+                        self.__auto_var_base
+                    ),
+                    self.dst_irq_idx_var.trace_variable("w",
+                        self.__auto_var_base
+                    )
+                )
+        else:
+            if self.v_var_base.get() != self.get_auto_irq_var_base():
+                self.__auto_var_base_cbs = None
+
+                self.src_node_var.trace_vdelete("w", cbs[0])
+                self.dst_node_var.trace_vdelete("w", cbs[1])
+                self.src_irq_idx_var.trace_vdelete("w", cbs[2])
+                self.dst_irq_idx_var.trace_vdelete("w", cbs[3])
 
     def on_node_text_changed(self, *args):
         irq = self.irq
@@ -193,6 +215,10 @@ class IRQSettingsWidget(SettingsWidget):
 
             node_var.set(node_text)
 
+        # If current var base equals auto var base then turn auto var base
+        # suggestion on.
+        self.__on_var_base()
+
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
             return
@@ -207,15 +233,7 @@ class IRQSettingsWidget(SettingsWidget):
                 self.refresh()
 
     def __auto_var_base(self, *args):
-        vvb = self.v_var_base
-        vb = vvb.get()
-
-        if vb == "irq" or vb == self.__prev_var_base:
-            # If variable base is default or equal to previously auto suggested
-            # value then suggest a new base again.
-            vb = self.get_auto_irq_var_base()
-            vvb.set(vb)
-            self.__prev_var_base = vb
+        self.v_var_base.set(self.get_auto_irq_var_base())
 
     def get_auto_irq_var_base(self):
         try:
