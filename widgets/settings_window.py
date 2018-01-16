@@ -125,6 +125,9 @@ class SettingsWidget(GUIFrame):
         except AttributeError:
             pass
 
+# Remembers runtime size of settings windows. One record per window type.
+window_sizes = dict()
+
 class SettingsWindow(VarToplevel):
     def __init__(self, node, machine,
             machine_history_tracker = None,
@@ -194,6 +197,8 @@ class SettingsWindow(VarToplevel):
 
         self.bind("<Escape>", self.on_escape, "+")
 
+        self.after(100, self.__init_geometry)
+
     def title(self, stringvar = None):
         """ Add the prefix with node ID. """
         if stringvar is None:
@@ -227,3 +232,18 @@ class SettingsWindow(VarToplevel):
 
     def __on_sw_destroy__(self, event):
         self.destroy()
+
+    def __init_geometry(self):
+        init_size = (self.winfo_width(), self.winfo_height())
+
+        size = window_sizes.get(type(self), None)
+        if size is not None:
+            size = max(size[0], init_size[0]), max(size[1], init_size[1])
+            self.geometry("%ux%u" % size)
+
+        self.bind("<Configure>", self.__on_configure, "+")
+
+    def __on_configure(self, event):
+        if event.widget is self:
+            window_sizes[type(self)] = (event.width, event.height)
+
