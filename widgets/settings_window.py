@@ -1,7 +1,6 @@
 from .var_widgets import (
     VarLabel,
-    VarButton,
-    VarToplevel
+    VarButton
 )
 from common import (
     FormatVar,
@@ -16,6 +15,8 @@ from six.moves.tkinter import (
     BOTH
 )
 from qemu import MOp_SetNodeVarNameBase
+
+from .gui_toplevel import GUIToplevel
 
 class SettingsWidget(GUIFrame):
     def __init__(self, node, machine, *args, **kw):
@@ -128,7 +129,7 @@ class SettingsWidget(GUIFrame):
 # Remembers runtime size of settings windows. One record per window type.
 window_sizes = dict()
 
-class SettingsWindow(VarToplevel):
+class SettingsWindow(GUIToplevel):
     def __init__(self, node, machine,
             machine_history_tracker = None,
             *args, **kw
@@ -137,7 +138,7 @@ class SettingsWindow(VarToplevel):
         to be initialized already. """
         self.node = node
 
-        VarToplevel.__init__(self, *args, **kw)
+        GUIToplevel.__init__(self, *args, **kw)
 
         self.mach = machine
         self.mht = machine_history_tracker
@@ -202,10 +203,10 @@ class SettingsWindow(VarToplevel):
     def title(self, stringvar = None):
         """ Add the prefix with node ID. """
         if stringvar is None:
-            return VarToplevel.title(self, stringvar = stringvar)
+            return GUIToplevel.title(self, stringvar = stringvar)
 
         title = FormatVar("(%u) %%s" % self.node.id) % stringvar
-        return VarToplevel.title(self, stringvar = title)
+        return GUIToplevel.title(self, stringvar = title)
 
     def on_escape(self, event):
         self.destroy()
