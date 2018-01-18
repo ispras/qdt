@@ -135,6 +135,8 @@ from widgets.pack_info_compat import *
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
 
+from .logo import *
+
 from .statusbar import *
 
 from .irq_hub_settings import *
