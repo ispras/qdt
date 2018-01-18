@@ -8,14 +8,25 @@ class GUIDialog(GUIToplevel):
 
         master = self.master
 
-        try:
-            hk = master.winfo_toplevel().hk
-        except:
-            hk = None
+        while master:
+            top = master.winfo_toplevel()
+            try:
+                hk = top.hk
+            except AttributeError:
+                master = top.master
+            else:
+                hk.disable_hotkeys()
+                self.bind("<Destroy>", self.__on_destroy, "+")
+                self.hk = hk
+                break
         else:
-            hk.disable_hotkeys()
-            self.bind("<Destroy>", self.__on_destroy, "+")
-            self.hk = hk
+            # Those imports are only used there.
+            from common import mlget as _
+            import sys
+
+            sys.stderr.write(_(
+                "Cannot found a top level window with hot key context\n"
+            ).get())
 
         self.transient(master)
         self.grab_set()
