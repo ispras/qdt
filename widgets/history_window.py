@@ -1,14 +1,14 @@
 from .branch_tree_view import BranchTreeview
 
-from .var_widgets import VarToplevel
+from .gui_toplevel import GUIToplevel
 
 from six.moves.tkinter_ttk import Scrollbar
 
 from common import mlget as _
 
-class HistoryWindow(VarToplevel):
+class HistoryWindow(GUIToplevel):
     def __init__(self, gui_project_history_tracker, *args, **kw):
-        VarToplevel.__init__(self, *args, **kw)
+        GUIToplevel.__init__(self, *args, **kw)
 
         self.guipht = gui_project_history_tracker
 
