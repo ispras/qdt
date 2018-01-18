@@ -105,6 +105,8 @@ from .gui_tk import \
     GUITaskManager, \
     GUITk
 
+from .gui_toplevel import *
+
 from .tv_width_helper import \
     TreeviewWidthHelper
 
