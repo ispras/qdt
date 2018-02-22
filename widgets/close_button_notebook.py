@@ -1,9 +1,8 @@
-from six.moves.tkinter_ttk import \
-    Notebook, \
+from six.moves.tkinter_ttk import (
+    Notebook,
     Style
-
-from six.moves.tkinter import \
-    PhotoImage
+)
+from six.moves.tkinter import PhotoImage
 
 """
 The code is based on

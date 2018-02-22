@@ -1,15 +1,19 @@
-from hashlib import \
-    md5
+__all__ = [
+    "get_vp"
+]
 
-from source import \
-    Initializer, \
-    add_base_types, \
-    Pointer, \
-    Header,\
-    Type, \
-    Function, \
-    Macro, \
+from hashlib import md5
+
+from source import (
+    Initializer,
+    add_base_types,
+    Pointer,
+    Header,
+    Type,
+    Function,
+    Macro,
     Structure
+)
 
 # Callable
 def c(value):

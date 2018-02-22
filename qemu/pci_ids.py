@@ -1,30 +1,39 @@
-from re import \
-    compile
+__all__ = [
+    "PCIVendorIdNetherExistsNorCreated"
+  , "PCIVendorIdAlreadyExists"
+  , "PCIDeviceIdAlreadyExists"
+  , "PCIVendorIdMismatch"
+  , "PCIId"
+      , "PCIVendorId"
+      , "PCIDeviceId"
+      , "PCIClassId"
+  , "PCIClassification"
+]
 
-from source import \
-    Type, \
+from re import compile
+
+from source import (
+    Type,
     Macro
+)
+from common import co_find_eq
 
-from common import \
-    co_find_eq
-
-from six.moves import \
-    range as xrange
+from six.moves import range as xrange
 
 re_pci_vendor = compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
 re_pci_class = compile("PCI_CLASS_([A-Z0-9_]+)")
 
-class PCIVendorIdAlreadyExists (Exception):
+class PCIVendorIdAlreadyExists(RuntimeError):
     pass
 
-class PCIDeviceIdAlreadyExists (Exception):
+class PCIDeviceIdAlreadyExists(RuntimeError):
     pass
 
-class PCIVendorIdNetherExistsNorCreate(Exception):
+class PCIVendorIdNetherExistsNorCreated(RuntimeError):
     pass
 
-class PCIVendorIdMismatch(Exception):
+class PCIVendorIdMismatch(ValueError):
     pass
 
 """
@@ -256,14 +265,14 @@ class PCIClassification(object):
         if vid is not None:
             try:
                 v = self.get_vendor(vendor_name, vid)
-            except PCIVendorIdNetherExistsNorCreate as e:
+            except PCIVendorIdNetherExistsNorCreated as e:
                 if vendor_name is not None:
                     raise e
                 v = None
         elif vendor_name is not None:
             try:
                 v = self.get_vendor(vendor_name, vid)
-            except PCIVendorIdNetherExistsNorCreate:
+            except PCIVendorIdNetherExistsNorCreated:
                 v = self.get_vendor(vendor_name, self.gen_uniq_vid())
         else:
             if name is None:
@@ -316,7 +325,7 @@ class PCIClassification(object):
                 if vid is not None:
                     v = PCIVendorId(name, vid)
                 else:
-                    raise PCIVendorIdNetherExistsNorCreate("Vendor %s does not\
+                    raise PCIVendorIdNetherExistsNorCreated("Vendor %s does not\
  exists and cannot be created because of no id is specified" % name)
             return v
         elif vid is not None:
@@ -326,7 +335,7 @@ class PCIClassification(object):
                     v = ven
                     break
             if v is None:
-                raise PCIVendorIdNetherExistsNorCreate("No vendor with id %s\
+                raise PCIVendorIdNetherExistsNorCreated("No vendor with id %s\
  was found and no one can be created because of no name is\
  specified" % id)
 

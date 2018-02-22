@@ -1,69 +1,69 @@
-from .qom import \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeString, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
+__all__ = [
+    "MachineType"
+  , "UnknownMachineNodeType"
+  , "UnknownBusBridgeType"
+  , "IncorrectPropertyValue"
+  , "UnknownPropertyType"
+  , "UnknownMemoryNodeType"
+]
+
+from .qom import (
+    QOMPropertyTypeLink,
+    QOMPropertyTypeString,
+    QOMPropertyTypeBoolean,
+    QOMPropertyTypeInteger,
     QOMType
-
-from source import \
-    Source, \
-    Type, \
-    Initializer, \
-    TypeNotRegistered, \
+)
+from source import (
+    Source,
+    Type,
+    TypeNotRegistered,
     Function
-
-from .machine_nodes import \
-    Node, \
-    SystemBusDeviceNode, \
-    BusNode, \
-    SystemBusNode, \
-    PCIExpressBusNode, \
-    IRQHub, \
-    MemoryNode, \
-    MemorySASNode, \
-    MemoryAliasNode, \
-    MemoryRAMNode, \
-    MemoryROMNode, \
-    DeviceNode, \
-    IRQLine, \
+)
+from .machine_nodes import (
+    SystemBusDeviceNode,
+    BusNode,
+    SystemBusNode,
+    PCIExpressBusNode,
+    IRQHub,
+    MemoryNode,
+    MemorySASNode,
+    MemoryAliasNode,
+    MemoryRAMNode,
+    MemoryROMNode,
+    DeviceNode,
+    IRQLine,
     PCIExpressDeviceNode
-
-from common import \
-    mlget as _, \
+)
+from common import (
+    mlget as _,
     sort_topologically
+)
+from os.path import join as join_path
 
-from os.path import \
-    join as join_path
+from .version import get_vp
 
-from .version import \
-    get_vp
+from six import integer_types
 
-from six import \
-    integer_types
+from collections import OrderedDict
 
-from collections import \
-    OrderedDict
+class UnknownMachineNodeType(ValueError):
+    pass
 
-from itertools import \
-    count
-
-class UnknownMachineNodeType(Exception):
-    def __init__(self, t):
-        Exception.__init__(self, t)
-
-class UnknownBusBridgeType(Exception):
+class UnknownBusBridgeType(ValueError):
     def __init__(self, primary_bus, secondary_bus):
-        Exception.__init__(self, "%s <-> %s" % (str(type(primary_bus)), str(type(secondary_bus))))
+        super(UnknownBusBridgeType, self).__init__(
+            "%s <-> %s" % (str(type(primary_bus)), str(type(secondary_bus)))
+        )
 
-class IncorrectPropertyValue(Exception):
+class IncorrectPropertyValue(ValueError):
     pass
 
-class UnknownPropertyType(Exception):
+class UnknownPropertyType(ValueError):
     pass
 
-class UnknownMemoryNodeType(Exception):
-    def __init__(self, t):
-        Exception.__init__(self, t)
+class UnknownMemoryNodeType(ValueError):
+    pass
 
 class IRQHubLayout(object):
     def __init__(self, hub, generator):
@@ -371,7 +371,7 @@ class MachineType(QOMType):
     dev_name = dev_name,
     prop_name = p.prop_name if Type.exists(p.prop_name) else "\"%s\"" % p.prop_name,
     value = self.gen_prop_val(p)
-                        )
+                    )
 
                 if isinstance(node, PCIExpressDeviceNode):
                     self.use_type_name("PCIDevice")
@@ -391,21 +391,34 @@ class MachineType(QOMType):
     multifunction = "true" if node.multifunction else "false",
     slot = node.slot,
     func = node.function
-                        )
+                    )
                 else:
                     self.use_type_name("DeviceState")
                     self.use_type_name("qdev_create")
 
                     decl_code += "    DeviceState *%s;\n" % dev_name
+
+                    if ((node.parent_bus is None)
+                        or isinstance(node.parent_bus, SystemBusNode)
+                    ):
+                        bus_name = "NULL"
+                    else:
+                        bus_name = "BUS(%s)" % self.node_map[node.parent_bus]
+
+                    if Type.exists(node.qom_type):
+                        qom_type = node.qom_type
+                    else:
+                        qom_type = "\"%s\"" % node.qom_type
+
                     def_code += """\
     {dev_name} = qdev_create(@a{bus_name},@s{qom_type});{props_code}
     qdev_init_nofail({dev_name});
 """.format(
     dev_name = dev_name,
-    bus_name = "NULL" if (node.parent_bus is None) or isinstance(node.parent_bus, SystemBusNode) else "BUS(%s)" % self.node_map[node.parent_bus],
-    qom_type = node.qom_type if Type.exists(node.qom_type) else "\"%s\"" % node.qom_type,
+    bus_name = bus_name,
+    qom_type = qom_type,
     props_code = props_code
-                        )
+                    )
 
                 if isinstance(node, SystemBusDeviceNode):
                     for idx, mmio in node.mmio_mappings.items():
@@ -425,9 +438,9 @@ class MachineType(QOMType):
     dev_name = dev_name,
     idx = idx,
     mmio_val = mmio_val
-                    )
+                            )
 
-                for bus_idx, bus in enumerate(node.buses):
+                for bus in node.buses:
                     if len(bus.devices) == 0:
                         continue
 
@@ -452,7 +465,7 @@ class MachineType(QOMType):
     bridge_name = dev_name,
     bridge_cast = bridge_cast,
     bus_field = bus_field
-                                )
+                            )
                         else:
                             raise UnknownBusBridgeType(node.parent_bus, bus)
                     except UnknownBusBridgeType:
@@ -466,12 +479,12 @@ class MachineType(QOMType):
 """.format(
     bus_name = bus_name,
     bus_cast = ("(%s *) %%s" % bus.c_type) if bus.cast is None else ("%s(%%s)" % bus.cast),
-                            ) % """\
+                        ) % """\
 qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
 """.format(
     bridge_name = dev_name,
     bus_child_name = bus.gen_child_name_for_bus(),
-                            )
+                        )
 
             elif isinstance(node, BusNode):
                 # No definition code will be generated
@@ -500,8 +513,10 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
 
                 decl_code += "    qemu_irq %s;\n" % irq_name
 
-                def_code += self.gen_irq_get(node.dst, irq_name) \
-                          + self.gen_irq_connect(node.src, irq_name)
+                def_code += (
+                    self.gen_irq_get(node.dst, irq_name)
+                  + self.gen_irq_connect(node.src, irq_name)
+                )
             elif isinstance(node, MemoryNode):
                 self.use_type_name("MemoryRegion")
                 if isinstance(node.size, str) and Type.exists(node.size):
@@ -534,8 +549,9 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     orig = self.node_map[node.alias_to],
     offset = node.alias_offset
                     )
-                elif    isinstance(node, MemoryRAMNode) \
-                     or isinstance(node, MemoryROMNode) :
+                elif (isinstance(node, MemoryRAMNode)
+                or isinstance(node, MemoryROMNode)
+                ):
                     self.use_type_name("memory_region_init_ram")
                     self.use_type_name("vmstate_register_ram_global")
 
@@ -559,13 +575,15 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                     )
 
                 if node.parent is not None:
-                    if      isinstance(node.offset, str) \
-                        and Type.exists(node.offset):
+                    if (isinstance(node.offset, str)
+                    and Type.exists(node.offset)
+                    ):
                         self.use_type_name(node.offset)
                     if node.may_overlap:
                         self.use_type_name("memory_region_add_subregion_overlap")
-                        if      isinstance(node.priority, str) \
-                            and Type.exists(node.priority):
+                        if (isinstance(node.priority, str)
+                        and Type.exists(node.priority)
+                        ):
                             self.use_type_name(node.priority)
 
                         def_code += """\
@@ -575,11 +593,12 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     offset = node.offset,
     priority = node.priority,
     child = mem_name
-                            )
+                        )
                     else:
                         self.use_type_name("memory_region_add_subregion")
-                        if      isinstance(node.priority, str) \
-                            and Type.exists(node.priority):
+                        if (isinstance(node.priority, str)
+                        and Type.exists(node.priority)
+                        ):
                             self.use_type_name(node.priority)
 
                         def_code += """\
@@ -588,7 +607,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     parent_name = self.node_map[node.parent],
     offset = node.offset,
     child = mem_name
-                            )
+                        )
 
             elif isinstance(node, IRQHub):
                 if len(node.irqs) < 1:
@@ -623,10 +642,10 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
             static = True,
             args = [
                 Type.lookup("MachineState").gen_var("machine", pointer = True)
-                ],
+            ],
             body = decl_code + "\n" + def_code,
             used_types = self.init_used_types
-            )
+        )
         self.source.add_type(self.instance_init)
 
         get_vp("machine type register template generator")(self)

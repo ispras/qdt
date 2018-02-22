@@ -1,13 +1,22 @@
-from six import \
-    integer_types
+__all__ = [
+    "InverseOperation"
+      , "InitialOperation"
+  , "InitialOperationBackwardIterator"
+  , "UnimplementedInverseOperation"
+  , "InitialOperationCall"
+  , "History"
+  , "HistoryTracker"
+]
 
-from six.moves import \
-    zip
+from six import integer_types
 
-from .ml import \
-    mlget as _
+from six.moves import zip
 
-class UnimplementedInverseOperation(Exception):
+from .ml import mlget as _
+
+from .notifier import Notifier
+
+class UnimplementedInverseOperation(NotImplementedError):
     pass
 
 simple_eq_types = [
@@ -15,9 +24,6 @@ simple_eq_types = [
     str,
     float
 ] + list(integer_types)
-
-from .notifier import \
-    Notifier
 
 def set_touches_entry(X, e):
     for x in X:
@@ -104,7 +110,7 @@ class InverseOperation(object):
         return _("Reversible operation with unimplemented description \
 (class %s).") % type(self).__name__
 
-class InitialOperationCall(Exception):
+class InitialOperationCall(TypeError):
     pass
 
 class InitialOperation(InverseOperation):

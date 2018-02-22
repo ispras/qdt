@@ -1,13 +1,18 @@
-from six.moves.tkinter import \
-    Variable as TkVariable, \
-    StringVar
+__all__ = [
+    "FormatedStringChangindException"
+  , "FormatVar"
+  , "FormatedStringVar"
+]
 
-from .variable import \
-    Variable
+from six.moves.tkinter import (
+    Variable as TkVariable,
+    StringVar
+)
+from .variable import Variable
 
 variables = (Variable, TkVariable)
 
-class FormatedStringChangindException(BaseException):
+class FormatedStringChangindException(TypeError):
     pass
 
 # The class just implements % (__mod__) operator for StringVar

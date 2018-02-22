@@ -1,21 +1,20 @@
-from six.moves.tkinter import \
-    Tk, \
-    Menu, \
-    Label, \
-    Toplevel, \
-    Button, \
-    LabelFrame, \
-    Checkbutton, \
-    Variable as TkVariable, \
+from six.moves.tkinter import (
+    Tk,
+    Menu,
+    Label,
+    Toplevel,
+    Button,
+    LabelFrame,
+    Checkbutton,
+    Variable as TkVariable,
     StringVar
-
-from six.moves.tkinter_ttk import \
-    Notebook, \
-    Combobox, \
+)
+from six.moves.tkinter_ttk import (
+    Notebook,
+    Combobox,
     Treeview
-
-from common import \
-    Variable
+)
+from common import Variable
 
 variables = (Variable, TkVariable)
 
@@ -304,8 +303,7 @@ if __name__ == "__main__":
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
 
-    from .tv_width_helper import \
-        TreeviewWidthHelper
+    from .tv_width_helper import TreeviewWidthHelper
 
     class TestTV(VarTreeview, TreeviewWidthHelper):
         def __init__(self, *args, **kw):
@@ -322,10 +320,11 @@ if __name__ == "__main__":
     tv = TestTV(root)
     tv.grid(row = 0, column = 0, sticky = "NEWS")
 
-    from six.moves.tkinter import \
-        BooleanVar, \
-        IntVar, \
+    from six.moves.tkinter import (
+        BooleanVar,
+        IntVar,
         DoubleVar
+    )
 
     sv = StringVar(value = "xxx...")
     bv = BooleanVar(value = True)

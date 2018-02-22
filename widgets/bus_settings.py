@@ -1,38 +1,33 @@
-from .settings_window import \
-    SettingsWindow, \
+from .settings_window import (
+    SettingsWindow,
     SettingsWidget
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
-
-from qemu import \
-    MOp_SetChildBus, \
+from qemu import (
+    MOp_SetChildBus,
     MachineNodeOperation
-
-from .var_widgets import \
-    VarCheckbutton, \
+)
+from .var_widgets import (
+    VarCheckbutton,
     VarLabel
-
-from six.moves.tkinter import \
-    BOTH, \
-    BooleanVar, \
+)
+from six.moves.tkinter import (
+    BOTH,
+    BooleanVar,
     StringVar
+)
+from six.moves.tkinter_ttk import Combobox
 
-from six.moves.tkinter_ttk import \
-    Combobox
+from .device_settings import DeviceSettingsWidget
 
-from .device_settings import \
-    DeviceSettingsWidget
-
-from qemu import \
-    MOp_SetBusAttr, \
+from qemu import (
+    MOp_SetBusAttr,
     BusNode
+)
+from .hotkey import HKEntry
 
-from .hotkey import \
-    HKEntry
-
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):

@@ -1,63 +1,55 @@
-from .var_widgets import \
-    VarLabel, \
-    VarButton, \
-    VarLabelFrame, \
+from .var_widgets import (
+    VarLabel,
+    VarButton,
+    VarLabelFrame,
     VarCheckbutton
+)
+from .device_tree_widget import DeviceTreeWidget
 
-from .device_tree_widget import \
-    DeviceTreeWidget
+from common import mlget as _
 
-from common import \
-    mlget as _
+from .gui_frame import GUIFrame
 
-from .gui_frame import \
-    GUIFrame
+from six import itervalues
 
-from six import \
-    itervalues
-
-from six.moves import \
-    zip, \
+from six.moves import (
+    zip,
     range as xrange
-
-from six.moves.tkinter import \
-    BOTH, \
-    StringVar, \
-    BooleanVar, \
+)
+from six.moves.tkinter import (
+    BOTH,
+    StringVar,
+    BooleanVar,
     OptionMenu
+)
+from six.moves.tkinter_ttk import Combobox
 
-from six.moves.tkinter_ttk import \
-    Combobox
-
-from qemu import \
-    QemuTypeName, \
-    BusNode, \
-    IRQLine, \
-    IRQHub, \
-    DeviceNode, \
-    MemoryNode, \
-    QOMPropertyValue, \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
-    QOMPropertyTypeString, \
-    MOp_SetChildBus, \
-    MachineNodeOperation, \
-        MOp_SetDevParentBus, \
-        MOp_SetDevQOMType, \
-        MOp_DelDevProp, \
-        MOp_AddDevProp, \
-        MOp_SetDevProp, \
+from qemu import (
+    QemuTypeName,
+    BusNode,
+    IRQLine,
+    IRQHub,
+    DeviceNode,
+    MemoryNode,
+    QOMPropertyValue,
+    QOMPropertyTypeLink,
+    QOMPropertyTypeBoolean,
+    QOMPropertyTypeInteger,
+    QOMPropertyTypeString,
+    MOp_SetChildBus,
+    MachineNodeOperation,
+        MOp_SetDevParentBus,
+        MOp_SetDevQOMType,
+        MOp_DelDevProp,
+        MOp_AddDevProp,
+        MOp_SetDevProp,
     qvd_get_registered
+)
+from itertools import count
 
-from itertools import \
-    count
+from .settings_window import SettingsWidget
 
-from .settings_window import \
-    SettingsWidget
-
-from .hotkey import \
-    HKEntry
+from .hotkey import HKEntry
 
 class BusLineDesc(object):
     def __init__(self, device_settings_widget, idx):

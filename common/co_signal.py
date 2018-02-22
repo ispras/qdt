@@ -1,10 +1,16 @@
-from .co_dispatcher import \
-    CoTask
+__all__ = [
+    "SignalIsAlreadyAttached"
+  , "SignalIsNotAttached"
+  , "SignalDispatcherTask"
+  , "CoSignal"
+]
 
-class SignalIsAlreadyAttached(Exception):
+from .co_dispatcher import CoTask
+
+class SignalIsAlreadyAttached(RuntimeError):
     pass
 
-class SignalIsNotAttached(Exception):
+class SignalIsNotAttached(RuntimeError):
     pass
 
 class SignalDispatcherTask(CoTask):

@@ -1,69 +1,65 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
-from examples import \
-    Q35Project_2_6_0, \
+from examples import (
+    Q35Project_2_6_0,
     Q35MachineNode_2_6_0
-
-from widgets import \
-    GUIPOp_SetBuildPath, \
-    TaskErrorDialog, \
-    Statusbar, \
-    GUIProjectHistoryTracker, \
-    HistoryWindow, \
-    askopen, \
-    asksaveas, \
-    askdirectory, \
-    AddDescriptionDialog, \
-    __dict__ as widgets_dict, \
-    GUIProject, \
-    HotKeyBinding, \
-    HotKey, \
-    ProjectWidget, \
-    VarMenu, \
+)
+from widgets import (
+    GUIPOp_SetBuildPath,
+    TaskErrorDialog,
+    Statusbar,
+    GUIProjectHistoryTracker,
+    HistoryWindow,
+    askopen,
+    asksaveas,
+    askdirectory,
+    AddDescriptionDialog,
+    __dict__ as widgets_dict,
+    GUIProject,
+    HotKeyBinding,
+    HotKey,
+    ProjectWidget,
+    VarMenu,
     GUITk
+)
+from argparse import ArgumentParser
 
-from argparse import \
-    ArgumentParser
+from qemu_device_creator import arg_type_directory
 
-from qemu_device_creator import \
-    arg_type_directory
-
-from qemu import \
-    QProject, \
-    qvd_get, \
-    BadBuildPath, \
-    MachineNode, \
-    __dict__ as qemu_namespace, \
-    load_build_path_list, \
-    account_build_path, \
+from qemu import (
+    QProject,
+    qvd_get,
+    BadBuildPath,
+    MachineNode,
+    __dict__ as qemu_namespace,
+    load_build_path_list,
+    account_build_path,
     QemuVersionDescription
+)
+from six.moves.tkinter import IntVar
 
-from six.moves.tkinter import \
-    IntVar
+from six.moves.cPickle import load as load_cPickled
 
-from six.moves.cPickle import \
-    load as load_cPickled
+from os import remove
 
-from os import \
-    remove
-
-from common import \
-    FormatVar, \
-    execfile, \
-    CoSignal, \
-    CoTask, \
-    PyGenerator, \
+from common import (
+    FormatVar,
+    execfile,
+    CoSignal,
+    CoTask,
+    PyGenerator,
     mlget as _
-
-from six.moves.tkinter import \
-    BooleanVar, \
+)
+from six.moves.tkinter import (
+    BooleanVar,
     StringVar
-
-from six.moves.tkinter_messagebox import \
-    askyesnocancel, \
-    showinfo, \
-    askyesno, \
+)
+from six.moves.tkinter_messagebox import (
+    askyesnocancel,
+    showinfo,
+    askyesno,
     showerror
+)
 
 class ProjectGeneration(CoTask):
     def __init__(self, project, source_path, signal):

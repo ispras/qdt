@@ -1,12 +1,11 @@
-from .var_widgets import \
-    VarTk
+from .var_widgets import VarTk
 
-from .tk_co_dispatcher import \
-    TkCoDispatcher
+from .tk_co_dispatcher import TkCoDispatcher
 
-from common import \
-    Notifier, \
+from common import (
+    Notifier,
     SignalDispatcherTask
+)
 
 @Notifier("activated", "finished", 'failed', "removed")
 class GUITaskManager(TkCoDispatcher):

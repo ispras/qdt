@@ -1,36 +1,41 @@
-from .qom_desc import \
-    DescriptionOf, \
+__all__ = [
+    "MachineNode"
+  , "MultipleSystemBusesInMachine"
+  , "NodeHasId"
+  , "NodeIdIsAlreadyInUse"
+]
+
+from .qom_desc import (
+    descriptionOf,
     QOMDescription
+)
+from itertools import count
 
-from itertools import \
-    count
+from .qom import QOMPropertyTypeLink
 
-from .qom import \
-    QOMPropertyTypeLink
+from .machine import MachineType
 
-from .machine import \
-    MachineType
-
-from .machine_nodes import \
-    SystemBusNode, \
-    SystemBusDeviceNode, \
-    DeviceNode, \
-    BusNode, \
-    IRQLine, \
-    IRQHub, \
+from .machine_nodes import (
+    SystemBusNode,
+    SystemBusDeviceNode,
+    DeviceNode,
+    BusNode,
+    IRQLine,
+    IRQHub,
     MemoryNode
+)
 
 # machine model
-class MultipleSystemBusesInMachine(Exception):
+class MultipleSystemBusesInMachine(RuntimeError):
     pass
 
-class NodeHasId(Exception):
+class NodeHasId(RuntimeError):
     pass
 
-class NodeIdIsAlreadyInUse(Exception):
+class NodeIdIsAlreadyInUse(RuntimeError):
     pass
 
-@DescriptionOf(MachineType)
+@descriptionOf(MachineType)
 class MachineNode(QOMDescription):
     def __description_init__(self):
         self.max_id = 0

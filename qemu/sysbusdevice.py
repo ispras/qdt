@@ -1,27 +1,24 @@
 __all__ = [ "SysBusDeviceType" ]
 
-from .qom import \
-    QOMDevice, \
+from .qom import (
+    QOMDevice,
     QOMType
-
-from source import \
-    line_origins, \
-    Pointer, \
-    Macro, \
-    Initializer, \
-    Function, \
+)
+from source import (
+    line_origins,
+    Pointer,
+    Macro,
+    Initializer,
+    Function,
     Type
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
+from collections import OrderedDict
 
-from collections import \
-    OrderedDict
+from .qom_desc import describable
 
-from .qom_desc import \
-    Describable
-
-@Describable
+@describable
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),

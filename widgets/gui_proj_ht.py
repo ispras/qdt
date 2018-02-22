@@ -1,15 +1,13 @@
-from qemu import \
-    PCIExpressDeviceDescription, \
-    PCIId, \
-    DOp_SetAttr, \
-    DOp_SetPCIIdAttr, \
+from qemu import (
+    PCIExpressDeviceDescription,
+    PCIId,
+    DOp_SetAttr,
+    DOp_SetPCIIdAttr,
     ProjectHistoryTracker
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
-
-from .gui_editing import \
-    GUIPOp_SetBuildPath
+from .gui_editing import GUIPOp_SetBuildPath
 
 class GUIProjectHistoryTracker(ProjectHistoryTracker):
     def __init__(self, *args, **kw):

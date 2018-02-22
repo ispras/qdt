@@ -1,11 +1,15 @@
-from copy import \
-    deepcopy as dcp
+__all__ = [
+    "Vector"
+      , "Segment"
+  , "Polygon"
+  , "sign"
+]
 
-from math import \
-    sqrt
+from copy import deepcopy as dcp
 
-from random import \
-    random
+from math import sqrt
+
+from random import random
 
 class Vector(object):
     def __init__(self, x = 0, y = 0):

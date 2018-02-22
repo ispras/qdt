@@ -1,72 +1,24 @@
-from source import \
-    Header, \
-    Type, \
-    Function, \
-    Macro, \
-    Structure, \
-    add_base_types
+from .version_description import *
 
-from .version_description import \
-    ProcessingUntrackedFile, \
-    ProcessingModifiedFile, \
-    QVCWasNotInitialized, \
-    BadBuildPath, \
-    MultipleQVCInitialization, \
-    QVCIsNotReady, \
-    QemuVersionDescription, \
-    qvd_create, \
-    qvd_get, \
-    qvd_get_registered, \
-    qvds_load, \
-    qvd_load_with_cache, \
-    qvds_load_with_cache, \
-    qvds_init_cache, \
-    forget_build_path, \
-    load_build_path_list, \
-    account_build_path
-
-from .pci_ids import \
-    PCIVendorIdNetherExistsNorCreate, \
-    PCIId, \
-    PCIVendorId, \
-    PCIDeviceId, \
-    PCIClassId, \
-    PCIClassification
+from .pci_ids import *
 
 from .sysbusdevice import *
 
 from .pcie import *
 
-from .qom import \
-    QOMPropertyType, \
-    QOMPropertyTypeLink, \
-    QOMPropertyTypeString, \
-    QOMPropertyTypeBoolean, \
-    QOMPropertyTypeInteger, \
-    QOMPropertyValue, \
-    QOMStateField, \
-    QemuTypeName, \
-    QOMDevice, \
-    QOMType
+from .qom import *
 
 from .machine_nodes import *
 
-from .machine import \
-    MachineType
+from .machine import *
 
-from .machine_description import \
-    MachineNode
+from .machine_description import *
 
-from .qom_desc import \
-    Describable, \
-    DescriptionOf, \
-    QOMDescription
+from .qom_desc import *
 
-from .project import \
-    QProject
+from .project import *
 
-from .version import \
-    get_vp
+from .version import *
 
 from .machine_editing import \
     MachineOperation, \

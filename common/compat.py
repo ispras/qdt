@@ -1,3 +1,7 @@
+__all__ = [
+    "execfile"
+]
+
 from sys import path as py_path
 from os.path import split
 from os import getcwd

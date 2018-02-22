@@ -1,14 +1,16 @@
-from common import \
-    get_class_total_args
+__all__ = [
+    "QOMDescription"
+  , "describable"
+  , "descriptionOf"
+]
 
-from inspect import \
-    getmro
+from common import get_class_total_args
 
-from collections import \
-    OrderedDict
+from inspect import getmro
 
-from sys import \
-    modules
+from collections import OrderedDict
+
+from sys import modules
 
 class QOMDescription(object):
     def __init__(self):
@@ -26,7 +28,7 @@ class QOMDescription(object):
 
 """
 GUI may edit only QOM templates which have the corresponding description
-wrapper. The 'Describable' decorator for QOM template class automatically
+wrapper. The 'describable' decorator for QOM template class automatically
 creates and exports such wrapper.
 
 See
@@ -35,15 +37,15 @@ about dynamic class creation
 
 This decorator is only compatible with __all__ list based module name export.
 """
-def Describable(QOMTemplate):
+def describable(QOMTemplate):
     desc_name = QOMTemplate.__name__.replace("Type", "Description")
 
     tmp_class = type(desc_name, (QOMDescription,), {})
     # decorate new description class
-    desc_class = DescriptionOf(QOMTemplate)(tmp_class)
+    desc_class = descriptionOf(QOMTemplate)(tmp_class)
 
     # get module of the template
-    module = __all__ = modules[QOMTemplate.__module__]
+    module = modules[QOMTemplate.__module__]
 
     # add the description class to same module as template
     module.__dict__[desc_name] = desc_class
@@ -55,11 +57,11 @@ def Describable(QOMTemplate):
     return QOMTemplate
 
 """
-DescriptionOf decorator is used to extend a class to one that could be used
+descriptionOf decorator is used to extend a class to one that could be used
 as description of QOM type template. Main purpose is to simplify definition
 of QOM type template description classes.
 """
-def DescriptionOf(QOMTemplate):
+def descriptionOf(QOMTemplate):
     """ Get arguments of QOM type template initializer and save them in
     defaults of function 'decorate'."""
     pa, kwa = get_class_total_args(QOMTemplate)

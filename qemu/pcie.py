@@ -1,35 +1,31 @@
 __all__ = [ "PCIExpressDeviceType" ]
 
-from source import \
-    line_origins, \
-    Pointer, \
-    Type, \
-    Function, \
-    Initializer, \
-    Macro, \
+from source import (
+    line_origins,
+    Pointer,
+    Type,
+    Function,
+    Initializer,
+    Macro,
     TypeNotRegistered
-
-from .qom import \
-    QOMDevice, \
+)
+from .qom import (
+    QOMDevice,
     QOMType
+)
+from six.moves import range as xrange
 
-from six.moves import \
-    range as xrange
-
-from .pci_ids import \
-    PCIVendorIdNetherExistsNorCreate, \
+from .pci_ids import (
+    PCIVendorIdNetherExistsNorCreated,
     PCIId
+)
+from common import mlget as _
 
-from common import \
-    mlget as _
+from collections import OrderedDict
 
-from collections import \
-    OrderedDict
+from .qom_desc import describable
 
-from .qom_desc import \
-    Describable
-
-@Describable
+@describable
 class PCIExpressDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         # Note that multiple NIC generation is not implemented yet.
@@ -83,7 +79,7 @@ class PCIExpressDeviceType(QOMDevice):
             if (val is not None) and (not isinstance(val, PCIId)):
                 try:
                     val = PCIId.db.get_vendor(name = val)
-                except PCIVendorIdNetherExistsNorCreate:
+                except PCIVendorIdNetherExistsNorCreated:
                     val = PCIId.db.get_vendor(vid = val)
             setattr(self, attr, val)
 

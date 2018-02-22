@@ -1,16 +1,14 @@
-from .project_editing import \
-    DescriptionOperation
+from .project_editing import DescriptionOperation
 
-from copy import \
-    deepcopy as dcp
+from copy import deepcopy as dcp
 
-from common import \
-    mlget as _
+from common import mlget as _
 
-from qemu import \
-    PCIVendorId, \
-    PCIDeviceId, \
+from qemu import (
+    PCIVendorId,
+    PCIDeviceId,
     PCIClassId
+)
 
 class DOp_SetAttr(DescriptionOperation):
     def __init__(self, attribute_name, new_value, *args, **kw):

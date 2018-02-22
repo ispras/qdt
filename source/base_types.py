@@ -1,8 +1,9 @@
-from .model import \
-    Type, \
-    Header, \
-    Function, \
+from .model import (
+    Type,
+    Header,
+    Function,
     Macro
+)
 
 def add_base_types():
     Type(name = "void", incomplete = True, base = True)

@@ -1,7 +1,6 @@
 __all__ = [ "GUIDialog" ]
 
-from .var_widgets import \
-    VarToplevel
+from .var_widgets import VarToplevel
 
 class GUIDialog(VarToplevel):
     def __init__(self, *args, **kw):

@@ -1,20 +1,18 @@
-from .gui_frame import \
-    GUIFrame
+from .gui_frame import GUIFrame
 
-from .var_widgets import \
-    VarCombobox
+from .var_widgets import VarCombobox
 
-from six.moves.tkinter_ttk import \
-    Combobox
+from six.moves.tkinter_ttk import Combobox
 
-from common import \
-    mlget as _
+from common import mlget as _
 
-from qemu import \
-    PCIId, \
-    PCIClassId, \
-    PCIVendorId, \
+from qemu import (
+    PCIId,
+    PCIClassId,
+    PCIVendorId,
     PCIDeviceId
+)
+from six import iteritems
 
 kind2idx = {
     PCIClassId  : 0,
@@ -26,9 +24,6 @@ kind2idx = {
 idx2kind = {}
 for kind, idx in kind2idx.items():
     idx2kind[idx] = kind
-
-from six import \
-    iteritems
 
 def get_db(idx):
     if idx == 0:

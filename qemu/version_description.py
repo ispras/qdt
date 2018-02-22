@@ -1,40 +1,57 @@
-from source import \
-    SourceTreeContainer, \
-    Header, \
+__all__ = [
+    "ProcessingUntrackedFile"
+  , "ProcessingModifiedFile"
+  , "QVCWasNotInitialized"
+  , "BadBuildPath"
+  , "MultipleQVCInitialization"
+  , "QVCIsNotReady"
+  , "QemuVersionDescription"
+  , "qvd_create"
+  , "qvd_get"
+  , "qvd_get_registered"
+  , "qvds_load"
+  , "qvd_load_with_cache"
+  , "qvds_load_with_cache"
+  , "qvds_init_cache"
+  , "forget_build_path"
+  , "load_build_path_list"
+  , "account_build_path"
+]
+
+from source import (
+    SourceTreeContainer,
+    Header,
     Macro
-
-from common import \
-    CommitDesc, \
-    mlget as _, \
-    callco, \
-    remove_file, \
-    execfile, \
+)
+from common import (
+    CommitDesc,
+    mlget as _,
+    callco,
+    remove_file,
+    execfile,
     PyGenerator
+)
+from json import load
 
-from json import \
-    load
-
-from .version import \
-    QVHDict, \
-    initialize_version, \
-    qemu_heuristic_db, \
-    calculate_qh_hash, \
+from .version import (
+    QVHDict,
+    initialize_version,
+    qemu_heuristic_db,
+    calculate_qh_hash,
     get_vp
-
-from os.path import \
-    sep, \
-    join, \
+)
+from os.path import (
+    sep,
+    join,
     isfile
-
-from .pci_ids import \
-    PCIId, \
+)
+from .pci_ids import (
+    PCIId,
     PCIClassification
+)
+from git import Repo
 
-from git import \
-    Repo
-
-from six import \
-    u
+from six import u
 
 bp_file_name = "build_path_list"
 
@@ -384,7 +401,7 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
         for param in vd:
             if param.name in commit.param_nval:
                 if commit.param_nval[param.name] != param.old_value:
-                     raise Exception(msg1 % (
+                    raise Exception(msg1 % (
 param.name, commit.sha, param.old_value, commit.param_nval[param.name]
                     ))
             elif param.name in commit.param_oval:
@@ -423,18 +440,16 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         QemuVersionCache.current = self
         return previous
 
-class BadBuildPath(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
-
-class MultipleQVCInitialization(Exception):
-    def __init__(self, path):
-        Exception.__init__(self, path)
-
-class QVCWasNotInitialized(Exception):
+class BadBuildPath(ValueError):
     pass
 
-class QVCIsNotReady(Exception):
+class MultipleQVCInitialization(RuntimeError):
+    pass
+
+class QVCWasNotInitialized(RuntimeError):
+    pass
+
+class QVCIsNotReady(RuntimeError):
     pass
 
 # Iterations Between Yields of Device Tree Macros adding task
