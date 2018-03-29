@@ -89,6 +89,8 @@ from .tk_co_dispatcher import \
     TkCoDispatcher
 
 from .cross_dialogs import \
+    CrossAskYesNoDialog, \
+        askyesno, \
     CrossDirectoryDialog, \
         askdirectory, \
     CrossOpenDialog, \
@@ -102,6 +104,8 @@ from .popup_helper import \
 from .gui_tk import \
     GUITaskManager, \
     GUITk
+
+from .gui_toplevel import *
 
 from .tv_width_helper import \
     TreeviewWidthHelper
@@ -132,6 +136,8 @@ from widgets.pack_info_compat import *
 
 from .qdc_gui_signal_helper import \
     QDCGUISignalHelper
+
+from .logo import *
 
 from .statusbar import *
 

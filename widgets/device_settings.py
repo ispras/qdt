@@ -495,20 +495,20 @@ class DeviceSettingsWidget(SettingsWidget):
         if node is None:
             return "-1: NULL"
 
-        ret = str(node.id) + ": "
+        ret = "%s: " % node.id
         if isinstance(node, BusNode):
-            ret = ret + "Bus, " + node.gen_child_name_for_bus()
+            ret = ret + "Bus, %s" % node.gen_child_name_for_bus()
         elif isinstance(node, IRQLine):
-            ret = ret + "IRQ: " \
-                + DeviceSettingsWidget.gen_node_link_text(node.src[0]) \
-                + " -> " \
-                + DeviceSettingsWidget.gen_node_link_text(node.dst[0])
+            ret = ret + "IRQ: %s" \
+                % DeviceSettingsWidget.gen_node_link_text(node.src[0]) \
+                + " -> %s" \
+                % DeviceSettingsWidget.gen_node_link_text(node.dst[0])
         elif isinstance(node, IRQHub):
             ret = ret + "IRQ Hub"
         elif isinstance(node, DeviceNode):
-            ret = ret + "Device, " + node.qom_type
+            ret = ret + "Device, %s" % node.qom_type
         elif isinstance(node, MemoryNode):
-            ret = ret + "Memory, " + node.name
+            ret = ret + "Memory, %s" % node.name
 
         return ret
 

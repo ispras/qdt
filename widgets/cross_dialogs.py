@@ -6,14 +6,50 @@ from six.moves.tkinter_tkfiledialog import (
     asksaveasfilename
 )
 
-class CrossSaveAsDialog(object):
-    def __init__(self, filetypes = None, title = None):
+from six.moves.tkinter_messagebox import askyesno as tk_askyesno
+
+class CrossDialog(object):
+    def __init__(self, master):
+        self.master = master
+
+    def ask(self):
+        try:
+            hk = self.master.winfo_toplevel().hk
+        except:
+            hk = None
+        else:
+            hk.disable_hotkeys()
+
+        try:
+            return self.__ask__()
+        finally:
+            if hk:
+                hk.enable_hotkeys()
+
+class CrossAskYesNoDialog(CrossDialog):
+    def __init__(self, master, title, message):
+        super(CrossAskYesNoDialog, self).__init__(master)
+        self.title, self.message = title, message
+
+    def __ask__(self):
+        return tk_askyesno(
+            title = self.title.get(),
+            message = self.message.get()
+        )
+
+def askyesno(*args, **kw):
+    return CrossAskYesNoDialog(*args, **kw).ask()
+
+class CrossSaveAsDialog(CrossDialog):
+    def __init__(self, master, filetypes = None, title = None):
+        super(CrossSaveAsDialog, self).__init__(master)
+
         self.title = _("Save as") if title is None else title
 
         self.filetypes = [(_("All files"), '.*')] if filetypes is None \
             else filetypes
 
-    def ask(self):
+    def __ask__(self):
         kw = {
             "title" : self.title.get(),
             "filetypes": [
@@ -27,14 +63,16 @@ class CrossSaveAsDialog(object):
 def asksaveas(*args, **kw):
     return CrossSaveAsDialog(*args, **kw).ask()
 
-class CrossOpenDialog(object):
-    def __init__(self, filetypes = None, title = None):
+class CrossOpenDialog(CrossDialog):
+    def __init__(self, master, filetypes = None, title = None):
+        super(CrossOpenDialog, self).__init__(master)
+
         self.title = _("Open file") if title is None else title
 
         self.filetypes = [(_("All files"), '.*')] if filetypes is None \
             else filetypes
 
-    def ask(self):
+    def __ask__(self):
         kw = {
             "title" : self.title.get(),
             "filetypes": [
@@ -48,11 +86,13 @@ class CrossOpenDialog(object):
 def askopen(*args, **kw):
     return CrossOpenDialog(*args, **kw).ask()
 
-class CrossDirectoryDialog(object):
-    def __init__(self, title = None):
+class CrossDirectoryDialog(CrossDialog):
+    def __init__(self, master, title = None):
+        super(CrossDirectoryDialog, self).__init__(master)
+
         self.title = _("Select directory") if title is None else title
 
-    def ask(self):
+    def __ask__(self):
         kw = {
             "title" : self.title.get()
         }

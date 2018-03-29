@@ -38,6 +38,9 @@ class Node(object):
             raise NotImplementedError("No default base for variable name")
         self.var_base = var_base
 
+    def __var_base__(self):
+        return self.var_base
+
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_args(self, pa_names = True)
@@ -570,7 +573,7 @@ class MemorySASNode(MemoryNode):
         MemoryNode.__init__(self, name, size, **kw)
 
 class MemoryLeafNode(MemoryNode):
-    def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
+    def add_child(self, *args, **kw):
         raise MemoryNodeCannotHasChildren()
 
 class MemoryAliasNode(MemoryLeafNode):

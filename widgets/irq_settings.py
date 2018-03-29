@@ -76,6 +76,33 @@ class IRQSettingsWidget(SettingsWidget):
                       "irq_name_l", "irq_name_e", "irq_name_var"]:
                 setattr(self, pfx + v, locals()[v])
 
+        self.__auto_var_base_cbs = None
+        self.v_var_base.trace_variable("w", self.__on_var_base)
+
+    def __on_var_base(self, *args):
+        cbs = self.__auto_var_base_cbs
+
+        if cbs is None:
+            if self.v_var_base.get() == self.get_auto_irq_var_base():
+                self.__auto_var_base_cbs = (
+                    self.src_node_var.trace_variable("w", self.__auto_var_base),
+                    self.dst_node_var.trace_variable("w", self.__auto_var_base),
+                    self.src_irq_idx_var.trace_variable("w",
+                        self.__auto_var_base
+                    ),
+                    self.dst_irq_idx_var.trace_variable("w",
+                        self.__auto_var_base
+                    )
+                )
+        else:
+            if self.v_var_base.get() != self.get_auto_irq_var_base():
+                self.__auto_var_base_cbs = None
+
+                self.src_node_var.trace_vdelete("w", cbs[0])
+                self.dst_node_var.trace_vdelete("w", cbs[1])
+                self.src_irq_idx_var.trace_vdelete("w", cbs[2])
+                self.dst_irq_idx_var.trace_vdelete("w", cbs[3])
+
     def on_node_text_changed(self, *args):
         irq = self.irq
 
@@ -188,6 +215,10 @@ class IRQSettingsWidget(SettingsWidget):
 
             node_var.set(node_text)
 
+        # If current var base equals auto var base then turn auto var base
+        # suggestion on.
+        self.__on_var_base()
+
     def on_changed(self, op, *args, **kw):
         if not isinstance(op, MachineNodeOperation):
             return
@@ -200,6 +231,34 @@ class IRQSettingsWidget(SettingsWidget):
         elif isinstance(op, MOp_SetIRQAttr):
             if op.node_id == self.irq.id:
                 self.refresh()
+
+    def __auto_var_base(self, *args):
+        self.v_var_base.set(self.get_auto_irq_var_base())
+
+    def get_auto_irq_var_base(self):
+        try:
+            node_id2var_name = self.mach.node_id2var_name
+        except AttributeError:
+            return "irq"
+
+        if self.src_node_var.get() == "" or self.dst_node_var.get() == "":
+            return "irq"
+
+        try:
+            src_idx = int(self.src_irq_idx_var.get())
+            dst_idx = int(self.dst_irq_idx_var.get())
+        except ValueError:
+            return "irq"
+
+        src_id = self.find_node_by_link_text(self.src_node_var.get()).id
+        dst_id = self.find_node_by_link_text(self.dst_node_var.get()).id
+
+        return "irq_%s_%u_to_%s_%u" % (
+            node_id2var_name[src_id].get(),
+            src_idx,
+            node_id2var_name[dst_id].get(),
+            dst_idx,
+        )
 
 class IRQSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):

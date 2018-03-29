@@ -12,9 +12,14 @@ from collections import OrderedDict
 
 from sys import modules
 
+from .qom import QemuTypeName
+
 class QOMDescription(object):
     def __init__(self):
         self.project = None
+
+    def __var_base__(self):
+        return QemuTypeName(self.name).for_id_name
 
     def __dfs_children__(self):
         return []
@@ -102,7 +107,8 @@ def descriptionOf(QOMTemplate):
 
             for attr in __pa + __kwa:
                 val = getattr(self, attr)
-                gen.gen_field("%s = %s" % (attr, gen.gen_const(val)))
+                gen.gen_field(attr + " = ")
+                gen.pprint(val)
 
             if self.compat:
                 for attr, val in self.compat.items():

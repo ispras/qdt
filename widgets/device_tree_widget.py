@@ -1,5 +1,4 @@
 from .var_widgets import (
-    VarToplevel,
     VarTreeview,
     VarButton,
     VarLabelFrame
@@ -14,9 +13,11 @@ from six.moves.tkinter import (
 )
 from common import mlget as _
 
-class DeviceTreeWidget(VarToplevel):
+from .gui_dialog import GUIDialog
+
+class DeviceTreeWidget(GUIDialog):
     def __init__(self, root, *args, **kw):
-        VarToplevel.__init__(self, master = root, *args, **kw)
+        GUIDialog.__init__(self, master = root, *args, **kw)
         self.qom_type_var = root.qom_type_var
 
         self.title(_("Device Tree"))
@@ -32,8 +33,6 @@ class DeviceTreeWidget(VarToplevel):
              + "+" + str(int(root.winfo_rooty()))
         self.geometry(geom)
 
-        self.transient(root)
-        self.grab_set()
         self.focus()
 
         self.device_tree = VarTreeview(self)

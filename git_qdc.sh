@@ -29,8 +29,21 @@ BranchRegEx="^[a-zA-Z_][a-zA-Z_0-9]*$"
 PrevPWD=`pwd`
 
 if [ "$1" == "" ] ; then
-    echo "A branch must be specified."
+    echo "A branch must be specified (1-st argument)."
     exit 1
+fi
+
+if ! [ -f "$2" ] ; then
+    echo "A project file must be specified (2-nd argument)."
+    exit 1
+fi
+
+if [ "$3" == "" ] ; then
+    echo "No commit message was provided (3-rd argument). Default one will be \
+used."
+    Msg="QDC auto commit"
+else
+    Msg="$3"
 fi
 
 if ! [[ "$1" =~ $BranchRegEx ]] ; then
@@ -50,6 +63,8 @@ if ! [ "${GitStatus}" == "" ] ; then
 fi
 
 Tag="${1}_QDC"
+StartTag="${Tag}_start"
+LastTag="${Tag}_last"
 DirName=`dirname "$0"`
 QDC="$DirName/$QDCSuffix"
 
@@ -60,19 +75,26 @@ BranchExists=`_git show-ref "$1"`
 #echo "$BranchExists"
 
 if [ "$BranchExists" == "" ] ; then
-    echo "Creating new device."
+    echo "First generation."
+
+    if _git tag "$StartTag" ; then
+        echo "Start tag has been set ($StartTag)."
+    else
+        echo "Cannot set start tag ($StartTag)."
+        exit 1
+    fi
 
     if _git branch "$1" ; then
         if _git checkout "$1" ; then
-            if python2 "$QDC" -q "$QemuSrc" ; then
+            if python "$QDC" "$2" ; then
                 if _git add -A ; then
-                    if _git commit -m "QDC auto commit" ; then
-                        if _git tag "$Tag" ; then
+                    if _git commit -m "$Msg" ; then
+                        if _git tag "$LastTag" ; then
                             echo "Success"
                             exit 0
                         else
-                            echo "Cannot create auxilliary tag '$Tag'. \
-Automatic update cannot be used again. Manual recovery is needed!"
+                            echo "Cannot create auxilliary tag '$LastTag'. \
+Automatic update will fail. Manual recovery is needed!"
                         fi
                     else
                         echo "Cannot commit generated code."
@@ -98,38 +120,52 @@ Automatic update cannot be used again. Manual recovery is needed!"
         echo "Failed create branch with name '$1'."
     fi
 else
-    echo "Updating device."
+    echo "Update."
 
-    TmpBranch="${1}_QDC_tmp"
+    NewBase="${1}_QDC_tmp"
+    PreviousBase="${1}_QDC_tmp2"
 
-    if _git checkout "$Tag" ; then
-        if _git branch "$TmpBranch" ; then
-            if _git checkout "$TmpBranch" ; then
-                if python2 "$QDC" -q "$QemuSrc" ; then
+    if _git checkout "$StartTag" ; then
+        if _git branch "$NewBase" ; then
+            if _git checkout "$NewBase" ; then
+                if python "$QDC" "$2" ; then
                     if _git add -A ; then
-                        if _git commit -m "QDC auto commit" ; then
-                            # Move tag
-                            if _git tag -d "$Tag" ; then
-                                if _git tag "$Tag" ; then
-                                    if _git rebase "$TmpBranch" \
-                                                        "$CurrentBranch" ; then
-                                        echo "Automatic update have done."
-                                    else
-                                        # Is there a conflict ?
-                                        echo "Conflict? If yes then you should \
+                        if _git commit -m "$Msg" ; then
+if _git checkout -b "$PreviousBase" "$LastTag" ; then
+    if _git cherry-pick --strategy-option theirs "$NewBase" ; then
+        if _git rebase --onto "$PreviousBase" "$LastTag" "$1" ; then
+            echo "Automatic update have done."
+            Checkout="yes"
+        else
+            # Is there a conflict ?
+            echo "Conflict? If yes then you should \
 resolve it then execute 'git rebase --continue' (see Git's message above). \
 Else there are some unexpected case. Manual solution is required in both cases."
-                                        _git branch -d "$TmpBranch"
-                                    fi
-                                    exit 0
-                                else
-                                    echo "Cannot create new auxilliary tag \
-'$Tag'. Automatic update cannot be used again. Manual recovery is needed!"
-                                fi
-                            else
-                                echo "Cannot remove previous auxilliary tag \
-'$Tag'."
-                            fi
+        fi
+        # Move tag
+        if _git tag -d "$LastTag" ; then
+            if ! _git tag "$LastTag" "$PreviousBase" ; then
+                echo "Cannot create new auxilliary tag '$LastTag'. Next update \
+will fail. Manual recovery is needed!"
+            fi
+        else
+            echo "Cannot remove previous auxilliary tag '$LastTag'. Next \
+update will be confused. Manual recovery is needed!"
+        fi
+        # Do not check current branch out if there is a conflict.
+        if [ "$Checkout" == "yes" ] ; then
+            _git checkout "$CurrentBranch"
+        fi
+        _git branch -D "$NewBase"
+        _git branch -D "$PreviousBase"
+        exit 0
+    else
+        echo "Cannot cherry pick new version of base onto old base."
+        _git merge --abort
+    fi
+    _git checkout "$NewBase"
+    _git branch -D "$PreviousBase"
+fi
                         else
                             echo "Cannot commit newly generated code."
                         fi
@@ -144,15 +180,15 @@ Else there are some unexpected case. Manual solution is required in both cases."
                 git clean -f 
                 _git checkout "$CurrentBranch"
             else
-                echo "Cannot switch to temporary branch '$TmpBranch'."
+                echo "Cannot switch to temporary branch '$NewBase'."
             fi
-            _git branch -d "$TmpBranch"
+            _git branch -d "$NewBase"
         else
-            echo "Cannot create temporary branch '$TmpBranch'."
+            echo "Cannot create branch for new base '$NewBase'."
         fi
         _git checkout "$CurrentBranch"
     else
-        echo "Cannot checkout auxilliary tag '$Tag'."
+        echo "Cannot checkout start tag '$StartTag'."
     fi
 fi
 

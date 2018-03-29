@@ -3,7 +3,6 @@ from os import listdir
 from os.path import (
     basename,
     splitext,
-    split,
     join,
     isdir
 )
@@ -15,19 +14,16 @@ from re import compile
 
 from itertools import chain
 
-# PLY`s C preprocessor is used for several QEMU code analysis
-ply = join(split(split(__file__)[0])[0], "ply")
-if ply not in sys.path:
-    sys.path.insert(0, ply)
-
-from ply.lex import lex
-from ply.cpp import *
-
 from common import (
+    ply2path, # PLY`s C preprocessor is used for several QEMU code analysis
     OrderedSet,
     ObjectVisitor,
     BreakVisiting
 )
+
+from ply.lex import lex
+from ply.cpp import *
+
 from itertools import count
 
 from six import (

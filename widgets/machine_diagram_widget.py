@@ -636,12 +636,13 @@ IRQ line creation
         """ Double-click handler for 1-st (left) mouse button. """
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+
+        if self.highlighted_irq_line:
+            touched_ids += (self.highlighted_irq_line.arrow,)
+
         touched_ids = self.sort_ids_by_priority(touched_ids)
 
         for tid in touched_ids:
-            if not "DnD" in self.canvas.gettags(tid):
-                continue
-
             if tid == self.shown_irq_circle:
                 # special lookup for IRQ lines
                 tnode = self.shown_irq_node.line
@@ -705,7 +706,7 @@ IRQ line creation
             self.hk.delete_bindings(self.bindings)
 
     def on_export_diagram(self, *args):
-        file_name = asksaveas(
+        file_name = asksaveas(self,
             [
                 ((_("Scalable Vector Graphics image"), ".svg")),
                 ((_("Postscript image"), ".ps"))
@@ -929,6 +930,9 @@ IRQ line creation
 
                 del self.node2dev[line]
                 del self.dev2node[irq]
+
+                del self.id2node[line.arrow]
+                del self.node2id[line]
             else:
                 src = self.dev2node[irq.src[0]]
                 dst = self.dev2node[irq.dst[0]]
@@ -1122,7 +1126,10 @@ IRQ line creation
                 # try to find GPIO names for this type
                 while t:
                     try:
-                        gpios = t.gpio_names
+                        if prefix == "src":
+                            gpios = t.out_gpio_names
+                        else:
+                            gpios = t.in_gpio_names
                     except AttributeError:
                         pass
                     else:
@@ -1582,9 +1589,14 @@ IRQ line creation
                 """ IRQ Line circles could discourage another nodes dragging,
                 especially related IRQ hub nodes. Hence, make IRQ line circles
                 less priority. """
-                ret = 2
+                ret = 1
                 """ There is no meaningful reason to distribute other nodes
                 priorities such way. So, just try and watch what will happen. """
+            elif isinstance(n, IRQLine):
+                # The id corresponds to arrow of a highlighted IRQ line.
+                # Sometimes an IRQ path circle is shown for different (not
+                # currently highlighted) line.
+                ret = 2
             elif isinstance(n, IRQHubCircle):
                 ret =  3
             else:
@@ -1980,7 +1992,13 @@ IRQ line creation
         id = self.dnd_dragged
 
         if id == self.irq_circle_preview:
-            self.circle_preview_to_irq(self.highlighted_irq_line)
+            self.tmp_irq_circle = (
+                self.highlighted_irq_line,
+                self.circle_preview_to_irq(self.highlighted_irq_line),
+                self.last_canvas_mouse[0], self.last_canvas_mouse[1]
+            )
+        else:
+            self.tmp_irq_circle = None
 
         if id == self.shown_irq_circle:
             node = self.shown_irq_node
@@ -2004,6 +2022,22 @@ IRQ line creation
         for n in self.dragged:
             n.static = False
         self.dragged = []
+
+        tirq = self.tmp_irq_circle
+        if tirq is not None:
+            # If new IRQ line point was not dragged far enough then remove it.
+            if not self.ph_is_running():
+                # During dynamic laying out point removal is automated.
+                lcm = self.last_canvas_mouse
+                dx = abs(tirq[2] - lcm[0])
+                dy = abs(tirq[3] - lcm[1])
+                # Use Manchester metric to speed up the check
+                if dx + dy <= DRAG_GAP:
+                    self.irq_line_delete_circle(tirq[0], tirq[1])
+                    self.invalidate()
+                    self.update_highlighted_irq_line()
+
+            self.tmp_irq_circle = None
 
     def __update_var_names(self):
         t = self.mach.gen_type()
@@ -2171,11 +2205,15 @@ IRQ line creation
             if d < nearest[1]:
                 nearest = (idx, d)
 
-        self.shown_irq_node = self.irq_line_add_circle(irql, nearest[0], x, y)
+        idx = nearest[0]
+
+        self.shown_irq_node = self.irq_line_add_circle(irql, idx, x, y)
         self.shown_irq_circle = self.irq_circle_preview
 
         self.irq_circle_preview = None
         self.stop_circle_preview()
+
+        return idx
 
     def process_irq_circles(self):
         total_circles = 0
@@ -2908,6 +2946,9 @@ IRQ line creation
         )
         line.arrow = id
         self.canvas.lower(id)
+
+        self.id2node[id] = line
+        self.node2id[line] = id
 
         self.irq_lines.append(line)
 

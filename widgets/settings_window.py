@@ -1,7 +1,6 @@
 from .var_widgets import (
     VarLabel,
-    VarButton,
-    VarToplevel
+    VarButton
 )
 from common import (
     FormatVar,
@@ -16,6 +15,8 @@ from six.moves.tkinter import (
     BOTH
 )
 from qemu import MOp_SetNodeVarNameBase
+
+from .gui_toplevel import GUIToplevel
 
 class SettingsWidget(GUIFrame):
     def __init__(self, node, machine, *args, **kw):
@@ -125,7 +126,10 @@ class SettingsWidget(GUIFrame):
         except AttributeError:
             pass
 
-class SettingsWindow(VarToplevel):
+# Remembers runtime size of settings windows. One record per window type.
+window_sizes = dict()
+
+class SettingsWindow(GUIToplevel):
     def __init__(self, node, machine,
             machine_history_tracker = None,
             *args, **kw
@@ -134,7 +138,7 @@ class SettingsWindow(VarToplevel):
         to be initialized already. """
         self.node = node
 
-        VarToplevel.__init__(self, *args, **kw)
+        GUIToplevel.__init__(self, *args, **kw)
 
         self.mach = machine
         self.mht = machine_history_tracker
@@ -194,13 +198,15 @@ class SettingsWindow(VarToplevel):
 
         self.bind("<Escape>", self.on_escape, "+")
 
+        self.after(100, self.__init_geometry)
+
     def title(self, stringvar = None):
         """ Add the prefix with node ID. """
         if stringvar is None:
-            return VarToplevel.title(self, stringvar = stringvar)
+            return GUIToplevel.title(self, stringvar = stringvar)
 
         title = FormatVar("(%u) %%s" % self.node.id) % stringvar
-        return VarToplevel.title(self, stringvar = title)
+        return GUIToplevel.title(self, stringvar = title)
 
     def on_escape(self, event):
         self.destroy()
@@ -227,3 +233,18 @@ class SettingsWindow(VarToplevel):
 
     def __on_sw_destroy__(self, event):
         self.destroy()
+
+    def __init_geometry(self):
+        init_size = (self.winfo_width(), self.winfo_height())
+
+        size = window_sizes.get(type(self), None)
+        if size is not None:
+            size = max(size[0], init_size[0]), max(size[1], init_size[1])
+            self.geometry("%ux%u" % size)
+
+        self.bind("<Configure>", self.__on_configure, "+")
+
+    def __on_configure(self, event):
+        if event.widget is self:
+            window_sizes[type(self)] = (event.width, event.height)
+

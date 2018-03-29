@@ -1,4 +1,5 @@
 from copy import deepcopy
+from qemu import QemuTypeName
 
 class GUILayout(object):
     def __init__(self, desc_name, opaque, shown = None):
@@ -51,6 +52,12 @@ class GUILayout(object):
             return []
         else:
             return [self.opaque]
+
+    def __var_base__(self):
+        return "%s_l%s" % (
+            QemuTypeName(self.desc_name).for_header_name,
+            "" if self.lid is None else self.lid
+        )
 
     def __gen_code__(self, g):
         g.reset_gen(self)

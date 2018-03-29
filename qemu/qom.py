@@ -571,10 +571,15 @@ class QOMType(object):
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro):
         read = Type.lookup("MemoryRegionOps_read")
-        return read.use_as_prototype(
-            name = name,
-            static = True,
-            body = """\
+
+        used_types = set([
+            read.args[1].type,
+            Type.lookup("uint64_t"),
+            Type.lookup("printf"),
+            Type.lookup("HWADDR_PRIx")
+        ])
+
+        body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
     uint64_t@bret@b=@s0;
 
@@ -590,22 +595,29 @@ class QOMType(object):
     offset = read.args[1].name,
     Struct = struct_name,
     UPPER = type_cast_macro
-),
-        used_types = [
-            read.args[1].type,
-            Type.lookup("uint64_t"),
-            Type.lookup("printf"),
-            Type.lookup("HWADDR_PRIx")
-        ]
+        )
+
+        return read.use_as_prototype(
+            name = name,
+            static = True,
+            body = body,
+            used_types = used_types
         )
 
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro):
         write = Type.lookup("MemoryRegionOps_write")
-        return write.use_as_prototype(
-            name = name,
-            static = True,
-            body = """\
+
+        used_types = set([
+            write.args[1].type,
+            write.args[2].type,
+            Type.lookup("uint64_t"),
+            Type.lookup("printf"),
+            Type.lookup("HWADDR_PRIx"),
+            Type.lookup("PRIx64")
+        ])
+
+        body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
 
     switch@b({offset})@b{{
@@ -620,15 +632,13 @@ class QOMType(object):
     value = write.args[2].name,
     Struct = struct_name,
     UPPER = type_cast_macro
-),
-            used_types = [
-                write.args[1].type,
-                write.args[2].type,
-                Type.lookup("uint64_t"),
-                Type.lookup("printf"),
-                Type.lookup("HWADDR_PRIx"),
-                Type.lookup("PRIx64")
-            ]
+        )
+
+        return write.use_as_prototype(
+            name = name,
+            static = True,
+            body = body,
+            used_types = used_types
         )
 
 

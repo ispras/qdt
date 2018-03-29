@@ -10,6 +10,7 @@ from widgets import (
     Statusbar,
     GUIProjectHistoryTracker,
     HistoryWindow,
+    askyesno,
     askopen,
     asksaveas,
     askdirectory,
@@ -57,7 +58,6 @@ from six.moves.tkinter import (
 from six.moves.tkinter_messagebox import (
     askyesnocancel,
     showinfo,
-    askyesno,
     showerror
 )
 
@@ -475,10 +475,10 @@ show it else hide it.")
             # reload_build_path_task always run at program start that is why
             # it's in process when it's not in finished_tasks and not failed
             if self.pw.reload_build_path_task not in self.pw.tm.finished_tasks:
-                ans = askyesno(
-                    title = _("Cache rebuilding").get(),
+                ans = askyesno(self,
+                    title = _("Cache rebuilding"),
                     message = _("Cache building is already \
-in process. Do you want to start cache rebuilding?").get()
+in process. Do you want to start cache rebuilding?")
                 )
                 if not ans:
                     return
@@ -527,7 +527,7 @@ in process. Do you want to start cache rebuilding?").get()
         d = AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
-        dir = askdirectory(title = _("Select Qemu build path"))
+        dir = askdirectory(self, title = _("Select Qemu build path"))
         if not dir:
             return
 
@@ -642,7 +642,8 @@ later.").get()
         self.save_project_to_file(file_name)
 
     def on_save_as(self):
-        fname = asksaveas([(_("QDC GUI Project defining script"), ".py")],
+        fname = asksaveas(self,
+            [(_("QDC GUI Project defining script"), ".py")],
             title = _("Save project")
         )
 
@@ -661,10 +662,10 @@ later.").get()
 
     def check_unsaved(self):
         if self.title_not_saved_asterisk.get() == "*":
-            return askyesno(
-                title = self.title_suffix.get(),
+            return askyesno(self,
+                title = self.title_suffix,
                 message =
-_("Current project has unsaved changes. They will be lost. Continue?").get()
+_("Current project has unsaved changes. They will be lost. Continue?")
             )
         else:
             return True
@@ -685,7 +686,7 @@ all changes are saved. """
         if not self.check_unsaved():
             return
 
-        fname = askopen([(_("QDC GUI Project defining script"), ".py")],
+        fname = askopen(self, [(_("QDC GUI Project defining script"), ".py")],
             title = _("Load project")
         )
 

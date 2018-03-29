@@ -6,6 +6,7 @@ from common import (
     Notifier,
     SignalDispatcherTask
 )
+from .logo import set_logo
 
 @Notifier("activated", "finished", 'failed', "removed")
 class GUITaskManager(TkCoDispatcher):
@@ -37,6 +38,9 @@ class GUITk(VarTk):
                 pass
 
         VarTk.__init__(self, **kw)
+
+        set_logo(self)
+
         self.task_manager = GUITaskManager(self, **disp_kw)
 
         self.signal_dispatcher = SignalDispatcherTask()

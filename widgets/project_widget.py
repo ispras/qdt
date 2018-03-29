@@ -187,7 +187,14 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                     continue
 
                 if l.widget is None:
-                    desc = next(self.p.find(name = desc_name))
+                    try:
+                        desc = next(self.p.find(name = desc_name))
+                    except StopIteration:
+                        # Ignore layouts for lost descriptions.
+                        # It is frequent situation after manual project
+                        # editing. I.e. a user was probably changed name of the
+                        # description.
+                        continue
 
                     w = self.gen_widget(desc)
                     try:
@@ -487,7 +494,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         qvc = qvd_get(self.p.build_path).qvc
         qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
 
-        next(qt.find(name = "sys-bus-device")).gpio_names = [
+        # Note that system bus device have no standard name for input IRQ.
+        next(qt.find(name = "sys-bus-device")).out_gpio_names = [
             "SYSBUS_DEVICE_GPIO_IRQ"
         ]
 

@@ -8,6 +8,8 @@ from six import (
     integer_types
 )
 
+from itertools import count
+
 if __name__ == "__main__":
     from sys import (
         stdout
@@ -41,8 +43,10 @@ class PyGenerator(object):
 
     def reset(self):
         self.obj2name = {}
+        self.name2obj = {}
+        self.name_counter = {}
+
         self.current_indent = ""
-        self.max_name = 0
         self.new_line = False
 
     def line(self, suffix = ""):
@@ -74,9 +78,23 @@ class PyGenerator(object):
             return "None"
 
         if not obj in self.obj2name:
-            name = "obj%u" % self.max_name
-            self.max_name = self.max_name + 1
+            try:
+                var_base = obj.__var_base__
+            except AttributeError:
+                var_base = "obj"
+            else:
+                var_base = var_base()
+
+            name = var_base
+
+            if name in self.name2obj:
+                for i in self.name_counter.setdefault(var_base, count(0)):
+                    name = "%s%d" % (var_base, i)
+                    if name not in self.name2obj:
+                        break
+
             self.obj2name[obj] = name
+            self.name2obj[name] = obj
 
         return self.obj2name[obj]
 
@@ -100,9 +118,7 @@ class PyGenerator(object):
             self.line()
 
     def gen_const(self, c):
-        if isinstance(c, bool):
-            return "True" if c else "False"
-        elif isinstance(c, integer_types):
+        if isinstance(c, integer_types):
             if c <= 0:
                 return "%d" % c
             else:
@@ -145,7 +161,7 @@ class PyGenerator(object):
                 quotes = '"""' if multiline else '"'
                 return prefix + quotes + escaped + quotes
         else:
-            return str(c)
+            return repr(c)
 
     def reset_gen(self, obj):
         self.reset_gen_common(type(obj).__name__ + "(")
@@ -222,29 +238,10 @@ class PyGenerator(object):
 
         self.first_field = True
 
-    def pprint_text(self, text):
-        # Double and single quote count
-        dquote = 0
-        squote = 0
-
-        text_utf8 = text_type('')
-
-        for c in text:
-            if c == '"':
-                dquote += 1
-            elif c == "'":
-                squote += 1
-            elif c == "\\":
-                c = "\\\\"
-
-            text_utf8 += text_type(c)
-
-        if dquote > squote:
-            escaped = text_utf8.replace(u"'", u"\\'")
-            self.write(u"u'" + escaped + u"'")
-        else:
-            escaped = text_utf8.replace(u'"', u'\\"')
-            self.write(u'u"' + escaped + u'"')
+    def gen_code(self, obj, pa_names = False, suffix = ")"):
+        self.reset_gen(obj)
+        self.gen_args(obj, pa_names = pa_names)
+        self.gen_end(suffix = suffix)
 
     def pprint(self, val):
         if isinstance(val, list):
@@ -268,11 +265,13 @@ class PyGenerator(object):
             self.line("{")
             self.push_indent()
             if val:
-                k, v = list(val.items())[0]
+                items = sorted(val.items(), key = lambda t : t[0])
+
+                k, v = items[0]
                 self.pprint(k)
                 self.write(": ")
                 self.pprint(v)
-                for k, v in list(val.items())[1:]:
+                for k, v in items[1:]:
                     self.line(",")
                     self.pprint(k)
                     self.write(": ")
@@ -302,7 +301,12 @@ class PyGenerator(object):
         elif val is None:
             self.write("None")
         else:
-            self.write(self.obj2name[val])
+            o2n = self.obj2name
+            if val in o2n:
+                s = o2n[val]
+            else:
+                s = repr(val)
+            self.write(s)
 
 if __name__ == "__main__":
     g = PyGenerator()
@@ -312,10 +316,3 @@ if __name__ == "__main__":
             stdout.write(str(type(val)) + " : " + repr(val) + "\n")
 
     g.w = Writer()
-
-    g.pprint_text("String in default encoding")
-    g.line()
-    g.pprint_text(u"Unicode string")
-    g.line()
-    g.pprint_text(b"ASCII string")
-    g.line()
