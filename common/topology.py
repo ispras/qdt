@@ -1,6 +1,6 @@
 __all__ = [
-    "GraphIsNotAcyclic",
-    "sort_topologically"
+    "GraphIsNotAcyclic"
+  , "sort_topologically"
 ]
 
 class GraphIsNotAcyclic(ValueError):
