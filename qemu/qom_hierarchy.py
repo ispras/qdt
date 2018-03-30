@@ -1,6 +1,6 @@
 __all__ = [
-    "QType",
-    "from_legacy_dict"
+    "QType"
+  , "from_legacy_dict"
 ]
 
 from copy import deepcopy as dcp
