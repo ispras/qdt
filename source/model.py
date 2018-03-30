@@ -1,3 +1,33 @@
+__all__ = [
+    "Source"
+      , "Header"
+  , "AddTypeRefToDefinerException"
+  , "TypeNotRegistered"
+  , "Type"
+      , "TypeReference"
+      , "Structure"
+      , "Function"
+      , "Pointer"
+      , "Macro"
+  , "Initializer"
+  , "Variable"
+  , "Usage"
+  , "SourceChunk"
+      , "HeaderInclusion"
+      , "MacroDefinition"
+      , "PointerTypeDeclaration"
+      , "PointerVariableDeclaration"
+      , "VariableDeclaration"
+      , "VariableDefinition"
+      , "VariableUsage"
+      , "StructureDeclarationBegin"
+      , "StructureDeclaration"
+      , "FunctionDeclaration"
+      , "FunctionDefinition"
+  , "SourceFile"
+  , "SourceTreeContainer"
+]
+
 from os import listdir
 
 from os.path import (
