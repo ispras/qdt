@@ -1,15 +1,13 @@
 #!/usr/bin/python2
 
-from widgets import \
-    VarCombobox, \
-    VarTk, \
+from widgets import (
+    VarCombobox,
+    VarTk,
     VarLabel
+)
+from six.moves.tkinter import StringVar
 
-from six.moves.tkinter import \
-    StringVar
-
-from random import \
-    random
+from random import random
 
 class VarComboboxTest(VarCombobox):
     def __init__(self, *args, **kw):

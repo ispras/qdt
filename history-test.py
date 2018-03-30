@@ -1,21 +1,22 @@
 #!/usr/bin/python2
 
-from common import \
-    HistoryTracker, \
-    InverseOperation, \
-    History, \
-    HistoryTracker, \
+from common import (
+    HistoryTracker,
+    InverseOperation,
+    History,
+    HistoryTracker,
     mlget as _
+)
 
-from widgets import \
-    CanvasDnD, \
-    VarTk, \
-    VarMenu, \
-    HotKey, \
+from widgets import (
+    CanvasDnD,
+    VarTk,
+    VarMenu,
+    HotKey,
     HotKeyBinding
+)
 
-from six.moves.tkinter import \
-    CURRENT
+from six.moves.tkinter import CURRENT
 
 class DnDOperation(InverseOperation):
     def __init__(self, cnv, id, *args, **kwargs):
