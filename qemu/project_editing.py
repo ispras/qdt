@@ -1,3 +1,11 @@
+__all__ = [
+    "QemuObjectCreationHelper"
+  , "ProjectOperation"
+      , "POp_AddDesc"
+          , "POp_DelDesc"
+      , "DescriptionOperation"
+]
+
 from common import (
     mlget as _,
     get_class,
