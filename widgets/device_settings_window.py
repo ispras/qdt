@@ -1,3 +1,7 @@
+__all__ = [
+    "DeviceSettingsWindow"
+]
+
 from widgets import (
     SystemBusDeviceSettingsWidget,
     DeviceSettingsWidget

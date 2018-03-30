@@ -1,3 +1,7 @@
+__all__ = [
+    "TkCoDispatcher"
+]
+
 from common import CoDispatcher
 
 from time import time

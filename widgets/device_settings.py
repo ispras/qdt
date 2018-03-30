@@ -1,3 +1,7 @@
+__all__ = [
+    "DeviceSettingsWidget"
+]
+
 from .var_widgets import (
     VarLabel,
     VarButton,

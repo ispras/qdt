@@ -1,6 +1,10 @@
 #!/usr/bin/python2
 # based on http://code.activestate.com/lists/python-list/281562/
 
+__all__ = [
+    "CanvasDnD"
+]
+
 from .gui_frame import GUIFrame
 
 from six.moves import range as xrange

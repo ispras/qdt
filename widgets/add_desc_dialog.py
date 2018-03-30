@@ -1,3 +1,7 @@
+__all__ = [
+    "AddDescriptionDialog"
+]
+
 from common import mlget as _
 
 from .hotkey import HKEntry

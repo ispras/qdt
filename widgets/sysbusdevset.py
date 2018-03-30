@@ -1,3 +1,7 @@
+__all__ = [
+    "SystemBusDeviceSettingsWidget"
+]
+
 from widgets import (
     DeviceSettingsWidget,
     VarLabelFrame,

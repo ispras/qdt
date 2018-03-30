@@ -1,3 +1,8 @@
+__all__ = [
+    "BusSettingsWindow"
+  , "BusSettingsWidget"
+]
+
 from .settings_window import (
     SettingsWindow,
     SettingsWidget

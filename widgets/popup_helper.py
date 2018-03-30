@@ -1,3 +1,7 @@
+__all__ = [
+    "TkPopupHelper"
+]
+
 from six.moves.tkinter import (
     TclError,
     Misc

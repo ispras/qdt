@@ -1,3 +1,7 @@
+__all__ = [
+    "PCIDeviceSettingsWidget"
+]
+
 from .device_settings import DeviceSettingsWidget
 
 from common import mlget as _
