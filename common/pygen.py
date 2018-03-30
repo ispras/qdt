@@ -11,22 +11,15 @@ from six import (
 from itertools import count
 
 if __name__ == "__main__":
-    from sys import (
-        stdout
-    )
-    from topology import (
-        sort_topologically
-    )
-    from reflection import (
-        get_class_total_args
-    )
+    from sys import stdout
+
+    from topology import sort_topologically
+
+    from reflection import get_class_total_args
 else:
-    from .topology import (
-        sort_topologically
-    )
-    from .reflection import (
-        get_class_total_args
-    )
+    from .topology import sort_topologically
+
+    from .reflection import get_class_total_args
 
 const_types = (float, text_type, binary_type, bool) + integer_types
 

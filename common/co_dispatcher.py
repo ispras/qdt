@@ -9,12 +9,10 @@ __all__ = [
   , "callco"
 ]
 
-from types import (
-    GeneratorType
-)
-from time import (
-    time
-)
+from types import GeneratorType
+
+from time import time
+
 import sys
 
 class FailedCallee(RuntimeError):

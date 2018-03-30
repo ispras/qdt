@@ -8,9 +8,7 @@ from inspect import (
     getargspec
 )
 
-from collections import (
-    OrderedDict
-)
+from collections import OrderedDict
 
 # http://stackoverflow.com/questions/12627118/get-a-function-arguments-default-value
 def get_default_args(func):
