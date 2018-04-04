@@ -7,8 +7,9 @@ from six import (
     binary_type,
     integer_types
 )
-
-from itertools import count
+from itertools import (
+    count
+)
 
 if __name__ == "__main__":
     from sys import (
