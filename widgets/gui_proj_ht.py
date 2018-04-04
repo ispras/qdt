@@ -5,9 +5,12 @@ from qemu import (
     DOp_SetPCIIdAttr,
     ProjectHistoryTracker
 )
-from common import mlget as _
-
-from .gui_editing import GUIPOp_SetBuildPath
+from common import (
+    mlget as _
+)
+from .gui_editing import (
+    GUIPOp_SetBuildPath
+)
 
 class GUIProjectHistoryTracker(ProjectHistoryTracker):
     def __init__(self, *args, **kw):

@@ -14,7 +14,9 @@ from six.moves.tkinter_ttk import (
     Combobox,
     Treeview
 )
-from common import Variable
+from common import (
+    Variable
+)
 
 variables = (Variable, TkVariable)
 
@@ -303,7 +305,9 @@ if __name__ == "__main__":
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
 
-    from .tv_width_helper import TreeviewWidthHelper
+    from .tv_width_helper import (
+        TreeviewWidthHelper
+    )
 
     class TestTV(VarTreeview, TreeviewWidthHelper):
         def __init__(self, *args, **kw):

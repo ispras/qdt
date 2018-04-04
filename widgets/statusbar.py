@@ -2,10 +2,12 @@ __all__ = [
     "Statusbar"
 ]
 
-from .gui_frame import GUIFrame
-
-from .var_widgets import VarLabel
-
+from .gui_frame import (
+    GUIFrame
+)
+from .var_widgets import (
+    VarLabel
+)
 from six.moves.tkinter import (
     Label,
     SUNKEN as RELIEF_SUNKEN,
@@ -14,7 +16,9 @@ from six.moves.tkinter import (
     RIGHT as SIDE_RIGHT,
     LEFT as SIDE_LEFT
 )
-from .pack_info_compat import pack_info
+from .pack_info_compat import (
+    pack_info
+)
 
 class Statusbar(GUIFrame):
     def __init__(self, *args, **kw):

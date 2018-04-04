@@ -2,8 +2,9 @@ from .settings_window import (
     SettingsWindow,
     SettingsWidget
 )
-from common import mlget as _
-
+from common import (
+    mlget as _
+)
 from qemu import (
     MOp_SetChildBus,
     MachineNodeOperation
@@ -17,17 +18,22 @@ from six.moves.tkinter import (
     BooleanVar,
     StringVar
 )
-from six.moves.tkinter_ttk import Combobox
-
-from .device_settings import DeviceSettingsWidget
-
+from six.moves.tkinter_ttk import (
+    Combobox
+)
+from .device_settings import (
+    DeviceSettingsWidget
+)
 from qemu import (
     MOp_SetBusAttr,
     BusNode
 )
-from .hotkey import HKEntry
-
-from .gui_frame import GUIFrame
+from .hotkey import (
+    HKEntry
+)
+from .gui_frame import (
+    GUIFrame
+)
 
 class BusSettingsWidget(SettingsWidget):
     def __init__(self, bus, *args, **kw):

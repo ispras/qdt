@@ -2,13 +2,16 @@ __all__ = [
     "set_logo"
 ]
 
-from six.moves.tkinter import PhotoImage
-
+from six.moves.tkinter import (
+    PhotoImage
+)
 from os.path import (
     split,
     join
 )
-from traceback import print_exc
+from traceback import (
+    print_exc
+)
 
 reported = False
 

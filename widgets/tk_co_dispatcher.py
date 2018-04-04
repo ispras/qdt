@@ -1,7 +1,9 @@
-from common import CoDispatcher
-
-from time import time
-
+from common import (
+    CoDispatcher
+)
+from time import (
+    time
+)
 import sys
 
 class TkCoDispatcher(CoDispatcher):

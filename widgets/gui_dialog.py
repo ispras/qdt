@@ -2,7 +2,9 @@ __all__ = [
     "GUIDialog"
 ]
 
-from .gui_toplevel import GUIToplevel
+from .gui_toplevel import (
+    GUIToplevel
+)
 
 class GUIDialog(GUIToplevel):
     def __init__(self, *args, **kw):
@@ -23,7 +25,10 @@ class GUIDialog(GUIToplevel):
                 break
         else:
             # Those imports are only used there.
-            from common import mlget as _
+            from common import (
+                mlget as _
+            )
+
             import sys
 
             sys.stderr.write(_(

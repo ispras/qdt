@@ -2,13 +2,17 @@ from .sysbusdevset import (
     SystemBusDeviceSettingsWidget,
     DeviceSettingsWidget
 )
-from common import mlget as _
-
+from common import (
+    mlget as _
+)
 import qemu
 
-from .pci_device_settings import PCIDeviceSettingsWidget
-
-from .settings_window import SettingsWindow
+from .pci_device_settings import (
+    PCIDeviceSettingsWidget
+)
+from .settings_window import (
+    SettingsWindow
+)
 
 class DeviceSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):

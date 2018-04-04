@@ -1,10 +1,15 @@
-from qemu import ProjectOperation
-
-from copy import deepcopy
-
-from common import mlget as _
-
-from .gui_project import GUIProject
+from qemu import (
+    ProjectOperation
+)
+from copy import (
+    deepcopy
+)
+from common import (
+    mlget as _
+)
+from .gui_project import (
+    GUIProject
+)
 
 """ The difference is the project should be a _GUI_ project. """
 class GUIProjectOperation(ProjectOperation):

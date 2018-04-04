@@ -1,12 +1,14 @@
-from common import mlget as _
-
+from common import (
+    mlget as _
+)
 from six.moves.tkinter_tkfiledialog import (
     askdirectory as tk_askdirector,
     askopenfilename,
     asksaveasfilename
 )
-
-from six.moves.tkinter_messagebox import askyesno as tk_askyesno
+from six.moves.tkinter_messagebox import (
+    askyesno as tk_askyesno
+)
 
 class CrossDialog(object):
     def __init__(self, master):

@@ -2,8 +2,12 @@ __all__ = [
     "GUIToplevel"
 ]
 
-from .var_widgets import VarToplevel
-from .logo import set_logo
+from .var_widgets import (
+    VarToplevel
+)
+from .logo import (
+    set_logo
+)
 
 class GUIToplevel(VarToplevel):
     def __init__(self, *args, **kw):
