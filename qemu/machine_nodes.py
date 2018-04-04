@@ -23,13 +23,18 @@ __all__ = [
   , "MemorySASNodeCanNotHaveParent"
 ]
 
-from itertools import count
-
-from six.moves import range as xrange
-
-from .qom import QOMPropertyTypeLink
-
-from bisect import insort
+from itertools import (
+    count
+)
+from six.moves import (
+    range as xrange
+)
+from .qom import (
+    QOMPropertyTypeLink
+)
+from bisect import (
+    insort
+)
 
 class Node(object):
     def __init__(self, var_base = None):

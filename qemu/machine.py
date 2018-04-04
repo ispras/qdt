@@ -39,13 +39,18 @@ from common import (
     mlget as _,
     sort_topologically
 )
-from os.path import join as join_path
-
-from .version import get_vp
-
-from six import integer_types
-
-from collections import OrderedDict
+from os.path import (
+    join as join_path
+)
+from .version import (
+    get_vp
+)
+from six import (
+    integer_types
+)
+from collections import (
+    OrderedDict
+)
 
 class UnknownMachineNodeType(ValueError):
     pass

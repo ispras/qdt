@@ -2,8 +2,9 @@ __all__ = [
     "get_vp"
 ]
 
-from hashlib import md5
-
+from hashlib import (
+    md5
+)
 from source import (
     Initializer,
     add_base_types,

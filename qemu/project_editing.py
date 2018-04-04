@@ -5,21 +5,27 @@ from common import (
     get_class_defaults, \
     InverseOperation
 )
-from inspect import getmro
-
+from inspect import (
+    getmro
+)
 from six import (
     binary_type,
     string_types,
     text_type,
     integer_types
 )
-from importlib import import_module
-
-from .qom_desc import QOMDescription
-
-from traceback import print_stack
-
-from copy import copy
+from importlib import (
+    import_module
+)
+from .qom_desc import (
+    QOMDescription
+)
+from traceback import (
+    print_stack
+)
+from copy import (
+    copy
+)
 
 class ProjectOperation(InverseOperation):
     def __init__(self, project, *args, **kw):

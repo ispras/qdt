@@ -14,11 +14,15 @@ from source import (
     Function,
     Type
 )
-from common import mlget as _
-
-from collections import OrderedDict
-
-from .qom_desc import describable
+from common import (
+    mlget as _
+)
+from collections import (
+    OrderedDict
+)
+from .qom_desc import (
+    describable
+)
 
 @describable
 class SysBusDeviceType(QOMDevice):

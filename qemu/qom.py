@@ -23,15 +23,21 @@ from source import (
     Pointer,
     Type
 )
-from os.path import join
-
-from six import integer_types
-
-from common import mlget as _
-
-from collections import OrderedDict
-
-from .version import get_vp
+from os.path import (
+    join
+)
+from six import (
+    integer_types
+)
+from common import (
+    mlget as _
+)
+from collections import (
+    OrderedDict
+)
+from .version import (
+    get_vp
+)
 
 # properties
 class QOMPropertyType(object):

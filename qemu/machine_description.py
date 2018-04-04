@@ -9,12 +9,15 @@ from .qom_desc import (
     descriptionOf,
     QOMDescription
 )
-from itertools import count
-
-from .qom import QOMPropertyTypeLink
-
-from .machine import MachineType
-
+from itertools import (
+    count
+)
+from .qom import (
+    QOMPropertyTypeLink
+)
+from .machine import (
+    MachineType
+)
 from .machine_nodes import (
     SystemBusNode,
     SystemBusDeviceNode,

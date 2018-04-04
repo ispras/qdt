@@ -1,9 +1,12 @@
-from .project_editing import DescriptionOperation
-
-from copy import deepcopy as dcp
-
-from common import mlget as _
-
+from .project_editing import (
+    DescriptionOperation
+)
+from copy import (
+    deepcopy as dcp
+)
+from common import (
+    mlget as _
+)
 from .pci_ids import (
     PCIVendorId,
     PCIDeviceId,

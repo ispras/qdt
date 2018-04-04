@@ -13,19 +13,25 @@ from os.path import (
     isdir,
     isfile
 )
-from itertools import count
-
-from .machine_description import MachineNode
-
+from itertools import (
+    count
+)
+from .machine_description import (
+    MachineNode
+)
 from common import (
     callco,
     co_find_eq
 )
-from .makefile_patching import patch_makefile
-
-from codecs import open
-
-from collections import defaultdict
+from .makefile_patching import (
+    patch_makefile
+)
+from codecs import (
+    open
+)
+from collections import (
+    defaultdict
+)
 
 """ TODO: Selection of configuration flag and accumulator variable
 name is Qemu version specific. Version API must be used there. """
