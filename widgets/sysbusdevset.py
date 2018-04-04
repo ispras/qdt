@@ -1,5 +1,6 @@
-from widgets import (
-    DeviceSettingsWidget,
+from .device_settings import DeviceSettingsWidget
+
+from .var_widgets import (
     VarLabelFrame,
     VarButton
 )

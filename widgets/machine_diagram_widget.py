@@ -1,7 +1,7 @@
-from widgets import (
-    VarMenu,
-    CanvasDnD
-)
+from .var_widgets import VarMenu
+
+from .DnDCanvas import CanvasDnD
+
 from six import (
     text_type,
     binary_type
@@ -62,7 +62,7 @@ from qemu import (
     DeviceNode,
     IRQHub
 )
-from widgets import DeviceSettingsWindow
+from .device_settings_window import DeviceSettingsWindow
 
 from .irq_settings import IRQSettingsWindow
 

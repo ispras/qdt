@@ -1,4 +1,4 @@
-from widgets import (
+from .sysbusdevset import (
     SystemBusDeviceSettingsWidget,
     DeviceSettingsWidget
 )
