@@ -1,3 +1,7 @@
+__all__ = [
+    "PCIIdWidget"
+]
+
 from .gui_frame import (
     GUIFrame
 )

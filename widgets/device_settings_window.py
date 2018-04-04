@@ -1,3 +1,7 @@
+__all__ = [
+    "DeviceSettingsWindow"
+]
+
 from .sysbusdevset import (
     SystemBusDeviceSettingsWidget,
     DeviceSettingsWidget

@@ -1,3 +1,7 @@
+__all__ = [
+    "ObjRefVar"
+]
+
 from six.moves.tkinter import (
     IntVar
 )

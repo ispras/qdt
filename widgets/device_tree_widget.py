@@ -1,3 +1,7 @@
+__all__ = [
+    "DeviceTreeWidget"
+]
+
 from .var_widgets import (
     VarTreeview,
     VarButton,

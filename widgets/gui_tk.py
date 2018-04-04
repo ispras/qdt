@@ -1,3 +1,8 @@
+__all__ = [
+    "GUITaskManager"
+  , "GUITk"
+]
+
 from .var_widgets import (
     VarTk
 )

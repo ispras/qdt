@@ -1,3 +1,7 @@
+__all__ = [
+    "QOMDescriptionSettingsWidget"
+]
+
 from .gui_frame import (
     GUIFrame
 )

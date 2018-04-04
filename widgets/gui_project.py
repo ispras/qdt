@@ -1,3 +1,7 @@
+__all__ = [
+    "GUIProject"
+]
+
 from qemu import (
     MachineNode,
     QProject

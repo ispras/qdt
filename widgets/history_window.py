@@ -1,3 +1,7 @@
+__all__ = [
+    "HistoryWindow"
+]
+
 from .branch_tree_view import (
     BranchTreeview
 )

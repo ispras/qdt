@@ -1,3 +1,8 @@
+__all__ = [
+    "MemoryTreeWidget"
+  , "MultipleSASInMachine"
+]
+
 from .var_widgets import (
     VarMenu, 
     VarTreeview

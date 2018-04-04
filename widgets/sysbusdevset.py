@@ -1,3 +1,7 @@
+__all__ = [
+    "SystemBusDeviceSettingsWidget"
+]
+
 from .device_settings import (
     DeviceSettingsWidget
 )

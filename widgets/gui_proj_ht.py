@@ -1,3 +1,7 @@
+__all__ = [
+    "GUIProjectHistoryTracker"
+]
+
 from qemu import (
     PCIExpressDeviceDescription,
     PCIId,

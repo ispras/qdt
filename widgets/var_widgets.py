@@ -1,3 +1,15 @@
+__all__ = [
+    "VarNotebook"
+  , "VarCombobox"
+  , "VarTk"
+  , "VarLabel"
+  , "VarToplevel"
+  , "VarButton"
+  , "VarLabelFrame"
+  , "VarCheckbutton"
+  , "VarMenu"
+  , "VarTreeview"
+]
 from six.moves.tkinter import (
     Tk,
     Menu,

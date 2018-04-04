@@ -1,3 +1,7 @@
+__all__ = [
+    "GUIFrame"
+]
+
 from six.moves.tkinter import (
     Frame
 )

@@ -1,3 +1,7 @@
+__all__ = [
+    "ProjectWidget"
+]
+
 from .var_widgets import (
     VarMenu,
     VarTreeview

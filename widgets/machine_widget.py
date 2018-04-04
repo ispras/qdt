@@ -1,3 +1,10 @@
+__all__ = [
+    "MachineWidgetLayout"
+  , "MachineDescriptionSettingsWidget"
+  , "MachineTabsWidget"
+  , "MachinePanedWidget"
+]
+
 from six.moves.tkinter import (
     VERTICAL,
     StringVar,

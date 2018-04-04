@@ -1,3 +1,7 @@
+__all__ = [
+    "CloseButtonNotebook"
+]
+
 from six.moves.tkinter_ttk import (
     Notebook,
     Style

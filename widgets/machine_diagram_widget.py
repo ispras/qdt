@@ -1,3 +1,9 @@
+__all__ = [
+    "MIN_MESH_STEP"
+  , "MAX_MESH_STEP"
+  , "MachineDiagramWidget"
+]
+
 from .var_widgets import (
     VarMenu
 )

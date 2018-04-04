@@ -1,3 +1,10 @@
+__all__ = [
+    "GUIProjectOperation"
+      , "GUIPOp_SetBuildPath"
+      , "GUIDescriptionOperation"
+          , "POp_SetDescLayout"
+]
+
 from qemu import (
     ProjectOperation
 )
