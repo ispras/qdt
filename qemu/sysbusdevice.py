@@ -1,4 +1,6 @@
-__all__ = [ "SysBusDeviceType" ]
+__all__ = [
+    "SysBusDeviceType"
+]
 
 from .qom import (
     QOMDevice,

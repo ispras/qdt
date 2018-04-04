@@ -1,4 +1,6 @@
-__all__ = [ "PCIExpressDeviceType" ]
+__all__ = [
+    "PCIExpressDeviceType"
+]
 
 from source import (
     line_origins,
