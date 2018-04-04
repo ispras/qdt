@@ -4,7 +4,7 @@ from copy import deepcopy as dcp
 
 from common import mlget as _
 
-from qemu import (
+from .pci_ids import (
     PCIVendorId,
     PCIDeviceId,
     PCIClassId

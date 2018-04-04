@@ -15,7 +15,7 @@ from six import (
 )
 from importlib import import_module
 
-from qemu import QOMDescription
+from .qom_desc import QOMDescription
 
 from traceback import print_stack
 
