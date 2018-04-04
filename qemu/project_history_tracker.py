@@ -1,3 +1,7 @@
+__all__ = [
+    "ProjectHistoryTracker"
+]
+
 from common import (
     get_default_args,
     HistoryTracker

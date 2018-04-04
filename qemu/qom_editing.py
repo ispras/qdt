@@ -1,3 +1,9 @@
+__all__ = [
+    "SetDescriptionReferenceAttribute"
+      , "DOp_SetPCIIdAttr"
+  , "DOp_SetAttr"
+]
+
 from .project_editing import (
     DescriptionOperation
 )
