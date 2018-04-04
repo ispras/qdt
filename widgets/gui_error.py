@@ -1,6 +1,6 @@
 __all__ = [
-    "TaskErrorWidget",
-    "TaskErrorDialog"
+    "TaskErrorWidget"
+  , "TaskErrorDialog"
 ]
 
 from .gui_frame import GUIFrame

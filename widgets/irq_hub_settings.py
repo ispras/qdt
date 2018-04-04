@@ -1,6 +1,6 @@
 __all__ = [
-    "IRQHubSettingsWidget",
-    "IRQHubSettingsWindow",
+    "IRQHubSettingsWidget"
+  , "IRQHubSettingsWindow"
 ]
 
 from .settings_window import (

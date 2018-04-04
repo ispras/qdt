@@ -1,6 +1,6 @@
 __all__ = [
-    "GUIText",
-    "READONLY"
+    "GUIText"
+  , "READONLY"
 ]
 
 # based on http://tkinter.unpythonic.net/wiki/ReadOnlyText

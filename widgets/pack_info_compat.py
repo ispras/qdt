@@ -1,6 +1,8 @@
 from sys import version_info as v
 
-__all__ = ["pack_info"]
+__all__ = [
+    "pack_info"
+]
 
 try:
     from six.moves.tkinter import _splitdict

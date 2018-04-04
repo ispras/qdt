@@ -1,4 +1,6 @@
-__all__ = [ "GUIDialog" ]
+__all__ = [
+    "GUIDialog"
+]
 
 from .gui_toplevel import GUIToplevel
 

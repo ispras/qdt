@@ -1,4 +1,6 @@
-__all__ = ["GUIToplevel"]
+__all__ = [
+    "GUIToplevel"
+]
 
 from .var_widgets import VarToplevel
 from .logo import set_logo
