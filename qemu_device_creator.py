@@ -6,11 +6,18 @@ from argparse import (
     ArgumentTypeError,
     ArgumentParser
 )
-from os.path import isdir
-from qemu import qvd_load_with_cache
-from common import execfile
-from traceback import print_exc
-
+from os.path import (
+    isdir
+)
+from qemu import (
+    qvd_load_with_cache
+)
+from common import (
+    execfile
+)
+from traceback import (
+    print_exc
+)
 import qdt
 
 def arg_type_directory(string):

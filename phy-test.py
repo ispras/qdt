@@ -1,15 +1,16 @@
 #!/usr/bin/python2
 
-from six.moves.tkinter import \
+from six.moves.tkinter import (
     Tk
-
-from common import \
-    Polygon, \
-    Segment, \
+)
+from common import (
+    Polygon,
+    Segment,
     Vector
-
-from widgets import \
+)
+from widgets import (
     CanvasDnD
+)
 
 class CanvasPolygon(Polygon):
     def __init__(self, canvas, *points, **kwargs):

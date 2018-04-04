@@ -1,7 +1,8 @@
 #!/usr/bin/python2
 
-from subprocess import call
-
+from subprocess import (
+    call
+)
 from os import (
     walk,
     makedirs
@@ -12,7 +13,9 @@ from os.path import (
     isdir,
     isfile,
 )
-from re import compile
+from re import (
+    compile
+)
 
 locale_files = []
 
