@@ -216,7 +216,7 @@ class Source(object):
                 % header.path
             )
 
-        if not header.path in self.inclusions:
+        if header.path not in self.inclusions:
             self.inclusions[header.path] = header
 
             for t in header.types.values():
@@ -455,7 +455,7 @@ class Header(Source):
 
     @staticmethod
     def _on_include(includer, inclusion, is_global):
-        if not inclusion in Header.reg:
+        if inclusion not in Header.reg:
             print("Parsing " + inclusion + " as inclusion")
             h = Header(path = inclusion, is_global = is_global)
             h.parsed = True
@@ -501,7 +501,7 @@ class Header(Source):
         else:
             (name, ext) = splitext(prefix)
             if ext == ".h":
-                if not prefix in Header.reg:
+                if prefix not in Header.reg:
                     h = Header(path = prefix, is_global = False)
                     h.parsed = False
                 else:
@@ -593,7 +593,7 @@ class Header(Source):
 
     @staticmethod
     def lookup(path):
-        if not path in Header.reg:
+        if path not in Header.reg:
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[path] 
 
@@ -683,7 +683,7 @@ class Type(object):
 
     @staticmethod
     def lookup(name):
-        if not name in Type.reg:
+        if name not in Type.reg:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name
             )
@@ -2196,7 +2196,7 @@ class SourceTreeContainer(object):
         self.reg_type = {}
 
     def type_lookup(self, name):
-        if not name in self.reg_type:
+        if name not in self.reg_type:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name)
         return self.reg_type[name]
@@ -2209,7 +2209,7 @@ class SourceTreeContainer(object):
             return False
 
     def header_lookup(self, path):
-        if not path in self.reg_header:
+        if path not in self.reg_header:
             raise RuntimeError("Header with path %s is not registered" % path)
         return self.reg_header[path]
 
@@ -2248,7 +2248,7 @@ digraph HeaderInclusion {
         # Create all headers
         for dict_h in list_headers:
             path = dict_h[HDB_HEADER_PATH]
-            if not path in self.reg_header:
+            if path not in self.reg_header:
                 Header(
                        path = dict_h[HDB_HEADER_PATH],
                        is_global = dict_h[HDB_HEADER_IS_GLOBAL])
