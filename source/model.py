@@ -15,6 +15,7 @@ from re import compile
 from itertools import chain
 
 from common import (
+    path2tuple,
     ply2path, # PLY`s C preprocessor is used for several QEMU code analysis
     OrderedSet,
     ObjectVisitor,
@@ -419,7 +420,7 @@ class Header(Source):
 
     @staticmethod
     def _on_include(includer, inclusion, is_global):
-        if inclusion not in Header.reg:
+        if path2tuple(inclusion) not in Header.reg:
             print("Info: parsing " + inclusion + " as inclusion")
             h = Header(path = inclusion, is_global = is_global)
             h.parsed = True
@@ -465,7 +466,7 @@ class Header(Source):
         else:
             (name, ext) = splitext(prefix)
             if ext == ".h":
-                if prefix not in Header.reg:
+                if path2tuple(prefix) not in Header.reg:
                     h = Header(path = prefix, is_global = False)
                     h.parsed = False
                 else:
@@ -557,9 +558,11 @@ class Header(Source):
 
     @staticmethod
     def lookup(path):
-        if path not in Header.reg:
+        tpath = path2tuple(path)
+
+        if tpath not in Header.reg:
             raise RuntimeError("Header with path %s is not registered" % path)
-        return Header.reg[path] 
+        return Header.reg[tpath]
 
     def __init__(self, path, is_global=False, protection = True):
         super(Header, self).__init__(path)
@@ -567,10 +570,11 @@ class Header(Source):
         self.includers = []
         self.protection = protection
 
-        if path in Header.reg:
+        tpath = path2tuple(path)
+        if tpath in Header.reg:
             raise RuntimeError("Header %s is already registered" % path)
 
-        Header.reg[path] = self
+        Header.reg[tpath] = self
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
@@ -2173,9 +2177,11 @@ class SourceTreeContainer(object):
             return False
 
     def header_lookup(self, path):
-        if path not in self.reg_header:
+        tpath = path2tuple(path)
+
+        if tpath not in self.reg_header:
             raise RuntimeError("Header with path %s is not registered" % path)
-        return self.reg_header[path]
+        return self.reg_header[tpath]
 
     def gen_header_inclusion_dot_file(self, dot_file_name):
         dot_writer = open(dot_file_name, "w")
@@ -2212,7 +2218,7 @@ digraph HeaderInclusion {
         # Create all headers
         for dict_h in list_headers:
             path = dict_h[HDB_HEADER_PATH]
-            if path not in self.reg_header:
+            if path2tuple(path) not in self.reg_header:
                 Header(
                        path = dict_h[HDB_HEADER_PATH],
                        is_global = dict_h[HDB_HEADER_IS_GLOBAL])
