@@ -48,6 +48,7 @@ langs = [
     "ru_RU"
 ]
 
+print("Root directory: " + root_dir)
 print("Updating *.po file by those files:")
 for f in locale_files:
     print("    " + f)
