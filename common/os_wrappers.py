@@ -1,6 +1,7 @@
 __all__ = [
     "remove_file"
   , "fixpath"
+  , "path2tuple"
 ]
 
 from os import (
@@ -11,10 +12,9 @@ from os import (
 from errno import (
     ENOENT
 )
-if os_name == "nt":
-    from re import (
-        compile
-    )
+from re import (
+    compile
+)
 
 def remove_file(file_name):
     try:
@@ -41,3 +41,10 @@ if os_name == "nt":
         return path
 else:
     fixpath = lambda x : x
+
+re_sep = compile("/|\\\\")
+
+def path2tuple(path):
+    "Splits file path by both UNIX and DOS separators returning a tuple."
+    parts = re_sep.split(path)
+    return tuple(parts)
