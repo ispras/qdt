@@ -68,6 +68,9 @@ from six import (
     text_type,
     binary_type
 )
+from .tools import (
+    get_cpp_search_paths
+)
 
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
@@ -515,11 +518,9 @@ class Header(Source):
                     p = Preprocessor(lex())
                     p.add_path(start_dir)
 
-                    # Default include search folders should be specified to
-                    # locate and parse standard headers.
-                    # TODO: parse `cpp -v` output to get actual list of default
-                    # include folders. It should be cross-platform
-                    p.add_path("/usr/include")
+                    global cpp_search_paths
+                    for path in cpp_search_paths:
+                        p.add_path(path)
 
                     p.on_include = Header._on_include
                     p.on_define.append(Header._on_define)
@@ -546,6 +547,13 @@ class Header(Source):
 
     @staticmethod
     def co_build_inclusions(dname):
+        # Default include search folders should be specified to
+        # locate and parse standard headers.
+        # parse `cpp -v` output to get actual list of default
+        # include folders. It should be cross-platform
+        global cpp_search_paths
+        cpp_search_paths = get_cpp_search_paths()
+
         Header.yields_per_header = []
 
         if not isinstance(sys.stdout, ParsePrintFilter):
