@@ -2,6 +2,9 @@ __all__ = [
     "set_logo"
 ]
 
+from common import (
+    mlget as _
+)
 from six.moves.tkinter import PhotoImage
 
 from os.path import (
