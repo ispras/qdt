@@ -51,10 +51,13 @@ def add_base_types():
     except:
         h = Header("stdbool.h", is_global=True)
 
-    h.add_types([
-        Type(name = "true", incomplete = False, base = False),
-        Type(name = "false", incomplete = False, base = False),
-        Type(name = "bool", incomplete = False, base = False)
+    # If "true", "false" and "bool" are not macros or do not exists then they
+    # must be added explicitly.
+    if not Type.exists("true"):
+        h.add_types([
+            Type(name = "true", incomplete = False, base = False),
+            Type(name = "false", incomplete = False, base = False),
+            Type(name = "bool", incomplete = False, base = False)
         ])
 
     try:
