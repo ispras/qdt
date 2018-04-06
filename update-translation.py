@@ -55,14 +55,16 @@ for f in locale_files:
 print("...")
 
 for l in langs:
-    directory = join("locale", l, "LC_MESSAGES")
+    directory = join(root_dir, "locale", l, "LC_MESSAGES")
     if not isdir(directory):
         makedirs(directory)
 
     call(
         [   "xgettext",
             "-o", join(directory, "messages.po"),
-        ] + locale_files
+        ] + [
+            join(root_dir, f) for f in locale_files
+        ]
     )
 
     if isfile(join(directory, "qdc.po")):
