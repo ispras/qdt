@@ -456,7 +456,7 @@ class Header(Source):
     @staticmethod
     def _on_include(includer, inclusion, is_global):
         if inclusion not in Header.reg:
-            print("Parsing " + inclusion + " as inclusion")
+            print("Info: parsing " + inclusion + " as inclusion")
             h = Header(path = inclusion, is_global = is_global)
             h.parsed = True
         else:
