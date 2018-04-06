@@ -28,6 +28,8 @@ def set_logo(self):
         icon = PhotoImage(file = logo_file)
         self.tk.call("wm", "iconphoto", self._w, icon)
     except:
+        global reported
+
         if reported:
             return
 
