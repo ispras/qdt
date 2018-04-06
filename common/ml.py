@@ -32,7 +32,9 @@ class ML(FormatVar):
         locale = [locale] if locale else []
         try:
             # First search for translation in default location
-            ML.current_translation = translation("qdc", None, locale)
+            ML.current_translation = translation("qdc", None, locale,
+                codeset = "utf8"
+            )
         except:
             try:
                 # Else search for translation relative current file path
@@ -40,7 +42,8 @@ class ML(FormatVar):
                 ML.current_translation = translation(
                     "qdc",
                     localedir,
-                    locale
+                    locale,
+                    codeset = "utf8"
                 )
             except:
                 pass
