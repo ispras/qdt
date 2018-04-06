@@ -38,10 +38,12 @@ def add_base_types():
         h = Header.lookup("stddef.h")
     except:
         h = Header("stddef.h", is_global=True)
+        h.add_types([
+            Macro("offsetof")
+        ])
 
     h.add_types([
         Type(name = "size_t", incomplete = False, base = False),
-        Macro("offsetof")
     ])
 
     try:
