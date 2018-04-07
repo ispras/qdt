@@ -102,6 +102,7 @@ after last statement in the corresponding callable object.
         ready = False
 
         for task in self.active_tasks:
+            generator = task.generator
             # If the generator is not started yet then just after it yields
             # a reference to its `gi_frame` must be preserved.
             catch_frame = task.gi_frame is None
@@ -109,7 +110,7 @@ after last statement in the corresponding callable object.
             try:
                 t0 = time()
 
-                ret = next(task.generator)
+                ret = next(generator)
             except StopIteration:
                 t1 = time()
 
@@ -141,9 +142,9 @@ after last statement in the corresponding callable object.
                 t1 = time()
 
                 if catch_frame:
-                    task.gi_frame = task.generator.gi_frame
+                    task.gi_frame = generator.gi_frame
 
-                lineno = task.generator.gi_frame.f_lineno
+                lineno = generator.gi_frame.f_lineno
 
                 if isinstance(ret, (CoTask, GeneratorType)):
                     # remember the call
@@ -157,8 +158,8 @@ after last statement in the corresponding callable object.
                 sys.stderr.write("Task %s consumed %f sec during iteration "
                     # file:line is the line reference format supported by
                     # Eclipse IDE Console.
-                    "between lines %s:%u and %u\n" % (task.generator.__name__,
-                        ti, task.generator.gi_code.co_filename, task.lineno,
+                    "between lines %s:%u and %u\n" % (generator.__name__, ti,
+                        generator.gi_code.co_filename, task.lineno,
                         lineno
                     )
                 )
