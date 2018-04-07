@@ -39,6 +39,15 @@ class CoTask(object):
         self.exception = None
         # Regular exceptions also have a traceback
         self.traceback = None
+        # Line number of last yield.
+        # Initially it points to the first line of generator's function.
+        self.lineno = generator.gi_code.co_firstlineno
+        # Required to preserve the generator frame after it is finished.
+        # This information required to get number of last executed line.
+        # If a problem will met with this approach then please look at the
+        # conversation here:
+        # https://stackoverflow.com/questions/49710035/how-to-get-last-line-executed-by-a-generator-in-python
+        self.gi_frame = None
 
     def on_activated(self):
         # do nothing by default
@@ -93,6 +102,10 @@ after last statement in the corresponding callable object.
         ready = False
 
         for task in self.active_tasks:
+            # If the generator is not started yet then just after it yields
+            # a reference to its `gi_frame` must be preserved.
+            catch_frame = not task.generator.gi_running
+
             try:
                 t0 = time()
 
@@ -100,14 +113,31 @@ after last statement in the corresponding callable object.
             except StopIteration:
                 t1 = time()
 
+                traceback = sys.exc_info()[2].tb_next
+                if traceback is None:
+                    # The generator returned without explicit StopIteration
+                    # raising. Its `gi_frame` is `None`ed. So use preserved
+                    # reference to it.
+                    lineno = task.gi_frame.f_lineno
+                else:
+                    lineno = traceback.tb_frame.f_lineno
+
                 finished.append(task)
             except Exception as e:
                 t1 = time()
 
-                task.traceback = sys.exc_info()[2]
+                traceback = sys.exc_info()[2]
+                lineno = traceback.tb_next.tb_frame.f_lineno
+
+                task.traceback = traceback
                 self.__failed__(task, e)
             else:
                 t1 = time()
+
+                if catch_frame:
+                    task.gi_frame = task.generator.gi_frame
+
+                lineno = task.generator.gi_frame.f_lineno
 
                 if isinstance(ret, (CoTask, GeneratorType)):
                     # remember the call
@@ -118,9 +148,14 @@ after last statement in the corresponding callable object.
 
             ti = t1 - t0
             if ti > 0.05:
-                sys.stderr.write("Task %s consumed %f sec during iteration\n"
-                    % (task.generator.__name__, ti)
+                sys.stderr.write("Task %s consumed %f sec during iteration "
+                    "between lines %u and %u of %s\n"
+                    % (task.generator.__name__, ti, task.lineno, lineno,
+                       task.generator.gi_code.co_filename
+                    )
                 )
+
+            task.lineno = lineno
 
         for task in finished:
             self.__finish__(task)
