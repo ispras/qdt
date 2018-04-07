@@ -102,14 +102,15 @@ after last statement in the corresponding callable object.
         ready = False
 
         for task in self.active_tasks:
+            generator = task.generator
             # If the generator is not started yet then just after it yields
             # a reference to its `gi_frame` must be preserved.
-            catch_frame = not task.generator.gi_running
+            catch_frame = not generator.gi_running
 
             try:
                 t0 = time()
 
-                ret = next(task.generator)
+                ret = next(generator)
             except StopIteration:
                 t1 = time()
 
@@ -135,9 +136,9 @@ after last statement in the corresponding callable object.
                 t1 = time()
 
                 if catch_frame:
-                    task.gi_frame = task.generator.gi_frame
+                    task.gi_frame = generator.gi_frame
 
-                lineno = task.generator.gi_frame.f_lineno
+                lineno = generator.gi_frame.f_lineno
 
                 if isinstance(ret, (CoTask, GeneratorType)):
                     # remember the call
@@ -150,8 +151,8 @@ after last statement in the corresponding callable object.
             if ti > 0.05:
                 sys.stderr.write("Task %s consumed %f sec during iteration "
                     "between lines %u and %u of %s\n"
-                    % (task.generator.__name__, ti, task.lineno, lineno,
-                       task.generator.gi_code.co_filename
+                    % (generator.__name__, ti, task.lineno, lineno,
+                       generator.gi_code.co_filename
                     )
                 )
 
