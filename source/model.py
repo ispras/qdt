@@ -1540,7 +1540,8 @@ class HeaderInclusion(SourceChunk):
 #include {}{}{}
 """.format(
         ( "<" if header.is_global else "\"" ),
-        header.path,
+        # Always use UNIX path separator in `#include` directive.
+        "/".join(path2tuple(header.path)),
         ( ">" if header.is_global else "\"" ),
     )
             )
