@@ -67,8 +67,7 @@ Both 2.7.3+ and 3.3+ versions are supported.
 ### Environment preparation
 
 - *This manual is tested on Ubuntu 14.04 and Debian 7.11.*
-- *Compatibility with MS Windows OSes are not tested yet*
-*but it is an objective.*
+- *It have words about MS Windows 7 SP1 64 bit with 32-bit MinGW.*
 
 There is a briefly guide to environment preparation for several OSes.
 A clear OS installation is taken as the start point.
@@ -137,6 +136,34 @@ wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
 ```
 
+#### Windows 7 SP1 64bit
+
+A version of Python for Windows can be downloaded from
+[here](https://www.python.org/downloads/windows/).
+Python 2.7.9+ and 3.4+ version installers is known to have `pip` and
+`tkinter` embedded.
+If it is not your case then there is an informative
+[discussion](https://stackoverflow.com/questions/4750806/how-do-i-install-pip-on-windows)
+at stackoverflow.
+
+`gitpython` and `six` are only to be installed by command below.
+
+```batch
+pip install --upgrade gitpython six
+```
+
+Note that, this command is for Windows `cmd.exe` utility, that could be
+launched using <kbd>Windows</kbd> + <kbd>R</kbd> accelerator.
+Or you can place it in a `*.bat` file.
+
+If `PATH` environment variable was configured neither during installation
+nor manually, or there are several Python versions installed then a full path
+to the Python executables must be used everywhere.
+
+```batch
+d:\Python27\Scripts\pip.exe install --upgrade gitpython six
+```
+
 ### Installation
 
 QDT is suddenly required a QEMU to work with.
@@ -161,6 +188,10 @@ Of course, the QEMU build dependencies must be satisfied first.
 ```bash
 sudo apt-get build-dep qemu
 ```
+
+Note that, this will not work for Windows.
+Building of QEMU under Windows is based on [MinGW](http://www.mingw.org/).
+But MinGW preparation explanation is complicated and is not for this text.
 
 A good practice is to use out-of-source tree build.
 And this manual follows it.
