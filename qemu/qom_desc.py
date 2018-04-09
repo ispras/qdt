@@ -4,15 +4,21 @@ __all__ = [
   , "descriptionOf"
 ]
 
-from common import get_class_total_args
-
-from inspect import getmro
-
-from collections import OrderedDict
-
-from sys import modules
-
-from .qom import QemuTypeName
+from common import (
+    get_class_total_args
+)
+from inspect import (
+    getmro
+)
+from collections import (
+    OrderedDict
+)
+from sys import (
+    modules
+)
+from .qom import (
+    QemuTypeName
+)
 
 class QOMDescription(object):
     def __init__(self):

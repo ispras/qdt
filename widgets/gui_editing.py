@@ -1,10 +1,22 @@
-from qemu import ProjectOperation
+__all__ = [
+    "GUIProjectOperation"
+      , "GUIPOp_SetBuildPath"
+      , "GUIDescriptionOperation"
+          , "POp_SetDescLayout"
+]
 
-from copy import deepcopy
-
-from common import mlget as _
-
-from .gui_project import GUIProject
+from qemu import (
+    ProjectOperation
+)
+from copy import (
+    deepcopy
+)
+from common import (
+    mlget as _
+)
+from .gui_project import (
+    GUIProject
+)
 
 """ The difference is the project should be a _GUI_ project. """
 class GUIProjectOperation(ProjectOperation):

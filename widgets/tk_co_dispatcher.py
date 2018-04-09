@@ -1,7 +1,13 @@
-from common import CoDispatcher
+__all__ = [
+    "TkCoDispatcher"
+]
 
-from time import time
-
+from common import (
+    CoDispatcher
+)
+from time import (
+    time
+)
 import sys
 
 class TkCoDispatcher(CoDispatcher):

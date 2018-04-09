@@ -1,4 +1,10 @@
-from six.moves.tkinter import Misc
+__all__ = [
+    "QDCGUISignalHelper"
+]
+
+from six.moves.tkinter import (
+    Misc
+)
 
 class QDCGUISignalHelper(Misc):
 

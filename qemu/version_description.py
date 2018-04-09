@@ -31,8 +31,9 @@ from common import (
     execfile,
     PyGenerator
 )
-from json import load
-
+from json import (
+    load
+)
 from .version import (
     QVHDict,
     initialize_version,
@@ -49,9 +50,12 @@ from .pci_ids import (
     PCIId,
     PCIClassification
 )
-from git import Repo
-
-from six import u
+from git import (
+    Repo
+)
+from six import (
+    u
+)
 
 bp_file_name = "build_path_list"
 

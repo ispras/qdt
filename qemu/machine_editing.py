@@ -1,5 +1,47 @@
-from .qom import QOMPropertyValue
+__all__ = [
+    "MachineOperation"
+      , "MachineNodeOperation"
+          , "MOp_AddMemChild"
+              , "MOp_RemoveMemChild"
+          , "MachineNodeAdding"
+              , "MachineNodeDeletion"
+                  , "MOp_DelMemoryNode"
+              , "MOp_AddMemoryNode"
+              , "MOp_AddBus"
+                  , "MOp_DelBus"
+              , "MOp_AddDevice"
+                  , "MOp_DelDevice"
+          , "MOp_DelIRQLine"
+              , "MOp_AddIRQLine"
+          , "MOp_AddIRQHub"
+              , "MOp_DelIRQHub"
+          , "MachineNodeSetAttributeOperation"
+              , "MOp_SetNodeVarNameBase"
+              , "MOp_SetMemNodeAttr"
+              , "MachineNodeSetLinkAttributeOperation"
+                  , "MOp_SetIRQEndPoint"
+                  , "MOp_SetMemNodeAlias"
+              , "MOp_PCIDevSetSlot"
+              , "MOp_PCIDevSetFunction"
+              , "MOp_PCIDevSetMultifunction"
+              , "MOp_SetIRQAttr"
+              , "MOp_SetBusAttr"
+          , "MachineIOMappingOperation"
+              , "MOp_DelIOMapping"
+              , "MOp_AddIOMapping"
+              , "MOp_SetIOMapping"
+          , "MOp_SetDevParentBus"
+          , "MOp_SetDevQOMType"
+          , "MachineDevicePropertyOperation"
+              , "MOp_DelDevProp"
+              , "MOp_AddDevProp"
+              , "MOp_SetDevProp"
+      , "MOp_SetChildBus"
+]
 
+from .qom import (
+    QOMPropertyValue
+)
 from .machine_nodes import (
     DeviceNode,
     BusNode,
@@ -17,11 +59,15 @@ from .project_editing import (
     QemuObjectCreationHelper,
     DescriptionOperation
 )
-from copy import deepcopy
-
-from common import mlget as _
-
-from six import integer_types
+from copy import (
+    deepcopy
+)
+from common import (
+    mlget as _
+)
+from six import (
+    integer_types
+)
 
 class MachineOperation(DescriptionOperation):
     def __init__(self, machine_description, *args, **kw):

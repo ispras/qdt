@@ -1,35 +1,40 @@
 __all__ = [
     # Machine nodes
-    "Node",
-        "BusNode",
-            "SystemBusNode",
-            "PCIExpressBusNode",
-            "ISABusNode",
-            "IDEBusNode",
-            "I2CBusNode",
-        "IRQLine",
-        "IRQHub",
-        "DeviceNode",
-            "SystemBusDeviceNode",
-            "PCIExpressDeviceNode",
-        "MemoryNode",
-            "MemorySASNode",
-            "MemoryLeafNode",
-                "MemoryAliasNode",
-                "MemoryRAMNode",
-                "MemoryROMNode",
+    "Node"
+      , "BusNode"
+          , "SystemBusNode"
+          , "PCIExpressBusNode"
+          , "ISABusNode"
+          , "IDEBusNode"
+          , "I2CBusNode"
+      , "IRQLine"
+      , "IRQHub"
+      , "DeviceNode"
+          , "SystemBusDeviceNode"
+          , "PCIExpressDeviceNode"
+      , "MemoryNode"
+          , "MemorySASNode"
+          , "MemoryLeafNode"
+              , "MemoryAliasNode"
+              , "MemoryRAMNode"
+              , "MemoryROMNode"
     # Exceptions
-    "MemoryNodeHasNoSuchParent",
-    "MemorySASNodeCanNotHaveParent"
+  , "MemoryNodeHasNoSuchParent"
+  , "MemorySASNodeCanNotHaveParent"
 ]
 
-from itertools import count
-
-from six.moves import range as xrange
-
-from .qom import QOMPropertyTypeLink
-
-from bisect import insort
+from itertools import (
+    count
+)
+from six.moves import (
+    range as xrange
+)
+from .qom import (
+    QOMPropertyTypeLink
+)
+from bisect import (
+    insort
+)
 
 class Node(object):
     def __init__(self, var_base = None):

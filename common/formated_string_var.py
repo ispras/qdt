@@ -8,7 +8,9 @@ from six.moves.tkinter import (
     Variable as TkVariable,
     StringVar
 )
-from .variable import Variable
+from .variable import (
+    Variable
+)
 
 variables = (Variable, TkVariable)
 
@@ -77,7 +79,9 @@ temporally replaces self.set with nope lambda to bypass this.
 # Test
 if __name__ == "__main__":
     # at least one Tk instance should exist
-    from six.moves.tkinter import Tk
+    from six.moves.tkinter import (
+        Tk
+    )
     root = Tk()
 
     fmt = FormatVar(value = "Text example is '%s'")

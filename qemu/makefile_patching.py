@@ -1,3 +1,6 @@
+__all__ = [
+    "patch_makefile"
+]
 
 def patch_makefile(mf_full_name, obj_base_name, obj_var_name, config_flag):
     """ The function ensures that object file with name obj_base_name is

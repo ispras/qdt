@@ -1,3 +1,8 @@
+__all__ = [
+    "MemoryTreeWidget"
+  , "MultipleSASInMachine"
+]
+
 from .var_widgets import (
     VarMenu, 
     VarTreeview
@@ -17,17 +22,24 @@ from qemu import (
     MOp_SetMemNodeAlias,
     MOp_SetMemNodeAttr
 )
-from .memory_settings import MemorySettingsWindow
-
-from common import mlget as _
-
-from .popup_helper import TkPopupHelper
-
-from six import integer_types
-
-from six.moves.tkinter import TclError
-
-from .tk_unbind import unbind
+from .memory_settings import (
+    MemorySettingsWindow
+)
+from common import (
+    mlget as _
+)
+from .popup_helper import (
+    TkPopupHelper
+)
+from six import (
+    integer_types
+)
+from six.moves.tkinter import (
+    TclError
+)
+from .tk_unbind import (
+    unbind
+)
 
 LAYOUT_COLUMNS_WIDTH = "columns width"
 

@@ -1,6 +1,13 @@
-from six.moves.tkinter import Frame
+__all__ = [
+    "GUIFrame"
+]
 
-from .tk_unbind import unbind
+from six.moves.tkinter import (
+    Frame
+)
+from .tk_unbind import (
+    unbind
+)
 
 class GUIFrame(Frame):
     unbind = unbind

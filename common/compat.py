@@ -2,9 +2,15 @@ __all__ = [
     "execfile"
 ]
 
-from sys import path as py_path
-from os.path import split
-from os import getcwd
+from sys import (
+    path as py_path
+)
+from os.path import (
+    split
+)
+from os import (
+    getcwd
+)
 
 def execfile(filename, globals = None, locals = None):
     f = open(filename, "rb")

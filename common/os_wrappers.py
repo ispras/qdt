@@ -2,9 +2,12 @@ __all__ = [
     "remove_file"
 ]
 
-from os import remove
-
-from errno import ENOENT
+from os import (
+    remove
+)
+from errno import (
+    ENOENT
+)
 
 def remove_file(file_name):
     try:

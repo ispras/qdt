@@ -3,14 +3,16 @@ __all__ = [
   , "mlget"
 ]
 
-from .formated_string_var import FormatVar
-
+from .formated_string_var import (
+    FormatVar
+)
 from gettext import (
     translation,
     NullTranslations
 )
-from locale import getdefaultlocale
-
+from locale import (
+    getdefaultlocale
+)
 from os.path import (
     dirname,
     abspath

@@ -1,14 +1,23 @@
-from widgets import (
-    DeviceSettingsWidget,
+__all__ = [
+    "SystemBusDeviceSettingsWidget"
+]
+
+from .device_settings import (
+    DeviceSettingsWidget
+)
+from .var_widgets import (
     VarLabelFrame,
     VarButton
 )
-from common import mlget as _
-
-from six import integer_types
-
-from six.moves import range as xrange
-
+from common import (
+    mlget as _
+)
+from six import (
+    integer_types
+)
+from six.moves import (
+    range as xrange
+)
 from six.moves.tkinter import (
     BOTH,
     Label,
@@ -19,9 +28,12 @@ from qemu import (
     MOp_AddIOMapping,
     MOp_SetIOMapping
 )
-from .hotkey import HKEntry
-
-from .gui_frame import GUIFrame
+from .hotkey import (
+    HKEntry
+)
+from .gui_frame import (
+    GUIFrame
+)
 
 def gen_mapping_string(mapping):
     if mapping is None:

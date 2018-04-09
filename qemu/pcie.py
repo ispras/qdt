@@ -1,4 +1,6 @@
-__all__ = [ "PCIExpressDeviceType" ]
+__all__ = [
+    "PCIExpressDeviceType"
+]
 
 from source import (
     line_origins,
@@ -13,17 +15,22 @@ from .qom import (
     QOMDevice,
     QOMType
 )
-from six.moves import range as xrange
-
+from six.moves import (
+    range as xrange
+)
 from .pci_ids import (
     PCIVendorIdNetherExistsNorCreated,
     PCIId
 )
-from common import mlget as _
-
-from collections import OrderedDict
-
-from .qom_desc import describable
+from common import (
+    mlget as _
+)
+from collections import (
+    OrderedDict
+)
+from .qom_desc import (
+    describable
+)
 
 @describable
 class PCIExpressDeviceType(QOMDevice):

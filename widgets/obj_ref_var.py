@@ -1,4 +1,10 @@
-from six.moves.tkinter import IntVar
+__all__ = [
+    "ObjRefVar"
+]
+
+from six.moves.tkinter import (
+    IntVar
+)
 
 ref_objects = {
     hash(None) : None

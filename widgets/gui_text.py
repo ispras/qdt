@@ -1,6 +1,6 @@
 __all__ = [
-    "GUIText",
-    "READONLY"
+    "GUIText"
+  , "READONLY"
 ]
 
 # based on http://tkinter.unpythonic.net/wiki/ReadOnlyText
@@ -13,9 +13,13 @@ from six.moves.tkinter import (
 READONLY = "readonly"
 
 try:
-    from idlelib.WidgetRedirector import WidgetRedirector
+    from idlelib.WidgetRedirector import (
+        WidgetRedirector
+    )
 except ImportError as e:
-    from sys import version_info
+    from sys import (
+        version_info
+    )
 
     raise ImportError("Cannot import from idlelib. Try:"
         " sudo apt-get install idle-python%d.%d" % version_info[:2]

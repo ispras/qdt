@@ -1,9 +1,15 @@
-from sys import version_info as v
+from sys import (
+    version_info as v
+)
 
-__all__ = ["pack_info"]
+__all__ = [
+    "pack_info"
+]
 
 try:
-    from six.moves.tkinter import _splitdict
+    from six.moves.tkinter import (
+        _splitdict
+    )
 except ImportError:
     # compatibility with old Tkinter version
     # Copied from Tkinter 8.6 for Python 2.7.12
@@ -40,14 +46,18 @@ def pack_info_compat(widget):
 
 if v[0] == 2:
     if v[1] > 7 or v[1] == 7 and v[2] >= 12:
-        from Tkinter import Pack
+        from Tkinter import (
+            Pack
+        )
         pack_info = Pack.pack_info
     else:
         pack_info = pack_info_compat
 
 elif v[0] == 3:
     if v[1] > 3:
-        from tkinter import Pack
+        from tkinter import (
+            Pack
+        )
         pack_info = Pack.pack_info
     else:
         pack_info = pack_info_compat

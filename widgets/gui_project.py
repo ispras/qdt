@@ -1,12 +1,20 @@
+__all__ = [
+    "GUIProject"
+]
+
 from qemu import (
     MachineNode,
     QProject
 )
-from common import History
-
-from .gui_layout import GUILayout
-
-from itertools import count
+from common import (
+    History
+)
+from .gui_layout import (
+    GUILayout
+)
+from itertools import (
+    count
+)
 
 class GUIProject(QProject):
     def __init__(self, layouts = [], build_path = None, **kw):

@@ -8,13 +8,18 @@ __all__ = [
   , "HistoryTracker"
 ]
 
-from six import integer_types
-
-from six.moves import zip
-
-from .ml import mlget as _
-
-from .notifier import Notifier
+from six import (
+    integer_types
+)
+from six.moves import (
+    zip
+)
+from .ml import (
+    mlget as _
+)
+from .notifier import (
+    Notifier
+)
 
 class UnimplementedInverseOperation(NotImplementedError):
     pass

@@ -1,6 +1,6 @@
 __all__ = [
-    "GGB_IBY",
-    "CommitDesc"
+    "GGB_IBY"
+  , "CommitDesc"
 ]
 
 # Iterations Between Yields of Git Graph Building task

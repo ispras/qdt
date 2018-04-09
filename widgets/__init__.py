@@ -1,144 +1,41 @@
-from .DnDCanvas import \
-    CanvasDnD
-
-from .close_button_notebook import \
-    CloseButtonNotebook
-
-from .var_widgets import \
-    VarNotebook, \
-    VarCombobox, \
-    VarTk, \
-    VarLabel, \
-    VarToplevel, \
-    VarButton, \
-    VarLabelFrame, \
-    VarCheckbutton, \
-    VarMenu, \
-    VarTreeview
-
-from .hotkey import \
-    HKEntry, \
-    HotKeyBinding, \
-    HotKey
-
-from .obj_ref_var import \
-    ObjRefVar
-
+from .add_desc_dialog import *
+from .branch_tree_view import *
+from .bus_settings import *
+from .close_button_notebook import *
+from .cross_dialogs import *
+from .device_settings import *
+from .device_settings_window import *
+from .device_tree_widget import *
+from .DnDCanvas import *
 from .gui_dialog import *
-
-from .device_settings import \
-    DeviceSettingsWidget
-
-from .sysbusdevset import \
-    SystemBusDeviceSettingsWidget
-
-from .device_settings_window import \
-    DeviceSettingsWindow
-
-from .device_tree_widget import \
-    DeviceTreeWidget
-
-from .machine_diagram_widget import \
-    MIN_MESH_STEP, \
-    MAX_MESH_STEP, \
-    MachineDiagramWidget
-
-from .memory_tree_widget import \
-    MemoryTreeWidget, \
-    MultipleSASInMachine
-
-from .pci_device_settings import \
-    PCIDeviceSettingsWidget
-
-from .irq_settings import \
-    IRQSettingsWindow, \
-    IRQSettingsWidget
-
-from .gui_project import \
-    GUIProject
-
-from .bus_settings import \
-    BusSettingsWindow, \
-    BusSettingsWidget
-
-from .machine_widget import \
-    MachineWidgetLayout, \
-    MachineDescriptionSettingsWidget, \
-    MachineTabsWidget, \
-    MachinePanedWidget
-
-from .project_widget import \
-    ProjectWidget
-
-from .gui_editing import \
-    GUIProjectOperation, \
-        GUIPOp_SetBuildPath, \
-        GUIDescriptionOperation, \
-            POp_SetDescLayout
-
-from .gui_frame import \
-    GUIFrame
-
-from .add_desc_dialog import \
-    AddDescriptionDialog
-
-from .qom_settings import \
-    QOMDescriptionSettingsWidget
-
-from .tk_co_dispatcher import \
-    TkCoDispatcher
-
-from .cross_dialogs import \
-    CrossAskYesNoDialog, \
-        askyesno, \
-    CrossDirectoryDialog, \
-        askdirectory, \
-    CrossOpenDialog, \
-        askopen, \
-    CrossSaveAsDialog, \
-        asksaveas
-
-from .popup_helper import \
-    TkPopupHelper
-
-from .gui_tk import \
-    GUITaskManager, \
-    GUITk
-
-from .gui_toplevel import *
-
-from .tv_width_helper import \
-    TreeviewWidthHelper
-
-from .gui_proj_ht import \
-    GUIProjectHistoryTracker
-
-from .gui_text import *
-
-from .branch_tree_view import \
-    BranchTreeview
-
-from .gui_layout import \
-    GUILayout
-
-from .history_window import \
-    HistoryWindow
-
-from .pci_id_widget import \
-    PCIIdWidget
-
+from .gui_editing import *
 from .gui_error import *
-
-from .tk_unbind import \
-    unbind
-
-from widgets.pack_info_compat import *
-
-from .qdc_gui_signal_helper import \
-    QDCGUISignalHelper
-
-from .logo import *
-
-from .statusbar import *
-
+from .gui_frame import *
+from .gui_layout import *
+from .gui_proj_ht import *
+from .gui_project import *
+from .gui_text import *
+from .gui_tk import *
+from .gui_toplevel import *
+from .history_window import *
+from .hotkey import *
 from .irq_hub_settings import *
+from .irq_settings import *
+from .logo import *
+from .machine_diagram_widget import *
+from .machine_widget import *
+from .memory_tree_widget import *
+from .obj_ref_var import *
+from .pci_device_settings import *
+from .pci_id_widget import *
+from .popup_helper import *
+from .project_widget import *
+from .qdc_gui_signal_helper import *
+from .qom_settings import *
+from .statusbar import *
+from .sysbusdevset import *
+from .tk_co_dispatcher import *
+from .tk_unbind import *
+from .tv_width_helper import *
+from .var_widgets import *
+from widgets.pack_info_compat import *

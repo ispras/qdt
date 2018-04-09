@@ -1,8 +1,12 @@
-__all__ = [ "OrderedSet" ]
+__all__ = [
+    "OrderedSet"
+]
 
 # Source: http://code.activestate.com/recipes/576694/
 
-from collections import MutableSet
+from collections import (
+    MutableSet
+)
 
 class OrderedSet(MutableSet):
 

@@ -1,13 +1,12 @@
 __all__ = [
-    "get_default_args",
-    "get_class_total_args"
+    "get_default_args"
+  , "get_class_total_args"
 ]
 
 from inspect import (
     getmro,
     getargspec
 )
-
 from collections import (
     OrderedDict
 )

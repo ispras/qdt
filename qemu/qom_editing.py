@@ -1,10 +1,19 @@
-from .project_editing import DescriptionOperation
+__all__ = [
+    "SetDescriptionReferenceAttribute"
+      , "DOp_SetPCIIdAttr"
+  , "DOp_SetAttr"
+]
 
-from copy import deepcopy as dcp
-
-from common import mlget as _
-
-from qemu import (
+from .project_editing import (
+    DescriptionOperation
+)
+from copy import (
+    deepcopy as dcp
+)
+from common import (
+    mlget as _
+)
+from .pci_ids import (
     PCIVendorId,
     PCIDeviceId,
     PCIClassId

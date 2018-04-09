@@ -1,19 +1,28 @@
+__all__ = [
+    "DeviceTreeWidget"
+]
+
 from .var_widgets import (
     VarTreeview,
     VarButton,
     VarLabelFrame
 )
-from qemu import qvd_get_registered
-
-from six.moves.tkinter_ttk import Scrollbar
-
+from qemu import (
+    qvd_get_registered
+)
+from six.moves.tkinter_ttk import (
+    Scrollbar
+)
 from six.moves.tkinter import (
     Radiobutton,
     StringVar
 )
-from common import mlget as _
-
-from .gui_dialog import GUIDialog
+from common import (
+    mlget as _
+)
+from .gui_dialog import (
+    GUIDialog
+)
 
 class DeviceTreeWidget(GUIDialog):
     def __init__(self, root, *args, **kw):

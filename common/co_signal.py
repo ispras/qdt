@@ -5,7 +5,9 @@ __all__ = [
   , "CoSignal"
 ]
 
-from .co_dispatcher import CoTask
+from .co_dispatcher import (
+    CoTask
+)
 
 class SignalIsAlreadyAttached(RuntimeError):
     pass

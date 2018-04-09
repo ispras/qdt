@@ -5,11 +5,15 @@ __all__ = [
   , "sign"
 ]
 
-from copy import deepcopy as dcp
-
-from math import sqrt
-
-from random import random
+from copy import (
+    deepcopy as dcp
+)
+from math import (
+    sqrt
+)
+from random import (
+    random
+)
 
 class Vector(object):
     def __init__(self, x = 0, y = 0):

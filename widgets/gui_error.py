@@ -1,12 +1,14 @@
 __all__ = [
-    "TaskErrorWidget",
-    "TaskErrorDialog"
+    "TaskErrorWidget"
+  , "TaskErrorDialog"
 ]
 
-from .gui_frame import GUIFrame
-
-from .gui_dialog import GUIDialog
-
+from .gui_frame import (
+    GUIFrame
+)
+from .gui_dialog import (
+    GUIDialog
+)
 from six.moves.tkinter import (
     VERTICAL,
     HORIZONTAL,
@@ -20,8 +22,9 @@ from .gui_text import (
     GUIText,
     READONLY
 )
-from traceback import format_exception
-
+from traceback import (
+    format_exception
+)
 from common import (
     CancelledCallee,
     FailedCallee

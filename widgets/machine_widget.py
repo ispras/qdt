@@ -1,3 +1,10 @@
+__all__ = [
+    "MachineWidgetLayout"
+  , "MachineDescriptionSettingsWidget"
+  , "MachineTabsWidget"
+  , "MachinePanedWidget"
+]
+
 from six.moves.tkinter import (
     VERTICAL,
     StringVar,
@@ -5,23 +12,28 @@ from six.moves.tkinter import (
     BooleanVar,
     PanedWindow
 )
-from six.moves.tkinter_ttk import Separator
-
+from six.moves.tkinter_ttk import (
+    Separator
+)
 from .machine_diagram_widget import (
     MIN_MESH_STEP,
     MAX_MESH_STEP,
     MachineDiagramWidget
 )
-from .qom_settings import QOMDescriptionSettingsWidget
-
-from .memory_tree_widget import MemoryTreeWidget
-
+from .qom_settings import (
+    QOMDescriptionSettingsWidget
+)
+from .memory_tree_widget import (
+    MemoryTreeWidget
+)
 from .var_widgets import (
     VarLabel,
     VarCheckbutton,
     VarNotebook
 )
-from common import mlget as _
+from common import (
+    mlget as _
+)
 
 class MachineWidgetLayout(object):
     """

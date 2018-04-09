@@ -1,5 +1,13 @@
-from widgets import (
-    VarMenu,
+__all__ = [
+    "MIN_MESH_STEP"
+  , "MAX_MESH_STEP"
+  , "MachineDiagramWidget"
+]
+
+from .var_widgets import (
+    VarMenu
+)
+from .DnDCanvas import (
     CanvasDnD
 )
 from six import (
@@ -20,16 +28,21 @@ from math import (
     sqrt,
     hypot
 )
-from random import random
-
-from time import time
-
-from sys import float_info
-
-from os import remove
-
-from os.path import splitext
-
+from random import (
+    random
+)
+from time import (
+    time
+)
+from sys import (
+    float_info
+)
+from os import (
+    remove
+)
+from os.path import (
+    splitext
+)
 from common import (
     PhBox,
     PhCircle,
@@ -62,28 +75,38 @@ from qemu import (
     DeviceNode,
     IRQHub
 )
-from widgets import DeviceSettingsWindow
-
-from .irq_settings import IRQSettingsWindow
-
-from .bus_settings import BusSettingsWindow
-
-from .popup_helper import TkPopupHelper
-
-from .cross_dialogs import asksaveas
-
-from six.moves.tkinter_messagebox import showerror
-
-from .hotkey import HotKeyBinding
-
+from .device_settings_window import (
+    DeviceSettingsWindow
+)
+from .irq_settings import (
+    IRQSettingsWindow
+)
+from .bus_settings import (
+    BusSettingsWindow
+)
+from .popup_helper import (
+    TkPopupHelper
+)
+from .cross_dialogs import (
+    asksaveas
+)
+from six.moves.tkinter_messagebox import (
+    showerror
+)
+from .hotkey import (
+    HotKeyBinding
+)
 from canvas2svg import (
     configure as svg_configure,
     SEGMENT_TO_PATH,
     saveall as saveall2svg
 )
-from .irq_hub_settings import IRQHubSettingsWindow
-
-from itertools import count
+from .irq_hub_settings import (
+    IRQHubSettingsWindow
+)
+from itertools import (
+    count
+)
 
 class MachineWidgetNodeOperation(MachineNodeOperation):
     def __init__(self, widget, *args, **kw):

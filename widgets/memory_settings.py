@@ -2,8 +2,9 @@ from .settings_window import (
     SettingsWidget,
     SettingsWindow
 )
-from common import mlget as _
-
+from common import (
+    mlget as _
+)
 from .var_widgets import (
     VarCheckbutton,
     VarLabel
@@ -27,13 +28,18 @@ from six.moves.tkinter import (
     StringVar,
     BooleanVar
 )
-from six.moves.tkinter_ttk import Combobox
-
-from .device_settings import DeviceSettingsWidget
-
-from .hotkey import HKEntry
-
-from .gui_frame import GUIFrame
+from six.moves.tkinter_ttk import (
+    Combobox
+)
+from .device_settings import (
+    DeviceSettingsWidget
+)
+from .hotkey import (
+    HKEntry
+)
+from .gui_frame import (
+    GUIFrame
+)
 
 def name_to_var_base(name):
     type_base = "sas" if "System address space" in name else name

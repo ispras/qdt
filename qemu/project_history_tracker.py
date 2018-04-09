@@ -1,3 +1,7 @@
+__all__ = [
+    "ProjectHistoryTracker"
+]
+
 from common import (
     get_default_args,
     HistoryTracker
@@ -29,11 +33,15 @@ from .machine_nodes import (
     QOMPropertyTypeLink,
     SystemBusDeviceNode
 )
-from .machine_description import MachineNode
-
-from .project_editing import POp_DelDesc
-
-from common import mlget as _
+from .machine_description import (
+    MachineNode
+)
+from .project_editing import (
+    POp_DelDesc
+)
+from common import (
+    mlget as _
+)
 
 class MachineProxyTracker(object):
     def __init__(self, project_history_tracker, machine_description):

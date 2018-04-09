@@ -8,7 +8,9 @@
 #
 # Usage example #2:
 #
-# from common import ply2path
+# from common import (
+#     ply2path
+# )
 # import ply
 #
 # This way you do have "ply2path" name defined in global scope.
@@ -19,7 +21,9 @@ from os.path import (
     split,
     join
 )
-from sys import path
+from sys import (
+    path
+)
 
 ply_path = join(split(split(split(__file__)[0])[0])[0], "ply")
 if ply_path not in path:

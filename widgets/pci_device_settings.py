@@ -1,16 +1,24 @@
-from .device_settings import DeviceSettingsWidget
+__all__ = [
+    "PCIDeviceSettingsWidget"
+]
 
-from common import mlget as _
-
-from six.moves import range as xrange
-
+from .device_settings import (
+    DeviceSettingsWidget
+)
+from common import (
+    mlget as _
+)
+from six.moves import (
+    range as xrange
+)
 from six.moves.tkinter import (
     BOTH,
     StringVar,
     BooleanVar
 )
-from six import integer_types
-
+from six import (
+    integer_types
+)
 from .var_widgets import (
     VarLabelFrame,
     VarLabel,
@@ -18,7 +26,9 @@ from .var_widgets import (
 )
 import sys
 
-from .hotkey import HKEntry
+from .hotkey import (
+    HKEntry
+)
 
 class PCIDeviceSettingsWidget(DeviceSettingsWidget):
     def __init__(self, *args, **kw):

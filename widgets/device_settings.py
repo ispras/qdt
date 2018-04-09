@@ -1,17 +1,25 @@
+__all__ = [
+    "DeviceSettingsWidget"
+]
+
 from .var_widgets import (
     VarLabel,
     VarButton,
     VarLabelFrame,
     VarCheckbutton
 )
-from .device_tree_widget import DeviceTreeWidget
-
-from common import mlget as _
-
-from .gui_frame import GUIFrame
-
-from six import itervalues
-
+from .device_tree_widget import (
+    DeviceTreeWidget
+)
+from common import (
+    mlget as _
+)
+from .gui_frame import (
+    GUIFrame
+)
+from six import (
+    itervalues
+)
 from six.moves import (
     zip,
     range as xrange
@@ -22,8 +30,9 @@ from six.moves.tkinter import (
     BooleanVar,
     OptionMenu
 )
-from six.moves.tkinter_ttk import Combobox
-
+from six.moves.tkinter_ttk import (
+    Combobox
+)
 from qemu import (
     QemuTypeName,
     BusNode,
@@ -45,11 +54,15 @@ from qemu import (
         MOp_SetDevProp,
     qvd_get_registered
 )
-from itertools import count
-
-from .settings_window import SettingsWidget
-
-from .hotkey import HKEntry
+from itertools import (
+    count
+)
+from .settings_window import (
+    SettingsWidget
+)
+from .hotkey import (
+    HKEntry
+)
 
 class BusLineDesc(object):
     def __init__(self, device_settings_widget, idx):

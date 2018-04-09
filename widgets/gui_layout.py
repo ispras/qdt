@@ -1,5 +1,13 @@
-from copy import deepcopy
-from qemu import QemuTypeName
+__all__ = [
+    "GUILayout"
+]
+
+from copy import (
+    deepcopy
+)
+from qemu import (
+    QemuTypeName
+)
 
 class GUILayout(object):
     def __init__(self, desc_name, opaque, shown = None):

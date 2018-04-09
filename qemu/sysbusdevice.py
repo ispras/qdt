@@ -1,4 +1,6 @@
-__all__ = [ "SysBusDeviceType" ]
+__all__ = [
+    "SysBusDeviceType"
+]
 
 from .qom import (
     QOMDevice,
@@ -12,11 +14,15 @@ from source import (
     Function,
     Type
 )
-from common import mlget as _
-
-from collections import OrderedDict
-
-from .qom_desc import describable
+from common import (
+    mlget as _
+)
+from collections import (
+    OrderedDict
+)
+from .qom_desc import (
+    describable
+)
 
 @describable
 class SysBusDeviceType(QOMDevice):

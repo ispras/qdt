@@ -23,10 +23,12 @@ from widgets import (
     VarMenu,
     GUITk
 )
-from argparse import ArgumentParser
-
-from qemu_device_creator import arg_type_directory
-
+from argparse import (
+    ArgumentParser
+)
+from qemu_device_creator import (
+    arg_type_directory
+)
 from qemu import (
     QProject,
     qvd_get,
@@ -37,12 +39,15 @@ from qemu import (
     account_build_path,
     QemuVersionDescription
 )
-from six.moves.tkinter import IntVar
-
-from six.moves.cPickle import load as load_cPickled
-
-from os import remove
-
+from six.moves.tkinter import (
+    IntVar
+)
+from six.moves.cPickle import (
+    load as load_cPickled
+)
+from os import (
+    remove
+)
 from common import (
     FormatVar,
     execfile,

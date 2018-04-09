@@ -3,19 +3,20 @@
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 :
 
-from argparse import \
+from argparse import (
     ArgumentParser
-
+)
 import sys
 
-from re import \
+from re import (
     compile
-
-from itertools import \
+)
+from itertools import (
     count
-
-from collections import \
+)
+from collections import (
     OrderedDict
+)
 
 class PosInfo(object):
     def __init__(self, row, start, end, m):

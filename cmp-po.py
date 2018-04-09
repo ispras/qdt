@@ -1,4 +1,6 @@
-from argparse import ArgumentParser
+from argparse import (
+    ArgumentParser
+)
 
 def get_msgstr(po_record):
     riter = iter(po_record)

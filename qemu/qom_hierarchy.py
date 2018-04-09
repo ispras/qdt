@@ -1,11 +1,14 @@
 __all__ = [
-    "QType",
-    "from_legacy_dict"
+    "QType"
+  , "from_legacy_dict"
 ]
 
-from copy import deepcopy as dcp
-
-from common import co_find_eq
+from copy import (
+    deepcopy as dcp
+)
+from common import (
+    co_find_eq
+)
 
 class QType(object):
     """ Node in QOM type tree """
