@@ -32,6 +32,7 @@ from six import (
     integer_types
 )
 from common import (
+    is_pow2,
     mlget as _
 )
 from collections import (
@@ -252,6 +253,7 @@ for U in ["", "U"]:
 
 class Register(object):
     def __init__(self, size,
+        # None or "gap" named registers are not backed by a state field
         name = None,
         access = "rw",
         reset = 0,
@@ -352,6 +354,21 @@ class QOMType(object):
             default = default
         )
         self.add_state_field(f)
+
+    def add_fields_for_regs(self, regs):
+        for reg in regs:
+            name = reg.name
+            if name is None or name == "gap":
+                continue
+
+            qtn = QemuTypeName(name)
+
+            size = reg.size
+            if size <= 8 and is_pow2(size):
+                self.add_state_field_h("uint%u_t" % (size * 8), qtn.for_id_name)
+            else:
+                # an arbitrary size, use an array
+                self.add_state_field_h("uint8_t", qtn.for_id_name, num = size)
 
     def gen_state(self):
         s = Structure(self.qtn.for_struct_name + 'State')
