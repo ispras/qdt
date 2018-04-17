@@ -22,9 +22,6 @@ from six import (
     text_type,
     integer_types
 )
-from importlib import (
-    import_module
-)
 from .qom_desc import (
     QOMDescription
 )
