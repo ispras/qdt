@@ -31,6 +31,9 @@ from traceback import (
 from copy import (
     copy
 )
+from source import (
+    CConst
+)
 
 class ProjectOperation(InverseOperation):
     def __init__(self, project, *args, **kw):
@@ -53,6 +56,11 @@ class ProjectOperation(InverseOperation):
 
 def none_import_hepler(val, helper):
     return None
+
+def cconst_import_helper(val, helper):
+    """CConst is imported as string. It must be passed to `CConst.parse` by any
+    `__init__` method."""
+    return str(val)
 
 basic_types = [
     text_type,
@@ -117,7 +125,8 @@ slot of the tuple) is not restricted.
     value_export_helpers = {}
 
     value_import_helpers = {
-        type(None): none_import_hepler
+        type(None): none_import_hepler,
+        CConst: cconst_import_helper
     }
     for basic_type in basic_types:
         value_import_helpers[basic_type] = basic_import_helper
