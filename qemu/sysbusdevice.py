@@ -187,6 +187,22 @@ class SysBusDeviceType(QOMDevice):
                 reg.reset.__c__()
             ))
 
+            warb = reg.warbits
+            if warb.v:
+                # forbid writing to WAR bits just after reset
+                wm = reg.wmask
+                if wm.v == (1 << (8 * reg.size)) - 1:
+                    reg_resets.append("s->%s_war@b=@s~%s;" % (
+                        qtn.for_id_name,
+                        warb.__c__()
+                    ))
+                elif wm.v:
+                    reg_resets.append("s->%s_war@b=@s%s@s&@b~%s;" % (
+                        qtn.for_id_name,
+                        wm.__c__(),
+                        warb.__c__()
+                    ))
+
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
