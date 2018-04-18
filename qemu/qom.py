@@ -262,7 +262,10 @@ class Register(object):
         reset = 0,
         full_name = None,
         # write mask (None corresponds 0b11...11. I.e. all bits are writable).
-        wmask = None
+        wmask = None,
+        # Write after read (WAR) bits. 1 marks the bit as WAR. None
+        # corresponds to 0b00...00, all bits can be written without reading.
+        warbits = None
     ):
         self.size, self.name, self.access = size, name, access
         self.reset = CINT(reset, 16, size)
@@ -271,6 +274,10 @@ class Register(object):
         if wmask is None:
             wmask = (1 << (size * 8)) - 1
         self.wmask = CINT(wmask, 2, size * 8)
+
+        if warbits is None:
+            warbits = 0
+        self.warbits = CINT(warbits, 2, size * 8)
 
     def __repr__(self, *args, **kwargs):
         # TODO: adapt and utilize PyGenerator.gen_args for this use case
@@ -302,6 +309,13 @@ class Register(object):
         or  wm.d != size * 8
         ):
             ret += ", wmask = " + repr(wm)
+
+        warb = self.warbits
+        if (warb.v != 0
+        or  warb.b != 2
+        or  warb.d != size * 8
+        ):
+            ret += ", warbits = " + repr(warb)
 
         ret += ")"
         return ret
@@ -349,9 +363,45 @@ def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
                 context["s_is_used"] = True
 
                 case += "\n" + indent
+
+                warb = reg.warbits
+                if warb.v: # neither None nor zero
+                    # There is at least one write-after-read bit in the reg.
+                    wm = reg.wmask
+                    if wm.v == (1 << (size * 8)) - 1:
+                        # no read only bits: set WAR mask to 0xF...F
+                        case += case_indent + "s->%s_war@b=@s~0;" % (
+                            qtn.for_id_name
+                        )
+                    else:
+                        # writable bits, read only bits: init WAR mask with
+                        # write mask
+                        case += case_indent + "s->{reg}_war@b=@s{m};".format(
+                            reg = qtn.for_id_name,
+                            m = wm.__c__()
+                        )
+                    case += "\n" + indent
             elif access == "w":
                 wm = reg.wmask
-                if wm.v == (1 << (size * 8)) - 1:
+                warb = reg.warbits
+
+                if warb.v and wm.v:
+                    # WAR bits, writable, read only bits: use WAR mask as
+                    # dynamic write mask
+                    case += case_indent + (
+                        "s->{reg}@b=@s({val}@s&@s{mask})@s"
+                        "|@b(s->{reg}@b&@b~{mask});"
+                    ).format(
+                        reg = qtn.for_id_name,
+                        val = val_name,
+                        mask = "s->%s_war" % qtn.for_id_name
+                    )
+                    context["s_is_used"] = True
+
+                    case += "\n" + indent
+
+                elif wm.v == (1 << (size * 8)) - 1:
+                    # no WAR bits, no read only bits
                     # write mask does not affect the value being assigned
                     case += case_indent + "s->%s@b=@s%s;" % (
                         qtn.for_id_name,
@@ -361,6 +411,8 @@ def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
 
                     case += "\n" + indent
                 elif wm.v:
+                    # no WAR bits, writable bits, read only bits: use static
+                    # write mask
                     case += case_indent + ("s->{reg}@b=@s({val}@s&@s{mask})"
                         "@s|@b(s->{reg}@b&@b~{mask});".format(
                             reg = qtn.for_id_name,
@@ -457,11 +509,18 @@ class QOMType(object):
             qtn = QemuTypeName(name)
 
             size = reg.size
-            if size <= 8 and is_pow2(size):
-                self.add_state_field_h("uint%u_t" % (size * 8), qtn.for_id_name)
+
+            if reg.warbits.v and reg.wmask.v:
+                reg_fields = (qtn.for_id_name, qtn.for_id_name + "_war",)
             else:
-                # an arbitrary size, use an array
-                self.add_state_field_h("uint8_t", qtn.for_id_name, num = size)
+                reg_fields = (qtn.for_id_name,)
+
+            for name in reg_fields:
+                if size <= 8 and is_pow2(size):
+                    self.add_state_field_h("uint%u_t" % (size * 8), name)
+                else:
+                    # an arbitrary size, use an array
+                    self.add_state_field_h("uint8_t", name, num = size)
 
     def gen_state(self):
         s = Structure(self.qtn.for_struct_name + 'State')
