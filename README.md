@@ -233,6 +233,15 @@ An example project of Intel Q35 machine will be automatically loaded.
 Do nothing if you wish to pass consequent examples without troubles.
 Just check it works and close the main windows without saving the project.
 
+If you want to use the GUI with localisation you can update the translation
+before the GUI launch:
+
+```bash
+~/qemu/qdt$
+
+./update-translation.py
+```
+
 ### Basic device stub generation
 
 To generate a device stub the two steps should be made.
