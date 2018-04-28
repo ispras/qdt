@@ -5,7 +5,8 @@ from subprocess import (
 )
 from os import (
     walk,
-    makedirs
+    makedirs,
+    sep
 )
 from os.path import (
     dirname,
@@ -21,7 +22,7 @@ locale_files = []
 
 ml_pattern = compile(" mlget +as +_[, \n]")
 
-root_dir = dirname(__file__)
+root_dir = dirname(__file__) or '.'
 root_prefix_len = len(root_dir) + 1
 
 for root, dirs, files in walk(root_dir):
