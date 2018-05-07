@@ -5,8 +5,7 @@ from subprocess import (
 )
 from os import (
     walk,
-    makedirs,
-    sep
+    makedirs
 )
 from os.path import (
     dirname,
