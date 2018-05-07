@@ -216,8 +216,10 @@ class MachineType(QOMType):
         if prop.prop_type == QOMPropertyTypeString:
             return "\"%s\"" % str(prop.prop_val)
         elif prop.prop_type == QOMPropertyTypeBoolean:
-            if not isinstance(prop.prop_val, bool):
-                raise IncorrectPropertyValue()
+            if not isinstance(prop.prop_val, (bool,) + integer_types):
+                raise IncorrectPropertyValue("%s is %s, expected bool" % (
+                    prop.prop_name, type(prop.prop_val).__name__
+                ))
 
             self.use_type_name("bool")
             return "true" if prop.prop_val else "false"

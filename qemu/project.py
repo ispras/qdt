@@ -97,34 +97,33 @@ already in another project.")
                 desc.link()
                 yield self.co_gen(desc, qemu_src, **gen_cfg)
 
-    def make_src_dirs(self, full_path):
-        tail, head = split(full_path)
+    def register_in_build_system(self, folder):
+        tail, head = split(folder)
 
+        if head == "hw":
+            return
+
+        # Provide Makefiles in ancestors
+        self.register_in_build_system(tail)
+
+        # Register the folder in its parent
         parent_Makefile_obj = join(tail, "Makefile.objs")
-
-        if not isdir(full_path):
-            # Make parent directories.
-            if not isfile(parent_Makefile_obj):
-                """ Some times, an existing directory (with Makefile.objs)
-                will be reached. Then the recursion stops. """
-                self.make_src_dirs(tail)
-
-            # Make required directory.
-            makedirs(full_path)
+        parent_dir = split(tail)[1]
+        patch_makefile(parent_Makefile_obj, head + "/",
+            obj_var_names[parent_dir], config_flags[parent_dir]
+        )
 
         # Add empty Makefile.objs if no one exists.
-        Makefile_obj = join(full_path, "Makefile.objs")
+        Makefile_obj = join(folder, "Makefile.objs")
         if not isfile(Makefile_obj):
-            # Ensure that the directory is registered in the QEMU build system.
-            # There is the assumption that a directory with Makefile is
-            # always registered. So, do it only when Makefile is just being
-            # created.
-            parent_dir = split(tail)[1]
-            patch_makefile(parent_Makefile_obj, head + "/",
-                obj_var_names[parent_dir], config_flags[parent_dir]
-            )
-
             open(Makefile_obj, "w").close()
+
+    def make_src_dirs(self, full_path):
+        if not isdir(full_path):
+            # Provide required directory.
+            makedirs(full_path)
+
+        self.register_in_build_system(full_path)
 
     """ Backward compatibility wrapper for co_gen """
     def gen(self, *args, **kw):

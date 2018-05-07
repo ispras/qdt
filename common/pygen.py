@@ -119,7 +119,11 @@ class PyGenerator(object):
             self.line()
 
     def gen_const(self, c):
-        if isinstance(c, integer_types):
+        # `bool` is an integer type (not in all Python versions probably) and
+        # this type information must be preserved.
+        if isinstance(c, bool):
+            return str(c)
+        elif isinstance(c, integer_types):
             if c <= 0:
                 return "%d" % c
             else:

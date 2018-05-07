@@ -2,6 +2,9 @@ __all__ = [
     "set_logo"
 ]
 
+from common import (
+    mlget as _
+)
 from six.moves.tkinter import (
     PhotoImage
 )
@@ -21,13 +24,21 @@ def set_logo(self):
     if not script_dir:
         script_dir = "."
 
-    logo_file = join(script_dir, "logo.png")
+    png_logo_file = join(script_dir, "logo.png")
 
     try:
         # see: https://stackoverflow.com/questions/18537918/set-window-icon
-        icon = PhotoImage(file = logo_file)
+        try:
+            icon = PhotoImage(file = png_logo_file)
+        except:
+            # Some versions of Tkinter do not support PNG. Use GIF instead.
+            gif_logo_file = join(script_dir, "logo.gif")
+            icon = PhotoImage(file = gif_logo_file)
+
         self.tk.call("wm", "iconphoto", self._w, icon)
     except:
+        global reported
+
         if reported:
             return
 

@@ -3,6 +3,12 @@ __all__ = [
   , "mlget"
 ]
 
+from os import (
+    name as os_name
+)
+from sys import (
+    version_info as py_version
+)
 from .formated_string_var import (
     FormatVar
 )
@@ -32,7 +38,9 @@ class ML(FormatVar):
         locale = [locale] if locale else []
         try:
             # First search for translation in default location
-            ML.current_translation = translation("qdc", None, locale)
+            ML.current_translation = translation("qdc", None, locale,
+                codeset = "utf8"
+            )
         except:
             try:
                 # Else search for translation relative current file path
@@ -40,7 +48,8 @@ class ML(FormatVar):
                 ML.current_translation = translation(
                     "qdc",
                     localedir,
-                    locale
+                    locale,
+                    codeset = "utf8"
                 )
             except:
                 pass
@@ -59,8 +68,15 @@ class ML(FormatVar):
         self.update()
         ML.multi_language_strings.append(self)
 
-    def update(self):
-        self.set(ML.current_translation.lgettext(self.key_value))
+    if os_name == "nt" and py_version[0] == 3:
+        # lgettext returns RAW bytes and Python 3(.5) is known to have troubles
+        # with this under Windows (7 SP1 64 bit).
+        def update(self):
+            raw = ML.current_translation.lgettext(self.key_value)
+            self.set(raw.decode("utf8"))
+    else:
+        def update(self):
+            self.set(ML.current_translation.lgettext(self.key_value))
 
 def mlget(key_value):
     for mls in ML.multi_language_strings:

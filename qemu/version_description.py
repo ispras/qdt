@@ -24,6 +24,7 @@ from source import (
     Macro
 )
 from common import (
+    fixpath,
     CommitDesc,
     mlget as _,
     callco,
@@ -482,14 +483,14 @@ class QemuVersionDescription(object):
         config_host = config_host_f.read()
         config_host_f.close()
 
-        self.src_path = QemuVersionDescription.ch_lookup(
+        self.src_path = fixpath(QemuVersionDescription.ch_lookup(
             config_host,
             "SRC_PATH"
-        )
-        self.target_list = QemuVersionDescription.ch_lookup(
+        ))
+        self.target_list = fixpath(QemuVersionDescription.ch_lookup(
             config_host,
             "TARGET_DIRS"
-        )
+        ))
 
         # Get SHA
         self.repo = Repo(self.src_path)

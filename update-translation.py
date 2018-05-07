@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 from subprocess import (
     call
@@ -18,10 +18,13 @@ from re import (
 )
 
 locale_files = []
+# Using of explicitly set (b)inary modifier for the pattern is required to
+# support both Py2 and Py3.
+# Note that files are also opened in (b)inary mode to avoid any internal
+# decoding.
+ml_pattern = compile(b" mlget +as +_[, \n]")
 
-ml_pattern = compile(" mlget +as +_[, \n]")
-
-root_dir = dirname(__file__)
+root_dir = dirname(__file__) or '.'
 root_prefix_len = len(root_dir) + 1
 
 for root, dirs, files in walk(root_dir):
@@ -48,20 +51,23 @@ langs = [
     "ru_RU"
 ]
 
+print("Root directory: " + root_dir)
 print("Updating *.po file by those files:")
 for f in locale_files:
     print("    " + f)
 print("...")
 
 for l in langs:
-    directory = join("locale", l, "LC_MESSAGES")
+    directory = join(root_dir, "locale", l, "LC_MESSAGES")
     if not isdir(directory):
         makedirs(directory)
 
     call(
         [   "xgettext",
             "-o", join(directory, "messages.po"),
-        ] + locale_files
+        ] + [
+            join(root_dir, f) for f in locale_files
+        ]
     )
 
     if isfile(join(directory, "qdc.po")):

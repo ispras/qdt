@@ -49,6 +49,7 @@ from itertools import (
     chain
 )
 from common import (
+    path2tuple,
     ply2path, # PLY`s C preprocessor is used for several QEMU code analysis
     OrderedSet,
     ObjectVisitor,
@@ -66,6 +67,9 @@ from six import (
     string_types,
     text_type,
     binary_type
+)
+from .tools import (
+    get_cpp_search_paths
 )
 
 # Used for sys.stdout recovery
@@ -216,7 +220,7 @@ class Source(object):
                 % header.path
             )
 
-        if not header.path in self.inclusions:
+        if header.path not in self.inclusions:
             self.inclusions[header.path] = header
 
             for t in header.types.values():
@@ -455,8 +459,8 @@ class Header(Source):
 
     @staticmethod
     def _on_include(includer, inclusion, is_global):
-        if not inclusion in Header.reg:
-            print("Parsing " + inclusion + " as inclusion")
+        if path2tuple(inclusion) not in Header.reg:
+            print("Info: parsing " + inclusion + " as inclusion")
             h = Header(path = inclusion, is_global = is_global)
             h.parsed = True
         else:
@@ -501,7 +505,7 @@ class Header(Source):
         else:
             (name, ext) = splitext(prefix)
             if ext == ".h":
-                if not prefix in Header.reg:
+                if path2tuple(prefix) not in Header.reg:
                     h = Header(path = prefix, is_global = False)
                     h.parsed = False
                 else:
@@ -514,11 +518,9 @@ class Header(Source):
                     p = Preprocessor(lex())
                     p.add_path(start_dir)
 
-                    # Default include search folders should be specified to
-                    # locate and parse standard headers.
-                    # TODO: parse `cpp -v` output to get actual list of default
-                    # include folders. It should be cross-platform
-                    p.add_path("/usr/include")
+                    global cpp_search_paths
+                    for path in cpp_search_paths:
+                        p.add_path(path)
 
                     p.on_include = Header._on_include
                     p.on_define.append(Header._on_define)
@@ -545,6 +547,13 @@ class Header(Source):
 
     @staticmethod
     def co_build_inclusions(dname):
+        # Default include search folders should be specified to
+        # locate and parse standard headers.
+        # parse `cpp -v` output to get actual list of default
+        # include folders. It should be cross-platform
+        global cpp_search_paths
+        cpp_search_paths = get_cpp_search_paths()
+
         Header.yields_per_header = []
 
         if not isinstance(sys.stdout, ParsePrintFilter):
@@ -593,9 +602,11 @@ class Header(Source):
 
     @staticmethod
     def lookup(path):
-        if not path in Header.reg:
+        tpath = path2tuple(path)
+
+        if tpath not in Header.reg:
             raise RuntimeError("Header with path %s is not registered" % path)
-        return Header.reg[path] 
+        return Header.reg[tpath]
 
     def __init__(self, path, is_global=False, protection = True):
         super(Header, self).__init__(path)
@@ -603,10 +614,11 @@ class Header(Source):
         self.includers = []
         self.protection = protection
 
-        if path in Header.reg:
+        tpath = path2tuple(path)
+        if tpath in Header.reg:
             raise RuntimeError("Header %s is already registered" % path)
 
-        Header.reg[path] = self
+        Header.reg[tpath] = self
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
@@ -683,7 +695,7 @@ class Type(object):
 
     @staticmethod
     def lookup(name):
-        if not name in Type.reg:
+        if name not in Type.reg:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name
             )
@@ -1564,7 +1576,8 @@ class HeaderInclusion(SourceChunk):
 #include {}{}{}
 """.format(
         ( "<" if header.is_global else "\"" ),
-        header.path,
+        # Always use UNIX path separator in `#include` directive.
+        "/".join(path2tuple(header.path)),
         ( ">" if header.is_global else "\"" ),
     )
             )
@@ -2196,7 +2209,7 @@ class SourceTreeContainer(object):
         self.reg_type = {}
 
     def type_lookup(self, name):
-        if not name in self.reg_type:
+        if name not in self.reg_type:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name)
         return self.reg_type[name]
@@ -2209,9 +2222,11 @@ class SourceTreeContainer(object):
             return False
 
     def header_lookup(self, path):
-        if not path in self.reg_header:
+        tpath = path2tuple(path)
+
+        if tpath not in self.reg_header:
             raise RuntimeError("Header with path %s is not registered" % path)
-        return self.reg_header[path]
+        return self.reg_header[tpath]
 
     def gen_header_inclusion_dot_file(self, dot_file_name):
         dot_writer = open(dot_file_name, "w")
@@ -2248,7 +2263,7 @@ digraph HeaderInclusion {
         # Create all headers
         for dict_h in list_headers:
             path = dict_h[HDB_HEADER_PATH]
-            if not path in self.reg_header:
+            if path2tuple(path) not in self.reg_header:
                 Header(
                        path = dict_h[HDB_HEADER_PATH],
                        is_global = dict_h[HDB_HEADER_IS_GLOBAL])
