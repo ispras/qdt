@@ -764,6 +764,13 @@ qemu_heuristic_db = {
             new_value = True,
             old_value = False
         )
+    ],
+    u'1c2adb958fc07e5b3e81ed21b801c04a15f41f4f':
+    [
+        QEMUVersionParameterDescription("Init cpu_env in arch",
+            old_value = True,
+            new_value = False
+        )
     ]
 }
 
