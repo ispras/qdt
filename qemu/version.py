@@ -257,6 +257,13 @@ def define_only_qemu_2_6_0_types():
         Function("memory_region_add_subregion")
     ]).add_reference(osdep_fake_type)
 
+    Header.lookup("exec/gdbstub.h").add_types([
+        Function(name = "gdb_get_reg8"),
+        Function(name = "gdb_get_reg16"),
+        Function(name = "gdb_get_reg32"),
+        Function(name = "gdb_get_reg64")
+    ]).add_reference(osdep_fake_type)
+
     Header.lookup("exec/ioport.h").add_types([
         Type("pio_addr_t", incomplete=False)
     ]).add_reference(osdep_fake_type)
