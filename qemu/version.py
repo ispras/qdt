@@ -462,7 +462,7 @@ def define_only_qemu_2_6_0_types():
     ])
 
     if get_vp()["include/hw/isa/i8257.h have IsaDmaTransferHandler reference"]:
-        Header.lookup("hw/isa/i8257.h").add_references([
+        Header.lookup(get_vp()["i8257.h path"]).add_references([
             Type.lookup("IsaDmaTransferHandler"),
             Type.lookup("MemoryRegion")
         ])
