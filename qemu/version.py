@@ -151,6 +151,7 @@ def define_only_qemu_2_6_0_types():
         Type("CPUClass", False),
         Type("vaddr", False),
         Type("MMUAccessType", False),
+        Type("CPUBreakpoint", False),
         Function("qemu_init_vcpu",
                  args = [
                      Type.lookup("CPUState").gen_var("cpu", pointer = True)
