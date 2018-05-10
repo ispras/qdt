@@ -766,6 +766,14 @@ qemu_heuristic_db = {
             old_value = False
         )
     ],
+    u'55f613ac25420384b2c4645420fea2f9bab15379':
+    [
+        # Be aware of moving 'i8257.h' header from hw/isa/ to hw/dma/
+        QEMUVersionParameterDescription("i8257.h path",
+            new_value = "hw/dma/i8257.h",
+            old_value = "hw/isa/i8257.h"
+        )
+    ],
     u'1c2adb958fc07e5b3e81ed21b801c04a15f41f4f':
     [
         # cpu_env initialization was moved to common code in QEMU in this
