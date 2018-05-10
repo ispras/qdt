@@ -16,6 +16,9 @@ from source import (
     Structure
 )
 
+from os.path import \
+    sep
+
 # Callable
 def c(value):
     return globals()[value]
@@ -685,6 +688,14 @@ def machine_register_2_6(mach):
     mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
 qemu_heuristic_db = {
+    u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
+        # This commit moves target-* CPU file into a target/ folder
+        # So target-xxx/ becomes target/xxx/ instead.
+        QEMUVersionParameterDescription("target folder",
+        new_value = 'target' + sep,
+        old_value = 'target-'
+        )
+    ],
     u'0e6aac87fd0f5db2be57c36c03d67388577208a7' : [
         # It is actually last commit touching the way of machine registration.
         # There is no reason to make more fine grained history decomposition.
