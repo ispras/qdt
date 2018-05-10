@@ -90,7 +90,9 @@ def define_only_qemu_2_6_0_types():
     ])
 
     Header.lookup("tcg-op.h").add_types([
-        Function("tcg_gen_insn_start")
+        Function("tcg_gen_insn_start"),
+        Function("tcg_gen_goto_tb"),
+        Function("tcg_gen_exit_tb")
     ])
 
     Header.lookup("qemu/osdep.h").add_types([
