@@ -197,6 +197,7 @@ def define_only_qemu_2_6_0_types():
         Function("gen_intermediate_code"),
         Function("cpu_restore_state"),
         Function("cpu_loop_exit"),
+        Function("cpu_loop_exit_restore"),
         Function("tlb_set_page")
     ]).add_reference(osdep_fake_type)
 
