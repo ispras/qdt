@@ -95,6 +95,14 @@ def define_only_qemu_2_6_0_types():
         Function("tcg_gen_exit_tb")
     ])
 
+    Header.lookup("tcg-op.h").add_types([
+        # HLTTemp is a fake type intended to mark
+        # variables which are to be replaced by this tool
+        # preprocessor (still in progress)
+        # HLTTemp is then converted to some existing QEMU types
+        Type("HLTTemp")
+    ])
+
     Header.lookup("qemu/osdep.h").add_types([
         osdep_fake_type
     ])
