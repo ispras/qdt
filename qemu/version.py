@@ -94,6 +94,10 @@ def define_only_qemu_2_6_0_types():
         Function("tcg_gen_exit_tb")
     ])
 
+    Header.lookup("tcg-op.h").add_types([
+        Type("HLTTemp")
+    ])
+
     Header.lookup("qemu/osdep.h").add_types([
         osdep_fake_type
     ])
