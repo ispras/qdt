@@ -179,11 +179,12 @@ def define_only_qemu_2_6_0_types():
 
     Header.lookup("disas/bfd.h").add_types([
         Type("disassemble_info", False)
-    ])
+    ]).add_reference(osdep_fake_type)
+
 
     Header.lookup("qemu/fprintf-fn.h").add_types([
         Type("fprintf_function", False)
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/exec-all.h").add_types([
         Type("TranslationBlock", False),
