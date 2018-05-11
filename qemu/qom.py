@@ -1016,3 +1016,210 @@ class QOMDevice(QOMType):
             initializer = init,
             static = True
         )
+
+class QOMCPU(QOMType):
+    def __init__(self, arch_name):
+        self.arch_name = arch_name.lower()
+        super(QOMCPU, self).__init__('CPU' + arch_name)
+
+    def gen_state(self):
+        s = super(QOMCPU, self).gen_state()
+        s.append_field_t_s('CPU_COMMON', '')
+        return s
+
+    # function body is generated in TargetCPU
+    # types are necessary functions + vmstate
+    def gen_class_init_fn(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_class_init',
+            args = [
+                Type.lookup('ObjectClass').gen_var('oc',
+                                                   pointer = True),
+                Type.lookup('void').gen_var('data', pointer = True)
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def gen_reset(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_reset',
+            args = [
+                Type.lookup('CPUState')
+            .gen_var('cs', pointer = True)],
+            static = True,
+            used_types = used_types
+        )
+
+    def gen_has_work(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_has_work',
+            ret_type = Type.lookup('bool'),
+            args = [
+                Type.lookup('CPUState')
+            .gen_var('cs', pointer = True)],
+            static = True,
+            used_types = used_types
+        )
+
+    def gen_disas_set_info(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_disas_set_info',
+            args = [
+                Type.lookup('CPUState')
+            .gen_var('cpu', pointer = True),
+                Type.lookup('disassemble_info')
+            .gen_var('info', pointer = True)
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def gen_set_pc(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_set_pc',
+            args = [
+                Type.lookup('CPUState')
+            .gen_var('cs', pointer = True),
+                Type.lookup('vaddr').gen_var('value')
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def gen_class_by_name(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_class_by_name',
+            ret_type = Pointer(
+                Type.lookup('ObjectClass')),
+            args = [
+                Type.lookup('const char')
+            .gen_var('cpu_model', pointer = True)
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def gen_do_interrupt(self):
+        return Function(
+            self.arch_name + '_cpu_do_interrupt',
+            args = [
+                Type.lookup('CPUState')
+            .gen_var('cs', pointer = True)
+            ]
+        )
+
+    def gen_phys_page_debug(self):
+        return Function(
+            self.arch_name + '_cpu_get_phys_page_debug',
+            ret_type = Type.lookup('hwaddr'),
+            args = [
+                Type.lookup('CPUState').gen_var('cs', pointer = True),
+                Type.lookup('vaddr').gen_var('addr')
+            ]
+        )
+
+    def gen_dump_state(self):
+        return Function(
+            self.arch_name + '_cpu_dump_state',
+            args = [
+                Type.lookup('CPUState')
+            .gen_var('cs', pointer = True),
+                Type.lookup('FILE')
+            .gen_var('f', pointer = True),
+                Type.lookup('fprintf_function')
+            .gen_var('cpu_fprintf'),
+                Type.lookup('int').gen_var('flags')
+            ]
+        )
+
+    def gen_translate_init(self):
+        return Function(self.arch_name + '_tcg_init')
+
+    def gen_realize_fn(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_realizefn',
+            args = [
+                Type.lookup('DeviceState')
+            .gen_var('dev', pointer = True),
+                Pointer(Type.lookup('Error'))
+            .gen_var('errp', pointer = True)
+            ],
+            static = True,
+            used_types = used_types
+    )
+
+    def gen_instance_init_fn(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_initfn',
+            args = [
+                Type.lookup('Object')
+            .gen_var('obj', pointer = True)
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def gdb_read_register(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_gdb_read_register',
+            ret_type = Type.lookup('int'),
+            args = [
+                Type.lookup('CPUState').gen_var('cs', pointer = True),
+                Type.lookup('uint8_t').gen_var('mem_buf', pointer = True),
+                Type.lookup('int').gen_var('n')
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def gdb_write_register(self, used_types = []):
+        return Function(
+            self.arch_name + '_cpu_gdb_write_register',
+            ret_type = Type.lookup('int'),
+            args = [
+                Type.lookup('CPUState').gen_var('cs', pointer = True),
+                Type.lookup('uint8_t').gen_var('mem_buf', pointer = True),
+                Type.lookup('int').gen_var('n')
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def raise_exception(self, used_types = []):
+        return Function(
+            'raise_exception',
+            ret_type = Type.lookup('void'),
+            args = [
+                Type.lookup(
+                    'CPU' + self.arch_name.upper() + 'State'
+                ).gen_var('env', pointer = True),
+                Type.lookup('uint32_t').gen_var('index')
+            ],
+            static = True,
+            used_types = used_types
+        )
+
+    def helper_debug(self, used_types = []):
+        return Function(
+            'helper_debug',
+            ret_type = Type.lookup('void'),
+            args = [
+                Type.lookup(
+                    'CPU' + self.arch_name.upper() + 'State'
+                ).gen_var('env', pointer = True),
+            ],
+            used_types = used_types
+        )
+
+    def helper_illegal(self, used_types = []):
+        return Function(
+            'helper_illegal',
+            ret_type = Type.lookup('void'),
+            args = [
+                Type.lookup(
+                    'CPU' + self.arch_name.upper() + 'State'
+                ).gen_var('env', pointer = True),
+            ],
+            used_types = used_types
+        )
