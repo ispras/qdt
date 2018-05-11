@@ -83,6 +83,17 @@ def add_base_types():
         ])
 
     try:
+        h = Header.lookup("byteswap.h")
+    except:
+        h = Header("byteswap.h", is_global = True)
+
+    h.add_types([
+        Function("bswap_64"),
+        Function("bswap_32"),
+        Function("bswap_16")
+    ])
+
+    try:
         h = Header.lookup("stdlib.h")
     except:
         h = Header("stdlib.h", is_global = True)
