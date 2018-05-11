@@ -15,6 +15,7 @@ def add_base_types():
     Type(name = "unsigned", incomplete = False, base = True)
     Type(name = "unsigned int", incomplete = False, base = True)
     Type(name = "const char", incomplete = False, base = True)
+    Type(name = "char", incomplete = False, base = True)
 
     try:
         h = Header.lookup("stdint.h")
