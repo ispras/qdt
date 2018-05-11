@@ -536,6 +536,75 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    Header.lookup("exec/helper-proto.h").add_type(
+        Macro("HELPER_PROTO_H")
+    )
+
+    Header.lookup("disas/bfd.h").add_types([
+        Type("bfd_vma", False)
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Type("bfd_byte", False)
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Type("const bfd_tyte", False)
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Function("bfd_getl64",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(Type.lookup("const bfd_tyte")).gen_var("addr", pointer = True)
+            ]
+        )
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Function("bfd_getl32",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(Type.lookup("const bfd_tyte")).gen_var("addr", pointer = True)
+            ]
+        )
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Function("bfd_getb32",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(Type.lookup("const bfd_tyte")).gen_var("addr", pointer = True)
+            ]
+        )
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Function("bfd_getl16",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(Type.lookup("const bfd_tyte")).gen_var("addr", pointer = True)
+            ]
+        )
+    ])
+    Header.lookup("disas/bfd.h").add_types([
+        Function("bfd_getb16",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(Type.lookup("const bfd_tyte")).gen_var("addr", pointer = True)
+            ]
+        )
+    ])
+
+
+    Header.lookup("disas/disas.h").add_types([
+        Function("lookup_symbol")
+    ])
+    Header.lookup("qemu/log.h").add_types([
+        Function("qemu_loglevel_mask"),
+        Function("qemu_log_in_addr_range"),
+        Function("qemu_log_lock"),
+        Function("qemu_log_unlock"),
+        Function("qemu_log")
+    ])
+    Header.lookup("exec/log.h").add_types([
+        Function("log_target_disas")
+    ])
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
