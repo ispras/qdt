@@ -33,7 +33,7 @@ def add_base_types():
         , Type(name = "int32_t", incomplete = False, base = False)
         , Type(name = "int16_t", incomplete = False, base = False)
         , Type(name = "int8_t", incomplete = False, base = False)
-        ])
+    ])
 
     try:
         h = Header.lookup("stddef.h")
@@ -50,7 +50,7 @@ def add_base_types():
     try:
         h = Header.lookup("stdbool.h")
     except:
-        h = Header("stdbool.h", is_global=True)
+        h = Header("stdbool.h", is_global = True)
 
     # If "true", "false" and "bool" are not macros or do not exists then they
     # must be added explicitly.
@@ -64,23 +64,23 @@ def add_base_types():
     try:
         h = Header.lookup("stdio.h")
     except:
-        h = Header("stdio.h", is_global=True)
+        h = Header("stdio.h", is_global = True)
 
     h.add_types([
         Type("ssize_t", incomplete = False, base = False),
         Function("printf"),
         Function("fprintf"),
         Type("FILE")
-        ])
+    ])
 
     try:
         h = Header.lookup("string.h")
     except:
-        h = Header("string.h", is_global=True)
+        h = Header("string.h", is_global = True)
 
     h.add_types([
         Function("memcpy")
-        ])
+    ])
 
     try:
         h = Header.lookup("byteswap.h")
