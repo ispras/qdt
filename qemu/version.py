@@ -266,7 +266,7 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/ioport.h").add_types([
-        Type("pio_addr_t", incomplete=False)
+        Type("pio_addr_t", incomplete = False)
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/boards.h").add_types([
@@ -373,7 +373,7 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/msi.h").add_types([
-        Function(name="msi_uninit"
+        Function(name = "msi_uninit"
             , ret_type = Type.lookup("void")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
@@ -618,7 +618,7 @@ def define_qemu_2_6_0_types():
 
 def define_msi_init_2_6_5():
     Header.lookup("hw/pci/msi.h").add_type(
-        Function(name="msi_init"
+        Function(name = "msi_init"
             , ret_type = Type.lookup("int")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
@@ -633,7 +633,7 @@ def define_msi_init_2_6_5():
 
 def define_msi_init_2_6_0():
     Header.lookup("hw/pci/msi.h").add_type(
-        Function(name="msi_init"
+        Function(name = "msi_init"
             , ret_type = Type.lookup("int")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
