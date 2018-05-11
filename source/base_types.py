@@ -81,3 +81,12 @@ def add_base_types():
     h.add_types([
         Function("memcpy")
         ])
+
+    try:
+        h = Header.lookup("stdlib.h")
+    except:
+        h = Header("stdlib.h", is_global = True)
+
+    h.add_types([
+        Function("abort")
+    ])
