@@ -49,9 +49,12 @@ class CloseButtonNotebook(Notebook):
             return
 
         element =  self.identify(event.x, event.y)
+        if "close" not in element:
+            return
+
         index = self.index("@%d,%d" % (event.x, event.y))
 
-        if "close" in element and self._active == index:
+        if self._active == index:
             self.forget(index)
             self.event_generate("<<NotebookTabClosed>>")
 
