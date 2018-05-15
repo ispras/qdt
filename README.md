@@ -7,7 +7,7 @@ QEMU.
 
 - A device stub generator.
 - A graphical editor representing a machine schematically.
-It able to generate a machine draft.
+It able to generate a machine boilerplate.
 - A common graphical user interface integrating both device and machine
 generators.
 
@@ -15,7 +15,7 @@ generators.
 
 - The device stub generator supports system bus and PCI(E) bus device
 generation only.
-- The machine draft generator does not generate CLI argument accounting.
+- The machine boilerplate generator does not generate CLI argument accounting.
 A developer have to implement it manually if required.
 - A CPU instantiation is also too specific and not fully supported.
 Therefore, a developer have to handle it after generation.
@@ -41,7 +41,7 @@ Generated device stubs are registered in QEMU build system and ready to
 compile.
 A developer may immediately concentrate on the device specifics implementation.
 
-### Machine draft generation overview
+### Machine boilerplate generation overview
 
 A machine model in QEMU is a module in C language.
 The main part of a machine module is the machine initialization function.
@@ -52,12 +52,12 @@ The toolset uses an object model describing the content of a machine.
 Each class of this model describes corresponding machine node.
 There is a graphical editor which provides a schematic visualization of
 machine content.
-The editor is paired with a generator producing a module draft for the machine
-represented in the editor.
+The editor is paired with a generator producing a module boilerplate for the
+machine represented in the editor.
 
-A generated machine draft contains most of the machine code.
+A generated machine boilerplate contains most of the machine code.
 It includes the initialization function and most of the auxilary code.
-The draft is also registered in QEMU build system and ready to build.
+The boilerplate is also registered in QEMU build system and ready to build.
 
 ## Getting started
 
@@ -321,9 +321,9 @@ Two new files should be created:
 Also `hw/char/Makefile.objs` file should be changed.
 QDT registered new device in QEMU build system.
 
-### Basic machine draft generation
+### Basic machine boilerplate generation
 
-Basic machine draft generation is very similar to device stub generation.
+Basic machine boilerplate generation is very similar to device stub generation.
 
 Simple `basic-machine.py` script is listed below.
 
@@ -451,7 +451,7 @@ Now the UART is ready.
 #### Instantiate Moxie CPU
 
 A CPU instantiation is frequently architecture specific.
-As a result, it is not supported by machine draft generator yet.
+As a result, it is not supported by machine boilerplate generator yet.
 Therefore, there is only one absent part of the machine - its CPU.
 
 Add the line listed below to the beginning of machine initialization function
