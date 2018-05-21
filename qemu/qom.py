@@ -302,7 +302,8 @@ class QOMType(object):
     def gen_state(self):
         s = Structure(self.qtn.for_struct_name + 'State')
         for f in self.state_fields:
-            s.append_field(f.type.gen_var(f.name, array_size = f.num))
+            t = Type.lookup(f.type)
+            s.append_field(t.gen_var(f.name, array_size = f.num))
         return s
 
     def gen_property_macros(self, source):
