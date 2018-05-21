@@ -9,6 +9,7 @@ __all__ = [
   , "QemuTypeName"
   , "QOMType"
       , "QOMDevice"
+      , "QOMCPU"
 ]
 
 from source import (
