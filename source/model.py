@@ -38,9 +38,6 @@ from os.path import (
     join,
     isdir
 )
-from copy import (
-    copy
-)
 import sys
 
 from re import (
@@ -71,6 +68,9 @@ from six import (
 )
 from .tools import (
     get_cpp_search_paths
+)
+from copy import (
+    copy
 )
 
 # Used for sys.stdout recovery
