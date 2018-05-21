@@ -13,7 +13,7 @@ try:
 except ImportError:
     # compatibility with old Tkinter version
     # Copied from Tkinter 8.6 for Python 2.7.12
-    def _splitdict(tk, v, cut_minus=True, conv=None):
+    def _splitdict(tk, v, cut_minus = True, conv = None):
         """Return a properly formatted dict built from Tcl list pairs.
 
         If cut_minus is True, the supposed '-' prefix will be removed from

@@ -249,11 +249,11 @@ show it else hide it.")
         ),
         filemenu.add_separator()
         filemenu.add_command(
-            label=_("Quit"),
+            label = _("Quit"),
             command = self.quit,
             accelerator = hotkeys.get_keycode_string(self.on_delete)
         )
-        menubar.add_cascade(label=_("File"), menu = filemenu)
+        menubar.add_cascade(label = _("File"), menu = filemenu)
 
         self.editmenu = editmenu = VarMenu(menubar, tearoff = False)
         editmenu.add_command(
@@ -299,8 +299,8 @@ show it else hide it.")
 
         # Widget layout
         self.grid()
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
 
         # Status bar
         self.grid_rowconfigure(1, weight = 0)

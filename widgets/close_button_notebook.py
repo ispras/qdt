@@ -69,16 +69,16 @@ class CloseButtonNotebook(Notebook):
         style = Style()
         global images
         images = (
-            PhotoImage("img_close", data='''
+            PhotoImage("img_close", data = '''
                 R0lGODlhCAAIAMIBAAAAADs7O4+Pj9nZ2Ts7Ozs7Ozs7Ozs7OyH+EUNyZWF0ZWQg
                 d2l0aCBHSU1QACH5BAEKAAQALAAAAAAIAAgAAAMVGDBEA0qNJyGw7AmxmuaZhWEU
                 5kEJADs=
                 '''),
-            PhotoImage("img_closeactive", data='''
+            PhotoImage("img_closeactive", data = '''
                 R0lGODlhCAAIAMIEAAAAAP/SAP/bNNnZ2cbGxsbGxsbGxsbGxiH5BAEKAAQALAAA
                 AAAIAAgAAAMVGDBEA0qNJyGw7AmxmuaZhWEU5kEJADs=
                 '''),
-            PhotoImage("img_closepressed", data='''
+            PhotoImage("img_closepressed", data = '''
                 R0lGODlhCAAIAMIEAAAAAOUqKv9mZtnZ2Ts7Ozs7Ozs7Ozs7OyH+EUNyZWF0ZWQg
                 d2l0aCBHSU1QACH5BAEKAAQALAAAAAAIAAgAAAMVGDBEA0qNJyGw7AmxmuaZhWEU
                 5kEJADs=

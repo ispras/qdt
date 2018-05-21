@@ -81,7 +81,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             except KeyError:
                 # attribute is read-only
                 v = StringVar()
-                w = HKEntry(f, textvariable = v, state="readonly")
+                w = HKEntry(f, textvariable = v, state = "readonly")
             else:
                 if _input is str:
                     v = StringVar()
