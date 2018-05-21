@@ -9,6 +9,7 @@ __all__ = [
       , "Function"
       , "Pointer"
       , "Macro"
+      , "Enumeration"
   , "Initializer"
   , "Variable"
   , "Usage"
