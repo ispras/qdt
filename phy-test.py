@@ -152,8 +152,8 @@ def main():
     root.title("Physic test")
 
     root.grid()
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_rowconfigure(0, weight=1)
+    root.grid_columnconfigure(0, weight = 1)
+    root.grid_rowconfigure(0, weight = 1)
     root.geometry("500x500")
 
     cnv = CrossTest(root)

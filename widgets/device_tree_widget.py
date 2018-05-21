@@ -60,17 +60,17 @@ class DeviceTreeWidget(GUIDialog):
 
         #Add Scrollbar
         ysb = Scrollbar(self,
-            orient="vertical",
+            orient = "vertical",
             command = self.device_tree.yview
         )
         xsb = Scrollbar(self,
-            orient="horizontal",
+            orient = "horizontal",
             command = self.device_tree.xview
         )
         self.device_tree['yscroll'] = ysb.set
         self.device_tree['xscroll'] = xsb.set
-        ysb.grid(row=0, column=1, sticky="NS")
-        xsb.grid(row=1, column=0, sticky="EW")
+        ysb.grid(row = 0, column = 1, sticky = "NS")
+        xsb.grid(row = 1, column = 0, sticky = "EW")
 
         self.add_button = VarButton(
             self,
@@ -91,7 +91,7 @@ class DeviceTreeWidget(GUIDialog):
         self.qom_create_tree("", roots)
 
     def qom_create_tree(self, parent_id, dt_list):
-        dt_list.sort(key=lambda x: x["type"])
+        dt_list.sort(key = lambda x: x["type"])
         for dict_dt in dt_list:
             if "macro" in dict_dt:
                 value = ""

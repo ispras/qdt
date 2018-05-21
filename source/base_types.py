@@ -20,7 +20,7 @@ def add_base_types():
     try:
         h = Header.lookup("stdint.h")
     except:
-        h = Header("stdint.h", is_global=True)
+        h = Header("stdint.h", is_global = True)
 
     h.add_types([
         Type(name = "uint64_t", incomplete = False, base = False)
@@ -38,7 +38,7 @@ def add_base_types():
     try:
         h = Header.lookup("stddef.h")
     except:
-        h = Header("stddef.h", is_global=True)
+        h = Header("stddef.h", is_global = True)
         h.add_types([
             Macro("offsetof")
         ])
