@@ -40,6 +40,9 @@ from .hotkey import (
 from .gui_frame import (
     GUIFrame
 )
+from source import (
+    CConst
+)
 
 def name_to_var_base(name):
     type_base = "sas" if "System address space" in name else name
@@ -88,15 +91,15 @@ class MemorySettingsWidget(SettingsWidget):
             row += 1
 
         self.fields = [
-            (_("Name"), "name", str),
-            (_("Size"), "size", int),
-            (_("Offset"), "offset", int),
+            (_("Name"), "name", CConst),
+            (_("Size"), "size", CConst),
+            (_("Offset"), "offset", CConst),
             (_("May overlap"), "may_overlap", bool),
-            (_("Priority"), "priority", int)
+            (_("Priority"), "priority", CConst)
         ]
 
         if type(mem) is MemoryAliasNode:
-            self.fields.extend([ (_("Alias offset"), "alias_offset", int) ])
+            self.fields.extend([ (_("Alias offset"), "alias_offset", CConst) ])
 
         if isinstance(mem, MemorySASNode):
             self.fields = [(_("Name"), "name", str)]
@@ -173,11 +176,11 @@ class MemorySettingsWidget(SettingsWidget):
 
         for text, field, _type in self.fields:
             new_val = getattr(self, "var_" + field).get()
-            if _type is int:
+            if _type is CConst:
                 try:
-                    new_val = int(new_val, base = 0)
-                except ValueError:
-                    pass
+                    new_val = CConst.parse(new_val)
+                except:
+                    continue
 
             cur_val = getattr(self.mem, field)
 
@@ -225,12 +228,6 @@ class MemorySettingsWidget(SettingsWidget):
         for text, field, _type in self.fields:
             var = getattr(self, "var_" + field)
             cur_val = getattr(self.mem, field)
-            if _type is int:
-                try:
-                    cur_val = hex(cur_val)
-                except TypeError:
-                    pass
-
             var.set(cur_val)
 
         if type(self.mem) is MemoryAliasNode:
@@ -271,7 +268,7 @@ class MemorySettingsWidget(SettingsWidget):
             prev_n = self.__prev_name
         except AttributeError:
             # name was not edited yet
-            prev_n = self.mem.name
+            prev_n = self.mem.name.v
 
         if vb == "mem" or vb == name_to_var_base(prev_n):
             """ If current variable name base is default or corresponds to

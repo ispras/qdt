@@ -9,9 +9,11 @@ __all__ = [
   , "QemuTypeName"
   , "QOMType"
       , "QOMDevice"
+  , "Register"
 ]
 
 from source import (
+    CINT,
     line_origins,
     Source,
     Header,
@@ -30,6 +32,7 @@ from six import (
     integer_types
 )
 from common import (
+    is_pow2,
     mlget as _
 )
 from collections import (
@@ -37,6 +40,9 @@ from collections import (
 )
 from .version import (
     get_vp
+)
+from math import (
+    log
 )
 
 # properties
@@ -232,6 +238,11 @@ type2prop = {
     )
 }
 
+type2vmstate = {
+    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
+    "PCIDevice" : "VMSTATE_PCI_DEVICE"
+}
+
 for U in ["", "U"]:
     for bits in ["8", "16", "32", "64"]:
         # macro suffix
@@ -241,10 +252,201 @@ for U in ["", "U"]:
 
         declare_int(ctn, "DEFINE_PROP_" + msfx)
 
-type2vmstate = {
-    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
-    "PCIDevice" : "VMSTATE_PCI_DEVICE"
-}
+        type2vmstate[ctn] = "VMSTATE_" + msfx
+
+class Register(object):
+    def __init__(self, size,
+        # None or "gap" named registers are not backed by a state field
+        name = None,
+        access = "rw",
+        reset = 0,
+        full_name = None,
+        # write mask (None corresponds 0b11...11. I.e. all bits are writable).
+        wmask = None,
+        # Write after read (WAR) bits. 1 marks the bit as WAR. None
+        # corresponds to 0b00...00, all bits can be written without reading.
+        warbits = None
+    ):
+        self.size, self.name, self.access = size, name, access
+        self.reset = CINT(reset, 16, size)
+        self.full_name = full_name
+
+        if wmask is None:
+            wmask = (1 << (size * 8)) - 1
+        self.wmask = CINT(wmask, 2, size * 8)
+
+        if warbits is None:
+            warbits = 0
+        self.warbits = CINT(warbits, 2, size * 8)
+
+    def __repr__(self, *args, **kwargs):
+        # TODO: adapt and utilize PyGenerator.gen_args for this use case
+
+        ret = type(self).__name__
+        size = self.size
+
+        ret += "(" + repr(size)
+
+        name = self.name
+        if name is not None:
+            ret += ", name = " + repr(name)
+
+        access = self.access
+        if access != "rw":
+            ret += ", access = " + repr(access)
+
+        reset = self.reset
+        if reset != CINT(0, 16, size):
+            ret += ", reset = " + repr(reset)
+
+        fn = self.full_name
+        if fn is not None:
+            ret += ", full_name = " + repr(fn)
+
+        wm = self.wmask
+        if (wm.v != (1 << (size * 8)) - 1
+        or  wm.b != 2
+        or  wm.d != size * 8
+        ):
+            ret += ", wmask = " + repr(wm)
+
+        warb = self.warbits
+        if (warb.v != 0
+        or  warb.b != 2
+        or  warb.d != size * 8
+        ):
+            ret += ", warbits = " + repr(warb)
+
+        ret += ")"
+        return ret
+
+def get_reg_range(regs):
+    return sum(reg.size for reg in regs)
+
+def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
+    indent = "    ",
+    case_indent = "    "
+):
+    reg_range = get_reg_range(regs)
+
+    digits = int(log(reg_range, 16)) + 1
+    off_fmt = "0x%%0%dX" % digits
+
+    cases = []
+    offset = 0
+
+    fprintf = None
+    hwaddr_pri = None
+
+    for reg in regs:
+        size = reg.size
+        if size == 1:
+            case = indent + "case %s:" % (off_fmt % offset)
+        else:
+            case = indent + "case %s ... %s:" % (
+                off_fmt % offset,
+                off_fmt % (offset + size - 1)
+            )
+        offset += size
+
+        name = reg.name
+        if name is not None:
+            case += " /* %s */" % name
+
+        case += "\n" + indent
+
+        if access in reg.access:
+            qtn = QemuTypeName(name)
+
+            if access == "r":
+                case += case_indent + "ret@b=@ss->%s;" % qtn.for_id_name
+                context["s_is_used"] = True
+
+                case += "\n" + indent
+
+                warb = reg.warbits
+                if warb.v: # neither None nor zero
+                    # There is at least one write-after-read bit in the reg.
+                    wm = reg.wmask
+                    if wm.v == (1 << (size * 8)) - 1:
+                        # no read only bits: set WAR mask to 0xF...F
+                        case += case_indent + "s->%s_war@b=@s~0;" % (
+                            qtn.for_id_name
+                        )
+                    else:
+                        # writable bits, read only bits: init WAR mask with
+                        # write mask
+                        case += case_indent + "s->{reg}_war@b=@s{m};".format(
+                            reg = qtn.for_id_name,
+                            m = wm.__c__()
+                        )
+                    case += "\n" + indent
+            elif access == "w":
+                wm = reg.wmask
+                warb = reg.warbits
+
+                if warb.v and wm.v:
+                    # WAR bits, writable, read only bits: use WAR mask as
+                    # dynamic write mask
+                    case += case_indent + (
+                        "s->{reg}@b=@s({val}@s&@s{mask})@s"
+                        "|@b(s->{reg}@b&@b~{mask});"
+                    ).format(
+                        reg = qtn.for_id_name,
+                        val = val_name,
+                        mask = "s->%s_war" % qtn.for_id_name
+                    )
+                    context["s_is_used"] = True
+
+                    case += "\n" + indent
+
+                elif wm.v == (1 << (size * 8)) - 1:
+                    # no WAR bits, no read only bits
+                    # write mask does not affect the value being assigned
+                    case += case_indent + "s->%s@b=@s%s;" % (
+                        qtn.for_id_name,
+                        val_name
+                    )
+                    context["s_is_used"] = True
+
+                    case += "\n" + indent
+                elif wm.v:
+                    # no WAR bits, writable bits, read only bits: use static
+                    # write mask
+                    case += case_indent + ("s->{reg}@b=@s({val}@s&@s{mask})"
+                        "@s|@b(s->{reg}@b&@b~{mask});".format(
+                            reg = qtn.for_id_name,
+                            val = val_name,
+                            mask = wm.__c__()
+                        )
+                    )
+                    context["s_is_used"] = True
+
+                    case += "\n" + indent
+        else:
+            if fprintf is None:
+                fprintf = Type.lookup("fprintf");
+                hwaddr_pri = Type.lookup("HWADDR_PRIx")
+
+            case += case_indent + ('%s(@astderr,@s"%%s: %s 0x%%0%d"%s"\\n",'
+                                   '@s__FUNCTION__,@s%s);'
+            ) % (
+                fprintf.name,
+                "Reading from" if access == "r" else "Writing to",
+                digits,
+                hwaddr_pri.name,
+                offset_name
+            )
+            case += "\n" + indent
+
+        case += case_indent + "break;\n"
+
+        cases.append(case)
+
+    if fprintf:
+        used_types.add(fprintf)
+
+    return "\n".join(cases)
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
@@ -297,6 +499,28 @@ class QOMType(object):
             default = default
         )
         self.add_state_field(f)
+
+    def add_fields_for_regs(self, regs):
+        for reg in regs:
+            name = reg.name
+            if name is None or name == "gap":
+                continue
+
+            qtn = QemuTypeName(name)
+
+            size = reg.size
+
+            if reg.warbits.v and reg.wmask.v:
+                reg_fields = (qtn.for_id_name, qtn.for_id_name + "_war",)
+            else:
+                reg_fields = (qtn.for_id_name,)
+
+            for name in reg_fields:
+                if size <= 8 and is_pow2(size):
+                    self.add_state_field_h("uint%u_t" % (size * 8), name)
+                else:
+                    # an arbitrary size, use an array
+                    self.add_state_field_h("uint8_t", name, num = size)
 
     def gen_state(self):
         s = Structure(self.qtn.for_struct_name + 'State')
@@ -575,7 +799,7 @@ class QOMType(object):
         return fn
 
     @staticmethod
-    def gen_mmio_read(name, struct_name, type_cast_macro):
+    def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
         read = Type.lookup("MemoryRegionOps_read")
 
         used_types = set([
@@ -585,11 +809,19 @@ class QOMType(object):
             Type.lookup("HWADDR_PRIx")
         ])
 
+        context = {
+            "s_is_used": False
+        }
+
+        regs = "" if regs is None else ("\n" + gen_reg_cases(regs, "r",
+            used_types, read.args[1].name, None, context
+        ))
+
         body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
+    {unused}{Struct}@b*s@b=@s{UPPER}(opaque);
     uint64_t@bret@b=@s0;
 
-    switch@b({offset})@b{{
+    switch@b({offset})@b{{{regs}
     default:
         printf(@a"%s:@bunimplemented@bread@bfrom@b0x%"HWADDR_PRIx",@bsize@b%d\
 \\n",@s__FUNCTION__,@s{offset},@ssize);
@@ -598,6 +830,8 @@ class QOMType(object):
 
     return@sret;
 """.format(
+    regs = regs,
+    unused = "" if context["s_is_used"] else "__attribute__((unused))@b",
     offset = read.args[1].name,
     Struct = struct_name,
     UPPER = type_cast_macro
@@ -611,7 +845,7 @@ class QOMType(object):
         )
 
     @staticmethod
-    def gen_mmio_write(name, struct_name, type_cast_macro):
+    def gen_mmio_write(name, struct_name, type_cast_macro, regs = None):
         write = Type.lookup("MemoryRegionOps_write")
 
         used_types = set([
@@ -623,10 +857,18 @@ class QOMType(object):
             Type.lookup("PRIx64")
         ])
 
-        body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
+        context = {
+            "s_is_used": False
+        }
 
-    switch@b({offset})@b{{
+        regs = "" if regs is None else ("\n" + gen_reg_cases(regs, "w",
+            used_types, write.args[1].name, write.args[2].name, context
+        ))
+
+        body = """\
+    {unused}{Struct}@b*s@b=@s{UPPER}(opaque);
+
+    switch@b({offset})@b{{{regs}
     default:
         printf(@a"%s:@bunimplemented@bwrite@bto@b0x%"HWADDR_PRIx",@bsize@b%d,@b"
                @a"value@b0x%"PRIx64"\\n",@s__FUNCTION__,@s{offset},@ssize,\
@@ -634,6 +876,8 @@ class QOMType(object):
         break;
     }}
 """.format(
+    regs = regs,
+    unused = "" if context["s_is_used"] else "__attribute__((unused))@b",
     offset = write.args[1].name,
     value = write.args[2].name,
     Struct = struct_name,
@@ -647,6 +891,14 @@ class QOMType(object):
             used_types = used_types
         )
 
+    @staticmethod
+    def gen_mmio_size(regs):
+        if regs is None:
+            return CINT(0x100, 16, 3) # legacy default
+        else:
+            reg_range = get_reg_range(regs)
+            digits = int(log(reg_range, 16)) + 1
+            return CINT(reg_range, 16, digits)
 
 class QOMStateField(object):
     def __init__(self, ftype, name,

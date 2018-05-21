@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from .qom import (
+    QemuTypeName,
     QOMDevice,
     QOMType
 )
@@ -23,6 +24,9 @@ from collections import (
 from .qom_desc import (
     describable
 )
+from copy import (
+    deepcopy as dcp
+)
 
 @describable
 class SysBusDeviceType(QOMDevice):
@@ -40,6 +44,8 @@ class SysBusDeviceType(QOMDevice):
         in_irq_num = 0,
         mmio_num = 0,
         pio_num = 0,
+        mmio = None,
+        pio = None,
         **qomd_kw
     ):
 
@@ -54,6 +60,9 @@ class SysBusDeviceType(QOMDevice):
         self.pio_size_macros = []
         self.pio_address_macros = []
 
+        self.mmio = {} if mmio is None else dcp(mmio);
+        self.pio = {} if pio is None else dcp(pio);
+
         self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
 
         for irqN in range(0, self.out_irq_num):
@@ -66,12 +75,14 @@ class SysBusDeviceType(QOMDevice):
                 self.get_Ith_mmio_name(mmioN),
                 save = False
             )
+            self.add_fields_for_regs(self.mmio.get(mmioN, list()))
 
         for ioN in range(0, self.pio_num):
             self.add_state_field_h("MemoryRegion",
                 self.get_Ith_io_name(ioN),
                 save = False
             )
+            self.add_fields_for_regs(self.pio.get(ioN, list()))
 
         self.timer_declare_fields()
         self.char_declare_fields()
@@ -106,11 +117,10 @@ class SysBusDeviceType(QOMDevice):
             self.state_struct
         ])
 
-        mmio_def_size = 0x100
         for mmioN in range(0, self.mmio_num):
             size_macro = Macro(
                 name = self.gen_Ith_mmio_size_macro_name(mmioN),
-                text = "0x%X" % mmio_def_size
+                text = self.gen_mmio_size(self.mmio.get(mmioN, None))
             )
 
             self.header.add_type(size_macro)
@@ -150,13 +160,58 @@ class SysBusDeviceType(QOMDevice):
         return header_source
 
     def generate_source(self):
+        s_is_used = False
+
+        all_regs = []
+        for idx, regs in self.mmio.items():
+            if idx >= self.mmio_num:
+                continue
+            all_regs.extend(regs)
+        for idx, regs in self.pio.items():
+            if idx >= self.pio_num:
+                continue
+            all_regs.extend(regs)
+
+        reg_resets = []
+
+        for reg in all_regs:
+            name = reg.name
+            if name is None or name == "gap":
+                continue
+            qtn = QemuTypeName(name)
+
+            s_is_used = True
+
+            reg_resets.append("s->%s@b=@s%s;" % (
+                qtn.for_id_name,
+                reg.reset.__c__()
+            ))
+
+            warb = reg.warbits
+            if warb.v:
+                # forbid writing to WAR bits just after reset
+                wm = reg.wmask
+                if wm.v == (1 << (8 * reg.size)) - 1:
+                    reg_resets.append("s->%s_war@b=@s~%s;" % (
+                        qtn.for_id_name,
+                        warb.__c__()
+                    ))
+                elif wm.v:
+                    reg_resets.append("s->%s_war@b=@s%s@s&@b~%s;" % (
+                        qtn.for_id_name,
+                        wm.__c__(),
+                        warb.__c__()
+                    ))
+
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
             body = """\
-    __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
+    {unused}{Struct}@b*s@b=@s{UPPER}(dev);{reset}
 """.format(
+    unused = "" if s_is_used else "__attribute__((unused))@b",
     Struct = self.state_struct.name,
     UPPER = self.type_cast_macro.name,
+    reset = "\n\n    " + "\n    ".join(reg_resets) if reg_resets else ""
             ),
             args = [Type.lookup("DeviceState").gen_var("dev", True)],
             static = True,
@@ -186,17 +241,36 @@ class SysBusDeviceType(QOMDevice):
 
             component = self.get_Ith_mmio_id_component(mmioN)
 
+            regs = self.mmio.get(mmioN, None)
+
             read_func = QOMType.gen_mmio_read(
                 name = self.qtn.for_id_name + "_" + component + "_read",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = regs
             )
 
             write_func = QOMType.gen_mmio_write(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = regs
             )
+
+            impl = ""
+
+            if regs:
+                reg_sizes = set(reg.size for reg in regs)
+
+                size = regs[0].size # note that all sizes are equal
+
+                if len(reg_sizes) == 1 and size < 8: # 8 is max size by impl.
+                    impl = """,
+    .impl = {{
+        .max_access_size = {size}
+    }}""".format(
+    size = size
+                    )
 
             write_func.extra_references = {read_func}
 
@@ -206,10 +280,11 @@ class SysBusDeviceType(QOMDevice):
                 used_types = [read_func, write_func],
                 code = """{{
     .read@b=@s{read},
-    .write@b=@s{write}
+    .write@b=@s{write}{impl}
 }}""".format (
     read = read_func.name,
-    write = write_func.name
+    write = write_func.name,
+    impl = impl
 )
             )
 
@@ -253,13 +328,15 @@ class SysBusDeviceType(QOMDevice):
             read_func = QOMType.gen_mmio_read(
                 name = self.qtn.for_id_name + "_" + component + "_read",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.pio.get(pioN, None)
             )
 
             write_func = QOMType.gen_mmio_write(
                 name = self.qtn.for_id_name + "_" + component + "_write",
                 struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name
+                type_cast_macro = self.type_cast_macro.name,
+                regs = self.pio.get(pioN, None)
             )
 
             write_func.extra_references = {read_func}

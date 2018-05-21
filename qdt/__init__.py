@@ -1,5 +1,12 @@
+from source import (
+    CINT,
+    CSTR
+)
 from qemu import (
     QProject
+
+# I/O regions register definition
+  , Register
 
 # System bus device stub generation settings
   , SysBusDeviceDescription

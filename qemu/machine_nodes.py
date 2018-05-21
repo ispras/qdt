@@ -35,6 +35,10 @@ from .qom import (
 from bisect import (
     insort
 )
+from source import (
+    CSTR,
+    CINT
+)
 
 class Node(object):
     def __init__(self, var_base = None):
@@ -519,18 +523,18 @@ class MemoryNode(Node):
     def __init__(self, name, size, var_base = "mem", **kw):
         Node.__init__(self, var_base = var_base, **kw)
 
-        self.name = name
-        self.size = size
+        self.name = CSTR(name)
+        self.size = None if size is None else CINT(size)
 
         self.parent = None
-        self.offset = 0
+        self.offset = CINT(0, base = 16)
         self.may_overlap = True
-        self.priority = 1
+        self.priority = CINT(1)
 
         self.children = []
 
         self.alias_to = None
-        self.alias_offset = 0
+        self.alias_offset = CINT(0, base = 16)
 
     def __dfs_children__(self):
         if self.alias_to is not None:
@@ -544,9 +548,9 @@ class MemoryNode(Node):
         if isinstance(child, MemorySASNode):
             raise MemorySASNodeCanNotHaveParent()
 
-        child.offset = offset
+        child.offset.set(offset)
         child.may_overlap = may_overlap
-        child.priority = priority
+        child.priority.set(priority)
         child.parent = self
         self.children.append(child)
 
@@ -582,11 +586,11 @@ class MemoryLeafNode(MemoryNode):
         raise MemoryNodeCannotHasChildren()
 
 class MemoryAliasNode(MemoryLeafNode):
-    def __init__(self, name, size, alias_to, offset = 0, **kw):
+    def __init__(self, name, size, alias_to, offset = CINT(0), **kw):
         MemoryLeafNode.__init__(self, name, size, **kw)
 
         self.alias_to = alias_to
-        self.alias_offset = offset
+        self.alias_offset = CINT(offset)
 
     def __get_init_arg_val__(self, arg_name):
         if arg_name == "offset":

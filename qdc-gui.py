@@ -15,7 +15,6 @@ from widgets import (
     asksaveas,
     askdirectory,
     AddDescriptionDialog,
-    __dict__ as widgets_dict,
     GUIProject,
     HotKeyBinding,
     HotKey,
@@ -34,7 +33,6 @@ from qemu import (
     qvd_get,
     BadBuildPath,
     MachineNode,
-    __dict__ as qemu_namespace,
     load_build_path_list,
     account_build_path,
     QemuVersionDescription
@@ -65,6 +63,7 @@ from six.moves.tkinter_messagebox import (
     showinfo,
     showerror
 )
+import qdt
 
 class ProjectGeneration(CoTask):
     def __init__(self, project, source_path, signal):
@@ -587,11 +586,9 @@ later.").get()
 
     def load_project_from_file(self, file_name):
         loaded_variables = {}
-        available_names = dict(qemu_namespace)
-        available_names.update(widgets_dict)
 
         try:
-            execfile(file_name, available_names, loaded_variables)
+            execfile(file_name, qdt.__dict__, loaded_variables)
         except Exception as e:
             raise e
         else:
@@ -741,7 +738,7 @@ def main():
 
         try:
             variables = {}
-            execfile("serialize-test.py", qemu_namespace, variables)
+            execfile("serialize-test.py", qdt.__dict__, variables)
     
             for v in variables.values():
                 if isinstance(v, MachineNode):

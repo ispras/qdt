@@ -15,7 +15,9 @@
 #
 # This way you do have "ply2path" name defined in global scope.
 
-__all__ = []
+__all__ = [
+    "gen_tokens"
+]
 
 from os.path import (
     split,
@@ -28,3 +30,12 @@ from sys import (
 ply_path = join(split(split(split(__file__)[0])[0])[0], "ply")
 if ply_path not in path:
     path.insert(0, ply_path)
+
+def gen_tokens(glob):
+    "Given global scope yielding PLY tokens."
+    for g in list(glob):
+        if g.startswith("t_"):
+            name = g[2:]
+            if name in ("error", "ignore"):
+                continue
+            yield name
