@@ -58,7 +58,13 @@ from common import (
 from ply.lex import (
     lex
 )
-from ply.cpp import *
+from ply.cpp import (
+    Preprocessor,
+    literals,
+    tokens,
+    t_error
+)
+exec("from ply.cpp import t_" + ", t_".join(tokens))
 
 from itertools import (
     count

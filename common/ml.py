@@ -68,12 +68,18 @@ class ML(FormatVar):
         self.update()
         ML.multi_language_strings.append(self)
 
-    if os_name == "nt" and py_version[0] == 3:
+    if py_version[0] == 3:
         # lgettext returns RAW bytes and Python 3(.5) is known to have troubles
         # with this under Windows (7 SP1 64 bit).
         def update(self):
             raw = ML.current_translation.lgettext(self.key_value)
-            self.set(raw.decode("utf8"))
+            if isinstance(raw, str):
+                # Under Ubuntu Linux 16.04 and Python 3(.5) lgettext may return
+                # either `str` or `bytes`. It looks like `str` is returned if
+                # no translation is found.
+                self.set(raw)
+            else:
+                self.set(raw.decode("utf8"))
     else:
         def update(self):
             self.set(ML.current_translation.lgettext(self.key_value))
