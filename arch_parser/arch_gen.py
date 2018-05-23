@@ -1097,18 +1097,27 @@ class TargetCodeGenerator(object):
             )
         ))
 
-    # TODO: implement cc->parent_realize(dev, errp) call
-    # it needs structure field access operators: . and ->
     def gen_cpu_realizefn(self, function):
         root = FunctionWrapper.connect(function)
 
         cs = Type.lookup('CPUState').gen_var('cs', pointer = True)
+        arch = self.arch.name.upper()
+        cc =  Type.lookup(arch + 'CPUClass').gen_var('cc', pointer = True)
 
         root.add_child(
             OpDeclare(
                 OpAssign(
                     cs,
                     OpMCall('CPU', function.args[0])
+                )
+            )
+        )
+
+        root.add_child(
+            OpDeclare(
+                OpAssign(
+                    cc,
+                    OpMCall(arch + '_CPU_GET_CLASS', function.args[0])
                 )
             )
         )
@@ -1127,8 +1136,29 @@ class TargetCodeGenerator(object):
                 OpAddr(err)
             )
         )
+
+        br = BranchIf(
+            OpNEq(err, Const('NULL'))
+        )
+        br.add_child(
+            OpCall(
+                'error_propagate',
+                function.args[1],
+                err
+            )
+        )
+        br.add_child(OpRet())
+        root.add_child(br)
+
         root.add_child(OpCall('qemu_init_vcpu', cs))
         root.add_child(OpCall('cpu_reset', cs))
+        root.add_child(
+            OpCall(
+                OpSDeref(cc, Const('parent_realize')),
+                function.args[0],
+                function.args[1]
+            )
+        )
 
     # TODO: implement cs->env_ptr = &cpu->env
     # it needs structure field access operators: . and ->
