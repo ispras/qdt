@@ -146,6 +146,7 @@ class ChunkGenerator(object):
                         chunks = origin.gen_declaration_chunks(self, **kw)
                     elif isinstance(self.stack[-2], Enumeration):
                         kw["enum"] = True
+                        kw["append_nl"] = False
                         chunks = origin.get_definition_chunks(self, **kw)
                     else:
                         # Something like a static inline function in a header
