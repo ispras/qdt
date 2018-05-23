@@ -365,7 +365,7 @@ class OpDeref(UnaryOperator):
         UnaryOperator.__init__(self, "*", arg1)
 
     def get_var(self):
-        return self.children[0].gen_var.var
+        return self.children[0].var
 
 
 class OpAdd(BinaryOperator):
