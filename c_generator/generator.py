@@ -51,10 +51,6 @@ from source import (
     Variable
 )
 
-TAB_SIZE = 4
-
-indent_level = 0
-
 class Node(object):
     # traverse order indicator for `ObjectVisitor`
     __descend__ = ("children",)
@@ -75,27 +71,22 @@ class Node(object):
     def set_parent(self, parent):
         self.parent = parent
 
-    @staticmethod
-    def indent(writer):
-        writer.write(" " * TAB_SIZE * indent_level)
-
     def out_children(self, writer, it = None):
-        global indent_level
-        indent_level += 1
+        writer.push()
         for child in (self.children if it is None else it):
             Node.out(child, writer)
-        indent_level -= 1
+        writer.pop()
 
     @staticmethod
     def out(node, writer):
         if not isinstance(node.parent, Operator):
             if node.do_indent:
-                Node.indent(writer)
+                writer.indent()
         node.out(writer)
         if not isinstance(node.parent, Operator):
             if node.ending != "":
                 if node.ending == "}":
-                    Node.indent(writer)
+                    writer.indent()
                 writer.write(node.ending + "\n")
         return
 
@@ -518,7 +509,7 @@ class Branch(Node):
 
         # there is only 1 post-cond branch - do-while loop
         if not self.pre:
-            self.indent(writer)
+            writer.indent()
             writer.write("} while (")
             if self.conds:
                 l = iter(self.conds)
@@ -591,7 +582,7 @@ class BranchIf(Branch):
         if i < l:
             # it's the last else block
             self.else_blocks[i].out(writer)
-            self.indent(writer)
+            writer.indent()
             writer.write("}\n")
 
 # Don't add this class as child to any Nodes
@@ -608,7 +599,7 @@ class BranchElse(Node):
         self.cond = cond
 
     def out(self, writer):
-        self.indent(writer)
+        writer.indent()
         writer.write(self.keyword)
 
         if self.cond is not None:
@@ -642,13 +633,13 @@ class BranchSwitch(Branch):
         self.ending = "}"
 
     def out_children(self, writer, it = None):
-        global indent_level
         if self.child_ident:
-            indent_level += 1
+            writer.push()
         for child in (self.children if it is None else it):
             Node.out(child, writer)
         if self.child_ident:
-            indent_level -= 1
+            writer.pop()
+
 
 class SwitchCase(Node):
     def __init__(self, case, add_break, *args):
