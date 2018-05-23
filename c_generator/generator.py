@@ -188,10 +188,10 @@ class Operator(Node):
 
         if self.children:
             l = iter(self.children)
-            Node.out(next(l), writer)
+            next(l).out(writer)
             for ch in l:
                 writer.write(self.delim)
-                Node.out(ch, writer)
+                ch.out(writer)
         writer.write(self.suffix)
         if need_parenthesis:
             writer.write(")")
