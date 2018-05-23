@@ -1982,10 +1982,10 @@ class EnumerationDeclarationBegin(SourceChunk):
         super(EnumerationDeclarationBegin, self).__init__(enum,
             "Beginning of enumeration %s declaration" % enum.enum_name,
             """\
-{indent}enum@b{enum_name}@b{{
+{indent}enum@b{enum_name}{{
 """.format(
     indent = indent,
-    enum_name = enum.enum_name
+    enum_name = enum.enum_name + "@b" if enum.enum_name else ""
             )
         )
 
