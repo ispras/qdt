@@ -169,7 +169,7 @@ class VariableUsage(Node):
         self.ending = ""
 
     def get_var(self):
-        return self.gen_var.var
+        return self.v
 
     def out(self, writer):
         self.gen_var.out(writer, self.parent)
