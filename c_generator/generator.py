@@ -230,14 +230,12 @@ class Operator(Node):
         if isinstance(self, OpRet):
             writer.write(" ")
 
-        l = iter(self.children)
-        try:
+        if self.children:
+            l = iter(self.children)
             Node.out(next(l), writer)
-        except StopIteration:
-            pass
-        for ch in l:
-            writer.write(self.delim)
-            Node.out(ch, writer)
+            for ch in l:
+                writer.write(self.delim)
+                Node.out(ch, writer)
         writer.write(self.suffix)
         if need_parenthesis:
             writer.write(")")
@@ -263,14 +261,12 @@ class OpDeclare(Operator):
                 writer.write("static ")
             v_tp = child.var.type
             writer.write(v_tp.name + " ")
-            l = iter(self.children)
-            try:
+            if self.children:
+                l = iter(self.children)
                 next(l).out(writer)
-            except StopIteration:
-                pass
-            for arg in l:
-                writer.write(", ")
-                arg.out(writer)
+                for arg in l:
+                    writer.write(", ")
+                    arg.out(writer)
         elif isinstance(child, Operator):
             assert(len(self.children) == 1)
             assert(isinstance(child, OpAssign))
@@ -543,14 +539,12 @@ class Branch(Node):
 
         if self.pre:
             writer.write(" (")
-            l = iter(self.conds)
-            try:
+            if self.conds:
+                l = iter(self.conds)
                 next(l).out(writer)
-            except StopIteration:
-                pass
-            for c in l:
-                writer.write(self.conds_delim + " ")
-                c.out(writer)
+                for c in l:
+                    writer.write(self.conds_delim + " ")
+                    c.out(writer)
             writer.write(") {\n")
         else:
             writer.write(" {\n")
@@ -560,14 +554,12 @@ class Branch(Node):
         if not self.pre:
             self.indent(writer)
             writer.write("} while (")
-            l = iter(self.conds)
-            try:
+            if self.conds:
+                l = iter(self.conds)
                 next(l).out(writer)
-            except StopIteration:
-                pass
-            for c in l:
-                writer.write(self.conds_delim + " ")
-                c.out(writer)
+                for c in l:
+                    writer.write(self.conds_delim + " ")
+                    c.out(writer)
             writer.write(")")
 
 
@@ -727,13 +719,11 @@ class SwitchCase(Node):
 
         if str(self.case) != "default":
             writer.write("case ")
-        l = iter(self.children)
-        try:
+        if self.children:
+            l = iter(self.children)
             next(l).out(writer)
-        except StopIteration:
-            pass
-        writer.write(":" + (" {" if has_nontriv_children else "") + "\n")
-        self.out_children(writer, l)
+            writer.write(":" + (" {" if has_nontriv_children else "") + "\n")
+            self.out_children(writer, l)
 
 
 class Cast(Operator):
