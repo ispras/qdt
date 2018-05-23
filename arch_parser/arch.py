@@ -369,7 +369,9 @@ class Arch(object):
 
                 insert_be = not self.arch_bigendian
                 insert_target = False
+                insert_disas_config = False
                 find_target_abi_dir = False
+                find_disas_config = False
                 for i, line in enumerate(lines):
                     if line == 'TARGET_ABI_DIR=""\n':
                         find_target_abi_dir = True
@@ -395,6 +397,26 @@ class Arch(object):
                             )
                             insert_target = True
 
+                    if line == 'disas_config() {\n':
+                        find_disas_config = True
+                    if find_disas_config and not insert_disas_config:
+                        if line == '  ' + self.name + ')\n':
+                            return
+                        if line == '  esac\n':
+                            lines.insert(
+                                i,
+                                '  ' + self.name + ')\n'
+                            )
+                            lines.insert(
+                                i + 1,
+                                '    disas_config "' + self.name.upper() + '"\n'
+                            )
+                            lines.insert(
+                                i + 2,
+                                '  ;;\n'
+                            )
+                            insert_disas_config = True
+
                     if not insert_be and lines[i] == 'target_bigendian="no"\n':
                         if lines[i + 3].find(self.name + '|') != -1:
                             return
@@ -403,7 +425,7 @@ class Arch(object):
                             lines[i + 3].lstrip()
                         insert_be = True
 
-                    if insert_be and insert_target:
+                    if insert_be and insert_target and insert_disas_config:
                         break
 
                 f = open(join(self.qemu_root, 'configure'), "w")
