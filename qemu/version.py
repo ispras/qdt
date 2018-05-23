@@ -169,7 +169,8 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("qapi/error.h").add_types([
-        Type("Error")
+        Type("Error"),
+        Function("error_propagate")
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("disas/bfd.h").add_types([
