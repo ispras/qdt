@@ -13,7 +13,9 @@ from sys import (
 from .generator import (
     Function
 )
-
+from .opt import (
+    optimize_function
+)
 
 class OutputWrapper:
     def __init__(self):
@@ -41,5 +43,6 @@ class FunctionWrapper:
         self.res = OutputWrapper()
 
     def __str__(self):
+        optimize_function(self.f)
         self.f.out(self.res)
         return self.res.getvalue()
