@@ -143,22 +143,18 @@ class Const(Node):
 class VariableUsage(Node):
     def __init__(self, var):
         Node.__init__(self)
-        self.v = var
+        self.var = var
         self.do_indent = False
         self.ending = ""
 
     def get_var(self):
-        return self.v
+        return self.var
 
     def out(self, writer):
         writer.write(self.var.name)
         if self.var.array_size is not None and self.parent is not None:
             if isinstance(self.parent, OpDeclare):
                 writer.write("[%d]" % self.var.array_size)
-
-    @property
-    def var(self):
-        return self.v
 
 class Operator(Node):
     def __init__(self, *args, **kw_args):
