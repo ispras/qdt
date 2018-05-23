@@ -671,7 +671,7 @@ class BranchSwitch(Branch):
 
 class SwitchCase(Node):
     def __init__(self, case, add_break, *args):
-        if type(case) == mVariable:
+        if isinstance(case, mVariable):
             case = VariableUsage(case)
         Node.__init__(self, case, *args)
         self.has_break = add_break
