@@ -176,7 +176,7 @@ class VariableUsage(Node):
 
     @property
     def var(self):
-        return self.gen_var.var
+        return self.v
 
 class Operator(Node):
     def __init__(self, *args, **kw_args):
