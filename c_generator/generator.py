@@ -217,7 +217,7 @@ class Operator(Node):
                 child = child.children[0]
             else:
                 if isinstance(child, VariableUsage):
-                    parent.local_vars.add(child.gen_var)
+                    parent.local_vars.add(child.var)
         Node.set_parent(self, parent)
 
     def out(self, writer):
