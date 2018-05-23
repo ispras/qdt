@@ -55,7 +55,7 @@ class Node(object):
     # traverse order indicator for `ObjectVisitor`
     __descend__ = ("children",)
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, indent_children = True):
         self.children = []
         self.parent = parent
 
@@ -63,6 +63,7 @@ class Node(object):
 
         self.do_indent = True
         self.ending = ";"
+        self.indent_children = indent_children
 
     def add_child(self, child):
         self.children.append(child)
@@ -72,10 +73,14 @@ class Node(object):
         self.parent = parent
 
     def out_children(self, writer, it = None):
-        writer.push()
+        if self.indent_children:
+            writer.push()
+
         for child in (self.children if it is None else it):
             Node.out(child, writer)
-        writer.pop()
+
+        if self.indent_children:
+            writer.pop()
 
     @staticmethod
     def out(node, writer):
