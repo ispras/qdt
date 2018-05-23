@@ -213,7 +213,7 @@ class Operator(Node):
         if need_parenthesis:
             writer.write("(")
 
-        if isinstance(self, OpRet):
+        if isinstance(self, OpRet) and len(self.children) > 0:
             writer.write(" ")
 
         if self.children:
@@ -327,9 +327,11 @@ class OpBreak(NAryOperator):
         NAryOperator.__init__(self, 0, "break")
 
 
-class OpRet(UnaryOperator):
-    def __init__(self, arg1):
-        UnaryOperator.__init__(self, "return", arg1)
+class OpRet(NAryOperator):
+    def __init__(self, *arg):
+        # zero or one argument is supported
+        assert(len(arg) <= 1)
+        NAryOperator.__init__(self, len(arg), "return", *arg)
 
 
 class OpAddr(UnaryOperator):
