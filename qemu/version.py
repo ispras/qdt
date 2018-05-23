@@ -16,6 +16,10 @@ from source import (
     Structure
 )
 
+from os.path import (
+    sep
+)
+
 # Callable
 def c(value):
     return globals()[value]
@@ -86,7 +90,17 @@ def define_only_qemu_2_6_0_types():
     ])
 
     Header.lookup("tcg-op.h").add_types([
-        Function("tcg_gen_insn_start")
+        Function("tcg_gen_insn_start"),
+        Function("tcg_gen_goto_tb"),
+        Function("tcg_gen_exit_tb")
+    ])
+
+    Header.lookup("tcg-op.h").add_types([
+        # HLTTemp is a fake type intended to mark
+        # variables which are to be replaced by this tool
+        # preprocessor (still in progress)
+        # HLTTemp is then converted to some existing QEMU types
+        Type("HLTTemp")
     ])
 
     Header.lookup("qemu/osdep.h").add_types([
@@ -148,6 +162,7 @@ def define_only_qemu_2_6_0_types():
         Type("CPUClass", False),
         Type("vaddr", False),
         Type("MMUAccessType", False),
+        Type("CPUBreakpoint", False),
         Function("qemu_init_vcpu",
                  args = [
                      Type.lookup("CPUState").gen_var("cpu", pointer = True)
@@ -164,11 +179,12 @@ def define_only_qemu_2_6_0_types():
 
     Header.lookup("disas/bfd.h").add_types([
         Type("disassemble_info", False)
-    ])
+    ]).add_reference(osdep_fake_type)
+
 
     Header.lookup("qemu/fprintf-fn.h").add_types([
         Type("fprintf_function", False)
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header.lookup("exec/exec-all.h").add_types([
         Type("TranslationBlock", False),
@@ -191,6 +207,7 @@ def define_only_qemu_2_6_0_types():
         Function("gen_intermediate_code"),
         Function("cpu_restore_state"),
         Function("cpu_loop_exit"),
+        Function("cpu_loop_exit_restore"),
         Function("tlb_set_page")
     ]).add_reference(osdep_fake_type)
 
@@ -246,8 +263,15 @@ def define_only_qemu_2_6_0_types():
         Function("memory_region_add_subregion")
     ]).add_reference(osdep_fake_type)
 
+    Header.lookup("exec/gdbstub.h").add_types([
+        Function(name = "gdb_get_reg8"),
+        Function(name = "gdb_get_reg16"),
+        Function(name = "gdb_get_reg32"),
+        Function(name = "gdb_get_reg64")
+    ]).add_reference(osdep_fake_type)
+
     Header.lookup("exec/ioport.h").add_types([
-        Type("pio_addr_t", incomplete=False)
+        Type("pio_addr_t", incomplete = False)
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/boards.h").add_types([
@@ -354,7 +378,7 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header.lookup("hw/pci/msi.h").add_types([
-        Function(name="msi_uninit"
+        Function(name = "msi_uninit"
             , ret_type = Type.lookup("void")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
@@ -459,7 +483,7 @@ def define_only_qemu_2_6_0_types():
     ])
 
     if get_vp()["include/hw/isa/i8257.h have IsaDmaTransferHandler reference"]:
-        Header.lookup("hw/isa/i8257.h").add_references([
+        Header.lookup(get_vp()["i8257.h path"]).add_references([
             Type.lookup("IsaDmaTransferHandler"),
             Type.lookup("MemoryRegion")
         ])
@@ -517,6 +541,71 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
+    Header.lookup("exec/helper-proto.h").add_type(
+        Macro("HELPER_PROTO_H")
+    )
+
+    Header.lookup("disas/bfd.h").add_types([
+        Type("bfd_vma", False),
+        Type("bfd_byte", False),
+        Type("const bfd_tyte", False),
+        Function("bfd_getl64",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(
+                    Type.lookup("const bfd_tyte")
+                ).gen_var("addr", pointer = True)
+            ]
+        ),
+        Function("bfd_getl32",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(
+                    Type.lookup("const bfd_tyte")
+                ).gen_var("addr", pointer = True)
+            ]
+        ),
+        Function("bfd_getb32",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(
+                    Type.lookup("const bfd_tyte")
+                ).gen_var("addr", pointer = True)
+            ]
+        ),
+        Function("bfd_getl16",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(
+                    Type.lookup("const bfd_tyte")
+                ).gen_var("addr", pointer = True)
+            ]
+        ),
+        Function("bfd_getb16",
+            ret_type = Type.lookup("bfd_vma"),
+            args = [
+                Pointer(
+                    Type.lookup("const bfd_tyte")
+                ).gen_var("addr", pointer = True)
+            ]
+        )
+    ])
+
+
+    Header.lookup("disas/disas.h").add_types([
+        Function("lookup_symbol")
+    ])
+    Header.lookup("qemu/log.h").add_types([
+        Function("qemu_loglevel_mask"),
+        Function("qemu_log_in_addr_range"),
+        Function("qemu_log_lock"),
+        Function("qemu_log_unlock"),
+        Function("qemu_log")
+    ])
+    Header.lookup("exec/log.h").add_types([
+        Function("log_target_disas")
+    ])
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
@@ -530,7 +619,7 @@ def define_qemu_2_6_0_types():
 
 def define_msi_init_2_6_5():
     Header.lookup("hw/pci/msi.h").add_type(
-        Function(name="msi_init"
+        Function(name = "msi_init"
             , ret_type = Type.lookup("int")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
@@ -545,7 +634,7 @@ def define_msi_init_2_6_5():
 
 def define_msi_init_2_6_0():
     Header.lookup("hw/pci/msi.h").add_type(
-        Function(name="msi_init"
+        Function(name = "msi_init"
             , ret_type = Type.lookup("int")
             , args = [
                 Type.lookup("PCIDevice").gen_var("dev", pointer = True)
@@ -685,6 +774,14 @@ def machine_register_2_6(mach):
     mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
 qemu_heuristic_db = {
+    u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
+        # This commit moves target-* CPU file into a target/ folder
+        # So target-xxx/ becomes target/xxx/ instead.
+        QEMUVersionParameterDescription("target folder",
+        new_value = 'target' + sep,
+        old_value = 'target-'
+        )
+    ],
     u'0e6aac87fd0f5db2be57c36c03d67388577208a7' : [
         # It is actually last commit touching the way of machine registration.
         # There is no reason to make more fine grained history decomposition.
@@ -752,6 +849,24 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("tcg_enabled is macro",
             new_value = True,
             old_value = False
+        )
+    ],
+    u'55f613ac25420384b2c4645420fea2f9bab15379':
+    [
+        # Be aware of moving 'i8257.h' header from hw/isa/ to hw/dma/
+        QEMUVersionParameterDescription("i8257.h path",
+            new_value = "hw/dma/i8257.h",
+            old_value = "hw/isa/i8257.h"
+        )
+    ],
+    u'1c2adb958fc07e5b3e81ed21b801c04a15f41f4f':
+    [
+        # cpu_env initialization was moved to common code in QEMU in this
+        # commit. Hence we have to decide if such initialization function
+        # must be generated by our system
+        QEMUVersionParameterDescription("Init cpu_env in arch",
+            old_value = True,
+            new_value = False
         )
     ]
 }

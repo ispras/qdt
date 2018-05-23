@@ -15,6 +15,7 @@ def add_base_types():
     Type(name = "unsigned", incomplete = False, base = True)
     Type(name = "unsigned int", incomplete = False, base = True)
     Type(name = "const char", incomplete = False, base = True)
+    Type(name = "char", incomplete = False, base = True)
 
     try:
         h = Header.lookup("stdint.h")
@@ -32,7 +33,7 @@ def add_base_types():
         , Type(name = "int32_t", incomplete = False, base = False)
         , Type(name = "int16_t", incomplete = False, base = False)
         , Type(name = "int8_t", incomplete = False, base = False)
-        ])
+    ])
 
     try:
         h = Header.lookup("stddef.h")
@@ -49,7 +50,7 @@ def add_base_types():
     try:
         h = Header.lookup("stdbool.h")
     except:
-        h = Header("stdbool.h", is_global=True)
+        h = Header("stdbool.h", is_global = True)
 
     # If "true", "false" and "bool" are not macros or do not exists then they
     # must be added explicitly.
@@ -63,20 +64,40 @@ def add_base_types():
     try:
         h = Header.lookup("stdio.h")
     except:
-        h = Header("stdio.h", is_global=True)
+        h = Header("stdio.h", is_global = True)
 
     h.add_types([
         Type("ssize_t", incomplete = False, base = False),
         Function("printf"),
         Function("fprintf"),
         Type("FILE")
-        ])
+    ])
 
     try:
         h = Header.lookup("string.h")
     except:
-        h = Header("string.h", is_global=True)
+        h = Header("string.h", is_global = True)
 
     h.add_types([
         Function("memcpy")
-        ])
+    ])
+
+    try:
+        h = Header.lookup("byteswap.h")
+    except:
+        h = Header("byteswap.h", is_global = True)
+
+    h.add_types([
+        Function("bswap_64"),
+        Function("bswap_32"),
+        Function("bswap_16")
+    ])
+
+    try:
+        h = Header.lookup("stdlib.h")
+    except:
+        h = Header("stdlib.h", is_global = True)
+
+    h.add_types([
+        Function("abort")
+    ])
