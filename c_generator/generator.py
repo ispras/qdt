@@ -55,9 +55,6 @@ TAB_SIZE = 4
 
 indent_level = 0
 
-def is_variable(obj):
-    return isinstance(obj, Variable)
-
 class Node(object):
     def __init__(self, parent = None):
         self.children = []
