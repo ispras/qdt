@@ -761,8 +761,7 @@ class Arch(object):
     .fields = (VMStateField[]) {{
         {field_str}
     }}
-}}
-""".format(name = "cpu", id = 1, min_id = 1, field_str = field_str),
+}}""".format(name = "cpu", id = 1, min_id = 1, field_str = field_str),
                     used_types = [
                         Type.lookup(self.target_cpu.get_cpustate_name())
                     ]
