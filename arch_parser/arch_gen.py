@@ -268,7 +268,7 @@ class TargetCodeGenerator(object):
         ctx_bstate = OpSDeref(ctx, Const('bstate'))
 
         def handle_opc_iter(gen_node, instr_node, total_read, last_read = 0,
-                            cur_vars=[]):
+                            cur_vars = []):
             opc = instr_node.opcode
             opc_dict = OrderedDict(sorted(instr_node.opc_dict.items()))
 
@@ -307,7 +307,7 @@ class TargetCodeGenerator(object):
                     else:
                         cases.append(Const(hex(int(k, base = 2))))
 
-                opc_mask = int('1' * opc[1], base=2) << shift_val
+                opc_mask = int('1' * opc[1], base = 2) << shift_val
                 if self.arch.byte_swap:
                     opc_mask = byte_swap(opc_mask, swap_size)
 

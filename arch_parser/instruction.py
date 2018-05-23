@@ -15,7 +15,7 @@ from sys import (
 BYTE_SIZE = 8
 
 class InstructionNode(object):
-    def __init__(self, opcode=None):
+    def __init__(self, opcode = None):
         self.opcode = opcode
         self.opc_dict = {}
 
@@ -323,7 +323,7 @@ class RawInstruction(object):
             cur_off += f.length
         return None
 
-    def dump(self, verbose=False):
+    def dump(self, verbose = False):
         print('INSTRUCTION: ' + self.mnem + '(' + self.parent + ')')
         if verbose:
             for field in self.fields:

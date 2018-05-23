@@ -610,7 +610,7 @@ class Header(Source):
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[tpath]
 
-    def __init__(self, path, is_global=False, protection = True):
+    def __init__(self, path, is_global = False, protection = True):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
@@ -711,7 +711,7 @@ class Type(object):
         except TypeNotRegistered:
             return False
 
-    def __init__(self, name, incomplete=True, base=False):
+    def __init__(self, name, incomplete = True, base = False):
         self.name = name
         self.incomplete = incomplete
         self.definer = None
@@ -956,7 +956,7 @@ class Enumeration(Type):
         for key, val in elems_dict.items():
             self.elems.append(
                 Variable(key, Type.lookup("int"),
-                         initializer=Initializer(str(val)))
+                         initializer = Initializer(str(val)))
             )
 
         self.elems.sort(key = lambda x: int(x.initializer.code))
@@ -1016,7 +1016,7 @@ class Function(Type):
         super(Function, self).__init__(name,
             # function cannot be a 'type' of variable. Only function
             # pointer type is permitted.
-            incomplete=True)
+            incomplete = True)
         self.static = static
         self.inline = inline
         self.body = body
@@ -1081,7 +1081,7 @@ class Function(Type):
     __type_references__ = ["ret_type", "args", "used_types"]
 
 class Pointer(Type):
-    def __init__(self, _type, name=None, const = False):
+    def __init__(self, _type, name = None, const = False):
         """
         const: pointer to constant (not a constant pointer).
         """
@@ -1160,7 +1160,7 @@ HDB_MACRO_ARGS = "args"
 
 class Macro(Type):
     # args is list of strings
-    def __init__(self, name, args = None, text=None):
+    def __init__(self, name, args = None, text = None):
         super(Macro, self).__init__(name, incomplete = False)
 
         self.args = args
@@ -1585,7 +1585,7 @@ class HeaderInclusion(SourceChunk):
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
             name = "Header {} inclusion".format(header.path),
-            references=[],
+            references = [],
             code = """\
 #include {}{}{}
 """.format(
@@ -1652,7 +1652,7 @@ class PointerTypeDeclaration(SourceChunk):
         super(PointerTypeDeclaration, self).__init__(_type, name, code)
 
 class PointerVariableDeclaration(SourceChunk):
-    def __init__(self, var, indent="", extern = False):
+    def __init__(self, var, indent = "", extern = False):
         self.var = var
         t = var.type.type
         if type(t) == Function:
@@ -1685,7 +1685,7 @@ class PointerVariableDeclaration(SourceChunk):
 class VariableDeclaration(SourceChunk):
     weight = 4
 
-    def __init__(self, var, indent="", extern = False):
+    def __init__(self, var, indent = "", extern = False):
         super(VariableDeclaration, self).__init__(var,
             name = "Variable {} of type {} declaration".format(
                 var.name,
@@ -1770,8 +1770,8 @@ class StructureDeclarationBegin(SourceChunk):
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
-            name="Beginning of structure {} declaration".format(struct.name),
-            code="""\
+            name = "Beginning of structure {} declaration".format(struct.name),
+            code = """\
 {indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
                 indent=indent,
@@ -1782,7 +1782,7 @@ class StructureDeclarationBegin(SourceChunk):
 class StructureDeclaration(SourceChunk):
     weight = 2
 
-    def __init__(self, struct, fields_indent="    ", indent="",
+    def __init__(self, struct, fields_indent = "    ", indent = "",
                  append_nl = True):
         super(StructureDeclaration, self).__init__(struct,
             name = "Ending of structure {} declaration".format(struct.name),
@@ -1802,9 +1802,9 @@ class EnumerationDeclarationBegin(SourceChunk):
         self.enum = enum
         super(EnumerationDeclarationBegin, self).__init__(
             enum,
-            name="Beginning of enumeration {} declaration".format(
+            name = "Beginning of enumeration {} declaration".format(
                 enum.enum_name),
-            code="""\
+            code = """\
 {indent}enum@b{enum_name}{{
 """.format(
         indent = indent,
@@ -1895,7 +1895,7 @@ class FunctionDefinition(SourceChunk):
         body = " {}" if function.body is None else "\n{\n%s}" % function.body
 
         if append_nl:
-            body +="\n"
+            body += "\n"
 
         super(FunctionDefinition, self).__init__(function,
             name = "Definition of function %s" % function.name,
@@ -1923,7 +1923,7 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.add(chunk)
 
 class SourceFile:
-    def __init__(self, name, is_header=False, protection = True):
+    def __init__(self, name, is_header = False, protection = True):
         self.name = name
         self.is_header = is_header
         # Note that, chunk order is significant while one reference per chunk
