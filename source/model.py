@@ -1710,12 +1710,12 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
+{indent}{static}{const}{type_name}{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
         const = "const@b" if var.const else "",
-        type_name = "" if enum else var.type.name,
+        type_name = "" if enum else var.type.name + "@b",
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
         init = init_code,
