@@ -1560,8 +1560,11 @@ class Variable(object):
 
         return [ch]
 
-    def get_definition_chunks(self, generator, indent = "", enum = False):
+    def get_definition_chunks(self, generator,
+        indent = "",
+        enum = False,
         append_nl = True
+    ):
         ch = VariableDefinition(self, indent, append_nl, enum)
 
         refs = list(generator.provide_chunks(self.type))
