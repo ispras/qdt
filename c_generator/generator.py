@@ -1,6 +1,5 @@
 __all__ = [
     "Function"
-    , "Variable"
     , "Const"
     , "OpDeclare"
     , "OpIndex"
