@@ -67,7 +67,7 @@ class Node(object):
         self.local_vars = set()
 
         self.do_indent = True
-        self.ending = ';'
+        self.ending = ";"
 
     def add_child(self, child):
         try:
@@ -98,7 +98,7 @@ class Node(object):
 
     @staticmethod
     def indent(writer):
-        writer.write(' ' * TAB_SIZE * indent_level)
+        writer.write(" " * TAB_SIZE * indent_level)
 
     def out_children(self, writer, it = None):
         global indent_level
@@ -114,10 +114,10 @@ class Node(object):
                 Node.indent(writer)
         node.out(writer)
         if not isinstance(node.parent, Operator):
-            if node.ending != '':
-                if node.ending == '}':
+            if node.ending != "":
+                if node.ending == "}":
                     Node.indent(writer)
-                writer.write(node.ending + '\n')
+                writer.write(node.ending + "\n")
         return
 
 
@@ -138,7 +138,7 @@ class Variable:
         writer.write(self.var.name)
         if self.var.array_size is not None and parent is not None:
             if isinstance(parent, OpDeclare):
-                writer.write('[%d]' % self.var.array_size)
+                writer.write("[%d]" % self.var.array_size)
 
 
 class Const(Node):
@@ -146,7 +146,7 @@ class Const(Node):
         Node.__init__(self)
         self.val = str(val)
         self.do_indent = False
-        self.ending = ''
+        self.ending = ""
 
     def __str__(self):
         return self.val
@@ -162,7 +162,7 @@ class VariableUsage(Node):
             var = Variable(var)
         self.gen_var = var
         self.do_indent = False
-        self.ending = ''
+        self.ending = ""
 
     def get_var(self):
         return self.gen_var.var
@@ -177,14 +177,14 @@ class VariableUsage(Node):
 class Operator(Node):
     def __init__(self, *args, **kw_args):
         Node.__init__(self)
-        self.ending = ';'
+        self.ending = ";"
 
-        self.prefix = ''
-        self.delim = ''
-        self.suffix = ''
+        self.prefix = ""
+        self.delim = ""
+        self.suffix = ""
 
         try:
-            self.parenthesis = kw_args['parenthesis']
+            self.parenthesis = kw_args["parenthesis"]
         except KeyError:
             self.parenthesis = False
 
@@ -225,10 +225,10 @@ class Operator(Node):
                 need_parenthesis = False
 
         if need_parenthesis:
-            writer.write('(')
+            writer.write("(")
 
         if isinstance(self, OpRet):
-            writer.write(' ')
+            writer.write(" ")
 
         l = iter(self.children)
         try:
@@ -240,7 +240,7 @@ class Operator(Node):
             Node.out(ch, writer)
         writer.write(self.suffix)
         if need_parenthesis:
-            writer.write(')')
+            writer.write(")")
 
 
 class OpDeclare(Operator):
@@ -260,49 +260,49 @@ class OpDeclare(Operator):
         if isinstance(child, VariableUsage):
             assert(len(set([var.var.type for var in self.children])) == 1)
             if child.var.static:
-                writer.write('static ')
+                writer.write("static ")
             v_tp = child.var.type
-            writer.write(v_tp.name + ' ')
+            writer.write(v_tp.name + " ")
             l = iter(self.children)
             try:
                 next(l).out(writer)
             except StopIteration:
                 pass
             for arg in l:
-                writer.write(', ')
+                writer.write(", ")
                 arg.out(writer)
         elif isinstance(child, Operator):
             assert(len(self.children) == 1)
             assert(isinstance(child, OpAssign))
 
-            writer.write(child.children[0].var.type.name + ' ')
+            writer.write(child.children[0].var.type.name + " ")
             child.out(writer)
         else:
             raise TypeError(
-                'Wrong operators combination: '
-                'expected declare and assignment'
+                "Wrong operators combination: "
+                "expected declare and assignment"
             )
 
 
 class OpIndex(Operator):
     def __init__(self, var, index):
         Operator.__init__(self, var, index)
-        self.delim = '['
-        self.suffix = ']'
+        self.delim = "["
+        self.suffix = "]"
 
 
 class OpSDeref(Operator):
     def __init__(self, struct_var, field):
         Operator.__init__(self, struct_var, field)
         self.field = field
-        self.delim = '.'
+        self.delim = "."
         t = None
         if isinstance(struct_var, Variable):
             t = struct_var.var.type
         elif isinstance(struct_var, mVariable):
             t = struct_var.type
         if t is not None and isinstance(t, mPointer):
-            self.delim = '->'
+            self.delim = "->"
 
     def get_var(self):
         return self.children[0].gen_var.var
@@ -317,7 +317,7 @@ class NAryOperator(Operator):
         self.argc = argc
 
         self.prefix = self.op_str
-        self.delim = '@s'
+        self.delim = "@s"
 
 
 class UnaryOperator(NAryOperator):
@@ -328,38 +328,38 @@ class UnaryOperator(NAryOperator):
 class BinaryOperator(NAryOperator):
     def __init__(self, op_str, arg1, arg2, parenthesis):
         NAryOperator.__init__(self, 2, op_str, arg1, arg2, parenthesis = parenthesis)
-        self.prefix = ''
-        self.delim = '@s' + op_str + '@b'
+        self.prefix = ""
+        self.delim = "@s" + op_str + "@b"
 
 
 class OpAssign(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '=', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "=", arg1, arg2, parenthesis)
 
 
 class OpCombAssign(BinaryOperator):
     def __init__(self, arg1, arg2, comb_op, parenthesis = False):
-        BinaryOperator.__init__(self, comb_op.op_str + '=', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, comb_op.op_str + "=", arg1, arg2, parenthesis)
 
 
 class OpBreak(NAryOperator):
     def __init__(self):
-        NAryOperator.__init__(self, 0, 'break')
+        NAryOperator.__init__(self, 0, "break")
 
 
 class OpRet(UnaryOperator):
     def __init__(self, arg1):
-        UnaryOperator.__init__(self, 'return', arg1)
+        UnaryOperator.__init__(self, "return", arg1)
 
 
 class OpAddr(UnaryOperator):
     def __init__(self, arg1):
-        UnaryOperator.__init__(self, '&', arg1)
+        UnaryOperator.__init__(self, "&", arg1)
 
 
 class OpDeref(UnaryOperator):
     def __init__(self, arg1):
-        UnaryOperator.__init__(self, '*', arg1)
+        UnaryOperator.__init__(self, "*", arg1)
 
     def get_var(self):
         return self.children[0].gen_var.var
@@ -367,102 +367,102 @@ class OpDeref(UnaryOperator):
 
 class OpAdd(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '+', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "+", arg1, arg2, parenthesis)
 
 
 class OpSub(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '-', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "-", arg1, arg2, parenthesis)
 
 
 class OpMul(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '*', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "*", arg1, arg2, parenthesis)
 
 
 class OpDiv(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '/', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "/", arg1, arg2, parenthesis)
 
 
 class OpRem(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '%', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "%", arg1, arg2, parenthesis)
 
 
 class OpAnd(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '&', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "&", arg1, arg2, parenthesis)
 
 
 class OpOr(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '|', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "|", arg1, arg2, parenthesis)
 
 
 class OpXor(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '^', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "^", arg1, arg2, parenthesis)
 
 
 class OpNot(UnaryOperator):
     def __init__(self, arg1):
-        UnaryOperator.__init__(self, '~', arg1)
+        UnaryOperator.__init__(self, "~", arg1)
 
 
 class OpLShift(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '<<', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "<<", arg1, arg2, parenthesis)
 
 
 class OpRShift(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '>>', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, ">>", arg1, arg2, parenthesis)
 
 
 class OpLogAnd(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '&&', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "&&", arg1, arg2, parenthesis)
 
 
 class OpLogOr(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '||', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "||", arg1, arg2, parenthesis)
 
 
 class OpLogNot(UnaryOperator):
     def __init__(self, arg1):
-        UnaryOperator.__init__(self, '!', arg1)
+        UnaryOperator.__init__(self, "!", arg1)
 
 
 class OpEq(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '==', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "==", arg1, arg2, parenthesis)
 
 
 class OpNEq(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '!=', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "!=", arg1, arg2, parenthesis)
 
 
 class OpGE(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '>=', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, ">=", arg1, arg2, parenthesis)
 
 
 class OpLE(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '<=', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "<=", arg1, arg2, parenthesis)
 
 
 class OpGreater(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '>', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, ">", arg1, arg2, parenthesis)
 
 
 class OpLower(BinaryOperator):
     def __init__(self, arg1, arg2, parenthesis = False):
-        BinaryOperator.__init__(self, '<', arg1, arg2, parenthesis)
+        BinaryOperator.__init__(self, "<", arg1, arg2, parenthesis)
 
 
 class OpCall(Operator):
@@ -471,7 +471,7 @@ class OpCall(Operator):
         implicit_decl = False
         if isinstance(func, str):
             try:
-                implicit_decl = kw_args['implicit_decl']
+                implicit_decl = kw_args["implicit_decl"]
             except KeyError:
                 pass
             if not implicit_decl:
@@ -487,12 +487,12 @@ class OpCall(Operator):
             raise TypeError
 
         if implicit_decl:
-            self.prefix = func + '('
+            self.prefix = func + "("
         else:
-            self.prefix = self.func.name + '('
+            self.prefix = self.func.name + "("
 
-        self.delim = ',@s'
-        self.suffix = ')'
+        self.delim = ",@s"
+        self.suffix = ")"
 
 
 class OpMCall(Operator):
@@ -500,18 +500,18 @@ class OpMCall(Operator):
         Operator.__init__(self, *args)
         self.macro = Type.lookup(macro)
         if len(args) > 0:
-            self.prefix = self.macro.name + '('
-            self.delim = ',@s' # slashless line breaking is allowed for macro
-            self.suffix = ')'
+            self.prefix = self.macro.name + "("
+            self.delim = ",@s" # slashless line breaking is allowed for macro
+            self.suffix = ")"
         else:
             self.prefix = self.macro.name
-            self.delim = ''
-            self.suffix = ''
+            self.delim = ""
+            self.suffix = ""
 
 class Goto(Node):
     def __init__(self, lable):
         Node.__init__(self)
-        self.keyword = 'goto ' + lable
+        self.keyword = "goto " + lable
 
     def out(self, writer):
         writer.write(self.keyword)
@@ -523,9 +523,9 @@ class Branch(Node):
         self.pre = pre
 
         if pre:
-            self.ending = '}'
+            self.ending = "}"
         else:
-            self.ending = ';'
+            self.ending = ";"
         self.conds = []
 
         for c in cond_parts:
@@ -534,40 +534,40 @@ class Branch(Node):
             else:
                 self.conds.append(c)
 
-        self.conds_delim = ';'
-        self.keyword = ''
+        self.conds_delim = ";"
+        self.keyword = ""
 
     def out(self, writer):
         writer.write(self.keyword)
 
         if self.pre:
-            writer.write(' (')
+            writer.write(" (")
             l = iter(self.conds)
             try:
                 next(l).out(writer)
             except StopIteration:
                 pass
             for c in l:
-                writer.write(self.conds_delim + ' ')
+                writer.write(self.conds_delim + " ")
                 c.out(writer)
-            writer.write(') {\n')
+            writer.write(") {\n")
         else:
-            writer.write(' {\n')
+            writer.write(" {\n")
         self.out_children(writer)
 
         # there is only 1 post-cond branch - do-while loop
         if not self.pre:
             self.indent(writer)
-            writer.write('} while (')
+            writer.write("} while (")
             l = iter(self.conds)
             try:
                 next(l).out(writer)
             except StopIteration:
                 pass
             for c in l:
-                writer.write(self.conds_delim + ' ')
+                writer.write(self.conds_delim + " ")
                 c.out(writer)
-            writer.write(')')
+            writer.write(")")
 
 
 # It's describes construction like
@@ -576,25 +576,25 @@ class MacroBranch(Node):
     def __init__(self, macro):
         Node.__init__(self)
         self.macro = macro
-        self.ending = '}'
+        self.ending = "}"
 
     def out(self, writer):
         self.macro.out(writer)
 
-        writer.write(' {\n')
+        writer.write(" {\n")
         self.out_children(writer)
 
 
 class LoopWhile(Branch):
     def __init__(self, cond):
         Branch.__init__(self, cond)
-        self.keyword = 'while'
+        self.keyword = "while"
 
 
 class LoopDoWhile(Branch):
     def __init__(self, cond):
         Branch.__init__(self, cond, pre = False)
-        self.keyword = 'do'
+        self.keyword = "do"
 
 
 class LoopFor(Branch):
@@ -603,13 +603,13 @@ class LoopFor(Branch):
                         OpAssign(iter_var, Const(start)),
                         end_cond,
                         OpAssign(iter_var, OpAdd(iter_var, Const(step))))
-        self.keyword = 'for'
+        self.keyword = "for"
 
 class BranchIf(Branch):
     def __init__(self, cond):
         Branch.__init__(self, cond)
-        self.keyword = 'if'
-        self.ending = '}'
+        self.keyword = "if"
+        self.ending = "}"
 
         self.else_blocks = []
 
@@ -620,8 +620,8 @@ class BranchIf(Branch):
         l = len(self.else_blocks)
         if l > 0:
             # ending is the keyword of next else block
-            # or '}'
-            self.ending = ''
+            # or "}"
+            self.ending = ""
         super(BranchIf, self).out(writer)
 
         i = 0
@@ -633,18 +633,18 @@ class BranchIf(Branch):
             # it's the last else block
             self.else_blocks[i].out(writer)
             self.indent(writer)
-            writer.write('}\n')
+            writer.write("}\n")
 
 # Don't add this class as child to any Nodes
-# It's should be added only by 'add_else'
+# It's should be added only by `add_else`
 # ending str is written in BranchIf out
 class BranchElse(Node):
     def __init__(self, cond = None):
         Node.__init__(self)
         if cond is not None:
-            self.keyword = '} else if'
+            self.keyword = "} else if"
         else:
-            self.keyword = '} else'
+            self.keyword = "} else"
 
         self.cond = cond
 
@@ -653,11 +653,11 @@ class BranchElse(Node):
         writer.write(self.keyword)
 
         if self.cond is not None:
-            writer.write(' (')
+            writer.write(" (")
             self.cond.out(writer)
-            writer.write(') {\n')
+            writer.write(") {\n")
         else:
-            writer.write(' {\n')
+            writer.write(" {\n")
         self.out_children(writer)
 
 class BranchSwitch(Branch):
@@ -669,7 +669,7 @@ class BranchSwitch(Branch):
         ):
         Branch.__init__(self, cond_var)
         assert(len(cases) > 0)
-        self.keyword = 'switch'
+        self.keyword = "switch"
         self.cases = cases
         self.bodies = {}
         self.child_ident = child_ident
@@ -677,10 +677,10 @@ class BranchSwitch(Branch):
             child = SwitchCase(case, add_breaks)
             self.bodies[str(child)] = child
             self.add_child(child)
-        child = SwitchCase(Const('default'), add_breaks)
+        child = SwitchCase(Const("default"), add_breaks)
         self.bodies[str(child)] = child
         self.add_child(child)
-        self.ending = '}'
+        self.ending = "}"
 
     def out_children(self, writer, it = None, to_ident = False):
         global indent_level
@@ -700,7 +700,7 @@ class SwitchCase(Node):
         self.case = case
 
         self.add_child(self.case)
-        self.ending = '}'
+        self.ending = "}"
 
     def __str__(self):
         return str(self.case)
@@ -722,16 +722,16 @@ class SwitchCase(Node):
 
         has_nontriv_children = len(self.children) > 1
         if not has_nontriv_children:
-            self.ending = ''
+            self.ending = ""
 
-        if str(self.case) != 'default':
-            writer.write('case ')
+        if str(self.case) != "default":
+            writer.write("case ")
         l = iter(self.children)
         try:
             next(l).out(writer)
         except StopIteration:
             pass
-        writer.write(':' + (' {' if has_nontriv_children else '') + '\n')
+        writer.write(":" + (" {" if has_nontriv_children else "") + "\n")
         self.out_children(writer, l)
 
 
@@ -741,9 +741,9 @@ class Cast(Operator):
         self.t = Type.lookup(t)
 
     def out(self, writer):
-        writer.write('(')
+        writer.write("(")
         writer.write(self.t.name)
-        writer.write(')')
+        writer.write(")")
         self.out_children(writer)
 
 
@@ -752,12 +752,12 @@ class Comment(Node):
         Node.__init__(self)
         self.value = value
         self.do_indent = True
-        self.ending = ''
+        self.ending = ""
 
     def out(self, writer):
-        writer.write('/* ')
+        writer.write("/* ")
         writer.write(self.value)
-        writer.write(' */\n')
+        writer.write(" */\n")
 
 op_priority = {
     OpIndex:    1,
