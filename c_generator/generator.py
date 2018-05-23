@@ -185,7 +185,7 @@ class Operator(Node):
         for arg in args:
             if isinstance(arg, Node):
                 self.add_child(arg)
-            elif is_variable(arg):
+            elif isinstance(arg, Variable):
                 self.add_child(VariableUsage(arg))
 
     def set_parent(self, parent):
@@ -459,7 +459,7 @@ class OpCall(Operator):
                 pass
             if not implicit_decl:
                 self.func = Type.lookup(func)
-        elif is_variable(func):
+        elif isinstance(func, Variable):
             if isinstance(func, Variable):
                 self.func = func
             else:
@@ -511,7 +511,7 @@ class Branch(Node):
         self.conds = []
 
         for c in cond_parts:
-            if is_variable(c):
+            if isinstance(c, Variable):
                 self.conds.append(VariableUsage(c))
             else:
                 self.conds.append(c)
