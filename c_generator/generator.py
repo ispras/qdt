@@ -628,7 +628,6 @@ class BranchSwitch(Branch):
         self.keyword = "switch"
         self.cases = cases
         self.bodies = {}
-        self.child_ident = child_ident
         for case in self.cases:
             child = SwitchCase(case, add_breaks)
             self.bodies[str(child)] = child
@@ -637,14 +636,6 @@ class BranchSwitch(Branch):
         self.bodies[str(child)] = child
         self.add_child(child)
         self.ending = "}"
-
-    def out_children(self, writer, it = None):
-        if self.child_ident:
-            writer.push()
-        for child in (self.children if it is None else it):
-            Node.out(child, writer)
-        if self.child_ident:
-            writer.pop()
 
 
 class SwitchCase(Node):
