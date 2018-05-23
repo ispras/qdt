@@ -172,7 +172,10 @@ class VariableUsage(Node):
         return self.v
 
     def out(self, writer):
-        self.gen_var.out(writer, self.parent)
+        writer.write(self.var.name)
+        if self.var.array_size is not None and self.parent is not None:
+            if isinstance(self.parent, OpDeclare):
+                writer.write("[%d]" % self.var.array_size)
 
     @property
     def var(self):
