@@ -936,14 +936,21 @@ class Arch(object):
 
             regs_var = []
             for r in self.target_cpu.reg_groups:
+                init_code = '{\n'
+                for r1 in r.regs:
+                    init_code += '    "' + r1.name + '",\n'
+                init_code += '}'
                 reg_var = Type.lookup(
                     'const char'
-                ).gen_var(r.name, pointer = True, static = True)
-                body = '[' + str(len(r)) + '] __attribute__((unused)) = ' '{\n'
-                for r1 in r.regs:
-                    body += '    "' + r1.name + '",\n'
-                body += '}'
-                reg_var.name += body
+                ).gen_var(
+                    r.name,
+                    pointer = True,
+                    initializer = Initializer(code = init_code),
+                    static = True,
+                    array_size = len(r),
+                    unused = True
+                )
+
                 df.add_global_variable(reg_var)
                 regs_var.append(reg_var)
 
