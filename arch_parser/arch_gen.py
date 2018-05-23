@@ -98,10 +98,9 @@ class TargetCodeGenerator(object):
 "Didn't find proper var for field at offset {} in {}".format(offset, instruction.mnem)
                             )
 
-                res = Variable(mVariable(
+                res = mVariable(
                     f.val + ':' + str(f.end) + ':' + str(f.start),
                     Type.lookup('uint64_t')
-                    )
                 )
                 decl = self.gen_extract_field(
                     OpDeclare(res),
@@ -170,7 +169,7 @@ class TargetCodeGenerator(object):
                 new_decls.append(
                     OpAssign(
                         OpDeclare(
-                            Variable(res),
+                            res,
                         ),
                         rval
                     )
@@ -252,12 +251,12 @@ class TargetCodeGenerator(object):
             )
         )
 
-        env = OpAddr(OpSDeref(Variable(function.args[0]),
+        env = OpAddr(OpSDeref(function.args[0],
                                       Const('env')))
-        ctx = Variable(function.args[1])
-        ctx_pc = Variable(mVariable(
+        ctx = function.args[1]
+        ctx_pc = mVariable(
                                     'ctx->pc',
-                                    Type.lookup('uint64_t')))
+                                    Type.lookup('uint64_t'))
         helper_funcs = []
 
         br_enum = Type.lookup('br_enum')
@@ -543,7 +542,7 @@ class TargetCodeGenerator(object):
             OpAssign(
                 OpDeclare(stream),
                 OpSDeref(
-                    Variable(function.args[1]),
+                    function.args[1],
                     Const('stream')
                 )
             )
@@ -554,7 +553,7 @@ class TargetCodeGenerator(object):
             OpAssign(
                 OpDeclare(fpr),
                 OpSDeref(
-                    Variable(function.args[1]),
+                    function.args[1],
                     Const('fprintf_func')
                 )
             )
@@ -1464,7 +1463,7 @@ class TargetCodeGenerator(object):
         root = FunctionWrapper.connect(function)
         root.add_child(
             OpAssign(
-                OpSDeref(Variable(function.args[1]), Const('mach')),
+                OpSDeref(function.args[1], Const('mach')),
                 # actually bdf_arch_* is a part of enum,
                 # bus now enums aren't supported
                 Const('bfd_arch_' + self.arch.name)
@@ -1472,7 +1471,7 @@ class TargetCodeGenerator(object):
         )
         root.add_child(
             OpAssign(
-                OpSDeref(Variable(function.args[1]), Const('print_insn')),
+                OpSDeref(function.args[1], Const('print_insn')),
                 Const('print_insn_' + self.arch.name)
             )
         )
