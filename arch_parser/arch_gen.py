@@ -253,10 +253,9 @@ class TargetCodeGenerator(object):
 
         env = OpAddr(OpSDeref(function.args[0],
                                       Const('env')))
+
         ctx = function.args[1]
-        ctx_pc = mVariable(
-                                    'ctx->pc',
-                                    Type.lookup('uint64_t'))
+        ctx_pc = OpSDeref(ctx, Const('pc'))
         helper_funcs = []
 
         br_enum = Type.lookup('br_enum')
@@ -479,10 +478,7 @@ class TargetCodeGenerator(object):
         assert(byte_num <= 8)
 
         read_memory_func = OpCall(
-            mVariable(
-                'info->read_memory_func',
-                Type.lookup('int')
-            ),
+            OpSDeref(info, Const('read_memory_func')),
             OpAdd(
                 addr,
                 Const(already_read)
@@ -741,10 +737,7 @@ class TargetCodeGenerator(object):
 
         root.add_child(Const('fail:\n'))
         memory_error_func = OpCall(
-            mVariable(
-                'info->memory_error_func',
-                Type.lookup('int')
-            ),
+            OpSDeref(function.args[1], Const('memory_error_func')),
             status, function.args[0], function.args[1]
         )
         root.add_child(memory_error_func)
