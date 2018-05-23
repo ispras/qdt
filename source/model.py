@@ -1805,7 +1805,7 @@ class EnumerationDeclaration(SourceChunk):
             name = "Ending of enumeration {} declaration".format(enum.enum_name),
             code = """\
 {indent}}};\n
-""".format(indent = indent, enum_name = enum.enum_name)
+""".format(indent = indent)
         )
 
 def gen_array_declaration(array_size):
