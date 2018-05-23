@@ -129,17 +129,6 @@ class Function(Node):
         self.out_children(writer)
 
 
-class Variable:
-    def __init__(self, legacy_var):
-        self.var = legacy_var
-
-    def out(self, writer, parent):
-        writer.write(self.var.name)
-        if self.var.array_size is not None and parent is not None:
-            if isinstance(parent, OpDeclare):
-                writer.write("[%d]" % self.var.array_size)
-
-
 class Const(Node):
     def __init__(self, val):
         Node.__init__(self)
