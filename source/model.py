@@ -723,7 +723,7 @@ class Type(object):
         Type.reg[name] = self
 
     def gen_var(self, name, pointer = False, initializer = None,
-                static = False, array_size = None):
+                static = False, array_size = None, unused = False):
         if self.incomplete:
             if not pointer:
                 raise ValueError("Cannon create non-pointer variable %s"
@@ -734,11 +734,11 @@ class Type(object):
             pt = Pointer(self)
             return Variable(name = name, _type = pt,
                 initializer = initializer, static = static,
-                array_size = array_size)
+                array_size = array_size, unused = unused)
         else:
             return Variable(name = name, _type = self,
                 initializer = initializer, static = static,
-                array_size = array_size)
+                array_size = array_size, unused = unused)
 
     def get_definers(self):
         if self.definer is None:
@@ -1247,13 +1247,14 @@ class Initializer():
 
 class Variable():
     def __init__(self, name, _type, initializer = None, static = False,
-                 const = False, array_size = None):
+                 const = False, array_size = None, unused = False):
         self.name = name
         self.type = _type
         self.initializer = initializer
         self.static = static
         self.const = const
         self.array_size = array_size
+        self.unused = unused
 
     def gen_declaration_chunks(self, generator,
         indent = "",
@@ -1721,7 +1722,7 @@ class VariableDefinition(SourceChunk):
             name = "Variable %s of type %s definition" %
                 (var.name, var.type.name),
             code = """\
-{indent}{static}{const}{type_name}{var_name}{array_decl}{init}{separ}{nl}
+{indent}{static}{const}{type_name}{var_name}{array_decl}{unused}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
@@ -1729,6 +1730,7 @@ class VariableDefinition(SourceChunk):
         type_name = "" if enum else var.type.name + "@b",
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
+        unused = "@b__attribute__((unused))" if var.unused else "",
         init = init_code,
         separ = separ,
         nl = "\n" if append_nl else ""
