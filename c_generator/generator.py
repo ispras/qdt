@@ -517,9 +517,10 @@ class Goto(Node):
         writer.write(self.keyword)
 
 class Branch(Node):
-    def __init__(self, *cond_parts, pre = True):
+    def __init__(self, *cond_parts, **kw):
         Node.__init__(self)
 
+        pre = kw.get("pre", True)
         self.pre = pre
 
         if pre:
