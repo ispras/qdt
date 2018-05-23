@@ -56,7 +56,7 @@ TAB_SIZE = 4
 indent_level = 0
 
 def is_variable(obj):
-    return isinstance(obj, Variable) or isinstance(obj, mVariable)
+    return isinstance(obj, mVariable)
 
 class Node(object):
     def __init__(self, parent = None):
@@ -157,8 +157,6 @@ class Const(Node):
 class VariableUsage(Node):
     def __init__(self, var):
         Node.__init__(self)
-        if isinstance(var, Variable):
-            var = var.var
         self.v = var
         self.do_indent = False
         self.ending = ""
@@ -295,9 +293,7 @@ class OpSDeref(Operator):
         self.field = field
         self.delim = "."
         t = None
-        if isinstance(struct_var, Variable):
-            t = struct_var.var.type
-        elif isinstance(struct_var, mVariable):
+        if isinstance(struct_var, mVariable):
             t = struct_var.type
         if t is not None and isinstance(t, mPointer):
             self.delim = "->"
@@ -475,9 +471,7 @@ class OpCall(Operator):
             if not implicit_decl:
                 self.func = Type.lookup(func)
         elif is_variable(func):
-            if isinstance(func, Variable):
-                self.func = func.var
-            elif isinstance(func, mVariable):
+            if isinstance(func, mVariable):
                 self.func = func
             else:
                 raise TypeError
@@ -688,7 +682,7 @@ class BranchSwitch(Branch):
 
 class SwitchCase(Node):
     def __init__(self, case, add_break, *args):
-        if type(case) == Variable or type(case) == mVariable:
+        if type(case) == mVariable:
             case = VariableUsage(case)
         Node.__init__(self, case, *args)
         self.has_break = add_break
