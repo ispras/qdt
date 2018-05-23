@@ -69,28 +69,8 @@ class Node(object):
         self.ending = ";"
 
     def add_child(self, child):
-        try:
-            if isinstance(self, Function) or isinstance(self, Branch) or \
-                    isinstance(self, SwitchCase):
-                try:
-                    if isinstance(child, OpAssign) and \
-                        isinstance(child.children[1], BinaryOperator) and \
-                        child.children[0].get_var() == \
-                                    child.children[1].children[0].get_var():
-                            new_child = OpCombAssign(child.children[0],
-                                                     child.children[1].children[1],
-                                                     child.children[1])
-                            self.children.append(new_child)
-                            child.set_parent(self)
-                    else:
-                        raise TypeError
-                except:
-                    raise TypeError
-            else:
-                raise TypeError
-        except TypeError:
-            self.children.append(child)
-            child.set_parent(self)
+        self.children.append(child)
+        child.set_parent(self)
 
     def set_parent(self, parent):
         self.parent = parent
