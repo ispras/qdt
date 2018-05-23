@@ -47,7 +47,7 @@ __all__ = [
 
 from source import (
     Type,
-    Pointer as mPointer,
+    Pointer,
     Variable
 )
 
@@ -281,7 +281,7 @@ class OpSDeref(Operator):
         t = None
         if isinstance(struct_var, Variable):
             t = struct_var.type
-        if t is not None and isinstance(t, mPointer):
+        if t is not None and isinstance(t, Pointer):
             self.delim = "->"
 
     def get_var(self):
