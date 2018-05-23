@@ -476,9 +476,10 @@ class Goto(Node):
 
 class Branch(Node):
     def __init__(self, *cond_parts, **kw):
-        Node.__init__(self)
+        pre = kw.pop("pre", True)
 
-        pre = kw.get("pre", True)
+        Node.__init__(self, **kw)
+
         self.pre = pre
 
         if pre:
