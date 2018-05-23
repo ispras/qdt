@@ -159,8 +159,12 @@ class VariableUsage(Node):
     def __init__(self, var):
         Node.__init__(self)
         if isinstance(var, mVariable):
-            var = Variable(var)
-        self.gen_var = var
+            gen_var = Variable(var)
+        elif isinstance(var, Variable):
+            gen_var = var
+            var = var.var
+        self.v = var
+        self.gen_var = gen_var
         self.do_indent = False
         self.ending = ""
 
