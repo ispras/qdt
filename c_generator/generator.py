@@ -657,7 +657,7 @@ class BranchSwitch(Branch):
         self.add_child(child)
         self.ending = "}"
 
-    def out_children(self, writer, it = None, to_ident = False):
+    def out_children(self, writer, it = None):
         global indent_level
         if self.child_ident:
             indent_level += 1
