@@ -34,10 +34,14 @@ class OutputWrapper:
     def pop(self):
         self.cur_indent = self.cur_indent[:-self.tab_size]
 
-    def write(self, data):
-        if version_info.major == 3:
+    if version_info.major == 3:
+
+        def write(self, data):
             self.res.write(data)
-        else:
+
+    else:
+
+        def write(self, data):
             self.res.write(unicode(data))
 
     def getvalue(self):
