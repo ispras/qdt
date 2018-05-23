@@ -18,8 +18,20 @@ from .opt import (
 )
 
 class OutputWrapper:
-    def __init__(self):
+
+    def __init__(self, tab_size = 4):
         self.res = StringIO()
+        self.indent_level = 0
+        self.tab_size = tab_size
+
+    def indent(self):
+        self.write(self.tab_size * self.indent_level * " ")
+
+    def push(self):
+        self.indent_level += 1
+
+    def pop(self):
+        self.indent_level -= 1
 
     def write(self, data):
         if version_info.major == 3:
