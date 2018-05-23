@@ -56,6 +56,9 @@ TAB_SIZE = 4
 indent_level = 0
 
 class Node(object):
+    # traverse order indicator for `ObjectVisitor`
+    __descend__ = ("children",)
+
     def __init__(self, parent = None):
         self.children = []
         self.parent = parent
