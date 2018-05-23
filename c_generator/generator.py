@@ -699,17 +699,6 @@ class SwitchCase(Node):
         return str(self.case)
 
     def out(self, writer):
-        def check_decl(cur):
-            result = False
-            for c in cur.children:
-                if isinstance(c, OpDeclare):
-                    result = True
-                    break
-                else:
-                    result = check_decl(c)
-
-            return result
-
         if self.has_break:
             self.add_child(OpBreak())
 
