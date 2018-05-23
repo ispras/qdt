@@ -980,7 +980,13 @@ class Enumeration(Type):
 
         for f in self.elems:
             # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = generator.provide_chunks(f, indent = field_indent)
+            if f == self.elems[-1]:
+                separ = ""
+            else:
+                separ = ","
+            decl_chunks = generator.provide_chunks(f, indent = field_indent,
+                separ = separ
+            )
 
             field_declaration = decl_chunks[0]
 
