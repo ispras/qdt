@@ -1774,9 +1774,9 @@ class StructureDeclarationBegin(SourceChunk):
             code = """\
 {indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
-                indent=indent,
-                struct_name=struct.name
-            )
+    indent = indent,
+    struct_name = struct.name
+)
         )
 
 class StructureDeclaration(SourceChunk):
