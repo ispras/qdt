@@ -358,7 +358,7 @@ class Arch(object):
             ),
             'w'
         )
-        f.write('CONFIG_' + self.name.upper() + '_DIS=y')
+        f.write('# Default configuration for ' + self.name + '-softmmu')
         f.close()
 
         def gen_arch_config():
