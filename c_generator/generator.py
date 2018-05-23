@@ -308,7 +308,7 @@ class OpSDeref(Operator):
             self.delim = "->"
 
     def get_var(self):
-        return self.children[0].gen_var.var
+        return self.children[0].var
 
 
 class NAryOperator(Operator):
