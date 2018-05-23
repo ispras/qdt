@@ -623,7 +623,7 @@ class BranchSwitch(Branch):
                  cases = [],
                  child_ident = False
         ):
-        Branch.__init__(self, cond_var)
+        Branch.__init__(self, cond_var, indent_children = child_ident)
         assert(len(cases) > 0)
         self.keyword = "switch"
         self.cases = cases
