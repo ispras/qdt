@@ -1792,8 +1792,11 @@ class EnumerationDeclarationBegin(SourceChunk):
             name="Beginning of enumeration {} declaration".format(
                 enum.enum_name),
             code="""\
-{indent}enum@b{enum_name}@b{{
-""".format(indent=indent, enum_name=enum.enum_name)
+{indent}enum@b{enum_name}{{
+""".format(
+        indent = indent,
+        enum_name = enum.enum_name + "@b" if enum.enum_name else ""
+    )
         )
 
 class EnumerationDeclaration(SourceChunk):
