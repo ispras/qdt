@@ -463,6 +463,9 @@ class OpCall(Operator):
                 self.func = func
             else:
                 raise TypeError
+        elif isinstance(func, OpSDeref):
+            func = func.get_var().name + func.delim + str(func.field)
+            implicit_decl = True
         else:
             raise TypeError
 
