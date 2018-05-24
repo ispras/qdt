@@ -11,7 +11,7 @@ from sys import (
 )
 
 from .generator import (
-    Function
+    FunctionBody
 )
 from .opt import (
     optimize_function
@@ -51,7 +51,7 @@ class OutputWrapper:
 class FunctionWrapper:
     @staticmethod
     def connect(modelFunction):
-        gf = Function(modelFunction.name)
+        gf = FunctionBody(modelFunction.name)
         modelFunction.body = FunctionWrapper(gf)
         return gf
 

@@ -1,5 +1,5 @@
 __all__ = [
-    "Function"
+    "FunctionBody"
     , "Const"
     , "OpDeclare"
     , "OpIndex"
@@ -96,7 +96,7 @@ class Node(object):
         return
 
 
-class Function(Node):
+class FunctionBody(Node):
     def __init__(self, name):
         Node.__init__(self)
         self.name = name
