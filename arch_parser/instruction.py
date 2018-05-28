@@ -26,17 +26,17 @@ class InstructionNode(object):
         self.instruction = None
 
         self.count = 0
-        self.instr_mnemonic = ''
+        self.instr_mnemonic = ""
 
     def dump(self):
-        print('\nInsNode: ' + str(self) + '[' + str(self.opcode) + ']')
+        print("\nInsNode: " + str(self) + "[" + str(self.opcode) + "]")
         if self.count > 0:
             print(self.instructions[0].name)
             if self.count > 1:
-                stderr.write('Warning: InstructionNode.count > 1 !')
+                stderr.write("Warning: InstructionNode.count > 1 !")
         else:
             for key, node in self.opc_dict.iteritems():
-                print('\n' + str(self) + ' [' + str(key) + '] -> ' + str(node))
+                print("\n" + str(self) + " [" + str(key) + "] -> " + str(node))
                 node.dump()
 
 
@@ -49,58 +49,58 @@ class InstrField(object):
         self.start = 0
         self.end = 0
 
-        type_ = type_.split('_')
+        type_ = type_.split("_")
         if len(type_) > 2:
-            stderr.write('Warning: unrecognized field type')
+            stderr.write("Warning: unrecognized field type")
         elif len(type_) == 2:
             self.mode = type_[1]
         else:
             self.mode = None
         self.type = type_[0]
 
-        self.opc = self.type == 'opcode'
+        self.opc = self.type == "opcode"
         if self.opc and len(self.val) != self.length:
-            self.val = '0' * (self.length - len(self.val)) + self.val
+            self.val = "0" * (self.length - len(self.val)) + self.val
 
     def __len__(self):
         return self.length
 
     def check(self):
-        return self.length == len(self.val) or self.type != 'opcode'
+        return self.length == len(self.val) or self.type != "opcode"
 
     def dump(self):
-        print(self.length, self.val, self.type + ('[' + self.mode + ']' if self.mode is not None else ''))
+        print(self.length, self.val, self.type + ("[" + self.mode + "]" if self.mode is not None else ""))
         if self.check() is not True:
-            stderr.write('Warning: check failed', \
-                '(' + str(self.length) + ' ' + str(len(self.val)) + ')')
+            stderr.write("Warning: check failed", \
+                "(" + str(self.length) + " " + str(len(self.val)) + ")")
 
 
 class Operand(InstrField):
     def __init__(self, length, name, num = 0):
-        super(Operand, self).__init__(length, name, 'oper', num)
+        super(Operand, self).__init__(length, name, "oper", num)
 
     def __str__(self):
-        return "Operand(" + str(self.length) + ", \"" + self.val + '\")'
+        return "Operand(" + str(self.length) + ', "' + self.val + '")'
 
 
 class Opcode(InstrField):
     def __init__(self, length, val, num = 0):
         super(Opcode, self).__init__(length,
-                                     str(bin(val)).lstrip('0b'),
-                                     'opcode',
+                                     str(bin(val)).lstrip("0b"),
+                                     "opcode",
                                      num)
 
     def __str__(self):
-        return 'Opcode(' + str(self.length) + ', 0b' + self.val + ')'
+        return "Opcode(" + str(self.length) + ", 0b" + self.val + ")"
 
 
 class Reserved(InstrField):
     def __init__(self, length, val = 0, num = 0):
-        super(Reserved, self).__init__(length, str(val), 'res', num)
+        super(Reserved, self).__init__(length, str(val), "res", num)
 
     def __str__(self):
-        return 'Reserved(' + str(self.length)\
-               + ((', ' + self.val) if self.val != '0' else '') + ')'
+        return "Reserved(" + str(self.length)\
+               + ((", " + self.val) if self.val != "0" else "") + ")"
 
 
 def expand_instruction(cur_iter, cur_path, res_list):
@@ -129,34 +129,34 @@ class Instruction(object):
             l = sorted(l, key = lambda x: x.num)
             for j, f in enumerate(l):
                 if f.num != j:
-                    raise Exception('Error: missing item #%d of field %s in'
-                                    ' the description of %s ' % (j, k, name))
+                    raise Exception("Error: missing item #%d of field %s in"
+                                    " the description of %s " % (j, k, name))
                 f.start = offset
                 f.end = offset + f.length - 1
                 offset += f.length
 
         self.args = list(args)
 
-        self.branch = kw_args.get('branch', False)
+        self.branch = kw_args.get("branch", False)
 
         # try to get format line for disas
-        format_ = kw_args.get('format', name)
+        format_ = kw_args.get("format", name)
         self.format = format_
 
-        self.comment = kw_args.get('comment', format_)
+        self.comment = kw_args.get("comment", format_)
 
     def __str__(self):
         indent = 2
-        tab = 4 * ' '
-        res = tab * (indent - 1) + 'Instruction(\n' + \
-              tab * indent + '\'' + self.mnem + '\','
+        tab = 4 * " "
+        res = tab * (indent - 1) + "Instruction(\n" + \
+              tab * indent + '"' + self.mnem + '",'
         for a in self.args:
-            res += '\n' + tab * indent
+            res += "\n" + tab * indent
             res += str(a)
-            res += ','
-        if self.comment != '':
-            res += '\n' + tab * indent + 'comment=\'' + self.comment + '\','
-        res += '\n' + tab * (indent - 1) + '),\n'
+            res += ","
+        if self.comment != "":
+            res += "\n" + tab * indent + 'comment="' + self.comment + '",'
+        res += "\n" + tab * (indent - 1) + "),\n"
         return res
 
     def __len__(self):
@@ -197,10 +197,10 @@ class RawInstruction(object):
         try:
             n = RawInstruction.existing_names[mnem]
             RawInstruction.existing_names[mnem] = n + 1
-            res =  mnem + '_' + str(n)
+            res = mnem + "_" + str(n)
         except KeyError:
             RawInstruction.existing_names[mnem] = 1
-            res = mnem + '_0'
+            res = mnem + "_0"
         return res
 
     # kwargs currently unused
@@ -208,8 +208,8 @@ class RawInstruction(object):
                  name,
                  length,
                  read_size,
-                 comment = '',
-                 format = '',
+                 comment = "",
+                 format = "",
                  branch = False,
                  *args
         ):
@@ -217,7 +217,7 @@ class RawInstruction(object):
         self.mnem = name
         self.fields = []
         self.fields_num = 0
-        self.parent = ''
+        self.parent = ""
         self.comment = comment
         self.format = format
         self.branch = branch
@@ -272,7 +272,7 @@ class RawInstruction(object):
         return self.name == other.name
 
     def __hash__(self):
-        if self.parent != '':
+        if self.parent != "":
             return self.parent.__hash__()
         else:
             return self.mnem.__hash__()
@@ -285,16 +285,16 @@ class RawInstruction(object):
 
     def __str__(self):
         indent = 2
-        tab = 4 * ' '
-        res = tab * (indent - 1) + 'Instruction(\n' + \
-              tab * indent + '\'' + self.mnem + '\','
+        tab = 4 * " "
+        res = tab * (indent - 1) + "Instruction(\n" + \
+              tab * indent + '"' + self.mnem + '",'
         for f in self.fields:
-            res += '\n' + tab * indent
+            res += "\n" + tab * indent
             res += str(f)
-            res += ','
-        if self.comment != '':
-            res += '\n' + tab * indent + 'comment=\'' + self.comment + '\','
-        res += '\n' + tab * (indent - 1) + '),\n'
+            res += ","
+        if self.comment != "":
+            res += "\n" + tab * indent + 'comment="' + self.comment + '",'
+        res += "\n" + tab * (indent - 1) + "),\n"
         return res
 
     def add_field(self, field):
@@ -310,7 +310,7 @@ class RawInstruction(object):
         return None
 
     def dump(self, verbose = False):
-        print('INSTRUCTION: ' + self.mnem + '(' + self.parent + ')')
+        print("INSTRUCTION: " + self.mnem + "(" + self.parent + ")")
         if verbose:
             for field in self.fields:
                 field.dump()
@@ -328,17 +328,17 @@ class RawInstruction(object):
     def get_opcode_part(self, pos):
         off, length = pos
         res = self.string[off:off+length]
-        if res.find('x') != -1:
+        if res.find("x") != -1:
             return None
         return res
 
     def has_opcode(self, offset, length):
-        return self.string[offset:offset+length].find('x') == -1
+        return self.string[offset:offset + length].find("x") == -1
 
     def get_string(self):
         length = len(self)
         opc = self.get_full_opcode()
-        res = list('x' * length)
+        res = list("x" * length)
         for val, off in opc:
             i = 0
             stop = False
@@ -349,7 +349,7 @@ class RawInstruction(object):
                 if stop:
                     break
                 i += 1
-        return ''.join(res)
+        return "".join(res)
 
 
 # common opcode is a list of tuples: [(off_1, len_1), ..., (off_k, len_k), ...]
@@ -361,7 +361,7 @@ def find_common_opcode(instructions):
     off = 0
     for i in range(min([len(string) for string in strs])):
         for x in strs:
-            if x[i] not in '01':
+            if x[i] not in "01":
                 if cur_len > 0:
                     result.append((off, cur_len))
                     cur_len = 0
