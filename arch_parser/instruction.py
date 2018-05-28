@@ -51,8 +51,6 @@ class InstrField(object):
 
         self.type = type_
 
-        self.opc = self.type == "opcode"
-
     def __len__(self):
         return self.length
 
