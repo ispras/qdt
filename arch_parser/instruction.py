@@ -244,7 +244,6 @@ class RawInstruction(object):
                         self.add_field(a)
                 else:
                     self.add_field(arg)
-                cur_off = 0
 
                 offset += arg.length
 
