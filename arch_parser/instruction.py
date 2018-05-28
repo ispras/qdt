@@ -116,8 +116,8 @@ class Instruction(object):
             l = sorted(l, key = lambda x: x.num)
             for j, f in enumerate(l):
                 if f.num != j:
-                    raise Exception("Error: missing item #%d of field %s in"
-                                    " the description of %s " % (j, k, name))
+                    raise ValueError("Missed item #%d of field %s in"
+                                     " the description of %s " % (j, k, name))
                 f.start = offset
                 f.end = offset + f.length - 1
                 offset += f.length
