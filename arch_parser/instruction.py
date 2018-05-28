@@ -58,7 +58,7 @@ class InstrField(object):
         return self.length == len(self.val) or not isinstance(self, Opcode)
 
     def dump(self):
-        print(self.length, self.val, self.type)
+        print(self.length, self.val, type(self).__name__)
         if self.check() is not True:
             stderr.write("Warning: check failed",
                 "(" + str(self.length) + " " + str(len(self.val)) + ")"
