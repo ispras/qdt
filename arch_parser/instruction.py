@@ -69,10 +69,14 @@ class InstrField(object):
         return self.length == len(self.val) or self.type != "opcode"
 
     def dump(self):
-        print(self.length, self.val, self.type + ("[" + self.mode + "]" if self.mode is not None else ""))
+        print(self.length, self.val, self.type + (
+                "[" + self.mode + "]" if self.mode is not None else ""
+            )
+        )
         if self.check() is not True:
-            stderr.write("Warning: check failed", \
-                "(" + str(self.length) + " " + str(len(self.val)) + ")")
+            stderr.write("Warning: check failed",
+                "(" + str(self.length) + " " + str(len(self.val)) + ")"
+            )
 
 
 class Operand(InstrField):
