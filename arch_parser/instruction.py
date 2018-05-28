@@ -126,7 +126,7 @@ class Instruction(object):
         for k, l in fields_dict.items():
             offset = 0
             l = sorted(l, key = lambda x: x.num)
-            for f, j in zip(l, range(len(l))):
+            for j, f in enumerate(l):
                 if f.num != j:
                     raise Exception('Error: missing item #%d of field %s in'
                                     ' the description of %s ' % (j, k, name))
