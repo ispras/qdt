@@ -1,7 +1,8 @@
 __all__ = [
-      "Operand"
-    , "Opcode"
-    , "Reserved"
+#      InstrField
+          "Operand"
+        , "Opcode"
+        , "Reserved"
     , "Instruction"
 ]
 
