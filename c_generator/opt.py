@@ -10,7 +10,9 @@ from .generator import (
     BinaryOperator,
     OpCombAssign,
     OpDeclare,
-    VariableUsage
+    VariableUsage,
+    OpSDeref,
+    OpDeref
 )
 
 class OptVisitor(ObjectVisitor):
@@ -36,12 +38,12 @@ class OptVisitor(ObjectVisitor):
                 return
 
             if not (
-                isinstance(dst, VariableUsage)
-            and isinstance(src0, VariableUsage)
+                isinstance(dst, (VariableUsage, OpSDeref, OpDeref))
+            and isinstance(src0, (VariableUsage, OpSDeref, OpDeref))
             ):
                 return
 
-            if dst.var is not src0.var:
+            if dst.get_var() is not src0.get_var():
                 return
 
             src1 = op.children[1]
