@@ -339,7 +339,6 @@ class RawInstruction(object):
 
 # common opcode is a list of tuples: [(off_1, len_1), ..., (off_k, len_k), ...]
 def find_common_opcode(instructions):
-    assert(instructions is not None)
     strs = [instr.string for instr in instructions]
     result = []
     cur_len = 0
