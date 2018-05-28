@@ -91,16 +91,21 @@ class Reserved(InstrField):
 
 
 def expand_instruction(cur_iter, cur_path, res_list):
+    """Given instruction class as a prefix tree of opcodes, this function
+    recursively generates all instruction encoding variants as paths on the
+    tree."""
     try:
         cur = next(cur_iter)
     except StopIteration:
         res_list.append(cur_path)
-        return
-    if type(cur) == tuple:
-        for br in cur:
-            expand_instruction(iter(br), cur_path, res_list)
-    elif isinstance(cur, InstrField):
-        expand_instruction(cur_iter, cur_path + [cur], res_list)
+    else:
+        if isinstance(cur, InstrField):
+            expand_instruction(cur_iter, cur_path + [cur], res_list)
+        else:
+            # encoding varies here, an iterable is expected
+            for br in cur:
+                expand_instruction(iter(br), cur_path, res_list)
+
 
 class Instruction(object):
     def __init__(self, name, *args, **kw_args):
