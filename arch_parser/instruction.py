@@ -308,7 +308,7 @@ class RawInstruction(object):
         res = []
         offset = 0
         for field in self.fields:
-            if field.opc:
+            if isinstance(field, Opcode):
                 res.append((field.val, offset))
             offset += len(field)
         return res
