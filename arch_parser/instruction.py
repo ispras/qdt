@@ -118,7 +118,6 @@ class Instruction(object):
     def __init__(self, name, *args, **kw_args):
         self.mnem = name
         fields_dict = {}
-        self.args = []
 
         for a in args:
             if isinstance(a, Operand):
@@ -127,8 +126,6 @@ class Instruction(object):
                 except KeyError:
                     fields_dict[a.val] = list()
                     fields_dict[a.val].append(a)
-
-            self.args.append(a)
 
         for k, l in fields_dict.items():
             offset = 0
