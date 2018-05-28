@@ -52,8 +52,6 @@ class InstrField(object):
         self.type = type_
 
         self.opc = self.type == "opcode"
-        if self.opc and len(self.val) != self.length:
-            self.val = "0" * (self.length - len(self.val)) + self.val
 
     def __len__(self):
         return self.length
@@ -79,10 +77,9 @@ class Operand(InstrField):
 
 class Opcode(InstrField):
     def __init__(self, length, val, num = 0):
-        super(Opcode, self).__init__(length,
-                                     str(bin(val)).lstrip("0b"),
-                                     "opcode",
-                                     num)
+        str_val = ("{0:0%ub}" % length).format(val)
+
+        super(Opcode, self).__init__(length, str_val, "opcode", num)
 
     def __str__(self):
         return "Opcode(" + str(self.length) + ", 0b" + self.val + ")"
