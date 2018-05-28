@@ -41,15 +41,13 @@ class InstructionNode(object):
 
 
 class InstrField(object):
-    def __init__(self, length, val, type_, num = 0):
+    def __init__(self, length, val, num = 0):
         self.length = length
         self.val = val
         self.num = num
 
         self.start = 0
         self.end = 0
-
-        self.type = type_
 
     def __len__(self):
         return self.length
@@ -67,7 +65,7 @@ class InstrField(object):
 
 class Operand(InstrField):
     def __init__(self, length, name, num = 0):
-        super(Operand, self).__init__(length, name, "oper", num)
+        super(Operand, self).__init__(length, name, num)
 
     def __str__(self):
         return "Operand(" + str(self.length) + ', "' + self.val + '")'
@@ -77,7 +75,7 @@ class Opcode(InstrField):
     def __init__(self, length, val, num = 0):
         str_val = ("{0:0%ub}" % length).format(val)
 
-        super(Opcode, self).__init__(length, str_val, "opcode", num)
+        super(Opcode, self).__init__(length, str_val, num)
 
     def __str__(self):
         return "Opcode(" + str(self.length) + ", 0b" + self.val + ")"
@@ -85,7 +83,7 @@ class Opcode(InstrField):
 
 class Reserved(InstrField):
     def __init__(self, length, val = 0, num = 0):
-        super(Reserved, self).__init__(length, str(val), "res", num)
+        super(Reserved, self).__init__(length, str(val), num)
 
     def __str__(self):
         return "Reserved(" + str(self.length)\
