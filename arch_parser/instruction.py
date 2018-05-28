@@ -177,9 +177,6 @@ class Instruction(object):
         tmp = []
         expand_instruction(iter(self.args), [], tmp)
         for l in tmp:
-            length = 0
-            for f in l:
-                length += len(f)
             ri = RawInstruction(
                 self.mnem,
                 read_size,
