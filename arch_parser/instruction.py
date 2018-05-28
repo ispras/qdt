@@ -337,8 +337,12 @@ class RawInstruction(object):
         return "".join(res)
 
 
-# common opcode is a list of tuples: [(off_1, len_1), ..., (off_k, len_k), ...]
 def find_common_opcode(instructions):
+    """ Finds bit intervals occupied by opcodes in all instructions.
+
+    :returns: list of tuples: [(off_1, len_1), ..., (off_k, len_k), ...]
+    """
+
     strs = [instr.string for instr in instructions]
     result = []
     cur_len = 0
