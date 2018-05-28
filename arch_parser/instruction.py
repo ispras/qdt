@@ -221,7 +221,6 @@ class RawInstruction(object):
         self.format = format
         self.branch = branch
         offset = 0
-        bytes = {}
         for arg in args:
             if isinstance(arg, InstrField):
                 new_args = []
