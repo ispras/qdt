@@ -55,7 +55,7 @@ class InstrField(object):
         return self.length
 
     def check(self):
-        return self.length == len(self.val) or self.type != "opcode"
+        return self.length == len(self.val) or not isinstance(self, Opcode)
 
     def dump(self):
         print(self.length, self.val, self.type)
