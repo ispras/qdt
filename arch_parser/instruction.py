@@ -140,21 +140,13 @@ class Instruction(object):
 
         self.args = list(args)
 
-        try:
-            self.branch = kw_args['branch']
-        except KeyError:
-            self.branch = False
+        self.branch = kw_args.get('branch', False)
 
         # try to get format line for disas
-        try:
-            self.format = kw_args['format']
-        except KeyError:
-            self.format = name
+        format_ = kw_args.get('format', name)
+        self.format = format_
 
-        try:
-            self.comment = kw_args['comment']
-        except KeyError:
-            self.comment = self.format
+        self.comment = kw_args.get('comment', format_)
 
     def __str__(self):
         indent = 2
