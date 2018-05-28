@@ -182,7 +182,6 @@ class Instruction(object):
                 length += len(f)
             ri = RawInstruction(
                 self.mnem,
-                length,
                 read_size,
                 self.comment,
                 self.format,
@@ -210,7 +209,6 @@ class RawInstruction(object):
     # kwargs currently unused
     def __init__(self,
                  name,
-                 length,
                  read_size,
                  comment = "",
                  format = "",
