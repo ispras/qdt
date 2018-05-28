@@ -86,7 +86,7 @@ class Reserved(InstrField):
         super(Reserved, self).__init__(length, str(val), num)
 
     def __str__(self):
-        return "Reserved(" + str(self.length)\
+        return "Reserved(" + str(self.length) \
                + ((", " + self.val) if self.val != "0" else "") + ")"
 
 
