@@ -49,14 +49,7 @@ class InstrField(object):
         self.start = 0
         self.end = 0
 
-        type_ = type_.split("_")
-        if len(type_) > 2:
-            stderr.write("Warning: unrecognized field type")
-        elif len(type_) == 2:
-            self.mode = type_[1]
-        else:
-            self.mode = None
-        self.type = type_[0]
+        self.type = type_
 
         self.opc = self.type == "opcode"
         if self.opc and len(self.val) != self.length:
