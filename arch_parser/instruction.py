@@ -121,11 +121,7 @@ class Instruction(object):
 
         for a in args:
             if isinstance(a, Operand):
-                try:
-                    fields_dict[a.val].append(a)
-                except KeyError:
-                    fields_dict[a.val] = list()
-                    fields_dict[a.val].append(a)
+                fields_dict.setdefault(a.val, []).append(a)
 
         for k, l in fields_dict.items():
             offset = 0
