@@ -1949,7 +1949,7 @@ digraph Chunks {
 
             if ch.references:
                 w.write("        /* References */\n")
-                for ref in ch.references:
+                for ref in sorted(ch.references):
                     w.write("        %s -> %s\n" % (cnn, chunk_node_name(ref)))
 
         w.write("}\n")
