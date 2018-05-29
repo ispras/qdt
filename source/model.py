@@ -2282,7 +2282,7 @@ digraph HeaderInclusion {
 
         dot_writer.close()
 
-    def load_header_db(self, list_headers):
+    def co_load_header_db(self, list_headers):
         # Create all headers
         for dict_h in list_headers:
             path = dict_h[HDB_HEADER_PATH]
@@ -2297,6 +2297,8 @@ digraph HeaderInclusion {
 
         # Set up inclusions
         for dict_h in list_headers:
+            yield
+
             path = dict_h[HDB_HEADER_PATH]
             h = self.header_lookup(path)
 
