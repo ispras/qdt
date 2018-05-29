@@ -25,6 +25,7 @@ __all__ = [
       , "StructureDeclaration"
       , "FunctionDeclaration"
       , "FunctionDefinition"
+      , "UsageTerminator"
   , "SourceFile"
   , "SourceTreeContainer"
 ]
@@ -1868,6 +1869,14 @@ class EnumerationDeclaration(SourceChunk):
             code = """\
 {indent}}};\n
 """.format(indent = indent, enum_name = enum.enum_name)
+        )
+
+
+class UsageTerminator(SourceChunk):
+
+    def __init__(self, usage, **kw):
+        super(UsageTerminator, self).__init__(usage,
+            "Variable %s usage terminator" % usage.name, ";\n", **kw
         )
 
 
