@@ -83,8 +83,6 @@ from .tools import (
 sys_stdout_recovery = sys.stdout
 
 macro_forbidden = compile("[^0-9A-Z_]")
-def to_macro_name(s):
-    return macro_forbidden.sub('_', s.upper())
 
 # Code generation model
 class ChunkGenerator(object):
@@ -2191,7 +2189,7 @@ them must be replaced with reference to h. """
             writer.write("""\
 #ifndef INCLUDE_{name}_H
 #define INCLUDE_{name}_H
-""".format(name = to_macro_name(self.name))
+""".format(name = self.name_for_macro())
             )
 
         prev_header = False
@@ -2212,8 +2210,11 @@ them must be replaced with reference to h. """
 
         if self.is_header and self.protection:
             writer.write(
-                "#endif /* INCLUDE_%s_H */\n" % to_macro_name(self.name)
+                "#endif /* INCLUDE_%s_H */\n" % self.name_for_macro()
             )
+
+    def name_for_macro(self):
+        return macro_forbidden.sub('_', self.name.upper())
 
 #Source tree container
 
