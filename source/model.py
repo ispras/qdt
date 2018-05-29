@@ -444,7 +444,7 @@ order does not meet all requirements.
 class AddTypeRefToDefinerException (Exception):
     pass
 
-class ParsePrintFilter:
+class ParsePrintFilter(object):
     def __init__(self, out):
         self.out = out
         self.written = False
@@ -1931,7 +1931,7 @@ def depth_first_sort(chunk, new_chunks):
     chunk.visited = 2
     new_chunks.add(chunk)
 
-class SourceFile:
+class SourceFile(object):
 
     def __init__(self, name, is_header = False, protection = True):
         self.name = name
