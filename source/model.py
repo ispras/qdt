@@ -549,8 +549,6 @@ class Header(Source):
 
                     Header.yields_per_header.append(yields_per_current_header)
 
-        raise StopIteration()
-
     @staticmethod
     def co_build_inclusions(dname):
         # Default include search folders should be specified to
@@ -592,8 +590,6 @@ class Header(Source):
         )
 
         del Header.yields_per_header
-
-        raise StopIteration()
 
 
     @staticmethod
