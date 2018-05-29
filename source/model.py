@@ -701,7 +701,10 @@ class Type(object):
         except TypeNotRegistered:
             return False
 
-    def __init__(self, name, incomplete=True, base=False):
+    def __init__(self, name,
+        incomplete = True,
+        base = False
+    ):
         self.name = name
         self.incomplete = incomplete
         self.definer = None
@@ -712,8 +715,12 @@ class Type(object):
 
         Type.reg[name] = self
 
-    def gen_var(self, name, pointer = False, initializer = None,
-                static = False, array_size = None):
+    def gen_var(self, name,
+        pointer = False,
+        initializer = None,
+        static = False,
+        array_size = None
+    ):
         if self.incomplete:
             if not pointer:
                 raise ValueError("Cannon create non-pointer variable %s"
@@ -721,14 +728,17 @@ class Type(object):
                 )
 
         if pointer:
-            pt = Pointer(self)
-            return Variable(name = name, _type = pt,
-                initializer = initializer, static = static,
-                array_size = array_size)
+            return Variable(name, Pointer(self),
+                initializer = initializer,
+                static = static,
+                array_size = array_size
+            )
         else:
-            return Variable(name = name, _type = self,
-                initializer = initializer, static = static,
-                array_size = array_size)
+            return Variable(name, self,
+                initializer = initializer,
+                static = static,
+                array_size = array_size
+            )
 
     def get_definers(self):
         if self.definer is None:
@@ -749,7 +759,7 @@ class Type(object):
 
     def gen_usage_string(self, initializer):
         # Usage string for an initializer is code of the initializer. It is
-        # legacy behaviour.
+        # legacy behavior.
         return initializer.code
 
     def __eq__(self, other):
@@ -764,12 +774,12 @@ class Type(object):
 
 class TypeReference(Type):
     def __init__(self, _type):
-        if type(_type) == TypeReference:
+        if isinstance(_type, TypeReference):
             raise ValueError("Attempt to create type reference to"
                 " another type reference %s." % _type.name
             )
 
-        #super(TypeReference, self).__init__(_type.name, _type.incomplete)
+        # super(TypeReference, self).__init__(_type.name, _type.incomplete)
         self.name = _type.name
         self.incomplete = _type.incomplete
         self.base = _type.base
@@ -799,8 +809,7 @@ class TypeReference(Type):
 
     gen_defining_chunk_list = gen_chunks
 
-    def gen_var(self, name, pointer = False, initializer = None,
-            static = False):
+    def gen_var(self, *args, **kw):
         raise ValueError("Attempt to generate variable of type %s"
             " using a reference" % self.type.name
         )
@@ -935,18 +944,16 @@ class Structure(Type):
 
 
 class Enumeration(Type):
-    def __init__(self,
-                 type_name,
-                 elems_dict,
-                 enum_name = ""
-                 ):
+
+    def __init__(self, type_name, elems_dict, enum_name = ""):
         super(Enumeration, self).__init__(type_name)
         self.elems = []
         self.enum_name = enum_name
         for key, val in elems_dict.items():
             self.elems.append(
                 Variable(key, Type.lookup("int"),
-                         initializer=Initializer(str(val)))
+                    initializer = Initializer(str(val))
+                )
             )
 
         self.elems.sort(key = lambda x: int(x.initializer.code))
@@ -958,7 +965,7 @@ class Enumeration(Type):
         return None
 
     def gen_chunks(self, generator):
-        fields_indent = " " * 4
+        fields_indent = "    "
         indent = ""
 
         enum_begin = EnumerationDeclarationBegin(self, indent)
@@ -987,20 +994,22 @@ class Enumeration(Type):
     __type_references__ = ["elems"]
 
 class Function(Type):
-    def __init__(self,
-            name,
-            body = None,
-            ret_type = None,
-            args = None,
-            static = False, 
-            inline = False,
-            used_types = [],
-            used_globals = []):
+
+    def __init__(self, name,
+        body = None,
+        ret_type = None,
+        args = None,
+        static = False,
+        inline = False,
+        used_types = [],
+        used_globals = []
+    ):
         # args is list of Variables
         super(Function, self).__init__(name,
             # function cannot be a 'type' of variable. Only function
             # pointer type is permitted.
-            incomplete=True)
+            incomplete = True
+        )
         self.static = static
         self.inline = inline
         self.body = body
@@ -1031,22 +1040,28 @@ class Function(Type):
         ch.add_references(refs)
         return [ch]
 
-    def use_as_prototype(self,
-        name,
+    def use_as_prototype(self, name,
         body = None,
         static = False,
         inline = False,
-        used_types = []):
+        used_types = []
+    ):
 
-        return Function(name, body, self.ret_type, self.args, static, inline,
-            used_types)
+        return Function(name,
+            body = body,
+            ret_type = self.ret_type,
+            args = self.args,
+            static = static,
+            inline = inline,
+            used_types = used_types
+        )
 
     def gen_body(self, used_types = None, used_globals = None):
         new_used_types = [self]
         new_used_types.extend([] if used_types is None else used_types)
         new_used_globals = [] if used_globals is None else used_globals
         new_f = Function(
-            self.name + '.body',
+            self.name + ".body",
             self.body,
             self.ret_type,
             self.args,
@@ -1059,13 +1074,13 @@ class Function(Type):
         return new_f
 
     def gen_var(self, name, initializer = None, static = False):
-        return Variable(name = name, _type = self, 
-                initializer = initializer, static = static)
+        return Variable(name, self, initializer = initializer, static = static)
 
     __type_references__ = ["ret_type", "args", "used_types"]
 
 class Pointer(Type):
-    def __init__(self, _type, name=None, const = False):
+
+    def __init__(self, _type, name = None, const = False):
         """
         const: pointer to constant (not a constant pointer).
         """
@@ -1079,7 +1094,8 @@ class Pointer(Type):
         if self.is_named:
             super(Pointer, self).__init__(name,
                 incomplete = False,
-                base = False)
+                base = False
+            )
         else:
             self.name = name
             self.incomplete = False
@@ -1120,7 +1136,7 @@ class Pointer(Type):
 
             """ 'typedef' does not require refererenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
-chunk. The references is to be added to 'users' of the 'typedef'.
+chunk. The references is to be added to `users` of the 'typedef'.
         """
             ch.add_references(refs)
 
@@ -1144,7 +1160,7 @@ HDB_MACRO_ARGS = "args"
 
 class Macro(Type):
     # args is list of strings
-    def __init__(self, name, args = None, text=None):
+    def __init__(self, name, args = None, text = None):
         super(Macro, self).__init__(name, incomplete = False)
 
         self.args = args
@@ -1161,10 +1177,10 @@ class Macro(Type):
 
         return "%s%s" % (self.name, arg_val)
 
-    def gen_var(self, pointer = False, inititalizer = None, static = False):
+    def gen_var(self, *args, **kw):
         return super(Macro, self).gen_var(
-                name = "fake variable of macro %s" % self.name
-            )
+            name = "fake variable of macro %s" % self.name
+        )
 
     def gen_dict(self):
         res = {HDB_MACRO_NAME : self.name}
@@ -1198,7 +1214,7 @@ class InitCodeVisitor(ObjectVisitor):
             self.used_types.add(cur)
             raise BreakVisiting()
 
-class Initializer():
+class Initializer(object):
     #code is string for variables and dictionary for macros
     def __init__(self, code, used_types = [], used_variables = []):
         self.code = code
@@ -1229,9 +1245,15 @@ class Initializer():
 
     __type_references__ = ["used_types", "used_variables"]
 
-class Variable():
-    def __init__(self, name, _type, initializer = None, static = False,
-                 const = False, array_size = None):
+
+class Variable(object):
+
+    def __init__(self, name, _type,
+        initializer = None,
+        static = False,
+        const = False,
+        array_size = None
+    ):
         self.name = name
         self.type = _type
         self.initializer = initializer
@@ -1252,8 +1274,10 @@ class Variable():
                 refs = generator.provide_chunks(self.type.type)
             ch.add_references(refs)
         else:
-            t = self.type if not isinstance(self.type, TypeReference)\
-                else self.type.type
+            if isinstance(self.type, TypeReference):
+                t = self.type.type
+            else:
+                t = self.type
 
             if type(t) == Macro:
                 u = VariableUsage.gen_chunks(self, generator, indent = indent)
@@ -1358,20 +1382,20 @@ class CopyFixerVisitor(ObjectVisitor):
 
     def on_visit(self):
         t = self.cur
-        if not isinstance(t, Type) or \
-            (isinstance(t, Pointer) and not t.is_named):
-            new_t = copy(t)
-            try:
-                self.replace(new_t)
-            except BreakVisiting:
-                pass
 
+        if (not isinstance(t, Type)
+            or (isinstance(t, Pointer) and not t.is_named)
+        ):
+            new_t = copy(t)
+
+            self.replace(new_t, skip_trunk = False)
         else:
             raise BreakVisiting()
 
 # Function and instruction models
 
-class Usage():
+
+class Usage(object):
     def __init__(self, var, initializer = None):
         self.variable = var
         self.initalizer = initializer
@@ -1382,14 +1406,15 @@ class Usage():
         )
         ret = ret[:1]
         # do not add semicolon after macro usage
-        if not (type(self.variable.type) == Macro \
-            or isinstance(self.variable.type, TypeReference) and \
-                isinstance(self.variable.type.type, Macro) \
+        if not (isinstance(self.variable.type, Macro)
+            or isinstance(self.variable.type, TypeReference)
+                and isinstance(self.variable.type.type, Macro)
         ):
             term_chunk = SourceChunk(
                 name = "Variable %s usage terminator" % self.variable.name,
                 code = ";\n",
-                references = ret)
+                references = ret
+            )
             ret.insert(0, term_chunk)
 
         return ret
@@ -1438,29 +1463,29 @@ class SourceChunk(object):
         for r in list(self.references):
             self.del_reference(r)
 
-    def check_cols_fix_up(self, max_cols = 80, indent = '    '):
-        anc = '@a' # indent anchor
-        can = '@c' # cancel indent anchor
-        nbs = '@b' # non-breaking space
-        nss = '@s' # non-slash space
+    def check_cols_fix_up(self, max_cols = 80, indent = "    "):
+        anc = "@a" # indent anchor
+        can = "@c" # cancel indent anchor
+        nbs = "@b" # non-breaking space
+        nss = "@s" # non-slash space
 
-        common_re = '(?<!@)((?:@@)*)({})'
+        common_re = "(?<!@)((?:@@)*)({})"
         re_anc = compile(common_re.format(anc))
         re_can = compile(common_re.format(can))
         re_nbs = compile(common_re.format(nbs))
         re_nss = compile(common_re.format(nss))
-        re_clr = compile('@(.|$)')
+        re_clr = compile("@(.|$)")
 
         lines = self.code.split('\n')
-        code = ''
+        code = ""
         last_line = len(lines) - 1
 
         for idx1, line in enumerate(lines):
             if idx1 == last_line and len(line) == 0:
                 break;
 
-            clear_line = re_clr.sub('\\1', re_anc.sub('\\1', re_can.sub('\\1',
-                         re_nbs.sub('\\1 ', re_nss.sub('\\1 ', line)))))
+            clear_line = re_clr.sub("\\1", re_anc.sub("\\1", re_can.sub("\\1",
+                         re_nbs.sub("\\1 ", re_nss.sub("\\1 ", line)))))
 
             if len(clear_line) <= max_cols:
                 code += clear_line + '\n'
@@ -1479,8 +1504,8 @@ class SourceChunk(object):
             4. replace any non-breaking space with a regular space in each word
             """
             words = list(filter(None, map(
-                lambda a: re_nbs.sub('\\1 ', a),
-                re_nss.sub('\\1 ' + nss + ' ', line.lstrip(' ')).split(' ')
+                lambda a: re_nbs.sub("\\1 ", a),
+                re_nss.sub("\\1 " + nss + ' ', line.lstrip(' ')).split(' ')
             )))
 
             ll = 0 # line length
@@ -1496,7 +1521,7 @@ class SourceChunk(object):
                     lambda a: re_can.split(a),
                     re_anc.split(word)
                 ))))
-                word = ''
+                word = ""
                 subword_indents = []
                 for subword in subwords:
                     if subword == anc:
@@ -1512,10 +1537,10 @@ class SourceChunk(object):
                                     " anchor from empty stack"
                                 )
                     else:
-                        word += re_clr.sub('\\1', subword)
+                        word += re_clr.sub("\\1", subword)
 
                 if ll > 0:
-                    # The variable r reserves characters for ' \\'
+                    # The variable r reserves characters for " \\"
                     # that can be added after current word
                     if idx2 == last_word or words[idx2 + 1] == nss:
                         r = 0
@@ -1528,7 +1553,7 @@ the expression which is 0 if safe breaking is not required after this word.
                     """
                     if ll + 1 + len(word) + r > max_cols:
                         if slash:
-                            code += ' \\'
+                            code += " \\"
                         code += '\n' + line_indent + tmp_indent + word
                         ll = len(line_indent) + len(tmp_indent) + len(word)
                     else:
@@ -1563,17 +1588,16 @@ class HeaderInclusion(SourceChunk):
 
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
-            name = "Header {} inclusion".format(header.path),
-            references=[],
+            name = "Header %s inclusion" % header.path,
+            references = [],
             code = """\
-#include {}{}{}
+#include {q}{path}{q}
 """.format(
-        ( "<" if header.is_global else "\"" ),
+        q = "<" if header.is_global else '"',
         # Always use UNIX path separator in `#include` directive.
-        "/".join(path2tuple(header.path)),
-        ( ">" if header.is_global else "\"" ),
+        path = "/".join(path2tuple(header.path))
     )
-            )
+        )
         self.header = header
 
     def __lt__(self, other):
@@ -1600,10 +1624,10 @@ class MacroDefinition(SourceChunk):
         if macro.args is None:
             args_txt = ""
         else:
-            args_txt = "("
+            args_txt = '('
             for a in macro.args[:-1]:
                 args_txt += a + ", "
-            args_txt += macro.args[-1] + ")"
+            args_txt += macro.args[-1] + ')'
 
         super(MacroDefinition, self).__init__(macro,
             name = "Definition of macro %s" % macro.name,
@@ -1611,8 +1635,9 @@ class MacroDefinition(SourceChunk):
                 indent,
                 macro.name,
                 args_txt,
-                "" if macro.text is None else " %s" % macro.text)
+                "" if macro.text is None else (" %s" % macro.text)
             )
+        )
 
         self.macro = macro
 
@@ -1620,29 +1645,35 @@ class PointerTypeDeclaration(SourceChunk):
     def __init__(self, _type, def_name):
         self.type = _type
         self.def_name = def_name
-        name = 'Definition of pointer to type' + self.type.name
+        name = "Definition of pointer to type" + self.type.name
 
-        if type(self.type) == Function:
-            code = 'typedef@b' + gen_function_declaration_string('', self.type, def_name)
-            code += ';\n'
+        if isinstance(self.type, Function):
+            code = "typedef@b"
+            code += gen_function_declaration_string("", self.type,
+                pointer_name = def_name
+            )
+            code += ";\n"
         else:
-            code = 'typedef@b' + self.type.name + '@b' + def_name
+            code = "typedef@b" + self.type.name + "@b" + def_name
 
         super(PointerTypeDeclaration, self).__init__(_type, name, code)
 
 class PointerVariableDeclaration(SourceChunk):
-    def __init__(self, var, indent="", extern = False):
+
+    def __init__(self, var, indent = "", extern = False):
         self.var = var
         t = var.type.type
-        if type(t) == Function:
+        if isinstance(t, Function):
             code = """\
 {indent}{extern}{decl_str};
 """.format(
-                indent = indent,
-                extern = "extern@b" if extern else "",
-                decl_str = gen_function_declaration_string('', t, var.name,
-                                                           var.array_size)
-                )
+        indent = indent,
+        extern = "extern@b" if extern else "",
+        decl_str = gen_function_declaration_string("", t,
+            pointer_name = var.name,
+            array_size = var.array_size
+        )
+            )
         else:
             code = """\
 {indent}{extern}{const}{type_name}@b*{var_name};
@@ -1654,22 +1685,19 @@ class PointerVariableDeclaration(SourceChunk):
                 extern = "extern@b" if extern else ""
             )
         super(PointerVariableDeclaration, self).__init__(var,
-            name = "Declaration of pointer {} to type {}".format(
-                var.name,
-                t.name
-            ),
+            name = "Declaration of pointer %s to type %s" % (var.name, t.name),
             code = code
         )
 
 class VariableDeclaration(SourceChunk):
     weight = 4
 
-    def __init__(self, var, indent="", extern = False):
+    def __init__(self, var, indent = "", extern = False):
         super(VariableDeclaration, self).__init__(var,
-            name = "Variable {} of type {} declaration".format(
+            name = "Variable %s of type %s declaration" % (
                 var.name,
                 var.type.name
-                ),
+            ),
             code = """\
 {indent}{extern}{const}{type_name}@b{var_name}{array_decl};
 """.format(
@@ -1681,13 +1709,14 @@ class VariableDeclaration(SourceChunk):
         extern = "extern@b" if extern else ""
     )
             )
+
         self.variable = var
 
 class VariableDefinition(SourceChunk):
     weight = 5
 
-    def __init__(self, var, indent="", append_nl = True, enum = False):
-        init_code = ''
+    def __init__(self, var, indent = "", append_nl = True, enum = False):
+        init_code = ""
         if var.initializer is not None:
             raw_code = var.type.gen_usage_string(var.initializer)
             # add indent to initializer code
@@ -1698,8 +1727,9 @@ class VariableDefinition(SourceChunk):
 
         self.variable = var
         super(VariableDefinition, self).__init__(var,
-            name = "Variable %s of type %s definition" %
-                (var.name, var.type.name),
+            name = "Variable %s of type %s definition" % (
+                var.name, var.type.name
+            ),
             code = """\
 {indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
@@ -1713,7 +1743,8 @@ class VariableDefinition(SourceChunk):
         separ = "," if enum else ";",
         nl = "\n" if append_nl else ""
     )
-            )
+        )
+
 
 class VariableUsage(SourceChunk):
     @staticmethod
@@ -1748,52 +1779,52 @@ class StructureDeclarationBegin(SourceChunk):
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
-            name="Beginning of structure {} declaration".format(struct.name),
-            code="""\
+            name = "Beginning of structure %s declaration" % struct.name,
+            code = """\
 {indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
-                indent=indent,
-                struct_name=struct.name
+    indent = indent,
+    struct_name = struct.name
             )
         )
 
 class StructureDeclaration(SourceChunk):
     weight = 2
 
-    def __init__(self, struct, fields_indent="    ", indent="",
+    def __init__(self, struct, fields_indent = "    ", indent = "",
                  append_nl = True):
         super(StructureDeclaration, self).__init__(struct,
-            name = "Ending of structure {} declaration".format(struct.name),
+            name = "Ending of structure %s declaration" % struct.name,
             code = """\
 {indent}}}@b{struct_name};{nl}
 """.format(
     indent = indent,
     struct_name = struct.name,
     nl = "\n" if append_nl else ""
-    ),
-            )
+            ),
+        )
 
         self.structure = struct
 
 class EnumerationDeclarationBegin(SourceChunk):
     def __init__(self, enum, indent = ""):
         self.enum = enum
-        super(EnumerationDeclarationBegin, self).__init__(
-            enum,
-            name="Beginning of enumeration {} declaration".format(
-                enum.enum_name),
-            code="""\
+        super(EnumerationDeclarationBegin, self).__init__(enum,
+            name = "Beginning of enumeration %s declaration" % enum.enum_name,
+            code = """\
 {indent}enum@b{enum_name}@b{{
-""".format(indent=indent, enum_name=enum.enum_name)
+""".format(
+    indent = indent,
+    enum_name = enum.enum_name
+            )
         )
 
 class EnumerationDeclaration(SourceChunk):
     weight = 3
 
     def __init__(self, enum, indent = ""):
-        super(EnumerationDeclaration, self).__init__(
-            enum,
-            name = "Ending of enumeration {} declaration".format(enum.enum_name),
+        super(EnumerationDeclaration, self).__init__(enum,
+            name = "Ending of enumeration %s declaration" % enum.enum_name,
             code = """\
 {indent}}};\n
 """.format(indent = indent, enum_name = enum.enum_name)
@@ -1802,15 +1833,18 @@ class EnumerationDeclaration(SourceChunk):
 def gen_array_declaration(array_size):
     if array_size is not None:
         if array_size == 0:
-            array_decl = '[]'
+            array_decl = "[]"
         elif array_size > 0:
             array_decl = '[' + str(array_size) + ']'
     else:
-        array_decl = ''
+        array_decl = ""
     return array_decl
 
-def gen_function_declaration_string(indent, function, pointer_name = None,
-                                    array_size = None):
+
+def gen_function_declaration_string(indent, function,
+    pointer_name = None,
+    array_size = None
+):
     if function.args is None:
         args = "void"
     else:
@@ -1820,7 +1854,7 @@ def gen_function_declaration_string(indent, function, pointer_name = None,
             if not a == function.args[-1]:
                 args += ",@s"
 
-    if function.name.find('.body') != -1:
+    if function.name.find(".body") != -1:
         decl_name = function.name[:-5]
     else:
         decl_name = function.name
@@ -1830,8 +1864,9 @@ def gen_function_declaration_string(indent, function, pointer_name = None,
         static = "static@b" if function.static else "",
         inline = "inline@b" if function.inline else "",
         ret_type = function.ret_type.name + "@b",
-        name = decl_name if pointer_name is None else ('(*' + pointer_name +
-                                                       gen_array_declaration(array_size) + ')'),
+        name = decl_name if pointer_name is None else (
+            "(*" + pointer_name + gen_array_declaration(array_size) + ')'
+        ),
         args = args
     )
 
@@ -1862,7 +1897,7 @@ class FunctionDeclaration(SourceChunk):
         super(FunctionDeclaration, self).__init__(function,
             name = "Declaration of function %s" % function.name,
             code = "%s;" % gen_function_declaration_string(indent, function)
-            )
+        )
         self.function = function
 
 class FunctionDefinition(SourceChunk):
@@ -1898,7 +1933,8 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.add(chunk)
 
 class SourceFile:
-    def __init__(self, name, is_header=False, protection = True):
+
+    def __init__(self, name, is_header = False, protection = True):
         self.name = name
         self.is_header = is_header
         # Note that, chunk order is significant while one reference per chunk
@@ -1934,7 +1970,7 @@ digraph Chunks {
 
             # invisible edges provides vertical order like in the output file
             if upper_cnn is not None:
-                w.write('\n    %s -> %s [style=invis]\n' % (cnn, upper_cnn))
+                w.write("\n    %s -> %s [style=invis]\n" % (cnn, upper_cnn))
             upper_cnn = cnn
 
             if ch.references:
@@ -2015,7 +2051,7 @@ digraph Chunks {
             (self.name, "h" if self.is_header else "c")
         ))
 
-        # use 'visited' flag to prevent dead loop in case of inclusion cycle
+        # use `visited` flag to prevent dead loop in case of inclusion cycle
         for h in Header.reg.values():
             h.visited = False
             h.root = None
@@ -2101,8 +2137,7 @@ them must be replaced with reference to h. """
     def check_static_function_declarations(self):
         func_dec = {}
         for ch in list(self.chunks):
-            if type(ch) != FunctionDeclaration \
-               and type(ch) != FunctionDefinition:
+            if not isinstance(ch, (FunctionDeclaration, FunctionDefinition)):
                 continue
 
             f = ch.function
@@ -2119,9 +2154,9 @@ them must be replaced with reference to h. """
             # TODO: check for loops in references, the cases in which forward
             #declarations is really needed.
 
-            if type(ch) == FunctionDeclaration:
+            if isinstance(ch, FunctionDeclaration):
                 self.remove_dup_chunk(prev_ch, ch)
-            elif type(ch) == type(prev_ch):
+            elif type(ch) is type(prev_ch):
                 # prev_ch and ch are FunctionDefinition
                 self.remove_dup_chunk(prev_ch, ch)
             else:
@@ -2197,7 +2232,8 @@ class SourceTreeContainer(object):
     def type_lookup(self, name):
         if name not in self.reg_type:
             raise TypeNotRegistered("Type with name %s is not registered"
-                % name)
+                % name
+            )
         return self.reg_type[name]
 
     def type_exists(self, name):
@@ -2222,7 +2258,8 @@ digraph HeaderInclusion {
     node [shape=polygon fontname=Monospace]
     edge[style=filled]
 
-""")
+"""
+        )
 
         def _header_path_to_node_name(path):
             return path.replace(".", "_").replace("/", "__").replace("-", "_")
@@ -2239,7 +2276,7 @@ digraph HeaderInclusion {
             for i in h.inclusions.values():
                 i_node = _header_path_to_node_name(i.path)
 
-                dot_writer.write('    %s -> %s\n' % (i_node, h_node))
+                dot_writer.write("    %s -> %s\n" % (i_node, h_node))
 
         dot_writer.write("}\n")
 
@@ -2251,8 +2288,9 @@ digraph HeaderInclusion {
             path = dict_h[HDB_HEADER_PATH]
             if path2tuple(path) not in self.reg_header:
                 Header(
-                       path = dict_h[HDB_HEADER_PATH],
-                       is_global = dict_h[HDB_HEADER_IS_GLOBAL])
+                    path = dict_h[HDB_HEADER_PATH],
+                    is_global = dict_h[HDB_HEADER_IS_GLOBAL]
+                )
             else:
                 # Check if existing header equals the one from database?
                 pass
