@@ -679,7 +679,7 @@ transitively includes definer of ref)"""
 
 # Type models
 
-class TypeNotRegistered(Exception):
+class TypeNotRegistered(RuntimeError):
     pass
 
 class Type(object):
