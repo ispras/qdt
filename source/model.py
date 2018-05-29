@@ -84,9 +84,11 @@ sys_stdout_recovery = sys.stdout
 
 macro_forbidden = compile("[^0-9A-Z_]")
 
+
 # Code generation model
 class ChunkGenerator(object):
     """ Maintains context of source code chunks generation precess."""
+
     def __init__(self, for_header = False):
         self.origin2chunks = {}
         self.for_header = for_header
@@ -145,7 +147,9 @@ class ChunkGenerator(object):
 
 # Source code models
 
+
 class Source(object):
+
     def __init__(self, path):
         self.path = path
         self.types = {}
@@ -347,7 +351,7 @@ switching to that mode.
             for t in l:
                 if not isinstance(t, TypeReference):
                     continue
-    
+
                 tfv = TypeFixerVisitor(self, t)
                 tfv.visit()
 
@@ -441,10 +445,13 @@ order does not meet all requirements.
 
         return file
 
+
 class AddTypeRefToDefinerException(RuntimeError):
     pass
 
+
 class ParsePrintFilter(object):
+
     def __init__(self, out):
         self.out = out
         self.written = False
@@ -458,6 +465,7 @@ class ParsePrintFilter(object):
         if self.written:
             self.out.flush()
             self.written = False
+
 
 class Header(Source):
     reg = {}
@@ -598,7 +606,7 @@ class Header(Source):
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[tpath]
 
-    def __init__(self, path, is_global=False, protection = True):
+    def __init__(self, path, is_global = False, protection = True):
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
@@ -639,7 +647,7 @@ class Header(Source):
     def __hash__(self):
         # key contains of 'g' or 'h' and header path
         # 'g' and 'h' are used to distinguish global and local
-        # headers with same 
+        # headers with same
         return hash("{}{}".format(
                 "g" if self.is_global else "l",
                 self.path))
@@ -677,8 +685,10 @@ transitively includes definer of ref)"""
 
 # Type models
 
+
 class TypeNotRegistered(RuntimeError):
     pass
+
 
 class Type(object):
     reg = {}
@@ -770,7 +780,9 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
+
 class TypeReference(Type):
+
     def __init__(self, _type):
         if isinstance(_type, TypeReference):
             raise ValueError("Attempt to create type reference to"
@@ -824,7 +836,9 @@ class TypeReference(Type):
     def __hash__(self):
         return hash(self.type)
 
+
 class Structure(Type):
+
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete = False)
         self.fields = []
@@ -844,7 +858,6 @@ class Structure(Type):
             definers.extend(f.type.get_definers())
 
         return definers
-
 
     def append_field(self, variable):
         for f in self.fields:
@@ -991,6 +1004,7 @@ class Enumeration(Type):
 
     __type_references__ = ["elems"]
 
+
 class Function(Type):
 
     def __init__(self, name,
@@ -1076,6 +1090,7 @@ class Function(Type):
 
     __type_references__ = ["ret_type", "args", "used_types"]
 
+
 class Pointer(Type):
 
     def __init__(self, _type, name = None, const = False):
@@ -1152,11 +1167,14 @@ chunk. The references is to be added to `users` of the 'typedef'.
 
     __type_references__ = ["type"]
 
+
 HDB_MACRO_NAME = "name"
 HDB_MACRO_TEXT = "text"
 HDB_MACRO_ARGS = "args"
 
+
 class Macro(Type):
+
     # args is list of strings
     def __init__(self, name, args = None, text = None):
         super(Macro, self).__init__(name, incomplete = False)
@@ -1199,7 +1217,9 @@ class Macro(Type):
 
 # Data models
 
+
 class InitCodeVisitor(ObjectVisitor):
+
     def __init__(self, code):
         super(InitCodeVisitor, self).__init__(code,
             field_name = "__type_references__"
@@ -1212,8 +1232,10 @@ class InitCodeVisitor(ObjectVisitor):
             self.used_types.add(cur)
             raise BreakVisiting()
 
+
 class Initializer(object):
-    #code is string for variables and dictionary for macros
+
+    # code is string for variables and dictionary for macros
     def __init__(self, code, used_types = [], used_variables = []):
         self.code = code
         self.used_types = set(used_types)
@@ -1314,7 +1336,9 @@ class Variable(object):
 
 # Type inspecting
 
+
 class TypeFixerVisitor(ObjectVisitor):
+
     def __init__(self, source, type_object, *args, **kw):
         kw["field_name"] = "__type_references__"
         ObjectVisitor.__init__(self, type_object, *args, **kw)
@@ -1373,7 +1397,9 @@ class TypeFixerVisitor(ObjectVisitor):
     references (in terms of python references)
     """
 
+
 class CopyFixerVisitor(ObjectVisitor):
+
     def __init__(self, type_object, *args, **kw):
         kw["field_name"] = "__type_references__"
         ObjectVisitor.__init__(self, type_object, *args, **kw)
@@ -1394,6 +1420,7 @@ class CopyFixerVisitor(ObjectVisitor):
 
 
 class Usage(object):
+
     def __init__(self, var, initializer = None):
         self.variable = var
         self.initalizer = initializer
@@ -1422,6 +1449,7 @@ class Usage(object):
     __type_references__ = ["variable", "initalizer"]
 
 # Source code instances
+
 
 class SourceChunk(object):
     """
@@ -1581,6 +1609,7 @@ the expression which is 0 if safe breaking is not required after this word.
         else:
             return self.name < other.name
 
+
 class HeaderInclusion(SourceChunk):
     weight = 0
 
@@ -1616,6 +1645,7 @@ class HeaderInclusion(SourceChunk):
         else:
             return super(HeaderInclusion, self).__lt__(other)
 
+
 class MacroDefinition(SourceChunk):
     weight = 1
 
@@ -1640,7 +1670,9 @@ class MacroDefinition(SourceChunk):
 
         self.macro = macro
 
+
 class PointerTypeDeclaration(SourceChunk):
+
     def __init__(self, _type, def_name):
         self.type = _type
         self.def_name = def_name
@@ -1656,6 +1688,7 @@ class PointerTypeDeclaration(SourceChunk):
             code = "typedef@b" + self.type.name + "@b" + def_name
 
         super(PointerTypeDeclaration, self).__init__(_type, name, code)
+
 
 class PointerVariableDeclaration(SourceChunk):
 
@@ -1688,6 +1721,7 @@ class PointerVariableDeclaration(SourceChunk):
             code = code
         )
 
+
 class VariableDeclaration(SourceChunk):
     weight = 4
 
@@ -1704,12 +1738,13 @@ class VariableDeclaration(SourceChunk):
         const = "const@b" if var.const else "",
         type_name = var.type.name,
         var_name = var.name,
-        array_decl =  gen_array_declaration(var.array_size),
+        array_decl = gen_array_declaration(var.array_size),
         extern = "extern@b" if extern else ""
     )
             )
 
         self.variable = var
+
 
 class VariableDefinition(SourceChunk):
     weight = 5
@@ -1746,6 +1781,7 @@ class VariableDefinition(SourceChunk):
 
 
 class VariableUsage(SourceChunk):
+
     @staticmethod
     def gen_chunks(var, generator, initializer = None, indent = ""):
         ch = VariableUsage(var, initializer, indent)
@@ -1774,7 +1810,9 @@ class VariableUsage(SourceChunk):
         self.indent = indent
         self.initializer = initializer
 
+
 class StructureDeclarationBegin(SourceChunk):
+
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
@@ -1786,6 +1824,7 @@ class StructureDeclarationBegin(SourceChunk):
     struct_name = struct.name
             )
         )
+
 
 class StructureDeclaration(SourceChunk):
     weight = 2
@@ -1805,7 +1844,9 @@ class StructureDeclaration(SourceChunk):
 
         self.structure = struct
 
+
 class EnumerationDeclarationBegin(SourceChunk):
+
     def __init__(self, enum, indent = ""):
         self.enum = enum
         super(EnumerationDeclarationBegin, self).__init__(enum,
@@ -1818,6 +1859,7 @@ class EnumerationDeclarationBegin(SourceChunk):
             )
         )
 
+
 class EnumerationDeclaration(SourceChunk):
     weight = 3
 
@@ -1828,6 +1870,7 @@ class EnumerationDeclaration(SourceChunk):
 {indent}}};\n
 """.format(indent = indent, enum_name = enum.enum_name)
         )
+
 
 def gen_array_declaration(array_size):
     if array_size is not None:
@@ -1869,6 +1912,7 @@ def gen_function_declaration_string(indent, function,
         args = args
     )
 
+
 def gen_function_decl_ref_chunks(function, generator):
     references = generator.provide_chunks(function.ret_type)
 
@@ -1877,6 +1921,7 @@ def gen_function_decl_ref_chunks(function, generator):
             references.extend(generator.provide_chunks(a.type))
 
     return references
+
 
 def gen_function_def_ref_chunks(f, generator):
     references = []
@@ -1889,6 +1934,7 @@ def gen_function_def_ref_chunks(f, generator):
 
     return references
 
+
 class FunctionDeclaration(SourceChunk):
     weight = 6
 
@@ -1899,12 +1945,14 @@ class FunctionDeclaration(SourceChunk):
         )
         self.function = function
 
+
 class FunctionDefinition(SourceChunk):
+
     def __init__(self, function, indent = "", append_nl = True):
         body = " {}" if function.body is None else "\n{\n%s}" % function.body
 
         if append_nl:
-            body +="\n"
+            body += "\n"
 
         super(FunctionDefinition, self).__init__(function,
             name = "Definition of function %s" % function.name,
@@ -1915,8 +1963,9 @@ class FunctionDefinition(SourceChunk):
             )
         self.function = function
 
+
 def depth_first_sort(chunk, new_chunks):
-    # visited: 
+    # visited:
     # 0 - not visited
     # 1 - visited
     # 2 - added to new_chunks
@@ -1930,6 +1979,7 @@ def depth_first_sort(chunk, new_chunks):
 
     chunk.visited = 2
     new_chunks.add(chunk)
+
 
 class SourceFile(object):
 
@@ -2151,7 +2201,7 @@ them must be replaced with reference to h. """
                 continue
 
             # TODO: check for loops in references, the cases in which forward
-            #declarations is really needed.
+            # declarations is really needed.
 
             if isinstance(ch, FunctionDeclaration):
                 self.remove_dup_chunk(prev_ch, ch)
@@ -2217,12 +2267,14 @@ them must be replaced with reference to h. """
     def name_for_macro(self):
         return macro_forbidden.sub('_', self.name.upper())
 
-#Source tree container
+# Source tree container
+
 
 HDB_HEADER_PATH = "path"
 HDB_HEADER_IS_GLOBAL = "is_global"
 HDB_HEADER_INCLUSIONS = "inclusions"
 HDB_HEADER_MACROS = "macros"
+
 
 class SourceTreeContainer(object):
     current = None
@@ -2340,5 +2392,6 @@ digraph HeaderInclusion {
         previous = SourceTreeContainer.current
         SourceTreeContainer.current = self
         return previous
+
 
 SourceTreeContainer().set_cur_stc()
