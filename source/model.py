@@ -1612,15 +1612,15 @@ class HeaderInclusion(SourceChunk):
 
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
-            name = "Header %s inclusion" % header.path,
-            references = [],
-            code = """\
+            "Header %s inclusion" % header.path,
+            """\
 #include {q}{path}{q}
 """.format(
         q = "<" if header.is_global else '"',
         # Always use UNIX path separator in `#include` directive.
         path = "/".join(path2tuple(header.path))
-    )
+            ),
+            references = []
         )
         self.header = header
 
@@ -1655,8 +1655,8 @@ class MacroDefinition(SourceChunk):
             args_txt += macro.args[-1] + ')'
 
         super(MacroDefinition, self).__init__(macro,
-            name = "Definition of macro %s" % macro.name,
-            code = "%s#define %s%s%s" % (
+            "Definition of macro %s" % macro.name,
+            "%s#define %s%s%s" % (
                 indent,
                 macro.name,
                 args_txt,
@@ -1713,8 +1713,8 @@ class PointerVariableDeclaration(SourceChunk):
                 extern = "extern@b" if extern else ""
             )
         super(PointerVariableDeclaration, self).__init__(var,
-            name = "Declaration of pointer %s to type %s" % (var.name, t.name),
-            code = code
+            "Declaration of pointer %s to type %s" % (var.name, t.name),
+            code
         )
 
 
@@ -1723,11 +1723,11 @@ class VariableDeclaration(SourceChunk):
 
     def __init__(self, var, indent = "", extern = False):
         super(VariableDeclaration, self).__init__(var,
-            name = "Variable %s of type %s declaration" % (
+            "Variable %s of type %s declaration" % (
                 var.name,
                 var.type.name
             ),
-            code = """\
+            """\
 {indent}{extern}{const}{type_name}@b{var_name}{array_decl};
 """.format(
         indent = indent,
@@ -1757,10 +1757,10 @@ class VariableDefinition(SourceChunk):
 
         self.variable = var
         super(VariableDefinition, self).__init__(var,
-            name = "Variable %s of type %s definition" % (
+            "Variable %s of type %s definition" % (
                 var.name, var.type.name
             ),
-            code = """\
+            """\
 {indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
@@ -1798,8 +1798,8 @@ class VariableUsage(SourceChunk):
 
     def __init__(self, var, initializer = None, indent = ""):
         super(VariableUsage, self).__init__(var,
-            name = "Usage of variable of type %s" % var.type.name,
-            code = indent + var.type.gen_usage_string(initializer)
+            "Usage of variable of type %s" % var.type.name,
+            indent + var.type.gen_usage_string(initializer)
         )
 
         self.variable = var
@@ -1812,8 +1812,8 @@ class StructureDeclarationBegin(SourceChunk):
     def __init__(self, struct, indent):
         self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
-            name = "Beginning of structure %s declaration" % struct.name,
-            code = """\
+            "Beginning of structure %s declaration" % struct.name,
+            """\
 {indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
     indent = indent,
@@ -1828,8 +1828,8 @@ class StructureDeclaration(SourceChunk):
     def __init__(self, struct, fields_indent = "    ", indent = "",
                  append_nl = True):
         super(StructureDeclaration, self).__init__(struct,
-            name = "Ending of structure %s declaration" % struct.name,
-            code = """\
+            "Ending of structure %s declaration" % struct.name,
+            """\
 {indent}}}@b{struct_name};{nl}
 """.format(
     indent = indent,
@@ -1846,8 +1846,8 @@ class EnumerationDeclarationBegin(SourceChunk):
     def __init__(self, enum, indent = ""):
         self.enum = enum
         super(EnumerationDeclarationBegin, self).__init__(enum,
-            name = "Beginning of enumeration %s declaration" % enum.enum_name,
-            code = """\
+            "Beginning of enumeration %s declaration" % enum.enum_name,
+            """\
 {indent}enum@b{enum_name}@b{{
 """.format(
     indent = indent,
@@ -1861,8 +1861,8 @@ class EnumerationDeclaration(SourceChunk):
 
     def __init__(self, enum, indent = ""):
         super(EnumerationDeclaration, self).__init__(enum,
-            name = "Ending of enumeration %s declaration" % enum.enum_name,
-            code = """\
+            "Ending of enumeration %s declaration" % enum.enum_name,
+            """\
 {indent}}};\n
 """.format(indent = indent, enum_name = enum.enum_name)
         )
@@ -1944,8 +1944,8 @@ class FunctionDeclaration(SourceChunk):
 
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
-            name = "Declaration of function %s" % function.name,
-            code = "%s;" % gen_function_declaration_string(indent, function)
+            "Declaration of function %s" % function.name,
+            "%s;" % gen_function_declaration_string(indent, function)
         )
         self.function = function
 
@@ -1959,8 +1959,8 @@ class FunctionDefinition(SourceChunk):
             body += "\n"
 
         super(FunctionDefinition, self).__init__(function,
-            name = "Definition of function %s" % function.name,
-            code = "{dec}{body}\n".format(
+            "Definition of function %s" % function.name,
+            "{dec}{body}\n".format(
                 dec = gen_function_declaration_string(indent, function),
                 body = body
                 )
