@@ -589,7 +589,7 @@ class QemuVersionDescription(object):
             if self.qvc.list_headers is not None:
                 yield True
 
-                self.qvc.stc.load_header_db(self.qvc.list_headers)
+                yield self.qvc.stc.co_load_header_db(self.qvc.list_headers)
 
             yield True
 
