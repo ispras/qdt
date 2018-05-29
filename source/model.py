@@ -2144,17 +2144,7 @@ them must be replaced with reference to h. """
         append_nl_after_headers = True
     ):
         self.remove_chunks_with_same_origin([
-            HeaderInclusion,
-            VariableDefinition,
-            VariableDeclaration,
-            FunctionDeclaration,
-            FunctionDefinition,
-            StructureDeclaration,
-            StructureDeclarationBegin,
-            MacroDefinition,
-            PointerTypeDeclaration,
-            PointerVariableDeclaration,
-            VariableUsage
+            HeaderInclusion
         ])
 
         self.check_static_function_declarations()
