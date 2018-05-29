@@ -1436,11 +1436,7 @@ class Usage(object):
             or isinstance(self.variable.type, TypeReference)
                 and isinstance(self.variable.type.type, Macro)
         ):
-            term_chunk = SourceChunk(
-                name = "Variable %s usage terminator" % self.variable.name,
-                code = ";\n",
-                references = ret
-            )
+            term_chunk = UsageTerminator(self, references = ret)
             ret.insert(0, term_chunk)
 
         return ret
