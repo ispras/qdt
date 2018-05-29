@@ -441,7 +441,7 @@ order does not meet all requirements.
 
         return file
 
-class AddTypeRefToDefinerException (Exception):
+class AddTypeRefToDefinerException(RuntimeError):
     pass
 
 class ParsePrintFilter(object):
