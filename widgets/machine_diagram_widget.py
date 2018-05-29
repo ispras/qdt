@@ -2667,8 +2667,6 @@ IRQ line creation
 
             yield
 
-        raise StopIteration()
-
     def ph_apply_conn(self, c):
         id = self.node2id[c]
         points = [

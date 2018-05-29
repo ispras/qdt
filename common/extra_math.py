@@ -115,8 +115,6 @@ class Polygon(object):
         )
         yield s
 
-        raise StopIteration()
-
     def CoordsGenerator(self):
         for p in self.points:
             yield p.x

@@ -12,5 +12,3 @@ def co_find_eq(iterable, **request):
                 break
         else:
             yield i
-
-    raise StopIteration()

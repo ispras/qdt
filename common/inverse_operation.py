@@ -146,8 +146,6 @@ def InitialOperationBackwardIterator(cur):
         yield cur
         cur = cur.prev
 
-    raise StopIteration()
-
 class History(object):
     def __init__(self):
         self.root = InitialOperation()
