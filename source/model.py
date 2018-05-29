@@ -1964,8 +1964,8 @@ class FunctionDefinition(SourceChunk):
             "{dec}{body}\n".format(
                 dec = gen_function_declaration_string(indent, function),
                 body = body
-                )
             )
+        )
         self.function = function
 
 
