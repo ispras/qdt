@@ -591,17 +591,6 @@ class Header(Source):
 
         del Header.yields_per_header
 
-
-    @staticmethod
-    def build_inclusions(dname):
-        gen = Header.co_build_inclusions(dname)
-
-        try:
-            while True:
-                next(gen)
-        except StopIteration:
-            pass
-
     @staticmethod
     def lookup(path):
         tpath = path2tuple(path)
