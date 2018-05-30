@@ -1625,7 +1625,6 @@ class HeaderInclusion(SourceChunk):
             ),
             references = []
         )
-        self.header = header
 
     def __lt__(self, other):
         """ During coarse chunk sorting <global> header inclusions are moved to
@@ -1667,13 +1666,10 @@ class MacroDefinition(SourceChunk):
             )
         )
 
-        self.macro = macro
-
 
 class PointerTypeDeclaration(SourceChunk):
 
     def __init__(self, _type, def_name):
-        self.type = _type
         self.def_name = def_name
 
         super(PointerTypeDeclaration, self).__init__(_type,
@@ -1701,7 +1697,6 @@ class FunctionPointerTypeDeclaration(SourceChunk):
 class PointerVariableDeclaration(SourceChunk):
 
     def __init__(self, var, indent = "", extern = False):
-        self.var = var
         t = var.type.type
         super(PointerVariableDeclaration, self).__init__(var,
             "Declaration of pointer %s to type %s" % (var.name, t.name),
@@ -1757,8 +1752,6 @@ class VariableDeclaration(SourceChunk):
     )
             )
 
-        self.variable = var
-
 
 class VariableDefinition(SourceChunk):
     weight = 5
@@ -1773,7 +1766,6 @@ class VariableDefinition(SourceChunk):
             for line in init_code_lines[1:]:
                 init_code += "\n" + indent + line
 
-        self.variable = var
         super(VariableDefinition, self).__init__(var,
             "Variable %s of type %s definition" % (
                 var.name, var.type.name
@@ -1820,7 +1812,6 @@ class VariableUsage(SourceChunk):
             indent + var.type.gen_usage_string(initializer)
         )
 
-        self.variable = var
         self.indent = indent
         self.initializer = initializer
 
@@ -1828,7 +1819,6 @@ class VariableUsage(SourceChunk):
 class StructureDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
-        self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct.name,
             """\
@@ -1856,13 +1846,10 @@ class StructureDeclaration(SourceChunk):
             ),
         )
 
-        self.structure = struct
-
 
 class EnumerationDeclarationBegin(SourceChunk):
 
     def __init__(self, enum, indent = ""):
-        self.enum = enum
         super(EnumerationDeclarationBegin, self).__init__(enum,
             "Beginning of enumeration %s declaration" % enum.enum_name,
             """\
@@ -1965,7 +1952,6 @@ class FunctionDeclaration(SourceChunk):
             "Declaration of function %s" % function.name,
             "%s;" % gen_function_declaration_string(indent, function)
         )
-        self.function = function
 
 
 class FunctionDefinition(SourceChunk):
@@ -1983,7 +1969,6 @@ class FunctionDefinition(SourceChunk):
                 body = body
             )
         )
-        self.function = function
 
 
 def depth_first_sort(chunk, new_chunks):
