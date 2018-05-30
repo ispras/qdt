@@ -1631,8 +1631,8 @@ class HeaderInclusion(SourceChunk):
         """ During coarse chunk sorting <global> header inclusions are moved to
         the top of "local". Same headers are ordered by path. """
         if isinstance(other, HeaderInclusion):
-            shdr = self.header
-            ohdr = other.header
+            shdr = self.origin
+            ohdr = other.origin
 
             sg = shdr.is_global
             og = ohdr.is_global
@@ -2133,7 +2133,7 @@ digraph Chunks {
 
         for ch in self.chunks:
             if type(ch) == HeaderInclusion:
-                h = ch.header
+                h = ch.origin
                 if h in included_headers:
                     raise RuntimeError("Duplicate inclusions must be removed "
                         " before inclusion optimization."
@@ -2168,16 +2168,16 @@ a header can (transitively) include itself. Then nothing is to be substituted.
                         log("Cycle: " + s.path)
                         continue
 
-                    if redundant.header is not s:
+                    if redundant.origin is not s:
                         # inclusion of s was already removed as redundant
                         log("%s includes %s which already substituted by "
-                            "%s" % (h.root.path, s.path, redundant.header.path)
+                            "%s" % (h.root.path, s.path, redundant.origin.path)
                         )
                         continue
 
                     log("%s includes %s, substitute %s with %s" % (
-                        h.root.path, s.path, redundant.header.path,
-                        substitution.header.path
+                        h.root.path, s.path, redundant.origin.path,
+                        substitution.origin.path
                     ))
 
                     self.remove_dup_chunk(substitution, redundant)
