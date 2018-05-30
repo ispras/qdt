@@ -200,19 +200,19 @@ class Source(object):
         for s in var.type.get_definers():
             if s == self:
                 continue
-            if not type(s) == Header:
+            if not isinstance(s, Header):
                 raise RuntimeError("Attempt to define variable %s whose type "
                     " is defined in non-header file %s" % (var.name, s.path)
                 )
             self.add_inclusion(s)
         # Auto add definers for types used by variable initializer
-        if type(self) is Source:
+        if type(self) is Source: # exactly a module, not a header
             if var.initializer is not None:
                 for t in var.initializer.used_types:
                     for s in t.get_definers():
                         if s == self:
                             continue
-                        if not type(s) == Header:
+                        if not isinstance(s, Header):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
                                 " defined in non-header file {file}".format(
@@ -227,7 +227,7 @@ class Source(object):
         return self
 
     def add_inclusion(self, header):
-        if not type(header) == Header:
+        if not isinstance(header, Header):
             raise ValueError("Inclusion of a non-header file is forbidden (%s)"
                 % header.path
             )
@@ -237,7 +237,7 @@ class Source(object):
 
             for t in header.types.values():
                 try:
-                    if type(t) == TypeReference:
+                    if isinstance(t, TypeReference):
                         self._add_type_recursive(TypeReference(t.type))
                     else:
                         self._add_type_recursive(TypeReference(t))
@@ -257,7 +257,7 @@ class Source(object):
     def _add_type_recursive(self, type_ref):
         if type_ref.name in self.types:
             t = self.types[type_ref.name]
-            if type(t) == TypeReference:
+            if isinstance(t, TypeReference):
                 # To check incomplete type case
                 if not t.type.definer == type_ref.type.definer:
                     raise RuntimeError("Conflict reference to type %s found in"
@@ -279,7 +279,7 @@ class Source(object):
         return self
 
     def add_type(self, _type):
-        if type(_type) == TypeReference:
+        if isinstance(_type, TypeReference):
             raise ValueError("A type reference (%s) cannot be added to a"
                 " source (%s) externally" % (_type.name, self.path)
             )
@@ -293,7 +293,7 @@ class Source(object):
         for s in _type.get_definers():
             if s == self:
                 continue
-            if not type(s) == Header:
+            if not isinstance(s, Header):
                 raise ValueError("Attempt to define structure %s that has a"
                     " field of a type defined in another non-header file %s."
                     % (_type.name, s.path)
@@ -366,7 +366,7 @@ switching to that mode.
             # Preserve current types list. See the comment above.
             l = list(self.types.values()) + ref_list
 
-        gen = ChunkGenerator(for_header = type(self) is Header)
+        gen = ChunkGenerator(for_header = isinstance(self, Header))
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
@@ -389,7 +389,7 @@ switching to that mode.
         for gv in self.global_variables.values():
             gen.provide_chunks(gv)
 
-        if type(self) == Header:
+        if isinstance(self, Header):
             for r in ref_list:
                 gen.provide_chunks(r)
 
@@ -440,7 +440,7 @@ order does not meet all requirements.
         source_basename = basename(self.path)
         name = splitext(source_basename)[0]
 
-        file = SourceFile(name, type(self) == Header,
+        file = SourceFile(name, isinstance(self, Header),
             protection = self.protection
         )
 
@@ -660,7 +660,7 @@ class Header(Source):
         h.add_reference(ref)
 
         for u in h.includers:
-            if type(u) == Source:
+            if type(u) is Source: # exactly a module, not a header
                 continue
             if ref in u.references:
                 continue
@@ -678,7 +678,7 @@ transitively includes definer of ref)"""
 
             for ref in h.references:
                 for u in h.includers:
-                    if type(u) == Source:
+                    if type(u) is Source: # exactly a module, not a header
                         continue
                     if ref in u.references:
                         continue
@@ -1302,7 +1302,7 @@ class Variable(object):
             else:
                 t = self.type
 
-            if type(t) == Macro:
+            if isinstance(t, Macro):
                 u = VariableUsage.gen_chunks(self, generator, indent = indent)
                 ch = u[0]
                 """ Note that references are already added to the chunk by
@@ -2055,7 +2055,7 @@ digraph Chunks {
             exists = {}
 
             for ch in list(self.chunks):
-                if not type(ch) == t:
+                if type(ch) is not t: # exact type match is required
                     continue
 
                 origin = ch.origin
@@ -2117,7 +2117,7 @@ digraph Chunks {
         included_headers = {}
 
         for ch in self.chunks:
-            if type(ch) == HeaderInclusion:
+            if isinstance(ch, HeaderInclusion):
                 h = ch.origin
                 if h in included_headers:
                     raise RuntimeError("Duplicate inclusions must be removed "
@@ -2384,7 +2384,7 @@ digraph HeaderInclusion {
 
             macro_list = []
             for t in h.types.values():
-                if type(t) == Macro:
+                if isinstance(t, Macro):
                     macro_list.append(t.gen_dict())
             dict_h[HDB_HEADER_MACROS] = macro_list
 
