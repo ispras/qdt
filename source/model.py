@@ -1426,7 +1426,7 @@ class Usage(object):
         self.variable = var
         self.initalizer = initializer
 
-    def gen_chunks(self, generator):
+    def gen_defining_chunk_list(self, generator):
         ret = VariableUsage.gen_chunks(self.variable, generator,
             self.initalizer
         )
@@ -1440,8 +1440,6 @@ class Usage(object):
             ret.insert(0, term_chunk)
 
         return ret
-
-    gen_defining_chunk_list = gen_chunks
 
     __type_references__ = ["variable", "initalizer"]
 
