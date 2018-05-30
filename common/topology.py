@@ -21,8 +21,6 @@ def dfs(node):
         node.__dfs_visited__ = 2
         yield node
 
-    raise StopIteration
-
 def sort_topologically(roots = []):
     """
     All objects (nodes) should NOT have attribute __dfs_visited__.
