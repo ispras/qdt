@@ -820,8 +820,6 @@ class TypeReference(Type):
 
         return [inc]
 
-    gen_defining_chunk_list = gen_chunks
-
     def gen_var(self, *args, **kw):
         raise ValueError("Attempt to generate variable of type %s"
             " using a reference" % self.type.name
