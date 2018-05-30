@@ -2211,7 +2211,7 @@ them must be replaced with reference to h. """
             if not isinstance(ch, (FunctionDeclaration, FunctionDefinition)):
                 continue
 
-            f = ch.function
+            f = ch.origin
 
             if not f.static:
                 continue
