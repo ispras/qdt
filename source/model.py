@@ -17,6 +17,7 @@ __all__ = [
       , "HeaderInclusion"
       , "MacroDefinition"
       , "PointerTypeDeclaration"
+      , "FunctionPointerTypeDeclaration"
       , "PointerVariableDeclaration"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
@@ -1143,11 +1144,11 @@ class Pointer(Type):
         if self.is_named:
             # strip function definition chunk, its references is only needed
             if isinstance(self.type, Function):
+                ch = FunctionPointerTypeDeclaration(self.type, self.name)
                 refs = gen_function_decl_ref_chunks(self.type, generator)
             else:
+                ch = PointerTypeDeclaration(self.type, self.name)
                 refs = generator.provide_chunks(self.type)
-
-            ch = PointerTypeDeclaration(self.type, self.name)
 
             """ 'typedef' does not require refererenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
@@ -1674,18 +1675,27 @@ class PointerTypeDeclaration(SourceChunk):
     def __init__(self, _type, def_name):
         self.type = _type
         self.def_name = def_name
-        name = "Definition of pointer to type" + self.type.name
 
-        if isinstance(self.type, Function):
-            code = "typedef@b"
-            code += gen_function_declaration_string("", self.type,
-                pointer_name = def_name
+        super(PointerTypeDeclaration, self).__init__(_type,
+            "Definition of pointer to type " + self.type.name,
+            "typedef@b" + self.type.name + "@b" + def_name
+        )
+
+
+class FunctionPointerTypeDeclaration(SourceChunk):
+
+    def __init__(self, _type, def_name):
+        self.def_name = def_name
+
+        super(FunctionPointerTypeDeclaration, self).__init__(_type,
+            "Definition of function pointer type " + self.type.name,
+            ("typedef@b"
+              + gen_function_declaration_string("", _type,
+                    pointer_name = def_name
+                )
+              + ";\n"
             )
-            code += ";\n"
-        else:
-            code = "typedef@b" + self.type.name + "@b" + def_name
-
-        super(PointerTypeDeclaration, self).__init__(_type, name, code)
+        )
 
 
 class PointerVariableDeclaration(SourceChunk):
