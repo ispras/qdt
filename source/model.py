@@ -18,6 +18,7 @@ __all__ = [
       , "MacroDefinition"
       , "PointerTypeDeclaration"
       , "PointerVariableDeclaration"
+      , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
       , "VariableUsage"
@@ -1287,11 +1288,11 @@ class Variable(object):
         extern = False
     ):
         if isinstance(self.type, Pointer) and not self.type.is_named:
-            ch = PointerVariableDeclaration(self, indent, extern)
-
             if isinstance(self.type.type, Function):
+                ch = FunctionPointerDeclaration(self, indent, extern)
                 refs = gen_function_decl_ref_chunks(self.type.type, generator)
             else:
+                ch = PointerVariableDeclaration(self, indent, extern)
                 refs = generator.provide_chunks(self.type.type)
             ch.add_references(refs)
         else:
@@ -1692,8 +1693,27 @@ class PointerVariableDeclaration(SourceChunk):
     def __init__(self, var, indent = "", extern = False):
         self.var = var
         t = var.type.type
-        if isinstance(t, Function):
-            code = """\
+        super(PointerVariableDeclaration, self).__init__(var,
+            "Declaration of pointer %s to type %s" % (var.name, t.name),
+            """\
+{indent}{extern}{const}{type_name}@b*{var_name};
+""".format(
+                indent = indent,
+                const = "const@b" if var.const else "",
+                type_name = t.name,
+                var_name = var.name,
+                extern = "extern@b" if extern else ""
+            )
+        )
+
+
+class FunctionPointerDeclaration(SourceChunk):
+
+    def __init__(self, var, indent = "", extern = False):
+        t = var.type.type
+        super(FunctionPointerDeclaration, self).__init__(var,
+            "Declaration of pointer %s to function %s" % (var.name, t.name),
+            """\
 {indent}{extern}{decl_str};
 """.format(
         indent = indent,
@@ -1703,19 +1723,6 @@ class PointerVariableDeclaration(SourceChunk):
             array_size = var.array_size
         )
             )
-        else:
-            code = """\
-{indent}{extern}{const}{type_name}@b*{var_name};
-""".format(
-                indent = indent,
-                const = "const@b" if var.const else "",
-                type_name = t.name,
-                var_name = var.name,
-                extern = "extern@b" if extern else ""
-            )
-        super(PointerVariableDeclaration, self).__init__(var,
-            "Declaration of pointer %s to type %s" % (var.name, t.name),
-            code
         )
 
 
