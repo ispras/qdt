@@ -17,7 +17,9 @@ __all__ = [
       , "HeaderInclusion"
       , "MacroDefinition"
       , "PointerTypeDeclaration"
+      , "FunctionPointerTypeDeclaration"
       , "PointerVariableDeclaration"
+      , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
       , "VariableUsage"
@@ -198,19 +200,19 @@ class Source(object):
         for s in var.type.get_definers():
             if s == self:
                 continue
-            if not type(s) == Header:
+            if not isinstance(s, Header):
                 raise RuntimeError("Attempt to define variable %s whose type "
                     " is defined in non-header file %s" % (var.name, s.path)
                 )
             self.add_inclusion(s)
         # Auto add definers for types used by variable initializer
-        if type(self) is Source:
+        if type(self) is Source: # exactly a module, not a header
             if var.initializer is not None:
                 for t in var.initializer.used_types:
                     for s in t.get_definers():
                         if s == self:
                             continue
-                        if not type(s) == Header:
+                        if not isinstance(s, Header):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
                                 " defined in non-header file {file}".format(
@@ -225,7 +227,7 @@ class Source(object):
         return self
 
     def add_inclusion(self, header):
-        if not type(header) == Header:
+        if not isinstance(header, Header):
             raise ValueError("Inclusion of a non-header file is forbidden (%s)"
                 % header.path
             )
@@ -235,7 +237,7 @@ class Source(object):
 
             for t in header.types.values():
                 try:
-                    if type(t) == TypeReference:
+                    if isinstance(t, TypeReference):
                         self._add_type_recursive(TypeReference(t.type))
                     else:
                         self._add_type_recursive(TypeReference(t))
@@ -255,7 +257,7 @@ class Source(object):
     def _add_type_recursive(self, type_ref):
         if type_ref.name in self.types:
             t = self.types[type_ref.name]
-            if type(t) == TypeReference:
+            if isinstance(t, TypeReference):
                 # To check incomplete type case
                 if not t.type.definer == type_ref.type.definer:
                     raise RuntimeError("Conflict reference to type %s found in"
@@ -277,7 +279,7 @@ class Source(object):
         return self
 
     def add_type(self, _type):
-        if type(_type) == TypeReference:
+        if isinstance(_type, TypeReference):
             raise ValueError("A type reference (%s) cannot be added to a"
                 " source (%s) externally" % (_type.name, self.path)
             )
@@ -291,7 +293,7 @@ class Source(object):
         for s in _type.get_definers():
             if s == self:
                 continue
-            if not type(s) == Header:
+            if not isinstance(s, Header):
                 raise ValueError("Attempt to define structure %s that has a"
                     " field of a type defined in another non-header file %s."
                     % (_type.name, s.path)
@@ -364,7 +366,7 @@ switching to that mode.
             # Preserve current types list. See the comment above.
             l = list(self.types.values()) + ref_list
 
-        gen = ChunkGenerator(for_header = type(self) is Header)
+        gen = ChunkGenerator(for_header = isinstance(self, Header))
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
@@ -387,7 +389,7 @@ switching to that mode.
         for gv in self.global_variables.values():
             gen.provide_chunks(gv)
 
-        if type(self) == Header:
+        if isinstance(self, Header):
             for r in ref_list:
                 gen.provide_chunks(r)
 
@@ -438,7 +440,7 @@ order does not meet all requirements.
         source_basename = basename(self.path)
         name = splitext(source_basename)[0]
 
-        file = SourceFile(name, type(self) == Header,
+        file = SourceFile(name, isinstance(self, Header),
             protection = self.protection
         )
 
@@ -658,7 +660,7 @@ class Header(Source):
         h.add_reference(ref)
 
         for u in h.includers:
-            if type(u) == Source:
+            if type(u) is Source: # exactly a module, not a header
                 continue
             if ref in u.references:
                 continue
@@ -676,7 +678,7 @@ transitively includes definer of ref)"""
 
             for ref in h.references:
                 for u in h.includers:
-                    if type(u) == Source:
+                    if type(u) is Source: # exactly a module, not a header
                         continue
                     if ref in u.references:
                         continue
@@ -817,8 +819,6 @@ class TypeReference(Type):
         inc.add_references(refs)
 
         return [inc]
-
-    gen_defining_chunk_list = gen_chunks
 
     def gen_var(self, *args, **kw):
         raise ValueError("Attempt to generate variable of type %s"
@@ -1142,11 +1142,11 @@ class Pointer(Type):
         if self.is_named:
             # strip function definition chunk, its references is only needed
             if isinstance(self.type, Function):
+                ch = FunctionPointerTypeDeclaration(self.type, self.name)
                 refs = gen_function_decl_ref_chunks(self.type, generator)
             else:
+                ch = PointerTypeDeclaration(self.type, self.name)
                 refs = generator.provide_chunks(self.type)
-
-            ch = PointerTypeDeclaration(self.type, self.name)
 
             """ 'typedef' does not require refererenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
@@ -1287,11 +1287,11 @@ class Variable(object):
         extern = False
     ):
         if isinstance(self.type, Pointer) and not self.type.is_named:
-            ch = PointerVariableDeclaration(self, indent, extern)
-
             if isinstance(self.type.type, Function):
+                ch = FunctionPointerDeclaration(self, indent, extern)
                 refs = gen_function_decl_ref_chunks(self.type.type, generator)
             else:
+                ch = PointerVariableDeclaration(self, indent, extern)
                 refs = generator.provide_chunks(self.type.type)
             ch.add_references(refs)
         else:
@@ -1300,7 +1300,7 @@ class Variable(object):
             else:
                 t = self.type
 
-            if type(t) == Macro:
+            if isinstance(t, Macro):
                 u = VariableUsage.gen_chunks(self, generator, indent = indent)
                 ch = u[0]
                 """ Note that references are already added to the chunk by
@@ -1426,7 +1426,7 @@ class Usage(object):
         self.variable = var
         self.initalizer = initializer
 
-    def gen_chunks(self, generator):
+    def gen_defining_chunk_list(self, generator):
         ret = VariableUsage.gen_chunks(self.variable, generator,
             self.initalizer
         )
@@ -1440,8 +1440,6 @@ class Usage(object):
             ret.insert(0, term_chunk)
 
         return ret
-
-    gen_defining_chunk_list = gen_chunks
 
     __type_references__ = ["variable", "initalizer"]
 
@@ -1623,14 +1621,13 @@ class HeaderInclusion(SourceChunk):
             ),
             references = []
         )
-        self.header = header
 
     def __lt__(self, other):
         """ During coarse chunk sorting <global> header inclusions are moved to
         the top of "local". Same headers are ordered by path. """
         if isinstance(other, HeaderInclusion):
-            shdr = self.header
-            ohdr = other.header
+            shdr = self.origin
+            ohdr = other.origin
 
             sg = shdr.is_global
             og = ohdr.is_global
@@ -1665,35 +1662,59 @@ class MacroDefinition(SourceChunk):
             )
         )
 
-        self.macro = macro
-
 
 class PointerTypeDeclaration(SourceChunk):
 
     def __init__(self, _type, def_name):
-        self.type = _type
         self.def_name = def_name
-        name = "Definition of pointer to type" + self.type.name
 
-        if isinstance(self.type, Function):
-            code = "typedef@b"
-            code += gen_function_declaration_string("", self.type,
-                pointer_name = def_name
+        super(PointerTypeDeclaration, self).__init__(_type,
+            "Definition of pointer to type " + self.type.name,
+            "typedef@b" + self.type.name + "@b" + def_name
+        )
+
+
+class FunctionPointerTypeDeclaration(SourceChunk):
+
+    def __init__(self, _type, def_name):
+        self.def_name = def_name
+
+        super(FunctionPointerTypeDeclaration, self).__init__(_type,
+            "Definition of function pointer type " + self.type.name,
+            ("typedef@b"
+              + gen_function_declaration_string("", _type,
+                    pointer_name = def_name
+                )
+              + ";\n"
             )
-            code += ";\n"
-        else:
-            code = "typedef@b" + self.type.name + "@b" + def_name
-
-        super(PointerTypeDeclaration, self).__init__(_type, name, code)
+        )
 
 
 class PointerVariableDeclaration(SourceChunk):
 
     def __init__(self, var, indent = "", extern = False):
-        self.var = var
         t = var.type.type
-        if isinstance(t, Function):
-            code = """\
+        super(PointerVariableDeclaration, self).__init__(var,
+            "Declaration of pointer %s to type %s" % (var.name, t.name),
+            """\
+{indent}{extern}{const}{type_name}@b*{var_name};
+""".format(
+                indent = indent,
+                const = "const@b" if var.const else "",
+                type_name = t.name,
+                var_name = var.name,
+                extern = "extern@b" if extern else ""
+            )
+        )
+
+
+class FunctionPointerDeclaration(SourceChunk):
+
+    def __init__(self, var, indent = "", extern = False):
+        t = var.type.type
+        super(FunctionPointerDeclaration, self).__init__(var,
+            "Declaration of pointer %s to function %s" % (var.name, t.name),
+            """\
 {indent}{extern}{decl_str};
 """.format(
         indent = indent,
@@ -1703,19 +1724,6 @@ class PointerVariableDeclaration(SourceChunk):
             array_size = var.array_size
         )
             )
-        else:
-            code = """\
-{indent}{extern}{const}{type_name}@b*{var_name};
-""".format(
-                indent = indent,
-                const = "const@b" if var.const else "",
-                type_name = t.name,
-                var_name = var.name,
-                extern = "extern@b" if extern else ""
-            )
-        super(PointerVariableDeclaration, self).__init__(var,
-            "Declaration of pointer %s to type %s" % (var.name, t.name),
-            code
         )
 
 
@@ -1740,8 +1748,6 @@ class VariableDeclaration(SourceChunk):
     )
             )
 
-        self.variable = var
-
 
 class VariableDefinition(SourceChunk):
     weight = 5
@@ -1756,7 +1762,6 @@ class VariableDefinition(SourceChunk):
             for line in init_code_lines[1:]:
                 init_code += "\n" + indent + line
 
-        self.variable = var
         super(VariableDefinition, self).__init__(var,
             "Variable %s of type %s definition" % (
                 var.name, var.type.name
@@ -1803,7 +1808,6 @@ class VariableUsage(SourceChunk):
             indent + var.type.gen_usage_string(initializer)
         )
 
-        self.variable = var
         self.indent = indent
         self.initializer = initializer
 
@@ -1811,7 +1815,6 @@ class VariableUsage(SourceChunk):
 class StructureDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
-        self.structure = struct
         super(StructureDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct.name,
             """\
@@ -1839,13 +1842,10 @@ class StructureDeclaration(SourceChunk):
             ),
         )
 
-        self.structure = struct
-
 
 class EnumerationDeclarationBegin(SourceChunk):
 
     def __init__(self, enum, indent = ""):
-        self.enum = enum
         super(EnumerationDeclarationBegin, self).__init__(enum,
             "Beginning of enumeration %s declaration" % enum.enum_name,
             """\
@@ -1948,7 +1948,6 @@ class FunctionDeclaration(SourceChunk):
             "Declaration of function %s" % function.name,
             "%s;" % gen_function_declaration_string(indent, function)
         )
-        self.function = function
 
 
 class FunctionDefinition(SourceChunk):
@@ -1966,7 +1965,6 @@ class FunctionDefinition(SourceChunk):
                 body = body
             )
         )
-        self.function = function
 
 
 def depth_first_sort(chunk, new_chunks):
@@ -2053,7 +2051,7 @@ digraph Chunks {
             exists = {}
 
             for ch in list(self.chunks):
-                if not type(ch) == t:
+                if type(ch) is not t: # exact type match is required
                     continue
 
                 origin = ch.origin
@@ -2115,8 +2113,8 @@ digraph Chunks {
         included_headers = {}
 
         for ch in self.chunks:
-            if type(ch) == HeaderInclusion:
-                h = ch.header
+            if isinstance(ch, HeaderInclusion):
+                h = ch.origin
                 if h in included_headers:
                     raise RuntimeError("Duplicate inclusions must be removed "
                         " before inclusion optimization."
@@ -2151,16 +2149,16 @@ a header can (transitively) include itself. Then nothing is to be substituted.
                         log("Cycle: " + s.path)
                         continue
 
-                    if redundant.header is not s:
+                    if redundant.origin is not s:
                         # inclusion of s was already removed as redundant
                         log("%s includes %s which already substituted by "
-                            "%s" % (h.root.path, s.path, redundant.header.path)
+                            "%s" % (h.root.path, s.path, redundant.origin.path)
                         )
                         continue
 
                     log("%s includes %s, substitute %s with %s" % (
-                        h.root.path, s.path, redundant.header.path,
-                        substitution.header.path
+                        h.root.path, s.path, redundant.origin.path,
+                        substitution.origin.path
                     ))
 
                     self.remove_dup_chunk(substitution, redundant)
@@ -2194,7 +2192,7 @@ them must be replaced with reference to h. """
             if not isinstance(ch, (FunctionDeclaration, FunctionDefinition)):
                 continue
 
-            f = ch.function
+            f = ch.origin
 
             if not f.static:
                 continue
@@ -2382,7 +2380,7 @@ digraph HeaderInclusion {
 
             macro_list = []
             for t in h.types.values():
-                if type(t) == Macro:
+                if isinstance(t, Macro):
                     macro_list.append(t.gen_dict())
             dict_h[HDB_HEADER_MACROS] = macro_list
 
