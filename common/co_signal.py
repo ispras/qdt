@@ -8,6 +8,9 @@ __all__ = [
 from .co_dispatcher import (
     CoTask
 )
+from .ml import (
+    mlget as _
+)
 
 class SignalIsAlreadyAttached(RuntimeError):
     pass
@@ -17,7 +20,11 @@ class SignalIsNotAttached(RuntimeError):
 
 class SignalDispatcherTask(CoTask):
     def __init__(self):
-        CoTask.__init__(self, self.co_deliver())
+        CoTask.__init__(
+            self,
+            self.co_deliver(),
+            description = _("Signal Dispatcher")
+        )
         self.queue = []
 
     def co_deliver(self):
