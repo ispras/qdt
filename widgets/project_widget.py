@@ -509,12 +509,13 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         # convert device tree to more convenient form
         qvc = qvd_get(self.p.build_path).qvc
-        qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+        if qvc.device_tree:
+            qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
 
-        # Note that system bus device have no standard name for input IRQ.
-        next(qt.find(name = "sys-bus-device")).out_gpio_names = [
-            "SYSBUS_DEVICE_GPIO_IRQ"
-        ]
+            # Note that system bus device have no standard name for input IRQ.
+            next(qt.find(name = "sys-bus-device")).out_gpio_names = [
+                "SYSBUS_DEVICE_GPIO_IRQ"
+            ]
 
         # extend QOM tree with types from project
         for d in self.p.descriptions:
@@ -525,7 +526,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
     def on_qvc_dirtied(self):
         # QOM tree is not actual now
-        del self.p.qom_tree
+        try:
+            del self.p.qom_tree
+        except AttributeError:
+            pass
 
         pht = self.pht
         if pht is not None:
