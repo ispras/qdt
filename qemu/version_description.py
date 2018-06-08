@@ -42,6 +42,9 @@ from .version import (
     calculate_qh_hash,
     get_vp
 )
+from os import (
+    listdir
+)
 from os.path import (
     sep,
     join,
@@ -181,10 +184,12 @@ class QemuVersionCache(object):
     def __init__(self,
                  list_headers = None,
                  device_tree = None,
+                 default_target_list = None,
                  version_desc = None,
                  pci_classes = None
     ):
         self.device_tree = device_tree
+        self.default_target_list = default_target_list
         self.list_headers = list_headers
         self.version_desc = version_desc
 
@@ -426,6 +431,9 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         gen.gen_field("device_tree = ")
         gen.pprint(self.device_tree)
 
+        gen.gen_field("default_target_list = ")
+        gen.pprint(self.default_target_list)
+
         gen.gen_field("list_headers = ")
         gen.pprint(self.list_headers)
 
@@ -570,6 +578,8 @@ class QemuVersionDescription(object):
             yield self.co_check_modified_files()
 
             yield self.co_gen_device_tree()
+
+            yield self.co_gen_default_target_list()
 
             # gen version description
             yield self.qvc.co_computing_parameters(self.repo)
@@ -720,6 +730,18 @@ class QemuVersionDescription(object):
             print("Macros were added to device tree")
         else:
             self.qvc.device_tree = None
+
+    def co_gen_default_target_list(self):
+        print("Making Default Target List...")
+        dconfigs = join(self.src_path, "default-configs")
+        dtl = set()
+        for config in listdir(dconfigs):
+            for suffix in ["-softmmu.mak", "-linux-user.mak", "-bsd-user.mak"]:
+                if config.endswith(suffix):
+                    dtl.add(config[:-len(suffix)])
+                    break
+        print("Default Target List was made")
+        self.qvc.default_target_list = list(dtl)
 
     def co_add_dt_macro(self, list_dt, text2macros = None):
         # iterations to yield
