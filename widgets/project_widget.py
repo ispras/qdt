@@ -70,11 +70,11 @@ class ReloadBuildPathTask(CoTask):
         self.qvd = qvd_get(project_widget.p.build_path)
         CoTask.__init__(
             self,
-            self.begin(),
+            self.main(),
             description = _("QVD loading failed")
         )
 
-    def begin(self):
+    def main(self):
         if self.qvd.qvc is None:
             yield self.qvd.co_init_cache()
 
