@@ -16,6 +16,9 @@ from common import (
 from .logo import (
     set_logo
 )
+from .gui_error import (
+    TaskErrorDialog
+)
 
 @Notifier("activated", "finished", "failed", "removed")
 class GUITaskManager(TkCoDispatcher):
@@ -30,6 +33,9 @@ class GUITaskManager(TkCoDispatcher):
     def __failed__(self, task, exception):
         TkCoDispatcher.__failed__(self, task, exception)
         self.__notify_failed(task)
+
+    def __root_task_failed__(self, task):
+        TaskErrorDialog(task)
 
     def remove(self, task):
         TkCoDispatcher.remove(self, task)
