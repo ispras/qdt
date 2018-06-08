@@ -84,7 +84,9 @@ class ProjectGeneration(CoTask):
     def main(self):
         self.prev_qvd = qvd_get(self.p.build_path).use()
 
-        yield self.p.co_gen_all(self.s)
+        yield self.p.co_gen_all(self.s,
+            default_target_list = self.prev_qvd.qvc.default_target_list
+        )
 
     def on_failed(self):
         self.__finalize()
