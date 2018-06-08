@@ -290,6 +290,8 @@ after last statement in the corresponding callable object.
 
     def __failed__(self, task, exception):
         task.exception = exception
+        if task in self.active_tasks:
+            self.active_tasks.remove(task)
         self.failed_tasks.add(task)
         task.on_failed()
 
