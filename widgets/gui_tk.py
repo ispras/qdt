@@ -17,7 +17,7 @@ from .logo import (
     set_logo
 )
 
-@Notifier("activated", "finished", 'failed', "removed")
+@Notifier("activated", "finished", "failed", "removed")
 class GUITaskManager(TkCoDispatcher):
     def __activate__(self, task):
         TkCoDispatcher.__activate__(self, task)
