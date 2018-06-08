@@ -63,9 +63,6 @@ from six.moves.tkinter_messagebox import (
 from .qdc_gui_signal_helper import (
     QDCGUISignalHelper
 )
-from .gui_error import (
-    TaskErrorDialog
-)
 
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
@@ -524,8 +521,6 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             self.__add_qtype_for_description(d)
 
     def __on_qvd_failed(self):
-        TaskErrorDialog(_("QVD loading failed"), self.reload_build_path_task)
-
         del self.reload_build_path_task
 
     def on_qvc_dirtied(self):
