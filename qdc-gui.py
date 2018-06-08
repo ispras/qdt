@@ -71,7 +71,11 @@ class ProjectGeneration(CoTask):
         self.s = source_path
         self.sig = signal
         self.finished = False
-        CoTask.__init__(self, self.begin())
+        CoTask.__init__(
+            self,
+            self.begin(),
+            description = _("Generation failed")
+        )
 
     def begin(self):
         self.prev_qvd = qvd_get(self.p.build_path).use()
