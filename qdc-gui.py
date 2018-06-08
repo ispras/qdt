@@ -6,7 +6,6 @@ from examples import (
 )
 from widgets import (
     GUIPOp_SetBuildPath,
-    TaskErrorDialog,
     Statusbar,
     GUIProjectHistoryTracker,
     HistoryWindow,
@@ -83,7 +82,6 @@ class ProjectGeneration(CoTask):
         yield self.p.co_gen_all(self.s)
 
     def on_failed(self):
-        TaskErrorDialog(_("Generation failed"), self)
         self.__finalize()
 
     def on_finished(self):
