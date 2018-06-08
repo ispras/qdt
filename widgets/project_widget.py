@@ -71,7 +71,11 @@ class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
         self.qvd = qvd_get(project_widget.p.build_path)
-        CoTask.__init__(self, generator = self.begin())
+        CoTask.__init__(
+            self,
+            self.begin(),
+            description = _("QVD loading failed")
+        )
 
     def begin(self):
         if self.qvd.qvc is None:
