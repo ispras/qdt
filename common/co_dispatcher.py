@@ -15,6 +15,9 @@ from types import (
 from time import (
     time
 )
+from .ml import (
+    mlget as _
+)
 import sys
 
 class FailedCallee(RuntimeError):
@@ -30,10 +33,12 @@ class CancelledCallee(RuntimeError):
 class CoTask(object):
     def __init__(self,
                  generator,
-                 enqueued = False
+                 enqueued = False,
+                 description = _("Coroutine based task without description")
         ):
         self.generator = generator
         self.enqueued = enqueued
+        self.description = description
 
         # Contains the exception if task has failed
         self.exception = None
