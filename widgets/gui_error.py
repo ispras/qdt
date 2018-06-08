@@ -27,7 +27,8 @@ from traceback import (
 )
 from common import (
     CancelledCallee,
-    FailedCallee
+    FailedCallee,
+    mlget as _
 )
 
 class TaskErrorWidget(GUIFrame):
@@ -79,9 +80,9 @@ class TaskErrorWidget(GUIFrame):
         t.insert(END, "".join(lines))
 
 class TaskErrorDialog(GUIDialog):
-    def __init__(self, title, task):
+    def __init__(self, task):
         GUIDialog.__init__(self)
 
-        self.title(title)
+        self.title(_("%s - failed") % task.description)
 
         TaskErrorWidget(task, master = self).pack(fill = BOTH, expand = ON)
