@@ -64,6 +64,11 @@ from six.moves.tkinter_messagebox import (
 )
 import qdt
 
+from traceback import (
+    format_exception
+)
+import sys
+
 class ProjectGeneration(CoTask):
     def __init__(self, project, source_path, signal):
         self.p = project
@@ -318,6 +323,7 @@ show it else hide it.")
         self.task_manager.watch_finished(self.__on_task_state_changed)
         self.task_manager.watch_failed(self.__on_task_state_changed)
         self.task_manager.watch_removed(self.__on_task_state_changed)
+        self.signal_dispatcher.watch_failed(self.__on_listener_failed)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
@@ -332,6 +338,11 @@ show it else hide it.")
             cur_val = len(getattr(self.task_manager, group))
             if cur_val != var.get():
                 var.set(cur_val)
+
+    def __on_listener_failed(self, e, tb):
+        sys.stderr.write("Listener failed - %s" %
+            "".join(format_exception(type(e), e, tb))
+        )
 
     def __on_history_window_destroy__(self, *args, **kw):
         self.var_history_window.trace_vdelete("w",
@@ -526,6 +537,7 @@ in process. Do you want to start cache rebuilding?")
         self.task_manager.unwatch_finished(self.__on_task_state_changed)
         self.task_manager.unwatch_failed(self.__on_task_state_changed)
         self.task_manager.unwatch_removed(self.__on_task_state_changed)
+        self.signal_dispatcher.unwatch_failed(self.__on_listener_failed)
 
         self.quit()
 
