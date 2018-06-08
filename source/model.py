@@ -541,7 +541,11 @@ class Header(Source):
                     p.on_include = Header._on_include
                     p.on_define.append(Header._on_define)
 
-                    header_input = open(full_name, "r").read()
+                    if sys.version_info[0] == 3:
+                        header_input = open(full_name, "r", encoding = "UTF-8").read()
+                    else:
+                        header_input = open(full_name, "rb").read().decode("UTF-8")
+
                     p.parse(input = header_input, source = prefix)
 
                     yields_per_current_header = 0
