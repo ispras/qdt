@@ -281,7 +281,8 @@ after last statement in the corresponding callable object.
         try:
             callers = self.callees.pop(task)
         except KeyError:
-            pass
+            if not isinstance(reason, CancelledCallee):
+                self.__root_task_failed__(task)
         else:
             # Callers of the task cannot continue and must be removed
             for c in list(callers):
@@ -294,6 +295,9 @@ after last statement in the corresponding callable object.
         task.on_failed()
 
         self.__cancel_callers(task, FailedCallee(task))
+
+    def __root_task_failed__(self, task):
+        pass
 
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)
