@@ -79,9 +79,9 @@ class TaskErrorWidget(GUIFrame):
         t.insert(END, "".join(lines))
 
 class TaskErrorDialog(GUIDialog):
-    def __init__(self, title, task):
+    def __init__(self, task):
         GUIDialog.__init__(self)
 
-        self.title(title)
+        self.title(task.description)
 
         TaskErrorWidget(task, master = self).pack(fill = BOTH, expand = ON)
