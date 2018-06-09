@@ -870,6 +870,13 @@ qemu_heuristic_db = {
             old_value = True,
             new_value = False
         )
+    ],
+    u'9c489ea6bed134fecfd556b439c68bba48fbe102':
+    [
+        QEMUVersionParameterDescription("gen_intermediate_code arg1 is generic",
+            old_value = False,
+            new_value = True
+        )
     ]
 }
 
