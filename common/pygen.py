@@ -255,11 +255,10 @@ class PyGenerator(object):
                 return
             self.line("[")
             self.push_indent()
-            if val:
-                self.pprint(val[0])
-                for v in val[1:]:
-                    self.line(",")
-                    self.pprint(v)
+            self.pprint(val[0])
+            for v in val[1:]:
+                self.line(",")
+                self.pprint(v)
             self.pop_indent()
             self.line()
             self.write("]")
@@ -269,18 +268,18 @@ class PyGenerator(object):
                 return
             self.line("{")
             self.push_indent()
-            if val:
-                items = sorted(val.items(), key = lambda t : t[0])
 
-                k, v = items[0]
+            items = sorted(val.items(), key = lambda t : t[0])
+
+            k, v = items[0]
+            self.pprint(k)
+            self.write(": ")
+            self.pprint(v)
+            for k, v in items[1:]:
+                self.line(",")
                 self.pprint(k)
                 self.write(": ")
                 self.pprint(v)
-                for k, v in items[1:]:
-                    self.line(",")
-                    self.pprint(k)
-                    self.write(": ")
-                    self.pprint(v)
             self.pop_indent()
             self.line()
             self.write("}")
@@ -290,14 +289,13 @@ class PyGenerator(object):
                 return
             self.line("(")
             self.push_indent()
-            if val:
-                self.pprint(val[0])
-                if len(val) > 1:
-                    for v in list(val)[1:]:
-                        self.line(",")
-                        self.pprint(v)
-                else:
+            self.pprint(val[0])
+            if len(val) > 1:
+                for v in list(val)[1:]:
                     self.line(",")
+                    self.pprint(v)
+            else:
+                self.line(",")
             self.pop_indent()
             self.line()
             self.write(")")
