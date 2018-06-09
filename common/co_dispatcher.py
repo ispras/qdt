@@ -296,10 +296,13 @@ after last statement in the corresponding callable object.
         try:
             callers = self.callees.pop(task)
         except KeyError:
-            pass
+            self.__root_task_failed__(task)
         else:
             # Callers of the task cannot continue and must be removed
             self.__cancel_tasks(callers, FailedCallee(task))
+
+    def __root_task_failed__(self, task):
+        pass
 
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)
