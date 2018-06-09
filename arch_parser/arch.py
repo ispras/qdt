@@ -716,7 +716,7 @@ class Arch(object):
             field_func = Function('parent_reset', args = [
                 Type.lookup('CPUState').gen_var('cpu', pointer = True)
             ])
-            pfunc = Pointer(field_func, 'DeviceReset')
+            pfunc = Pointer(field_func)
             cpu_class.append_field(pfunc.gen_var('parent_reset'))
             cpu_class.append_field_t_s('uint32_t', 'vr')
             hdr.add_type(cpu_class)
