@@ -22,6 +22,9 @@ from source import (
 from numbers import (
     Integral
 )
+from qemu import (
+    get_vp
+)
 
 class Attribute(object):
     def __init__(self, name, val):
@@ -302,17 +305,18 @@ class TargetCPU(object):
         transl_c.add_type(dump_state.gen_body())
         transl_c.add_type(tcg_init_body)
 
-        cpu_init = Function(
-            'cpu_' + self.qom_cpu.arch_name + '_init',
-            ret_type = Pointer(Type.lookup(self.get_cpu_name())),
-            args = [
-                Type.lookup('const char').gen_var('cpu_model', pointer = True)
-            ]
-        )
-        cpu_h.add_type(cpu_init)
-        cpu_init = cpu_init.gen_body()
-        generator.gen_cpu_init(cpu_init)
-        cpu_c.add_type(cpu_init)
+        if get_vp()['Create cpu_init']:
+            cpu_init = Function(
+                'cpu_' + self.qom_cpu.arch_name + '_init',
+                ret_type = Pointer(Type.lookup(self.get_cpu_name())),
+                args = [
+                    Type.lookup('const char').gen_var('cpu_model', pointer = True)
+                ]
+            )
+            cpu_h.add_type(cpu_init)
+            cpu_init = cpu_init.gen_body()
+            generator.gen_cpu_init(cpu_init)
+            cpu_c.add_type(cpu_init)
 
         # TODO: add vmstate and user-only handle_mmu_fault
         class_init = self.qom_cpu.gen_class_init_fn(

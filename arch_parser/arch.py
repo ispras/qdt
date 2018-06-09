@@ -582,13 +582,21 @@ class Arch(object):
             )
             hdr.add_type(arch_cpu)
 
-            hdr.add_type(
-                Macro(
-                    'cpu_init',
-                    args = ['cpu_model'],
-                    text = 'CPU(cpu_' + self.name + '_init(cpu_model))'
+            if get_vp()['CPU_RESOLVING_TYPE']:
+                cpu_resolv = Macro(
+                    'CPU_RESOLVING_TYPE',
+                    text = 'TYPE_' + self.name.upper() + '_CPU'
                 )
-            )
+                hdr.add_type(cpu_resolv)
+
+            if get_vp()['Create cpu_init']:
+                hdr.add_type(
+                    Macro(
+                        'cpu_init',
+                        args = ['cpu_model'],
+                        text = 'CPU(cpu_' + self.name + '_init(cpu_model))'
+                    )
+                )
 
             enum = Enumeration(
                 'excp_enum',
