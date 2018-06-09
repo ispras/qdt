@@ -66,7 +66,7 @@ class TaskErrorWidget(GUIFrame):
         while isinstance(e, (CancelledCallee, FailedCallee)):
             g = task.generator
             lines.append('In coroutine "%s" (%s):\n' % (
-                g.__name__, type(task).__name__
+                g.__name__, task.description.get()
             ))
             lines.extend(format_stack(task.gi_frame))
 
@@ -75,7 +75,7 @@ class TaskErrorWidget(GUIFrame):
 
         g = task.generator
         lines.append('In coroutine "%s" (%s):\n' % (
-            g.__name__, type(task).__name__
+            g.__name__, task.description.get()
         ))
         lines.extend(format_exception(type(e), e, task.traceback))
 
