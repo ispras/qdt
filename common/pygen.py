@@ -265,6 +265,13 @@ class PyGenerator(object):
             self.line("[")
             self.pprint_list(val)
             self.write("]")
+        elif isinstance(val, set):
+            if not val:
+                self.write("set([])")
+                return
+            self.line("set([")
+            self.pprint_list(sorted(val))
+            self.write("])")
         elif isinstance(val, dict):
             if not val:
                 self.write("{}")
