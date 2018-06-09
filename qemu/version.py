@@ -877,6 +877,20 @@ qemu_heuristic_db = {
             old_value = False,
             new_value = True
         )
+    ],
+    u'0dacec874fa3b3fd34b0d0670fa257efdcbbebd0':
+    [
+        QEMUVersionParameterDescription("CPU_RESOLVING_TYPE",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'3f71e724e283233753f1b5b3d6a30948d3084636':
+    [
+        QEMUVersionParameterDescription("Create cpu_init",
+            old_value = True,
+            new_value = False
+        )
     ]
 }
 
