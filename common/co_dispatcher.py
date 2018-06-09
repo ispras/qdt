@@ -240,7 +240,7 @@ after last statement in the corresponding callable object.
             pass
         else:
             # Callers of the task cannot continue and must be removed
-            self.__cancel_callers(callers, CancelledCallee(task))
+            self.__cancel_tasks(callers, CancelledCallee(task))
 
         if task in self.callers:
             callee = self.callers.pop(task)
@@ -283,7 +283,7 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
-    def __cancel_callers(self, tasks, reason):
+    def __cancel_tasks(self, tasks, reason):
         for c in list(tasks):
             del self.callers[c]
             self.__failed__(c, reason)
@@ -299,7 +299,7 @@ after last statement in the corresponding callable object.
             pass
         else:
             # Callers of the task cannot continue and must be removed
-            self.__cancel_callers(callers, FailedCallee(task))
+            self.__cancel_tasks(callers, FailedCallee(task))
 
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)
