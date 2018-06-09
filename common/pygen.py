@@ -248,19 +248,22 @@ class PyGenerator(object):
         self.gen_args(obj, pa_names = pa_names)
         self.gen_end(suffix = suffix)
 
+    def pprint_list(self, val):
+        self.push_indent()
+        self.pprint(val[0])
+        for v in val[1:]:
+            self.line(",")
+            self.pprint(v)
+        self.pop_indent()
+        self.line()
+
     def pprint(self, val):
         if isinstance(val, list):
             if not val:
                 self.write("[]")
                 return
             self.line("[")
-            self.push_indent()
-            self.pprint(val[0])
-            for v in val[1:]:
-                self.line(",")
-                self.pprint(v)
-            self.pop_indent()
-            self.line()
+            self.pprint_list(val)
             self.write("]")
         elif isinstance(val, dict):
             if not val:
