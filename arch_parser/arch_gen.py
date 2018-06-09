@@ -746,6 +746,16 @@ class TargetCodeGenerator(object):
     def gen_gen_intermediate_code(self, function, cpu_pc, cpu_env):
         root = FunctionWrapper.connect(function)
 
+        if get_vp()['gen_intermediate_code arg1 is generic']:
+            env_type = self.arch.target_cpu.get_cpustate_name() 
+            env = Type.lookup(env_type).gen_var('env', pointer = True)
+            root.add_child(
+                OpAssign(
+                    OpDeclare(env),
+                    OpSDeref(function.args[0], Const('env_ptr'))
+                )
+            )
+
         cpu = Type.lookup(self.arch.name.upper() + 'CPU')\
             .gen_var('cpu', pointer = True)
 
@@ -770,13 +780,16 @@ class TargetCodeGenerator(object):
 
         tb = function.args[1]
 
-        cs = Type.lookup('CPUState').gen_var('cs', pointer = True)
-        root.add_child(
-            OpAssign(
-                OpDeclare(cs),
-                OpMCall('CPU', cpu)
+        if not get_vp()['gen_intermediate_code arg1 is generic']:
+            cs = Type.lookup('CPUState').gen_var('cs', pointer = True)
+            root.add_child(
+                OpAssign(
+                    OpDeclare(cs),
+                    OpMCall('CPU', cpu)
+                )
             )
-        )
+        else:
+            cs = function.args[0]
 
         bp = Type.lookup('CPUBreakpoint').gen_var('bp', pointer = True)
         root.add_child(OpDeclare(bp))

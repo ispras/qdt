@@ -865,12 +865,18 @@ class Arch(object):
                 Type.lookup('br_enum')
             ]
 
+            if get_vp()['gen_intermediate_code arg1 is generic']:
+                arg1 = Type.lookup(
+                            'CPUState'
+                       ).gen_var('cs', pointer = True)
+            else:
+                arg1 = Type.lookup(
+                            self.target_cpu.get_cpustate_name()
+                       ).gen_var('env', pointer = True),
             gen_int_code = Function(
                 'gen_intermediate_code.body',
                 args = [
-                    Type.lookup(
-                        self.target_cpu.get_cpustate_name()
-                    ).gen_var('env', pointer = True),
+                    arg1,
                     Type.lookup(
                         'TranslationBlock'
                     ).gen_var('tb', pointer = True)
