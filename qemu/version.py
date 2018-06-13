@@ -283,9 +283,12 @@ def define_only_qemu_2_6_0_types():
         Function(name = "gdb_get_reg64")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/ioport.h").add_types([
-        Type("pio_addr_t", incomplete = False)
-    ]).add_reference(osdep_fake_type)
+    if get_vp("pio_addr_t exists"):
+        Header.lookup("exec/ioport.h").add_types([
+            Type("pio_addr_t", incomplete = False)
+        ]).add_reference(osdep_fake_type)
+    else:
+        Header.lookup("exec/ioport.h").add_reference(osdep_fake_type)
 
     Header.lookup("hw/boards.h").add_types([
         Structure("MachineClass"),
@@ -321,8 +324,12 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type.lookup("void"),
             args = [
                 Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-                Type.lookup("pio_addr_t").gen_var("dev"),
-                Type.lookup("pio_addr_t").gen_var("dev")
+                Type.lookup(
+                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
+                ).gen_var("dev"),
+                Type.lookup("pio_addr_t"
+                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
+                ).gen_var("dev")
             ]
         ),
         Function("sysbus_mmio_map"),
@@ -791,6 +798,13 @@ def machine_register_2_6(mach):
     mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
 
 qemu_heuristic_db = {
+    # hw: remove pio_addr_t
+    u'89a80e7400f7225d9401b35ef32454b4ab29dc67' : [
+        QEMUVersionParameterDescription("pio_addr_t exists",
+            new_value = False,
+            old_value = True
+        )
+    ],
     u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
         # This commit moves target-* CPU file into a target/ folder
         # So target-xxx/ becomes target/xxx/ instead.
