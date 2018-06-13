@@ -909,6 +909,13 @@ qemu_heuristic_db = {
             old_value = False,
             new_value = True
         )
+    ],
+    u'1d48474d8e9eff9d08ad43477043d95789b96a40':
+    [
+        QEMUVersionParameterDescription("target_disas has FLAGS argument",
+            old_value = True,
+            new_value = False
+        )
     ]
 }
 

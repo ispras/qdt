@@ -995,13 +995,13 @@ class TargetCodeGenerator(object):
                 OpCall('lookup_symbol', pc_start)
             )
         )
+        target_disas_args = [cs, pc_start, OpSub(ctx_pc, pc_start)]
+        if get_vp()['target_disas has FLAGS argument']:
+            target_disas_args.append(Const('0'))
         if_block.add_child(
             OpCall(
                 'log_target_disas',
-                cs,
-                pc_start,
-                OpSub(ctx_pc, pc_start),
-                Const('0')
+                *target_disas_args
             )
         )
         if_block.add_child(
