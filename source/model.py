@@ -458,12 +458,7 @@ order does not meet all requirements.
     def generate(self, inherit_references = False):
         Header.propagate_references()
 
-        source_basename = basename(self.path)
-        name = splitext(source_basename)[0]
-
-        file = SourceFile(name, type(self) == Header,
-            protection = self.protection
-        )
+        file = SourceFile(self, protection = self.protection)
 
         file.add_chunks(self.gen_chunks(inherit_references))
 
@@ -1958,14 +1953,15 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.add(chunk)
 
 class SourceFile:
-    def __init__(self, name, is_header = False, protection = True):
-        self.name = name
-        self.is_header = is_header
+    def __init__(self, origin, protection = True):
+        self.name = splitext(basename(origin.path))[0]
+        self.is_header = type(origin) is Header
         # Note that, chunk order is significant while one reference per chunk
         # is enough.
         self.chunks = OrderedSet()
         self.sort_needed = False
         self.protection = protection
+        self.origin = origin
 
     def gen_chunks_graph(self, w):
         w.write("""\
