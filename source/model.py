@@ -242,6 +242,14 @@ class Source(object):
                                 file = s.path
                             ))
                         self.add_inclusion(s)
+        elif type(self) is Header: # exactly a header
+            if var.declarer is not None:
+                raise RuntimeError(
+                    "Variable '%s' is already declared by '%s'" % (
+                        var.name, self.path
+                    )
+                )
+            var.declarer = self
 
         self.global_variables[var.name] = var
 
@@ -1491,6 +1499,8 @@ class Variable(object):
         self.const = const
         self.array_size = array_size
         self.used = used
+        # a header
+        self.declarer = None
 
     def gen_declaration_chunks(self, generator,
         indent = "",
