@@ -755,6 +755,8 @@ class TargetCodeGenerator(object):
                     OpSDeref(function.args[0], Const('env_ptr'))
                 )
             )
+        else:
+            env = function.args[0]
 
         cpu = Type.lookup(self.arch.name.upper() + 'CPU')\
             .gen_var('cpu', pointer = True)
@@ -762,7 +764,7 @@ class TargetCodeGenerator(object):
         root.add_child(
             OpAssign(
                 OpDeclare(cpu),
-                OpCall(self.arch.name + '_env_get_cpu', function.args[0])
+                OpCall(self.arch.name + '_env_get_cpu', env)
             )
         )
 
