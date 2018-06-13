@@ -713,7 +713,7 @@ class Arch(object):
                 args = ['obj'],
                 text = 'OBJECT_GET_CLASS(' + self.name.upper()
                     + 'CPUClass, (obj), TYPE_'
-                    + self.target_cpu.get_cpu_name() + ')'
+                    + self.name.upper() + '_CPU)'
             )
 
             hdr.add_type(get_class)
