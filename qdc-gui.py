@@ -6,7 +6,6 @@ from examples import (
 )
 from widgets import (
     GUIPOp_SetBuildPath,
-    TaskErrorDialog,
     Statusbar,
     GUIProjectHistoryTracker,
     HistoryWindow,
@@ -65,21 +64,32 @@ from six.moves.tkinter_messagebox import (
 )
 import qdt
 
+from traceback import (
+    format_exception
+)
+import sys
+
 class ProjectGeneration(CoTask):
     def __init__(self, project, source_path, signal):
         self.p = project
         self.s = source_path
         self.sig = signal
         self.finished = False
-        CoTask.__init__(self, self.begin())
+        CoTask.__init__(
+            self,
+            self.main(),
+            description = _("Generation")
+        )
 
-    def begin(self):
-        self.prev_qvd = qvd_get(self.p.build_path).use()
+    def main(self):
+        cur_qvd = qvd_get(self.p.build_path)
+        self.prev_qvd = cur_qvd.use()
 
-        yield self.p.co_gen_all(self.s)
+        yield self.p.co_gen_all(self.s,
+            known_targets = cur_qvd.qvc.known_targets
+        )
 
     def on_failed(self):
-        TaskErrorDialog(_("Generation failed"), self)
         self.__finalize()
 
     def on_finished(self):
@@ -316,6 +326,7 @@ show it else hide it.")
         self.task_manager.watch_finished(self.__on_task_state_changed)
         self.task_manager.watch_failed(self.__on_task_state_changed)
         self.task_manager.watch_removed(self.__on_task_state_changed)
+        self.signal_dispatcher.watch_failed(self.__on_listener_failed)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
 
@@ -330,6 +341,11 @@ show it else hide it.")
             cur_val = len(getattr(self.task_manager, group))
             if cur_val != var.get():
                 var.set(cur_val)
+
+    def __on_listener_failed(self, e, tb):
+        sys.stderr.write("Listener failed - %s" %
+            "".join(format_exception(type(e), e, tb))
+        )
 
     def __on_history_window_destroy__(self, *args, **kw):
         self.var_history_window.trace_vdelete("w",
@@ -524,6 +540,7 @@ in process. Do you want to start cache rebuilding?")
         self.task_manager.unwatch_finished(self.__on_task_state_changed)
         self.task_manager.unwatch_failed(self.__on_task_state_changed)
         self.task_manager.unwatch_removed(self.__on_task_state_changed)
+        self.signal_dispatcher.unwatch_failed(self.__on_listener_failed)
 
         self.quit()
 

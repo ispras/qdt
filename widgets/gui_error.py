@@ -23,11 +23,13 @@ from .gui_text import (
     READONLY
 )
 from traceback import (
-    format_exception
+    format_exception,
+    format_stack
 )
 from common import (
     CancelledCallee,
-    FailedCallee
+    FailedCallee,
+    mlget as _
 )
 
 class TaskErrorWidget(GUIFrame):
@@ -58,30 +60,31 @@ class TaskErrorWidget(GUIFrame):
         t.config(xscrollcommand = hsb.set)
         hsb.config(command = t.xview)
 
-        task_traceback = []
+        lines = []
 
         e = task.exception
         while isinstance(e, (CancelledCallee, FailedCallee)):
-            task_traceback.append(task)
+            g = task.generator
+            lines.append('In coroutine "%s" (%s):\n' % (
+                g.__name__, task.description.get()
+            ))
+            lines.extend(format_stack(task.gi_frame))
 
             task = e.callee
             e = task.exception
 
-        lines = format_exception(type(e), e, task.traceback)
-
-        lines.append("\n")
-        for task in reversed(task_traceback):
-            g = task.generator
-            lines.append('in coroutine "%s" (%s)\n' % (
-                g.__name__, type(task).__name__
-            ))
+        g = task.generator
+        lines.append('In coroutine "%s" (%s):\n' % (
+            g.__name__, task.description.get()
+        ))
+        lines.extend(format_exception(type(e), e, task.traceback))
 
         t.insert(END, "".join(lines))
 
 class TaskErrorDialog(GUIDialog):
-    def __init__(self, title, task):
+    def __init__(self, task):
         GUIDialog.__init__(self)
 
-        self.title(title)
+        self.title(_("%s - failed") % task.description)
 
         TaskErrorWidget(task, master = self).pack(fill = BOTH, expand = ON)

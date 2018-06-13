@@ -63,17 +63,18 @@ from six.moves.tkinter_messagebox import (
 from .qdc_gui_signal_helper import (
     QDCGUISignalHelper
 )
-from .gui_error import (
-    TaskErrorDialog
-)
 
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
         self.qvd = qvd_get(project_widget.p.build_path)
-        CoTask.__init__(self, generator = self.begin())
+        CoTask.__init__(
+            self,
+            self.main(),
+            description = _("QVD loading")
+        )
 
-    def begin(self):
+    def main(self):
         if self.qvd.qvc is None:
             yield self.qvd.co_init_cache()
 
@@ -508,25 +509,27 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         # convert device tree to more convenient form
         qvc = qvd_get(self.p.build_path).qvc
-        qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+        if qvc.device_tree:
+            qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
 
-        # Note that system bus device have no standard name for input IRQ.
-        next(qt.find(name = "sys-bus-device")).out_gpio_names = [
-            "SYSBUS_DEVICE_GPIO_IRQ"
-        ]
+            # Note that system bus device have no standard name for input IRQ.
+            next(qt.find(name = "sys-bus-device")).out_gpio_names = [
+                "SYSBUS_DEVICE_GPIO_IRQ"
+            ]
 
         # extend QOM tree with types from project
         for d in self.p.descriptions:
             self.__add_qtype_for_description(d)
 
     def __on_qvd_failed(self):
-        TaskErrorDialog(_("QVD loading failed"), self.reload_build_path_task)
-
         del self.reload_build_path_task
 
     def on_qvc_dirtied(self):
         # QOM tree is not actual now
-        del self.p.qom_tree
+        try:
+            del self.p.qom_tree
+        except AttributeError:
+            pass
 
         pht = self.pht
         if pht is not None:

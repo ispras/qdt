@@ -8,6 +8,15 @@ __all__ = [
 from .co_dispatcher import (
     CoTask
 )
+from .ml import (
+    mlget as _
+)
+from .notifier import (
+    Notifier
+)
+from sys import (
+    exc_info
+)
 
 class SignalIsAlreadyAttached(RuntimeError):
     pass
@@ -15,9 +24,14 @@ class SignalIsAlreadyAttached(RuntimeError):
 class SignalIsNotAttached(RuntimeError):
     pass
 
+@Notifier("failed")
 class SignalDispatcherTask(CoTask):
     def __init__(self):
-        CoTask.__init__(self, self.co_deliver())
+        CoTask.__init__(
+            self,
+            self.co_deliver(),
+            description = _("Signal Dispatcher")
+        )
         self.queue = []
 
     def co_deliver(self):
@@ -37,16 +51,19 @@ class SignalDispatcherTask(CoTask):
                 while listeners:
                     yield True
 
-                    l = listeners.pop(0)
-                    if args is None:
-                        if kw is None:
-                            l()
+                    try:
+                        l = listeners.pop(0)
+                        if args is None:
+                            if kw is None:
+                                l()
+                            else:
+                                l(**kw)
+                        elif kw is None:
+                            l(*args)
                         else:
-                            l(**kw)
-                    elif kw is None:
-                        l(*args)
-                    else:
-                        l(*args, **kw)
+                            l(*args, **kw)
+                    except BaseException as e:
+                        self.__notify_failed(e, exc_info()[2])
 
 
     def _do_emit(self, signal, args, kw):

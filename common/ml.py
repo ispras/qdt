@@ -3,9 +3,6 @@ __all__ = [
   , "mlget"
 ]
 
-from os import (
-    name as os_name
-)
 from sys import (
     version_info as py_version
 )

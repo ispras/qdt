@@ -15,6 +15,9 @@ from types import (
 from time import (
     time
 )
+from .ml import (
+    mlget as _
+)
 import sys
 
 class FailedCallee(RuntimeError):
@@ -30,10 +33,12 @@ class CancelledCallee(RuntimeError):
 class CoTask(object):
     def __init__(self,
                  generator,
-                 enqueued = False
+                 enqueued = False,
+                 description = _("Coroutine based task without description")
         ):
         self.generator = generator
         self.enqueued = enqueued
+        self.description = description
 
         # Contains the exception if task has failed
         self.exception = None
@@ -229,7 +234,13 @@ after last statement in the corresponding callable object.
         if not isinstance(task, CoTask):
             task = self.gen2task[task]
 
-        self.__cancel_callers(task, CancelledCallee(task))
+        try:
+            callers = self.callees.pop(task)
+        except KeyError:
+            pass
+        else:
+            # Callers of the task cannot continue and must be removed
+            self.__cancel_tasks(callers, CancelledCallee(task))
 
         if task in self.callers:
             callee = self.callers.pop(task)
@@ -272,23 +283,28 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
-    def __cancel_callers(self, task, reason):
-        try:
-            callers = self.callees.pop(task)
-        except KeyError:
-            pass
-        else:
-            # Callers of the task cannot continue and must be removed
-            for c in list(callers):
-                del self.callers[c]
-                self.__failed__(c, reason)
+    def __cancel_tasks(self, tasks, reason):
+        for c in list(tasks):
+            del self.callers[c]
+            self.__failed__(c, reason)
 
     def __failed__(self, task, exception):
         task.exception = exception
+        if task in self.active_tasks:
+            self.active_tasks.remove(task)
         self.failed_tasks.add(task)
         task.on_failed()
 
-        self.__cancel_callers(task, FailedCallee(task))
+        try:
+            callers = self.callees.pop(task)
+        except KeyError:
+            self.__root_task_failed__(task)
+        else:
+            # Callers of the task cannot continue and must be removed
+            self.__cancel_tasks(callers, FailedCallee(task))
+
+    def __root_task_failed__(self, task):
+        pass
 
     def __finish__(self, task):
         # print 'Task %s finished' % str(task)

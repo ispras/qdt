@@ -97,18 +97,22 @@ already in another project.")
                 desc.link()
                 yield self.co_gen(desc, qemu_src, **gen_cfg)
 
-    def register_in_build_system(self, folder):
+    def register_in_build_system(self, folder, known_targets):
         tail, head = split(folder)
 
         if head == "hw":
             return
 
         # Provide Makefiles in ancestors
-        self.register_in_build_system(tail)
+        self.register_in_build_system(tail, known_targets)
 
         # Register the folder in its parent
         parent_Makefile_obj = join(tail, "Makefile.objs")
         parent_dir = split(tail)[1]
+
+        if parent_dir == "hw" and known_targets and head in known_targets:
+            return
+
         patch_makefile(parent_Makefile_obj, head + "/",
             obj_var_names[parent_dir], config_flags[parent_dir]
         )
@@ -118,18 +122,21 @@ already in another project.")
         if not isfile(Makefile_obj):
             open(Makefile_obj, "w").close()
 
-    def make_src_dirs(self, full_path):
+    def make_src_dirs(self, full_path, known_targets):
         if not isdir(full_path):
             # Provide required directory.
             makedirs(full_path)
 
-        self.register_in_build_system(full_path)
+        self.register_in_build_system(full_path, known_targets)
 
     """ Backward compatibility wrapper for co_gen """
     def gen(self, *args, **kw):
         callco(self.co_gen(*args, **kw))
 
-    def co_gen(self, desc, src, with_chunk_graph = False):
+    def co_gen(self, desc, src,
+        with_chunk_graph = False,
+        known_targets = None
+    ):
         dev_t = desc.gen_type()
 
         if "header" in dev_t.__dict__:
@@ -175,7 +182,7 @@ already in another project.")
         if isfile(full_source_path):
             remove(full_source_path)
         else:
-            self.make_src_dirs(source_directory)
+            self.make_src_dirs(source_directory, known_targets)
 
         source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
 
