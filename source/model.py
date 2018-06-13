@@ -145,6 +145,21 @@ class ChunkGenerator(object):
                     elif isinstance(self.stack[-2], Enumeration):
                         kw["enum"] = True
                         chunks = origin.get_definition_chunks(self, **kw)
+                    elif (
+                        # Generate a header inclusion for global variable
+                        # from other module.
+                        # This code assumes that the variable (`origin`) is
+                        # used by a function (`self.stack[-2]`) because there
+                        # is no other entities whose can use a variable.
+                        # XXX: One day an `Initializer` will do it.
+                        origin.declarer is not None
+                        # Check if chunks are being requested for a file which
+                        # is neither the header declares the variable nor the
+                        # module defining it.
+                    and origin.declarer not in self.stack[-2].get_definers()
+                    and origin.definer not in self.stack[-2].get_definers()
+                    ):
+                        chunks = [HeaderInclusion(origin.declarer)]
                     else:
                         # Something like a static inline function in a header
                         # may request chunks for a global variable. This case
