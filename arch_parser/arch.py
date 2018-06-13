@@ -844,10 +844,14 @@ class Arch(object):
                 static = True
             )
 
+            if get_vp()['Init cpu_env in arch']:
+                cpu_env = src.f.global_variables['cpu_env']
+            else:
+                cpu_env = Header.lookup('tcg.h').global_variables['cpu_env']
             self.g.gen_decode_opc(
                 decode_opc,
                 src.f.global_variables['cpu_pc'],
-                src.f.global_variables['cpu_env']
+                cpu_env
             )
             decode_used_types = [Type.lookup(instr.name)
                               for instr in self.instructions]
@@ -894,7 +898,7 @@ class Arch(object):
             self.g.gen_gen_intermediate_code(
                 gen_int_code,
                 src.f.global_variables['cpu_pc'],
-                src.f.global_variables['cpu_env']
+                cpu_env
             )
             src.add_type(gen_int_code)
 

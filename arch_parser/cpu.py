@@ -200,13 +200,16 @@ class TargetCPU(object):
         dump_state = self.qom_cpu.gen_dump_state()
         generator.gen_cpu_dump_state(dump_state, self)
 
-        cpu_env = Variable(
-            'cpu_env',
-            Type.lookup('TCGv_env'),
-            static = True
-        )
-        transl_c.add_global_variable(cpu_env)
-        Header.lookup("exec/gen-icount.h").add_reference(cpu_env)
+        if get_vp()['Init cpu_env in arch']:
+            cpu_env = Variable(
+                'cpu_env',
+                Type.lookup('TCGv_env'),
+                static = True
+            )
+            transl_c.add_global_variable(cpu_env)
+            Header.lookup("exec/gen-icount.h").add_reference(cpu_env)
+        else:
+            cpu_env = Header.lookup('tcg.h').global_variables['cpu_env']
         reg_vars = []
         for reg_gr in self.reg_groups:
             var = Variable('cpu_' + reg_gr.name,

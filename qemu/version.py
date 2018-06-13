@@ -81,12 +81,15 @@ def define_only_qemu_2_6_0_types():
         Type("TCGv_i32"),
         Type("TCGv_i64"),
         Type("TCGv_ptr"),
-        Type("TCGv_env"),
+        Type("TCGv_env", incomplete = False),
         Type("TCGv"),
         Function("tcg_global_mem_new_i32"),
         Function("tcg_global_mem_new_i64"),
         Function("tcg_op_buf_full")
     ])
+
+    cpu_env = Type.lookup("TCGv_env").gen_var("cpu_env")
+    Header.lookup("tcg.h").add_global_variable(cpu_env)
 
     Header.lookup("tcg-op.h").add_types([
         Function("tcg_gen_insn_start"),
