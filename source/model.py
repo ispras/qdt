@@ -72,6 +72,9 @@ from .tools import (
 from copy import (
     copy
 )
+from collections import (
+    deque
+)
 
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
@@ -199,17 +202,11 @@ class Source(object):
                 % (var.name, self.name)
             )
 
-        TypeFixerVisitor(self, var).visit()
+        fixer = TypeFixerVisitor(self, var)
+        fixer.visit()
 
-        # Auto add definers for type
-        for s in var.type.get_definers():
-            if s == self:
-                continue
-            if not type(s) == Header:
-                raise RuntimeError("Attempt to define variable %s whose type "
-                    " is defined in non-header file %s" % (var.name, s.path)
-                )
-            self.add_inclusion(s)
+        # Auto add references to types this variable does depend on
+        self.add_references(tr.type for tr in fixer.new_type_references)
         # Auto add definers for types used by variable initializer
         if type(self) is Source:
             if var.definer is not None:
@@ -231,7 +228,6 @@ class Source(object):
                                 t = t.name,
                                 file = s.path
                             ))
-                        self.add_inclusion(s)
 
             var.definer = self
         elif type(self) is Header: # exactly a header
@@ -276,6 +272,10 @@ class Source(object):
         return self
 
     def _add_type_recursive(self, type_ref):
+        # adding a type may satisfy the dependency
+        if type_ref.type in self.references:
+            self.references.remove(type_ref.type)
+
         if type_ref.name in self.types:
             t = self.types[type_ref.name]
             if type(t) == TypeReference:
@@ -305,21 +305,18 @@ class Source(object):
                 " source (%s) externally" % (_type.name, self.path)
             )
 
-        TypeFixerVisitor(self, _type).visit()
+        fixer = TypeFixerVisitor(self, _type)
+        fixer.visit()
 
         _type.definer = self
         self.types[_type.name] = _type
 
-        # Auto include type definers
-        for s in _type.get_definers():
-            if s == self:
-                continue
-            if not type(s) == Header:
-                raise ValueError("Attempt to define structure %s that has a"
-                    " field of a type defined in another non-header file %s."
-                    % (_type.name, s.path)
-                )
-            self.add_inclusion(s)
+        # Auto add references to types this one does depend on
+        self.add_references(tr.type for tr in fixer.new_type_references)
+
+        # Addition of a required type does satisfy the dependence.
+        if _type in self.references:
+            self.references.remove(_type)
 
         return self
 
@@ -391,13 +388,6 @@ switching to that mode.
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
-                for inc in self.inclusions.values():
-                    if t.name in inc.types:
-                        break
-                else:
-                    raise RuntimeError("Any type reference in a file must "
-"be provided by at least one inclusion (%s: %s)" % (self.path, t.name)
-                    )
                 continue
 
             if t.definer is not self:
@@ -1350,6 +1340,7 @@ class TypeFixerVisitor(ObjectVisitor):
 
         self.source = source
         self.replaced = False
+        self.new_type_references = deque()
 
     def replace(self, new_value):
         self.replaced = True
@@ -1363,8 +1354,9 @@ class TypeFixerVisitor(ObjectVisitor):
                     self_tr = self.source.types[t.name]
                 except KeyError:
                     # The source does not have such type reference
-                    self.source.add_inclusion(t.type.definer)
-                    self_tr = self.source.types[t.name]
+                    self_tr = TypeReference(t.type)
+                    self.source.types[t.name] = self_tr
+                    self.new_type_references.append(self_tr)
 
                 if self_tr is not t:
                     self.replace(self_tr)
@@ -1386,12 +1378,13 @@ class TypeFixerVisitor(ObjectVisitor):
             if t.definer is self.source:
                 return
 
+            # replace foreign type with reference to it
             try:
                 tr = self.source.types[t.name]
             except KeyError:
-                self.source.add_inclusion(t.definer)
-                # Now a reference to type t must be in types of the source
-                tr = self.source.types[t.name]
+                tr = TypeReference(t)
+                self.source.types[t.name] = tr
+                self.new_type_references.append(tr)
 
             self.replace(tr)
 
@@ -2229,6 +2222,10 @@ them must be replaced with reference to h. """
 
         for chunk in self.chunks:
             if isinstance(chunk, HeaderInclusion):
+                # propagate actual inclusions back to the origin
+                if self.is_header:
+                    self.origin.add_inclusion(chunk.header)
+
                 prev_header = True
             else:
                 if append_nl_after_headers and prev_header:
