@@ -247,6 +247,12 @@ class Source(object):
             self.add_inclusion(s)
         # Auto add definers for types used by variable initializer
         if type(self) is Source: # exactly a module, not a header
+            if var.definer is not None:
+                raise RuntimeError(
+                    "Variable '%s' is already defined in '%s'" % (
+                        var, self.path
+                    )
+                )
             if var.initializer is not None:
                 for t in var.initializer.used_types:
                     for s in t.get_definers():
@@ -261,6 +267,8 @@ class Source(object):
                                 file = s.path
                             ))
                         self.add_inclusion(s)
+
+            var.definer = self
         elif type(self) is Header: # exactly a header
             if var.declarer is not None:
                 raise RuntimeError(
@@ -1624,6 +1632,8 @@ class Variable(object):
         self.used = used
         # a header
         self.declarer = None
+        # a module
+        self.definer = None
 
     def gen_declaration_chunks(self, generator,
         indent = "",
