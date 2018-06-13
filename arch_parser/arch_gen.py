@@ -1614,7 +1614,10 @@ class TargetCodeGenerator(object):
                 OpDeclare(ret),
                 OpCall(
                     self.arch.name + '_cpu_handle_mmu_fault',
-                    *function.args[:-1]
+                    function.args[0],
+                    function.args[1],
+                    function.args[3],
+                    function.args[4]
                 )
             )
         )
