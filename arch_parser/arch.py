@@ -684,7 +684,6 @@ class Arch(object):
             self.g.gen_cpu_get_tb_cpu_state(get_tb_cpu_state)
             hdr.add_type(get_tb_cpu_state)
 
-            hdr.add_inclusion(Header.lookup('exec/cpu-all.h'))
             hdr.add_reference(Type.lookup('MIN'))
             Header.lookup(
                 'exec/exec-all.h'
