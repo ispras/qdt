@@ -175,11 +175,22 @@ class ChunkGenerator(object):
     def stringify_stack(self):
         frames = deque()
         for frame in self.stack:
+            definer = None
             if isinstance(frame, Usage):
                 name = frame.var.name
             else:
                 name = frame.name
-            frames.append("    %-20s %s" % (type(frame).__name__, name))
+
+                if isinstance(frame, TypeReference):
+                    definer = frame.type.definer.path
+                elif isinstance(frame, Type):
+                    definer = frame.definer.path
+
+            definer = "" if definer is None else ("  (%s)" % definer)
+
+            frames.append("    %-20s %s%s" % (
+                type(frame).__name__, name, definer
+            ))
         return "\n".join(frames)
 
 # Source code models
