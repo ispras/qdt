@@ -886,7 +886,7 @@ class Arch(object):
             else:
                 arg1 = Type.lookup(
                             self.target_cpu.get_cpustate_name()
-                       ).gen_var('env', pointer = True),
+                       ).gen_var('env', pointer = True)
             gen_int_code = Function(
                 'gen_intermediate_code.body',
                 args = [
