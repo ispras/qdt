@@ -1974,7 +1974,9 @@ def depth_first_sort(chunk, new_chunks):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
-            raise RuntimeError("A loop is found in source chunk references")
+            raise RuntimeError("A loop is found in source chunk references"
+                " on chunk: %s" % chunk.name
+            )
         depth_first_sort(ch, new_chunks)
 
     chunk.visited = 2
