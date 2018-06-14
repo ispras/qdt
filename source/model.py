@@ -1974,9 +1974,16 @@ def depth_first_sort(chunk, new_chunks):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
-            raise RuntimeError("A loop is found in source chunk references"
-                " on chunk: %s" % chunk.name
+            msg = "A loop is found in source chunk references on chunk: %s" % (
+                chunk.name
             )
+            if isinstance(ch, HeaderInclusion):
+                # XXX: Allow loop of header inclusions and hope that they
+                # will eat each other during inclusion optimization pass.
+                print(msg)
+                continue
+            else:
+                raise RuntimeError(msg)
         depth_first_sort(ch, new_chunks)
 
     chunk.visited = 2
