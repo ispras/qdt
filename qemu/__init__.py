@@ -1,3 +1,4 @@
+from .introspection import *
 from .machine import *
 from .machine_description import *
 from .machine_editing import *
