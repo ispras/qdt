@@ -124,6 +124,20 @@ class ChunkGenerator(object):
         try:
             chunks = self.chunk_cache[key]
         except KeyError:
+            # Notify user about cycle dependency and continue
+            if isinstance(origin, Type):
+                for frame in self.stack:
+                    if not isinstance(frame, Type):
+                        continue
+                    if frame.name == origin.name:
+                        print("Chunks providing process cycled"
+                            " on\n    %s %s\nStack:\n%s" % (
+                                type(origin).__name__, origin.name,
+                                self.stringify_stack()
+                            )
+                        )
+                        return []
+
             self.stack.append(origin)
 
             if isinstance(origin, Function):
