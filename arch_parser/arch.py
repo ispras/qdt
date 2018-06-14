@@ -840,7 +840,10 @@ class Arch(object):
                     ),
                     Type.lookup('DisasContext').gen_var('ctx', pointer = True)
                 ],
-                static = True
+                static = True,
+                used_globals = [
+                    src.f.global_variables['cpu_pc']
+                ]
             )
 
             if get_vp()['Init cpu_env in arch']:
