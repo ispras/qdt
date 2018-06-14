@@ -158,6 +158,16 @@ class ChunkGenerator(object):
 
         return list(res)
 
+    def stringify_stack(self):
+        frames = deque()
+        for frame in self.stack:
+            if isinstance(frame, Usage):
+                name = frame.var.name
+            else:
+                name = frame.name
+            frames.append("    %-20s %s" % (type(frame).__name__, name))
+        return "\n".join(frames)
+
 # Source code models
 
 class Source(object):
