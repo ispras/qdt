@@ -556,7 +556,7 @@ class TargetCodeGenerator(object):
         )
 
         def handle_opc_iter(gen_node, instr_node, total_read, last_read = 0,
-                            cur_vars = []):
+                            cur_vars = [], is_default = True):
             opc = instr_node.opcode
             opc_dict = OrderedDict(sorted(instr_node.opc_dict.items()))
 
@@ -645,7 +645,8 @@ class TargetCodeGenerator(object):
                         node,
                         total_read,
                         new_last_read,
-                        new_vars
+                        new_vars,
+                        case_key == 'default'
                     )
             else:
                 if instr_node.instruction.comment is None:
@@ -654,6 +655,11 @@ class TargetCodeGenerator(object):
                 else:
                     comm = Comment(instr_node.instruction.comment)
                 gen_node.add_child(comm)
+                if is_default:
+                    print(
+                        'Warning: "%s" arguments intersect with the opcode' %
+                        comm.value
+                    )
 
                 new_var, new_read = self.gen_disas_opcode_read(
                     gen_node,
