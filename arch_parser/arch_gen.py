@@ -1111,6 +1111,15 @@ class TargetCodeGenerator(object):
                 ).name
             )
         ))
+        if get_vp()['Generic call to tcg_initialize']:
+            root.add_child(OpAssign(
+                OpSDeref(cc, Const('tcg_initialize')),
+                Const(
+                    Type.lookup(
+                        self.arch.name + '_tcg_init'
+                    ).name
+                )
+            ))
 
     def gen_cpu_realizefn(self, function):
         root = FunctionWrapper.connect(function)
@@ -1201,8 +1210,10 @@ class TargetCodeGenerator(object):
                 )
             )
         )
-        inited = Type.lookup('int').gen_var('inited', static = True)
-        root.add_child(OpDeclare(inited))
+
+        if not get_vp()['Generic call to tcg_initialize']:
+            inited = Type.lookup('int').gen_var('inited', static = True)
+            root.add_child(OpDeclare(inited))
 
         root.add_child(
             OpAssign(
@@ -1211,15 +1222,16 @@ class TargetCodeGenerator(object):
             )
         )
 
-        br = BranchIf(
-            OpLogAnd(
-                OpCall('tcg_enabled'),
-                OpLogNot(inited)
+        if not get_vp()['Generic call to tcg_initialize']:
+            br = BranchIf(
+                OpLogAnd(
+                    OpCall('tcg_enabled'),
+                    OpLogNot(inited)
+                )
             )
-        )
-        root.add_child(br)
-        br.add_child(OpAssign(inited, Const(1)))
-        br.add_child(OpCall(self.arch.name + '_tcg_init'))
+            root.add_child(br)
+            br.add_child(OpAssign(inited, Const(1)))
+            br.add_child(OpCall(self.arch.name + '_tcg_init'))
 
     def gen_class_by_name(self, function):
         root = FunctionWrapper.connect(function)
