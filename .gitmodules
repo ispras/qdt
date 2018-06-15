@@ -4,3 +4,6 @@
 [submodule "canvas2svg"]
 	path = canvas2svg
 	url = https://github.com/WojciechMula/canvas2svg.git
+[submodule "pyrsp"]
+	path = pyrsp
+	url = git@nasredin.intra.ispras.ru:qemu/pyrsp.git
