@@ -1,6 +1,8 @@
 __all__ = [
     "SourcePosition",
     "QEvent",
+    "q_event_dict",
+    "q_event_list"
 ]
 
 from common import (
@@ -74,3 +76,24 @@ class QEvent(object):
         self.position, self.description = (
             position, description
         )
+
+
+q_event_list = [
+    QEvent(
+        ("type_register_internal",),
+        "QOM Type registration"
+    ),
+    QEvent(
+        ("object_initialize_with_type", 379,),
+        "Object initialization started"
+    ),
+    QEvent(
+        ("object_initialize_with_type", 386,),
+        "Object initialization finished"
+    ),
+]
+
+q_event_dict = {}
+
+for e in q_event_list:
+    q_event_dict[e.description] = e
