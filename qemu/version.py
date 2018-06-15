@@ -919,6 +919,13 @@ qemu_heuristic_db = {
             old_value = True,
             new_value = False
         )
+    ],
+    u'55c3ceef61fcf06fc98ddc752b7cce788ce7680b':
+    [
+        QEMUVersionParameterDescription("Generic call to tcg_initialize",
+            old_value = False,
+            new_value = True
+        )
     ]
 }
 
