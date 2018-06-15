@@ -1,5 +1,11 @@
 __all__ = [
+    "SourcePosition",
+    "QEvent",
 ]
+
+from common import (
+    Notifier
+)
 
 # Events are valid for this QEMU version
 # 4743c23509a51bd4ee85cc272287a41917d1be35
@@ -7,12 +13,22 @@ __all__ = [
 
 class SourcePosition(object):
     def __init__(self,
-        file_path = None,
-        line_number = None,
         function_name = None,
+        line_number = None,
+        file_path = None,
         **compat # forward compatibility
     ):
         self.compat = compat
+
+        self.file_path, self.line_number, self.function_name = (
+            file_path, line_number, function_name
+        )
+
+    def __identify__(self, qimg):
+        "This function is called when a QEMU debug image becomes available."
+        file_path, line_number, function_name = (
+            self.file_path, self.line_number, self.function_name
+        )
 
         if function_name is None:
             if file_path is None or line_number is None:
@@ -34,11 +50,27 @@ class SourcePosition(object):
             file_path, line_number, function_name
         )
 
-class Event(object):
+
+@Notifier("happened")
+class QEvent(object):
     def __init__(self,
         position,
+        description,
+        **compat # forward compatibility
     ):
         """
         :position:
             Instance of `SourcePosition`
         """
+        self.compat = compat
+
+        if isinstance(position, dict):
+            # TODO: any mapping
+            position = SourcePosition(**position)
+        elif not isinstance(position, SourcePosition):
+            # list, tuple, any iterable
+            position = SourcePosition(*position)
+
+        self.position, self.description = (
+            position, description
+        )
