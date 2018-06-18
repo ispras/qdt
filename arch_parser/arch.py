@@ -741,6 +741,17 @@ class Arch(object):
         def gen_instruction_funcs_file():
             h = self.gen_files['translate.inc.c']
 
+            enum = Enumeration(
+                'br_enum',
+                {
+                    'BS_NONE': 0,
+                    'BS_STOP': 1,
+                    'BS_BRANCH': 2,
+                    'BS_EXCP': 3
+                }
+            )
+            h.add_type(enum)
+
             disas_context = Structure('DisasContext')
             disas_context.append_field_t_s(
                 'TranslationBlock', 'tb',
@@ -818,17 +829,6 @@ class Arch(object):
 
         def gen_translation_code():
             src = self.gen_files['translate.c']
-
-            enum = Enumeration(
-                'br_enum',
-                {
-                    'BS_NONE': 0,
-                    'BS_STOP': 1,
-                    'BS_BRANCH': 2,
-                    'BS_EXCP': 3
-                }
-            )
-            src.add_type(enum)
 
             decode_opc = Function(
                  'decode_opc',
