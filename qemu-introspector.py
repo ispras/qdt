@@ -28,9 +28,12 @@ from sys import (
     path as python_path
 )
 
-pyrsp_path = join(split(__file__)[0], "pyrsp")
-if pyrsp_path not in python_path:
-    python_path.insert(0, pyrsp_path)
+# Add ours pyelftools to PYTHON_PATH before importing of pyrsp to substitute
+# system pyelftools imported by pyrsp
+for mod in ("pyrsp", "pyelftools"):
+    path = join(split(__file__)[0], mod)
+    if path not in python_path:
+        python_path.insert(0, path)
 
 from pyrsp.targets import (
     AMD64
