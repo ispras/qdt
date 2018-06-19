@@ -76,7 +76,11 @@ def main():
 
     qemu_proc.start()
 
-    qemu_debugger = AMD64(qemu_debug_addr, verbose = True, host = True)
+    qemu_debugger = AMD64(qemu_debug_addr,
+        elffile = qemu_debug,
+        verbose = True,
+        host = True
+    )
 
     qemu_debugger.run()
 
