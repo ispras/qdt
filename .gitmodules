@@ -7,3 +7,6 @@
 [submodule "pyrsp"]
 	path = pyrsp
 	url = git@nasredin.intra.ispras.ru:qemu/pyrsp.git
+[submodule "pyelftools"]
+	path = pyelftools
+	url = git@nasredin.intra.ispras.ru:qemu/pyelftools.git
