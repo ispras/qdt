@@ -514,7 +514,7 @@ class Header(Source):
         except:
             m = Macro(
                 name = macro.name,
-                text = macro.value[0].value,
+                text = "".join(tok.value for tok in macro.value),
                 args = (
                     None if macro.arglist is None else list(macro.arglist)
                 )
