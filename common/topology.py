@@ -16,13 +16,19 @@ def dfs(node, visiting, visited):
     if nid in visited:
         return
 
-    visiting.add(nid)
+    try:
+        children = node.__dfs_children__
+    except AttributeError:
+        pass
+    else:
+        visiting.add(nid)
 
-    for n in node.__dfs_children__():
-        for nn in dfs(n, visiting, visited):
-            yield nn
+        for n in children():
+            for nn in dfs(n, visiting, visited):
+                yield nn
 
-    visiting.remove(nid)
+        visiting.remove(nid)
+
     visited.add(nid)
 
     yield node
@@ -30,9 +36,10 @@ def dfs(node, visiting, visited):
 
 def sort_topologically(roots = []):
     """
-    All objects in the trees should implement __dfs_children__ method. This
-    method should return list of objects, to which an edge exists, or [], if
-    the object is a leaf.
+    Objects in the trees do implement __dfs_children__ method. This method
+    returns an iterable of objects to each of whose an edge exists.
+    Leafs may either return empty iterable or do not implement
+    __dfs_children__ at all.
     """
 
     ret = []
