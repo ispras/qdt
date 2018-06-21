@@ -9,7 +9,7 @@ class GraphIsNotAcyclic(ValueError):
 def dfs(node):
     try:
         if node.__dfs_visited__ == 1:
-            raise GraphIsNotAcyclic
+            raise GraphIsNotAcyclic()
         # This is not actually needed
         # elif node.__dfs_visited__ == 2:
         #     raise StopIteration
