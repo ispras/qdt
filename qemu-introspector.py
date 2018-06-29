@@ -39,6 +39,8 @@ from pyrsp.targets import (
     AMD64
 )
 from pyrsp.elf import (
+    InMemoryELFFile,
+    DWARFInfoAccelerator,
     ELF,
     AddrDesc
 )
@@ -173,6 +175,38 @@ def main():
         "QELFCache": QELFCache,
         "intervalmap" : intervalmap
     }
+
+    elf = InMemoryELFFile(qemu_debug)
+    if not elf.has_dwarf_info():
+        stderr("%s does not have DWARF info. Provide a debug QEMU build\n" % (
+            qemu_debug
+        ))
+        return -1
+
+    di = DWARFInfoAccelerator(elf.get_dwarf_info())
+
+    di.get_CU_by_name("tcg.c")
+    print("found tcg.c")
+    di.get_CU_by_name(join("ui", "console.c"))
+    print("found ui/vl.c")
+    di.get_CU_by_name(join("ui", "console.c"))
+    print("found ui/vl.c again")
+    di.get_CU_by_name("console.c")
+    print("found console.c")
+    try:
+        di.get_CU_by_name("virtio-blk.c")
+    except:
+        di.get_CU_by_name(join("block", "virtio-blk.c"))
+        print("found block/virtio-blk.c")
+    else:
+        print("short suffix exception is expected")
+    try:
+        di.get_CU_by_name("apic.c")
+    except:
+        di.get_CU_by_name(join("kvm", "apic.c"))
+        print("found kvm/apic.c")
+    else:
+        print("short suffix exception is expected")
 
     if isfile(cache_file):
         print("Trying to load cache from %s" % cache_file)
