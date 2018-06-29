@@ -34,7 +34,7 @@ def dfs(node, visiting, visited):
     yield node
 
 
-def sort_topologically(roots = []):
+def sort_topologically(roots):
     """
     Objects in the trees do implement __dfs_children__ method. This method
     returns an iterable of objects to each of whose an edge exists.
