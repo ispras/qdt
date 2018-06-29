@@ -35,20 +35,15 @@ def dfs(node, visiting, visited):
 
 
 def sort_topologically(roots):
-    """
-    Objects in the trees do implement __dfs_children__ method. This method
-    returns an iterable of objects to each of whose an edge exists.
-    Leafs may either return empty iterable or do not implement
-    __dfs_children__ at all.
+    """ Given roots of object trees this generator iterates objects in depth
+first topology order. A tree is defined by `__dfs_children__` method of each
+its node. One must return an iterable of its node children. A leaf node may
+either return an empty iterable or do not implement `__dfs_children__` at all.
     """
 
-    ret = []
     visiting = set()
     visited = set()
 
-    # reverse sequence returned
     for node in roots:
         for n in dfs(node, visiting, visited):
-            ret.append(n)
-
-    return ret
+            yield n
