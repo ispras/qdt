@@ -6,40 +6,44 @@ __all__ = [
 class GraphIsNotAcyclic(ValueError):
     pass
 
-def dfs(node):
+
+def dfs(node, visiting, visited):
+    nid = id(node)
+
+    if nid in visiting:
+        raise GraphIsNotAcyclic()
+
+    if nid in visited:
+        return
+
     try:
-        if node.__dfs_visited__ == 1:
-            raise GraphIsNotAcyclic
-        # This is not actually needed
-        # elif node.__dfs_visited__ == 2:
-        #     raise StopIteration
+        children = node.__dfs_children__
     except AttributeError:
-        node.__dfs_visited__ = 1
-        for n in node.__dfs_children__():
-            for nn in dfs(n):
+        pass
+    else:
+        visiting.add(nid)
+
+        for n in children():
+            for nn in dfs(n, visiting, visited):
                 yield nn
-        node.__dfs_visited__ = 2
-        yield node
 
-def sort_topologically(roots = []):
-    """
-    All objects (nodes) should NOT have attribute __dfs_visited__.
+        visiting.remove(nid)
 
-    All objects in the trees should implement __dfs_children__ method. This
-    method should return list of objects, to which an edge exists, or [], if
-    the object is a leaf.
+    visited.add(nid)
 
-    __dfs_visited__ (for cycle detection):
-        AttributeError - not visited
-        1 - under processing
-        2 - processed
+    yield node
+
+
+def sort_topologically(roots):
+    """ Given roots of object trees this generator iterates objects in depth
+first topology order. A tree is defined by `__dfs_children__` method of each
+its node. One must return an iterable of its node children. A leaf node may
+either return an empty iterable or do not implement `__dfs_children__` at all.
     """
 
-    ret = []
-    # reverse sequence returned
+    visiting = set()
+    visited = set()
+
     for node in roots:
-        for n in dfs(node):
-            ret.append(n)
-    for node in ret:
-        del node.__dfs_visited__
-    return ret
+        for n in dfs(node, visiting, visited):
+            yield n
