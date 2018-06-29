@@ -257,6 +257,7 @@ accuracy.
         self.gen_end(suffix = suffix)
 
     def pprint_list(self, val):
+        self.line("[")
         self.push_indent()
         self.pprint(val[0])
         for v in val[1:]:
@@ -264,6 +265,7 @@ accuracy.
             self.pprint(v)
         self.pop_indent()
         self.line()
+        self.write("]")
 
     def pprint(self, val):
         # Note that an exact type match is required for types those are
@@ -272,16 +274,14 @@ accuracy.
             if not val:
                 self.write("[]")
                 return
-            self.line("[")
             self.pprint_list(val)
-            self.write("]")
         elif type(val) is set:
             if not val:
                 self.write("set([])")
                 return
-            self.line("set([")
+            self.write("set(")
             self.pprint_list(sorted(val))
-            self.write("])")
+            self.write(")")
         elif type(val) is dict:
             if not val:
                 self.write("{}")
