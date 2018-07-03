@@ -183,27 +183,27 @@ def main():
         ))
         return -1
 
-    di = DWARFInfoAccelerator(elf.get_dwarf_info())
+    dia = DWARFInfoAccelerator(elf.get_dwarf_info())
 
-    di.get_CU_by_name("tcg.c")
+    dia.get_CU_by_name("tcg.c")
     print("found tcg.c")
-    di.get_CU_by_name(join("ui", "console.c"))
+    dia.get_CU_by_name(join("ui", "console.c"))
     print("found ui/vl.c")
-    di.get_CU_by_name(join("ui", "console.c"))
+    dia.get_CU_by_name(join("ui", "console.c"))
     print("found ui/vl.c again")
-    di.get_CU_by_name("console.c")
+    dia.get_CU_by_name("console.c")
     print("found console.c")
     try:
-        di.get_CU_by_name("virtio-blk.c")
+        dia.get_CU_by_name("virtio-blk.c")
     except:
-        di.get_CU_by_name(join("block", "virtio-blk.c"))
+        dia.get_CU_by_name(join("block", "virtio-blk.c"))
         print("found block/virtio-blk.c")
     else:
         print("short suffix exception is expected")
     try:
-        di.get_CU_by_name("apic.c")
+        dia.get_CU_by_name("apic.c")
     except:
-        di.get_CU_by_name(join("kvm", "apic.c"))
+        dia.get_CU_by_name(join("kvm", "apic.c"))
         print("found kvm/apic.c")
     else:
         print("short suffix exception is expected")
