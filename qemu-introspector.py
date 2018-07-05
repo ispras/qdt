@@ -185,6 +185,29 @@ def main():
 
     dia = DWARFInfoAccelerator(elf.get_dwarf_info())
 
+    cpu_exec = dia.get_CU_by_name("cpu-exec.c")
+    lp = dia.di.line_program_for_CU(cpu_exec)
+    entrs = lp.get_entries()
+
+    print("%s line program (%u)" % (
+        cpu_exec.get_top_DIE().attributes["DW_AT_name"].value,
+        len(entrs)
+    ))
+    # print("\n".join(repr(e.state) for e in entrs))
+
+    dia.account_line_program(lp)
+
+    return
+
+    for cu in dia.iter_CUs():
+        name = cu.get_top_DIE().attributes["DW_AT_name"].value
+        print("Getting line program for %s" % name)
+        li = dia.di.line_program_for_CU(cu)
+        entries = li.get_entries()
+        print("Prog size: %u" % len(entries))
+
+    return
+
     dia.get_CU_by_name("tcg.c")
     print("found tcg.c")
     dia.get_CU_by_name(join("ui", "console.c"))
@@ -207,6 +230,8 @@ def main():
         print("found kvm/apic.c")
     else:
         print("short suffix exception is expected")
+
+    return
 
     if isfile(cache_file):
         print("Trying to load cache from %s" % cache_file)
