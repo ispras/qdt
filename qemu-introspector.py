@@ -196,6 +196,16 @@ def main():
     # print("\n".join(repr(e.state) for e in entrs))
 
     dia.account_line_program(lp)
+    lmap = dia.find_line_map("cpu-exec.c")
+
+    for (l, r), entries in lmap.items():
+        s = entries[0].state
+        print("[%6i;%6i]: %s 0x%x" % (
+            1 if l is None else l,
+            r - 1,
+            "S" if s.is_stmt else " ",
+            s.address
+        ))
 
     return
 
