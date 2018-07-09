@@ -186,6 +186,25 @@ def main():
     dia = DWARFInfoAccelerator(elf.get_dwarf_info())
 
     cpu_exec = dia.get_CU_by_name("cpu-exec.c")
+
+    dia.account_subprograms(cpu_exec)
+    for name, sps in dia.subprograms.items():
+        for sp in sps:
+            print("%s(%s) -> %r" % (
+                name,
+                ", ".join(varname for (varname, var) in sp.data.items()
+                          if var.is_argument
+                ),
+                sp.ranges
+            ))
+
+            for varname, var in sp.data.items():
+                if var.is_argument:
+                    continue
+                print("    %s" % varname)
+
+    return
+
     lp = dia.di.line_program_for_CU(cpu_exec)
     entrs = lp.get_entries()
 
