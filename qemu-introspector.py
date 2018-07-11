@@ -183,6 +183,21 @@ def main():
 
     dia = DWARFInfoAccelerator(elf.get_dwarf_info())
 
+    object_c = dia.get_CU_by_name("object.c")
+
+    # get info argument of type_register_internal function
+    dia.account_subprograms(object_c)
+    type_register_internal = dia.subprograms["type_register_internal"][0]
+    info = type_register_internal.data["info"]
+
+    # get address for specific line inside object.c (type_register_internal)
+    dia.account_line_program(dia.di.line_program_for_CU(object_c))
+    line_map = dia.find_line_map("object.c")
+
+    br_addr = line_map[136][0].state.address
+
+    print("info loc: %s" % info.location)
+
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
@@ -197,6 +212,14 @@ def main():
         verbose = True,
         host = True
     )
+
+    br_addr_str = qemu_debugger.get_hex_str(br_addr)
+    print("addr 0x%s" % br_addr_str)
+
+    def type_reg():
+        print("type reg")
+
+    qemu_debugger.set_br(br_addr_str, type_reg)
 
     qemu_debugger.run()
 
