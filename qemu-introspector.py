@@ -203,29 +203,6 @@ def main():
 
     return
 
-    lp = dia.di.line_program_for_CU(cpu_exec)
-    entrs = lp.get_entries()
-
-    print("%s line program (%u)" % (
-        cpu_exec.get_top_DIE().attributes["DW_AT_name"].value,
-        len(entrs)
-    ))
-    # print("\n".join(repr(e.state) for e in entrs))
-
-    dia.account_line_program(lp)
-    lmap = dia.find_line_map("cpu-exec.c")
-
-    for (l, r), entries in lmap.items():
-        s = entries[0].state
-        print("[%6i;%6i]: %s 0x%x" % (
-            1 if l is None else l,
-            r - 1,
-            "S" if s.is_stmt else " ",
-            s.address
-        ))
-
-    return
-
     for cu in dia.iter_CUs():
         name = cu.get_top_DIE().attributes["DW_AT_name"].value
         print("Getting line program for %s" % name)
@@ -254,6 +231,31 @@ def main():
     qemu_debugger.run()
 
     qemu_proc.join()
+
+
+def test_line_program(dia):
+    cpu_exec = dia.get_CU_by_name("cpu-exec.c")
+
+    lp = dia.di.line_program_for_CU(cpu_exec)
+    entrs = lp.get_entries()
+
+    print("%s line program (%u)" % (
+        cpu_exec.get_top_DIE().attributes["DW_AT_name"].value,
+        len(entrs)
+    ))
+    # print("\n".join(repr(e.state) for e in entrs))
+
+    dia.account_line_program(lp)
+    lmap = dia.find_line_map("cpu-exec.c")
+
+    for (l, r), entries in lmap.items():
+        s = entries[0].state
+        print("[%6i;%6i]: %s 0x%x" % (
+            1 if l is None else l,
+            r - 1,
+            "S" if s.is_stmt else " ",
+            s.address
+        ))
 
 
 def test_CU_lookup(dia):
