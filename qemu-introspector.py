@@ -203,15 +203,6 @@ def main():
 
     return
 
-    for cu in dia.iter_CUs():
-        name = cu.get_top_DIE().attributes["DW_AT_name"].value
-        print("Getting line program for %s" % name)
-        li = dia.di.line_program_for_CU(cu)
-        entries = li.get_entries()
-        print("Prog size: %u" % len(entries))
-
-    return
-
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
@@ -231,6 +222,15 @@ def main():
     qemu_debugger.run()
 
     qemu_proc.join()
+
+
+def test_line_program_sizes(dia):
+    for cu in dia.iter_CUs():
+        name = cu.get_top_DIE().attributes["DW_AT_name"].value
+        print("Getting line program for %s" % name)
+        li = dia.di.line_program_for_CU(cu)
+        entries = li.get_entries()
+        print("Prog size: %u" % len(entries))
 
 
 def test_line_program(dia):
