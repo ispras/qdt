@@ -197,9 +197,7 @@ def main():
             ))
 
             for varname, var in sp.data.items():
-                if var.is_argument:
-                    continue
-                print("    %s" % varname)
+                print("    %s = %s" % (varname, var.location))
 
     return
 
