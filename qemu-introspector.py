@@ -235,6 +235,28 @@ def main():
 
     return
 
+    qemu_debug_addr = "localhost:4321"
+
+    qemu_proc = Process(
+        target = system,
+        # XXX: if there are spaces in arguments this code will not work.
+        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
+    )
+
+    qemu_proc.start()
+
+    qemu_debugger = AMD64(qemu_debug_addr,
+        elffile = qemu_debug,
+        verbose = True,
+        host = True
+    )
+
+    qemu_debugger.run()
+
+    qemu_proc.join()
+
+
+def test_CU_lookup(dia):
     dia.get_CU_by_name("tcg.c")
     print("found tcg.c")
     dia.get_CU_by_name(join("ui", "console.c"))
@@ -257,28 +279,6 @@ def main():
         print("found kvm/apic.c")
     else:
         print("short suffix exception is expected")
-
-    return
-
-    qemu_debug_addr = "localhost:4321"
-
-    qemu_proc = Process(
-        target = system,
-        # XXX: if there are spaces in arguments this code will not work.
-        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
-    )
-
-    qemu_proc.start()
-
-    qemu_debugger = AMD64(qemu_debug_addr,
-        elffile = qemu_debug,
-        verbose = True,
-        host = True
-    )
-
-    qemu_debugger.run()
-
-    qemu_proc.join()
 
 
 def test_cache(qemu_debug):
