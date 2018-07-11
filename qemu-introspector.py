@@ -185,11 +185,16 @@ def main():
 
     cpu_exec = dia.get_CU_by_name("cpu-exec.c")
 
-    dia.account_subprograms(cpu_exec)
-    for name, sps in dia.subprograms.items():
+    # For testing:
+    # pthread_atfork.c has subprogram data referencing location lists
+    # ioport.c contains inlined subprogram, without ranges
+
+    for cu in [cpu_exec]: # dia.iter_CUs():
+        print(cu.get_top_DIE().attributes["DW_AT_name"].value)
+        sps = dia.account_subprograms(cu)
         for sp in sps:
             print("%s(%s) -> %r" % (
-                name,
+                sp.name,
                 ", ".join(varname for (varname, var) in sp.data.items()
                           if var.is_argument
                 ),
