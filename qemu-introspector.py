@@ -183,10 +183,6 @@ def main():
 
     dia = DWARFInfoAccelerator(elf.get_dwarf_info())
 
-    test_subprograms(dia)
-
-    return
-
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
