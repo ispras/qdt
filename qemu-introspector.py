@@ -168,8 +168,6 @@ def main():
     # debug info
     qemu_debug = qemu_cmd_args[0]
 
-    cache_file = qemu_debug + ".qec"
-
     loaded = {
         "AddrDesc": AddrDesc,
         "QELFCache": QELFCache,
@@ -262,6 +260,30 @@ def main():
 
     return
 
+    qemu_debug_addr = "localhost:4321"
+
+    qemu_proc = Process(
+        target = system,
+        # XXX: if there are spaces in arguments this code will not work.
+        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
+    )
+
+    qemu_proc.start()
+
+    qemu_debugger = AMD64(qemu_debug_addr,
+        elffile = qemu_debug,
+        verbose = True,
+        host = True
+    )
+
+    qemu_debugger.run()
+
+    qemu_proc.join()
+
+
+def test_cache(qemu_debug):
+    cache_file = qemu_debug + ".qec"
+
     if isfile(cache_file):
         print("Trying to load cache from %s" % cache_file)
         try:
@@ -283,26 +305,6 @@ def main():
         print("Saving cache to %s" % cache_file)
         with open(cache_file, "wb") as f:
             PyGenerator().serialize(f, cache)
-
-    qemu_debug_addr = "localhost:4321"
-
-    qemu_proc = Process(
-        target = system,
-        # XXX: if there are spaces in arguments this code will not work.
-        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
-    )
-
-    qemu_proc.start()
-
-    qemu_debugger = AMD64(qemu_debug_addr,
-        elffile = qemu_debug,
-        verbose = True,
-        host = True
-    )
-
-    qemu_debugger.run()
-
-    qemu_proc.join()
 
 
 if __name__ == "__main__":
