@@ -183,26 +183,7 @@ def main():
 
     dia = DWARFInfoAccelerator(elf.get_dwarf_info())
 
-    cpu_exec = dia.get_CU_by_name("cpu-exec.c")
-
-    # For testing:
-    # pthread_atfork.c has subprogram data referencing location lists
-    # ioport.c contains inlined subprogram, without ranges
-
-    for cu in [cpu_exec]: # dia.iter_CUs():
-        print(cu.get_top_DIE().attributes["DW_AT_name"].value)
-        sps = dia.account_subprograms(cu)
-        for sp in sps:
-            print("%s(%s) -> %r" % (
-                sp.name,
-                ", ".join(varname for (varname, var) in sp.data.items()
-                          if var.is_argument
-                ),
-                sp.ranges
-            ))
-
-            for varname, var in sp.data.items():
-                print("    %s = %s" % (varname, var.location))
+    test_subprograms(dia)
 
     return
 
@@ -225,6 +206,29 @@ def main():
     qemu_debugger.run()
 
     qemu_proc.join()
+
+
+def test_subprograms(dia):
+    cpu_exec = dia.get_CU_by_name("cpu-exec.c")
+
+    # For testing:
+    # pthread_atfork.c has subprogram data referencing location lists
+    # ioport.c contains inlined subprogram, without ranges
+
+    for cu in [cpu_exec]: # dia.iter_CUs():
+        print(cu.get_top_DIE().attributes["DW_AT_name"].value)
+        sps = dia.account_subprograms(cu)
+        for sp in sps:
+            print("%s(%s) -> %r" % (
+                sp.name,
+                ", ".join(varname for (varname, var) in sp.data.items()
+                          if var.is_argument
+                ),
+                sp.ranges
+            ))
+
+            for varname, var in sp.data.items():
+                print("    %s = %s" % (varname, var.location))
 
 
 def test_line_program_sizes(dia):
