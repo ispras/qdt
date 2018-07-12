@@ -710,11 +710,15 @@ def machine_register_2_5(mach):
 
     # Main machine registration macro
     def_type = get_vp()["machine initialization function register type name"]
-    machine_init_def = Type.lookup(def_type).gen_var()
     machine_init_def_args = Initializer(
         code = { "function": mach.type_reg_func }
     )
-    mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
+    mach.source.add_type(
+        Type.lookup(def_type).gen_usage(
+            initializer = machine_init_def_args,
+            name = "%s_%s" % (def_type.name, mach.type_reg_func.name)
+        )
+    )
 
 def machine_register_2_6(mach):
     # machine class definition function
@@ -769,9 +773,13 @@ def machine_register_2_6(mach):
     mach.source.add_type(mach.type_reg_func)
 
     # Main machine registration macro
-    machine_init_def = Type.lookup("type_init").gen_var()
     machine_init_def_args = Initializer({ "function": mach.type_reg_func })
-    mach.source.add_usage(machine_init_def.gen_usage(machine_init_def_args))
+    mach.source.add_type(
+        Type.lookup("type_init").gen_usage(
+            initializer = machine_init_def_args,
+            name = "type_init_" + mach.type_reg_func.name
+        )
+    )
 
 qemu_heuristic_db = {
     u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
