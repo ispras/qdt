@@ -1215,9 +1215,21 @@ class Macro(Type):
 
         return "%s%s" % (self.name, arg_val)
 
-    def gen_var(self, *args, **kw):
-        return super(Macro, self).gen_var(
-            name = "fake variable of macro %s" % self.name
+    def gen_var(self, name,
+        pointer = False,
+        initializer = None,
+        static = False,
+        array_size = None,
+        unused = False,
+        macro_initializer = None
+    ):
+        mt = MacroType(self,  initializer = macro_initializer)
+        return mt.gen_var(name,
+            pointer = pointer,
+            initializer = initializer,
+            static = static,
+            array_size = array_size,
+            unused = unused
         )
 
     def gen_dict(self):
