@@ -863,7 +863,7 @@ class Structure(Type):
         definers = [self.definer]
 
         for f in self.fields:
-            definers.extend(f.type.get_definers())
+            definers.extend(f.get_definers())
 
         return definers
 
@@ -1341,6 +1341,9 @@ class Variable(object):
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
+
+    def get_definers(self):
+        return self.type.get_definers()
 
     __type_references__ = ["type", "initializer"]
 
