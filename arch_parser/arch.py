@@ -105,9 +105,12 @@ class GenFile(object):
         else:
             self.fd = open(self.abs_path, mode)
 
-    def generate(self):
+    def generate(self, gen_chunk_graphs, gen_debug_comments):
         if self.opened:
-            self.f.generate().generate(self.fd)
+            sf = self.f.generate()
+            if gen_chunk_graphs:
+                sf.gen_chunks_gv_file(self.abs_path + ".chunks.gv")
+            sf.generate(self.fd, gen_debug_comments = gen_debug_comments)
 
     def close(self):
         if self.opened:
@@ -121,7 +124,9 @@ class Arch(object):
                  arch_bigendian = False,
                  verbose = False,
                  debug_decoder = False,
-                 overwrite = False):
+                 overwrite = False,
+                 gen_chunk_graphs = False,
+                 gen_debug_comments = False):
 
         if name is None:
             raise Exception('arch name isn\'t provided')
@@ -131,6 +136,9 @@ class Arch(object):
         self.name_to_format = {}
 
         self.overwrite = overwrite
+
+        self.gen_chunk_graphs = gen_chunk_graphs
+        self.gen_debug_comments = gen_debug_comments
 
         self.instr_size_is_fixed = False
         self.fixed_size = 0
@@ -1084,12 +1092,11 @@ class Arch(object):
             self.g.gen_print_ins(disas_def)
 
             df.add_type(disas_def)
-            df.generate()
+            df.generate(self.gen_chunk_graphs, self.gen_debug_comments)
             df.close()
 
         update_makefile()
         gen_disas_code()
-
 
     def gen_all(self):
         self.gen_disas()
@@ -1097,5 +1104,5 @@ class Arch(object):
         # TODO: add return value check
         self.gen_target_code()
         for f in self.gen_files.values():
-            f.generate()
+            f.generate(self.gen_chunk_graphs, self.gen_debug_comments)
             f.close()

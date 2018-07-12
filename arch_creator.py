@@ -52,6 +52,24 @@ def main():
         help = 'Overwrite existing files without a prompt',
         action = 'store_true'
     )
+    argparser.add_argument(
+        '--gen-chunk-graphs',
+        action = 'store_true',
+        help = 'Generate Graphviz files with graph of chunks per each '
+        'generated source.'
+    )
+    argparser.add_argument(
+        '--gen-debug-comments',
+        action = 'store_true',
+        help = 'Generate source files with debug comments.'
+    )
+
+    argparser.add_argument(
+        "--gen-header-tree",
+        default = None,
+        metavar = "header_tree.gv",
+        help = "Output QEMU header inclusion graph in Graphviz format."
+    )
 
     args = vars(argparser.parse_args(cmd_args))
 
@@ -62,13 +80,18 @@ def main():
 
     qvd = qvd_load_with_cache(args['qemu_folder'])
 
+    if args['gen_header_tree'] is not None:
+        qvd.qvc.stc.gen_header_inclusion_dot_file(args['gen_header_tree'])
+
     arch = Arch(
         args['arch_name'],
         qvd.src_path,
         arch_big_endian,
         args['verbose'],
         args['d'],
-        args['overwrite']
+        args['overwrite'],
+        args['gen_chunk_graphs'],
+        args['gen_debug_comments']
     )
 
     if arch.fill() is None:
