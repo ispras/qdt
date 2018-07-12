@@ -9,6 +9,7 @@ __all__ = [
       , "Function"
       , "Pointer"
       , "Macro"
+      , "MacroType"
       , "Enumeration"
   , "Initializer"
   , "Variable"
@@ -18,6 +19,7 @@ __all__ = [
       , "MacroDefinition"
       , "PointerTypeDeclaration"
       , "FunctionPointerTypeDeclaration"
+      , "MacroTypeUsage"
       , "PointerVariableDeclaration"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
@@ -1235,6 +1237,65 @@ class Macro(Type):
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
 
+
+class MacroType(Type):
+    def __init__(self, _macro,
+        initializer = None,
+        name = None,
+        is_usage = False
+    ):
+        if not isinstance(_macro, Macro):
+            raise ValueError("Attempt to create macrotype from "
+                " %s which is not macro." % _macro.name
+            )
+        if is_usage or (name is not None):
+            self.is_named = True
+            if name is None:
+                name = _macro.name + ".usage" + str(id(self))
+            super(MacroType, self).__init__(name,
+                incomplete = False,
+                base = False
+            )
+        else:
+            # do not add nameless macrotypes to type registry
+            self.is_named = False
+            self.name = _macro.gen_usage_string(initializer)
+            self.incomplete = False
+            self.base = False
+
+        self.macro = _macro
+        self.initializer = initializer
+
+    def get_definers(self):
+        if self.is_named:
+            return super(MacroType, self).get_definers()
+        else:
+            return self.macro.get_definers()
+
+    def gen_chunks(self, generator, indent = ""):
+        if not self.is_named:
+            return []
+
+        macro = self.macro
+        initializer = self.initializer
+
+        ch = MacroTypeUsage(macro, initializer, indent)
+        refs = list(generator.provide_chunks(macro))
+
+        if initializer is not None:
+            for v in initializer.used_variables:
+                """ Note that 0-th chunk is variable and rest are its
+                dependencies """
+                refs.append(generator.provide_chunks(v)[0])
+
+            for t in initializer.used_types:
+                refs.extend(generator.provide_chunks(t))
+
+        ch.add_references(refs)
+        return [ch]
+
+    __type_references__ = ["macro", "initializer"]
+
 # Data models
 
 
@@ -1711,6 +1772,18 @@ class FunctionPointerTypeDeclaration(SourceChunk):
                 )
               + ";\n"
             )
+        )
+
+
+class MacroTypeUsage(SourceChunk):
+
+    def __init__(self, macro, initializer, indent):
+        self.macro = macro
+        self.initializer = initializer
+
+        super(MacroTypeUsage, self).__init__(macro,
+            "Usage of macro type " + macro.name,
+            code = indent + macro.gen_usage_string(initializer)
         )
 
 
