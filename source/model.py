@@ -927,12 +927,13 @@ class Structure(Type):
             # Note that 0-th chunk is field and rest are its dependencies
             decl_chunks = generator.provide_chunks(f, indent = field_indent)
 
-            field_declaration = decl_chunks[0]
+            if decl_chunks:
+                field_declaration = decl_chunks[0]
 
-            field_refs.extend(list(field_declaration.references))
-            field_declaration.clean_references()
-            field_declaration.add_reference(top_chunk)
-            top_chunk = field_declaration
+                field_refs.extend(list(field_declaration.references))
+                field_declaration.clean_references()
+                field_declaration.add_reference(top_chunk)
+                top_chunk = field_declaration
 
         struct_begin.add_references(field_refs)
         struct_end.add_reference(top_chunk)
