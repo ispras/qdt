@@ -1220,6 +1220,13 @@ class Macro(Type):
             unused = unused
         )
 
+    def gen_usage(self, initializer = None, name = None):
+        return MacroType(self,
+            initializer = initializer,
+            name = name,
+            is_usage = True
+        )
+
     def gen_dict(self):
         res = {HDB_MACRO_NAME : self.name}
         if self.text is not None:
