@@ -13,7 +13,6 @@ __all__ = [
       , "Enumeration"
   , "Initializer"
   , "Variable"
-  , "Usage"
   , "SourceChunk"
       , "HeaderInclusion"
       , "MacroDefinition"
@@ -24,7 +23,6 @@ __all__ = [
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
-      , "VariableUsage"
       , "StructureDeclarationBegin"
       , "StructureDeclaration"
       , "FunctionDeclaration"
@@ -160,7 +158,6 @@ class Source(object):
         self.types = {}
         self.inclusions = {}
         self.global_variables = {}
-        self.usages = []
         self.references = set()
         self.protection = False
 
@@ -180,13 +177,6 @@ class Source(object):
     def add_references(self, refs):
         for ref in refs:
             self.add_reference(ref)
-
-        return self
-
-    def add_usage(self, usage):
-        TypeFixerVisitor(self, usage).visit()
-
-        self.usages.append(usage)
 
         return self
 
@@ -394,9 +384,6 @@ switching to that mode.
         if isinstance(self, Header):
             for r in ref_list:
                 gen.provide_chunks(r)
-
-        for u in self.usages:
-            gen.provide_chunks(u)
 
         chunks = gen.get_all_chunks()
 
@@ -1408,9 +1395,6 @@ class Variable(object):
         ch.add_references(refs)
         return [ch]
 
-    def gen_usage(self, initializer = None):
-        return Usage(self, initializer)
-
     def get_definers(self):
         return self.type.get_definers()
 
@@ -1498,32 +1482,6 @@ class CopyFixerVisitor(ObjectVisitor):
             self.replace(new_t, skip_trunk = False)
         else:
             raise BreakVisiting()
-
-# Function and instruction models
-
-
-class Usage(object):
-
-    def __init__(self, var, initializer = None):
-        self.variable = var
-        self.initalizer = initializer
-
-    def gen_defining_chunk_list(self, generator):
-        ret = VariableUsage.gen_chunks(self.variable, generator,
-            self.initalizer
-        )
-        ret = ret[:1]
-        # do not add semicolon after macro usage
-        if not (isinstance(self.variable.type, Macro)
-            or isinstance(self.variable.type, TypeReference)
-                and isinstance(self.variable.type.type, Macro)
-        ):
-            term_chunk = UsageTerminator(self, references = ret)
-            ret.insert(0, term_chunk)
-
-        return ret
-
-    __type_references__ = ["variable", "initalizer"]
 
 # Source code instances
 
@@ -1875,36 +1833,6 @@ class VariableDefinition(SourceChunk):
         nl = "\n" if append_nl else ""
     )
         )
-
-
-class VariableUsage(SourceChunk):
-
-    @staticmethod
-    def gen_chunks(var, generator, initializer = None, indent = ""):
-        ch = VariableUsage(var, initializer, indent)
-
-        refs = generator.provide_chunks(var.type)
-
-        if initializer is not None:
-            for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
-                refs.append(generator.provide_chunks(v)[0])
-
-            for t in initializer.used_types:
-                refs.extend(generator.provide_chunks(t))
-
-        ch.add_references(refs)
-        return [ch]
-
-    def __init__(self, var, initializer = None, indent = ""):
-        super(VariableUsage, self).__init__(var,
-            "Usage of variable of type %s" % var.type.name,
-            indent + var.type.gen_usage_string(initializer)
-        )
-
-        self.indent = indent
-        self.initializer = initializer
 
 
 class StructureDeclarationBegin(SourceChunk):
