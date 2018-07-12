@@ -1510,7 +1510,7 @@ class CopyFixerVisitor(ObjectVisitor):
         t = self.cur
 
         if (not isinstance(t, Type)
-            or (isinstance(t, Pointer) and not t.is_named)
+            or (isinstance(t, (Pointer, MacroType)) and not t.is_named)
         ):
             new_t = copy(t)
 
