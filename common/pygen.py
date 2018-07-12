@@ -10,6 +10,9 @@ from six import (
 from itertools import (
     count
 )
+from .code_writer import (
+    CodeWriter
+)
 
 if __name__ == "__main__":
     from sys import (
@@ -36,43 +39,16 @@ PyGenerator provides an interface for saving an object to the file.
 The file is to be a python script such that execution of the file will
 reconstruct the object.
 """
-class PyGenerator(object):
-    def __init__(self, indent = "    "):
-        self.indent = indent
 
-        self.reset()
+
+class PyGenerator(CodeWriter):
 
     def reset(self):
+        super(PyGenerator, self).reset()
+
         self.obj2name = {}
         self.name2obj = {}
         self.name_counter = {}
-
-        self.current_indent = ""
-        self.new_line = False
-
-    def line(self, suffix = ""):
-        if self.new_line:
-            self.write_enc(self.current_indent)
-        else:
-            self.new_line = True
-
-        self.write_enc(suffix + "\n")
-
-    def write(self, string = ""):
-        if self.new_line:
-            self.write_enc(self.current_indent)
-            self.new_line = False
-
-        self.write_enc(string)
-
-    def write_enc(self, string):
-        self.w.write(string.encode("utf-8"))
-
-    def push_indent(self):
-        self.current_indent = self.current_indent + self.indent
-
-    def pop_indent(self):
-        self.current_indent = self.current_indent[:-len(self.indent)]
 
     def nameof(self, obj):
         if obj is None:
