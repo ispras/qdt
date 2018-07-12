@@ -1443,9 +1443,10 @@ class TypeFixerVisitor(ObjectVisitor):
             if t.base:
                 raise BreakVisiting()
 
-            """ Skip pointer types without name. Nameless pointer does not have
-            definer and should not be replaced with type reference """
-            if isinstance(t, Pointer) and not t.is_named:
+            """ Skip pointer and macrotype types without name. Nameless pointer
+            or macrotype does not have definer and should not be replaced with
+            type reference """
+            if isinstance(t, (Pointer, MacroType)) and not t.is_named:
                 return
 
             # Do not add definerless types to the Source automatically
