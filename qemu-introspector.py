@@ -191,7 +191,7 @@ def main():
     info = type_register_internal.data["info"]
 
     # get address for specific line inside object.c (type_register_internal)
-    dia.account_line_program(dia.di.line_program_for_CU(object_c))
+    dia.account_line_program_CU(object_c)
     line_map = dia.find_line_map("object.c")
 
     br_addr = line_map[136][0].state.address
