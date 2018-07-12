@@ -1389,20 +1389,9 @@ class Variable(object):
                 refs = generator.provide_chunks(self.type.type)
             ch.add_references(refs)
         else:
-            if isinstance(self.type, TypeReference):
-                t = self.type.type
-            else:
-                t = self.type
-
-            if isinstance(t, Macro):
-                u = VariableUsage.gen_chunks(self, generator, indent = indent)
-                ch = u[0]
-                """ Note that references are already added to the chunk by
-                VariableUsage.gen_chunks """
-            else:
-                ch = VariableDeclaration(self, indent, extern)
-                refs = generator.provide_chunks(self.type)
-                ch.add_references(refs)
+            ch = VariableDeclaration(self, indent, extern)
+            refs = generator.provide_chunks(self.type)
+            ch.add_references(refs)
 
         return [ch]
 
