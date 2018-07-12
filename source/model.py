@@ -201,7 +201,7 @@ class Source(object):
         TypeFixerVisitor(self, var).visit()
 
         # Auto add definers for type
-        for s in var.type.get_definers():
+        for s in var.get_definers():
             if s == self:
                 continue
             if not isinstance(s, Header):
@@ -868,7 +868,7 @@ class Structure(Type):
         definers = [self.definer]
 
         for f in self.fields:
-            definers.extend(f.type.get_definers())
+            definers.extend(f.get_definers())
 
         return definers
 
@@ -1346,6 +1346,9 @@ class Variable(object):
 
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
+
+    def get_definers(self):
+        return self.type.get_definers()
 
     __type_references__ = ["type", "initializer"]
 
