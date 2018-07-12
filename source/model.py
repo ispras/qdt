@@ -641,8 +641,8 @@ class Header(Source):
         return self
 
     def __hash__(self):
-        # key contains of 'g' or 'h' and header path
-        # 'g' and 'h' are used to distinguish global and local
+        # key contains of 'g' or 'l' and header path
+        # 'g' and 'l' are used to distinguish global and local
         # headers with same
         return hash("{}{}".format(
                 "g" if self.is_global else "l",
