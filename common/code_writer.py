@@ -7,7 +7,6 @@ class CodeWriter(object):
 
     Supports:
     - indentation
-    - UTF-8 encoding
     """
 
     def __init__(self, backend = None, indent = "    "):
@@ -18,7 +17,7 @@ class CodeWriter(object):
         :indent: is string value of single indentation step.
         """
 
-        self.indent = indent.encode("utf-8")
+        self.indent = indent
         self.w = backend
 
         self.reset()
@@ -28,7 +27,7 @@ class CodeWriter(object):
         outputting new line marker.
         """
 
-        self.current_indent = b""
+        self.current_indent = ""
         self.new_line = False
 
     def line(self, suffix = ""):
@@ -43,7 +42,7 @@ class CodeWriter(object):
         else:
             self.new_line = True
 
-        self._write_enc(suffix + "\n")
+        self.w.write(suffix + "\n")
 
     def write(self, string = ""):
         """ Appends :string: to current line.
@@ -56,7 +55,7 @@ class CodeWriter(object):
             self.w.write(self.current_indent)
             self.new_line = False
 
-        self._write_enc(string)
+        self.w.write(string)
 
     def push_indent(self):
         "Increases current indent by one indentation step."
@@ -67,6 +66,3 @@ class CodeWriter(object):
         "Decreases current indent by one indentation step."
 
         self.current_indent = self.current_indent[:-len(self.indent)]
-
-    def _write_enc(self, string):
-        self.w.write(string.encode("utf-8"))
