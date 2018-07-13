@@ -613,7 +613,6 @@ class QemuVersionDescription(object):
                 if not checksum == qemu_heuristic_hash:
                     is_outdated = True
             if is_outdated:
-                remove_file(qvc_path)
                 yield self.qvc.co_computing_parameters(self.repo)
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
                 PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
