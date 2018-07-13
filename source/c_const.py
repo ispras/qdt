@@ -26,6 +26,9 @@ class CConst(object):
         "Implementation must return string compatible with C generator"
         raise NotImplementedError()
 
+    def __c__(self, writer):
+        writer.write(self.gen_c_code())
+
     def __ne__(self, v):
         "Explicit redirection for Py2."
         return not self.__eq__(v)

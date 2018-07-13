@@ -1361,6 +1361,11 @@ class Variable(object):
     def gen_usage(self, initializer = None):
         return Usage(self, initializer)
 
+    def __c__(self, writer):
+        writer.write(self.name)
+        if self.array_size is not None:
+            writer.write("[%d]" % self.array_size)
+
     __type_references__ = ["type", "initializer"]
 
 # Type inspecting
