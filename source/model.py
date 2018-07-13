@@ -735,8 +735,7 @@ class Type(object):
         pointer = False,
         initializer = None,
         static = False,
-        array_size = None,
-        unused = False
+        array_size = None
     ):
         if self.incomplete:
             if not pointer:
@@ -748,15 +747,13 @@ class Type(object):
             return Variable(name, Pointer(self),
                 initializer = initializer,
                 static = static,
-                array_size = array_size,
-                unused = unused
+                array_size = array_size
             )
         else:
             return Variable(name, self,
                 initializer = initializer,
                 static = static,
-                array_size = array_size,
-                unused = unused
+                array_size = array_size
             )
 
     def get_definers(self):
@@ -1208,7 +1205,6 @@ class Macro(Type):
         initializer = None,
         static = False,
         array_size = None,
-        unused = False,
         macro_initializer = None
     ):
         mt = MacroType(self,  initializer = macro_initializer)
@@ -1216,8 +1212,7 @@ class Macro(Type):
             pointer = pointer,
             initializer = initializer,
             static = static,
-            array_size = array_size,
-            unused = unused
+            array_size = array_size
         )
 
     def gen_usage(self, initializer = None, name = None):
@@ -1375,8 +1370,7 @@ class Variable(object):
         initializer = None,
         static = False,
         const = False,
-        array_size = None,
-        unused = False
+        array_size = None
     ):
         self.name = name
         self.type = _type
@@ -1384,7 +1378,6 @@ class Variable(object):
         self.static = static
         self.const = const
         self.array_size = array_size
-        self.unused = unused
 
     def gen_declaration_chunks(self, generator,
         indent = "",
@@ -1847,7 +1840,7 @@ class VariableDefinition(SourceChunk):
                 var.name, var.type.name
             ),
             """\
-{indent}{static}{const}{type_name}@b{var_name}{array_decl}{unused}{init}{separ}{nl}
+{indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
@@ -1855,7 +1848,6 @@ class VariableDefinition(SourceChunk):
         type_name = "" if enum else var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
-        unused = "@b__attribute__((unused))" if var.unused else "",
         init = init_code,
         separ = "," if enum else ";",
         nl = "\n" if append_nl else ""
