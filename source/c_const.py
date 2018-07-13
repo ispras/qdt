@@ -146,7 +146,7 @@ class CSTR(CConst):
         if c is None:
             v = self.v
             if v is None:
-                v = "NULL"
+                c = "NULL"
             else:
                 c = str2c(v)
             self.c = c
