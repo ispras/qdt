@@ -1421,6 +1421,11 @@ class Variable(object):
     def get_definers(self):
         return self.type.get_definers()
 
+    def __c__(self, writer):
+        writer.write(self.name)
+        if self.array_size is not None:
+            writer.write("[%d]" % self.array_size)
+
     __type_references__ = ["type", "initializer"]
 
 # Type inspecting
