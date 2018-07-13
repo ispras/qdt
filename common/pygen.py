@@ -1,5 +1,6 @@
 __all__ = [
     "PyGenerator"
+  , "pythonize"
 ]
 
 from six import (
@@ -315,6 +316,20 @@ accuracy.
             else:
                 s = repr(val)
             self.write(s)
+
+
+def pythonize(root, path):
+    """ Serializes graph of objects presented by its :root: object to Python
+    script and writes it to file. See `PyGenerator`.
+
+    :obj: to be serialized
+    :path: of target file
+    """
+
+    with open(path, "wb") as _file:
+        gen = PyGenerator(backend = _file)
+        gen.serialize(root)
+
 
 if __name__ == "__main__":
     g = PyGenerator()
