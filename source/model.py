@@ -1987,9 +1987,13 @@ def gen_function_decl_ref_chunks(function, generator):
 def gen_function_def_ref_chunks(f, generator):
     references = []
 
+    v = TypesCollector(f.body)
+    v.visit()
+
+    for t in v.used_types:
+        references.extend(generator.provide_chunks(t))
+
     if isinstance(f.body, FunctionBodyString):
-        for t in f.body.used_types:
-            references.extend(generator.provide_chunks(t))
         for g in f.body.used_globals:
             # Note that 0-th chunk is the global and rest are its dependencies
             references.append(generator.provide_chunks(g)[0])
