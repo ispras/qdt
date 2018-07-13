@@ -12,6 +12,9 @@ from six import (
 from itertools import (
     count
 )
+from collections import (
+    Hashable
+)
 
 if __name__ == "__main__":
     from sys import (
@@ -79,7 +82,12 @@ accuracy.
         if obj is None:
             return "None"
 
-        if not obj in self.obj2name:
+        if isinstance(obj, Hashable):
+            key = obj
+        else:
+            key = id(obj)
+
+        if not key in self.obj2name:
             try:
                 var_base = obj.__var_base__
             except AttributeError:
@@ -95,10 +103,10 @@ accuracy.
                     if name not in self.name2obj:
                         break
 
-            self.obj2name[obj] = name
+            self.obj2name[key] = name
             self.name2obj[name] = obj
 
-        return self.obj2name[obj]
+        return self.obj2name[key]
 
     def serialize(self, root):
         self.reset()
