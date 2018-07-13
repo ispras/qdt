@@ -2337,6 +2337,16 @@ class SourceTreeContainer(object):
         self.reg_header = {}
         self.reg_type = {}
 
+        # add preprocessor macros those are always defined
+        prev = self.set_cur_stc()
+
+        CPPMacro("__FILE__")
+        CPPMacro("__LINE__")
+        CPPMacro("__FUNCTION__")
+
+        if prev is not None:
+            prev.set_cur_stc()
+
     def type_lookup(self, name):
         if name not in self.reg_type:
             raise TypeNotRegistered("Type with name %s is not registered"
