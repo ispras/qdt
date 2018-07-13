@@ -968,10 +968,12 @@ class Enumeration(Type):
         super(Enumeration, self).__init__(type_name)
         self.elems = []
         self.enum_name = enum_name
+        v_type = Type.lookup(type_name)
+        int_type = Type.lookup("int")
         for key, val in elems_dict.items():
             self.elems.append(
-                Variable(key, Type.lookup("int"),
-                    initializer = Initializer(str(val))
+                Variable(key, v_type,
+                    initializer = Initializer(str(val), [int_type])
                 )
             )
 
