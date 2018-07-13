@@ -764,16 +764,16 @@ class Type(object):
         else:
             return [self.definer]
 
-    def gen_chunks(self, generator):
+    def gen_chunks(self, generator, **kw):
         raise ValueError("Attempt to generate source chunks for stub"
             " type %s" % self.name
         )
 
-    def gen_defining_chunk_list(self, generator):
+    def gen_defining_chunk_list(self, generator, **kw):
         if self.base:
             return []
         else:
-            return self.gen_chunks(generator)
+            return self.gen_chunks(generator, **kw)
 
     def gen_usage_string(self, initializer):
         # Usage string for an initializer is code of the initializer. It is
