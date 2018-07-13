@@ -1243,10 +1243,10 @@ class CPPMacro(Macro):
 # Data models
 
 
-class InitCodeVisitor(ObjectVisitor):
+class TypesCollector(ObjectVisitor):
 
     def __init__(self, code):
-        super(InitCodeVisitor, self).__init__(code,
+        super(TypesCollector, self).__init__(code,
             field_name = "__type_references__"
         )
         self.used_types = set()
@@ -1269,9 +1269,9 @@ class Initializer(object):
             self.__type_references__ = self.__type_references__ + ["code"]
 
             # automatically get types used in the code
-            icv = InitCodeVisitor(code)
-            icv.visit()
-            self.used_types.update(icv.used_types)
+            tc = TypesCollector(code)
+            tc.visit()
+            self.used_types.update(tc.used_types)
 
     def __getitem__(self, key):
         val = self.code[key]
