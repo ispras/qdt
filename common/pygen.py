@@ -4,6 +4,7 @@ __all__ = [
 ]
 
 from six import (
+    StringIO,
     text_type,
     binary_type,
     integer_types
@@ -326,9 +327,12 @@ def pythonize(root, path):
     :path: of target file
     """
 
+    res = StringIO()
+    gen = PyGenerator(backend = res)
+    gen.serialize(root)
+
     with open(path, "wb") as _file:
-        gen = PyGenerator(backend = _file)
-        gen.serialize(root)
+        _file.write(res.getvalue().encode("utf-8"))
 
 
 if __name__ == "__main__":
