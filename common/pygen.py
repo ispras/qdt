@@ -1,8 +1,10 @@
 __all__ = [
     "PyGenerator"
+  , "pythonize"
 ]
 
 from six import (
+    StringIO,
     text_type,
     binary_type,
     integer_types
@@ -34,14 +36,34 @@ else:
 
 const_types = (float, text_type, binary_type, bool) + integer_types
 
-"""
-PyGenerator provides an interface for saving an object to the file.
-The file is to be a python script such that execution of the file will
-reconstruct the object.
-"""
-
 
 class PyGenerator(CodeWriter):
+    """ PyGenerator provides an API for serialization of objects in a Python
+script.
+
+    Each object must have:
+
+    - __gen_code__, a method that is given a `PyGenerator` instance. It should
+        use the instance to write Python code that is equivalent to the object.
+
+    - __dfs_children__, a method that is used by `PyGenerator` to locate
+        objects this object does depend on.
+        See `common.topology.sort_topologically` for details.
+
+    An object may have:
+
+    - __var_base__, a method that must return a string which will be used by
+        `PyGenerator` to evaluate name for the variable generated for the
+        object.
+
+    - __get_init_arg_val__, a method to transform values of argumetns before
+        serialization to Python. See `PyGenerator.gen_args`.
+
+    The goal is to produce a script, execution of which will result in a set
+of objects those are equivalent to original objects. However, `PyGenerator`
+only provides useful methods for it. Actual equivalence depends on user's
+accuracy.
+    """
 
     def reset(self):
         super(PyGenerator, self).reset()
@@ -75,8 +97,7 @@ class PyGenerator(CodeWriter):
 
         return self.obj2name[obj]
 
-    def serialize(self, writer, root):
-        self.w = writer
+    def serialize(self, root):
         self.reset()
 
         objects = sort_topologically([root])
@@ -296,6 +317,23 @@ class PyGenerator(CodeWriter):
             else:
                 s = repr(val)
             self.write(s)
+
+
+def pythonize(root, path):
+    """ Serializes graph of objects presented by its :root: object to Python
+    script and writes it to file. See `PyGenerator`.
+
+    :obj: to be serialized
+    :path: of target file
+    """
+
+    res = StringIO()
+    gen = PyGenerator(backend = res)
+    gen.serialize(root)
+
+    with open(path, "wb") as _file:
+        _file.write(res.getvalue().encode("utf-8"))
+
 
 if __name__ == "__main__":
     g = PyGenerator()

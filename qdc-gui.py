@@ -50,7 +50,7 @@ from common import (
     execfile,
     CoSignal,
     CoTask,
-    PyGenerator,
+    pythonize,
     mlget as _
 )
 from six.moves.tkinter import (
@@ -636,7 +636,7 @@ later.").get()
             if isinstance(d, MachineNode):
                 d.link(handle_system_bus = False)
 
-        PyGenerator().serialize(open(file_name, "wb"), project)
+        pythonize(project, file_name)
 
         self.set_current_file_name(file_name)
         self.saved_operation = self.pht.pos
