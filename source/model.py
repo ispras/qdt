@@ -1303,6 +1303,21 @@ class MacroType(Type):
 
     __type_references__ = ["macro", "initializer"]
 
+
+class CPPMacro(Macro):
+    """ A kind of macro defined by the C preprocessor.
+    For example __FILE__, __LINE__, __FUNCTION__ and etc.
+    """
+
+    def __init__(self, *args, **kw):
+        super(CPPMacro, self).__init__(*args, **kw)
+
+    def gen_chunks(self, _):
+        # CPPMacro does't require referenced types
+        # because it's defined by C preprocessor.
+        return []
+
+
 # Data models
 
 
