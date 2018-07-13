@@ -181,7 +181,8 @@ def main():
         ))
         return -1
 
-    dia = DWARFInfoAccelerator(elf.get_dwarf_info())
+    di = elf.get_dwarf_info()
+    dia = DWARFInfoAccelerator(di)
 
     object_c = dia.get_CU_by_name("object.c")
 
@@ -199,6 +200,16 @@ def main():
 
     print("frame base: %s" % frame)
     print("info loc: %s" % info.location)
+
+    if di.has_CFI():
+        cfi = di.CFI_entries()
+    elif di.has_EH_CFI():
+        cfi = di.EH_CFI_entries()
+    else:
+        stderr("%s does not have call frame information\n" % (
+            qemu_debug
+        ))
+        return -1
 
     qemu_debug_addr = "localhost:4321"
 
