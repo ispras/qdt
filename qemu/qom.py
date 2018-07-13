@@ -378,7 +378,7 @@ def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
                         # write mask
                         case += case_indent + "s->{reg}_war@b=@s{m};".format(
                             reg = qtn.for_id_name,
-                            m = wm.__c__()
+                            m = wm.gen_c_code()
                         )
                     case += "\n" + indent
             elif access == "w":
@@ -417,7 +417,7 @@ def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
                         "@s|@b(s->{reg}@b&@b~{mask});".format(
                             reg = qtn.for_id_name,
                             val = val_name,
-                            mask = wm.__c__()
+                            mask = wm.gen_c_code()
                         )
                     )
                     context["s_is_used"] = True
