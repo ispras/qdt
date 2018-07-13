@@ -735,7 +735,6 @@ class Type(object):
         initializer = None,
         static = False,
         array_size = None,
-        unused = False
     ):
         if self.incomplete:
             if not pointer:
@@ -748,14 +747,12 @@ class Type(object):
                 initializer = initializer,
                 static = static,
                 array_size = array_size,
-                unused = unused
             )
         else:
             return Variable(name, self,
                 initializer = initializer,
                 static = static,
                 array_size = array_size,
-                unused = unused
             )
 
     def get_definers(self):
@@ -1298,7 +1295,6 @@ class Variable(object):
         static = False,
         const = False,
         array_size = None,
-        unused = False
     ):
         self.name = name
         self.type = _type
@@ -1306,7 +1302,6 @@ class Variable(object):
         self.static = static
         self.const = const
         self.array_size = array_size
-        self.unused = unused
 
     def gen_declaration_chunks(self, generator,
         indent = "",
@@ -1793,7 +1788,7 @@ class VariableDefinition(SourceChunk):
                 var.name, var.type.name
             ),
             """\
-{indent}{static}{const}{type_name}@b{var_name}{array_decl}{unused}{init}{separ}{nl}
+{indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
@@ -1801,7 +1796,6 @@ class VariableDefinition(SourceChunk):
         type_name = "" if enum else var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
-        unused = "@b__attribute__((unused))" if var.unused else "",
         init = init_code,
         separ = "," if enum else ";",
         nl = "\n" if append_nl else ""
