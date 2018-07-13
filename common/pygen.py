@@ -75,8 +75,7 @@ class PyGenerator(CodeWriter):
 
         return self.obj2name[obj]
 
-    def serialize(self, writer, root):
-        self.w = writer
+    def serialize(self, root):
         self.reset()
 
         objects = sort_topologically([root])

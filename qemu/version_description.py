@@ -590,7 +590,7 @@ class QemuVersionDescription(object):
 
             yield True
 
-            PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
+            PyGenerator(backend = open(qvc_path, "wb")).serialize(self.qvc)
         else:
             self.load_cache()
             # make just loaded QVC active
@@ -615,7 +615,7 @@ class QemuVersionDescription(object):
             if is_outdated:
                 yield self.qvc.co_computing_parameters(self.repo)
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
-                PyGenerator().serialize(open(qvc_path, "wb"), self.qvc)
+                PyGenerator(backend = open(qvc_path, "wb")).serialize(self.qvc)
 
         yield True
 
