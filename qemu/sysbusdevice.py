@@ -184,7 +184,7 @@ class SysBusDeviceType(QOMDevice):
 
             reg_resets.append("s->%s@b=@s%s;" % (
                 qtn.for_id_name,
-                reg.reset.__c__()
+                reg.reset.gen_c_code()
             ))
 
             warb = reg.warbits
@@ -194,13 +194,13 @@ class SysBusDeviceType(QOMDevice):
                 if wm.v == (1 << (8 * reg.size)) - 1:
                     reg_resets.append("s->%s_war@b=@s~%s;" % (
                         qtn.for_id_name,
-                        warb.__c__()
+                        warb.gen_c_code()
                     ))
                 elif wm.v:
                     reg_resets.append("s->%s_war@b=@s%s@s&@b~%s;" % (
                         qtn.for_id_name,
-                        wm.__c__(),
-                        warb.__c__()
+                        wm.gen_c_code(),
+                        warb.gen_c_code()
                     ))
 
         self.device_reset = Function(
