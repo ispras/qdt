@@ -4,3 +4,4 @@ from .c_str_adapter import *
 from .code import *
 from .model import *
 from .tools import *
+from .function import *
