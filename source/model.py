@@ -811,6 +811,9 @@ class TypeReference(Type):
         return self.type.get_definers()
 
     def gen_chunks(self, generator):
+        if isinstance(self.type, CPPMacro):
+            return []
+
         if self.definer_references is None:
             raise RuntimeError("Attempt to generate chunks for reference to"
                 " type %s without the type reference adjusting"
@@ -1224,6 +1227,17 @@ class Macro(Type):
             args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
+
+
+class CPPMacro(Macro):
+    "A kind of macro defined by the C preprocessor."
+
+    def __init__(self, *args, **kw):
+        super(CPPMacro, self).__init__(*args, **kw)
+
+    def gen_chunks(self, _):
+        return []
+
 
 # Data models
 
