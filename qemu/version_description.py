@@ -30,7 +30,7 @@ from common import (
     callco,
     remove_file,
     execfile,
-    PyGenerator
+    pythonize
 )
 from json import (
     load
@@ -590,7 +590,7 @@ class QemuVersionDescription(object):
 
             yield True
 
-            PyGenerator(backend = open(qvc_path, "wb")).serialize(self.qvc)
+            pythonize(self.qvc, qvc_path)
         else:
             self.load_cache()
             # make just loaded QVC active
@@ -615,7 +615,7 @@ class QemuVersionDescription(object):
             if is_outdated:
                 yield self.qvc.co_computing_parameters(self.repo)
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
-                PyGenerator(backend = open(qvc_path, "wb")).serialize(self.qvc)
+                pythonize(self.qvc, qvc_path)
 
         yield True
 
