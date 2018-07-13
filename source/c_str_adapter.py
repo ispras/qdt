@@ -11,6 +11,12 @@ def t_C_GEN_ESCAPE(t):
     t.value = "@@"
     return t
 
+# space inside a C string should not be breaked during auto line wrapping
+def t_SPACE(t):
+    "[ ]"
+    t.value = "@b"
+    return t
+
 # escape quotes (C grammar)
 def t_QUOTES(t):
     '"'
