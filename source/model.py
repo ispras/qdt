@@ -1252,6 +1252,10 @@ class TypesCollector(ObjectVisitor):
 
     def on_visit(self):
         cur = self.cur
+        # Depth traversal nameless pointer to determine the type
+        if isinstance(cur, Pointer) and not cur.is_named:
+            return
+
         if isinstance(cur, Type):
             self.used_types.add(cur)
             raise BreakVisiting()
