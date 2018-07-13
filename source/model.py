@@ -214,6 +214,8 @@ class ChunkGenerator(object):
 
             if isinstance(frame, TypeReference):
                 definer = frame.type.definer.path
+            elif isinstance(frame, (Pointer, MacroType)) and frame.is_named:
+                definer = frame.definer.path
             elif isinstance(frame, Type):
                 definer = frame.definer.path
 
