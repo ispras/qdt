@@ -1015,6 +1015,19 @@ class Enumeration(Type):
     __type_references__ = ["elems"]
 
 
+class FunctionBodyString(object):
+
+    def __init__(self, body = None, used_types = None, used_globals = None):
+        self.body = body
+        self.used_types = set() if used_types is None else set(used_types)
+        self.used_globals = [] if used_globals is None else list(used_globals)
+
+    def __str__(self):
+        return self.body
+
+    __type_references__ = ["used_types"]
+
+
 class Function(Type):
 
     def __init__(self, name,
@@ -1023,8 +1036,8 @@ class Function(Type):
         args = None,
         static = False,
         inline = False,
-        used_types = [],
-        used_globals = []
+        used_types = None,
+        used_globals = None
     ):
         # args is list of Variables
         super(Function, self).__init__(name,
@@ -1034,11 +1047,21 @@ class Function(Type):
         )
         self.static = static
         self.inline = inline
-        self.body = body
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
         self.args = args
-        self.used_types = set(used_types)
-        self.used_globals = used_globals
+
+        if isinstance(body, str):
+            self.body = FunctionBodyString(
+                body = body,
+                used_types = used_types,
+                used_globals = used_globals
+            )
+        else:
+            self.body = body
+            if (used_types or used_globals) is not None:
+                raise ValueError("Specifing of used types or globals for non-"
+                    "string body is redundant."
+                )
 
     def gen_declaration_chunks(self, generator):
         indent = ""
@@ -1098,7 +1121,7 @@ class Function(Type):
     def gen_var(self, name, initializer = None, static = False):
         return Variable(name, self, initializer = initializer, static = static)
 
-    __type_references__ = ["ret_type", "args", "used_types"]
+    __type_references__ = ["ret_type", "args", "body"]
 
 
 class Pointer(Type):
@@ -1962,11 +1985,12 @@ def gen_function_decl_ref_chunks(function, generator):
 def gen_function_def_ref_chunks(f, generator):
     references = []
 
-    for t in f.used_types:
-        references.extend(generator.provide_chunks(t))
-    for g in f.used_globals:
-        # Note that 0-th chunk is the global and rest are its dependencies
-        references.append(generator.provide_chunks(g)[0])
+    if isinstance(f.body, FunctionBodyString):
+        for t in f.body.used_types:
+            references.extend(generator.provide_chunks(t))
+        for g in f.body.used_globals:
+            # Note that 0-th chunk is the global and rest are its dependencies
+            references.append(generator.provide_chunks(g)[0])
 
     return references
 
