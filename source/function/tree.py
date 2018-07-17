@@ -93,6 +93,11 @@ class Node(object):
         if self.indent_children:
             writer.pop_indent()
 
+    def __call__(self, *children):
+        for c in children:
+            self.add_child(c)
+        return self
+
 
 class Comment(Node):
     def __init__(self, value):
@@ -220,6 +225,15 @@ class BranchIf(Node):
             self.else_blocks[i].__c__(writer)
             writer.line("}")
 
+    def __call__(self, *children_and_elses):
+        for ce in children_and_elses:
+            if isinstance(ce, BranchElse):
+                self.add_else(ce)
+            else:
+                self.add_child(ce)
+
+        return self
+
 
 # Don't add this class as child to any Nodes
 # It should be added only by `add_else`
@@ -279,6 +293,10 @@ class BranchSwitch(Node):
         writer.line(") {")
         self.out_children(writer)
         writer.line("}")
+
+    def __call__(self, *cases):
+        self.add_cases(cases)
+        return self
 
 
 class SwitchCase(Node):
