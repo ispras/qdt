@@ -204,6 +204,17 @@ def main():
     fde = dia.fde(br_addr)
     print("fde = %s" % fde)
 
+    table_desc = fde.get_decoded()
+    table = table_desc.table
+
+    for row in table:
+        print(row)
+
+    call_frame_row = dia.cfr(br_addr)
+    print("call frame: %s" % call_frame_row)
+    cfa = dia.cfa(br_addr)
+    print("CFA: %s" % cfa)
+
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
