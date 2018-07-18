@@ -39,6 +39,7 @@ from pyrsp.targets import (
     AMD64
 )
 from pyrsp.elf import (
+    Runtime,
     InMemoryELFFile,
     DWARFInfoAccelerator,
     ELF,
@@ -56,6 +57,10 @@ from common import (
 )
 from traceback import (
     print_exc
+)
+from pyrsp.utils import (
+    switch_endian,
+    decode_data
 )
 
 
@@ -230,11 +235,22 @@ def main():
         host = True
     )
 
+    rt = Runtime(qemu_debugger, dia)
+
     br_addr_str = qemu_debugger.get_hex_str(br_addr)
     print("addr 0x%s" % br_addr_str)
 
     def type_reg():
         print("type reg")
+        info_loc = info.location.eval(rt)
+        info_loc_str = "%0*x" % (qemu_debugger.tetradsize, info_loc)
+        print("info at 0x%s" % info_loc_str)
+        info_val = switch_endian(
+            decode_data(
+                qemu_debugger.get_mem(info_loc_str, 8)
+            )
+        )
+        print("info = 0x%s" % info_val)
 
     qemu_debugger.set_br(br_addr_str, type_reg)
 
