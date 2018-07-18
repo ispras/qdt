@@ -191,11 +191,10 @@ def main():
 
     object_c = dia.get_CU_by_name("object.c")
 
-    # get info argument and frame base of type_register_internal function
+    # get info argument of type_register_internal function
     dia.account_subprograms(object_c)
     type_register_internal = dia.subprograms["type_register_internal"][0]
     info = type_register_internal.data["info"]
-    frame = type_register_internal.frame_base
 
     # get address for specific line inside object.c (type_register_internal)
     dia.account_line_program_CU(object_c)
@@ -203,22 +202,7 @@ def main():
 
     br_addr = line_map[136][0].state.address
 
-    print("frame base: %s" % frame)
     print("info loc: %s" % info.location)
-
-    fde = dia.fde(br_addr)
-    print("fde = %s" % fde)
-
-    table_desc = fde.get_decoded()
-    table = table_desc.table
-
-    for row in table:
-        print(row)
-
-    call_frame_row = dia.cfr(br_addr)
-    print("call frame: %s" % call_frame_row)
-    cfa = dia.cfa(br_addr)
-    print("CFA: %s" % cfa)
 
     qemu_debug_addr = "localhost:4321"
 
@@ -257,6 +241,26 @@ def main():
     qemu_debugger.run()
 
     qemu_proc.join()
+
+
+def test_call_frame(type_register_internal, br_addr):
+    frame = type_register_internal.frame_base
+
+    print("frame base: %s" % frame)
+
+    fde = dia.fde(br_addr)
+    print("fde = %s" % fde)
+
+    table_desc = fde.get_decoded()
+    table = table_desc.table
+
+    for row in table:
+        print(row)
+
+    call_frame_row = dia.cfr(br_addr)
+    print("call frame: %s" % call_frame_row)
+    cfa = dia.cfa(br_addr)
+    print("CFA: %s" % cfa)
 
 
 def test_subprograms(dia):
