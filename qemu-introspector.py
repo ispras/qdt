@@ -62,6 +62,9 @@ from pyrsp.utils import (
     switch_endian,
     decode_data
 )
+from pyrsp.gdb_types import (
+    Type
+)
 
 
 def checksum(stream, block_size):
@@ -235,6 +238,9 @@ def main():
             )
         )
         print("info = 0x%s" % info_val)
+        pt = Type(dia, info.type_DIE)
+        t = pt.target()
+        print("info type: %s %s" % (" ".join(t.modifiers), t.name))
 
     qemu_debugger.set_br(br_addr_str, type_reg)
 
