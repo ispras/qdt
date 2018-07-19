@@ -45,7 +45,7 @@ from pyrsp.elf import (
     ELF,
     AddrDesc
 )
-from pyrsp.intervalmap import (
+from elftools.common.intervalmap import (
     intervalmap
 )
 from hashlib import (
