@@ -63,6 +63,7 @@ from pyrsp.utils import (
     decode_data
 )
 from pyrsp.gdb import (
+    Value,
     Type
 )
 
@@ -227,7 +228,7 @@ def main():
     br_addr_str = qemu_debugger.get_hex_str(br_addr)
     print("addr 0x%s" % br_addr_str)
 
-    def type_reg():
+    def type_reg_fields():
         print("type reg")
         info_loc = info.location.eval(rt)
         info_loc_str = "%0*x" % (qemu_debugger.tetradsize, info_loc)
@@ -246,6 +247,19 @@ def main():
 
         for f in st.fields():
             print("%s %s; // %s" % (f.type.name, f.name, f.location))
+
+    # hack to make this work
+    qemu_debugger.address_size = 8
+    def type_reg_name():
+        v = Value(info, rt)
+        parent = v["parent"]
+        name = parent.fetch(qemu_debugger.address_size)
+        print("parent name at 0x%0*x" % (qemu_debugger.tetradsize, name))
+        print("parent: %s" % parent.fetch_c_string())
+
+    def type_reg():
+        type_reg_name()
+        type_reg_fields()
 
     qemu_debugger.set_br(br_addr_str, type_reg)
 
