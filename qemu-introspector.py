@@ -62,7 +62,7 @@ from pyrsp.utils import (
     switch_endian,
     decode_data
 )
-from pyrsp.gdb_types import (
+from pyrsp.gdb import (
     Type
 )
 
