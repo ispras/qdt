@@ -244,7 +244,8 @@ def main():
 
     qemu_debugger.set_br(br_addr_str, type_reg)
 
-    qemu_debugger.run()
+    qemu_debugger.resume()
+    qemu_debugger.rsp.finish()
 
     qemu_proc.join()
 
