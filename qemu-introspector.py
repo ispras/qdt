@@ -252,10 +252,13 @@ def main():
     qemu_debugger.address_size = 8
     def type_reg_name():
         v = Value(info, rt)
+        name = v["name"]
         parent = v["parent"]
-        name = parent.fetch(qemu_debugger.address_size)
-        print("parent name at 0x%0*x" % (qemu_debugger.tetradsize, name))
-        print("parent: %s" % parent.fetch_c_string())
+
+        p_name = parent.fetch(qemu_debugger.address_size)
+        print("parent name at 0x%0*x" % (qemu_debugger.tetradsize, p_name))
+
+        print("%s -> %s" % (parent.fetch_c_string(), name.fetch_c_string()))
 
     def type_reg():
         type_reg_name()
