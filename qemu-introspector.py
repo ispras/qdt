@@ -241,6 +241,11 @@ def main():
         pt = Type(dia, info.type_DIE)
         t = pt.target()
         print("info type: %s %s" % (" ".join(t.modifiers), t.name))
+        # t is `typedef`, get the structure
+        st = t.target()
+
+        for f in st.fields():
+            print("%s %s; // %s" % (f.type.name, f.name, f.location))
 
     qemu_debugger.set_br(br_addr_str, type_reg)
 
