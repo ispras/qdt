@@ -200,13 +200,18 @@ class ConstWgt(object):
         self.frame_id = c.create_rectangle(
             x - CONST_PADDING, y - CONST_PADDING,
             x + CONST_PADDING, y + CONST_PADDING,
-            fill = "white",
+            fill = "white"
+        )
+        self.drag_id = c.create_rectangle(
+            x - CONST_PADDING, y - CONST_PADDING,
+            x + CONST_PADDING, y + CONST_PADDING,
+            fill = "black",
             tag = "DnD"
         )
         self.text_id = c.create_text(x, y, text = "")
         self.update(w)
 
-        DnDGroup(w, self.frame_id, [self.text_id])
+        DnDGroup(w, self.drag_id, [self.text_id, self.frame_id])
 
     def update(self, w):
         c = w.canvas
@@ -231,9 +236,13 @@ class ConstWgt(object):
             bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING,
             bounds[2] + CONST_PADDING, bounds[3] + CONST_PADDING
         )
+        c.coords(self.drag_id,
+            bounds[0] - 2 * CONST_PADDING, bounds[1] - 2 * CONST_PADDING,
+            bounds[0], bounds[1]
+        )
 
     def ids(self):
-        return [self.text_id, self.frame_id]
+        return [self.text_id, self.frame_id, self.drag_id]
 
 class VarDialog(VarToplevel):
     def __init__(self, *a, **kw):
