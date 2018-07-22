@@ -1,4 +1,10 @@
+from common import (
+    mlget as _
+)
 from widgets import (
+    VarButton,
+    HKEntry,
+    VarToplevel,
     CanvasDnD,
     VarTk
 )
@@ -15,9 +21,16 @@ from math import (
 from bisect import (
     bisect_left
 )
+from six.moves.tkinter import (
+    END,
+    StringVar
+)
 
 class Const(object):
     ico = u"Const"
+
+    def __init__(self):
+        self.str_value = None
 
 class Op(object):
     ico = None
@@ -197,7 +210,18 @@ class ConstWgt(object):
 
     def update(self, w):
         c = w.canvas
-        bounds = c.bbox(self.text_id)
+        text_id = self.text_id
+
+        val = self.c.str_value
+        if val is None:
+            text = ""
+        elif val == "":
+            text = '""'
+        else:
+            text = val
+        c.itemconfig(text_id, text = text)
+
+        bounds = c.bbox(text_id)
         c.coords(self.frame_id,
             bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING,
             bounds[2] + CONST_PADDING, bounds[3] + CONST_PADDING
@@ -206,6 +230,77 @@ class ConstWgt(object):
     def ids(self):
         return [self.text_id, self.frame_id]
 
+class VarDialog(VarToplevel):
+    def __init__(self, *a, **kw):
+        VarToplevel.__init__(self, *a, **kw)
+
+        self.transient(self.master)
+        self.grab_set()
+
+class ConstEdit(VarDialog):
+    def __init__(self, const_wgt, *a, **kw):
+        VarDialog.__init__(self, *a, **kw)
+
+        self.title(_("Edit constant"))
+
+        self.cw = const_wgt
+
+        self.grid()
+        self.rowconfigure(0, weight = 1)
+        self.rowconfigure(1, weight = 0)
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 1)
+
+        v = self.var = StringVar()
+        e = self.entry = HKEntry(self, textvariable = v)
+        e.grid(row = 0, column = 0, columnspan = 2, sticky = "NESW")
+
+        e.focus_set()
+
+        val = const_wgt.c.str_value
+
+        if val is None:
+            v.set("")
+        elif val == "":
+            v.set('""')
+        else:
+            v.set(val)
+
+        VarButton(self, text = _(u"Ok"), command = self.on_ok).grid(
+            row = 1, column = 0, sticky = "W"
+        )
+        VarButton(self, text = _(u"Cancel"), command = self.on_cancel).grid(
+            row = 1, column = 1, sticky = "E"
+        )
+
+        self.bind("<Return>", self.on_ok, "+")
+        self.bind("<Escape>", self.on_cancel, "+")
+
+        self.after(10, self.after_init)
+
+    def after_init(self):
+        e = self.entry
+
+        e.selection_range(0, END)
+        e.icursor(END)
+
+    def on_cancel(self, __ = None):
+        # __ is required to use this as a keyboard event key handler
+        self.destroy()
+
+    def on_ok(self, __ = None):
+        cw = self.cw
+
+        val = self.var.get()
+        if val == "":
+            cw.c.str_value = None
+        elif val == '""':
+            cw.c.str_value = ""
+        else:
+            cw.c.str_value = val
+
+        cw.update(self.master)
+        self.destroy()
 
 OPERATORS = [x for x in globals().values() if (
     isclass(x)
@@ -225,6 +320,24 @@ SHORTCUTS = tuple(OPERATORS + [
     Const
 ])
 
+class move_centred(object):
+    def __init__(self, wgt, x, y, w = None, h = None):
+        self.wgt, self.x, self.y, self.w, self.h = wgt, x, y, w, h
+        wgt.after(10, self.move_centred)
+
+    def move_centred(self):
+        wgt = self.wgt
+
+        w, h = self.w, self.h
+        if w is None:
+            w = wgt.winfo_width()
+        if h is None:
+            h = wgt.winfo_height()
+
+        wgt.geometry("%ux%u+%u+%u" % (
+            w, h, self.x - (w >> 1), self.y - (h >> 1)
+        ))
+
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
         CanvasDnD.__init__(self, *a, *kw)
@@ -237,6 +350,31 @@ class CodeCanvas(CanvasDnD):
         self.__op_hl_idx = None
 
         self.id2wgt = {}
+
+        self.canvas.bind("<Double-Button-1>", self.on_double_button_1, "+")
+
+    def on_double_button_1(self, event):
+        c = self.canvas
+
+        ex, ey = event.x, event.y
+        x, y = c.canvasx(ex), c.canvasy(ey)
+
+        touched = c.find_overlapping(x - 1, y - 1, x + 1, y + 1)
+        i2w = self.id2wgt
+
+        for i in touched:
+            if i not in i2w:
+                continue
+
+            wgt = i2w[i]
+
+            if isinstance(wgt, ConstWgt):
+                move_centred(ConstEdit(wgt, self),
+                    c.winfo_rootx() + ex,
+                    c.winfo_rooty() + ey,
+                    w = 200
+                )
+                break
 
     # overrides
     def down(self, event):
