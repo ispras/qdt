@@ -82,6 +82,40 @@ class Mod(Bin):
     def __eval__(self, a, b):
         return a % b
 
+class DnDGroup(object):
+    def __init__(self, w, anchor_id, items):
+        self.anchor_id = anchor_id
+        self.items = items
+        w.bind("<<DnDDown>>", self.on_dnd_down, "+")
+
+    def on_dnd_down(self, event):
+        w = event.widget
+        a_id = self.anchor_id
+        if w.dnd_dragged != a_id:
+            return
+        self.prev = w.canvas.coords(a_id)[:2]
+        self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
+        self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
+
+    def on_dnd_moved(self, event):
+        w = event.widget
+        a_id = self.anchor_id
+        px, py = self.prev
+
+        x, y = w.canvas.coords(a_id)[:2]
+        dx, dy = x - px, y - py
+        self.prev = x, y
+
+        coords = w.canvas.coords
+        for i in self.items:
+            x0, y0, x1, y1 = coords(i)
+            coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+
+    def on_dnd_up(self, event):
+        w = event.widget
+        w.unbind("<<DnDMoved>>", self.__moved)
+        w.unbind("<<DnDUp>>", self.__up)
+
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
 
@@ -129,36 +163,7 @@ class OpWgt(object):
         # width = bounds[2] - bounds[0]
         # height = bounds[3] - bounds[1]
         # c.coords(op_id, x - width / 2, y - height / 2)
-
-        w.bind("<<DnDDown>>", self.on_dnd_down, "+")
-
-    def on_dnd_down(self, event):
-        w = event.widget
-        op_id = self.op_id
-        if w.dnd_dragged != op_id:
-            return
-        self.prev = w.canvas.coords(op_id)[:2]
-        self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
-        self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
-
-    def on_dnd_moved(self, event):
-        w = event.widget
-        op_id = self.op_id
-        px, py = self.prev
-
-        x, y = w.canvas.coords(op_id)[:2]
-        dx, dy = x - px, y - py
-        self.prev = x, y
-
-        coords = w.canvas.coords
-        for i in self.in_slots + self.out_slots:
-            x0, y0, x1, y1 = coords(i)
-            coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
-
-    def on_dnd_up(self, event):
-        w = event.widget
-        w.unbind("<<DnDMoved>>", self.__moved)
-        w.unbind("<<DnDUp>>", self.__up)
+        DnDGroup(w, op_id, self.in_slots + self.out_slots)
 
 OPERATORS = tuple(x for x in globals().values() if (
     isclass(x)
