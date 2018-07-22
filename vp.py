@@ -213,13 +213,18 @@ class ConstWgt(object):
         text_id = self.text_id
 
         val = self.c.str_value
+
+        color = "black"
+
         if val is None:
             text = ""
         elif val == "":
             text = '""'
+            color = "gray"
         else:
             text = val
-        c.itemconfig(text_id, text = text)
+
+        c.itemconfig(text_id, text = text, fill = color)
 
         bounds = c.bbox(text_id)
         c.coords(self.frame_id,
@@ -294,7 +299,7 @@ class ConstEdit(VarDialog):
         val = self.var.get()
         if val == "":
             cw.c.str_value = None
-        elif val == '""':
+        elif val == '""' or val == "''" or val == '""""""' or val == "''''''":
             cw.c.str_value = ""
         else:
             cw.c.str_value = val
