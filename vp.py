@@ -16,6 +16,9 @@ from bisect import (
     bisect_left
 )
 
+class Const(object):
+    ico = u"Const"
+
 class Op(object):
     ico = None
     # no limitations for operands amount
@@ -108,8 +111,12 @@ class DnDGroup(object):
 
         coords = w.canvas.coords
         for i in self.items:
-            x0, y0, x1, y1 = coords(i)
-            coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+            xy = coords(i)
+            if len(xy) == 2:
+                x0, y0 = xy
+                coords(i, x0 + dx, y0 + dy)
+            else:
+                x0, y0, x1, y1 = xy                coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
 
     def on_dnd_up(self, event):
         w = event.widget
@@ -165,11 +172,40 @@ class OpWgt(object):
         # c.coords(op_id, x - width / 2, y - height / 2)
         DnDGroup(w, op_id, self.in_slots + self.out_slots)
 
-OPERATORS = tuple(x for x in globals().values() if (
+CONST_PADDING = 5
+
+class ConstWgt(object):
+    def __init__(self):
+        self.c = Const()
+
+    def init(self, w, x, y):
+        c = w.canvas
+
+        self.frame_id = c.create_rectangle(
+            x - CONST_PADDING, y - CONST_PADDING,
+            x + CONST_PADDING, y + CONST_PADDING,
+            fill = "white",
+            tag = "DnD"
+        )
+        self.text_id = c.create_text(x, y, text = "")
+        self.update(w)
+
+        DnDGroup(w, self.frame_id, [self.text_id])
+
+    def update(self, w):
+        c = w.canvas
+        bounds = c.bbox(self.text_id)
+        c.coords(self.frame_id,
+            bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING,
+            bounds[2] + CONST_PADDING, bounds[3] + CONST_PADDING
+        )
+
+
+OPERATORS = [x for x in globals().values() if (
     isclass(x)
     and Op in getmro(x)
     and x.ico is not None
-))
+)]
 
 
 # operator selection circle
@@ -179,6 +215,9 @@ OP_HL_CIRCLE_R = 20
 OP_HL_THRESHOLD_1 = 50.0 ** 2
 OP_HL_THRESHOLD_2 = 150.0 ** 2
 
+SHORTCUTS = tuple(OPERATORS + [
+    Const
+])
 
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
@@ -206,8 +245,13 @@ class CodeCanvas(CanvasDnD):
     def up(self, event):
         hl_idx = self.__op_hl_idx
         if hl_idx is not None:
-            op_wgt = OpWgt(OPERATORS[hl_idx])
-            op_wgt.init(self, *self.__b1_down)
+            cls = SHORTCUTS[hl_idx]
+            if cls is Const:
+                wgt = ConstWgt()
+            else:
+                wgt = OpWgt(cls)
+
+            wgt.init(self, *self.__b1_down)
 
         self.hide_ops()
 
@@ -229,10 +273,10 @@ class CodeCanvas(CanvasDnD):
                 a = atan2(dy, dx)
 
                 idx = bisect_left(self.__op_segments, a)
-                idx %= len(OPERATORS)
+                idx %= len(SHORTCUTS)
                 self.__op_hl_idx = idx
 
-                # print(OPERATORS[idx].__name__)
+                # print(SHORTCUTS[idx].__name__)
 
                 op_a = self.__op_segments[idx] - self.__op_step / 2
                 op_x, op_y = (
@@ -273,13 +317,13 @@ class CodeCanvas(CanvasDnD):
         cnv = self.canvas
         ids = self.__ops_ids
 
-        step = 2.0 * pi / len(OPERATORS)
+        step = 2.0 * pi / len(SHORTCUTS)
         a = -pi
 
         # for user selection identification
         seg = a + step / 2
         op_segments = []
-        for op in OPERATORS:
+        for op in SHORTCUTS:
             ids.append(
                 cnv.create_text(
                     (x + OP_CIRCLE_R * cos(a), y + OP_CIRCLE_R * sin(a)),
