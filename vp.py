@@ -82,6 +82,84 @@ class Mod(Bin):
     def __eval__(self, a, b):
         return a % b
 
+def slot(x, y):
+    return x - 10, y - 10, x + 10, y + 10
+
+class OpWgt(object):
+
+    def __init__(self, op_class):
+        self.op = op_class()
+        self.op_id = None
+        self.in_slots = []
+        self.out_slots = []
+
+    def init(self, w, x, y):
+        c = w.canvas
+        op = self.op
+
+        in_slots = self.in_slots
+        I = op.op_amount
+        step = pi / I
+        a = -pi + step / 2
+
+        rad = 30
+
+        i = 0
+        while i < I:
+            sx, sy = x + rad * cos(a), y + rad * sin(a)
+            in_slots.append(c.create_rectangle(slot(sx, sy)))
+            a += step
+            i += 1
+
+        out_slots = self.out_slots
+        I = op.ret_amount
+        step = pi / I
+        a = pi - step / 2
+
+        i = 0
+        while i < I:
+            sx, sy = x + rad * cos(a), y + rad * sin(a)
+            out_slots.append(c.create_rectangle(slot(sx, sy)))
+            a -= step
+            i += 1
+
+        op_id = c.create_text(x, y, text = op.ico, tag = "DnD")
+        self.op_id = op_id
+        # bounds = c.bbox(op_id)
+        # width = bounds[2] - bounds[0]
+        # height = bounds[3] - bounds[1]
+        # c.coords(op_id, x - width / 2, y - height / 2)
+
+        w.bind("<<DnDDown>>", self.on_dnd_down, "+")
+
+    def on_dnd_down(self, event):
+        w = event.widget
+        op_id = self.op_id
+        if w.dnd_dragged != op_id:
+            return
+        self.prev = w.canvas.coords(op_id)[:2]
+        self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
+        self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
+
+    def on_dnd_moved(self, event):
+        w = event.widget
+        op_id = self.op_id
+        px, py = self.prev
+
+        x, y = w.canvas.coords(op_id)[:2]
+        dx, dy = x - px, y - py
+        self.prev = x, y
+
+        coords = w.canvas.coords
+        for i in self.in_slots + self.out_slots:
+            x0, y0, x1, y1 = coords(i)
+            coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+
+    def on_dnd_up(self, event):
+        w = event.widget
+        w.unbind("<<DnDMoved>>", self.__moved)
+        w.unbind("<<DnDUp>>", self.__up)
+
 OPERATORS = tuple(x for x in globals().values() if (
     isclass(x)
     and Op in getmro(x)
@@ -121,10 +199,14 @@ class CodeCanvas(CanvasDnD):
         self.show_ops(x, y)
 
     def up(self, event):
-        self.__b1_down = None
+        hl_idx = self.__op_hl_idx
+        if hl_idx is not None:
+            op_wgt = OpWgt(OPERATORS[hl_idx])
+            op_wgt.init(self, *self.__b1_down)
 
         self.hide_ops()
 
+        self.__b1_down = None
         CanvasDnD.up(self, event)
 
     def motion(self, event):
