@@ -172,6 +172,9 @@ class OpWgt(object):
         # c.coords(op_id, x - width / 2, y - height / 2)
         DnDGroup(w, op_id, self.in_slots + self.out_slots)
 
+    def ids(self):
+        return [self.op_id] + self.in_slots + self.out_slots
+
 CONST_PADDING = 5
 
 class ConstWgt(object):
@@ -199,6 +202,9 @@ class ConstWgt(object):
             bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING,
             bounds[2] + CONST_PADDING, bounds[3] + CONST_PADDING
         )
+
+    def ids(self):
+        return [self.text_id, self.frame_id]
 
 
 OPERATORS = [x for x in globals().values() if (
@@ -230,6 +236,8 @@ class CodeCanvas(CanvasDnD):
         self.__op_circle = None
         self.__op_hl_idx = None
 
+        self.id2wgt = {}
+
     # overrides
     def down(self, event):
         CanvasDnD.down(self, event)
@@ -252,6 +260,10 @@ class CodeCanvas(CanvasDnD):
                 wgt = OpWgt(cls)
 
             wgt.init(self, *self.__b1_down)
+
+            i2w = self.id2wgt
+            for i in wgt.ids():
+                i2w[i] = wgt
 
         self.hide_ops()
 
