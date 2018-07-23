@@ -39,7 +39,6 @@ from pyrsp.targets import (
     AMD64
 )
 from pyrsp.elf import (
-    Runtime,
     InMemoryELFFile,
     DWARFInfoAccelerator,
     ELF,
@@ -65,6 +64,9 @@ from pyrsp.utils import (
 from pyrsp.gdb import (
     Value,
     Type
+)
+from pyrsp.runtime import (
+    Runtime
 )
 
 
