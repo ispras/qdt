@@ -226,25 +226,16 @@ def main():
     br_cb = runtime_based_var_getting(rt)
     qemu_debugger.set_br(br_addr_str, br_cb)
 
-    qemu_debugger.resume()
-
-    qemu_debugger.del_br(br_addr_str)
-    rt.on_resume()
-    qemu_debugger.rsp.step()
-    qemu_debugger.set_br(br_addr_str, br_cb)
-
-    rt.on_resume()
-    qemu_debugger.resume()
+    qemu_debugger.run()
 
     qemu_debugger.rsp.finish()
-
     qemu_proc.join()
 
 
 def runtime_based_var_getting(rt):
     target = rt.target
 
-    def type_reg():
+    def type_reg(resumes = [1]):
         print("type reg")
         info = rt["info"]
         name = info["name"]
@@ -254,6 +245,13 @@ def runtime_based_var_getting(rt):
         print("parent name at 0x%0*x" % (target.tetradsize, p_name))
 
         print("%s -> %s" % (parent.fetch_c_string(), name.fetch_c_string()))
+
+        rt.on_resume()
+
+        if resumes[0] == 0:
+            rt.target.interrupt()
+        else:
+            resumes[0] -= 1
 
     return type_reg
 
@@ -301,6 +299,8 @@ def explicit_var_getting(rt, object_c):
     def type_reg():
         type_reg_name()
         type_reg_fields()
+
+        rt.on_resume()
 
     return type_reg
 
