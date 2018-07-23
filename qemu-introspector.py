@@ -226,7 +226,7 @@ def main():
     # hack to make this work
     qemu_debugger.address_size = 8
 
-    br_cb = explicit_var_getting(rt, object_c)
+    br_cb = runtime_based_var_getting(rt)
     qemu_debugger.set_br(br_addr_str, br_cb)
 
     qemu_debugger.resume()
@@ -242,6 +242,23 @@ def main():
     qemu_debugger.rsp.finish()
 
     qemu_proc.join()
+
+
+def runtime_based_var_getting(rt):
+    target = rt.target
+
+    def type_reg():
+        print("type reg")
+        info = rt["info"]
+        name = info["name"]
+        parent = info["parent"]
+
+        p_name = parent.fetch(target.address_size)
+        print("parent name at 0x%0*x" % (target.tetradsize, p_name))
+
+        print("%s -> %s" % (parent.fetch_c_string(), name.fetch_c_string()))
+
+    return type_reg
 
 
 def explicit_var_getting(rt, object_c):
