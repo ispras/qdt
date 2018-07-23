@@ -197,18 +197,11 @@ def main():
 
     object_c = dia.get_CU_by_name("object.c")
 
-    # get info argument of type_register_internal function
-    dia.account_subprograms(object_c)
-    type_register_internal = dia.subprograms["type_register_internal"][0]
-    info = type_register_internal.data["info"]
-
     # get address for specific line inside object.c (type_register_internal)
     dia.account_line_program_CU(object_c)
     line_map = dia.find_line_map("object.c")
 
     br_addr = line_map[136][0].state.address
-
-    print("info loc: %s" % info.location)
 
     qemu_debug_addr = "localhost:4321"
 
@@ -230,14 +223,45 @@ def main():
     br_addr_str = qemu_debugger.get_hex_str(br_addr)
     print("addr 0x%s" % br_addr_str)
 
+    # hack to make this work
+    qemu_debugger.address_size = 8
+
+    br_cb = explicit_var_getting(rt, object_c)
+    qemu_debugger.set_br(br_addr_str, br_cb)
+
+    qemu_debugger.resume()
+
+    qemu_debugger.del_br(br_addr_str)
+    rt.on_resume()
+    qemu_debugger.rsp.step()
+    qemu_debugger.set_br(br_addr_str, br_cb)
+
+    rt.on_resume()
+    qemu_debugger.resume()
+
+    qemu_debugger.rsp.finish()
+
+    qemu_proc.join()
+
+
+def explicit_var_getting(rt, object_c):
+    dia = rt.dia
+    target = rt.target
+    # get info argument of type_register_internal function
+    dia.account_subprograms(object_c)
+    type_register_internal = dia.subprograms["type_register_internal"][0]
+    info = type_register_internal.data["info"]
+
+    print("info loc: %s" % info.location)
+
     def type_reg_fields():
         print("type reg")
         info_loc = info.location.eval(rt)
-        info_loc_str = "%0*x" % (qemu_debugger.tetradsize, info_loc)
+        info_loc_str = "%0*x" % (target.tetradsize, info_loc)
         print("info at 0x%s" % info_loc_str)
         info_val = switch_endian(
             decode_data(
-                qemu_debugger.get_mem(info_loc_str, 8)
+                target.get_mem(info_loc_str, 8)
             )
         )
         print("info = 0x%s" % info_val)
@@ -250,15 +274,13 @@ def main():
         for f in st.fields():
             print("%s %s; // %s" % (f.type.name, f.name, f.location))
 
-    # hack to make this work
-    qemu_debugger.address_size = 8
     def type_reg_name():
         v = Value(info, rt)
         name = v["name"]
         parent = v["parent"]
 
-        p_name = parent.fetch(qemu_debugger.address_size)
-        print("parent name at 0x%0*x" % (qemu_debugger.tetradsize, p_name))
+        p_name = parent.fetch(target.address_size)
+        print("parent name at 0x%0*x" % (target.tetradsize, p_name))
 
         print("%s -> %s" % (parent.fetch_c_string(), name.fetch_c_string()))
 
@@ -266,21 +288,7 @@ def main():
         type_reg_name()
         type_reg_fields()
 
-    qemu_debugger.set_br(br_addr_str, type_reg)
-
-    qemu_debugger.resume()
-
-    qemu_debugger.del_br(br_addr_str)
-    rt.on_resume()
-    qemu_debugger.rsp.step()
-    qemu_debugger.set_br(br_addr_str, type_reg)
-
-    rt.on_resume()
-    qemu_debugger.resume()
-
-    qemu_debugger.rsp.finish()
-
-    qemu_proc.join()
+    return type_reg
 
 
 def test_call_frame(type_register_internal, br_addr):
