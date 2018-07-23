@@ -223,9 +223,6 @@ def main():
     br_addr_str = qemu_debugger.get_hex_str(br_addr)
     print("addr 0x%s" % br_addr_str)
 
-    # hack to make this work
-    qemu_debugger.address_size = 8
-
     br_cb = runtime_based_var_getting(rt)
     qemu_debugger.set_br(br_addr_str, br_cb)
 
