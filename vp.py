@@ -158,24 +158,20 @@ class OpWgt(object):
 
         rad = 30
 
-        i = 0
-        while i < I:
+        for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
             in_slots.append(c.create_rectangle(slot(sx, sy), fill = "white"))
             a += step
-            i += 1
 
         out_slots = self.out_slots
         I = op.ret_amount
         step = pi / I
         a = pi - step / 2
 
-        i = 0
-        while i < I:
+        for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
             out_slots.append(c.create_rectangle(slot(sx, sy), fill = "white"))
             a -= step
-            i += 1
 
         op_id = c.create_text(x, y, text = op.ico, tag = "DnD")
         self.op_id = op_id
