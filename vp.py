@@ -144,8 +144,10 @@ class OpWgt(object):
     def __init__(self, op_class):
         self.op = op_class()
         self.op_id = None
-        self.in_slots = []
-        self.out_slots = []
+
+        # widget id to operand index
+        self.in_slots = {}
+        self.out_slots = {}
 
     def init(self, w, x, y):
         c = w.canvas
@@ -160,7 +162,7 @@ class OpWgt(object):
 
         for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
-            in_slots.append(c.create_rectangle(slot(sx, sy), fill = "white"))
+            in_slots[c.create_rectangle(slot(sx, sy), fill = "white")] = i
             a += step
 
         out_slots = self.out_slots
@@ -170,7 +172,7 @@ class OpWgt(object):
 
         for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
-            out_slots.append(c.create_rectangle(slot(sx, sy), fill = "white"))
+            out_slots[c.create_rectangle(slot(sx, sy), fill = "white")] = i
             a -= step
 
         op_id = c.create_text(x, y, text = op.ico, tag = "DnD")
@@ -179,16 +181,16 @@ class OpWgt(object):
         # width = bounds[2] - bounds[0]
         # height = bounds[3] - bounds[1]
         # c.coords(op_id, x - width / 2, y - height / 2)
-        DnDGroup(w, op_id, self.in_slots + self.out_slots)
+        DnDGroup(w, op_id, tuple(self.in_slots) + tuple(self.out_slots))
 
     def ids(self):
-        return [self.op_id] + self.in_slots + self.out_slots
+        return (self.op_id,) + tuple(self.in_slots) + tuple(self.out_slots)
 
     def out_ids(self):
-        return self.out_slots
+        return self.out_slots.keys()
 
     def in_ids(self):
-        return self.in_slots
+        return self.in_slots.keys()
 
 CONST_PADDING = 5
 
