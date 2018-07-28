@@ -188,6 +188,12 @@ class OpWgt(object):
     def ids(self):
         return [self.op_id] + self.in_slots + self.out_slots
 
+    def out_ids(self):
+        return self.out_slots
+
+    def in_ids(self):
+        return self.in_slots
+
 CONST_PADDING = 5
 
 class ConstWgt(object):
@@ -243,6 +249,12 @@ class ConstWgt(object):
 
     def ids(self):
         return [self.text_id, self.frame_id, self.drag_id]
+
+    def out_ids(self):
+        return [self.frame_id]
+
+    def in_ids(self):
+        return []
 
 class VarDialog(VarToplevel):
     def __init__(self, *a, **kw):
@@ -364,8 +376,14 @@ class CodeCanvas(CanvasDnD):
         self.__op_hl_idx = None
 
         self.id2wgt = {}
+        self.in_ids = set()
+        self.out_ids = set()
 
         self.canvas.bind("<Double-Button-1>", self.on_double_button_1, "+")
+
+        # data dragging
+        self.__data_drag = False
+        self.__data_tmp_line = None
 
     def on_double_button_1(self, event):
         c = self.canvas
@@ -392,17 +410,54 @@ class CodeCanvas(CanvasDnD):
 
     # overrides
     def down(self, event):
-        CanvasDnD.down(self, event)
-
-        if self.dragging:
-            return
+        # Before DnD tagged widgets drawing check for data dragging
+        cnv = self.canvas
 
         x, y = event.x, event.y
         self.__b1_down = (x, y)
 
-        self.show_ops(x, y)
+        out_ids = self.out_ids
+        for _id in cnv.find_overlapping(x - 1, y - 1, x + 1, y + 1):
+            if _id in out_ids:
+                break
+        else:
+            CanvasDnD.down(self, event)
+
+            if not self.dragging:
+                self.show_ops(x, y)
+
+            return
+
+        self.__data_start = _id
+        self.__data_drag = True
+        self.__data_tmp_line = cnv.create_line(x, y, x + 1, y + 1)
 
     def up(self, event):
+        if self.__data_drag:
+            self.__data_drag = False
+            self.canvas.delete(self.__data_tmp_line)
+            self.__data_tmp_line = None
+
+            x, y = event.x, event.y
+            in_ids = self.in_ids
+
+            for end_id in self.canvas.find_overlapping(
+                x - 1, y - 1, x + 1, y + 1
+            ):
+                if end_id in in_ids:
+                    break
+            else:
+                return
+
+            i2w = self.id2wgt
+
+            start_id = self.__data_start
+            start = i2w[start_id]
+            end = i2w[end_id]
+
+            print("%s -> %s" % (start, end))
+            return
+
         hl_idx = self.__op_hl_idx
         if hl_idx is not None:
             cls = SHORTCUTS[hl_idx]
@@ -417,12 +472,25 @@ class CodeCanvas(CanvasDnD):
             for i in wgt.ids():
                 i2w[i] = wgt
 
+            self.in_ids.update(wgt.in_ids())
+            self.out_ids.update(wgt.out_ids())
+
         self.hide_ops()
 
         self.__b1_down = None
         CanvasDnD.up(self, event)
 
     def motion(self, event):
+        if self.__data_drag:
+            cnv = self.canvas
+
+            x1, y1 = self.__b1_down
+            x2, y2 = event.x, event.y
+            line_id = self.__data_tmp_line
+
+            cnv.coords(line_id, x1, y1, x2, y2)
+            return
+
         CanvasDnD.motion(self, event)
 
         if self.dragging:
