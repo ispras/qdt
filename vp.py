@@ -149,7 +149,7 @@ class OpWgt(object):
         self.in_slots = {}
         self.out_slots = {}
 
-    def init(self, w, x, y):
+    def __g_init__(self, w, x, y):
         c = w.canvas
         op = self.op
 
@@ -198,21 +198,21 @@ class ConstWgt(object):
     def __init__(self):
         self.c = Const()
 
-    def init(self, w, x, y):
+    def __g_init__(self, w, x, y):
         c = w.canvas
 
-        # actual frame and drag-box sizes will be assigned by `update`
+        # actual frame and drag-box sizes will be assigned by `__g_update__`
         self.frame_id = c.create_rectangle(x, y, x, y, fill = "white")
         self.drag_id = c.create_rectangle(x, y, x, y,
             fill = "black",
             tag = "DnD"
         )
         self.text_id = c.create_text(x, y, text = "")
-        self.update(w)
+        self.__g_update__(w)
 
         DnDGroup(w, self.drag_id, [self.text_id, self.frame_id])
 
-    def update(self, w):
+    def __g_update__(self, w):
         c = w.canvas
         text_id = self.text_id
 
@@ -318,7 +318,7 @@ class ConstEdit(VarDialog):
         else:
             cw.c.str_value = val
 
-        cw.update(self.master)
+        cw.__g_update__(self.master)
         self.destroy()
 
 OPERATORS = [x for x in globals().values() if (
@@ -459,7 +459,7 @@ class CodeCanvas(CanvasDnD):
             else:
                 wgt = OpWgt(cls)
 
-            wgt.init(self, *self.__b1_down)
+            wgt.__g_init__(self, *self.__b1_down)
 
             i2w = self.id2wgt
             for i in wgt.ids():
