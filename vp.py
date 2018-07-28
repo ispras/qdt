@@ -201,14 +201,9 @@ class ConstWgt(object):
     def init(self, w, x, y):
         c = w.canvas
 
-        self.frame_id = c.create_rectangle(
-            x - CONST_PADDING, y - CONST_PADDING,
-            x + CONST_PADDING, y + CONST_PADDING,
-            fill = "white"
-        )
-        self.drag_id = c.create_rectangle(
-            x - CONST_PADDING, y - CONST_PADDING,
-            x + CONST_PADDING, y + CONST_PADDING,
+        # actual frame and drag-box sizes will be assigned by `update`
+        self.frame_id = c.create_rectangle(x, y, x, y, fill = "white")
+        self.drag_id = c.create_rectangle(x, y, x, y,
             fill = "black",
             tag = "DnD"
         )
@@ -241,8 +236,8 @@ class ConstWgt(object):
             bounds[2] + CONST_PADDING, bounds[3] + CONST_PADDING
         )
         c.coords(self.drag_id,
-            bounds[0] - 2 * CONST_PADDING, bounds[1] - 2 * CONST_PADDING,
-            bounds[0], bounds[1]
+            bounds[0] - 3 * CONST_PADDING, bounds[1] - 3 * CONST_PADDING,
+            bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING
         )
 
     def ids(self):
