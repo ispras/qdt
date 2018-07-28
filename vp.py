@@ -161,7 +161,7 @@ class OpWgt(object):
         i = 0
         while i < I:
             sx, sy = x + rad * cos(a), y + rad * sin(a)
-            in_slots.append(c.create_rectangle(slot(sx, sy)))
+            in_slots.append(c.create_rectangle(slot(sx, sy), fill = "white"))
             a += step
             i += 1
 
@@ -173,7 +173,7 @@ class OpWgt(object):
         i = 0
         while i < I:
             sx, sy = x + rad * cos(a), y + rad * sin(a)
-            out_slots.append(c.create_rectangle(slot(sx, sy)))
+            out_slots.append(c.create_rectangle(slot(sx, sy), fill = "white"))
             a -= step
             i += 1
 
