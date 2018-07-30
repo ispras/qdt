@@ -68,6 +68,9 @@ from pyrsp.gdb import (
 from pyrsp.runtime import (
     Runtime
 )
+from itertools import (
+    count
+)
 
 
 def checksum(stream, block_size):
@@ -161,6 +164,122 @@ class QArgumentParser(ArgumentParser):
             " before QEMU and its arguments.\n"
         )
         super(QArgumentParser, self).error(*args, **kw)
+
+
+# Characters disalowed in node ID according to DOT language. That is not a full
+# list though.
+# https://www.graphviz.org/doc/info/lang.html
+re_DOT_ID_disalowed = compile(r"[^a-zA-Z0-9_]")
+
+class QOMTreeGetter(object):
+
+    def __init__(self, runtime, dot_file_name = None):
+        self.rt = runtime
+        dia = runtime.dia
+        object_c = dia.get_CU_by_name("object.c")
+
+        # get address for specific line inside object.c (type_register_internal)
+        dia.account_line_program_CU(object_c)
+        line_map = dia.find_line_map("object.c")
+
+        line_137 = line_map[137]
+        line_138 = line_map[138]
+
+        br_addr = line_137[0].state.address
+
+        self.target = target = runtime.target
+
+        br_addr_str = target.get_hex_str(br_addr)
+        print("type_register_internal entry: 0x%s" % br_addr_str)
+
+        target.set_br(br_addr_str, self.on_type_register_internal)
+
+        # set finish breakpoint in main just after QOM module initialization
+        main = dia["main"]
+        dia.account_line_program_CU(main.die.cu)
+        vl_c_line_map = dia.find_line_map("vl.c")
+        main_addr = vl_c_line_map[3075][0].state.address
+        main_addr_str = target.get_hex_str(main_addr)
+
+        print("finish br in `main`: 0x%s" % main_addr_str)
+        target.set_br(main_addr_str, self.on_main)
+
+        if dot_file_name is None:
+            dot_file = None
+        else:
+            dot_file = open(dot_file_name, "wb")
+            dot_file.write("""\
+digraph QOM {
+    rankdir=LR;
+    node [shape=polygon fontname=Momospace]
+    edge [style=filled]
+"""
+            )
+            self.name2node = {}
+            self.nodes = {}
+
+        self.dot_file = dot_file
+
+        target.on_finish.append(self.finalize)
+
+    def node(self, name):
+        node_base = re_DOT_ID_disalowed.sub("_", name)
+        nodes = self.nodes
+
+        if node_base in nodes:
+            counter = nodes[node_base]
+            if counter is None:
+                nodes[node_base] = counter = count(0)
+
+            node = "%s__%d" % (node_base, next(counter))
+        else:
+            node = node_base
+            nodes[node_base] = None
+
+        self.name2node[name] = node
+        return node
+
+    def on_type_register_internal(self):
+        rt = self.rt
+
+        info = rt["info"]
+        name = info["name"]
+        parent = info["parent"]
+
+        parent_s, name_s = parent.fetch_c_string(), name.fetch_c_string()
+
+        if parent_s is None:
+            parent_s = "NULL"
+
+        print("%s -> %s" % (parent_s, name_s))
+
+        dot = self.dot_file
+        if dot is not None:
+            n2n = self.name2node
+
+            if parent_s in n2n:
+                parent_n = n2n[parent_s]
+            else:
+                parent_n = self.node(parent_s)
+                dot.write(b'\n\n    %s [label = "%s"]' % (parent_n, parent_s))
+
+            if name_s in n2n:
+                name_n = n2n[name_s]
+            else:
+                name_n = self.node(name_s)
+                dot.write(b'\n\n    %s [label = "%s"]' % (name_n, name_s))
+
+            dot.write(b"\n    %s -> %s" % (parent_n, name_n))
+
+        rt.on_resume()
+
+    def on_main(self):
+        self.rt.target.interrupt()
+
+    def finalize(self):
+        if self.dot_file:
+            self.dot_file.write(b"\n}\n")
+            self.dot_file.close()
 
 
 def main():
