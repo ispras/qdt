@@ -234,9 +234,7 @@ digraph QOM {
         return node
 
     def on_type_register_internal(self):
-        rt = self.rt
-
-        info = rt["info"]
+        info = self.rt["info"]
         name = info["name"]
         parent = info["parent"]
 
@@ -264,8 +262,6 @@ digraph QOM {
                 dot.write(b'\n\n    %s [label = "%s"]' % (name_n, name_s))
 
             dot.write(b"\n    %s -> %s" % (parent_n, name_n))
-
-        rt.on_resume()
 
     def on_main(self):
         self.rt.target.interrupt()
