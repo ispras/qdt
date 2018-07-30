@@ -29,8 +29,8 @@ from six.moves.tkinter import (
 class Const(object):
     ico = u"Const"
 
-    def __init__(self):
-        self.str_value = None
+    def __init__(self, str_value = None):
+        self.str_value = str_value
 
 class Op(object):
     ico = None
