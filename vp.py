@@ -195,8 +195,8 @@ class OpWgt(object):
 CONST_PADDING = 5
 
 class ConstWgt(object):
-    def __init__(self):
-        self.c = Const()
+    def __init__(self, const = None):
+        self.c = Const() if const is None else const
 
     def __g_init__(self, w, x, y):
         c = w.canvas
