@@ -180,7 +180,6 @@ class QOMTreeGetter(object):
         line_map = dia.find_line_map("object.c")
 
         line_137 = line_map[137]
-        line_138 = line_map[138]
 
         br_addr = line_137[0].state.address
 
