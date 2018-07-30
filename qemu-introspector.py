@@ -11,6 +11,7 @@ from re import (
     compile
 )
 from collections import (
+    defaultdict,
     deque
 )
 from multiprocessing import (
@@ -51,6 +52,7 @@ from hashlib import (
     sha1
 )
 from common import (
+    sort_topologically,
     PyGenerator,
     execfile
 )
@@ -70,6 +72,10 @@ from pyrsp.runtime import (
 )
 from itertools import (
     count
+)
+from inspect import (
+    getmembers,
+    ismethod
 )
 from graphviz import (
     Digraph
@@ -168,6 +174,61 @@ class QArgumentParser(ArgumentParser):
         )
         super(QArgumentParser, self).error(*args, **kw)
 
+
+class RQOMTree(object):
+    """ QEmu object model tree descriptor at runtime
+    """
+
+    def __init__(self):
+        null = RQOMType(self, "0", "NULL", None)
+
+        self.name2type = {"NULL" : null}
+        self.addr2type = {0 : null}
+
+        # Types are found randomly (i.e. not in parent-first order).
+        self.unknown_parents = defaultdict(list)
+
+    def account(self, info_addr, name, parent):
+        "Add a type"
+        t = RQOMType(self, info_addr, name, parent)
+        self.addr2type[info_addr] = t
+        self.name2type[name] = t
+
+        unk_p = self.unknown_parents
+
+        n2t = self.name2type
+        if parent in n2t:
+            n2t[parent].children.append(t)
+        else:
+            unk_p[parent].append(t)
+
+        if name in unk_p:
+            t.children.extend(unk_p.pop(name))
+
+class RQOMType(object):
+    """ QEmu object model type descriptor at runtime
+    """
+    def __init__(self, tree, info_addr, name, parent):
+        self.tree = tree
+        self.addr = info_addr
+        self.name, self.parent = name, parent
+
+        self.children = []
+
+    def __dfs_children__(self):
+        return self.children
+
+
+# Characters disalowed in node ID according to DOT language. That is not a full
+# list though.
+# https://www.graphviz.org/doc/info/lang.html
+re_DOT_ID_disalowed = compile(r"[^a-zA-Z0-9_]")
+
+
+def gv_node(label):
+    return re_DOT_ID_disalowed.sub("_", label)
+
+
 class QOMTreeGetter(object):
 
     def __init__(self, runtime):
@@ -195,19 +256,7 @@ class QOMTreeGetter(object):
         print("finish br in `main`: 0x%s" % main_addr_str)
         target.set_br(main_addr_str, self.on_main)
 
-        self.graph = Digraph(
-            name = "QOM",
-            graph_attr = dict(
-                rankdir = "LR"
-            ),
-            node_attr = dict(
-                shape = "polygon",
-                fontname = "Momospace"
-            ),
-            edge_attr = dict(
-                style = "filled"
-            ),
-        )
+        self.tree = RQOMTree()
 
     def on_type_register_internal(self):
         info = self.rt["info"]
@@ -221,14 +270,102 @@ class QOMTreeGetter(object):
 
         print("%s -> %s" % (parent_s, name_s))
 
-        self.graph.edge(parent_s, name_s)
+        self.tree.account(info.fetch_pointer(), name_s, parent_s)
 
     def on_main(self):
         self.rt.target.interrupt()
 
     def to_file(self, dot_file_name):
+        graph = Digraph(
+            name = "QOM",
+            graph_attr = dict(
+                rankdir = "LR"
+            ),
+            node_attr = dict(
+                shape = "polygon",
+                fontname = "Momospace"
+            ),
+            edge_attr = dict(
+                style = "filled"
+            ),
+        )
+
+        graph.node("NULL")
+        for t in sort_topologically(self.tree.name2type["NULL"].children):
+            n = gv_node(t.name)
+            graph.node(n, label = t.name + "\\n0x%x" % t.addr)
+            graph.edge(gv_node(t.parent), n)
+
         with open(dot_file_name, "wb") as f:
-            f.write(self.graph.source)
+            f.write(graph.source)
+
+
+class QInstance(object):
+    """ Descriptor for QOM object at runtime.
+    """
+
+    def __init__(self, addr, type_name = None):
+        self.addr = addr
+        self.type_name = type_name
+
+re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]*$")
+
+def is_breakpoint_cb(object):
+    if not ismethod(object):
+        return False
+    if not object.__name__.startswith("on_"):
+        return False
+    doc = object.__doc__
+    return doc and re_breakpoint_pos.match(doc.splitlines()[0])
+
+
+class MachineWatcher(object):
+    """ Watches for QOM API calls to reconstruct machine model and monitor its
+    state at runtime.
+    """
+
+    def __init__(self, dia, verbose = True):
+        self.dia = dia
+        self.verbose = verbose
+
+        # inspect methods getting those who is a breakpoint handler
+        self.breakpoints = brs = []
+        for name, cb in getmembers(type(self), predicate = is_breakpoint_cb):
+            file_name, line_str = cb.__doc__.splitlines()[0].split(":")
+            line_map = dia.find_line_map(file_name)
+            line_descs = line_map[int(line_str)]
+            addr = line_descs[0].state.address
+            brs.append((addr, getattr(self, name)))
+
+        # addr -> QInstance mapping
+        self.instances = {}
+
+    def init_runtime(self, rt):
+        v = self.verbose
+
+        self.rt = rt
+        target = rt.target
+
+        for addr, cb in self.breakpoints:
+            addr_str = target.get_hex_str(addr)
+
+            if v:
+                print("br 0x" + addr_str + ", handler = " + cb.__name__)
+
+            target.set_br(addr_str, cb)
+
+    def on_obj_init_start(self):
+        "object.c:384" # object_initialize_with_type
+
+        _type = self.rt["type"]
+        name_ptr = _type["name"]
+        name = name_ptr.fetch_c_string()
+
+        print("creating instance of " + str(name))
+
+    def on_obj_init_end(self):
+        "object.c:386" # object_initialize_with_type
+        rt = self.rt
 
 
 def main():
@@ -265,6 +402,8 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
+    mw = MachineWatcher(dia)
+
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
@@ -282,6 +421,7 @@ def main():
 
     rt = Runtime(qemu_debugger, dia)
 
+    mw.init_runtime(rt)
 
     qomtg = QOMTreeGetter(rt)
 
