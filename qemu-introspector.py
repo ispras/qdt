@@ -176,10 +176,7 @@ class QOMTreeGetter(object):
     def __init__(self, runtime, dot_file_name = None):
         self.rt = runtime
         dia = runtime.dia
-        object_c = dia.get_CU_by_name("object.c")
-
         # get address for specific line inside object.c (type_register_internal)
-        dia.account_line_program_CU(object_c)
         line_map = dia.find_line_map("object.c")
 
         line_137 = line_map[137]
@@ -195,8 +192,6 @@ class QOMTreeGetter(object):
         target.set_br(br_addr_str, self.on_type_register_internal)
 
         # set finish breakpoint in main just after QOM module initialization
-        main = dia["main"]
-        dia.account_line_program_CU(main.die.cu)
         vl_c_line_map = dia.find_line_map("vl.c")
         main_addr = vl_c_line_map[3075][0].state.address
         main_addr_str = target.get_hex_str(main_addr)
