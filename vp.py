@@ -1,4 +1,6 @@
 from common import (
+    execfile,
+    PyGenerator,
     mlget as _
 )
 from widgets import (
@@ -25,6 +27,12 @@ from six.moves.tkinter import (
     END,
     StringVar
 )
+from os.path import (
+    isfile
+)
+from traceback import (
+    format_exc
+)
 
 
 class Const(object):
@@ -32,6 +40,15 @@ class Const(object):
 
     def __init__(self, str_value = None):
         self.str_value = str_value
+
+    def __dfs_children__(self):
+        return tuple()
+
+    def __gen_code__(self, g):
+        g.gen_code(self)
+
+    def __var_base__(self):
+        return "c"
 
 
 class Op(object):
@@ -47,6 +64,16 @@ class Op(object):
 
     def __getitem__(self, idx):
         return self.operands[idx]
+
+    def __gen_code__(self, g):
+        g.reset_gen_common(type(self).__name__)
+        g.pprint(tuple(self.operands))
+
+    def __dfs_children__(self):
+        return self.operands
+
+    def __var_base__(self):
+        return type(self).__name__.lower()
 
 
 class Bin(Op):
@@ -200,6 +227,9 @@ class OpWgt(Wgt):
         # c.coords(op_id, x - width / 2, y - height / 2)
         DnDGroup(w, op_id, tuple(self.in_slots) + tuple(self.out_slots))
 
+    def __g_coords__(self, w):
+        return w.canvas.coords(self.op_id)
+
     def ids(self):
         return (self.op_id,) + tuple(self.in_slots) + tuple(self.out_slots)
 
@@ -258,6 +288,9 @@ class ConstWgt(Wgt):
             bounds[0] - 3 * CONST_PADDING, bounds[1] - 3 * CONST_PADDING,
             bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING
         )
+
+    def __g_coords__(self, w):
+        return w.canvas.coords(self.text_id)
 
     def ids(self):
         return [self.text_id, self.frame_id, self.drag_id]
@@ -498,6 +531,30 @@ class CodeCanvas(CanvasDnD):
         self.in_ids.update(wgt.in_ids())
         self.out_ids.update(wgt.out_ids())
 
+    def add_instance(self, inst, x, y):
+        t = type(inst)
+        for cls in getmro(t):
+            if cls is Const:
+                wgt = ConstWgt(inst)
+                break
+            elif cls is Op:
+                wgt = OpWgt(inst)
+                break
+        else:
+            raise ValueError("No widget for object %s of type %s" % (
+                str(inst), t.__name__
+            ))
+
+        self.add_widget(wgt, x, y)
+
+    def iter_widgets(self):
+        yielded = set()
+        for w in self.id2wgt.values():
+            if w in yielded:
+                continue
+            yield w
+            yielded.add(w)
+
     def motion(self, event):
         if self.__data_drag:
             cnv = self.canvas
@@ -598,6 +655,33 @@ class CodeCanvas(CanvasDnD):
 
             self.__hide_op_hl()
 
+    def iter_positions(self):
+        for wgt in self.iter_widgets():
+            x, y = wgt.__g_coords__(self)
+            yield wgt.inst, x, y
+
+
+class SaveData(object):
+    def __init__(self, *positions):
+        self.positions = positions
+
+    def from_canvas(self, cnv):
+        self.positions = list(cnv.iter_positions())
+
+    def to_canvas(self, cnv):
+        for item_position in self.positions:
+            cnv.add_instance(*item_position)
+
+    def __dfs_children__(self):
+        return [p[0] for p in self.positions]
+
+    def __gen_code__(self, g):
+        g.reset_gen_common(type(self).__name__)
+        g.pprint(tuple(self.positions))
+
+    def __var_base__(self):
+        return "save"
+
 
 if __name__ == "__main__":
     root = VarTk()
@@ -609,5 +693,29 @@ if __name__ == "__main__":
     dnd_cnv.grid(row = 0, column = 0, sticky = "NESW")
 
     root.geometry("800x800+400+400")
+
+    # last project loading
+    if isfile("vproject.py"):
+        loaded = {}
+        try:
+            execfile("vproject.py", globals(), loaded)
+        except:
+            print("Cannot load project file:\n" + format_exc())
+        else:
+            if "save" in loaded:
+                loaded["save"].to_canvas(dnd_cnv)
+            else:
+                print("No save data found in project file")
+
+    def do_save_and_destroy():
+        save = SaveData()
+        save.from_canvas(dnd_cnv)
+
+        with open("vproject.py", "wb") as w:
+            PyGenerator().serialize(w, save)
+
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", do_save_and_destroy)
 
     root.mainloop()
