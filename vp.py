@@ -26,11 +26,13 @@ from six.moves.tkinter import (
     StringVar
 )
 
+
 class Const(object):
     ico = u"Const"
 
     def __init__(self, str_value = None):
         self.str_value = str_value
+
 
 class Op(object):
     ico = None
@@ -46,6 +48,7 @@ class Op(object):
     def __getitem__(self, idx):
         return self.operands[idx]
 
+
 class Bin(Op):
     __py_op__ = None
     op_amount = 2 # exactly 2 operands
@@ -56,12 +59,14 @@ class Bin(Op):
         w(self.__py_op__)
         self[1].__py__(w)
 
+
 class Add(Bin):
     ico = u"+"
     __py_op__ = "+"
 
     def __eval__(self, a, b):
         return a + b
+
 
 class Sub(Bin):
     ico = u"\u2212"
@@ -70,12 +75,14 @@ class Sub(Bin):
     def __eval__(self, a, b):
         return a - b
 
+
 class Mul(Bin):
     ico = u"\u00d7"
     __py_op__ = "*"
 
     def __eval__(self, a, b):
         return a * b
+
 
 class Div(Bin):
     ico = u"/"
@@ -84,6 +91,7 @@ class Div(Bin):
     def __eval__(self, a, b):
         return a / b
 
+
 class IntDiv(Bin):
     ico = u"//"
     __py_op__ = "//"
@@ -91,12 +99,14 @@ class IntDiv(Bin):
     def __eval__(self, a, b):
         return a // b
 
+
 class Mod(Bin):
     ico = u"mod"
     __py_op__ = "%"
 
     def __eval__(self, a, b):
         return a % b
+
 
 class DnDGroup(object):
     def __init__(self, w, anchor_id, items):
@@ -136,12 +146,15 @@ class DnDGroup(object):
         w.unbind("<<DnDMoved>>", self.__moved)
         w.unbind("<<DnDUp>>", self.__up)
 
+
 class Wgt(object):
     def __init__(self, instance):
         self.inst = instance
 
+
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
+
 
 class OpWgt(Wgt):
 
@@ -196,7 +209,9 @@ class OpWgt(Wgt):
     def in_ids(self):
         return self.in_slots.keys()
 
+
 CONST_PADDING = 5
+
 
 class ConstWgt(Wgt):
     def __init__(self, const = None):
@@ -253,12 +268,14 @@ class ConstWgt(Wgt):
     def in_ids(self):
         return []
 
+
 class VarDialog(VarToplevel):
     def __init__(self, *a, **kw):
         VarToplevel.__init__(self, *a, **kw)
 
         self.transient(self.master)
         self.grab_set()
+
 
 class ConstEdit(VarDialog):
     def __init__(self, const_wgt, *a, **kw):
@@ -325,12 +342,12 @@ class ConstEdit(VarDialog):
         cw.__g_update__(self.master)
         self.destroy()
 
+
 OPERATORS = [x for x in globals().values() if (
     isclass(x)
     and Op in getmro(x)
     and x.ico is not None
 )]
-
 
 # operator selection circle
 OP_CIRCLE_R = 100
@@ -360,6 +377,7 @@ class move_centred(object):
         wgt.geometry("%ux%u+%u+%u" % (
             w, h, self.x - (w >> 1), self.y - (h >> 1)
         ))
+
 
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
@@ -579,6 +597,7 @@ class CodeCanvas(CanvasDnD):
             self.__ops_ids.clear()
 
             self.__hide_op_hl()
+
 
 if __name__ == "__main__":
     root = VarTk()
