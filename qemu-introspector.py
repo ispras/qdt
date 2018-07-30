@@ -316,14 +316,6 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
-    object_c = dia.get_CU_by_name("object.c")
-
-    # get address for specific line inside object.c (type_register_internal)
-    dia.account_line_program_CU(object_c)
-    line_map = dia.find_line_map("object.c")
-
-    br_addr = line_map[136][0].state.address
-
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
@@ -341,15 +333,15 @@ def main():
 
     rt = Runtime(qemu_debugger, dia)
 
-    br_addr_str = qemu_debugger.get_hex_str(br_addr)
-    print("addr 0x%s" % br_addr_str)
+    qomtg = QOMTreeGetter(rt, dot_file_name = "qom-by-q.i.dot")
 
-    br_cb = runtime_based_var_getting(rt)
-    qemu_debugger.set_br(br_addr_str, br_cb)
 
     qemu_debugger.run()
 
     qemu_debugger.rsp.finish()
+    # XXX: on_finish method is not called by RemoteTarget
+    qomtg.finalize()
+
     qemu_proc.join()
 
 
