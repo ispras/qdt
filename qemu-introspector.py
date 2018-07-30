@@ -71,6 +71,9 @@ from pyrsp.runtime import (
 from itertools import (
     count
 )
+from graphviz import (
+    Digraph
+)
 
 
 def checksum(stream, block_size):
@@ -165,15 +168,9 @@ class QArgumentParser(ArgumentParser):
         )
         super(QArgumentParser, self).error(*args, **kw)
 
-
-# Characters disalowed in node ID according to DOT language. That is not a full
-# list though.
-# https://www.graphviz.org/doc/info/lang.html
-re_DOT_ID_disalowed = compile(r"[^a-zA-Z0-9_]")
-
 class QOMTreeGetter(object):
 
-    def __init__(self, runtime, dot_file_name = None):
+    def __init__(self, runtime):
         self.rt = runtime
         dia = runtime.dia
         # get address for specific line inside object.c (type_register_internal)
@@ -198,40 +195,19 @@ class QOMTreeGetter(object):
         print("finish br in `main`: 0x%s" % main_addr_str)
         target.set_br(main_addr_str, self.on_main)
 
-        if dot_file_name is None:
-            dot_file = None
-        else:
-            dot_file = open(dot_file_name, "wb")
-            dot_file.write("""\
-digraph QOM {
-    rankdir=LR;
-    node [shape=polygon fontname=Momospace]
-    edge [style=filled]
-"""
-            )
-            self.name2node = {}
-            self.nodes = {}
-
-        self.dot_file = dot_file
-
-        target.on_finish.append(self.finalize)
-
-    def node(self, name):
-        node_base = re_DOT_ID_disalowed.sub("_", name)
-        nodes = self.nodes
-
-        if node_base in nodes:
-            counter = nodes[node_base]
-            if counter is None:
-                nodes[node_base] = counter = count(0)
-
-            node = "%s__%d" % (node_base, next(counter))
-        else:
-            node = node_base
-            nodes[node_base] = None
-
-        self.name2node[name] = node
-        return node
+        self.graph = Digraph(
+            name = "QOM",
+            graph_attr = dict(
+                rankdir = "LR"
+            ),
+            node_attr = dict(
+                shape = "polygon",
+                fontname = "Momospace"
+            ),
+            edge_attr = dict(
+                style = "filled"
+            ),
+        )
 
     def on_type_register_internal(self):
         info = self.rt["info"]
@@ -245,31 +221,14 @@ digraph QOM {
 
         print("%s -> %s" % (parent_s, name_s))
 
-        dot = self.dot_file
-        if dot is not None:
-            n2n = self.name2node
-
-            if parent_s in n2n:
-                parent_n = n2n[parent_s]
-            else:
-                parent_n = self.node(parent_s)
-                dot.write(b'\n\n    %s [label = "%s"]' % (parent_n, parent_s))
-
-            if name_s in n2n:
-                name_n = n2n[name_s]
-            else:
-                name_n = self.node(name_s)
-                dot.write(b'\n\n    %s [label = "%s"]' % (name_n, name_s))
-
-            dot.write(b"\n    %s -> %s" % (parent_n, name_n))
+        self.graph.edge(parent_s, name_s)
 
     def on_main(self):
         self.rt.target.interrupt()
 
-    def finalize(self):
-        if self.dot_file:
-            self.dot_file.write(b"\n}\n")
-            self.dot_file.close()
+    def to_file(self, dot_file_name):
+        with open(dot_file_name, "wb") as f:
+            f.write(self.graph.source)
 
 
 def main():
@@ -323,14 +282,14 @@ def main():
 
     rt = Runtime(qemu_debugger, dia)
 
-    qomtg = QOMTreeGetter(rt, dot_file_name = "qom-by-q.i.dot")
 
+    qomtg = QOMTreeGetter(rt)
 
     qemu_debugger.run()
 
     qemu_debugger.rsp.finish()
     # XXX: on_finish method is not called by RemoteTarget
-    qomtg.finalize()
+    qomtg.to_file("qom-by-q.i.dot")
 
     qemu_proc.join()
 
