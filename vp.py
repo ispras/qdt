@@ -141,8 +141,8 @@ def slot(x, y):
 
 class OpWgt(object):
 
-    def __init__(self, op_class):
-        self.op = op_class()
+    def __init__(self, op):
+        self.op = op
         self.op_id = None
 
         # widget id to operand index
@@ -457,7 +457,7 @@ class CodeCanvas(CanvasDnD):
             if cls is Const:
                 wgt = ConstWgt()
             else:
-                wgt = OpWgt(cls)
+                wgt = OpWgt(cls())
 
             self.add_widget(wgt, *self.__b1_down)
 
