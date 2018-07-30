@@ -136,13 +136,17 @@ class DnDGroup(object):
         w.unbind("<<DnDMoved>>", self.__moved)
         w.unbind("<<DnDUp>>", self.__up)
 
+class Wgt(object):
+    def __init__(self, instance):
+        self.inst = instance
+
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
 
-class OpWgt(object):
+class OpWgt(Wgt):
 
     def __init__(self, op):
-        self.op = op
+        super(OpWgt, self).__init__(op)
         self.op_id = None
 
         # widget id to operand index
@@ -151,7 +155,7 @@ class OpWgt(object):
 
     def __g_init__(self, w, x, y):
         c = w.canvas
-        op = self.op
+        op = self.inst
 
         in_slots = self.in_slots
         I = op.op_amount
@@ -194,9 +198,9 @@ class OpWgt(object):
 
 CONST_PADDING = 5
 
-class ConstWgt(object):
+class ConstWgt(Wgt):
     def __init__(self, const = None):
-        self.c = Const() if const is None else const
+        super(ConstWgt, self).__init__(Const() if const is None else const)
 
     def __g_init__(self, w, x, y):
         c = w.canvas
@@ -216,7 +220,7 @@ class ConstWgt(object):
         c = w.canvas
         text_id = self.text_id
 
-        val = self.c.str_value
+        val = self.inst.str_value
 
         color = "black"
 
@@ -276,7 +280,7 @@ class ConstEdit(VarDialog):
 
         e.focus_set()
 
-        val = const_wgt.c.str_value
+        val = const_wgt.inst.str_value
 
         if val is None:
             v.set("")
@@ -312,11 +316,11 @@ class ConstEdit(VarDialog):
 
         val = self.var.get()
         if val == "":
-            cw.c.str_value = None
+            cw.inst.str_value = None
         elif val == '""' or val == "''" or val == '""""""' or val == "''''''":
-            cw.c.str_value = ""
+            cw.inst.str_value = ""
         else:
-            cw.c.str_value = val
+            cw.inst.str_value = val
 
         cw.__g_update__(self.master)
         self.destroy()
