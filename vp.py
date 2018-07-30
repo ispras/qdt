@@ -459,19 +459,22 @@ class CodeCanvas(CanvasDnD):
             else:
                 wgt = OpWgt(cls)
 
-            wgt.__g_init__(self, *self.__b1_down)
-
-            i2w = self.id2wgt
-            for i in wgt.ids():
-                i2w[i] = wgt
-
-            self.in_ids.update(wgt.in_ids())
-            self.out_ids.update(wgt.out_ids())
+            self.add_widget(wgt, *self.__b1_down)
 
         self.hide_ops()
 
         self.__b1_down = None
         CanvasDnD.up(self, event)
+
+    def add_widget(self, wgt, x, y):
+        wgt.__g_init__(self, x, y)
+
+        i2w = self.id2wgt
+        for i in wgt.ids():
+            i2w[i] = wgt
+
+        self.in_ids.update(wgt.in_ids())
+        self.out_ids.update(wgt.out_ids())
 
     def motion(self, event):
         if self.__data_drag:
