@@ -312,7 +312,9 @@ def main():
         return -1
 
     di = elf.get_dwarf_info()
-    dia = DWARFInfoAccelerator(di)
+    dia = DWARFInfoAccelerator(di,
+        symtab = elf.get_section_by_name(b".symtab")
+    )
 
     object_c = dia.get_CU_by_name("object.c")
 
