@@ -163,6 +163,48 @@ Extra features:
         return "qec"
 
 
+re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]*$")
+
+
+def is_breakpoint_cb(object):
+    if not ismethod(object):
+        return False
+    if not object.__name__.startswith("on_"):
+        return False
+    doc = object.__doc__
+    return doc and re_breakpoint_pos.match(doc.splitlines()[0])
+
+
+class Watcher(object):
+
+    def __init__(self, dia, verbose = True):
+        self.dia = dia
+        self.verbose = verbose
+
+        # inspect methods getting those who is a breakpoint handler
+        self.breakpoints = brs = []
+        for name, cb in getmembers(type(self), predicate = is_breakpoint_cb):
+            file_name, line_str = cb.__doc__.splitlines()[0].split(":")
+            line_map = dia.find_line_map(file_name)
+            line_descs = line_map[int(line_str)]
+            addr = line_descs[0].state.address
+            brs.append((addr, getattr(self, name)))
+
+    def init_runtime(self, rt):
+        v = self.verbose
+
+        self.rt = rt
+        target = rt.target
+
+        for addr, cb in self.breakpoints:
+            addr_str = target.get_hex_str(addr)
+
+            if v:
+                print("br 0x" + addr_str + ", handler = " + cb.__name__)
+
+            target.set_br(addr_str, cb)
+
+
 re_qemu_system_x = compile(".*qemu-system-.+$")
 
 
@@ -308,51 +350,16 @@ class QInstance(object):
         self.addr = addr
         self.type_name = type_name
 
-re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]*$")
 
-def is_breakpoint_cb(object):
-    if not ismethod(object):
-        return False
-    if not object.__name__.startswith("on_"):
-        return False
-    doc = object.__doc__
-    return doc and re_breakpoint_pos.match(doc.splitlines()[0])
-
-
-class MachineWatcher(object):
+class MachineWatcher(Watcher):
     """ Watches for QOM API calls to reconstruct machine model and monitor its
     state at runtime.
     """
 
     def __init__(self, dia, verbose = True):
-        self.dia = dia
-        self.verbose = verbose
-
-        # inspect methods getting those who is a breakpoint handler
-        self.breakpoints = brs = []
-        for name, cb in getmembers(type(self), predicate = is_breakpoint_cb):
-            file_name, line_str = cb.__doc__.splitlines()[0].split(":")
-            line_map = dia.find_line_map(file_name)
-            line_descs = line_map[int(line_str)]
-            addr = line_descs[0].state.address
-            brs.append((addr, getattr(self, name)))
-
+        super(MachineWatcher, self).__init__(dia, verbose = verbose)
         # addr -> QInstance mapping
         self.instances = {}
-
-    def init_runtime(self, rt):
-        v = self.verbose
-
-        self.rt = rt
-        target = rt.target
-
-        for addr, cb in self.breakpoints:
-            addr_str = target.get_hex_str(addr)
-
-            if v:
-                print("br 0x" + addr_str + ", handler = " + cb.__name__)
-
-            target.set_br(addr_str, cb)
 
     def on_obj_init_start(self):
         "object.c:384" # object_initialize_with_type
