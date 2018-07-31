@@ -279,11 +279,11 @@ class QOMTreeGetter(Watcher):
         self.tree = RQOMTree()
 
     def on_type_register_internal(self):
-        "object.c:137" # type_register_internal
+        "object.c:139" # type_register_internal
 
-        info = self.rt["info"]
-        name = info["name"]
-        parent = info["parent"]
+        impl = self.rt["ti"]
+        name = impl["name"]
+        parent = impl["parent"]
 
         parent_s, name_s = parent.fetch_c_string(), name.fetch_c_string()
 
@@ -292,7 +292,7 @@ class QOMTreeGetter(Watcher):
 
         print("%s -> %s" % (parent_s, name_s))
 
-        self.tree.account(info.fetch_pointer(), name_s, parent_s)
+        self.tree.account(impl.fetch_pointer(), name_s, parent_s)
 
     def on_main(self):
         "vl.c:3075" # main, just after QOM module initialization
