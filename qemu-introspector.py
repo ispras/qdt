@@ -267,6 +267,25 @@ class RQOMType(object):
     def __dfs_children__(self):
         return self.children
 
+    def iter_ancestors(self):
+        n2t = self.tree.name2type
+        cur = self.parent
+
+        while cur is not None:
+            t = n2t[cur]
+            yield t
+            cur = t.parent
+
+    def implements(self, name):
+        if name == self.name:
+            return True
+        t = self.tree.name2type[name]
+
+        for a in self.iter_ancestors():
+            if a is t:
+                return True
+        return False
+
 
 # Characters disalowed in node ID according to DOT language. That is not a full
 # list though.
