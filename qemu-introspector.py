@@ -271,36 +271,16 @@ def gv_node(label):
     return re_DOT_ID_disalowed.sub("_", label)
 
 
-class QOMTreeGetter(object):
+class QOMTreeGetter(Watcher):
 
-    def __init__(self, runtime):
-        self.rt = runtime
-        dia = runtime.dia
-        # get address for specific line inside object.c (type_register_internal)
-        line_map = dia.find_line_map("object.c")
-
-        line_137 = line_map[137]
-
-        br_addr = line_137[0].state.address
-
-        self.target = target = runtime.target
-
-        br_addr_str = target.get_hex_str(br_addr)
-        print("type_register_internal entry: 0x%s" % br_addr_str)
-
-        target.set_br(br_addr_str, self.on_type_register_internal)
-
-        # set finish breakpoint in main just after QOM module initialization
-        vl_c_line_map = dia.find_line_map("vl.c")
-        main_addr = vl_c_line_map[3075][0].state.address
-        main_addr_str = target.get_hex_str(main_addr)
-
-        print("finish br in `main`: 0x%s" % main_addr_str)
-        target.set_br(main_addr_str, self.on_main)
+    def __init__(self, dia, verbose = True):
+        super(QOMTreeGetter, self).__init__(dia, verbose = verbose)
 
         self.tree = RQOMTree()
 
     def on_type_register_internal(self):
+        "object.c:137" # type_register_internal
+
         info = self.rt["info"]
         name = info["name"]
         parent = info["parent"]
@@ -315,6 +295,8 @@ class QOMTreeGetter(object):
         self.tree.account(info.fetch_pointer(), name_s, parent_s)
 
     def on_main(self):
+        "vl.c:3075" # main, just after QOM module initialization
+
         self.rt.target.interrupt()
 
     def to_file(self, dot_file_name):
@@ -410,6 +392,7 @@ def main():
     )
 
     mw = MachineWatcher(dia)
+    qomtg = QOMTreeGetter(dia)
 
     qemu_debug_addr = "localhost:4321"
 
@@ -429,8 +412,7 @@ def main():
     rt = Runtime(qemu_debugger, dia)
 
     mw.init_runtime(rt)
-
-    qomtg = QOMTreeGetter(rt)
+    qomtg.init_runtime(rt)
 
     qemu_debugger.run()
 
