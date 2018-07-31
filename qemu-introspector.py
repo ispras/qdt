@@ -247,6 +247,13 @@ class RQOMTree(object):
         if name in unk_p:
             t.children.extend(unk_p.pop(name))
 
+    def __getitem__(self, addr_or_name):
+        if isinstance(addr_or_name, str):
+            return self.name2type[addr_or_name]
+        else:
+            return self.addr2type[addr_or_name]
+
+
 class RQOMType(object):
     """ QEmu object model type descriptor at runtime
     """
