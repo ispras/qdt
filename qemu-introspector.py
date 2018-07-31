@@ -299,10 +299,15 @@ def gv_node(label):
 
 class QOMTreeGetter(Watcher):
 
-    def __init__(self, dia, verbose = True):
+    def __init__(self, dia, interrupt = True, verbose = True):
+        """
+        :param interrupt:
+            Stop QEmu and exit `RemoteTarget.run`.
+        """
         super(QOMTreeGetter, self).__init__(dia, verbose = verbose)
 
         self.tree = RQOMTree()
+        self.interrupt = interrupt
 
     def on_type_register_internal(self):
         "object.c:139" # type_register_internal
@@ -324,7 +329,8 @@ class QOMTreeGetter(Watcher):
     def on_main(self):
         "vl.c:3075" # main, just after QOM module initialization
 
-        self.rt.target.interrupt()
+        if self.interrupt:
+            self.rt.target.interrupt()
 
     def to_file(self, dot_file_name):
         graph = Digraph(
