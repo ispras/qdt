@@ -316,7 +316,8 @@ class QOMTreeGetter(Watcher):
         if parent_s is None:
             parent_s = "NULL"
 
-        print("%s -> %s" % (parent_s, name_s))
+        if self.verbose:
+            print("%s -> %s" % (parent_s, name_s))
 
         self.tree.account(impl.fetch_pointer(), name_s, parent_s)
 
