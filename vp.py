@@ -251,7 +251,25 @@ class OpWgt(Wgt):
         DnDGroup(w, op_id, tuple(self.in_slots) + tuple(self.out_slots))
 
     def __g_update__(self, w):
-        pass
+        ops = self.inst.operands
+        dc = w.data_colors
+        iconfig = w.canvas.itemconfig
+
+        for iid, idx in self.in_slots.items():
+            datum_id = ops[idx]
+            if datum_id in dc:
+                color1, color2 = dc[datum_id]
+            else:
+                color1, color2 = "white", "black"
+            iconfig(iid, fill = color1, outline = color2)
+
+        for iid, idx in self.out_slots.items():
+            datum_id = self.get_datum(iid)
+            if datum_id in dc:
+                color1, color2 = dc[datum_id]
+            else:
+                color1, color2 = "white", "black"
+            iconfig(iid, fill = color1, outline = color2)
 
     def __g_coords__(self, w):
         return w.canvas.coords(self.op_id)
@@ -301,12 +319,15 @@ class ConstWgt(Wgt):
 
     def __g_update__(self, w):
         c = w.canvas
-        text_id = self.text_id
+        inst = self.inst
 
-        val = self.inst.str_value
+        text_id = self.text_id
+        frame_id = self.frame_id
+        drag_id = self.drag_id
+
+        val = inst.str_value
 
         color = "black"
-
         if val is None:
             text = ""
         elif val == "":
@@ -315,14 +336,21 @@ class ConstWgt(Wgt):
         else:
             text = val
 
+        if inst in w.data_colors:
+            color1, color2 = w.data_colors[inst]
+        else:
+            color1, color2 = "white", "black"
+
+        c.itemconfig(frame_id, outline = color2)
+        c.itemconfig(drag_id, fill = color1, outline = color2)
         c.itemconfig(text_id, text = text, fill = color)
 
         bounds = c.bbox(text_id)
-        c.coords(self.frame_id,
+        c.coords(frame_id,
             bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING,
             bounds[2] + CONST_PADDING, bounds[3] + CONST_PADDING
         )
-        c.coords(self.drag_id,
+        c.coords(drag_id,
             bounds[0] - 3 * CONST_PADDING, bounds[1] - 3 * CONST_PADDING,
             bounds[0] - CONST_PADDING, bounds[1] - CONST_PADDING
         )
@@ -468,6 +496,23 @@ class move_centred(object):
         ))
 
 
+def color_generator(seed = 0xff0000):
+    _next = seed
+    while True:
+        yield _next >> 16, (_next >> 8) & 0xff, _next & 0xff
+        _next = (_next + 202387) & 0x00FFFFFF
+
+def color_string_generator(**kw):
+    for r, g, b in color_generator(**kw):
+        yield (
+            "#%02x%02x%02x" % (r, g, b),
+            "#%02x%02x%02x" % (
+                max(r - 20, 0),
+                max(g - 20, 0),
+                max(b - 20, 0)
+            )
+        )
+
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
         CanvasDnD.__init__(self, *a, *kw)
@@ -489,6 +534,8 @@ class CodeCanvas(CanvasDnD):
         self.__data_drag = False
         self.__data_tmp_line = None
 
+        self.__color_gen_state = color_string_generator()
+        self.data_colors = {}
         # datum id to widget of its source
         self.did2wgt = {}
 
@@ -563,8 +610,13 @@ class CodeCanvas(CanvasDnD):
             end = i2w[end_id]
 
             datum_id = start.get_datum(start_id)
+            if datum_id not in self.data_colors:
+                self.data_colors[datum_id] = next(self.__color_gen_state)
+
             end.set_datum(end_id, datum_id)
 
+            start.__g_update__(self)
+            end.__g_update__(self)
             return
 
         hl_idx = self.__op_hl_idx
@@ -582,7 +634,7 @@ class CodeCanvas(CanvasDnD):
         self.__b1_down = None
         CanvasDnD.up(self, event)
 
-    def add_widget(self, wgt, x, y):
+    def add_widget(self, wgt, x, y, assing_colors = True):
         wgt.__g_init__(self, x, y)
 
         i2w = self.id2wgt
@@ -596,9 +648,23 @@ class CodeCanvas(CanvasDnD):
         for datum_id in wgt.get_defined():
             did2wgt[datum_id] = wgt
 
+        if assing_colors:
+            self.assing_colors(wgt)
+        else:
+            wgt.__g_update__(self)
+
+    def assing_colors(self, wgt):
+        did2wgt = self.did2wgt
+        dc = self.data_colors
+        for datum_id in wgt.get_used():
+            if datum_id in dc:
+                continue
+            dc[datum_id] = next(self.__color_gen_state)
+            did2wgt[datum_id].__g_update__(self)
+
         wgt.__g_update__(self)
 
-    def add_instance(self, inst, x, y):
+    def add_instance(self, inst, x, y, assing_colors = True):
         t = type(inst)
         for cls in getmro(t):
             if cls is Const:
@@ -612,11 +678,15 @@ class CodeCanvas(CanvasDnD):
                 str(inst), t.__name__
             ))
 
-        self.add_widget(wgt, x, y)
+        self.add_widget(wgt, x, y, assing_colors = assing_colors)
+        return wgt
 
     def add_instances(self, instances):
-        for inst in instances:
-            self.add_instance(*inst)
+        for wgt in [
+            self.add_instance(*inst, assing_colors = False)
+                for inst in instances
+        ]:
+            self.assing_colors(wgt)
 
     def iter_widgets(self):
         yielded = set()
