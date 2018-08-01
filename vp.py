@@ -78,6 +78,27 @@ class Op(object):
         return type(self).__name__.lower()
 
 
+class OpDef(object):
+    "Value defined by an operator"
+    def __init__(self, op, ret_idx):
+        self.op, self.ret_idx = op, ret_idx
+
+    def __hash__(self):
+        return hash((self.op, self.ret_idx))
+
+    def __eq__(self, opdef):
+        return (self.op is opdef.op) and (self.ret_idx == opdef.ret_idx)
+
+    def __var_base__(self):
+        return type(self.op).__name__.lower() + ("_%u" % self.ret_idx)
+
+    def __dfs_children__(self):
+        return [self.op]
+
+    def __gen_code__(self, g):
+        g.gen_code(self)
+
+
 class Bin(Op):
     __py_op__ = None
     op_amount = 2 # exactly 2 operands
