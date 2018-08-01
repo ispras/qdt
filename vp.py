@@ -227,6 +227,9 @@ class OpWgt(Wgt):
         # c.coords(op_id, x - width / 2, y - height / 2)
         DnDGroup(w, op_id, tuple(self.in_slots) + tuple(self.out_slots))
 
+    def __g_update__(self, w):
+        pass
+
     def __g_coords__(self, w):
         return w.canvas.coords(self.op_id)
 
