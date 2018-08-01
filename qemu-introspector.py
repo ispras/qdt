@@ -421,6 +421,12 @@ def main():
         return -1
 
     di = elf.get_dwarf_info()
+
+    if di.pubtypes is None:
+        print("%s does not contain .debug_pubtypes section. Provide"
+            " -gpubnames flag to the compiller" % qemu_debug
+        )
+
     dia = DWARFInfoAccelerator(di,
         symtab = elf.get_section_by_name(b".symtab")
     )
