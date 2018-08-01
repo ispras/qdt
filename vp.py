@@ -60,7 +60,9 @@ class Op(object):
     ret_amount = None
 
     def __init__(self, *operands):
-        self.operands = operands
+        self.operands = _ops = [None] * self.op_amount
+        for i, o in enumerate(operands):
+            _ops[i] = o
 
     def __getitem__(self, idx):
         return self.operands[idx]
@@ -70,7 +72,7 @@ class Op(object):
         g.pprint(tuple(self.operands))
 
     def __dfs_children__(self):
-        return self.operands
+        return [op for op in self.operands if op is not None]
 
     def __var_base__(self):
         return type(self).__name__.lower()
