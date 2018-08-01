@@ -382,8 +382,9 @@ class MachineWatcher(Watcher):
     state at runtime.
     """
 
-    def __init__(self, dia, verbose = True):
+    def __init__(self, dia, qom_tree, verbose = True):
         super(MachineWatcher, self).__init__(dia, verbose = verbose)
+        self.tree = qom_tree
         # addr -> QInstance mapping
         self.instances = {}
 
@@ -441,8 +442,8 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
-    mw = MachineWatcher(dia)
     qomtg = QOMTreeGetter(dia)
+    mw = MachineWatcher(dia, qomtg.tree)
 
     qemu_debug_addr = "localhost:4321"
 
