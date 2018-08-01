@@ -265,6 +265,19 @@ class OpWgt(Wgt):
     def in_ids(self):
         return self.in_slots.keys()
 
+    def get_datum(self, iid):
+        return OpDef(self.inst, self.out_slots[iid])
+
+    def set_datum(self, iid, datum_id):
+        self.inst.operands[self.in_slots[iid]] = datum_id
+
+    def get_used(self):
+        return self.inst.__dfs_children__()
+
+    def get_defined(self):
+        inst = self.inst
+        return [OpDef(inst, i) for i in range(inst.op_amount)]
+
 
 CONST_PADDING = 5
 
@@ -325,6 +338,24 @@ class ConstWgt(Wgt):
 
     def in_ids(self):
         return []
+
+    def get_datum(self, iid):
+        if iid != self.frame_id:
+            raise ValueError(
+                "Datum is represented by item %u rather that %u" % (
+                    self.frame_id, iid
+                )
+            )
+        return self.inst
+
+    def set_datum(self, *a, **kw):
+        raise TypeError("Constant does not have a datum to set.")
+
+    def get_used(self):
+        return []
+
+    def get_defined(self):
+        return [self.inst]
 
 
 class VarDialog(VarToplevel):
@@ -458,6 +489,9 @@ class CodeCanvas(CanvasDnD):
         self.__data_drag = False
         self.__data_tmp_line = None
 
+        # datum id to widget of its source
+        self.did2wgt = {}
+
     def on_double_button_1(self, event):
         c = self.canvas
 
@@ -528,7 +562,9 @@ class CodeCanvas(CanvasDnD):
             start = i2w[start_id]
             end = i2w[end_id]
 
-            print("%s -> %s" % (start, end))
+            datum_id = start.get_datum(start_id)
+            end.set_datum(end_id, datum_id)
+
             return
 
         hl_idx = self.__op_hl_idx
@@ -555,6 +591,10 @@ class CodeCanvas(CanvasDnD):
 
         self.in_ids.update(wgt.in_ids())
         self.out_ids.update(wgt.out_ids())
+
+        did2wgt = self.did2wgt
+        for datum_id in wgt.get_defined():
+            did2wgt[datum_id] = wgt
 
         wgt.__g_update__(self)
 
