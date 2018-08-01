@@ -260,7 +260,6 @@ class ConstWgt(Wgt):
             tag = "DnD"
         )
         self.text_id = c.create_text(x, y, text = "")
-        self.__g_update__(w)
 
         DnDGroup(w, self.drag_id, [self.text_id, self.frame_id])
 
@@ -533,6 +532,8 @@ class CodeCanvas(CanvasDnD):
 
         self.in_ids.update(wgt.in_ids())
         self.out_ids.update(wgt.out_ids())
+
+        wgt.__g_update__(self)
 
     def add_instance(self, inst, x, y):
         t = type(inst)
