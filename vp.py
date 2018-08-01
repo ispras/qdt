@@ -553,6 +553,10 @@ class CodeCanvas(CanvasDnD):
 
         self.add_widget(wgt, x, y)
 
+    def add_instances(self, instances):
+        for inst in instances:
+            self.add_instance(*inst)
+
     def iter_widgets(self):
         yielded = set()
         for w in self.id2wgt.values():
@@ -675,8 +679,7 @@ class SaveData(object):
         self.positions = list(cnv.iter_positions())
 
     def to_canvas(self, cnv):
-        for item_position in self.positions:
-            cnv.add_instance(*item_position)
+        cnv.add_instances(self.positions)
 
     def __dfs_children__(self):
         return [p[0] for p in self.positions]
