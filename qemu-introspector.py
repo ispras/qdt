@@ -372,9 +372,10 @@ class QInstance(object):
     """ Descriptor for QOM object at runtime.
     """
 
-    def __init__(self, addr, type_name = None):
-        self.addr = addr
-        self.type_name = type_name
+    def __init__(self, obj, type):
+        self.obj = obj
+        self.type = type
+        self.related = []
 
 
 class MachineWatcher(Watcher):
