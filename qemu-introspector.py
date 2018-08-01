@@ -205,6 +205,16 @@ class Watcher(object):
 
             target.set_br(addr_str, cb, quiet = quiet)
 
+    def remove_breakpoints(self):
+        "Removes breakpoints assigned by `init_runtime`."
+
+        target = self.rt.target
+        quiet = not self.verbose
+
+        for addr, _ in self.breakpoints:
+            addr_str = target.get_hex_str(addr)
+            target.del_br(addr_str, quiet = quiet)
+
 
 re_qemu_system_x = compile(".*qemu-system-.+$")
 
