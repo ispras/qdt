@@ -192,6 +192,7 @@ class Watcher(object):
 
     def init_runtime(self, rt):
         v = self.verbose
+        quiet = not v
 
         self.rt = rt
         target = rt.target
@@ -202,7 +203,7 @@ class Watcher(object):
             if v:
                 print("br 0x" + addr_str + ", handler = " + cb.__name__)
 
-            target.set_br(addr_str, cb)
+            target.set_br(addr_str, cb, quiet = quiet)
 
 
 re_qemu_system_x = compile(".*qemu-system-.+$")
