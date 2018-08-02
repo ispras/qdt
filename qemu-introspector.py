@@ -239,9 +239,18 @@ class RQOMTree(object):
         # Types are found randomly (i.e. not in parent-first order).
         self.unknown_parents = defaultdict(list)
 
-    def account(self, info_addr, name, parent):
+    def account(self, impl, name = None, parent = None):
         "Add a type"
-        t = RQOMType(self, info_addr, name, parent)
+        if not impl.is_global:
+            impl = impl.to_global()
+
+        info_addr = impl.address
+
+        t = RQOMType(self, impl, name = name, parent = parent)
+
+        name = t.name
+        parent = t.parent
+
         self.addr2type[info_addr] = t
         self.name2type[name] = t
 
@@ -268,9 +277,25 @@ class RQOMTree(object):
 class RQOMType(object):
     """ QEmu object model type descriptor at runtime
     """
-    def __init__(self, tree, info_addr, name, parent):
+
+    def __init__(self, tree, impl, name = None, parent = None):
+        """
+        :param impl:
+            global runtime `Value` which is pointer to the `TypeImpl`
+
+        :param name:
+            `str`ing read form impl
+
+        :param parent:
+            `str`ing too
+        """
         self.tree = tree
-        self.addr = info_addr
+        self.impl = impl
+        if name is None:
+            name = impl["name"].fetch_c_string()
+        if parent is None:
+            parent = impl["parent"].fetch_c_string()
+            # Parent may be None
         self.name, self.parent = name, parent
 
         self.children = []
@@ -323,17 +348,13 @@ class QOMTreeGetter(Watcher):
     def on_type_register_internal(self):
         "object.c:139" # type_register_internal
 
-        impl = self.rt["ti"]
-        name = impl["name"]
-        parent = impl["parent"]
-
-        parent_s, name_s = parent.fetch_c_string(), name.fetch_c_string()
-
+        # Pointer `ti` is a value on the stack. It cannot be used as a global.
+        # While `TypeImpl` is on the heap. Hence, it can. I.e. a dereferenced
+        # `Value` should be used.
+        t = self.tree.account(self.rt["ti"].dereference())
 
         if self.verbose:
-            print("%s -> %s" % (parent_s, name_s))
-
-        self.tree.account(impl.fetch_pointer(), name_s, parent_s)
+            print("%s -> %s" % (t.parent, t.name))
 
     def on_main(self):
         "vl.c:3075" # main, just after QOM module initialization
@@ -360,7 +381,7 @@ class QOMTreeGetter(Watcher):
             v for v in self.tree.name2type.values() if v.parent is None
         ):
             n = gv_node(t.name)
-            graph.node(n, label = t.name + "\\n0x%x" % t.addr)
+            graph.node(n, label = t.name + "\\n0x%x" % t.impl.address)
             if t.parent:
                 graph.edge(gv_node(t.parent), n)
 
