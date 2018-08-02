@@ -258,6 +258,8 @@ class RQOMTree(object):
         if name in unk_p:
             t.children.extend(unk_p.pop(name))
 
+        return t
+
     def __getitem__(self, addr_or_name):
         if isinstance(addr_or_name, str):
             return self.name2type[addr_or_name]
