@@ -233,10 +233,8 @@ class RQOMTree(object):
     """
 
     def __init__(self):
-        null = RQOMType(self, "0", "NULL", None)
-
-        self.name2type = {"NULL" : null}
-        self.addr2type = {0 : null}
+        self.name2type = {}
+        self.addr2type = {}
 
         # Types are found randomly (i.e. not in parent-first order).
         self.unknown_parents = defaultdict(list)
@@ -331,8 +329,6 @@ class QOMTreeGetter(Watcher):
 
         parent_s, name_s = parent.fetch_c_string(), name.fetch_c_string()
 
-        if parent_s is None:
-            parent_s = "NULL"
 
         if self.verbose:
             print("%s -> %s" % (parent_s, name_s))
@@ -360,11 +356,13 @@ class QOMTreeGetter(Watcher):
             ),
         )
 
-        graph.node("NULL")
-        for t in sort_topologically(self.tree.name2type["NULL"].children):
+        for t in sort_topologically(
+            v for v in self.tree.name2type.values() if v.parent is None
+        ):
             n = gv_node(t.name)
             graph.node(n, label = t.name + "\\n0x%x" % t.addr)
-            graph.edge(gv_node(t.parent), n)
+            if t.parent:
+                graph.edge(gv_node(t.parent), n)
 
         with open(dot_file_name, "wb") as f:
             f.write(graph.source)
