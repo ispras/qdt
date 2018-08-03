@@ -495,7 +495,12 @@ def main():
     mw.init_runtime(rt)
     qomtg.init_runtime(rt)
 
-    qemu_debugger.run()
+    try:
+        qemu_debugger.run()
+    except:
+        print_exc()
+
+        print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
 
     qemu_debugger.rsp.finish()
     # XXX: on_finish method is not called by RemoteTarget
