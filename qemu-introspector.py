@@ -67,6 +67,9 @@ from pyrsp.gdb import (
     Value,
     Type
 )
+from pyrsp.type import (
+    TYPE_CODE_PTR
+)
 from pyrsp.runtime import (
     Runtime
 )
@@ -241,6 +244,11 @@ class RQOMTree(object):
 
     def account(self, impl, name = None, parent = None):
         "Add a type"
+        if impl.type.code == TYPE_CODE_PTR:
+            # Pointer `impl` is definetly a value on the stack. It cannot be
+            # used as a global. Same time `TypeImpl` is on the heap. Hence, it
+            # can. I.e. a dereferenced `Value` should be used.
+            impl = impl.dereference()
         if not impl.is_global:
             impl = impl.to_global()
 
