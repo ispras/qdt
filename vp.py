@@ -644,7 +644,7 @@ class CodeCanvas(CanvasDnD):
         # data instance to widget
         self.inst2wgt = {}
 
-        # (source data id, destination inst., dest. id) -> line
+        # (source data id, destination inst., dest. idx) -> line
         self.lines = {}
 
     def on_double_button_1(self, event):
