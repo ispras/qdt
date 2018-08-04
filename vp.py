@@ -336,6 +336,12 @@ class OpWgt(Wgt):
     def slots(self):
         return enumerate(self.inst.operands)
 
+    def get_slot_idx(self, iid):
+        return self.in_slots[iid]
+
+    def get_slot(self, iid):
+        return self.inst.operands[self.in_slots[iid]]
+
 CONST_PADDING = 5
 
 
