@@ -542,6 +542,8 @@ class CodeCanvas(CanvasDnD):
         self.data_colors = {}
         # datum id to widget of its source
         self.did2wgt = {}
+        # data instance to widget
+        self.inst2wgt = {}
 
     def on_double_button_1(self, event):
         c = self.canvas
@@ -640,6 +642,8 @@ class CodeCanvas(CanvasDnD):
 
     def add_widget(self, wgt, x, y, assing_colors = True):
         wgt.__g_init__(self, x, y)
+
+        self.inst2wgt[wgt.inst] = wgt
 
         i2w = self.id2wgt
         for i in wgt.ids():
