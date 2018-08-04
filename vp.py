@@ -41,6 +41,9 @@ from os import (
     rename,
     remove
 )
+from collections import (
+    defaultdict
+)
 
 
 class Const(object):
@@ -647,6 +650,9 @@ class CodeCanvas(CanvasDnD):
         # (source data id, destination inst., dest. idx) -> line
         self.lines = {}
 
+        # datum id -> list of users (inst, idx)
+        self.users = defaultdict(list)
+
     def on_double_button_1(self, event):
         c = self.canvas
 
@@ -781,12 +787,19 @@ class CodeCanvas(CanvasDnD):
     def remove_datum_from_slot(self, iid):
         wgt = self.id2wgt[iid]
 
-        self.remove_line(wgt.get_slot(iid), wgt.inst,
-            wgt.get_slot_idx(iid)
-        )
+        did, inst, idx = wgt.get_slot(iid), wgt.inst, wgt.get_slot_idx(iid)
+
+        self.remove_line(did, inst, idx)
+
+        users = self.users[did]
+        users.remove((inst, idx))
 
         wgt.set_datum(iid, None)
         wgt.__g_update__(self)
+
+        if not users:
+            self.data_colors.pop(did)
+            self.did2wgt[did].__g_update__(self)
 
     def remove_line(self, datum_id, inst, idx):
         line = self.lines.pop((datum_id, inst, idx))
@@ -795,12 +808,14 @@ class CodeCanvas(CanvasDnD):
     def update_lines(self, wgt):
         lines = self.lines
         inst = wgt.inst
+        users = self.users
         for idx, datum_id in wgt.slots():
             if datum_id is None:
                 continue
             key = datum_id, inst, idx
             if key in lines:
                 continue
+            users[datum_id].append((inst, idx))
             line = DatumLine(self, *key)
             self.lines[key] = line
 
