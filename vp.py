@@ -248,7 +248,9 @@ class OpWgt(Wgt):
         # width = bounds[2] - bounds[0]
         # height = bounds[3] - bounds[1]
         # c.coords(op_id, x - width / 2, y - height / 2)
-        DnDGroup(w, op_id, tuple(self.in_slots) + tuple(self.out_slots))
+        self.dnd_group = DnDGroup(w, op_id,
+            tuple(self.in_slots) + tuple(self.out_slots)
+        )
 
     def __g_update__(self, w):
         ops = self.inst.operands
@@ -315,7 +317,9 @@ class ConstWgt(Wgt):
         )
         self.text_id = c.create_text(x, y, text = "")
 
-        DnDGroup(w, self.drag_id, [self.text_id, self.frame_id])
+        self.dnd_group = DnDGroup(w, self.drag_id,
+            [self.text_id, self.frame_id]
+        )
 
     def __g_update__(self, w):
         c = w.canvas
