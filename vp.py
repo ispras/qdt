@@ -547,6 +547,49 @@ def color_string_generator(**kw):
             )
         )
 
+
+class DatumLine(object):
+    def __init__(self, w, datum_id, dest_inst, dest_idx):
+        self.w = w
+
+        cnv = w.canvas
+
+        dst_wgt = w.inst2wgt[dest_inst]
+        dst_iid = list(dst_wgt.in_ids())[dest_idx]
+
+        dst_bbox = cnv.bbox(dst_iid)
+        dx, dy = (
+            (dst_bbox[2] + dst_bbox[0]) / 2,
+            (dst_bbox[1] + dst_bbox[3]) / 2
+        )
+
+        src_wgt = w.did2wgt[datum_id]
+        for src_idx, did in enumerate(src_wgt.get_defined()):
+            if did == datum_id:
+                break
+        src_iid = list(src_wgt.out_ids())[src_idx]
+
+        src_bbox = cnv.bbox(src_iid)
+        sx, sy = (
+            (src_bbox[2] + src_bbox[0]) / 2,
+            (src_bbox[1] + src_bbox[3]) / 2
+        )
+
+        color = w.data_colors[datum_id]
+        line_id = cnv.create_line(sx, sy, dx, dy, fill = color)
+
+        cnv.lower(line_id)
+
+        src_wgt.dnd_group.add_item(line_id, first_coord = 0, end = 2)
+        dst_wgt.dnd_group.add_item(line_id, first_coord = 2)
+
+
+        self.w = w
+        self.dst_iid = dst_iid
+        self.src_iid = src_iid
+        self.line_id = line_id
+
+
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
         CanvasDnD.__init__(self, *a, *kw)
@@ -574,6 +617,9 @@ class CodeCanvas(CanvasDnD):
         self.did2wgt = {}
         # data instance to widget
         self.inst2wgt = {}
+
+        # (source data id, destination inst., dest. id) -> line
+        self.lines = {}
 
     def on_double_button_1(self, event):
         c = self.canvas
@@ -653,6 +699,8 @@ class CodeCanvas(CanvasDnD):
 
             start.__g_update__(self)
             end.__g_update__(self)
+
+            self.update_lines(end)
             return
 
         hl_idx = self.__op_hl_idx
@@ -669,6 +717,18 @@ class CodeCanvas(CanvasDnD):
 
         self.__b1_down = None
         CanvasDnD.up(self, event)
+
+    def update_lines(self, wgt):
+        lines = self.lines
+        inst = wgt.inst
+        for idx, datum_id in wgt.slots():
+            if datum_id is None:
+                continue
+            key = datum_id, inst, idx
+            if key in lines:
+                continue
+            line = DatumLine(self, *key)
+            self.lines[key] = line
 
     def add_widget(self, wgt, x, y, assing_colors = True):
         wgt.__g_init__(self, x, y)
@@ -701,6 +761,8 @@ class CodeCanvas(CanvasDnD):
             did2wgt[datum_id].__g_update__(self)
 
         wgt.__g_update__(self)
+
+        self.update_lines(wgt)
 
     def add_instance(self, inst, x, y, assing_colors = True):
         t = type(inst)
