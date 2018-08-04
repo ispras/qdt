@@ -42,6 +42,7 @@ from os import (
     remove
 )
 from collections import (
+    OrderedDict,
     defaultdict
 )
 
@@ -252,9 +253,10 @@ class OpWgt(Wgt):
         super(OpWgt, self).__init__(op)
         self.op_id = None
 
-        # widget id to operand index
-        self.in_slots = {}
-        self.out_slots = {}
+        # Canvas item id to operand/return index mappings. Keys (item id) order
+        # is operand/return slot index ascending (by `__g_init__`).
+        self.in_slots = OrderedDict()
+        self.out_slots = OrderedDict()
 
     def __g_init__(self, w, x, y):
         c = w.canvas
