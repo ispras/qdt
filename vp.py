@@ -527,6 +527,8 @@ SHORTCUTS = tuple(OPERATORS + [
     Const
 ])
 
+DATA_REMOVE_R = 50
+
 class move_centred(object):
     def __init__(self, wgt, x, y, w = None, h = None):
         self.wgt, self.x, self.y, self.w, self.h = wgt, x, y, w, h
@@ -631,6 +633,10 @@ class CodeCanvas(CanvasDnD):
         self.__data_drag = False
         self.__data_tmp_line = None
 
+        # data removing (from slot)
+        self.__data_removing = False
+        self.__data_tmp_oval = None
+
         self.__color_gen_state = color_string_generator()
         self.data_colors = {}
         # datum id to widget of its source
@@ -673,20 +679,35 @@ class CodeCanvas(CanvasDnD):
         self.__b1_down = (x, y)
 
         out_ids = self.out_ids
+        in_ids = self.in_ids
         for _id in cnv.find_overlapping(x - 1, y - 1, x + 1, y + 1):
             if _id in out_ids:
-                break
-        else:
-            CanvasDnD.down(self, event)
+                self.__data_start = _id
+                self.__data_drag = True
+                self.__data_tmp_line = cnv.create_line(x, y, x + 1, y + 1)
+                return
+            elif _id in in_ids:
+                wgt = self.id2wgt[_id]
+                if wgt.get_slot(_id) is None:
+                    return
+                self.__data_start = _id
+                self.__data_removing = True
 
-            if not self.dragging:
-                self.show_ops(x, y)
+                bbox = cnv.bbox(_id)
+                ox, oy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
 
-            return
+                self.__data_tmp_oval = cnv.create_oval(
+                    ox - DATA_REMOVE_R, oy - DATA_REMOVE_R,
+                    ox + DATA_REMOVE_R, oy + DATA_REMOVE_R,
+                    outline = "gray"
+                )
+                return
 
-        self.__data_start = _id
-        self.__data_drag = True
-        self.__data_tmp_line = cnv.create_line(x, y, x + 1, y + 1)
+        CanvasDnD.down(self, event)
+
+        if not self.dragging:
+            self.show_ops(x, y)
+
 
     def up(self, event):
         if self.__data_drag:
@@ -723,6 +744,22 @@ class CodeCanvas(CanvasDnD):
             self.update_lines(end)
             return
 
+        elif self.__data_removing:
+            self.__data_removing = False
+            cnv = self.canvas
+
+            bbox = cnv.bbox(self.__data_tmp_oval)
+
+            cnv.delete(self.__data_tmp_oval)
+
+            ox, oy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+            x, y = event.x, event.y
+            dx, dy = x - ox, y - oy
+
+            if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
+                self.remove_datum_from_slot(self.__data_start)
+            return
+
         hl_idx = self.__op_hl_idx
         if hl_idx is not None:
             cls = SHORTCUTS[hl_idx]
@@ -737,6 +774,20 @@ class CodeCanvas(CanvasDnD):
 
         self.__b1_down = None
         CanvasDnD.up(self, event)
+
+    def remove_datum_from_slot(self, iid):
+        wgt = self.id2wgt[iid]
+
+        self.remove_line(wgt.get_slot(iid), wgt.inst,
+            wgt.get_slot_idx(iid)
+        )
+
+        wgt.set_datum(iid, None)
+        wgt.__g_update__(self)
+
+    def remove_line(self, datum_id, inst, idx):
+        line = self.lines.pop((datum_id, inst, idx))
+        line.__g_cleanup__(self)
 
     def update_lines(self, wgt):
         lines = self.lines
