@@ -239,6 +239,8 @@ class Wgt(object):
     def __init__(self, instance):
         self.inst = instance
 
+def bbox_center(bbox):
+    return (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
 
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
@@ -577,10 +579,7 @@ class DatumLine(object):
         dst_iid = list(dst_wgt.in_ids())[dest_idx]
 
         dst_bbox = cnv.bbox(dst_iid)
-        dx, dy = (
-            (dst_bbox[2] + dst_bbox[0]) / 2,
-            (dst_bbox[1] + dst_bbox[3]) / 2
-        )
+        dx, dy = bbox_center(dst_bbox)
 
         src_wgt = w.did2wgt[datum_id]
         for src_idx, did in enumerate(src_wgt.get_defined()):
@@ -589,10 +588,7 @@ class DatumLine(object):
         src_iid = list(src_wgt.out_ids())[src_idx]
 
         src_bbox = cnv.bbox(src_iid)
-        sx, sy = (
-            (src_bbox[2] + src_bbox[0]) / 2,
-            (src_bbox[1] + src_bbox[3]) / 2
-        )
+        sx, sy = bbox_center(src_bbox)
 
         color = w.data_colors[datum_id]
         line_id = cnv.create_line(sx, sy, dx, dy, fill = color)
@@ -700,7 +696,7 @@ class CodeCanvas(CanvasDnD):
                 self.__data_removing = True
 
                 bbox = cnv.bbox(_id)
-                ox, oy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+                ox, oy = bbox_center(bbox)
 
                 self.__data_tmp_oval = cnv.create_oval(
                     ox - DATA_REMOVE_R, oy - DATA_REMOVE_R,
@@ -761,7 +757,7 @@ class CodeCanvas(CanvasDnD):
 
             cnv.delete(self.__data_tmp_oval)
 
-            ox, oy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+            ox, oy = bbox_center(bbox)
             x, y = event.x, event.y
             dx, dy = x - ox, y - oy
 
