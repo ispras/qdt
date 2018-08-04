@@ -33,6 +33,9 @@ from os.path import (
 from traceback import (
     format_exc
 )
+from six import (
+    integer_types
+)
 
 
 class Const(object):
@@ -161,7 +164,7 @@ class Mod(Bin):
 class DnDGroup(object):
     def __init__(self, w, anchor_id, items):
         self.anchor_id = anchor_id
-        self.items = items
+        self.items = list(items)
         w.bind("<<DnDDown>>", self.on_dnd_down, "+")
 
     def on_dnd_down(self, event):
@@ -172,6 +175,12 @@ class DnDGroup(object):
         self.prev = w.canvas.coords(a_id)[:2]
         self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
         self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
+
+    def add_item(self, iid, first_coord = None, end = None):
+        if first_coord is None:
+            self.items.append(iid)
+        else:
+            self.items.append((iid, first_coord, end))
 
     def on_dnd_moved(self, event):
         w = event.widget
@@ -184,12 +193,28 @@ class DnDGroup(object):
 
         coords = w.canvas.coords
         for i in self.items:
-            xy = coords(i)
-            if len(xy) == 2:
-                x0, y0 = xy
-                coords(i, x0 + dx, y0 + dy)
+            if isinstance(i, integer_types):
+                xy = coords(i)
+                if len(xy) == 2:
+                    x0, y0 = xy
+                    coords(i, x0 + dx, y0 + dy)
+                else:
+                    x0, y0, x1, y1 = xy                    coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+            elif isinstance(i, tuple):
+                iid, first_coord, end = i
+                c = coords(iid)
+                if end is None:
+                    end = len(c)
+                for idx in range(first_coord, end):
+                    if idx & 1:
+                        c[idx] += dy
+                    else:
+                        c[idx] += dx
+                coords(iid, *c)
             else:
-                x0, y0, x1, y1 = xy                coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+                raise ValueError(
+                    "Unsupported type of item: " + type(i).__name__
+                )
 
     def on_dnd_up(self, event):
         w = event.widget
