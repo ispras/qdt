@@ -602,6 +602,13 @@ class DatumLine(object):
         self.src_iid = src_iid
         self.line_id = line_id
 
+    def __g_cleanup__(self, w):
+        line_id = self.line_id
+
+        w.id2wgt[self.src_iid].dnd_group.del_item(line_id)
+        w.id2wgt[self.dst_iid].dnd_group.del_item(line_id)
+
+        w.canvas.delete(line_id)
 
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
