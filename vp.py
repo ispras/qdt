@@ -235,6 +235,62 @@ class DnDGroup(object):
         w.unbind("<<DnDMoved>>", self.__moved)
         w.unbind("<<DnDUp>>", self.__up)
 
+    def rotate(self, w, a, cx, cy):
+        coords = w.canvas.coords
+        bbox = w.canvas.bbox
+        cosa, sina = cos(a), sin(a)
+        for i in self.items:
+            if isinstance(i, integer_types):
+                # only "center point" of item is rotated, item's points are
+                # translated accordingly
+                ix, iy = bbox_center(bbox(i))
+                ry, rx = iy - cy, ix - cx
+                # (nx, ny) = |rotation matrix| x (rx, ry)
+                nx, ny = cosa * rx - sina * ry, sina * rx + cosa * ry
+                dx, dy = nx - rx, ny - ry
+
+                xy = coords(i)
+                if len(xy) == 2:
+                    x0, y0 = xy
+                    coords(i, x0 + dx, y0 + dy)
+                else:
+                    x0, y0, x1, y1 = xy
+                    coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+            elif isinstance(i, tuple):
+                # item's points are rotated individually
+                iid, first_coord, end = i
+                c = coords(iid)
+                if end is None:
+                    end = len(c)
+                lasty = end - 1
+
+                # Coordinate range may start from y. But x is required to
+                # compute rotation. So, align start index by x coordinate
+                # boundary.
+                start_idx = (first_coord >> 1) << 1
+
+                citer = enumerate(c[start_idx:], start_idx)
+                while True:
+                    (xidx, x), (yidx, y) = next(citer), next(citer)
+
+                    ry, rx = y - cy, x - cx
+                    nx, ny = cosa * rx - sina * ry, sina * rx + cosa * ry
+                    dx, dy = nx - rx, ny - ry
+
+                    # unaligned ranges are possible
+                    if first_coord >= xidx:
+                        c[xidx] = x + dx
+                    if yidx < end:
+                        c[yidx] = y + dy
+
+                    if yidx == lasty:
+                        break
+
+                coords(iid, *c)
+            else:
+                raise ValueError(
+                    "Unsupported type of item: " + type(i).__name__
+                )
 
 class Wgt(object):
     def __init__(self, instance):
