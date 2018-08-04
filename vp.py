@@ -31,10 +31,15 @@ from os.path import (
     isfile
 )
 from traceback import (
+    print_exc,
     format_exc
 )
 from six import (
     integer_types
+)
+from os import (
+    rename,
+    remove
 )
 
 
@@ -951,8 +956,16 @@ if __name__ == "__main__":
         save = SaveData()
         save.from_canvas(dnd_cnv)
 
-        with open("vproject.py", "wb") as w:
-            PyGenerator().serialize(w, save)
+        try:
+            with open("vproject.py.tmp", "wb") as w:
+                PyGenerator().serialize(w, save)
+        except:
+            print_exc()
+            return
+        else:
+            if isfile("vproject.py"):
+                remove("vproject.py")
+            rename("vproject.py.tmp", "vproject.py")
 
         root.destroy()
 
