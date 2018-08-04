@@ -736,6 +736,9 @@ class CodeCanvas(CanvasDnD):
             if datum_id not in self.data_colors:
                 self.data_colors[datum_id] = next(self.__color_gen_state)
 
+            if end.get_slot(end_id) is not None:
+                self.remove_datum_from_slot(end_id)
+
             end.set_datum(end_id, datum_id)
 
             start.__g_update__(self)
