@@ -298,6 +298,8 @@ class OpWgt(Wgt):
         inst = self.inst
         return [OpDef(inst, i) for i in range(inst.op_amount)]
 
+    def slots(self):
+        return enumerate(self.inst.operands)
 
 CONST_PADDING = 5
 
@@ -388,6 +390,9 @@ class ConstWgt(Wgt):
 
     def get_defined(self):
         return [self.inst]
+
+    def slots(self):
+        return []
 
 
 class VarDialog(VarToplevel):
