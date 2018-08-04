@@ -555,8 +555,6 @@ def color_string_generator(**kw):
 
 class DatumLine(object):
     def __init__(self, w, datum_id, dest_inst, dest_idx):
-        self.w = w
-
         cnv = w.canvas
 
         dst_wgt = w.inst2wgt[dest_inst]
@@ -589,7 +587,6 @@ class DatumLine(object):
         dst_wgt.dnd_group.add_item(line_id, first_coord = 2)
 
 
-        self.w = w
         self.dst_iid = dst_iid
         self.src_iid = src_iid
         self.line_id = line_id
