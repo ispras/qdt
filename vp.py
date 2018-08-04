@@ -259,7 +259,7 @@ class OpWgt(Wgt):
 
         for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
-            in_slots[c.create_rectangle(slot(sx, sy), fill = "white")] = i
+            in_slots[c.create_oval(slot(sx, sy), fill = "white")] = i
             a += step
 
         out_slots = self.out_slots
