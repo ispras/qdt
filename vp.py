@@ -302,6 +302,8 @@ def bbox_center(bbox):
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
 
+ROTATION_R1 = 30
+ROTATION_R2 = 5
 
 class OpWgt(Wgt):
 
@@ -314,14 +316,22 @@ class OpWgt(Wgt):
         self.in_slots = OrderedDict()
         self.out_slots = OrderedDict()
 
-    def __g_init__(self, w, x, y):
+    def __g_init__(self, w, x, y, angle):
         c = w.canvas
         op = self.inst
+
+        rx, ry = x + ROTATION_R1 * cos(angle), y + ROTATION_R1 * sin(angle)
+        self.rot_id = c.create_oval(
+            rx - ROTATION_R2, ry - ROTATION_R2,
+            rx + ROTATION_R2, ry + ROTATION_R2,
+            outline = "gray",
+            fill = "white"
+        )
 
         in_slots = self.in_slots
         I = op.op_amount
         step = pi / I
-        a = -pi + step / 2
+        a = angle + pi + step / 2
 
         rad = 30
 
@@ -333,7 +343,7 @@ class OpWgt(Wgt):
         out_slots = self.out_slots
         I = op.ret_amount
         step = pi / I
-        a = pi - step / 2
+        a = angle + pi - step / 2
 
         for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
@@ -347,7 +357,7 @@ class OpWgt(Wgt):
         # height = bounds[3] - bounds[1]
         # c.coords(op_id, x - width / 2, y - height / 2)
         self.dnd_group = DnDGroup(w, op_id,
-            tuple(self.in_slots) + tuple(self.out_slots)
+            tuple(self.in_slots) + tuple(self.out_slots) + (self.rot_id,)
         )
 
     def __g_update__(self, w):
@@ -372,16 +382,25 @@ class OpWgt(Wgt):
             iconfig(iid, fill = color1, outline = color2)
 
     def __g_coords__(self, w):
-        return w.canvas.coords(self.op_id)
+        x, y = w.canvas.coords(self.op_id)
+        bbox = w.canvas.bbox(self.rot_id)
+        rx, ry = bbox_center(bbox)
+        a = atan2(ry - y, rx - x)
+        return x, y, a
 
     def ids(self):
-        return (self.op_id,) + tuple(self.in_slots) + tuple(self.out_slots)
+        return (self.op_id, self.rot_id) + tuple(self.in_slots) + tuple(
+            self.out_slots
+        )
 
     def out_ids(self):
         return self.out_slots.keys()
 
     def in_ids(self):
         return self.in_slots.keys()
+
+    def rotation_ids(self):
+        return [self.rot_id]
 
     def get_datum(self, iid):
         return OpDef(self.inst, self.out_slots[iid])
@@ -412,7 +431,7 @@ class ConstWgt(Wgt):
     def __init__(self, const = None):
         super(ConstWgt, self).__init__(Const() if const is None else const)
 
-    def __g_init__(self, w, x, y):
+    def __g_init__(self, w, x, y, a):
         c = w.canvas
 
         # actual frame and drag-box sizes will be assigned by `__g_update__`
@@ -466,7 +485,7 @@ class ConstWgt(Wgt):
         )
 
     def __g_coords__(self, w):
-        return w.canvas.coords(self.text_id)
+        return w.canvas.coords(self.text_id) + [0]
 
     def ids(self):
         return [self.text_id, self.frame_id, self.drag_id]
@@ -475,6 +494,9 @@ class ConstWgt(Wgt):
         return [self.frame_id]
 
     def in_ids(self):
+        return []
+
+    def rotation_ids(self):
         return []
 
     def get_datum(self, iid):
@@ -683,12 +705,17 @@ class CodeCanvas(CanvasDnD):
         self.id2wgt = {}
         self.in_ids = set()
         self.out_ids = set()
+        # widget rotation
+        self.rot_ids = set()
 
         self.canvas.bind("<Double-Button-1>", self.on_double_button_1, "+")
 
         # data dragging
         self.__data_drag = False
         self.__data_tmp_line = None
+
+        # data rotation
+        self.__rotation = False
 
         # data removing (from slot)
         self.__data_removing = False
@@ -740,6 +767,7 @@ class CodeCanvas(CanvasDnD):
 
         out_ids = self.out_ids
         in_ids = self.in_ids
+        rot_ids = self.rot_ids
         for _id in cnv.find_overlapping(x - 1, y - 1, x + 1, y + 1):
             if _id in out_ids:
                 self.__data_start = _id
@@ -761,6 +789,14 @@ class CodeCanvas(CanvasDnD):
                     ox + DATA_REMOVE_R, oy + DATA_REMOVE_R,
                     outline = "gray"
                 )
+                return
+            elif _id in rot_ids:
+                self.__rotation = True
+                group = self.id2wgt[_id].dnd_group
+                cx, cy = bbox_center(cnv.bbox(group.anchor_id))
+                self.__last_angle = atan2(y - cy, x - cx)
+                self.__rotation_center = cx, cy
+                self.__rotation_group = group
                 return
 
         CanvasDnD.down(self, event)
@@ -822,6 +858,10 @@ class CodeCanvas(CanvasDnD):
             if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
                 self.remove_datum_from_slot(self.__data_start)
             return
+        elif self.__rotation:
+            self.__rotation_center = None
+            self.__rotation = False
+            return
 
         hl_idx = self.__op_hl_idx
         if hl_idx is not None:
@@ -831,7 +871,7 @@ class CodeCanvas(CanvasDnD):
             else:
                 wgt = OpWgt(cls())
 
-            self.add_widget(wgt, *self.__b1_down)
+            self.add_widget(wgt, *self.__b1_down, 0)
 
         self.hide_ops()
 
@@ -873,8 +913,8 @@ class CodeCanvas(CanvasDnD):
             line = DatumLine(self, *key)
             self.lines[key] = line
 
-    def add_widget(self, wgt, x, y, assing_colors = True):
-        wgt.__g_init__(self, x, y)
+    def add_widget(self, wgt, x, y, a, assing_colors = True):
+        wgt.__g_init__(self, x, y, a)
 
         self.inst2wgt[wgt.inst] = wgt
 
@@ -884,6 +924,7 @@ class CodeCanvas(CanvasDnD):
 
         self.in_ids.update(wgt.in_ids())
         self.out_ids.update(wgt.out_ids())
+        self.rot_ids.update(wgt.rotation_ids())
 
         did2wgt = self.did2wgt
         for datum_id in wgt.get_defined():
@@ -907,7 +948,7 @@ class CodeCanvas(CanvasDnD):
 
         self.update_lines(wgt)
 
-    def add_instance(self, inst, x, y, assing_colors = True):
+    def add_instance(self, inst, x, y, a, assing_colors = True):
         t = type(inst)
         for cls in getmro(t):
             if cls is Const:
@@ -921,7 +962,7 @@ class CodeCanvas(CanvasDnD):
                 str(inst), t.__name__
             ))
 
-        self.add_widget(wgt, x, y, assing_colors = assing_colors)
+        self.add_widget(wgt, x, y, a, assing_colors = assing_colors)
         return wgt
 
     def add_instances(self, instances):
@@ -948,6 +989,14 @@ class CodeCanvas(CanvasDnD):
             line_id = self.__data_tmp_line
 
             cnv.coords(line_id, x1, y1, x2, y2)
+            return
+        elif self.__rotation:
+            cx, cy = self.__rotation_center
+            x, y = event.x, event.y
+            a = atan2(y - cy, x - cx)
+            da = a - self.__last_angle
+            self.__rotation_group.rotate(self, da, cx, cy)
+            self.__last_angle = a
             return
 
         CanvasDnD.motion(self, event)
@@ -1041,8 +1090,8 @@ class CodeCanvas(CanvasDnD):
 
     def iter_positions(self):
         for wgt in self.iter_widgets():
-            x, y = wgt.__g_coords__(self)
-            yield wgt.inst, x, y
+            x, y, a = wgt.__g_coords__(self)
+            yield wgt.inst, x, y, a
 
 
 class SaveData(object):
