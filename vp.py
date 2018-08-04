@@ -187,6 +187,11 @@ class DnDGroup(object):
         else:
             self.items.append((iid, first_coord, end))
 
+    def del_item(self, iid):
+        self.items = [i for i in self.items if (
+            (i != iid) if isinstance(i, integer_types) else (i[0] != iid)
+        )]
+
     def on_dnd_moved(self, event):
         w = event.widget
         a_id = self.anchor_id
