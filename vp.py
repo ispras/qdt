@@ -861,8 +861,18 @@ class CodeCanvas(CanvasDnD):
             x, y = event.x, event.y
             dx, dy = x - ox, y - oy
 
-            if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
-                self.remove_datum_from_slot(self.__data_start)
+            in_ids = self.in_ids
+            for end_id in cnv.find_overlapping(
+                x - 1, y - 1, x + 1, y + 1
+            ):
+                if end_id == self.__data_start:
+                    continue
+                if end_id in in_ids:
+                    self.exchange_data(self.__data_start, end_id)
+                    break
+            else:
+                if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
+                    self.remove_datum_from_slot(self.__data_start)
             return
         elif self.__rotation:
             self.__rotation_center = None
@@ -901,6 +911,32 @@ class CodeCanvas(CanvasDnD):
         if not users:
             self.data_colors.pop(did)
             self.did2wgt[did].__g_update__(self)
+
+    def exchange_data(self, iid1, iid2):
+        wgt1 = self.id2wgt[iid1]
+        datum1 = wgt1.get_slot(iid1)
+
+        wgt2 = self.id2wgt[iid2]
+        datum2 = wgt2.get_slot(iid2)
+
+        if datum1 is not None:
+            inst, idx = wgt1.inst, wgt1.get_slot_idx(iid1)
+            self.remove_line(datum1, inst, idx)
+            self.users[datum1].remove((inst, idx))
+
+        if datum2 is not None:
+            inst, idx = wgt2.inst, wgt2.get_slot_idx(iid2)
+            self.remove_line(datum2, inst, idx)
+            self.users[datum2].remove((inst, idx))
+
+        wgt1.set_datum(iid1, datum2)
+        wgt2.set_datum(iid2, datum1)
+
+        wgt1.__g_update__(self)
+        wgt2.__g_update__(self)
+
+        self.update_lines(wgt1)
+        self.update_lines(wgt2)
 
     def remove_line(self, datum_id, inst, idx):
         line = self.lines.pop((datum_id, inst, idx))
@@ -1014,10 +1050,20 @@ class CodeCanvas(CanvasDnD):
             x, y = event.x, event.y
             dx, dy = x - ox, y - oy
 
-            if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
-                self.master.config(cursor = "X_cursor")
+            in_ids = self.in_ids
+            for end_id in cnv.find_overlapping(
+                x - 1, y - 1, x + 1, y + 1
+            ):
+                if end_id == self.__data_start:
+                    continue
+                if end_id in in_ids:
+                    self.master.config(cursor = "exchange")
+                    break
             else:
-                self.master.config(cursor = "question_arrow")
+                if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
+                    self.master.config(cursor = "X_cursor")
+                else:
+                    self.master.config(cursor = "question_arrow")
             return
         elif self.__rotation:
             cx, cy = self.__rotation_center
