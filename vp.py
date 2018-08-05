@@ -773,6 +773,7 @@ class CodeCanvas(CanvasDnD):
                 self.__data_start = _id
                 self.__data_drag = True
                 self.__data_tmp_line = cnv.create_line(x, y, x + 1, y + 1)
+                self.master.config(cursor = "question_arrow")
                 return
             elif _id in in_ids:
                 wgt = self.id2wgt[_id]
@@ -789,6 +790,7 @@ class CodeCanvas(CanvasDnD):
                     ox + DATA_REMOVE_R, oy + DATA_REMOVE_R,
                     outline = "gray"
                 )
+                self.master.config(cursor = "question_arrow")
                 return
             elif _id in rot_ids:
                 self.__rotation = True
@@ -797,6 +799,7 @@ class CodeCanvas(CanvasDnD):
                 self.__last_angle = atan2(y - cy, x - cx)
                 self.__rotation_center = cx, cy
                 self.__rotation_group = group
+                self.master.config(cursor = "exchange")
                 return
 
         CanvasDnD.down(self, event)
@@ -810,6 +813,7 @@ class CodeCanvas(CanvasDnD):
             self.__data_drag = False
             self.canvas.delete(self.__data_tmp_line)
             self.__data_tmp_line = None
+            self.master.config(cursor = "")
 
             x, y = event.x, event.y
             in_ids = self.in_ids
@@ -845,6 +849,8 @@ class CodeCanvas(CanvasDnD):
 
         elif self.__data_removing:
             self.__data_removing = False
+            self.master.config(cursor = "")
+
             cnv = self.canvas
 
             bbox = cnv.bbox(self.__data_tmp_oval)
@@ -861,6 +867,7 @@ class CodeCanvas(CanvasDnD):
         elif self.__rotation:
             self.__rotation_center = None
             self.__rotation = False
+            self.master.config(cursor = "")
             return
 
         hl_idx = self.__op_hl_idx
@@ -989,6 +996,28 @@ class CodeCanvas(CanvasDnD):
             line_id = self.__data_tmp_line
 
             cnv.coords(line_id, x1, y1, x2, y2)
+
+            in_ids = self.in_ids
+            for end_id in cnv.find_overlapping(
+                x2 - 1, y2 - 1, x2 + 1, y2 + 1
+            ):
+                if end_id in in_ids:
+                    self.master.config(cursor = "plus")
+                    break
+            else:
+                self.master.config(cursor = "question_arrow")
+            return
+        elif self.__data_removing:
+            cnv = self.canvas
+
+            ox, oy = bbox_center(cnv.bbox(self.__data_tmp_oval))
+            x, y = event.x, event.y
+            dx, dy = x - ox, y - oy
+
+            if dx ** 2 + dy ** 2 >= DATA_REMOVE_R ** 2:
+                self.master.config(cursor = "X_cursor")
+            else:
+                self.master.config(cursor = "question_arrow")
             return
         elif self.__rotation:
             cx, cy = self.__rotation_center
