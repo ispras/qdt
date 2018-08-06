@@ -394,6 +394,27 @@ class QOMTreeGetter(Watcher):
             f.write(graph.source)
 
 
+class RQObjectProperty(object):
+    """ Runtime QOM object property
+    """
+
+    def __init__(self, obj, prop, name = None, type = None):
+        """
+        :param obj:
+            is corresponding `QInstance`
+        :param prop:
+            is `Value` representing `ObjectProperty`
+        """
+        self.obj = obj
+        self.prop = prop
+        if name is None:
+            name = prop["name"].fetch_c_string()
+        if type is None:
+            type = prop["type"].fetch_c_string()
+        self.name = name
+        self.type = type
+
+
 class QInstance(object):
     """ Descriptor for QOM object at runtime.
     """
