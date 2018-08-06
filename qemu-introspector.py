@@ -466,7 +466,7 @@ class MachineWatcher(Watcher):
     state at runtime.
     """
 
-    def __init__(self, dia, qom_tree, verbose = True):
+    def __init__(self, dia, qom_tree, verbose = False):
         super(MachineWatcher, self).__init__(dia, verbose = verbose)
         self.tree = qom_tree
         # addr -> QInstance mapping
