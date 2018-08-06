@@ -404,6 +404,15 @@ class QInstance(object):
         self.related = []
 
 
+    def relate(self, qinst):
+        self.related.append(qinst)
+        qinst.related.append(self)
+
+    def unrelate(self, qinst):
+        self.related.remove(qinst)
+        qinst.related.renove(self)
+
+
 class MachineWatcher(Watcher):
     """ Watches for QOM API calls to reconstruct machine model and monitor its
     state at runtime.
