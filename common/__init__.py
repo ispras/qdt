@@ -17,6 +17,7 @@ from .os_wrappers import *
 from .pygen import *
 from .reflection import *
 from .search_helper import *
+from .split_by_n import *
 from .topology import *
 from .variable import *
 from .version import *
