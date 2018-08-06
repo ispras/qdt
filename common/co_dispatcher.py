@@ -2,6 +2,8 @@ __all__ = [
 # RuntimeError
     "FailedCallee"
   , "CancelledCallee"
+# IOError
+  , "IOException"
 # object
   , "CoTask"
   , "CoDispatcher"
@@ -18,6 +20,9 @@ from time import (
 from .ml import (
     mlget as _
 )
+from select import (
+    select
+)
 import sys
 
 class FailedCallee(RuntimeError):
@@ -29,6 +34,9 @@ class CancelledCallee(RuntimeError):
     def __init__(self, callee):
         super(CancelledCallee, self).__init__()
         self.callee = callee
+
+class IOException(IOError): pass
+
 
 class CoTask(object):
     def __init__(self,
@@ -98,11 +106,45 @@ after last statement in the corresponding callable object.
         self.failed_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
+        # non-blocking I/O support
+        self.io2read = {}
+        self.io2write = {}
+        self.io_timeout = 0
+
+    def select(self):
+        i2r = self.io2read
+        i2w = self.io2write
+
+        if not (i2r or i2w):
+            return
+
+        r2r, r2w = select(i2r.keys(), i2w.keys(), [], self.io_timeout)[:2]
+
+        tasks = self.tasks
+
+        for io in r2r:
+            tasks.append(i2r.pop(io))
+
+        for io in r2w:
+            tasks.append(i2w.pop(io))
+
+        # Exceptions selection is separated because there is no waiting.
+        if i2r:
+            read_exceptions = select([], [], i2r.keys(), 0)[2]
+            for io in read_exceptions:
+                self.__failed__(i2r.pop(io), IOException())
+
+        if i2w:
+            write_exceptions = select([], [], i2w.keys(), 0)[2]
+            for io in write_exceptions:
+                self.__failed__(i2w.pop(io), IOException())
 
     # poll returns True if at least one task is ready to proceed immediately.
     def poll(self):
         finished = []
         calls = []
+        read_waits = []
+        write_waits = []
 
         ready = False
 
@@ -155,6 +197,11 @@ after last statement in the corresponding callable object.
                     # remember the call
                     calls.append((task, ret))
                     ready = True
+                elif isinstance(ret, tuple):
+                    # coroutine is wating for an I/O descriptor
+                    io, wait_write = ret
+                    wait_set = write_waits if wait_write else read_waits
+                    wait_set.append((io, task))
                 elif ret:
                     ready = True
 
@@ -227,6 +274,16 @@ after last statement in the corresponding callable object.
             self.active_tasks.remove(caller)
             # Remember all callers.
             self.callers[caller] = callee
+
+        i2r = self.io2read
+        for io, task in read_waits:
+            i2r[io] = task
+            self.active_tasks.remove(task)
+
+        i2w = self.io2write
+        for io, task in write_waits:
+            i2w[io] = task
+            self.active_tasks.remove(task)
 
         return ready
 
@@ -318,6 +375,8 @@ after last statement in the corresponding callable object.
         task.on_activated()
 
     def pull(self):
+        self.select()
+
         if not self.tasks:
             return False
 
