@@ -83,6 +83,9 @@ from inspect import (
 from graphviz import (
     Digraph
 )
+from widgets import (
+    GUITk
+)
 
 
 def checksum(stream, block_size):
@@ -546,14 +549,26 @@ def main():
     mw.init_runtime(rt)
     qomtg.init_runtime(rt)
 
-    try:
-        qemu_debugger.run()
-    except:
-        print_exc()
+    def co_rsp_poller(rsp = qemu_debugger):
+        rsp.run_no_block()
 
-        print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
+        rsp._interrupt = False
+        while not rsp._interrupt:
+            yield
+            try:
+                rsp.poll()
+            except:
+                print_exc()
+                print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
+                break
 
-    qemu_debugger.rsp.finish()
+        yield
+        qemu_debugger.rsp.finish()
+
+    tk = GUITk(wait_msec = 1)
+    tk.task_manager.enqueue(co_rsp_poller())
+    tk.mainloop()
+
     # XXX: on_finish method is not called by RemoteTarget
     qomtg.to_file("qom-by-q.i.dot")
 
