@@ -431,6 +431,8 @@ class QInstance(object):
         self.type = type
         self.related = []
 
+        # object
+        self.properties = {}
 
     def relate(self, qinst):
         self.related.append(qinst)
@@ -439,6 +441,21 @@ class QInstance(object):
     def unrelate(self, qinst):
         self.related.remove(qinst)
         qinst.related.renove(self)
+
+    def account_property(self, prop):
+        """
+        :param prop:
+            is `Value` representing `ObjectProperty`
+        """
+        if prop.type.code == TYPE_CODE_PTR:
+            prop = prop.dereference()
+        if not prop.is_global:
+            prop = prop.to_global()
+
+        rqo_prop = RQObjectProperty(self, prop)
+        self.properties[rqo_prop.name] = rqo_prop
+
+        return rqo_prop
 
 
 class MachineWatcher(Watcher):
