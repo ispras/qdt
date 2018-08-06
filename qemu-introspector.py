@@ -420,6 +420,13 @@ class QInstance(object):
     """
 
     def __init__(self, obj, type):
+        """
+        :param obj:
+            Global runtime `Value`.
+
+        :param type:
+            instance of `RQOMType`
+        """
         self.obj = obj
         self.type = type
         self.related = []
