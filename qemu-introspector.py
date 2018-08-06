@@ -346,7 +346,7 @@ def gv_node(label):
 
 class QOMTreeGetter(Watcher):
 
-    def __init__(self, dia, interrupt = True, verbose = True):
+    def __init__(self, dia, interrupt = True, verbose = False):
         """
         :param interrupt:
             Stop QEmu and exit `RemoteTarget.run`.
