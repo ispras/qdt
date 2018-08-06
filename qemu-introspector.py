@@ -356,10 +356,7 @@ class QOMTreeGetter(Watcher):
     def on_type_register_internal(self):
         "object.c:139" # type_register_internal
 
-        # Pointer `ti` is a value on the stack. It cannot be used as a global.
-        # While `TypeImpl` is on the heap. Hence, it can. I.e. a dereferenced
-        # `Value` should be used.
-        t = self.tree.account(self.rt["ti"].dereference())
+        t = self.tree.account(self.rt["ti"])
 
         if self.verbose:
             print("%s -> %s" % (t.parent, t.name))
