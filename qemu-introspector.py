@@ -526,7 +526,9 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
-    qomtg = QOMTreeGetter(dia)
+    qomtg = QOMTreeGetter(dia,
+        interrupt = False
+    )
     mw = MachineWatcher(dia, qomtg.tree)
 
     qemu_debug_addr = "localhost:4321"
