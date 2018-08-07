@@ -10,7 +10,7 @@ from .tk_co_dispatcher import (
     TkCoDispatcher
 )
 from common import (
-    Notifier,
+    notifier,
     SignalDispatcherTask
 )
 from .logo import (
@@ -20,7 +20,7 @@ from .gui_error import (
     TaskErrorDialog
 )
 
-@Notifier("activated", "finished", "failed", "removed")
+@notifier("activated", "finished", "failed", "removed")
 class GUITaskManager(TkCoDispatcher):
     def __activate__(self, task):
         TkCoDispatcher.__activate__(self, task)
