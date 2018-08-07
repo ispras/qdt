@@ -18,7 +18,7 @@ from .ml import (
     mlget as _
 )
 from .notifier import (
-    Notifier
+    notifier
 )
 
 class UnimplementedInverseOperation(NotImplementedError):
@@ -155,7 +155,7 @@ class History(object):
         self.root = InitialOperation()
         self.leafs = [self.root]
 
-@Notifier("changed")
+@notifier("changed")
 class HistoryTracker(object):
     def __init__(self, history):
         self.history = history
