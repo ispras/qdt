@@ -26,8 +26,13 @@ class SourcePosition(object):
             file_path, line_number, function_name
         )
 
-    def __identify__(self, qimg):
-        "This function is called when a QEMU debug image becomes available."
+    def __identify__(self, dia):
+        """ This function is called when a QEMU debug information becomes
+        available.
+
+        :param dia:
+            is a `DWARFInfoAccelerator` instance
+        """
         file_path, line_number, function_name = (
             self.file_path, self.line_number, self.function_name
         )
@@ -37,6 +42,9 @@ class SourcePosition(object):
                 raise ValueError("To few data to identify a position.")
             """TODO: Given file:line look the corresponding function up or
             raise the ValueError."""
+            line_map = dia.find_line_map(file_path)
+            line_descs = line_map[line_number]
+            self.addresses = tuple(d.state.address for d in line_descs)
         else:
             if line_number is None:
                 "TODO: get first line of function"
@@ -47,6 +55,7 @@ class SourcePosition(object):
                 "XXX: check if only one file containing the function"
             else:
                 "XXX: check if the file containing the function"
+            self.addresses = tuple()
 
         self.file_path, self.line_number, self.function_name = (
             file_path, line_number, function_name
