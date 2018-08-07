@@ -1,4 +1,4 @@
-from qemu.introspection import (
+from qemu import (
     q_event_dict,
     q_event_list
 )
