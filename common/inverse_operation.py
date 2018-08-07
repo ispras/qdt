@@ -51,7 +51,7 @@ def set_touches_entry(X, e):
             elif e == x:
                 return True
         else:
-            ValueError("Unsupported type of entry: " + str(type(x)))
+            raise ValueError("Unsupported type of entry: " + str(type(x)))
     return False
 
 """
