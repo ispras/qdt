@@ -113,11 +113,10 @@ class MachineNodeOperation(MachineOperation):
     def gen_entry(self):
         return self.gen_node_id_entry(self.node_id)
 
-    """
-    Checks if the operation writes the node itself (not node's element)
-    Frequent examples are node adding and deleting operations.
-    """
     def writes_node(self):
+        """ Checks if the operation writes the node itself (not node's element)
+        Frequent examples are node adding and deleting operations.
+        """
         return self.writes(self.gen_entry())
 
     def gen_id_str(self, val):
