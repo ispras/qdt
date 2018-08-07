@@ -35,7 +35,7 @@ def set_touches_entry(X, e):
         if isinstance(x, tuple):
             if isinstance(e, tuple):
                 for ee, xx in zip(e, x):
-                    if not ee == xx:
+                    if ee != xx:
                         break
                 else:
                     return True
