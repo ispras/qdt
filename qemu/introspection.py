@@ -58,13 +58,13 @@ class QEvent(object):
     def __init__(self,
         position,
         description,
-        **compat # forward compatibility
+        *compat, **kompat # forward compatibility
     ):
         """
         :position:
             Instance of `SourcePosition`
         """
-        self.compat = compat
+        self.compat = compat, kompat
 
         if isinstance(position, dict):
             # TODO: any mapping
