@@ -43,7 +43,7 @@ def set_touches_entry(X, e):
                 if e == x[0]:
                     return True
             else:
-                raise Exception("Unsupported type of entry: " + str(type(e)))
+                raise ValueError("Unsupported type of entry: " + str(type(e)))
         elif isinstance(x, simple_eq_types):
             if isinstance(e, tuple):
                 if e[0] == x:
@@ -51,7 +51,7 @@ def set_touches_entry(X, e):
             elif e == x:
                 return True
         else:
-            Exception("Unsupported type of entry: " + str(type(x)))
+            ValueError("Unsupported type of entry: " + str(type(x)))
     return False
 
 """
