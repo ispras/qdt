@@ -31,27 +31,31 @@ simple_eq_types = (
 ) + integer_types
 
 def set_touches_entry(X, e):
-    for x in X:
-        if isinstance(x, tuple):
-            if isinstance(e, tuple):
+    if isinstance(e, tuple):
+        for x in X:
+            if isinstance(x, tuple):
                 for ee, xx in zip(e, x):
                     if ee != xx:
                         break
                 else:
                     return True
-            elif isinstance(e, simple_eq_types):
-                if e == x[0]:
-                    return True
-            else:
-                raise ValueError("Unsupported type of entry: " + str(type(e)))
-        elif isinstance(x, simple_eq_types):
-            if isinstance(e, tuple):
+            elif isinstance(x, simple_eq_types):
                 if e[0] == x:
                     return True
-            elif e == x:
-                return True
-        else:
-            raise ValueError("Unsupported type of entry: " + str(type(x)))
+            else:
+                raise ValueError("Unsupported type of entry: " + str(type(x)))
+    elif isinstance(e, simple_eq_types):
+        for x in X:
+            if isinstance(x, tuple):
+                if e == x[0]:
+                    return True
+            elif isinstance(x, simple_eq_types):
+                if e == x:
+                    return True
+            else:
+                raise ValueError("Unsupported type of entry: " + str(type(x)))
+    else:
+        raise ValueError("Unsupported type of entry: " + str(type(e)))
     return False
 
 """
