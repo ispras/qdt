@@ -1,5 +1,5 @@
 __all__ = [
-    "Notifier"
+    "notifier"
 ]
 
 # "Function factory" approach is used to meet "late binding" problem.
@@ -30,7 +30,7 @@ def gen_event_helpers(wrapped_init, cb_list_name):
 
     return init_wrapper, add_callback, remove_callback, notify
 
-def Notifier(*events):
+def notifier(*events):
     def add_events(klass, events = events):
         for event in events:
             # Callback list is private.
