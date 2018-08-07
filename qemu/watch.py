@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 from common import (
-    Notifier
+    notifier
 )
 
 # Events are valid for this QEMU version
@@ -53,7 +53,7 @@ class SourcePosition(object):
         )
 
 
-@Notifier("happened")
+@notifier("happened")
 class QEvent(object):
     def __init__(self,
         position,
