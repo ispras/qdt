@@ -649,8 +649,11 @@ IRQ line creation
         )
         self.popup_multiple = p
 
-        self.bind("<FocusIn>", self.__on_focus_in__, "+")
-        self.bind("<FocusOut>", self.__on_focus_out__, "+")
+        if hotkeys is not None:
+            # focus handlers do only managing hotkeys
+            self.bind("<FocusIn>", self.__on_focus_in__, "+")
+            self.bind("<FocusOut>", self.__on_focus_out__, "+")
+
         self.bind("<Destroy>", self.__on_destroy__, "+")
 
         self.ph_launch()
