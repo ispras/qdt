@@ -1,4 +1,3 @@
-from .introspection import *
 from .machine import *
 from .machine_description import *
 from .machine_editing import *
@@ -16,3 +15,4 @@ from .qom_hierarchy import *
 from .sysbusdevice import *
 from .version import *
 from .version_description import *
+from .watch import *
