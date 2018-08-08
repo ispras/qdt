@@ -1,6 +1,7 @@
 __all__ = [
     "SourcePosition",
-    "Breakpoint",
+    "Breakpoint"
+      , "Break"
 ]
 
 from common import (
@@ -99,3 +100,45 @@ likely running simultaneously.
     def __happened__(self, *a, **kw):
         "Provides access to private `__notify_happened`"
         self.__notify_happened(*a, **kw)
+
+
+class Break(Breakpoint):
+    """ Helper that allows to write the breakpoint position and description in
+the class doc string (like this one).
+
+    Example:
+
+    ''' file/name/suffix.c:line
+
+    The breakpoint description starts from empty line above. All lines in the
+    description are jointed with a space " " as separator. Empty lines are
+    dropped. Trailing and leading white spaces are stripped.
+    '''
+    """
+
+    def __init__(self, *a, **kw):
+        # get source position and description from class doc
+        doc = type(self).__doc__
+
+        doc_lines = [
+            stripped for stripped in (
+                line.strip() for line in doc.splitlines()
+            ) if stripped
+        ]
+
+        try:
+            pos, description_lines = doc_lines[0], doc_lines[1:]
+            file_path, line_str = pos.split(":")
+            line_n = int(line_str.strip())
+        except:
+            super(Break, self).__init__(*a, **kw)
+            return
+
+        super(Break, self).__init__(
+            SourcePosition(
+                line_number = line_n,
+                file_path = file_path.strip()
+            ),
+            description = " ".join(description_lines),
+            *a, **kw
+        )
