@@ -1,4 +1,6 @@
 from qemu import (
+    MOp_SetDevParentBus,
+    MachineNode,
     q_event_dict,
     q_event_list
 )
@@ -52,6 +54,7 @@ from hashlib import (
     sha1
 )
 from common import (
+    mlget as _,
     notifier,
     sort_topologically,
     PyGenerator,
@@ -85,6 +88,9 @@ from graphviz import (
     Digraph
 )
 from widgets import (
+    GUIProjectHistoryTracker,
+    GUIProject,
+    MachineDescriptionSettingsWidget,
     GUITk
 )
 from gdb import (
@@ -694,6 +700,92 @@ class MachineWatcher(Watcher):
         "hw/core/qdev.c:57" # bus_remove_child, before actual unparanting
         print("not implemented")
 
+class MachineReverser(object):
+
+    def __init__(self, watcher, machine, tracker):
+        """
+        :type watcher: MachineWatcher
+        :type machine: MachineNode
+        :type tracker: GUIProjectHistoryTracker
+        """
+        self.watcher = watcher
+        self.machine = machine
+        self.tracker = tracker
+        self.proxy = tracker.get_machine_proxy(machine)
+
+        # auto assign event handlers
+        for name, ref in getmembers(type(self)):
+            if name[:4] == "_on_" and ismethod(ref):
+                watcher.watch(name[4:], getattr(self, name))
+
+        self.__next_node_id = 1
+        self.inst2id = {}
+        self.id2inst = []
+
+    def __id(self):
+        _id = self.__next_node_id
+        self.__next_node_id += 1
+        return _id
+
+    def _on_device_created(self, inst):
+        _id = self.__id()
+        self.inst2id[inst] = _id
+        self.id2inst.append(inst)
+
+        _type = inst.type
+        if _type.implements("pci-device"):
+            self.proxy.add_device("PCIExpressDeviceNode", _id,
+                qom_type = _type.name
+            )
+        elif _type.implements("sys-bus-device"):
+            self.proxy.add_device("SystemBusDeviceNode", _id,
+                qom_type = _type.name
+            )
+        else:
+            self.proxy.add_device("DeviceNode", _id,
+                qom_type = _type.name
+            )
+
+        self.proxy.commit()
+
+    def _on_bus_created(self, bus):
+        _id = self.__id()
+        self.inst2id[bus] = _id
+        self.id2inst.append(bus)
+
+        bus_type = bus.type
+        if bus_type.implements("System"):
+            bus_class = "SystemBusNode"
+        elif bus_type.implements("PCI"):
+            bus_class = "PCIExpressBusNode"
+        elif bus_type.implements("ISA"):
+            bus_class = "ISABusNode"
+        elif bus_type.implements("IDE"):
+            bus_class = "IDEBusNode"
+        elif bus_type.implements("i2c-bus"):
+            bus_class = "I2CBusNode"
+        else:
+            bus_class = "BusNode"
+
+        self.proxy.add_bus(bus_class, _id)
+        self.proxy.commit()
+
+    def _on_bus_attached(self, bus, device):
+        bus_id = self.inst2id[bus]
+        device_id = self.inst2id[device]
+
+        self.proxy.append_child_bus(device_id, bus_id)
+        self.proxy.commit()
+
+    def _on_device_attached(self, device, bus):
+        bus_id = self.inst2id[bus]
+        device_id = self.inst2id[device]
+
+        self.proxy.stage(MOp_SetDevParentBus, self.machine.id2node[bus_id],
+            device_id
+        )
+        self.proxy.commit()
+
 
 def main():
     ap = QArgumentParser(
@@ -760,6 +852,14 @@ def main():
     mw.init_runtime(rt)
     qomtg.init_runtime(rt)
 
+    mach_desc = MachineNode("runtime-machine", "")
+    proj = GUIProject(
+        descriptions = [mach_desc]
+    )
+    pht = GUIProjectHistoryTracker(proj, proj.history)
+
+    MachineReverser(mw, mach_desc, pht)
+
     def co_rsp_poller(rsp = qemu_debugger):
         rsp.run_no_block()
 
@@ -777,7 +877,20 @@ def main():
         qemu_debugger.rsp.finish()
 
     tk = GUITk(wait_msec = 1)
+    tk.title(_("QEmu Watcher"))
+
+    tk.pht = pht
+
     tk.task_manager.enqueue(co_rsp_poller())
+
+    tk.grid()
+    tk.rowconfigure(0, weight = 1)
+    tk.columnconfigure(0, weight = 1)
+
+    mdsw = MachineDescriptionSettingsWidget(mach_desc, tk)
+    mdsw.grid(row = 0, column = 0, sticky = "NESW")
+
+    tk.geometry("1024x1024")
     tk.mainloop()
 
     # XXX: on_finish method is not called by RemoteTarget
