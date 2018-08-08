@@ -57,6 +57,15 @@ https://docs.python.org/3/reference/expressions.html#atom-identifiers
             notify_name = "_" + klass.__name__ + "__notify_" + event
             setattr(klass, notify_name, __notify)
 
+        def watch(self, event_name, cb):
+            getattr(self, "watch_" + event_name)(cb)
+
+        def unwatch(self, event_name, cb):
+            getattr(self, "unwatch_" + event_name)(cb)
+
+        klass.watch = watch
+        klass.unwatch = unwatch
+
         return klass
 
     return add_events
