@@ -592,30 +592,41 @@ class MachineWatcher(Watcher):
         ))
 
     def on_qbus_realize(self):
-        "hw/core/bus.c:105" # qbus_realize, if parent is not NULL
+        "hw/core/bus.c:101" # qbus_realize, parrent may be NULL
         rt = self.rt
         bus = rt["bus"]
 
         bus_inst = self.instances[bus.fetch_pointer()]
-        device_inst = self.instances[rt["parent"].fetch_pointer()]
+
         name = bus["name"].fetch_c_string()
 
         bus_inst.name = name
-        bus_inst.parent = device_inst
-        device_inst.children.append(bus_inst)
 
-        bus_inst.relate(device_inst)
+        dev_addr = rt["parent"].fetch_pointer()
+        if dev_addr:
+            device_inst = self.instances[dev_addr]
+            bus_inst.parent = device_inst
+            device_inst.children.append(bus_inst)
+
+            bus_inst.relate(device_inst)
 
         if not self.verbose:
             return
 
-        print("Device 0x%x (%s) |----- bus 0x%s %s (%s)" % (
-            device_inst.obj.address,
-            device_inst.type.name,
-            bus_inst.obj.address,
-            bus_inst.name,
-            bus_inst.type.name
-        ))
+        if dev_addr:
+            print("Device 0x%x (%s) |----- bus 0x%s %s (%s)" % (
+                device_inst.obj.address,
+                device_inst.type.name,
+                bus_inst.obj.address,
+                bus_inst.name,
+                bus_inst.type.name
+            ))
+        else:
+            print("   ~-- bus 0x%s %s (%s)" % (
+                bus_inst.obj.address,
+                bus_inst.name,
+                bus_inst.type.name
+            ))
 
     def on_bus_unparent(self):
         "hw/core/bus.c:123" # bus_unparent, before actual unparanting
