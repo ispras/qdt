@@ -52,6 +52,7 @@ from hashlib import (
     sha1
 )
 from common import (
+    notifier,
     sort_topologically,
     PyGenerator,
     execfile
@@ -426,6 +427,12 @@ class QInstance(object):
         return rqo_prop
 
 
+@notifier(
+    "device_created", # QInstance
+    "bus_created", # QInstance
+    "bus_attached", # QInstance bus, QInstance device
+    "device_attached", # QInstance device, QInstance bus
+)
 class MachineWatcher(Watcher):
     """ Watches for QOM API calls to reconstruct machine model and monitor its
     state at runtime.
@@ -478,6 +485,8 @@ class MachineWatcher(Watcher):
             if self.verbose:
                 print("Creating device " + inst.type.name)
             self.current_device = inst
+
+            self.__notify_device_created(inst)
         elif t.implements("qemu:memory-region"):
             # print("Creating memory")
             self.current_memory = inst
@@ -602,6 +611,8 @@ class MachineWatcher(Watcher):
 
         bus_inst.name = name
 
+        self.__notify_bus_created(bus_inst)
+
         dev_addr = rt["parent"].fetch_pointer()
         if dev_addr:
             device_inst = self.instances[dev_addr]
@@ -609,6 +620,8 @@ class MachineWatcher(Watcher):
             device_inst.children.append(bus_inst)
 
             bus_inst.relate(device_inst)
+
+            self.__notify_bus_attached(bus_inst, device_inst)
 
         if not self.verbose:
             return
@@ -663,6 +676,8 @@ class MachineWatcher(Watcher):
         device_inst.parent = bus_inst
         bus_inst.children.append(device_inst)
         bus_inst.relate(device_inst)
+
+        self.__notify_device_attached(device_inst, bus_inst)
 
         if not self.verbose:
             return
