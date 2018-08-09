@@ -775,7 +775,7 @@ class MachineReverser(object):
         self.__next_node_id += 1
         return _id
 
-    def _on_device_created(self, inst):
+    def _on_device_creating(self, inst):
         _id = self.__id()
         self.inst2id[inst] = _id
         self.id2inst.append(inst)
