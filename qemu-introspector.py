@@ -834,6 +834,45 @@ class MachineReverser(object):
         )
         self.proxy.commit()
 
+    def _on_property_added(self, obj, _property):
+        prop = _property.prop
+        setter_addr = prop["set"].fetch_pointer()
+
+        if not setter_addr:
+            return
+
+        inst2id = self.inst2id
+        if obj not in inst2id:
+            return
+
+        if not obj.type.implements("device"):
+            return
+
+        self.proxy.stage(MOp_AddDevProp, _property.as_qom, inst2id[obj])
+        self.proxy.commit()
+
+    def _on_property_set(self, obj, _property, val):
+        prop = _property.prop
+        setter_addr = prop["set"].fetch_pointer()
+
+        if not setter_addr:
+            return
+
+        inst2id = self.inst2id
+        if obj not in inst2id:
+            return
+
+        if not obj.type.implements("device"):
+            return
+
+        qom_prop = _property.as_qom
+
+        self.proxy.stage(MOp_SetDevProp, qom_prop.prop_type,
+            qom_prop.prop_val, # XXX: recover from `val`
+            qom_prop,
+            inst2id[obj]
+        )
+        self.proxy.commit()
 
 def main():
     ap = QArgumentParser(
