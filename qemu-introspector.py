@@ -64,6 +64,7 @@ from traceback import (
     print_exc
 )
 from pyrsp.utils import (
+    lazy,
     switch_endian,
     decode_data
 )
@@ -267,6 +268,15 @@ class RQOMType(object):
         self.name, self.parent = name, parent
 
         self.children = []
+
+    @lazy
+    def instance_init(self):
+        impl = self.impl
+
+        addr = impl["instance_init"].fetch_pointer()
+        if addr:
+            return impl.dia.subprogram(addr)
+        return None
 
     def __dfs_children__(self):
         return self.children
