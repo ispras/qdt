@@ -127,7 +127,7 @@ class DetachDevice(Break):
 
 breaks = {}
 
-for name, ref in globals().items():
+for name, ref in tuple(globals().items()):
     if not isclass(ref):
         continue
     if ref is Break:
