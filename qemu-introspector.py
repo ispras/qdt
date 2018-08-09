@@ -444,6 +444,7 @@ class QInstance(object):
 
 
 @notifier(
+    "device_creating", # QInstance
     "device_created", # QInstance
     "bus_created", # QInstance
     "bus_attached", # QInstance bus, QInstance device
@@ -501,6 +502,8 @@ class MachineWatcher(Watcher):
             if self.verbose:
                 print("Creating device " + inst.type.name)
             self.current_device = inst
+
+            self.__notify_device_creating(inst)
         elif t.implements("qemu:memory-region"):
             # print("Creating memory")
             self.current_memory = inst
