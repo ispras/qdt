@@ -469,6 +469,8 @@ class QInstance(object):
     "bus_created", # QInstance
     "bus_attached", # QInstance bus, QInstance device
     "device_attached", # QInstance device, QInstance bus
+    "property_added", # QInstance, RQObjectProperty
+    "property_set", # QInstance, RQObjectProperty, Value
 )
 class MachineWatcher(Watcher):
     """ Watches for QOM API calls to reconstruct machine model and monitor its
@@ -608,6 +610,8 @@ class MachineWatcher(Watcher):
 
         prop = inst.account_property(rt["prop"])
 
+        self.__notify_property_added(inst, prop)
+
         if not self.verbose:
             return
 
@@ -636,6 +640,8 @@ class MachineWatcher(Watcher):
             return
 
         prop = inst.properties[name]
+
+        self.__notify_property_set(inst, prop, None)
 
         if not self.verbose:
             return
