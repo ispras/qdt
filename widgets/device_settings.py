@@ -25,6 +25,9 @@ from six.moves import (
     range as xrange
 )
 from six.moves.tkinter import (
+    ALL,
+    Scrollbar,
+    Canvas,
     BOTH,
     StringVar,
     BooleanVar,
@@ -396,10 +399,55 @@ class DeviceSettingsWidget(SettingsWidget):
 
         self.child_buses_rows = []
 
-        self.props_lf = VarLabelFrame(self,
+        # pack properties inside a farame with scrolling
+        outer_frame = VarLabelFrame(self,
             text = _("Properties")
         )
-        self.props_lf.pack(fill = BOTH, expand = False)
+        outer_frame.pack(fill = BOTH, expand = True)
+
+        outer_frame.rowconfigure(0, weight = 1)
+        outer_frame.columnconfigure(0, weight = 1)
+        outer_frame.columnconfigure(1, weight = 0)
+
+        # container for inner frame, it supports scrolling
+        canvas = Canvas(outer_frame, width = 1, height = 1)
+        canvas.grid(row = 0, column = 0, sticky = "NESW")
+
+        inner_frame = GUIFrame(canvas)
+
+        inner_frame_id = canvas.create_window((0, 0),
+            window = inner_frame,
+            anchor = "nw"
+        )
+
+        scrollbar = Scrollbar(outer_frame,
+            orient = "vertical",
+            command = canvas.yview
+        )
+        scrollbar.grid(row = 0, column = 1, sticky = "NESW")
+
+        canvas.configure(yscrollcommand = scrollbar.set)
+
+        def inner_configure(_):
+            cnf = dict(
+                scrollregion = canvas.bbox(ALL)
+            )
+            cnv_h = canvas.winfo_height()
+            inner_h = inner_frame.winfo_height()
+
+            if inner_h < cnv_h:
+                cnf["height"] = inner_h
+
+            canvas.configure(**cnf)
+
+        inner_frame.bind("<Configure>", inner_configure, "+")
+
+        def canvas_configure(_):
+            canvas.itemconfig(inner_frame_id, width = canvas.winfo_width())
+
+        canvas.bind("<Configure>", canvas_configure, "+")
+
+        self.props_lf = inner_frame
         self.props_lf.columnconfigure(0, weight = 1)
         self.props_lf.columnconfigure(1, weight = 0)
         self.props_lf.columnconfigure(2, weight = 1)
