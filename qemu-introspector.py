@@ -1,4 +1,11 @@
 from qemu import (
+    QOMPropertyTypeLink,
+    QOMPropertyTypeString,
+    QOMPropertyTypeBoolean,
+    QOMPropertyTypeInteger,
+    QOMPropertyValue,
+    MOp_AddDevProp,
+    MOp_SetDevProp,
     MOp_SetDevParentBus,
     MachineNode,
     q_event_dict,
@@ -383,6 +390,19 @@ class RQObjectProperty(object):
             type = prop["type"].fetch_c_string()
         self.name = name
         self.type = type
+
+    @lazy
+    def as_qom(self):
+        # XXX: note that returned values are not default
+        t = self.type
+        if t.startswith("int") or t.startswith("uint"):
+            return QOMPropertyValue(QOMPropertyTypeInteger, self.name, 0)
+        elif t.startswith("link<"):
+            return QOMPropertyValue(QOMPropertyTypeLink, self.name, None)
+        elif t == "bool":
+            return QOMPropertyValue(QOMPropertyTypeBoolean, self.name, False)
+        else:
+            return QOMPropertyValue(QOMPropertyTypeString, self.name, "")
 
 
 class QInstance(object):
