@@ -491,14 +491,23 @@ class MachineWatcher(Watcher):
             if self.verbose:
                 print("Creating device " + inst.type.name)
             self.current_device = inst
-
-            self.__notify_device_created(inst)
         elif t.implements("qemu:memory-region"):
             # print("Creating memory")
             self.current_memory = inst
 
     def on_obj_init_end(self):
         "object.c:386" # object_initialize_with_type
+
+        if self.machine is None:
+            return
+
+        rt = self.rt
+        addr = rt["obj"].fetch_pointer()
+
+        inst = self.instances[addr]
+
+        if inst.type.implements("device"):
+            self.__notify_device_created(inst)
 
     def on_board_init_start(self):
         "hw/core/machine.c:829" # machine_run_board_init
