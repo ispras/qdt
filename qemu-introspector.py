@@ -947,6 +947,8 @@ def main():
 
     MachineReverser(mw, mach_desc, pht)
 
+    qemu_debugger.finished = False
+
     def co_rsp_poller(rsp = qemu_debugger):
         rsp.run_no_block()
 
@@ -961,6 +963,7 @@ def main():
                 break
 
         yield
+        qemu_debugger.finished = True
         qemu_debugger.rsp.finish()
 
     tk = GUITk(wait_msec = 1)
@@ -979,6 +982,9 @@ def main():
 
     tk.geometry("1024x1024")
     tk.mainloop()
+
+    if not qemu_debugger.finished:
+        qemu_debugger.rsp.finish()
 
     # XXX: on_finish method is not called by RemoteTarget
     qomtg.to_file("qom-by-q.i.dot")
