@@ -367,7 +367,13 @@ class QOMTreeGetter(Watcher):
             v for v in self.tree.name2type.values() if v.parent is None
         ):
             n = gv_node(t.name)
-            graph.node(n, label = t.name + "\\n0x%x" % t.impl.address)
+            label = t.name + "\\n0x%x" % t.impl.address
+            if t._instance_casts:
+                label += "\\n*"
+                for cast in t._instance_casts:
+                    label += "\\n" + cast.name
+
+            graph.node(n, label = label)
             if t.parent:
                 graph.edge(gv_node(t.parent), n)
 
