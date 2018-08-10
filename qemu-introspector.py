@@ -276,6 +276,10 @@ class RQOMType(object):
 
         self.children = []
 
+        # Instance pointer can be casted to different C types. Remember those
+        # types.
+        self._instance_casts = []
+
     @lazy
     def instance_init(self):
         impl = self.impl
