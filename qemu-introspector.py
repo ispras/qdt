@@ -820,6 +820,10 @@ class MachineReverser(object):
         self.__next_node_id += 1
         return _id
 
+    def _on_runtime_set(self, rt):
+        self.rt = rt
+        self.target = rt.target
+
     def _on_device_creating(self, inst):
         _id = self.__id()
         self.inst2id[inst] = _id
@@ -840,6 +844,12 @@ class MachineReverser(object):
             )
 
         self.proxy.commit()
+
+        ii = _type.instance_init
+        if ii:
+            target = self.target
+            for addr in ii.epilogues:
+                target.set_br(target.get_hex_str(addr), CastCatcher(inst))
 
     def _on_bus_created(self, bus):
         _id = self.__id()
