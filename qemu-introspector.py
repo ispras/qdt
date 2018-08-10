@@ -280,6 +280,16 @@ class RQOMType(object):
         # types.
         self._instance_casts = []
 
+    def instance_casts(self):
+        """ A QOM instance can be casted to C types corresponding to its
+        ancestors too.
+        """
+        ret = set(self._instance_casts)
+        for a in self.iter_ancestors():
+            for cast in a._instance_casts:
+                ret.add(cast)
+        return ret
+
     @lazy
     def instance_init(self):
         impl = self.impl
@@ -970,9 +980,12 @@ def main():
     )
 
     qomtg = QOMTreeGetter(dia,
+        # verbose = True,
         interrupt = False
     )
-    mw = MachineWatcher(dia, qomtg.tree)
+    mw = MachineWatcher(dia, qomtg.tree,
+        # verbose = True
+    )
 
     mach_desc = MachineNode("runtime-machine", "")
     proj = GUIProject(
@@ -993,7 +1006,7 @@ def main():
     qemu_proc.start()
 
     qemu_debugger = AMD64(qemu_debug_addr,
-        verbose = True,
+        # verbose = True,
         host = True
     )
 
