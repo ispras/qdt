@@ -105,7 +105,7 @@ class RSPReader(CoTask):
                     c = yield
                 checksum = (yield) + (yield)
 
-                # print("-> %" + data + "#" + checksum)
+                print("-> %" + data + "#" + checksum)
 
                 if rsp_check_pkt(data, checksum):
                     if rsp.ack: # `ack` is dynamic, do not cache!
@@ -121,7 +121,7 @@ class RSPReader(CoTask):
                     c = yield
                 checksum = (yield) + (yield)
 
-                # print("-> $" + data + "#" + checksum)
+                print("-> $" + data + "#" + checksum)
 
                 if rsp_check_pkt(data, checksum):
                     if rsp.ack:
@@ -130,11 +130,11 @@ class RSPReader(CoTask):
                 else:
                     write(b"-")
             elif c == b"+":
-                # print("-> +")
+                print("-> +")
 
                 ack_ok()
             elif c == b"-":
-                # print("-> -")
+                print("-> -")
 
                 ack_error()
             else:
@@ -296,7 +296,7 @@ class CoRSP(object):
             self._write(packet)
 
     def _write(self, buf):
-        # print("<- " + buf)
+        print("<- " + buf)
 
         self.out_buf += buf
 
