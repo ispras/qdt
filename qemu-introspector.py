@@ -919,6 +919,14 @@ def main():
     )
     mw = MachineWatcher(dia, qomtg.tree)
 
+    mach_desc = MachineNode("runtime-machine", "")
+    proj = GUIProject(
+        descriptions = [mach_desc]
+    )
+    pht = GUIProjectHistoryTracker(proj, proj.history)
+
+    MachineReverser(mw, mach_desc, pht)
+
     qemu_debug_addr = "localhost:4321"
 
     qemu_proc = Process(
@@ -938,14 +946,6 @@ def main():
 
     mw.init_runtime(rt)
     qomtg.init_runtime(rt)
-
-    mach_desc = MachineNode("runtime-machine", "")
-    proj = GUIProject(
-        descriptions = [mach_desc]
-    )
-    pht = GUIProjectHistoryTracker(proj, proj.history)
-
-    MachineReverser(mw, mach_desc, pht)
 
     qemu_debugger.finished = False
 
