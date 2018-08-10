@@ -10,6 +10,9 @@ from inspect import (
 from re import (
     compile
 )
+from common import (
+    notifier
+)
 
 re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]*$")
 
@@ -23,6 +26,7 @@ def is_breakpoint_cb(object):
     return doc and re_breakpoint_pos.match(doc.splitlines()[0])
 
 
+@notifier("runtime_set")
 class Watcher(object):
 
     def __init__(self, dia, verbose = True):
@@ -52,6 +56,8 @@ class Watcher(object):
                 print("br 0x" + addr_str + ", handler = " + cb.__name__)
 
             target.set_br(addr_str, cb, quiet = quiet)
+
+        self.__notify_runtime_set(rt)
 
     def remove_breakpoints(self):
         "Removes breakpoints assigned by `init_runtime`."
