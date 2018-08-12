@@ -302,6 +302,7 @@ def bbox_center(bbox):
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
 
+SLOTS_R = 30
 ROTATION_R1 = 30
 ROTATION_R2 = 5
 
@@ -333,7 +334,7 @@ class OpWgt(Wgt):
         step = pi / I
         a = angle + pi + step / 2
 
-        rad = 30
+        rad = SLOTS_R
 
         for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
