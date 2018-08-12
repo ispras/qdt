@@ -302,7 +302,7 @@ def bbox_center(bbox):
 def slot(x, y):
     return x - 10, y - 10, x + 10, y + 10
 
-SLOTS_R = 30
+SLOTS_R = 25
 ROTATION_R1 = 30
 ROTATION_R2 = 5
 
