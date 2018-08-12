@@ -15,6 +15,7 @@ from inspect import (
     isclass
 )
 from math import (
+    sqrt,
     pi,
     sin,
     cos,
@@ -359,11 +360,13 @@ class OpWgt(Wgt):
         self.in_slots = OrderedDict()
         self.out_slots = OrderedDict()
 
-    def __g_init__(self, w, x, y, angle):
+    def __g_init__(self, w, x, y, angle, scale):
         c = w.canvas
         op = self.inst
 
-        rx, ry = x + ROTATION_R1 * cos(angle), y + ROTATION_R1 * sin(angle)
+        rad = ROTATION_R1 * scale
+
+        rx, ry = x + rad * cos(angle), y + rad * sin(angle)
         self.rot_id = c.create_oval(
             rx - ROTATION_R2, ry - ROTATION_R2,
             rx + ROTATION_R2, ry + ROTATION_R2,
@@ -376,7 +379,7 @@ class OpWgt(Wgt):
         step = pi / I
         a = angle + pi + step / 2
 
-        rad = SLOTS_R
+        rad = SLOTS_R * scale
 
         for i in range(I):
             sx, sy = x + rad * cos(a), y + rad * sin(a)
@@ -428,8 +431,10 @@ class OpWgt(Wgt):
         x, y = w.canvas.coords(self.op_id)
         bbox = w.canvas.bbox(self.rot_id)
         rx, ry = bbox_center(bbox)
-        a = atan2(ry - y, rx - x)
-        return x, y, a
+        dy, dx = ry - y, rx - x
+        a = atan2(dy, dx)
+        s = sqrt(dx * dx + dy * dy) / ROTATION_R1
+        return x, y, a, s
 
     def ids(self):
         return (self.op_id, self.rot_id) + tuple(self.in_slots) + tuple(
@@ -474,7 +479,7 @@ class ConstWgt(Wgt):
     def __init__(self, const = None):
         super(ConstWgt, self).__init__(Const() if const is None else const)
 
-    def __g_init__(self, w, x, y, a):
+    def __g_init__(self, w, x, y, a, s):
         c = w.canvas
 
         # actual frame and drag-box sizes will be assigned by `__g_update__`
@@ -528,7 +533,7 @@ class ConstWgt(Wgt):
         )
 
     def __g_coords__(self, w):
-        return w.canvas.coords(self.text_id) + [0]
+        return w.canvas.coords(self.text_id) + [0, 1.0]
 
     def ids(self):
         return [self.text_id, self.frame_id, self.drag_id]
@@ -839,7 +844,9 @@ class CodeCanvas(CanvasDnD):
                 self.__rotation = True
                 group = self.id2wgt[_id].dnd_group
                 cx, cy = bbox_center(cnv.bbox(group.anchor_id))
-                self.__last_angle = atan2(y - cy, x - cx)
+                dx, dy = x - cx, y - cy
+                self.__last_radius_2 = sqrt(dx * dx + dy * dy)
+                self.__last_angle = atan2(dy, dx)
                 self.__rotation_center = cx, cy
                 self.__rotation_group = group
                 self.master.config(cursor = "exchange")
@@ -999,8 +1006,8 @@ class CodeCanvas(CanvasDnD):
             line = DatumLine(self, *key)
             self.lines[key] = line
 
-    def add_widget(self, wgt, x, y, a, assing_colors = True):
-        wgt.__g_init__(self, x, y, a)
+    def add_widget(self, wgt, x, y, a, s, assing_colors = True):
+        wgt.__g_init__(self, x, y, a, s)
 
         self.inst2wgt[wgt.inst] = wgt
 
@@ -1034,7 +1041,7 @@ class CodeCanvas(CanvasDnD):
 
         self.update_lines(wgt)
 
-    def add_instance(self, inst, x, y, a, assing_colors = True):
+    def add_instance(self, inst, x, y, a, s, assing_colors = True):
         t = type(inst)
         for cls in getmro(t):
             if cls is Const:
@@ -1048,7 +1055,7 @@ class CodeCanvas(CanvasDnD):
                 str(inst), t.__name__
             ))
 
-        self.add_widget(wgt, x, y, a, assing_colors = assing_colors)
+        self.add_widget(wgt, x, y, a, s, assing_colors = assing_colors)
         return wgt
 
     def add_instances(self, instances):
@@ -1111,9 +1118,15 @@ class CodeCanvas(CanvasDnD):
         elif self.__rotation:
             cx, cy = self.__rotation_center
             x, y = event.x, event.y
-            a = atan2(y - cy, x - cx)
+            dy, dx = y - cy, x - cx
+            a = atan2(dy, dx)
             da = a - self.__last_angle
-            self.__rotation_group.rotate(self, da, cx, cy)
+            r2 = sqrt(dx * dx + dy * dy)
+            s = r2 / self.__last_radius_2
+            self.__last_radius_2 = r2
+            group = self.__rotation_group
+            group.rotate(self, da, cx, cy)
+            group.scale(self, s, cx, cy)
             self.__last_angle = a
             return
 
@@ -1208,8 +1221,8 @@ class CodeCanvas(CanvasDnD):
 
     def iter_positions(self):
         for wgt in self.iter_widgets():
-            x, y, a = wgt.__g_coords__(self)
-            yield wgt.inst, x, y, a
+            x, y, a, s = wgt.__g_coords__(self)
+            yield wgt.inst, x, y, a, s
 
 
 class SaveData(object):
