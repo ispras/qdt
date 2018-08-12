@@ -292,6 +292,48 @@ class DnDGroup(object):
                     "Unsupported type of item: " + type(i).__name__
                 )
 
+    def scale(self, w, s, cx, cy):
+        coords = w.canvas.coords
+        bbox = w.canvas.bbox
+        for i in self.items:
+            if isinstance(i, integer_types):
+                # only "center point" of item is scalled, item's points are
+                # translated accordingly
+                ix, iy = bbox_center(bbox(i))
+                ry, rx = iy - cy, ix - cx
+                # (nx, ny) = (rx, ry) * s
+                nx, ny = rx * s, ry * s
+                # translation is same for all the points
+                dx, dy = nx - rx, ny - ry
+
+                xy = coords(i)
+                if len(xy) == 2:
+                    x0, y0 = xy
+                    coords(i, x0 + dx, y0 + dy)
+                else:
+                    x0, y0, x1, y1 = xy
+                    coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
+            elif isinstance(i, tuple):
+                # item's points are translated individually
+                iid, first_coord, end = i
+                c = coords(iid)
+                if end is None:
+                    end = len(c)
+                for idx in range(first_coord, end):
+                    if idx & 1:
+                        ry = c[idx] - cy
+                        ny = ry * s
+                        c[idx] = cy + ny
+                    else:
+                        rx = c[idx] - cx
+                        nx = rx * s
+                        c[idx] = cx + nx
+                coords(iid, *c)
+            else:
+                raise ValueError(
+                    "Unsupported type of item: " + type(i).__name__
+                )
+
 class Wgt(object):
     def __init__(self, instance):
         self.inst = instance
