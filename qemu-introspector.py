@@ -987,6 +987,55 @@ class MachineReverser(object):
         )
         self.proxy.commit()
 
+
+class QEmuWatcherGUI(GUITk):
+
+    def __init__(self, pht, mach_desc, runtime):
+        GUITk.__init__(self, wait_msec = 1)
+
+        self.title(_("QEmu Watcher"))
+
+        self.pht = pht
+        self.rt = runtime
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        mdsw = MachineDescriptionSettingsWidget(mach_desc, self)
+        mdsw.grid(row = 0, column = 0, sticky = "NESW")
+        self.mdsw = mdsw
+
+        self.task_manager.enqueue(self.co_rsp_poller())
+
+    def co_rsp_poller(self):
+        rt = self.rt
+        target = rt.target
+
+        target.run_no_block()
+
+        target.finished = False
+        target._interrupt = False
+        while not target._interrupt:
+            yield
+            try:
+                target.poll()
+            except:
+                print_exc()
+                print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
+
+                if not target.finished:
+                    target.finished = True
+                    target.rsp.finish()
+
+                break
+
+        yield
+
+        if not target.finished:
+            target.finished = True
+            target.rsp.finish()
+
+
 def main():
     ap = QArgumentParser(
         description = "QEMU runtime introspection tool"
@@ -1063,46 +1112,7 @@ def main():
     mw.init_runtime(rt)
     qomtg.init_runtime(rt)
 
-    qemu_debugger.finished = False
-
-    def co_rsp_poller(rt = rt):
-        target = rt.target
-        target.run_no_block()
-
-        target._interrupt = False
-        while not target._interrupt:
-            yield
-            try:
-                target.poll()
-            except:
-                print_exc()
-                print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
-
-                if not target.finished:
-                    target.finished = True
-                    target.rsp.finish()
-
-                break
-
-        yield
-
-        if not target.finished:
-            target.finished = True
-            target.rsp.finish()
-
-    tk = GUITk(wait_msec = 1)
-    tk.title(_("QEmu Watcher"))
-
-    tk.pht = pht
-
-    tk.task_manager.enqueue(co_rsp_poller())
-
-    tk.grid()
-    tk.rowconfigure(0, weight = 1)
-    tk.columnconfigure(0, weight = 1)
-
-    mdsw = MachineDescriptionSettingsWidget(mach_desc, tk)
-    mdsw.grid(row = 0, column = 0, sticky = "NESW")
+    tk = QEmuWatcherGUI(pht, mach_desc, rt)
 
     tk.geometry("1024x1024")
     tk.mainloop()
