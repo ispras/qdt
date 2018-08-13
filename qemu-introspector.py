@@ -290,11 +290,23 @@ class RQOMType(object):
                 ret.add(cast)
         return ret
 
+    # TODO: there is too many boilerplate code for `TypeImpl` fields access.
+    # Consider to rewrite it in a common way. `__getitem__` ?
+
     @lazy
     def instance_init(self):
         impl = self.impl
 
         addr = impl["instance_init"].fetch_pointer()
+        if addr:
+            return impl.dia.subprogram(addr)
+        return None
+
+    @lazy
+    def class_init(self):
+        impl = self.impl
+
+        addr = impl["class_init"].fetch_pointer()
         if addr:
             return impl.dia.subprogram(addr)
         return None
