@@ -55,7 +55,7 @@ class Watcher(object):
             if v:
                 print("br 0x" + addr_str + ", handler = " + cb.__name__)
 
-            target.set_br(addr_str, cb, quiet = quiet)
+            target.add_br(addr_str, cb, quiet = quiet)
 
         self.__notify_runtime_set(rt)
 
@@ -65,6 +65,6 @@ class Watcher(object):
         target = self.rt.target
         quiet = not self.verbose
 
-        for addr, _ in self.breakpoints:
+        for addr, cb in self.breakpoints:
             addr_str = target.get_hex_str(addr)
-            target.del_br(addr_str, quiet = quiet)
+            target.remove_br(addr_str, cb, quiet = quiet)
