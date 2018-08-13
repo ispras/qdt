@@ -1040,11 +1040,18 @@ def main():
             except:
                 print_exc()
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
+
+                if not qemu_debugger.finished:
+                    qemu_debugger.finished = True
+                    qemu_debugger.rsp.finish()
+
                 break
 
         yield
-        qemu_debugger.finished = True
-        qemu_debugger.rsp.finish()
+
+        if not qemu_debugger.finished:
+            qemu_debugger.finished = True
+            qemu_debugger.rsp.finish()
 
     tk = GUITk(wait_msec = 1)
     tk.title(_("QEmu Watcher"))
