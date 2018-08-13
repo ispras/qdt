@@ -278,7 +278,7 @@ class RQOMType(object):
 
         # Instance pointer can be casted to different C types. Remember those
         # types.
-        self._instance_casts = []
+        self._instance_casts = set()
 
         # "device"
         self.realize = None
@@ -841,7 +841,7 @@ class CastCatcher(object):
             datum_addr = datum.fetch_pointer()
             if datum_addr != addr:
                 continue
-            qom_type._instance_casts.append(datum_type.target_type)
+            qom_type._instance_casts.add(datum_type.target_type)
 
 
 class MachineReverser(object):
