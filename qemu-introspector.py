@@ -1065,29 +1065,30 @@ def main():
 
     qemu_debugger.finished = False
 
-    def co_rsp_poller(rsp = qemu_debugger):
-        rsp.run_no_block()
+    def co_rsp_poller(rt = rt):
+        target = rt.target
+        target.run_no_block()
 
-        rsp._interrupt = False
-        while not rsp._interrupt:
+        target._interrupt = False
+        while not target._interrupt:
             yield
             try:
-                rsp.poll()
+                target.poll()
             except:
                 print_exc()
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
 
-                if not qemu_debugger.finished:
-                    qemu_debugger.finished = True
-                    qemu_debugger.rsp.finish()
+                if not target.finished:
+                    target.finished = True
+                    target.rsp.finish()
 
                 break
 
         yield
 
-        if not qemu_debugger.finished:
-            qemu_debugger.finished = True
-            qemu_debugger.rsp.finish()
+        if not target.finished:
+            target.finished = True
+            target.rsp.finish()
 
     tk = GUITk(wait_msec = 1)
     tk.title(_("QEmu Watcher"))
