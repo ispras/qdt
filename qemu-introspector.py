@@ -896,11 +896,18 @@ class MachineReverser(object):
 
         self.proxy.commit()
 
+        target = self.target
+        cc = CastCatcher(inst)
+
         ii = _type.instance_init
         if ii:
-            target = self.target
             for addr in ii.epilogues:
-                target.set_br(target.get_hex_str(addr), CastCatcher(inst))
+                target.set_br(target.get_hex_str(addr), cc)
+
+        realize = _type.realize
+        if realize:
+            for addr in realize.epilogues:
+                target.set_br(target.get_hex_str(addr), cc)
 
     def _on_bus_created(self, bus):
         _id = self.__id()
