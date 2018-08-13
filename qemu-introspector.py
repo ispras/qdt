@@ -280,6 +280,9 @@ class RQOMType(object):
         # types.
         self._instance_casts = []
 
+        # "device"
+        self.realize = None
+
     def instance_casts(self):
         """ A QOM instance can be casted to C types corresponding to its
         ancestors too.
@@ -363,6 +366,32 @@ class QOMTreeGetter(Watcher):
 
         if self.verbose:
             print("%s -> %s" % (t.parent, t.name))
+
+    def on_type_initialize(self):
+        "object.c:344" # now the type and its ancestors are initialized
+
+        rt = self.rt
+        type_impl = rt["ti"]
+
+        ti_addr = type_impl.fetch_pointer()
+        a2t = self.tree.addr2type
+
+        if ti_addr not in a2t:
+            # There are interfaces providing variations of regular types. They
+            # do not path throug type_register_internal because its TypeInfo is
+            # created and used directly by type_initialize_interface.
+            return
+
+        t = a2t[ti_addr]
+
+        if t.implements("device"):
+            cls = type_impl["class"]
+
+            dev_cls = cls.cast("DeviceClass *")
+            realize_addr = dev_cls["realize"].fetch_pointer()
+
+            if realize_addr:
+                t.realize = rt.dia.subprogram(realize_addr)
 
     def on_main(self):
         "vl.c:3075" # main, just after QOM module initialization
