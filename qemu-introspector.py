@@ -1160,7 +1160,7 @@ def explicit_var_getting(rt, object_c):
             )
         )
         print("info = 0x%s" % info_val)
-        pt = Type(dia, info.type_DIE)
+        pt = dia.type_by_die(info.type_DIE)
         t = pt.target()
         print("info type: %s %s" % (" ".join(t.modifiers), t.name))
         # t is `typedef`, get the structure
