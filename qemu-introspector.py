@@ -1,4 +1,5 @@
 from qemu import (
+    MOp_AddIRQLine,
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
@@ -500,6 +501,11 @@ class QInstance(object):
         # bus: devices on the bus
         self.children = []
 
+        # irq:
+        # tuple (dev. `QInstance`, GPIO name, GPIO index)
+        self.src = None
+        self.dst = None
+
     def relate(self, qinst):
         self.related.append(qinst)
         qinst.related.append(self)
@@ -532,6 +538,7 @@ class QInstance(object):
     "device_attached", # QInstance device, QInstance bus
     "property_added", # QInstance, RQObjectProperty
     "property_set", # QInstance, RQObjectProperty, Value
+    "irq_connected", # QInstance
 )
 class MachineWatcher(Watcher):
     """ Watches for QOM API calls to reconstruct machine model and monitor its
@@ -808,6 +815,57 @@ class MachineWatcher(Watcher):
     def on_bus_remove_child(self):
         "hw/core/qdev.c:57" # bus_remove_child, before actual unparanting
         print("not implemented")
+
+    def on_qdev_get_gpio_in_named(self):
+        "core/qdev.c:456" # qdev_get_gpio_in_named, return
+        instances = self.instances
+        rt = self.rt
+
+        irq_addr = rt.returned_value.fetch_pointer()
+        dst_addr = rt["dev"].fetch_pointer()
+        dst_name = rt["name"].fetch_c_string()
+        dst_idx = rt["n"].fetch(4) # int
+
+        irq = instances[irq_addr]
+        dst = instances[dst_addr]
+
+        irq.dst = (dst, dst_name, dst_idx)
+
+        self.check_irq_connected(irq)
+
+    def on_qdev_connect_gpio_out_named(self):
+        "core/qdev.c:479"
+        # qdev_connect_gpio_out_named, after IRQ was assigned and before
+        # property name `propname` freed.
+
+        rt = self.rt
+
+        irq_addr = rt["pin"].fetch_pointer()
+
+        if not irq_addr:
+            return
+
+        instances = self.instances
+
+        src_addr = rt["dev"].fetch_pointer()
+        src_name = rt["name"].fetch_c_string()
+        src_idx = rt["n"].fetch(4) # int
+
+        src = instances[src_addr]
+        irq = instances[irq_addr]
+
+        irq.src = (src, src_name, src_idx)
+
+        self.check_irq_connected(irq)
+
+    def check_irq_connected(self, irq):
+        src = irq.src
+        dst = irq.dst
+
+        if src is None or dst is None:
+            return
+
+        self.__notify_irq_connected(irq)
 
 
 class CastCatcher(object):
