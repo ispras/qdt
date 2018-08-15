@@ -1,4 +1,5 @@
 from qemu import (
+    MOp_AddIRQHub,
     MOp_AddIRQLine,
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
@@ -503,6 +504,7 @@ class QInstance(object):
 
         # irq:
         # tuple (dev. `QInstance`, GPIO name, GPIO index)
+        #     for split IRQ that `dst[0]` is `self`
         self.src = None
         self.dst = None
 
@@ -539,6 +541,7 @@ class QInstance(object):
     "property_added", # QInstance, RQObjectProperty
     "property_set", # QInstance, RQObjectProperty, Value
     "irq_connected", # QInstance
+    "irq_split_created", # QInstance (IRQ)
 )
 class MachineWatcher(Watcher):
     """ Watches for QOM API calls to reconstruct machine model and monitor its
@@ -867,6 +870,28 @@ class MachineWatcher(Watcher):
 
         self.__notify_irq_connected(irq)
 
+    def on_qemu_irq_split(self):
+        "core/irq.c:122" # returning from `qemu_irq_split`
+
+        rt = self.rt
+        instances = self.instances
+
+        split_irq_addr = rt.returned_value.fetch_pointer()
+
+        split_irq = instances[split_irq_addr]
+
+        self.__notify_irq_split_created(split_irq)
+
+        irq1 = instances[rt["irq1"].fetch_pointer()]
+        irq2 = instances[rt["irq2"].fetch_pointer()]
+
+        split_irq.dst = (split_irq, None, 0) # yes, to itself
+        irq1.src = (split_irq, None, 0)
+        irq2.src = (split_irq, None, 1)
+
+        self.check_irq_connected(irq1)
+        self.check_irq_connected(irq2)
+
 
 class CastCatcher(object):
     """ A breakpoint handler that inspects all subprogram pointers those do
@@ -922,6 +947,7 @@ class MachineReverser(object):
 
         self.__next_node_id = 1
         self.inst2id = {}
+        self.irq_inst2hub_id = {}
         self.id2inst = []
 
     def __id(self):
@@ -1055,8 +1081,23 @@ class MachineReverser(object):
         src = irq.src
         dst = irq.dst
 
-        src_id = i2i[src[0]]
-        dst_id = i2i[dst[0]]
+        src_inst = src[0]
+        dst_inst = dst[0]
+
+        ii2hi = self.irq_inst2hub_id
+
+        # A split IRQ (hub) instance presents in both mappings. But in
+        # `irq_inst2hub_id` it points to IRQ hub id while in `inst2id` it
+        # points to IRQ line id
+        if src_inst in ii2hi:
+            src_id = ii2hi[src_inst]
+        else:
+            src_id = i2i[src_inst]
+
+        if dst_inst in ii2hi:
+            dst_id = ii2hi[dst_inst]
+        else:
+            dst_id = i2i[dst_inst]
 
         self.proxy.stage(MOp_AddIRQLine,
             src_id, dst_id,
@@ -1064,6 +1105,14 @@ class MachineReverser(object):
             src[1], dst[1],  # names
             _id
         )
+        self.proxy.commit()
+
+    def _on_irq_split_created(self, irq):
+        _id = self.__id()
+        self.irq_inst2hub_id[irq] = _id
+        self.id2inst.append(irq)
+
+        self.proxy.stage(MOp_AddIRQHub, _id)
         self.proxy.commit()
 
 
