@@ -1163,6 +1163,8 @@ class QEmuWatcherGUI(GUITk):
             target.finished = True
             target.rsp.finish()
 
+        # self.destroy()
+
 
 def main():
     ap = QArgumentParser(
