@@ -1045,6 +1045,27 @@ class MachineReverser(object):
         )
         self.proxy.commit()
 
+    def _on_irq_connected(self, irq):
+        i2i = self.inst2id
+
+        _id = self.__id()
+        i2i[irq] = _id
+        self.id2inst.append(irq)
+
+        src = irq.src
+        dst = irq.dst
+
+        src_id = i2i[src[0]]
+        dst_id = i2i[dst[0]]
+
+        self.proxy.stage(MOp_AddIRQLine,
+            src_id, dst_id,
+            src[2], dst[2], # indices
+            src[1], dst[1],  # names
+            _id
+        )
+        self.proxy.commit()
+
 
 class QEmuWatcherGUI(GUITk):
 
