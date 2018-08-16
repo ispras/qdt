@@ -78,10 +78,10 @@ from pyrsp.utils import (
     decode_data
 )
 from pyrsp.gdb import (
-    Value,
-    Type
+    Value
 )
 from pyrsp.type import (
+    Type,
     TYPE_CODE_PTR
 )
 from pyrsp.runtime import (
