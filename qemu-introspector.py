@@ -331,7 +331,12 @@ class RQOMType(object):
     def implements(self, name):
         if name == self.name:
             return True
-        t = self.tree.name2type[name]
+
+        try:
+            t = self.tree.name2type[name]
+        except KeyError:
+            # the type given is unknown, `self` cannot implement it
+            return False
 
         for a in self.iter_ancestors():
             if a is t:
