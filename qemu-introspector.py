@@ -724,12 +724,18 @@ class MachineWatcher(Watcher):
             return
 
         rt = self.rt
-        obj_addr = rt["obj"].fetch_pointer()
+        obj = rt["obj"]
+        obj_addr = obj.fetch_pointer()
 
         try:
             inst = self.instances[obj_addr]
         except KeyError:
-            print("Skipping property for unaccounted object 0x%x" % obj_addr)
+            print("Skipping property for unaccounted object 0x%x of type"
+                  " %s" % (
+                    obj_addr,
+                    obj["class"]["type"]["name"].fetch_c_string()
+                )
+            )
             return
 
         prop = inst.account_property(rt["prop"])
