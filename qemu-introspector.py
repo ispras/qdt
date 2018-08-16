@@ -367,6 +367,8 @@ class QOMTreeGetter(Watcher):
         self.interrupt = interrupt
 
     def on_type_register_internal(self):
+        # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        # v2.12.0
         "object.c:139" # type_register_internal
 
         t = self.tree.account(self.rt["ti"])
@@ -375,7 +377,13 @@ class QOMTreeGetter(Watcher):
             print("%s -> %s" % (t.parent, t.name))
 
     def on_type_initialize(self):
-        "object.c:344" # now the type and its ancestors are initialized
+        # now the type and its ancestors are initialized
+
+        # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        "object.c:333" # before `class_init` call
+
+        # v2.12.0
+        "object.c:344"
 
         rt = self.rt
         type_impl = rt["ti"]
@@ -401,7 +409,13 @@ class QOMTreeGetter(Watcher):
                 t.realize = rt.dia.subprogram(realize_addr)
 
     def on_main(self):
-        "vl.c:3075" # main, just after QOM module initialization
+        # main, just after QOM module initialization
+
+        # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
+        "vl.c:2989"
+
+        # v2.12.0
+        "vl.c:3075"
 
         if self.interrupt:
             self.rt.target.interrupt()
@@ -583,7 +597,13 @@ class MachineWatcher(Watcher):
     # Breakpoint handlers
 
     def on_obj_init_start(self):
-        "object.c:384" # object_initialize_with_type
+        # object_initialize_with_type, before `object_init_with_type`
+
+        # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        "object.c:376"
+
+        # v2.12.0
+        "object.c:384"
 
         machine = self.machine
         if machine is None:
@@ -607,7 +627,13 @@ class MachineWatcher(Watcher):
             self.current_memory = inst
 
     def on_obj_init_end(self):
-        "object.c:386" # object_initialize_with_type
+        # object_initialize_with_type, return
+
+        # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        "object.c:378"
+
+        # v2.12.0
+        "object.c:386"
 
         if self.machine is None:
             return
@@ -621,10 +647,17 @@ class MachineWatcher(Watcher):
             self.__notify_device_created(inst)
 
     def on_board_init_start(self):
+        # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
+        "vl.c:4510" # main, before `machine_class->init(current_machine)`
+
+        # v2.12.0
         "hw/core/machine.c:829" # machine_run_board_init
 
         rt = self.rt
-        machine_obj = rt["machine"]
+        # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
+        machine_obj = rt["current_machine"]
+        # v2.12.0
+        # machine_obj = rt["machine"]
         self.machine = inst = self.account_instance(machine_obj)
 
         desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
@@ -637,7 +670,13 @@ class MachineWatcher(Watcher):
         )
 
     def on_mem_init_end(self):
-        "memory.c:1153" # return from memory_region_init
+        # return from memory_region_init
+
+        # 0ab8ed18a6fe98bfc82705b0f041fbf2a8ca5b60
+        "memory.c:1009"
+
+        # v2.12.0
+        "memory.c:1153"
 
         if self.machine is None:
             return
@@ -656,6 +695,10 @@ class MachineWatcher(Watcher):
         print("Memory: %s 0x%x" % (m.name or "[nameless]", m.size))
 
     def on_board_init_end(self):
+        # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
+        "vl.c:4511" # main, after `machine_class->init(current_machine)`
+
+        # v2.12.0
         "hw/core/machine.c:830" # machine_run_board_init
 
         self.remove_breakpoints()
@@ -670,6 +713,11 @@ class MachineWatcher(Watcher):
         )
 
     def on_obj_prop_add(self):
+        # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        # object_property_add, before insertion to prop. table; property found
+        "object.c:954"
+
+        # v2.12.0
         "object.c:976" # return from object_property_add
 
         if self.machine is None:
@@ -699,7 +747,13 @@ class MachineWatcher(Watcher):
         ))
 
     def on_obj_prop_set(self):
-        "object.c:1122" # object_property_set (prop. exists and has a setter)
+        # object_property_set (prop. exists and has a setter)
+
+        # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        "object.c:1094"
+
+        # v2.12.0
+        "object.c:1122"
 
         if self.machine is None:
             return
@@ -731,7 +785,9 @@ class MachineWatcher(Watcher):
         ))
 
     def on_qbus_realize(self):
+        # v2.12.0
         "hw/core/bus.c:101" # qbus_realize, parrent may be NULL
+
         rt = self.rt
         bus = rt["bus"]
 
@@ -772,7 +828,9 @@ class MachineWatcher(Watcher):
             ))
 
     def on_bus_unparent(self):
+        # v2.12.0
         "hw/core/bus.c:123" # bus_unparent, before actual unparanting
+
         # TODO: test me
         rt = self.rt
         bus = rt["bus"]
@@ -797,7 +855,14 @@ class MachineWatcher(Watcher):
         ))
 
     def on_bus_add_child(self):
-        "hw/core/qdev.c:73" # bus_add_child
+        # bus_add_child
+
+        # 67980031d234aa90524b83bb80bb5d1601d29076
+        "hw/core/qdev.c:101" # returning
+
+        # v2.12.0
+        "hw/core/qdev.c:73"
+
         rt = self.rt
         bus = rt["bus"]
         bus_inst = self.instances[bus.fetch_pointer()]
@@ -821,11 +886,25 @@ class MachineWatcher(Watcher):
         ))
 
     def on_bus_remove_child(self):
-        "hw/core/qdev.c:57" # bus_remove_child, before actual unparanting
+        # bus_remove_child, before actual unparanting
+
+        # 67980031d234aa90524b83bb80bb5d1601d29076
+        "hw/core/qdev.c:70"
+
+        # v2.12.0
+        "hw/core/qdev.c:57"
+
         print("not implemented")
 
     def on_qdev_get_gpio_in_named(self):
-        "core/qdev.c:456" # qdev_get_gpio_in_named, return
+        # qdev_get_gpio_in_named, return
+
+        # 67980031d234aa90524b83bb80bb5d1601d29076
+        "core/qdev.c:473"
+
+        # v2.12.0
+        "core/qdev.c:456"
+
         instances = self.instances
         rt = self.rt
 
@@ -842,9 +921,14 @@ class MachineWatcher(Watcher):
         self.check_irq_connected(irq)
 
     def on_qdev_connect_gpio_out_named(self):
-        "core/qdev.c:479"
         # qdev_connect_gpio_out_named, after IRQ was assigned and before
         # property name `propname` freed.
+
+        # 67980031d234aa90524b83bb80bb5d1601d29076
+        "core/qdev.c:496"
+
+        # v2.12.0
+        "core/qdev.c:479"
 
         rt = self.rt
 
@@ -876,7 +960,13 @@ class MachineWatcher(Watcher):
         self.__notify_irq_connected(irq)
 
     def on_qemu_irq_split(self):
-        "core/irq.c:122" # returning from `qemu_irq_split`
+        # returning from `qemu_irq_split`
+
+        # 67980031d234aa90524b83bb80bb5d1601d29076
+        "core/irq.c:121"
+
+        # v2.12.0
+        "core/irq.c:122"
 
         rt = self.rt
         instances = self.instances
