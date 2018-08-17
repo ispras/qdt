@@ -88,7 +88,7 @@ class DraggedLabel(VarMenu):
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
 
-    def __init__(self, parent, mach_desc, **kw):
+    def __init__(self, parent, mach_desc, readonly = False, **kw):
         VarTreeview.__init__(self, parent, **kw)
         TkPopupHelper.__init__(self)
 
@@ -105,16 +105,23 @@ class MemoryTreeWidget(VarTreeview, TkPopupHelper):
         try:
             pht = toplevel.pht
         except AttributeError:
-            self.mht = None
+            mht = None
         else:
             if pht is None:
-                self.mht = None
+                mht = None
             else:
-                self.mht = pht.get_machine_proxy(self.mach)
+                mht = pht.get_machine_proxy(self.mach)
 
         # snapshot mode without MHT
-        if self.mht is not None:
-            self.mht.watch_changed(self.on_machine_changed)
+        if mht is not None:
+            mht.watch_changed(self.on_machine_changed)
+
+            if readonly:
+                # In read-only mode user may not change the machine while inner
+                # changes still must be wathced.
+                mht = None
+
+        self.mht = mht
 
         self.iid2node = {}
         self.selected = None
