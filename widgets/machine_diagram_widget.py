@@ -308,7 +308,7 @@ LAYOUT_IRQ_LINES_POINTS = "IRQ lines points"
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
-    def __init__(self, parent, mach_desc, node_font = None):
+    def __init__(self, parent, mach_desc, node_font = None, readonly = False):
         CanvasDnD.__init__(self, parent,
             id_priority_sort_function = self.sort_ids_by_priority
         )
@@ -367,16 +367,23 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         try:
             pht = self.winfo_toplevel().pht
         except AttributeError:
-            self.mht = None
+            mht = None
         else:
             if pht is None:
-                self.mht = None
+                mht = None
             else:
-                self.mht = pht.get_machine_proxy(self.mach)
+                mht = pht.get_machine_proxy(self.mach)
 
         # snapshot mode without MHT
-        if self.mht is not None:
-            self.mht.watch_changed(self.on_machine_changed)
+        if mht is not None:
+            mht.watch_changed(self.on_machine_changed)
+
+            if readonly:
+                # In read-only mode user may not change the machine while inner
+                # changes still must be wathced.
+                mht = None
+
+        self.mht = mht
 
         self.id2node = {}
         self.node2id = {}
