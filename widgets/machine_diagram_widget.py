@@ -2405,7 +2405,6 @@ IRQ line creation
             dev = self.node2dev[n]
             if isinstance(dev, Node):
                 if isinstance(n, NodeCircle):
-                    bbox = self.canvas.bbox(idtext)
                     coords = [n.x + n.r, n.y + n.r]
                 else:
                     coords = [n.x + n.width + n.spacing,
