@@ -684,8 +684,10 @@ IRQ line creation
 
     def on_b1_double(self, event):
         """ Double-click handler for 1-st (left) mouse button. """
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
-        touched_ids = self.canvas.find_overlapping(x - 3, y - 3, x + 3, y + 3)
+        cnv = self.canvas
+
+        x, y = cnv.canvasx(event.x), cnv.canvasy(event.y)
+        touched_ids = cnv.find_overlapping(x - 3, y - 3, x + 3, y + 3)
 
         if self.highlighted_irq_line:
             touched_ids += (self.highlighted_irq_line.arrow,)
@@ -725,8 +727,8 @@ IRQ line creation
             if handler is None:
                 continue
 
-            x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
-            x, y = self.canvas.coords(tid)[-2:]
+            x0, y0 = cnv.canvasx(0), cnv.canvasy(0)
+            x, y = cnv.coords(tid)[-2:]
             x = x - x0
             y = y - y0
 
@@ -807,35 +809,37 @@ IRQ line creation
             )
 
     def on_diagram_finding(self, *args):
-        ids = self.canvas.find_withtag("DnD")
+        cnv = self.canvas
+
+        ids = cnv.find_withtag("DnD")
         if len(ids) == 0:
             return
 
-        sx = self.canvas.canvasx(self.canvas.winfo_width() / 2)
-        sy = self.canvas.canvasy(self.canvas.winfo_height() / 2)
+        sx = cnv.canvasx(cnv.winfo_width() / 2)
+        sy = cnv.canvasy(cnv.winfo_height() / 2)
 
-        bboxes = map(lambda _id: self.canvas.bbox(_id), ids)
+        bboxes = map(lambda _id: cnv.bbox(_id), ids)
         centers = map(lambda b: ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2), bboxes)
         x0, y0 = min(centers, key = lambda a: hypot(a[0] - sx, a[1] - sy))
 
-        x = self.canvas.canvasx(0) \
-          + self.canvas.winfo_width() / 2 - x0
-        y = self.canvas.canvasy(0) \
-          + self.canvas.winfo_height() / 2 - y0
+        x = cnv.canvasx(0) + cnv.winfo_width() / 2 - x0
+        y = cnv.canvasy(0) + cnv.winfo_height() / 2 - y0
 
-        self.canvas.scan_mark(0, 0)
-        self.canvas.scan_dragto(int(x), int(y), gain = 1)
+        cnv.scan_mark(0, 0)
+        cnv.scan_dragto(int(x), int(y), gain = 1)
 
         # cancel current physic iteration if moved
         self.invalidate()
         self.select_point = None
-        self.canvas.delete(self.select_frame)
+        cnv.delete(self.select_frame)
         self.select_frame = None
 
         self.__repaint_mesh()
 
     def on_diagram_centering(self, *args):
-        ids = self.canvas.find_withtag("DnD")
+        cnv = self.canvas
+
+        ids = cnv.find_withtag("DnD")
         if len(ids) == 0:
             return
 
@@ -844,21 +848,19 @@ IRQ line creation
                 min(a[0], b[0]), min(a[1], b[1]),
                 max(a[2], b[2]), max(a[3], b[3])
             ),
-            map(lambda _id: self.canvas.bbox(_id), ids)
+            map(lambda _id: cnv.bbox(_id), ids)
         )
 
-        x = self.canvas.canvasx(0) \
-          + self.canvas.winfo_width() / 2 - (x1 + x2) / 2
-        y = self.canvas.canvasy(0) \
-          + self.canvas.winfo_height() / 2 - (y1 + y2) / 2
+        x = cnv.canvasx(0) + cnv.winfo_width() / 2 - (x1 + x2) / 2
+        y = cnv.canvasy(0) + cnv.winfo_height() / 2 - (y1 + y2) / 2
 
-        self.canvas.scan_mark(0, 0)
-        self.canvas.scan_dragto(int(x), int(y), gain = 1)
+        cnv.scan_mark(0, 0)
+        cnv.scan_dragto(int(x), int(y), gain = 1)
 
         # cancel current physic iteration if moved
         self.invalidate()
         self.select_point = None
-        self.canvas.delete(self.select_frame)
+        cnv.delete(self.select_frame)
         self.select_frame = None
 
         self.__repaint_mesh()
