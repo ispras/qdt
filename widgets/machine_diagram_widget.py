@@ -1426,7 +1426,7 @@ IRQ line creation
         x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
                p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
 
-        # print "Adding IRQ hub: " + str(x) + ", " + str(y)
+        # print("Adding IRQ hub: %i, %i" % (x, y))
 
         node_id = self.mach.get_free_id()
 
@@ -1646,12 +1646,12 @@ IRQ line creation
         try:
             n = self.id2node[_id]
             if isinstance(n, IRQPathCircle):
-                """ IRQ Line circles could discourage another nodes dragging,
-                especially related IRQ hub nodes. Hence, make IRQ line circles
-                less priority. """
+                # IRQ Line circles could discourage another nodes dragging,
+                # especially related IRQ hub nodes. Hence, make IRQ line
+                # circles less priority.
                 ret = 1
-                """ There is no meaningful reason to distribute other nodes
-                priorities such way. So, just try and watch what will happen. """
+                # There is no meaningful reason to distribute other nodes
+                # priorities such way. So, just try and watch what will happen.
             elif isinstance(n, IRQLine):
                 # The _id corresponds to arrow of a highlighted IRQ line.
                 # Sometimes an IRQ path circle is shown for different (not
@@ -1667,19 +1667,14 @@ IRQ line creation
                 elif isinstance(n, BusNode):
                     ret =  5
                 else:
-                    """ Unspecified node. Make it much intrusive to speed up its
-                    priority specification. """
+                    # Unspecified node. Make it much intrusive to speed up its
+                    # priority specification.
                     ret =  6
         except KeyError:
-            # print "_id %d without prototype has less priority" % _id
+            # print("item %d without a descriptor has minimal priority" % _id)
             return 0
 
-        """
-        print str(_id) \
-            + " priority " \
-            + str(ret) \
-            + " (" + type(n).__name__ + ")"
-        """
+        # print("%u priority %u (%s)" % (_id, ret, type(n).__name__))
 
         return ret
 
@@ -1775,10 +1770,10 @@ IRQ line creation
         self.begin_drag_all = True
         self.dragging_all = False
         self.all_were_dragged = False
-        #print("on_b3_press")
+        # print("on_b3_press")
 
     def on_b3_release(self, event):
-        #print("on_b3_release")
+        # print("on_b3_release")
         for n in self.nodes + self.buslabels + self.circles:
             n.static = False
 
@@ -1923,7 +1918,7 @@ IRQ line creation
 
     def motion_all(self, event):
         self.motion(event)
-        #print("motion_all")
+        # print("motion_all")
 
         mx, my = event.x, event.y
         x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
@@ -2286,8 +2281,9 @@ IRQ line creation
             if self.irq_circle_per_line_limit == 0:
                 self.irq_circle_per_line_limit = 1
 
-            #print "Total circles: " + str(total_circles) + ", CPL: " + \
-            #    str(self.irq_circle_per_line_limit)
+            # print("Total circles: %u, CPL: %u" % (total_circles,
+            #    self.irq_circle_per_line_limit)
+            # )
 
         for l in self.irq_lines:
             self.ph_process_irq_line(l)
@@ -2629,7 +2625,9 @@ IRQ line creation
 
         for idx, h in enumerate(self.circles):
             for h1 in self.circles[idx + 1:]:
-                #if bool(isinstance(h1, IRQPathCircle)) != bool(isinstance(h, IRQPathCircle)):
+                # if (bool(isinstance(h1, IRQPathCircle))
+                #  != bool(isinstance(h, IRQPathCircle))
+                # ):
                 #    continue
 
                 if not h.overlaps_circle(h1):
@@ -2912,8 +2910,8 @@ IRQ line creation
         if "_ph_run" in self.__dict__:
             raise Exception("Attempt to launch physical simulation twice")
 
-        """ If background task manager is available then use coroutine task
-        to compute physics else use legacy "after" based method """
+        # If background task manager is available then use coroutine task
+        # to compute physics else use legacy "after" based method.
         if self.task_manager is None:
             self._ph_run = self.after(0, self.ph_run)
         else:
@@ -2968,7 +2966,7 @@ IRQ line creation
 
         self.update_node_text(node)
 
-        # todo: replace rectangle with image
+        # TODO: replace rectangle with image
         if fixed_x:
             tags = ("DnD", "fixed_x")
         else:
