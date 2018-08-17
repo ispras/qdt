@@ -87,6 +87,7 @@ class DraggedLabel(VarMenu):
         self.entryconfig(0, label = text)
 
 class MemoryTreeWidget(VarTreeview, TkPopupHelper):
+
     def __init__(self, parent, mach_desc, **kw):
         VarTreeview.__init__(self, parent, **kw)
         TkPopupHelper.__init__(self)
