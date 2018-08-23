@@ -239,7 +239,8 @@ class Arch(object):
         def build_instruction_tree(cur_node,
                                    instructions,
                                    depth,
-                                   prev_instructions = []
+                                   prev_instructions = [],
+                                   checked_opc = []
             ):
             if instructions == prev_instructions:
                 raise Exception('Recursion error')
@@ -263,7 +264,16 @@ class Arch(object):
             unique = set(instructions)
             cur_node.count = len(unique)
             if len(unique) == 1:
-                cur_node.instruction = unique.pop()
+                unchecked_opc = set(orig_opc).difference(set(checked_opc))
+                ins = unique.pop()
+                for opc in unchecked_opc:
+                    cur_node.opcode = opc
+                    key = ins.get_opcode_part(opc)
+                    ins_node = InstructionNode()
+                    cur_node.opc_dict[key] = ins_node
+                    cur_node = ins_node
+
+                cur_node.instruction = ins
 
                 # believe that instructions with identical opcode
                 # can't vary in length
@@ -329,13 +339,16 @@ class Arch(object):
                     tmp_dict[key] = [ins]
                 else:
                     tmp_dict[key].append(ins)
+            new_checked_opc = list(checked_opc)
+            new_checked_opc.append(opc)
             for key, instrs in tmp_dict.items():
                 cur_node.opc_dict[key] = InstructionNode()
                 build_instruction_tree(
                     cur_node.opc_dict[key],
                     instrs,
                     depth + 1,
-                    instructions
+                    instructions,
+                    new_checked_opc
                 )
 
             return cur_node

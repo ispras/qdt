@@ -272,7 +272,7 @@ class TargetCodeGenerator(object):
             opc = instr_node.opcode
             opc_dict = OrderedDict(sorted(instr_node.opc_dict.items()))
 
-            if instr_node.count > 1:
+            if instr_node.instruction is None:
                 new_var, cur_read = self.gen_field_read(
                     gen_node,
                     opc[0],
@@ -560,7 +560,7 @@ class TargetCodeGenerator(object):
             opc = instr_node.opcode
             opc_dict = OrderedDict(sorted(instr_node.opc_dict.items()))
 
-            if instr_node.count > 1:
+            if instr_node.instruction is None:
                 new_var, cur_read = self.gen_disas_opcode_read(
                     gen_node,
                     opc[0],
