@@ -987,12 +987,63 @@ class Arch(object):
                 self.overwrite
             )
 
-            ftr = {
-                '%s': 'const char',
-                '%d': 'int',
-                '%x': 'unsigned',
-                '%c': 'char'
+            type_by_specifier_and_length = {
+                ('d', 'i'): {
+                    None: 'int',
+                    'hh': 'signed char',
+                    'h': 'short int',
+                    'l': 'long int',
+                    'll': 'long long int',
+                    'j': 'intmax_t',
+                    'z': 'size_t',
+                    't': 'ptrdiff_t'
+                },
+                ('u', 'o', 'x', 'X'): {
+                    None: 'unsigned', # 'unsigned int'
+                    'hh': 'unsigned char',
+                    'h': 'unsigned short int',
+                    'l': 'unsigned long int',
+                    'll': 'unsigned long long int',
+                    'j': 'uintmax_t',
+                    'z': 'size_t',
+                    't': 'ptrdiff_t'
+                },
+                ('f', 'F', 'e', 'E', 'g', 'G', 'a', 'A'): {
+                    None: 'double',
+                    'L': 'long double'
+                },
+                ('c',): {
+                    None: 'char', # 'int'
+                    'l': 'wint_t'
+                },
+                ('s',): {
+                    None: 'const char*', # 'char*'
+                    'l': 'wchar_t*'
+                },
+                ('p',): {
+                    None: 'void*'
+                },
+                ('n',): {
+                    None: 'int*',
+                    'hh': 'signed char*',
+                    'h': 'short int*',
+                    'l': 'long int*',
+                    'll': 'long long int*',
+                    'j': 'intmax_t*',
+                    'z': 'size_t*',
+                    't': 'ptrdiff_t*'
+                }
             }
+            ftr = {}
+            for specifiers, info in type_by_specifier_and_length.items():
+                subftr = {}
+                for length, type_name in info.items():
+                    if type_name.endswith('*'):
+                        subftr[length] = Pointer(Type.lookup(type_name[:-1]))
+                    else:
+                        subftr[length] = Type.lookup(type_name)
+                for specifier in specifiers:
+                    ftr[specifier] = subftr
 
             added = {}
             disas_used_types = []
@@ -1017,12 +1068,12 @@ class Arch(object):
                 df.add_global_variable(reg_var)
                 regs_var.append(reg_var)
 
-            re_spec = compile('(%(?:' +
+            re_spec = compile('(?<!%)(?:%%)*(%(?:' +
                 '(?:[-+ #0]{0,5})' +       # flags
                 '(?:\d+|\*)?' +            # width
                 '(?:\.(?:\d+|\*))?' +      # precision
-                '(?:hh|h|l|ll|j|z|t|L)?' + # length
-                '[diuoxXfFeEgGaAcspn%]))'  # specifier
+                '(hh|h|l|ll|j|z|t|L)?' +   # length
+                '([diuoxXfFeEgGaAcspn])))' # specifier
             )
             for n, v in self.name_to_format.items():
                 arg_count = n.count(',') + 1
@@ -1034,13 +1085,18 @@ class Arch(object):
                         if v[0] is not None:
                             spec_m = re_spec.search(v[0])
                             if spec_m:
-                                specifier = spec_m.group(0)
+                                length = spec_m.group(2)
+                                specifier = spec_m.group(3)
+                                try:
+                                    ret_type = ftr[specifier][length]
+                                except KeyError:
+                                    raise Exception(
+"Illegal format specifier '%s'" % spec_m.group(1)
+                                    )
                             else:
-                                specifier = ''
-                            if specifier == '%s':
-                                ret_type = Pointer(Type.lookup(ftr[specifier]))
-                            else:
-                                ret_type = Type.lookup(ftr[specifier])
+                                raise Exception(
+"Format specifier not found in string '%s'" % v[0]
+                                )
                         else:
                             args.insert(
                                 0,
