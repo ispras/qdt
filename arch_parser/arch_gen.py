@@ -259,7 +259,7 @@ class TargetCodeGenerator(object):
         helper_funcs = []
 
         br_enum = Type.lookup('br_enum')
-        tcg_gen_movi_tl = OpCall('tcg_gen_movi_tl', cpu_pc, ctx_pc)
+        set_pc = OpCall('set_pc', ctx_pc)
         gen_helper_illegal = OpCall(
             'gen_helper_illegal',
             cpu_env,
@@ -320,7 +320,7 @@ class TargetCodeGenerator(object):
                 try:
                     check_default = opc_dict['default']
                 except KeyError:
-                    sw.bodies['default'].add_child(tcg_gen_movi_tl)
+                    sw.bodies['default'].add_child(set_pc)
                     sw.bodies['default'].add_child(gen_helper_illegal)
                     sw.bodies['default'].add_child(
                         OpAssign(
@@ -778,7 +778,7 @@ class TargetCodeGenerator(object):
         ctx = mVariable('ctx', Type.lookup('DisasContext'))
         ctx_pc = OpSDeref(ctx, Const('pc'))
         ctx_tb = OpSDeref(ctx, Const('tb'))
-        tcg_gen_movi_tl = OpCall('tcg_gen_movi_tl', cpu_pc, ctx_pc)
+        set_pc = OpCall('set_pc', ctx_pc)
         gen_helper_debug = OpCall(
             'gen_helper_debug',
             cpu_env,
@@ -867,7 +867,7 @@ class TargetCodeGenerator(object):
                 OpSDeref(bp, Const('pc'))
             )
         )
-        if_ctx_pc.add_child(tcg_gen_movi_tl)
+        if_ctx_pc.add_child(set_pc)
         if_ctx_pc.add_child(gen_helper_debug)
         if_ctx_pc.add_child(
             OpAssign(
@@ -934,7 +934,7 @@ class TargetCodeGenerator(object):
                 OpEq(ctx_bstate, br_enum.get_field('BS_STOP')),
             )
         )
-        check_bstate.add_child(tcg_gen_movi_tl)
+        check_bstate.add_child(set_pc)
 
         if_singlestep = BranchIf(OpSDeref(cs, Const('singlestep_enabled')))
         if_singlestep.add_child(check_bstate)
@@ -952,7 +952,7 @@ class TargetCodeGenerator(object):
             ],
         )
         case_none = bstate_switch.bodies['BS_NONE']
-        case_none.add_child(tcg_gen_movi_tl)
+        case_none.add_child(set_pc)
         case_none.has_break = True
         bstate_switch.bodies['default'].has_break = True
 
