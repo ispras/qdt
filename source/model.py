@@ -128,7 +128,11 @@ class ChunkGenerator(object):
                         kw["enum"] = True
                         chunks = origin.get_definition_chunks(self, **kw)
                     else:
-                        chunks = origin.get_definition_chunks(self, **kw)
+                        if self.for_header:
+                            kw["extern"] = True
+                            chunks = origin.gen_declaration_chunks(self, **kw)
+                        else:
+                            chunks = origin.get_definition_chunks(self, **kw)
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
