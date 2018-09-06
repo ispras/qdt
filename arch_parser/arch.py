@@ -949,10 +949,10 @@ class Arch(object):
 
         gen_arch_config()
         gen_target_files()
-        gen_instruction_funcs_file()
         gen_vmstate_desc()
         gen_makefile()
         gen_qom_code()
+        gen_instruction_funcs_file()
         gen_translation_code()
         gen_helper()
 
