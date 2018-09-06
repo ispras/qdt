@@ -1097,9 +1097,13 @@ class Arch(object):
                 arg_count = n.count(',') + 1
                 if v[1] is not None:
                     if added.get(v[1]) is None:
-                        args = [Type.lookup('uint64_t').gen_var('arg' + str(i))
-                                for i in range(0, arg_count)
-                        ]
+                        if arg_count == 1:
+                            args = [Type.lookup('uint64_t').gen_var('arg')]
+                        else:
+                            args = [
+                                Type.lookup('uint64_t').gen_var('arg' + str(i))
+                                    for i in range(0, arg_count)
+                            ]
                         if v[0] is not None:
                             spec_m = re_spec.search(v[0])
                             if spec_m:
