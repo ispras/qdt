@@ -1629,15 +1629,22 @@ class TargetCodeGenerator(object):
         root = FunctionWrapper.connect(function)
 
         ret = Type.lookup('int').gen_var('ret')
+        if get_vp()["tlb_fill has SIZE argument"]:
+            args = [
+                function.args[0],
+                function.args[1],
+                function.args[3],
+                function.args[4]
+            ]
+        else:
+            args = function.args[:-1]
+
         root.add_child(
             OpAssign(
                 OpDeclare(ret),
                 OpCall(
                     self.arch.name + '_cpu_handle_mmu_fault',
-                    function.args[0],
-                    function.args[1],
-                    function.args[3],
-                    function.args[4]
+                    *args
                 )
             )
         )
