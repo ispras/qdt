@@ -267,6 +267,8 @@ class TargetCodeGenerator(object):
         )
         ctx_bstate = OpSDeref(ctx, Const('bstate'))
 
+        ins_used_types = [Type.lookup('set_pc')]
+
         def handle_opc_iter(gen_node, instr_node, total_read, last_read = 0,
                             cur_vars = []):
             opc = instr_node.opcode
@@ -407,7 +409,8 @@ class TargetCodeGenerator(object):
                     instr_node.instruction.name,
                     static = True,
                     inline = True,
-                    body = '//' + instr_node.instruction.comment + '\n'
+                    body = '//' + instr_node.instruction.comment + '\n',
+                    used_types = ins_used_types
                 )
                 func.args = [
                     Type.lookup('DisasContext').gen_var('ctx', pointer = True)] \
