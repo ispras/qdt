@@ -786,6 +786,24 @@ class Arch(object):
 
             Header.lookup('exec/cpu_ldst.h').add_reference(disas_context)
 
+            set_pc = Function(
+                'set_pc',
+                ret_type = Type.lookup('void'),
+                args = [Type.lookup('uint64_t').gen_var('val')],
+                static = True,
+                inline = True,
+                used_globals = [
+                    h.f.global_variables['pc']
+                ]
+            )
+
+            self.g.gen_set_pc(set_pc, h.f.global_variables['pc'])
+            set_pc.used_types = [
+                Type.lookup('uint64_t')
+            ]
+
+            h.add_type(set_pc)
+
         def gen_vmstate_desc():
             src = self.gen_files['machine.c']
 

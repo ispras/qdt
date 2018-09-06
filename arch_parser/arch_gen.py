@@ -1647,6 +1647,10 @@ class TargetCodeGenerator(object):
                                       function.args[-1]))
         root.add_child(unlikely)
 
+    def gen_set_pc(self, function, pc):
+        root = FunctionWrapper.connect(function)
+        root.add_child(OpAssign(pc, function.args[0]))
+
     def gen_restore_state_to_opc(self, function):
         root = FunctionWrapper.connect(function)
         root.add_child(
