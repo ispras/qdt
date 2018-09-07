@@ -56,7 +56,7 @@ script.
         `PyGenerator` to evaluate name for the variable generated for the
         object.
 
-    - __get_init_arg_val__, a method to transform values of argumetns before
+    - __get_init_arg_val__, a method to transform values of arguments before
         serialization to Python. See `PyGenerator.gen_args`.
 
     The goal is to produce a script, execution of which will result in a set
