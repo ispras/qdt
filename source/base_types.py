@@ -87,11 +87,14 @@ def add_base_types():
     except:
         h = Header("byteswap.h", is_global = True)
 
-    h.add_types([
-        Function("bswap_64"),
-        Function("bswap_32"),
-        Function("bswap_16")
-    ])
+    # If "bswap_64", "bswap_32" and "bswap_16" are not macros or do not exists
+    # then they must be added explicitly.
+    if not Type.exists("bswap_64"):
+        h.add_types([
+            Function("bswap_64"),
+            Function("bswap_32"),
+            Function("bswap_16")
+        ])
 
     try:
         h = Header.lookup("stdlib.h")
