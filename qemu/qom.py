@@ -14,6 +14,7 @@ __all__ = [
 
 from source import (
     CINT,
+    CSTR,
     line_origins,
     Source,
     Header,
@@ -23,6 +24,7 @@ from source import (
     Function,
     Macro,
     Pointer,
+    Variable,
     Type
 )
 from os.path import (
@@ -44,6 +46,7 @@ from .version import (
 from math import (
     log
 )
+from source.function import *
 
 # properties
 class QOMPropertyType(object):
@@ -323,64 +326,68 @@ class Register(object):
 def get_reg_range(regs):
     return sum(reg.size for reg in regs)
 
-def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
-    indent = "    ",
-    case_indent = "    "
-):
+def gen_reg_cases(regs, access, offset_name, val, ret, s):
     reg_range = get_reg_range(regs)
-
-    digits = int(log(reg_range, 16)) + 1
-    off_fmt = "0x%%0%dX" % digits
-
     cases = []
-    offset = 0
+    digits = int(log(reg_range, 16)) + 1
 
-    fprintf = None
-    hwaddr_pri = None
+    offset = 0
 
     for reg in regs:
         size = reg.size
         if size == 1:
-            case = indent + "case %s:" % (off_fmt % offset)
+            case_cond = CINT(offset, base = 16, digits = digits)
         else:
-            case = indent + "case %s ... %s:" % (
-                off_fmt % offset,
-                off_fmt % (offset + size - 1)
+            case_cond = (
+                CINT(offset, base = 16, digits = digits),
+                CINT(offset + size - 1, base = 16, digits = digits)
             )
         offset += size
 
+        case = SwitchCase(case_cond)
         name = reg.name
         if name is not None:
-            case += " /* %s */" % name
-
-        case += "\n" + indent
+            case.add_child(Comment(reg.name))
 
         if access in reg.access:
             qtn = QemuTypeName(name)
+            s_deref_war = OpSDeref(
+                s,
+                qtn.for_id_name + "_war"
+            )
+            s_deref = OpSDeref(
+                s,
+                qtn.for_id_name
+            )
 
             if access == "r":
-                case += case_indent + "ret@b=@ss->%s;" % qtn.for_id_name
-                context["s_is_used"] = True
-
-                case += "\n" + indent
-
+                case.add_child(
+                    OpAssign(
+                        ret,
+                        s_deref
+                    )
+                )
                 warb = reg.warbits
                 if warb.v: # neither None nor zero
                     # There is at least one write-after-read bit in the reg.
                     wm = reg.wmask
                     if wm.v == (1 << (size * 8)) - 1:
                         # no read only bits: set WAR mask to 0xF...F
-                        case += case_indent + "s->%s_war@b=@s~0;" % (
-                            qtn.for_id_name
+                        case.add_child(
+                            OpAssign(
+                                s_deref_war,
+                                OpNot(0)
+                            )
                         )
                     else:
                         # writable bits, read only bits: init WAR mask with
                         # write mask
-                        case += case_indent + "s->{reg}_war@b=@s{m};".format(
-                            reg = qtn.for_id_name,
-                            m = wm.gen_c_code()
+                        case.add_child(
+                            OpAssign(
+                                s_deref_war,
+                                wm
+                            )
                         )
-                    case += "\n" + indent
             elif access == "w":
                 wm = reg.wmask
                 warb = reg.warbits
@@ -388,65 +395,78 @@ def gen_reg_cases(regs, access, used_types, offset_name, val_name, context,
                 if warb.v and wm.v:
                     # WAR bits, writable, read only bits: use WAR mask as
                     # dynamic write mask
-                    case += case_indent + (
-                        "s->{reg}@b=@s({val}@s&@s{mask})@s"
-                        "|@b(s->{reg}@b&@b~{mask});"
-                    ).format(
-                        reg = qtn.for_id_name,
-                        val = val_name,
-                        mask = "s->%s_war" % qtn.for_id_name
+                    case.add_child(
+                        OpAssign(
+                            s_deref,
+                            OpOr(
+                                OpAnd(
+                                    val,
+                                    s_deref_war,
+                                    parenthesis = True
+                                ),
+                                OpAnd(
+                                    s_deref,
+                                    OpNot(
+                                        s_deref_war
+                                    ),
+                                    parenthesis = True
+                                )
+                            )
+                        )
                     )
-                    context["s_is_used"] = True
-
-                    case += "\n" + indent
-
                 elif wm.v == (1 << (size * 8)) - 1:
                     # no WAR bits, no read only bits
                     # write mask does not affect the value being assigned
-                    case += case_indent + "s->%s@b=@s%s;" % (
-                        qtn.for_id_name,
-                        val_name
+                    case.add_child(
+                        OpAssign(
+                            s_deref,
+                            val
+                        )
                     )
-                    context["s_is_used"] = True
-
-                    case += "\n" + indent
                 elif wm.v:
                     # no WAR bits, writable bits, read only bits: use static
                     # write mask
-                    case += case_indent + ("s->{reg}@b=@s({val}@s&@s{mask})"
-                        "@s|@b(s->{reg}@b&@b~{mask});".format(
-                            reg = qtn.for_id_name,
-                            val = val_name,
-                            mask = wm.gen_c_code()
+                    case.add_child(
+                        OpAssign(
+                            s_deref,
+                            OpOr(
+                                OpAnd(
+                                    val,
+                                    wm,
+                                    parenthesis = True
+                                ),
+                                OpAnd(
+                                    s_deref,
+                                    OpNot(
+                                        wm
+                                    ),
+                                    parenthesis = True
+                                )
+                            )
                         )
                     )
-                    context["s_is_used"] = True
-
-                    case += "\n" + indent
         else:
-            if fprintf is None:
-                fprintf = Type.lookup("fprintf");
-                hwaddr_pri = Type.lookup("HWADDR_PRIx")
-
-            case += case_indent + ('%s(@astderr,@s"%%s: %s 0x%%0%d"%s"\\n",'
-                                   '@s__FUNCTION__,@s%s);'
-            ) % (
-                fprintf.name,
-                "Reading from" if access == "r" else "Writing to",
-                digits,
-                hwaddr_pri.name,
-                offset_name
+            case.add_child(
+                Call(
+                    "fprintf",
+                    MCall("stderr"),
+                    StrConcat(
+                        CSTR(
+"%%s: %s 0x%%0%d" % ("Reading from" if access == "r" else "Writing to", digits)
+                        ),
+                        MCall("HWADDR_PRIx"),
+                        CSTR("\\n"),
+                        delim = "@s"
+                    ),
+                    MCall("__FUNCTION__"),
+                    offset_name
+                )
             )
-            case += "\n" + indent
-
-        case += case_indent + "break;\n"
 
         cases.append(case)
 
-    if fprintf:
-        used_types.add(fprintf)
+    return cases
 
-    return "\n".join(cases)
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
@@ -800,96 +820,129 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
-        read = Type.lookup("MemoryRegionOps_read")
-
-        used_types = set([
-            read.args[1].type,
-            Type.lookup("uint64_t"),
-            Type.lookup("printf"),
-            Type.lookup("HWADDR_PRIx")
-        ])
-
-        context = {
-            "s_is_used": False
-        }
-
-        regs = "" if regs is None else ("\n" + gen_reg_cases(regs, "r",
-            used_types, read.args[1].name, None, context
-        ))
-
-        body = """\
-    {unused}{Struct}@b*s@b=@s{UPPER}(opaque);
-    uint64_t@bret@b=@s0;
-
-    switch@b({offset})@b{{{regs}
-    default:
-        printf(@a"%s:@bunimplemented@bread@bfrom@b0x%"HWADDR_PRIx",@bsize@b%d\
-\\n",@s__FUNCTION__,@s{offset},@ssize);
-        break;
-    }}
-
-    return@sret;
-""".format(
-    regs = regs,
-    unused = "" if context["s_is_used"] else "__attribute__((unused))@b",
-    offset = read.args[1].name,
-    Struct = struct_name,
-    UPPER = type_cast_macro
-        )
-
-        return read.use_as_prototype(
+        func = Type.lookup("MemoryRegionOps_read").use_as_prototype(
             name = name,
             static = True,
-            body = body,
-            used_types = used_types
+            body = BodyTree()
         )
+        root = func.body
+        s = Type.lookup(struct_name).gen_var("s", pointer = True)
+
+        ret = Variable("ret", Type.lookup("uint64_t"))
+
+        root.add_child(
+            Declare(
+                OpAssign(
+                    s,
+                    MCall(
+                        type_cast_macro,
+                        func.args[0]
+                    )
+                )
+            )
+        )
+
+        root.add_child(
+            Declare(
+                OpAssign(
+                    ret,
+                    0
+                )
+            )
+        )
+        root.add_child(NewLine())
+
+        if regs:
+            cases = gen_reg_cases(regs, "r", func.args[1], None, ret, s)
+        else:
+            cases = []
+        switch = BranchSwitch(func.args[1],
+            cases = cases,
+            separate_cases = True
+        )
+        case_default = SwitchCase("default")
+        case_default.add_child(
+            Call(
+                "printf",
+                StrConcat(
+                    "%s: unimplemented read from 0x%",
+                    MCall("HWADDR_PRIx"),
+                    ", size %d\\n",
+                    delim = "@s"
+                ),
+                MCall("__FUNCTION__"),
+                func.args[1],
+                func.args[2]
+            )
+        )
+        switch.add_child(case_default)
+        root.add_child(switch)
+
+        root.add_child(NewLine())
+        root.add_child(Return(ret))
+
+        return func
 
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro, regs = None):
-        write = Type.lookup("MemoryRegionOps_write")
-
-        used_types = set([
-            write.args[1].type,
-            write.args[2].type,
-            Type.lookup("uint64_t"),
-            Type.lookup("printf"),
-            Type.lookup("HWADDR_PRIx"),
-            Type.lookup("PRIx64")
-        ])
-
-        context = {
-            "s_is_used": False
-        }
-
-        regs = "" if regs is None else ("\n" + gen_reg_cases(regs, "w",
-            used_types, write.args[1].name, write.args[2].name, context
-        ))
-
-        body = """\
-    {unused}{Struct}@b*s@b=@s{UPPER}(opaque);
-
-    switch@b({offset})@b{{{regs}
-    default:
-        printf(@a"%s:@bunimplemented@bwrite@bto@b0x%"HWADDR_PRIx",@bsize@b%d,@b"
-               @a"value@b0x%"PRIx64"\\n",@s__FUNCTION__,@s{offset},@ssize,\
-@s{value});
-        break;
-    }}
-""".format(
-    regs = regs,
-    unused = "" if context["s_is_used"] else "__attribute__((unused))@b",
-    offset = write.args[1].name,
-    value = write.args[2].name,
-    Struct = struct_name,
-    UPPER = type_cast_macro
-        )
-
-        return write.use_as_prototype(
+        func = Type.lookup("MemoryRegionOps_write").use_as_prototype(
             name = name,
             static = True,
-            body = body,
-            used_types = used_types
+            body = BodyTree()
         )
+        root = func.body
+
+        s = Type.lookup(struct_name).gen_var("s", pointer = True)
+
+        root.add_child(
+            Declare(
+                OpAssign(
+                    s,
+                    MCall(
+                        type_cast_macro,
+                        func.args[0]
+                    )
+                )
+            )
+        )
+        root.add_child(NewLine())
+
+        if regs:
+            cases = gen_reg_cases(
+                regs, "w", func.args[1], func.args[2], None, s
+            )
+        else:
+            cases = []
+        switch = BranchSwitch(func.args[1],
+            cases = cases,
+            separate_cases = True
+        )
+        case_default = SwitchCase("default")
+        case_default.add_child(
+            Call(
+                "printf",
+                StrConcat(
+                    "%s: unimplemented write to 0x%",
+                    MCall("HWADDR_PRIx"),
+                    StrConcat(
+                        ", size %d, ",
+                        "value 0x%",
+                        delim = "@s"
+                    ),
+                    MCall("PRIx64"),
+                    "\\n",
+                    delim = "@s"
+                ),
+                MCall("__FUNCTION__"),
+                func.args[1],
+                func.args[3],
+                func.args[2]
+            )
+        )
+        switch.add_child(case_default)
+        root.add_child(switch)
+
+        return func
 
     @staticmethod
     def gen_mmio_size(regs):
