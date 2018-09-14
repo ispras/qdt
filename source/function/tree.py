@@ -270,6 +270,16 @@ class BranchIf(Node):
     def add_else(self, else_bl):
         self.else_blocks.append(else_bl)
 
+    def __call__(self, *children_and_elses):
+        for ce in children_and_elses:
+            if isinstance(ce, BranchElse):
+                self.add_else(ce)
+            else:
+                self.add_child(ce)
+
+        return self
+
+
     def __c__(self, writer):
         writer.write("if@b(")
         if self.cond:
@@ -337,6 +347,10 @@ class BranchSwitch(Node):
     def add_cases(self, cases):
         for case in cases:
             self.add_child(case)
+
+    def __call__(self, *cases):
+        self.add_cases(cases)
+        return self
 
     def __c__(self, writer):
         if "default" not in self.added_cases:
