@@ -12,13 +12,13 @@ from six import (
 from itertools import (
     count
 )
-from .code_writer import (
-    CodeWriter
-)
 
 if __name__ == "__main__":
     from sys import (
         stdout
+    )
+    from code_writer import (
+        CodeWriter
     )
     from topology import (
         sort_topologically
@@ -27,6 +27,9 @@ if __name__ == "__main__":
         get_class_total_args
     )
 else:
+    from .code_writer import (
+        CodeWriter
+    )
     from .topology import (
         sort_topologically
     )
@@ -56,7 +59,7 @@ script.
         `PyGenerator` to evaluate name for the variable generated for the
         object.
 
-    - __get_init_arg_val__, a method to transform values of argumetns before
+    - __get_init_arg_val__, a method to transform values of arguments before
         serialization to Python. See `PyGenerator.gen_args`.
 
     The goal is to produce a script, execution of which will result in a set
