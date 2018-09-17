@@ -73,7 +73,9 @@ if __name__ == "__main__":
         Comment("It is a very L " + " O " * 200 + " N  G comment"),
 
         OpAssign(_a, OpSub(OpMul(3, _i), 2)),
-        OpAssign(_a, OpMul(3, OpSub(100, _i)))
+        OpAssign(_a, OpMul(3, OpSub(100, _i))),
+
+        Return()
     )
 
     print_code(str(root))
