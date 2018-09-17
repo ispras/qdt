@@ -75,6 +75,14 @@ if __name__ == "__main__":
         OpAssign(_a, OpSub(OpMul(3, _i), 2)),
         OpAssign(_a, OpMul(3, OpSub(100, _i))),
 
+        LoopFor(None, _i, None)(
+            Break()
+        ),
+
+        LoopFor(None, None, OpInc(_i))(
+            Break()
+        ),
+
         Return()
     )
 
