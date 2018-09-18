@@ -134,6 +134,8 @@ class ChunkGenerator(object):
 
             self.stack.pop()
 
+            # Note that conversion to a tuple is performed to prevent further
+            # modifications of chunk list.
             self.origin2chunks[origin] = tuple(chunks)
 
         return chunks
