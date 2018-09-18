@@ -114,6 +114,9 @@ class ChunkGenerator(object):
                 else:
                     chunks = origin.gen_definition_chunks(self, **kw)
             elif isinstance(origin, Variable):
+                # A variable in a header does always have `extern` modifier.
+                # Note taht some "variables" do describe `struct`/`enum`
+                # entries and must not have it.
                 if len(self.stack) == 1:
                     if self.for_header:
                         kw["extern"] = True
@@ -128,6 +131,9 @@ class ChunkGenerator(object):
                         kw["enum"] = True
                         chunks = origin.get_definition_chunks(self, **kw)
                     else:
+                        # Something like a static inline function in a header
+                        # may request chunks for a global variable. This case
+                        # the stack height is greater than 1.
                         if self.for_header:
                             kw["extern"] = True
                             chunks = origin.gen_declaration_chunks(self, **kw)
