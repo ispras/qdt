@@ -1,0 +1,4 @@
+*.docx_files/
+*.docx
+!ref.docx
+*.pmd
