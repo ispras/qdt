@@ -134,7 +134,7 @@ class ChunkGenerator(object):
 
             self.stack.pop()
 
-            self.origin2chunks[origin] = chunks
+            self.origin2chunks[origin] = tuple(chunks)
 
         return chunks
 
@@ -1325,7 +1325,7 @@ class Variable(object):
         append_nl = True
         ch = VariableDefinition(self, indent, append_nl, enum)
 
-        refs = generator.provide_chunks(self.type)
+        refs = list(generator.provide_chunks(self.type))
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
@@ -1929,7 +1929,7 @@ def gen_function_declaration_string(indent, function,
 
 
 def gen_function_decl_ref_chunks(function, generator):
-    references = generator.provide_chunks(function.ret_type)
+    references = list(generator.provide_chunks(function.ret_type))
 
     if function.args is not None:
         for a in function.args:
