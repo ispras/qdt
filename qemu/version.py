@@ -541,10 +541,6 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
-    Header.lookup("exec/helper-proto.h").add_type(
-        Macro("HELPER_PROTO_H")
-    )
-
     Header.lookup("disas/bfd.h").add_types([
         Type("bfd_vma", False),
         Type("bfd_byte", False),
