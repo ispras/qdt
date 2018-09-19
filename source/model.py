@@ -739,6 +739,7 @@ class Type(object):
         initializer = None,
         static = False,
         array_size = None,
+        used = False
     ):
         if self.incomplete:
             if not pointer:
@@ -751,12 +752,14 @@ class Type(object):
                 initializer = initializer,
                 static = static,
                 array_size = array_size,
+                used = used
             )
         else:
             return Variable(name, self,
                 initializer = initializer,
                 static = static,
                 array_size = array_size,
+                used = used
             )
 
     def get_definers(self):
@@ -1404,6 +1407,7 @@ class Variable(object):
         static = False,
         const = False,
         array_size = None,
+        used = False
     ):
         self.name = name
         self.type = _type
@@ -1411,6 +1415,7 @@ class Variable(object):
         self.static = static
         self.const = const
         self.array_size = array_size
+        self.used = used
 
     def gen_declaration_chunks(self, generator,
         indent = "",
@@ -1456,6 +1461,8 @@ class Variable(object):
         writer.write(self.name)
         if self.array_size is not None:
             writer.write("[%d]" % self.array_size)
+        if not self.used:
+            writer.write("@b__attribute__((unused))")
 
     __type_references__ = ["type", "initializer"]
 
