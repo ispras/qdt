@@ -39,10 +39,10 @@ class HistoryWindow(GUIToplevel):
             sticky = "NEWS"
         )
 
-        vsb = Scrollbar(self, orient="vertical", command = tv.yview)
+        vsb = Scrollbar(self, orient = "vertical", command = tv.yview)
         vsb.grid(row = 0, column = 1, sticky = "NS")
 
-        hsb = Scrollbar(self, orient="horizontal", command = tv.xview)
+        hsb = Scrollbar(self, orient = "horizontal", command = tv.xview)
         hsb.grid(row = 1, column = 0, sticky = "EW")
 
         tv.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)

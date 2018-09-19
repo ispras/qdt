@@ -522,13 +522,12 @@ Type.lookup("void").gen_var("opaque", True),
 
         self.source.add_type(self.register_types)
 
-        type_init_var = Type.lookup("type_init").gen_var()
         type_init_usage_init = Initializer(
             code = { "function": self.register_types }
         )
-        self.source.add_usage(
-            type_init_var.gen_usage(type_init_usage_init)
-            )
+        self.source.add_type(
+            Type.lookup("type_init").gen_usage(type_init_usage_init)
+        )
 
         # order life cycle functions
         self.device_realize.extra_references = {self.instance_init}

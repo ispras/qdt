@@ -9,20 +9,20 @@ __all__ = [
       , "Function"
       , "Pointer"
       , "Macro"
+      , "MacroType"
       , "Enumeration"
   , "Initializer"
   , "Variable"
-  , "Usage"
   , "SourceChunk"
       , "HeaderInclusion"
       , "MacroDefinition"
       , "PointerTypeDeclaration"
       , "FunctionPointerTypeDeclaration"
+      , "MacroTypeUsage"
       , "PointerVariableDeclaration"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
-      , "VariableUsage"
       , "StructureDeclarationBegin"
       , "StructureDeclaration"
       , "FunctionDeclaration"
@@ -114,6 +114,9 @@ class ChunkGenerator(object):
                 else:
                     chunks = origin.gen_definition_chunks(self, **kw)
             elif isinstance(origin, Variable):
+                # A variable in a header does always have `extern` modifier.
+                # Note that some "variables" do describe `struct`/`enum`
+                # entries and must not have it.
                 if len(self.stack) == 1:
                     if self.for_header:
                         kw["extern"] = True
@@ -128,13 +131,22 @@ class ChunkGenerator(object):
                         kw["enum"] = True
                         chunks = origin.get_definition_chunks(self, **kw)
                     else:
-                        chunks = origin.get_definition_chunks(self, **kw)
+                        # Something like a static inline function in a header
+                        # may request chunks for a global variable. This case
+                        # the stack height is greater than 1.
+                        if self.for_header:
+                            kw["extern"] = True
+                            chunks = origin.gen_declaration_chunks(self, **kw)
+                        else:
+                            chunks = origin.get_definition_chunks(self, **kw)
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
             self.stack.pop()
 
-            self.origin2chunks[origin] = chunks
+            # Note that conversion to a tuple is performed to prevent further
+            # modifications of chunk list.
+            self.origin2chunks[origin] = tuple(chunks)
 
         return chunks
 
@@ -158,7 +170,6 @@ class Source(object):
         self.types = {}
         self.inclusions = {}
         self.global_variables = {}
-        self.usages = []
         self.references = set()
         self.protection = False
 
@@ -181,13 +192,6 @@ class Source(object):
 
         return self
 
-    def add_usage(self, usage):
-        TypeFixerVisitor(self, usage).visit()
-
-        self.usages.append(usage)
-
-        return self
-
     def add_global_variable(self, var):
         if var.name in self.global_variables:
             raise RuntimeError("Variable with name %s is already in file %s"
@@ -197,7 +201,7 @@ class Source(object):
         TypeFixerVisitor(self, var).visit()
 
         # Auto add definers for type
-        for s in var.type.get_definers():
+        for s in var.get_definers():
             if s == self:
                 continue
             if not isinstance(s, Header):
@@ -393,9 +397,6 @@ switching to that mode.
             for r in ref_list:
                 gen.provide_chunks(r)
 
-        for u in self.usages:
-            gen.provide_chunks(u)
-
         chunks = gen.get_all_chunks()
 
         # Account extra references
@@ -502,7 +503,7 @@ class Header(Source):
         except:
             m = Macro(
                 name = macro.name,
-                text = macro.value[0].value,
+                text = "".join(tok.value for tok in macro.value),
                 args = (
                     None if macro.arglist is None else list(macro.arglist)
                 )
@@ -652,8 +653,8 @@ class Header(Source):
         return self
 
     def __hash__(self):
-        # key contains of 'g' or 'h' and header path
-        # 'g' and 'h' are used to distinguish global and local
+        # key contains of 'g' or 'l' and header path
+        # 'g' and 'l' are used to distinguish global and local
         # headers with same
         return hash("{}{}".format(
                 "g" if self.is_global else "l",
@@ -769,11 +770,11 @@ class Type(object):
             " type %s" % self.name
         )
 
-    def gen_defining_chunk_list(self, generator):
+    def gen_defining_chunk_list(self, generator, **kw):
         if self.base:
             return []
         else:
-            return self.gen_chunks(generator)
+            return self.gen_chunks(generator, **kw)
 
     def gen_usage_string(self, initializer):
         # Usage string for an initializer is code of the initializer. It is
@@ -863,7 +864,7 @@ class Structure(Type):
         definers = [self.definer]
 
         for f in self.fields:
-            definers.extend(f.type.get_definers())
+            definers.extend(f.get_definers())
 
         return definers
 
@@ -1146,24 +1147,24 @@ class Pointer(Type):
             return self.type.get_definers()
 
     def gen_chunks(self, generator):
-        if self.is_named:
-            # strip function definition chunk, its references is only needed
-            if isinstance(self.type, Function):
-                ch = FunctionPointerTypeDeclaration(self.type, self.name)
-                refs = gen_function_decl_ref_chunks(self.type, generator)
-            else:
-                ch = PointerTypeDeclaration(self.type, self.name)
-                refs = generator.provide_chunks(self.type)
+        if not self.is_named:
+            return []
 
-            """ 'typedef' does not require refererenced types to be visible.
+        # strip function definition chunk, its references is only needed
+        if isinstance(self.type, Function):
+            ch = FunctionPointerTypeDeclaration(self.type, self.name)
+            refs = gen_function_decl_ref_chunks(self.type, generator)
+        else:
+            ch = PointerTypeDeclaration(self.type, self.name)
+            refs = generator.provide_chunks(self.type)
+
+        """ 'typedef' does not require refererenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
 chunk. The references is to be added to `users` of the 'typedef'.
-        """
-            ch.add_references(refs)
+    """
+        ch.add_references(refs)
 
-            return [ch]
-        else:
-            return []
+        return [ch]
 
     def __hash__(self):
         stars = "*"
@@ -1201,9 +1202,28 @@ class Macro(Type):
 
         return "%s%s" % (self.name, arg_val)
 
-    def gen_var(self, *args, **kw):
-        return super(Macro, self).gen_var(
-            name = "fake variable of macro %s" % self.name
+    def gen_var(self, name,
+        pointer = False,
+        initializer = None,
+        static = False,
+        array_size = None,
+        unused = False,
+        macro_initializer = None
+    ):
+        mt = MacroType(self,  initializer = macro_initializer)
+        return mt.gen_var(name,
+            pointer = pointer,
+            initializer = initializer,
+            static = static,
+            array_size = array_size,
+            unused = unused
+        )
+
+    def gen_usage(self, initializer = None, name = None):
+        return MacroType(self,
+            initializer = initializer,
+            name = name,
+            is_usage = True
         )
 
     def gen_dict(self):
@@ -1222,6 +1242,65 @@ class Macro(Type):
             args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
+
+
+class MacroType(Type):
+    def __init__(self, _macro,
+        initializer = None,
+        name = None,
+        is_usage = False
+    ):
+        if not isinstance(_macro, Macro):
+            raise ValueError("Attempt to create macrotype from "
+                " %s which is not macro." % _macro.name
+            )
+        if is_usage or (name is not None):
+            self.is_named = True
+            if name is None:
+                name = _macro.name + ".usage" + str(id(self))
+            super(MacroType, self).__init__(name,
+                incomplete = False,
+                base = False
+            )
+        else:
+            # do not add nameless macrotypes to type registry
+            self.is_named = False
+            self.name = _macro.gen_usage_string(initializer)
+            self.incomplete = False
+            self.base = False
+
+        self.macro = _macro
+        self.initializer = initializer
+
+    def get_definers(self):
+        if self.is_named:
+            return super(MacroType, self).get_definers()
+        else:
+            return self.macro.get_definers()
+
+    def gen_chunks(self, generator, indent = ""):
+        if not self.is_named:
+            return []
+
+        macro = self.macro
+        initializer = self.initializer
+
+        ch = MacroTypeUsage(macro, initializer, indent)
+        refs = list(generator.provide_chunks(macro))
+
+        if initializer is not None:
+            for v in initializer.used_variables:
+                """ Note that 0-th chunk is variable and rest are its
+                dependencies """
+                refs.append(generator.provide_chunks(v)[0])
+
+            for t in initializer.used_types:
+                refs.extend(generator.provide_chunks(t))
+
+        ch.add_references(refs)
+        return [ch]
+
+    __type_references__ = ["macro", "initializer"]
 
 # Data models
 
@@ -1304,20 +1383,9 @@ class Variable(object):
                 refs = generator.provide_chunks(self.type.type)
             ch.add_references(refs)
         else:
-            if isinstance(self.type, TypeReference):
-                t = self.type.type
-            else:
-                t = self.type
-
-            if isinstance(t, Macro):
-                u = VariableUsage.gen_chunks(self, generator, indent = indent)
-                ch = u[0]
-                """ Note that references are already added to the chunk by
-                VariableUsage.gen_chunks """
-            else:
-                ch = VariableDeclaration(self, indent, extern)
-                refs = generator.provide_chunks(self.type)
-                ch.add_references(refs)
+            ch = VariableDeclaration(self, indent, extern)
+            refs = generator.provide_chunks(self.type)
+            ch.add_references(refs)
 
         return [ch]
 
@@ -1325,7 +1393,7 @@ class Variable(object):
         append_nl = True
         ch = VariableDefinition(self, indent, append_nl, enum)
 
-        refs = generator.provide_chunks(self.type)
+        refs = list(generator.provide_chunks(self.type))
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
@@ -1339,8 +1407,8 @@ class Variable(object):
         ch.add_references(refs)
         return [ch]
 
-    def gen_usage(self, initializer = None):
-        return Usage(self, initializer)
+    def get_definers(self):
+        return self.type.get_definers()
 
     __type_references__ = ["type", "initializer"]
 
@@ -1379,9 +1447,10 @@ class TypeFixerVisitor(ObjectVisitor):
             if t.base:
                 raise BreakVisiting()
 
-            """ Skip pointer types without name. Nameless pointer does not have
-            definer and should not be replaced with type reference """
-            if isinstance(t, Pointer) and not t.is_named:
+            """ Skip pointer and macrotype types without name. Nameless pointer
+            or macrotype does not have definer and should not be replaced with
+            type reference """
+            if isinstance(t, (Pointer, MacroType)) and not t.is_named:
                 return
 
             # Do not add definerless types to the Source automatically
@@ -1418,39 +1487,13 @@ class CopyFixerVisitor(ObjectVisitor):
         t = self.cur
 
         if (not isinstance(t, Type)
-            or (isinstance(t, Pointer) and not t.is_named)
+            or (isinstance(t, (Pointer, MacroType)) and not t.is_named)
         ):
             new_t = copy(t)
 
             self.replace(new_t, skip_trunk = False)
         else:
             raise BreakVisiting()
-
-# Function and instruction models
-
-
-class Usage(object):
-
-    def __init__(self, var, initializer = None):
-        self.variable = var
-        self.initalizer = initializer
-
-    def gen_defining_chunk_list(self, generator):
-        ret = VariableUsage.gen_chunks(self.variable, generator,
-            self.initalizer
-        )
-        ret = ret[:1]
-        # do not add semicolon after macro usage
-        if not (isinstance(self.variable.type, Macro)
-            or isinstance(self.variable.type, TypeReference)
-                and isinstance(self.variable.type.type, Macro)
-        ):
-            term_chunk = UsageTerminator(self, references = ret)
-            ret.insert(0, term_chunk)
-
-        return ret
-
-    __type_references__ = ["variable", "initalizer"]
 
 # Source code instances
 
@@ -1699,6 +1742,18 @@ class FunctionPointerTypeDeclaration(SourceChunk):
         )
 
 
+class MacroTypeUsage(SourceChunk):
+
+    def __init__(self, macro, initializer, indent):
+        self.macro = macro
+        self.initializer = initializer
+
+        super(MacroTypeUsage, self).__init__(macro,
+            "Usage of macro type " + macro.name,
+            code = indent + macro.gen_usage_string(initializer)
+        )
+
+
 class PointerVariableDeclaration(SourceChunk):
 
     def __init__(self, var, indent = "", extern = False):
@@ -1790,36 +1845,6 @@ class VariableDefinition(SourceChunk):
         nl = "\n" if append_nl else ""
     )
         )
-
-
-class VariableUsage(SourceChunk):
-
-    @staticmethod
-    def gen_chunks(var, generator, initializer = None, indent = ""):
-        ch = VariableUsage(var, initializer, indent)
-
-        refs = generator.provide_chunks(var.type)
-
-        if initializer is not None:
-            for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
-                refs.append(generator.provide_chunks(v)[0])
-
-            for t in initializer.used_types:
-                refs.extend(generator.provide_chunks(t))
-
-        ch.add_references(refs)
-        return [ch]
-
-    def __init__(self, var, initializer = None, indent = ""):
-        super(VariableUsage, self).__init__(var,
-            "Usage of variable of type %s" % var.type.name,
-            indent + var.type.gen_usage_string(initializer)
-        )
-
-        self.indent = indent
-        self.initializer = initializer
 
 
 class StructureDeclarationBegin(SourceChunk):
@@ -1929,7 +1954,7 @@ def gen_function_declaration_string(indent, function,
 
 
 def gen_function_decl_ref_chunks(function, generator):
-    references = generator.provide_chunks(function.ret_type)
+    references = list(generator.provide_chunks(function.ret_type))
 
     if function.args is not None:
         for a in function.args:

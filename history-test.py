@@ -125,7 +125,7 @@ def main():
     tracker = HistoryTracker(history)
 
     cnv = HistCanvasDnD(root, history_tracker = tracker)
-    cnv.grid(row = 0, column = 0, sticky="NEWS")
+    cnv.grid(row = 0, column = 0, sticky = "NEWS")
 
     cnv.canvas.create_rectangle(
         10, 10, 100, 100,

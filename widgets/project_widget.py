@@ -168,10 +168,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         tv = self.tv_descs = DescriptionsTreeview(self.p.descriptions, fr)
         tv.grid(row = 0, column = 0, sticky = "NEWS")
 
-        vsb = Scrollbar(fr, orient="vertical", command = tv.yview)
+        vsb = Scrollbar(fr, orient = "vertical", command = tv.yview)
         vsb.grid(row = 0, column = 1, sticky = "NS")
 
-        hsb = Scrollbar(fr, orient="horizontal", command = tv.xview)
+        hsb = Scrollbar(fr, orient = "horizontal", command = tv.xview)
         hsb.grid(row = 1, column = 0, sticky = "EW")
 
         tv.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)

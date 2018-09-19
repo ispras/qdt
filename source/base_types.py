@@ -20,7 +20,7 @@ def add_base_types():
     try:
         h = Header.lookup("stdint.h")
     except:
-        h = Header("stdint.h", is_global=True)
+        h = Header("stdint.h", is_global = True)
 
     h.add_types([
         Type(name = "uint64_t", incomplete = False, base = False)
@@ -38,7 +38,7 @@ def add_base_types():
     try:
         h = Header.lookup("stddef.h")
     except:
-        h = Header("stddef.h", is_global=True)
+        h = Header("stddef.h", is_global = True)
         h.add_types([
             Macro("offsetof")
         ])
@@ -87,11 +87,14 @@ def add_base_types():
     except:
         h = Header("byteswap.h", is_global = True)
 
-    h.add_types([
-        Function("bswap_64"),
-        Function("bswap_32"),
-        Function("bswap_16")
-    ])
+    # If "bswap_64", "bswap_32" and "bswap_16" are not macros or do not exists
+    # then they must be added explicitly.
+    if not Type.exists("bswap_64"):
+        h.add_types([
+            Function("bswap_64"),
+            Function("bswap_32"),
+            Function("bswap_16")
+        ])
 
     try:
         h = Header.lookup("stdlib.h")
