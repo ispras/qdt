@@ -40,6 +40,9 @@ from source import (
 from re import (
     compile
 )
+from collections import (
+    OrderedDict
+)
 
 NECESSARY_FILES = [
     'cpu.h', 'translate.inc.c', 'cpu.c', 'helper.c', 'machine.c', 'translate.c'
@@ -155,8 +158,8 @@ class Arch(object):
         if not exists(abs_target_folder):
             makedirs(abs_target_folder)
 
-        self.gen_files = {
-            fl.name: fl for fl in [
+        self.gen_files = OrderedDict(
+            (fl.name, fl) for fl in [
                 GenFile(
                     f,
                     self.target_folder,
@@ -164,7 +167,7 @@ class Arch(object):
                     overwrite = overwrite
                 ) for f in NECESSARY_FILES
             ]
-        }
+        )
 
         self.arch_bigendian = arch_bigendian
         self.desc_bigendian = False
