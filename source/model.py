@@ -738,7 +738,8 @@ class Type(object):
         pointer = False,
         initializer = None,
         static = False,
-        array_size = None
+        array_size = None,
+        used = False
     ):
         if self.incomplete:
             if not pointer:
@@ -750,13 +751,15 @@ class Type(object):
             return Variable(name, Pointer(self),
                 initializer = initializer,
                 static = static,
-                array_size = array_size
+                array_size = array_size,
+                used = used
             )
         else:
             return Variable(name, self,
                 initializer = initializer,
                 static = static,
-                array_size = array_size
+                array_size = array_size,
+                used = used
             )
 
     def get_definers(self):
@@ -1231,6 +1234,7 @@ class Macro(Type):
         initializer = None,
         static = False,
         array_size = None,
+        used = False,
         macro_initializer = None
     ):
         mt = MacroType(self,  initializer = macro_initializer)
@@ -1238,7 +1242,8 @@ class Macro(Type):
             pointer = pointer,
             initializer = initializer,
             static = static,
-            array_size = array_size
+            array_size = array_size,
+            used = used
         )
 
     def gen_usage(self, initializer = None, name = None):
@@ -1396,7 +1401,8 @@ class Variable(object):
         initializer = None,
         static = False,
         const = False,
-        array_size = None
+        array_size = None,
+        used = False
     ):
         self.name = name
         self.type = _type
@@ -1404,6 +1410,7 @@ class Variable(object):
         self.static = static
         self.const = const
         self.array_size = array_size
+        self.used = used
 
     def gen_declaration_chunks(self, generator,
         indent = "",
@@ -1449,6 +1456,8 @@ class Variable(object):
         writer.write(self.name)
         if self.array_size is not None:
             writer.write("[%d]" % self.array_size)
+        if not self.used:
+            writer.write("@b__attribute__((unused))")
 
     __type_references__ = ["type", "initializer"]
 
@@ -2005,9 +2014,13 @@ def gen_function_decl_ref_chunks(function, generator):
 def gen_function_def_ref_chunks(f, generator):
     references = []
 
+    v = TypesCollector(f.body)
+    v.visit()
+
+    for t in v.used_types:
+        references.extend(generator.provide_chunks(t))
+
     if isinstance(f.body, FunctionBodyString):
-        for t in f.body.used_types:
-            references.extend(generator.provide_chunks(t))
         for g in f.body.used_globals:
             # Note that 0-th chunk is the global and rest are its dependencies
             references.append(generator.provide_chunks(g)[0])
