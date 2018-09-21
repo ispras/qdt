@@ -129,8 +129,8 @@ class Label(Node):
         self.name = name
 
     def __c__(self, writer):
-        # Label must be written without indent
-        # That is why we set False to new_line
+        # A label must be written without an indent.
+        # That is why `new_line` is set to `False`.
         writer.new_line = False
         writer.line(self.name + ":")
 
