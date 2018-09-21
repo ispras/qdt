@@ -7,6 +7,7 @@ from .extra_math import *
 from .formated_string_var import *
 from .git_tools import *
 from .inverse_operation import *
+from .lazy import *
 from .legacy import *
 from .mechanics import *
 from .ml import *
