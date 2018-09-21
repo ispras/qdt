@@ -373,9 +373,6 @@ class SemicolonPresence(Node):
     to print semicolon.
     """
 
-    def __init__(self, children = []):
-        super(SemicolonPresence, self).__init__(children = children)
-
 
 class Break(SemicolonPresence):
 
