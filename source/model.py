@@ -78,6 +78,9 @@ from six import (
     text_type,
     binary_type
 )
+from collections import (
+    OrderedDict
+)
 from .tools import (
     get_cpp_search_paths
 )
@@ -847,7 +850,7 @@ class Structure(Type):
 
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete = False)
-        self.fields = []
+        self.fields = OrderedDict()
         if fields is not None:
             for v in fields:
                 self.append_field(v)
@@ -860,19 +863,19 @@ class Structure(Type):
 
         definers = [self.definer]
 
-        for f in self.fields:
+        for f in self.fields.values():
             definers.extend(f.get_definers())
 
         return definers
 
     def append_field(self, variable):
-        for f in self.fields:
-            if f.name == variable.name:
-                raise RuntimeError("A field with name %s already exists in"
-                    " the structure %s" % (f.name, self.name)
-                )
+        v_name = variable.name
+        if v_name in self.fields:
+            raise RuntimeError("A field with name %s already exists in"
+                " the structure %s" % (v_name, self.name)
+            )
 
-        self.fields.append(variable)
+        self.fields[v_name] = variable
 
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
@@ -919,7 +922,7 @@ class Structure(Type):
         field_refs = []
         top_chunk = struct_begin
 
-        for f in self.fields:
+        for f in self.fields.values():
             # Note that 0-th chunk is field and rest are its dependencies
             decl_chunks = generator.provide_chunks(f, indent = field_indent)
 
@@ -948,12 +951,12 @@ class Structure(Type):
         # as entry key.
 
         fields_code = []
-        for f in self.fields:
+        for name in self.fields.keys():
             try:
-                val_str = init[f.name]
+                val_str = init[name]
             except KeyError: # no initializer for this field
                 continue
-            fields_code.append("    .%s@b=@s%s" % (f.name, val_str))
+            fields_code.append("    .%s@b=@s%s" % (name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
 
