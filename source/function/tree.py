@@ -601,20 +601,14 @@ class OpSDeref(Operator):
         # for type collection
         self.struct = struct
 
+        if isinstance(_type, Pointer):
+            self.suffix = "->" + field
+        else:
+            self.suffix = "." + field
+
     @lazy
     def type(self):
         return self.struct.fields[self.field].type
-
-    def __c__(self, writer):
-        value = self.children[0]
-        value.__c__(writer)
-
-        if isinstance(value.type, Pointer):
-            writer.write("->")
-        else:
-            writer.write(".")
-
-        writer.write(self.field)
 
 
 class UnaryOperator(Operator):
