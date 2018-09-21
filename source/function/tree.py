@@ -257,8 +257,8 @@ class BranchIf(Node):
         writer.line("}")
 
 
-# BranchElse must be added to parent BranchIf node using `add_else`
 class BranchElse(Node):
+    """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
