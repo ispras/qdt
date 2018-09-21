@@ -298,10 +298,8 @@ class BranchSwitch(Node):
     def add_child(self, case):
         const = case.const
         if const in self.added_cases:
-            raise ValueError(
-                "{} const-expression is duplicated in switch".format(
-                    case.gen_const_str()
-                )
+            raise ValueError(case.gen_const_str() +
+                " const-expression is duplicated in switch"
             )
         self.added_cases.add(const)
         super(BranchSwitch, self).add_child(case)
