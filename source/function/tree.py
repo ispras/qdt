@@ -105,8 +105,7 @@ class Node(object):
         for child in self.children:
             child.__c__(writer)
             if isinstance(child, SemicolonPresence):
-                if not isinstance(self, SemicolonPresence):
-                    writer.line(";")
+                writer.line(";")
 
         if self.indent_children:
             writer.pop_indent()
