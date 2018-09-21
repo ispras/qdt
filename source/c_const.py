@@ -22,9 +22,12 @@ class CConst(object):
         except (QCParserError, QCLexerError):
             return CSTR(s)
 
-    def __c__(self):
+    def gen_c_code(self):
         "Implementation must return string compatible with C generator"
         raise NotImplementedError()
+
+    def __c__(self, writer):
+        writer.write(self.gen_c_code())
 
     def __ne__(self, v):
         "Explicit redirection for Py2."
@@ -89,7 +92,7 @@ class CINT(CConst):
                 "Cannot assign value of type %s" % type(value).__name__
             )
 
-    def __c__(self):
+    def gen_c_code(self):
         val = self.v
 
         if isinstance(val, str):
@@ -114,7 +117,7 @@ class CINT(CConst):
     def __repr__(self):
         return "CINT(%s, %d, %d)" % (repr(self.v), self.b, self.d)
 
-    __str__ = __c__
+    __str__ = gen_c_code
 
     __hash__ = CConst.__hash__
     def __eq__(self, v):
@@ -141,12 +144,12 @@ class CSTR(CConst):
         self.c = "NULL"
         self.set(value)
 
-    def __c__(self):
+    def gen_c_code(self):
         c = self.c
         if c is None:
             v = self.v
             if v is None:
-                v = "NULL"
+                c = "NULL"
             else:
                 c = str2c(v)
             self.c = c
@@ -174,7 +177,7 @@ class CSTR(CConst):
         if isinstance(v, str):
             # There is no difference in target representation
             # TODO: account macros possibility (must not be enclosed with '"')
-            return self.__c__() == '"' + v + '"'
+            return self.gen_c_code() == '"' + v + '"'
         elif isinstance(v, CSTR):
             return self.v == v.v
         return False
@@ -304,5 +307,5 @@ string with new line and quoted "@" and Windows\r\nnewline''', CSTR),
             raise AssertionError("%s / %s" % (type(q), expected))
         res = str(q)
         print(res, repr(q))
-        print(q.__c__())
+        print(q.gen_c_code())
         assert res == data

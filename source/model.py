@@ -78,6 +78,9 @@ from six import (
     text_type,
     binary_type
 )
+from collections import (
+    OrderedDict
+)
 from .tools import (
     get_cpp_search_paths
 )
@@ -736,7 +739,7 @@ class Type(object):
         initializer = None,
         static = False,
         array_size = None,
-        unused = False
+        used = False
     ):
         if self.incomplete:
             if not pointer:
@@ -749,14 +752,14 @@ class Type(object):
                 initializer = initializer,
                 static = static,
                 array_size = array_size,
-                unused = unused
+                used = used
             )
         else:
             return Variable(name, self,
                 initializer = initializer,
                 static = static,
                 array_size = array_size,
-                unused = unused
+                used = used
             )
 
     def get_definers(self):
@@ -850,7 +853,7 @@ class Structure(Type):
 
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete = False)
-        self.fields = []
+        self.fields = OrderedDict()
         if fields is not None:
             for v in fields:
                 self.append_field(v)
@@ -863,19 +866,19 @@ class Structure(Type):
 
         definers = [self.definer]
 
-        for f in self.fields:
+        for f in self.fields.values():
             definers.extend(f.get_definers())
 
         return definers
 
     def append_field(self, variable):
-        for f in self.fields:
-            if f.name == variable.name:
-                raise RuntimeError("A field with name %s already exists in"
-                    " the structure %s" % (f.name, self.name)
-                )
+        v_name = variable.name
+        if v_name in self.fields:
+            raise RuntimeError("A field with name %s already exists in"
+                " the structure %s" % (v_name, self.name)
+            )
 
-        self.fields.append(variable)
+        self.fields[v_name] = variable
 
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
@@ -922,7 +925,7 @@ class Structure(Type):
         field_refs = []
         top_chunk = struct_begin
 
-        for f in self.fields:
+        for f in self.fields.values():
             # Note that 0-th chunk is field and rest are its dependencies
             decl_chunks = generator.provide_chunks(f, indent = field_indent)
 
@@ -951,12 +954,12 @@ class Structure(Type):
         # as entry key.
 
         fields_code = []
-        for f in self.fields:
+        for name in self.fields.keys():
             try:
-                val_str = init[f.name]
+                val_str = init[name]
             except KeyError: # no initializer for this field
                 continue
-            fields_code.append("    .%s@b=@s%s" % (f.name, val_str))
+            fields_code.append("    .%s@b=@s%s" % (name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
 
@@ -969,10 +972,11 @@ class Enumeration(Type):
         super(Enumeration, self).__init__(type_name)
         self.elems = []
         self.enum_name = enum_name
+        t = [Type.lookup("int")]
         for key, val in elems_dict.items():
             self.elems.append(
-                Variable(key, Type.lookup("int"),
-                    initializer = Initializer(str(val))
+                Variable(key, self,
+                    initializer = Initializer(str(val), t)
                 )
             )
 
@@ -1014,6 +1018,19 @@ class Enumeration(Type):
     __type_references__ = ["elems"]
 
 
+class FunctionBodyString(object):
+
+    def __init__(self, body = None, used_types = None, used_globals = None):
+        self.body = body
+        self.used_types = set() if used_types is None else set(used_types)
+        self.used_globals = [] if used_globals is None else list(used_globals)
+
+    def __str__(self):
+        return self.body
+
+    __type_references__ = ["used_types"]
+
+
 class Function(Type):
 
     def __init__(self, name,
@@ -1022,8 +1039,8 @@ class Function(Type):
         args = None,
         static = False,
         inline = False,
-        used_types = [],
-        used_globals = []
+        used_types = None,
+        used_globals = None
     ):
         # args is list of Variables
         super(Function, self).__init__(name,
@@ -1033,11 +1050,21 @@ class Function(Type):
         )
         self.static = static
         self.inline = inline
-        self.body = body
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
         self.args = args
-        self.used_types = set(used_types)
-        self.used_globals = used_globals
+
+        if isinstance(body, str):
+            self.body = FunctionBodyString(
+                body = body,
+                used_types = used_types,
+                used_globals = used_globals
+            )
+        else:
+            self.body = body
+            if (used_types or used_globals) is not None:
+                raise ValueError("Specifing of used types or globals for non-"
+                    "string body is redundant."
+                )
 
     def gen_declaration_chunks(self, generator):
         indent = ""
@@ -1097,7 +1124,7 @@ class Function(Type):
     def gen_var(self, name, initializer = None, static = False):
         return Variable(name, self, initializer = initializer, static = static)
 
-    __type_references__ = ["ret_type", "args", "used_types"]
+    __type_references__ = ["ret_type", "args", "body"]
 
 
 class Pointer(Type):
@@ -1207,7 +1234,7 @@ class Macro(Type):
         initializer = None,
         static = False,
         array_size = None,
-        unused = False,
+        used = False,
         macro_initializer = None
     ):
         mt = MacroType(self,  initializer = macro_initializer)
@@ -1216,7 +1243,7 @@ class Macro(Type):
             initializer = initializer,
             static = static,
             array_size = array_size,
-            unused = unused
+            used = used
         )
 
     def gen_usage(self, initializer = None, name = None):
@@ -1302,13 +1329,28 @@ class MacroType(Type):
 
     __type_references__ = ["macro", "initializer"]
 
+
+class CPPMacro(Macro):
+    """ A kind of macro defined by the C preprocessor.
+    For example __FILE__, __LINE__, __FUNCTION__ and etc.
+    """
+
+    def __init__(self, *args, **kw):
+        super(CPPMacro, self).__init__(*args, **kw)
+
+    def gen_chunks(self, _):
+        # CPPMacro does't require referenced types
+        # because it's defined by C preprocessor.
+        return []
+
+
 # Data models
 
 
-class InitCodeVisitor(ObjectVisitor):
+class TypesCollector(ObjectVisitor):
 
     def __init__(self, code):
-        super(InitCodeVisitor, self).__init__(code,
+        super(TypesCollector, self).__init__(code,
             field_name = "__type_references__"
         )
         self.used_types = set()
@@ -1331,9 +1373,9 @@ class Initializer(object):
             self.__type_references__ = self.__type_references__ + ["code"]
 
             # automatically get types used in the code
-            icv = InitCodeVisitor(code)
-            icv.visit()
-            self.used_types.update(icv.used_types)
+            tc = TypesCollector(code)
+            tc.visit()
+            self.used_types.update(tc.used_types)
 
     def __getitem__(self, key):
         val = self.code[key]
@@ -1360,7 +1402,7 @@ class Variable(object):
         static = False,
         const = False,
         array_size = None,
-        unused = False
+        used = False
     ):
         self.name = name
         self.type = _type
@@ -1368,7 +1410,7 @@ class Variable(object):
         self.static = static
         self.const = const
         self.array_size = array_size
-        self.unused = unused
+        self.used = used
 
     def gen_declaration_chunks(self, generator,
         indent = "",
@@ -1409,6 +1451,13 @@ class Variable(object):
 
     def get_definers(self):
         return self.type.get_definers()
+
+    def __c__(self, writer):
+        writer.write(self.name)
+        if self.array_size is not None:
+            writer.write("[%d]" % self.array_size)
+        if not self.used:
+            writer.write("@b__attribute__((unused))")
 
     __type_references__ = ["type", "initializer"]
 
@@ -1831,7 +1880,7 @@ class VariableDefinition(SourceChunk):
                 var.name, var.type.name
             ),
             """\
-{indent}{static}{const}{type_name}@b{var_name}{array_decl}{unused}{init}{separ}{nl}
+{indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
         indent = indent,
         static = "static@b" if var.static else "",
@@ -1839,7 +1888,6 @@ class VariableDefinition(SourceChunk):
         type_name = "" if enum else var.type.name,
         var_name = var.name,
         array_decl = gen_array_declaration(var.array_size),
-        unused = "@b__attribute__((unused))" if var.unused else "",
         init = init_code,
         separ = "," if enum else ";",
         nl = "\n" if append_nl else ""
@@ -1966,11 +2014,16 @@ def gen_function_decl_ref_chunks(function, generator):
 def gen_function_def_ref_chunks(f, generator):
     references = []
 
-    for t in f.used_types:
+    v = TypesCollector(f.body)
+    v.visit()
+
+    for t in v.used_types:
         references.extend(generator.provide_chunks(t))
-    for g in f.used_globals:
-        # Note that 0-th chunk is the global and rest are its dependencies
-        references.append(generator.provide_chunks(g)[0])
+
+    if isinstance(f.body, FunctionBodyString):
+        for g in f.body.used_globals:
+            # Note that 0-th chunk is the global and rest are its dependencies
+            references.append(generator.provide_chunks(g)[0])
 
     return references
 
@@ -2320,6 +2373,16 @@ class SourceTreeContainer(object):
     def __init__(self):
         self.reg_header = {}
         self.reg_type = {}
+
+        # add preprocessor macros those are always defined
+        prev = self.set_cur_stc()
+
+        CPPMacro("__FILE__")
+        CPPMacro("__LINE__")
+        CPPMacro("__FUNCTION__")
+
+        if prev is not None:
+            prev.set_cur_stc()
 
     def type_lookup(self, name):
         if name not in self.reg_type:
