@@ -28,11 +28,11 @@ class DiffParser(object):
 
     @staticmethod
     def __extract_range(range):
-        lineno = range[0]
+        lineno = int(range[0])
         count = None
 
         if len(range) != 1:
-            count = range[1]
+            count = int(range[1])
 
         return lineno, count
 
@@ -46,9 +46,9 @@ class DiffParser(object):
             o_lineno, o_count = self.__extract_range(old_range)
             n_lineno, n_count = self.__extract_range(new_range)
 
-            chunks = {i : CHUNK(RANGE(o_lineno, o_lineno),
-                RANGE(n_lineno, n_lineno))
-            }
+            chunks[i] = CHUNK(RANGE(o_lineno, o_count),
+                RANGE(n_lineno, n_count)
+            )
         return chunks
 
     def get_changes(self):
