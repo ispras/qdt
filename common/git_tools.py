@@ -1,10 +1,59 @@
 __all__ = [
     "GGB_IBY"
   , "CommitDesc"
+  , "DiffParser"
 ]
+
+from collections import (
+    namedtuple
+)
+from re import (
+    findall,
+    split
+)
 
 # Iterations Between Yields of Git Graph Building task
 GGB_IBY = 100
+
+RANGE = namedtuple("RANGE", "lineno count")
+CHUNK = namedtuple("CHUNK", "old_file new_file")
+
+
+class DiffParser(object):
+    def __init__(self, diff):
+        self.unprsd_chunks = (
+            findall("[@][@] ([- ][\d,]* [+ ][\d,]*) [@][@]", diff)
+        )
+        self.changes = split("[@][@] [- ][\d,]* [+ ][\d,]* [@][@] ", diff)[1:]
+
+    @staticmethod
+    def __extract_range(range):
+        lineno = range[0]
+        count = None
+
+        if len(range) != 1:
+            count = range[1]
+
+        return lineno, count
+
+    def get_chunks(self):
+        chunks = {}
+
+        for i, chunk in enumerate(self.unprsd_chunks):
+            old_range = findall("^[- ]([\d,]*)", chunk)[0].split(',')
+            new_range = findall("[+ ]([\d,]*)$", chunk)[0].split(',')
+
+            o_lineno, o_count = self.__extract_range(old_range)
+            n_lineno, n_count = self.__extract_range(new_range)
+
+            chunks = {i : CHUNK(RANGE(o_lineno, o_lineno),
+                RANGE(n_lineno, n_lineno))
+            }
+        return chunks
+
+    def get_changes(self):
+        return dict((i, changes) for i, changes in enumerate(self.changes))
+
 
 class CommitDesc(object):
     def __init__(self, sha, parents, children):
