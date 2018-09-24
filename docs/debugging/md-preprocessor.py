@@ -158,11 +158,13 @@ if __name__ == "__main__":
 
         if enum_captions and l[0] == "#":
             if ispras:
-                # insert empty line before headers of level 2+
-                if l[1] == "#":
-                    lines.insert(row, "\n")
-                    lines.insert(row, "<br>\n")
-                    row += 2
+                # Insert empty line before headers of level 1+.
+                # Note that 1st level in this preprocessor corresponds to
+                # 2nd heading level in terms of
+                # Template_for_Proceedings_of_ISP_RAS.dotm
+                lines.insert(row, "\n")
+                lines.insert(row, "<br>\n")
+                row += 2
 
             # Both anchors & references can contain `$`.
             # Hecnce, `$` used for caption enumeration must be processed
