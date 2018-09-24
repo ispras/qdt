@@ -3,6 +3,9 @@ __all__ = [
     "re_breakpoint_pos"
 ]
 
+from os import (
+    environ
+)
 from os.path import (
     join,
     dirname,
@@ -16,7 +19,8 @@ from inspect import (
     ismethod
 )
 from re import (
-    compile
+    compile,
+    split
 )
 from common import (
     notifier
@@ -24,78 +28,101 @@ from common import (
 from git import (
     Repo
 )
+from common.git_tools import (
+    DiffParser
+)
 
-path.insert(0, join(dirname(abspath(__file__)), "pyelftools"))
+path.insert(0, join(dirname(abspath(__file__)), "..", "pyelftools"))
 
 from elftools.common.intervalmap import (
     intervalmap
 )
 
-re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]*$")
+re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]* [\w.]+$")
 
-def get_delta_intervals(chunks):
-    pass
 
-def get_changed_intervals(c):
-    pass
-
+class LineVersionAdapter(object):
+    def __init__(self, diff):
+        self.delta_intervals = intervalmap()
+        self.changes_intervals = intervalmap()
+        self.diff_parser = DiffParser(diff)
+        self.__delta = 0
+        self.build_intervals()
 
     def __get_delta(self, old_range, new_range):
-        if len(old_range) == 1 and len(new_range) == 1:
+        if not bool(old_range.count) and not bool(new_range.count):
             return self.__delta
-        elif len(old_range) == 1 and len(new_range) != 1:
-            if not int(new_range[1]):
+        elif not bool(old_range.count) and bool(new_range.count):
+            if not new_range.count:
                 self.__delta += 1
                 return self.__delta
             else:
                 # TODO: Do something
                 return self.__delta
-        elif len(old_range) != 1 and len(new_range) == 1:
-            if not int(old_range[1]):
+        elif bool(old_range.count) and not bool(new_range.count):
+            if not old_range.count:
                 self.__delta -= 1
                 return self.__delta
             else:
                 # TODO: Do something
                 return self.__delta
-        elif len(old_range) != 1 and len(new_range) != 1:
-            if not int(old_range[1]):
-                self.__delta -= int(new_range[1])
+        elif bool(old_range.count) and bool(new_range.count):
+            if not old_range.count:
+                self.__delta -= new_range.count
                 return self.__delta
-            elif not int(new_range[1]):
-                self.__delta += int(old_range[1])
+            elif not new_range.count:
+                self.__delta += old_range.count
                 return self.__delta
             else:
                 self.__delta = (
-                    self.__delta + int(old_range[1]) - int(new_range[1])
+                    self.__delta + old_range.count - new_range.count
             )
                 return self.__delta
 
-    def get_diffs(self):
-        diff4search = intervalmap()
-        diffdelta_intervals = intervalmap()
-        old_lineno = 0
-        delta = 0
+    def build_intervals(self):
+        chunks = self.diff_parser.get_chunks()
+        changes = self.diff_parser.get_changes()
+        tmp_lineno = 1
+        tmp_delta = 0
 
-        for chunk, changes in zip(self.chunks, self.changes):
-            old, new = self.extract_ranges(chunk)
+        for i in xrange(0, len(chunks)):
+            old_range = chunks[i].old_file
+            new_range = chunks[i].new_file
 
-            if len(new) != 1:
-                lineno, count = int(new[0]), int(new[1])
-                diff4search[lineno: lineno + (count if count else 1)] = changes
+            if bool(new_range.count):
+                self.changes_intervals[
+                    new_range.lineno: new_range.lineno + (
+                        new_range.count if new_range.count else 1
+                    )
+                ] = changes[i]
             else:
-                lineno = int(new[0])
-                diff4search[lineno: lineno + 1] = changes
+                self.changes_intervals[
+                    new_range.lineno: new_range.lineno + 1
+                ] = changes[i]
 
-            diffdelta_intervals[old_lineno: lineno] = delta
-            delta = self.__get_delta(old, new)
-            old_lineno = lineno
+            self.delta_intervals[tmp_lineno: new_range.lineno] = tmp_delta
+            tmp_delta = self.__get_delta(old_range, new_range)
+            tmp_lineno = new_range.lineno
 
-        diffdelta_intervals[old_lineno: None] = delta
+        self.delta_intervals[tmp_lineno: None] = tmp_delta
 
-        return diff4search, diffdelta_intervals
+    def adapt_lineno(self, lineno):
+        return lineno + self.delta_intervals[lineno]
 
-    def get_new_lineno(self, old_lineno):
-        return old_lineno + self.diffdelta_intervals[old_lineno]
+    # def is_line_changed(self, lineno, epsilon = 0):
+    #     res = True
+    #
+    #     for i in xrange(lineno - epsilon, lineno + epsilon + 1):
+    #
+    #         res = res and bool(self.)
+    #
+    #     return res
+
+    def get_delta_intervals(self):
+        return self.delta_intervals
+
+    def get_changes_intervals(self):
+        return self.changes_intervals
 
 
 def is_breakpoint_cb(object):
@@ -117,9 +144,18 @@ class Watcher(object):
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
         for name, cb in getmembers(type(self), predicate = is_breakpoint_cb):
-            file_name, line_str = cb.__doc__.splitlines()[0].split(":")
+            file_name, line_str, version = (
+                split("[: ]+", cb.__doc__.splitlines()[0])
+            )
+            line = int(line_str)
+            repo = Repo(environ["QEMU_SRC"])
+            commit = repo.commit(repo.head.object.hexsha)
+            diff = commit.diff(version, file_name, True, unified = 0)
+            if diff:
+                line_adapter = LineVersionAdapter(diff[0].diff)
+                line = line_adapter.adapt_lineno(line)
             line_map = dia.find_line_map(file_name)
-            line_descs = line_map[int(line_str)]
+            line_descs = line_map[line]
             addr = line_descs[0].state.address
             brs.append((addr, getattr(self, name)))
 
