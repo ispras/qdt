@@ -15,7 +15,7 @@ MDP_ARGS := --ispras --caption-number-prefix
 REF_DOCX := ref.docx
 
 main.docx \
-: PANDOC_ARGS= --toc --metadata="toc-title:Содержание" --toc-depth=2
+: PANDOC_ARGS=
 
 #=
 
