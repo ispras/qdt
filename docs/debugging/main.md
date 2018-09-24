@@ -14,7 +14,7 @@ abstract: |
   ТУДУ.
 ...
 
-# Введение
+# $. Введение
 
 При разработке новой виртуальной вычислительной машины программист
 неизбежно сталкивается с ситуацией, когда она ведёт себя не так, как он ожидает.
@@ -411,27 +411,27 @@ QEMU Object Model (QOM).
 
 ## $.$ Восстановление состава машины
 
-# Заключение
+# $. Заключение
 
-# Использованные источники
+# Список литературы
 
-$. <a name="ref.QDTCommon"></a>QDT Common
+[$]. <a name="ref.QDTCommon"></a>QDT Common
 
-$. <a name="ref.QDTRegisters"></a>QDT Device Registers
+[$]. <a name="ref.QDTRegisters"></a>QDT Device Registers
 
-$. <a name="ref.pygdb"></a>Minimal C Debugger in Python.
+[$]. <a name="ref.pygdb"></a>Minimal C Debugger in Python.
    https://github.com/theicfire/pygdb
 
-$. <a name="ref.pyrsp"></a>pyrsp.
+[$]. <a name="ref.pyrsp"></a>pyrsp.
    https://github.com/stef/pyrsp
 
-$. <a name="ref.python-gdb-mi"></a>Python GDB MI Parser.
+[$]. <a name="ref.python-gdb-mi"></a>Python GDB MI Parser.
    https://github.com/hydra-dbg/python-gdb-mi
 
-$. <a name="ref.pygdbmi"></a>pygdbmi - Get Structured Output from GDB's
+[$]. <a name="ref.pygdbmi"></a>pygdbmi - Get Structured Output from GDB's
    Machine Interface.
    https://github.com/cs01/pygdbmi
 
-$. <a name="ref.pyelftools"></a>pyelftools.
+[$]. <a name="ref.pyelftools"></a>pyelftools.
    https://github.com/eliben/pyelftools
 
