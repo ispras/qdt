@@ -3,6 +3,14 @@ __all__ = [
     "re_breakpoint_pos"
 ]
 
+from os.path import (
+    join,
+    dirname,
+    abspath
+)
+from sys import (
+    path
+)
 from inspect import (
     getmembers,
     ismethod
@@ -13,8 +21,81 @@ from re import (
 from common import (
     notifier
 )
+from git import (
+    Repo
+)
+
+path.insert(0, join(dirname(abspath(__file__)), "pyelftools"))
+
+from elftools.common.intervalmap import (
+    intervalmap
+)
 
 re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]*$")
+
+def get_delta_intervals(chunks):
+    pass
+
+def get_changed_intervals(c):
+    pass
+
+
+    def __get_delta(self, old_range, new_range):
+        if len(old_range) == 1 and len(new_range) == 1:
+            return self.__delta
+        elif len(old_range) == 1 and len(new_range) != 1:
+            if not int(new_range[1]):
+                self.__delta += 1
+                return self.__delta
+            else:
+                # TODO: Do something
+                return self.__delta
+        elif len(old_range) != 1 and len(new_range) == 1:
+            if not int(old_range[1]):
+                self.__delta -= 1
+                return self.__delta
+            else:
+                # TODO: Do something
+                return self.__delta
+        elif len(old_range) != 1 and len(new_range) != 1:
+            if not int(old_range[1]):
+                self.__delta -= int(new_range[1])
+                return self.__delta
+            elif not int(new_range[1]):
+                self.__delta += int(old_range[1])
+                return self.__delta
+            else:
+                self.__delta = (
+                    self.__delta + int(old_range[1]) - int(new_range[1])
+            )
+                return self.__delta
+
+    def get_diffs(self):
+        diff4search = intervalmap()
+        diffdelta_intervals = intervalmap()
+        old_lineno = 0
+        delta = 0
+
+        for chunk, changes in zip(self.chunks, self.changes):
+            old, new = self.extract_ranges(chunk)
+
+            if len(new) != 1:
+                lineno, count = int(new[0]), int(new[1])
+                diff4search[lineno: lineno + (count if count else 1)] = changes
+            else:
+                lineno = int(new[0])
+                diff4search[lineno: lineno + 1] = changes
+
+            diffdelta_intervals[old_lineno: lineno] = delta
+            delta = self.__get_delta(old, new)
+            old_lineno = lineno
+
+        diffdelta_intervals[old_lineno: None] = delta
+
+        return diff4search, diffdelta_intervals
+
+    def get_new_lineno(self, old_lineno):
+        return old_lineno + self.diffdelta_intervals[old_lineno]
 
 
 def is_breakpoint_cb(object):
