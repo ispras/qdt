@@ -101,7 +101,9 @@ if __name__ == "__main__":
         log_file.write(msg + "\n")
 
     anchor = compile("""\
+\[+\
 (?P<substitution2>\$?)\
+\]+\
 (?(substitution2)[^<]*)\
 (?P<prefix>< *a +name *= *)\
 (?P<quote>["'])\
