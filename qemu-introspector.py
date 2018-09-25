@@ -412,7 +412,7 @@ class QOMTreeGetter(Watcher):
         # main, just after QOM module initialization
 
         # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
-        "vl.c:2989"
+        #"vl.c:2989"
 
         # v2.12.0
         "vl.c:3075"
@@ -600,7 +600,7 @@ class MachineWatcher(Watcher):
         # object_initialize_with_type, before `object_init_with_type`
 
         # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
-        "object.c:376"
+        #"object.c:376"
 
         # v2.12.0
         "object.c:384"
@@ -630,7 +630,7 @@ class MachineWatcher(Watcher):
         # object_initialize_with_type, return
 
         # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
-        "object.c:378"
+        #"object.c:378"
 
         # v2.12.0
         "object.c:386"
@@ -648,16 +648,16 @@ class MachineWatcher(Watcher):
 
     def on_board_init_start(self):
         # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
-        "vl.c:4510" # main, before `machine_class->init(current_machine)`
+        #"vl.c:4510" # main, before `machine_class->init(current_machine)`
 
         # v2.12.0
         "hw/core/machine.c:829" # machine_run_board_init
 
         rt = self.rt
         # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
-        machine_obj = rt["current_machine"]
+        #machine_obj = rt["current_machine"]
         # v2.12.0
-        # machine_obj = rt["machine"]
+        machine_obj = rt["machine"]
         self.machine = inst = self.account_instance(machine_obj)
 
         desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
@@ -673,7 +673,7 @@ class MachineWatcher(Watcher):
         # return from memory_region_init
 
         # 0ab8ed18a6fe98bfc82705b0f041fbf2a8ca5b60
-        "memory.c:1009"
+        #"memory.c:1009"
 
         # v2.12.0
         "memory.c:1153"
@@ -696,7 +696,7 @@ class MachineWatcher(Watcher):
 
     def on_board_init_end(self):
         # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
-        "vl.c:4511" # main, after `machine_class->init(current_machine)`
+        #"vl.c:4511" # main, after `machine_class->init(current_machine)`
 
         # v2.12.0
         "hw/core/machine.c:830" # machine_run_board_init
@@ -715,7 +715,7 @@ class MachineWatcher(Watcher):
     def on_obj_prop_add(self):
         # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
         # object_property_add, before insertion to prop. table; property found
-        "object.c:954"
+        #"object.c:954"
 
         # v2.12.0
         "object.c:976" # return from object_property_add
@@ -756,7 +756,7 @@ class MachineWatcher(Watcher):
         # object_property_set (prop. exists and has a setter)
 
         # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
-        "object.c:1094"
+        #"object.c:1094"
 
         # v2.12.0
         "object.c:1122"
@@ -864,7 +864,7 @@ class MachineWatcher(Watcher):
         # bus_add_child
 
         # 67980031d234aa90524b83bb80bb5d1601d29076
-        "hw/core/qdev.c:101" # returning
+        #"hw/core/qdev.c:101" # returning
 
         # v2.12.0
         "hw/core/qdev.c:73"
@@ -895,7 +895,7 @@ class MachineWatcher(Watcher):
         # bus_remove_child, before actual unparanting
 
         # 67980031d234aa90524b83bb80bb5d1601d29076
-        "hw/core/qdev.c:70"
+        #"hw/core/qdev.c:70"
 
         # v2.12.0
         "hw/core/qdev.c:57"
@@ -906,7 +906,7 @@ class MachineWatcher(Watcher):
         # qdev_get_gpio_in_named, return
 
         # 67980031d234aa90524b83bb80bb5d1601d29076
-        "core/qdev.c:473"
+        #"core/qdev.c:473"
 
         # v2.12.0
         "core/qdev.c:456"
@@ -931,7 +931,7 @@ class MachineWatcher(Watcher):
         # property name `propname` freed.
 
         # 67980031d234aa90524b83bb80bb5d1601d29076
-        "core/qdev.c:496"
+        #"core/qdev.c:496"
 
         # v2.12.0
         "core/qdev.c:479"
@@ -969,7 +969,7 @@ class MachineWatcher(Watcher):
         # returning from `qemu_irq_split`
 
         # 67980031d234aa90524b83bb80bb5d1601d29076
-        "core/irq.c:121"
+        #"core/irq.c:121"
 
         # v2.12.0
         "core/irq.c:122"
@@ -1308,11 +1308,11 @@ def main():
     )
 
     qomtg = QOMTreeGetter(dia,
-        # verbose = True,
+        verbose = True,
         interrupt = False
     )
     mw = MachineWatcher(dia, qomtg.tree,
-        # verbose = True
+        verbose = True
     )
 
     mach_desc = MachineNode("runtime-machine", "")
