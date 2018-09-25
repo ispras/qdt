@@ -40,33 +40,45 @@ from elftools.common.intervalmap import (
 
 re_breakpoint_pos = compile("^[^:]*:[1-9][0-9]* [\w.]+$")
 
+QEMU_SRC = environ["QEMU_SRC"]
+
 
 class LineVersionAdapter(object):
     def __init__(self, diff):
+        self.diff_parser = DiffParser(diff)
         self.delta_intervals = intervalmap()
         self.changes_intervals = intervalmap()
-        self.diff_parser = DiffParser(diff)
         self.__delta = 0
         self.build_intervals()
 
     def __get_delta(self, old_range, new_range):
-        if not bool(old_range.count) and not bool(new_range.count):
+        if old_range.count is None and new_range.count is None:
             return self.__delta
-        elif not bool(old_range.count) and bool(new_range.count):
+        elif old_range.count is None and new_range.count is not None:
             if not new_range.count:
                 self.__delta += 1
                 return self.__delta
             else:
-                # TODO: Do something
+                # # TODO: Do something
+                # raise AssertionError(
+                #     ("gdb.watcher.LineVersionAdapter.__get_delta: "
+                #      "not implemented case with (*) (*, * > 0)")
+                # )
+                self.__delta += 1 - new_range.count
                 return self.__delta
-        elif bool(old_range.count) and not bool(new_range.count):
+        elif old_range.count is not None and new_range.count is None:
             if not old_range.count:
                 self.__delta -= 1
                 return self.__delta
             else:
-                # TODO: Do something
+                # # TODO: Do something
+                # raise AssertionError(
+                #     ("gdb.watcher.LineVersionAdapter.__get_delta: "
+                #      "not implemented case with (*, * > 0) (*)")
+                # )
+                self.__delta += old_range.count - 1
                 return self.__delta
-        elif bool(old_range.count) and bool(new_range.count):
+        elif old_range.count is not None and new_range.count is not None:
             if not old_range.count:
                 self.__delta -= new_range.count
                 return self.__delta
@@ -74,9 +86,7 @@ class LineVersionAdapter(object):
                 self.__delta += old_range.count
                 return self.__delta
             else:
-                self.__delta = (
-                    self.__delta + old_range.count - new_range.count
-            )
+                self.__delta += old_range.count - new_range.count
                 return self.__delta
 
     def build_intervals(self):
@@ -89,7 +99,7 @@ class LineVersionAdapter(object):
             old_range = chunks[i].old_file
             new_range = chunks[i].new_file
 
-            if bool(new_range.count):
+            if new_range.count is not None:
                 self.changes_intervals[
                     new_range.lineno: new_range.lineno + (
                         new_range.count if new_range.count else 1
@@ -109,20 +119,14 @@ class LineVersionAdapter(object):
     def adapt_lineno(self, lineno):
         return lineno + self.delta_intervals[lineno]
 
-    # def is_line_changed(self, lineno, epsilon = 0):
-    #     res = True
-    #
-    #     for i in xrange(lineno - epsilon, lineno + epsilon + 1):
-    #
-    #         res = res and bool(self.)
-    #
-    #     return res
+    def get_line_changes(self, lineno, epsilon = 0):
+        changes = None
 
-    def get_delta_intervals(self):
-        return self.delta_intervals
-
-    def get_changes_intervals(self):
-        return self.changes_intervals
+        for i in xrange(lineno - epsilon, lineno + epsilon + 1):
+            changes = self.changes_intervals[i]
+            if bool(changes):
+                break
+        return changes
 
 
 def is_breakpoint_cb(object):
@@ -131,7 +135,10 @@ def is_breakpoint_cb(object):
     if not object.__name__.startswith("on_"):
         return False
     doc = object.__doc__
-    return doc and re_breakpoint_pos.match(doc.splitlines()[0])
+    lines_match = True
+    for doc_line in doc.splitlines():
+        lines_match = lines_match and bool(re_breakpoint_pos.match(doc_line))
+    return bool(doc) and lines_match
 
 
 @notifier("runtime_set")
@@ -143,21 +150,28 @@ class Watcher(object):
 
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
+        repo = Repo(QEMU_SRC)
+        commit = repo.commit(repo.head.object.hexsha)
         for name, cb in getmembers(type(self), predicate = is_breakpoint_cb):
-            file_name, line_str, version = (
-                split("[: ]+", cb.__doc__.splitlines()[0])
-            )
-            line = int(line_str)
-            repo = Repo(environ["QEMU_SRC"])
-            commit = repo.commit(repo.head.object.hexsha)
-            diff = commit.diff(version, file_name, True, unified = 0)
-            if diff:
-                line_adapter = LineVersionAdapter(diff[0].diff)
-                line = line_adapter.adapt_lineno(line)
-            line_map = dia.find_line_map(file_name)
-            line_descs = line_map[line]
-            addr = line_descs[0].state.address
-            brs.append((addr, getattr(self, name)))
+            for doc_line in cb.__doc__.splitlines():
+                file_name, line_str, version = (split("[: ]+", doc_line))
+                line = int(line_str)
+                diff = commit.diff(version, file_name, True, unified = 0)
+                if diff:
+                    line_adapter = LineVersionAdapter(diff[0].diff)
+                    changes = line_adapter.get_line_changes(line, epsilon = 3)
+                    if not bool(changes):
+                        line = line_adapter.adapt_lineno(line)
+                    else:
+                        # line = 3068 # for cmp
+                        # TODO: accumulate changes
+                        print changes
+                        continue
+                line_map = dia.find_line_map(file_name)
+                line_descs = line_map[line]
+                addr = line_descs[0].state.address
+                brs.append((addr, getattr(self, name)))
+            # TODO: raise exception
 
     def init_runtime(self, rt):
         v = self.verbose
