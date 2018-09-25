@@ -165,10 +165,20 @@ if __name__ == "__main__":
             continue
 
         # Avoid matching YAML header with long dash pattern
-        if not first_non_empty_line or l != "---\n":
+        if not first_non_empty_line:
+            if l.startswith("---"):
+                # join "---" with previous non-empty line
+                while lines[-1] == "\n":
+                    row -= 1
+                    lines.pop()
+
+                # strip '\n' and inset ' ' match `dash` regexp.
+                l = lines.pop()[:-1] + " " + l
+                row -= 1
+
             l = dash.sub(dash_nbs, l)
 
-        if l:
+        if first_non_empty_line and l.strip():
             first_non_empty_line = False
 
         lines.append(l)
