@@ -368,7 +368,7 @@ class QOMTreeGetter(Watcher):
     def on_type_register_internal(self):
         # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
         # v2.12.0
-        "object.c:139 v2.12.0" # type_register_internal
+        """object.c:139 v2.12.0""" # type_register_internal
 
         t = self.tree.account(self.rt["ti"])
 
@@ -382,7 +382,8 @@ class QOMTreeGetter(Watcher):
         # "object.c:333" # before `class_init` call
 
         # v2.12.0
-        """object.c:344 v2.12.0"""
+        """object.c:344 v2.12.0
+object.c:333 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91"""
 
         rt = self.rt
         type_impl = rt["ti"]
@@ -414,7 +415,8 @@ class QOMTreeGetter(Watcher):
         #"vl.c:2989"
 
         # v2.12.0
-        "vl.c:3075"
+        """vl.c:3075 v2.12.0
+vl.c:2576 v1.3.1"""
 
         if self.interrupt:
             self.rt.target.interrupt()
@@ -602,7 +604,8 @@ class MachineWatcher(Watcher):
         #"object.c:376"
 
         # v2.12.0
-        "object.c:384 v2.12.0"
+        """object.c:384 v2.12.0
+object.c:376 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91"""
 
         machine = self.machine
         if machine is None:
@@ -632,7 +635,8 @@ class MachineWatcher(Watcher):
         #"object.c:378"
 
         # v2.12.0
-        "object.c:386 v2.12.0"
+        """object.c:386 v2.12.0
+object.c:378 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91"""
 
         if self.machine is None:
             return
@@ -650,7 +654,8 @@ class MachineWatcher(Watcher):
         #"vl.c:4510" # main, before `machine_class->init(current_machine)`
 
         # v2.12.0
-        "hw/core/machine.c:829 v2.12.0" # machine_run_board_init
+        """hw/core/machine.c:829 v2.12.0
+vl.c:4510 43ac51e66b421216856c752f9382cb6de3cfccad""" # machine_run_board_init
 
         rt = self.rt
         # 43ac51e66b421216856c752f9382cb6de3cfccad (!)
@@ -675,7 +680,8 @@ class MachineWatcher(Watcher):
         #"memory.c:1009"
 
         # v2.12.0
-        "memory.c:1153 v2.12.0"
+        """memory.c:1153 v2.12.0
+memory.c:1009 0ab8ed18a6fe98bfc82705b0f041fbf2a8ca5b60"""
 
         if self.machine is None:
             return
@@ -698,7 +704,8 @@ class MachineWatcher(Watcher):
         #"vl.c:4511" # main, after `machine_class->init(current_machine)`
 
         # v2.12.0
-        "hw/core/machine.c:830 v2.12.0" # machine_run_board_init
+        """hw/core/machine.c:830 v2.12.0
+vl.c:4511 43ac51e66b421216856c752f9382cb6de3cfccad""" # machine_run_board_init
 
         self.remove_breakpoints()
         self.rt.target.interrupt()
@@ -717,7 +724,8 @@ class MachineWatcher(Watcher):
         #"object.c:954"
 
         # v2.12.0
-        "object.c:976 v2.12.0" # return from object_property_add
+        """object.c:976 v2.12.0
+object.c:954 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91""" # return from object_property_add
 
         if self.machine is None:
             return
@@ -758,7 +766,8 @@ class MachineWatcher(Watcher):
         #"object.c:1094"
 
         # v2.12.0
-        """object.c:1122"""
+        """object.c:1122
+object.c:1094 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91"""
 
         if self.machine is None:
             return
@@ -866,7 +875,8 @@ class MachineWatcher(Watcher):
         #"hw/core/qdev.c:101" # returning
 
         # v2.12.0
-        "hw/core/qdev.c:73 v2.12.0"
+        """hw/core/qdev.c:73 v2.12.0
+hw/core/qdev.c:101 67980031d234aa90524b83bb80bb5d1601d29076"""
 
         rt = self.rt
         bus = rt["bus"]
@@ -897,7 +907,8 @@ class MachineWatcher(Watcher):
         #"hw/core/qdev.c:70"
 
         # v2.12.0
-        "hw/core/qdev.c:57 v2.12.0"
+        """hw/core/qdev.c:57 v2.12.0
+hw/core/qdev.c:70 67980031d234aa90524b83bb80bb5d1601d29076"""
 
         print("not implemented")
 
@@ -908,7 +919,8 @@ class MachineWatcher(Watcher):
         #"core/qdev.c:473"
 
         # v2.12.0
-        "core/qdev.c:456 v2.12.0"
+        """core/qdev.c:456 v2.12.0
+core/qdev.c:473 67980031d234aa90524b83bb80bb5d1601d29076"""
 
         instances = self.instances
         rt = self.rt
@@ -933,7 +945,8 @@ class MachineWatcher(Watcher):
         #"core/qdev.c:496"
 
         # v2.12.0
-        "core/qdev.c:479 v2.12.0"
+        """core/qdev.c:479 v2.12.0
+core/qdev.c:496 67980031d234aa90524b83bb80bb5d1601d29076"""
 
         rt = self.rt
 
@@ -971,7 +984,8 @@ class MachineWatcher(Watcher):
         #"core/irq.c:121"
 
         # v2.12.0
-        "core/irq.c:122 v2.12.0"
+        """core/irq.c:122 v2.12.0
+core/irq.c:121 67980031d234aa90524b83bb80bb5d1601d29076"""
 
         rt = self.rt
         instances = self.instances
