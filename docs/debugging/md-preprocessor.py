@@ -11,6 +11,7 @@ from argparse import \
 import sys
 
 from re import \
+    UNICODE, \
     compile
 
 from itertools import \
@@ -124,6 +125,10 @@ if __name__ == "__main__":
 """
     )
 
+    # Auto add a non-breaking space before each long dash
+    dash = compile("\s---", UNICODE)
+    dash_nbs = u"\u00a0---".encode("utf-8")
+
     anchors = OrderedDict()
     references = []
     lines = []
@@ -145,16 +150,28 @@ if __name__ == "__main__":
     else:
         tap_pfx = ""
 
+    first_non_empty_line = True
+
     for l in list(iter(in_file.readline, "")):
         row += 1
-        lines.append(l)
 
         if l.startswith("```"):
             code_block = not code_block
+            lines.append(l)
             continue
 
         if code_block:
+            lines.append(l)
             continue
+
+        # Avoid matching YAML header with long dash pattern
+        if not first_non_empty_line or l != "---\n":
+            l = dash.sub(dash_nbs, l)
+
+        if l:
+            first_non_empty_line = False
+
+        lines.append(l)
 
         if enum_captions and l[0] == "#":
             if ispras:
@@ -438,6 +455,7 @@ if __name__ == "__main__":
             l = new_line
 
             lines[idx] = l
+
 
     for l in lines:
         out_file.write(str(l))
