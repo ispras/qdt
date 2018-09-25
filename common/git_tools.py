@@ -24,7 +24,8 @@ class DiffParser(object):
         self.unprsd_chunks = (
             findall("[@][@] ([- ][\d,]* [+ ][\d,]*) [@][@]", diff)
         )
-        self.changes = split("[@][@] [- ][\d,]* [+ ][\d,]* [@][@] ", diff)[1:]
+        self.changes = split("[@][@] [- ][\d,]* [+ ][\d,]* [@][@] *", diff)[1:]
+        print
 
     @staticmethod
     def __extract_range(range):
@@ -37,22 +38,18 @@ class DiffParser(object):
         return lineno, count
 
     def get_chunks(self):
-        chunks = {}
-
-        for i, chunk in enumerate(self.unprsd_chunks):
+        for chunk in self.unprsd_chunks:
             old_range = findall("^[- ]([\d,]*)", chunk)[0].split(',')
             new_range = findall("[+ ]([\d,]*)$", chunk)[0].split(',')
 
             o_lineno, o_count = self.__extract_range(old_range)
             n_lineno, n_count = self.__extract_range(new_range)
 
-            chunks[i] = CHUNK(RANGE(o_lineno, o_count),
-                RANGE(n_lineno, n_count)
-            )
-        return chunks
+            yield CHUNK(RANGE(o_lineno, o_count), RANGE(n_lineno, n_count))
 
     def get_changes(self):
-        return dict((i, changes) for i, changes in enumerate(self.changes))
+        for changes in self.changes:
+            yield changes
 
 
 class CommitDesc(object):
