@@ -423,19 +423,19 @@ QEMU Object Model (QOM).
 
 [$]. <a name="ref.QDTRegisters"></a>QDT Device Registers
 
-[$]. <a name="ref.pygdb"></a>Minimal C Debugger in Python.
-   https://github.com/theicfire/pygdb
+[$]. <a name="ref.pygdb"></a>Minimal C Debugger in Python. Доступно по ссылке:
+   https://github.com/theicfire/pygdb, 23.09.2018.
 
-[$]. <a name="ref.pyrsp"></a>pyrsp.
-   https://github.com/stef/pyrsp
+[$]. <a name="ref.pyrsp"></a>pyrsp. Доступно по ссылке:
+   https://github.com/stef/pyrsp,  23.09.2018.
 
-[$]. <a name="ref.python-gdb-mi"></a>Python GDB MI Parser.
-   https://github.com/hydra-dbg/python-gdb-mi
+[$]. <a name="ref.python-gdb-mi"></a>Python GDB MI Parser. Доступно по ссылке:
+   https://github.com/hydra-dbg/python-gdb-mi, 23.09.2018.
 
 [$]. <a name="ref.pygdbmi"></a>pygdbmi - Get Structured Output from GDB's
-   Machine Interface.
-   https://github.com/cs01/pygdbmi
+   Machine Interface. Доступно по ссылке:
+   https://github.com/cs01/pygdbmi, 23.09.2018.
 
-[$]. <a name="ref.pyelftools"></a>pyelftools.
-   https://github.com/eliben/pyelftools
+[$]. <a name="ref.pyelftools"></a>pyelftools. Доступно по ссылке:
+   https://github.com/eliben/pyelftools, 23.09.2018.
 
