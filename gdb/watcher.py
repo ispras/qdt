@@ -90,25 +90,25 @@ class LineVersionAdapter(object):
                 return self.__delta
 
     def build_intervals(self):
-        chunks = self.diff_parser.get_chunks()
-        changes = self.diff_parser.get_changes()
+        chunks_gen = self.diff_parser.get_chunks()
+        changes_gen = self.diff_parser.get_changes()
         tmp_lineno = 1
         tmp_delta = 0
 
-        for i in xrange(0, len(chunks)):
-            old_range = chunks[i].old_file
-            new_range = chunks[i].new_file
+        for chunks, changes in zip(chunks_gen, changes_gen):
+            old_range = chunks.old_file
+            new_range = chunks.new_file
 
             if new_range.count is not None:
                 self.changes_intervals[
                     new_range.lineno: new_range.lineno + (
                         new_range.count if new_range.count else 1
                     )
-                ] = changes[i]
+                ] = changes
             else:
                 self.changes_intervals[
                     new_range.lineno: new_range.lineno + 1
-                ] = changes[i]
+                ] = changes
 
             self.delta_intervals[tmp_lineno: new_range.lineno] = tmp_delta
             tmp_delta = self.__get_delta(old_range, new_range)
@@ -120,6 +120,7 @@ class LineVersionAdapter(object):
         return lineno + self.delta_intervals[lineno]
 
     def get_line_changes(self, lineno, epsilon = 0):
+        # TODO: do it better, add slice support to intervalmap
         changes = None
 
         for i in xrange(lineno - epsilon, lineno + epsilon + 1):
@@ -153,6 +154,8 @@ class Watcher(object):
         repo = Repo(QEMU_SRC)
         commit = repo.commit(repo.head.object.hexsha)
         for name, cb in getmembers(type(self), predicate = is_breakpoint_cb):
+            err_msg = []
+            line_map = None
             for doc_line in cb.__doc__.splitlines():
                 file_name, line_str, version = (split("[: ]+", doc_line))
                 line = int(line_str)
@@ -163,15 +166,18 @@ class Watcher(object):
                     if not bool(changes):
                         line = line_adapter.adapt_lineno(line)
                     else:
-                        # line = 3068 # for cmp
-                        # TODO: accumulate changes
-                        print changes
+                        err_msg.append("%s %s:\n%s" % (
+                            version, file_name, changes)
+                        )
                         continue
                 line_map = dia.find_line_map(file_name)
                 line_descs = line_map[line]
                 addr = line_descs[0].state.address
                 brs.append((addr, getattr(self, name)))
-            # TODO: raise exception
+            if not bool(line_map):
+                raise Exception(
+                    "br line adaption error:\n%s" % '\n'.join(err_msg)
+                )
 
     def init_runtime(self, rt):
         v = self.verbose
