@@ -2566,7 +2566,7 @@ them must be replaced with reference to h. """
             if isinstance(chunk, HeaderInclusion):
                 # propagate actual inclusions back to the origin
                 if self.is_header:
-                    self.origin.add_inclusion(chunk.header)
+                    self.origin.add_inclusion(chunk.origin)
 
                 prev_header = True
             else:
