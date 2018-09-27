@@ -2126,7 +2126,7 @@ class VariableDefinition(SourceChunk):
                 var.name, var.type.name
             ),
             """\
-{indent}{static}{const}{type_name}{var_name}{array_decl}{init}{separ}{nl}
+{indent}{static}{const}{type_name}{var_name}{array_decl}{used}{init}{separ}{nl}
 """.format(
     indent = indent,
     static = "static@b" if var.static else "",
@@ -2134,6 +2134,7 @@ class VariableDefinition(SourceChunk):
     type_name = "" if enum else var.type.name + "@b",
     var_name = var.name,
     array_decl = gen_array_declaration(var.array_size),
+    used = "" if var.used else "@b__attribute__((unused))",
     init = init_code,
     separ = separ,
     nl = "\n" if append_nl else ""
