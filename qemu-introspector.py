@@ -956,6 +956,60 @@ class MachineWatcher(Watcher):
 
         self.check_irq_connected(irq)
 
+    def on_pc_piix_gsi(self):
+        # v2.12.0
+        "pc_piix.c:301"
+        # "pc_piix.c:195" # wrong position, it is for array access testing only
+
+        rt = self.rt
+        instances = self.instances
+
+        gsi = rt["pcms"]["gsi"]
+        # gsi is array of qemu_irq
+        gsi_state = rt["gsi_state"]
+        i8259_irq = gsi_state["i8259_irq"]
+        ioapic_irq = gsi_state["ioapic_irq"]
+
+        for i in range(24): # GSI_NUM_PINS, IOAPIC_NUM_PINS
+            gsi_addr = gsi[i].fetch_pointer()
+            gsi_inst = instances[gsi_addr]
+
+            self.__notify_irq_split_created(gsi_inst)
+            # yes, to itself, like a split irq
+            gsi_inst.dst = (gsi_inst, None, 0)
+            self.check_irq_connected(gsi_inst)
+
+            ioapic_irq_addr = ioapic_irq[i].fetch_pointer()
+            if ioapic_irq_addr != 0:
+                ioapic_inst = instances[ioapic_irq_addr]
+
+                ioapic_inst.src = (gsi_inst, None, i)
+                self.check_irq_connected(ioapic_inst)
+
+            if i < 16: # ISA_NUM_IRQS
+                i8259_irq_addr = i8259_irq[i].fetch_pointer()
+                if i8259_irq_addr != 0:
+                    i8259_inst = instances[i8259_irq_addr]
+
+                    i8259_inst.src = (gsi_inst, None, i)
+                    self.check_irq_connected(i8259_inst)
+
+    def on_piix4_pm_gsi(self):
+        # v.2.12.0
+        "piix4.c:578"
+
+        rt = self.rt
+
+        irq_addr = rt["sci_irq"].fetch_pointer()
+        src_addr = rt["dev"].fetch_pointer()
+
+        src = self.instances[src_addr]
+        irq = self.instances[irq_addr]
+
+        irq.src = (src, None, None)
+
+        self.check_irq_connected(irq)
+
     def check_irq_connected(self, irq):
         src = irq.src
         dst = irq.dst
