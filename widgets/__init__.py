@@ -1,6 +1,7 @@
 from .add_desc_dialog import *
 from .branch_tree_view import *
 from .bus_settings import *
+from .canvas_frame import *
 from .close_button_notebook import *
 from .cross_dialogs import *
 from .device_settings import *
