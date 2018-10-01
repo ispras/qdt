@@ -27,6 +27,7 @@ from .machine_diagram_widget import *
 from .machine_widget import *
 from .memory_tree_widget import *
 from .obj_ref_var import *
+from .pack_info_compat import *
 from .pci_device_settings import *
 from .pci_id_widget import *
 from .popup_helper import *
@@ -39,4 +40,3 @@ from .tk_co_dispatcher import *
 from .tk_unbind import *
 from .tv_width_helper import *
 from .var_widgets import *
-from widgets.pack_info_compat import *
