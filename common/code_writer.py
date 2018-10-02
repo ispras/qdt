@@ -19,6 +19,7 @@ class CodeWriter(object):
 
         self.indent = indent
         self.w = backend
+        self.states = []
 
         self.reset()
 
@@ -66,3 +67,18 @@ class CodeWriter(object):
         "Decreases current indent by one indentation step."
 
         self.current_indent = self.current_indent[:-len(self.indent)]
+
+    def push_state(self, reset = False):
+        "Save current state"
+
+        self.states.append((self.current_indent, self.new_line))
+        if reset:
+            self.reset()
+
+    def pop_state(self):
+        "Load previous state"
+
+        if self.states:
+            state = self.states.pop()
+            self.current_indent = state[0]
+            self.new_line = state[1]
