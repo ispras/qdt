@@ -20,6 +20,7 @@ class CodeWriter(object):
 
         self.indent = indent
         self.w = backend
+        self.indents = []
 
         self.reset()
 
@@ -67,3 +68,18 @@ class CodeWriter(object):
         "Decreases current indent by one indentation step."
 
         self.current_indent = self.current_indent[:-len(self.indent)]
+
+    def save_indent(self, reset = True):
+        "Saves current indent."
+
+        self.indents.append(self.current_indent)
+        if reset:
+            self.current_indent = ""
+
+    def load_indent(self):
+        "Loads previous indent."
+
+        if self.indents:
+            self.current_indent = self.indents.pop()
+        else:
+            raise RuntimeError("Cannot load previous indent - stack empty")
