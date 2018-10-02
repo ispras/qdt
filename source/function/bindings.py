@@ -52,8 +52,11 @@ class BodyTree(Node):
     def __str__(self):
         VarUsageAnalyzer(self).visit()
         cw = CodeWriter(backend = StringIO())
+        cw.add_lang("c", "    ")
+        cw.add_lang("cpp", "  ", "#")
         cw.new_line = True
-        self.__c__(cw)
+        with cw.c:
+            self.__c__(cw)
         return cw.w.getvalue()
 
     def __c__(self, writer):
