@@ -567,12 +567,17 @@ class MachineWatcher(Watcher):
     state at runtime.
     """
 
-    def __init__(self, dia, qom_tree, verbose = False):
+    def __init__(self, dia, qom_tree, verbose = False, interrupt = True):
+        """
+        @param interrupt
+            Interrupt QEmu process after machine is created.
+        """
         super(MachineWatcher, self).__init__(dia, verbose = verbose)
         self.tree = qom_tree
         # addr -> QInstance mapping
         self.instances = {}
         self.machine = None
+        self.interrupt = interrupt
 
     def account_instance(self, obj, type_impl = None):
         """
@@ -702,7 +707,8 @@ class MachineWatcher(Watcher):
         "hw/core/machine.c:830" # machine_run_board_init
 
         self.remove_breakpoints()
-        self.rt.target.interrupt()
+        if self.interrupt:
+            self.rt.target.interrupt()
 
         if not self.verbose:
             return
