@@ -1294,6 +1294,7 @@ class QEmuWatcherGUI(GUITk):
 
         mdsw = MachineDescriptionSettingsWidget(mach_desc, self)
         mdsw.grid(row = 0, column = 0, sticky = "NESW")
+        mdsw.mw.mdw.var_physical_layout.set(False)
         self.mdsw = mdsw
 
         self.task_manager.enqueue(self.co_rsp_poller())
