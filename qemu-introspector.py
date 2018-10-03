@@ -964,6 +964,46 @@ class MachineWatcher(Watcher):
 
         self.check_irq_connected(irq)
 
+    def check_irq_connected(self, irq):
+        src = irq.src
+        dst = irq.dst
+
+        if src is None or dst is None:
+            return
+
+        self.__notify_irq_connected(irq)
+
+    def on_qemu_irq_split(self):
+        # returning from `qemu_irq_split`
+
+        # 67980031d234aa90524b83bb80bb5d1601d29076
+        #"core/irq.c:121"
+
+        # v2.12.0
+        "core/irq.c:122"
+
+        rt = self.rt
+        instances = self.instances
+
+        split_irq_addr = rt.returned_value.fetch_pointer()
+
+        split_irq = instances[split_irq_addr]
+
+        self.__notify_irq_split_created(split_irq)
+
+        irq1 = instances[rt["irq1"].fetch_pointer()]
+        irq2 = instances[rt["irq2"].fetch_pointer()]
+
+        split_irq.dst = (split_irq, None, 0) # yes, to itself
+        irq1.src = (split_irq, None, 0)
+        irq2.src = (split_irq, None, 1)
+
+        self.check_irq_connected(irq1)
+        self.check_irq_connected(irq2)
+
+
+class PCMachineWatcher(MachineWatcher):
+
     def on_pc_piix_gsi(self):
         # v2.12.0
         "pc_piix.c:301"
@@ -982,7 +1022,7 @@ class MachineWatcher(Watcher):
             gsi_addr = gsi[i].fetch_pointer()
             gsi_inst = instances[gsi_addr]
 
-            self.__notify_irq_split_created(gsi_inst)
+            self._MachineWatcher__notify_irq_split_created(gsi_inst)
             # yes, to itself, like a split irq
             gsi_inst.dst = (gsi_inst, None, 0)
             self.check_irq_connected(gsi_inst)
@@ -1017,43 +1057,6 @@ class MachineWatcher(Watcher):
         irq.src = (src, None, None)
 
         self.check_irq_connected(irq)
-
-    def check_irq_connected(self, irq):
-        src = irq.src
-        dst = irq.dst
-
-        if src is None or dst is None:
-            return
-
-        self.__notify_irq_connected(irq)
-
-    def on_qemu_irq_split(self):
-        # returning from `qemu_irq_split`
-
-        # 67980031d234aa90524b83bb80bb5d1601d29076
-        "core/irq.c:121"
-
-        # v2.12.0
-        "core/irq.c:122"
-
-        rt = self.rt
-        instances = self.instances
-
-        split_irq_addr = rt.returned_value.fetch_pointer()
-
-        split_irq = instances[split_irq_addr]
-
-        self.__notify_irq_split_created(split_irq)
-
-        irq1 = instances[rt["irq1"].fetch_pointer()]
-        irq2 = instances[rt["irq2"].fetch_pointer()]
-
-        split_irq.dst = (split_irq, None, 0) # yes, to itself
-        irq1.src = (split_irq, None, 0)
-        irq2.src = (split_irq, None, 1)
-
-        self.check_irq_connected(irq1)
-        self.check_irq_connected(irq2)
 
 
 class CastCatcher(object):
@@ -1374,7 +1377,12 @@ def main():
         # verbose = True,
         interrupt = False
     )
-    mw = MachineWatcher(dia, qomtg.tree,
+    if "-i386" in qemu_debug or "-x86_64" in qemu_debug:
+        MWClass = PCMachineWatcher
+    else:
+        MWClass = MachineWatcher
+
+    mw = MWClass(dia, qomtg.tree,
         # verbose = True
     )
 
