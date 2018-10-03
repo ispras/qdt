@@ -722,9 +722,11 @@ class MachineWatcher(Watcher):
         # 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
         # object_property_add, before insertion to prop. table; property found
         "object.c:954"
+        # Do NOT set this breakpoint on `return` because it will catch all
+        # `return` statements in the function.
 
         # v2.12.0
-        "object.c:976" # return from object_property_add
+        "object.c:975"
 
         if self.machine is None:
             return
