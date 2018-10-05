@@ -6,6 +6,7 @@ from .compat import *
 from .extra_math import *
 from .formated_string_var import *
 from .git_tools import *
+from .intervalmap import *
 from .inverse_operation import *
 from .lazy import *
 from .legacy import *
