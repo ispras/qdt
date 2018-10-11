@@ -79,6 +79,7 @@ from six import (
     binary_type
 )
 from collections import (
+    defaultdict,
     OrderedDict
 )
 from .tools import (
@@ -2139,22 +2140,26 @@ digraph Chunks {
 
         self.chunks.remove(ch_remove)
 
-    def remove_chunks_with_same_origin(self, types = [], check_only = True):
-        for t in types:
-            exists = {}
+    def remove_chunks_with_same_origin(self, types = None, check_only = True):
+        if types is not None:
+            types = set(types)
 
-            for ch in list(self.chunks):
-                if type(ch) is not t: # exact type match is required
-                    continue
+        all_exists = defaultdict(dict)
+        sort_needed = False
 
-                origin = ch.origin
+        for ch in list(self.chunks):
+            t = type(ch)
 
-                try:
-                    ech = exists[origin]
-                except KeyError:
-                    exists[origin] = ch
-                    continue
+            # exact type match is required
+            if not (types is None or t in types):
+                continue
 
+            exists = all_exists[t]
+
+            origin = ch.origin
+
+            if origin in exists:
+                ech = exists[origin]
                 if check_only:
                     raise AssertionError("Chunks %s and %s are both"
                         " originated from %s" % (ch.name, ech.name, origin)
@@ -2162,7 +2167,12 @@ digraph Chunks {
 
                 self.remove_dup_chunk(ech, ch)
 
-                self.sort_needed = True
+                sort_needed = True
+            else:
+                exists[origin] = ch
+
+        if sort_needed:
+            self.sort_needed = True
 
     def sort_chunks(self):
         if not self.sort_needed:
