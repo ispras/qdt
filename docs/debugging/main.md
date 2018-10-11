@@ -336,7 +336,7 @@ Edit (редактировать) указывает на то, что эта с
 Desktop error elimination tool[[$](#ref.deet)] (deet) --- графический
 программируемый отладчик, написанный на языке Tcl и использующий интерактивный
 интерпретатор tksh (вариант Korn shell).
-Графический интерфейс deet основан на библиотеке Tk/Tcl.
+Графический интерфейс deet основан на библиотеке Tk/Tcl[[$](#ref.Tk)].
 
 deet состоит из клиента (отладчик и графический интерфейс) и сервера
 (т.н. "nub").
@@ -842,4 +842,7 @@ In: Proc. ICSE. (2013) 352-361
 
 [$]. <a name="ref.deet"></a>Hanson, D.R., Korn, J.L.: A simple and extensible
 graphical debugger. In: WINTER 1997 USENIX CONFERENCE. (1997) 173-184
+
+[$]. <a name="ref.Tk"></a>Ousterhout J. K. Tcl and the Tk Toolkit.
+Addison-Wesley, Reading, MA, 1994.
 
