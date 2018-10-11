@@ -2328,9 +2328,8 @@ them must be replaced with reference to h. """
         gen_debug_comments = False,
         append_nl_after_headers = True
     ):
-        self.remove_chunks_with_same_origin([
-            HeaderInclusion
-        ])
+        # check for duplicate chunks for same origin
+        self.remove_chunks_with_same_origin()
 
         self.check_static_function_declarations()
 
