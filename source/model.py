@@ -96,7 +96,7 @@ class ChunkGenerator(object):
     """ Maintains context of source code chunks generation precess."""
 
     def __init__(self, for_header = False):
-        self.origin2chunks = {}
+        self.chunk_cache = {}
         self.for_header = for_header
         """ Tracking of recursive calls of `provide_chunks`. Currently used only
         to generate "extern" keyword for global variables in header and to
@@ -107,7 +107,7 @@ class ChunkGenerator(object):
         """ Given origin the method returns chunk list generating it on first
         access. """
         try:
-            chunks = self.origin2chunks[origin]
+            chunks = self.chunk_cache[origin]
         except KeyError:
             self.stack.append(origin)
 
@@ -149,14 +149,14 @@ class ChunkGenerator(object):
 
             # Note that conversion to a tuple is performed to prevent further
             # modifications of chunk list.
-            self.origin2chunks[origin] = tuple(chunks)
+            self.chunk_cache[key] = tuple(chunks)
 
         return chunks
 
     def get_all_chunks(self):
         res = set()
 
-        for chunks in self.origin2chunks.values():
+        for chunks in self.chunk_cache.values():
             for chunk in chunks:
                 if chunk not in res:
                     res.add(chunk)
@@ -403,12 +403,12 @@ switching to that mode.
         chunks = gen.get_all_chunks()
 
         # Account extra references
-        origin2chunks = {}
+        chunk_cache = {}
 
         # Build mapping
         for ch in chunks:
             origin = ch.origin
-            origin2chunks.setdefault(origin, []).append(ch)
+            chunk_cache.setdefault(origin, []).append(ch)
 
         # link chunks
         for ch in chunks:
@@ -429,7 +429,7 @@ order does not meet all requirements.
 
             for r in refs:
                 try:
-                    referenced_chunks = origin2chunks[r]
+                    referenced_chunks = chunk_cache[r]
                 except KeyError:
                     # no chunk was generated for that referenced origin
                     continue
