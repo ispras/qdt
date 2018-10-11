@@ -2139,7 +2139,7 @@ digraph Chunks {
 
         self.chunks.remove(ch_remove)
 
-    def remove_chunks_with_same_origin(self, types = []):
+    def remove_chunks_with_same_origin(self, types = [], check_only = True):
         for t in types:
             exists = {}
 
@@ -2154,6 +2154,11 @@ digraph Chunks {
                 except KeyError:
                     exists[origin] = ch
                     continue
+
+                if check_only:
+                    raise AssertionError("Chunks %s and %s are both"
+                        " originated from %s" % (ch.name, ech.name, origin)
+                    )
 
                 self.remove_dup_chunk(ech, ch)
 
