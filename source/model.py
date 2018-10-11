@@ -106,8 +106,13 @@ class ChunkGenerator(object):
     def provide_chunks(self, origin, **kw):
         """ Given origin the method returns chunk list generating it on first
         access. """
+        if isinstance(origin, TypeReference):
+            key = origin.type.definer
+        else:
+            key = origin
+
         try:
-            chunks = self.chunk_cache[origin]
+            chunks = self.chunk_cache[key]
         except KeyError:
             self.stack.append(origin)
 
@@ -149,7 +154,7 @@ class ChunkGenerator(object):
 
             # Note that conversion to a tuple is performed to prevent further
             # modifications of chunk list.
-            self.chunk_cache[origin] = tuple(chunks)
+            self.chunk_cache[key] = tuple(chunks)
 
         return chunks
 
