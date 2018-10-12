@@ -942,6 +942,9 @@ class TypeReference(Type):
     def __hash__(self):
         return hash(self.type)
 
+    def __c__(self, writer):
+        self.type.__c__(writer)
+
 
 class Structure(Type):
 
@@ -1082,6 +1085,9 @@ class Structure(Type):
             fields_code.append("    .%s@b=@s%s" % (name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
+
+    def __c__(self, writer):
+        writer.write(self.name)
 
     __type_references__ = ["fields"]
 
@@ -1256,6 +1262,9 @@ class Function(Type):
             static = static
         )
 
+    def __c__(self, writer):
+        writer.write(self.name)
+
     __type_references__ = ["ret_type", "args", "body"]
 
 
@@ -1392,6 +1401,9 @@ class Macro(Type):
             args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
+
+    def __c__(self, writer):
+        writer.write(self.name)
 
 
 class MacroType(Type):
