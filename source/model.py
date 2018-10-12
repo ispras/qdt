@@ -79,6 +79,7 @@ from six import (
     binary_type
 )
 from collections import (
+    defaultdict,
     OrderedDict
 )
 from .tools import (
@@ -96,7 +97,7 @@ class ChunkGenerator(object):
     """ Maintains context of source code chunks generation precess."""
 
     def __init__(self, for_header = False):
-        self.origin2chunks = {}
+        self.chunk_cache = {}
         self.for_header = for_header
         """ Tracking of recursive calls of `provide_chunks`. Currently used only
         to generate "extern" keyword for global variables in header and to
@@ -106,8 +107,13 @@ class ChunkGenerator(object):
     def provide_chunks(self, origin, **kw):
         """ Given origin the method returns chunk list generating it on first
         access. """
+        if isinstance(origin, TypeReference):
+            key = origin.type.definer
+        else:
+            key = origin
+
         try:
-            chunks = self.origin2chunks[origin]
+            chunks = self.chunk_cache[key]
         except KeyError:
             self.stack.append(origin)
 
@@ -149,14 +155,14 @@ class ChunkGenerator(object):
 
             # Note that conversion to a tuple is performed to prevent further
             # modifications of chunk list.
-            self.origin2chunks[origin] = tuple(chunks)
+            self.chunk_cache[key] = tuple(chunks)
 
         return chunks
 
     def get_all_chunks(self):
         res = set()
 
-        for chunks in self.origin2chunks.values():
+        for chunks in self.chunk_cache.values():
             for chunk in chunks:
                 if chunk not in res:
                     res.add(chunk)
@@ -403,12 +409,12 @@ switching to that mode.
         chunks = gen.get_all_chunks()
 
         # Account extra references
-        origin2chunks = {}
+        chunk_cache = {}
 
         # Build mapping
         for ch in chunks:
             origin = ch.origin
-            origin2chunks.setdefault(origin, []).append(ch)
+            chunk_cache.setdefault(origin, []).append(ch)
 
         # link chunks
         for ch in chunks:
@@ -429,7 +435,7 @@ order does not meet all requirements.
 
             for r in refs:
                 try:
-                    referenced_chunks = origin2chunks[r]
+                    referenced_chunks = chunk_cache[r]
                 except KeyError:
                     # no chunk was generated for that referenced origin
                     continue
@@ -2134,25 +2140,39 @@ digraph Chunks {
 
         self.chunks.remove(ch_remove)
 
-    def remove_chunks_with_same_origin(self, types = []):
-        for t in types:
-            exists = {}
+    def remove_chunks_with_same_origin(self, types = None, check_only = True):
+        if types is not None:
+            types = set(types)
 
-            for ch in list(self.chunks):
-                if type(ch) is not t: # exact type match is required
-                    continue
+        all_exists = defaultdict(dict)
+        sort_needed = False
 
-                origin = ch.origin
+        for ch in list(self.chunks):
+            t = type(ch)
 
-                try:
-                    ech = exists[origin]
-                except KeyError:
-                    exists[origin] = ch
-                    continue
+            # exact type match is required
+            if not (types is None or t in types):
+                continue
+
+            exists = all_exists[t]
+
+            origin = ch.origin
+
+            if origin in exists:
+                ech = exists[origin]
+                if check_only:
+                    raise AssertionError("Chunks %s and %s are both"
+                        " originated from %s" % (ch.name, ech.name, origin)
+                    )
 
                 self.remove_dup_chunk(ech, ch)
 
-                self.sort_needed = True
+                sort_needed = True
+            else:
+                exists[origin] = ch
+
+        if sort_needed:
+            self.sort_needed = True
 
     def sort_chunks(self):
         if not self.sort_needed:
@@ -2308,9 +2328,8 @@ them must be replaced with reference to h. """
         gen_debug_comments = False,
         append_nl_after_headers = True
     ):
-        self.remove_chunks_with_same_origin([
-            HeaderInclusion
-        ])
+        # check for duplicate chunks for same origin
+        self.remove_chunks_with_same_origin()
 
         self.check_static_function_declarations()
 
