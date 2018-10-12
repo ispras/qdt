@@ -2225,10 +2225,7 @@ def gen_function_declaration_string(indent, function,
             if not a == function.args[-1]:
                 args += ",@s"
 
-    if function.name.find(".body") != -1:
-        decl_name = function.name[:-5]
-    else:
-        decl_name = function.name
+    decl_name = function.name.split('.', 1)[0]
 
     return "{indent}{static}{inline}{ret_type}{name}(@a{args}@c)".format(
         indent = indent,
