@@ -890,6 +890,9 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
+    def __c__(self, writer):
+        writer.write(self.name)
+
 
 class TypeReference(Type):
 
@@ -943,6 +946,9 @@ class TypeReference(Type):
 
     def __hash__(self):
         return hash(self.type)
+
+    def __c__(self, writer):
+        self.type.__c__(writer)
 
 
 class Structure(Type):
