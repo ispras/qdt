@@ -2243,8 +2243,9 @@ def gen_function_declaration_string(indent, function,
             if not a == function.args[-1]:
                 args += ",@s"
 
-    if function.name.find(".body") != -1:
-        decl_name = function.name[:-5]
+    i = function.name.find(".")
+    if i != -1:
+        decl_name = function.name[:i]
     else:
         decl_name = function.name
 
