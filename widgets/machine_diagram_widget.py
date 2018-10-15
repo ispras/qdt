@@ -172,7 +172,7 @@ class TextBox(PhBox):
 
         self.bus_padding = 20
 
-    def get_irq_binding(self, target):
+    def get_bind_point(self, target):
         if target:
             s2 = self.spacing/2
             p = Polygon(
@@ -271,7 +271,7 @@ class IRQHubCircle(NodeCircle):
         self.spacing = 5
         self.node = hub
 
-    def get_irq_binding(self, target):
+    def get_bind_point(self, target):
         if target:
             dx = target[0] - self.x
             dy = target[1] - self.y
@@ -2689,14 +2689,14 @@ IRQ line creation
                 continue
 
             c = l.circles[0]
-            x, y = l.src.get_irq_binding((c.x, c.y))
+            x, y = l.src.get_bind_point((c.x, c.y))
             dx = x - (c.x + c.r)
             dy = y - (c.y + c.r)
             c.vx = c.vx + dx * self.irq_circle_graviry
             c.vy = c.vy + dy * self.irq_circle_graviry
 
             c = l.circles[-1]
-            x, y = l.dst.get_irq_binding((c.x, c.y))
+            x, y = l.dst.get_bind_point((c.x, c.y))
             dx = x - (c.x + c.r)
             dy = y - (c.y + c.r)
             c.vx = c.vx + dx * self.irq_circle_graviry
@@ -2826,20 +2826,20 @@ IRQ line creation
                 if l.circles:
                     c = l.circles[0]
                     x1, y1 = c.x + c.r, c.y + c.r
-                    x0, y0 = l.src.get_irq_binding((x1, y1))
+                    x0, y0 = l.src.get_bind_point((x1, y1))
                 else:
-                    x1, y1 = l.dst.get_irq_binding(None)
-                    x0, y0 = l.src.get_irq_binding((x1, y1))
-                    x1, y1 = l.dst.get_irq_binding((x0, y0))
+                    x1, y1 = l.dst.get_bind_point(None)
+                    x0, y0 = l.src.get_bind_point((x1, y1))
+                    x1, y1 = l.dst.get_bind_point((x0, y0))
             elif i == len(l.lines) - 1:
                 if l.circles:
                     c = l.circles[i - 1]
                     x0, y0 = c.x + c.r, c.y + c.r
-                    x1, y1 = l.dst.get_irq_binding((x0, y0))
+                    x1, y1 = l.dst.get_bind_point((x0, y0))
                 else:
-                    x0, y0 = l.src.get_irq_binding(None)
-                    x1, y1 = l.dst.get_irq_binding((x0, y0))
-                    x0, y0 = l.src.get_irq_binding((x1, y1))
+                    x0, y0 = l.src.get_bind_point(None)
+                    x1, y1 = l.dst.get_bind_point((x0, y0))
+                    x0, y0 = l.src.get_bind_point((x1, y1))
             else:
                 c = l.circles[i - 1]
                 x0, y0 = c.x + c.r, c.y + c.r
@@ -2883,7 +2883,7 @@ IRQ line creation
                             c = l.circles[i]
                             x1, y1 = c.x + c.r, c.y + c.r
                         else:
-                            x1, y1 = l.dst.get_irq_binding((x0, y0))
+                            x1, y1 = l.dst.get_bind_point((x0, y0))
 
                         changed = True
 
