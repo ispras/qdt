@@ -1021,7 +1021,7 @@ IRQ line creation
                 self.update_buslabel_text(self.dev2node[bus])
 
         elif isinstance(op, MOp_SetChildBus):
-            dev = self.mach.id2node[op.dev_id]
+            dev = self.mach.id2node[op.node_id]
             dev_node_id = self.node2id[self.dev2node[dev]]
 
             if dev.buses:
