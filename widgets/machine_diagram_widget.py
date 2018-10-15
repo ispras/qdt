@@ -402,7 +402,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.irq_lines = []
 
         self.velocity_k = 0.05
-        self.velicity_limit = 10
+        self.velocity_limit = 10
 
         self.bus_velocity_k = 0.05
         self.bus_gravity_k = 0.2
@@ -2757,10 +2757,10 @@ IRQ line creation
         self.canvas.coords(_id, *points)
 
     def ph_move(self, n):
-        if abs(n.vx) > self.velicity_limit:
-            n.vx = sign(n.vx) * self.velicity_limit
-        if abs(n.vy) > self.velicity_limit:
-            n.vy = sign(n.vy) * self.velicity_limit
+        if abs(n.vx) > self.velocity_limit:
+            n.vx = sign(n.vx) * self.velocity_limit
+        if abs(n.vy) > self.velocity_limit:
+            n.vy = sign(n.vy) * self.velocity_limit
 
         n.x = n.x + n.vx
         n.y = n.y + n.vy
