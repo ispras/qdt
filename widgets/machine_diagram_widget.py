@@ -2459,11 +2459,23 @@ IRQ line creation
         del self.node2idtext[node]
 
     def ph_apply(self):
+        lim = self.velocity_limit
+
         for n in self.nodes + self.buslabels + self.circles:
             if n.static:
                 continue
 
-            self.ph_move(n)
+            vx, vy = n.vx, n.vy
+
+            if abs(vx) > lim:
+                vx = sign(vx) * lim
+                n.vx = vx
+            if abs(vy) > lim:
+                vy = sign(vy) * lim
+                n.vy = vy
+
+            n.x += vx
+            n.y += vy
 
         self.ph_sync()
 
@@ -2755,15 +2767,6 @@ IRQ line creation
         ]
 
         self.canvas.coords(_id, *points)
-
-    def ph_move(self, n):
-        if abs(n.vx) > self.velocity_limit:
-            n.vx = sign(n.vx) * self.velocity_limit
-        if abs(n.vy) > self.velocity_limit:
-            n.vy = sign(n.vy) * self.velocity_limit
-
-        n.x = n.x + n.vx
-        n.y = n.y + n.vy
 
     def apply_node(self, n):
         p = [n.x + n.width / 2, n.y + n.height / 2]
