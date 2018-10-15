@@ -36,7 +36,7 @@ __all__ = [
               , "MOp_DelDevProp"
               , "MOp_AddDevProp"
               , "MOp_SetDevProp"
-      , "MOp_SetChildBus"
+          , "MOp_SetChildBus"
 ]
 
 from .qom import (
@@ -430,14 +430,16 @@ class MOp_DelBus(MOp_AddBus):
             self.node_id
         )
 
-class MOp_SetChildBus(MachineOperation):
-    def __init__(self, dev_id, child_idx, bus_id, *args, **kw):
-        MachineOperation.__init__(self, *args, **kw)
 
-        self.dev_id, self.idx, self.bus_id = dev_id, child_idx, bus_id
+class MOp_SetChildBus(MachineNodeOperation):
+
+    def __init__(self, dev_id, child_idx, bus_id, *args, **kw):
+        MachineNodeOperation.__init__(self, dev_id, *args, **kw)
+
+        self.idx, self.bus_id = child_idx, bus_id
 
     def __backup__(self):
-        dev = self.mach.id2node[self.dev_id]
+        dev = self.mach.id2node[self.node_id]
         try:
             self.prev_bus_id = dev.buses[self.idx].id
         except IndexError:
@@ -469,23 +471,23 @@ class MOp_SetChildBus(MachineOperation):
                 dev.buses[idx] = new_bus
 
     def __do__(self):
-        MOp_SetChildBus.swap_child_bus(self.mach, self.dev_id, self.idx,
+        MOp_SetChildBus.swap_child_bus(self.mach, self.node_id, self.idx,
             self.bus_id)
 
     def __undo__(self):
-        MOp_SetChildBus.swap_child_bus(self.mach, self.dev_id, self.idx,
+        MOp_SetChildBus.swap_child_bus(self.mach, self.node_id, self.idx,
             self.prev_bus_id)
 
     def __read_set__(self):
-        return MachineOperation.__read_set__(self) + [
+        return MachineNodeOperation.__read_set__(self) + [
             self.gen_node_id_entry(i) for i in [
-                self.dev_id, self.bus_id, self.prev_bus_id
+                self.bus_id, self.prev_bus_id
             ] if not i == -1
         ]
 
     def __write_set__(self):
-        ret = MachineOperation.__write_set__(self) + [
-            (self.gen_node_id_entry(self.dev_id), "buses")
+        ret = MachineNodeOperation.__write_set__(self) + [
+            (self.gen_node_id_entry(self.node_id), "buses")
         ]
         if not self.bus_id == -1:
             ret.append((self.gen_node_id_entry(self.bus_id), "parent_device"))
@@ -500,7 +502,7 @@ class MOp_SetChildBus(MachineOperation):
         if self.prev_bus_id == -1:
             return _("Make device %s (%d) a controller of bus %s (%d) with \
 index %d.") % (
-                mach.id2node[self.dev_id].qom_type, self.dev_id,
+                mach.id2node[self.node_id].qom_type, self.node_id,
                 mach.id2node[self.bus_id].child_name, self.bus_id,
                 self.idx
             )
@@ -509,14 +511,14 @@ index %d.") % (
 (%d).") % (
                 mach.id2node[self.prev_bus_id].child_name, self.prev_bus_id,
                 self.idx,
-                mach.id2node[self.dev_id].qom_type, self.dev_id
+                mach.id2node[self.node_id].qom_type, self.node_id
             )
         else:
             return _("Replace bus %s (%d) with %s (%d) in controller %s (%d) \
 at index %d.") % (
                 mach.id2node[self.prev_bus_id].child_name, self.prev_bus_id,
                 mach.id2node[self.bus_id].child_name, self.bus_id,
-                mach.id2node[self.dev_id].qom_type, self.dev_id,
+                mach.id2node[self.node_id].qom_type, self.node_id,
                 self.idx
             )
 
