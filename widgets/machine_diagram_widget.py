@@ -2459,24 +2459,6 @@ IRQ line creation
         del self.node2idtext[node]
 
     def ph_apply(self):
-        lim = self.velocity_limit
-
-        for n in self.nodes + self.buslabels + self.circles:
-            if n.static:
-                continue
-
-            vx, vy = n.vx, n.vy
-
-            if abs(vx) > lim:
-                vx = sign(vx) * lim
-                n.vx = vx
-            if abs(vy) > lim:
-                vy = sign(vy) * lim
-                n.vy = vy
-
-            n.x += vx
-            n.y += vy
-
         self.ph_sync()
 
     def ph_iterate_co(self):
@@ -2734,6 +2716,21 @@ IRQ line creation
                 c1.vy = c1.vy - dy * self.irq_circle_graviry
 
             yield
+
+        lim = self.velocity_limit
+
+        for n in dynamic:
+            vx, vy = n.vx, n.vy
+
+            if abs(vx) > lim:
+                vx = sign(vx) * lim
+                n.vx = vx
+            if abs(vy) > lim:
+                vy = sign(vy) * lim
+                n.vy = vy
+
+            n.x += vx
+            n.y += vy
 
     def ph_apply_conn(self, c):
         _id = self.node2id[c]
