@@ -171,6 +171,7 @@ class TextBox(PhBox):
         self.padding = 10
 
         self.bus_padding = 20
+        self.bus_labels = []
 
     def get_bind_point(self, target):
         if target:
@@ -1022,7 +1023,8 @@ IRQ line creation
 
         elif isinstance(op, MOp_SetChildBus):
             dev = self.mach.id2node[op.node_id]
-            dev_node_id = self.node2id[self.dev2node[dev]]
+            dev_wgt = self.dev2node[dev]
+            dev_node_id = self.node2id[dev_wgt]
 
             if dev.buses:
                 self.canvas.addtag_withtag("fixed_x", dev_node_id)
@@ -1035,6 +1037,8 @@ IRQ line creation
                 if not bus_id == -1:
                     bus = self.mach.id2node[bus_id]
                     self.update_buslabel_text(self.dev2node[bus])
+
+            dev_wgt.bus_labels = [self.dev2node[bus] for bus in dev.buses]
 
         elif isinstance(op, MOp_AddBus) or isinstance(op, MOp_DelBus):
             try:
@@ -1113,7 +1117,7 @@ IRQ line creation
                 self.dev2node[dev] = node
                 self.node2dev[node] = dev
 
-                self.add_node(node, False)
+                self.add_node(node, None)
 
             self.__update_var_names()
 
@@ -2318,20 +2322,16 @@ IRQ line creation
 
     def ph_sync(self):
         for n in self.nodes:
-            dev = self.node2dev[n]
-
-            if dev.buses:
+            if n.bus_labels:
                 min_x = n.x + n.width + n.bus_padding
                 max_x = n.x - n.bus_padding
 
-                for bus in dev.buses:
-                    b = self.dev2node[bus]
-
-                    x = b.x + b.offset[0] - n.bus_padding
+                for bl in n.bus_labels:
+                    x = bl.x + bl.offset[0] - n.bus_padding
                     if min_x > x:
                         min_x = x
 
-                    x = b.x + b.offset[0] + n.bus_padding
+                    x = bl.x + bl.offset[0] + n.bus_padding
                     if max_x < x:
                         max_x = x
 
@@ -2968,7 +2968,7 @@ IRQ line creation
         node.width = node.text_width + node.padding
         node.height = node.text_height + node.padding
 
-    def add_node(self, node, fixed_x):
+    def add_node(self, node, buses):
         node.text = self.canvas.create_text(
             node.x, node.y,
             state = DISABLED,
@@ -2978,8 +2978,9 @@ IRQ line creation
         self.update_node_text(node)
 
         # TODO: replace rectangle with image
-        if fixed_x:
+        if buses:
             tags = ("DnD", "fixed_x")
+            node.bus_labels = [self.dev2node[bus] for bus in buses]
         else:
             tags = "DnD"
 
