@@ -2480,7 +2480,12 @@ IRQ line creation
         self.ph_sync()
 
     def ph_iterate_co(self):
-        for n in self.nodes + self.buslabels + self.circles:
+        all_nodes = self.nodes + self.buslabels + self.circles
+        dynamic = [n for n in all_nodes if not n.static]
+
+        yield
+
+        for n in dynamic:
             n.vx = n.vy = 0
 
         yield
