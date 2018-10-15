@@ -155,7 +155,7 @@ class MWOp_MoveNode(MachineWidgetNodeOperation):
         ]
 
 
-class NodeBox(PhBox):
+class TextBox(PhBox):
 
     def __init__(self, node):
         PhBox.__init__(self)
@@ -219,10 +219,10 @@ class BusLine(PhBox):
         self.buslabel = bl
 
 
-class BusLabel(NodeBox):
+class BusLabel(TextBox):
 
     def __init__(self, bus):
-        NodeBox.__init__(self, bus)
+        TextBox.__init__(self, bus)
 
         self.cap_size = 0.5
         self.busline = None
@@ -1108,7 +1108,7 @@ IRQ line creation
                     self.__set_irq_dst_cmd_enabled(False)
             else:
                 # added
-                node = NodeBox(dev)
+                node = TextBox(dev)
 
                 self.dev2node[dev] = node
                 self.node2dev[node] = dev
@@ -2035,13 +2035,13 @@ IRQ line creation
                 n = self.id2node[i]
                 n.x, n.y = n.x + ox, n.y + oy
 
-                if isinstance(n, NodeBox):
+                if isinstance(n, TextBox):
                     self.apply_node(n)
         else:
             node.x = points[0]
             node.y = points[1]
 
-            if isinstance(node, NodeBox):
+            if isinstance(node, TextBox):
                 self.apply_node(node)
 
         # cancel current physic iteration if moved
@@ -2144,7 +2144,7 @@ IRQ line creation
 
         for dev in self.mach.devices:
             if not dev in self.dev2node:
-                node = NodeBox(dev)
+                node = TextBox(dev)
 
                 self.dev2node[dev] = node
                 self.node2dev[node] = dev
