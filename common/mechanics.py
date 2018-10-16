@@ -26,6 +26,11 @@ class PhObject(object):
         self.spacing = spacing
         self.static = static
 
+    def aabb(self):
+        x, y, = self.x, self.y
+        return x, y, x + self.width, y + self.height
+
+
 class PhBox(PhObject):
     """ Axis aligned box or vertical line (width == 0) or horizontal line
     (height == 0). """
