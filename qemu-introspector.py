@@ -29,6 +29,7 @@ from multiprocessing import (
     Process
 )
 from os import (
+    remove,
     system
 )
 from os.path import (
@@ -63,6 +64,7 @@ from hashlib import (
     sha1
 )
 from common import (
+    pythonize,
     mlget as _,
     notifier,
     sort_topologically,
@@ -98,6 +100,10 @@ from graphviz import (
     Digraph
 )
 from widgets import (
+    asksaveas,
+    VarMenu,
+    HotKey,
+    HotKeyBinding,
     GUIProjectHistoryTracker,
     GUIProject,
     MachineDescriptionSettingsWidget,
@@ -105,6 +111,9 @@ from widgets import (
 )
 from gdb import (
     Watcher
+)
+from six.moves.tkinter_messagebox import (
+    showerror
 )
 
 
@@ -1301,6 +1310,66 @@ class QEmuWatcherGUI(GUITk):
         self.mdsw = mdsw
 
         self.task_manager.enqueue(self.co_rsp_poller())
+
+        self.hk = hk = HotKey(self)
+        hk.add_bindings([
+            HotKeyBinding(self._on_save,
+                key_code = 39,
+                description = _("Save machine"),
+                symbol = "S"
+            )
+        ])
+
+        menubar = VarMenu(self)
+        self.config(menu = menubar)
+
+        filemenu = VarMenu(menubar, tearoff = False)
+        menubar.add_cascade(label = _("File"), menu = filemenu)
+
+        filemenu.add_command(
+            label = _("Save machine"),
+            command = self._on_save,
+            accelerator = hk.get_keycode_string(self._on_save)
+        )
+
+    def _on_save(self):
+        fname = asksaveas(self,
+            [(_("QDC GUI Project defining script"), ".py")],
+            title = _("Save machine")
+        )
+
+        if not fname:
+            return
+
+        self.save_project_to_file(fname)
+
+    def try_save_project_to_file(self, file_name):
+        try:
+            open(file_name, "wb").close()
+        except IOError as e:
+            if not e.errno == 13: # Do not remove read-only files
+                try:
+                    remove(file_name)
+                except:
+                    pass
+
+            showerror(
+                title = _("Cannot save project").get(),
+                message = str(e)
+            )
+            return
+
+        self.save_project_to_file(file_name)
+
+    def save_project_to_file(self, file_name):
+        project = self.pht.p
+
+        # Ensure that all machine nodes are in corresponding lists
+        for d in project.descriptions:
+            if isinstance(d, MachineNode):
+                d.link(handle_system_bus = False)
+
+        pythonize(project, file_name)
 
     def co_rsp_poller(self):
         rt = self.rt
