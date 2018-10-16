@@ -1317,6 +1317,9 @@ class QEmuWatcherGUI(GUITk):
         mdsw.mw.mdw.var_physical_layout.set(False)
         self.mdsw = mdsw
 
+        # magic with layouts
+        pht.p.add_layout(mach_desc.name, mdsw.gen_layout()).widget = mdsw
+
         self.task_manager.enqueue(self.co_rsp_poller())
 
         self.hk = hk = HotKey(self)
@@ -1371,6 +1374,8 @@ class QEmuWatcherGUI(GUITk):
 
     def save_project_to_file(self, file_name):
         project = self.pht.p
+
+        project.sync_layouts()
 
         # Ensure that all machine nodes are in corresponding lists
         for d in project.descriptions:
