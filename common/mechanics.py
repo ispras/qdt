@@ -6,6 +6,7 @@ __all__ = [
     "PhObject"
       , "PhBox"
       , "PhCircle"
+  , "find_empty_aabb"
 ]
 
 class PhObject(object):
@@ -132,3 +133,107 @@ class PhCircle(PhObject):
             return False
         return True
 
+
+def find_empty_aabb(objs, minw = 1, minh = 1):
+    """
+    :returns: empty space bounds (left, top, right, bottom) where `None` means
+        no restriction from that side.
+    """
+    aabbs = [o.aabb() for o in objs]
+
+    for aabb in aabbs:
+        # check the zone to the bottom of that aabb
+        #
+        #       *======*                0--->
+        #       # aabb #                |   x
+        #   +---*======*----+ miny      V y
+        #   | is overlapped |
+        #   | by an aabb0 ? | minh
+        #   |               |
+        #   +---------------+ maxy
+        #         minw
+
+        # TODO: look for empty space to the top, to the right and to the left
+
+        miny = aabb[3]
+        maxy = miny + minh
+
+        left, right = aabb[2], aabb[0]
+
+        # see below
+        rlb, lrb = None, None
+
+        for aabb0 in aabbs:
+            #      *=======*
+            #      # aabb0 #
+            #   +--*=======*--+ miny
+            #   |             |
+            #
+            if aabb0[3] <= miny:
+                continue
+
+            #   |             |
+            #   +-------------+ maxy
+            #      *=======*
+            #      # aabb0 #
+            #      *=======*
+            #
+            if maxy <= aabb0[1]:
+                continue
+
+            #     +-------------+ miny
+            #  *=======*
+            #  # aabb0 #
+            #  *=======*
+            #     +-------------+ maxy
+            #
+
+            #                | rightmost left bound (rlb)
+            #          +-----|------+
+            #             *==*      |
+            #  *=====*    #  #  left|
+            #  #     #    #  #      |
+            #  *=====*    *==*      |
+            #        | +------------+
+            #        |
+            #        | left bound (right edge of aabb0)
+
+            # left bound
+            lb = aabb0[2]
+            if lb < left:
+                if rlb is None or rlb < lb:
+                    rlb = lb
+                continue
+
+            #           | leftmost right bound (lrb)
+            #  +--------------+
+            #  |        **
+            #  |        **  *====*
+            #  |right       #    #
+            #  |            *====*
+            #  +------------|-+
+            #               | right bound (left edge of aabb0)
+
+            rb = aabb0[0]
+            if right < rb:
+                if lrb is None or rb < lrb:
+                    lrb = rb
+                continue
+
+            #       +-------------+
+            #  *====*=============*====*
+            #  # or #    aabb0    # or #
+            #  *=== *=============*====*
+            #       |             |
+            #       +-------------+
+
+            # The zone is denied by aabb0
+            break
+        else:
+            if lrb is None or rlb is None or (lrb - rlb) >= minw:
+                return rlb, miny, lrb, maxy
+
+    if aabbs:
+        raise AssertionError("It is not possible mathematically!")
+
+    return None, None, None, None
