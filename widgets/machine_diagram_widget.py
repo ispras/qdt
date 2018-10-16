@@ -213,6 +213,7 @@ class BusLine(PhBox):
 
     def __init__(self, bl):
         PhBox.__init__(self,
+            w = 1,
             y = -100000,
             h = 200000,
         )
@@ -232,7 +233,7 @@ class BusLabel(TextBox):
 class ConnectionLine(PhBox):
 
     def __init__(self, dev_node, bus_node):
-        PhBox.__init__(self)
+        PhBox.__init__(self, h = 1)
         self.dev_node = dev_node
         self.bus_node = bus_node
 
