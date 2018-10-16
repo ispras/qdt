@@ -214,8 +214,7 @@ class BusLine(PhBox):
     def __init__(self, bl):
         PhBox.__init__(self,
             w = 1,
-            y = -100000,
-            h = 200000,
+            h = 50 * 2,
         )
         self.extra_length = 50
 
