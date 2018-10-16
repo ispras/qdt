@@ -98,6 +98,15 @@ class PhCircle(PhObject):
     def __init__(self, r = 10, **kw):
         PhObject.__init__(self, **kw)
         self.r = r
+        self._width = self._height = r * 2
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
     def overlaps_circle(self, c):
         """ Checks collision with a circle. """
