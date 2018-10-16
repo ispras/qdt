@@ -158,3 +158,10 @@ exists." % (l.lid, l.desc_name)
             guiproj.add_description(d)
 
         return guiproj
+
+    def sync_layouts(self):
+        for desc_layouts in self.layouts.values():
+            for l in desc_layouts.values():
+                l.sync_from_widget()
+                # "shown" from opaque dictionary is not more relevant while
+                # its attribute analog is maintained dynamically.
