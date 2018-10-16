@@ -115,6 +115,14 @@ from gdb import (
 from six.moves.tkinter_messagebox import (
     showerror
 )
+from six.moves import (
+    range
+)
+from socket import (
+    socket,
+    AF_INET,
+    SOCK_STREAM
+)
 
 
 def checksum(stream, block_size):
@@ -1463,7 +1471,19 @@ def main():
 
     MachineReverser(mw, mach_desc, pht)
 
-    qemu_debug_addr = "localhost:4321"
+    # auto select free port for gdb-server
+    for port in range(4321, 1 << 16):
+        test_socket = socket(AF_INET, SOCK_STREAM)
+        try:
+            test_socket.bind(("", port))
+        except:
+            pass
+        else:
+            break
+        finally:
+            test_socket.close()
+
+    qemu_debug_addr = "localhost:%u" % port
 
     qemu_proc = Process(
         target = system,
