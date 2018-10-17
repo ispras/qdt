@@ -516,8 +516,9 @@ class QemuVersionDescription(object):
         print("Qemu version is {}".format(self.qemu_version))
 
         self.include_paths = [
-            join(self.src_path, "include"),
-            join(self.src_path, "tcg")
+            # path, need recursion
+            (join(self.src_path, "include"), True),
+            (join(self.src_path, "tcg"), False)
         ]
 
         self.qvc = None
@@ -570,8 +571,8 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
-            for path in self.include_paths:
-                yield Header.co_build_inclusions(path)
+            for path, recursive in self.include_paths:
+                yield Header.co_build_inclusions(path, recursive)
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
@@ -665,7 +666,7 @@ class QemuVersionDescription(object):
         # index.diff(None) returns diff between index and working directory
         for e in self.repo.index.diff(None) + self.repo.index.diff('HEAD'):
             abs_path = join(u(self.src_path), e.a_path)
-            for include in self.include_paths:
+            for include, _ in self.include_paths:
                 if abs_path.startswith(include + sep):
                     modified_files.add(abs_path[len(include)+1:])
 
@@ -686,7 +687,7 @@ class QemuVersionDescription(object):
         i2y = QVD_CUF_IBY
         for path in self.repo.untracked_files:
             abs_path = join(self.src_path, path)
-            for include in self.include_paths:
+            for include, _ in self.include_paths:
                 if abs_path.startswith(include + sep):
                     raise ProcessingUntrackedFile(path)
 
