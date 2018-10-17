@@ -89,6 +89,10 @@ def define_only_qemu_2_6_0_types():
         Function("tcg_op_buf_full")
     ])
 
+    tcg_target_h = Header("tcg-target.h")
+    tcg_target_h.add_type(Macro("TCG_AREG0"))
+    Header["exec/cpu-defs.h"].add_inclusion(tcg_target_h)
+
     Header["tcg-op.h"].add_types([
         Function("tcg_gen_insn_start"),
         Function("tcg_gen_goto_tb"),
