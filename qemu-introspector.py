@@ -57,13 +57,11 @@ from pyrsp.elf import (
     ELF,
     AddrDesc
 )
-from elftools.common.intervalmap import (
-    intervalmap
-)
 from hashlib import (
     sha1
 )
 from common import (
+    intervalmap,
     pythonize,
     mlget as _,
     notifier,
