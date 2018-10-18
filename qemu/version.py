@@ -788,6 +788,12 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    u'2fefa16cec5a719f5cbc26c0672dd2099cd2ed9b' : [
+        QEMUVersionParameterDescription("PCIE requires interface",
+            new_value = True,
+            old_value = False
+        )
+    ],
     u'81517ba37a6cec59f92396b4722861868eb0a500' : [
         QEMUVersionParameterDescription("char backend hotswap handler",
             new_value = True,
