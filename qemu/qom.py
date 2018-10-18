@@ -1046,6 +1046,11 @@ class QOMDevice(QOMType):
     def char_event_name(self, index):
         return self.qtn.for_id_name + "_" + self.char_name(index) + "_event"
 
+    def char_backend_changed_name(self, index):
+        return (
+            self.qtn.for_id_name + "_" + self.char_name(index) + "_be_changed"
+        )
+
     def char_declare_fields(self):
         field_type = (Type.lookup("CharBackend") if get_vp()["v2.8 chardev"]
             else Pointer(Type.lookup("CharDriverState"))
@@ -1059,7 +1064,7 @@ class QOMDevice(QOMType):
             ))
 
     def char_gen_cb(self, proto_name, handler_name, index, source,
-        state_struct, type_cast_macro
+        state_struct, type_cast_macro, ret
     ):
         proto = Type.lookup(proto_name)
         cb = proto.use_as_prototype(handler_name,
@@ -1068,8 +1073,7 @@ class QOMDevice(QOMType):
 """ % (
     state_struct.name,
     self.type_cast_macro.name,
-    "\n\n    return 0;" \
-    if proto.ret_type not in [ None, Type.lookup("void") ] else "",
+    ("\n\n    return %s;" % ret) if ret is not None else "",
             ),
             static = True,
             used_types = set([state_struct, type_cast_macro])
@@ -1078,14 +1082,22 @@ class QOMDevice(QOMType):
         return cb
 
     def char_gen_handlers(self, index, source, state_struct, type_cast_macro):
+        handlers = [
+            ("IOCanReadHandler", self.char_can_read_name(index), "0"),
+            ("IOReadHandler", self.char_read_name(index), None),
+            ("IOEventHandler", self.char_event_name(index), None)
+        ]
+        if get_vp("char backend hotswap handler"):
+            handlers.append((
+                "BackendChangeHandler",
+                self.char_backend_changed_name(index),
+                "-1" # hotswap is not supported by an empty device boilerplate
+            ))
+
         ret = [
             self.char_gen_cb(proto_name, handler_name, index, source,
-                state_struct, type_cast_macro
-            ) for proto_name, handler_name in [
-                ("IOCanReadHandler", self.char_can_read_name(index)),
-                ("IOReadHandler", self.char_read_name(index)),
-                ("IOEventHandler", self.char_event_name(index))
-            ]
+                state_struct, type_cast_macro, handler_ret
+            ) for proto_name, handler_name, handler_ret in handlers
         ]
 
         # Define handler relative order: can read, read, event
