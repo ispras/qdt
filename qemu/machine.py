@@ -335,6 +335,8 @@ class MachineType(QOMType):
             return hubl
 
     def generate_source(self):
+        glob_mem = get_vp("explicit global memory registration")
+
         self.source = Source(self.source_path)
 
         all_nodes = sort_topologically(
@@ -560,15 +562,18 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                 or isinstance(node, MemoryROMNode)
                 ):
                     self.use_type_name("memory_region_init_ram")
-                    self.use_type_name("vmstate_register_ram_global")
+                    if glob_mem:
+                        self.use_type_name("vmstate_register_ram_global")
 
                     def_code += """\
-    memory_region_init_ram(@a{mem_name},@sNULL,@s{dbg_name},@s{size},@sNULL);
-    vmstate_register_ram_global({mem_name});
+    memory_region_init_ram(@a{mem_name},@sNULL,@s{dbg_name},@s{size},@sNULL);{glob}
 """.format(
     mem_name = mem_name,
     dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
-    size = node.size
+    size = node.size,
+    glob = (("\n    vmstate_register_ram_global(%s);" % mem_name) if glob_mem
+        else ""
+    )
                     )
                 elif not isinstance(node, MemorySASNode):
                     self.use_type_name("memory_region_init")
