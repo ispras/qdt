@@ -480,7 +480,23 @@ class ParsePrintFilter(object):
             self.written = False
 
 
+class registry(type):
+    """ Provides dict-like access to a class with a `lookup` `classmethod`.
+It's to be used as a `__metaclass__`.
+
+Ex.: MyClassWithInstanceRegistry["instance id"]
+
+References:
+* https://stackoverflow.com/a/12447078/7623015
+    """
+
+    def __getitem__(self, path):
+        # `self` is a `type` instance here
+        return self.lookup(path)
+
 class Header(Source):
+    __metaclass__ = registry
+
     reg = {}
 
     @staticmethod
@@ -709,6 +725,8 @@ class TypeNotRegistered(RuntimeError):
 
 class Type(object):
     reg = {}
+
+    __metaclass__ = registry
 
     @staticmethod
     def lookup(name):
