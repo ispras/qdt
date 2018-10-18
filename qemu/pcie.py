@@ -34,6 +34,9 @@ from .qom_desc import (
 from copy import (
     deepcopy as dcp
 )
+from .version import (
+    get_vp
+)
 
 
 @describable
@@ -71,6 +74,10 @@ class PCIExpressDeviceType(QOMDevice):
         **qomd_kw
     ):
         super(PCIExpressDeviceType, self).__init__(name, directory, **qomd_kw)
+
+        if get_vp("PCIE requires interface"):
+            self.interfaces.add("INTERFACE_PCIE_DEVICE")
+            # TODO: what about INTERFACE_CONVENTIONAL_PCI_DEVICE?
 
         self.irq_num = irq_num
         self.mem_bar_num = mem_bar_num
