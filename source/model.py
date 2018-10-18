@@ -1229,6 +1229,9 @@ class FunctionBodyString(object):
         self.used_types = set() if used_types is None else set(used_types)
         self.used_globals = [] if used_globals is None else list(used_globals)
 
+        for i in self.used_globals:
+            i.used = True
+
     def __str__(self):
         return self.body
 
