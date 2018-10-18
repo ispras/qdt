@@ -34,6 +34,7 @@ from six import (
     integer_types
 )
 from common import (
+    OrderedSet,
     is_pow2,
     mlget as _
 )
@@ -477,6 +478,8 @@ class QOMType(object):
         self.qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
+        # an interface is either `Macro` or C string literal
+        self.interfaces = OrderedSet()
 
     def test_basic_state(self):
         for u, bits in [("", "32"), ("u", "8"), ("u", "16"), ("u", "32"),
@@ -774,6 +777,24 @@ class QOMType(object):
         else:
             used_types.append(parent_macro)
 
+        if self.interfaces:
+            used_types.append(Type["InterfaceInfo"])
+            interfaces = []
+            for i in self.interfaces:
+                if not isinstance(i, Macro):
+                    try:
+                        i = Type[i]
+                    except TypeNotRegistered:
+                        pass
+
+                if isinstance(i, Macro):
+                    interfaces.append(i.name)
+                    used_types.append(i)
+                else:
+                    interfaces.append('"%s"' % i)
+        else:
+            interfaces = False
+
         # Type info initializer
         tii = Initializer(
             code = """{{
@@ -781,14 +802,23 @@ class QOMType(object):
     .parent@b@b@b@b@b@b@b@b=@s{parent_tn},
     .instance_size@b=@ssizeof({Struct}),
     .instance_init@b=@s{instance_init},
-    .class_init@b@b@b@b=@s{class_init}
+    .class_init@b@b@b@b=@s{class_init}{interfaces}
 }}""".format(
     UPPER = self.qtn.for_macros,
     parent_tn = ('"%s"' % parent_tn) if parent_macro is None \
                 else parent_macro.name,
     Struct = state_struct.name,
     instance_init = instance_init_fn.name,
-    class_init = class_init_fn.name
+    class_init = class_init_fn.name,
+    interfaces = (
+        ",\n"
+        "    .interfaces@b@b@b@b=@s(InterfaceInfo[])@b{\n        "
+        +
+        ",\n        ".join("{@b%s@s}" % i for i in interfaces)
+        +
+        ",\n        {@b}\n"
+        "    }"
+    ) if interfaces else ""
             ),
             used_types = used_types
         )
