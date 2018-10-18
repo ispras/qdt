@@ -361,12 +361,13 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
         if access in reg.access:
             qtn = QemuTypeName(name)
-            s_deref_war = OpSDeref(
-                s,
-                qtn.for_id_name + "_war"
-            )
             warb = reg.warbits
             wm = reg.wmask
+            if warb.v and wm.v:
+                s_deref_war = OpSDeref(
+                    s,
+                    qtn.for_id_name + "_war"
+                )
             s_deref = OpSDeref(
                 s,
                 qtn.for_id_name
