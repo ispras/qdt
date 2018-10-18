@@ -606,6 +606,16 @@ def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
 
+    if get_vp("char backend hotswap handler"):
+        Header["chardev/char-fe.h"].add_type(
+            Function("BackendChangeHandler",
+                ret_type = Type["int"],
+                args = [
+                    Type["void"].gen_var("opaque", pointer = True)
+                ]
+            )
+        )
+
 def define_qemu_2_6_0_types():
     add_base_types()
     # The paths of the headers are presented relative root directory.
@@ -776,6 +786,12 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    u'81517ba37a6cec59f92396b4722861868eb0a500' : [
+        QEMUVersionParameterDescription("char backend hotswap handler",
+            new_value = True,
+            old_value = False
+        )
+    ],
     u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
         # This commit moves target-* CPU file into a target/ folder
         # So target-xxx/ becomes target/xxx/ instead.
