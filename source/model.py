@@ -1155,6 +1155,8 @@ class FunctionBodyString(object):
         self.used_globals = [] if used_globals is None else list(used_globals)
 
     def __str__(self):
+        for i in self.used_globals:
+            i.used = True
         return self.body
 
     __type_references__ = ["used_types"]
