@@ -365,6 +365,8 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                 s,
                 qtn.for_id_name + "_war"
             )
+            warb = reg.warbits
+            wm = reg.wmask
             s_deref = OpSDeref(
                 s,
                 qtn.for_id_name
@@ -377,10 +379,8 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         s_deref
                     )
                 )
-                warb = reg.warbits
                 if warb.v: # neither None nor zero
                     # There is at least one write-after-read bit in the reg.
-                    wm = reg.wmask
                     if wm.v == (1 << (size * 8)) - 1:
                         # no read only bits: set WAR mask to 0xF...F
                         case.add_child(
@@ -399,9 +399,6 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                             )
                         )
             elif access == "w":
-                wm = reg.wmask
-                warb = reg.warbits
-
                 if warb.v and wm.v:
                     # WAR bits, writable, read only bits: use WAR mask as
                     # dynamic write mask
