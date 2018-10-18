@@ -788,6 +788,12 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    u'b59821a95bd1d7cb4697fd7748725c910582e0e7' : [
+        QEMUVersionParameterDescription("explicit global memory registration",
+            new_value = False,
+            old_value = True
+        )
+    ],
     u'2fefa16cec5a719f5cbc26c0672dd2099cd2ed9b' : [
         QEMUVersionParameterDescription("PCIE requires interface",
             new_value = True,
