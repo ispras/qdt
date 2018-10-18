@@ -125,12 +125,14 @@ def define_only_qemu_2_6_0_types():
     Header.lookup("qom/object.h").add_types([
         Type("ObjectClass", False),
         Type("Object", False),
+        Type("InterfaceInfo", False),
         Structure("TypeInfo",
             fields = [
                 # These are required fields only
                 Pointer(Type.lookup("const char")).gen_var("name"),
                 Pointer(Type.lookup("const char")).gen_var("parent"),
-                Pointer(Type.lookup("void")).gen_var("class_init")
+                Pointer(Type.lookup("void")).gen_var("class_init"),
+                Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
             ]
         ),
         Type("Type", False),
