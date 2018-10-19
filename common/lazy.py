@@ -7,6 +7,9 @@ class lazy(object):
 
     def __init__(self, getter):
         self.getter = getter
+        doc = getter.__doc__ or ""
+
+        self.__doc__ = doc + "\nlazy: evaluated on demand."
 
     def __get__(self, obj, cls):
         getter = self.getter
