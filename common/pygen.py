@@ -249,6 +249,7 @@ accuracy.
         self.gen_end(suffix = suffix)
 
     def pprint_list(self, val):
+        self.line("[")
         self.push_indent()
         self.pprint(val[0])
         for v in val[1:]:
@@ -256,22 +257,21 @@ accuracy.
             self.pprint(v)
         self.pop_indent()
         self.line()
+        self.write("]")
 
     def pprint(self, val):
         if isinstance(val, list):
             if not val:
                 self.write("[]")
                 return
-            self.line("[")
             self.pprint_list(val)
-            self.write("]")
         elif isinstance(val, set):
             if not val:
                 self.write("set([])")
                 return
-            self.line("set([")
+            self.write("set(")
             self.pprint_list(sorted(val))
-            self.write("])")
+            self.write(")")
         elif isinstance(val, dict):
             if not val:
                 self.write("{}")
