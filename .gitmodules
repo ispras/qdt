@@ -10,3 +10,7 @@
 [submodule "pyelftools"]
 	path = pyelftools
 	url = git@nasredin.intra.ispras.ru:qemu/pyelftools.git
+[submodule "debug/pyelftools"]
+	path = debug/pyelftools
+	url = git@nasredin.intra.ispras.ru:qemu/pyelftools.git
+	branch = lazy
