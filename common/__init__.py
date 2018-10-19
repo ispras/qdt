@@ -18,6 +18,7 @@ from .pygen import *
 from .reflection import *
 from .search_helper import *
 from .topology import *
+from .trie import *
 from .variable import *
 from .version import *
 from .visitor import *
