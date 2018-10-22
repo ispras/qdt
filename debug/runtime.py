@@ -42,11 +42,18 @@ class Runtime(object):
 
         self.object_stack = deque()
 
+        # Version number of debug session. It is incremented on each target
+        # resumption. It helps detect using of not actual data. E.g. a local
+        # variable of a function which is already returned.
+        self.version = 0
+
         # When target resumes all cached data must be reset because it is not
         # actual now.
         target.on_resume.append(self.on_resume)
 
     def on_resume(self, *_, **__):
+        self.version += 1
+
         self.regs[:] = repeat(None, len(self.regs))
 
         reset_cache(self)
