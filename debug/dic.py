@@ -5,8 +5,14 @@ __all__ = [
 from .dia import (
     DWARFInfoAccelerator
 )
+from common import (
+    intervalmap
+)
 from .type import (
     Type
+)
+from .glob import (
+    Subprogram
 )
 
 
@@ -17,6 +23,12 @@ class DWARFInfoCache(DWARFInfoAccelerator):
         super(DWARFInfoCache, self).__init__(di)
 
         self.symtab = symtab
+
+        # Mapping of subprogram names to lists of `Subprogram` descriptors.
+        self.subprograms = {}
+
+        # Mapping of target addresses to subprograms covering them.
+        self.addr2subprog = intervalmap()
 
         # cache for parsed types, keyed by names
         self.types = {}
@@ -42,3 +54,70 @@ class DWARFInfoCache(DWARFInfoAccelerator):
         do2t[offset] = t
 
         return t
+
+    def subprogram(self, addr):
+        """
+    :param addr:
+        is a target's one
+    :returns:
+        the `Subprogram` that covers given `addr`ess or `None` if no subprogram
+        found for the `addr`ess.
+
+        """
+
+        a2s = self.addr2subprog
+        sp = a2s[addr]
+
+        if sp is None:
+            cu_for_addr = self.cu(addr)
+            self.account_subprograms(cu_for_addr)
+
+            # `account_subprograms` was filled `addr2subprog` with subprograms
+            # of the compilation unit. Try to look for the subprogram again.
+            sp = a2s[addr]
+
+        return sp
+
+    def account_subprograms(self, cu):
+        """  Extend `subprograms` mapping with subprograms from the compilation
+unit (`cu`). Adds address intervals of subprograms to `addr2subprog` mapping.
+
+    :param cu:
+        a Conpilation Unit descriptor
+    :retunrs:
+        list of subprograms in the `cu`
+
+        """
+        root = cu.get_top_DIE()
+        sps = self.subprograms
+        a2s = self.addr2subprog
+        cu_sps = []
+
+        for die in root.iter_children():
+            if die.tag != "DW_TAG_subprogram":
+                continue
+
+            name = die.attributes["DW_AT_name"].value
+
+            if name in sps:
+                progs = sps[name]
+            else:
+                sps[name] = progs = []
+
+            for sp in progs:
+                if sp.die is die:
+                    # The subprogram name is already accounted by __getitem__.
+                    # Only ranges must be accounted in `addr2subprog`.
+                    break
+            else:
+                sp = Subprogram(self, die, name = name)
+                progs.append(sp)
+
+            ranges = sp.ranges
+            if ranges:
+                for start, end in ranges:
+                    a2s[start:end] = sp
+
+            cu_sps.append(sp)
+
+        return cu_sps
