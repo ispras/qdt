@@ -8,11 +8,15 @@ from .dia import (
 from common import (
     intervalmap
 )
+from collections import (
+    defaultdict
+)
 from .type import (
     Type,
     TYPE_TAGS
 )
 from .glob import (
+    Datum,
     Subprogram
 )
 
@@ -36,6 +40,27 @@ class DWARFInfoCache(DWARFInfoAccelerator):
 
         # cache for parsed types, keyed by DIE offsets
         self.die_off2type = {}
+
+        # A compile unit may contain global variables. This is 2-level cache.
+        # 1. CU offset -> dict of globals
+        # 2. name of a global variable -> `Datum`
+        self.cu_off2globals = defaultdict(dict)
+
+    def get_CU_global_variables(self, cu):
+        off = cu.cu_offset
+        globs = self.cu_off2globals[off]
+
+        if globs: # already accounted
+            return globs
+
+        for die in cu.get_top_DIE().iter_children():
+            if die.tag != "DW_TAG_variable":
+                continue
+
+            var = Datum(self, die)
+            globs[var.name] = var
+
+        return globs
 
     def type_by_die(self, die):
         do2t = self.die_off2type
