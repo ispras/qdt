@@ -174,6 +174,9 @@ class Register(Expression):
     def __str__(self):
         return "reg #%u" % self.refs[0]
 
+    def __eval__(self, runtime, idx):
+        return runtime.get_reg(idx)
+
 
 class FrameBase(Expression):
     "Base address of current subprogram frame,"
@@ -181,12 +184,18 @@ class FrameBase(Expression):
     def __str__(self):
         return "FRAME"
 
+    def __eval__(self, runtime):
+        return runtime.frame
+
 
 class AddressSize(Expression):
     "Size of address of target architecture."
 
     def __str__(self):
         return "sizeof(long)"
+
+    def __eval__(self, runtime):
+        return runtime.target.address_size
 
 
 class Deref(Expression):
@@ -197,9 +206,28 @@ class Deref(Expression):
     def __str__(self):
         return "mem[%s:%s + %s]" % (self.refs[0], self.refs[0], self.refs[1])
 
+    def __eval__(self, runtime, addr, size, space):
+        if space is not None:
+            raise NotImplementedError(
+                "Address space handling is not implemented yet"
+            )
+
+        # Note that `get_val` should handle target endianness.
+        str_val = runtime.get_val(addr, size)
+
+        data = int(str_val, 16)
+        return data
+
 
 class ObjDeref(Expression):
     "Implements object stacking for chain of object-relative evaluations."
+
+    def __eval_recursively__(self, runtime, values):
+        obj, field = self.refs
+        runtime.push(obj)
+        res = field.__eval_recursively__(runtime, values)
+        runtime.pop()
+        return res
 
     def __str__(self):
         return "(%s) -> (%s)" % tuple(self.refs)
@@ -212,6 +240,9 @@ See DW_OP_push_object_address operation description of DWARF.
 
     def __str__(self):
         return "OBJECT"
+
+    def __eval__(self, runtime):
+        return runtime.object
 
 
 class ToTLS(Expression):
@@ -228,6 +259,9 @@ class CFA(Expression):
 
     def __str__(self):
         return "CFA"
+
+    def __eval__(self, runtime):
+        return runtime.cfa
 
 
 class Constant(Expression):
