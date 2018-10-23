@@ -61,6 +61,7 @@ from hashlib import (
     sha1
 )
 from common import (
+    lazy,
     intervalmap,
     pythonize,
     mlget as _,
@@ -73,7 +74,6 @@ from traceback import (
     print_exc
 )
 from pyrsp.utils import (
-    lazy,
     switch_endian,
     decode_data
 )
