@@ -36,6 +36,7 @@ from .qdc_gui_signal_helper import *
 from .qom_settings import *
 from .statusbar import *
 from .sysbusdevset import *
+from .thread_control import *
 from .tk_co_dispatcher import *
 from .tk_unbind import *
 from .tv_width_helper import *
