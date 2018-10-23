@@ -125,12 +125,14 @@ def define_only_qemu_2_6_0_types():
     Header.lookup("qom/object.h").add_types([
         Type("ObjectClass", False),
         Type("Object", False),
+        Type("InterfaceInfo", False),
         Structure("TypeInfo",
             fields = [
                 # These are required fields only
                 Pointer(Type.lookup("const char")).gen_var("name"),
                 Pointer(Type.lookup("const char")).gen_var("parent"),
-                Pointer(Type.lookup("void")).gen_var("class_init")
+                Pointer(Type.lookup("void")).gen_var("class_init"),
+                Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
             ]
         ),
         Type("Type", False),
@@ -606,6 +608,16 @@ def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
 
+    if get_vp("char backend hotswap handler"):
+        Header["chardev/char-fe.h"].add_type(
+            Function("BackendChangeHandler",
+                ret_type = Type["int"],
+                args = [
+                    Type["void"].gen_var("opaque", pointer = True)
+                ]
+            )
+        )
+
 def define_qemu_2_6_0_types():
     add_base_types()
     # The paths of the headers are presented relative root directory.
@@ -776,6 +788,24 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    u'b59821a95bd1d7cb4697fd7748725c910582e0e7' : [
+        QEMUVersionParameterDescription("explicit global memory registration",
+            new_value = False,
+            old_value = True
+        )
+    ],
+    u'2fefa16cec5a719f5cbc26c0672dd2099cd2ed9b' : [
+        QEMUVersionParameterDescription("PCIE requires interface",
+            new_value = True,
+            old_value = False
+        )
+    ],
+    u'81517ba37a6cec59f92396b4722861868eb0a500' : [
+        QEMUVersionParameterDescription("char backend hotswap handler",
+            new_value = True,
+            old_value = False
+        )
+    ],
     u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
         # This commit moves target-* CPU file into a target/ folder
         # So target-xxx/ becomes target/xxx/ instead.
