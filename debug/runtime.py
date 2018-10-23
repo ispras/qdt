@@ -12,6 +12,10 @@ from common import (
     cached,
     reset_cache
 )
+from .value import (
+    Returned,
+    Value
+)
 
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
@@ -42,6 +46,9 @@ class Runtime(object):
 
         self.object_stack = deque()
 
+        return_reg_name = target.arch["return"]
+        self.return_reg = target.reg2idx[return_reg_name]
+
         # Version number of debug session. It is incremented on each target
         # resumption. It helps detect using of not actual data. E.g. a local
         # variable of a function which is already returned.
@@ -69,6 +76,15 @@ class Runtime(object):
             regs[idx] = val
 
         return val
+
+    @cached
+    def returned_value(self):
+        """ Value being returned by current subprogram. Note that it is
+normally correct only when the target is stopped at the subprogram epilogue.
+        """
+        pc = self.get_reg(self.pc)
+        val_desc = Returned(self.dic, self.return_reg, pc)
+        return Value(val_desc, runtime = self, version = self.version)
 
     @cached
     def subprogram(self):
@@ -106,3 +122,37 @@ class Runtime(object):
 
     def get_val(self, addr, size):
         return self.target.get_val(addr, size)
+
+    def __getitem__(self, name):
+        """ Accessing variables by name.
+
+Search order:
+- current subprogram local data (variables, arguments, ...)
+- global variables for compile unit of current subprogram
+TODO: public global variables across all CUs
+TODO: current CU's subprograms
+TODO: public global subprograms
+TODO: target registers
+
+    :param name:
+        of a variable
+
+    :returns:
+        corresponding runtime descriptor `Value`
+
+        """
+
+        prog = self.subprogram
+        _locals = prog.data
+
+        try:
+            datum = _locals[name]
+        except KeyError:
+            cu = prog.die.cu
+            _globals = self.dic.get_CU_global_variables(cu)
+            try:
+                datum = _globals[name]
+            except KeyError:
+                raise KeyError("No name '%s' found in runtime" % name)
+
+        return Value(datum, runtime = self, version = self.version)
