@@ -52,8 +52,6 @@ from pyrsp.targets import (
     AMD64
 )
 from pyrsp.elf import (
-    InMemoryELFFile,
-    DWARFInfoAccelerator,
     ELF,
     AddrDesc
 )
@@ -77,14 +75,12 @@ from pyrsp.utils import (
     switch_endian,
     decode_data
 )
-from pyrsp.gdb import (
-    Value
-)
-from pyrsp.type import (
+from debug import (
+    InMemoryELFFile,
+    DWARFInfoCache,
+    Value,
     Type,
-    TYPE_CODE_PTR
-)
-from pyrsp.runtime import (
+    TYPE_CODE_PTR,
     Runtime
 )
 from itertools import (
@@ -319,7 +315,7 @@ class RQOMType(object):
 
         addr = impl["instance_init"].fetch_pointer()
         if addr:
-            return impl.dia.subprogram(addr)
+            return impl.dic.subprogram(addr)
         return None
 
     @lazy
@@ -328,7 +324,7 @@ class RQOMType(object):
 
         addr = impl["class_init"].fetch_pointer()
         if addr:
-            return impl.dia.subprogram(addr)
+            return impl.dic.subprogram(addr)
         return None
 
     def __dfs_children__(self):
@@ -371,12 +367,12 @@ def gv_node(label):
 
 class QOMTreeGetter(Watcher):
 
-    def __init__(self, dia, interrupt = True, verbose = False):
+    def __init__(self, dic, interrupt = True, verbose = False):
         """
         :param interrupt:
             Stop QEmu and exit `RemoteTarget.run`.
         """
-        super(QOMTreeGetter, self).__init__(dia, verbose = verbose)
+        super(QOMTreeGetter, self).__init__(dic, verbose = verbose)
 
         self.tree = RQOMTree()
         self.interrupt = interrupt
@@ -421,7 +417,7 @@ class QOMTreeGetter(Watcher):
             realize_addr = dev_cls["realize"].fetch_pointer()
 
             if realize_addr:
-                t.realize = rt.dia.subprogram(realize_addr)
+                t.realize = rt.dic.subprogram(realize_addr)
 
     def on_main(self):
         # main, just after QOM module initialization
@@ -582,12 +578,12 @@ class MachineWatcher(Watcher):
     state at runtime.
     """
 
-    def __init__(self, dia, qom_tree, verbose = False, interrupt = True):
+    def __init__(self, dic, qom_tree, verbose = False, interrupt = True):
         """
         @param interrupt
             Interrupt QEmu process after machine is created.
         """
-        super(MachineWatcher, self).__init__(dia, verbose = verbose)
+        super(MachineWatcher, self).__init__(dic, verbose = verbose)
         self.tree = qom_tree
         # addr -> QInstance mapping
         self.instances = {}
@@ -1449,11 +1445,11 @@ def main():
             " -gpubnames flag to the compiller" % qemu_debug
         )
 
-    dia = DWARFInfoAccelerator(di,
+    dic = DWARFInfoCache(di,
         symtab = elf.get_section_by_name(b".symtab")
     )
 
-    qomtg = QOMTreeGetter(dia,
+    qomtg = QOMTreeGetter(dic,
         # verbose = True,
         interrupt = False
     )
@@ -1462,7 +1458,7 @@ def main():
     else:
         MWClass = MachineWatcher
 
-    mw = MWClass(dia, qomtg.tree,
+    mw = MWClass(dic, qomtg.tree,
         # verbose = True
     )
 
@@ -1501,7 +1497,7 @@ def main():
         host = True
     )
 
-    rt = Runtime(qemu_debugger, dia)
+    rt = Runtime(qemu_debugger, dic)
 
     mw.init_runtime(rt)
     qomtg.init_runtime(rt)
@@ -1545,11 +1541,11 @@ def runtime_based_var_getting(rt):
 
 
 def explicit_var_getting(rt, object_c):
-    dia = rt.dia
+    dic = rt.dic
     target = rt.target
     # get info argument of type_register_internal function
-    dia.account_subprograms(object_c)
-    type_register_internal = dia.subprograms["type_register_internal"][0]
+    dic.account_subprograms(object_c)
+    type_register_internal = dic.subprograms["type_register_internal"][0]
     info = type_register_internal.data["info"]
 
     print("info loc: %s" % info.location)
@@ -1565,7 +1561,7 @@ def explicit_var_getting(rt, object_c):
             )
         )
         print("info = 0x%s" % info_val)
-        pt = dia.type_by_die(info.type_DIE)
+        pt = dic.type_by_die(info.type_DIE)
         t = pt.target()
         print("info type: %s %s" % (" ".join(t.modifiers), t.name))
         # t is `typedef`, get the structure
@@ -1613,16 +1609,16 @@ def test_call_frame(type_register_internal, br_addr):
     print("CFA: %s" % cfa)
 
 
-def test_subprograms(dia):
-    cpu_exec = dia.get_CU_by_name("cpu-exec.c")
+def test_subprograms(dic):
+    cpu_exec = dic.get_CU_by_name("cpu-exec.c")
 
     # For testing:
     # pthread_atfork.c has subprogram data referencing location lists
     # ioport.c contains inlined subprogram, without ranges
 
-    for cu in [cpu_exec]: # dia.iter_CUs():
+    for cu in [cpu_exec]: # dic.iter_CUs():
         print(cu.get_top_DIE().attributes["DW_AT_name"].value)
-        sps = dia.account_subprograms(cu)
+        sps = dic.account_subprograms(cu)
         for sp in sps:
             print("%s(%s) -> %r" % (
                 sp.name,
