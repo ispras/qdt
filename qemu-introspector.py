@@ -97,6 +97,7 @@ from widgets import (
     VarMenu,
     HotKey,
     HotKeyBinding,
+    ThreadControl,
     GUIProjectHistoryTracker,
     GUIProject,
     MachineDescriptionSettingsWidget,
@@ -1313,6 +1314,11 @@ class QEmuWatcherGUI(GUITk):
 
         # magic with layouts
         pht.p.add_layout(mach_desc.name, mdsw.gen_layout()).widget = mdsw
+
+        self.columnconfigure(1, weight = 0)
+        self.tc = tc = ThreadControl(self)
+        tc.grid(row = 0, column = 1, sticky = "NESW")
+        tc.set_target(runtime.target)
 
         self.task_manager.enqueue(self.co_rsp_poller())
 
