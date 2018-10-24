@@ -12,6 +12,20 @@ from six.moves.tkinter import (
 RESIZE_GAP = 4
 DOUBLE_GAP = RESIZE_GAP << 1
 
+SIDE_CURSORS = (
+    "",                    # no side
+    "sb_h_double_arrow",   # left
+    "sb_h_double_arrow",   # right
+    "",                    # impossible
+    "sb_v_double_arrow",   # top
+    "top_left_corner",     # top-left
+    "top_right_corner",    # top-right
+    "",                    # impossible
+    "sb_v_double_arrow",   # bottom
+    "bottom_left_corner",  # bottom-left
+    "bottom_right_corner", # bottom-right
+)
+
 
 class CanvasFrame(GUIFrame):
     """ A container allowing to place widgets onto a `Canvas` with moving and
@@ -120,22 +134,7 @@ class CanvasFrame(GUIFrame):
 
         self.__side = side
 
-        hor = side & 3
-        vert = side & 12
-
-        if hor and vert:
-            if self.cursor != "sizing":
-                self.cursor = "sizing"
-                self.config(cursor = "sizing")
-        elif hor:
-            if self.cursor != "sb_h_double_arrow":
-                self.cursor = "sb_h_double_arrow"
-                self.config(cursor = "sb_h_double_arrow")
-        elif vert:
-            if self.cursor != "sb_v_double_arrow":
-                self.cursor = "sb_v_double_arrow"
-                self.config(cursor = "sb_v_double_arrow")
-        else:
-            if self.cursor != "":
-                self.cursor = ""
-                self.config(cursor = "")
+        side_cursor = SIDE_CURSORS[side]
+        if self.cursor != side_cursor:
+            self.cursor = side_cursor
+            self.config(cursor = side_cursor)
