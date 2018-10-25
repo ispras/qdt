@@ -360,10 +360,10 @@ class RQObjectProperty(object):
         self.prop = prop
         if name is None:
             name = prop["name"].fetch_c_string()
-        if type is None:
+        if _type is None:
             _type = prop["type"].fetch_c_string()
         self.name = name
-        self.type = type
+        self.type = _type
 
     @lazy
     def as_qom(self):
