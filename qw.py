@@ -321,7 +321,7 @@ class RQObjectProperty(object):
 
     def __init__(self, obj, prop, name = None, _type = None):
         """
-    :type obj: QInstance
+    :type obj: RQInstance
     :param obj:
         is owner of that property
     :type prop: debug.Value
