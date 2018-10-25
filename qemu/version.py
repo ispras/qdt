@@ -285,9 +285,12 @@ def define_only_qemu_2_6_0_types():
         Function(name = "gdb_get_reg64")
     ]).add_reference(osdep_fake_type)
 
-    Header["exec/ioport.h"].add_types([
-        Type("pio_addr_t", incomplete = False)
-    ]).add_reference(osdep_fake_type)
+    if get_vp("pio_addr_t exists"):
+        Header["exec/ioport.h"].add_types([
+            Type("pio_addr_t", incomplete = False)
+        ]).add_reference(osdep_fake_type)
+    else:
+        Header["exec/ioport.h"].add_reference(osdep_fake_type)
 
     Header["hw/boards.h"].add_types([
         Structure("MachineClass"),
@@ -323,8 +326,12 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["void"],
             args = [
                 Type["SysBusDevice"].gen_var("dev", pointer = True),
-                Type["pio_addr_t"].gen_var("dev"),
-                Type["pio_addr_t"].gen_var("dev")
+                Type[
+                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
+                ].gen_var("ioport"),
+                Type[
+                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
+                ].gen_var("size")
             ]
         ),
         Function("sysbus_mmio_map"),
@@ -788,6 +795,13 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("char backend hotswap handler",
             new_value = True,
             old_value = False
+        )
+    ],
+    # hw: remove pio_addr_t
+    u'89a80e7400f7225d9401b35ef32454b4ab29dc67' : [
+        QEMUVersionParameterDescription("pio_addr_t exists",
+            new_value = False,
+            old_value = True
         )
     ],
     u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [
