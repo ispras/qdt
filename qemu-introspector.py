@@ -52,8 +52,7 @@ from pyrsp.targets import (
     AMD64
 )
 from pyrsp.elf import (
-    ELF,
-    AddrDesc
+    ELF
 )
 from hashlib import (
     sha1
@@ -1424,12 +1423,6 @@ def main():
 
     # debug info
     qemu_debug = qemu_cmd_args[0]
-
-    loaded = {
-        "AddrDesc": AddrDesc,
-        "QELFCache": QELFCache,
-        "intervalmap" : intervalmap
-    }
 
     elf = InMemoryELFFile(qemu_debug)
     if not elf.has_dwarf_info():
