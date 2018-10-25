@@ -4,6 +4,9 @@ from collections import (
     defaultdict
 )
 from debug import (
+    Runtime,
+    InMemoryELFFile,
+    DWARFInfoCache,
     Watcher,
     TYPE_CODE_PTR
 )
@@ -17,7 +20,34 @@ from re import (
 from graphviz import (
     Digraph
 )
+from socket import (
+    socket,
+    AF_INET,
+    SOCK_STREAM
+)
+from argparse import (
+    ArgumentParser
+)
+from sys import (
+    stderr,
+    path as python_path
+)
+from multiprocessing import (
+    Process
+)
+from os import (
+    system
+)
+from os.path import (
+    split,
+    join
+)
+# use ours pyrsp
+python_path.insert(0, join(split(__file__)[0], "pyrsp"))
 
+from pyrsp.targets import (
+    AMD64
+)
 
 class RQOMTree(object):
     "QEmu object model tree descriptor at runtime"
@@ -279,8 +309,94 @@ the QOM tree by fetching relevant data.
             f.write(graph.source)
 
 
+re_qemu_system_x = compile(".*qemu-system-.+$")
+
+
+class QArgumentParser(ArgumentParser):
+
+    def error(self, *args, **kw):
+        stderr.write("Error in argument string. Ensure that `--` is passed"
+            " before QEMU and its arguments.\n"
+        )
+        super(QArgumentParser, self).error(*args, **kw)
+
+
 def main():
-    return 0
+    ap = QArgumentParser(
+        description = "QEMU runtime introspection tool"
+    )
+    ap.add_argument("qarg",
+        nargs = "+",
+        help = "QEMU executable and arguments to it. Prefix them with `--`."
+    )
+    args = ap.parse_args()
+
+    # executable
+    qemu_cmd_args = args.qarg
+
+    # debug info
+    qemu_debug = qemu_cmd_args[0]
+
+    elf = InMemoryELFFile(qemu_debug)
+    if not elf.has_dwarf_info():
+        stderr("%s does not have DWARF info. Provide a debug QEMU build\n" % (
+            qemu_debug
+        ))
+        return -1
+
+    di = elf.get_dwarf_info()
+
+    if di.pubtypes is None:
+        print("%s does not contain .debug_pubtypes section. Provide"
+            " -gpubnames flag to the compiller" % qemu_debug
+        )
+
+    dic = DWARFInfoCache(di,
+        symtab = elf.get_section_by_name(b".symtab")
+    )
+
+    qomtr = QOMTreeReverser(dic,
+        verbose = True
+    )
+
+    # auto select free port for gdb-server
+    for port in range(4321, 1 << 16):
+        test_socket = socket(AF_INET, SOCK_STREAM)
+        try:
+            test_socket.bind(("", port))
+        except:
+            pass
+        else:
+            break
+        finally:
+            test_socket.close()
+
+    qemu_debug_addr = "localhost:%u" % port
+
+    qemu_proc = Process(
+        target = system,
+        # XXX: if there are spaces in arguments this code will not work.
+        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
+    )
+
+    qemu_proc.start()
+
+    qemu_debugger = AMD64(qemu_debug_addr,
+        host = True
+    )
+
+    rt = Runtime(qemu_debugger, dic)
+
+    qomtr.init_runtime(rt)
+
+    qemu_debugger.run()
+
+    qemu_debugger.rsp.finish()
+
+    qomtr.to_file("qom-by-q.i.dot")
+
+    qemu_proc.join()
+
 
 if __name__ == "__main__":
     exit(main())
