@@ -916,6 +916,40 @@ class PCMachineWatcher(MachineWatcher):
         self.check_irq_connected(irq)
 
 
+class CastCatcher(object):
+    """ A breakpoint handler that inspects all subprogram pointers those do
+refer to a given QOM instance and remembers types of those pointers as
+possible casts for instances of that QOM type.
+    """
+
+    def __init__(self, instance, runtime = None):
+        self.inst = instance
+        self.rt = runtime
+
+    def __call__(self):
+        inst = self.inst
+        obj = inst.obj
+
+        addr = obj.address
+        qom_type = inst.type
+
+        rt = self.rt
+        if rt is None:
+            rt = obj.runtime
+        if rt is None:
+            raise ValueError("Cannot obtain runtime")
+
+        for datum_name in rt.subprogram.data:
+            datum = rt[datum_name]
+            datum_type = datum.type
+            if datum_type.code != TYPE_CODE_PTR:
+                continue
+            datum_addr = datum.fetch_pointer()
+            if datum_addr != addr:
+                continue
+            qom_type._instance_casts.add(datum_type.target_type)
+
+
 re_qemu_system_x = compile(".*qemu-system-.+$")
 
 
