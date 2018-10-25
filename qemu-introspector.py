@@ -1397,11 +1397,6 @@ class QEmuWatcherGUI(GUITk):
             except:
                 print_exc()
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
-
-                if not target.finished:
-                    target.finished = True
-                    target.rsp.finish()
-
                 break
 
         yield
