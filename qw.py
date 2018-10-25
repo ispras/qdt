@@ -60,6 +60,8 @@ from inspect import (
     ismethod
 )
 from widgets import (
+    GUIProject,
+    GUIProjectHistoryTracker,
     asksaveas,
     VarMenu,
     HotKey,
@@ -1326,8 +1328,26 @@ def main():
     )
 
     qomtr = QOMTreeReverser(dic,
+        interrupt = False,
         verbose = True
     )
+
+    if "-i386" in qemu_debug or "-x86_64" in qemu_debug:
+        MWClass = PCMachineWatcher
+    else:
+        MWClass = MachineWatcher
+
+    mw = MWClass(dic, qomtr.tree,
+        interrupt = True
+    )
+
+    mach_desc = MachineNode("runtime-machine", "")
+    proj = GUIProject(
+        descriptions = [mach_desc]
+    )
+    pht = GUIProjectHistoryTracker(proj, proj.history)
+
+    MachineReverser(mw, mach_desc, pht)
 
     # auto select free port for gdb-server
     for port in range(4321, 1 << 16):
@@ -1358,10 +1378,15 @@ def main():
     rt = Runtime(qemu_debugger, dic)
 
     qomtr.init_runtime(rt)
+    mw.init_runtime(rt)
 
-    qemu_debugger.run()
+    tk = QEmuWatcherGUI(pht, mach_desc, rt)
 
-    qemu_debugger.rsp.finish()
+    tk.geometry("1024x1024")
+    tk.mainloop()
+
+    if not qemu_debugger.finished:
+        qemu_debugger.rsp.finish()
 
     qomtr.to_file("qom-by-q.i.dot")
 
