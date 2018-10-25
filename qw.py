@@ -1,5 +1,12 @@
 #!/usr/bin/python
 
+from qemu import (
+    QOMPropertyTypeLink,
+    QOMPropertyTypeString,
+    QOMPropertyTypeBoolean,
+    QOMPropertyTypeInteger,
+    QOMPropertyValue
+)
 from collections import (
     defaultdict
 )
@@ -307,6 +314,112 @@ the QOM tree by fetching relevant data.
 
         with open(dot_file_name, "wb") as f:
             f.write(graph.source)
+
+
+class RQObjectProperty(object):
+    "Represents runtime state of QOM object property"
+
+    def __init__(self, obj, prop, name = None, _type = None):
+        """
+    :type obj: RQInstance
+    :param obj:
+        is owner of that property
+    :type prop: debug.Value
+    :param prop:
+        represents corresponding variable of type `ObjectProperty`
+        """
+        self.obj = obj
+        self.prop = prop
+        if name is None:
+            name = prop["name"].fetch_c_string()
+        if _type is None:
+            _type = prop["type"].fetch_c_string()
+        self.name = name
+        self.type = _type
+
+    @lazy
+    def as_qom(self):
+        "Converts to property model from `qemu` module."
+        # XXX: note that returned values are not default
+        t = self.type
+        if t.startswith("int") or t.startswith("uint"):
+            return QOMPropertyValue(QOMPropertyTypeInteger, self.name, 0)
+        elif t.startswith("link<"):
+            return QOMPropertyValue(QOMPropertyTypeLink, self.name, None)
+        elif t == "bool":
+            return QOMPropertyValue(QOMPropertyTypeBoolean, self.name, False)
+        else:
+            return QOMPropertyValue(QOMPropertyTypeString, self.name, "")
+
+
+class RQInstance(object):
+    "Descriptor for QOM object at runtime."
+
+    def __init__(self, obj, _type):
+        """
+    :type obj: debug.Value
+    :param obj:
+        is runtime variable representing that instance
+
+    :type type: RQOMType
+    :param type:
+        is descriptor for QOM type of that instance
+        """
+        self.obj = obj
+        self.type = _type
+        self.related = []
+
+
+        # QOM type specific fields
+
+        # object
+        self.properties = {}
+
+        # qemu:memory-region:
+        # bus
+        self.name = None
+
+        # qemu:memory-region
+        self.size = None
+
+        # device: the bus this device is attached to
+        # bus: the device controlling this bus
+        self.parent = None
+
+        # device: buses controlled by the device
+        # bus: devices on the bus
+        self.children = []
+
+        # irq:
+        # tuple (dev. `RQInstance`, GPIO name, GPIO index)
+        #     for split IRQ: `dst[0]` is `self`
+        self.src = None
+        self.dst = None
+
+    def relate(self, qinst):
+        self.related.append(qinst)
+        qinst.related.append(self)
+
+    def unrelate(self, qinst):
+        self.related.remove(qinst)
+        qinst.related.renove(self)
+
+    def account_property(self, prop):
+        """ Helper for property accounting.
+
+    :type prop: Value
+    :param prop:
+        represents corresponding variable of type `ObjectProperty`
+        """
+        if prop.type.code == TYPE_CODE_PTR:
+            prop = prop.dereference()
+        if not prop.is_global:
+            prop = prop.to_global()
+
+        rqo_prop = RQObjectProperty(self, prop)
+        self.properties[rqo_prop.name] = rqo_prop
+
+        return rqo_prop
 
 
 re_qemu_system_x = compile(".*qemu-system-.+$")
