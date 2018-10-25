@@ -75,6 +75,7 @@ from pyrsp.utils import (
     decode_data
 )
 from debug import (
+    Watcher,
     InMemoryELFFile,
     DWARFInfoCache,
     Value,
@@ -102,9 +103,6 @@ from widgets import (
     GUIProject,
     MachineDescriptionSettingsWidget,
     GUITk
-)
-from gdb import (
-    Watcher
 )
 from six.moves.tkinter_messagebox import (
     showerror
