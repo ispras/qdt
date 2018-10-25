@@ -1,6 +1,11 @@
 #!/usr/bin/python
 
 from qemu import (
+    MOp_AddIRQHub,
+    MOp_AddIRQLine,
+    MOp_AddDevProp,
+    MOp_SetDevProp,
+    MOp_SetDevParentBus,
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
@@ -45,6 +50,10 @@ from multiprocessing import (
 )
 from os import (
     system
+)
+from inspect import (
+    getmembers,
+    ismethod
 )
 from os.path import (
     split,
@@ -948,6 +957,198 @@ possible casts for instances of that QOM type.
             if datum_addr != addr:
                 continue
             qom_type._instance_casts.add(datum_type.target_type)
+
+
+class MachineReverser(object):
+    """ Listener for `MachineWatcher` that reconstructs machine as a
+description for QDT project.
+    """
+
+    def __init__(self, watcher, machine, tracker):
+        """
+    :type watcher: MachineWatcher
+    :type machine: MachineNode
+    :type tracker: GUIProjectHistoryTracker
+        """
+        self.watcher = watcher
+        self.machine = machine
+        self.tracker = tracker
+        self.proxy = tracker.get_machine_proxy(machine)
+
+        # auto assign event handlers
+        for name, ref in getmembers(type(self)):
+            if name[:4] == "_on_" and ismethod(ref):
+                watcher.watch(name[4:], getattr(self, name))
+
+        self.__next_node_id = 1
+        self.inst2id = {}
+        self.irq_inst2hub_id = {}
+        self.id2inst = []
+
+    def __id(self):
+        _id = self.__next_node_id
+        self.__next_node_id += 1
+        return _id
+
+    def _on_runtime_set(self, rt):
+        self.rt = rt
+        self.target = rt.target
+
+    def _on_device_creating(self, inst):
+        _id = self.__id()
+        self.inst2id[inst] = _id
+        self.id2inst.append(inst)
+
+        _type = inst.type
+        if _type.implements("pci-device"):
+            self.proxy.add_device("PCIExpressDeviceNode", _id,
+                qom_type = _type.name
+            )
+        elif _type.implements("sys-bus-device"):
+            self.proxy.add_device("SystemBusDeviceNode", _id,
+                qom_type = _type.name
+            )
+        else:
+            self.proxy.add_device("DeviceNode", _id,
+                qom_type = _type.name
+            )
+
+        self.proxy.commit()
+
+        target = self.target
+        cc = CastCatcher(inst)
+
+        ii = _type.instance_init
+        if ii:
+            for addr in ii.epilogues:
+                target.add_br(target.get_hex_str(addr), cc)
+
+        realize = _type.realize
+        if realize:
+            for addr in realize.epilogues:
+                target.add_br(target.get_hex_str(addr), cc)
+
+    def _on_bus_created(self, bus):
+        _id = self.__id()
+        self.inst2id[bus] = _id
+        self.id2inst.append(bus)
+
+        bus_type = bus.type
+        if bus_type.implements("System"):
+            bus_class = "SystemBusNode"
+        elif bus_type.implements("PCI"):
+            bus_class = "PCIExpressBusNode"
+        elif bus_type.implements("ISA"):
+            bus_class = "ISABusNode"
+        elif bus_type.implements("IDE"):
+            bus_class = "IDEBusNode"
+        elif bus_type.implements("i2c-bus"):
+            bus_class = "I2CBusNode"
+        else:
+            bus_class = "BusNode"
+
+        self.proxy.add_bus(bus_class, _id)
+        self.proxy.commit()
+
+    def _on_bus_attached(self, bus, device):
+        bus_id = self.inst2id[bus]
+        device_id = self.inst2id[device]
+
+        self.proxy.append_child_bus(device_id, bus_id)
+        self.proxy.commit()
+
+    def _on_device_attached(self, device, bus):
+        bus_id = self.inst2id[bus]
+        device_id = self.inst2id[device]
+
+        self.proxy.stage(MOp_SetDevParentBus, self.machine.id2node[bus_id],
+            device_id
+        )
+        self.proxy.commit()
+
+    def _on_property_added(self, obj, _property):
+        prop = _property.prop
+        setter_addr = prop["set"].fetch_pointer()
+
+        if not setter_addr:
+            return
+
+        inst2id = self.inst2id
+        if obj not in inst2id:
+            return
+
+        if not obj.type.implements("device"):
+            return
+
+        self.proxy.stage(MOp_AddDevProp, _property.as_qom, inst2id[obj])
+        self.proxy.commit()
+
+    def _on_property_set(self, obj, _property, val):
+        prop = _property.prop
+        setter_addr = prop["set"].fetch_pointer()
+
+        if not setter_addr:
+            return
+
+        inst2id = self.inst2id
+        if obj not in inst2id:
+            return
+
+        if not obj.type.implements("device"):
+            return
+
+        qom_prop = _property.as_qom
+
+        self.proxy.stage(MOp_SetDevProp, qom_prop.prop_type,
+            qom_prop.prop_val, # TODO: recover from `val`
+            qom_prop,
+            inst2id[obj]
+        )
+        self.proxy.commit()
+
+    def _on_irq_connected(self, irq):
+        i2i = self.inst2id
+
+        _id = self.__id()
+        i2i[irq] = _id
+        self.id2inst.append(irq)
+
+        src = irq.src
+        dst = irq.dst
+
+        src_inst = src[0]
+        dst_inst = dst[0]
+
+        ii2hi = self.irq_inst2hub_id
+
+        # A split IRQ (hub) instance presents in both mappings. But in
+        # `irq_inst2hub_id` it points to IRQ hub id while in `inst2id` it
+        # points to IRQ line id
+        if src_inst in ii2hi:
+            src_id = ii2hi[src_inst]
+        else:
+            src_id = i2i[src_inst]
+
+        if dst_inst in ii2hi:
+            dst_id = ii2hi[dst_inst]
+        else:
+            dst_id = i2i[dst_inst]
+
+        self.proxy.stage(MOp_AddIRQLine,
+            src_id, dst_id,
+            src[2], dst[2], # indices
+            src[1], dst[1],  # names
+            _id
+        )
+        self.proxy.commit()
+
+    def _on_irq_split_created(self, irq):
+        _id = self.__id()
+        self.irq_inst2hub_id[irq] = _id
+        self.id2inst.append(irq)
+
+        self.proxy.stage(MOp_AddIRQHub, _id)
+        self.proxy.commit()
 
 
 re_qemu_system_x = compile(".*qemu-system-.+$")
