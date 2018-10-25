@@ -4,10 +4,18 @@ from collections import (
     defaultdict
 )
 from debug import (
+    Watcher,
     TYPE_CODE_PTR
 )
 from common import (
+    sort_topologically,
     lazy
+)
+from re import (
+    compile
+)
+from graphviz import (
+    Digraph
 )
 
 
@@ -160,6 +168,115 @@ ancestors.
             if a is t:
                 return True
         return False
+
+
+# Characters disallowed in node ID according to DOT language. That is not a
+# full list though.
+# https://www.graphviz.org/doc/info/lang.html
+re_DOT_ID_disalowed = compile(r"[^a-zA-Z0-9_]")
+
+
+def gv_node(label):
+    return re_DOT_ID_disalowed.sub("_", label)
+
+
+class QOMTreeReverser(Watcher):
+    """ Sets breakpoints on key places of QOM tree initialization and reverses
+the QOM tree by fetching relevant data.
+    """
+
+    def __init__(self, dic, interrupt = True, verbose = False):
+        """
+    :param interrupt:
+        Stop QEmu and exit `RemoteTarget.run` after QOM module is initialized.
+        """
+        super(QOMTreeReverser, self).__init__(dic, verbose = verbose)
+
+        self.tree = RQOMTree()
+        self.interrupt = interrupt
+
+    def on_type_register_internal(self):
+        # type_register_internal
+
+        # v2.12.0
+        "object.c:139"
+
+        t = self.tree.account(self.rt["ti"])
+
+        if self.verbose:
+            print("%s -> %s" % (t.parent, t.name))
+
+    def on_type_initialize(self):
+        # now the type and its ancestors are initialized
+
+        # v2.12.0
+        "object.c:344"
+
+        rt = self.rt
+        type_impl = rt["ti"]
+
+        ti_addr = type_impl.fetch_pointer()
+        a2t = self.tree.addr2type
+
+        if ti_addr not in a2t:
+            # There are interfaces providing variations of regular types. They
+            # do not path through type_register_internal because its `TypeInfo`
+            # is created and used directly by type_initialize_interface.
+            return
+
+        t = a2t[ti_addr]
+
+        if t.implements("device"):
+            cls = type_impl["class"]
+
+            dev_cls = cls.cast("DeviceClass *")
+            realize_addr = dev_cls["realize"].fetch_pointer()
+
+            if realize_addr:
+                t.realize = rt.dic.subprogram(realize_addr)
+
+    def on_main(self):
+        # main, just after QOM module initialization
+
+        # v2.12.0
+        "vl.c:3075"
+
+        if self.interrupt:
+            self.rt.target.interrupt()
+
+    def to_file(self, dot_file_name):
+        "Writes QOM tree to Graphviz file."
+
+        graph = Digraph(
+            name = "QOM",
+            graph_attr = dict(
+                rankdir = "LR"
+            ),
+            node_attr = dict(
+                shape = "polygon",
+                fontname = "Momospace"
+            ),
+            edge_attr = dict(
+                style = "filled"
+            ),
+        )
+
+        for t in sort_topologically(
+            v for v in self.tree.name2type.values() if v.parent is None
+        ):
+            n = gv_node(t.name)
+            label = t.name + "\\n0x%x" % t.impl.address
+            if t.instance_casts:
+                label += "\\n*"
+                for cast in t.instance_casts:
+                    label += "\\n" + cast.name
+
+            graph.node(n, label = label)
+            if t.parent:
+                graph.edge(gv_node(t.parent), n)
+
+        with open(dot_file_name, "wb") as f:
+            f.write(graph.source)
 
 
 def main():
