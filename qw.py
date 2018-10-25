@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from qemu import (
+    MachineNode,
     MOp_AddIRQHub,
     MOp_AddIRQLine,
     MOp_AddDevProp,
@@ -23,6 +24,8 @@ from debug import (
     TYPE_CODE_PTR
 )
 from common import (
+    mlget as _,
+    pythonize,
     notifier,
     sort_topologically,
     lazy
@@ -49,11 +52,26 @@ from multiprocessing import (
     Process
 )
 from os import (
+    remove,
     system
 )
 from inspect import (
     getmembers,
     ismethod
+)
+from widgets import (
+    asksaveas,
+    VarMenu,
+    HotKey,
+    HotKeyBinding,
+    MachineDescriptionSettingsWidget,
+    GUITk
+)
+from six.moves.tkinter_messagebox import (
+    showerror
+)
+from traceback import (
+    print_exc
 )
 from os.path import (
     split,
@@ -1161,6 +1179,116 @@ class QArgumentParser(ArgumentParser):
             " before QEMU and its arguments.\n"
         )
         super(QArgumentParser, self).error(*args, **kw)
+
+
+class QEmuWatcherGUI(GUITk):
+    "Showing runtime state of machine."
+
+    def __init__(self, pht, mach_desc, runtime):
+        GUITk.__init__(self, wait_msec = 1)
+
+        self.title(_("QEmu Watcher"))
+
+        self.pht = pht
+        self.rt = runtime
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        mdsw = MachineDescriptionSettingsWidget(mach_desc, self)
+        mdsw.grid(row = 0, column = 0, sticky = "NESW")
+        mdsw.mw.mdw.var_physical_layout.set(False)
+        self.mdsw = mdsw
+
+        # magic with layouts
+        pht.p.add_layout(mach_desc.name, mdsw.gen_layout()).widget = mdsw
+
+        self.task_manager.enqueue(self.co_rsp_poller())
+
+        self.hk = hk = HotKey(self)
+        hk.add_bindings([
+            HotKeyBinding(self._on_save,
+                key_code = 39,
+                description = _("Save machine"),
+                symbol = "S"
+            )
+        ])
+
+        menubar = VarMenu(self)
+        self.config(menu = menubar)
+
+        filemenu = VarMenu(menubar, tearoff = False)
+        menubar.add_cascade(label = _("File"), menu = filemenu)
+
+        filemenu.add_command(
+            label = _("Save machine"),
+            command = self._on_save,
+            accelerator = hk.get_keycode_string(self._on_save)
+        )
+
+    def _on_save(self):
+        fname = asksaveas(self,
+            [(_("QDC GUI Project defining script"), ".py")],
+            title = _("Save machine")
+        )
+
+        if not fname:
+            return
+
+        self.save_project_to_file(fname)
+
+    def try_save_project_to_file(self, file_name):
+        try:
+            open(file_name, "wb").close()
+        except IOError as e:
+            if not e.errno == 13: # Do not remove read-only files
+                try:
+                    remove(file_name)
+                except:
+                    pass
+
+            showerror(
+                title = _("Cannot save project").get(),
+                message = str(e)
+            )
+            return
+
+        self.save_project_to_file(file_name)
+
+    def save_project_to_file(self, file_name):
+        project = self.pht.p
+
+        project.sync_layouts()
+
+        # Ensure that all machine nodes are in corresponding lists
+        for d in project.descriptions:
+            if isinstance(d, MachineNode):
+                d.link(handle_system_bus = False)
+
+        pythonize(project, file_name)
+
+    def co_rsp_poller(self):
+        rt = self.rt
+        target = rt.target
+
+        target.run_no_block()
+
+        target.finished = False
+        target._interrupt = False
+        while not target._interrupt:
+            yield
+            try:
+                target.poll()
+            except:
+                print_exc()
+                print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
+                break
+
+        yield
+
+        if not target.finished:
+            target.finished = True
+            target.rsp.finish()
 
 
 def main():
