@@ -18,6 +18,7 @@ from debug import (
     TYPE_CODE_PTR
 )
 from common import (
+    notifier,
     sort_topologically,
     lazy
 )
@@ -420,6 +421,440 @@ class RQInstance(object):
         self.properties[rqo_prop.name] = rqo_prop
 
         return rqo_prop
+
+
+@notifier(
+    "device_creating", # RQInstance
+    "device_created", # RQInstance
+    "bus_created", # RQInstance
+    "bus_attached", # RQInstance bus, RQInstance device
+    "device_attached", # RQInstance device, RQInstance bus
+    "property_added", # RQInstance, RQObjectProperty
+    "property_set", # RQInstance, RQObjectProperty, Value
+    "irq_connected", # RQInstance
+    "irq_split_created", # RQInstance (IRQ)
+)
+class MachineWatcher(Watcher):
+    """ Watches machine initialization by setting breakpoints at key points of
+corresponding QEmu API. It remembers instances composing the machine.
+Notifications are issued for many machine composition events.
+    """
+
+    def __init__(self, dic, qom_tree, verbose = False, interrupt = False):
+        """
+    :type qom_tree: RQOMTree
+
+    :param interrupt:
+        Interrupt QEmu process after machine is fully created.
+
+        """
+        super(MachineWatcher, self).__init__(dic, verbose = verbose)
+        self.tree = qom_tree
+        # addr -> RQInstance mapping
+        self.instances = {}
+        self.machine = None
+        self.interrupt = interrupt
+
+    def account_instance(self, obj, type_impl = None):
+        """
+    :type obj: debug.Value
+    :param obj:
+        is runtime variable representing that instance
+
+    :type type_impl: debug.Value
+    :param type_impl:
+        represents `TypeImpl` struct of QOM type that instance, if it has been
+        already evaluated, an optimization
+
+        """
+        if obj.type.code == TYPE_CODE_PTR:
+            obj = obj.dereference()
+        if not obj.is_global:
+            obj = obj.to_global()
+
+        if type_impl is None:
+            type_impl = obj.cast("Object")["class"]["type"]
+
+        addr = type_impl.fetch_pointer()
+        rqom_type = self.tree.addr2type[addr]
+
+        i = RQInstance(obj, rqom_type)
+        self.instances[obj.address] = i
+        return i
+
+    # Breakpoint handlers
+
+    def on_obj_init_start(self):
+        # object_initialize_with_type, before `object_init_with_type`
+
+        # v2.12.0
+        "object.c:384"
+
+        machine = self.machine
+        if machine is None:
+            return
+
+        rt = self.rt
+        impl = rt["type"]
+        t = self.tree[impl.fetch_pointer()]
+
+        inst = self.account_instance(rt["obj"], impl)
+        inst.relate(machine)
+
+        if t.implements("device"):
+            if self.verbose:
+                print("Creating device " + inst.type.name)
+            self.current_device = inst
+
+            self.__notify_device_creating(inst)
+        elif t.implements("qemu:memory-region"):
+            if self.verbose:
+                print("Creating memory")
+            self.current_memory = inst
+
+    def on_obj_init_end(self):
+        # object_initialize_with_type, return
+
+        # v2.12.0
+        "object.c:386"
+
+        if self.machine is None:
+            return
+
+        rt = self.rt
+        addr = rt["obj"].fetch_pointer()
+
+        inst = self.instances[addr]
+
+        if inst.type.implements("device"):
+            self.__notify_device_created(inst)
+
+    def on_board_init_start(self):
+        # machine_run_board_init
+
+        # v2.12.0
+        "hw/core/machine.c:829"
+
+        rt = self.rt
+
+        machine_obj = rt["machine"]
+        self.machine = inst = self.account_instance(machine_obj)
+
+        desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
+
+        if not self.verbose:
+            return
+
+        print("Machine creation started\nDescription: " +
+            desc.fetch_c_string()
+        )
+
+    def on_mem_init_end(self):
+        # return from memory_region_init
+
+        # v2.12.0
+        "memory.c:1153"
+
+        if self.machine is None:
+            return
+
+        rt = self.rt
+        m = self.current_memory
+
+        if m.obj.address != rt["mr"].fetch_pointer():
+            raise RuntimeError("Unexpected memory initialization sequence")
+
+        m.name = rt["name"].fetch_c_string()
+        m.size = rt["size"].fetch(8)
+
+        if not self.verbose:
+            return
+        print("Memory: %s 0x%x" % (m.name or "[nameless]", m.size))
+
+    def on_board_init_end(self):
+        # machine_run_board_init
+
+        # v2.12.0
+        "hw/core/machine.c:830"
+
+        self.remove_breakpoints()
+        if self.interrupt:
+            self.rt.target.interrupt()
+
+        if not self.verbose:
+            return
+
+        print("Machine creation ended: " +
+            # explicit casting is not required here, it's just for testing
+            self.machine.type.impl.cast("TypeImpl")["name"].fetch_c_string()
+        )
+
+    def on_obj_prop_add(self):
+        # object_property_add, before insertion to prop. table; property found
+        # Do NOT set this breakpoint on `return` because it will catch all
+        # `return` statements in the function.
+
+        # v2.12.0
+        "object.c:975"
+
+        if self.machine is None:
+            return
+
+        rt = self.rt
+        obj = rt["obj"]
+        obj_addr = obj.fetch_pointer()
+
+        try:
+            inst = self.instances[obj_addr]
+        except KeyError:
+            print("Skipping property for unaccounted object 0x%x of type"
+                  " %s" % (
+                    obj_addr,
+                    obj["class"]["type"]["name"].fetch_c_string()
+                )
+            )
+            return
+
+        prop = inst.account_property(rt["prop"])
+
+        self.__notify_property_added(inst, prop)
+
+        if not self.verbose:
+            return
+
+        print("Object 0x%x (%s) -> %s (%s)" % (
+            prop.obj.obj.address,
+            prop.obj.type.name,
+            prop.name,
+            prop.type
+        ))
+
+    def on_obj_prop_set(self):
+        # object_property_set (prop. exists and has a setter)
+
+        # v2.12.0
+        "object.c:1122"
+
+        if self.machine is None:
+            return
+
+        rt = self.rt
+        obj_addr = rt["obj"].fetch_pointer()
+        name = rt["name"].fetch_c_string()
+        try:
+            inst = self.instances[obj_addr]
+        except:
+            print("Skipping value of property '%s' for unaccounted object"
+                " 0x%x" % (name, obj_addr)
+            )
+            return
+
+        prop = inst.properties[name]
+
+        self.__notify_property_set(inst, prop, None)
+
+        if not self.verbose:
+            return
+
+        print("Object 0x%x (%s) -> %s (%s) = 0x%x (Visitor)" % (
+            prop.obj.obj.address,
+            prop.obj.type.name,
+            prop.name,
+            prop.type,
+            rt["v"].fetch_pointer()
+        ))
+
+    def on_qbus_realize(self):
+        # qbus_realize, parent may be NULL
+
+        # v2.12.0
+        "hw/core/bus.c:101"
+
+        rt = self.rt
+        bus = rt["bus"]
+
+        bus_inst = self.instances[bus.fetch_pointer()]
+
+        name = bus["name"].fetch_c_string()
+
+        bus_inst.name = name
+
+        self.__notify_bus_created(bus_inst)
+
+        dev_addr = rt["parent"].fetch_pointer()
+        if dev_addr:
+            device_inst = self.instances[dev_addr]
+            bus_inst.parent = device_inst
+            device_inst.children.append(bus_inst)
+
+            bus_inst.relate(device_inst)
+
+            self.__notify_bus_attached(bus_inst, device_inst)
+
+        if not self.verbose:
+            return
+
+        if dev_addr:
+            print("Device 0x%x (%s) |----- bus 0x%s %s (%s)" % (
+                device_inst.obj.address,
+                device_inst.type.name,
+                bus_inst.obj.address,
+                bus_inst.name,
+                bus_inst.type.name
+            ))
+        else:
+            print("   ~-- bus 0x%s %s (%s)" % (
+                bus_inst.obj.address,
+                bus_inst.name,
+                bus_inst.type.name
+            ))
+
+    def on_bus_unparent(self):
+        # bus_unparent, before actual unparenting
+
+        # v2.12.0
+        "hw/core/bus.c:123"
+
+        # TODO: this code is not tested because this event never happens
+        rt = self.rt
+        bus = rt["bus"]
+        bus_inst = self.instances[bus.fetch_pointer()]
+        parent = bus["parent"]
+        device_inst = self.instances[parent.fetch_pointer()]
+
+        bus_inst.parent = None
+        device_inst.children.remove(bus_inst)
+
+        device_inst.unrelate(bus_inst)
+
+        if not self.verbose:
+            return
+
+        print("Device 0x%x (%s) |-x x- bus 0x%s %s (%s)" % (
+            device_inst.obj.address,
+            device_inst.type.name,
+            bus_inst.obj.address,
+            bus_inst.name,
+            bus_inst.type.name
+        ))
+
+    def on_bus_add_child(self):
+        # bus_add_child
+
+        # v2.12.0
+        "hw/core/qdev.c:73"
+
+        rt = self.rt
+        bus = rt["bus"]
+        bus_inst = self.instances[bus.fetch_pointer()]
+        device_inst = self.instances[rt["child"].fetch_pointer()]
+
+        device_inst.parent = bus_inst
+        bus_inst.children.append(device_inst)
+        bus_inst.relate(device_inst)
+
+        self.__notify_device_attached(device_inst, bus_inst)
+
+        if not self.verbose:
+            return
+
+        print("Bus 0x%x %s (%s) |----- device 0x%x (%s)" % (
+            bus_inst.obj.address,
+            bus_inst.name,
+            bus_inst.type.name,
+            device_inst.obj.address,
+            device_inst.type.name
+        ))
+
+    def on_bus_remove_child(self):
+        # bus_remove_child, before actual unparenting
+
+        # v2.12.0
+        "hw/core/qdev.c:57"
+
+        print("not implemented")
+
+    def on_qdev_get_gpio_in_named(self):
+        # qdev_get_gpio_in_named, return
+
+        # v2.12.0
+        "core/qdev.c:456"
+
+        instances = self.instances
+        rt = self.rt
+
+        irq_addr = rt.returned_value.fetch_pointer()
+        dst_addr = rt["dev"].fetch_pointer()
+        dst_name = rt["name"].fetch_c_string()
+        dst_idx = rt["n"].fetch(4) # int
+
+        irq = instances[irq_addr]
+        dst = instances[dst_addr]
+
+        irq.dst = (dst, dst_name, dst_idx)
+
+        self.check_irq_connected(irq)
+
+    def on_qdev_connect_gpio_out_named(self):
+        # qdev_connect_gpio_out_named, after IRQ was assigned and before
+        # property name `propname` freed.
+
+        # v2.12.0
+        "core/qdev.c:479"
+
+        rt = self.rt
+
+        irq_addr = rt["pin"].fetch_pointer()
+
+        if not irq_addr:
+            return
+
+        instances = self.instances
+
+        src_addr = rt["dev"].fetch_pointer()
+        src_name = rt["name"].fetch_c_string()
+        src_idx = rt["n"].fetch(4) # int
+
+        src = instances[src_addr]
+        irq = instances[irq_addr]
+
+        irq.src = (src, src_name, src_idx)
+
+        self.check_irq_connected(irq)
+
+    def check_irq_connected(self, irq):
+        src = irq.src
+        dst = irq.dst
+
+        if src is None or dst is None:
+            return
+
+        self.__notify_irq_connected(irq)
+
+    def on_qemu_irq_split(self):
+        # returning from `qemu_irq_split`
+
+        # v2.12.0
+        "core/irq.c:122"
+
+        rt = self.rt
+        instances = self.instances
+
+        split_irq_addr = rt.returned_value.fetch_pointer()
+
+        split_irq = instances[split_irq_addr]
+
+        self.__notify_irq_split_created(split_irq)
+
+        irq1 = instances[rt["irq1"].fetch_pointer()]
+        irq2 = instances[rt["irq2"].fetch_pointer()]
+
+        split_irq.dst = (split_irq, None, 0) # yes, to itself
+        irq1.src = (split_irq, None, 0)
+        irq2.src = (split_irq, None, 1)
+
+        self.check_irq_connected(irq1)
+        self.check_irq_connected(irq2)
 
 
 re_qemu_system_x = compile(".*qemu-system-.+$")
