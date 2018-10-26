@@ -3,7 +3,7 @@ __all__ = [
 ]
 
 # Tk variable emulation class
-# TODO: use Notifier for feedback
+# TODO: use `notifier` for feedback
 
 def undefined(): pass
 
