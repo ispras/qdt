@@ -1409,10 +1409,7 @@ IRQ line creation
             else:
                 node_id = mach_n.id
 
-                if (isinstance(mach_n, DeviceNode)
-                    or isinstance(mach_n, BusNode)
-                    or isinstance(mach_n, IRQHub)
-                ):
+                if isinstance(mach_n, (DeviceNode, BusNode, IRQHub)):
                     if n.x != 0 or n.y != 0:
                         # move node to 0, 0 to preserve its coordinates
                         self.mht.stage(MWOp_MoveNode, 0, 0, self, node_id)
