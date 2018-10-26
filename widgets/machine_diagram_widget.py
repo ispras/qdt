@@ -2205,7 +2205,7 @@ IRQ line creation
             t0 = t1
 
         self.current_ph_iteration = None
-        self.ph_apply()
+        self.ph_sync()
 
         t1 = time()
         dt = t1 - t0
@@ -2454,9 +2454,6 @@ IRQ line creation
         idtext = self.node2idtext[node]
         self.canvas.delete(idtext)
         del self.node2idtext[node]
-
-    def ph_apply(self):
-        self.ph_sync()
 
     def ph_iterate_co(self):
         all_nodes = self.nodes + self.buslabels + self.circles
