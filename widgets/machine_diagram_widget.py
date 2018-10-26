@@ -44,6 +44,7 @@ from os.path import (
     splitext
 )
 from common import (
+    find_empty_aabb,
     PhBox,
     PhCircle,
     Vector,
@@ -2455,6 +2456,22 @@ IRQ line creation
         self.canvas.delete(idtext)
         del self.node2idtext[node]
 
+    def ph_iter_all_objects(self):
+        for n in self.nodes:
+            yield n
+            c = n.conn
+            if c is not None:
+                yield c
+        for bl in self.buslabels:
+            yield bl
+            yield bl.busline
+        for c in self.circles:
+            yield c
+        for l in self.irq_lines:
+            for c in l.circles:
+                yield c
+            # TODO: also yield lines between circles
+
     def ph_iterate_co(self):
         all_nodes = self.nodes + self.buslabels + self.circles
         dynamic = [n for n in all_nodes if not n.static]
@@ -2966,6 +2983,26 @@ IRQ line creation
         node.width = node.text_width + node.padding
         node.height = node.text_height + node.padding
 
+    def place_object(self, obj):
+        left, top, right, bottom = find_empty_aabb(self.ph_iter_all_objects(),
+            minw = obj.width + 4 * obj.spacing,
+            minh = obj.height + 4 * obj.spacing
+        )
+
+        if left is None:
+            if right is not None:
+                obj.x = right - obj.width - 2 * obj.spacing
+            # else:
+            #     pass # no restriction for node.x, left it as it is
+        else:
+            obj.x = left + 2 * obj.spacing
+
+        if top is None:
+            if bottom is not None:
+                obj.y = bottom - obj.height - 2 * obj.spacing
+        else:
+            obj.y = top + 2 * obj.spacing
+
     def add_node(self, node, buses):
         node.text = self.canvas.create_text(
             node.x, node.y,
@@ -2974,6 +3011,7 @@ IRQ line creation
         )
 
         self.update_node_text(node)
+        self.place_object(node)
 
         # TODO: replace rectangle with image
         if buses:
@@ -3003,6 +3041,8 @@ IRQ line creation
             fill = "white",
             tag = "DnD"
         )
+
+        self.place_object(hub)
 
         self.id2node[_id] = hub
         self.node2id[hub] = _id
@@ -3092,6 +3132,7 @@ IRQ line creation
         )
 
         self.update_buslabel_text(bl)
+        self.place_object(bl)
 
         self.id2node[_id] = bl
         self.node2id[bl] = _id
