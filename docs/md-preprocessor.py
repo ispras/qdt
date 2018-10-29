@@ -3,20 +3,22 @@
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 :
 
-from argparse import (
+DEBUG = 1
+
+from argparse import \
     ArgumentParser
-)
+
 import sys
 
-from re import (
+from re import \
+    UNICODE, \
     compile
-)
-from itertools import (
+
+from itertools import \
     count
-)
-from collections import (
+
+from collections import \
     OrderedDict
-)
 
 class PosInfo(object):
     def __init__(self, row, start, end, m):
@@ -67,10 +69,19 @@ if __name__ == "__main__":
     ap.add_argument("in_file_name", nargs = "?", metavar = "in-file-name")
     ap.add_argument("--out-file-name", "-o", nargs = "?")
     ap.add_argument("--ispras", action = 'store_true')
+    ap.add_argument("--caption-number-prefix",
+        action = "store_true",
+        help = "Reset table & picture enumeration when 1st level caption"
+            "number increases. Add a prefix with 1st level caption number to"
+            "both table & picture number."
+    )
 
     args = ap.parse_args()
 
     ispras = args.ispras
+    cnp = args.caption_number_prefix
+
+    enum_captions = ispras or cnp
 
     try:
         in_file_name = args.in_file_name
@@ -78,7 +89,6 @@ if __name__ == "__main__":
         in_file = sys.stdin
     else:
         in_file = open(in_file_name, "rb")
-
 
     out_file_name = args.out_file_name
     if out_file_name is None:
@@ -92,7 +102,9 @@ if __name__ == "__main__":
         log_file.write(msg + "\n")
 
     anchor = compile("""\
+\[?\
 (?P<substitution2>\$?)\
+\]?\
 (?(substitution2)[^<]*)\
 (?P<prefix>< *a +name *= *)\
 (?P<quote>["'])\
@@ -113,12 +125,114 @@ if __name__ == "__main__":
 """
     )
 
+    # Auto add a non-breaking space before each long dash
+    dash = compile("\s---", UNICODE)
+    dash_nbs = u"\u00a0---".encode("utf-8")
+
     anchors = OrderedDict()
     references = []
     lines = []
 
-    for row, l in enumerate(iter(in_file.readline, "")):
+    code_block = False
+
+    # automatic caption enumeration
+    if enum_captions:
+        levels = [0]
+
+    row = -1;
+
+    picture_num_gen = count(1)
+    table_num_gen = count(1)
+
+    # tap_pfx : tABLE aND pICTURE pREfIx
+    if cnp:
+        tap_pfx = "1."
+    else:
+        tap_pfx = ""
+
+    first_non_empty_line = True
+
+    for l in list(iter(in_file.readline, "")):
+        row += 1
+
+        if l.startswith("```"):
+            code_block = not code_block
+            lines.append(l)
+            continue
+
+        if code_block:
+            lines.append(l)
+            continue
+
+        # Avoid matching YAML header with long dash pattern
+        if not first_non_empty_line:
+            if l.startswith("---"):
+                # join "---" with previous non-empty line
+                while lines[-1] == "\n":
+                    row -= 1
+                    lines.pop()
+
+                # strip '\n' and inset ' ' match `dash` regexp.
+                l = lines.pop()[:-1] + " " + l
+                row -= 1
+
+            l = dash.sub(dash_nbs, l)
+
+        if first_non_empty_line and l.strip():
+            first_non_empty_line = False
+
         lines.append(l)
+
+        if enum_captions and l[0] == "#":
+            if ispras:
+                # Insert empty line before headers of level 1+.
+                # Note that 1st level in this preprocessor corresponds to
+                # 2nd heading level in terms of
+                # Template_for_Proceedings_of_ISP_RAS.dotm
+                lines.insert(row, "\n")
+                lines.insert(row, "<br>\n")
+                row += 2
+
+            # Both anchors & references can contain `$`.
+            # Hecnce, `$` used for caption enumeration must be processed
+            # independently.
+            macro_parts = l.split("<")
+
+            parts = macro_parts[0].split("$")
+
+            if len(parts) > 1:
+                current = len(levels)
+
+                line_level = len(parts) - 2
+
+                for tmp in range(current, line_level + 1):
+                    levels.append(0)
+
+                for tmp in range(line_level + 1, current):
+                    levels.pop()
+
+                levels[line_level] += 1
+
+                if cnp:
+                    # reset picture and table enumeration
+                    if line_level == 0: # 1st level actually
+                        picture_num_gen = count(1)
+                        table_num_gen = count(1)
+
+                        tap_pfx = "%d." % levels[line_level]
+
+                l = ""
+                for p, lvl in zip(parts, levels):
+                    l += p + str(lvl)
+
+                l += parts[-1]
+
+                # do not forget the tail
+                if len(macro_parts) > 1:
+                    l += "<" + "<".join(macro_parts[1:])
+
+                # line was changed, overwrite
+                lines[row] = l
 
         col = 0
         while True:
@@ -127,11 +241,29 @@ if __name__ == "__main__":
             if m is not None:
                 start, col = m.regs[0]
 
-                anchors[m.group("name")] = AnchorInfo(row, start, col, m)
+                a = AnchorInfo(row, start, col, m)
 
-                log(str(row) + "." + str(start) + " anchor : "
-                    + str(m.groupdict())
-                )
+                anchors[m.group("name")] = a
+
+                if DEBUG < 1:
+                    log(str(row) + "." + str(start) + " anchor : "
+                        + str(m.groupdict())
+                    )
+
+                if a.type == "rel":
+                    pass
+                elif a.type == "ref":
+                    pass
+                # picture and table enumeration
+                elif a.type == "pic":
+                    a.substitution = tap_pfx + str(next(picture_num_gen))
+                elif a.type == "tbl":
+                    a.substitution = tap_pfx +  str(next(table_num_gen))
+                elif a.type is not None:
+                    log("unknown anchor type %s at %u.%u" % (
+                        a.type, a.row, a.start
+                    ))
+
                 continue
 
             m = reference.search(l, col)
@@ -140,9 +272,10 @@ if __name__ == "__main__":
 
                 references.append(RefInfo(row, start, col, m))
 
-                log(str(row) + "." + str(start) + " reference : "
-                    + str(m.groupdict())
-                )
+                if DEBUG < 1:
+                    log(str(row) + "." + str(start) + " reference : "
+                        + str(m.groupdict())
+                    )
                 continue
 
             break
@@ -203,29 +336,26 @@ if __name__ == "__main__":
                 ref.type, ref.row, ref.start
             ))
 
-    picture_num_gen = count(1)
-    table_num_gen = count(1)
-
+    # propagate both picture and table numbers to its references
     for a in anchors.values():
-        if a.type == "rel":
-            pass
-        elif a.type == "ref":
-            pass
-        elif a.type == "pic":
-            a.substitution = str(next(picture_num_gen))
+        if a.type == "pic":
             for ref in a.references:
                 ref.substitution = a.substitution
         elif a.type == "tbl":
-            a.substitution = str(next(table_num_gen))
             for ref in a.references:
                 ref.substitution = a.substitution
-        elif a.type is not None:
-            log("unknown anchor type %s at %u.%u" % (
-                a.type, a.row, a.start
-            ))
 
     # patch lines
+    code_block = False
+
     for row, line in enumerate(list(lines)):
+        if line.startswith("```"):
+            code_block = not code_block
+            continue
+
+        if code_block:
+            continue
+
         pis = [ pi for pi in references + anchors.values() if pi.row == row ]
 
         if not pis:
@@ -248,7 +378,7 @@ if __name__ == "__main__":
                 except IndexError:
                     break
                 if g:
-                    if ispras:
+                    if ispras and not isinstance(pi, AnchorInfo):
                         new_line = (line[:m.start("prefix")]
                             + pi.substitution
                             + line[m.end("suffix"):]
@@ -258,8 +388,10 @@ if __name__ == "__main__":
                             + pi.substitution
                             + line[m.end(subst):]
                         )
+                    # note that line could be changed multiple times
+                    line = new_line
 
-                    lines[row] = new_line
+        lines[row] = line
 
     # sort sources by reference order
     ref_anchors = [ a for a in anchors.values() if \
@@ -296,37 +428,44 @@ if __name__ == "__main__":
 
     lines = lines[:min_row] + a_lines
 
-    # automatic chapter enumeration
     if ispras:
-        levels = [0]
+        code_block = False
 
         for idx, l in enumerate(list(lines)):
-            if l[0] != "#":
+            code = False
+            tag = False
+            new_word = True
+
+            if l.startswith("```"):
+                code_block = not code_block
                 continue
-            if "$" not in l:
+
+            if code_block:
                 continue
-
-            parts = l.split("$")
-
-            current = len(levels)
-
-            line_level = len(parts) - 1
-
-            for tmp in range(current, line_level):
-                levels.append(0)
-
-            for tmp in range(line_level, current):
-                levels.pop()
-
-            levels[line_level - 1] += 1
 
             new_line = ""
-            for p, l in zip(parts, levels):
-                new_line += p + str(l)
+            for c in l:
+                if c == "`":
+                    code = not code
+                elif not code:
+                    if c == "<":
+                        tag = True
+                    elif c == ">":
+                        tag = False
+                if (not (code or tag)) and c == '"':
+                    if new_word:
+                        c = "«"
+                    else:
+                        c = "»"
 
-            new_line += parts[-1]
+                new_word = (c == " ")
 
-            lines[idx] = new_line
+                new_line = new_line + c
+
+            l = new_line
+
+            lines[idx] = l
+
 
     for l in lines:
         out_file.write(str(l))

@@ -10,6 +10,14 @@ article.html : PANDOC_ARGS += --css ispras.css
 
 isp-article.html : PANDOC_ARGS += --css ispras.css
 
+PANDOC_PATH := PATH="$$HOME/.local/bin/:$$PATH"
+MDP_ARGS := --ispras
+REF_DOCX := ref.docx
+
+article.docx : $(REF_DOCX)
+
+isp-article.docx : $(REF_DOCX)
+
 clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
 	rm -f *.pmd
@@ -21,24 +29,30 @@ clean:
 #=
 
 define do_pandoc
+	$(PANDOC_PATH) \
 	pandoc \
 	$(PANDOC_ARGS) \
 	$(3) \
 	--standalone \
-	--smart \
 	-o $(2) \
 	$(1)
 endef
 
+define make_docx
+	$(call do_pandoc, \
+	--reference-doc=$(REF_DOCX) \
+	$(1), $(2))
+endef
+
 %.docx : %.pmd
-	$(call do_pandoc, $<, $@)
+	$(call make_docx, $<, $@)
 
 %.html : %.pmd
 	$(call do_pandoc, $<, $@)
 
 %.pdf : %.pmd
 	$(call do_pandoc, $<, $@, \
-		--latex-engine=xelatex \
+		--pdf-engine=xelatex \
 		-V geometry:margin=1.5cm \
 		-V papersize:a5 \
 		-V mainfont="Times New Roman" \
