@@ -16,6 +16,9 @@ clean:
 	rm -f *.png
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report.$(ext))
 	rm -f $(foreach ext,$(extensions),isp-article.$(ext))
+	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,isp-open.$(ext))
+
+#=
 
 define do_pandoc
 	pandoc \
@@ -36,7 +39,9 @@ endef
 %.pdf : %.pmd
 	$(call do_pandoc, $<, $@, \
 		--latex-engine=xelatex \
-		-V mainfont="Times New Roman"\
+		-V geometry:margin=1.5cm \
+		-V papersize:a5 \
+		-V mainfont="Times New Roman" \
 		-V monofont="Ubuntu Mono" \
 	) || true
 
@@ -78,4 +83,24 @@ report.pdf: report.tex \
  type-reference.png \
  workflow.png \
  workflow-old.png \
+
+#=
+all: isp-open.pdf
+
+isp-open.pdf: isp-open.tex \
+ AM79C971.jpg \
+ C2600.png \
+ c2600_pci_c_chunks.png \
+ gdb-feedback-en.png \
+ device-model-ex-en.png \
+ heuristics-en.png \
+ legend.png \
+ machine-example.png \
+ main-en.png \
+ Q35-h.png \
+ REMOTE.jpg \
+ source-example.png \
+ type-reference.png \
+ workflow-en.png \
+ workflow-old-en.png \
 
