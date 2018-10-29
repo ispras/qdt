@@ -37,7 +37,7 @@ endef
 	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
 %.png : %.svg
-	convert -density 150 $< $@
+	convert -density 300 $< $@
 
 %.png : %.gv
 	dot -Tpng -Gdpi=300 $< -o $@
