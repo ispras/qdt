@@ -1,32 +1,102 @@
-extensions := docx html pdf
+all:
 
-all: $(foreach ext,$(extensions),article.$(ext))
-all: $(foreach ext,$(extensions),isp-article.$(ext))
-
-$(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
-$(foreach ext,$(extensions),isp-article.$(ext)) : C2600.png Q35.png main.png
-
-article.html : PANDOC_ARGS += --css ispras.css
-
-isp-article.html : PANDOC_ARGS += --css ispras.css
+#########################
+# Target specific rules #
+#########################
 
 PANDOC_PATH := PATH="$$HOME/.local/bin/:$$PATH"
 MDP_ARGS := --ispras
 REF_DOCX := ref.docx
+extensions := docx html pdf
+SVG2PNG_DPI := 300
 
+# article (1-st paper, a technical doc, about QDT)
+all : $(foreach ext,$(extensions),article.$(ext))
+
+$(foreach ext,$(extensions),article.$(ext)): \
+ C2600.png \
+ Q35.png \
+ main.png \
+
+article.html : PANDOC_ARGS += --css ispras.css
 article.docx : $(REF_DOCX)
 
+clean : clean-article
+clean-article:
+	rm -f $(foreach ext,$(extensions),article.$(ext))
+
+# isp-article (article variant for ISP RAS proceedings)
+all : $(foreach ext,$(extensions),isp-article.$(ext))
+
+$(foreach ext,$(extensions),isp-article.$(ext)): \
+ C2600.png \
+ Q35.png \
+ main.png \
+
+isp-article.html : PANDOC_ARGS += --css ispras.css
 isp-article.docx : $(REF_DOCX)
 
-clean:
-	rm -f $(foreach ext,$(extensions),article.$(ext))
-	rm -f *.pmd
-	rm -f *.png
-	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report.$(ext))
+clean : clean-isp-article
+clean-isp-article:
 	rm -f $(foreach ext,$(extensions),isp-article.$(ext))
+
+# report (1-st report slides, on ISP RAS internal seminar, 18.10.2017)
+all : report.pdf
+
+report.pdf : report.tex \
+ AM79C971.jpg \
+ C2600.png \
+ c2600_pci_c_chunks.png \
+ device-model.png \
+ device-model-ex.png \
+ gdb-feedback.png \
+ generation.png \
+ heuristics.png \
+ legend.png \
+ machine-example.png \
+ main.png \
+ Q35-h.png \
+ REMOTE.jpg \
+ source-example.png \
+ type-reference.png \
+ workflow.png \
+ workflow-old.png \
+
+clean : clean-report
+clean-report:
+	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report.$(ext))
+
+# isp-open (2-nd report slides, on ISP RAS Open 2017 conference)
+all : isp-open.pdf
+
+isp-open.pdf : isp-open.tex \
+ AM79C971.jpg \
+ C2600.png \
+ c2600_pci_c_chunks.png \
+ gdb-feedback-en.png \
+ device-model-ex-en.png \
+ heuristics-en.png \
+ legend.png \
+ machine-example.png \
+ main-en.png \
+ Q35-h.png \
+ REMOTE.jpg \
+ source-example.png \
+ type-reference.png \
+ workflow-en.png \
+ workflow-old-en.png \
+
+clean : clean-isp-open
+clean-isp-open:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,isp-open.$(ext))
 
-#=
+################
+# Common rules #
+################
+
+clean:
+	rm -f *.pmd
+	rm -f *.png
 
 define do_pandoc
 	$(PANDOC_PATH) \
@@ -62,8 +132,6 @@ endef
 %.pmd : %.md
 	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
-SVG2PNG_DPI := 300
-
 %.png : %.svg
 	if ! convert -density $(SVG2PNG_DPI) $< $@ ; then \
 	  inkscape --without-gui --export-dpi=$(SVG2PNG_DPI) $< --export-png=$@ ; \
@@ -75,46 +143,4 @@ SVG2PNG_DPI := 300
 %.pdf : %.tex
 	pdflatex $< $@ # two step generation
 	pdflatex $< $@
-
-# =
-all: report.pdf
-
-report.pdf: report.tex \
- AM79C971.jpg \
- C2600.png \
- c2600_pci_c_chunks.png \
- device-model.png \
- device-model-ex.png \
- gdb-feedback.png \
- generation.png \
- heuristics.png \
- legend.png \
- machine-example.png \
- main.png \
- Q35-h.png \
- REMOTE.jpg \
- source-example.png \
- type-reference.png \
- workflow.png \
- workflow-old.png \
-
-#=
-all: isp-open.pdf
-
-isp-open.pdf: isp-open.tex \
- AM79C971.jpg \
- C2600.png \
- c2600_pci_c_chunks.png \
- gdb-feedback-en.png \
- device-model-ex-en.png \
- heuristics-en.png \
- legend.png \
- machine-example.png \
- main-en.png \
- Q35-h.png \
- REMOTE.jpg \
- source-example.png \
- type-reference.png \
- workflow-en.png \
- workflow-old-en.png \
 
