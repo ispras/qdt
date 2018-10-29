@@ -36,8 +36,12 @@ endef
 %.pmd : %.md
 	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
+SVG2PNG_DPI := 300
+
 %.png : %.svg
-	convert -density 300 $< $@
+	if ! convert -density $(SVG2PNG_DPI) $< $@ ; then \
+	  inkscape --without-gui --export-dpi=$(SVG2PNG_DPI) $< --export-png=$@ ; \
+	fi
 
 %.png : %.gv
 	dot -Tpng -Gdpi=300 $< -o $@
