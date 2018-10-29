@@ -53,10 +53,14 @@ SVG2PNG_DPI := 300
 %.png : %.gv
 	dot -Tpng -Gdpi=300 $< -o $@
 
+%.pdf : %.tex
+	pdflatex $< $@ # two step generation
+	pdflatex $< $@
+
 # =
 all: report.pdf
 
-report.pdf: \
+report.pdf: report.tex \
  AM79C971.jpg \
  C2600.png \
  c2600_pci_c_chunks.png \
@@ -74,9 +78,4 @@ report.pdf: \
  type-reference.png \
  workflow.png \
  workflow-old.png \
-
-
-report.pdf : report.tex
-	pdflatex $< $@ # two step generation
-	pdflatex $< $@
 
