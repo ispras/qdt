@@ -1,6 +1,6 @@
 extensions := docx html pdf
 
-all: $(foreach ext,$(extensions),article.$(ext)) report.pdf isp-article.html
+all: $(foreach ext,$(extensions),article.$(ext)) isp-article.html
 
 $(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
 
@@ -45,6 +45,9 @@ SVG2PNG_DPI := 300
 
 %.png : %.gv
 	dot -Tpng -Gdpi=300 $< -o $@
+
+# =
+all: report.pdf
 
 report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
 REMOTE.jpg generation.png workflow-old.png device-model.png source-example.png \
