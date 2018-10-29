@@ -146,7 +146,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="296.08717"
+     inkscape:cx="134.30146"
      inkscape:cy="58.782163"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -168,7 +168,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -385,7 +385,7 @@
          sodipodi:role="line"
          id="tspan4630"
          x="37.857143"
-         y="71.647919">Модель файла</tspan><tspan
+         y="71.647919">Модель вёрстки файла</tspan><tspan
          sodipodi:role="line"
          x="37.857143"
          y="86.647919"
@@ -595,7 +595,7 @@
              height="30.714285"
              x="329.28571"
              y="238.79077" /></flowRegion><flowPara
-           id="flowPara5985"></flowPara></flowRoot>      <path
+           id="flowPara5985" /></flowRoot>      <path
          sodipodi:nodetypes="cc"
          inkscape:connector-curvature="0"
          id="path4452-5"
