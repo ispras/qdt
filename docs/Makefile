@@ -6,6 +6,10 @@ all: $(foreach ext,$(extensions),isp-article.$(ext))
 $(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
 $(foreach ext,$(extensions),isp-article.$(ext)) : C2600.png Q35.png main.png
 
+article.html : PANDOC_ARGS += --css ispras.css
+
+isp-article.html : PANDOC_ARGS += --css ispras.css
+
 clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
 	rm -f *.pmd
