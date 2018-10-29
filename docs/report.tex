@@ -67,6 +67,12 @@
 \usepackage[]{url}
 %\MakeShortVerb{!}
 \usepackage{listings}
+\lstset{ %
+    stringstyle=\color{red},
+    extendedchars=\true,
+    inputencoding=utf8,
+    columns=fixed,keepspaces
+}
 \usepackage{enumerate}
 \usepackage{tikz}
 \usepackage{xy}
@@ -94,7 +100,7 @@
 
 \institute[]{ИСП РАН}
 
-\date[]{11 октября 2017}
+\date[]{18 октября 2017}
 
 \begin{document}
 
@@ -105,10 +111,17 @@
 
 
 \begin{frame}{Проблема}
-Разработка моделей устройств и вычислительных машин для QEMU~--- это трудоёмкий
-процесс. В связи с повысившейся заинтересованностью в расширении QEMU новыми
-вычислительными машинами требуется его ускорить. Ускорения предлагается достичь
-за счёт автоматизации.
+\begin{itemize}
+\item Чтобы задействовать все возможности динамического анализа нужен эмулятор с
+поддержкой соответствующей вычислительной машины.
+В данном случае используется эмулятор QEMU.
+\vfill
+\item Разработка моделей устройств и машин для QEMU~--- это трудоёмкий процесс.
+В связи с повысившейся заинтересованностью в расширении QEMU новыми
+машинами, требуется его ускорить.
+\vfill
+\item Ускорения предлагается достичь за счёт автоматизации.
+\end{itemize}
 \end{frame}
 
 
@@ -117,13 +130,13 @@
 Целью работы является автоматизация процесса разработки моделей устройств и
 вычислительных машин для эмулятора QEMU.
 
-\vskip.5cm
+\vfill
 
 {Для достижения поставленной цели были выполнены следующие задачи:}
 
 \begin{itemize}
-\item поиск в исследуемом процессе автоматизируемых этапов;
-\item разработка и реализация методов автоматизации;
+\item анализ QEMU и поиск в исследуемом процессе автоматизируемых этапов;
+\item разработка и реализация метода автоматизации;
 \item повышение удобства использования реализованного инструмента.
 \end{itemize}
 \end{frame}
@@ -135,7 +148,11 @@
 \sectionpagekb
 \begin{itemize}
 \item Процесс до автоматизации и его особенности
-\item Автоматизированный процесс
+\item Объектная модель QEMU (QOM)
+\item Особенности API QEMU для моделирования устройств и компоновки виртуальных
+машин (VM)
+\item Предлагаемый автоматизированный процесс
+\item Похожие результаты
 \end{itemize}
 \end{frame}
 
@@ -145,6 +162,63 @@
 \begin{center}
 \includegraphics[height=0.8\textheight]{workflow-old.png}
 \end{center}
+\end{frame}
+
+
+
+\begin{frame}{Основные сложности}
+\begin{itemize}
+\item Пока нет большинства устройств, скомпоновать машину нельзя.
+\item Устройство <<в вакууме>> ограничено в отладке. Чтобы отлаживать
+устройство необходимо внедрить его в машину и запустить в ней ПО.
+\item Модели содержат много однотипного формального кода, который приходится
+писать, копировать и править для каждой модели.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Объектная модель QEMU (QOM)}
+\begin{minipage}{0.49\textwidth}
+\dirtree{%
+.1 object .
+    .2 machine .
+    .2 device .
+        .3 sys-bus-device .
+            .4 модельный ряд .
+               .5 конкретное\\устройство .
+        .3 pci-device .
+        .3 cpu, {...} .
+    .2 bus .
+        .3 PCI .
+            .4 PCIE .
+        .3 System .
+        .3 usb-bus, {...}.
+    .2 irq .
+    .2 qemu:memory-region .
+}
+\hfill
+\end{minipage}
+\hfill
+\begin{minipage}{0.49\textwidth}
+\begin{itemize}
+\item ООП на Си (похоже на gobject из Gnome library)
+\item Базовое понятие ---~тип~(type)
+\item тип =~\textit{класс}~(class) +~\textit{экземпляр}~(instance)
+\item класс/экземпляр =~\textit{структура}~(\texttt{struct}, Си)
++~\textit{конструктор}~(функция обратного вызова, Си)
+\item \texttt{object} ---~один из типов, добавляющий
+\textit{свойства}~(property) к классу и экземпляру
+\end{itemize}
+\end{minipage}
+\end{frame}
+
+
+
+\begin{frame}{API QEMU для моделирования устройства}
+\includegraphics[width=\linewidth]{device-model-ex.png}
+\vfill
+\it{*Стрелками показано распространение данных.}
 \end{frame}
 
 
@@ -170,8 +244,29 @@
 \end{frame}
 
 
+\begin{frame}[fragile]{Типовой способ компоновки VM}
+\lstset{language=C}
+\begin{lstlisting}
+/* Создание экземпляра устройства. */
+dev = qdev_create(parent_bus, QOM_TYPE_NAME);
+/* Задание свойств. */
+object_property_set_TYPE(dev,
+                         PROP_VALUE, PROP_NAME,
+                         ...);
+/* " Реализация" экземпляра устройства. */
+qdev_init_nofail(dev);
+/* Отображение регистров. */
+sysbus_mmio_map(dev, REG_INDEX, REG_ADDRESS);
+/* Связывание прерываний. */
+my_incoming_irq = qdev_get_gpio_in(dev,
+                                   IN_IRQ_INDEX);
+sysbus_connect_irq(dev, OUT_IRQ_INDEX,
+                   neighbour_incoming_irq);
+\end{lstlisting}
+\end{frame}
 
-\begin{frame}{Особенности разработки ВМ}
+
+\begin{frame}{Особенности компоновки VM}
 
 \begin{itemize}
 \item Декларативный характер определения
@@ -181,8 +276,8 @@
 \end{itemize}
 
 \begin{center}
-Можно разработать графический редактор, генерирующий {\it{}почти}
-работоспособную модель.
+Требуется отобразить VM на схеме в графическом редакторе.
+Редактор должен генерировать заготовку модели машины.
 \end{center}
 
 \end{frame}
@@ -195,15 +290,34 @@
 
 
 
+\begin{frame}[fragile]{Похожие результаты}
+\begin{center}
+\begin{tabular}{l|ccc}
+Эмулятор/  & \multicolumn{2}{c}{Прототипирование} & Автоматизация            \\
+Симулятор  & GUI & API                            &                          \\
+\hline
+Simics     &  +  & C++, Python                    & DML \(\rightarrow\) C++  \\
+AMD SimNow &  +  & C++                            & -                        \\
+gem5       &  -  & C++, Python                    & -                        \\
+OVPSim     &  -  & C                              & TCL \(\rightarrow\) C    \\
+QEMU       &  -  & C                              & -                        \\
+\end{tabular}
+\end{center}
+\end{frame}
+
+
+
 \section{Разработанный инструмент}
 \begin{frame}{}
 \sectionpagekb
 \begin{itemize}
 \item Архитектура
-\item Возможности
-\item Графический интерфейс пользователя (GUI) и API
+\item Формат хранения настроек генерации
+\item Задание параметров генерации заготовок устройств и машин
+\item Графический интерфейс пользователя (ГИП)
 \item Особенности генерации кода
-\item Обратная связь из QEMU
+\item Вспомогательные модели генератора кода
+\item Взаимосвязь с существующим кодом QEMU
 \end{itemize}
 \end{frame}{}
 
@@ -211,6 +325,30 @@
 \begin{frame}{}
 \includegraphics[width=\linewidth]{main.png}
 \end{frame}
+
+
+
+\begin{frame}{Формат хранения настроек генерации заготовок}
+Настройки хранятся в форме кода на Python.
+\vfill
+\dirtree{%
+.1 object .
+    .2 QProject .
+        .3 GUIProject .
+    .2 QOMDescription .
+        .3 SysBusDeviceDescription .
+        .3 PCIExpressDeviceDescription .
+        .3 MachineNode .
+}
+\vfill
+\texttt{object} --- базовый класс языка Python.\\
+\texttt{QProject} --- контейнер с описаниями заготовок.\\
+\texttt{GUIProject} --- дополнительные настройки для ГИП.\\
+\texttt{QOMDescription} --- базовый класс для хранения настроек генерации
+конкретной заготовки.\\
+\texttt{MachineNode} --- контейнер для описания состава машины.
+\end{frame}
+
 
 
 
@@ -237,7 +375,29 @@ PCI(E)           & out IRQ (INTx) \\
 
 
 
-\begin{frame}{GUI настройки генерации устройства}
+\begin{frame}[fragile]{Пример кода настройки генерации устройства}
+\begin{center}
+Собирательное устройство <<CISCO Remote>> из С2600
+\end{center}
+\lstset{language=Python}
+\begin{lstlisting}
+obj43 = SysBusDeviceDescription(
+    name = "CISCO Remote", # имя модели
+    directory = "char",    # папка модели
+# Параметры генерации заготовок API QEMU
+#    out_irq_num = 0,      - значения по умолчанию
+#    in_irq_num = 0,         явно указывать не нужно
+    mmio_num = 0x1,
+#    pio_num = 0,
+#    nic_num = 0,
+#    timer_num = 0,
+    char_num = 0x1,
+    block_num = 0x1
+)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Пример настройки генерации устройства в ГИП}
 \begin{center}
 PCI Fast Ethernet контроллер из С2600
 \end{center}
@@ -246,30 +406,9 @@ PCI Fast Ethernet контроллер из С2600
 
 
 
-\begin{frame}[fragile]{Код настройки генерации устройства}
+\begin{frame}[fragile]{Описание состава виртуальной машины}
 
-\lstset{language=Python}
-\begin{lstlisting}
-obj43 = SysBusDeviceDescription(
-    name = "CISCO remote",
-    directory = "char",
-    out_irq_num = 0,
-    in_irq_num = 0,
-    mmio_num = 0x1,
-    pio_num = 0,
-    nic_num = 0,
-    timer_num = 0,
-    char_num = 0x1,
-    block_num = 0x1
-)
-\end{lstlisting}
-
-\end{frame}
-
-
-
-\begin{frame}[fragile]{API компоновки вычислительной машины}
-
+\begin{minipage}{0.61\textwidth}
 \dirtree{%
 .1 Node .
     .2 BusNode .
@@ -287,32 +426,57 @@ obj43 = SysBusDeviceDescription(
             .4 MemoryRAMNode .
             .4 MemoryROMNode .
 }
+\end{minipage}
+\begin{minipage}{0.37\textwidth}
+Иерархия основана на API QEMU.\\
+ \\
+Шины и устройства наследуются по принадлежности к стандарту шины.\\
+ \\
+\texttt{IRQHub} --- абстракция, позволяющая доставить одно прерывание к
+нескольким устройствам.
+\end{minipage}
 \end{frame}
 
 
 
-\begin{frame}{Схема вычислительной машины}
-\begin{minipage}[b]{0.71\textwidth}
-\includegraphics[width=\linewidth]{machine-example.png}
+\begin{frame}[fragile]{Особенности API компоновки VM}
+Параметры интеграции элементов задаются при создании объекта (обрабатываются
+конструктором).\\
+\lstset{language=Python}
+\begin{lstlisting}
+PCIExpressDeviceNode(
+    qom_type,            # имя типа устройства (QOM)
+    pci_express_bus,     # родительская шина
+    slot, function,      # адрес на шине
+    *a, **kw             # прочие параметры
+)
+\end{lstlisting}
 \vfill
+Ввиду возможности циклических связей между объектами, \textit{\textbf{после}}
+создания объекта добавляются следующие параметры:
+\begin{itemize}
+\item \textit{для устройств}: свойства и связи с дочерними шинами;
+\item \textit{для памяти}: вложенность участков.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Общий вид схемы машины}
+\begin{minipage}[b]{0.71\textwidth}
+\includegraphics[width=\linewidth]{machine-example.png}\\
+(упрощенная схема типового криптомаршрутизатора)
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.24\textwidth}
-\vfill
-\includegraphics[width=\linewidth]{legend.png}
+\includegraphics[width=\linewidth]{legend.png}\\
+обозначения
 \end{minipage}
 \end{frame}
 
 
 
-\begin{frame}{GUI настройки интеграции устройства}
-\includegraphics[height=0.9\textheight]{REMOTE.jpg}
-\end{frame}
-
-
-
-\begin{frame}[fragile]{Код настройки интеграции устройства}
-
+\begin{frame}[fragile]{Пример кода настройки интеграции устройства}
 \lstset{language=Python}
 \begin{lstlisting}
 obj3 = SystemBusDeviceNode(
@@ -332,6 +496,117 @@ obj3.properties.extend([
 ])
 \end{lstlisting}
 
+\end{frame}
+
+
+
+\begin{frame}{Пример настройки интеграции устройства в ГИП}
+\includegraphics[height=0.9\textheight]{REMOTE.jpg}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Пример кода настройки интеграции шины}
+\lstset{language=Python}
+\begin{lstlisting}
+obj18 = PCIExpressBusNode(
+    host_bridge = obj13,
+    var_base = "pci"
+)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Нужно указать только мост (родительское устройство).
+\item Устройства-дети привязываются при создании этих устройств.
+\item Параметров генерации шины много, но все они задаются при наследовании:
+\end{itemize}
+\vfill
+\lstset{language=Python}
+\begin{lstlisting}
+class BusNode(Node):
+    def __init__(self, parent = None,
+        c_type = "BusState", cast = "BUS",
+        child_name = "bus", force_index = True,
+        var_base = "bus", **kw
+    ):
+\end{lstlisting}
+\end{frame}
+
+
+
+\begin{frame}{Пример настройки интеграции шины в ГИП}
+\begin{center}
+\includegraphics[width=0.7\linewidth]{bus_widget.jpg}
+\end{center}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Пример кода настройки линии IRQ}
+\lstset{language=Python}
+\begin{lstlisting}
+obj31 = IRQLine(
+    src_dev = obj13,
+    dst_dev = obj12,
+    src_irq_idx = "3",
+    dst_irq_idx = "3",
+    dst_irq_name = "SYSBUS_DEVICE_GPIO_IRQ"
+)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Точки подключения прерываний к устройству собраны в
+\textit{\textbf{именованные}}
+группы.
+\item Внутри группы точки \textit{\textbf{нумеруются}}, начиная с \texttt{0}.
+\item Если имя группы не указано, то подразумевается
+\texttt{"unnamed-gpio-in"} / \texttt{"*-out"}.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Пример настройки линии IRQ в ГИП}
+\begin{center}
+\includegraphics[height=0.8\textheight]{irq_widget.jpg}
+\end{center}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Пример кода настройки интеграции памяти}
+\lstset{language=Python}
+\begin{lstlisting}
+alias = MemoryAliasNode(
+    name = "test_alias", # отладочное имя
+    size = 0x1000,       # собственный размер
+
+    alias_to = isa_bios, # cсылается на адрес 0x4000
+    offset = 0x4000      # относительно начала
+)                        # isa_bios
+
+pci_as.add_child(        # включение alias в участок
+    child = alias,       # pci_as со смещением
+    offset = 0xdeadbeef, # 0xdeadbeef и низким
+    priority = -1        # приоритетом
+)
+\end{lstlisting}
+\end{frame}
+
+
+
+\begin{frame}{Пример настройки интеграции памяти в ГИП}
+\begin{center}
+\includegraphics[height=0.7\textheight]{test_alias.jpg}
+\end{center}
+\end{frame}
+
+
+
+\begin{frame}{Пример дерева памяти в ГИП}
+\begin{center}
+\includegraphics[width=\textwidth]{memory_tree.jpg}
+\end{center}
 \end{frame}
 
 
@@ -356,13 +631,13 @@ obj3.properties.extend([
 
 
 
-\begin{frame}{Устройство генератора}
+\begin{frame}{Вспомогательные модели генератора}
 \includegraphics[height=0.9\textheight]{generation.png}
 \end{frame}
 
 
 
-\begin{frame}{Модель языка программирования}
+\begin{frame}{Модель гибридного языка}
 \dirtree{%
 .1 object .
     .2 Source\ \ \ \ \ \ \ \ \ \ \ \ \ - контейнер.
@@ -378,11 +653,234 @@ obj3.properties.extend([
     .2 Initializer\ \ \ \ \ \ \ \ \ \ \ \ \{ + начальное значение \}.
     .2 Usage\ \ \ \ \ \ \ \ \ \ \ \ \ \ - Type/Variable + Initializer.
 }
+
+\vfill
+Модель описывает содержимое файла с исходным кодом.
 \end{frame}
 
 
 
-\begin{frame}{Пример модели исходного кода}
+\begin{frame}[fragile]{Тип}
+\lstset{language=Python}
+\begin{lstlisting}
+Type(name, incomplete = True, base = False)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item \texttt{name} --- уникальный строковый идентификатор; совпадает с
+    именем соответствующего Си-типа, функции или макроса.
+\item \texttt{incomplete} --- нельзя создать \textit{переменную} такого типа, но
+    можно создать \textit{указатель} на такой тип или зависимость от него. Все
+    классы-потомки являются завершёнными.
+\item \texttt{base} --- тип не зависит от других типов: не требуется
+    генерировать код, обеспечивающий его <<видимость>>.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Указатель}
+\lstset{language=Python}
+\begin{lstlisting}
+Pointer(_type, name = None, const = False)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Описывает указатель на Си-тип или функцию (\texttt{\_type}).
+\item \texttt{name} --- позволяет создать \textit{именованный} указатель,
+    например:\\
+
+\lstset{language=C}
+\begin{lstlisting}
+typedef const char * pstr_t;
+typedef int (*my_callback_t) (char, void *);
+\end{lstlisting}
+
+    Имя именованного указателя --- это имя типа: оно должно быть уникально.
+    Безымянные указатели такого ограничения не имеют и используются в
+    конструкциях вида:
+
+\lstset{language=C}
+\begin{lstlisting}
+const char *my_string;
+int *p;
+\end{lstlisting}
+
+
+\item \texttt{const} --- создаёт указатель на константу.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Переменная}
+\lstset{language=Python}
+\begin{lstlisting}
+Variable(name, _type, initializer = None,
+         static = False, array_size = None)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Описывает глобальную переменную, поле структуры, аргумент функции и др.
+\item \texttt{name}, \texttt{initializer} --- имя переменной и инициализатор;
+    использование этих значений при генерации зависит от типа (\texttt{\_type}).
+\item \texttt{static} --- соответствующее ключевое слово.
+\item \texttt{array\_size} --- позволяет создать массив, указав его размер;
+    Ноль соответствует безразмерному массиву.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Структура}
+\lstset{language=Python}
+\begin{lstlisting}
+Structure(name, fields = None)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Структура соответствует конструкции \texttt{struct} языка Си.
+\item \texttt{name} --- имя структуры, используется при генерации код.
+\item \texttt{fields} --- список полей; поле описывается \textit{переменной}.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Функция}
+\lstset{language=Python}
+\begin{lstlisting}
+Function(name, ret_type = None, args = None,
+  static = False, inline = False,
+  body = None, used_types = [], used_globals = [])
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Описывает функцию из языка Си и применяется при описании указателей на
+    функции.
+\item \texttt{ret\_type} --- тип возвращаемого значения.
+\item \texttt{args} --- список аргументов, описываемых \textit{переменными}.
+\item \texttt{static}, \texttt{inline} --- соответствующие ключевые слов.
+\item \texttt{body} --- тело функции, задаваемое строкой.
+\item \texttt{used\_types}, \texttt{used\_globals} --- ссылки на типы и
+    глобальные переменные, используемые в теле.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Перечисление}
+\lstset{language=Python}
+\begin{lstlisting}
+Enumeration(type_name, elems_dict, enum_name = "")
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Описывает конструкцию \texttt{enum} языка Си.
+\item \texttt{type\_name} --- формальное уникальное имя типа, а
+    \texttt{enum\_name} --- имя, используемые при генерации конструкции
+    \texttt{enum} (может отсутствовать).
+\item \texttt{elems\_dict} --- словарь соответствия элементов перечисления
+    целым числам. По словарю автоматически создаются переменные типа
+    \texttt{int}, инициализированные указанными числами. В реализации
+    интерфейса элементы описываются этими переменными.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Макрос (макроопределение)}
+\lstset{language=Python}
+\begin{lstlisting}
+Macro(name, args = None, text = None)
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Описывает макрос, определяемый директивой \texttt{\#define} препроцессора.
+\item \texttt{name} --- имя* макроса.
+\item \texttt{args} --- список имён аргументов параметризованного макроса.
+\item \texttt{text} --- соответствующая подстановка.
+\end{itemize}
+\vfill
+
+\lstset{language=C}
+\begin{lstlisting}
+#define name(arg1, arg2) text
+#define name text /* когда args is None */
+\end{lstlisting}
+
+\vfill
+
+\textit{*В общем случае имена макросов и типов Си могут совпадать, но это
+предотвращено правилами написания кода QEMU. Поэтому макросы могут содержаться
+вместе с типами Си в рамках данной модели.}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Инициализатор}
+\lstset{language=Python}
+\begin{lstlisting}
+Initializer(code, used_types = [],
+            used_variables = [])
+\end{lstlisting}
+\vfill
+\begin{itemize}
+\item Содержит данные для инициализации переменной, элемента перечисления,
+    генерации вызова макроса.
+\item \texttt{code} --- инициализирующее значение; для макроса и структуры
+    --- словарь \{строка \(\rightarrow\) строка\}, для остальных --- строка.
+\item \texttt{used\_types}, \texttt{used\_variables} --- типы и глобальные
+    переменные, используемые в инициализирующем значении.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Использование}
+\lstset{language=Python}
+\begin{lstlisting}
+Usage(var, initializer = None)
+\end{lstlisting}
+\vfill
+
+\begin{itemize}
+\item Используется для генерации присваивания значения переменной или
+    \textit{вызова макроса}*.
+\item \texttt{var} --- переменная;
+\item \texttt{initializer} --- инициализатор.
+\end{itemize}
+
+\vfill
+\textit{*\textbf{Раскрытие} макроса при генерации не происходит: генерируется
+только вызов.}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Ссылка на тип (\texttt{TypeReference})}
+При включении (\texttt{\#include}) одного файла в другой, включающий
+содержит все типы включаемого. \texttt{TypeReference} используется для
+отличия собственных типов от чужих, включённых.
+
+\vfill
+
+\begin{center}
+\includegraphics[height=0.31\textheight]{type-reference.png}
+\end{center}
+
+\vfill
+
+Когда один тип в своём коде использует другой тип, то появляется
+\textit{зависимость} между типами.
+При зависимости от чужого типа, для её разрешения, генерируется включение
+соответствующего заголовка, а при зависимости от своего типа
+генерируется его код.
+\end{frame}
+
+
+
+\begin{frame}{Пример описания содержимого файла}
 Устройство с одним регистром\\
 \vfill
 \begin{center}
@@ -392,11 +890,12 @@ obj3.properties.extend([
 
 
 
-\begin{frame}{Модель файла с исходным кодом}
+\begin{frame}{Пример вёрстки файла с исходным кодом}
 \begin{minipage}{0.61\textwidth}
-\includegraphics[width=\linewidth]{c2600_pci_c_chunks.png}
+\includegraphics[width=1.15\linewidth]{c2600_pci_c_chunks.png}
 \end{minipage}
-\begin{minipage}{0.37\textwidth}
+\hfill
+\begin{minipage}{0.34\textwidth}
 \begin{itemize}
 \item Топологическая сортировка
 \item Семантическая сортировка
@@ -444,14 +943,14 @@ obj3.properties.extend([
 \item Цель эксперимента~--- убедиться в эквивалентности предельных возможностей
 предлагаемого метода (по сравнению с классическим, ручным).
 \item Многие устройства в QEMU уже присутствовали.
-\item Остальные были реализованы в соответствии с действующими требованиями
+\item Остальные были приведены в соответствие с действующими требованиями
 QEMU при помощи инструмента.
 \end{itemize}
 \end{frame}
 
 
 
-\begin{frame}{}
+\begin{frame}{Схема Q35}
 \begin{center}
 \includegraphics[width=\linewidth]{Q35-h.png}
 \end{center}
@@ -539,26 +1038,47 @@ AM79C971          & 12                 & 175           \\
 
 
 
-\section{Результаты}
+\section{Заключение}
 \begin{frame}
 \sectionpagekb
-\vfill
 \begin{itemize}
-\item Автоматизирован начальный этап разработки машины и устройства
-\item Настройка генерации осуществляется на языке Python
-\item Объём настройки генерации заготовки устройства в 11-25 раз меньше объёма
-сгенерированной заготовки
-\item Разработан GUI, в т.ч. с визуализацией машины в виде схемы
-\item Поддерживается разработка машин, сравнимых по сложности с Intel Q35
-\item Доля сгенерированного кода составляет от \(1/4\) до \(3/4\) в зависимости
-от количества уже реализованных устройств
-\item Реализована обратная связь из QEMU
+\item Результаты
+\item Дальнейшая работа
 \end{itemize}
 \end{frame}
 
 
 
-\begin{frame}
+\begin{frame}{Результаты}
+\begin{itemize}
+\item Автоматизирован начальный этап разработки модели машины и устройства.
+\item Настройка генерации осуществляется на языке Python.
+\item Объём настройки генерации заготовки устройства в 11-25 раз меньше объёма
+сгенерированной заготовки.
+\item Разработан ГИП, включающий редактор машины, представленной в виде схемы.
+\item Поддерживается разработка моделей машин, сравнимых по сложности с
+Intel Q35.
+\item Доля сгенерированного кода составляет от \(1/4\) до \(3/4\) в зависимости
+от количества уже реализованных устройств.
+\item Реализована взаимосвязь с существующим кодом QEMU, включая поддержку
+разных версий API.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Дальнейшая работа}
+Отладочная обратная связь из запущенного эмулятора с информацией времени
+выполнения.
+\vfill
+\begin{center}
+\includegraphics[width=0.8\textwidth]{gdb-feedback.png}
+\end{center}
+\end{frame}
+
+
+
+\begin{frame}{Конец}
 \begin{center}
 Спасибо за внимание
 \end{center}
