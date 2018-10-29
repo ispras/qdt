@@ -90,6 +90,17 @@ clean : clean-isp-open
 clean-isp-open:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,isp-open.$(ext))
 
+# registers (paper about device register model of QDT, for Ivannikov Memorial
+# Workshop 2018)
+all : registers.pdf
+
+registers.pdf : registers.tex \
+ IEEEtran.cls \
+
+clean : clean-registers
+clean-registers:
+	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,registers.$(ext))
+
 ################
 # Common rules #
 ################
