@@ -1,15 +1,17 @@
 extensions := docx html pdf
 
-all: $(foreach ext,$(extensions),article.$(ext)) isp-article.html
+all: $(foreach ext,$(extensions),article.$(ext))
+all: $(foreach ext,$(extensions),isp-article.$(ext))
 
 $(foreach ext,$(extensions),article.$(ext)) : C2600.png Q35.png main.png
+$(foreach ext,$(extensions),isp-article.$(ext)) : C2600.png Q35.png main.png
 
 clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
 	rm -f *.pmd
 	rm -f *.png
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report.$(ext))
-	rm -f isp-article.html
+	rm -f $(foreach ext,$(extensions),isp-article.$(ext))
 
 define do_pandoc
 	pandoc \
