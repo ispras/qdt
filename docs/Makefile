@@ -15,6 +15,7 @@ clean:
 
 define do_pandoc
 	pandoc \
+	$(PANDOC_ARGS) \
 	$(3) \
 	--standalone \
 	--smart \
