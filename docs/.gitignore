@@ -17,6 +17,7 @@ report.toc
 report.vrb
 report.dvi
 device-model.png
+device-model-ex.png
 generation.png
 workflow.png
 workflow-old.png
@@ -26,4 +27,6 @@ legend.png
 source-example.png
 Q35-h.png
 heuristics.png
+gdb-feedback.png
+type-reference.png
 
