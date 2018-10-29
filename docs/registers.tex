@@ -1,0 +1,586 @@
+\documentclass[conference,compsoc,a4paper]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{multirow}
+
+\ifCLASSOPTIONcompsoc
+  % IEEE Computer Society needs nocompress option
+  % requires cite.sty v4.0 or later (November 2003)
+  \usepackage[nocompress]{cite}
+\else
+  % normal IEEE
+  \usepackage{cite}
+\fi
+
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+\begin{document}
+
+\title{Peripheral device register support for\\%
+source code boilerplate generator of\\%
+QEMU Development Toolkit}
+
+
+% author names and affiliations
+\author{
+    \IEEEauthorblockN{
+        Vasily Efimov\IEEEauthorrefmark{1},
+        Vartan Padaryan\IEEEauthorrefmark{1}\IEEEauthorrefmark{2}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{1}
+        Ivannikov Institute for System Programming of the RAS,
+        ul. Solzhenitsyna 25, Moscow, 109004 Russia}
+    \IEEEauthorblockA{\IEEEauthorrefmark{2}
+        Moscow State University, Moscow, 119991 Russia
+        Email: \{real, vartan\}@ispras.ru}
+}
+
+
+\maketitle
+
+\begin{abstract}
+QEMU emulator is used together with different security tools to solve problems
+where maximum control over virtual machine is required.
+Absence of a proper VM with specific devices is a widespread issue.
+Also, development of a new virtual device (device model) is a error prone and
+time consuming process.
+The QEMU Development Toolkit (QDT) can be  used to simplify the first
+stage of this process by generating boilerplate code for models.
+Currently QDT can generate the bulk of device model code.
+The paper discusses some extensions of QDT capabilities.
+A device register model was added.
+The register model allows to generate extra code for frequently met
+device register behavior patterns.
+The model is implemented as an  extension to QDT device description
+API in Python.
+Evaluation showed that size of device register description is half of
+C-code boilerplate generated from it.
+The register description is gathered in one place, that's more convenient
+for developer whereas generated code is spread across the boilerplate.
+\end{abstract}
+
+\begin{IEEEkeywords}
+QEMU, boilerplate generation, device semantic.
+\end{IEEEkeywords}
+
+
+\IEEEpeerreviewmaketitle
+
+
+\section{Introduction}
+The QEMU \cite{QEMU} emulator is used together with different security tools
+for problems where
+maximum control over virtual hardware is required, such as malware reverse
+engineering,
+vulnerability searching \cite{QEMUIdDynAn} and so on.
+While there had been efforts to improve emulator infrastructure
+\cite{QEMU-min-replay},
+in practice there is lack of specialized virtual platforms.
+For example, the diversity of the IoT leads to the situation that the security
+analysis of every new device will be preceded by development of an appropriate
+VM.
+Such a situation unacceptably delays practical results, because existing
+practices of development of a new VM for QEMU last up to a year.
+The QEMU Development Toolkit (QDT) \cite{QDT} had been proposed to simplify and
+speed up the VM development.
+The initial version could generate the bulk of code of a device model
+boilerplate.
+This paper discusses additional features that were implemented in QDT; a device
+register model was added.
+The register model extends capabilities of the device register bank boilerplate
+generator adding extra code for implementation of frequently encountered device
+register behavior.
+
+This paper first presents a brief overview of the way QEMU models devices.
+It is followed by an explanation of the device boilerplate generator
+capabilities.
+Then, the proposed device register model is explained.
+
+\section{Devices in QEMU}
+
+This section describes both QEMU approach to device modelling and the tricks
+QDT uses to generate device source code boilerplates.
+In course of it the aspects of developer job improved by this work are
+designated.
+
+A device in QEMU is a set of functions (handlers) and structures initialized
+with those functions addresses and related data.
+QEMU infrastructure uses this information to bring the device to operation.
+Each function serves its specific purpose.
+In other words, device model is event driven.
+
+Given a developer preferences, QDT generates those functions and structures.
+Device boilerplate generation is based on \textit{templates} (do not confuse
+with C++ templates).
+A template is a parameterized format string.
+But frequently a device feature is a set of templates with a complicated
+interrelation.
+Interrelations may be between different features too.
+Those of this kind are normally much complicated than feature inner
+interrelations.
+A code in C language is produced by assigning values to template parameters.
+
+Unfortunately, there is no advanced semantic related preferences.
+Hence, function bodies are often quite empty and structures are filled with
+example values.
+
+This work makes a step towards this problem by introducing the device register
+model which is actually some kind of device semantic description.
+By using of this register information QDT generates much more code than
+originally.
+
+\subsection{Device operation}
+
+The life cycle of a basic QEMU virtual device consists of four stages:
+instantiation, resetting, normal operation and destruction.
+
+\subsubsection{Instantiation and destruction}
+Instantiation is split onto initialization and realization.
+Symmetrically, destruction is split onto \textit{un}realization and finalization.
+
+During initialization the handler should configure device operation aspects
+whose do depend neither on external conditions nor runtime.
+A good example is \textit{properties} declaration.
+A property services for configuration of the device by machine instantiation
+code.
+Examples of property purposes are:
+
+\begin{itemize}
+    \item file-image (block device namely) assignment for a ROM device,
+    \item NIC connection to an emulated hub (which is normally connected
+    to either TAP or a host NIC at other port),
+    \item UART (serial interface) connection to a virtual terminal
+    emulator, file, network socket etc.,
+    \item device specific operation mode setting and so on.
+\end{itemize}
+
+It is guaranteed that no property is changed after device is realized.
+In other words, all property initializations are made between calls of the
+initialization handler and the realization handler.
+Except properties, there are other examples of initilization handler code.
+They will be given below during explanation of other device parts.
+
+Realization handler should made all rest work excluding resetting of
+runtime device parameters.
+It is responsibility of reset handler.
+Normally, realization handler contains code that depends on property
+values.
+
+Unrealization handler removes device references to other board components
+and finalization handler frees extra heap memory.
+Note that the memory block allocated for the device itself is freed by
+QEMU infrastructure.
+
+Initially, the bodies of initialization, realization, unrealization and
+finalization handlers are empty.
+But there are many other templates that require a code to be executed
+during those handlers.
+As a result, a generated content of them are normally far from few lines.
+
+\subsubsection{Resetting}
+
+Reset handler brings the device to an initial state according to
+its documentation.
+Many boards support runtime reset by both hardware and software causes.
+So, this handler is often called several times.
+
+Some device features need to be reseted and corresponding templates do
+add its specific code to the handler.
+Going forward, because of device registers must be reseted the feature
+added by this work increases size of reset handler boilerplate much.
+
+\subsubsection{Normal operation}
+
+There is no explicit handler for normal operation.
+Instead there are many handlers declared during instantiation.
+QEMU infrastructure calls them when needed.
+Each of those handlers corresponds to a device feature.
+
+\subsection{Device features}
+
+A device model is a composition of features whose all together emulate
+device behaviour.
+The features supported by QDT boilerplate generator is described below.
+
+\subsubsection{State structure}
+
+The state of a device is held into a structure.
+The behaviour of all device features depends on current state.
+Hence, the content of this structure is touched by almost all
+the feature templates.
+QDT has a simple template of state structure and other templates
+do fill it during generation.
+
+\subsubsection{State snapshot}
+
+Some fields of state structure are changed dynamically during normal
+operation.
+Because QEMU supports snapshot mechanism, the device model should
+declare such fields in the state description variable and pass it
+to the emulator during instantiation.
+QDT meets this requirements using an empty template, which is
+filled by other feature templates.
+
+\subsubsection{Registers}
+
+Registers are used by a device to exchange data with other machine
+components.
+For instance, those components are CPU and DMA controller.
+Registers are frequently joined in banks.
+A register bank cowers a segment of the device bus address space.
+Name of register banks are differing from one bus standard to another.
+For example, registers of system bus are called ``MMIO''
+(memory mapped input/output).
+Legacy LPC registers of IBM PC architecture is called ``PIO''
+(programmable input/output).
+PCI registers have name ``BAR'' (base address register).
+Whatever bus, QEMU uses the same approach for register bank
+implementation.
+
+A register bank is defined by both read and write handlers.
+Any time a something in the system accessed the register bank,
+the corresponding handler is called.
+Except handlers, there is a structure and a code in
+instantiation handlers.
+QDT does generate boilerplates for all this items.
+
+The handler body is usually a big \texttt{switch} block.
+Each \texttt{case} of which corresponds to a register of the bank.
+Originally, QDT generated only \texttt{default} statement which prints
+the message about an unimplemented access.
+Also, registers must have corresponding fields in both state structure
+and state declaration.
+
+Before this work, a developer have to do the tedious job of
+filling this all by hands.
+This is because there were no semantic information about a register
+bank.
+But some regular signatures of registers were discovered and the register
+model was developed.
+It is described in details in the separated section below.
+
+\subsubsection{Interrupt requests}
+
+IRQ is a way device uses to notify software about some event.
+Some devices (like an interrupt controller or a bus bridge) have input
+IRQs too.
+Input IRQ does require a handler.
+Also using of this feature extends instantiation handlers and the
+state structure.
+QDT provides this automatically.
+
+During emulation of IRQ behaviour the register state is frequently
+affected from within handler of any related feature.
+This is implemented by developer hands.
+Therefore, it is very handy when the register already have a field in the
+state structure.
+
+\subsubsection{Timers}
+
+In a real device a timer is a register that is being decremented or
+incremented each tick of the clock.
+When the register reaches some value an event happened.
+But QEMU does not emulates clock ticking so precise.
+Instead a device model should evaluate the time at which this event will
+took place and schedule a handler to be called.
+This handler does execute required actions.
+
+In other words, a timer in QEMU is a callback function with specific
+descriptor.
+Normally, timers are used to implement IRQ raising behaviour.
+Of course, some registers are involved in the process.
+
+QDT does generate a simple handler, auxiliary code in both instantiation
+and destruction handlers, and fields in both state description and
+state structure.
+But implementation of register value accounting is up to a developer.
+So, registers are desired to be implemented already.
+
+\subsubsection{Other features}
+
+There are other features supported by the QDT device boilerplate generator
+including:
+
+\begin{itemize}
+    \item character device (used to implement serial interfaces),
+    \item block device (used to implement ROMs),
+    \item network interface abstraction.
+\end{itemize}
+
+The registers are used by all of them.
+And the goal of this work is to provide those registers in the boilerplate
+before future development started.
+
+\section{Device registers}
+
+Basing on experience of device models development a several frequently
+encountered register behaviour signatures were discovered.
+The formal model was invented.
+This model does not covers all aspects of register semantic.
+Instead it is used to automatically generate some frequent patterns.
+
+The model is implemented as an optional extension to device description
+of QDT.
+Recall that QDT is written in Python and uses this language for
+configuration files too.
+In other words, this work extends API which QDT used for device
+boilerplate description.
+
+The register model provides formal way for register bank definition.
+Register bank is given by a list of register descriptors.
+Order of the descriptors is significant because of it is used to build
+\texttt{switch} block of handlers.
+Each descriptor contains information given below.
+
+\begin{itemize}
+    \item \textit{Short name} is used to evaluate a name for state structure
+    field.
+    \item \textit{Long name} is used in automatically generated comments for
+    a developer.
+    \item \textit{Size} is used to choose appropriate type
+    for state structure field, macro for state description record,
+    and to build \texttt{switch} blocks of handlers.
+    \item \textit{Initial value} is loaded into the register during device
+    resetting.
+\end{itemize}
+
+Other information held in a register descriptor configures semantic.
+There are four semantic classes used in this work: read only registers,
+read/write registers, write only registers and gap registers.
+
+\subsection{Read only register}
+
+Writing to such register takes no effect on the device.
+Register of this class is normally used for storing data the device
+prepared for CPU.
+An example is RX register of a UART which stores data received by
+the UART from channel.
+
+A code of the read helper is as simple as structure field reading.
+A message is added to the write handler to warn a developer about
+unexpected access.
+
+\subsection{Read/write register}
+
+This kind of registers is normally used for device configuration.
+Content of a configuration register is normally handled by the device
+as input.
+
+In basic case a code of both read and write handlers is actually a
+structure field access.
+But sometimes several bits of a read/write register has access
+restrictions.
+There are three known limitation kinds: read only bit,
+write after read (WAR) bit and write once bit.
+First two of them are implemented.
+An explanation is below.
+
+\subsubsection{Read only bit}
+
+Read only bits are usually used for reserved values, error or event
+flags, hardware provided signals and so on.
+To denote those bits a bitmask is used.
+If a register has such bits the write handler is extended with
+the expression using this bitmask to protect read only bits from
+being overwritten.
+
+\subsubsection{Write after read bit}
+
+Write after read bits are only allowed to be written if they were
+read since last changing by the device.
+A bit of such kind is frequently used as IRQ cause status flag.
+This prevents loosing of the IRQ cause by the software.
+An example is presented below.
+
+Let a device has one IRQ which is raised by two events.
+For simplicity, let names of the events are ``A'' and ``B''.
+Status bits have correspondingly same names.
+Both bits are in same status register.
+The sequence leading to losing of event notification is here.
+
+\begin{enumerate}
+    \item Event ``A'' happened.
+    The bit ``A'' is set and the IRQ is raised.
+    \item Guest software reads status register to get the reason of the
+    IRQ.
+    \item Event ``B'' happened.
+    The bit ``B'' is set and the IRQ is still raised.
+    \item The software handled event ``A''.
+    Then it resets bit ``A'' in cached value and writes it back to notify
+    the device that event ``A'' was handled.
+    Note that bit ``B'' is \textit{not} set in \textit{cached} value.
+    Software expected the device lowers IRQ now.
+    Also reminder that a software must cache register value and affect only
+    specific bit because there are different important information in
+    neighboured bits.
+    But a software may access memory by machine words.
+    And a word do fit entire register.
+    In other words, a software may not write to a specific bit
+    independently.
+    Therefore, this software behaviour is normal.
+    \item Without write after read protection the bit ``B''
+    is overwritten with the cached value (before event ``B'') and
+    the software will never know about event ``B''.
+\end{enumerate}
+
+User of QDT designates WAR bits of a register by a bitmask.
+Implementation of those bits in a device model is based on extra
+field in the state structure.
+This field stores a bitmap.
+If a bit in the bitmap is reset (zero) then the corresponding bit of
+the register is write protected.
+That means, the same approach as for read only bits is used.
+The difference is the ``write mask'' in this case is dynamic.
+Of course, the bitmap is declared in the state description to be saved
+in a snapshot.
+
+The implementation described above is provided by an auxiliary code
+which is generated automatically by QDT.
+QDT is also provides a code in the read helper which does set all
+bits in the bitmap making all WAR bits writable.
+But QDT does not know when those bits are set by the device.
+So, resetting of corresponding bits in the bitmask is up to developer.
+
+\subsubsection{Write once bit}
+
+Write once bit becomes write protected after first writing it.
+A condition that makes this bit writable again may be arbitrary.
+Frequently, such bits become writable on the device reset.
+
+The example of write once bits (entire register actually) is
+subsystem and subsystem vendor identifiers of PCI device
+configuration space.
+They are set by PCI ROM at BIOS boot time and never changed by
+software during system operation.
+
+Implementation of write once bits is beyond this work because of
+there no known examples of such bits except PCI.
+But write once bit support for it is already implemented in QEMU.
+
+\subsection{Gap register}
+
+This is not a register.
+It is actually a gap between registers.
+Writing to it takes no effect.
+Reading of it returns the value defined by the documentation for such
+cases.
+Frequent examples of the value is either all zeros (0x0...0) or all
+ones (0xF...F).
+This class of ``registers'' is supported by the model to allow a developer
+to avoid splitting a register bank onto two ones.
+It is handy under some circumstances.
+
+\subsection{Write only register}
+
+There are no known examples of write only registers.
+Bit it still technically possible.
+The implementation of such register is same as implementation of read/write
+register with one exception: reading of it results in a warn message.
+The value returned by read helper is normally same as for gap register.
+
+\section{Evaluation}
+
+Evaluation of introduced QDT extension is based on comparison of sizes of
+originally resulting device boilerplate and the boilerplate of same device with
+register description.
+Line count is used as size measure.
+Measurements are made for several peripheral devices of different
+purposes.
+Exact device model names cannot be revealed in this paper.
+Alias names will be used instead.
+
+The comparison is given in Table 1.
+There are several notes about its content interpretation to be given.
+
+\begin{itemize}
+    \item A line of device model description for QDT is as simple as
+    keyword argument assignment.
+    \item A line of boilerplate is an arbitrary C code line.
+    That means, it can be an empty indentation line or a complicated
+    expression or long function declaration etc.
+    \item A device boilerplate is normally presented by module and header.
+    It also registered in corresponding Makefile.
+    There is sum of lines of all those files in the table.
+\end{itemize}
+
+% Shortcuts for table
+\def \r#1{\multirow{ 2}{*}{#1}}
+
+\begin{table}[!t]
+% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+\caption{Impact of Device Register Model Appliance}
+\label{table_example}
+\centering
+\begin{tabular}{|c||c|c||c|c|}
+\hline
+Device     & \multicolumn{2}{c||}{Description size} & \multicolumn{2}{c|}{Boilerplate size}\\
+\cline{2-5}
+name       & without    & with       & without   & with \\
+           & registers  & registers  & registers & registers\\
+\hline
+UART       & 7          & 54         & 157       & 247\\
+Interrupt  & \r{7}      & \r{40}     & \r{127}   & \r{196}\\
+Controller &            &            &           &\\
+Timer      & 7          & 120        & 152       & 375\\
+Watchdog   & 7          & 32         & 133       & 177\\
+ROM        & 6          & 54         & 130       & 224\\
+\hline
+\end{tabular}
+\end{table}
+
+As previously, a resulting device boilerplate with registers is not
+ready to use because there is no all the semantic.
+But it can be compiled and provides a start point for consequent
+development.
+
+\section{Conclusion}
+
+The device register model introduced by this work simplifies register
+bank implementation.
+The evaluation showed that size of device register description is half of
+C boilerplate generated from it.
+It is also important that the register description is congregated in one
+place while corresponding generated code is spread across the C boilerplate.
+Hence, it is more easy to configure registers in the description.
+Moreover, the previous register bank implementation way is error prone
+because there are many related places across both the module and the header.
+
+
+\ifCLASSOPTIONcompsoc
+  \section*{Acknowledgments}
+\else
+  \section*{Acknowledgment}
+\fi
+
+QDT development is originally supported by RFBR, grant № 16-29-09632.
+This work was made as part of ISP RAS work flow and supported indirectly
+by corresponding projects.
+
+\begin{thebibliography}{1}
+
+\bibitem{QEMU}
+F.~Bellard QEMU, A Fast and Portable Dynamic Translator. USENIX Annual
+Technical Conference, FREENIX Track. USENIX, 2007. P. 41-465~p.
+
+\bibitem{QEMUIdDynAn}
+Dovgalyuk~P.M., Makarov~.A., Padaryan~V.A., Romaneev~M.S.,
+Fursova~N.I. Primenenie programmnykh ehmulyatorov v zadachakh
+analiza binarnogo koda [Application of software emulators for
+the binary code analysis]. Trudy ISP RAN [The Proceedings of
+ISP RAS], 2014, vol.~26, no.~1, pp.~277-296.
+
+\bibitem{QEMU-min-replay}
+V.~Efimov, K.~Batuzov, V.~Padaryan, A.~Avetisyan. Features of the deterministic
+replay in the case of a minimum device set. Programming and Computer
+Software, vol. 42, pp.174-186, Apr 2016
+
+\bibitem{QDT}
+V.Yu.~Efimov, A.A.~Bezzubikov, D.A.~Bogomolov, O.V.~Goremykin,
+V.A.~Padaryan, “Automation of device and machine development
+for QEMU”, Proceedings of ISP RAS, 29:6~(2017), 77–104
+
+\end{thebibliography}
+
+
+\end{document}
+
