@@ -56,9 +56,27 @@ SVG2PNG_DPI := 300
 # =
 all: report.pdf
 
-report.pdf : report.tex main.png workflow.png C2600.png AM79C971.jpg \
-REMOTE.jpg generation.png workflow-old.png device-model.png source-example.png \
-c2600_pci_c_chunks.png machine-example.png legend.png Q35-h.png heuristics.png
+report.pdf: \
+ AM79C971.jpg \
+ C2600.png \
+ c2600_pci_c_chunks.png \
+ device-model.png \
+ device-model-ex.png \
+ gdb-feedback.png \
+ generation.png \
+ heuristics.png \
+ legend.png \
+ machine-example.png \
+ main.png \
+ Q35-h.png \
+ REMOTE.jpg \
+ source-example.png \
+ type-reference.png \
+ workflow.png \
+ workflow-old.png \
+
+
+report.pdf : report.tex
 	pdflatex $< $@ # two step generation
 	pdflatex $< $@
 
