@@ -8,7 +8,7 @@ clean:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
 	rm -f *.pmd
 	rm -f *.png
-	rm -f $(foreach ext,pdf aux log nav out snm toc,report.$(ext))
+	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report.$(ext))
 	rm -f isp-article.html
 
 define do_pandoc
