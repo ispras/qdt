@@ -93,6 +93,14 @@
 %\theoremstyle{plain}
 %\newtheorem{lemma}{Лемма}
 
+
+%% Комманды в кириллице %%
+
+\newcommand{\п}{\item} % пункт
+
+%% А дальше - держитесь! %%
+
+
 \title[]
 {Автоматизированная отладка QEmu}
 
