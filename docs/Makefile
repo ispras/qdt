@@ -105,7 +105,7 @@ clean-registers:
 # about software driven debugging of QEmu)
 all : report2.pdf
 
-report2.pdf : report2.tex \
+report2.pdf : report2.utex \
 
 clean : clean-report2
 clean-report2:
