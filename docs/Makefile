@@ -162,6 +162,6 @@ endef
 	dot -Tpng -Gdpi=300 $< -o $@
 
 %.pdf : %.tex
-	pdflatex $< $@ # two step generation
-	pdflatex $< $@
+	pdflatex -interaction=nonstopmode $< $@ # two step generation
+	pdflatex -interaction=nonstopmode $< $@
 
