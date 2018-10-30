@@ -1,0 +1,111 @@
+%\documentclass[unicode]{beamer}
+\documentclass[unicode,hyperref={unicode=true}]{beamer}
+\mode<presentation>
+{
+%  \useoutertheme{shadow}
+%  \useinnertheme{rounded}
+  \usecolortheme[RGB={55,109,160}]{structure}
+%  \usetheme[height=7mm]{Rochester}
+%  \usetheme{default}
+%  \usetheme{Warsaw}
+%  \usetheme{Frankfurt}
+  \usetheme{Dresden}
+%  \setbeamercolor{normal text}{bg=black,fg=white}
+  \setbeamertemplate{navigation symbols}{}
+  \setbeamertemplate{blocks}[rounded][shadow=true]
+  \setbeamertemplate{items}[ball]
+  \setbeamercovered{invisible}
+}
+
+\defbeamertemplate*{footline}{infolines theme}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+% \setbeamertemplate{headline}{
+%   \leavevmode
+%  \hbox{%
+%  \begin{beamercolorbox}[wd=\paperwidth,ht=3.25ex,dp=1ex,right]{date in head/foot}%
+%    Институт системного программирования \\ Российская академия наук
+%    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+%  \end{beamercolorbox}}%
+%  \vskip0pt%
+%   \includegraphics[width=\textwidth]{logo-cmb.png}%
+%}
+
+\setbeamertemplate{headline}{
+	\begin{beamercolorbox}[wd=\paperwidth,ht=3.25ex,dp=1ex,left]{date in head/foot}
+		~~\insertsection
+	\end{beamercolorbox}
+}
+
+\setbeamerfont{section title}{parent=title}
+\setbeamercolor{section title}{parent=titlelike}
+\defbeamertemplate*{section page kb}{default}[1][]
+{
+  \centering
+	\begin{beamercolorbox}[sep=8pt,center,#1]{section title}
+	  \usebeamerfont{section title}\insertsection\par
+	\end{beamercolorbox}
+}
+\newcommand*{\sectionpagekb}{\usebeamertemplate*{section page kb}}
+\setbeamercolor{block title}{use=structure,fg=white,bg=structure.fg!75!black}
+
+\usepackage{etex}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{shortvrb}
+\usepackage{amsthm}
+\usepackage[]{url}
+%\MakeShortVerb{!}
+\usepackage{listings}
+\lstset{ %
+    stringstyle=\color{red},
+    extendedchars=\true,
+    inputencoding=utf8,
+    columns=fixed,keepspaces
+}
+\usepackage{enumerate}
+\usepackage{tikz}
+\usepackage{xy}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{latexsym}
+\usepackage{subfig}
+\usepackage{tikz}
+\usepackage{dirtree}
+\usetikzlibrary{positioning,arrows}
+%\lstset{basicstyle=\ttfamily,language=lisp}
+
+\theoremstyle{definition}
+\newtheorem{mydef}{Определение}
+\theoremstyle{plain}
+\newtheorem{stmt}{Утверждение}
+%\theoremstyle{plain}
+%\newtheorem{lemma}{Лемма}
+
+\title[]
+{Автоматизированная отладка QEmu}
+
+\author[]{Ефимов Василий}
+
+\institute[]{ИСП РАН}
+
+\date[]{07 ноября 2018}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\end{document}

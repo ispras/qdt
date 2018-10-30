@@ -101,6 +101,16 @@ clean : clean-registers
 clean-registers:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,registers.$(ext))
 
+# report2 (2-nd report slides, on ISP RAS internal seminar, 07.11.2018,
+# about software driven debugging of QEmu)
+all : report2.pdf
+
+report2.pdf : report2.tex \
+
+clean : clean-report2
+clean-report2:
+	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report2.$(ext))
+
 ################
 # Common rules #
 ################
