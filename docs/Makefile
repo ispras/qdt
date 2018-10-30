@@ -161,6 +161,10 @@ endef
 %.png : %.gv
 	dot -Tpng -Gdpi=300 $< -o $@
 
+# *.utex is a *.tex but with UTF-8 characters in commands (ex.: \пример{})
+%.tex : %.utex
+	cat $< | ./utf8cmds.py > $@
+
 %.pdf : %.tex
 	pdflatex -interaction=nonstopmode $< $@ # two step generation
 	pdflatex -interaction=nonstopmode $< $@
