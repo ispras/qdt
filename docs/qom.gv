@@ -1,0 +1,20 @@
+digraph QOM {
+	graph [rankdir=LR]
+	node [fontname=Momospace shape=polygon]
+	edge [style=filled]
+	object;
+	object -> irq;
+	object -> machine;
+	object -> bus;
+	bus->PCI;
+	bus->System;
+	object -> device;
+	device -> cpu;
+	sbd[label="sys-bus-device"];
+	dots[label="..." shape=none]
+	dots->ioapic;
+	sbd->dots;
+	device -> sbd;
+	mem[label="qemu:memory-region"]
+	object -> mem;
+}
