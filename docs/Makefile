@@ -115,6 +115,43 @@ clean : clean-registers
 clean-registers:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,registers.$(ext))
 
+# report2 (2-nd report slides, on ISP RAS internal seminar, 07.11.2018,
+# about software driven debugging of QEmu)
+all : report2.pdf
+
+report2-PNGs = \
+ lowlevel-debug-primitives.png \
+ highlevel-debug-primitives.png \
+ debug-hierarchy.png \
+ qdt-debug.png \
+ git-breakpoints.png \
+ non-blocking.png \
+ common-debug-tools.png \
+ gdb-python.png \
+ debug-in-workflow-en.png \
+ domain-specific-debug.png \
+ suffix-form.png \
+ prefix-form.png \
+ dwarf-expr-1.png \
+ dwarf-expr-2.png \
+ qdt-debug-verb.png \
+ watcher-example.png \
+ qom.png \
+ qom-tree-getting.png \
+ machine-reversing.png \
+
+report2.pdf : report2.utex \
+ $(report2-PNGs) \
+ ddd-btree.png \
+ ddd-plot.png \
+ i440fx.png \
+ exynos.png \
+
+clean : clean-report2
+clean-report2:
+	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report2.$(ext))
+	rm -f $(report2-PNGs)
+
 ################
 # Common rules #
 ################

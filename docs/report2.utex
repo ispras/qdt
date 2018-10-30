@@ -1,0 +1,636 @@
+%\documentclass[unicode]{beamer}
+\documentclass[unicode,hyperref={unicode=true}]{beamer}
+\mode<presentation>
+{
+%  \useoutertheme{shadow}
+%  \useinnertheme{rounded}
+  \usecolortheme[RGB={55,109,160}]{structure}
+%  \usetheme[height=7mm]{Rochester}
+%  \usetheme{default}
+%  \usetheme{Warsaw}
+%  \usetheme{Frankfurt}
+  \usetheme{Dresden}
+%  \setbeamercolor{normal text}{bg=black,fg=white}
+  \setbeamertemplate{navigation symbols}{}
+  \setbeamertemplate{blocks}[rounded][shadow=true]
+  \setbeamertemplate{items}[ball]
+  \setbeamercovered{invisible}
+}
+
+\defbeamertemplate*{footline}{infolines theme}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+% \setbeamertemplate{headline}{
+%   \leavevmode
+%  \hbox{%
+%  \begin{beamercolorbox}[wd=\paperwidth,ht=3.25ex,dp=1ex,right]{date in head/foot}%
+%    Институт системного программирования \\ Российская академия наук
+%    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+%  \end{beamercolorbox}}%
+%  \vskip0pt%
+%   \includegraphics[width=\textwidth]{logo-cmb.png}%
+%}
+
+\setbeamertemplate{headline}{
+	\begin{beamercolorbox}[wd=\paperwidth,ht=3.25ex,dp=1ex,left]{date in head/foot}
+		~~\insertsection
+	\end{beamercolorbox}
+}
+
+\setbeamerfont{section title}{parent=title}
+\setbeamercolor{section title}{parent=titlelike}
+\defbeamertemplate*{section page kb}{default}[1][]
+{
+  \centering
+	\begin{beamercolorbox}[sep=8pt,center,#1]{section title}
+	  \usebeamerfont{section title}\insertsection\par
+	\end{beamercolorbox}
+}
+\newcommand*{\sectionpagekb}{\usebeamertemplate*{section page kb}}
+\setbeamercolor{block title}{use=structure,fg=white,bg=structure.fg!75!black}
+
+\usepackage{etex}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{shortvrb}
+\usepackage{amsthm}
+\usepackage[]{url}
+%\MakeShortVerb{!}
+\usepackage{listings}
+\lstset{ %
+    stringstyle=\color{red},
+    extendedchars=\true,
+    inputencoding=utf8,
+    columns=fixed,keepspaces
+}
+\usepackage{enumerate}
+\usepackage{tikz}
+\usepackage{xy}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{latexsym}
+\usepackage{subfig}
+\usepackage{tikz}
+\usepackage{dirtree}
+\usetikzlibrary{positioning,arrows}
+%\lstset{basicstyle=\ttfamily,language=lisp}
+\usepackage[usestackEOL]{stackengine}
+\usepackage{pgfplots}
+
+\theoremstyle{definition}
+\newtheorem{mydef}{Определение}
+\theoremstyle{plain}
+\newtheorem{stmt}{Утверждение}
+%\theoremstyle{plain}
+%\newtheorem{lemma}{Лемма}
+
+
+%% Комманды в кириллице %%
+
+\newcommand{\п}{\item} % пункт
+\newcommand{\тп}{~~\llap{\textbullet}~~}  % пункт в таблице
+
+%% А дальше - держитесь! %%
+
+
+\title[]
+{Автоматизированная отладка QEMU}
+
+\author{%
+ \Longunderstack{Ефимов Василий\\(докладчик)}%
+ \hfill%
+ \Longunderstack{Колтунов Дмитрий}%
+}
+
+\institute[]{ИСП РАН}
+
+\date[]{07 ноября 2018}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+
+\section{}
+
+
+\begin{frame}{Разработка новой виртуальной машины}
+\begin{center}
+\includegraphics[width=\linewidth]{debug-in-workflow-en.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Введение}
+\textbf{%
+Обзор классических способов и средств отладки. Узкоспециализированная отладка.
+}
+\vfill
+\begin{itemize}
+\п Низкоуровневые отладочные примитивы
+\п Высокоуровневые отладочные примитивы
+\п Отладочные инструменты общего назначения
+\п API для автоматизации отладки
+\п GDB Python скрипты для отладки QEMU
+\end{itemize}
+\end{frame}
+
+
+\section{Сложности классической отладки}
+
+
+\begin{frame}{Место узкоспециализированной отладки}
+\begin{center}
+\includegraphics[width=\linewidth]{debug-hierarchy.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Низкоуровневые отладочные примитивы}
+\begin{center}
+\includegraphics[height=0.9\textheight]{lowlevel-debug-primitives.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Неблокирующий режим управления нитями}
+\begin{center}
+\includegraphics[height=0.9\textheight]{non-blocking.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Высокоуровневые отладочные примитивы}
+\begin{center}
+\includegraphics[width=\linewidth]{highlevel-debug-primitives.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Отладочные инструменты общего назначения}
+\begin{center}
+\includegraphics[height=0.7\textheight]{common-debug-tools.png}
+\end{center}
+\hfill{}https://sourceware.org/gdb/wiki/GDB\%20Front\%20Ends
+\end{frame}
+
+
+\begin{frame}{DataDisplayDebugger (1/2)}
+\begin{center}
+\includegraphics[height=0.88\textheight]{ddd-btree.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{DataDisplayDebugger (2/2)}
+\begin{minipage}{0.38\textwidth}
+\begin{itemize}
+\п использует устаревший интерфейс к gdb
+\п написан на Си
+\п исходный код открыт
+\п последняя новость на сайте\textsuperscript{1} датируется 18~января 2013~г
+\п современный аналог: gdbgui\textsuperscript{2}
+\end{itemize}
+\end{minipage}
+\begin{minipage}{0.6\textwidth}
+\begin{center}
+\includegraphics[height=0.6\textheight]{ddd-plot.png}
+\end{center}
+\end{minipage}
+\vfill
+\hfill\textsuperscript{1}https://www.gnu.org/software/ddd/\\
+\hfill\textsuperscript{2}https://github.com/cs01/gdbgui/\\
+\end{frame}
+
+
+\begin{frame}{GDB и специализированная отладка}
+\begin{center}
+\includegraphics[width=\linewidth]{domain-specific-debug.png}
+\end{center}
+\end{frame}
+
+
+%\begin{frame}{Deet, программируемый отладчик}
+%\end{frame}
+
+
+\begin{frame}{Отладка с помощью Python-скриптов}
+\begin{center}
+\includegraphics[width=\linewidth]{gdb-python.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}[fragile]{Вывод QEMU memory flat view с помощью GDB Python}
+\textit{«Проекция» ациклического графа памяти на «прямую» для более
+быстрого поиска.}
+\begin{lstlisting}
+ - I/O -
+...
+ - memory -
+00000000-0009ffff pc.ram
+000a0000-000bffff vga-lowmem
+000c0000-000dffff pc.rom
+000e0000-000fffff pc.bios
+00100000-07ffffff pc.ram
+fec00000-fec00fff ioapic
+fed00000-fed003ff hpet
+fee00000-feefffff apic-msi
+fffc0000-ffffffff pc.bios
+\end{lstlisting}
+45 строк кода; несколько часов проб и попыток отладки.
+\end{frame}
+
+
+\begin{frame}{Отладка отладочного скрипта (Python)}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                         & GDB    & Обычный \\
+                                         & Python & Python \\
+\hline
+Трассировка значений                     & +      & + \\
+Пошаговая отладка                        & -      & + \\
+Доступ к значениям произвольных объектов & -      & + \\
+Точки останова                           & -      & + \\
+Графический интерфейс пользователя       & -      & много \\
+\end{tabular}
+\end{center}
+\vfill
+?: \textit{remote\_pdb} --- отладка скрипта внутри GDB Python через сокет.
+\end{frame}
+
+
+\section{}
+\begin{frame}
+\textbf{%
+Разработанный Python-пакет для отладки программ на языке Си через GDB Remote
+Serial Protocol~(RSP) с использованием отладочной информации в формате
+DWARF~(v4).
+}
+\vfill
+\begin{itemize}
+\п Схема использования API
+\п pyrsp, исправления и улучшения
+\п pyelftools, ленивый анализ отладочной информации
+\п API разработанного Python-пакета
+\п Git для адаптации скриптов к разным версиям исходного кода
+%\п \textbf{[ToDo]}~\textit{Двухэтапная обработка точек останова}
+%\п \textbf{[ToDo]}~\textit{Многоклиентная отладка}
+\end{itemize}
+\end{frame}
+
+
+\section{Python-пакет для автоматизации отладки}
+
+
+\begin{frame}{Основные возможности}
+\begin{itemize}
+\п Обработка точек останова при помощи функций обратного вызова.
+\п Адаптация позиций точек останова при изменении исходных файлов с
+использованием истории Git.
+\п Чтение значений времени выполнения:
+\begin{itemize}
+\п в терминах исходного кода;
+\п в терминах машинного уровня.
+\end{itemize}
+\п Поддержка Си-типов из отладочной информации.
+\п Работает в обычном Python, можно отлаживать в привычной IDE.
+\п \textbf{[ToDo]}~\textit{Изменение значений времени выполнения}.
+\п \textbf{[ToDo]}~\textit{Вызов функций отлаживаемого процесса}.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Использование API}
+\begin{center}
+\includegraphics[width=\linewidth]{qdt-debug.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Модификация pyrsp}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                & До    & После \\
+\hline
+callback/breakpoint             & 1     & $\ge$1 \\
+отключение контроля целостности & -     & + \\
+поддержка уведомлений           & игнор & обработка \\
+неблокирующий режим             & -     & + \\
+раздельное управление нитями    & -     & + (внутреннее) \\
+чтение Си-строк                 & -     & + \\
+работоспособный master          & -     & + (но это не точно) \\
+\end{tabular}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Модификация pyelftools (анализ DWARF)}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                 & До         & После\textsuperscript{+} \\
+\hline
+анализ ELF/DWARF                 & много,     & фрагментарно, \\
+                                 & сразу      & по запросу \\
+\hline
+переход между сестринскими       & -          & + \\
+вершинами в дереве               &            & \\
+Debug Information Entry          &            & \\
+(DW\_AT\_sibling)                &            & \\
+\hline
+Кэширование                      & -          & + \\
+\hline
+Поддержка формата секций         &            & \\
+.debug\_pubname                  & -          & + \\
+.debug\_pubtypes                 & -          & + \\
+\hline
+время старта (поиск              & несколько  & несколько\\
+точек останова; QEMU)            & минут      & секунд \\
+\end{tabular}
+\end{center}
+\vfill
+\hfill\textsuperscript{+}\textit{несколько мелких оптимизаций}
+\end{frame}
+
+
+\begin{frame}{Суффиксная индексация имён исходных файлов}
+\begin{center}
+\begin{tabular}{l|l}
+\multicolumn{1}{c|}{Префиксная форма} &\multicolumn{1}{|c}{Суффиксная форма} \\
+\multicolumn{1}{c|}{(классическая)}   & \\
+\hline
+\includegraphics[width=0.4\linewidth]{prefix-form.png} & %
+  \includegraphics[width=0.4\linewidth]{suffix-form.png} \\
+\hline
+\тп Используется в отладочной   & \тп Достаточно указать\\
+информации                      & уникальный суффикс \\
+\тп Встречаются как полный, так & \тп Требуется построить TRIE \\
+и относительный варианты        & $O($[кол-во исх. файлов] \\
+\тп Поиск по суффиксу           & \hfill$*$ [добавление в TRIE]$)$ \\
+$O($[кол-во исх. файлов]        & \тп Поиск по суффиксу\\
+\hfill$*$ [длина суффикса]$)$   & $O($[длина суффикса] \\
+                                & \hfill{}$+$ [поиск в TRIE]$)$\\
+\end{tabular}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Виртуальная машина DWARF Expression}
+\textbf{Назначение}: описание способа вычисления значений по данным,
+считываемым из отлаживаемого процесса.\\
+\textbf{Характеристики}: стековая, размер ячейки = длина адреса основной
+машины, двоичная кодировка инструкций, инструкции переменной длины. \\
+
+\textbf{Операции}:
+\begin{tabular}{l|l}
+\hline
+Ввод       & Константа, регистр, память, адрес объекта, \\
+           & адрес стека (отлаживаемого процесса). \\
+Арифметика & $+$, $-$, $/$, $*$, абсолютное значение, \\
+           & остаток от деления, инверсия знака. \\
+Биты       & Правый сдвиг (+ арифметический), левый сдвиг, \\
+           & AND, OR, XOR, NOT. \\
+Стек       & копирование, pop, swap, ротация \\
+Сравнения  & \textless, \textgreater, $\le$, $\ge$, $=$, $\ne$ \\
+Ветвления  & условный/безусловный переход, вызов \\
+\hline
+\end{tabular}
+\textit{Инструкции часто являются комбинациями из операций.}
+\end{frame}
+
+
+\begin{frame}{Поддержка DWARF Expression}
+\begin{itemize}
+\п Код программы интерпретируется и транслируется в AST-подобное символьное
+выражение.
+\п Во время выполнения вычисляется уже полученное символьное выражение.
+\п Символьные выражения также применяются при составлении более сложных
+запросов внутри API.
+\п Реализовано всё кроме ветвлений, трансляции адресов thread local storage
+(TLS) и специфических адресных пространств.
+\п \textbf{[ToDo?]}~\textit{Трансляция в Python.}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Пример DWARF Expression}
+\begin{center}
+\begin{tabular}{c|c}
+DW\_OP\_fbreg [-48]   & Искусственное \\
+(переменная на стеке) & (считывание указателя со стека) \\
+\hline
+\includegraphics[width=0.3\linewidth]{dwarf-expr-1.png} & %
+  \includegraphics[width=0.65\linewidth]{dwarf-expr-2.png} \\
+\end{tabular}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Пример обработки точки останова}
+\begin{center}
+\includegraphics[width=\linewidth]{watcher-example.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Адаптация позиций точек останова}
+\begin{center}
+\includegraphics[width=\linewidth]{git-breakpoints.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Архитектура qdt.debug}
+\includegraphics[width=\linewidth]{qdt-debug-verb.png}
+\end{frame}
+
+
+\section{}
+\begin{frame}
+\textbf{%
+Средство наблюдения за работой процесса QEMU с интерпретацией внутреннего
+состояния в терминах виртуальной машины (ВМ) и QEMU Object Model~(QOM).
+}
+\vfill
+\begin{itemize}
+\п Восстановление дерева типов QOM
+\п Восстановление состава ВМ
+\п Графическое отображение ВМ
+%\п \textbf{[ToDo]}~\textit{Отображение состояния элементов ВМ}
+%\п \textbf{[ToDo]}~\textit{Высокоуровневые точки останова}
+%\п \textbf{[ToDo]}~\textit{Изменение состояния элементов ВМ}
+\end{itemize}
+\end{frame}
+
+
+\section{Специализированная отладка QEMU}
+
+
+\begin{frame}{Дерево типов QOM}
+\begin{center}
+\includegraphics[width=\linewidth]{qom.png}
+\end{center}
+\begin{itemize}
+\п Применяется для идентификации элементов виртуальной машины.
+\п Строится динамически в куче: всю информацию статически не получить.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Получение дерева типов QOM}
+\begin{center}
+\includegraphics[height=0.9\textheight]{qom-tree-getting.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Восстановление состава виртуальной машины}
+\begin{center}
+\includegraphics[width=\linewidth]{machine-reversing.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Пример: i440FX (i386)}
+\begin{center}
+\includegraphics[height=0.9\textheight]{i440fx.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Пример: exynos (ARM)}
+\begin{center}
+\includegraphics[height=0.9\textheight]{exynos.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Производительность автоматизированной отладки}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[ %
+  xlabel={Time, s}, %
+  ylabel={Breakpoints during past sec.}, grid, no marks]
+\addplot+ coordinates {
+(0,2)(1,230)(2,240)(3,245)(4,70)(5,0)(6,0)(7,1)
+(8,103)(9,75)(10,105)(11,102)(12,156)(13,174)(14,136)(15,161)
+(16,218)(17,147)(18,158)(19,165)(20,178)(21,154)(22,258)(23,257)
+(24,266)(25,283)(26,269)(27,231)(28,259)(29,205)(30,231)(31,233)
+(32,227)(33,228)(34,251)(35,249)(36,243)(37,239)(38,241)(39,252)
+(40,239)(41,235)(42,226)(43,232)(44,219)(45,222)(46,223)(47,246)
+(48,260)(49,222)(50,225)(51,247)(52,212)(53,221)(54,200)(55,218)
+(56,234)(57,205)(58,230)(59,241)(60,222)(61,238)(62,237)(63,247)
+(64,252)(65,234)(66,237)(67,227)(68,226)(69,246)(70,256)(71,255)
+(72,242)(73,234)(74,237)(75,237)(76,238)(77,248)(78,254)(79,253)
+(80,264)(81,230)(82,239)(83,238)(84,221)(85,227)(86,242)(87,231)
+(88,223)(89,211)(90,222)(91,211)(92,221)(93,202)(94,217)(95,216)
+(96,200)(97,212)(98,230)(99,229)(100,227)(101,241)(102,225)(103,218)
+(104,202)(105,186)(106,213)(107,201)(108,208)(109,248)(110,248)(111,231)
+(112,237)(113,254)(114,231)(115,216)(116,223)(117,243)(118,244)(119,244)
+(120,257)(121,229)(122,209)(123,226)(124,222)(125,222)(126,226)(127,221)
+(128,233)(129,237)(130,222)(131,156)(132,178)(133,195)(134,190)(135,187)
+(136,190)(137,176)(138,171)(139,160)(140,155)(141,119)(142,105)(143,103)
+(144,100)(145,94)(146,95)(147,77)(148,82)(149,66)(150,80)(151,74)
+(152,76)(153,71)(154,74)(155,177)(156,223)(157,205)(158,190)(159,186)
+(160,171)(161,189)(162,146)(163,205)(164,146)(165,154)(166,78)(167,97)
+(168,174)(169,172)(170,204)(171,183)(172,203)(173,208)(174,177)(175,232)
+(176,180)(177,228)(178,189)(179,197)(180,172)(181,222)(182,169)(183,229)
+(184,127)(185,196)(186,166)(187,127)(188,208)(189,196)(190,141)(191,228)
+(192,167)(193,171)(194,230)(195,142)(196,171)(197,238)(198,155)(199,111)
+(200,193)(201,221)(202,136)(203,120)(204,220)(205,235)(206,123)(207,124)
+(208,218)(209,226)(210,120)(211,222)(212,221)(213,192)(214,220)(215,237)
+(216,242)(217,220)(218,243)(219,216)(220,202)(221,221)(222,99)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+Всего срабатываний точек останова: 43675
+\end{frame}
+
+
+\begin{frame}{Замедление}
+\begin{center}
+\begin{tabular}{c|c|c}
+\hline
+Инициализация & \multicolumn{2}{|c}{Длительность [сек]} \\
+              & без анализа & с анализом \\
+\hline
+% & 1541592808 - 1541592801
+QOM           & \textless{}1 & 7 \\
+% & 1541593207 - 1541593202
+\hline
+% & 1541593295 - 1541593223
+i440FX        & \textless{}1 & 72 \\
+\hline
+% & 1541593026 - 1541592832
+exynos        & \textless{}1 & 194 \\
+\hline
+\end{tabular}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Дальнейшая работа}
+\begin{itemize}
+\п Отображение состояния элементов машины.
+\п Высокоуровневые точки останова:
+\begin{itemize}
+\п на срабатывание линии прерывания,
+\п на доступ к регистру устройства.
+\end{itemize}
+%\п Отладка транслированного гостевого кода для поиска ошибок при реализации
+%новой архитектуры процессора:
+%\begin{itemize}
+%\п Точки останова на гостевой код и TCG IR,
+%\п Доступ к значениям переменных TCG.
+%\end{itemize}
+\end{itemize}
+%\begin{tabular}{c|c|c}
+%\hline
+%Гостевой код & TCG           & Код основной машины \\
+%             & промежуточное & \\
+%             & представление & \\
+%\hline
+%\end{tabular}
+\end{frame}
+
+
+\section{}
+\begin{frame}{Заключение}
+\textbf{%
+Результаты
+}
+\vfill
+\begin{itemize}
+\п Разработан Python-пакет для автоматизации отладки Си-программ по
+протоколу GDB RSP.
+\begin{itemize}
+\п Улучшены пакеты pyrsp и pyelftools.
+\п Поддержана адаптация отладочных скриптов к изменениям в исходном коде
+отлаживаемой программы.
+\end{itemize}
+\п Разработано средство наблюдение за виртуальной машиной QEMU посредством
+автоматизированной отладки.
+\end{itemize}
+\vfill
+\begin{center}
+\textit{%
+Спасибо за внимание!
+}
+\end{center}
+\end{frame}
+
+\end{document}
