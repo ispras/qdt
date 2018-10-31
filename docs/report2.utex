@@ -142,6 +142,12 @@
 \end{center}
 \end{frame}
 
+\begin{frame}{Высокоуровневые отладочные примитивы}
+\begin{center}
+\includegraphics[width=\linewidth]{highlevel-debug-primitives.png}
+\end{center}
+\end{frame}
+
 \begin{frame}
 \end{frame}
 
