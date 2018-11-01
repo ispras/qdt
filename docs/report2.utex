@@ -85,6 +85,7 @@
 \usepackage{dirtree}
 \usetikzlibrary{positioning,arrows}
 %\lstset{basicstyle=\ttfamily,language=lisp}
+\usepackage[usestackEOL]{stackengine}
 
 \theoremstyle{definition}
 \newtheorem{mydef}{Определение}
@@ -104,7 +105,11 @@
 \title[]
 {Автоматизированная отладка QEmu}
 
-\author[]{Ефимов Василий}
+\author{%
+ \Longunderstack{Ефимов Василий\\(докладчик)}%
+ \hfill%
+ \Longunderstack{Колтунов Дмитрий}%
+}
 
 \institute[]{ИСП РАН}
 
