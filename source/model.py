@@ -1492,6 +1492,22 @@ class TypesCollector(ObjectVisitor):
             raise BreakVisiting()
 
 
+class GlobalsCollector(ObjectVisitor):
+
+    def __init__(self, code):
+        super(GlobalsCollector, self).__init__(code,
+            field_name = "__node__"
+        )
+        self.used_globals = set()
+
+    def on_visit(self):
+        cur = self.cur
+        if (    isinstance(cur, Variable)
+            and (cur.declarer is not None or cur.definer is not None)
+        ):
+            self.used_globals.add(cur)
+
+
 class NeedForwardDeclarationChecker(ObjectVisitor):
     "This visitor checks that the nested type is the same as the root type."
 
