@@ -136,6 +136,13 @@
 \section{Сложности классической отладки}
 
 
+\begin{frame}{Место узкоспециализированной отладки}
+\begin{center}
+\includegraphics[width=\linewidth]{debug-hierarchy.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Низкоуровневые отладочные примитивы}
 \begin{center}
 \includegraphics[height=0.9\textheight]{lowlevel-debug-primitives.png}
