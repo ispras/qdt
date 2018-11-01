@@ -182,6 +182,7 @@ DWARF~(v4).
 \vfill
 \begin{itemize}
 \п Схема использования API
+\п pyrsp, исправления и улучшения
 \п API для работы с отладочной информацие из DWARF
 \п Работа с точками останова и доступ к данным
 \п \textbf{[ToDo]}~\textit{Двухэтапная обработка точек останова}
@@ -197,6 +198,23 @@ DWARF~(v4).
 \begin{frame}{Использование API}
 \begin{center}
 \includegraphics[width=\linewidth]{qdt-debug.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Модификация pyrsp}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                & До    & После \\
+\hline
+callback/breakpoint             & 1     & \textgreater{}1 \\
+отключение контроля целостности & -     & + \\
+поддержка уведомлений           & игнор & обработка \\
+неблокирующий режим             & -     & + \\
+раздельное управление нитями    & -     & + (внутреннее) \\
+чтение Си-строк                 & -     & + \\
+работоспособный master          & -     & + (кажется) \\
+\end{tabular}
 \end{center}
 \end{frame}
 
