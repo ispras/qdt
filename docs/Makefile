@@ -112,6 +112,7 @@ report2.pdf : report2.utex \
  qdt-debug.png \
  git-breakpoints.png \
  non-blocking.png \
+ common-debug-tools.png \
 
 clean : clean-report2
 clean-report2:

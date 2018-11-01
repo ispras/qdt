@@ -169,6 +169,14 @@
 \end{frame}
 
 
+\begin{frame}{Отладочные инструменты общего назначения}
+\begin{center}
+\includegraphics[height=0.8\textheight]{common-debug-tools.png}
+\end{center}
+\hfill{}https://sourceware.org/gdb/wiki/GDB\%20Front\%20Ends
+\end{frame}
+
+
 \begin{frame}
 \end{frame}
 
