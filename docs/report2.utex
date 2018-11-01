@@ -172,7 +172,7 @@ DWARF~(v4).
 }
 \vfill
 \begin{itemize}
-\п Схема использования пакета
+\п Схема использования API
 \п RSP, раздельное управление нитями и неблокирующий режим
 \п API для работы с отладочной информацие из DWARF
 \п Работа с точками останова и доступ к данным
@@ -186,14 +186,14 @@ DWARF~(v4).
 \section{Python-пакет для автоматизации отладки}
 
 
-\begin{frame}{Использование пакета}
+\begin{frame}{Использование API}
 \begin{center}
 \includegraphics[width=\linewidth]{qdt-debug.png}
 \end{center}
 \end{frame}
 
 
-\begin{frame}{Неблокирующий режим}
+\begin{frame}{Неблокирующий режим RSP}
 \begin{center}
 \includegraphics[height=0.9\textheight]{non-blocking.png}
 \end{center}
