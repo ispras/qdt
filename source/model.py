@@ -1507,6 +1507,23 @@ class TypesCollector(ObjectVisitor):
             raise BreakVisiting()
 
 
+class GlobalsCollector(ObjectVisitor):
+
+    def __init__(self, definers, code):
+        super(GlobalsCollector, self).__init__(code,
+            field_name = "__node__"
+        )
+        self.definers = definers
+        self.used_globals = set()
+
+    def on_visit(self):
+        cur = self.cur
+        if (    isinstance(cur, Variable)
+            and (cur.declarer is not None or cur.definer is not None)
+        ):
+            self.used_globals.add(cur)
+
+
 class NeedForwardDeclarationChecker(ObjectVisitor):
 
     def __init__(self, type_object, *args, **kw):
