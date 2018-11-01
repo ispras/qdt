@@ -109,6 +109,7 @@ report2.pdf : report2.utex \
  lowlevel-debug-primitives.png \
  highlevel-debug-primitives.png \
  debug-hierarchy.png \
+ qdt-debug.png \
 
 clean : clean-report2
 clean-report2:
