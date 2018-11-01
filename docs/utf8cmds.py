@@ -12,7 +12,7 @@ from sys import (
 )
 
 SLASH = ord("\\")
-COMMAND_TERM = tuple(ord(c) for c in " {\n")
+COMMAND_TERM = tuple(ord(c) for c in " {\n\\")
 A = ord("A")
 
 def tocommand(i):
