@@ -181,7 +181,11 @@ class ChunkGenerator(object):
                     and origin.declarer not in self.stack[-2].get_definers()
                     and origin.definer not in self.stack[-2].get_definers()
                     ):
-                        chunks = [ HeaderInclusion(self.path, origin.declarer) ]
+                        declarer = origin.declarer
+                        try:
+                            chunks = self.chunk_cache[declarer]
+                        except KeyError:
+                            chunks = [ HeaderInclusion(self.path, declarer) ]
                     else:
                         # Something like a static inline function in a header
                         # may request chunks for a global variable. This case
