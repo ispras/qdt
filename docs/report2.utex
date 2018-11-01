@@ -193,6 +193,13 @@ DWARF~(v4).
 \end{frame}
 
 
+\begin{frame}{Неблокирующий режим}
+\begin{center}
+\includegraphics[height=0.9\textheight]{non-blocking.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Адаптация позиций точек останова}
 \begin{center}
 \includegraphics[width=\linewidth]{git-breakpoints.png}

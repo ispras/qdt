@@ -111,6 +111,7 @@ report2.pdf : report2.utex \
  debug-hierarchy.png \
  qdt-debug.png \
  git-breakpoints.png \
+ non-blocking.png \
 
 clean : clean-report2
 clean-report2:
