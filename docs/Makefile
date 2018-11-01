@@ -110,6 +110,7 @@ report2.pdf : report2.utex \
  highlevel-debug-primitives.png \
  debug-hierarchy.png \
  qdt-debug.png \
+ git-breakpoints.png \
 
 clean : clean-report2
 clean-report2:
