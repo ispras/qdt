@@ -154,11 +154,20 @@
 \end{center}
 \end{frame}
 
+
+\begin{frame}{Неблокирующий режим управления нитями}
+\begin{center}
+\includegraphics[height=0.9\textheight]{non-blocking.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Высокоуровневые отладочные примитивы}
 \begin{center}
 \includegraphics[width=\linewidth]{highlevel-debug-primitives.png}
 \end{center}
 \end{frame}
+
 
 \begin{frame}
 \end{frame}
@@ -173,7 +182,6 @@ DWARF~(v4).
 \vfill
 \begin{itemize}
 \п Схема использования API
-\п RSP, раздельное управление нитями и неблокирующий режим
 \п API для работы с отладочной информацие из DWARF
 \п Работа с точками останова и доступ к данным
 \п \textbf{[ToDo]}~\textit{Двухэтапная обработка точек останова}
@@ -189,13 +197,6 @@ DWARF~(v4).
 \begin{frame}{Использование API}
 \begin{center}
 \includegraphics[width=\linewidth]{qdt-debug.png}
-\end{center}
-\end{frame}
-
-
-\begin{frame}{Неблокирующий режим RSP}
-\begin{center}
-\includegraphics[height=0.9\textheight]{non-blocking.png}
 \end{center}
 \end{frame}
 
