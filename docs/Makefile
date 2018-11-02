@@ -119,7 +119,7 @@ clean-registers:
 # about software driven debugging of QEmu)
 all : report2.pdf
 
-report2.pdf : report2.utex \
+report2-PNGs = \
  lowlevel-debug-primitives.png \
  highlevel-debug-primitives.png \
  debug-hierarchy.png \
@@ -130,9 +130,13 @@ report2.pdf : report2.utex \
  gdb-python.png \
  debug-in-workflow-en.png \
 
+report2.pdf : report2.utex \
+ $(report2-PNGs) \
+
 clean : clean-report2
 clean-report2:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report2.$(ext))
+	rm -f $(report2-PNGs)
 
 ################
 # Common rules #
