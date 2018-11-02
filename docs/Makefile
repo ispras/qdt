@@ -114,6 +114,7 @@ report2.pdf : report2.utex \
  non-blocking.png \
  common-debug-tools.png \
  gdb-python.png \
+ debug-in-workflow-en.png \
 
 clean : clean-report2
 clean-report2:
