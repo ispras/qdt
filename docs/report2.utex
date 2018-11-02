@@ -186,6 +186,34 @@
 \end{frame}
 
 
+\begin{frame}{DataDisplayDebugger (1/2)}
+\begin{center}
+\includegraphics[height=0.88\textheight]{ddd-btree.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}[fragile]{DataDisplayDebugger (2/2)}
+\begin{minipage}{0.38\textwidth}
+\begin{itemize}
+\п использует устаревший интерфейс к gdb
+\п написан на Си
+\п исходный код открыт
+\п последняя новость на сайте\textsuperscript{1} датируется 18~января 2013~г
+\п современный аналог: gdbgui\textsuperscript{2}
+\end{itemize}
+\end{minipage}
+\begin{minipage}{0.6\textwidth}
+\begin{center}
+\includegraphics[height=0.6\textheight]{ddd-plot.png}
+\end{center}
+\end{minipage}
+\vfill
+\hfill\textsuperscript{1}https://www.gnu.org/software/ddd/\\
+\hfill\textsuperscript{2}https://github.com/cs01/gdbgui/\\
+\end{frame}
+
+
 \begin{frame}{Отладка с помощью Python-скриптов}
 \begin{center}
 \includegraphics[width=\linewidth]{gdb-python.png}

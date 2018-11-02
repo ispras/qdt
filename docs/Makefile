@@ -132,6 +132,8 @@ report2-PNGs = \
 
 report2.pdf : report2.utex \
  $(report2-PNGs) \
+ ddd-btree.png \
+ ddd-plot.png \
 
 clean : clean-report2
 clean-report2:
