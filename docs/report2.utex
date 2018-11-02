@@ -177,6 +177,13 @@
 \end{frame}
 
 
+\begin{frame}{Отладка с помощью Python-скриптов}
+\begin{center}
+\includegraphics[width=\linewidth]{gdb-python.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}
 \end{frame}
 
