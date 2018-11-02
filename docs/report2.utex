@@ -290,6 +290,34 @@ callback/breakpoint             & 1     & \textgreater{}1 \\
 \end{frame}
 
 
+\begin{frame}{Модификация pyelftools (анализ DWARF)}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                 & До         & После\textsuperscript{+} \\
+\hline
+анализ ELF/DWARF                 & много,     & фрагментарно, \\
+                                 & сразу      & по запросу \\
+\hline
+переход между сестринскими       & -          & + \\
+вершинами в дереве               &            & \\
+Debug Information Entry          &            & \\
+(DW\_AT\_sibling)                &            & \\
+\hline
+Кэширование                      & -          & + \\
+\hline
+Поддержка формата секций         &            & \\
+.debug\_pubname                  & -          & + \\
+.debug\_pubtypes                 & -          & + \\
+\hline
+время старта (поиск              & несколько  & несколько\\
+точек останова; QEmu)            & минут      & секунд \\
+\end{tabular}
+\end{center}
+\vfill
+\hfill\textsuperscript{+}\textit{несколько мелких оптимизаций}
+\end{frame}
+
+
 \begin{frame}{Адаптация позиций точек останова}
 \begin{center}
 \includegraphics[width=\linewidth]{git-breakpoints.png}
