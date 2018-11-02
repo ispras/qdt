@@ -123,6 +123,15 @@
 
 
 \section{}
+
+
+\begin{frame}{Разработка новой виртуальной машины}
+\begin{center}
+\includegraphics[width=\linewidth]{debug-in-workflow-en.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Введение}
 \textbf{%
 Обзор классических способов и средств отладки. Узкоспециализированная отладка.
