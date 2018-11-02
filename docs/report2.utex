@@ -184,6 +184,24 @@
 \end{frame}
 
 
+\begin{frame}{Отладка отладочного скрипта (Python)}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                         & GDB    & Обычный \\
+                                         & Python & Python \\
+\hline
+Трассировка значений                     & +      & + \\
+Пошаговая отладка                        & -      & + \\
+Доступ к значениям произвольных объектов & -      & + \\
+Точки останова                           & -      & + \\
+Графический интерфейс пользователя       & -      & много \\
+\end{tabular}
+\end{center}
+\vfill
+?: \textit{remote\_pdb} --- отладка скрипта внтури GDB Python через сокет.
+\end{frame}
+
+
 \begin{frame}
 \end{frame}
 
