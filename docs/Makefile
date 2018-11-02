@@ -13,10 +13,13 @@ SVG2PNG_DPI := 300
 # article (1-st paper, a technical doc, about QDT)
 all : $(foreach ext,$(extensions),article.$(ext))
 
-$(foreach ext,$(extensions),article.$(ext)): \
+article-PNGs := \
  C2600.png \
  Q35.png \
  main.png \
+
+$(foreach ext,$(extensions),article.$(ext)): \
+ $(article-PNGs)
 
 article.html : PANDOC_ARGS += --css ispras.css
 article.docx : $(REF_DOCX)
@@ -24,14 +27,16 @@ article.docx : $(REF_DOCX)
 clean : clean-article
 clean-article:
 	rm -f $(foreach ext,$(extensions),article.$(ext))
+	rm -f $(article-PNGs)
 
 # isp-article (article variant for ISP RAS proceedings)
 all : $(foreach ext,$(extensions),isp-article.$(ext))
 
+isp-article-PNGs = \
+ $(article-PNGs)
+
 $(foreach ext,$(extensions),isp-article.$(ext)): \
- C2600.png \
- Q35.png \
- main.png \
+ $(isp-article-PNGs)
 
 isp-article.html : PANDOC_ARGS += --css ispras.css
 isp-article.docx : $(REF_DOCX)
@@ -39,12 +44,12 @@ isp-article.docx : $(REF_DOCX)
 clean : clean-isp-article
 clean-isp-article:
 	rm -f $(foreach ext,$(extensions),isp-article.$(ext))
+	rm -f $(isp-article-PNGs)
 
 # report (1-st report slides, on ISP RAS internal seminar, 18.10.2017)
 all : report.pdf
 
-report.pdf : report.tex \
- AM79C971.jpg \
+report-PNGs = \
  C2600.png \
  c2600_pci_c_chunks.png \
  device-model.png \
@@ -56,21 +61,25 @@ report.pdf : report.tex \
  machine-example.png \
  main.png \
  Q35-h.png \
- REMOTE.jpg \
  source-example.png \
  type-reference.png \
  workflow.png \
  workflow-old.png \
 
+report.pdf : report.tex \
+ AM79C971.jpg \
+ REMOTE.jpg \
+ $(report-PNGs) \
+
 clean : clean-report
 clean-report:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report.$(ext))
+	rm -f $(report-PNGs)
 
 # isp-open (2-nd report slides, on ISP RAS Open 2017 conference)
 all : isp-open.pdf
 
-isp-open.pdf : isp-open.tex \
- AM79C971.jpg \
+isp-open-PNGs = \
  C2600.png \
  c2600_pci_c_chunks.png \
  gdb-feedback-en.png \
@@ -80,15 +89,20 @@ isp-open.pdf : isp-open.tex \
  machine-example.png \
  main-en.png \
  Q35-h.png \
- REMOTE.jpg \
  source-example.png \
  type-reference.png \
  workflow-en.png \
  workflow-old-en.png \
 
+isp-open.pdf : isp-open.tex \
+ AM79C971.jpg \
+ REMOTE.jpg \
+ $(isp-open-PNGs) \
+
 clean : clean-isp-open
 clean-isp-open:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,isp-open.$(ext))
+	rm -f $(isp-open-PNGs)
 
 # registers (paper about device register model of QDT, for Ivannikov Memorial
 # Workshop 2018)
@@ -126,7 +140,6 @@ clean-report2:
 
 clean:
 	rm -f *.pmd
-	rm -f *.png
 
 define do_pandoc
 	$(PANDOC_PATH) \
