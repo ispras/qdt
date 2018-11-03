@@ -187,6 +187,10 @@
 \end{frame}
 
 
+\begin{frame}{Специализированная отладка}
+\end{frame}
+
+
 \begin{frame}{DataDisplayDebugger (1/2)}
 \begin{center}
 \includegraphics[height=0.88\textheight]{ddd-btree.png}
@@ -212,6 +216,10 @@
 \vfill
 \hfill\textsuperscript{1}https://www.gnu.org/software/ddd/\\
 \hfill\textsuperscript{2}https://github.com/cs01/gdbgui/\\
+\end{frame}
+
+
+\begin{frame}{Deet, программируемый отладчик}
 \end{frame}
 
 
@@ -259,6 +267,10 @@
 \begin{center}
 \includegraphics[width=\linewidth]{gdb-python.png}
 \end{center}
+\end{frame}
+
+
+\begin{frame}{Вывод TLB QEmu}
 \end{frame}
 
 
@@ -356,6 +368,22 @@ Debug Information Entry          &            & \\
 \end{center}
 \vfill
 \hfill\textsuperscript{+}\textit{несколько мелких оптимизаций}
+\end{frame}
+
+
+\begin{frame}{Основные возможности qdt.debug}
+\end{frame}
+
+
+\begin{frame}{Суффиксная индексация исходных данных}
+\end{frame}
+
+
+\begin{frame}{Виртуальная машина DWARF Location Expression}
+\end{frame}
+
+
+\begin{frame}{Пример DWARF Location Expression}
 \end{frame}
 
 
