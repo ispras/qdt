@@ -296,9 +296,6 @@
 \end{frame}
 
 
-\begin{frame}
-\end{frame}
-
 \section{}
 \begin{frame}
 \textbf{%
@@ -415,10 +412,6 @@ $O($[кол-во исх. файлов]        & \тп Поиск по суффи
 \end{frame}
 
 
-\begin{frame}
-\end{frame}
-
-
 \section{}
 \begin{frame}
 \textbf{%
@@ -438,10 +431,6 @@ $O($[кол-во исх. файлов]        & \тп Поиск по суффи
 
 
 \section{Специализированная отладка QEmu}
-
-
-\begin{frame}
-\end{frame}
 
 
 \section{}
