@@ -187,10 +187,6 @@
 \end{frame}
 
 
-\begin{frame}{Специализированная отладка}
-\end{frame}
-
-
 \begin{frame}{DataDisplayDebugger (1/2)}
 \begin{center}
 \includegraphics[height=0.88\textheight]{ddd-btree.png}
@@ -216,6 +212,10 @@
 \vfill
 \hfill\textsuperscript{1}https://www.gnu.org/software/ddd/\\
 \hfill\textsuperscript{2}https://github.com/cs01/gdbgui/\\
+\end{frame}
+
+
+\begin{frame}{Специализированная отладка}
 \end{frame}
 
 
