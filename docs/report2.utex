@@ -198,7 +198,7 @@
 \end{frame}
 
 
-\begin{frame}[fragile]{DataDisplayDebugger (2/2)}
+\begin{frame}{DataDisplayDebugger (2/2)}
 \begin{minipage}{0.38\textwidth}
 \begin{itemize}
 \п использует устаревший интерфейс к gdb
