@@ -227,6 +227,35 @@
 \end{frame}
 
 
+\begin{frame}{Отладка с помощью Python-скриптов}
+\begin{center}
+\includegraphics[width=\linewidth]{gdb-python.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Вывод TLB QEmu}
+\end{frame}
+
+
+\begin{frame}{Отладка отладочного скрипта (Python)}
+\begin{center}
+\begin{tabular}{r|l|l}
+                                         & GDB    & Обычный \\
+                                         & Python & Python \\
+\hline
+Трассировка значений                     & +      & + \\
+Пошаговая отладка                        & -      & + \\
+Доступ к значениям произвольных объектов & -      & + \\
+Точки останова                           & -      & + \\
+Графический интерфейс пользователя       & -      & много \\
+\end{tabular}
+\end{center}
+\vfill
+?: \textit{remote\_pdb} --- отладка скрипта внтури GDB Python через сокет.
+\end{frame}
+
+
 \begin{frame}{Производительность автоматизированной отладки}
 \begin{center}
 \begin{tikzpicture}
@@ -264,35 +293,6 @@
 \end{axis}
 \end{tikzpicture}
 \end{center}
-\end{frame}
-
-
-\begin{frame}{Отладка с помощью Python-скриптов}
-\begin{center}
-\includegraphics[width=\linewidth]{gdb-python.png}
-\end{center}
-\end{frame}
-
-
-\begin{frame}{Вывод TLB QEmu}
-\end{frame}
-
-
-\begin{frame}{Отладка отладочного скрипта (Python)}
-\begin{center}
-\begin{tabular}{r|l|l}
-                                         & GDB    & Обычный \\
-                                         & Python & Python \\
-\hline
-Трассировка значений                     & +      & + \\
-Пошаговая отладка                        & -      & + \\
-Доступ к значениям произвольных объектов & -      & + \\
-Точки останова                           & -      & + \\
-Графический интерфейс пользователя       & -      & много \\
-\end{tabular}
-\end{center}
-\vfill
-?: \textit{remote\_pdb} --- отладка скрипта внтури GDB Python через сокет.
 \end{frame}
 
 
