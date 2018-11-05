@@ -129,6 +129,7 @@ report2-PNGs = \
  common-debug-tools.png \
  gdb-python.png \
  debug-in-workflow-en.png \
+ domain-specific-debug.png \
 
 report2.pdf : report2.utex \
  $(report2-PNGs) \
