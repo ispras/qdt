@@ -114,6 +114,13 @@ sudo pip install --upgrade six
 sudo pip3 install --upgrade six
 ```
 
+`graphviz` package is required by internal debug facilities.
+
+```bash
+sudo pip install --upgrade graphviz
+sudo pip3 install --upgrade graphviz
+```
+
 Now the all environment prerequisites are satisfied.
 
 #### Debian Linux
