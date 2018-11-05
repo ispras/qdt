@@ -99,6 +99,7 @@
 %% Комманды в кириллице %%
 
 \newcommand{\п}{\item} % пункт
+\newcommand{\тп}{~~\llap{\textbullet}~~}  % пункт в таблице
 
 %% А дальше - держитесь! %%
 
@@ -377,7 +378,25 @@ Debug Information Entry          &            & \\
 \end{frame}
 
 
-\begin{frame}{Суффиксная индексация исходных данных}
+\begin{frame}{Суффиксная индексация имён исходных файлов}
+\begin{center}
+\begin{tabular}{l|l}
+\multicolumn{1}{c|}{Префиксная форма} &\multicolumn{1}{|c}{Суффиксная форма} \\
+\multicolumn{1}{c|}{(классическая)}   & \\
+\hline
+\includegraphics[width=0.4\linewidth]{prefix-form.png} & %
+  \includegraphics[width=0.4\linewidth]{suffix-form.png} \\
+\hline
+\тп Используется в отладочной   & \тп Достаточно указать\\
+информации                      & уникальный суффикс \\
+\тп Встречаются как полный, так & \тп Требуется построить TRIE \\
+и относительный варианты        & $O($[кол-во исх. файлов] \\
+\тп Поиск по суффиксу           & \hfill$*$ [добавление в TRIE]$)$ \\
+$O($[кол-во исх. файлов]        & \тп Поиск по суффиксу\\
+\hfill$*$ [поиск подстоки]$)$   & $O($[длина суффикса] \\
+                                & \hfill{}$+$ [поиск в TRIE]$)$\\
+\end{tabular}
+\end{center}
 \end{frame}
 
 

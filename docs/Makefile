@@ -130,6 +130,8 @@ report2-PNGs = \
  gdb-python.png \
  debug-in-workflow-en.png \
  domain-specific-debug.png \
+ suffix-form.png \
+ prefix-form.png \
 
 report2.pdf : report2.utex \
  $(report2-PNGs) \
