@@ -215,7 +215,10 @@
 \end{frame}
 
 
-\begin{frame}{Специализированная отладка}
+\begin{frame}{GDB и специализированная отладка}
+\begin{center}
+\includegraphics[width=\linewidth]{domain-specific-debug.png}
+\end{center}
 \end{frame}
 
 
