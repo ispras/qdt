@@ -105,9 +105,9 @@ macro_forbidden = compile("[^0-9A-Z_]")
 class ChunkGenerator(object):
     """ Maintains context of source code chunks generation precess."""
 
-    def __init__(self, for_header = False):
-        self.chunk_cache = {}
-        self.for_header = for_header
+    def __init__(self, definer):
+        self.chunk_cache = { definer: [] }
+        self.for_header = isinstance(definer, Header)
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
@@ -443,7 +443,7 @@ switching to that mode.
             # Preserve current types list. See the comment above.
             l = list(self.types.values()) + ref_list
 
-        gen = ChunkGenerator(for_header = isinstance(self, Header))
+        gen = ChunkGenerator(self)
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
