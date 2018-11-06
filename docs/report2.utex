@@ -234,7 +234,24 @@
 \end{frame}
 
 
-\begin{frame}{Вывод TLB QEmu}
+\begin{frame}[fragile]{Вывод QEmu memory flat view с помощью GDB Python}
+\textit{«Проекция» ациклического графа памяти на «прямую» для более
+быстрого поиска.}
+\begin{lstlisting}
+ - I/O -
+...
+ - memory -
+00000000-0009ffff pc.ram
+000a0000-000bffff vga-lowmem
+000c0000-000dffff pc.rom
+000e0000-000fffff pc.bios
+00100000-07ffffff pc.ram
+fec00000-fec00fff ioapic
+fed00000-fed003ff hpet
+fee00000-feefffff apic-msi
+fffc0000-ffffffff pc.bios
+\end{lstlisting}
+45 строк кода; несколько часов проб и попыток отладки.
 \end{frame}
 
 
