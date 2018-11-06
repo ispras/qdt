@@ -438,7 +438,16 @@ $O($[кол-во исх. файлов]        & \тп Поиск по суффи
 \end{frame}
 
 
-\begin{frame}{Пример DWARF Location Expression}
+\begin{frame}{Пример DWARF Expression}
+\begin{center}
+\begin{tabular}{c|c}
+DW\_OP\_fbreg [-48]   & Искусственное \\
+(переменная на стеке) & (считывание указателя со стека) \\
+\hline
+\includegraphics[width=0.3\linewidth]{dwarf-expr-1.png} & %
+  \includegraphics[width=0.65\linewidth]{dwarf-expr-2.png} \\
+\end{tabular}
+\end{center}
 \end{frame}
 
 
