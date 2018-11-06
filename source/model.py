@@ -887,9 +887,7 @@ class Structure(Type):
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete = False)
         self.fields = OrderedDict()
-        if fields is not None:
-            for v in fields:
-                self.append_field(v)
+        self.append_fields(fields)
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
@@ -923,6 +921,11 @@ class Structure(Type):
             )
 
         self.fields[v_name] = variable
+
+    def append_fields(self, fields):
+        if fields is not None:
+            for v in fields:
+                self.append_field(v)
 
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
