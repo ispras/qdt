@@ -391,10 +391,6 @@ Debug Information Entry          &            & \\
 \end{frame}
 
 
-\begin{frame}{Основные возможности qdt.debug}
-\end{frame}
-
-
 \begin{frame}{Суффиксная индексация имён исходных файлов}
 \begin{center}
 \begin{tabular}{l|l}
@@ -472,6 +468,11 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \begin{center}
 \includegraphics[width=\linewidth]{git-breakpoints.png}
 \end{center}
+\end{frame}
+
+
+\begin{frame}{Архитектура qdt.debug}
+\includegraphics[width=\linewidth]{qdt-debug-verb.png}
 \end{frame}
 
 
