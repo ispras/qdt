@@ -12,7 +12,7 @@ from .ml import (
     mlget as _
 )
 from .notifier import (
-    Notifier
+    notifier
 )
 from sys import (
     exc_info
@@ -24,7 +24,7 @@ class SignalIsAlreadyAttached(RuntimeError):
 class SignalIsNotAttached(RuntimeError):
     pass
 
-@Notifier("failed")
+@notifier("failed")
 class SignalDispatcherTask(CoTask):
     def __init__(self):
         CoTask.__init__(

@@ -3,14 +3,15 @@ __all__ = [
 ]
 
 # Tk variable emulation class
-# TODO: use Notifier for feedback
+# TODO: use `notifier` for feedback
 
 def undefined(): pass
 
 class Variable(object):
     """ None as value is a value too. Hence use special internal symbol
-    'undefined' to distinguish None-valued and non-provided keyword argument.
+'undefined' to distinguish None-valued and non-provided keyword argument.
     """
+
     def __init__(self, value = undefined):
         self.__w = self.__changed = []
         self.__r = self.__going_read = []

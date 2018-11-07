@@ -1,5 +1,5 @@
 __all__ = [
-    "Notifier"
+    "notifier"
 ]
 
 # "Function factory" approach is used to meet "late binding" problem.
@@ -30,7 +30,7 @@ def gen_event_helpers(wrapped_init, cb_list_name):
 
     return init_wrapper, add_callback, remove_callback, notify
 
-def Notifier(*events):
+def notifier(*events):
     def add_events(klass, events = events):
         for event in events:
             # Callback list is private.
@@ -56,6 +56,15 @@ https://docs.python.org/3/reference/expressions.html#atom-identifiers
             methods is not recommended. """
             notify_name = "_" + klass.__name__ + "__notify_" + event
             setattr(klass, notify_name, __notify)
+
+        def watch(self, event_name, cb):
+            getattr(self, "watch_" + event_name)(cb)
+
+        def unwatch(self, event_name, cb):
+            getattr(self, "unwatch_" + event_name)(cb)
+
+        klass.watch = watch
+        klass.unwatch = unwatch
 
         return klass
 

@@ -36,11 +36,17 @@ class HKEntry(Entry):
                 self.delete("sel.first", "sel.last")
 
 class HotKeyBinding(object):
-    def __init__(self, callback, key_code, description = None):
+
+    def __init__(self, callback, key_code,
+        description = None,
+        symbol = None
+    ):
         self.cb = callback
         self.kc = key_code
         self.desc = description
         self.enabled = True
+        self.symbol = symbol
+
 
 class HotKey(object):
     def __init__(self, root):
@@ -94,7 +100,11 @@ class HotKey(object):
         kc = binding.kc
         self.keys2bindings.setdefault(kc, []).append(binding)
 
-        self.update_name(binding)
+        sym = binding.symbol
+        if sym is not None:
+            self.add_key_symbols({kc: sym})
+        else:
+            self.update_name(binding)
 
     def add_bindings(self, bindings):
         for b in bindings:

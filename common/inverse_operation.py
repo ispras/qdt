@@ -18,40 +18,44 @@ from .ml import (
     mlget as _
 )
 from .notifier import (
-    Notifier
+    notifier
 )
 
 class UnimplementedInverseOperation(NotImplementedError):
     pass
 
-simple_eq_types = [
+simple_eq_types = (
     bool,
     str,
     float
-] + list(integer_types)
+) + integer_types
 
 def set_touches_entry(X, e):
-    for x in X:
-        if isinstance(x, tuple):
-            if isinstance(e, tuple):
+    if isinstance(e, tuple):
+        for x in X:
+            if isinstance(x, tuple):
                 for ee, xx in zip(e, x):
-                    if not ee == xx:
+                    if ee != xx:
                         break
                 else:
                     return True
-            elif type(e) in simple_eq_types:
-                if e == x[0]:
-                    return True
-            else:
-                raise Exception("Unsupported type of entry: " + str(type(e)))
-        elif type(x) in simple_eq_types:
-            if isinstance(e, tuple):
+            elif isinstance(x, simple_eq_types):
                 if e[0] == x:
                     return True
-            elif e == x:
-                return True
-        else:
-            Exception("Unsupported type of entry: " + str(type(x)))
+            else:
+                raise ValueError("Unsupported type of entry: " + str(type(x)))
+    elif isinstance(e, simple_eq_types):
+        for x in X:
+            if isinstance(x, tuple):
+                if e == x[0]:
+                    return True
+            elif isinstance(x, simple_eq_types):
+                if e == x:
+                    return True
+            else:
+                raise ValueError("Unsupported type of entry: " + str(type(x)))
+    else:
+        raise ValueError("Unsupported type of entry: " + str(type(e)))
     return False
 
 """
@@ -151,7 +155,7 @@ class History(object):
         self.root = InitialOperation()
         self.leafs = [self.root]
 
-@Notifier("changed")
+@notifier("changed")
 class HistoryTracker(object):
     def __init__(self, history):
         self.history = history
