@@ -533,6 +533,13 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \end{frame}
 
 
+\begin{frame}{Получение дерева типов QOM}
+\begin{center}
+\includegraphics[height=0.9\textheight]{qom-tree-getting.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Пример: i440FX (i386)}
 \begin{center}
 \includegraphics[height=0.9\textheight]{i440fx.png}
