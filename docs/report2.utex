@@ -561,6 +561,28 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \end{frame}
 
 
+\begin{frame}{Замедление}
+\begin{center}
+\begin{tabular}{c|c|c}
+\hline
+Инициализация & \multicolumn{2}{|c}{Длительность [сек]} \\
+              & без анализа & с анализом \\
+\hline
+% & 1541592808 - 1541592801
+QOM           & \textless{}1 & 7 \\
+% & 1541593207 - 1541593202
+\hline
+% & 1541593295 - 1541593223
+i440FX        & \textless{}1 & 72 \\
+\hline
+% & 1541593026 - 1541592832
+exynos        & \textless{}1 & 194 \\
+\hline
+\end{tabular}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Дальнейшая работа}
 \begin{itemize}
 \п Отображение состояния элементов машины.
