@@ -134,6 +134,7 @@ report2-PNGs = \
  prefix-form.png \
  dwarf-expr-1.png \
  dwarf-expr-2.png \
+ qdt-debug-verb.png \
 
 report2.pdf : report2.utex \
  $(report2-PNGs) \
