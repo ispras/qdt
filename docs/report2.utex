@@ -511,6 +511,20 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \end{frame}
 
 
+\begin{frame}{Пример: i440FX (i386)}
+\begin{center}
+\includegraphics[height=0.9\textheight]{i440fx.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Пример: exynos (ARM)}
+\begin{center}
+\includegraphics[height=0.9\textheight]{exynos.png}
+\end{center}
+\end{frame}
+
+
 \section{}
 \begin{frame}{Заключение}
 \textbf{%
