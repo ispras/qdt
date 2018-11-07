@@ -504,6 +504,13 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \section{Специализированная отладка QEMU}
 
 
+\begin{frame}{Дерево типов QOM}
+\begin{center}
+\includegraphics[width=\linewidth]{qom.png}
+\end{center}
+\end{frame}
+
+
 \section{}
 \begin{frame}{Заключение}
 \textbf{%
