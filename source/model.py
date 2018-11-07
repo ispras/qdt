@@ -1355,7 +1355,7 @@ class Macro(Type):
         if self.args is None:
             return self.name
         else:
-            arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + ")"
+            arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + "@c)"
 
         return "%s%s" % (self.name, arg_val)
 
@@ -2184,7 +2184,7 @@ def gen_function_declaration_string(indent, function,
     else:
         decl_name = function.name
 
-    return "{indent}{static}{inline}{ret_type}{name}(@a{args})".format(
+    return "{indent}{static}{inline}{ret_type}{name}(@a{args}@c)".format(
         indent = indent,
         static = "static@b" if function.static else "",
         inline = "inline@b" if function.inline else "",
