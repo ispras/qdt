@@ -540,6 +540,13 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \end{frame}
 
 
+\begin{frame}{Восстановление состава виртуальной машины}
+\begin{center}
+\includegraphics[width=\linewidth]{machine-reversing.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Пример: i440FX (i386)}
 \begin{center}
 \includegraphics[height=0.9\textheight]{i440fx.png}

@@ -138,6 +138,7 @@ report2-PNGs = \
  watcher-example.png \
  qom.png \
  qom-tree-getting.png \
+ machine-reversing.png \
 
 report2.pdf : report2.utex \
  $(report2-PNGs) \
