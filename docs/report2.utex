@@ -526,6 +526,10 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \begin{center}
 \includegraphics[width=\linewidth]{qom.png}
 \end{center}
+\begin{itemize}
+\п Применяется для идентификации элементов виртуальной машины.
+\п Строится динамически в куче: всю информацию статически не получить.
+\end{itemize}
 \end{frame}
 
 
