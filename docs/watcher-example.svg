@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="152.62712mm"
+   height="63.797791mm"
+   viewBox="0 0 540.80476 226.05516"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="watcher-example.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="198.57523"
+     inkscape:cy="124.08943"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1619"
+     inkscape:window-height="938"
+     inkscape:window-x="2011"
+     inkscape:window-y="160"
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(33792.876,174.83993)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="359.28571"
+       y="486.64792"
+       id="text4455"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4457"
+         x="359.28571"
+         y="486.64792" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="-33679.801"
+       y="-123.18115"
+       id="text4380"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4382"
+         x="-33679.801"
+         y="-123.18115"><tspan
+   style="fill:#0000ff"
+   id="tspan4520">class</tspan> QOMTreeReverser(Watcher):</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-108.18115"
+         id="tspan4384" /><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-93.181152"
+         id="tspan4386"><tspan
+   style="fill:#0000ff"
+   id="tspan4518">    def</tspan> on_type_register_internal(self):</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-78.181152"
+         id="tspan4388"
+         style="fill:#ff7f2a">        &quot;object.c:139 4743c23509a51bd4ee85cc272287a41917d1be35&quot;</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-63.181149"
+         id="tspan4390" /><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-48.181145"
+         id="tspan4392">        type_info = self.rt[<tspan
+   style="fill:#ff7f2a"
+   id="tspan4514">&quot;ti&quot;</tspan>]</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-33.181145"
+         id="tspan4394" /><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-18.181145"
+         id="tspan4396">        print(<tspan
+   style="fill:#ff7f2a"
+   id="tspan4512">&quot;%s -&gt; %s&quot;</tspan> % (</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="-3.1811428"
+         id="tspan4398">            type_info[<tspan
+   style="fill:#ff7f2a"
+   id="tspan4506">&quot;parent&quot;</tspan>].fetch_c_string(),</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="11.818858"
+         id="tspan4400">            type_info[<tspan
+   style="fill:#ff7f2a"
+   id="tspan4508">&quot;name&quot;</tspan>].fetch_c_string()</tspan><tspan
+         sodipodi:role="line"
+         x="-33679.801"
+         y="26.818859"
+         id="tspan4402">        ))</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       x="-33792.66"
+       y="-55.446556"
+       id="text4410"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4412"
+         x="-33792.66"
+         y="-55.446556"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;">- docstring содержит</tspan><tspan
+         sodipodi:role="line"
+         x="-33792.66"
+         y="-40.446556"
+         id="tspan4414"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;">позицию точки останова</tspan><tspan
+         sodipodi:role="line"
+         x="-33792.66"
+         y="-25.446554"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;"
+         id="tspan4524">- достаточно указать</tspan><tspan
+         sodipodi:role="line"
+         x="-33792.66"
+         y="-10.446552"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;"
+         id="tspan4526">уникальный суффикс</tspan><tspan
+         sodipodi:role="line"
+         x="-33792.66"
+         y="4.5534487"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;"
+         id="tspan4528">имени файла</tspan><tspan
+         sodipodi:role="line"
+         x="-33792.66"
+         y="19.55345"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;"
+         id="tspan4522" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       x="-33273.359"
+       y="-107.82401"
+       id="text4435"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4437"
+         x="-33273.359"
+         y="-107.82401"
+         style="font-style:italic;fill:#008000;">v2.12.0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       x="-33438.359"
+       y="-22.82399"
+       id="text4439"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4441"
+         x="-33438.359"
+         y="-22.82399"
+         style="font-style:italic;fill:#008000;">runtime</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="m -33300.863,-73.18114 -334.285,0 -20.858,38.030458 -135.715,0"
+       id="path4443"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="m -33529.574,-44.23911 12.627,0 54.862,25.004353 51.743,0"
+       id="path4445"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       x="-33385.863"
+       y="-39.609715"
+       id="text4447"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4449"
+         x="-33385.863"
+         y="-39.609715"
+         style="font-style:italic;fill:#008000;">имя локальной переменной</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="m -33505.148,-43.53829 11.071,0 30.714,8.21429 156.786,0"
+       id="path4451"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="m -33541.443,15.86497 23.234,0 34.85,34.850261 114.4,0"
+       id="path4453"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       x="-33481.32"
+       y="46.385624"
+       id="text4447-3"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="-33481.32"
+         y="46.385624"
+         style="font-style:italic;text-align:start;text-anchor:start;fill:#008000;"
+         id="tspan4473">имя поля структуры</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="m -33549.019,-88.43328 241.013,0 15.41,-15.40965 40.305,0"
+       id="path4477"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#008000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="m -33614.805,-102.93392 -16.794,0 -28.06,-43.67306 160.53,0"
+       id="path4479"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.00000095px;line-height:125%;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       x="-33657.484"
+       y="-166.52393"
+       id="text4481"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4483"
+         x="-33657.484"
+         y="-166.52393"
+         style="font-style:italic;fill:#008000;">метод-обработчик точки останова</tspan><tspan
+         sodipodi:role="line"
+         x="-33657.484"
+         y="-151.52393"
+         id="tspan4485"
+         style="font-style:italic;fill:#008000;">должен иметь префикс &quot;on_&quot;</tspan></text>
+  </g>
+</svg>

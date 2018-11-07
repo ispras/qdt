@@ -464,6 +464,13 @@ DW\_OP\_fbreg [-48]   & Искусственное \\
 \end{frame}
 
 
+\begin{frame}{Пример обработки точки останова}
+\begin{center}
+\includegraphics[width=\linewidth]{watcher-example.png}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Адаптация позиций точек останова}
 \begin{center}
 \includegraphics[width=\linewidth]{git-breakpoints.png}
