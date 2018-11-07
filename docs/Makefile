@@ -142,6 +142,8 @@ report2.pdf : report2.utex \
  $(report2-PNGs) \
  ddd-btree.png \
  ddd-plot.png \
+ i440fx.png \
+ exynos.png \
 
 clean : clean-report2
 clean-report2:
