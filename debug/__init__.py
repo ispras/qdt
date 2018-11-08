@@ -4,3 +4,4 @@ from .dia import *
 from .dic import *
 from .dwarf_expr_builder import *
 from .gv import *
+from .type import *
