@@ -1,7 +1,7 @@
 __all__ = [
-    "CoRSP",
-    "rsp_decode",
-    "assert_ok"
+    "CoRSP"
+  , "rsp_decode"
+  , "assert_ok"
 ]
 
 from socket import (
