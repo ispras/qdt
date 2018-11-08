@@ -1,5 +1,6 @@
 __all__ = [
     "CoRSP"
+      , "CoRSPClient"
   , "rsp_decode"
   , "assert_ok"
 ]
@@ -191,13 +192,10 @@ def assert_ok(data):
 
 class CoRSP(object):
 
-    def __init__(self, co_disp, remote, verbose = False):
-        # connection setup
-        self.sock = sock = socket(AF_INET, SOCK_STREAM)
-        addr, port = remote.split(":")
+    def __init__(self, co_disp, sock, verbose = False):
+        self.sock = sock
 
-        while sock.connect_ex((addr, int(port))): pass
-
+        # using select based coroutines assumes that socket is non-blocking
         sock.setblocking(False)
 
         # operation parameters
@@ -205,13 +203,8 @@ class CoRSP(object):
         self.verbose = verbose
         # slow but safe, will overwritten during initialization sequence
         self.packet_size = 1
+
         self.ack = True
-        self.selected_thread = None
-        self.features = features = Features(
-            multiprocess = True,
-            qRelocInsn = True,
-            swbreak = True
-        )
 
         # input
 
@@ -227,30 +220,6 @@ class CoRSP(object):
         self.out_buf = b""
 
         co_disp.enqueue(RSPWriter(self))
-
-        # begin initialization
-        self._write(b"+")
-        self.send(features.query(), callback = self._on_features)
-
-    # initialization sequence (send-callback-send chain)
-    def _on_features(self, data):
-        features = self.features
-        features.parse(data)
-        self.packet_size = int(features["PacketSize"], 16)
-
-        if not features["QNonStop"]:
-            raise RuntimeError("Remote does not support non-stop mode")
-
-        self.send("QNonStop:1", callback = self._on_nonstop)
-
-    def _on_nonstop(self, data):
-        assert_ok(data)
-        if self.features["QStartNoAckMode"]:
-            self.send("QStartNoAckMode", callback = self._on_noack)
-
-    def _on_noack(self, data):
-        assert_ok(data)
-        self.ack = False
 
     # events from reader
     def __packet__(self, data):
@@ -305,30 +274,11 @@ class CoRSP(object):
     def fetchOK(self, data):
         self.send(data, callback = assert_ok)
 
-    def swap_thread(self, pid_tid):
-        prev = self.selected_thread
-
-        if prev != pid_tid:
-            self.fetchOK("Hg" + pid_tid)
-            self.selected_thread = pid_tid
-        else:
-            prev = None
-
-        return prev
-
     def v_continue(self, pid_tid = "-1"):
         self.fetchOK("vCont;c:" + pid_tid)
 
     def v_step(self, pid_tid = "-1"):
         self.fetchOK("vCont;s:" + pid_tid)
-
-    def set_br(self, addr):
-        self.swap_thread("p0.0")
-        self.fetchOK("Z0,%s,1" % addr)
-
-    def del_br(self, addr):
-        self.swap_thread("p0.0")
-        self.fetchOK("z0,%s,1" % addr)
 
     def finish(self):
         self.send("k")
@@ -341,3 +291,68 @@ class CoRSP(object):
             pktlen = len(pkt) / 2
             self.fetchOK("M%x,%x:%s" % (addr, pktlen, pkt))
             addr += pktlen
+
+
+class CoRSPClient(CoRSP):
+
+    def __init__(self, co_disp, remote, verbose = False):
+        # connection setup
+        addr, port = remote.split(":")
+
+        sock = socket(AF_INET, SOCK_STREAM)
+        while sock.connect_ex((addr, int(port))): pass
+
+        super(CoRSPClient, self).__init__(co_disp, sock, verbose = verbose)
+
+        self.selected_thread = None
+
+        self.features = features = Features(
+            multiprocess = True,
+            qRelocInsn = True,
+            swbreak = True
+        )
+
+        # begin initialization
+        self._write(b"+")
+        self.send(features.query(), callback = self._on_features)
+
+    # initialization sequence (send-callback-send chain)
+    def _on_features(self, data):
+        features = self.features
+        features.parse(data)
+        self.packet_size = int(features["PacketSize"], 16)
+
+        if not features["QNonStop"]:
+            raise RuntimeError("Remote does not support non-stop mode")
+
+        self.send("QNonStop:1", callback = self._on_nonstop)
+
+    def _on_nonstop(self, data):
+        assert_ok(data)
+        if self.features["QStartNoAckMode"]:
+            self.send("QStartNoAckMode", callback = self._on_noack)
+
+    def _on_noack(self, data):
+        assert_ok(data)
+        self.ack = False
+
+    # helpers
+
+    def swap_thread(self, pid_tid):
+        prev = self.selected_thread
+
+        if prev != pid_tid:
+            self.fetchOK("Hg" + pid_tid)
+            self.selected_thread = pid_tid
+        else:
+            prev = None
+
+        return prev
+
+    def set_br(self, addr):
+        self.swap_thread("p0.0")
+        self.fetchOK("Z0,%s,1" % addr)
+
+    def del_br(self, addr):
+        self.swap_thread("p0.0")
+        self.fetchOK("z0,%s,1" % addr)
