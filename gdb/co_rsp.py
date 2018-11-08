@@ -192,7 +192,7 @@ def assert_ok(data):
 class CoRSP(object):
 
     def __init__(self, co_disp, remote, verbose = False):
-        # conenction setup
+        # connection setup
         self.sock = sock = socket(AF_INET, SOCK_STREAM)
         addr, port = remote.split(":")
 
@@ -200,10 +200,10 @@ class CoRSP(object):
 
         sock.setblocking(False)
 
-        # interoperation parameters
+        # operation parameters
 
         self.verbose = verbose
-        # slow but safe, will overwritten dduring initialization sequence
+        # slow but safe, will overwritten during initialization sequence
         self.packet_size = 1
         self.ack = True
         self.selected_thread = None
@@ -222,7 +222,7 @@ class CoRSP(object):
 
         # output
 
-        # queue of requests sheaduled by `send`
+        # queue of requests scheduled by `send`
         self.waiting = deque()
         self.out_buf = b""
 
