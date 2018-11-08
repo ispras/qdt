@@ -24,6 +24,7 @@ from debug import (
     TYPE_CODE_PTR
 )
 from common import (
+    free_tcp_port,
     mlget as _,
     pythonize,
     notifier,
@@ -35,11 +36,6 @@ from re import (
 )
 from graphviz import (
     Digraph
-)
-from socket import (
-    socket,
-    AF_INET,
-    SOCK_STREAM
 )
 from argparse import (
     ArgumentParser
@@ -1350,16 +1346,7 @@ def main():
     MachineReverser(mw, mach_desc, pht)
 
     # auto select free port for gdb-server
-    for port in range(4321, 1 << 16):
-        test_socket = socket(AF_INET, SOCK_STREAM)
-        try:
-            test_socket.bind(("", port))
-        except:
-            pass
-        else:
-            break
-        finally:
-            test_socket.close()
+    port = free_tcp_port(4321)
 
     qemu_debug_addr = "localhost:%u" % port
 
