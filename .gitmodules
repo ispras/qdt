@@ -8,3 +8,6 @@
 	path = debug/pyelftools
 	url = git@nasredin.intra.ispras.ru:qemu/pyelftools.git
 	branch = lazy
+[submodule "pyrsp"]
+	path = pyrsp
+	url = git@nasredin.intra.ispras.ru:qemu/pyrsp.git
