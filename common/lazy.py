@@ -1,5 +1,7 @@
 __all__ = [
     "lazy"
+      , "cached"
+  , "reset_cache"
 ]
 
 # See: https://docs.python.org/2/howto/descriptor.html
@@ -22,3 +24,27 @@ class lazy(object):
         # custom `__getattr__` / `__getattribute__` implementation.
         obj.__dict__[getter.__name__] = val
         return val
+
+
+class cached(lazy):
+    """ Variant of `lazy` attribute decorator that saves names of evaluated
+lazy attributes to list with name `__lazy__`. An instance with `cached`
+attributes must provide such an attribute (by `__init__`, for example).
+    """
+
+    def __get__(self, obj, cls):
+        getter = self.getter
+        val = getter(obj)
+        name = getter.__name__
+        obj.__dict__[name] = val
+        obj.__lazy__.append(name)
+        return val
+
+def reset_cache(obj):
+    "Resets lazily evaluated `cached` attributes of `obj`."
+
+    l = obj.__lazy__
+    d = obj.__dict__
+    for name in l:
+        del d[name]
+    del l[:]
