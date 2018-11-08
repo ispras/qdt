@@ -12,6 +12,7 @@ from .lazy import *
 from .legacy import *
 from .mechanics import *
 from .ml import *
+from .net import *
 from .notifier import *
 from .ordered_set import *
 from .os_wrappers import *
