@@ -43,12 +43,18 @@ def main():
         description = "GDB RSP proxy",
         formatter_class = ArgumentDefaultsHelpFormatter
     )
+    ap.add_argument("-s", "--start",
+        type = int,
+        metavar = "PORT",
+        default = 1234,
+        help = "this proxy will start unused port search from this number"
+    )
     args = ap.parse_args()
 
     disp = CoDispatcher()
 
     # server socket
-    port = free_tcp_port(1234)
+    port = free_tcp_port(args.start)
     ss = socket(AF_INET, SOCK_STREAM)
     ss.bind(("", port))
     ss.listen(10)
