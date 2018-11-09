@@ -14,6 +14,7 @@ from .rsp_features import (
     Features
 )
 from common import (
+    notifier,
     split_by_n,
     CoTask,
     mlget as _
@@ -190,6 +191,9 @@ def assert_ok(data):
         raise RuntimeError("'OK' expected, got: '%s'" % data)
 
 
+@notifier(
+    "event" # CoRSP, data
+)
 class CoRSP(object):
 
     def __init__(self, co_disp, sock, verbose = False):
@@ -209,7 +213,6 @@ class CoRSP(object):
         # input
 
         self.acked = False
-        self.notifiers = []
 
         co_disp.enqueue(RSPReader(self))
 
@@ -237,8 +240,7 @@ class CoRSP(object):
         callback(data)
 
     def __notification__(self, data):
-        for n in list(self.notifiers):
-            n(data)
+        self.__notify_event(self, data)
 
     def __ack_ok__(self):
         self.acked = True
