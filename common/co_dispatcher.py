@@ -24,6 +24,9 @@ from select import (
     select
 )
 import sys
+from traceback import (
+    print_exception
+)
 
 class FailedCallee(RuntimeError):
     def __init__(self, callee):
@@ -71,8 +74,7 @@ class CoTask(object):
         pass
 
     def on_failed(self):
-        # do nothing by default
-        pass
+        print_exception(type(self.exception), self.exception, self.traceback)
 
 class CoDispatcher(object):
     """
