@@ -28,7 +28,7 @@ from binascii import (
     hexlify
 )
 
-# This module is particially based on: https://github.com/stef/pyrsp
+# This module is partially based on: https://github.com/stef/pyrsp
 
 
 def rsp_pack(data):
