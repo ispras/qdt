@@ -193,6 +193,7 @@ def assert_ok(data):
 
 @notifier(
     "event" # CoRSP, data
+  , "command" # CoRSP, data
 )
 class CoRSP(object):
 
@@ -227,6 +228,10 @@ class CoRSP(object):
     # events from reader
     def __packet__(self, data):
         waiting = self.waiting
+
+        if not waiting:
+            self.__notify_command(self, data)
+            return
 
         callback = waiting.popleft()[2]
 
