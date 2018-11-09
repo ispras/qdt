@@ -38,7 +38,7 @@ def rsp_escape(data):
     return data
 
 def rsp_pack(data):
-    " Formats data into a RSP packet "
+    "Formats data into a RSP packet"
     return "$%s#%02x" % (rsp_escape(data), (sum(ord(c) for c in data) % 256))
 
 
