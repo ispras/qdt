@@ -12,6 +12,10 @@ from signal import (
 from time import (
     sleep
 )
+from argparse import (
+    ArgumentParser,
+    ArgumentDefaultsHelpFormatter
+)
 from common import (
     CoDispatcher,
     free_tcp_port
@@ -35,6 +39,12 @@ def co_accept(ss):
         cs.close()
 
 def main():
+    ap = ArgumentParser(
+        description = "GDB RSP proxy",
+        formatter_class = ArgumentDefaultsHelpFormatter
+    )
+    args = ap.parse_args()
+
     disp = CoDispatcher()
 
     # server socket
