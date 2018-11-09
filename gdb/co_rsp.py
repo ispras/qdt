@@ -29,14 +29,17 @@ from binascii import (
 # This module is partially based on: https://github.com/stef/pyrsp
 
 
-def rsp_pack(data):
-    " Formats data into a RSP packet "
+def rsp_escape(data):
     # c -> "}%s" % chr(ord(c) ^ 0x20)
     data = data.replace(b'}', b"}]")
     data = data.replace(b'*', b"}\n")
     data = data.replace(b'#', b"}\x03")
     data = data.replace(b'$', b"}\x04")
-    return "$%s#%02x" % (data, (sum(ord(c) for c in data) % 256))
+    return data
+
+def rsp_pack(data):
+    " Formats data into a RSP packet "
+    return "$%s#%02x" % (rsp_escape(data), (sum(ord(c) for c in data) % 256))
 
 
 def rsp_check_pkt(data, checksum):
