@@ -85,8 +85,13 @@ class RSPReader(CoTask):
         while True:
             yield read_wait
 
-            # `packet_size` is dynamic, do not cache!
-            buf = recv(rsp.packet_size)
+            # 0xFFFF - 20 [minimum IP header length] = 65515
+            # It's the maximum size of an IP packet payload.
+            # See: https://tools.ietf.org/rfc/rfc791.txt
+            # Note that normal gdbserver `PacketSize` is 0x3fff. Which is much
+            # less than this limit. So, the reader may always accept an entire
+            # RSP packet per `recv` call.
+            buf = recv(65515)
             for c in buf:
                 send(c)
 
@@ -171,6 +176,7 @@ class RSPWriter(CoTask):
 
         while True:
             if buf:
+                # `packet_size` is dynamic, do not cache!
                 sent = send(buf[:rsp.packet_size])
                 if sent == len(buf):
                     buf = rsp.out_buf
