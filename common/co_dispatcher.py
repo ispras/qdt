@@ -200,7 +200,7 @@ after last statement in the corresponding callable object.
                     calls.append((task, ret))
                     ready = True
                 elif isinstance(ret, tuple):
-                    # coroutine is wating for an I/O descriptor
+                    # coroutine is waiting for an I/O descriptor
                     io, wait_write = ret
                     wait_set = write_waits if wait_write else read_waits
                     wait_set.append((io, task))
