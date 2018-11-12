@@ -7,19 +7,25 @@ class Features(object):
     """ Helper for `qSupported` packet.
     """
 
-    def __init__(self, **features):
+    def __init__(self, features = {}, **kwfeatures):
         """
         :param features:
             - use `True`/`False` for boolean features (those who are encoded
                 using as `name+` and `name-`).
             - use strings for features with values (encoded as `name=value`)
+        :param kwfeatures:
+            A way to specify features as object instantiation arguments. If a
+            feature name is not comply with Python syntax then it may be
+            given through `features`.
 
         There is `name?` stub feature encoding form. It results in `None` in
         `stubfeatures` after parsing. Support for those features should be
         detecetd using other way.
         """
 
-        self.gdbfeatures = features
+        kwfeatures.update(features)
+        self.gdbfeatures = kwfeatures
+
         self.stubfeatures = None
 
     def __query_body(self):
