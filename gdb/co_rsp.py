@@ -78,7 +78,7 @@ class RSPReader(CoTask):
         # cache references
         rsp = self.rsp
         sock = rsp.sock
-        read = sock.recv
+        recv = sock.recv
         read_wait = sock, False
         send = parser.send
 
@@ -86,7 +86,7 @@ class RSPReader(CoTask):
             yield read_wait
 
             # `packet_size` is dynamic, do not cache!
-            buf = read(rsp.packet_size)
+            buf = recv(rsp.packet_size)
             for c in buf:
                 send(c)
 
