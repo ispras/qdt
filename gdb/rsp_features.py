@@ -10,7 +10,7 @@ class Features(object):
     def __init__(self, **features):
         """
         :param features:
-            - use `True`/`False` for boolean features (thise who are encoded
+            - use `True`/`False` for boolean features (those who are encoded
                 using as `name+` and `name-`).
             - use strings for features with values (encoded as `name=value`)
 
