@@ -204,6 +204,9 @@ after last statement in the corresponding callable object.
                     io, wait_write = ret
                     wait_set = write_waits if wait_write else read_waits
                     wait_set.append((io, task))
+                    # The `generator` is waiting for the `io`. But the
+                    # dispatcher is *ready* to poll that `io`.
+                    ready = True
                 elif ret:
                     ready = True
 
