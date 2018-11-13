@@ -103,7 +103,7 @@ class RSPReader(CoTask):
         notify = rsp.__notification__
         packet = rsp.__packet__
         ack_ok = rsp.__ack_ok__
-        ack_error = rsp.ack
+        ack_error = rsp.__ack_error__
 
         while True:
             c = yield
