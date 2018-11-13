@@ -117,12 +117,14 @@ class RSPReader(CoTask):
 
                 print("-> %" + data + "#" + checksum)
 
-                if rsp_check_pkt(data, checksum):
-                    if rsp.ack: # `ack` is dynamic, do not cache!
+                if rsp.ack: # `ack` is dynamic, do not cache!
+                    if rsp_check_pkt(data, checksum):
                         write(b"+")
-                    notify(data)
+                        notify(data)
+                    else:
+                        write(b"-")
                 else:
-                    write(b"-")
+                    notify(data)
             elif c == b"$":
                 data = b""
                 c = yield
@@ -133,12 +135,14 @@ class RSPReader(CoTask):
 
                 print("-> $" + data + "#" + checksum)
 
-                if rsp_check_pkt(data, checksum):
-                    if rsp.ack:
+                if rsp.ack:
+                    if rsp_check_pkt(data, checksum):
                         write(b"+")
-                    packet(data)
+                        packet(data)
+                    else:
+                        write(b"-")
                 else:
-                    write(b"-")
+                    packet(data)
             elif c == b"+":
                 print("-> +")
 
