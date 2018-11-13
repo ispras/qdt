@@ -117,7 +117,7 @@ class RSPReader(CoTask):
 
                 print("-> %" + data + "#" + checksum)
 
-                if rsp.ack: # `ack` is dynamic, do not cache!
+                if rsp._ack: # `_ack` is dynamic, do not cache!
                     if rsp_check_pkt(data, checksum):
                         write(b"+")
                         notify(data)
@@ -135,7 +135,7 @@ class RSPReader(CoTask):
 
                 print("-> $" + data + "#" + checksum)
 
-                if rsp.ack:
+                if rsp._ack:
                     if rsp_check_pkt(data, checksum):
                         write(b"+")
                         packet(data)
@@ -148,7 +148,7 @@ class RSPReader(CoTask):
 
                 ack_ok()
             elif c == b"-":
-                if rsp.ack:
+                if rsp._ack:
                     # While "+" packets are still acceptable in no-ack mode, a
                     # "-" packet is direct protocol violation. Because this
                     # side should neither expect nor handle them.
@@ -228,7 +228,7 @@ class CoRSP(object):
         # slow but safe, will overwritten during initialization sequence
         self.packet_size = 1
 
-        self.ack = True
+        self._ack = True
 
         # input
 
@@ -252,14 +252,31 @@ class CoRSP(object):
             self.__notify_command(self, data)
             return
 
-        callback = waiting.popleft()[2]
+        if self._ack:
+            callback = waiting[0][2]
 
-        if self.ack and not self.acked:
-            raise RuntimeError("Packet has not been acked")
-        self.acked = False
+            if callback is None:
+                # Current packet waits for ack, not for a response. Hence,
+                # this packet is a command.
+                self.__notify_command(self, data)
+                return
 
-        if waiting:
-            self._write(waiting[0][0])
+            if not self.acked:
+                raise RuntimeError("Packet has not been acked")
+
+            waiting.popleft()
+
+            if waiting:
+                self._write(waiting[0][0])
+                self.acked = False
+        else:
+            callback = waiting.popleft()[2]
+            # Note that because of no-ack mode operation algorithms, `waiting`
+            # does always contain a packet with a response expected at the
+            # moment of `__packet__` call beginning.
+            # So, `callback` is never `None`.
+
+            self._flush()
 
         callback(data)
 
@@ -267,7 +284,19 @@ class CoRSP(object):
         self.__notify_event(self, data)
 
     def __ack_ok__(self):
-        self.acked = True
+        if not self._ack:
+            return
+
+        # packets sent without a callback is expected to have no feedback data
+        waiting = self.waiting
+
+        callback = waiting[0][2]
+        if callback is None:
+            waiting.popleft()
+            if waiting:
+                self._write(waiting[0][0])
+        else:
+            self.acked = True
 
     def __ack_error__(self):
         current = self.waiting[0]
@@ -280,15 +309,74 @@ class CoRSP(object):
         self._write(packet)
 
     # interaction with writer
+    @property
+    def ack(self):
+        return self._ack
+
+    @ack.setter
+    def ack(self, v):
+        if self._ack == v:
+            return
+        self._ack = v
+
+        if v:
+            if self.waiting:
+                self.acked = False
+            return
+
+        # Entering no-ack mode.
+        self._flush()
+
+
+    def _flush(self):
+        """ Flushes all packets without a response expected until one which do
+expect. """
+        waiting = self.waiting
+
+        if not waiting:
+            return
+
+        callback = waiting[0][2]
+        while callback is None:
+            waiting.popleft()
+            if not waiting:
+                break
+            packet, _, callback = waiting[0]
+            self._write(packet)
 
     def send(self, data, callback = None, retries = 50):
+        """ `None` `callback` means that no response packet is expected. It is
+useful for a packet which is a response itself.
+        """
         packet = rsp_pack(data)
 
         waiting = self.waiting
-        waiting.append([packet, retries, callback])
+        if self._ack:
+            if not waiting:
+                self.acked = False
+                self._write(packet)
+            # Because of ack mode even a packet with no response expected
+            # should be preserved in `waiting` for possible re-sending.
+            waiting.append([packet, retries, callback])
+        else:
+            if waiting:
+                # Note that because of no-ack mode operation algorithms,
+                # `waiting` must contain at least one packet with response
+                # expected.
+                # So, appending this packet to the `waiting` queue
+                # will not result in its hanging.
+                # It will be sent during handling of a response for previous
+                # packet in `waiting` during `__packet__` operation.
+                waiting.append([packet, retries, callback])
+            else:
+                if callback is not None:
+                    # A response is expected for this packet.
+                    waiting.append([packet, retries, callback])
+                # else:
+                    # Because of no-ack mode, a re-sending is never required
+                    # and this packet copy should not be kept in `waiting`.
 
-        if len(waiting) == 1:
-            self._write(packet)
+                self._write(packet)
 
     def _write(self, buf):
         print("<- " + buf)
