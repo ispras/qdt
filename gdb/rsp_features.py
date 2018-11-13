@@ -3,7 +3,7 @@ __all__ = [
 ]
 
 
-class Features(object):
+class Features(dict):
     """ Helper for `qSupported` packet.
     """
 
@@ -19,15 +19,12 @@ class Features(object):
         feature name is not comply with Python syntax then it may be
         given through `features`.
 
-There is `name?` stub feature encoding form. It results in `None` in
-`stubfeatures` after parsing. Support for those features should be detected
-using other way.
+There is `name?` stub feature encoding form. It results in `None` after
+parsing. Support for those features should be detected using other way.
         """
 
-        kwfeatures.update(features)
-        self.gdbfeatures = kwfeatures
-
-        self.stubfeatures = None
+        super(Features, self).__init__(**kwfeatures)
+        self.update(features)
 
     def response(self):
         return ";".join(
@@ -39,7 +36,7 @@ using other way.
                         )
                     )
                 )
-            ) for name, value in self.gdbfeatures.items()
+            ) for name, value in self.items()
         )
 
     def request(self):
@@ -49,8 +46,9 @@ using other way.
         else:
             return "qSupported"
 
-    def parse(self, reply):
-        self.stubfeatures = features = {}
+    @classmethod
+    def parse(cls, reply):
+        features = {}
 
         for feature in reply.split(";"):
             if feature[-1] == "+":
@@ -63,7 +61,4 @@ using other way.
                 name, value = feature.split("=")
                 features[name] = value
 
-    def __getitem__(self, feature_name):
-        """ dict-like access to stub features"
-        """
-        return self.stubfeatures[feature_name]
+        return cls(features = features)

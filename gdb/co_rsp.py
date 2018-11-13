@@ -334,8 +334,7 @@ class CoRSPClient(CoRSP):
 
     # initialization sequence (send-callback-send chain)
     def _on_features(self, data):
-        features = self.features
-        features.parse(data)
+        self.stub_features = features = Features.parse(data)
         self.packet_size = int(features["PacketSize"], 16)
 
         if not features["QNonStop"]:
@@ -345,7 +344,7 @@ class CoRSPClient(CoRSP):
 
     def _on_nonstop(self, data):
         assert_ok(data)
-        if self.features["QStartNoAckMode"]:
+        if self.stub_features["QStartNoAckMode"]:
             self.send("QStartNoAckMode", callback = self._on_noack)
 
     def _on_noack(self, data):
