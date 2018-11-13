@@ -330,7 +330,7 @@ class CoRSPClient(CoRSP):
 
         # begin initialization
         self._write(b"+")
-        self.send(features.query(), callback = self._on_features)
+        self.send(features.resuest(), callback = self._on_features)
 
     # initialization sequence (send-callback-send chain)
     def _on_features(self, data):
