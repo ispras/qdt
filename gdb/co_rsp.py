@@ -148,7 +148,13 @@ class RSPReader(CoTask):
 
                 ack_ok()
             elif c == b"-":
-                print("-> -")
+                if rsp.ack:
+                    # While "+" packets are still acceptable in no-ack mode, a
+                    # "-" packet is direct protocol violation. Because this
+                    # side should neither expect nor handle them.
+                    print("-> - [unexpected in no-ack mode]")
+                else:
+                    print("-> -")
 
                 ack_error()
             else:
