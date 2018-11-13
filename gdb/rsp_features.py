@@ -29,7 +29,7 @@ using other way.
 
         self.stubfeatures = None
 
-    def __query_body(self):
+    def response(self):
         return ";".join(
             (
                 name + (
@@ -43,9 +43,9 @@ using other way.
         )
 
     def query(self):
-        body = self.__query_body()
-        if body:
-            return "qSupported:" + body
+        values = self.response()
+        if values:
+            return "qSupported:" + values
         else:
             return "qSupported"
 
