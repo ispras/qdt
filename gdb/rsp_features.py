@@ -17,14 +17,14 @@ class Features(dict):
     :param kwfeatures:
         A way to specify features as object instantiation arguments. If a
         feature name is not comply with Python syntax then it may be
-        given through `features`.
+        given through `features`. Overrides `features`.
 
 There is `name?` stub feature encoding form. It results in `None` after
 parsing. Support for those features should be detected using other way.
         """
 
-        super(Features, self).__init__(**kwfeatures)
-        self.update(features)
+        super(Features, self).__init__(features)
+        self.update(kwfeatures)
 
     def response(self):
         return ";".join(
