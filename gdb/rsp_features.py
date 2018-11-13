@@ -42,7 +42,7 @@ using other way.
             ) for name, value in self.gdbfeatures.items()
         )
 
-    def query(self):
+    def request(self):
         values = self.response()
         if values:
             return "qSupported:" + values
