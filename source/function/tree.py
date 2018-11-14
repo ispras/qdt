@@ -544,6 +544,10 @@ class Declare(SemicolonPresence):
             asterisks += "*"
         writer.write(v_type.name + asterisks)
         child.__c__(writer)
+        if isinstance(child, Variable) and child.array_size is not None:
+            writer.write("[%d]" % child.array_size)
+        if isinstance(child, Variable) and child.initializer:
+            writer.write(child.gen_usage_string(child.initializer))
 
         for child in self.children[1:]:
             if isinstance(child, OpAssign):
@@ -564,6 +568,8 @@ class Declare(SemicolonPresence):
 
             writer.write(",@s" + asterisks)
             child.__c__(writer)
+            if isinstance(child, Variable) and child.array_size is not None:
+                writer.write("[%d]" % child.array_size)
 
 
 class MCall(SemicolonPresence):
