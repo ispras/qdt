@@ -198,9 +198,6 @@ class RSPWriter(CoTask):
                 buf = rsp.out_buf
                 rsp.out_buf = b""
 
-    def on_failed(self):
-        raise RuntimeError("CoRSP writer failed")
-
 
 def assert_ok(data):
     if data != b"OK":
