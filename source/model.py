@@ -1695,6 +1695,14 @@ class TypeFixerVisitor(ObjectVisitor):
             if isinstance(t, (Pointer, MacroType)) and not t.is_named:
                 return
 
+            # Prevent recursion for nested types
+            if ((   isinstance(t, Structure) and t.nested
+                 or isinstance(t, Enumeration)
+                )
+                and t in [x[0] for x in self.path[:-1]]
+            ):
+                raise BreakVisiting()
+
             # Do not add definerless types to the Source automatically
             if t.definer is None:
                 return
