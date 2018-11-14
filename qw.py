@@ -1320,7 +1320,7 @@ def main():
 
     if di.pubtypes is None:
         print("%s does not contain .debug_pubtypes section. Provide"
-            " -gpubnames flag to the compiller" % qemu_debug
+            " -gpubnames flag to the compiler" % qemu_debug
         )
 
     dic = DWARFInfoCache(di,
