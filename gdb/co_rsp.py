@@ -379,7 +379,7 @@ useful for a packet which is a response itself.
                 self._write(packet)
 
     def _write(self, buf):
-        print("<- " + buf)
+        print("<- " + repr(buf))
 
         self.out_buf += buf
 
