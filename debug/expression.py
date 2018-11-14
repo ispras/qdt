@@ -1,4 +1,4 @@
-# A model of symbolic expressions cowers DWARF location expressions
+# A model of symbolic expressions covers DWARF location expressions
 
 __all__ = [
    "Expression"
