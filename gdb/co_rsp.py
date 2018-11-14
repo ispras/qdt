@@ -392,11 +392,17 @@ expect. """
             packet, _, callback = waiting[0]
             self._write(packet)
 
-    def send(self, data, callback = None, retries = 50):
+    def packet(self, data, *a, **kw):
+        """Formats `data` as RSP packet (command or response) and queue it to
+send. See backing `send` for arguments and return value descriptions.
+        """
+        packet = rsp_packet(data)
+        return self.send(packet, *a, **kw)
+
+    def send(self, packet, callback = None, retries = 50):
         """ `None` `callback` means that no response packet is expected. It is
 useful for a packet which is a response itself.
         """
-        packet = rsp_packet(data)
 
         waiting = self.waiting
         if self._ack:
@@ -434,7 +440,7 @@ useful for a packet which is a response itself.
     # helpers
 
     def fetchOK(self, data):
-        self.send(data, callback = assert_ok)
+        self.packet(data, callback = assert_ok)
 
     def v_continue(self, pid_tid = "-1"):
         self.fetchOK("vCont;c:" + pid_tid)
@@ -443,7 +449,7 @@ useful for a packet which is a response itself.
         self.fetchOK("vCont;s:" + pid_tid)
 
     def finish(self):
-        self.send("k")
+        self.packet("k")
         self.sock.close()
 
     def store(self, addr, data):
@@ -476,7 +482,7 @@ class CoRSPClient(CoRSP):
 
         # begin initialization
         self._write(b"+")
-        self.send(features.resuest(), callback = self._on_features)
+        self.packet(features.resuest(), callback = self._on_features)
 
     # initialization sequence (send-callback-send chain)
     def _on_features(self, data):
@@ -486,12 +492,12 @@ class CoRSPClient(CoRSP):
         if not features["QNonStop"]:
             raise RuntimeError("Remote does not support non-stop mode")
 
-        self.send("QNonStop:1", callback = self._on_nonstop)
+        self.packet("QNonStop:1", callback = self._on_nonstop)
 
     def _on_nonstop(self, data):
         assert_ok(data)
         if self.stub_features["QStartNoAckMode"]:
-            self.send("QStartNoAckMode", callback = self._on_noack)
+            self.packet("QStartNoAckMode", callback = self._on_noack)
 
     def _on_noack(self, data):
         assert_ok(data)
