@@ -188,8 +188,8 @@ class DWARFInfoCache(DWARFInfoAccelerator):
 unit (`cu`). Adds address intervals of subprograms to `addr2subprog` mapping.
 
     :param cu:
-        a Conpilation Unit descriptor
-    :retunrs:
+        a Compilation Unit descriptor
+    :returns:
         list of subprograms in the `cu`
 
         """
