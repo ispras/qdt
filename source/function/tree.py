@@ -647,13 +647,12 @@ class Operator(SemicolonPresence):
 
         writer.write(self.prefix)
 
-        if self.children:
-            first_child = self.children[0]
-            first_child.__c__(writer)
+        first_child = self.children[0]
+        first_child.__c__(writer)
 
-            for c in self.children[1:]:
-                writer.write(self.delim)
-                c.__c__(writer)
+        for c in self.children[1:]:
+            writer.write(self.delim)
+            c.__c__(writer)
 
         writer.write(self.suffix)
         if self.parenthesis:
