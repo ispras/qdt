@@ -9,6 +9,7 @@ from common import (
     intervalmap
 )
 from .type import (
+    TYPE_TAGS,
     Type
 )
 from .glob import (
@@ -54,6 +55,85 @@ class DWARFInfoCache(DWARFInfoAccelerator):
         do2t[offset] = t
 
         return t
+
+    def __getitem__(self, name):
+        sps = self.subprograms
+
+        if name in sps:
+            return sps[name]
+
+        types = self.types
+        if name in types:
+            return types[name]
+
+        di = self.di
+
+        # First, search in .debug_pubnames
+        pubnames = di.pubnames
+        if pubnames is None:
+            offsets = None
+        else:
+            offsets = pubnames[name]
+
+        # Second, search in .debug_pubtypes
+        if offsets is None:
+            pubtypes = di.pubtypes
+            if pubtypes is None:
+                offsets = None
+            else:
+                offsets = di.pubtypes[name]
+
+        # Third, search in .symtab
+        if offsets is None:
+            symtab = self.symtab
+            if symtab is None:
+                raise KeyError(name)
+
+            symbols = symtab.get_symbol_by_name(name)
+            if symbols is None:
+                raise KeyError(name)
+
+            for symbol in symbols:
+                # Get CU that covers target address of current symbol
+                address = symbol.entry.st_value
+                cu = self.cu(address)
+
+                # Search for a DIE with requested name
+                # TODO: Only topmost DIEs are processed now. Is there a reason
+                # for a deeper search?
+                for die in cu.get_top_DIE().iter_children():
+                    attrs = die.attributes
+                    if "DW_AT_name" not in attrs:
+                        continue
+                    if attrs["DW_AT_name"].value == name:
+                        break
+                else:
+                    # No DIE with such name found in current CU
+                    continue
+                # A DIE with such name was found
+                break
+            else:
+                # No DIE was found for each symbol with requested name
+                raise KeyError(name)
+            # Note that last cu and die variable definitions are looked for
+        else:
+            cu = di._parse_CU_at_offset(offsets[0])
+            die = cu.get_DIE_at_offset(offsets[1])
+
+        tag = die.tag[7:] # DW_TAG_*
+
+        if tag == "subprogram":
+            sym_name = die.attributes["DW_AT_name"].value
+            symbol = Subprogram(self, die, name = sym_name)
+            sps[sym_name] = [symbol]
+        elif tag in TYPE_TAGS:
+            symbol = self.type_by_die(die)
+        else:
+            raise NotImplementedError("Handling name '%s' of DIE tag"
+                " 'DW_TAG_%s' is not implemented yet" % (name, tag)
+            )
+
+        return symbol
 
     def subprogram(self, addr):
         """
