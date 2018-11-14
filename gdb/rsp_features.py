@@ -62,3 +62,29 @@ parsing. Support for those features should be detected using other way.
                 features[name] = value
 
         return cls(features = features)
+
+    def fit(self, limits):
+        undefined = {}
+        fitted = {}
+        for feature, cur in self.items():
+            if feature in limits:
+                limit = limits[feature]
+                if limit is False:
+                    if cur is not False:
+                        fitted[feature] = False
+                elif limit is not True:
+                    try:
+                        # "PacketSize" is only known integer feature
+                        ilimit = int(limit, 16)
+                    except:
+                        print("Unknown non-boolean feature: " + feature)
+                        if limit != cur:
+                            fitted[feature] = limit
+                    else:
+                        if int(cur, 16) > ilimit:
+                            fitted[feature] = limit
+            else:
+                undefined[feature] = cur
+        if fitted:
+            self.update(fitted)
+        return undefined
