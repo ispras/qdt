@@ -688,6 +688,9 @@ class OpSDeref(Operator):
         # for type collection
         self.struct = _type
 
+        # check field existence
+        self.struct.fields[field]
+
         if isinstance(value.type, Pointer):
             self.suffix = "->" + field
         else:
