@@ -1711,6 +1711,14 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if isinstance(t, (Pointer, MacroType)) and not t.is_named:
                 return
 
+            # Prevent recursion for nested types
+            if ((   isinstance(t, Structure) and t.nested
+                 or isinstance(t, Enumeration)
+                )
+                and t in self.previous
+            ):
+                raise BreakVisiting()
+
             # Do not add definerless types to the Source automatically
             if t.definer is None:
                 return
