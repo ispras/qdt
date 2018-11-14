@@ -1727,6 +1727,9 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.base:
                 raise BreakVisiting()
 
+            if t in self.previous:
+                raise BreakVisiting()
+
             """ Skip pointer and macrotype types without name. Nameless pointer
             or macrotype does not have definer and should not be replaced with
             type reference """
