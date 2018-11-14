@@ -1,8 +1,20 @@
 __all__ = [
     "CoRSP"
       , "CoRSPClient"
-  , "rsp_decode"
   , "assert_ok"
+
+  # Low level formatting
+  , "rsp_escape_char"
+  , "rsp_escape"
+  , "rsp_unescape_parts"
+  , "rsp_unescape"
+  , "rsp_tail"
+  , "rsp_packet"
+  , "rsp_notification"
+  , "rsp_check_pkt"
+  , "rsp_decode"
+  , "rsp_decode_parts"
+  , "rsp_decode_chars"
 ]
 
 from socket import (
@@ -28,41 +40,83 @@ from binascii import (
 
 # This module is partially based on: https://github.com/stef/pyrsp
 
+_RSP_ESCAPE_TABLE = list(chr(code) for code in range(256))
+# Some characters must be escaped
+
+def rsp_escape_char(c):
+    return '}' + chr(ord(c) ^ 0x20)
+
+for c in "}*#$":
+    _RSP_ESCAPE_TABLE[ord(c)] = rsp_escape_char(c)
+
+# make it constant
+RSP_ESCAPE_TABLE = tuple(_RSP_ESCAPE_TABLE)
 
 def rsp_escape(data):
-    # c -> "}%s" % chr(ord(c) ^ 0x20)
-    data = data.replace(b'}', b"}]")
-    data = data.replace(b'*', b"}\n")
-    data = data.replace(b'#', b"}\x03")
-    data = data.replace(b'$', b"}\x04")
-    return data
+    "Escapes forbidden characters yielding substrings."
+    for c in data:
+        yield RSP_ESCAPE_TABLE[ord(c)]
 
-def rsp_pack(data):
-    "Formats data into a RSP packet"
-    return "$%s#%02x" % (rsp_escape(data), (sum(ord(c) for c in data) % 256))
+def rsp_unescape_parts(data):
+    "Decodes escaped characters yielding substrings."
+    parts = data.split('}')
+    i = iter(parts)
+    prev = next(i)
+    yield prev
+    for cur in i:
+        c = chr(ord(cur[0]) ^ 0x20)
+        yield c
+        yield cur[1:]
 
+def rsp_unescape(data):
+    return "".join(rsp_unescape_parts(data))
+
+def rsp_tail(data):
+    """ Evaluates tail of RSP command/response packet or notification with
+checksum suffix, yielding substrings.
+    """
+    s = 0
+    for part in rsp_escape(data):
+        yield part
+        for c in part:
+            s += ord(c)
+    yield "#%02x" % (s & 0xff)
+
+def rsp_packet(data):
+    "Escapes data and formats it into a RSP packet with honest checksum."
+    return "$" + "".join(rsp_tail(data))
+
+def rsp_notification(data):
+    "Escapes data and formats it into a RSP notification with honest checksum."
+    return "%" + "".join(rsp_tail(data))
 
 def rsp_check_pkt(data, checksum):
-    return sum(ord(c) for c in data) % 256 == int(checksum, 16)
-
+    return sum(ord(c) for c in data) & 0xff == int(checksum, 16)
 
 def rsp_decode(data):
-    """ Decodes data from received packet.
+    """ Decodes run-length encoded data.
 
-    Decoding algorithm is described here:
-    https://sourceware.org/gdb/onlinedocs/gdb/Overview.html
+See: https://sourceware.org/gdb/onlinedocs/gdb/Overview.html
     """
-    decoded_data = ""
-    j = -1
-    for i, ch in enumerate(data):
-        if ch == '*' and data[i - 1] != '*':
-            n = ord(data[i + 1]) - 29
-            decoded_data = decoded_data + (data[i - 1] * n)
-            j = i + 1
-        elif i != j:
-            decoded_data = decoded_data[::] + ch
-    return decoded_data
+    return "".join(rsp_decode_parts(data))
 
+def rsp_decode_parts(data):
+    "An internal run-length decoding variant that yielding decoded substrings."
+    parts = data.split('*')
+    i = iter(parts)
+    prev = next(i)
+    yield prev
+    for cur in i:
+        n = ord(cur[0]) - 29
+        yield prev[-1] * n
+        yield cur[1:]
+        prev = cur
+
+def rsp_decode_chars(data):
+    "A character generator variant of `rsp_decode`."
+    for part in rsp_decode_parts(data):
+        for c in part:
+            yield c
 
 class RSPReader(CoTask):
     def __init__(self, rsp):
@@ -342,7 +396,7 @@ expect. """
         """ `None` `callback` means that no response packet is expected. It is
 useful for a packet which is a response itself.
         """
-        packet = rsp_pack(data)
+        packet = rsp_packet(data)
 
         waiting = self.waiting
         if self._ack:
