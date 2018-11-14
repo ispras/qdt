@@ -1705,6 +1705,11 @@ class TypeFixerVisitor(ObjectVisitor):
 
                 raise BreakVisiting()
 
+            # Prevent nested type
+            if t in [x[0] for x in self.path[:-1]]:
+                tr = TypeReference(t)
+                self.replace(tr)
+
             if t.base:
                 raise BreakVisiting()
 
