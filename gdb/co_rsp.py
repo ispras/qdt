@@ -176,11 +176,11 @@ class RSPReader(CoTask):
                 if rsp._ack: # `_ack` is dynamic, do not cache!
                     if rsp_check_pkt(data, checksum):
                         write(b"+")
-                        notify(data)
+                        notify(data, checksum)
                     else:
                         write(b"-")
                 else:
-                    notify(data)
+                    notify(data, checksum)
             elif c == b"$":
                 data = b""
                 c = yield
@@ -194,11 +194,11 @@ class RSPReader(CoTask):
                 if rsp._ack:
                     if rsp_check_pkt(data, checksum):
                         write(b"+")
-                        packet(data)
+                        packet(data, checksum)
                     else:
                         write(b"-")
                 else:
-                    packet(data)
+                    packet(data, checksum)
             elif c == b"+":
                 print("-> +")
 
@@ -255,14 +255,14 @@ class RSPWriter(CoTask):
                 rsp.out_buf = b""
 
 
-def assert_ok(data):
+def assert_ok(data, _):
     if data != b"OK":
         raise RuntimeError("'OK' expected, got: '%s'" % data)
 
 
 @notifier(
-    "event" # CoRSP, data
-  , "command" # CoRSP, data
+    "event" # CoRSP, data, checksum
+  , "command" # CoRSP, data, checksum
 )
 class CoRSP(object):
 
@@ -295,11 +295,11 @@ class CoRSP(object):
         co_disp.enqueue(RSPWriter(self))
 
     # events from reader
-    def __packet__(self, data):
+    def __packet__(self, data, checksum):
         waiting = self.waiting
 
         if not waiting:
-            self.__notify_command(self, data)
+            self.__notify_command(self, data, checksum)
             return
 
         if self._ack:
@@ -308,7 +308,7 @@ class CoRSP(object):
             if callback is None:
                 # Current packet waits for ack, not for a response. Hence,
                 # this packet is a command.
-                self.__notify_command(self, data)
+                self.__notify_command(self, data, checksum)
                 return
 
             if not self.acked:
@@ -328,10 +328,10 @@ class CoRSP(object):
 
             self._flush()
 
-        callback(data)
+        callback(data, checksum)
 
-    def __notification__(self, data):
-        self.__notify_event(self, data)
+    def __notification__(self, data, checksum):
+        self.__notify_event(self, data, checksum)
 
     def __ack_ok__(self):
         if not self._ack:
@@ -487,7 +487,7 @@ class CoRSPClient(CoRSP):
         self.packet(features.resuest(), callback = self._on_features)
 
     # initialization sequence (send-callback-send chain)
-    def _on_features(self, data):
+    def _on_features(self, data, _):
         self.stub_features = features = Features.parse(data)
         self.packet_size = int(features["PacketSize"], 16)
 
@@ -496,12 +496,12 @@ class CoRSPClient(CoRSP):
 
         self.packet("QNonStop:1", callback = self._on_nonstop)
 
-    def _on_nonstop(self, data):
+    def _on_nonstop(self, data, _):
         assert_ok(data)
         if self.stub_features["QStartNoAckMode"]:
             self.packet("QStartNoAckMode", callback = self._on_noack)
 
-    def _on_noack(self, data):
+    def _on_noack(self, data, _):
         assert_ok(data)
         self.ack = False
 
