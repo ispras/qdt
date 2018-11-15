@@ -1,10 +1,38 @@
 __all__ = [
     "GGB_IBY"
   , "CommitDesc"
+  , "iter_chunks"
 ]
+
+from collections import (
+    namedtuple
+)
+from re import (
+    compile
+)
 
 # Iterations Between Yields of Git Graph Building task
 GGB_IBY = 100
+
+# Unified Diff Format:
+# https://www.artima.com/weblogs/viewpost.jsp?thread=164293
+Range = namedtuple("Range", "lineno count")
+# 'old' - range for current version of file
+# 'new' - range for base version of file
+Chunk = namedtuple("Chunk", "old new")
+
+re_chunks = compile("@@ -(\d+)(?:,?(\d*)) \+(\d+)(?:,?(\d*)) @@")
+
+
+def iter_chunks(diff):
+    for chunk in re_chunks.findall(diff):
+        c_lineno, c_count, b_lineno, b_count = chunk
+        yield Chunk(
+            # empty '*_count' is equivalent to '*_count' == 1
+            Range(int(c_lineno), int(c_count) if c_count != '' else 1),
+            Range(int(b_lineno), int(b_count) if b_count != '' else 1)
+        )
+
 
 class CommitDesc(object):
     def __init__(self, sha, parents, children):
