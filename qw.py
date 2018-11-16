@@ -1293,6 +1293,12 @@ def main():
     ap = QArgumentParser(
         description = "QEMU runtime introspection tool"
     )
+    ap.add_argument("-p", "--port",
+        type = int,
+        metavar = "PORT",
+        default = 4321,
+        help = "start search for unused port from this number"
+    )
     ap.add_argument("qarg",
         nargs = "+",
         help = "QEMU executable and arguments to it. Prefix them with `--`."
@@ -1346,7 +1352,7 @@ def main():
     MachineReverser(mw, mach_desc, pht)
 
     # auto select free port for gdb-server
-    port = free_tcp_port(4321)
+    port = free_tcp_port(args.port)
 
     qemu_debug_addr = "localhost:%u" % port
 
