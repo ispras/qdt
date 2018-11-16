@@ -115,12 +115,12 @@ class GLVAdapterCache(dict):
     # def __init__(self, version, commit):
     def __init__(self, curr_commit, *args, **kwargs):
         self.curr_commit = curr_commit
-        self.del
+        # self.del
         super(GLVAdapterCache, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
         if key not in self:
-
+            pass
 
     # def __setitem__(self, key, value):
     #     pass
@@ -163,7 +163,7 @@ class CacheManager(object):
 
         if isfile(self.cache_file):
             with open(self.cache_file, "rb") as f:
-                cache =
+                # cache =
                 self.cache.update(cache)
 
         # if version in cache:

@@ -253,13 +253,14 @@ class QOMTreeReverser(Watcher):
 the QOM tree by fetching relevant data.
     """
 
-    def __init__(self, dic, interrupt = True, adptr = None, verbose = False):
+    def __init__(self, dic, interrupt = True, verbose = False, **kw):
         """
     :param interrupt:
         Stop QEmu and exit `RemoteTarget.run` after QOM module is initialized.
         """
-        super(QOMTreeReverser, self).__init__(dic, line_adapter = adptr,
-            verbose = verbose
+        super(QOMTreeReverser, self).__init__(dic,
+            verbose = verbose,
+            **kw
         )
 
         self.tree = RQOMTree()
@@ -472,8 +473,10 @@ corresponding QEmu API. It remembers instances composing the machine.
 Notifications are issued for many machine composition events.
     """
 
-    def __init__(self, dic, qom_tree, adptr = None, verbose = False,
-            interrupt = False
+    def __init__(self, dic, qom_tree,
+        interrupt = False,
+        verbose = False,
+        **kw
     ):
         """
     :type qom_tree: RQOMTree
@@ -482,8 +485,9 @@ Notifications are issued for many machine composition events.
         Interrupt QEmu process after machine is fully created.
 
         """
-        super(MachineWatcher, self).__init__(dic, line_adapter = adptr,
-            verbose = verbose
+        super(MachineWatcher, self).__init__(dic,
+            verbose = verbose,
+            **kw
         )
         self.tree = qom_tree
         # addr -> RQInstance mapping
@@ -1341,11 +1345,11 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
-    gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
+    # gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
 
     qomtr = QOMTreeReverser(dic,
         interrupt = False,
-        adptr = gvl_adptr,
+        # adptr = gvl_adptr,
         verbose = True
     )
 
@@ -1356,7 +1360,7 @@ def main():
 
     mw = MWClass(dic, qomtr.tree,
         interrupt = True,
-        adptr = gvl_adptr
+        # adptr = gvl_adptr
     )
 
     mach_desc = MachineNode("runtime-machine", "")

@@ -14,13 +14,18 @@ from re import (
 from common import (
     notifier
 )
-from debug import (
-    LineAdapter
+from .line_adapter import (
+    IdentityAdapter
 )
 
 
 re_breakpoint_pos = compile("^\s*([^:]*):([1-9][0-9]*)(\s?.*)$")
 
+def breakpoint_matches(lines, match = re_breakpoint_pos.match):
+    for l in lines:
+        mi = match(l)
+        if mi is not None:
+            yield mi
 
 def is_breakpoint_cb(obj):
     """
@@ -47,37 +52,28 @@ pointed by just _unique suffix_ of its name (not only by the full name).
 Leading spaces are ignored.
     """
 
-    def __init__(self, dic, line_adapter = None, verbose = False):
+    def __init__(self, dic, line_adapter = IdentityAdapter(), verbose = False):
         """
     :type dic: DWARFInfoCache
         """
         self.dic = dic
         self.verbose = verbose
 
-        if line_adapter and not isinstance(line_adapter, LineAdapter):
-            raise Exception
-
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
         for _, cb in getmembers(self, predicate = is_breakpoint_cb):
-            match = re_breakpoint_pos.match
-            for l in cb.__doc__.splitlines():
-                mi = match(l)
-                if mi is not None:
-                    if line_adapter:
-                        line_adapter.num_target = 1
+            mi = None
+            for mi in breakpoint_matches(cb.__doc__.splitlines()):
+                file_name, line = line_adapter.adapt_lineno(*mi.groups())
+                if line is not None:
                     break
             else:
-                # No position specification was found. It's not a breakpoint
-                # handler.
-                continue
-
-            file_name, line_str, _ = mi.groups()
-            line = int(line_str)
-            if line_adapter:
-                line = line_adapter.adapt_lineno(file_name, line, _)
-                if line is None:
+                if mi is None:
+                    # No position specification was found.
+                    # It's not a breakpoint handler.
                     continue
+                file_name, line = line_adapter.failback()
+
             line_map = dic.find_line_map(file_name)
             line_descs = line_map[line]
 
