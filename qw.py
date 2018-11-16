@@ -40,6 +40,7 @@ from graphviz import (
     Digraph
 )
 from argparse import (
+    ArgumentDefaultsHelpFormatter,
     ArgumentParser
 )
 from sys import (
@@ -1360,6 +1361,7 @@ class QEmuWatcherGUI(GUITk):
 
 def main():
     ap = QArgumentParser(
+        formatter_class = ArgumentDefaultsHelpFormatter,
         description = "QEMU runtime introspection tool"
     )
     ap.add_argument("-q",
