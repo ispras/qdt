@@ -1343,6 +1343,10 @@ def main():
     ap = QArgumentParser(
         description = "QEMU runtime introspection tool"
     )
+    ap.add_argument("-q",
+        dest = "qsrc",
+        help = "QEMU src directory."
+    )
     ap.add_argument("qarg",
         nargs = "+",
         help = "QEMU executable and arguments to it. Prefix them with `--`."
@@ -1351,6 +1355,9 @@ def main():
 
     # executable
     qemu_cmd_args = args.qarg
+
+    # src directory
+    qemu_src_dir = args.qsrc
 
     # debug info
     qemu_debug = qemu_cmd_args[0]
