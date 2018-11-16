@@ -14,6 +14,9 @@ from re import (
 from common import (
     notifier
 )
+from debug import (
+    LineAdapter
+)
 
 
 re_breakpoint_pos = compile("^\s*([^:]*):([1-9][0-9]*)(\s?.*)$")
@@ -51,6 +54,9 @@ Leading spaces are ignored.
         self.dic = dic
         self.verbose = verbose
 
+        if line_adapter and not isinstance(line_adapter, LineAdapter):
+            raise Exception
+
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
         for _, cb in getmembers(self, predicate = is_breakpoint_cb):
@@ -58,6 +64,8 @@ Leading spaces are ignored.
             for l in cb.__doc__.splitlines():
                 mi = match(l)
                 if mi is not None:
+                    if line_adapter:
+                        line_adapter.num_target = 1
                     break
             else:
                 # No position specification was found. It's not a breakpoint
@@ -65,8 +73,13 @@ Leading spaces are ignored.
                 continue
 
             file_name, line_str, _ = mi.groups()
+            line = int(line_str)
+            if line_adapter:
+                line = line_adapter.adapt_lineno(file_name, line, _)
+                if line is None:
+                    continue
             line_map = dic.find_line_map(file_name)
-            line_descs = line_map[int(line_str)]
+            line_descs = line_map[line]
 
             for desc in line_descs:
                 addr = desc.state.address
