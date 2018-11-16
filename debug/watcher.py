@@ -14,6 +14,9 @@ from re import (
 from common import (
     notifier
 )
+from .line_adapter import (
+    IdentityAdapter
+)
 
 
 re_breakpoint_pos = compile("^\s*([^:]*):([1-9][0-9]*)(\s?.*)$")
@@ -44,7 +47,7 @@ pointed by just _unique suffix_ of its name (not only by the full name).
 Leading spaces are ignored.
     """
 
-    def __init__(self, dic, verbose = False):
+    def __init__(self, dic, line_adapter = IdentityAdapter(), verbose = False):
         """
     :type dic: DWARFInfoCache
         """
