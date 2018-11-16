@@ -1301,10 +1301,17 @@ def main():
         nargs = "+",
         help = "QEMU executable and arguments to it. Prefix them with `--`."
     )
+    ap.add_argument("--dir",
+        dest = "qsrc",
+        help = "QEMU src directory."
+    )
     args = ap.parse_args()
 
     # executable
     qemu_cmd_args = args.qarg
+
+    # src directory
+    qemu_src_dir = args.qsrc
 
     # debug info
     qemu_debug = qemu_cmd_args[0]
