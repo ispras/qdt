@@ -22,7 +22,8 @@ from debug import (
     InMemoryELFFile,
     DWARFInfoCache,
     Watcher,
-    TYPE_CODE_PTR
+    TYPE_CODE_PTR,
+    GitLineVersionAdapter
 )
 from common import (
     pypath,
@@ -254,12 +255,15 @@ class QOMTreeReverser(Watcher):
 the QOM tree by fetching relevant data.
     """
 
-    def __init__(self, dic, interrupt = True, verbose = False):
+    def __init__(self, dic, interrupt = True, verbose = False, **kw):
         """
     :param interrupt:
         Stop QEmu and exit `RemoteTarget.run` after QOM module is initialized.
         """
-        super(QOMTreeReverser, self).__init__(dic, verbose = verbose)
+        super(QOMTreeReverser, self).__init__(dic,
+            verbose = verbose,
+            **kw
+        )
 
         self.tree = RQOMTree()
         self.interrupt = interrupt
@@ -472,7 +476,11 @@ corresponding QEmu API. It remembers instances composing the machine.
 Notifications are issued for many machine composition events.
     """
 
-    def __init__(self, dic, qom_tree, verbose = False, interrupt = False):
+    def __init__(self, dic, qom_tree,
+        interrupt = False,
+        verbose = False,
+        **kw
+    ):
         """
     :type qom_tree: RQOMTree
 
@@ -480,7 +488,10 @@ Notifications are issued for many machine composition events.
         Interrupt QEmu process after machine is fully created.
 
         """
-        super(MachineWatcher, self).__init__(dic, verbose = verbose)
+        super(MachineWatcher, self).__init__(dic,
+            verbose = verbose,
+            **kw
+        )
         self.tree = qom_tree
         # addr -> RQInstance mapping
         self.instances = {}
@@ -1380,9 +1391,12 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
+    gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
+
     qomtr = QOMTreeReverser(dic,
         interrupt = False,
-        verbose = True
+        verbose = True,
+        line_adapter = gvl_adptr
     )
 
     if "-i386" in qemu_debug or "-x86_64" in qemu_debug:
@@ -1391,7 +1405,8 @@ def main():
         MWClass = MachineWatcher
 
     mw = MWClass(dic, qomtr.tree,
-        interrupt = True
+        interrupt = True,
+        line_adapter = gvl_adptr
     )
 
     proj = GUIProject()
@@ -1460,6 +1475,8 @@ def main():
     qomtr.to_file("qom-by-q.i.dot")
 
     qemu_proc.join()
+
+    gvl_adptr.cm.store_cache()
 
 
 if __name__ == "__main__":
