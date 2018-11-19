@@ -154,6 +154,7 @@ class QemuTypeName(object):
                 tmp += c if qtn_char(c) else "_"
 
         self.for_macros = tmp
+        self.type_macro = "TYPE_%s" % tmp
 
 # Property declaration generation helpers
 
