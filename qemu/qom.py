@@ -472,7 +472,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
-        ("name", { "short": _("Name") })
+        ("name", { "short": _("Name"), "input": str })
     ])
 
     def __init__(self, name):
