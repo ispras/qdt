@@ -338,12 +338,7 @@ class ProjectHistoryTracker(HistoryTracker):
         (True by default)
     """
     def commit(self, *args, **kw):
-        try:
-            ns = kw["new_sequence"]
-        except KeyError:
-            ns = True
-        else:
-            del kw["new_sequence"]
+        ns = kw.pop("new_sequence", True)
 
         HistoryTracker.commit(self, *args, **kw)
 
