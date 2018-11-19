@@ -40,6 +40,7 @@ from graphviz import (
     Digraph
 )
 from argparse import (
+    SUPPRESS,
     ArgumentDefaultsHelpFormatter,
     ArgumentParser
 )
@@ -1368,6 +1369,17 @@ def main():
         dest = "qsrc",
         help = "QEMU src directory."
     )
+    ap.add_argument("-c", "--connect",
+        nargs = "?",
+        metavar = "HOST",
+        const = "127.0.0.1", # default if `-c` is given without a value
+        # Suppress reasons:
+        # 1. do not print incorrect default in help by
+        #    `ArgumentDefaultsHelpFormatter` (correct is `const`)
+        # 2. do not add the attribute to parsed args if the arg is missed
+        default = SUPPRESS,
+        help = "connect to existing gdbstub (default: %(const)s)"
+    )
     ap.add_argument("-p", "--port",
         type = int,
         metavar = "PORT",
@@ -1433,18 +1445,25 @@ def main():
 
     MachineReverser(mw, pht)
 
-    # auto select free port for gdb-server
-    port = find_free_port(args.port)
+    try:
+        qemu_debug_addr_fmt = args.connect + ":%u"
+    except AttributeError: # no -c/--connect option
+        # auto select free port for gdb-server
+        port = find_free_port(args.port)
 
-    qemu_debug_addr = "localhost:%u" % port
+        qemu_debug_addr = "localhost:%u" % port
 
-    qemu_proc = Process(
-        target = system,
-        # XXX: if there are spaces in arguments this code will not work.
-        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
-    )
+        qemu_proc = Process(
+            target = system,
+            # XXX: if there are spaces in arguments this code will not work.
+            args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
+        )
 
-    qemu_proc.start()
+        qemu_proc.start()
+    else:
+        port = args.port
+        qemu_debug_addr = qemu_debug_addr_fmt % port
+        qemu_proc = None
 
     if not wait_for_tcp_port(port):
         raise RuntimeError("gdbserver does not listen %u" % port)
@@ -1484,7 +1503,8 @@ def main():
 
     qomtr.to_file("qom-by-q.i.dot")
 
-    qemu_proc.join()
+    if qemu_proc is not None:
+        qemu_proc.join()
 
     if gvl_adptr is not None:
         gvl_adptr.cm.store_cache()
