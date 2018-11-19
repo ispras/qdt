@@ -380,8 +380,6 @@ after last statement in the corresponding callable object.
         task.on_activated()
 
     def pull(self):
-        self.select()
-
         if not self.tasks:
             return False
 

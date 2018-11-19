@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+from os import (
+    getpid
+)
 from socket import (
     socket,
     AF_INET,
@@ -104,9 +107,13 @@ class CoRSPVS(CoRSP):
 
 class CoRSPProxy(CoRSP):
 
-    def __init__(self, server, *a, **kw):
+    def __init__(self, server, sock,
+        pass_vFile = False,
+        pass_qSymbol = False,
+        **kw
+    ):
         kw.setdefault("verbose", server.verbose)
-        super(CoRSPProxy, self).__init__(server.co_disp, *a, **kw)
+        super(CoRSPProxy, self).__init__(server.co_disp, sock, **kw)
 
         self.server = server
         # client's features are same as backing stub with few extensions.
@@ -114,6 +121,9 @@ class CoRSPProxy(CoRSP):
             QStartNoAckMode = True,
             QNonStop = True
         )
+
+        self._vFile = pass_vFile
+        self._qSymbol = pass_qSymbol
 
         server.watch_event(self._on_event)
         self.watch_command(self._on_command)
@@ -137,6 +147,10 @@ class CoRSPProxy(CoRSP):
         elif data.startswith("QNonStop:"):
             # TODO: data[-1]
             self.packet("OK")
+        elif not self._vFile and data.startswith("vFile:"):
+            self.packet("")
+        elif not self._qSymbol and data.startswith("qSymbol:"):
+            self.packet("")
         else:
             server = self.server
             if server._ack:
@@ -192,6 +206,7 @@ def main():
     args = ap.parse_args()
 
     disp = CoDispatcher()
+    disp.io_timeout = 0.1
 
     # remote socket
     remote = (args.remote, args.port)
@@ -221,11 +236,12 @@ def main():
     signal(SIGINT, sigint)
 
     while working:
-        if not disp.iteration():
-            sleep(0.1)
+        disp.iteration()
+        disp.select()
 
     return 0
 
 
 if __name__ == "__main__":
+    print("PI %u" % getpid())
     exit(main())
