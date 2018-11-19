@@ -251,6 +251,9 @@ class HistoryTracker(object):
         return list(reversed(backlog))
 
     def commit(self, including = None):
+        """
+    :returns: `True` if at least one operation has been performed.
+        """
         if not including:
             p = self.pos
         else:
@@ -264,15 +267,17 @@ class HistoryTracker(object):
                 queue.insert(0, p)
             p = p.prev
 
-        if queue:
-            for p in queue:
-                if not p.backed_up:
-                    p.__backup__()
-                    p.backed_up = True
-    
-                p.__do__()
-                p.done = True
+        if not queue:
+            return False
 
-                self.__notify_changed(p)
+        for p in queue:
+            if not p.backed_up:
+                p.__backup__()
+                p.backed_up = True
 
+            p.__do__()
+            p.done = True
 
+            self.__notify_changed(p)
+
+        return True
