@@ -5,6 +5,7 @@ from examples import (
     Q35MachineNode_2_6_0
 )
 from widgets import (
+    DescNameWatcher,
     GUIPOp_SetBuildPath,
     Statusbar,
     GUIProjectHistoryTracker,
@@ -440,6 +441,8 @@ show it else hide it.")
 
         self.proj = project
         self.pht = GUIProjectHistoryTracker(self.proj, self.proj.history)
+
+        DescNameWatcher(self.pht)
 
         self.pw = ProjectWidget(self.proj, self)
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
