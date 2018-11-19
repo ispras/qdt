@@ -18,7 +18,7 @@ from .gui_editing import (
 
 class GUIProjectHistoryTracker(ProjectHistoryTracker):
     def __init__(self, *args, **kw):
-        ProjectHistoryTracker.__init__(self, *args, **kw)
+        super(GUIProjectHistoryTracker, self).__init__(*args, **kw)
 
         self.operation_strings = {}
 
@@ -43,7 +43,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         if prev_seq_desc is not None:
             self.set_sequence_description(prev_seq_desc)
 
-        ProjectHistoryTracker.start_new_sequence(self)
+        super(GUIProjectHistoryTracker, self).start_new_sequence()
 
     def commit(self, *args, **kw):
         try:
@@ -56,7 +56,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         if seq_desc is not None:
             self.sequence_strings[self.current_sequence] = seq_desc
 
-        ProjectHistoryTracker.commit(self, *args, **kw)
+        super(GUIProjectHistoryTracker, self).commit(*args, **kw)
 
     def all_pci_ids_2_objects(self):
         for pci_desc in self.p.descriptions:
