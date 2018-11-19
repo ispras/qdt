@@ -56,7 +56,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         if seq_desc is not None:
             self.sequence_strings[self.current_sequence] = seq_desc
 
-        super(GUIProjectHistoryTracker, self).commit(*args, **kw)
+        return super(GUIProjectHistoryTracker, self).commit(*args, **kw)
 
     def all_pci_ids_2_objects(self):
         for pci_desc in self.p.descriptions:
