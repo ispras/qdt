@@ -97,9 +97,14 @@ def descriptionOf(QOMTemplate):
     # collected in reverse order.
     attribute_info = OrderedDict(reversed(list(attribute_info.items())))
 
-    def decorate(klass, pa = pa, kwa = kwa, ai = attribute_info):
+    def decorate(klass,
+        pa = pa,
+        kwa = kwa,
+        ai = attribute_info,
+        template = QOMTemplate
+    ):
         # default method to generate QOM type from description
-        def gen_type(self, __class = QOMTemplate, __pa = pa, __kwa = kwa):
+        def gen_type(self, __class = template, __pa = pa, __kwa = kwa):
             kwa = {}
             for key in __kwa:
                 val = getattr(self, key)
@@ -182,6 +187,7 @@ def __init__(self, {pa}, {kwa}, **compat):
             klass.__gen_code__ = __gen_code__
 
         klass.__attribute_info__ = ai
+        klass.__qom_template__ = template
 
         return klass
 

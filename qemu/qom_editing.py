@@ -46,9 +46,13 @@ class DOp_SetAttr(DescriptionOperation):
         setattr(self.find_desc(), self.attr, dcp(self.old_val))
 
     def __description__(self):
-        name = self.find_desc().name
+        attr = self.attr
+        if attr == "name":
+            name = self.old_val
+        else:
+            name = self.find_desc().name
         return _("Set '%s' of '%s' to '%s'.") % (
-            self.attr,
+            attr,
             name,
             str(self.val)
         )

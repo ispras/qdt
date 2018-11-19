@@ -94,7 +94,7 @@ class SysBusDeviceType(QOMDevice):
         self.header.add_type(self.state_struct)
 
         self.type_name_macros = Macro(
-            name = "TYPE_%s" % self.qtn.for_macros,
+            name = self.qtn.type_macro,
             text = '"%s"' % self.qtn.for_id_name
         )
 
@@ -103,8 +103,8 @@ class SysBusDeviceType(QOMDevice):
         self.type_cast_macro = Macro(
             name = self.qtn.for_macros,
             args = ["obj"],
-            text = "OBJECT_CHECK({Struct}, (obj), TYPE_{UPPER})".format(
-    UPPER = self.qtn.for_macros,
+            text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
+    TYPE_MACRO = self.qtn.type_macro,
     Struct = self.struct_name
 )
         )
@@ -299,13 +299,13 @@ class SysBusDeviceType(QOMDevice):
             instance_init_used_globals.append(ops)
 
             instance_init_code += """
-    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@sTYPE_{UPPER},\
+    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@s{TYPE_MACRO},\
 @s{size});
     sysbus_init_mmio(@aSYS_BUS_DEVICE(obj),@s&s->{mmio});
 """.format(
     mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
-    UPPER = self.qtn.for_macros,
+    TYPE_MACRO = self.qtn.type_macro,
     size = size_macro.name
 )
             s_is_used = True
@@ -365,14 +365,14 @@ class SysBusDeviceType(QOMDevice):
             instance_init_used_globals.append(ops)
 
             instance_init_code += """
-    memory_region_init_io(@a&s->{pio},@sobj,@s&{ops},@ss,@sTYPE_{UPPER},\
+    memory_region_init_io(@a&s->{pio},@sobj,@s&{ops},@ss,@s{TYPE_MACRO},\
 @s{size});
     sysbus_add_io(@aSYS_BUS_DEVICE(obj),@s{addr},@s&s->{pio});
     sysbus_init_ioports(@aSYS_BUS_DEVICE(obj),@s{addr},@s{size});
 """.format(
     pio = self.get_Ith_io_name(pioN),
     ops = self.gen_Ith_pio_ops_name(pioN),
-    UPPER = self.qtn.for_macros,
+    TYPE_MACRO = self.qtn.type_macro,
     size = size_macro.name,
     addr = address_macro.name
             )

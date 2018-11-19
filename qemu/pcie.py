@@ -165,7 +165,7 @@ corresponding vendor is given" % attr
         self.header.add_type(self.state_struct)
 
         self.type_name_macros = Macro(
-            name = "TYPE_%s" % self.qtn.for_macros,
+            name = self.qtn.type_macro,
             text = '"%s"' % self.qtn.for_id_name
         )
         self.header.add_type(self.type_name_macros)
@@ -173,8 +173,8 @@ corresponding vendor is given" % attr
         self.type_cast_macro = Macro(
             name = self.qtn.for_macros, 
             args = ["obj"],
-            text = "OBJECT_CHECK({Struct}, (obj), TYPE_{UPPER})".format(
-    UPPER = self.qtn.for_macros,
+            text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
+    TYPE_MACRO = self.qtn.type_macro,
     Struct = self.struct_name
             )
         )
@@ -349,13 +349,13 @@ corresponding vendor is given" % attr
             realize_used_globals.append(ops)
 
             realize_code += """
-    memory_region_init_io(@a&s->{bar},@sOBJECT(dev),@s&{ops},@ss,@sTYPE_{UPPER},@s{size});
+    memory_region_init_io(@a&s->{bar},@sOBJECT(dev),@s&{ops},@ss,@s{TYPE_MACRO},@s{size});
     pci_register_bar(@a&s->parent_obj,@s{barN},@sPCI_BASE_ADDRESS_SPACE_MEMORY,@s&s->{bar});
 """.format(
     barN = barN,
     bar = self.get_Ith_mem_bar_name(barN),
     ops = self.gen_Ith_mem_bar_ops_name(barN),
-    UPPER = self.qtn.for_macros,
+    TYPE_MACRO = self.qtn.type_macro,
     size = size_macro.name
             )
 

@@ -300,7 +300,7 @@ class MachineProxyTracker(object):
 
 class ProjectHistoryTracker(HistoryTracker):
     def __init__(self, project, *args, **kw):
-        HistoryTracker.__init__(self, *args, **kw)
+        super(ProjectHistoryTracker, self).__init__(*args, **kw)
         self.p = project
 
         ops = self.get_branch()
@@ -319,7 +319,7 @@ class ProjectHistoryTracker(HistoryTracker):
         self.new_sequence = True
         op_kw["sequence"] = self.current_sequence
 
-        return HistoryTracker.stage(self,
+        return super(ProjectHistoryTracker, self).stage(
             op_class,
             *(op_args + (self.p,)), **op_kw
         )
@@ -333,19 +333,15 @@ class ProjectHistoryTracker(HistoryTracker):
     def get_machine_proxy(self, machine_description):
         return MachineProxyTracker(self, machine_description)
 
-    """
-    new_sequence - begin new sequence after committing staged operation
-        (True by default)
-    """
     def commit(self, *args, **kw):
-        try:
-            ns = kw["new_sequence"]
-        except KeyError:
-            ns = True
-        else:
-            del kw["new_sequence"]
+        """
+    :type new_sequence: bool
+    :param new_sequence:
+        begin new sequence after committing staged operations (True by default)
+        """
+        ns = kw.pop("new_sequence", True)
 
-        HistoryTracker.commit(self, *args, **kw)
+        super(ProjectHistoryTracker, self).commit(*args, **kw)
 
         if ns:
             self.start_new_sequence()

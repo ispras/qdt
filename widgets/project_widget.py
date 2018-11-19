@@ -386,6 +386,18 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             else: # added
                 self.__add_qtype_for_description(desc)
         elif isinstance(op, DOp_SetAttr):
+            if op.attr == "name":
+                # Update tab heading
+                prev_name = op.old_val if op.done else op.val
+                new_name = op.find_desc().name
+
+                for tab_id in self.nb_descriptions.tabs():
+                    if self.nb_descriptions.tab(tab_id)["text"] == prev_name:
+                        self.nb_descriptions.tab(tab_id, text = new_name)
+
+                # Update references in layouts
+                self.p.rename_layouts(prev_name, new_name)
+
             self.tv_descs.update()
         elif isinstance(op, POp_SetDescLayout):
             # remove all tabs that are not cached in current layouts
@@ -495,7 +507,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         qtn = QemuTypeName(desc.name)
         QType(qtn.for_id_name, parent).macro = [
-            "TYPE_" + qtn.for_macros
+            qtn.type_macro
         ]
 
     def on_qvc_available(self):

@@ -4,6 +4,7 @@ from .bus_settings import *
 from .canvas_frame import *
 from .close_button_notebook import *
 from .cross_dialogs import *
+from .desc_name_watcher import *
 from .device_settings import *
 from .device_settings_window import *
 from .device_tree_widget import *
