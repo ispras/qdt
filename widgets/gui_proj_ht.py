@@ -46,12 +46,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         super(GUIProjectHistoryTracker, self).start_new_sequence()
 
     def commit(self, *args, **kw):
-        try:
-            seq_desc = kw["sequence_description"]
-        except KeyError:
-            seq_desc = None
-        else:
-            del kw["sequence_description"]
+        seq_desc = kw.pop("sequence_description", None)
 
         if seq_desc is not None:
             self.sequence_strings[self.current_sequence] = seq_desc
