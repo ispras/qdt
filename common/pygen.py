@@ -268,19 +268,21 @@ accuracy.
         self.write("]")
 
     def pprint(self, val):
-        if isinstance(val, list):
+        # Note that an exact type match is required for types those are
+        # returned by a special syntax construct.
+        if type(val) is list:
             if not val:
                 self.write("[]")
                 return
             self.pprint_list(val)
-        elif isinstance(val, set):
+        elif type(val) is set:
             if not val:
                 self.write("set([])")
                 return
             self.write("set(")
             self.pprint_list(sorted(val))
             self.write(")")
-        elif isinstance(val, dict):
+        elif type(val) is dict:
             if not val:
                 self.write("{}")
                 return
@@ -301,7 +303,7 @@ accuracy.
             self.pop_indent()
             self.line()
             self.write("}")
-        elif isinstance(val, tuple):
+        elif type(val) is tuple:
             if not val:
                 self.write("()")
                 return
@@ -317,7 +319,7 @@ accuracy.
             self.pop_indent()
             self.line()
             self.write(")")
-        elif isinstance(val, const_types):
+        elif type(val) in const_types:
             self.write(self.gen_const(val))
         elif val is None:
             self.write("None")
