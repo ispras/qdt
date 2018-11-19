@@ -38,6 +38,7 @@ from graphviz import (
     Digraph
 )
 from argparse import (
+    SUPPRESS,
     ArgumentDefaultsHelpFormatter,
     ArgumentParser
 )
@@ -1295,6 +1296,17 @@ def main():
         formatter_class = ArgumentDefaultsHelpFormatter,
         description = "QEMU runtime introspection tool"
     )
+    ap.add_argument("-c", "--connect",
+        nargs = "?",
+        metavar = "HOST",
+        const = "127.0.0.1", # default if `-c` is given without a value
+        # Suppress reasons:
+        # 1. do not print incorrect default in help by
+        #    `ArgumentDefaultsHelpFormatter` (correct is `const`)
+        # 2. do not add the attribute to parsed args if the arg is missed
+        default = SUPPRESS,
+        help = "connect to existing gdbstub (default: %(const)s)"
+    )
     ap.add_argument("-p", "--port",
         type = int,
         metavar = "PORT",
@@ -1353,18 +1365,23 @@ def main():
 
     MachineReverser(mw, mach_desc, pht)
 
-    # auto select free port for gdb-server
-    port = free_tcp_port(args.port)
+    try:
+        qemu_debug_addr = "%s:%u" % (args.connect, args.port)
+    except AttributeError: # no -c/--connect option
+        # auto select free port for gdb-server
+        port = free_tcp_port(args.port)
 
-    qemu_debug_addr = "localhost:%u" % port
+        qemu_debug_addr = "localhost:%u" % port
 
-    qemu_proc = Process(
-        target = system,
-        # XXX: if there are spaces in arguments this code will not work.
-        args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
-    )
+        qemu_proc = Process(
+            target = system,
+            # XXX: if there are spaces in arguments this code will not work.
+            args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
+        )
 
-    qemu_proc.start()
+        qemu_proc.start()
+    else:
+        qemu_proc = None
 
     qemu_debugger = AMD64(qemu_debug_addr,
         host = True
@@ -1385,7 +1402,8 @@ def main():
 
     qomtr.to_file("qom-by-q.i.dot")
 
-    qemu_proc.join()
+    if qemu_proc is not None:
+        qemu_proc.join()
 
 
 if __name__ == "__main__":
