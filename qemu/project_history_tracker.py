@@ -333,11 +333,12 @@ class ProjectHistoryTracker(HistoryTracker):
     def get_machine_proxy(self, machine_description):
         return MachineProxyTracker(self, machine_description)
 
-    """
-    new_sequence - begin new sequence after committing staged operation
-        (True by default)
-    """
     def commit(self, *args, **kw):
+        """
+    :type new_sequence: bool
+    :param new_sequence:
+        begin new sequence after committing staged operations (True by default)
+        """
         ns = kw.pop("new_sequence", True)
 
         super(ProjectHistoryTracker, self).commit(*args, **kw)
