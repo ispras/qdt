@@ -77,6 +77,16 @@ exists." % (l.lid, l.desc_name)
     def delete_layouts(self, desc_name):
         del self.layouts[desc_name]
 
+    def rename_layouts(self, prev_desc_name, desc_name):
+        if desc_name in self.layouts:
+            raise ValueError("Layouts for %s are already exist" % desc_name)
+
+        if prev_desc_name in self.layouts:
+            lys = self.layouts.pop(prev_desc_name)
+            self.layouts[desc_name] = lys
+            for l in lys.values():
+                l.desc_name = desc_name
+
     # replaces all layouts for description with new layout
     def set_layout(self, desc_name, layout_opaque):
         self.delete_layouts(desc_name)
