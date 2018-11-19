@@ -621,7 +621,7 @@ class QOMType(object):
         return var
 
     def gen_vmstate_initializer(self, state_struct):
-        type_macro = Type.lookup("TYPE_" + self.qtn.for_macros)
+        type_macro = Type.lookup(self.qtn.type_macro)
         code = ("""{
     .name@b=@s%s,
     .version_id@b=@s1,
@@ -799,13 +799,13 @@ class QOMType(object):
         # Type info initializer
         tii = Initializer(
             code = """{{
-    .name@b@b@b@b@b@b@b@b@b@b=@sTYPE_{UPPER},
+    .name@b@b@b@b@b@b@b@b@b@b=@s{TYPE_MACRO},
     .parent@b@b@b@b@b@b@b@b=@s{parent_tn},
     .instance_size@b=@ssizeof({Struct}),
     .instance_init@b=@s{instance_init},
     .class_init@b@b@b@b=@s{class_init}{interfaces}
 }}""".format(
-    UPPER = self.qtn.for_macros,
+    TYPE_MACRO = self.qtn.type_macro,
     parent_tn = ('"%s"' % parent_tn) if parent_macro is None \
                 else parent_macro.name,
     Struct = state_struct.name,
