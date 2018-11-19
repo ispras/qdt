@@ -340,10 +340,12 @@ class ProjectHistoryTracker(HistoryTracker):
     def commit(self, *args, **kw):
         ns = kw.pop("new_sequence", True)
 
-        super(ProjectHistoryTracker, self).commit(*args, **kw)
+        ret = super(ProjectHistoryTracker, self).commit(*args, **kw)
 
         if ns:
             self.start_new_sequence()
+
+        return ret
 
     def delete_description(self, desc):
         if isinstance(desc, MachineNode):
