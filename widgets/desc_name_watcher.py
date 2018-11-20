@@ -32,9 +32,9 @@ refactoring:
 
         self.gpht = gpht
         self.p = gpht.p
-        gpht.watch_changed(self._on_changed)
+        gpht.watch_staged(self._on_staged)
 
-    def _on_changed(self, op):
+    def _on_staged(self, op):
         if not isinstance(op, DOp_SetAttr):
             return
         if op.attr != "name":
@@ -43,9 +43,8 @@ refactoring:
         if QOMDevice not in getmro(desc.__qom_template__):
             return
 
-        prev_name = op.old_val if op.done else op.val
-        prev_type = QemuTypeName(prev_name).type_macro
-        new_type = QemuTypeName(desc.name).type_macro
+        prev_type = QemuTypeName(desc.name).type_macro
+        new_type = QemuTypeName(op.val).type_macro
 
         seq = self.gpht.begin()
 
