@@ -4,6 +4,7 @@ __all__ = [
   , "UnimplementedInverseOperation"
   , "InitialOperationCall"
   , "History"
+  , "Sequence"
   , "HistoryTracker"
 ]
 
@@ -165,6 +166,39 @@ class History(object):
         self.root = InitialOperation()
         self.leafs = [self.root]
 
+
+class Sequence(object):
+    """ A dedicated inverse operations sequence that can be applied on demand.
+It's like a transaction in a data base management system.
+    """
+
+    def __init__(self, ht):
+        self.ht = ht
+        self._calls, self._staged, self._committed = [], False, False
+
+    def stage(self, *a, **kw):
+        self._staged = True
+        self._calls.append(("stage", a, kw))
+
+    def commit(self, *a, **kw):
+        self._committed = True
+        self._calls.append(("commit", a, kw))
+
+    def begin(self):
+        "Begins a new sequence and chains it after this one."
+        # sequence chaining is supported by the tracker
+        return self.ht.begin()
+
+    def __apply__(self):
+        if not (self._staged and self._committed):
+            # The sequence in incomplete
+            return
+
+        ht, calls = self.ht, self._calls
+
+        for method, a, kw in calls:
+            getattr(ht, method)(*a, **kw)
+
 @notifier(
     "staged",
     "changed"
@@ -173,6 +207,13 @@ class HistoryTracker(object):
     def __init__(self, history):
         self.history = history
         self.pos = history.leafs[0]
+        self.delayed = []
+
+    def begin(self):
+        "Begins an operation sequence that will be applied during next commit."
+        seq = Sequence(self)
+        self.delayed.append(seq)
+        return seq
 
     def undo(self, including = None):
         cur = self.pos
@@ -277,4 +318,9 @@ class HistoryTracker(object):
 
             self.__notify_changed(p)
 
+        while self.delayed:
+            delayed = list(self.delayed)
+            del self.delayed[:]
+            for seq in delayed:
+                seq.__apply__()
 
