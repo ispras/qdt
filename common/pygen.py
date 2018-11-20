@@ -79,7 +79,9 @@ accuracy.
         if obj is None:
             return "None"
 
-        if not obj in self.obj2name:
+        nid = id(obj)
+
+        if nid not in self.obj2name:
             try:
                 var_base = obj.__var_base__
             except AttributeError:
@@ -95,10 +97,10 @@ accuracy.
                     if name not in self.name2obj:
                         break
 
-            self.obj2name[obj] = name
-            self.name2obj[name] = obj
+            self.obj2name[nid] = name
+            self.name2obj[name] = nid
 
-        return self.obj2name[obj]
+        return self.obj2name[nid]
 
     def serialize(self, root):
         self.reset()
