@@ -164,18 +164,20 @@ class HistoryTracker(object):
     def undo(self, including = None):
         queue = []
 
+        cur = self.pos
+
         while True:
-            if self.pos.done:
-                queue.append(self.pos)
+            if cur.done:
+                queue.append(cur)
 
-            cur = self.pos
-            self.pos = cur.prev
+            cur = cur.prev
 
-            if including:
-                if including == cur:
-                    break
-            else:
+            if including is None:
                 break
+            if including is cur:
+                break
+
+        self.pos = cur
 
         if queue:
             for p in queue:
