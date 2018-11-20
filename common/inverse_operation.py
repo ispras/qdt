@@ -165,7 +165,10 @@ class History(object):
         self.root = InitialOperation()
         self.leafs = [self.root]
 
-@notifier("changed")
+@notifier(
+    "staged",
+    "changed"
+)
 class HistoryTracker(object):
     def __init__(self, history):
         self.history = history
@@ -256,6 +259,8 @@ class HistoryTracker(object):
         cur.next.insert(0, op)
 
         self.pos = op
+
+        self.__notify_staged(op)
 
         return op
 
