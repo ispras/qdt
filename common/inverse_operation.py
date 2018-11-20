@@ -1,7 +1,6 @@
 __all__ = [
     "InverseOperation"
       , "InitialOperation"
-  , "InitialOperationBackwardIterator"
   , "UnimplementedInverseOperation"
   , "InitialOperationCall"
   , "History"
@@ -151,11 +150,6 @@ class InitialOperation(InverseOperation):
     def __description__(self):
         return _("The beginning of known history.")
 
-def InitialOperationBackwardIterator(cur):
-    while cur is not None:
-        yield cur
-        cur = cur.prev
-
 class History(object):
     def __init__(self):
         self.root = InitialOperation()
@@ -256,8 +250,7 @@ class HistoryTracker(object):
         return op
 
     def get_branch(self):
-        backlog = list(InitialOperationBackwardIterator(self.pos))
-        return list(reversed(backlog))
+        return list(reversed(tuple(self.pos.backlog())))
 
     def commit(self, including = None):
         if not including:
