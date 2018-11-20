@@ -263,12 +263,10 @@ class HistoryTracker(object):
         return list(reversed(tuple(self.pos.backlog())))
 
     def commit(self, including = None):
-        if not including:
-            p = self.pos
-        else:
-            p = including
+        if including is None:
+            including = self.pos
 
-        for p in reversed(tuple(p.skipped())):
+        for p in reversed(tuple(including.skipped())):
             # TODO:  check read/write sets before
             # some operations could be skipped if not required
             if not p.backed_up:
