@@ -97,6 +97,12 @@ class InverseOperation(object):
         self.backed_up = False
         self.done = False
 
+    def __backlog__(self):
+        cur = self
+        while cur is not None:
+            yield cur
+            cur = cur.prev
+
     def __backup__(self):
         raise UnimplementedInverseOperation()
 
