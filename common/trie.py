@@ -6,7 +6,7 @@ __all__ = [
 # Helpers to build trie of `dict`s
 
 
-def trie_add(trie, path, value):
+def trie_add(trie, path, value, replace = False):
     """
     :trie: is a starting node
     :path: is a list (or any indexable & slicable) of hashables
@@ -28,6 +28,9 @@ def trie_add(trie, path, value):
 
                 if other_path == path:
                     # this path is already in the trie
+                    if replace:
+                        trie[part] = (value, path)
+
                     return other_value
 
                 if other_path:
