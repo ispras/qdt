@@ -277,18 +277,9 @@ class HistoryTracker(object):
         else:
             p = including
 
-        queue = []
-        while p:
-            if not p.done:
-                # TODO:  check read/write sets before
-                # some operations could be skipped if not required
-                queue.insert(0, p)
-            p = p.prev
-
-        if not queue:
-            return
-
-        for p in queue:
+        for p in reversed(p.__not_done__()):
+            # TODO:  check read/write sets before
+            # some operations could be skipped if not required
             if not p.backed_up:
                 p.__backup__()
                 p.backed_up = True
