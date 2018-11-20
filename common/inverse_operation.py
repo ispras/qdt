@@ -199,7 +199,7 @@ class HistoryTracker(object):
             cur = prev
 
     def can_undo(self):
-        return bool(not self.pos == self.history.root)
+        return self.pos is not self.history.root
 
     def do(self, index = 0):
         op = self.pos.next[index]
@@ -228,20 +228,23 @@ class HistoryTracker(object):
         self.commit()
 
     def can_do(self, index = 0):
-        return bool(self.pos.next and index < len(self.pos.next))
+        return self.pos.next is not None and index < len(self.pos.next)
 
     def stage(self, op_class, *op_args, **op_kwargs):
+        cur = self.pos
+
         op = op_class(
             *op_args,
-            previous = self.pos,
+            previous = cur,
             **op_kwargs
         )
 
-        if self.pos in self.history.leafs:
-            self.history.leafs.remove(self.pos)
+        if cur in self.history.leafs:
+            self.history.leafs.remove(cur)
 
         self.history.leafs.append(op)
-        self.pos.next.insert(0, op)
+        cur.next.insert(0, op)
+
         self.pos = op
 
         return op
@@ -264,15 +267,17 @@ class HistoryTracker(object):
                 queue.insert(0, p)
             p = p.prev
 
-        if queue:
-            for p in queue:
-                if not p.backed_up:
-                    p.__backup__()
-                    p.backed_up = True
-    
-                p.__do__()
-                p.done = True
+        if not queue:
+            return
 
-                self.__notify_changed(p)
+        for p in queue:
+            if not p.backed_up:
+                p.__backup__()
+                p.backed_up = True
+
+            p.__do__()
+            p.done = True
+
+            self.__notify_changed(p)
 
 
