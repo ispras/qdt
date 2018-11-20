@@ -102,6 +102,11 @@ class InverseOperation(object):
             yield cur
             cur = cur.prev
 
+    def skipped(self):
+        for op in self.backlog():
+            if not op.done:
+                yield op
+
     def __backup__(self):
         raise UnimplementedInverseOperation()
 
