@@ -108,6 +108,11 @@ class InverseOperation(object):
             if not op.done:
                 yield op
 
+    def __done__(self):
+        for op in self.__backlog__():
+            if op.done:
+                yield op
+
     def __backup__(self):
         raise UnimplementedInverseOperation()
 
