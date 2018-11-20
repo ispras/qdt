@@ -71,7 +71,7 @@ accuracy.
     def reset(self):
         super(PyGenerator, self).reset()
 
-        self.obj2name = {}
+        self.id2name = {}
         self.name2obj = {}
         self.name_counter = {}
 
@@ -79,7 +79,9 @@ accuracy.
         if obj is None:
             return "None"
 
-        if not obj in self.obj2name:
+        obj_id = id(obj)
+
+        if obj_id not in self.id2name:
             try:
                 var_base = obj.__var_base__
             except AttributeError:
@@ -95,10 +97,10 @@ accuracy.
                     if name not in self.name2obj:
                         break
 
-            self.obj2name[obj] = name
+            self.id2name[obj_id] = name
             self.name2obj[name] = obj
 
-        return self.obj2name[obj]
+        return self.id2name[obj_id]
 
     def serialize(self, root):
         self.reset()
@@ -314,9 +316,10 @@ accuracy.
         elif val is None:
             self.write("None")
         else:
-            o2n = self.obj2name
-            if val in o2n:
-                s = o2n[val]
+            o2n = self.id2name
+            val_id = id(val)
+            if val_id in o2n:
+                s = o2n[val_id]
             else:
                 s = repr(val)
             self.write(s)
