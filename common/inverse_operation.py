@@ -264,12 +264,10 @@ class HistoryTracker(object):
         return list(reversed(backlog))
 
     def commit(self, including = None):
-        if not including:
-            p = self.pos
-        else:
-            p = including
+        if including is None:
+            including = self.pos
 
-        for p in reversed(p.__not_done__()):
+        for p in reversed(tuple(including.__not_done__())):
             # TODO:  check read/write sets before
             # some operations could be skipped if not required
             if not p.backed_up:
