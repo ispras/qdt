@@ -178,15 +178,13 @@ class HistoryTracker(object):
         self.pos = history.leafs[0]
 
     def undo(self, including = None):
-        queue = []
-
         cur = self.pos
 
-        while True:
-            if cur.done:
-                queue.append(cur)
+        for cur in cur.__done__():
+            cur.__undo__()
+            cur.done = False
 
-            cur = cur.prev
+            self.__notify_changed(cur)
 
             if including is None:
                 break
@@ -195,12 +193,6 @@ class HistoryTracker(object):
 
         self.pos = cur
 
-        if queue:
-            for p in queue:
-                p.__undo__()
-                p.done = False
-
-                self.__notify_changed(p)
 
     def undo_sequence(self):
         cur = self.pos
