@@ -47,9 +47,7 @@ refactoring:
         prev_type = QemuTypeName(prev_name).type_macro
         new_type = QemuTypeName(desc.name).type_macro
 
-        gpht = self.gpht
-
-        staged = False
+        seq = self.gpht.begin()
 
         for mach in self.p.descriptions:
             if not isinstance(mach, MachineNode):
@@ -61,18 +59,9 @@ refactoring:
 
                 if node.qom_type != prev_type:
                     continue
+                seq.stage(MOp_SetDevQOMType, new_type, nid, mach.__sn__)
 
-                if not staged:
-                    gpht.start_new_sequence()
-                    staged = True
-
-                gpht.stage(MOp_SetDevQOMType, new_type, nid, mach.__sn__)
-
-        if not staged:
-            # nothing has been changed
-            return
-
-        gpht.commit(
+        seq.commit(
             sequence_description = _(
                 "Automatic update of QOM type for devices in all machines."
             )
