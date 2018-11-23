@@ -91,7 +91,7 @@ def trie_find(trie, path):
 
         # Check parts of current value path those are not in the tree yet.
         if rest[:len(path) - i] == path[i:]:
-            return value
+            return value, rest[len(path) - i:]
         else:
             # Some parts differs.
             break
@@ -99,7 +99,7 @@ def trie_find(trie, path):
         # Provided path is fully traversed. Is there a value with exactly
         # such path?
         if None in trie:
-            return trie[None]
+            return trie[None], ()
 
         raise ValueError("Given path %s is not long enough to look value"
             " up unambiguously. There are several values with such path"
