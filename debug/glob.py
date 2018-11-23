@@ -201,7 +201,7 @@ source code of that subprogram.
         rpath = tuple(reversed(source_path))
 
         # line program for the CU must be already accounted by `get_CU_files`
-        lm = trie_find(dic.srcmap, rpath)
+        lm, _ = trie_find(dic.srcmap, rpath)
 
         ranges = self.ranges
 
