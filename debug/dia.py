@@ -241,7 +241,7 @@ pyelftools's `DWARFInfo`.
     def find_line_map(self, file_name):
         rpath = tuple(reversed(file_name.split(sep)))
         try:
-            lm = trie_find(self.srcmap, rpath)
+            lm, _ = trie_find(self.srcmap, rpath)
         except KeyError:
             try:
                 cu = self.get_CU_by_reversed_path(rpath)
@@ -252,7 +252,7 @@ pyelftools's `DWARFInfo`.
                 ))
 
             self.account_line_program_CU(cu)
-            lm = trie_find(self.srcmap, rpath)
+            lm, _ = trie_find(self.srcmap, rpath)
         except ValueError:
             raise ValueError("File name suffix '%s' is not long enough to"
                 " unambiguously identify line map" % file_name)
