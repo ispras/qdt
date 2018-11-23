@@ -42,7 +42,7 @@ def trie_add(trie, path, value, replace = False):
                     }
                 else:
                     other = {
-                        None : other_value
+                        None : (other_value, other_path)
                     }
 
                 trie[part] = other
@@ -60,7 +60,7 @@ def trie_add(trie, path, value, replace = False):
     if None in trie:
         return trie[None]
     else:
-        trie[None] = value
+        trie[None] = (value, path)
         return value
 
 
