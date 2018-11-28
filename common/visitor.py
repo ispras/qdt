@@ -131,6 +131,8 @@ traversing is skipped using BreakVisiting exception (including replacement).
     def __visit_items__(self, attr):
         if isinstance(attr, list):
             self.__visit_list__(attr)
+        elif isinstance(attr, tuple):
+            self.__visit_list__(attr)
         elif isinstance(attr, dict):
             self.__visit_dictionary__(attr)
         elif isinstance(attr, set):
