@@ -3,8 +3,35 @@ __all__ = [
   , "sort_topologically"
 ]
 
+from .visitor import (
+    ObjectVisitor,
+    BreakVisiting
+)
+from collections import (
+    deque
+)
+from six import (
+    moves
+)
+
+builtin_types = [
+    t for t in moves.builtins.__dict__.values() if isinstance(t, type)
+] + [type(None)]
+
+
 class GraphIsNotAcyclic(ValueError):
     pass
+
+
+class TopologyVisitor(ObjectVisitor):
+    def __init__(self, root, field_name = "__dfs_attrs__"):
+        self.objects = deque()
+        super(TopologyVisitor, self).__init__(root, field_name)
+
+    def on_visit(self):
+        if type(self.cur) not in builtin_types:
+            self.objects.append(self.cur)
+            raise BreakVisiting()
 
 
 def dfs(node, visiting, visited):
@@ -17,17 +44,23 @@ def dfs(node, visiting, visited):
         return
 
     try:
-        children = node.__dfs_children__
+        get_children = node.__dfs_children__
     except AttributeError:
-        pass
+        tv = TopologyVisitor(node, field_name = "__dfs_attrs__")
+
+        tv.visit()
+
+        children = list(reversed(tv.objects))
     else:
-        visiting.add(nid)
+        children = get_children()
 
-        for n in children():
-            for nn in dfs(n, visiting, visited):
-                yield nn
+    visiting.add(nid)
 
-        visiting.remove(nid)
+    for n in children:
+        for nn in dfs(n, visiting, visited):
+            yield nn
+
+    visiting.remove(nid)
 
     visited.add(nid)
 
