@@ -49,7 +49,7 @@ Note that 'replace' method internally raises BreakVisiting.
     + replacement of references (values) in dictionary
     + visiting of references in set
     + replacement of reference in set
-    - visiting of references in tuple
+    + visiting of references in tuple
     - replacement of reference in tuple (new tuple should be constructed
 because the tuple class does not support editing)
     - recursive visiting of tuples, lists, dictionaries
@@ -130,6 +130,8 @@ traversing is skipped using BreakVisiting exception (including replacement).
 
     def __visit_items__(self, attr):
         if isinstance(attr, list):
+            self.__visit_list__(attr)
+        elif isinstance(attr, tuple):
             self.__visit_list__(attr)
         elif isinstance(attr, dict):
             self.__visit_dictionary__(attr)
