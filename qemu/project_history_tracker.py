@@ -339,12 +339,10 @@ class ProjectHistoryTracker(HistoryTracker):
     :param new_sequence:
         begin new sequence after committing staged operations (True by default)
         """
-        ns = kw.pop("new_sequence", True)
+        if kw.pop("new_sequence", True):
+            self.start_new_sequence()
 
         super(ProjectHistoryTracker, self).commit(*args, **kw)
-
-        if ns:
-            self.start_new_sequence()
 
     def delete_description(self, desc):
         if isinstance(desc, MachineNode):

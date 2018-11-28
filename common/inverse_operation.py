@@ -1,10 +1,10 @@
 __all__ = [
     "InverseOperation"
       , "InitialOperation"
-  , "InitialOperationBackwardIterator"
   , "UnimplementedInverseOperation"
   , "InitialOperationCall"
   , "History"
+  , "Sequence"
   , "HistoryTracker"
 ]
 
@@ -97,6 +97,22 @@ class InverseOperation(object):
         self.backed_up = False
         self.done = False
 
+    def backlog(self):
+        cur = self
+        while cur is not None:
+            yield cur
+            cur = cur.prev
+
+    def skipped(self):
+        for op in self.backlog():
+            if not op.done:
+                yield op
+
+    def committed(self):
+        for op in self.backlog():
+            if op.done:
+                yield op
+
     def __backup__(self):
         raise UnimplementedInverseOperation()
 
@@ -145,21 +161,59 @@ class InitialOperation(InverseOperation):
     def __description__(self):
         return _("The beginning of known history.")
 
-def InitialOperationBackwardIterator(cur):
-    while cur is not None:
-        yield cur
-        cur = cur.prev
-
 class History(object):
     def __init__(self):
         self.root = InitialOperation()
         self.leafs = [self.root]
 
-@notifier("changed")
+
+class Sequence(object):
+    """ A dedicated inverse operations sequence that can be applied on demand.
+It's like a transaction in a data base management system.
+    """
+
+    def __init__(self, ht):
+        self.ht = ht
+        self._calls, self._staged, self._committed = [], False, False
+
+    def stage(self, *a, **kw):
+        self._staged = True
+        self._calls.append(("stage", a, kw))
+
+    def commit(self, *a, **kw):
+        self._committed = True
+        self._calls.append(("commit", a, kw))
+
+    def begin(self):
+        "Begins a new sequence and chains it after this one."
+        # sequence chaining is supported by the tracker
+        return self.ht.begin()
+
+    def __apply__(self):
+        if not (self._staged and self._committed):
+            # The sequence in incomplete
+            return
+
+        ht, calls = self.ht, self._calls
+
+        for method, a, kw in calls:
+            getattr(ht, method)(*a, **kw)
+
+@notifier(
+    "staged",
+    "changed"
+)
 class HistoryTracker(object):
     def __init__(self, history):
         self.history = history
         self.pos = history.leafs[0]
+        self.delayed = []
+
+    def begin(self):
+        "Begins an operation sequence that will be applied during next commit."
+        seq = Sequence(self)
+        self.delayed.append(seq)
+        return seq
 
     def undo(self, including = None):
         queue = []
@@ -199,7 +253,7 @@ class HistoryTracker(object):
             cur = prev
 
     def can_undo(self):
-        return bool(not self.pos == self.history.root)
+        return self.pos is not self.history.root
 
     def do(self, index = 0):
         op = self.pos.next[index]
@@ -228,51 +282,51 @@ class HistoryTracker(object):
         self.commit()
 
     def can_do(self, index = 0):
-        return bool(self.pos.next and index < len(self.pos.next))
+        return self.pos.next is not None and index < len(self.pos.next)
 
     def stage(self, op_class, *op_args, **op_kwargs):
+        cur = self.pos
+
         op = op_class(
             *op_args,
-            previous = self.pos,
+            previous = cur,
             **op_kwargs
         )
 
-        if self.pos in self.history.leafs:
-            self.history.leafs.remove(self.pos)
+        if cur in self.history.leafs:
+            self.history.leafs.remove(cur)
 
         self.history.leafs.append(op)
-        self.pos.next.insert(0, op)
+        cur.next.insert(0, op)
+
         self.pos = op
+
+        self.__notify_staged(op)
 
         return op
 
     def get_branch(self):
-        backlog = list(InitialOperationBackwardIterator(self.pos))
-        return list(reversed(backlog))
+        return list(reversed(tuple(self.pos.backlog())))
 
     def commit(self, including = None):
-        if not including:
-            p = self.pos
-        else:
-            p = including
+        if including is None:
+            including = self.pos
 
-        queue = []
-        while p:
-            if not p.done:
-                # TODO:  check read/write sets before
-                # some operations could be skipped if not required
-                queue.insert(0, p)
-            p = p.prev
+        for p in reversed(tuple(including.skipped())):
+            # TODO:  check read/write sets before
+            # some operations could be skipped if not required
+            if not p.backed_up:
+                p.__backup__()
+                p.backed_up = True
 
-        if queue:
-            for p in queue:
-                if not p.backed_up:
-                    p.__backup__()
-                    p.backed_up = True
-    
-                p.__do__()
-                p.done = True
+            p.__do__()
+            p.done = True
 
-                self.__notify_changed(p)
+            self.__notify_changed(p)
 
+        while self.delayed:
+            delayed = list(self.delayed)
+            del self.delayed[:]
+            for seq in delayed:
+                seq.__apply__()
 
