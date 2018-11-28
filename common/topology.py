@@ -3,8 +3,45 @@ __all__ = [
   , "sort_topologically"
 ]
 
+from .visitor import (
+    ObjectVisitor
+)
+from collections import (
+    deque
+)
+# this code based on
+# https://stackoverflow.com/questions/3210238/how-do-i-get-list-of-all-python-
+# types-programmatically
+try :
+    # python2
+    import __builtin__
+
+    builtin_types = [
+        t for t in __builtin__.__dict__.itervalues() if isinstance(t, type)
+    ]
+except ImportError:
+    # python3
+    import builtins
+
+    builtin_types = [
+        getattr(builtins, d) for d in dir(builtins)
+        if isinstance(getattr(builtins, d), type)
+    ]
+
+builtin_types.append(type(None))
+
 class GraphIsNotAcyclic(ValueError):
     pass
+
+
+class TopologyVisitor(ObjectVisitor):
+    def __init__(self, root):
+        self.objects = deque()
+        super(TopologyVisitor, self).__init__(root)
+
+    def on_visit(self):
+        if type(self.cur) not in builtin_types:
+            self.objects.append(self.cur)
 
 
 def dfs(node, visiting, visited):
@@ -19,7 +56,12 @@ def dfs(node, visiting, visited):
     try:
         children = node.__dfs_children__
     except AttributeError:
-        pass
+        tv = TopologyVisitor(node)
+
+        tv.visit()
+
+        for n in list(reversed(tv.objects)):
+            yield n
     else:
         visiting.add(nid)
 
