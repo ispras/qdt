@@ -4,7 +4,8 @@ __all__ = [
 ]
 
 from .visitor import (
-    ObjectVisitor
+    ObjectVisitor,
+    BreakVisiting
 )
 from collections import (
     deque
@@ -42,6 +43,7 @@ class TopologyVisitor(ObjectVisitor):
     def on_visit(self):
         if type(self.cur) not in builtin_types:
             self.objects.append(self.cur)
+            raise BreakVisiting()
 
 
 def dfs(node, visiting, visited):
@@ -54,22 +56,23 @@ def dfs(node, visiting, visited):
         return
 
     try:
-        children = node.__dfs_children__
+        get_children = node.__dfs_children__
     except AttributeError:
-        tv = TopologyVisitor(node)
+        tv = TopologyVisitor(node, field_name = "__dfs_attrs__")
 
         tv.visit()
 
-        for n in list(reversed(tv.objects)):
-            yield n
+        children = list(reversed(tv.objects))
     else:
-        visiting.add(nid)
+        children = get_children()
 
-        for n in children():
-            for nn in dfs(n, visiting, visited):
-                yield nn
+    visiting.add(nid)
 
-        visiting.remove(nid)
+    for n in children:
+        for nn in dfs(n, visiting, visited):
+            yield nn
+
+    visiting.remove(nid)
 
     visited.add(nid)
 
