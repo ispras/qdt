@@ -600,3 +600,18 @@ The project is based on `q35` machine implementation in QEMU.
 
 qdt/qdc-gui.py qdt/examples/q35-for-q2.6.py
 ```
+
+## Miscellaneous
+
+There are several miscellaneous tools, code experiments and snippets in
+`misc` module.
+To run them, configure `PYTHONPATH` to include directory that contains
+QDT modules.
+I.e. parent directory of `misc`.
+For example:
+
+```bash
+~/qemu/qdt/misc$
+
+PYTHONPATH=".." python canvas_frame_test.py
+```
