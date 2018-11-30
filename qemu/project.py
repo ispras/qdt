@@ -214,3 +214,9 @@ already in another project.")
 
     def __var_base__(self):
         return "project"
+
+    def __dfs_children__(self):
+        return list(self.descriptions)
+
+    def __gen_code__(self, gen):
+        gen.gen_code(self)
