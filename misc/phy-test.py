@@ -113,7 +113,7 @@ class CrossTest(CanvasDnD):
             self.drag_points[id] = s, 1
 
     def update(self):
-        for i in self.segments:
+        for i in self.segments + self.polygons:
             i.update()
 
         for c in self.crosses:
