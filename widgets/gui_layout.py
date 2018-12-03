@@ -9,6 +9,7 @@ from qemu import (
     QemuTypeName
 )
 
+
 class GUILayout(object):
     def __init__(self, desc_name, opaque, shown = None):
         self.desc_name = desc_name
