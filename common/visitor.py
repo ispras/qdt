@@ -127,6 +127,7 @@ traversing is skipped using BreakVisiting exception (including replacement).
 
     def visit(self):
         self.__visit_items__(self.cur)
+        return self # for call chaining
 
     def __visit_items__(self, attr):
         if isinstance(attr, list):
