@@ -7,7 +7,9 @@ from sys import (
 )
 from os.path import (
     join,
-    split
+    split,
+    dirname,
+    exists
 )
 from inspect import (
     getmembers,
@@ -35,6 +37,9 @@ ARCHMAP = {
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg} {arg}\n"
 
+C2T_DIR = dirname(__file__) or '.'
+C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
+
 
 class C2TArgumentParser(ArgumentParser):
     """ Custom ArgumentParser """
@@ -58,12 +63,28 @@ class C2TArgumentParser(ArgumentParser):
 
 def main():
     parser = C2TArgumentParser()
+    parser.add_argument("-c", "--config",
+        type = str,
+        dest = "config",
+        help = "configuration file for %s" % parser.prog
+    )
     parser.add_argument("-v", "--verbose",
         action = "store_true",
         help = "increase output verbosity"
     )
 
     args = parser.parse_args()
+
+    if not args.config:
+        parser.error("requires more input arguments to run")
+
+    config = join(C2T_CONFIGS_DIR, "%s.py" % args.config)
+    if not exists(config):
+        config = join(C2T_DIR, "%s.py" % args.config)
+        if not exists(config):
+            parser.error("configuration file doesn't exist:",
+                optval = args.config
+            )
 
 
 if __name__ == "__main__":
