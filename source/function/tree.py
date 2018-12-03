@@ -67,6 +67,7 @@ from ..c_const import (
 )
 from ..model import (
     Type,
+    TypeReference,
     Pointer,
     Variable,
     Macro,
@@ -657,6 +658,8 @@ class OpSDeref(Operator):
             struct = _type.type
         else: # _type expected to be a Structure
             struct = _type
+        if isinstance(struct, TypeReference):
+            struct = struct.type
 
         # for type collection
         self.struct = struct
