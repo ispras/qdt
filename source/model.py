@@ -334,8 +334,7 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
-        tf = TypeFixerVisitor(self, self.global_variables)
-        tf.visit()
+        TypeFixerVisitor(self, self.global_variables).visit()
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
