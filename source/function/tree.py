@@ -65,6 +65,7 @@ from ..c_const import (
 )
 from ..model import (
     Type,
+    TypeReference,
     Pointer,
     Variable
 )
@@ -682,15 +683,13 @@ class OpSDeref(Operator):
         self.field = field
 
         _type = value.type
-        if isinstance(_type, Pointer):
-            struct = _type.type
-        else: # _type expected to be a Structure
-            struct = _type
+        while isinstance(_type, (Pointer, TypeReference)):
+            _type = _type.type
 
         # for type collection
-        self.struct = struct
+        self.struct = _type
 
-        if isinstance(_type, Pointer):
+        if isinstance(value.type, Pointer):
             self.suffix = "->" + field
         else:
             self.suffix = "." + field
