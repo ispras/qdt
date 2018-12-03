@@ -49,6 +49,7 @@ from math import (
 )
 from source.function import *
 
+
 # properties
 class QOMPropertyType(object):
     set_f = None
@@ -81,6 +82,7 @@ class QOMPropertyValue(object):
         self.prop_type = prop_type
         self.prop_name = prop_name
         self.prop_val = prop_val
+
 
 def qtn_char(c):
     # low ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"] high
