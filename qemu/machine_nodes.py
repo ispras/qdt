@@ -307,13 +307,6 @@ class IRQHub(Node):
             return []
         return getattr(self, arg_name)
 
-# QObject property model
-
-class DevicePropertyDefinition(object):
-    def __init__(self, property_name, property_type, property_value):
-        self.property_name = self.property_name
-        self.property_type = self.property_type
-        self.property_value = self.property_value
 
 # device models
 
