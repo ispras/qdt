@@ -67,6 +67,7 @@ from ..c_const import (
 )
 from ..model import (
     Type,
+    TypeReference,
     Pointer,
     Macro,
     NodeVisitor,
@@ -657,10 +658,10 @@ class OpSDeref(Operator):
         self.field = field
 
         _type = value.type
-        if isinstance(_type, Pointer):
-            struct = _type.type
-        else: # _type expected to be a Structure
-            struct = _type
+
+        struct = _type
+        while isinstance(struct, (Pointer, TypeReference)):
+            struct = struct.type
 
         # for type collection
         self.struct = struct
