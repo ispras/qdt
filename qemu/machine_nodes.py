@@ -40,6 +40,7 @@ from source import (
     CINT
 )
 
+
 class Node(object):
     def __init__(self, var_base = None):
         self.id = -1
@@ -54,6 +55,7 @@ class Node(object):
         gen.reset_gen(self)
         gen.gen_args(self, pa_names = True)
         gen.gen_end()
+
 
 # bus models
 class BusNode(Node):
@@ -100,6 +102,7 @@ class BusNode(Node):
             arg_name = "parent_device"
         return getattr(self, arg_name)
 
+
 class SystemBusNode(BusNode):
     def __init__(self, **kw):
         # Assume, the system bus has no parent
@@ -114,6 +117,7 @@ class SystemBusNode(BusNode):
             gen.line(gen.nameof(self.parent_device) + ".append_child_bus("
                 + gen.nameof(self) + ")"
             )
+
 
 class PCIExpressBusNode(BusNode):
     def __init__(self, host_bridge,
@@ -259,6 +263,7 @@ class IRQLine(Node):
     def __dfs_children__(self):
         return [ self.src_dev, self.dst_dev ]
 
+
 class IRQHub(Node):
     def __init__(self, srcs = None, dsts = None, var_base = "irq", **kw):
         Node.__init__(self, var_base = var_base, **kw)
@@ -350,6 +355,7 @@ class PropList(dict):
         self.__names.remove(name)
         return dict.__delitem__(self, name)
 
+
 class DeviceNode(Node):
     def __init__(self, qom_type, parent = None, var_base = "dev", **kw):
         Node.__init__(self, var_base = var_base, **kw)
@@ -416,6 +422,7 @@ class DeviceNode(Node):
         if arg_name == "parent":
             arg_name = "parent_bus"
         return getattr(self, arg_name)
+
 
 def iter_mappings(mapping):
     for idx in xrange(0, max(mapping.keys()) + 1):
@@ -484,6 +491,7 @@ class SystemBusDeviceNode(DeviceNode):
             else:
                 return None
         return getattr(self, arg_name)
+
 
 class PCIExpressDeviceNode(DeviceNode):
     def __init__(self, qom_type, pci_express_bus, slot, function,
@@ -576,6 +584,7 @@ class MemoryNode(Node):
             if self.priority != 0:
                 gen.gen_field("priority = " + gen.gen_const(self.priority))
             gen.gen_end()
+
 
 class MemorySASNode(MemoryNode):
     def __init__(self, name, size = None, **kw):

@@ -145,6 +145,7 @@ class CINT(CConst):
         # Some other type
         return False
 
+
 class CSTR(CConst):
     def __init__(self, value):
         # C representation is computed on demand and cached
@@ -189,6 +190,7 @@ class CSTR(CConst):
         elif isinstance(v, CSTR):
             return self.v == v.v
         return False
+
 
 class QCLexerError(ValueError): pass
 QCParserError = QCLexerError
