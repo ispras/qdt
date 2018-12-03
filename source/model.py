@@ -884,6 +884,17 @@ class Structure(Type):
             for v in fields:
                 self.append_field(v)
 
+    def __getattr__(self, name):
+        "Tries to find undefined attributes among fields."
+        d = self.__dict__
+        try:
+            return d[name]
+        except KeyError:
+            try:
+                return d["fields"][name]
+            except KeyError:
+                return super(Structure, self).__getattr__(name)
+
     def get_definers(self):
         if self.definer is None:
             raise RuntimeError("Getting definers for structure %s that is not"
