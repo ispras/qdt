@@ -1147,7 +1147,7 @@ class Function(Type):
 
     def use_as_prototype(self, name,
         body = None,
-        static = False,
+        static = None,
         inline = False,
         used_types = []
     ):
@@ -1155,7 +1155,7 @@ class Function(Type):
             body = body,
             ret_type = self.ret_type,
             args = self.args,
-            static = static,
+            static = self.static if static is None else static,
             inline = inline,
             used_types = used_types
         )
