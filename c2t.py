@@ -8,7 +8,8 @@ from sys import (
 from os import (
     listdir,
     killpg,
-    makedirs
+    makedirs,
+    setpgrp
 )
 from os.path import (
     join,
@@ -67,7 +68,8 @@ from debug import (
     PreLoader
 )
 from c2t import (
-    CommentParser
+    CommentParser,
+    DebugComparison
 )
 
 ARCHMAP = {
@@ -446,7 +448,58 @@ class CpuTestingTool(object):
             errmsg(errmsg2, prog = "%s: oracle_compiler" % config)
 
     def start(self):
-        pass
+        setpgrp()
+
+        self.target_builder.start()
+        self.oracle_builder.start()
+
+        while 1:
+            test_src, target_elf = self.target_elf_queue.get(block = True)
+            test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
+
+            qemu = ProcessWithErrCatching(
+                self.config.qemu.get_run().format(bin = target_elf)
+            )
+            gdbserver = ProcessWithErrCatching(
+                self.config.gdbserver.get_run().format(bin = oracle_elf)
+            )
+
+            qemu.daemon = True
+            gdbserver.daemon = True
+
+            oracle_queue = Queue(0)
+            target_queue = Queue(0)
+
+            qemu.start()
+            gdbserver.start()
+
+            oracle_session = DebugProcess(ARCHMAP[self.oracle_cpu],
+                test_src, "localhost:4321", oracle_elf, oracle_queue,
+                self.verbose, oracle = True
+            )
+            target_session = DebugProcess(ARCHMAP[self.machine_type],
+                test_src, "localhost:1234", target_elf, target_queue,
+                self.verbose
+            )
+            debug_comparison = DebugComparison(oracle_queue, target_queue)
+
+            oracle_session.start()
+            target_session.start()
+            try:
+                debug_comparison.start()
+            except RuntimeError:
+                # TODO: Use gdb remote protocol vKill and k
+                killpg(0, SIGKILL)
+                # oracle_session.stop()
+                # target_session.stop()
+            else:
+                qemu.join()
+                gdbserver.join()
+                oracle_session.join()
+                target_session.join()
+
+            if self.target_elf_queue.empty() and self.oracle_elf_queue.empty():
+                break
 
 
 class C2TArgumentParser(ArgumentParser):
