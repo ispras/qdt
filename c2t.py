@@ -5,6 +5,9 @@ from sys import (
     path,
     stderr
 )
+from os import (
+    listdir
+)
 from os.path import (
     join,
     split,
@@ -18,6 +21,9 @@ from inspect import (
 )
 from argparse import (
     ArgumentParser
+)
+from re import (
+    compile
 )
 
 # use custom pyrsp
@@ -39,6 +45,7 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg} {arg}\n"
 
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
+C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 
 
 class C2TArgumentParser(ArgumentParser):
@@ -61,12 +68,24 @@ class C2TArgumentParser(ArgumentParser):
         ))
 
 
+def get_tests(regexp):
+    r = compile("%s[.]c$" % regexp)
+    return list(filter(r.match, listdir(C2T_TEST_DIR)))
+
+
 def main():
     parser = C2TArgumentParser()
     parser.add_argument("-c", "--config",
         type = str,
         dest = "config",
         help = "configuration file for %s" % parser.prog
+    )
+    parser.add_argument("-t", "--test",
+        type = str,
+        dest="regexp",
+        help = ("regular expression that defines a test set"
+             " (tests are located in %s)"
+        ) % C2T_TEST_DIR
     )
     parser.add_argument("-v", "--verbose",
         action = "store_true",
@@ -75,7 +94,7 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.config:
+    if not args.config or not args.regexp:
         parser.error("requires more input arguments to run")
 
     config = join(C2T_CONFIGS_DIR, "%s.py" % args.config)
@@ -85,6 +104,12 @@ def main():
             parser.error("configuration file doesn't exist:",
                 optval = args.config
             )
+
+    tests = get_tests(args.regexp)
+    if not tests:
+        parser.error("no matches in %s with:" % C2T_TEST_DIR,
+            optval = args.regexp
+        )
 
 
 if __name__ == "__main__":
