@@ -57,7 +57,13 @@ class C2TArgumentParser(ArgumentParser):
 
 
 def main():
-    pass
+    parser = C2TArgumentParser()
+    parser.add_argument("-v", "--verbose",
+        action = "store_true",
+        help = "increase output verbosity"
+    )
+
+    args = parser.parse_args()
 
 
 if __name__ == "__main__":
