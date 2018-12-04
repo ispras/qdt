@@ -6,7 +6,8 @@ from sys import (
     stderr
 )
 from os import (
-    listdir
+    listdir,
+    killpg
 )
 from os.path import (
     join,
@@ -25,6 +26,16 @@ from argparse import (
 )
 from re import (
     compile
+)
+from multiprocessing import (
+    Process
+)
+from subprocess import (
+    Popen,
+    PIPE
+)
+from signal import (
+    SIGKILL
 )
 
 # use custom pyrsp
@@ -61,6 +72,29 @@ def errmsg(msg,
     ))
     if with_exit:
         exit(1)
+
+
+class ProcessWithErrCatching(Process):
+    """ Process with error catching """
+
+    def __init__(self, command):
+        Process.__init__(self)
+        self.cmd = command
+        self.prog = command.split(' ')[0]
+
+    def run(self):
+        process = Popen(self.cmd,
+            shell = True,
+            stdout = PIPE,
+            stderr = PIPE
+        )
+        output, error = process.communicate()
+        if process.returncode != 0:
+            errmsg(error,
+                prog = self.prog,
+                with_exit = False
+            )
+            killpg(0, SIGKILL)
 
 
 class CpuTestingTool(object):
