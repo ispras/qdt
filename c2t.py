@@ -25,7 +25,8 @@ from argparse import (
     ArgumentParser
 )
 from re import (
-    compile
+    compile,
+    findall
 )
 from multiprocessing import (
     Process
@@ -58,6 +59,8 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg} {arg}\n"
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
+C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
+C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
 
 
 def errmsg(msg,
@@ -95,6 +98,43 @@ class ProcessWithErrCatching(Process):
                 with_exit = False
             )
             killpg(0, SIGKILL)
+
+
+class TestBuilder(Process):
+    """ A helper class that builds tests """
+
+    def __init__(self, march, cmpl_unit, tests, elf_queue):
+        Process.__init__(self)
+        self.suffix = "_%s" % march
+        self.cmpl_unit = cmpl_unit
+        self.tests = tests
+        self.elf_queue = elf_queue
+
+    def test_build(self, test):
+        test_name = test[:-2]
+        test_src = join(C2T_TEST_DIR, test)
+        test_ir = join(C2T_TEST_IR_DIR, test_name)
+        test_bin = join(C2T_TEST_BIN_DIR, test_name + self.suffix)
+        run_script = ''
+
+        for run_script in self.cmpl_unit.get_run():
+            cmpl_unit = ProcessWithErrCatching(run_script.format(
+                src = test_src,
+                ir = test_ir,
+                bin = test_bin
+            ))
+            cmpl_unit.start()
+            cmpl_unit.join()
+
+        ext = findall("-o {bin}(\S*)", run_script).pop()
+        self.elf_queue.put((test_src, test_bin + ext))
+
+    def run(self):
+        for test in self.tests:
+            # Builds another test if 'elf_queue' contains one element
+            while self.elf_queue.qsize() > 1:
+                pass
+            self.test_build(test)
 
 
 class CpuTestingTool(object):
