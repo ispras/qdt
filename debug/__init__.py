@@ -17,3 +17,4 @@ with pypath("pyelftools"):
     from .watcher import *
     from .line_adapter import *
     from .glv_adapter import *
+    from .preloader import *
