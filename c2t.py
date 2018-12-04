@@ -12,7 +12,8 @@ from os.path import (
     join,
     split,
     dirname,
-    exists
+    exists,
+    basename
 )
 from inspect import (
     getmembers,
@@ -46,6 +47,20 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg} {arg}\n"
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
+
+
+def errmsg(msg,
+    prog = __file__,
+    arg = '',
+    with_exit = True
+):
+    print(C2T_ERRMSG_FORMAT.format(
+        prog = basename(prog),
+        msg = msg,
+        arg = arg
+    ))
+    if with_exit:
+        exit(1)
 
 
 class CpuTestingTool(object):
