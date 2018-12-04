@@ -48,6 +48,17 @@ C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 
 
+class CpuTestingTool(object):
+
+    def __init__(self, config, tests, verbose):
+        self.config = config
+        self.tests = tests
+        self.verbose = verbose
+
+    def start(self):
+        pass
+
+
 class C2TArgumentParser(ArgumentParser):
     """ Custom ArgumentParser """
 
@@ -110,6 +121,9 @@ def main():
         parser.error("no matches in %s with:" % C2T_TEST_DIR,
             optval = args.regexp
         )
+
+    tf = CpuTestingTool(config, tests, args.verbose)
+    tf.start()
 
 
 if __name__ == "__main__":
