@@ -44,6 +44,7 @@ from os.path import (
     splitext
 )
 from common import (
+    bidict,
     find_empty_aabb,
     PhBox,
     PhCircle,
@@ -387,8 +388,8 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         self.mht = mht
 
-        self.id2node = {}
-        self.node2id = {}
+        self.id2node = bidict()
+        self.node2id = self.id2node.mirror
         self.dev2node = {}
         self.node2dev = {}
         self.node2idtext = {}
@@ -917,9 +918,7 @@ IRQ line creation
                     pbn = self.dev2node[pb].busline
                     node.conn.bus_node = pbn
                 else:
-                    conn_id = self.node2id[node.conn]
-                    del self.id2node[conn_id]
-                    del self.node2id[node.conn]
+                    conn_id = self.node2id.pop(node.conn)
                     self.conns.remove(node.conn)
                     self.canvas.delete(conn_id)
                     node.conn = None
@@ -940,9 +939,7 @@ IRQ line creation
                     break
 
                 self.circles.remove(hub_node)
-                circle_id = self.node2id[hub_node]
-                del self.node2id[hub_node]
-                del self.id2node[circle_id]
+                circle_id = self.node2id.pop(hub_node)
                 if circle_id in self.selected:
                     self.selected.remove(circle_id)
                     self.event_generate(MachineDiagramWidget.EVENT_SELECT)
@@ -995,7 +992,6 @@ IRQ line creation
                 del self.node2dev[line]
                 del self.dev2node[irq]
 
-                del self.id2node[line.arrow]
                 del self.node2id[line]
             else:
                 src = self.dev2node[irq.src[0]]
@@ -1051,23 +1047,19 @@ IRQ line creation
                         if bus.id == -1:
                             break
 
-                poly_id = self.node2id[bl]
-                line_id = self.node2id[bl.busline]
+                poly_id = self.node2id.pop(bl)
+                line_id = self.node2id.pop(bl.busline)
 
                 if poly_id in self.selected:
                     self.selected.remove(poly_id)
                     self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
                 self.buslabels.remove(bl)
-                del self.node2id[bl]
-                del self.id2node[poly_id]
 
                 self.canvas.delete(poly_id)
                 self.canvas.delete(bl.text)
 
                 self.buses.remove(bl.busline)
-                del self.node2id[bl.busline]
-                del self.id2node[line_id]
 
                 self.canvas.delete(line_id)
 
@@ -1094,15 +1086,13 @@ IRQ line creation
                         if dev.id == -1:
                             break
 
-                node_id = self.node2id[node]
+                node_id = self.node2id.pop(node)
 
                 if node_id in self.selected:
                     self.selected.remove(node_id)
                     self.event_generate(MachineDiagramWidget.EVENT_SELECT)
 
                 self.nodes.remove(node)
-                del self.node2id[node]
-                del self.id2node[node_id]
                 self.canvas.delete(node_id)
                 self.canvas.delete(node.text)
                 del self.dev2node[dev]
@@ -3029,7 +3019,6 @@ IRQ line creation
         )
 
         self.id2node[_id] = node
-        self.node2id[node] = _id
 
         self.canvas.lift(node.text)
 
@@ -3045,7 +3034,6 @@ IRQ line creation
         self.place_object(hub)
 
         self.id2node[_id] = hub
-        self.node2id[hub] = _id
 
         self.circles.append(hub)
         self.ph_apply_hub(hub)
@@ -3067,7 +3055,6 @@ IRQ line creation
         self.canvas.lower(_id)
 
         self.id2node[_id] = line
-        self.node2id[line] = _id
 
         self.irq_lines.append(line)
 
@@ -3095,7 +3082,6 @@ IRQ line creation
         self.canvas.lower(_id)
 
         self.id2node[_id] = bus
-        self.node2id[bus] = _id
 
         self.buses.append(bus)
 
@@ -3135,7 +3121,6 @@ IRQ line creation
         self.place_object(bl)
 
         self.id2node[_id] = bl
-        self.node2id[bl] = _id
 
         self.canvas.lift(_id)
         self.canvas.lift(bl.text)
@@ -3152,7 +3137,6 @@ IRQ line creation
         self.canvas.lower(_id)
 
         self.id2node[_id] = conn
-        self.node2id[conn] = _id
 
         dev.conn = conn
 
