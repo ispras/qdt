@@ -851,7 +851,7 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
-        func = Type.lookup("MemoryRegionOps_read").use_as_prototype(
+        func = Type["MemoryRegionOps"].read.type.use_as_prototype(
             name = name,
             static = True,
             body = BodyTree()
@@ -916,7 +916,7 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro, regs = None):
-        func = Type.lookup("MemoryRegionOps_write").use_as_prototype(
+        func = Type["MemoryRegionOps"].write.type.use_as_prototype(
             name = name,
             static = True,
             body = BodyTree()
