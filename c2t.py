@@ -29,7 +29,8 @@ from re import (
     findall
 )
 from multiprocessing import (
-    Process
+    Process,
+    Queue
 )
 from subprocess import (
     Popen,
@@ -37,6 +38,9 @@ from subprocess import (
 )
 from signal import (
     SIGKILL
+)
+from platform import (
+    machine
 )
 
 # use custom pyrsp
@@ -140,9 +144,17 @@ class TestBuilder(Process):
 class CpuTestingTool(object):
 
     def __init__(self, config, tests, verbose):
-        self.tests = tests
         self.config = self.get_cfg(config)
         self.verify_config(config)
+        self.oracle_cpu = "amd64" if machine() == "x86_64" else "i386"
+        self.target_elf_queue = Queue(0)
+        self.oracle_elf_queue = Queue(0)
+        self.target_builder = TestBuilder(self.machine_type,
+            self.config.target_compiler, tests, self.target_elf_queue
+        )
+        self.oracle_builder = TestBuilder(self.oracle_cpu,
+            self.config.oracle_compiler, tests, self.oracle_elf_queue
+        )
         self.verbose = verbose
 
     @staticmethod
