@@ -43,14 +43,27 @@ from platform import (
     machine
 )
 
-# use custom pyrsp
+# use custom pyrsp and pyelftools
 path.insert(0, join(split(__file__)[0], "pyrsp"))
+path.insert(0, join(split(__file__)[0], "debug", "pyelftools"))
 
 from pyrsp.rsp import (
     RemoteTarget
 )
 from pyrsp import (
     targets
+)
+from pyrsp.utils import (
+    pack
+)
+from elftools.elf.elffile import (
+    ELFFile
+)
+from debug import (
+    PreLoader
+)
+from c2t import (
+    CommentParser
 )
 
 ARCHMAP = {
@@ -79,6 +92,234 @@ def errmsg(msg,
     ))
     if with_exit:
         exit(1)
+
+
+class DebugProcess(Process):
+    """ Debug session process """
+
+    def __init__(self, target, srcfile, port, elffile, queue, verbose,
+                 oracle = False):
+        Process.__init__(self)
+        self.target = target(port, elffile,
+            verbose = verbose,
+            host = oracle
+        )
+        self.srcfile = srcfile
+        self.elffile = elffile
+        self.port = port
+        self.queue = queue
+        self.cb = {
+            "br": self.__br,
+            "bre": self.__bre,
+            "brc": self.__brc,
+            "ch": self.__ch
+        }
+
+    def __br(self, lineno, param = None):
+        addr = self.target.get_hex_str(
+            self.target.elf.src_map[lineno]["start"]
+        )
+        self.target.set_br(addr, self.continue_cb)
+
+    def __brc(self, lineno, param = None):
+        addr_s = self.target.get_hex_str(
+            self.target.elf.src_map[lineno]["start"]
+        )
+        addr_e = self.target.elf.src_map[lineno]["end"]
+
+        if addr_e:
+            addr_e = self.target.get_hex_str(addr_e)
+
+            self.target.set_br(addr_s, self.cycle_cb,
+                lineno = lineno,
+                old = addr_e
+            ) # check in start
+            self.target.set_br(addr_e, self.cycle_cb,
+                lineno = lineno,
+                old = addr_s
+            ) # check in end
+        else :
+            self.target.set_br(addr_s, self.continue_cb, lineno = lineno)
+
+    def __bre(self, lineno, param = None):
+        addr = self.target.get_hex_str(
+            self.target.elf.src_map[lineno]["start"]
+        )
+        self.target.set_br(addr, self.finish_cb)
+
+    def __ch(self, lineno, param = None):
+        addr = self.target.elf.src_map[lineno]["end"]
+
+        if addr:
+            addr = self.target.get_hex_str(
+                self.target.elf.src_map[lineno]["end"]
+            )
+        else:
+            addr = self.target.get_hex_str(
+                self.target.elf.src_map[lineno]["start"]
+            )
+
+        self.target.set_br(addr, self.dump_cb,
+            lineno = lineno,
+            name = param
+        ) # check in start
+
+    def __set_breakpoints(self):
+        lineno = 0
+
+        with open(self.srcfile, 'r') as f:
+            for line in f:
+                lineno = lineno + 1
+                pos = line.find("//$")
+                if pos != -1:
+                    command = line[pos:]
+                    command = command[command.find('$') + 1:]
+                    exec(command, {}, CommentParser(locals(), lineno))
+        self.target.on_finish.append(self.finish_cb)
+
+    def load(self, verify):
+        """ loads binary belonging to elf to beginning of .text
+segment (alias self.elf.workarea), and if verify is set read
+it back and check if it matches with the uploaded binary.
+        """
+        if self.target.verbose:
+            print("load %s" % self.target.elf.name)
+
+        with open(self.elffile, "rb") as stream:
+            sections_names = [".text", ".rodata", ".data", ".bss"]
+            preloader = PreLoader(sections_names, ELFFile(stream))
+            sections_data = preloader.get_sections_data()
+            addr = self.target.elf.workarea
+            for name in sections_names:
+                if sections_data[name].data is not None:
+                    self.target.store(sections_data[name].data, addr)
+                    addr = addr + sections_data[name].data_size
+
+            buf = sections_data[".text"].data
+            if verify:
+                if self.target.verbose:
+                    print("verify test")
+                if not self.target.dump(len(buf)) == buf:
+                    raise ValueError("uploaded binary failed to verify")
+                if self.target.verbose:
+                    print("OK")
+
+    def run_session(self):
+        """ Runs the target handling breakpoints.
+For non-oracle target it also sets program counter to either the start
+symbol (if configured) or entry point by the ELF file header (if not).
+        """
+        if not self.target.rsp.host:
+            if self.start:
+                entry = self.target.get_hex_str(
+                    self.target.elf.symbols[self.target.start]
+                )
+            else:
+                entry = self.target.get_hex_str(self.target.elf.entry)
+
+            if self.target.verbose:
+                print("set new pc: @test (0x%s) OK" % entry)
+            self.target.set_reg(self.target.pc, entry)
+            if self.target.verbose:
+                print("continuing")
+
+        sig = self.target.rsp.run()
+        while sig[:3] in ["T05", "S05"]:
+            self.target.handle_br()
+            sig = self.target.rsp.run()
+
+        self.finish_cb()
+
+    def run(self):
+        self.__set_breakpoints()
+        self.target.start = "main"
+        self.target.refresh_regs()
+        if not self.target.rsp.host:
+            self.load(True)
+            self.target.set_sp()
+        self.run_session()
+
+    def stop(self):
+        """Stopping the process
+        """
+        self.target.rsp.port.write(pack('k'))
+        self.target.rsp.port.close()
+        self.terminate()
+
+    def dump_cb(self):
+        """ rsp_dump callback, hit if rsp_dump is called. Outputs to
+stdout the source line, and a hexdump of the memory pointed by $r0
+with a size of $r1 bytes. Then it resumes running.
+        """
+        self.target.dump_regs()
+
+        vals = self.target.dump_vars("ch")
+        addr = self.target.regs[self.target.pc]
+
+        dump = {
+            addr: {
+                "variables": vals,
+                "lineno"   : self.target.br[addr]["lineno"],
+                "regs"     : self.target.dump_regs()
+            }
+        }
+        if self.target.verbose:
+            print(dump.values())
+        self.queue.put(dump.copy())
+        dump.clear()
+        self.target.del_br(addr, quiet = True)
+
+    def continue_cb(self):
+        self.target.dump_regs()
+
+        self.target.del_br(self.target.regs[self.target.pc], quiet = True)
+
+    def cycle_cb(self):
+        self.target.dump_regs()
+
+        addr = self.target.regs[self.target.pc]
+
+        if addr < self.target.br[addr]["old"] and self.target.br[addr]["old"]:
+            vals = self.target.dump_vars("brc")
+            dump = {
+                addr: {
+                    "variables" : vals,
+                    "lineno"    : self.target.br[addr]["lineno"],
+                    "regs"      : self.target.dump_regs()
+                }
+            }
+            if self.target.verbose:
+                print(dump.values())
+            self.queue.put(dump.copy())
+            dump.clear()
+
+        if (    self.target.br[addr]["old"]
+            and self.target.br[addr]["old"] not in self.target.br
+        ):
+            self.target.set_br(self.target.br[addr]["old"],
+                self.target.br[addr]["cb"],
+                lineno = self.target.br[addr]["lineno"],
+                old = addr
+            )
+
+        self.target.del_br(addr, quiet = True)
+
+    def finish_cb(self):
+        """ final breakpoint, if hit it deletes all breakpoints,
+continues running the cpu, and detaches from the debugging device
+        """
+        self.target.dump_regs()
+
+        for br in self.target.br.keys()[:]:
+            self.target.del_br(br)
+
+        if self.target.verbose:
+            print("\ncontinuing and detaching")
+
+        if self.queue:
+            self.queue.put("CMP_EXIT")
+        self.target.rsp.finish()
+        exit(0)
 
 
 class ProcessWithErrCatching(Process):
