@@ -1,3 +1,4 @@
+from .bidict import *
 from .class_tools import *
 from .co_dispatcher import *
 from .co_signal import *
