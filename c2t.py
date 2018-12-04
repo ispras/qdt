@@ -66,9 +66,46 @@ def errmsg(msg,
 class CpuTestingTool(object):
 
     def __init__(self, config, tests, verbose):
-        self.config = config
         self.tests = tests
+        self.config = self.get_cfg(config)
+        self.verify_config(config)
         self.verbose = verbose
+
+    @staticmethod
+    def get_cfg(config):
+        try:
+            exec(open(config).read())
+            return c2t_cfg
+        except Exception as e:
+            errmsg(e, prog = config)
+
+    def verify_config(self, config):
+        if self.config.march in ARCHMAP:
+            self.machine_type = self.config.march
+        else:
+            errmsg("unsupported target:", arg = self.config.march)
+
+        errmsg1 = "compiler specified with frontend or backend"
+        errmsg2 = "frontend or backend are not specified"
+        if self.config.target_compiler.compiler is not None:
+            if (    self.config.target_compiler.frontend is not None
+                or  self.config.target_compiler.backend is not None
+            ):
+                errmsg(errmsg1, prog = "%s: target_compiler" % config)
+        elif (    self.config.target_compiler.frontend is None
+              or  self.config.target_compiler.backend is None
+        ):
+            errmsg(errmsg2, prog = "%s: target_compiler" % config)
+
+        if self.config.oracle_compiler.compiler is not None:
+            if (    self.config.oracle_compiler.frontend is not None
+                or  self.config.oracle_compiler.backend is not None
+            ):
+                errmsg(errmsg1, prog = "%s: oracle_compiler" % config)
+        elif (    self.config.oracle_compiler.frontend is None
+              or  self.config.oracle_compiler.backend is None
+        ):
+            errmsg(errmsg2, prog = "%s: oracle_compiler" % config)
 
     def start(self):
         pass
