@@ -27,9 +27,11 @@ from itertools import (
     count
 )
 from six.moves import (
+    zip_longest,
     range as xrange
 )
 from .qom import (
+    idon,
     QOMPropertyTypeLink
 )
 from bisect import (
@@ -38,6 +40,12 @@ from bisect import (
 from source import (
     CSTR,
     CINT
+)
+from common import (
+    same,
+    same_sets,
+    same_vectors,
+    same_attrs
 )
 
 
@@ -55,6 +63,11 @@ class Node(object):
         gen.reset_gen(self)
         gen.gen_args(self, pa_names = True)
         gen.gen_end()
+
+    def __same__(self, o):
+        if type(self) is not type(o):
+            return False
+        return same_attrs(self, o, "id", "var_base")
 
 
 # bus models
@@ -101,6 +114,22 @@ class BusNode(Node):
         if arg_name == "parent":
             arg_name = "parent_device"
         return getattr(self, arg_name)
+
+    def __same__(self, o):
+        if not Node.__same__(self, o):
+            return False
+
+        if not same(idon(self.parent_device), idon(o.parent_device)):
+            return False
+
+        for a in ("c_type", "cast", "child_name", "force_index"):
+            if not same(getattr(self, a), getattr(o, a)):
+                return False
+
+        # device order is not significant
+        if same_sets((d.id for d in self.devices), (d.id for d in o.devices)):
+            return True
+        return False
 
 
 class SystemBusNode(BusNode):
@@ -263,6 +292,23 @@ class IRQLine(Node):
     def __dfs_children__(self):
         return [ self.src_dev, self.dst_dev ]
 
+    def __same__(self, o):
+        if not Node.__same__(self, o):
+            return False
+        # Neither source nor destination device can be None.
+        if not same(self.src_dev.id, o.src_dev.id):
+            return False
+        if not same(self.dst_dev.id, o.dst_dev.id):
+            return False
+
+        for a in (
+            "src_irq_idx", "src_irq_name",
+            "dst_irq_idx", "dst_irq_name"
+        ):
+            if not same(getattr(self, a), getattr(o, a)):
+                return False
+        return True
+
 
 class IRQHub(Node):
     def __init__(self, srcs = None, dsts = None, var_base = "irq", **kw):
@@ -312,6 +358,15 @@ class IRQHub(Node):
             return []
         return getattr(self, arg_name)
 
+    def __same__(self, o):
+        if not Node.__same__(self, o):
+            return False
+
+        # IRQ order is not significant
+        if same_sets((i.id for i in self.irqs), (i.id for i in o.irqs)):
+            return True
+        return False
+
 # QObject property model
 
 class DevicePropertyDefinition(object):
@@ -354,6 +409,12 @@ class PropList(dict):
     def __delitem__(self, name):
         self.__names.remove(name)
         return dict.__delitem__(self, name)
+
+    def __same__(self, o):
+        # property order is significant for code generation determinism
+        if same_vectors(self, o):
+            return True
+        return False
 
 
 class DeviceNode(Node):
@@ -422,6 +483,28 @@ class DeviceNode(Node):
         if arg_name == "parent":
             arg_name = "parent_bus"
         return getattr(self, arg_name)
+
+    def __same__(self, o):
+        if not Node.__same__(self, o):
+            return False
+
+        if not same(idon(self.parent_bus), idon(o.parent_bus)):
+            return False
+
+        if not same_attrs(self, o, "qom_type", "properties"):
+            return False
+
+        # order of buses is significant
+        if not same_vectors(
+            (b.id for b in self.buses),
+            (b.id for b in o.buses)
+        ):
+            return False
+
+        # order of IRQs is not significant
+        if same_sets((i.id for i in self.irqs), (i.id for i in o.irqs)):
+            return True
+        return False
 
 
 def iter_mappings(mapping):
@@ -492,6 +575,20 @@ class SystemBusDeviceNode(DeviceNode):
                 return None
         return getattr(self, arg_name)
 
+    def __same__(self, o):
+        if not DeviceNode.__same__(self, o):
+            return False
+
+        # Order of mapping is significant including holes (None) between
+        # mappings.
+        for mapping in ("mmio_mappings", "pmio_mappings"):
+            if not same_vectors(
+                iter_mappings(getattr(self, mapping)),
+                iter_mappings(getattr(o, mapping))
+            ):
+                return False
+        return True
+
 
 class PCIExpressDeviceNode(DeviceNode):
     def __init__(self, qom_type, pci_express_bus, slot, function,
@@ -512,6 +609,15 @@ class PCIExpressDeviceNode(DeviceNode):
         if arg_name == "pci_express_bus":
             arg_name = "parent_bus"
         return getattr(self, arg_name)
+
+    def __same__(self, o):
+        if not DeviceNode.__same__(self, o):
+            return False
+
+        for a in ("slot", "function", "multifunction"):
+            if not same(getattr(self, a), getattr(o, a)):
+                return False
+        return True
 
 # Memory tree model
 
@@ -584,6 +690,29 @@ class MemoryNode(Node):
             if self.priority != 0:
                 gen.gen_field("priority = " + gen.gen_const(self.priority))
             gen.gen_end()
+
+    def __same__(self, o):
+        if not Node.__same__(self, o):
+            return False
+
+        for a in ("name", "size", "offset", "may_overlap", "priority",
+            "alias_offset"
+        ):
+            if not same(getattr(self, a), getattr(o, a)):
+                return False
+
+        if not same(idon(self.parent), idon(o.parent)):
+            return False
+        if not same(idon(self.alias_to), idon(o.alias_to)):
+            return False
+
+        # children order is not significant
+        if same_sets(
+            (c.id for c in self.children),
+            (c.id for c in o.children)
+        ):
+            return True
+        return False
 
 
 class MemorySASNode(MemoryNode):
