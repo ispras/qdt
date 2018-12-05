@@ -49,6 +49,8 @@ class MachineNode(QOMDescription):
             self.assign_id(n)
 
     def __dfs_children__(self):
+        self.link()
+
         return QOMDescription.__dfs_children__(self) \
             + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
 
