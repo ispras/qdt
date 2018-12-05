@@ -196,3 +196,10 @@ class MachineNode(QOMDescription):
         for i in count(0):
             if not i in self.id2node:
                 return i
+
+    def __same__(self, o):
+        # Join all the nodes before comparison
+        self.link()
+        o.link()
+        # descriptionOf.__same__ will do actual comparison
+        return True

@@ -5,6 +5,7 @@ __all__ = [
 ]
 
 from common import (
+    same_attrs,
     get_class_total_args
 )
 from inspect import (
@@ -188,6 +189,21 @@ def __init__(self, {pa}, {kwa}, **compat):
 
         klass.__attribute_info__ = ai
         klass.__qom_template__ = template
+
+        def __same__(self, o,
+            attribs = tuple(pa) + tuple(kwa.keys()),
+            # support extra comparison rules
+            _same = (klass.__same__ if "__same__" in klass.__dict__ else None)
+        ):
+            if type(self) is not type(o):
+                return False
+            if _same is not None and not _same(self, o):
+                return False
+            if same_attrs(self, o, *attribs):
+                return True
+            return False
+
+        setattr(klass, "__same__", __same__)
 
         return klass
 
