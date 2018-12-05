@@ -8,6 +8,9 @@ from copy import (
 from qemu import (
     QemuTypeName
 )
+from common import (
+    same_attrs
+)
 
 
 class GUILayout(object):
@@ -44,6 +47,14 @@ class GUILayout(object):
             if not cfg.values():
                 # remove empty configuration
                 del self.opaque[-1]
+
+    def __same__(self, o):
+        if type(self) is not type(o):
+            return False
+
+        if same_attrs(self, o, "desc_name", "shown", "opaque"):
+            return True
+        return False
 
     def __deepcopy__(self, memo):
         ret = type(self)(self.desc_name, deepcopy(self.opaque, memo))
