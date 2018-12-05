@@ -1,17 +1,93 @@
 #!/usr/bin/python
 
+# Refs:
+# https://docs.sympy.org/latest/python-comparisons.html
+
 from traceback import (
     format_exc
 )
 
 
 def prex(expr):
+    print(expr + " # evaluation...")
     try:
         res = eval(expr)
     except:
-        print("%s\n%s" % (expr, format_exc()))
+        print("! failure:\n%s\n" % format_exc())
     else:
-        print("%s # %s" % (expr, res))
+        print("# result: %s" % res)
+
+
+class A(object):
+
+    def __init__(self, a, hash):
+        self.a = a
+        self._hash = hash
+
+    def __lt__(self, o):
+        print "%s.__lt__(%s)" % (self.a, o.a)
+        return NotImplemented
+
+    def __le__(self, o):
+        print "%s.__le__(%s)" % (self.a, o.a)
+        return NotImplemented
+
+    def __gt__(self, o):
+        print "%s.__gt__(%s)" % (self.a, o.a)
+        return NotImplemented
+
+    def __ge__(self, o):
+        print "%s.__ge__(%s)" % (self.a, o.a)
+        return NotImplemented
+
+    def __cmp__(self, o):
+        print "%s.__cmp__(%s)" % (self.a, o.a)
+        # return cmp(self._hash, o._hash)
+        return NotImplemented
+
+    def __eq__(self, o):
+        print "%s.__eq__(%s)" % (self.a, o.a)
+        return NotImplemented
+
+    def __ne__(self, o):
+        print "%s.__ne__(%s)" % (self.a, o.a)
+        return NotImplemented
+
+    def __hash__(self):
+        print "%s.__hash__()" % (self.a)
+        return self._hash
+
+
+show = prex
+
+a = A("a", 1)
+b = A("b", 2)
+c = A("c", 3)
+d = A("d", 1)
+
+show("a == b")
+show("a != b")
+show("a < b")
+show("a <= b")
+show("a > b")
+show("a >= b")
+show("sorted([a, b, c])")
+show("{d: 5}")
+show("a in {d: 5}")
+show("set([d, d, d])")
+show("a in set([d, d, d])")
+show("set([a, b])")
+
+
+print("--- x = set([a, b]); y = set([a, b]); ---")
+x = set([a, b])
+y = set([a, b])
+prex("x == y")
+
+print("--- x = set([a, b]); y = set([b, d]); ---")
+x = set([a, b])
+y = set([b, d])
+prex("x == y")
 
 
 class Simple(object): pass
