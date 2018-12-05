@@ -37,6 +37,9 @@ class QOMDescription(object):
     def remove_from_project(self):
         self.project.remove_description(self)
 
+    __hash__ = object.__hash__
+    __ne__ = lambda self, *a : not self.__eq__(*a)
+
 """
 GUI may edit only QOM templates which have the corresponding description
 wrapper. The 'describable' decorator for QOM template class automatically
@@ -188,6 +191,22 @@ def __init__(self, {pa}, {kwa}, **compat):
 
         klass.__attribute_info__ = ai
         klass.__qom_template__ = template
+
+        def __eq__(self, o,
+            attribs = tuple(pa) + tuple(kwa.keys()),
+            # support extra comparison rules
+            eq = (klass.__eq__ if "__eq__" in klass.__dict__ else None)
+        ):
+            if type(self) is not type(o):
+                return False
+            for a in attribs:
+                if getattr(self, a) != getattr(o, a):
+                    return False
+            if eq is not None and not eq(self, o):
+                return False
+            return True
+
+        setattr(klass, "__eq__", __eq__)
 
         return klass
 

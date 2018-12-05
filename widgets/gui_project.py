@@ -15,6 +15,10 @@ from .gui_layout import (
 from itertools import (
     count
 )
+from six.moves import (
+    zip_longest
+)
+
 
 class GUIProject(QProject):
     def __init__(self, layouts = [], build_path = None, **kw):
@@ -175,3 +179,20 @@ exists." % (l.lid, l.desc_name)
                 l.sync_from_widget()
                 # "shown" from opaque dictionary is not more relevant while
                 # its attribute analog is maintained dynamically.
+
+    def __eq__(self, o):
+        if not QProject.__eq__(self, o):
+            return False
+
+        if self.build_path != o.build_path:
+            return False
+
+        # layouts order is not significant
+        for sl, ol in zip_longest(
+            self.get_all_layouts_sorted(),
+            o.get_all_layouts_sorted()
+        ):
+            if sl != ol:
+                return False
+        return True
+

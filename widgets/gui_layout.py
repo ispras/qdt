@@ -45,6 +45,18 @@ class GUILayout(object):
                 # remove empty configuration
                 del self.opaque[-1]
 
+    def __eq__(self, o):
+        if type(self) is not type(o):
+            return False
+
+        if self.desc_name != o.desc_name:
+            return False
+        if self.shown != o.shown:
+            return False
+        if self.opaque != self.opaque:
+            return False
+        return True
+
     def __deepcopy__(self, memo):
         ret = type(self)(self.desc_name, deepcopy(self.opaque, memo))
         ret.lid = self.lid

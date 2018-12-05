@@ -220,3 +220,24 @@ already in another project.")
 
     def __gen_code__(self, gen):
         gen.gen_code(self)
+
+    def __eq__(self, o):
+        if type(self) is not type(o):
+            return False
+
+        # Descriptions order is not significant
+        # O(n*m) ...
+
+        rest = list(self.descriptions)
+        for sd in self.descriptions:
+            for i, od in enumerate(rest):
+                if sd == od:
+                    del rest[i]
+                    break
+            else:
+                return False
+        if rest:
+            return False
+        return True
+
+    __ne__ = lambda self, *a : not self.__eq__(*a)

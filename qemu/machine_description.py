@@ -48,6 +48,20 @@ class MachineNode(QOMDescription):
         self.irq_hubs:
             self.assign_id(n)
 
+    def __eq__(self, o):
+        if not isinstance(o, MachineNode):
+            return False
+
+        self.link() # fills id2node mapping
+
+        rest = dict(self.id2node)
+        for i, n in o.id2node.items():
+            if rest.pop(i, None) != n:
+                return False
+        if rest:
+            return False
+        return True
+
     def __dfs_children__(self):
         self.link()
 
