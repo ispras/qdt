@@ -20,6 +20,7 @@ from .machine_description import (
     MachineNode
 )
 from common import (
+    same_sets,
     callco,
     co_find_eq
 )
@@ -214,3 +215,12 @@ already in another project.")
 
     def __var_base__(self):
         return "project"
+
+    def __same__(self, o):
+        if type(self) is not type(o):
+            return False
+
+        # Descriptions order is not significant
+        if same_sets(self.descriptions, o.descriptions):
+            return True
+        return False
