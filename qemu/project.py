@@ -225,8 +225,7 @@ already in another project.")
             return True
         return False
 
-    def __dfs_children__(self):
-        return list(self.descriptions)
+    __pygen_deps__ = ("descriptions",)
 
     def __gen_code__(self, gen):
         gen.gen_code(self)

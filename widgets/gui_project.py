@@ -122,8 +122,7 @@ exists." % (l.lid, l.desc_name)
             key = lambda l: (l.desc_name, l.lid)
         )
 
-    def __dfs_children__(self):
-        return list(self.descriptions) + self.get_all_layouts_sorted()
+    __pygen_deps__ = QProject.__pygen_deps__ + ("layouts",)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)

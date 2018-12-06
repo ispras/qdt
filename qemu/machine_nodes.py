@@ -95,11 +95,7 @@ class BusNode(Node):
         self.child_name = child_name
         self.force_index = force_index
 
-    def __dfs_children__(self):
-        if self.parent_device is None:
-            return []
-        else:
-            return [self.parent_device]
+    __pygen_deps__ = ("parent_device",)
 
     def gen_child_name_for_bus(self):
         if self.parent_device is None \
@@ -289,8 +285,7 @@ class IRQLine(Node):
         return    isinstance(self.src_dev, IRQHub) \
                or isinstance(self.dst_dev, IRQHub)
 
-    def __dfs_children__(self):
-        return [ self.src_dev, self.dst_dev ]
+    __pygen_deps__ = ("src_dev", "dst_dev")
 
     def __same__(self, o):
         if not Node.__same__(self, o):
@@ -332,7 +327,10 @@ class IRQHub(Node):
                     src_irq_name = None, dst_irq_name = end[2]
                 )
 
-    def __dfs_children__(self):
+    __pygen_deps__ = ("referenced_hubs",)
+
+    @property
+    def referenced_hubs(self):
         referenced_hubs = []
         for line in self.irqs:
             dst = line.dst_node
@@ -460,12 +458,11 @@ class DeviceNode(Node):
         super(DeviceNode, self).__gen_code__(gen)
         self.gen_props(gen)
 
-    def __dfs_children__(self):
-        if self.parent_bus is None:
-            ret = []
-        else:
-            ret = [self.parent_bus]
+    __pygen_deps__ = ("parent_bus", "links")
 
+    @property
+    def links(self):
+        ret = []
         for p in self.properties:
             if p.prop_type == QOMPropertyTypeLink:
                 if p.prop_val is not None:
@@ -646,10 +643,7 @@ class MemoryNode(Node):
         self.alias_to = None
         self.alias_offset = CINT(0, base = 16)
 
-    def __dfs_children__(self):
-        if self.alias_to is not None:
-            return [self.alias_to]
-        return [] if self.parent is None else [self.parent]
+    __pygen_deps__ = ("alias_to", "parent") # a cycle?
 
     def add_child(self, child, offset = 0, may_overlap = True, priority = 1):
         if child.parent is not None:
