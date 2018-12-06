@@ -7,7 +7,8 @@ from sys import (
 )
 from os import (
     listdir,
-    killpg
+    killpg,
+    makedirs
 )
 from os.path import (
     join,
@@ -20,6 +21,9 @@ from inspect import (
     getmembers,
     getmro,
     isclass
+)
+from errno import (
+    EEXIST
 )
 from argparse import (
     ArgumentParser
@@ -78,6 +82,13 @@ C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
 C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
+
+try:
+    makedirs(C2T_TEST_IR_DIR)
+    makedirs(C2T_TEST_BIN_DIR)
+except OSError as e:
+    if e.errno != EEXIST:
+        raise
 
 
 def errmsg(msg,
