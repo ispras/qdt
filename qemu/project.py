@@ -224,3 +224,9 @@ already in another project.")
         if same_sets(self.descriptions, o.descriptions):
             return True
         return False
+
+    def __dfs_children__(self):
+        return list(self.descriptions)
+
+    def __gen_code__(self, gen):
+        gen.gen_code(self)
