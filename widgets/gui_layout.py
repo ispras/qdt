@@ -65,13 +65,7 @@ class GUILayout(object):
         if self.widget:
             self.opaque = self.widget.gen_layout()
 
-    def __dfs_children__(self):
-        try:
-            (self.opaque.__gen_code__)
-        except AttributeError:
-            return []
-        else:
-            return [self.opaque]
+    __pygen_deps__ = ("opaque",)
 
     def __var_base__(self):
         return "%s_l%s" % (

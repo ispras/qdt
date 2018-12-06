@@ -342,8 +342,8 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
 
         """ It is unexpected way to type independently check for the description
         is empty. """
-        if desc.__dfs_children__():
-            raise Exception("Not empty description removing attempt.")
+        # if desc.__dfs_children__():
+        #     raise Exception("Not empty description removing attempt.")
 
         self.p.remove_description(desc)
 
