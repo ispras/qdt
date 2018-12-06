@@ -508,6 +508,9 @@ class DeviceNode(Node):
 
 
 def iter_mappings(mapping):
+    if not mapping:
+        # empty mapping, nothing to iterate
+        return
     for idx in xrange(0, max(mapping.keys()) + 1):
         try:
             yield mapping[idx]
