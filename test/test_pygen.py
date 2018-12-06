@@ -52,6 +52,13 @@ class PyGeneratorTestHelper(object):
         self.assertTrue(eq, "Loaded object differs.")
 
 
+class TestDict(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._namespace = {}
+        self._original = {}
+
+
 class TestQ35(TestCase, PyGeneratorTestHelper):
 
     def setUp(self):
