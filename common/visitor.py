@@ -81,9 +81,7 @@ traversing is skipped using BreakVisiting exception (including replacement).
         cur_container = self.path[-2][0]
         cur_name = self.path[-1][1]
 
-        if    isinstance(cur_container, list) \
-           or isinstance(cur_container, dict) \
-        :
+        if isinstance(cur_container, (list, dict)):
             cur_container[cur_name] = new_value
         elif isinstance(cur_container, set):
             cur_value = self.path[-1][0]
@@ -141,8 +139,10 @@ traversing is skipped using BreakVisiting exception (including replacement).
         elif isinstance(attr, object):
             self.__visit_fields__(attr)
         else:
-            raise VisitingIsNotImplemented("Visiting of attribute '%s' of \
-type '%s is not implemented" % (self.path[-1][1], type(attr).name)
+            raise VisitingIsNotImplemented(
+                "Visiting of attribute '%s' of type '%s is not implemented" % (
+                    self.path[-1][1], type(attr).name
+                )
             )
 
     def __visit__(self, attr):
