@@ -12,30 +12,15 @@ from six import (
 from itertools import (
     count
 )
-
-if __name__ == "__main__":
-    from sys import (
-        stdout
-    )
-    from code_writer import (
-        CodeWriter
-    )
-    from topology import (
-        sort_topologically
-    )
-    from reflection import (
-        get_class_total_args
-    )
-else:
-    from .code_writer import (
-        CodeWriter
-    )
-    from .topology import (
-        sort_topologically
-    )
-    from .reflection import (
-        get_class_total_args
-    )
+from .code_writer import (
+    CodeWriter
+)
+from .topology import (
+    sort_topologically
+)
+from .reflection import (
+    get_class_total_args
+)
 
 const_types = (float, text_type, binary_type, bool) + integer_types
 
@@ -340,12 +325,3 @@ def pythonize(root, path):
     with open(path, "wb") as _file:
         _file.write(res.getvalue().encode("utf-8"))
 
-
-if __name__ == "__main__":
-    g = PyGenerator()
-
-    class Writer():
-        def write(self, val):
-            stdout.write(str(type(val)) + " : " + repr(val) + "\n")
-
-    g.w = Writer()
