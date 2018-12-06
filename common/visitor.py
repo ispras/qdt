@@ -66,8 +66,7 @@ traversing is skipped using BreakVisiting exception (including replacement).
         self.field_name = field_name
 
     def on_visit(self):
-        # default method does nothing
-        pass
+        "default method does nothing"
 
     def replace(self, new_value, skip_trunk = True):
         """
