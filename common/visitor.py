@@ -69,10 +69,13 @@ traversing is skipped using BreakVisiting exception (including replacement).
         "default method does nothing"
 
     def replace(self, new_value, skip_trunk = True):
-        """
-        :skip_trunk: Skip subtree of current (being replaced) node. Keep in
-            mind that setting it to `False` may quite easy lead to fall into
-            a dead loop.
+        """ Replaces current (being replaced) node within its container with.
+
+    :param skip_trunk:
+        Skip subtree of `new_value` by raising `BreakVisiting` (no return).
+        Subtree of previous value will be skipped because of replacement.
+        Keep in mind that setting the argument to `False` may quite easy
+        lead to fall into a dead loop.
         """
 
         cur_container = self.path[-2][0]
