@@ -17,7 +17,8 @@ from qemu import (
   , PCIId
 
 # Machine draft generation settings
-  , MachineNode
+  , MachineDescription
+  , MachineNode # Alias of MachineDescription. Legacy. Do not use it.
   # Device instantiation and interconnection parameters
   , DeviceNode
       , SystemBusDeviceNode
