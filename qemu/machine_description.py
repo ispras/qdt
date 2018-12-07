@@ -1,5 +1,6 @@
 __all__ = [
-    "MachineNode"
+    "MachineDescription"
+  , "MachineNode" # Alias of MachineDescription. Legacy. Do not use it.
   , "MultipleSystemBusesInMachine"
   , "NodeHasId"
   , "NodeIdIsAlreadyInUse"
@@ -39,7 +40,7 @@ class NodeIdIsAlreadyInUse(RuntimeError):
     pass
 
 @descriptionOf(MachineType)
-class MachineNode(QOMDescription):
+class MachineDescription(QOMDescription):
     def __description_init__(self):
         self.max_id = 0
         self.id2node = {}
@@ -206,3 +207,6 @@ class MachineNode(QOMDescription):
         o.link()
         # descriptionOf.__same__ will do actual comparison
         return True
+
+
+MachineNode = MachineDescription
