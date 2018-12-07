@@ -9,6 +9,7 @@ from examples import (
     Q35Project_2_6_0
 )
 from common import (
+    intervalmap,
     same,
     PyGenVisitor
 )
@@ -53,6 +54,22 @@ class TestDict(TestCase, PyGeneratorTestHelper):
     def setUp(self):
         self._namespace = {}
         self._original = {}
+
+
+class TestNestedDict(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._namespace = {
+            "intervalmap" : intervalmap
+        }
+        self._original = dict(
+            a = dict(
+                im = intervalmap((
+                    ((0, 10), 'a'),
+                    ((10, 20), 'b')
+                ))
+            )
+        )
 
 
 class TestQ35(TestCase, PyGeneratorTestHelper):
