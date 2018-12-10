@@ -28,9 +28,6 @@ class QOMDescription(object):
     def __var_base__(self):
         return QemuTypeName(self.name).for_id_name
 
-    def __dfs_children__(self):
-        return []
-
     def gen_type(self):
         raise Exception("Attempt to create type model from interface type " \
                         + str(self.__class__) + ".")

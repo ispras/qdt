@@ -49,12 +49,11 @@ class MachineNode(QOMDescription):
         ):
             self.assign_id(n)
 
-    def __dfs_children__(self):
+    @property
+    def __pygen_deps__(self):
         self.link()
 
-        return (QOMDescription.__dfs_children__(self) +
-            self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
-        )
+        return ("devices", "buses", "irqs", "mems", "irq_hubs")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)

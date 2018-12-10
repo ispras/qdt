@@ -1,6 +1,7 @@
 __all__ = [
     "PyGenerator"
   , "pythonize"
+  , "PyGenVisitor"
 ]
 
 from six import (
@@ -15,14 +16,98 @@ from itertools import (
 from .code_writer import (
     CodeWriter
 )
-from .topology import (
-    sort_topologically
-)
 from .reflection import (
     get_class_total_args
 )
+from .visitor import (
+    BreakVisiting,
+    ObjectVisitor
+)
 
 const_types = (float, text_type, binary_type, bool) + integer_types
+
+not_generated = 0
+generating = 1
+generated = 2
+
+class PyGenVisitor(ObjectVisitor):
+
+    def __init__(self, root, backend = None, **genkw):
+        super(PyGenVisitor, self).__init__(root,
+            field_name = "__pygen_deps__"
+        )
+
+        if backend is None:
+            backend = StringIO()
+
+        self.gen = PyGenerator(backend = backend, **genkw)
+
+    def on_visit(self):
+        oid = id(self.cur)
+        state = self.state.get(oid, not_generated)
+
+        if state is generating:
+            raise RuntimeError("Recursive dependencies")
+
+        if state is generated:
+            raise BreakVisiting()
+
+        self.state[oid] = generating
+
+    def on_leave(self):
+        o = self.cur
+        oid = id(o)
+
+        # prevent garbage collection
+        self.keepalive.append(o)
+
+        if self.state[oid] is generating:
+            self.state[oid] = generated
+        else:
+            return
+
+        try:
+            gen_code = o.__gen_code__
+        except AttributeError:
+            return
+
+        g = self.gen
+
+        g.write(g.nameof(o) + " = ")
+        gen_code(g)
+        g.line()
+
+    def visit(self):
+        self.gen.reset()
+
+        self.state = {}
+        # List of generated & skipped objects.
+        # This prevents garbage collection and re-usage of ids during
+        # generation.
+        # It can happen when the value of an attribute listed in
+        # `__pygen_deps__` is generated dynamically using [non-]data
+        # descriptor like `property`.
+        self.keepalive = []
+
+        ret = super(PyGenVisitor, self).visit()
+
+        # generate root
+        o = self.cur
+
+        if id(o) not in self.state:
+            g = self.gen
+            g.write(g.nameof(o) + " = ")
+
+            try:
+                gen_code = o.__gen_code__
+            except AttributeError:
+                g.pprint(o)
+            else:
+                gen_code(g)
+
+            g.line()
+
+        return ret
 
 
 class PyGenerator(CodeWriter):
@@ -86,24 +171,6 @@ accuracy.
             self.name2obj[name] = obj
 
         return self.id2name[obj_id]
-
-    def serialize(self, root):
-        self.reset()
-
-        objects = sort_topologically([root])
-
-        for o in objects:
-            self.write(self.nameof(o) + " = ")
-            try:
-                gen_code = o.__gen_code__
-            except AttributeError:
-                print("Object %s of type %s does not provide __gen_code__" % (
-                    str(o), type(o).__name__
-                ))
-                self.line("None")
-            else:
-                gen_code(self)
-            self.line()
 
     def gen_const(self, c):
         # `bool` is an integer type (not in all Python versions probably) and
@@ -318,9 +385,7 @@ def pythonize(root, path):
     :path: of target file
     """
 
-    res = StringIO()
-    gen = PyGenerator(backend = res)
-    gen.serialize(root)
+    res = PyGenVisitor(root).visit().gen.w
 
     with open(path, "wb") as _file:
         _file.write(res.getvalue().encode("utf-8"))
