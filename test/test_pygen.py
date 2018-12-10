@@ -10,10 +10,7 @@ from examples import (
 )
 from common import (
     same,
-    PyGenerator
-)
-from six import (
-    StringIO
+    PyGenVisitor
 )
 from traceback import (
     format_exc
@@ -26,9 +23,8 @@ PYGEN_VERBOSE = environ.get("PYGEN_VERBOSE", False)
 class PyGeneratorTestHelper(object):
 
     def test(self):
-        buf = StringIO()
-        self._generator = g = PyGenerator(backend = buf)
-        g.serialize(self._original)
+        self._generator = gen = PyGenVisitor(self._original).visit().gen
+        buf = gen.w
         code = buf.getvalue()
         res = {}
         try:
