@@ -1,0 +1,55 @@
+body {
+  font-family: 'Times New Roman';
+  font-size: 10pt;
+  text-align: justify;
+}
+
+p, ul, li, h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+h1 {
+  font-family: 'Arial';
+  font-weight: bold;
+  font-size: 16pt;
+  text-align: center;
+}
+
+h2 {
+  font-family: 'Arial';
+  font-weight: bold;
+  font-size: 11pt;
+  text-align: left;
+}
+
+h3, h4, h5, h6 {
+  font-family: 'Arial';
+  font-weight: bold;
+  font-size: 10pt;
+  text-align: left;
+}
+
+code {
+  font-family: 'Ubuntu Mono';
+  font-size: 10pt;
+}
+
+table {
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+table th {
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+table td {
+  border-top: 1px solid;
+  border-left: 1px solid;
+  vertical-align: top;
+}
+

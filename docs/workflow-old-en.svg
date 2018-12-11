@@ -9,13 +9,13 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="113.96627mm"
-   height="75.456131mm"
-   viewBox="0 0 403.81752 267.36424"
+   width="159.99001mm"
+   height="72.452423mm"
+   viewBox="0 0 566.89375 256.72118"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="workflow-old.svg">
+   sodipodi:docname="workflow-old-en.svg">
   <defs
      id="defs4">
     <marker
@@ -224,15 +224,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="229.97984"
-     inkscape:cy="118.63616"
+     inkscape:cx="245.31403"
+     inkscape:cy="116.76939"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1145"
+     inkscape:window-height="1153"
      inkscape:window-x="0"
-     inkscape:window-y="373"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -255,10 +255,10 @@
      inkscape:groupmode="layer"
      id="layer1"
      style="display:inline"
-     transform="translate(-40.168488,-35.22016)">
+     transform="translate(42.651606,-45.863228)">
     <g
        id="g3451"
-       transform="matrix(0.10347592,0,0,0.10347592,146.30607,56.147105)">
+       transform="matrix(0.10347592,0,0,0.10347592,114.52432,56.147105)">
       <circle
          id="circle3397"
          r="254.644"
@@ -267,7 +267,7 @@
          style="fill:#6eb1e1" />
       <polygon
          id="polygon3399"
-         points="163.772,444.864 384.848,444.864 384.848,77.987 91.55,77.987 91.55,372.641 "
+         points="384.848,444.864 384.848,77.987 91.55,77.987 91.55,372.641 163.772,444.864 "
          style="fill:#f1f3f7" />
       <polygon
          id="polygon3401"
@@ -342,7 +342,7 @@
     </g>
     <g
        id="g3377"
-       transform="matrix(0.09576219,0,0,0.09871746,84.932312,56.036942)">
+       transform="matrix(0.09576219,0,0,0.09871746,174.87395,53.006484)">
       <g
          id="g3337">
         <path
@@ -383,15 +383,15 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="59.518486"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="113.51849"
        y="121.70097"
        id="text3477"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         x="59.518486"
+         x="113.51849"
          y="121.70097"
-         id="tspan3481">Изучение документации</tspan></text>
+         id="tspan3481">Documentation analyze</tspan></text>
     <g
        id="g5030"
        transform="translate(-48.487325,-33.335034)">
@@ -1486,65 +1486,52 @@
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="54.043152"
-       y="185.39246"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="98.225899"
+       y="182.86708"
        id="text7152"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan7154"
-         x="54.043152"
-         y="185.39246">Итеративная разработка</tspan></text>
+         x="98.225899"
+         y="182.86708">Iterative development</tspan></text>
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Mend-1-9-5)"
-       d="m 266.92275,253.06999 -27.2741,0.50508"
+       d="m 270.92275,253.06999 -27.2741,0.50508"
        id="path5101-0-8-4"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Mend-1-9-3)"
-       d="m 215.40497,89.93035 32.82997,2e-6"
+       d="m 232.01157,89.93035 22.22337,2e-6"
        id="path5101-0-8-1"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="341.91595"
-       y="44.542427"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="337.91595"
+       y="54.542427"
        id="text3477-3"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         x="341.91595"
-         y="44.542427"
-         id="tspan3481-6"
-         style="text-align:center;text-anchor:middle">Первичная разработка</tspan><tspan
-         sodipodi:role="line"
-         x="341.91595"
-         y="59.542427"
+         x="337.91595"
+         y="54.542427"
          id="tspan5746"
-         style="text-align:center;text-anchor:middle">устройств</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;text-anchor:middle">Device drafts writing</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="409.34537"
-       y="245.97232"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="335.60422"
+       y="294.96472"
        id="text6432"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan6434"
-         x="409.34537"
-         y="245.97232">Интеграция</tspan><tspan
-         sodipodi:role="line"
-         x="409.34537"
-         y="260.97232"
-         id="tspan6436">устройств</tspan><tspan
-         sodipodi:role="line"
-         x="409.34537"
-         y="275.97232"
-         id="tspan6438">в машину</tspan></text>
+         x="335.60422"
+         y="294.96472"
+         id="tspan4852">Initial machine composing</tspan></text>
     <g
-       transform="matrix(0.08890178,0,0,0.08890178,180.19697,229.05872)"
+       transform="matrix(0.08890178,0,0,0.08890178,195.59037,230.57394)"
        id="g3">
       <g
          id="g5">
@@ -1597,7 +1584,7 @@
     </g>
     <g
        id="g7353"
-       transform="matrix(0.47998811,0,0,0.50946907,37.062529,117.34742)">
+       transform="matrix(0.47998811,0,0,0.50946907,61.547304,116.33727)">
       <g
          transform="translate(-290.43912,92.103016)"
          id="g5030-4"
@@ -2479,7 +2466,7 @@
     <g
        style="display:inline"
        id="g3377-4"
-       transform="matrix(0.09576219,0,0,0.09871746,112.45178,225.06849)">
+       transform="matrix(0.09576219,0,0,0.09871746,135.42131,222.03803)">
       <g
          id="g3337-6">
         <path
@@ -2520,37 +2507,126 @@
     </g>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker7988)"
-       d="m 87.611807,209.10176 c 24.797283,-24.79728 71.689753,-22.78283 95.459413,2.0203"
+       d="m 113.61181,209.10176 c 24.79728,-24.79728 71.68975,-22.78283 95.45941,2.0203"
        id="path7980"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker7988-5)"
-       d="m 179.15669,284.44147 c -24.79728,24.79728 -71.68976,22.78283 -95.459423,-2.0203"
+       d="m 205.15669,284.44147 c -24.79728,24.79728 -71.68976,22.78283 -95.45942,-2.0203"
        id="path7980-4"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="194.18291"
-       y="225.26424"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="209.57631"
+       y="226.77945"
        id="text8363"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan8365"
-         x="194.18291"
-         y="225.26424">Отладка</tspan></text>
+         x="209.57631"
+         y="226.77945">Debug</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="72.459503"
-       y="226.77943"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="98.459503"
+       y="225.26421"
        id="text8367"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan8369"
-         x="72.459503"
-         y="226.77943">Доработка</tspan></text>
+         x="98.459503"
+         y="225.26421">Improve</tspan></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot4835"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:Monospace;-inkscape-font-specification:Monospace;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       transform="translate(40.168488,35.220145)"><flowRegion
+         id="flowRegion4837"><rect
+           id="rect4839"
+           width="58.588848"
+           height="29.7995"
+           x="339.91632"
+           y="207.76524" /></flowRegion><flowPara
+         id="flowPara4841" /></flowRoot>    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="476.54092"
+       y="146.51588"
+       id="text4849"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4851"
+         x="476.54092"
+         y="146.51588">A detached device</tspan><tspan
+         sodipodi:role="line"
+         x="476.54092"
+         y="161.51588"
+         id="tspan4855">is difficult to debug.</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 414.92158,148.0311 10.6066,18.68783 96.46957,0"
+       id="path4869"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 372.09099,253.04307 33.84011,23.23351 96.46957,0"
+       id="path4869-0"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;display:inline;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="464.62747"
+       y="238.86162"
+       id="text4849-9"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="464.62747"
+         y="238.86162"
+         id="tspan4855-9">A machine cannot be</tspan><tspan
+         sodipodi:role="line"
+         x="464.62747"
+         y="253.86162"
+         id="tspan4911">composed untill most of</tspan><tspan
+         sodipodi:role="line"
+         x="464.62747"
+         y="268.86163"
+         id="tspan4913">its devices are available.</tspan></text>
+    <path
+       style="display:inline;fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 112.66601,102.70018 -19.697972,23.23351 c 0,0 -116.672627,1.01016 -118.692932,1e-5"
+       id="path4869-05"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;display:inline;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="24.239017"
+       y="59.054405"
+       id="text4849-0"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="24.239017"
+         y="59.054405"
+         id="tspan5126">Both device &amp; machine</tspan><tspan
+         sodipodi:role="line"
+         x="24.239017"
+         y="74.054405"
+         id="tspan5114">documentation is frequently</tspan><tspan
+         sodipodi:role="line"
+         x="24.239017"
+         y="89.054405"
+         id="tspan5134">written in a domain specific</tspan><tspan
+         sodipodi:role="line"
+         x="24.239017"
+         y="104.05441"
+         id="tspan5118">natural language.</tspan><tspan
+         sodipodi:role="line"
+         x="24.239017"
+         y="119.05441"
+         id="tspan5122">It cannot be formalized.</tspan></text>
   </g>
 </svg>
