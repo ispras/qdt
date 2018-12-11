@@ -72,6 +72,35 @@ class TestNestedDict(TestCase, PyGeneratorTestHelper):
         )
 
 
+class CustomDict(dict):
+    pass
+
+
+class TestCustomDict(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._namespace = {
+            "CustomDict": CustomDict
+        }
+        self._original = CustomDict()
+
+
+class TestCustomNestedObjescts(TestCase, PyGeneratorTestHelper):
+    def setUp(self):
+        self._namespace = {
+            "intervalmap" : intervalmap,
+            "CustomDict" : CustomDict
+        }
+        self._original = CustomDict(
+            a = CustomDict(
+                im = intervalmap((
+                    ((0, 10), 'a'),
+                    ((10, 20), 'b')
+                ))
+            )
+        )
+
+
 class TestQ35(TestCase, PyGeneratorTestHelper):
 
     def setUp(self):
