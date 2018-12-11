@@ -54,7 +54,7 @@ Features (+) implemented, (-) TODO:
  + replacement of references (values) in dictionary
  + visiting of references in set
  + replacement of reference in set
- - visiting of references in tuple
+ + visiting of references in tuple
  - replacement of reference in tuple (new tuple should be constructed
    because the tuple class does not support editing)
  - recursive visiting of tuples, lists, dictionaries
@@ -136,7 +136,7 @@ Features (+) implemented, (-) TODO:
         return self # for call chaining
 
     def __visit_items__(self, attr):
-        if isinstance(attr, list):
+        if isinstance(attr, (list, tuple)):
             self.__visit_list__(attr)
         elif isinstance(attr, dict):
             self.__visit_dictionary__(attr)
