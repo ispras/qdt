@@ -76,6 +76,10 @@ class CustomDict(dict):
     pass
 
 
+class CustomList(list):
+    pass
+
+
 class TestCustomDict(TestCase, PyGeneratorTestHelper):
 
     def setUp(self):
@@ -85,18 +89,31 @@ class TestCustomDict(TestCase, PyGeneratorTestHelper):
         self._original = CustomDict()
 
 
+class TestCustomList(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._namespace = {
+            "CustomList": CustomList
+        }
+        self._original = CustomList()
+
+
 class TestCustomNestedObjescts(TestCase, PyGeneratorTestHelper):
     def setUp(self):
         self._namespace = {
             "intervalmap" : intervalmap,
-            "CustomDict" : CustomDict
+            "CustomDict" : CustomDict,
+            "CustomList": CustomList
         }
         self._original = CustomDict(
             a = CustomDict(
                 im = intervalmap((
                     ((0, 10), 'a'),
                     ((10, 20), 'b')
-                ))
+                )),
+                l = CustomList([
+                    CustomList()
+                ])
             )
         )
 
