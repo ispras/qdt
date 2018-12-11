@@ -327,26 +327,30 @@ accuracy.
             self.pprint_list(sorted(val))
             self.write(")")
         elif isinstance(val, dict):
+            if type(val) is not dict:
+                self.write("%s(" % val.__class__.__name__)
             if not val:
                 self.write("{}")
-                return
-            self.line("{")
-            self.push_indent()
+            else:
+                self.line("{")
+                self.push_indent()
 
-            items = sorted(val.items(), key = lambda t : t[0])
+                items = sorted(val.items(), key = lambda t : t[0])
 
-            k, v = items[0]
-            self.pprint(k)
-            self.write(": ")
-            self.pprint(v)
-            for k, v in items[1:]:
-                self.line(",")
+                k, v = items[0]
                 self.pprint(k)
                 self.write(": ")
                 self.pprint(v)
-            self.pop_indent()
-            self.line()
-            self.write("}")
+                for k, v in items[1:]:
+                    self.line(",")
+                    self.pprint(k)
+                    self.write(": ")
+                    self.pprint(v)
+                self.pop_indent()
+                self.line()
+                self.write("}")
+            if type(val) is not dict:
+                self.write(")")
         elif isinstance(val, tuple):
             if not val:
                 self.write("()")
