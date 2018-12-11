@@ -16,6 +16,9 @@ from common import (
 from traceback import (
     format_exc
 )
+from collections import (
+    namedtuple
+)
 import qdt
 
 PYGEN_VERBOSE = environ.get("PYGEN_VERBOSE", False)
@@ -96,6 +99,14 @@ class CustomSet(set):
         return False
 
 
+class CustomTuple(namedtuple("CustomTuple", "inner a b")):
+
+    def __same__(self, o):
+        if type(self) is type(o):
+            return super(CustomTuple, self).__eq__(o)
+        return False
+
+
 class TestCustomDict(TestCase, PyGeneratorTestHelper):
 
     def setUp(self):
@@ -123,13 +134,23 @@ class TestCustomSet(TestCase, PyGeneratorTestHelper):
         self._original = CustomSet()
 
 
+class TestCustomTuple(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._namespace = {
+            "CustomTuple": CustomTuple
+        }
+        self._original = CustomTuple(CustomTuple(None, 0, 0), 1, 2)
+
+
 class TestCustomNestedObjescts(TestCase, PyGeneratorTestHelper):
     def setUp(self):
         self._namespace = {
             "intervalmap" : intervalmap,
             "CustomDict" : CustomDict,
             "CustomList" : CustomList,
-            "CustomSet" : CustomSet
+            "CustomSet" : CustomSet,
+            "CustomTuple" : CustomTuple
         }
         self._original = CustomDict(
             a = CustomDict(
@@ -139,10 +160,12 @@ class TestCustomNestedObjescts(TestCase, PyGeneratorTestHelper):
                 )),
                 l = CustomList([
                     CustomList([
-                        CustomSet()
+                        CustomSet(),
+                        CustomTuple(None, 0, 0)
                     ])
                 ]),
-                s = CustomSet()
+                s = CustomSet(),
+                t = CustomTuple(None, -1, -1)
             )
         )
 
