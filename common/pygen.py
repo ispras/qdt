@@ -360,21 +360,25 @@ accuracy.
             if type(val) is not dict:
                 self.write(")")
         elif isinstance(val, tuple):
+            if type(val) is not tuple:
+                self.write("%s(" % val.__class__.__name__)
             if not val:
                 self.write("()")
-                return
-            self.line("(")
-            self.push_indent()
-            self.pprint(val[0])
-            if len(val) > 1:
-                for v in list(val)[1:]:
-                    self.line(",")
-                    self.pprint(v)
             else:
-                self.line(",")
-            self.pop_indent()
-            self.line()
-            self.write(")")
+                self.line("(")
+                self.push_indent()
+                self.pprint(val[0])
+                if len(val) > 1:
+                    for v in list(val)[1:]:
+                        self.line(",")
+                        self.pprint(v)
+                else:
+                    self.line(",")
+                self.pop_indent()
+                self.line()
+                self.write(")")
+            if type(val) is not tuple:
+                self.write(")")
         elif isinstance(val, const_types):
             self.write(self.gen_const(val))
         elif val is None:

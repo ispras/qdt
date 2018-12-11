@@ -84,6 +84,10 @@ class CustomSet(set):
     pass
 
 
+class CustomTuple(set):
+    pass
+
+
 class TestCustomDict(TestCase, PyGeneratorTestHelper):
 
     def setUp(self):
@@ -111,13 +115,23 @@ class TestCustomSet(TestCase, PyGeneratorTestHelper):
         self._original = CustomSet()
 
 
+class TestCustomTuple(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._namespace = {
+            "CustomTuple": CustomTuple
+        }
+        self._original = CustomTuple()
+
+
 class TestCustomNestedObjescts(TestCase, PyGeneratorTestHelper):
     def setUp(self):
         self._namespace = {
             "intervalmap" : intervalmap,
             "CustomDict" : CustomDict,
             "CustomList" : CustomList,
-            "CustomSet" : CustomSet
+            "CustomSet" : CustomSet,
+            "CustomTuple" : CustomTuple
         }
         self._original = CustomDict(
             a = CustomDict(
@@ -127,10 +141,12 @@ class TestCustomNestedObjescts(TestCase, PyGeneratorTestHelper):
                 )),
                 l = CustomList([
                     CustomList([
-                        CustomSet()
+                        CustomSet(),
+                        CustomTuple()
                     ])
                 ]),
-                s = CustomSet()
+                s = CustomSet(),
+                t = CustomTuple()
             )
         )
 
