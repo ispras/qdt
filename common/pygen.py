@@ -26,9 +26,10 @@ from .visitor import (
 
 const_types = (float, text_type, binary_type, bool) + integer_types
 
-not_generated = 0
-generating = 1
-generated = 2
+NOT_GENERATED = 0
+GENERATING = 1
+GENERATED = 2
+
 
 class PyGenVisitor(ObjectVisitor):
 
@@ -44,15 +45,15 @@ class PyGenVisitor(ObjectVisitor):
 
     def on_visit(self):
         oid = id(self.cur)
-        state = self.state.get(oid, not_generated)
+        state = self.state.get(oid, NOT_GENERATED)
 
-        if state is generating:
+        if state is GENERATING:
             raise RuntimeError("Recursive dependencies")
 
-        if state is generated:
+        if state is GENERATED:
             raise BreakVisiting()
 
-        self.state[oid] = generating
+        self.state[oid] = GENERATING
 
     def on_leave(self):
         o = self.cur
@@ -61,8 +62,8 @@ class PyGenVisitor(ObjectVisitor):
         # prevent garbage collection
         self.keepalive.append(o)
 
-        if self.state[oid] is generating:
-            self.state[oid] = generated
+        if self.state[oid] is GENERATING:
+            self.state[oid] = GENERATED
         else:
             return
 
@@ -172,7 +173,8 @@ accuracy.
 
         return self.id2name[obj_id]
 
-    def gen_const(self, c):
+    @staticmethod
+    def gen_const(c):
         # `bool` is an integer type (not in all Python versions probably) and
         # this type information must be preserved.
         if isinstance(c, bool):
