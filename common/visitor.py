@@ -4,11 +4,14 @@ __all__ = [
   , "VisitingIsNotImplemented"
 ]
 
+
 class BreakVisiting(Exception):
     pass
 
+
 class VisitingIsNotImplemented(NotImplementedError):
     pass
+
 
 class ObjectVisitor(object):
     """
