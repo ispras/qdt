@@ -173,7 +173,8 @@ accuracy.
 
         return self.id2name[obj_id]
 
-    def gen_const(self, c):
+    @staticmethod
+    def gen_const(c):
         # `bool` is an integer type (not in all Python versions probably) and
         # this type information must be preserved.
         if isinstance(c, bool):
