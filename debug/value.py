@@ -30,6 +30,9 @@ from six import (
 from traceback import (
     print_exc
 )
+from collections import (
+    deque
+)
 
 
 class ArtificialPointer(object):
@@ -242,17 +245,46 @@ Related: `dereference`
 
         return self.fetch(remote.address_size)
 
-    def fetch_c_string(self):
+    def fetch_c_string(self, limit = 10):
+        """
+        Reads C-string from remote.
+
+        :type limit: int
+        :param limit:
+            is maximum count of memory blocks (64 bytes in each). If the limit
+            is exceeded then it is likely that the pointer refers to something
+            that differs from C string. A user should give a bigger value (or
+            something that never equal to `int`, like `None`) if string is
+            expected to be very long.
+        :returns: `str`
+        """
+
         addr = self.fetch_pointer()
         if addr:
-            try:
-                return self.runtime.target.fetch_c_string(addr)
-            except RuntimeError:
-                # XXX: a workaround for a non-deterministic E01 error from
-                # gdb stub because of an unidentified reason
-                print("Failed to fetch string.")
-                print_exc()
-                return ""
+            value = deque()
+            pos = -1
+            dump = self.runtime.target.dump
+
+            while pos == -1:
+                if len(value) == limit:
+                    raise RuntimeError("C string length limit exceeded")
+
+                try:
+                    substring = dump(64, addr)
+                except RuntimeError:
+                    # XXX: a workaround for a non-deterministic E01 error from
+                    # gdb stub because of an unidentified reason
+                    print("Failed to fetch string.")
+                    print_exc()
+                    break
+
+                pos = substring.find("\0")
+                if pos != -1:
+                    substring = substring[:pos]
+                value.append(substring)
+                addr = addr + 64
+
+            return "".join(value)
         else:
             # NULL pointer dereference
             return None
