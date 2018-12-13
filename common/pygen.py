@@ -327,11 +327,11 @@ accuracy.
                 self.write(")")
         elif isinstance(val, set):
             if not val:
-                self.write("set([])")
-                return
-            self.write("set(")
-            self.pprint_list(sorted(val))
-            self.write(")")
+                self.write(type(val).__name__ + "()")
+            else:
+                self.write(type(val).__name__ + "(")
+                self.pprint_list(sorted(val))
+                self.write(")")
         elif isinstance(val, dict):
             if type(val) is not dict:
                 self.write(type(val).__name__ + "(")
