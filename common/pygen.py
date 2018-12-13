@@ -317,10 +317,14 @@ accuracy.
 
     def pprint(self, val):
         if isinstance(val, list):
+            if type(val) is not list:
+                self.write(type(val).__name__ + "(")
             if not val:
                 self.write("[]")
-                return
-            self.pprint_list(val)
+            else:
+                self.pprint_list(val)
+            if type(val) is not list:
+                self.write(")")
         elif isinstance(val, set):
             if not val:
                 self.write("set([])")
