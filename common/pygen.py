@@ -358,6 +358,13 @@ accuracy.
             if type(val) is not dict:
                 self.write(")")
         elif isinstance(val, tuple):
+            if type(val) is not tuple:
+                # Unlike another containers, a `tuple` subclass is expected to
+                # override `__new__` to get fixed number of arguments instead
+                # of building itself from another `tuple` (its subclass) as
+                # one argument. `collections.namedtuple` is an example.
+                # So, just add name of the subclass before the parentheses.
+                self.write(type(val).__name__)
             if not val:
                 self.write("()")
                 return
