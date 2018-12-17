@@ -213,10 +213,7 @@ class Deref(Expression):
             )
 
         # Note that `get_val` should handle target endianness.
-        str_val = runtime.get_val(addr, size)
-
-        data = int(str_val, 16)
-        return data
+        return runtime.get_val(addr, size)
 
 
 class ObjDeref(Expression):
