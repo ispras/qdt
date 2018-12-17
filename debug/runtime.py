@@ -77,7 +77,7 @@ class Runtime(object):
 
         if val is None:
             tgt = self.target
-            val_hex = tgt.get_thread_reg(idx)
+            val_hex = tgt.regs[tgt.registers[idx]]
             val = int(val_hex, 16)
             regs[idx] = val
 
