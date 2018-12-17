@@ -195,7 +195,7 @@ class AddressSize(Expression):
         return "sizeof(long)"
 
     def __eval__(self, runtime):
-        return runtime.target.address_size
+        return runtime.address_size
 
 
 class Deref(Expression):
