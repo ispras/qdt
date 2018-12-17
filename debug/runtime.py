@@ -121,7 +121,21 @@ normally correct only when the target is stopped at the subprogram epilogue.
         return loc
 
     def get_val(self, addr, size):
-        return self.target.get_val(addr, size)
+        target = self.target
+
+        data = target.dump(size, addr)
+
+        if target.arch["endian"]:
+            data = reversed(data)
+
+        # there the data is big-endian
+        di = iter(data)
+        val = ord(next(di))
+        for d in di:
+            val <<= 8
+            val += ord(d)
+
+        return val
 
     def __getitem__(self, name):
         """ Accessing variables by name.
