@@ -89,16 +89,17 @@ Leading spaces are ignored.
             if v:
                 print("br 0x" + addr_str + ", handler = " + cb.__name__)
 
-            target.add_br(addr_str, cb, quiet = quiet)
+            rt.add_br(addr_str, cb, quiet = quiet)
 
         self.__notify_runtime_set(rt)
 
     def remove_breakpoints(self):
         "Removes breakpoints assigned by `init_runtime`."
 
-        target = self.rt.target
+        rt = self.rt
+        target = rt.target
         quiet = not self.verbose
 
         for addr, cb in self.breakpoints:
             addr_str = target.get_hex_str(addr)
-            target.remove_br(addr_str, cb, quiet = quiet)
+            rt.remove_br(addr_str, cb, quiet = quiet)
