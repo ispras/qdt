@@ -1031,17 +1031,18 @@ description for QDT project.
         self.proxy.commit()
 
         target = self.target
+        rt = self.rt
         cc = CastCatcher(inst)
 
         ii = _type.instance_init
         if ii:
             for addr in ii.epilogues:
-                target.add_br(target.get_hex_str(addr), cc)
+                rt.add_br(target.get_hex_str(addr), cc)
 
         realize = _type.realize
         if realize:
             for addr in realize.epilogues:
-                target.add_br(target.get_hex_str(addr), cc)
+                rt.add_br(target.get_hex_str(addr), cc)
 
     def _on_bus_created(self, bus):
         _id = self.__id()
