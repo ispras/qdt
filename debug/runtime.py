@@ -49,6 +49,10 @@ class Runtime(object):
         return_reg_name = target.arch["return"]
         self.return_reg = target.reg2idx[return_reg_name]
 
+        # TODO: this must be done using DWARF because tetradsize and address
+        # size are not same values semantically (but same by implementation).
+        self.address_size = target.arch["tetradsize"] >> 1
+
         # Version number of debug session. It is incremented on each target
         # resumption. It helps detect using of not actual data. E.g. a local
         # variable of a function which is already returned.
