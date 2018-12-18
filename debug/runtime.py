@@ -3,12 +3,14 @@ __all__ = [
 ]
 
 from collections import (
+    defaultdict,
     deque
 )
 from itertools import (
     repeat
 )
 from common import (
+    notifier,
     cached,
     reset_cache
 )
@@ -16,6 +18,20 @@ from .value import (
     Returned,
     Value
 )
+
+
+@notifier("break")
+class Breakpoints(object):
+
+    def __call__(self):
+        self.__notify_break()
+
+    # See: https://stackoverflow.com/a/5288992/7623015
+    def __bool__(self): # Py3
+        return bool(self.__break)
+
+    __nonzero__ = __bool__ # Py2
+
 
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
@@ -63,6 +79,21 @@ class Runtime(object):
         # When target resumes all cached data must be reset because it is not
         # actual now.
         target.on_resume.append(self.on_resume)
+
+        # breakpoints and its handlers
+        self.brs = defaultdict(Breakpoints)
+
+    def add_br(self, addr_str, cb, quiet = False):
+        cbs = self.brs[addr_str]
+        if not cbs:
+            self.target.add_br(addr_str, cbs, quiet)
+        cbs.watch_break(cb)
+
+    def remove_br(self, addr_str, cb, quiet = False):
+        cbs = self.brs[addr_str]
+        cbs.unwatch_break(cb)
+        if not cbs:
+            self.target.remove_br(addr_str, cbs, quiet)
 
     def on_resume(self, *_, **__):
         self.version += 1
