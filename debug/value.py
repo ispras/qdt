@@ -241,9 +241,7 @@ Related: `dereference`
         return fetched
 
     def fetch_pointer(self):
-        remote = self.runtime.target
-
-        return self.fetch(remote.address_size)
+        return self.fetch(self.runtime.address_size)
 
     def fetch_c_string(self, limit = 10):
         """
