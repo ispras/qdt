@@ -17,6 +17,7 @@ from .notifier import *
 from .ordered_set import *
 from .os_wrappers import *
 from .pygen import *
+from .pypath import *
 from .reflection import *
 from .search_helper import *
 from .topology import *
