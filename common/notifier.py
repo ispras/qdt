@@ -66,6 +66,11 @@ https://docs.python.org/3/reference/expressions.html#atom-identifiers
         klass.watch = watch
         klass.unwatch = unwatch
 
+        if not hasattr(klass, "events"):
+            klass.events = tuple(events)
+        else:
+            klass.events += tuple(events)
+
         return klass
 
     return add_events
