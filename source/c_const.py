@@ -13,6 +13,9 @@ from string import (
     digits,
     ascii_uppercase
 )
+from common import (
+    gen_tokens
+)
 
 class CConst(object):
     @staticmethod
@@ -186,7 +189,7 @@ class QCLexerError(ValueError): pass
 QCParserError = QCLexerError
 
 # PLY is used to parse C constants
-from common.ply2path import gen_tokens
+import common.ply2path
 from ply.lex import lex
 from ply.yacc import yacc
 
