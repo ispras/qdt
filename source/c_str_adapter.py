@@ -2,7 +2,10 @@ __all__ = [
     "str2c"
 ]
 
-from common.ply2path import *
+from common import (
+    gen_tokens
+)
+import common.ply2path
 from ply.lex import lex
 
 # escape @ (for C boilerplate generator)
