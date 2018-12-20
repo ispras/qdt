@@ -23,8 +23,17 @@ from .value import (
 @notifier("break")
 class Breakpoints(object):
 
+    def __init__(self, runtime):
+        self._rt = runtime
+        self._alive = True
+
     def __call__(self):
         self.__notify_break()
+
+        rt = self._rt
+        rt.on_resume()
+        if self._alive:
+            rt.target.step_over_br()
 
     # See: https://stackoverflow.com/a/5288992/7623015
     def __bool__(self): # Py3
@@ -52,7 +61,7 @@ class Runtime(object):
         self.target = target
         self.dic = dic
 
-        self.pc = target.pc_idx
+        self.pc = target.registers.index(target.pc_reg)
 
         # cache of register values converted to integer
         self.regs = [None] * len(target.registers)
@@ -69,33 +78,34 @@ class Runtime(object):
 
         # TODO: this must be done using DWARF because tetradsize and address
         # size are not same values semantically (but same by implementation).
-        self.address_size = target.arch["tetradsize"] >> 1
+        self.address_size = target.arch["bitsize"] >> 3
 
         # Version number of debug session. It is incremented on each target
         # resumption. It helps detect using of not actual data. E.g. a local
         # variable of a function which is already returned.
         self.version = 0
 
-        # When target resumes all cached data must be reset because it is not
-        # actual now.
-        target.on_resume.append(self.on_resume)
-
         # breakpoints and its handlers
-        self.brs = defaultdict(Breakpoints)
+        self.brs = defaultdict(lambda : Breakpoints(self))
 
     def add_br(self, addr_str, cb, quiet = False):
         cbs = self.brs[addr_str]
         if not cbs:
-            self.target.add_br(addr_str, cbs, quiet)
+            self.target.set_br_a(addr_str, cbs, quiet)
         cbs.watch_break(cb)
 
     def remove_br(self, addr_str, cb, quiet = False):
         cbs = self.brs[addr_str]
         cbs.unwatch_break(cb)
         if not cbs:
-            self.target.remove_br(addr_str, cbs, quiet)
+            cbs._alive = False
+            self.target.del_br(addr_str, quiet)
 
     def on_resume(self, *_, **__):
+        """ When target resumes all cached data must be reset because it is
+not actual now.
+        """
+
         self.version += 1
 
         self.regs[:] = repeat(None, len(self.regs))
