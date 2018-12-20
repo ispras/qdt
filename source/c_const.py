@@ -14,8 +14,13 @@ from string import (
     ascii_uppercase
 )
 from common import (
+    pypath,
     gen_tokens
 )
+# PLY is used to parse C constants
+with pypath("..ply"):
+    from ply.lex import lex
+    from ply.yacc import yacc
 
 class CConst(object):
     @staticmethod
@@ -187,11 +192,6 @@ class CSTR(CConst):
 
 class QCLexerError(ValueError): pass
 QCParserError = QCLexerError
-
-# PLY is used to parse C constants
-import common.ply2path
-from ply.lex import lex
-from ply.yacc import yacc
 
 def t_error(t):
     raise QCLexerError()

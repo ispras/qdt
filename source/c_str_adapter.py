@@ -3,10 +3,11 @@ __all__ = [
 ]
 
 from common import (
+    pypath,
     gen_tokens
 )
-import common.ply2path
-from ply.lex import lex
+with pypath("..ply"):
+    from ply.lex import lex
 
 # escape @ (for C boilerplate generator)
 def t_C_GEN_ESCAPE(t):
