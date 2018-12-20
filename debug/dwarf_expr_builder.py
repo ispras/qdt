@@ -20,22 +20,10 @@ from .expression import (
     CFA,
     Constant
 )
-
-import sys
-from os.path import (
-    split
-)
-
-# this module uses custom pyelftools
-prev_path = list(sys.path)
-sys.path.insert(0, split(__file__)[0])
-
 from elftools.dwarf.dwarf_expr import (
     GenericExprVisitor,
     DW_OP_name2opcode
 )
-
-sys.path = prev_path
 
 
 def unknown(opcode):

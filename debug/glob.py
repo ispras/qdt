@@ -7,21 +7,9 @@ __all__ = [
   , "Subprogram"
 ]
 
-import sys
-from os.path import (
-    split
-)
-
-# this module uses custom pyelftools
-prev_path = list(sys.path)
-sys.path.insert(0, split(__file__)[0])
-
 from elftools.dwarf.constants import (
     DW_INL_not_inlined
 )
-
-sys.path = prev_path
-
 from common import (
     lazy,
     trie_find,

@@ -8,23 +8,13 @@ from common import (
     trie_find,
     intervalmap
 )
-import sys
 from os.path import (
-    split,
     sep,
     join
 )
-
-# this module uses custom pyelftools
-prev_path = list(sys.path)
-sys.path.insert(0, split(__file__)[0])
-
 from elftools.dwarf.callframe import (
     CIE
 )
-
-sys.path = prev_path
-
 from .dwarf_expr_builder import (
     DWARFExprBuilder
 )
