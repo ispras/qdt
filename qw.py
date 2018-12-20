@@ -24,6 +24,7 @@ from debug import (
     TYPE_CODE_PTR
 )
 from common import (
+    pypath,
     mlget as _,
     pythonize,
     notifier,
@@ -45,8 +46,7 @@ from argparse import (
     ArgumentParser
 )
 from sys import (
-    stderr,
-    path as python_path
+    stderr
 )
 from multiprocessing import (
     Process
@@ -75,16 +75,11 @@ from six.moves.tkinter_messagebox import (
 from traceback import (
     print_exc
 )
-from os.path import (
-    split,
-    join
-)
 # use ours pyrsp
-python_path.insert(0, join(split(__file__)[0], "pyrsp"))
-
-from pyrsp.targets import (
-    AMD64
-)
+with pypath("pyrsp"):
+    from pyrsp.targets import (
+        AMD64
+    )
 
 class RQOMTree(object):
     "QEmu object model tree descriptor at runtime"
