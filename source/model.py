@@ -54,21 +54,24 @@ from itertools import (
 )
 from common import (
     path2tuple,
-    ply2path, # PLY`s C preprocessor is used for several QEMU code analysis
+    pypath,
     OrderedSet,
     ObjectVisitor,
     BreakVisiting
 )
-from ply.lex import (
-    lex
-)
-from ply.cpp import (
-    Preprocessor,
-    literals,
-    tokens,
-    t_error
-)
-exec("from ply.cpp import t_" + ", t_".join(tokens))
+
+with pypath("..ply"):
+    # PLY`s C preprocessor is used for several QEMU code analysis
+    from ply.lex import (
+        lex
+    )
+    from ply.cpp import (
+        Preprocessor,
+        literals,
+        tokens,
+        t_error
+    )
+    exec("from ply.cpp import t_" + ", t_".join(tokens))
 
 from itertools import (
     count

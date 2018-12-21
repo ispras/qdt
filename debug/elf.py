@@ -4,23 +4,14 @@ __all__ = [
     "InMemoryELFFile"
 ]
 
-import sys
-from os.path import (
-    join,
-    split
-)
-
-# this package uses custom pyelftools
-prev_path = list(sys.path)
-sys.path.insert(0, join(split(__file__)[0], "pyelftools"))
-
 from elftools.elf.elffile import (
     ELFFile
 )
 
-sys.path = prev_path
-
-if sys.version_info[0] == 3:
+from sys import (
+    version_info
+)
+if version_info[0] == 3:
     from io import (
         BytesIO
     )

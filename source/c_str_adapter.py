@@ -2,8 +2,12 @@ __all__ = [
     "str2c"
 ]
 
-from common.ply2path import *
-from ply.lex import lex
+from common import (
+    pypath,
+    gen_tokens
+)
+with pypath("..ply"):
+    from ply.lex import lex
 
 # escape @ (for C boilerplate generator)
 def t_C_GEN_ESCAPE(t):
