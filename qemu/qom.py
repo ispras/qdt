@@ -630,13 +630,13 @@ class QOMType(object):
         code = ("""{
     .name@b=@s%s,
     .version_id@b=@s1,
-    .fields@b=@s(VMStateField[])@b{""" % type_macro.name
+    .fields@b=@s(VMStateField[])@b{
+""" % type_macro.name
         )
 
         used_macros = set()
         global type2vmstate
 
-        first = True
         for f in self.state_fields:
             if not f.save:
                 continue
@@ -667,20 +667,9 @@ class QOMType(object):
                     "_state": state_struct.name
                 }
             )
-
-            if first:
-                first = False
-                code += "\n"
-            else:
-                code += ",\n"
-
-            code += " " * 8 + vms_macro.gen_usage_string(init)
+            code += " " * 8 + vms_macro.gen_usage_string(init) + ",\n"
 
         # Generate VM state list terminator macro.
-        if first:
-            code += "\n"
-        else:
-            code += ",\n"
         code += " " * 8 + Type.lookup("VMSTATE_END_OF_LIST").gen_usage_string()
 
         code += "\n    }\n}"
