@@ -41,7 +41,8 @@ from os.path import (
     basename,
     splitext,
     join,
-    isdir
+    isdir,
+    dirname
 )
 from copy import (
     copy
@@ -108,6 +109,7 @@ class ChunkGenerator(object):
     def __init__(self, definer):
         self.chunk_cache = { definer: [] }
         self.for_header = isinstance(definer, Header)
+        self.path = definer.path
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
@@ -179,7 +181,7 @@ class ChunkGenerator(object):
                     and origin.declarer not in self.stack[-2].get_definers()
                     and origin.definer not in self.stack[-2].get_definers()
                     ):
-                        chunks = [HeaderInclusion(origin.declarer)]
+                        chunks = [ HeaderInclusion(self.path, origin.declarer) ]
                     else:
                         # Something like a static inline function in a header
                         # may request chunks for a global variable. This case
@@ -911,7 +913,7 @@ class TypeReference(Type):
                 " pass." % self.name
             )
 
-        inc = HeaderInclusion(self.type.definer)
+        inc = HeaderInclusion(generator.path, self.type.definer)
 
         refs = []
         for r in self.definer_references:
@@ -1868,7 +1870,13 @@ after this word.
 class HeaderInclusion(SourceChunk):
     weight = 0
 
-    def __init__(self, header):
+    def __init__(self, include_path, header):
+        if dirname(include_path) == dirname(header.path):
+            path = (basename(header.path),)
+        else:
+            path = path2tuple(header.path)
+            if path[0] in ("include", "tcg"):
+                path = path[1:]
         super(HeaderInclusion, self).__init__(header,
             "Header %s inclusion" % header.path,
             """\
@@ -1876,7 +1884,7 @@ class HeaderInclusion(SourceChunk):
 """.format(
     lq = "<" if header.is_global else '"',
     # Always use UNIX path separator in `#include` directive.
-    path = "/".join(path2tuple(header.path)),
+    path = "/".join(path),
     rq = ">" if header.is_global else '"'
             ),
             references = []
