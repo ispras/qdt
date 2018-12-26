@@ -44,7 +44,8 @@ from os.path import (
     basename,
     splitext,
     join,
-    isdir
+    isdir,
+    dirname
 )
 from copy import (
     copy
@@ -2600,6 +2601,24 @@ them must be replaced with reference to h. """
                 self.remove_dup_chunk(ch, prev_ch)
                 func_dec[f] = ch
 
+    def header_paths_shortening(self):
+        origin_dir = dirname(self.origin.path)
+
+        for ch in self.chunks:
+            if not isinstance(ch, HeaderInclusion):
+                continue
+
+            header_path = ch.origin.path
+            if origin_dir == dirname(header_path):
+                path = (basename(header_path),)
+            else:
+                path = path2tuple(header_path)
+                # TODO: those are domain specific values, make them global
+                # parameters
+                if path[0] in ("include", "tcg"):
+                    path = path[1:]
+            ch.path = path
+
     def generate(self, writer,
         gen_debug_comments = False,
         append_nl_after_headers = True
@@ -2612,6 +2631,8 @@ them must be replaced with reference to h. """
         self.sort_chunks()
 
         self.optimize_inclusions()
+
+        self.header_paths_shortening()
 
         # semantic sort
         self.chunks = OrderedSet(sorted(self.chunks))
