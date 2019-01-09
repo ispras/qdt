@@ -13,9 +13,15 @@ from six.moves.tkinter import (
 READONLY = "readonly"
 
 try:
-    from idlelib.WidgetRedirector import (
-        WidgetRedirector
-    )
+    try:
+        from idlelib.redirector import (
+            WidgetRedirector
+        )
+    except ImportError:
+        # WidgetRedirector location differs in old idlelib versions
+        from idlelib.WidgetRedirector import (
+            WidgetRedirector
+        )
 except ImportError as e:
     from sys import (
         version_info
