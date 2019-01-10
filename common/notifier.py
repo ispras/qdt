@@ -2,17 +2,57 @@ __all__ = [
     "notifier"
 ]
 
+from inspect import (
+    getargspec
+)
+
+
+def gen_init_wrapper(wrapped_init, cb_list_name):
+    """ Also preserves argument specification and doc string of wrapped_init.
+It makes `notifier` decorator more transparent.
+    """
+    code = "def __init__("
+
+    args, varargs, keywords, defaults = getargspec(wrapped_init)
+
+    if defaults:
+        arg_strs = list(args[:-len(defaults)]) + list(
+            (a + " = " + repr(v)) for a, v in zip(
+                args[-len(defaults):], defaults
+            )
+        )
+    else:
+        arg_strs = args
+
+    if varargs:
+        arg_strs.append("*" + varargs)
+    if  keywords:
+        arg_strs.append("**" + keywords)
+
+    code += ", ".join(arg_strs) + "):\n"
+
+    if wrapped_init.__doc__:
+        code += "    '''%s'''\n" % wrapped_init.__doc__.replace("'", '\'')
+    # Define callback list before calling of original __init__ to allow
+    # it assign watchers.
+    code += "    setattr(self, '" + cb_list_name + "', [])\n"
+    # code += "    print(wrapped_init)\n"
+    code += "    wrapped_init(" + ", ".join(arg_strs) + ")\n"
+
+    # print(code)
+
+    _locals = {"wrapped_init" : wrapped_init}
+
+    exec(code, _locals)
+
+    return _locals["__init__"]
+
 # "Function factory" approach is used to meet "late binding" problem.
 # http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop/
 
 def gen_event_helpers(wrapped_init, cb_list_name):
     # Wrapper for constructor that adds callback list to each instance
-    def init_wrapper(self, *args, **kw):
-        """ Define callback list before calling of original __init__ to allow
-        it assign watchers. """
-        setattr(self, cb_list_name, [])
-
-        wrapped_init(self, *args, **kw)
+    init_wrapper = gen_init_wrapper(wrapped_init, cb_list_name)
 
     def add_callback(self, callback):
         getattr(self, cb_list_name).append(callback)
