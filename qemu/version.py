@@ -72,13 +72,13 @@ def define_only_qemu_2_6_0_types():
     osdep_fake_type = Type("FAKE_TYPE_IN_QEMU_OSDEP")
 
     if not get_vp("tcg_enabled is macro"):
-        Header.lookup("qemu-common.h").add_types([
+        Header["qemu-common.h"].add_types([
             Function("tcg_enabled",
-                     ret_type = Type.lookup("bool")
+                     ret_type = Type["bool"]
             )
         ])
 
-    Header.lookup("tcg.h").add_types([
+    Header["tcg.h"].add_types([
         Type("TCGv_i32"),
         Type("TCGv_i64"),
         Type("TCGv_ptr"),
@@ -89,13 +89,13 @@ def define_only_qemu_2_6_0_types():
         Function("tcg_op_buf_full")
     ])
 
-    Header.lookup("tcg-op.h").add_types([
+    Header["tcg-op.h"].add_types([
         Function("tcg_gen_insn_start"),
         Function("tcg_gen_goto_tb"),
         Function("tcg_gen_exit_tb")
     ])
 
-    Header.lookup("tcg-op.h").add_types([
+    Header["tcg-op.h"].add_types([
         # HLTTemp is a fake type intended to mark
         # variables which are to be replaced by this tool
         # preprocessor (still in progress)
@@ -103,50 +103,50 @@ def define_only_qemu_2_6_0_types():
         Type("HLTTemp")
     ])
 
-    Header.lookup("qemu/osdep.h").add_types([
+    Header["qemu/osdep.h"].add_types([
         osdep_fake_type
     ])
 
-    Header.lookup("exec/hwaddr.h").add_types([
+    Header["exec/hwaddr.h"].add_types([
         Type("hwaddr", False)
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/cpu-defs.h").add_types([
+    Header["exec/cpu-defs.h"].add_types([
         Type("target_ulong", False),
     ])
 
-    Header.lookup("exec/cpu_ldst.h").add_types([
-        Function("cpu_ldub_code", ret_type = Type.lookup("uint8_t")),
-        Function("cpu_lduw_code", ret_type = Type.lookup("uint16_t")),
-        Function("cpu_ldl_code", ret_type = Type.lookup("uint32_t")),
-        Function("cpu_ldq_code", ret_type = Type.lookup("uint64_t")),
+    Header["exec/cpu_ldst.h"].add_types([
+        Function("cpu_ldub_code", ret_type = Type["uint8_t"]),
+        Function("cpu_lduw_code", ret_type = Type["uint16_t"]),
+        Function("cpu_ldl_code", ret_type = Type["uint32_t"]),
+        Function("cpu_ldq_code", ret_type = Type["uint64_t"]),
     ])
 
-    Header.lookup("qom/object.h").add_types([
+    Header["qom/object.h"].add_types([
         Type("ObjectClass", False),
         Type("Object", False),
         Type("InterfaceInfo", False),
         Structure("TypeInfo",
             fields = [
                 # These are required fields only
-                Pointer(Type.lookup("const char")).gen_var("name"),
-                Pointer(Type.lookup("const char")).gen_var("parent"),
-                Pointer(Type.lookup("void")).gen_var("class_init"),
+                Pointer(Type["const char"]).gen_var("name"),
+                Pointer(Type["const char"]).gen_var("parent"),
+                Pointer(Type["void"]).gen_var("class_init"),
                 Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
             ]
         ),
         Type("Type", False),
         Type("TypeImpl", False),
         Function(name = "type_register_static",
-            ret_type = Type.lookup("TypeImpl"),
+            ret_type = Type["TypeImpl"],
             args = [
-                Type.lookup("TypeInfo").gen_var("info", pointer = True)
+                Type["TypeInfo"].gen_var("info", pointer = True)
             ]
         ),
         Function(name = "type_register",
-            ret_type = Type.lookup("TypeImpl"),
+            ret_type = Type["TypeImpl"],
             args = [
-                Type.lookup("TypeInfo").gen_var("info", pointer = True)
+                Type["TypeInfo"].gen_var("info", pointer = True)
             ]
         ),
         Function("object_get_typename"),
@@ -159,7 +159,7 @@ def define_only_qemu_2_6_0_types():
         Function("object_class_is_abstract")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("qom/cpu.h").add_types([
+    Header["qom/cpu.h"].add_types([
         Type("CPUState", False),
         Type("CPUClass", False),
         Type("vaddr", False),
@@ -167,7 +167,7 @@ def define_only_qemu_2_6_0_types():
         Type("CPUBreakpoint", False),
         Function("qemu_init_vcpu",
                  args = [
-                     Type.lookup("CPUState").gen_var("cpu", pointer = True)
+                     Type["CPUState"].gen_var("cpu", pointer = True)
                  ]
         ),
         Function("cpu_exec_realizefn"),
@@ -175,35 +175,35 @@ def define_only_qemu_2_6_0_types():
         Function("cpu_generic_init")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("qapi/error.h").add_types([
+    Header["qapi/error.h"].add_types([
         Type("Error")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("disas/bfd.h").add_types([
+    Header["disas/bfd.h"].add_types([
         Type("disassemble_info", False)
     ]).add_reference(osdep_fake_type)
 
 
-    Header.lookup("qemu/fprintf-fn.h").add_types([
+    Header["qemu/fprintf-fn.h"].add_types([
         Type("fprintf_function", False)
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/exec-all.h").add_types([
+    Header["exec/exec-all.h"].add_types([
         Type("TranslationBlock", False),
         Function("tlb_fill",
                  args = [
-                     Type.lookup("CPUState").gen_var("cs", pointer = True),
-                     Type.lookup("target_ulong").gen_var("addr"),
-                     Type.lookup("MMUAccessType").gen_var("access_type"),
-                     Type.lookup("int").gen_var("mmu_idx"),
-                     Type.lookup("uintptr_t").gen_var("retaddr")
+                     Type["CPUState"].gen_var("cs", pointer = True),
+                     Type["target_ulong"].gen_var("addr"),
+                     Type["MMUAccessType"].gen_var("access_type"),
+                     Type["int"].gen_var("mmu_idx"),
+                     Type["uintptr_t"].gen_var("retaddr")
                  ],
                  used_types = []
         ),
         Function("cpu_exec_init",
                  args = [
-                     Type.lookup("CPUState").gen_var("cs", pointer = True),
-                     Pointer(Pointer(Type.lookup("Error"))).gen_var("errp")
+                     Type["CPUState"].gen_var("cs", pointer = True),
+                     Pointer(Pointer(Type["Error"])).gen_var("errp")
                  ]
         ),
         Function("gen_intermediate_code"),
@@ -213,49 +213,49 @@ def define_only_qemu_2_6_0_types():
         Function("tlb_set_page")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/gen-icount.h").add_types([
+    Header["exec/gen-icount.h"].add_types([
         Function("gen_tb_start"),
         Function("gen_tb_end")
     ])
 
-    Header.lookup("exec/address-spaces.h").add_types([
+    Header["exec/address-spaces.h"].add_types([
         Function("get_system_memory")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/memory.h").add_types([
+    Header["exec/memory.h"].add_types([
         Type("MemoryRegion", False),
         Function(name = "MemoryRegionOps_read",
-            ret_type = Type.lookup("uint64_t"),
+            ret_type = Type["uint64_t"],
             args = [
-                Type.lookup("void").gen_var("opaque", pointer = True),
-                Type.lookup("hwaddr").gen_var("offset"),
-                Type.lookup("unsigned").gen_var("size")
+                Type["void"].gen_var("opaque", pointer = True),
+                Type["hwaddr"].gen_var("offset"),
+                Type["unsigned"].gen_var("size")
             ]
         ),
         Function(name = "MemoryRegionOps_write",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("void").gen_var("opaque", pointer = True),
-                Type.lookup("hwaddr").gen_var("offset"),
-                Type.lookup("uint64_t").gen_var("value"),
-                Type.lookup("unsigned").gen_var("size")
+                Type["void"].gen_var("opaque", pointer = True),
+                Type["hwaddr"].gen_var("offset"),
+                Type["uint64_t"].gen_var("value"),
+                Type["unsigned"].gen_var("size")
             ]
         ),
         Structure("MemoryRegionOps",
-            [   Type.lookup("MemoryRegionOps_read").gen_var("read"),
-                Type.lookup("MemoryRegionOps_write").gen_var("write"),
+            [   Type["MemoryRegionOps_read"].gen_var("read"),
+                Type["MemoryRegionOps_write"].gen_var("write"),
              ]
         ),
         Function(name = "memory_region_init_io",
             args = [
-                Type.lookup("MemoryRegion").gen_var("mr", pointer = True),
+                Type["MemoryRegion"].gen_var("mr", pointer = True),
                 # struct
-                Type.lookup("Object").gen_var("owner", pointer = True),
+                Type["Object"].gen_var("owner", pointer = True),
                 # const
-                Type.lookup("MemoryRegionOps").gen_var("ops", pointer = True),
-                Type.lookup("void").gen_var("opaque", pointer = True),
-                Type.lookup("const char").gen_var("name", pointer = True),
-                Type.lookup("uint64_t").gen_var("size")
+                Type["MemoryRegionOps"].gen_var("ops", pointer = True),
+                Type["void"].gen_var("opaque", pointer = True),
+                Type["const char"].gen_var("name", pointer = True),
+                Type["uint64_t"].gen_var("size")
             ]
         ),
         Function("memory_region_init"),
@@ -265,89 +265,89 @@ def define_only_qemu_2_6_0_types():
         Function("memory_region_add_subregion")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/gdbstub.h").add_types([
+    Header["exec/gdbstub.h"].add_types([
         Function(name = "gdb_get_reg8"),
         Function(name = "gdb_get_reg16"),
         Function(name = "gdb_get_reg32"),
         Function(name = "gdb_get_reg64")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("exec/ioport.h").add_types([
+    Header["exec/ioport.h"].add_types([
         Type("pio_addr_t", incomplete = False)
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/boards.h").add_types([
+    Header["hw/boards.h"].add_types([
         Structure("MachineClass"),
         Structure("MachineState")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/sysbus.h").add_types([
+    Header["hw/sysbus.h"].add_types([
         Type("SysBusDevice", False),
         Type("qemu_irq", False),
         Function(name = "sysbus_init_mmio",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-                Type.lookup("MemoryRegion").gen_var("memory", pointer = True)
+                Type["SysBusDevice"].gen_var("dev", pointer = True),
+                Type["MemoryRegion"].gen_var("memory", pointer = True)
             ]
         ),
         Function(name = "sysbus_init_irq",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-                Type.lookup("qemu_irq").gen_var("p", pointer = True)
+                Type["SysBusDevice"].gen_var("dev", pointer = True),
+                Type["qemu_irq"].gen_var("p", pointer = True)
             ]
         ),
         Function(name = "sysbus_add_io",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-                Type.lookup("hwaddr").gen_var("addr"),
-                Type.lookup("MemoryRegion").gen_var("mem", pointer = True)
+                Type["SysBusDevice"].gen_var("dev", pointer = True),
+                Type["hwaddr"].gen_var("addr"),
+                Type["MemoryRegion"].gen_var("mem", pointer = True)
             ]
         ),
         Function(name = "sysbus_init_ioports",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("SysBusDevice").gen_var("dev", pointer = True),
-                Type.lookup("pio_addr_t").gen_var("dev"),
-                Type.lookup("pio_addr_t").gen_var("dev")
+                Type["SysBusDevice"].gen_var("dev", pointer = True),
+                Type["pio_addr_t"].gen_var("dev"),
+                Type["pio_addr_t"].gen_var("dev")
             ]
         ),
         Function("sysbus_mmio_map"),
         Function("sysbus_connect_irq")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/irq.h").add_types([
+    Header["hw/irq.h"].add_types([
         Function(name = "qemu_irq_handler",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("void").gen_var("opaque", pointer = True),
-                Type.lookup("int").gen_var("n"),
-                Type.lookup("int").gen_var("level")
+                Type["void"].gen_var("opaque", pointer = True),
+                Type["int"].gen_var("n"),
+                Type["int"].gen_var("level")
             ]
         ),
         Function("qemu_irq_split")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/qdev-core.h").add_types([
+    Header["hw/qdev-core.h"].add_types([
         Type("DeviceClass", False),
         Type("DeviceState", False),
         Type("Property", False),
         Function(name = "qdev_init_gpio_in",
-            ret_type = Type.lookup("void"),
+            ret_type = Type["void"],
             args = [
-                Type.lookup("DeviceState").gen_var("dev", pointer = True),
-                Type.lookup("qemu_irq_handler").gen_var("handler"),
-                Type.lookup("int").gen_var("n")
+                Type["DeviceState"].gen_var("dev", pointer = True),
+                Type["qemu_irq_handler"].gen_var("handler"),
+                Type["int"].gen_var("n")
             ]
         ),
         Pointer(
             Function(
                 name = "device_realize pointee",
                 args = [
-                    Type.lookup("DeviceState").gen_var("dev", pointer = True),
-                    Pointer(Type.lookup("Error")).gen_var("errp",
+                    Type["DeviceState"].gen_var("dev", pointer = True),
+                    Pointer(Type["Error"]).gen_var("errp",
                         pointer = True
                     )
                 ]
@@ -364,39 +364,39 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_connect_gpio_out_named")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("migration/vmstate.h").add_types([
+    Header["migration/vmstate.h"].add_types([
         Type("VMStateDescription", False),
         Type("VMStateField", False),
         Function("vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("qemu/module.h").add_reference(osdep_fake_type)
+    Header["qemu/module.h"].add_reference(osdep_fake_type)
 
-    Header.lookup("hw/pci/pci.h").add_types([
+    Header["hw/pci/pci.h"].add_types([
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False),
         Function("pci_create_multifunction"),
         Type("PCIIOMMUFunc"),
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/pci/msi.h").add_types([
+    Header["hw/pci/msi.h"].add_types([
         Function(name = "msi_uninit"
-            , ret_type = Type.lookup("void")
+            , ret_type = Type["void"]
             , args = [
-                Type.lookup("PCIDevice").gen_var("dev", pointer = True)
+                Type["PCIDevice"].gen_var("dev", pointer = True)
             ]
         )
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/pci/pci_bus.h").add_types([
+    Header["hw/pci/pci_bus.h"].add_types([
         Type("PCIBus", incomplete = True)
     ]).add_references([
-        Type.lookup("PCIIOMMUFunc"),
+        Type["PCIIOMMUFunc"],
         osdep_fake_type
     ])
-    Header.lookup("hw/pci/pci_host.h").add_reference(osdep_fake_type)
+    Header["hw/pci/pci_host.h"].add_reference(osdep_fake_type)
 
-    Header.lookup("qemu/typedefs.h").add_types([
+    Header["qemu/typedefs.h"].add_types([
         # BlockBackend is defined in internal block_int.h. Its fields may not
         # be accessed outside internal code. Methods from block-backend.h must
         # be used instead.
@@ -404,27 +404,27 @@ def define_only_qemu_2_6_0_types():
         Structure("I2CBus") # the structure is defined in .c file
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("qemu/bswap.h").add_types([
+    Header["qemu/bswap.h"].add_types([
         Function("bswap64"),
         Function("bswap32"),
         Function("bswap16")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/ide/internal.h").add_types([
+    Header["hw/ide/internal.h"].add_types([
         Structure("IDEDMA")
     ]).add_reference(osdep_fake_type)
 
-    Header.lookup("hw/ide/ahci.h").add_references([
-        Type.lookup("IDEDMA"),
+    Header["hw/ide/ahci.h"].add_references([
+        Type["IDEDMA"],
         osdep_fake_type
     ])
 
-    Header.lookup("hw/block/flash.h").add_references([
-        Type.lookup("VMStateDescription"),
+    Header["hw/block/flash.h"].add_references([
+        Type["VMStateDescription"],
         osdep_fake_type
     ])
 
-    Header.lookup("qemu/timer.h").add_types([
+    Header["qemu/timer.h"].add_types([
         Structure("QEMUTimer"),
         Function("timer_new_ns"),
         Function("timer_del"),
@@ -434,18 +434,18 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
-    Header.lookup("qemu/main-loop.h").add_types([
+    Header["qemu/main-loop.h"].add_types([
         Function("IOCanReadHandler",
-            ret_type = Type.lookup("int"),
+            ret_type = Type["int"],
             args = [
-                Pointer(Type.lookup("void")).gen_var("opaque")
+                Pointer(Type["void"]).gen_var("opaque")
             ]
         ),
         Function("IOReadHandler",
             args = [
-                Pointer(Type.lookup("void")).gen_var("opaque"),
-                Pointer(Type.lookup("uint8_t"), const = True).gen_var("buf"),
-                Type.lookup("int").gen_var("size")
+                Pointer(Type["void"]).gen_var("opaque"),
+                Pointer(Type["uint8_t"], const = True).gen_var("buf"),
+                Type["int"].gen_var("size")
             ]
         )
     ]).add_references([
@@ -463,34 +463,34 @@ def define_only_qemu_2_6_0_types():
             Structure("CharDriverState")
         ]
 
-    Header.lookup(get_vp("header with IOEventHandler")).add_types([
+    Header[get_vp("header with IOEventHandler")].add_types([
         Function("IOEventHandler",
             args = [
-                Pointer(Type.lookup("void")).gen_var("opaque"),
-                Type.lookup("int").gen_var("event")
+                Pointer(Type["void"]).gen_var("opaque"),
+                Type["int"].gen_var("event")
             ]
         )
     ] + chardev_types).add_references([
         osdep_fake_type
     ])
 
-    Header.lookup("sysemu/block-backend.h").add_types([
+    Header["sysemu/block-backend.h"].add_types([
         Structure("BlockDevOps"),
     ]).add_references([
         osdep_fake_type
     ])
 
-    Header.lookup("hw/isa/isa.h").add_types([
+    Header["hw/isa/isa.h"].add_types([
         Type("IsaDmaTransferHandler")
     ])
 
     if get_vp()["include/hw/isa/i8257.h have IsaDmaTransferHandler reference"]:
-        Header.lookup(get_vp()["i8257.h path"]).add_references([
-            Type.lookup("IsaDmaTransferHandler"),
-            Type.lookup("MemoryRegion")
+        Header[get_vp()["i8257.h path"]].add_references([
+            Type["IsaDmaTransferHandler"],
+            Type["MemoryRegion"]
         ])
 
-    Header.lookup("net/net.h").add_types([
+    Header["net/net.h"].add_types([
         Type("qemu_macaddr_default_if_unset"),
         Type("qemu_format_nic_info_str"),
         Type("qemu_new_nic"),
@@ -500,39 +500,39 @@ def define_only_qemu_2_6_0_types():
         Type("NICState"),
         Type("NetClientState"),
         Function("NetCanReceive",
-            ret_type = Type.lookup("int"),
+            ret_type = Type["int"],
             args = [
-                Pointer(Type.lookup("NetClientState")).gen_var("nc")
+                Pointer(Type["NetClientState"]).gen_var("nc")
             ]
         ),
         Function("NetReceive",
-            ret_type = Type.lookup("ssize_t"),
+            ret_type = Type["ssize_t"],
             args = [
-                Pointer(Type.lookup("NetClientState")).gen_var("nc"),
-                Pointer(Type.lookup("const uint8_t")).gen_var("buf"),
-                Type.lookup("size_t").gen_var("size")
+                Pointer(Type["NetClientState"]).gen_var("nc"),
+                Pointer(Type["const uint8_t"]).gen_var("buf"),
+                Type["size_t"].gen_var("size")
             ]
         ),
         Function("LinkStatusChanged",
             args = [
-                Pointer(Type.lookup("NetClientState")).gen_var("nc")
+                Pointer(Type["NetClientState"]).gen_var("nc")
             ]
         ),
         Function("NetCleanup",
             args = [
-                Pointer(Type.lookup("NetClientState")).gen_var("nc")
+                Pointer(Type["NetClientState"]).gen_var("nc")
             ]
         ),
         Structure("NetClientInfo",
             fields = [
                 # "type" field type is enum NetClientDriver, but enum is not
                 # supported by model
-                Type.lookup("int").gen_var("type"),
-                Type.lookup("size_t").gen_var("size"),
-                Type.lookup("NetReceive").gen_var("receive"),
-                Type.lookup("NetCanReceive").gen_var("can_receive"),
-                Type.lookup("NetCleanup").gen_var("cleanup"),
-                Type.lookup("LinkStatusChanged").gen_var("link_status_changed")
+                Type["int"].gen_var("type"),
+                Type["size_t"].gen_var("size"),
+                Type["NetReceive"].gen_var("receive"),
+                Type["NetCanReceive"].gen_var("can_receive"),
+                Type["NetCleanup"].gen_var("cleanup"),
+                Type["LinkStatusChanged"].gen_var("link_status_changed")
                 # There are other fields but they are not needed.
             ]
         ),
@@ -543,64 +543,64 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
-    Header.lookup("disas/bfd.h").add_types([
+    Header["disas/bfd.h"].add_types([
         Type("bfd_vma", False),
         Type("bfd_byte", False),
         Type("const bfd_tyte", False),
         Function("bfd_getl64",
-            ret_type = Type.lookup("bfd_vma"),
+            ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type.lookup("const bfd_tyte")
+                    Type["const bfd_tyte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
         Function("bfd_getl32",
-            ret_type = Type.lookup("bfd_vma"),
+            ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type.lookup("const bfd_tyte")
+                    Type["const bfd_tyte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
         Function("bfd_getb32",
-            ret_type = Type.lookup("bfd_vma"),
+            ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type.lookup("const bfd_tyte")
+                    Type["const bfd_tyte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
         Function("bfd_getl16",
-            ret_type = Type.lookup("bfd_vma"),
+            ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type.lookup("const bfd_tyte")
+                    Type["const bfd_tyte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
         Function("bfd_getb16",
-            ret_type = Type.lookup("bfd_vma"),
+            ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type.lookup("const bfd_tyte")
+                    Type["const bfd_tyte"]
                 ).gen_var("addr", pointer = True)
             ]
         )
     ])
 
 
-    Header.lookup("disas/disas.h").add_types([
+    Header["disas/disas.h"].add_types([
         Function("lookup_symbol")
     ])
-    Header.lookup("qemu/log.h").add_types([
+    Header["qemu/log.h"].add_types([
         Function("qemu_loglevel_mask"),
         Function("qemu_log_in_addr_range"),
         Function("qemu_log_lock"),
         Function("qemu_log_unlock"),
         Function("qemu_log")
     ])
-    Header.lookup("exec/log.h").add_types([
+    Header["exec/log.h"].add_types([
         Function("log_target_disas")
     ])
 
@@ -626,30 +626,30 @@ def define_qemu_2_6_0_types():
     define_only_qemu_2_6_0_types()
 
 def define_msi_init_2_6_5():
-    Header.lookup("hw/pci/msi.h").add_type(
+    Header["hw/pci/msi.h"].add_type(
         Function(name = "msi_init"
-            , ret_type = Type.lookup("int")
+            , ret_type = Type["int"]
             , args = [
-                Type.lookup("PCIDevice").gen_var("dev", pointer = True)
-                , Type.lookup("uint8_t").gen_var("offset")
-                , Type.lookup("unsigned int").gen_var("nr_vectors")
-                , Type.lookup("bool").gen_var("msi64bit")
-                , Type.lookup("bool").gen_var("msi_per_vector_mask")
-                , Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
+                Type["PCIDevice"].gen_var("dev", pointer = True)
+                , Type["uint8_t"].gen_var("offset")
+                , Type["unsigned int"].gen_var("nr_vectors")
+                , Type["bool"].gen_var("msi64bit")
+                , Type["bool"].gen_var("msi_per_vector_mask")
+                , Pointer(Type["Error"]).gen_var("errp", pointer = True)
             ]
         )
     )
 
 def define_msi_init_2_6_0():
-    Header.lookup("hw/pci/msi.h").add_type(
+    Header["hw/pci/msi.h"].add_type(
         Function(name = "msi_init"
-            , ret_type = Type.lookup("int")
+            , ret_type = Type["int"]
             , args = [
-                Type.lookup("PCIDevice").gen_var("dev", pointer = True)
-                , Type.lookup("uint8_t").gen_var("offset")
-                , Type.lookup("unsigned int").gen_var("nr_vectors")
-                , Type.lookup("bool").gen_var("msi64bit")
-                , Type.lookup("bool").gen_var("msi_per_vector_mask")
+                Type["PCIDevice"].gen_var("dev", pointer = True)
+                , Type["uint8_t"].gen_var("offset")
+                , Type["unsigned int"].gen_var("nr_vectors")
+                , Type["bool"].gen_var("msi64bit")
+                , Type["bool"].gen_var("msi_per_vector_mask")
             ]
         )
     )
@@ -659,10 +659,10 @@ def machine_register_2_5(mach):
     mach.class_init = Function(
         name = "machine_%s_class_init" % mach.qtn.for_id_name,
         static = True,
-        ret_type = Type.lookup("void"),
+        ret_type = Type["void"],
         args = [
-            Type.lookup("ObjectClass").gen_var("oc", pointer = True),
-            Type.lookup("void").gen_var("opaque", pointer = True)
+            Type["ObjectClass"].gen_var("oc", pointer = True),
+            Type["void"].gen_var("opaque", pointer = True)
         ],
         body = """\
     MachineClass *mc = MACHINE_CLASS(oc);
@@ -676,18 +676,18 @@ def machine_register_2_5(mach):
     instance_init = mach.instance_init.name
         ),
         used_types = [
-            Type.lookup("MachineClass"),
-            Type.lookup("MACHINE_CLASS"),
+            Type["MachineClass"],
+            Type["MACHINE_CLASS"],
             mach.instance_init
         ]
     )
     mach.source.add_type(mach.class_init)
 
     # machine type definition structure
-    type_machine_macro = Type.lookup("TYPE_MACHINE")
-    type_machine_suf_macro = Type.lookup("TYPE_MACHINE_SUFFIX")
+    type_machine_macro = Type["TYPE_MACHINE"]
+    type_machine_suf_macro = Type["TYPE_MACHINE_SUFFIX"]
 
-    mach.type_info = Type.lookup("TypeInfo").gen_var(
+    mach.type_info = Type["TypeInfo"].gen_var(
         name = "machine_type_%s" % mach.qtn.for_id_name,
         static = True,
         initializer = Initializer({
@@ -711,7 +711,7 @@ def machine_register_2_5(mach):
     type_info = mach.type_info.name
         ),
         static = True,
-        used_types = [Type.lookup("type_register")],
+        used_types = [Type["type_register"]],
         used_globals = [mach.type_info]
     )
     mach.source.add_type(mach.type_reg_func)
@@ -722,7 +722,7 @@ def machine_register_2_5(mach):
         code = { "function": mach.type_reg_func }
     )
     mach.source.add_type(
-        Type.lookup(def_type).gen_usage(
+        Type[def_type].gen_usage(
             initializer = machine_init_def_args
         )
     )
@@ -732,10 +732,10 @@ def machine_register_2_6(mach):
     mach.class_init = Function(
         name = "machine_%s_class_init" % mach.qtn.for_id_name,
         static = True,
-        ret_type = Type.lookup("void"),
+        ret_type = Type["void"],
         args = [
-            Type.lookup("ObjectClass").gen_var("oc", pointer = True),
-            Type.lookup("void").gen_var("opaque", pointer = True)
+            Type["ObjectClass"].gen_var("oc", pointer = True),
+            Type["void"].gen_var("opaque", pointer = True)
         ],
         body = """\
     MachineClass *mc = MACHINE_CLASS(oc);
@@ -747,18 +747,18 @@ def machine_register_2_6(mach):
     instance_init = mach.instance_init.name
         ),
         used_types = [
-            Type.lookup("MachineClass"),
-            Type.lookup("MACHINE_CLASS"),
+            Type["MachineClass"],
+            Type["MACHINE_CLASS"],
             mach.instance_init
         ]
     )
     mach.source.add_type(mach.class_init)
 
     # machine type definition structure
-    type_machine_macro = Type.lookup("TYPE_MACHINE")
-    type_machine_type_name_macro = Type.lookup("MACHINE_TYPE_NAME")
+    type_machine_macro = Type["TYPE_MACHINE"]
+    type_machine_type_name_macro = Type["MACHINE_TYPE_NAME"]
 
-    mach.type_info = Type.lookup("TypeInfo").gen_var(
+    mach.type_info = Type["TypeInfo"].gen_var(
         name = "machine_type_%s" % mach.qtn.for_id_name,
         static = True,
         initializer = Initializer({
@@ -782,7 +782,7 @@ def machine_register_2_6(mach):
     # Main machine registration macro
     machine_init_def_args = Initializer({ "function": mach.type_reg_func })
     mach.source.add_type(
-        Type.lookup("type_init").gen_usage(
+        Type["type_init"].gen_usage(
             initializer = machine_init_def_args
         )
     )
