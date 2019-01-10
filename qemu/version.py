@@ -183,7 +183,6 @@ def define_only_qemu_2_6_0_types():
         Type("disassemble_info", False)
     ]).add_reference(osdep_fake_type)
 
-
     Header["qemu/fprintf-fn.h"].add_types([
         Type("fprintf_function", False)
     ]).add_reference(osdep_fake_type)
@@ -559,10 +558,10 @@ def define_only_qemu_2_6_0_types():
         ]
     ])
 
-
     Header["disas/disas.h"].add_types([
         Function("lookup_symbol")
     ])
+
     Header["qemu/log.h"].add_types([
         Function("qemu_loglevel_mask"),
         Function("qemu_log_in_addr_range"),
@@ -570,6 +569,7 @@ def define_only_qemu_2_6_0_types():
         Function("qemu_log_unlock"),
         Function("qemu_log")
     ])
+
     Header["exec/log.h"].add_types([
         Function("log_target_disas")
     ])
