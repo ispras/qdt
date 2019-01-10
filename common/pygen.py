@@ -191,6 +191,8 @@ accuracy.
         assignments for `__init__` method of object's class. Lists of arguments
         are gathered in method resolution order (MRO).
         See `get_class_total_args` for details.
+        Warning! It fails if `__init__` has been replaced. E.g. by a class
+        decorator.
 
             A value for assignment is searched in the object by argument name
         using built-in `getattr`. If it is not such trivial, the class must
