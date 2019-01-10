@@ -546,12 +546,12 @@ def define_only_qemu_2_6_0_types():
     Header["disas/bfd.h"].add_types([
         Type("bfd_vma", False),
         Type("bfd_byte", False),
-        Type("const bfd_tyte", False),
+        Type("const bfd_byte", False),
         Function("bfd_getl64",
             ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type["const bfd_tyte"]
+                    Type["const bfd_byte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
@@ -559,7 +559,7 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type["const bfd_tyte"]
+                    Type["const bfd_byte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
@@ -567,7 +567,7 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type["const bfd_tyte"]
+                    Type["const bfd_byte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
@@ -575,7 +575,7 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type["const bfd_tyte"]
+                    Type["const bfd_byte"]
                 ).gen_var("addr", pointer = True)
             ]
         ),
@@ -583,7 +583,7 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["bfd_vma"],
             args = [
                 Pointer(
-                    Type["const bfd_tyte"]
+                    Type["const bfd_byte"]
                 ).gen_var("addr", pointer = True)
             ]
         )
