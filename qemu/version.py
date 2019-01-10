@@ -547,46 +547,16 @@ def define_only_qemu_2_6_0_types():
         Type("bfd_vma", False),
         Type("bfd_byte", False),
         Type("const bfd_byte", False),
-        Function("bfd_getl64",
-            ret_type = Type["bfd_vma"],
-            args = [
-                Pointer(
-                    Type["const bfd_byte"]
-                ).gen_var("addr", pointer = True)
+        *[
+            Function(name,
+                ret_type = Type["bfd_vma"],
+                args = [
+                    Pointer(Pointer(Type["const bfd_byte"])).gen_var("addr")
+                ]
+            ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32",
+                "bfd_getl16", "bfd_getb16"
             ]
-        ),
-        Function("bfd_getl32",
-            ret_type = Type["bfd_vma"],
-            args = [
-                Pointer(
-                    Type["const bfd_byte"]
-                ).gen_var("addr", pointer = True)
-            ]
-        ),
-        Function("bfd_getb32",
-            ret_type = Type["bfd_vma"],
-            args = [
-                Pointer(
-                    Type["const bfd_byte"]
-                ).gen_var("addr", pointer = True)
-            ]
-        ),
-        Function("bfd_getl16",
-            ret_type = Type["bfd_vma"],
-            args = [
-                Pointer(
-                    Type["const bfd_byte"]
-                ).gen_var("addr", pointer = True)
-            ]
-        ),
-        Function("bfd_getb16",
-            ret_type = Type["bfd_vma"],
-            args = [
-                Pointer(
-                    Type["const bfd_byte"]
-                ).gen_var("addr", pointer = True)
-            ]
-        )
+        ]
     ])
 
 
