@@ -108,8 +108,8 @@ class CoSignal(object):
 
         return self
 
-    def emit(self, *args, **kw):
-        return self.emit_args(args, kw)
+    def emit(self, *a, **kw):
+        return self.emit_args(a if a else None, kw if kw else None)
 
     def watch(self, callback):
         self.listeners.add(callback)
