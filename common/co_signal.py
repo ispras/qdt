@@ -18,11 +18,14 @@ from sys import (
     exc_info
 )
 
+
 class SignalIsAlreadyAttached(RuntimeError):
     pass
 
+
 class SignalIsNotAttached(RuntimeError):
     pass
+
 
 @notifier("failed")
 class SignalDispatcherTask(CoTask):
