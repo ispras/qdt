@@ -37,6 +37,11 @@ class SignalDispatcherTask(CoTask):
         )
         self.queue = []
 
+    def new_signal(self):
+        "Create a new signal and attach it to self."
+        s = CoSignal()
+        return s.attach(self)
+
     def co_deliver(self):
         while True:
             queue = self.queue
