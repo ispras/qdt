@@ -14,5 +14,6 @@ from .qom_desc import *
 from .qom_editing import *
 from .qom_hierarchy import *
 from .sysbusdevice import *
+from .target_code_generator import *
 from .version import *
 from .version_description import *
