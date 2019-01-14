@@ -23,8 +23,13 @@ from .value import (
 @notifier("break")
 class Breakpoints(object):
 
+    def __init__(self, runtime):
+        self._rt = runtime
+
     def __call__(self):
         self.__notify_break()
+
+        self._rt.on_resume()
 
     # See: https://stackoverflow.com/a/5288992/7623015
     def __bool__(self): # Py3
@@ -76,12 +81,8 @@ class Runtime(object):
         # variable of a function which is already returned.
         self.version = 0
 
-        # When target resumes all cached data must be reset because it is not
-        # actual now.
-        target.on_resume.append(self.on_resume)
-
         # breakpoints and its handlers
-        self.brs = defaultdict(Breakpoints)
+        self.brs = defaultdict(lambda : Breakpoints(self))
 
     def add_br(self, addr_str, cb, quiet = False):
         cbs = self.brs[addr_str]
@@ -96,6 +97,10 @@ class Runtime(object):
             self.target.remove_br(addr_str, cbs, quiet)
 
     def on_resume(self, *_, **__):
+        """ When target resumes all cached data must be reset because it is
+not actual now.
+        """
+
         self.version += 1
 
         self.regs[:] = repeat(None, len(self.regs))
