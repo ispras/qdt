@@ -1,3 +1,4 @@
+from .cpu import *
 from .instruction import *
 from .machine import *
 from .machine_description import *
