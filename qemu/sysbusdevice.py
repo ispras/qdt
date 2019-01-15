@@ -104,9 +104,9 @@ class SysBusDeviceType(QOMDevice):
             name = self.qtn.for_macros,
             args = ["obj"],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
-    TYPE_MACRO = self.qtn.type_macro,
-    Struct = self.struct_name
-)
+                TYPE_MACRO = self.qtn.type_macro,
+                Struct = self.struct_name
+            )
         )
 
         self.header.add_type(self.type_cast_macro)
@@ -268,9 +268,7 @@ class SysBusDeviceType(QOMDevice):
                     impl = """,
     .impl = {{
         .max_access_size = {size}
-    }}""".format(
-    size = size
-                    )
+    }}""".format(size = size)
 
             write_func.extra_references = {read_func}
 
@@ -281,11 +279,11 @@ class SysBusDeviceType(QOMDevice):
                 code = """{{
     .read@b=@s{read},
     .write@b=@s{write}{impl}
-}}""".format (
+}}""".format(
     read = read_func.name,
     write = write_func.name,
     impl = impl
-)
+                )
             )
 
             ops = Type.lookup("MemoryRegionOps").gen_var(
@@ -307,7 +305,7 @@ class SysBusDeviceType(QOMDevice):
     ops = self.gen_Ith_mmio_ops_name(mmioN),
     TYPE_MACRO = self.qtn.type_macro,
     size = size_macro.name
-)
+            )
             s_is_used = True
 
         if self.pio_num > 0:
@@ -348,7 +346,7 @@ class SysBusDeviceType(QOMDevice):
                 code = """{{
     .read@b=@s{read},
     .write@b=@s{write}
-}}""".format (
+}}""".format(
     read = read_func.name,
     write = write_func.name
                 )
@@ -403,8 +401,8 @@ use_as_prototype(
                 body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(opaque);
 """.format(
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
                 )
             )
 
@@ -449,9 +447,7 @@ use_as_prototype(
             for timerN in range(self.timer_num):
                 code += """    timer_del(s->{timerN});
     timer_free(s->{timerN});
-""".format(
-timerN = self.timer_name(timerN)
-                )
+""".format(timerN = self.timer_name(timerN))
 
         self.device_unrealize = Function(
             self.qtn.for_id_name + "_unrealize",
@@ -463,10 +459,10 @@ timerN = self.timer_name(timerN)
             used_types = used_types,
             body = "    {unused}{Struct}@b*s@b=@s{CAST}(dev);\n"
             "{extra_code}".format(
-unused = "" if used_s else "__attribute__((unused))@b",
-Struct = self.state_struct.name,
-CAST = self.type_cast_macro.name,
-extra_code = code
+    unused = "" if used_s else "__attribute__((unused))@b",
+    Struct = self.state_struct.name,
+    CAST = self.type_cast_macro.name,
+    extra_code = code
             )
         )
         self.source.add_type(self.device_unrealize)
