@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from qemu import (
+    POp_AddDesc,
     MachineNode,
     MOp_AddIRQHub,
     MOp_AddIRQLine,
@@ -982,16 +983,13 @@ class MachineReverser(object):
 description for QDT project.
     """
 
-    def __init__(self, watcher, machine, tracker):
+    def __init__(self, watcher, tracker):
         """
     :type watcher: MachineWatcher
-    :type machine: MachineNode
     :type tracker: GUIProjectHistoryTracker
         """
         self.watcher = watcher
-        self.machine = machine
         self.tracker = tracker
-        self.proxy = tracker.get_machine_proxy(machine)
 
         # auto assign event handlers
         for name, ref in getmembers(type(self)):
@@ -1011,6 +1009,18 @@ description for QDT project.
     def _on_runtime_set(self, rt):
         self.rt = rt
         self.target = rt.target
+
+    def _on_machine_created(self, m):
+        tracker = self.tracker
+        tracker.stage(POp_AddDesc, "MachineNode",
+            tracker.p.next_serial_number(),
+            name = m.type.name,
+            directory = ""
+        )
+        tracker.commit()
+
+        self.machine = machine = tracker.p.find1(name = m.type.name)
+        self.proxy = tracker.get_machine_proxy(machine)
 
     def _on_device_creating(self, inst):
         _id = self.__id()
@@ -1185,7 +1195,7 @@ class QArgumentParser(ArgumentParser):
 class QEmuWatcherGUI(GUITk):
     "Showing runtime state of machine."
 
-    def __init__(self, pht, mach_desc, runtime):
+    def __init__(self, pht, runtime):
         GUITk.__init__(self, wait_msec = 1)
 
         self.title(_("QEmu Watcher"))
@@ -1195,14 +1205,6 @@ class QEmuWatcherGUI(GUITk):
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
-
-        mdsw = MachineDescriptionSettingsWidget(mach_desc, self)
-        mdsw.grid(row = 0, column = 0, sticky = "NESW")
-        mdsw.mw.mdw.var_physical_layout.set(False)
-        self.mdsw = mdsw
-
-        # magic with layouts
-        pht.p.add_layout(mach_desc.name, mdsw.gen_layout()).widget = mdsw
 
         self.task_manager.enqueue(self.co_rsp_poller())
 
@@ -1226,6 +1228,29 @@ class QEmuWatcherGUI(GUITk):
             command = self._on_save,
             accelerator = hk.get_keycode_string(self._on_save)
         )
+
+        pht.watch_changed(self._on_changed)
+
+    def _on_changed(self, op):
+        if not isinstance(op, POp_AddDesc):
+            return
+
+        for d in self.pht.p.descriptions:
+            if isinstance(d, MachineNode):
+                break
+        else:
+            return
+
+        mdsw = MachineDescriptionSettingsWidget(d, self)
+        mdsw.grid(row = 0, column = 0, sticky = "NESW")
+        mdsw.mw.mdw.var_physical_layout.set(False)
+        self.mdsw = mdsw
+
+        # magic with layouts
+        self.pht.p.add_layout(d.name, mdsw.gen_layout()).widget = mdsw
+
+        # only one machine is supported
+        self.pht.unwatch_changed(self._on_changed)
 
     def _on_save(self):
         fname = asksaveas(self,
@@ -1340,13 +1365,10 @@ def main():
         interrupt = True
     )
 
-    mach_desc = MachineNode("runtime-machine", "")
-    proj = GUIProject(
-        descriptions = [mach_desc]
-    )
+    proj = GUIProject()
     pht = GUIProjectHistoryTracker(proj, proj.history)
 
-    MachineReverser(mw, mach_desc, pht)
+    MachineReverser(mw, pht)
 
     # auto select free port for gdb-server
     for port in range(4321, 1 << 16):
@@ -1379,7 +1401,7 @@ def main():
     qomtr.init_runtime(rt)
     mw.init_runtime(rt)
 
-    tk = QEmuWatcherGUI(pht, mach_desc, rt)
+    tk = QEmuWatcherGUI(pht, rt)
 
     tk.geometry("1024x1024")
     tk.mainloop()
