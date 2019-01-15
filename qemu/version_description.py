@@ -516,8 +516,8 @@ class QemuVersionDescription(object):
         print("Qemu version is {}".format(self.qemu_version))
 
         self.include_paths = [
-            join(self.src_path, 'include'),
-            join(self.src_path, 'tcg')
+            join(self.src_path, "include"),
+            join(self.src_path, "tcg")
         ]
 
         self.qvc = None
