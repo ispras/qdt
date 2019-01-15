@@ -98,7 +98,7 @@ def qtn_char(c):
     # ["A", "Z"] middle1 ["a"; "z"]
     if "Z" < c:
         # middle1 ["a"; "z"]
-        return "A" <= c
+        return "a" <= c
     # ["A", "Z"]
     return True
 
