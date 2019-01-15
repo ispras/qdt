@@ -36,16 +36,16 @@ class DOp_SetAttr(DescriptionOperation):
             (self.sn, str(self.attr))
         ]
 
-    def __backup__(self):
+    def _backup(self):
         self.old_val = dcp(getattr(self.find_desc(), self.attr))
 
-    def __do__(self):
+    def _do(self):
         setattr(self.find_desc(), self.attr, dcp(self.val))
 
-    def __undo__(self):
+    def _undo(self):
         setattr(self.find_desc(), self.attr, dcp(self.old_val))
 
-    def __description__(self):
+    def _description(self):
         attr = self.attr
         if attr == "name":
             name = self.old_val
@@ -75,13 +75,13 @@ class SetDescriptionReferenceAttribute(DescriptionOperation):
             (self.sn, str(self.attr))
         ]
 
-    def __backup__(self):
+    def _backup(self):
         self.old_val = getattr(self.find_desc(), self.attr)
 
-    def __do__(self):
+    def _do(self):
         setattr(self.find_desc(), self.attr, self.val)
 
-    def __undo__(self):
+    def _undo(self):
         setattr(self.find_desc(), self.attr, self.old_val)
 
 def get_pci_id_kind_str(pci_id):
@@ -101,7 +101,7 @@ def gen_pci_id_str(pci_id):
 
 class DOp_SetPCIIdAttr(SetDescriptionReferenceAttribute):
 
-    def __description__(self):
+    def _description(self):
         name = self.find_desc().name
         if self.old_val is None:
             return _("Set '%s' of '%s' to %s") % (

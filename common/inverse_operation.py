@@ -90,6 +90,16 @@ Life cycle:
 """
 
 class InverseOperation(object):
+    """ Describes a deterministic operation that can be done on a context and
+consequently undone resulting in the same context state. An operation should
+be as basic as possible. A complex "operation" should be presented by a
+`sequence` of basic operations. An operation must only contain information
+required to perform it. It must be context free and independent. Before an
+operation is done it is given a chance to get a backup required for consequent
+undoing. The backup must be context independent too. It's possible because of
+determinism.
+    """
+
     def __init__(self, previous = None, sequence = None):
         self.prev = previous
         self.next = []
@@ -113,13 +123,13 @@ class InverseOperation(object):
             if op.done:
                 yield op
 
-    def __backup__(self):
+    def __backup__(self, context):
         raise UnimplementedInverseOperation()
 
-    def __do__(self):
+    def __do__(self, context):
         raise UnimplementedInverseOperation()
 
-    def __undo__(self):
+    def __undo__(self, context):
         raise UnimplementedInverseOperation()
 
     def __read_set__(self):
@@ -131,7 +141,7 @@ class InverseOperation(object):
     def writes(self, entry):
         return set_touches_entry(self.__write_set__(), entry)
 
-    def __description__(self):
+    def __description__(self, context):
         return _("Reversible operation with unimplemented description \
 (class %s).") % type(self).__name__
 
@@ -143,13 +153,13 @@ class InitialOperation(InverseOperation):
         InverseOperation.__init__(self)
         self.done = True
 
-    def __backup__(self):
+    def __backup__(self, _):
         raise InitialOperationCall()
 
-    def __do__(self):
+    def __do__(self, _):
         raise InitialOperationCall()
 
-    def __undo__(self):
+    def __undo__(self, _):
         raise InitialOperationCall()
 
     def __read_set__(self):
@@ -158,7 +168,7 @@ class InitialOperation(InverseOperation):
     def __write_set__(self):
         return []
 
-    def __description__(self):
+    def __description__(self, __):
         return _("The beginning of known history.")
 
 class History(object):
@@ -204,7 +214,8 @@ It's like a transaction in a data base management system.
     "changed"
 )
 class HistoryTracker(object):
-    def __init__(self, history):
+    def __init__(self, context, history):
+        self.ctx = context
         self.history = history
         self.pos = history.leafs[0]
         self.delayed = []
@@ -232,8 +243,9 @@ class HistoryTracker(object):
                 break
 
         if queue:
+            ctx = self.ctx
             for p in queue:
-                p.__undo__()
+                p.__undo__(ctx)
                 p.done = False
 
                 self.__notify_changed(p)
@@ -312,14 +324,16 @@ class HistoryTracker(object):
         if including is None:
             including = self.pos
 
+        ctx = self.ctx
+
         for p in reversed(tuple(including.skipped())):
             # TODO:  check read/write sets before
             # some operations could be skipped if not required
             if not p.backed_up:
-                p.__backup__()
+                p.__backup__(ctx)
                 p.backed_up = True
 
-            p.__do__()
+            p.__do__(ctx)
             p.done = True
 
             self.__notify_changed(p)

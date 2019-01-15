@@ -136,17 +136,17 @@ class MWOp_MoveNode(MachineWidgetNodeOperation):
 
         self.tgt = target_x, target_y
 
-    def __backup__(self):
+    def _backup(self):
         w = self.get_widget_descriptor()
 
         self.orig = w.x, w.y
 
-    def __do__(self):
+    def _do(self):
         w = self.get_widget_descriptor()
 
         w.x, w.y = self.tgt
 
-    def __undo__(self):
+    def _undo(self):
         w = self.get_widget_descriptor()
 
         w.x, w.y = self.orig
