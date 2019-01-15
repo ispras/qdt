@@ -22,8 +22,7 @@ import qdt
 
 def arg_type_directory(string):
     if not isdir(string):
-        raise ArgumentTypeError(
-            "{} is not directory".format(string))
+        raise ArgumentTypeError(string + " is not directory")
     return string
 
 def main():
