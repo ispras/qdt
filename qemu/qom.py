@@ -179,7 +179,7 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     init_code["_field"] = init_code["_f"]
 
     # _conf is name of argument of macro DEFINE_NIC_PROPERTIES that
-    # corresponds to structure filed name
+    # corresponds to structure field name
     init_code["_conf"] = init_code["_f"]
 
     if default_default is not None:
