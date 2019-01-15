@@ -174,8 +174,8 @@ corresponding vendor is given" % attr
             name = self.qtn.for_macros, 
             args = ["obj"],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
-    TYPE_MACRO = self.qtn.type_macro,
-    Struct = self.struct_name
+                TYPE_MACRO = self.qtn.type_macro,
+                Struct = self.struct_name
             )
         )
         self.header.add_type(self.type_cast_macro)
@@ -332,7 +332,7 @@ corresponding vendor is given" % attr
                 code = """{{
     .read = {read},
     .write = {write}
-}}""".format (
+}}""".format(
     read = read_func.name,
     write = write_func.name
                 )
@@ -429,10 +429,10 @@ corresponding vendor is given" % attr
     {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if used_s else "__attribute__((unused))@b",
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        extra_code = code
+    unused = "" if used_s else "__attribute__((unused))@b",
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+    extra_code = code
             )
         )
         self.source.add_type(self.device_exit)
@@ -462,7 +462,8 @@ corresponding vendor is given" % attr
     pc->revision@b@b{pad}=@s{revision};
     dc->vmsd@b@b@b@b@b@b{pad}=@s&vmstate_{dev};
     dc->props@b@b@b@b@b{pad}=@s{dev}_properties;
-""".format(dev = self.qtn.for_id_name,
+""".format(
+    dev = self.qtn.for_id_name,
     revision = self.revision,
     vendor_macro = self.vendor_macro.name,
     device_macro = self.device_macro.name,
