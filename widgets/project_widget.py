@@ -389,7 +389,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             if op.attr == "name":
                 # Update tab heading
                 prev_name = op.old_val if op.done else op.val
-                new_name = op.find_desc().name
+                new_name = self.p.find1(__sn__ = op.sn).name
 
                 for tab_id in self.nb_descriptions.tabs():
                     if self.nb_descriptions.tab(tab_id)["text"] == prev_name:
