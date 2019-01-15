@@ -76,10 +76,16 @@ from six.moves.tkinter_messagebox import (
 from traceback import (
     print_exc
 )
+from threading import (
+    Thread
+)
 # use ours pyrsp
 with pypath("pyrsp"):
-    from pyrsp.targets import (
+    from pyrsp.rsp import (
         AMD64
+    )
+    from pyrsp.utils import (
+        wait_for_tcp_port
     )
 
 class RQOMTree(object):
@@ -305,7 +311,7 @@ the QOM tree by fetching relevant data.
         "vl.c:3075"
 
         if self.interrupt:
-            self.rt.target.interrupt()
+            self.rt.target.exit = True
 
     def to_file(self, dot_file_name):
         "Writes QOM tree to Graphviz file."
@@ -607,7 +613,7 @@ Notifications are issued for many machine composition events.
 
         self.remove_breakpoints()
         if self.interrupt:
-            self.rt.target.interrupt()
+            self.rt.target.exit = True
 
         if not self.verbose:
             return
@@ -1050,12 +1056,12 @@ description for QDT project.
         ii = _type.instance_init
         if ii:
             for addr in ii.epilogues:
-                rt.add_br(target.get_hex_str(addr), cc)
+                rt.add_br(target.reg_fmt % addr, cc)
 
         realize = _type.realize
         if realize:
             for addr in realize.epilogues:
-                rt.add_br(target.get_hex_str(addr), cc)
+                rt.add_br(target.reg_fmt % addr, cc)
 
     def _on_bus_created(self, bus):
         _id = self.__id()
@@ -1206,6 +1212,7 @@ class QEmuWatcherGUI(GUITk):
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
 
+        self._killed = False
         self.task_manager.enqueue(self.co_rsp_poller())
 
         self.hk = hk = HotKey(self)
@@ -1228,6 +1235,8 @@ class QEmuWatcherGUI(GUITk):
             command = self._on_save,
             accelerator = hk.get_keycode_string(self._on_save)
         )
+        self._exiting = False
+        self.protocol("WM_DELETE_WINDOW", self._on_wm_delete_window)
 
         pht.watch_changed(self._on_changed)
 
@@ -1297,24 +1306,37 @@ class QEmuWatcherGUI(GUITk):
         rt = self.rt
         target = rt.target
 
-        target.run_no_block()
-
-        target.finished = False
-        target._interrupt = False
-        while not target._interrupt:
-            yield
+        def run():
             try:
-                target.poll()
+                target.run(setpc = False)
             except:
                 print_exc()
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
-                break
 
-        yield
+            try:
+                target.send("k")
+            except:
+                pass
 
-        if not target.finished:
-            target.finished = True
-            target.rsp.finish()
+        t = Thread(target = run)
+        t.start()
+
+        while t.isAlive():
+            yield False
+
+        self._killed = True
+
+        if self._exiting:
+            self.destroy()
+
+    def _on_wm_delete_window(self):
+        if self._killed:
+            self.destroy()
+            return
+
+        # co_rsp_poller will destroy the window after RSP thread ended.
+        self._exiting = True
+        self.rt.target.exit = True
 
 
 def main():
@@ -1392,22 +1414,41 @@ def main():
 
     qemu_proc.start()
 
-    qemu_debugger = AMD64(qemu_debug_addr,
-        host = True
-    )
+    if not wait_for_tcp_port(port):
+        raise RuntimeError("gdbserver does not listen %u" % port)
+
+    qemu_debugger = AMD64(str(port), noack = True)
 
     rt = Runtime(qemu_debugger, dic)
 
     qomtr.init_runtime(rt)
     mw.init_runtime(rt)
 
-    tk = QEmuWatcherGUI(pht, rt)
+    # Because pyrsp (with machine reconstruction suite) works in a separate
+    # thread, tracker's "changed" notifications are racing with GUI. So, GUI
+    # must not watch those notifications. To maintain GUI consistency
+    # other project and tracker are created with same history. The GUI is
+    # watching this second tracker. A special coroutine working in GUI thread
+    # will poll first (master) tracker position and adjust second (slave)
+    # tracker updating the GUI without races.
+    proj2 = GUIProject()
+    # different context (project) but same history
+    slave_pht = GUIProjectHistoryTracker(proj2, proj.history)
+
+    def co_syncronizer():
+        while True:
+            if slave_pht.pos != pht.pos:
+                yield True
+                slave_pht.do()
+            else:
+                yield False
+
+    tk = QEmuWatcherGUI(slave_pht, rt)
+
+    tk.task_manager.enqueue(co_syncronizer())
 
     tk.geometry("1024x1024")
     tk.mainloop()
-
-    if not qemu_debugger.finished:
-        qemu_debugger.rsp.finish()
 
     qomtr.to_file("qom-by-q.i.dot")
 
