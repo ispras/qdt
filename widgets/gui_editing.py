@@ -22,7 +22,7 @@ from .gui_project import (
 class GUIProjectOperation(ProjectOperation):
     def __init__(self, project, *args, **kw):
         if not isinstance(project, GUIProject):
-            raise Exception("The 'project' argument is not a GUI project.")
+            raise ValueError("The 'project' argument is not a GUI project.")
 
         ProjectOperation.__init__(self, project, *args, **kw)
 
