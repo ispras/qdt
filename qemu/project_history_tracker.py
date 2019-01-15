@@ -299,9 +299,8 @@ class MachineProxyTracker(object):
         return getattr(self.pht, name)
 
 class ProjectHistoryTracker(HistoryTracker):
-    def __init__(self, project, *args, **kw):
+    def __init__(self, *args, **kw):
         super(ProjectHistoryTracker, self).__init__(*args, **kw)
-        self.p = project
 
         ops = self.get_branch()
         last_seq = ops[-1].seq
@@ -315,13 +314,16 @@ class ProjectHistoryTracker(HistoryTracker):
 
         self.new_sequence = True
 
+    @property
+    def p(self):
+        return self.ctx
+
     def stage(self, op_class, *op_args, **op_kw):
         self.new_sequence = True
         op_kw["sequence"] = self.current_sequence
 
         return super(ProjectHistoryTracker, self).stage(
-            op_class,
-            *(op_args + (self.p,)), **op_kw
+            op_class, *op_args, **op_kw
         )
 
     # explicitly attach consequent staged operation to new sequence

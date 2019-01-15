@@ -36,10 +36,34 @@ from source import (
 )
 
 class ProjectOperation(InverseOperation):
-    def __init__(self, project, *args, **kw):
-        InverseOperation.__init__(self, *args, **kw)
 
+    # Those wrappers emulates old InverseOperation interface which has not been
+    # context free. Previously, a context reference (project) has been passed
+    # to the __init__ of `ProjectOperation` and saved in `p` attribute.
+    # So, old style methods are expecting this attribute to be in `self`.
+    # Now, context is passed to each method while an operation instance is
+    # context free. But, `p` attribute is set by those wrappers to hide the
+    # difference from old-style method implementation.
+    # TODO: update all old-style implementations
+
+    def __backup__(self, project):
         self.p = project
+        self._backup()
+
+    def __do__(self, project):
+        self.p = project
+        self._do()
+
+    def __undo__(self, project):
+        self.p = project
+        self._undo()
+
+    def __description__(self, project):
+        if hasattr(self, "_description"):
+            self.p = project
+            return self._description()
+        else:
+            return super(ProjectOperation, self).__description__(project)
 
     """
     The InverseOperation defines no read or write sets. Instead it raises an
@@ -330,14 +354,14 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
 
         self.sn = serial_number
 
-    def __backup__(self):
+    def _backup(self):
         pass
 
-    def __do__(self):
+    def _do(self):
         desc = self.new()
         self.p.add_description(desc, with_sn = self.sn)
 
-    def __undo__(self):
+    def _undo(self):
         desc = next(self.p.find(__sn__ = self.sn))
 
         """ It is unexpected way to type independently check for the description
@@ -362,7 +386,7 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
             else _("an auto generated code")
         )
 
-    def __description__(self):
+    def _description(self):
         return _("'%s' QOM object addition (%s).") % (
             self.get_arg("name"),
             self.get_kind_str()
@@ -372,14 +396,14 @@ class POp_DelDesc(POp_AddDesc):
     def __init__(self, serial_number, *args, **kw):
         POp_AddDesc.__init__(self, "QOMDescription", serial_number, *args, **kw)
 
-    def __backup__(self):
+    def _backup(self):
         desc = next(self.p.find(__sn__ = self.sn))
         self.set_with_origin(desc)
 
-    __do__ = POp_AddDesc.__undo__
-    __undo__ = POp_AddDesc.__do__
+    _do = POp_AddDesc._undo
+    _undo = POp_AddDesc._do
 
-    def __description__(self):
+    def _description(self):
         return _("'%s' QOM object deletion (%s).") % (
             self.get_arg("name"),
             self.get_kind_str()

@@ -19,16 +19,15 @@ from six.moves.tkinter import (
 )
 
 class DnDOperation(InverseOperation):
-    def __init__(self, cnv, id, *args, **kwargs):
+    def __init__(self, id, pos, *args, **kwargs):
         InverseOperation.__init__(self, *args, **kwargs)
-        self.cnv = cnv
         self.id = id
 
-        self.orig_pos = self.cnv.canvas.coords(self.id)[:2]
+        self.orig_pos = pos
         self.target_pos = None
 
-    def __backup__(self):
-        self.target_pos = self.cnv.canvas.coords(self.id)[:2]
+    def __backup__(self, cnv):
+        self.target_pos = cnv.canvas.coords(self.id)[:2]
 
     def __write_set__(self):
         return [self.id]
@@ -36,21 +35,21 @@ class DnDOperation(InverseOperation):
     def __read_set__(self):
         return []
 
-    def apply(self, pos):
-        points = self.cnv.canvas.coords(self.id)
+    def apply(self, cnv, pos):
+        points = cnv.canvas.coords(self.id)
         anchor = points[:2]
 
         for idx, p in enumerate(points):
             offset = p - anchor[idx % 2]
             points[idx] = offset + pos[idx % 2]
 
-        self.cnv.canvas.coords(*([self.id] + points))
+        cnv.canvas.coords(*([self.id] + points))
 
-    def __do__(self):
-        self.apply(self.target_pos)
+    def __do__(self, cnv):
+        self.apply(cnv, self.target_pos)
 
-    def __undo__(self):
-        self.apply(self.orig_pos)
+    def __undo__(self, cnv):
+        self.apply(cnv, self.orig_pos)
 
 class HistCanvasDnD(CanvasDnD):
     def __init__(self, *args, **kwargs):
@@ -63,7 +62,7 @@ class HistCanvasDnD(CanvasDnD):
     def dnd_down(self, event):
         dragged = self.canvas.find_withtag(CURRENT)[0]
 
-        self.ht.stage(DnDOperation, self,  dragged)
+        self.ht.stage(DnDOperation, dragged, self.canvas.coords(dragged)[:2])
 
     def dnd_up(self, event):
         self.ht.commit()
@@ -122,9 +121,12 @@ def main():
     history = History()
 
     global tracker
-    tracker = HistoryTracker(history)
+    tracker = HistoryTracker(None, history)
 
     cnv = HistCanvasDnD(root, history_tracker = tracker)
+
+    tracker.ctx = cnv
+
     cnv.grid(row = 0, column = 0, sticky = "NEWS")
 
     cnv.canvas.create_rectangle(
