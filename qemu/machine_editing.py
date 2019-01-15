@@ -766,9 +766,6 @@ class MOp_SetIRQAttr(MachineNodeSetAttributeOperation):
 
 class MOp_SetIRQEndPoint(MachineNodeSetLinkAttributeOperation):
     def __description__(self):
-        mach = self.find_desc()
-        dev = mach.id2node[self.node_id]
-
         return _("Replace %s '%s' of IRQ line %d with value '%s'.\
 ") % (
             _("source end-point") if "src" in self.attr \
