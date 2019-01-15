@@ -390,8 +390,7 @@ class SysBusDeviceType(QOMDevice):
 """ % self.get_Ith_irq_name(irqN)
 
         if self.in_irq_num > 0:
-            self.irq_handler = Type.lookup("qemu_irq_handler").\
-use_as_prototype(
+            self.irq_handler = Type["qemu_irq_handler"].use_as_prototype(
                 name = self.qtn.for_id_name + "_irq_handler",
                 static = True,
                 used_types = [
@@ -457,8 +456,8 @@ use_as_prototype(
             ],
             static = True,
             used_types = used_types,
-            body = "    {unused}{Struct}@b*s@b=@s{CAST}(dev);\n"
-            "{extra_code}".format(
+            body = """    {unused}{Struct}@b*s@b=@s{CAST}(dev);
+{extra_code}""".format(
     unused = "" if used_s else "__attribute__((unused))@b",
     Struct = self.state_struct.name,
     CAST = self.type_cast_macro.name,
