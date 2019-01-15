@@ -448,6 +448,7 @@ class RQInstance(object):
 
 
 @notifier(
+    "machine_created", # RQInstance
     "device_creating", # RQInstance
     "device_created", # RQInstance
     "bus_created", # RQInstance
@@ -565,6 +566,8 @@ Notifications are issued for many machine composition events.
         self.machine = inst = self.account_instance(machine_obj)
 
         desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
+
+        self.__notify_machine_created(inst)
 
         if not self.verbose:
             return
