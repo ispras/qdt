@@ -82,6 +82,9 @@ already in another project.")
     def find(self, **kw):
         return co_find_eq(self.descriptions, **kw)
 
+    def find1(self, **kw):
+        return next(self.find(**kw))
+
     """ Backward compatibility wrapper for co_gen_all """
     def gen_all(self, *args, **kw):
         callco(self.co_gen_all(*args, **kw))
