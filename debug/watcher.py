@@ -84,7 +84,7 @@ Leading spaces are ignored.
         target = rt.target
 
         for addr, cb in self.breakpoints:
-            addr_str = target.get_hex_str(addr)
+            addr_str = target.reg_fmt % addr
 
             if v:
                 print("br 0x" + addr_str + ", handler = " + cb.__name__)
@@ -101,5 +101,5 @@ Leading spaces are ignored.
         quiet = not self.verbose
 
         for addr, cb in self.breakpoints:
-            addr_str = target.get_hex_str(addr)
+            addr_str = target.reg_fmt % addr
             rt.remove_br(addr_str, cb, quiet = quiet)
