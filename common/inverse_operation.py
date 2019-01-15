@@ -70,17 +70,15 @@ http://legacy.python.org/workshops/1997-10/proceedings/zukowski.html
 Life cycle:
                                    ___---> __description__
         / after first call \      /                ^
-        \ to __do__ only]  / -->(!)                |
+        \ to __do__ only   / -->(!)                |
                                  |                 |   / all referenced   \
-                                 |  done = True    |   | objects should   |
-              backed_up = True   |   |             |   | be in same state |
-                          |      |   |            (!)<-| as during first  |
+                                 |                 |   | objects should   |
+              backed_up = True   |                 |   | be in same state |
+                          |      |                (!)<-| as during first  |
  __init__ --> __backup__ --> __do__ --> __undo__   |   | call to __do__   |
            \                               .       |   | (use r/w sets    |
  backed_up = False             ^           |-------'   | to control this, |
-      done = False             `-----------'           \ for instance)]   /
-                                     \
-                                    done = False
+                               `-----------'           \ for instance)]   /
 
 "__init__" is called same time the operation is created during "stage"
 (by Python).
@@ -105,23 +103,12 @@ determinism.
         self.next = []
         self.seq = sequence
         self.backed_up = False
-        self.done = False
 
     def backlog(self):
         cur = self
         while cur is not None:
             yield cur
             cur = cur.prev
-
-    def skipped(self):
-        for op in self.backlog():
-            if not op.done:
-                yield op
-
-    def committed(self):
-        for op in self.backlog():
-            if op.done:
-                yield op
 
     def __backup__(self, context):
         raise UnimplementedInverseOperation()
@@ -149,9 +136,6 @@ class InitialOperationCall(TypeError):
     pass
 
 class InitialOperation(InverseOperation):
-    def __init__(self):
-        InverseOperation.__init__(self)
-        self.done = True
 
     def __backup__(self, _):
         raise InitialOperationCall()
@@ -219,6 +203,8 @@ class HistoryTracker(object):
         self.history = history
         self.pos = history.leafs[0]
         self.delayed = []
+        # root (initial) operation is always done
+        self.done = set([history.root])
 
     def begin(self):
         "Begins an operation sequence that will be applied during next commit."
@@ -227,10 +213,11 @@ class HistoryTracker(object):
         return seq
 
     def undo(self, including = None):
+        done = self.done
         queue = []
 
         while True:
-            if self.pos.done:
+            if self.pos in done:
                 queue.append(self.pos)
 
             cur = self.pos
@@ -246,7 +233,7 @@ class HistoryTracker(object):
             ctx = self.ctx
             for p in queue:
                 p.__undo__(ctx)
-                p.done = False
+                done.remove(p)
 
                 self.__notify_changed(p)
 
@@ -317,6 +304,18 @@ class HistoryTracker(object):
 
         return op
 
+    def skipped(self, last):
+        done = self.done
+        for op in last.backlog():
+            if op not in done:
+                yield op
+
+    def committed(self, last):
+        done = self.done
+        for op in last.backlog():
+            if op in done:
+                yield op
+
     def get_branch(self):
         return list(reversed(tuple(self.pos.backlog())))
 
@@ -325,8 +324,9 @@ class HistoryTracker(object):
             including = self.pos
 
         ctx = self.ctx
+        done = self.done
 
-        for p in reversed(tuple(including.skipped())):
+        for p in reversed(tuple(self.skipped(including))):
             # TODO:  check read/write sets before
             # some operations could be skipped if not required
             if not p.backed_up:
@@ -334,7 +334,7 @@ class HistoryTracker(object):
                 p.backed_up = True
 
             p.__do__(ctx)
-            p.done = True
+            done.add(p)
 
             self.__notify_changed(p)
 
