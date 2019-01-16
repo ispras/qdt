@@ -73,7 +73,7 @@ if __name__ == "__main__":
                 )
             ]
         )(
-            SwitchCase((CINT("0b010"), CINT("0b110")))(
+            SwitchCase(OpCaseRange(CINT("0b010"), CINT("0b110")))(
                 OpAssign(_i, 456),
             ),
             SwitchCase("default")(
