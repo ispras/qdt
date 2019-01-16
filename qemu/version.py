@@ -808,8 +808,8 @@ qemu_heuristic_db = {
         # This commit moves target-* CPU file into a target/ folder
         # So target-xxx/ becomes target/xxx/ instead.
         QEMUVersionParameterDescription("target folder",
-        new_value = 'target' + sep,
-        old_value = 'target-'
+            new_value = "target" + sep,
+            old_value = "target-"
         )
     ],
     u'0e6aac87fd0f5db2be57c36c03d67388577208a7' : [
