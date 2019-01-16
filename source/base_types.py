@@ -82,14 +82,14 @@ def add_base_types():
         Function("memcpy")
     ])
 
-    try:
-        h = Header.lookup("byteswap.h")
-    except:
-        h = Header("byteswap.h", is_global = True)
-
     # If "bswap_64", "bswap_32" and "bswap_16" are not macros or do not exists
     # then they must be added explicitly.
     if not Type.exists("bswap_64"):
+        try:
+            h = Header["byteswap.h"]
+        except:
+            h = Header("byteswap.h", is_global = True)
+
         h.add_types([
             Function("bswap_64"),
             Function("bswap_32"),
