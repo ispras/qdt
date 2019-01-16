@@ -28,6 +28,8 @@ __all__ = [
                   , "OpInc"
                   , "OpPostDec"
                   , "OpPostInc"
+                  , "OpPreDec"
+                  , "OpPreInc"
                   , "OpDeref"
                   , "OpNot"
                   , "OpCast"
@@ -637,6 +639,18 @@ OpPostDec = OpDec
 OpPostInc = OpInc
 
 
+class OpPreDec(UnaryOperator):
+
+    def __init__(self, var):
+        super(OpPreDec, self).__init__("--", var, suffix_op = False)
+
+
+class OpPreInc(UnaryOperator):
+
+    def __init__(self, var):
+        super(OpPreInc, self).__init__("++", var, suffix_op = False)
+
+
 class OpCast(UnaryOperator):
 
     __type_references__ = ("children", "type")
@@ -817,6 +831,8 @@ op_priority = {
     # aliases has no effect.
     OpPostDec:    1,
     OpPostInc:    1,
+    OpPreDec:     1,
+    OpPreInc:     1,
     OpDeref:      2,
     OpAddr:       2,
     OpNot:        2,
