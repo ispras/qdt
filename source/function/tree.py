@@ -51,6 +51,7 @@ __all__ = [
                   , "OpLE"
                   , "OpGreater"
                   , "OpLower"
+                  , "ExtCaseRange"
 ]
 
 from ..c_const import (
@@ -794,11 +795,18 @@ class OpLower(BinaryOperator):
         super(OpLower, self).__init__("<", arg1, arg2, parenthesis)
 
 
+class ExtCaseRange(BinaryOperator):
+
+    def __init__(self, arg1, arg2, parenthesis = False):
+        super(ExtCaseRange, self).__init__("...", arg1, arg2, parenthesis)
+
+
 op_priority = {
     OpIndex:      1,
     OpSDeref:     1,
     OpDec:        1,
     OpInc:        1,
+    ExtCaseRange: 1,
     OpDeref:      2,
     OpAddr:       2,
     OpNot:        2,
