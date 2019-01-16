@@ -1407,6 +1407,22 @@ class TypesCollector(ObjectVisitor):
             raise BreakVisiting()
 
 
+class NeedForwardDeclarationChecker(ObjectVisitor):
+
+    def __init__(self, type_object, *args, **kw):
+        kw["field_name"] = "__type_references__"
+        ObjectVisitor.__init__(self, type_object, *args, **kw)
+
+        self.need = False
+
+    def on_visit(self):
+        if (    isinstance(self.cur, TypeReference)
+            and self.cur.type  == self.path[0][0]
+        ):
+            self.need = True
+            BreakVisiting()
+
+
 class Initializer(object):
 
     # code is string for variables and dictionary for macros
