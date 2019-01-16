@@ -142,8 +142,7 @@ already in another project.")
         if "header" in dev_t.__dict__:
             yield True
 
-            include_path = join(src, 'include')
-            full_header_path = join(include_path, dev_t.header.path)
+            full_header_path = join(src, dev_t.header.path)
 
             # Create intermediate directories
             header_dir = split(full_header_path)[0]

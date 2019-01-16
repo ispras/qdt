@@ -1023,7 +1023,9 @@ class QOMDevice(QOMType):
         self.block_num = block_num
 
         # Define header file
-        header_path = join("hw", directory, self.qtn.for_header_name + ".h")
+        header_path = join("include", "hw", directory,
+            self.qtn.for_header_name + ".h"
+        )
         try:
             self.header = Header.lookup(header_path)
         except Exception:
