@@ -935,9 +935,19 @@ class Structure(Type):
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureTypedefDeclarationBegin(self, indent)
+        nfdc = NeedForwardDeclarationChecker(self)
+        nfdc.visit()
 
-        struct_end = StructureTypedefDeclarationEnd(self, fields_indent, indent, True)
+        if nfdc.need:
+            struct_begin = StructureForwardDeclarationBegin(self, indent)
+            struct_end = StructureForwardDeclarationEnd(self, fields_indent,
+                indent, True
+            )
+        else:
+            struct_begin = StructureTypedefDeclarationBegin(self, indent)
+            struct_end = StructureTypedefDeclarationEnd(self, fields_indent,
+                indent, True
+            )
 
         """
         References map of structure definition chunks:
