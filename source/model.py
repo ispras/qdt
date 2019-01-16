@@ -24,7 +24,7 @@ __all__ = [
       , "VariableDeclaration"
       , "VariableDefinition"
       , "StructureTypedefDeclarationBegin"
-      , "StructureDeclaration"
+      , "StructureTypedefDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "UsageTerminator"
@@ -935,7 +935,7 @@ class Structure(Type):
 
         struct_begin = StructureTypedefDeclarationBegin(self, indent)
 
-        struct_end = StructureDeclaration(self, fields_indent, indent, True)
+        struct_end = StructureTypedefDeclarationEnd(self, fields_indent, indent, True)
 
         """
         References map of structure definition chunks:
@@ -1952,12 +1952,12 @@ class StructureTypedefDeclarationBegin(SourceChunk):
         )
 
 
-class StructureDeclaration(SourceChunk):
+class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
     def __init__(self, struct, fields_indent = "    ", indent = "",
                  append_nl = True):
-        super(StructureDeclaration, self).__init__(struct,
+        super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct.name,
             """\
 {indent}}}@b{struct_name};{nl}
