@@ -60,6 +60,15 @@ from git import (
 from six import (
     u
 )
+from tempfile import (
+    mkdtemp
+)
+from shutil import (
+    rmtree
+)
+from subprocess import (
+    Popen
+)
 
 bp_file_name = "build_path_list"
 
@@ -565,18 +574,50 @@ class QemuVersionDescription(object):
         yield True
 
         if not isfile(qvc_path):
-            yield self.co_check_untracked_files()
-
             self.qvc = QemuVersionCache()
+
+            # Check out Qemu source to a temporary directory and analyze it
+            # there. This avoids problems with user changes in main working
+            # directory.
+
+            tmp_work_dir = mkdtemp("qdt-qemu-%s" % self.commit_sha)
+
+            print("Checking out temporary source tree in %s" % tmp_work_dir)
+
+            # Note. Alternatively, checking out can be performed without
+            # cloning. Instead, a magic might be casted on GIT_DIR and
+            # GIT_WORK_TREE environment variables. But, this approach resets
+            # staged files in src_path repository which can be inconvenient
+            # for a user.
+            # Current approach uses "-s" (--shared) option to avoid copying
+            # of history and "-n" (--no-checkout) to avoid redundant checking
+            # out of src_path repo HEAD. Therefore, overhead of cloning is
+            # low enough.
+
+            for cmd in [
+                ["git", "clone", "-n", "-s", self.src_path, "."],
+                ["git", "checkout", "-f", self.commit_sha]
+            ]:
+
+                p = Popen(cmd, cwd = tmp_work_dir)
+
+                while p.returncode is None:
+                    yield False
+                    p.poll()
+
+                if p.returncode:
+                    raise RuntimeError(
+                        "Failed to checkout Qemu source: %s" % p.returncode
+                    )
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
-            for path in self.include_abs_paths:
-                yield Header.co_build_inclusions(path)
+            for path in self.include_paths:
+                yield Header.co_build_inclusions(join(tmp_work_dir, path))
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
-            yield self.co_check_modified_files()
+            rmtree(tmp_work_dir)
 
             yield self.co_gen_device_tree()
 
