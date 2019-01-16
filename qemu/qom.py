@@ -10,6 +10,7 @@ __all__ = [
   , "QOMType"
       , "QOMDevice"
   , "Register"
+      , "MemoryRegister"
 ]
 
 from source import (
@@ -259,7 +260,13 @@ for U in ["", "U"]:
 
         type2vmstate[ctn] = "VMSTATE_" + msfx
 
+
 class Register(object):
+    def __init__(self, name, size):
+        self.name, self.size = name, size
+
+
+class MemoryRegister(Register):
     def __init__(self, size,
         # None or "gap" named registers are not backed by a state field
         name = None,
@@ -272,7 +279,8 @@ class Register(object):
         # corresponds to 0b00...00, all bits can be written without reading.
         warbits = None
     ):
-        self.size, self.name, self.access = size, name, access
+        super(MemoryRegister, self).__init__(name, size)
+        self.access = access
         self.reset = CINT(reset, 16, size)
         self.full_name = full_name
 
