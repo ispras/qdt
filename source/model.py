@@ -892,6 +892,7 @@ class Structure(Type):
         super(Structure, self).__init__(name, incomplete = False)
         self.fields = OrderedDict()
         self.append_fields(fields)
+        self.nested = False
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
@@ -1424,6 +1425,28 @@ class TypesCollector(TypeReferencesVisitor):
         cur = self.cur
         if isinstance(cur, Type):
             self.used_types.add(cur)
+            raise BreakVisiting()
+
+
+class NeedForwardDeclarationChecker(TypeReferencesVisitor):
+    "This visitor checks that the nested type is the same as the root type."
+
+    def __init__(self, variable, root_struct):
+        super(NeedForwardDeclarationChecker, self).__init__(variable)
+
+        self.root_struct = root_struct
+        self.need = False
+
+    def on_visit(self):
+        t = self.cur
+        if (    isinstance(t, Structure)
+            and t.nested
+            and t in self.previous
+        ):
+            raise BreakVisiting()
+
+        if t is self.root_struct:
+            self.need = True
             raise BreakVisiting()
 
 
