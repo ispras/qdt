@@ -698,9 +698,7 @@ def machine_register_2_5(mach):
         name = "machine_init_%s" % mach.qtn.for_id_name,
         body = """\
     type_register(&{type_info});
-""".format(
-    type_info = mach.type_info.name
-        ),
+""".format(type_info = mach.type_info.name),
         static = True,
         used_types = [Type["type_register"]],
         used_globals = [mach.type_info]
