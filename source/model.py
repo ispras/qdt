@@ -25,6 +25,8 @@ __all__ = [
       , "VariableDefinition"
       , "StructureTypedefDeclarationBegin"
       , "StructureTypedefDeclarationEnd"
+      , "StructureForwardDeclarationBegin"
+      , "StructureForwardDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "UsageTerminator"
@@ -1956,6 +1958,21 @@ class StructureTypedefDeclarationBegin(SourceChunk):
         )
 
 
+class StructureForwardDeclarationBegin(SourceChunk):
+
+    def __init__(self, struct, indent):
+        super(StructureForwardDeclarationBegin, self).__init__(struct,
+            "Beginning of structure %s declaration" % struct.name,
+            """\
+{indent}typedef@bstruct@b{struct_name}@b{struct_name};
+struct@b{struct_name}@b{{
+""".format(
+    indent = indent,
+    struct_name = struct.name
+            )
+        )
+
+
 class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
@@ -1968,6 +1985,22 @@ class StructureTypedefDeclarationEnd(SourceChunk):
 """.format(
     indent = indent,
     struct_name = struct.name,
+    nl = "\n" if append_nl else ""
+            )
+        )
+
+
+class StructureForwardDeclarationEnd(SourceChunk):
+    weight = 2
+
+    def __init__(self, struct, fields_indent = "    ", indent = "",
+                 append_nl = True):
+        super(StructureForwardDeclarationEnd, self).__init__(struct,
+            "Ending of structure %s declaration" % struct.name,
+            """\
+{indent}}};{nl}
+""".format(
+    indent = indent,
     nl = "\n" if append_nl else ""
             )
         )
