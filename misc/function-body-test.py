@@ -90,7 +90,7 @@ if __name__ == "__main__":
             Break()
         ),
 
-        LoopFor(None, None, OpInc(_i))(
+        LoopFor(None, None, OpPredInc(_i))(
             Break()
         ),
 
