@@ -24,8 +24,8 @@ __all__ = [
               , "OpSDeref"
               # UnaryOperator
                   , "OpAddr"
-                  , "OpDec"
-                  , "OpInc"
+                  , "OpPostDec"
+                  , "OpPostInc"
                   , "OpDeref"
                   , "OpNot"
                   , "OpCast"
@@ -618,16 +618,16 @@ class UnaryOperator(Operator):
             self.prefix = op_str
 
 
-class OpInc(UnaryOperator):
+class OpPostInc(UnaryOperator):
 
     def __init__(self, var):
-        super(OpInc, self).__init__("++", var, suffix_op = True)
+        super(OpPostInc, self).__init__("++", var, suffix_op = True)
 
 
-class OpDec(UnaryOperator):
+class OpPostDec(UnaryOperator):
 
     def __init__(self, var):
-        super(OpDec, self).__init__("--", var, suffix_op = True)
+        super(OpPostDec, self).__init__("--", var, suffix_op = True)
 
 
 class OpCast(UnaryOperator):
@@ -803,8 +803,8 @@ class OpCaseRange(BinaryOperator):
 op_priority = {
     OpIndex:      1,
     OpSDeref:     1,
-    OpDec:        1,
-    OpInc:        1,
+    OpPostDec:    1,
+    OpPostInc:    1,
     OpCaseRange:  1,
     OpDeref:      2,
     OpAddr:       2,
