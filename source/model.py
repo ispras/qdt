@@ -927,6 +927,8 @@ class Structure(Type):
                 " the structure %s" % (v_name, self.name)
             )
 
+        ForwardDeclarationFixerVisitor(variable, self).visit()
+
         self.fields[v_name] = variable
 
     def append_fields(self, fields):
@@ -944,9 +946,19 @@ class Structure(Type):
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureTypedefDeclarationBegin(self, indent)
+        if not self.fields:
+            return [StructureForwardDeclaration(self, indent)]
 
-        struct_end = StructureTypedefDeclarationEnd(self, fields_indent, indent, True)
+        if self.declaration is None:
+            struct_begin = StructureTypedefDeclarationBegin(self, indent)
+            struct_end = StructureTypedefDeclarationEnd(self, fields_indent,
+                indent, True
+            )
+        else:
+            struct_begin = StructureDeclarationBegin(self, indent)
+            struct_end = StructureDeclarationEnd(self, fields_indent,
+                indent, True
+            )
 
         """
         References map of structure definition chunks:
