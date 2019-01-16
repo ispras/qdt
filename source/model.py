@@ -1411,6 +1411,29 @@ class TypesCollector(ObjectVisitor):
             raise BreakVisiting()
 
 
+class NeedForwardDeclarationChecker(ObjectVisitor):
+    "This visitor checks that the nested type is the same as the root type."
+
+    def __init__(self, type_object, root_struct):
+        super(NeedForwardDeclarationChecker, self).__init__(type_object,
+            field_name = "__type_references__"
+        )
+        self.root_struct = root_struct
+        self.need = False
+
+    def on_visit(self):
+        t = self.cur
+        if (    isinstance(t, Structure)
+            and t.nested
+            and t in [x[0] for x in self.path[:-1]]
+        ):
+            raise BreakVisiting()
+
+        if t == self.root_struct:
+            self.need = True
+            raise BreakVisiting()
+
+
 class Initializer(object):
 
     # code is string for variables and dictionary for macros
