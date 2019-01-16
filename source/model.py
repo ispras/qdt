@@ -23,7 +23,7 @@ __all__ = [
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
-      , "StructureDeclarationBegin"
+      , "StructureTypedefDeclarationBegin"
       , "StructureDeclaration"
       , "FunctionDeclaration"
       , "FunctionDefinition"
@@ -933,7 +933,7 @@ class Structure(Type):
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureDeclarationBegin(self, indent)
+        struct_begin = StructureTypedefDeclarationBegin(self, indent)
 
         struct_end = StructureDeclaration(self, fields_indent, indent, True)
 
@@ -1938,10 +1938,10 @@ class VariableDefinition(SourceChunk):
         )
 
 
-class StructureDeclarationBegin(SourceChunk):
+class StructureTypedefDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
-        super(StructureDeclarationBegin, self).__init__(struct,
+        super(StructureTypedefDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct.name,
             """\
 {indent}typedef@bstruct@b{struct_name}@b{{
