@@ -14,8 +14,19 @@ def add_base_types():
     Type(name = "int", incomplete = False, base = True)
     Type(name = "unsigned", incomplete = False, base = True)
     Type(name = "unsigned int", incomplete = False, base = True)
+    Type(name = "short int", incomplete = False, base = True)
+    Type(name = "unsigned short int", incomplete = False, base = True)
+    Type(name = "long int", incomplete = False, base = True)
+    Type(name = "unsigned long", incomplete = False, base = True)
+    Type(name = "unsigned long int", incomplete = False, base = True)
+    Type(name = "long long int", incomplete = False, base = True)
+    Type(name = "unsigned long long int", incomplete = False, base = True)
     Type(name = "const char", incomplete = False, base = True)
     Type(name = "char", incomplete = False, base = True)
+    Type(name = "signed char", incomplete = False, base = True)
+    Type(name = "unsigned char", incomplete = False, base = True)
+    Type(name = "double", incomplete = False, base = True)
+    Type(name = "long double", incomplete = False, base = True)
 
     try:
         h = Header.lookup("stdint.h")
@@ -33,6 +44,8 @@ def add_base_types():
         , Type(name = "int32_t", incomplete = False, base = False)
         , Type(name = "int16_t", incomplete = False, base = False)
         , Type(name = "int8_t", incomplete = False, base = False)
+        , Type(name = "intmax_t", incomplete = False, base = False)
+        , Type(name = "uintmax_t", incomplete = False, base = False)
     ])
 
     try:
@@ -45,6 +58,7 @@ def add_base_types():
 
     h.add_types([
         Type(name = "size_t", incomplete = False, base = False),
+        Type(name = "ptrdiff_t", incomplete = False, base = False)
     ])
 
     try:
@@ -103,4 +117,14 @@ def add_base_types():
 
     h.add_types([
         Function("abort")
+    ])
+
+    try:
+        h = Header.lookup("wchar.h")
+    except:
+        h = Header("wchar.h", is_global = True)
+
+    h.add_types([
+        Type(name = "wint_t", incomplete = False, base = False),
+        Type(name = "wchar_t", incomplete = False, base = False)
     ])
