@@ -502,16 +502,13 @@ class QemuVersionDescription(object):
 
         # Get SHA
         self.repo = Repo(self.src_path)
-        self.commit_sha = self.repo.head.commit.hexsha
 
-        VERSION_path = join(self.src_path, 'VERSION')
+        head = self.repo.head.commit
 
-        if not  isfile(VERSION_path):
-            raise BadBuildPath("{} does not exists\n".format(VERSION_path))
+        self.commit_sha = head.hexsha
 
-        VERSION_f = open(VERSION_path)
-        self.qemu_version = VERSION_f.readline().rstrip("\n")
-        VERSION_f.close()
+        VERSION = head.tree["VERSION"]
+        self.qemu_version = VERSION.data_stream.read().strip().decode()
 
         print("Qemu version is {}".format(self.qemu_version))
 
