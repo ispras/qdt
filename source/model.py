@@ -893,6 +893,8 @@ class Structure(Type):
         super(Structure, self).__init__(name, incomplete = False)
         self.fields = OrderedDict()
         self.append_fields(fields)
+        self.declaration = None
+        self.definition = None
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
@@ -1015,7 +1017,7 @@ class Structure(Type):
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
 
-    __type_references__ = ["fields"]
+    __type_references__ = ["fields", "declaration"]
 
 
 class Enumeration(Type):
@@ -1436,6 +1438,33 @@ class TypesCollector(TypeReferencesVisitor):
             raise BreakVisiting()
 
 
+class ForwardDeclarationFixerVisitor(TypeReferencesVisitor):
+    "This visitor replaces nested type by declaration of this type."
+
+    def __init__(self, variable, root_struct):
+        super(ForwardDeclarationFixerVisitor, self).__init__(variable)
+
+        self.root_struct = root_struct
+
+    def on_visit(self):
+        t = self.cur
+        if (   t is self.root_struct
+            or isinstance(t, Structure) and t in self.previous
+        ):
+            if t.declaration is not None:
+                decl = t.declaration
+            else:
+                decl = Structure(t.name + ".declaration")
+                t.declaration = decl
+                decl.definition = t
+                if t.definer is not None:
+                    t.definer.add_type(decl)
+
+            self.replace(decl)
+
+            raise BreakVisiting()
+
+
 class Initializer(object):
 
     # code is string for variables and dictionary for macros
@@ -1579,6 +1608,12 @@ class TypeFixerVisitor(TypeReferencesVisitor):
 
             if t.definer is self.source:
                 return
+
+            # Make TypeReference to declaration instead of definition
+            if isinstance(t, Structure) and t.declaration is not None:
+                t = t.declaration
+                if type(t) is TypeReference:
+                    t = t.type
 
             try:
                 tr = self.source.types[t.name]
