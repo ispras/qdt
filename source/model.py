@@ -925,6 +925,9 @@ class Structure(Type):
                 " the structure %s" % (v_name, self.name)
             )
 
+        if NeedForwardDeclarationChecker(variable, self).visit().need:
+            self.nested = True
+
         self.fields[v_name] = variable
 
     def append_fields(self, fields):
@@ -942,9 +945,16 @@ class Structure(Type):
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureTypedefDeclarationBegin(self, indent)
-
-        struct_end = StructureTypedefDeclarationEnd(self, fields_indent, indent, True)
+        if self.nested:
+            struct_begin = StructureForwardDeclarationBegin(self, indent)
+            struct_end = StructureForwardDeclarationEnd(self, fields_indent,
+                indent, True
+            )
+        else:
+            struct_begin = StructureTypedefDeclarationBegin(self, indent)
+            struct_end = StructureTypedefDeclarationEnd(self, fields_indent,
+                indent, True
+            )
 
         """
         References map of structure definition chunks:
