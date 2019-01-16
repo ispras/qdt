@@ -94,6 +94,10 @@ if __name__ == "__main__":
             Break()
         ),
 
+        LoopFor(None, None, OpPreInc(_i))(
+            Break()
+        ),
+
         Return(0),
 
         Return(),
