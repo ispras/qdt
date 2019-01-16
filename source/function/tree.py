@@ -12,6 +12,8 @@ __all__ = [
       , "BranchElse"
       , "SwitchCase"
       , "StrConcat"
+      , "Ifdef"
+      , "Endif"
       # SemicolonPresence
           , "Break"
           , "Call"
@@ -378,6 +380,33 @@ class StrConcat(Node):
         for c in self.children[1:]:
             writer.write(self.delim)
             c.__c__(writer)
+
+
+class Ifdef(Node):
+
+    def __init__(self, val):
+        super(Ifdef, self).__init__()
+        if isinstance(val, str):
+            self.val = CPPStr(val)
+        else:
+            self.val = val
+
+    def __c__(self, writer):
+        writer.push_state(reset = True)
+        writer.write("#ifdef ")
+        self.val.__c__(writer)
+        writer.line()
+        writer.pop_state()
+
+
+class Endif(Node):
+    def __init__(self):
+        super(Endif, self).__init__()
+
+    def __c__(self, writer):
+        writer.push_state(reset = True)
+        writer.line("#endif")
+        writer.pop_state()
 
 
 class SemicolonPresence(Node):
