@@ -939,6 +939,10 @@ class Structure(Type):
         return definers
 
     def append_field(self, variable):
+        if self._definition is not None:
+            self._definition.append_field(variable)
+            return
+
         v_name = variable.name
         if v_name in self.fields:
             raise RuntimeError("A field with name %s already exists in"
