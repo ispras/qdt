@@ -5,7 +5,6 @@ __all__ = [
   , "BadBuildPath"
   , "QVCIsNotReady"
   , "QemuVersionDescription"
-  , "qvd_create"
   , "qvd_get"
   , "qvds_load"
   , "qvd_load_with_cache"
@@ -70,6 +69,9 @@ from subprocess import (
 
 bp_file_name = "build_path_list"
 
+# Two level dict:
+# 1. path (of Qemu Git repo)
+# 2. Qemu version (SHA1 id of Git commit)
 qvd_reg = None
 
 class ProcessingUntrackedFile(RuntimeError):
@@ -102,7 +104,7 @@ def load_build_path_list():
 
     for val in build_path_list:
         v = val.rstrip()
-        qvd_reg[v] = None
+        qvd_reg[v] = {}
 
 def account_build_path(path):
     load_build_path_list()
@@ -117,7 +119,7 @@ def account_build_path(path):
     f.write(path + "\n")
     f.close()
 
-    qvd_reg[path] = None
+    qvd_reg[path] = {}
 
 def forget_build_path(path):
     load_build_path_list()
@@ -130,54 +132,53 @@ def forget_build_path(path):
     with open(bp_file_name, 'w') as f:
         f.write("\n".join(qvd_reg.keys()))
 
-def qvd_create(path):
-    account_build_path(path)
+def qvd_get(path, version = None):
+    load_build_path_list()
 
-    qvd = qvd_reg[path]
-
-    if qvd is None:
-        qvd = QemuVersionDescription(path)
-    else:
-        raise Exception("Multiple Qemu version descriptions for %s." % path)
-
-    qvd_reg[path] = qvd
-    return qvd
-
-def qvd_get(path):
     if path is None:
         raise BadBuildPath("Build path is None.")
 
-    load_build_path_list()
+    try:
+        qvds = qvd_reg[path]
+    except KeyError:
+        # before accounting because it can raise an exception
+        qvd = QemuVersionDescription(path, version = version)
+        account_build_path(path)
+        qvd_reg[path][qvd.commit_sha] = qvd
+        return qvd
+
+    if version is None and qvds:
+        # Legacy behavior. Return QVD for HEAD if version is omitted.
+        # Note, Git repository at this path can be obtained from any QVD.
+        version = next(iter(qvds.values())).repo.head.commit.hexsha
 
     try:
-        qvd = qvd_reg[path]
+        return qvds[version]
     except KeyError:
-        qvd = None
+        qvd = QemuVersionDescription(path, version = version)
+        # Version aliasing is possible. SHA1 is an invariant. Return existing
+        # QVD instead of just created one.
+        return qvds.setdefault(qvd.commit_sha, qvd)
 
-    if qvd is None:
-        qvd = qvd_create(path)
-
-    return qvd
-
-def qvd_load_with_cache(build_path):
-    qvd = qvd_get(build_path)
+def qvd_load_with_cache(build_path, version = None):
+    qvd = qvd_get(build_path, version = version)
     qvd.init_cache()
     return qvd
 
 def qvds_load():
     load_build_path_list()
 
-    for k, v in list(qvd_reg.items()):
-        if v is None:
-            qvd_reg[k] = QemuVersionDescription(k)
+    for path in list(qvd_reg):
+        qvd_get(path)
 
 def qvds_init_cache():
     if qvd_reg is None:
         return
 
-    for v in qvd_reg.values():
-        if v is not None and v.qvc is None:
-            v.init_cache()
+    for qvds in qvd_reg.values():
+        for v in qvds:
+            if v.qvc is None:
+                v.init_cache()
 
 def qvds_load_with_cache():
     qvds_load()
