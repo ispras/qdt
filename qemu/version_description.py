@@ -8,7 +8,6 @@ __all__ = [
   , "QemuVersionDescription"
   , "qvd_create"
   , "qvd_get"
-  , "qvd_get_registered"
   , "qvds_load"
   , "qvd_load_with_cache"
   , "qvds_load_with_cache"
@@ -147,12 +146,6 @@ def qvd_get(path):
         qvd = qvd_create(path)
 
     return qvd
-
-def qvd_get_registered(path):
-    if not path in qvd_reg.keys():
-        raise RuntimeError("%s was not registered." % path)
-
-    return qvd_get(path)
 
 def qvds_load():
     for k, v in qvd_reg.items():
