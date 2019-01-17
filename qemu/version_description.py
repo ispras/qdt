@@ -70,7 +70,7 @@ from subprocess import (
 
 bp_file_name = "build_path_list"
 
-qvd_reg = {}
+qvd_reg = None
 
 class ProcessingUntrackedFile(RuntimeError):
     def __init__(self, file_name):
@@ -87,8 +87,15 @@ class ProcessingModifiedFile(RuntimeError):
         return (_("Source has modified file: %s.") % self.args[0]).get()
 
 def load_build_path_list():
+    global qvd_reg
+
+    if qvd_reg is not None:
+        return
+
     if not isfile(bp_file_name):
         return
+
+    qvd_reg = {}
 
     with open(bp_file_name) as f:
         build_path_list = f.readlines()
@@ -98,6 +105,8 @@ def load_build_path_list():
         qvd_reg[v] = None
 
 def account_build_path(path):
+    load_build_path_list()
+
     if path in qvd_reg.keys():
         return
     if not isfile(bp_file_name):
@@ -111,6 +120,8 @@ def account_build_path(path):
     qvd_reg[path] = None
 
 def forget_build_path(path):
+    load_build_path_list()
+
     if not path in qvd_reg.keys():
         raise RuntimeError("%s is not registered." % path)
 
@@ -136,6 +147,8 @@ def qvd_get(path):
     if path is None:
         raise BadBuildPath("Build path is None.")
 
+    load_build_path_list()
+
     try:
         qvd = qvd_reg[path]
     except KeyError:
@@ -152,11 +165,16 @@ def qvd_load_with_cache(build_path):
     return qvd
 
 def qvds_load():
+    load_build_path_list()
+
     for k, v in list(qvd_reg.items()):
         if v is None:
             qvd_reg[k] = QemuVersionDescription(k)
 
 def qvds_init_cache():
+    if qvd_reg is None:
+        return
+
     for v in qvd_reg.values():
         if v is not None and v.qvc is None:
             v.init_cache()
