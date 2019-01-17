@@ -3,7 +3,6 @@ __all__ = [
   , "ProcessingModifiedFile"
   , "QVCWasNotInitialized"
   , "BadBuildPath"
-  , "MultipleQVCInitialization"
   , "QVCIsNotReady"
   , "QemuVersionDescription"
   , "qvd_create"
@@ -456,9 +455,6 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
 class BadBuildPath(ValueError):
     pass
 
-class MultipleQVCInitialization(RuntimeError):
-    pass
-
 class QVCWasNotInitialized(RuntimeError):
     pass
 
@@ -558,7 +554,8 @@ class QemuVersionDescription(object):
 
     def co_init_cache(self):
         if self.qvc is not None:
-            raise MultipleQVCInitialization(self.src_path)
+            print("Multiple QVC initialization " + self.src_path)
+            self.qvc = None
 
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
         qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
