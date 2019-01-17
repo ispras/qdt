@@ -40,6 +40,13 @@ def main():
         metavar = "/path/to/qemu/build/directory",
         help = "Override QEMU build path of the project."
     )
+    parser.add_argument(
+        "--target-version", "-t",
+        default = None,
+        metavar = "<tree-ish>", # like in Git's docs
+        help = "Assume given version of Qemu."
+        " Overrides project's target_version."
+    )
 
     parser.add_argument(
         "--gen-header-tree",
@@ -88,8 +95,13 @@ def main():
         if not qemu_build_path:
             qemu_build_path = arguments.qemu_build
 
+    version = arguments.target_version
+
+    if version is None:
+        version = project.target_version
+
     try:
-        qvd = qvd_load_with_cache(qemu_build_path)
+        qvd = qvd_load_with_cache(qemu_build_path, version = version)
     except:
         print("QVD loading failed")
         print_exc()
