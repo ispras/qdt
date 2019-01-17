@@ -128,10 +128,9 @@ class Label(Node):
         self.name = name
 
     def __c__(self, writer):
-        # A label must be written without an indent.
-        # That is why `new_line` is set to `False`.
-        writer.new_line = False
+        writer.push_state(reset = True)
         writer.line(self.name + ":")
+        writer.pop_state()
 
 
 class NewLine(Node):
