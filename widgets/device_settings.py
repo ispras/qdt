@@ -364,7 +364,7 @@ class DeviceSettingsWidget(SettingsWidget):
         if bp is None:
             b["state"] = "disabled"
         else:
-            qvd = qvd_get(bp)
+            qvd = qvd_get(bp, version = self.mach.project.target_version)
             if qvd.qvc is None or qvd.qvc.device_tree is None:
                 # TODO: watch "qvc_available" signal
                 b["state"] = "disabled"

@@ -85,7 +85,7 @@ class DeviceTreeWidget(GUIDialog):
 
         # Check exception before __init__ call.
         bp = root.mach.project.build_path
-        qvd = qvd_get(bp)
+        qvd = qvd_get(bp, version = root.mach.project.target_version)
         # the QOM type of roots[0] is "device"
         roots = qvd.qvc.device_tree[0]["children"]
         self.qom_create_tree("", roots)

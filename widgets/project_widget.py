@@ -67,7 +67,8 @@ from .qdc_gui_signal_helper import (
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
-        self.qvd = qvd_get(project_widget.p.build_path)
+        proj = project_widget.p
+        self.qvd = qvd_get(proj.build_path, version = proj.target_version)
         CoTask.__init__(
             self,
             self.main(),
@@ -77,6 +78,7 @@ class ReloadBuildPathTask(CoTask):
     def main(self):
         if self.qvd.qvc is None:
             yield self.qvd.co_init_cache()
+        self.pw.qvd = self.qvd
 
     def on_finished(self):
         self.qvd.use()
@@ -516,7 +518,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             pht.all_pci_ids_2_objects()
 
         # convert device tree to more convenient form
-        qvc = qvd_get(self.p.build_path).qvc
+        qvc = self.qvd.qvc
         if qvc.device_tree:
             qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
 
@@ -544,10 +546,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             pht.all_pci_ids_2_values()
 
         try:
-            qvd = qvd_get(self.p.build_path)
-        except BadBuildPath:
+            qvd = self.qvd
+        except AttributeError:
             pass
         else:
+            del self.qvd
             if qvd.qvc is not None:
                 qvd.forget_cache()
 
