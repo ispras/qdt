@@ -206,7 +206,7 @@ class QemuVersionCache(object):
         self.stc = SourceTreeContainer()
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
-    def co_computing_parameters(self, repo):
+    def co_computing_parameters(self, repo, version):
         print("Build QEMU Git graph ...")
         self.commit_desc_nodes = {}
         yield QemuCommitDesc.co_build_git_graph(repo, self.commit_desc_nodes)
@@ -214,7 +214,7 @@ class QemuVersionCache(object):
 
         yield self.co_propagate_param()
 
-        c = self.commit_desc_nodes[repo.head.commit.hexsha]
+        c = self.commit_desc_nodes[repo.commit(version).hexsha]
         param = self.version_desc = QVHDict()
         for k, v in c.param_nval.items():
             param[k] = v
@@ -488,7 +488,7 @@ QVD_QH_HASH = "qh_hash"
 class QemuVersionDescription(object):
     current = None
 
-    def __init__(self, build_path):
+    def __init__(self, build_path, version = None):
         config_host_path = join(build_path, 'config-host.mak')
         if not isfile(config_host_path):
             forget_build_path(build_path)
@@ -512,11 +512,14 @@ class QemuVersionDescription(object):
         # Get SHA
         self.repo = Repo(self.src_path)
 
-        head = self.repo.head.commit
+        if version is None:
+            c = self.repo.head.commit
+        else:
+            c = self.repo.commit(version)
 
-        self.commit_sha = head.hexsha
+        self.commit_sha = c.hexsha
 
-        VERSION = head.tree["VERSION"]
+        VERSION = c.tree["VERSION"]
         self.qemu_version = VERSION.data_stream.read().strip().decode()
 
         print("Qemu version is {}".format(self.qemu_version))
@@ -624,7 +627,7 @@ class QemuVersionDescription(object):
             yield self.co_gen_known_targets()
 
             # gen version description
-            yield self.qvc.co_computing_parameters(self.repo)
+            yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
             self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
 
             # Search for PCI Ids
@@ -655,7 +658,7 @@ class QemuVersionDescription(object):
                 if not checksum == qemu_heuristic_hash:
                     is_outdated = True
             if is_outdated:
-                yield self.qvc.co_computing_parameters(self.repo)
+                yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
                 pythonize(self.qvc, qvc_path)
 
