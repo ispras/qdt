@@ -55,7 +55,7 @@ from qemu import (
         MOp_DelDevProp,
         MOp_AddDevProp,
         MOp_SetDevProp,
-    qvd_get_registered
+    qvd_get
 )
 from itertools import (
     count
@@ -364,15 +364,10 @@ class DeviceSettingsWidget(SettingsWidget):
         if bp is None:
             b["state"] = "disabled"
         else:
-            try:
-                qvd = qvd_get_registered(bp)
-            except Exception:
+            qvd = qvd_get(bp)
+            if qvd.qvc is None or qvd.qvc.device_tree is None:
+                # TODO: watch "qvc_available" signal
                 b["state"] = "disabled"
-            else:
-                if qvd is None or \
-                   qvd.qvc == None or \
-                   qvd.qvc.device_tree == None:
-                    b["state"] = "disabled"
 
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
