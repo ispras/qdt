@@ -147,7 +147,7 @@ def qvd_get(path):
     return qvd
 
 def qvds_load():
-    for k, v in qvd_reg.items():
+    for k, v in list(qvd_reg.items()):
         if v is None:
             qvd_reg[k] = QemuVersionDescription(k)
 
@@ -157,7 +157,7 @@ def qvd_load_with_cache(build_path):
     return qvd
 
 def qvds_load_with_cache():
-    for k, v in qvd_reg.items():
+    for k, v in list(qvd_reg.items()):
         if v is None:
             qvd_reg[k] = QemuVersionDescription(k)
         qvd = qvd_reg[k]
