@@ -146,27 +146,24 @@ def qvd_get(path):
 
     return qvd
 
-def qvds_load():
-    for k, v in list(qvd_reg.items()):
-        if v is None:
-            qvd_reg[k] = QemuVersionDescription(k)
-
 def qvd_load_with_cache(build_path):
     qvd = qvd_get(build_path)
     qvd.init_cache()
     return qvd
 
-def qvds_load_with_cache():
+def qvds_load():
     for k, v in list(qvd_reg.items()):
         if v is None:
             qvd_reg[k] = QemuVersionDescription(k)
-        qvd = qvd_reg[k]
-        qvd.init_cache()
 
 def qvds_init_cache():
     for v in qvd_reg.values():
         if v is not None:
             v.init_cache()
+
+def qvds_load_with_cache():
+    qvds_load()
+    qvds_init_cache()
 
 class QemuCommitDesc(CommitDesc):
     def __init__(self, sha, parents, children):
