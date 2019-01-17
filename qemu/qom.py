@@ -845,10 +845,9 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
-        func = Type["MemoryRegionOps"].read.type.use_as_prototype(
-            name = name,
-            static = True,
-            body = BodyTree()
+        func = Type["MemoryRegionOps"].read.type.use_as_prototype(name,
+            body = BodyTree(),
+            static = True
         )
         root = func.body
         s = Type.lookup(struct_name).gen_var("s", pointer = True)
@@ -910,10 +909,9 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro, regs = None):
-        func = Type["MemoryRegionOps"].write.type.use_as_prototype(
-            name = name,
-            static = True,
-            body = BodyTree()
+        func = Type["MemoryRegionOps"].write.type.use_as_prototype(name,
+            body = BodyTree(),
+            static = True
         )
         root = func.body
 
@@ -1328,8 +1326,7 @@ class QOMDevice(QOMType):
 
     def gen_nic_helper(self, helper, cbtn, index):
         cbt = Type.lookup(cbtn)
-        return cbt.use_as_prototype(
-            self.nic_helper_name(helper, index),
+        return cbt.use_as_prototype(self.nic_helper_name(helper, index),
             body = "    return 0;\n" if cbt.ret_type.name != "void" else "",
             static = True,
             used_types = [ Type.lookup(self.struct_name) ]
