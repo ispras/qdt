@@ -1089,7 +1089,8 @@ class FunctionBodyString(object):
 
 class Function(Type):
 
-    def __init__(self, name,
+    def __init__(self,
+        name = None,
         body = None,
         ret_type = None,
         args = None,
@@ -1099,11 +1100,20 @@ class Function(Type):
         used_globals = None
     ):
         # args is list of Variables
-        super(Function, self).__init__(name,
-            # function cannot be a 'type' of variable. Only function
-            # pointer type is permitted.
-            incomplete = True
-        )
+
+        # do not add nameless functions to type registry
+        if name is not None:
+            super(Function, self).__init__(name,
+                # function cannot be a 'type' of variable. Only function
+                # pointer type is permitted.
+                incomplete = True
+            )
+        else:
+            self.name = ""
+            self.incomplete = True
+            self.definer = None
+            self.base = False
+
         self.static = static
         self.inline = inline
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
