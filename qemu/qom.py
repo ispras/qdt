@@ -483,7 +483,6 @@ class QOMType(object):
 
     def __init__(self, name):
         self.qtn = QemuTypeName(name)
-        self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
@@ -1021,6 +1020,8 @@ class QOMDevice(QOMType):
             **qom_kw
     ):
         super(QOMDevice, self).__init__(name, **qom_kw)
+
+        self.struct_name = self.qtn.for_struct_name + "State"
 
         self.directory = directory
         self.nic_num = nic_num
