@@ -1177,13 +1177,13 @@ class Function(Type):
         new_used_globals = [] if used_globals is None else used_globals
         new_f = Function(
             name = self.name + ".body",
-            self.body,
-            self.ret_type,
-            self.args,
-            self.static,
-            self.inline,
-            new_used_types,
-            new_used_globals
+            body = self.body,
+            ret_type = self.ret_type,
+            args = self.args,
+            static = self.static,
+            inline = self.inline,
+            used_types = new_used_types,
+            used_globals = new_used_globals
         )
         CopyFixerVisitor(new_f).visit()
         return new_f
