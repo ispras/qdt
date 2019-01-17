@@ -92,9 +92,9 @@ def load_build_path_list():
     if not isfile(bp_file_name):
         return
 
-    build_path_f = open(bp_file_name)
-    build_path_list = build_path_f.readlines()
-    build_path_f.close()
+    with open(bp_file_name) as f:
+        build_path_list = f.readlines()
+
     for val in build_path_list:
         v = val.rstrip()
         qvd_reg[v] = None
