@@ -118,10 +118,8 @@ def forget_build_path(path):
 
     del qvd_reg[path]
 
-    f = open(bp_file_name, 'w')
-    for val in qvd_reg.keys():
-        f.write(val + "\n")
-    f.close()
+    with open(bp_file_name, 'w') as f:
+        f.write("\n".join(qvd_reg.keys()))
 
 def qvd_create(path):
     account_build_path(path)
