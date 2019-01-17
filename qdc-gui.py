@@ -83,7 +83,7 @@ class ProjectGeneration(CoTask):
         )
 
     def main(self):
-        cur_qvd = qvd_get(self.p.build_path)
+        cur_qvd = qvd_get(self.p.build_path, version = self.p.target_version)
         self.prev_qvd = cur_qvd.use()
 
         yield self.p.co_gen_all(self.s,
@@ -483,7 +483,9 @@ show it else hide it.")
 
     def rebuild_cache(self):
         try:
-            qvd = qvd_get(self.proj.build_path)
+            qvd = qvd_get(self.proj.build_path,
+                version = self.proj.target_version
+            )
         except BadBuildPath as e:
             showerror(
                 title = _("Cache rebuilding is impossible").get(),
@@ -579,7 +581,9 @@ in process.").get()
             return
 
         try:
-            qvd = qvd_get(self.proj.build_path)
+            qvd = qvd_get(self.proj.build_path,
+                version = self.proj.target_version
+            )
         except BadBuildPath as e:
             showerror(
                 title = _("Generation is impossible").get(),
