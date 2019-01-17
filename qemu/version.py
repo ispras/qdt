@@ -162,6 +162,37 @@ def define_only_qemu_2_6_0_types():
         Function(name = "object_class_is_abstract")
     ]).add_reference(osdep_fake_type)
 
+    Header["qemu/fprintf-fn.h"].add_types([
+        Type("fprintf_function", False)
+    ]).add_reference(osdep_fake_type)
+
+    Header["disas/bfd.h"].add_types([
+        Type("disassemble_info", False)
+    ]).add_reference(osdep_fake_type)
+
+    Header["disas/bfd.h"].add_types([
+        Type("bfd_vma", False),
+        Type("bfd_byte", False),
+        Type("const bfd_byte", False),
+        *[
+            Function(
+                name = name,
+                ret_type = Type["bfd_vma"],
+                args = [
+                    Pointer(Pointer(Type["const bfd_byte"])).gen_var("addr")
+                ]
+            ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32",
+                "bfd_getl16", "bfd_getb16"
+            ]
+        ]
+    ])
+
+    Header["migration/vmstate.h"].add_types([
+        Type("VMStateDescription", False),
+        Type("VMStateField", False),
+        Function(name = "vmstate_register_ram_global")
+    ]).add_reference(osdep_fake_type)
+
     Header["qom/cpu.h"].add_types([
         Type("CPUState", False),
         Type("CPUClass", False),
@@ -179,14 +210,6 @@ def define_only_qemu_2_6_0_types():
 
     Header["qapi/error.h"].add_types([
         Type("Error")
-    ]).add_reference(osdep_fake_type)
-
-    Header["disas/bfd.h"].add_types([
-        Type("disassemble_info", False)
-    ]).add_reference(osdep_fake_type)
-
-    Header["qemu/fprintf-fn.h"].add_types([
-        Type("fprintf_function", False)
     ]).add_reference(osdep_fake_type)
 
     if get_vp()["tlb_fill has SIZE argument"]:
@@ -398,12 +421,6 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_connect_gpio_out_named")
     ]).add_reference(osdep_fake_type)
 
-    Header["migration/vmstate.h"].add_types([
-        Type("VMStateDescription", False),
-        Type("VMStateField", False),
-        Function(name = "vmstate_register_ram_global")
-    ]).add_reference(osdep_fake_type)
-
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
     Header["hw/pci/pci.h"].add_types([
@@ -573,23 +590,6 @@ def define_only_qemu_2_6_0_types():
         # registry but is included by "net.h" indirectly.
     ]).add_references([
         osdep_fake_type
-    ])
-
-    Header["disas/bfd.h"].add_types([
-        Type("bfd_vma", False),
-        Type("bfd_byte", False),
-        Type("const bfd_byte", False),
-        *[
-            Function(
-                name = name,
-                ret_type = Type["bfd_vma"],
-                args = [
-                    Pointer(Pointer(Type["const bfd_byte"])).gen_var("addr")
-                ]
-            ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32",
-                "bfd_getl16", "bfd_getb16"
-            ]
-        ]
     ])
 
     Header["disas/disas.h"].add_types([
