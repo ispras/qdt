@@ -152,7 +152,7 @@ def qvd_get(path):
 
 def qvd_get_registered(path):
     if not path in qvd_reg.keys():
-        raise Exception("%s was not registered." % path)
+        raise RuntimeError("%s was not registered." % path)
 
     return qvd_get(path)
 
