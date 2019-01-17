@@ -8,7 +8,7 @@ from .var_widgets import (
     VarLabelFrame
 )
 from qemu import (
-    qvd_get_registered
+    qvd_get
 )
 from six.moves.tkinter_ttk import (
     Scrollbar
@@ -85,7 +85,7 @@ class DeviceTreeWidget(GUIDialog):
 
         # Check exception before __init__ call.
         bp = root.mach.project.build_path
-        qvd = qvd_get_registered(bp)
+        qvd = qvd_get(bp)
         # the QOM type of roots[0] is "device"
         roots = qvd.qvc.device_tree[0]["children"]
         self.qom_create_tree("", roots)
