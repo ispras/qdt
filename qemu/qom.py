@@ -1269,10 +1269,10 @@ class QOMDevice(QOMType):
     {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if s_is_used else "__attribute__((unused))@b",
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        extra_code = code
+    unused = "" if s_is_used else "__attribute__((unused))@b",
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+    extra_code = code
             ),
             args = [
                 Type.lookup(dev_type_name).gen_var("dev", pointer = True),
