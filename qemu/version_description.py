@@ -158,7 +158,7 @@ def qvds_load():
 
 def qvds_init_cache():
     for v in qvd_reg.values():
-        if v is not None:
+        if v is not None and v.qvc is None:
             v.init_cache()
 
 def qvds_load_with_cache():
