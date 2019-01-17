@@ -552,7 +552,7 @@ class QOMType(object):
                     self.add_state_field_h("uint8_t", name, num = size)
 
     def gen_state(self):
-        s = Structure(self.qtn.for_struct_name + 'State')
+        s = Structure(self.qtn.for_struct_name + "State")
         for f in self.state_fields:
             s.append_field(f.type.gen_var(f.name, array_size = f.num))
         return s
