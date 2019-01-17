@@ -1177,7 +1177,10 @@ class Function(Type):
         return new_f
 
     def gen_var(self, name, initializer = None, static = False):
-        return Variable(name, self, initializer = initializer, static = static)
+        return Variable(name, Pointer(self),
+            initializer = initializer,
+            static = static
+        )
 
     __type_references__ = ["ret_type", "args", "body"]
 
