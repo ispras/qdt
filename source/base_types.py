@@ -82,8 +82,8 @@ def add_base_types():
 
     h.add_types([
         Type("ssize_t", incomplete = False, base = False),
-        Function("printf"),
-        Function("fprintf"),
+        Function(name = "printf"),
+        Function(name = "fprintf"),
         Type("FILE")
     ])
 
@@ -93,7 +93,7 @@ def add_base_types():
         h = Header("string.h", is_global = True)
 
     h.add_types([
-        Function("memcpy")
+        Function(name = "memcpy")
     ])
 
     # If "bswap_64", "bswap_32" and "bswap_16" are not macros or do not exists
@@ -105,9 +105,9 @@ def add_base_types():
             h = Header("byteswap.h", is_global = True)
 
         h.add_types([
-            Function("bswap_64"),
-            Function("bswap_32"),
-            Function("bswap_16")
+            Function(name = "bswap_64"),
+            Function(name = "bswap_32"),
+            Function(name = "bswap_16")
         ])
 
     try:
@@ -116,7 +116,7 @@ def add_base_types():
         h = Header("stdlib.h", is_global = True)
 
     h.add_types([
-        Function("abort")
+        Function(name = "abort")
     ])
 
     try:

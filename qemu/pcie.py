@@ -277,7 +277,7 @@ corresponding vendor is given" % attr
 
     def generate_source(self):
         self.device_reset = Function(
-        "%s_reset" % self.qtn.for_id_name,
+            name = "%s_reset" % self.qtn.for_id_name,
             body = """\
     __attribute__((unused))@b{Struct}@b*s@b=@s{UPPER}(dev);
 """.format(

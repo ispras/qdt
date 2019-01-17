@@ -1161,7 +1161,8 @@ class Function(Type):
         used_types = []
     ):
 
-        return Function(name,
+        return Function(
+            name = name,
             body = body,
             ret_type = self.ret_type,
             args = self.args,
@@ -1175,7 +1176,7 @@ class Function(Type):
         new_used_types.extend([] if used_types is None else used_types)
         new_used_globals = [] if used_globals is None else used_globals
         new_f = Function(
-            self.name + ".body",
+            name = self.name + ".body",
             self.body,
             self.ret_type,
             self.args,

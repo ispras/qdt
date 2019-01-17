@@ -1151,7 +1151,8 @@ class QOMDevice(QOMType):
             ))
 
     def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
-        timer_cb = Function(self.timer_cb_name(index),
+        timer_cb = Function(
+            name = self.timer_cb_name(index),
             body = """\
     __attribute__((unused))@b%s@b*s@b=@s%s(opaque);
 """ % (state_struct.name, self.type_cast_macro.name
