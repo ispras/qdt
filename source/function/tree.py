@@ -527,7 +527,7 @@ class Goto(SemicolonPresence):
         self.label = label
 
     def __c__(self, writer):
-        writer.line("goto@b" + self.label.name)
+        writer.write("goto@b" + self.label.name)
 
 
 class Operator(SemicolonPresence):
