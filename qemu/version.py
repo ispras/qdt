@@ -146,7 +146,17 @@ def define_only_qemu_2_6_0_types():
                 # These are required fields only
                 Pointer(Type["const char"]).gen_var("name"),
                 Pointer(Type["const char"]).gen_var("parent"),
-                Pointer(Type["void"]).gen_var("class_init"),
+                Type["size_t"].gen_var("instance_size"),
+                Function(
+                    args = [ Type["Object"].gen_var("obj", pointer = True) ]
+                ).gen_var("instance_init"),
+                Type["size_t"].gen_var("class_size"),
+                Function(
+                    args = [
+                        Type["ObjectClass"].gen_var("oc", pointer = True),
+                        Type["void"].gen_var("data", pointer = True)
+                    ]
+                ).gen_var("class_init"),
                 Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
             ]
         ),
@@ -176,11 +186,8 @@ def define_only_qemu_2_6_0_types():
         Type("fprintf_function", False)
     ]).add_reference(osdep_fake_type)
 
-    Header["disas/bfd.h"].add_types([
-        Type("disassemble_info", False)
-    ]).add_reference(osdep_fake_type)
-
-    Header["disas/bfd.h"].add_types([
+    bfd_h = Header["disas/bfd.h"]
+    bfd_h.add_types([
         Type("bfd_vma", False),
         Type("bfd_byte", False),
         Type("const bfd_byte", False),
@@ -196,6 +203,37 @@ def define_only_qemu_2_6_0_types():
             ]
         ]
     ])
+    dis_info = Structure("disassemble_info")
+    dis_info.append_fields([
+        # These are required fields only
+        Type["fprintf_function"].gen_var("fprintf_func"),
+        Type["FILE"].gen_var("stream", pointer = True),
+        Type["unsigned long"].gen_var("mach"),
+        Function(
+            ret_type = Type["int"],
+            args = [
+                Type["bfd_vma"].gen_var("memaddr"),
+                Type["bfd_byte"].gen_var("myaddr", pointer = True),
+                Type["int"].gen_var("length"),
+                dis_info.gen_var("info", pointer = True)
+            ]
+        ).gen_var("read_memory_func"),
+        Function(
+            args = [
+                Type["int"].gen_var("status"),
+                Type["bfd_vma"].gen_var("memaddr"),
+                dis_info.gen_var("info", pointer = True)
+            ]
+        ).gen_var("memory_error_func"),
+        Function(
+            ret_type = Type["int"],
+            args = [
+                Type["bfd_vma"].gen_var("addr"),
+                dis_info.gen_var("info", pointer = True)
+            ]
+        ).gen_var("print_insn")
+    ])
+    bfd_h.add_type(dis_info).add_reference(osdep_fake_type)
 
     Header["migration/vmstate.h"].add_types([
         Type("VMStateDescription", False),
@@ -204,11 +242,97 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header["qom/cpu.h"].add_types([
-        Type("CPUState", False),
-        Type("CPUClass", False),
         Type("vaddr", False),
         Type("MMUAccessType", False),
-        Type("CPUBreakpoint", False),
+        Structure("CPUBreakpoint",
+            fields = [
+                # These are required fields only
+                Type["vaddr"].gen_var("pc")
+            ]
+        ),
+        Structure("CPUState",
+            fields = [
+                # These are required fields only
+                Type["uint32_t"].gen_var("interrupt_request"),
+                Type["int"].gen_var("singlestep_enabled"),
+                Type["void"].gen_var("env_ptr", pointer = True),
+                Type["QTAILQ_HEAD"].gen_var("breakpoints",
+                    macro_initializer = Initializer({
+                        "name": "breakpoints_head",
+                        "type": Type["CPUBreakpoint"]
+                    })
+                ),
+                Type["uint32_t"].gen_var("exception_index")
+            ]
+        ),
+        Structure("CPUClass",
+            fields = [
+                # These are required fields only
+                Function(
+                    ret_type = Pointer(Type["ObjectClass"]),
+                    args = [
+                        Type["const char"].gen_var("cpu_model", pointer = True)
+                    ]
+                ).gen_var("class_by_name"),
+                Function(
+                    args = [ Type["CPUState"].gen_var("cs", pointer = True) ]
+                ).gen_var("reset"),
+                Function(
+                    ret_type = Type["bool"],
+                    args = [ Type["CPUState"].gen_var("cs", pointer = True) ]
+                ).gen_var("has_work"),
+                Function(
+                    args = [ Type["CPUState"].gen_var("cs", pointer = True) ]
+                ).gen_var("do_interrupt"),
+                Function(
+                    args = [
+                        Type["CPUState"].gen_var("cs", pointer = True),
+                        Type["FILE"].gen_var("f", pointer = True),
+                        Type["fprintf_function"].gen_var("cpu_fprintf"),
+                        Type["int"].gen_var("flags")
+                    ]
+                ).gen_var("dump_state"),
+                Function(
+                    args = [
+                        Type["CPUState"].gen_var("cs", pointer = True),
+                        Type["vaddr"].gen_var("value")
+                    ]
+                ).gen_var("set_pc"),
+                Function(
+                    ret_type = Type["hwaddr"],
+                    args = [
+                        Type["CPUState"].gen_var("cs", pointer = True),
+                        Type["vaddr"].gen_var("addr")
+                    ]
+                ).gen_var("get_phys_page_debug"),
+                Function(
+                    ret_type = Type["int"],
+                    args = [
+                        Type["CPUState"].gen_var("cs", pointer = True),
+                        Type["uint8_t"].gen_var("mem_buf", pointer = True),
+                        Type["int"].gen_var("n")
+                    ]
+                ).gen_var("gdb_read_register"),
+                Function(
+                    ret_type = Type["int"],
+                    args = [
+                        Type["CPUState"].gen_var("cs", pointer = True),
+                        Type["uint8_t"].gen_var("mem_buf", pointer = True),
+                        Type["int"].gen_var("n")
+                    ]
+                ).gen_var("gdb_write_register"),
+                Type["VMStateDescription"].gen_var("vmsd", pointer = True),
+                Type["int"].gen_var("gdb_num_core_regs"),
+                Function(
+                    args = [
+                        Type["CPUState"].gen_var("cpu", pointer = True),
+                        Type["disassemble_info"].gen_var("info",
+                            pointer = True
+                        )
+                    ]
+                ).gen_var("disas_set_info")
+            ]
+        ),
         Function(
             name = "qemu_init_vcpu",
             args = [ Type["CPUState"].gen_var("cpu", pointer = True) ]
@@ -218,8 +342,12 @@ def define_only_qemu_2_6_0_types():
         Function(name = "cpu_generic_init")
     ]).add_reference(osdep_fake_type)
 
+    if get_vp()["Generic call to tcg_initialize"]:
+        Type["CPUClass"].append_field(Function().gen_var("tcg_initialize"))
+
     Header["qapi/error.h"].add_types([
-        Type("Error")
+        Type("Error"),
+        Function(name = "error_propagate")
     ]).add_reference(osdep_fake_type)
 
     if get_vp()["tlb_fill has SIZE argument"]:
@@ -248,7 +376,15 @@ def define_only_qemu_2_6_0_types():
             used_types = []
         )
     Header["exec/exec-all.h"].add_types([
-        Type("TranslationBlock", False),
+        Structure("TranslationBlock",
+            fields = [
+                # These are required fields only
+                Type["target_ulong"].gen_var("pc"),
+                Type["uint16_t"].gen_var("size"),
+                Type["uint16_t"].gen_var("icount"),
+                Type["uint32_t"].gen_var("cflags")
+            ]
+        ),
         tlb_fill,
         Function(
             name = "cpu_exec_init",
@@ -397,8 +533,22 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header["hw/qdev-core.h"].add_types([
-        Type("DeviceClass", False),
         Type("DeviceState", False),
+        Pointer(
+            Function(
+                args = [
+                    Type["DeviceState"].gen_var("dev", pointer = True),
+                    Pointer(Type["Error"]).gen_var("errp", pointer = True)
+                ]
+            ),
+            name = "DeviceRealize",
+        ),
+        Structure("DeviceClass",
+            fields = [
+                # These are required fields only
+                Type["DeviceRealize"].gen_var("realize")
+            ]
+        ),
         Type("Property", False),
         Function(
             name = "qdev_init_gpio_in",
@@ -408,18 +558,6 @@ def define_only_qemu_2_6_0_types():
                 Type["qemu_irq_handler"].gen_var("handler"),
                 Type["int"].gen_var("n")
             ]
-        ),
-        Pointer(
-            Function(
-                name = "device_realize pointee",
-                args = [
-                    Type["DeviceState"].gen_var("dev", pointer = True),
-                    Pointer(Type["Error"]).gen_var("errp",
-                        pointer = True
-                    )
-                ]
-            ),
-            name = "DeviceRealize",
         ),
         Function(name = "qdev_create"),
         Function(name = "qdev_init_nofail"),
