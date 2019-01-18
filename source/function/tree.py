@@ -529,6 +529,14 @@ class MCall(SemicolonPresence):
         super(MCall, self).__init__(children = args)
         self.type = Type.lookup(macro)
 
+    def add_child(self, child):
+        if isinstance(child, str):
+            child = CPPStr(child)
+        if isinstance(child, integer_types):
+            child = CINT(child)
+
+        self.children.append(child)
+
     def __c__(self, writer):
         writer.write(self.type.name)
 
