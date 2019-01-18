@@ -470,7 +470,8 @@ class Break(SemicolonPresence):
 
 class Call(SemicolonPresence):
 
-    __type_references__ = ("children", "type")
+    __node__ = ("children", "type")
+    __type_references__ = __node__
 
     def __init__(self, func, *args):
         super(Call, self).__init__(children = args)
