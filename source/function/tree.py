@@ -478,7 +478,7 @@ class Call(SemicolonPresence):
         self.func = func
         if isinstance(func, str):
             self.type = Type.lookup(func)
-        elif isinstance(func, Variable) or isinstance(func, OpSDeref):
+        elif isinstance(func, (Variable, OpSDeref)):
             # Pointer to the function
             self.type = func
         else:
