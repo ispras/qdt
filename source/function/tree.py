@@ -11,6 +11,7 @@ __all__ = [
       , "BranchSwitch"
       , "BranchElse"
       , "SwitchCase"
+      , "SwitchCaseDefault"
       , "StrConcat"
       , "Ifdef"
       , "Endif"
@@ -381,6 +382,28 @@ class SwitchCase(Node):
             writer.write("case@b")
         writer.line(const_str + ":")
         self.out_children(writer)
+
+
+class SwitchCaseDefault(Node):
+
+    def __init__(self, add_break = True):
+        super(SwitchCaseDefault, self).__init__()
+        self.add_break = add_break
+
+    def __c__(self, writer):
+        if self.add_break:
+            self.add_child(Break())
+
+        ds = DeclarationInChildrenSearcher(self)
+        ds.visit()
+
+        if ds.have_declaration:
+            writer.line("default:@b{")
+            self.out_children(writer)
+            writer.line("}")
+        else:
+            writer.line("default:")
+            self.out_children(writer)
 
 
 class StrConcat(Node):
