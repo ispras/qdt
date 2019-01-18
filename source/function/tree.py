@@ -313,28 +313,24 @@ class BranchSwitch(Node):
     __type_references__ = __node__
 
     def __init__(self, var,
-        add_breaks = True,
+        add_break_in_default = True,
         cases = [],
         child_indent = False,
         separate_cases = False
     ):
         super(BranchSwitch, self).__init__(indent_children = child_indent)
-        self.added_cases = set()
-        self.add_breaks = add_breaks
+        self.default_case = None
+        self.add_break_in_default = add_break_in_default
         self.var = var
         self.separate_cases = separate_cases
         self.add_cases(cases)
 
     def add_child(self, case):
-        const = case.const
-        if const in self.added_cases:
-            raise ValueError(case.gen_const_str() +
-                " const-expression is duplicated in switch"
-            )
-        self.added_cases.add(const)
-        super(BranchSwitch, self).add_child(case)
-        if self.separate_cases and const != "default":
-            super(BranchSwitch, self).add_child(NewLine())
+        if isinstance(case, SwitchCaseDefault):
+            if self.default_case:
+                raise ValueError("Multiple default labels in one switch")
+            self.default_case = case
+        self.children.append(case)
 
     def add_cases(self, cases):
         for case in cases:
@@ -345,10 +341,16 @@ class BranchSwitch(Node):
         return self
 
     def __c__(self, writer):
-        if "default" not in self.added_cases:
-            child = SwitchCase("default", self.add_breaks)
-            self.added_cases.add("default")
-            self.add_child(child)
+        if not self.default_case:
+            self.add_child(SwitchCaseDefault(self.add_break_in_default))
+
+        if self.separate_cases and self.children:
+            old_ch = self.children
+            new_ch = [ old_ch[0] ]
+            for ch in old_ch[1:]:
+                new_ch.append(NewLine())
+                new_ch.append(ch)
+            self.children = new_ch
 
         writer.write("switch@b(")
         self.var.__c__(writer)
@@ -362,26 +364,28 @@ class SwitchCase(Node):
     def __init__(self, const, add_break = True):
         super(SwitchCase, self).__init__()
         self.add_break = add_break
-        self.const = const
 
-    def gen_const_str(self):
-        const = self.const
-        if const == "default":
-            return const
-        elif isinstance(const, tuple):
-            return str(const[0]) + "@b...@b" + str(const[1])
-        else:
-            return str(const)
+        if isinstance(const, integer_types):
+            const = CINT(const)
+
+        self.const = const
 
     def __c__(self, writer):
         if self.add_break:
             self.add_child(Break())
 
-        const_str = self.gen_const_str()
-        if const_str != "default":
-            writer.write("case@b")
-        writer.line(const_str + ":")
-        self.out_children(writer)
+        ds= DeclarationInChildrenSearcher(self)
+        ds.visit()
+
+        writer.write("case@b")
+        self.const.__c__(writer)
+        if ds.have_declaration:
+            writer.line(":@b{")
+            self.out_children(writer)
+            writer.line("}")
+        else:
+            writer.line(":")
+            self.out_children(writer)
 
 
 class SwitchCaseDefault(Node):
