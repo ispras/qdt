@@ -108,8 +108,8 @@ class ChunkGenerator(object):
     def __init__(self, for_header = False):
         self.chunk_cache = {}
         self.for_header = for_header
-        """ Tracking of recursive calls of `provide_chunks`. Currently used only
-        to generate "extern" keyword for global variables in header and to
+        """ Tracking of recursive calls of `provide_chunks`. Currently used
+        only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
         self.stack = []
 
@@ -141,7 +141,9 @@ class ChunkGenerator(object):
             self.stack.append(origin)
 
             if isinstance(origin, Function):
-                if self.for_header and (not origin.static or not origin.inline):
+                if (    self.for_header
+                    and (not origin.static or not origin.inline)
+                ):
                     chunks = origin.gen_declaration_chunks(self, **kw)
                 else:
                     chunks = origin.gen_definition_chunks(self, **kw)
@@ -307,8 +309,8 @@ class Source(object):
 
     def add_inclusion(self, header):
         if not isinstance(header, Header):
-            raise ValueError("Inclusion of a non-header file is forbidden (%s)"
-                % header.path
+            raise ValueError(
+"Inclusion of a non-header file is forbidden (%s)" % header.path
             )
 
         if header.path not in self.inclusions:
@@ -325,8 +327,8 @@ class Source(object):
                     pass
 
             if self in header.includers:
-                raise RuntimeError("Header %s is among includers of %s but does"
-                    " not includes it" % (self.path, header.path)
+                raise RuntimeError("Header %s is among includers of %s but"
+                    " does not includes it" % (self.path, header.path)
                 )
 
             header.includers.append(self)
@@ -626,9 +628,13 @@ class Header(Source):
                     p.on_define.append(Header._on_define)
 
                     if sys.version_info[0] == 3:
-                        header_input = open(full_name, "r", encoding = "UTF-8").read()
+                        header_input = (
+                            open(full_name, "r", encoding = "UTF-8").read()
+                        )
                     else:
-                        header_input = open(full_name, "rb").read().decode("UTF-8")
+                        header_input = (
+                            open(full_name, "rb").read().decode("UTF-8")
+                        )
 
                     p.parse(input = header_input, source = prefix)
 
@@ -711,9 +717,10 @@ class Header(Source):
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
-            raise AddTypeRefToDefinerException("Adding a type reference (%s) to"
-                " a file (%s) defining the type"
-                % (type_ref.type.name, self.path)
+            raise AddTypeRefToDefinerException(
+"Adding a type reference (%s) to a file (%s) defining the type" % (
+    type_ref.type.name, self.path
+)
             )
 
         # Preventing infinite recursion by header inclusion loop
@@ -1763,7 +1770,8 @@ class SourceChunk(object):
 
             """
             1. cut off indent of the line
-            2. surround non-slash spaces with ' ' moving them to separated words
+            2. surround non-slash spaces with ' ' moving them to separated
+                words
             3. split the line onto words
             4. replace any non-breaking space with a regular space in each word
             """
@@ -1810,10 +1818,11 @@ class SourceChunk(object):
                         r = 0
                     else:
                         r = 2
-                    """ If the line will be broken _after_ this word, its length
-may be still longer than max_cols because of safe breaking (' \'). If so, brake
-the line _before_ this word. Safe breaking is presented by 'r' variable in
-the expression which is 0 if safe breaking is not required after this word.
+                    """ If the line will be broken _after_ this word,
+its length may be still longer than max_cols because of safe breaking (' \').
+If so, brake the line _before_ this word. Safe breaking is presented by
+'r' variable in the expression which is 0 if safe breaking is not required
+after this word.
                     """
                     if ll + 1 + len(word) + r > max_cols:
                         if slash:
@@ -1877,7 +1886,7 @@ class HeaderInclusion(SourceChunk):
             if sg == og:
                 return shdr.path < ohdr.path
             else:
-                # If self `is_global` flag is greater then order weight is less.
+                # If self `is_global` flag is greater then order weight is less
                 return sg > og
         else:
             return super(HeaderInclusion, self).__lt__(other)
