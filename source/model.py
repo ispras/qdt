@@ -695,8 +695,9 @@ class Header(Source):
         # 'g' and 'l' are used to distinguish global and local
         # headers with same
         return hash("{}{}".format(
-                "g" if self.is_global else "l",
-                self.path))
+            "g" if self.is_global else "l",
+            self.path
+        ))
 
     @staticmethod
     def _propagate_reference(h, ref):
@@ -1764,10 +1765,10 @@ class HeaderInclusion(SourceChunk):
             """\
 #include {lq}{path}{rq}
 """.format(
-        lq = "<" if header.is_global else '"',
-        # Always use UNIX path separator in `#include` directive.
-        path = "/".join(path2tuple(header.path)),
-        rq = ">" if header.is_global else '"'
+    lq = "<" if header.is_global else '"',
+    # Always use UNIX path separator in `#include` directive.
+    path = "/".join(path2tuple(header.path)),
+    rq = ">" if header.is_global else '"'
             ),
             references = []
         )
@@ -1861,11 +1862,11 @@ class PointerVariableDeclaration(SourceChunk):
             """\
 {indent}{extern}{const}{type_name}@b*{var_name};
 """.format(
-                indent = indent,
-                const = "const@b" if var.const else "",
-                type_name = t.name,
-                var_name = var.name,
-                extern = "extern@b" if extern else ""
+    indent = indent,
+    const = "const@b" if var.const else "",
+    type_name = t.name,
+    var_name = var.name,
+    extern = "extern@b" if extern else ""
             )
         )
 
@@ -1879,12 +1880,12 @@ class FunctionPointerDeclaration(SourceChunk):
             """\
 {indent}{extern}{decl_str};
 """.format(
-        indent = indent,
-        extern = "extern@b" if extern else "",
-        decl_str = gen_function_declaration_string("", t,
-            pointer_name = var.name,
-            array_size = var.array_size
-        )
+    indent = indent,
+    extern = "extern@b" if extern else "",
+    decl_str = gen_function_declaration_string("", t,
+        pointer_name = var.name,
+        array_size = var.array_size
+    )
             )
         )
 
@@ -1901,14 +1902,14 @@ class VariableDeclaration(SourceChunk):
             """\
 {indent}{extern}{const}{type_name}@b{var_name}{array_decl};
 """.format(
-        indent = indent,
-        const = "const@b" if var.const else "",
-        type_name = var.type.name,
-        var_name = var.name,
-        array_decl = gen_array_declaration(var.array_size),
-        extern = "extern@b" if extern else ""
-    )
+    indent = indent,
+    const = "const@b" if var.const else "",
+    type_name = var.type.name,
+    var_name = var.name,
+    array_decl = gen_array_declaration(var.array_size),
+    extern = "extern@b" if extern else ""
             )
+        )
 
 
 class VariableDefinition(SourceChunk):
@@ -1931,16 +1932,16 @@ class VariableDefinition(SourceChunk):
             """\
 {indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
 """.format(
-        indent = indent,
-        static = "static@b" if var.static else "",
-        const = "const@b" if var.const else "",
-        type_name = "" if enum else var.type.name,
-        var_name = var.name,
-        array_decl = gen_array_declaration(var.array_size),
-        init = init_code,
-        separ = "," if enum else ";",
-        nl = "\n" if append_nl else ""
-    )
+    indent = indent,
+    static = "static@b" if var.static else "",
+    const = "const@b" if var.const else "",
+    type_name = "" if enum else var.type.name,
+    var_name = var.name,
+    array_decl = gen_array_declaration(var.array_size),
+    init = init_code,
+    separ = "," if enum else ";",
+    nl = "\n" if append_nl else ""
+            )
         )
 
 
