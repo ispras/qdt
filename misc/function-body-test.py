@@ -76,7 +76,7 @@ if __name__ == "__main__":
             SwitchCase(OpCaseRange(CINT("0b010"), CINT("0b110")))(
                 OpAssign(_i, 456),
             ),
-            SwitchCase("default")(
+            SwitchCaseDefault(
                 OpAssign(_i, 789)
             )
         ),
