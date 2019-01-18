@@ -741,8 +741,8 @@ class OpAssign(BinaryOperator):
 
 class OpCombAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, comb_op, parenthesis = False):
-        super(OpCombAssign, self).__init__(comb_op.op_str + "=",
+    def __init__(self, arg1, arg2, op_str, parenthesis = False):
+        super(OpCombAssign, self).__init__(op_str + "=",
             arg1, arg2, parenthesis
         )
 
