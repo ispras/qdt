@@ -502,7 +502,7 @@ class Call(SemicolonPresence):
                 writer.write(",@s")
                 c.__c__(writer)
 
-        writer.write(")")
+        writer.write("@c)")
 
 
 class Declare(SemicolonPresence):
@@ -585,7 +585,7 @@ class MCall(SemicolonPresence):
         writer.write(self.type.name)
 
         if self.children:
-            writer.write("(")
+            writer.write("(@a")
 
             first_child = self.children[0]
             first_child.__c__(writer)
@@ -594,7 +594,7 @@ class MCall(SemicolonPresence):
                 writer.write(",@s")
                 c.__c__(writer)
 
-            writer.write(")")
+            writer.write("@c)")
 
 
 class Return(SemicolonPresence):
