@@ -73,6 +73,16 @@ from six import (
 )
 
 
+class CPPStr(object):
+    "Class stores the string used while the preprocessor is running"
+
+    def __init__(self, val):
+        self.val = val
+
+    def __c__(self, writer):
+        writer.write(self.val)
+
+
 class Node(object):
 
     # traverse order indicator for `ObjectVisitor`
