@@ -588,9 +588,9 @@ class Header(Source):
         try:
             m = Type.lookup(macro.name)
             if not m.definer.path == definer:
-                print("Info: multiple definitions of macro %s in %s and %s"\
-                     % (macro.name, m.definer.path, definer)
-                )
+                print("Info: multiple definitions of macro %s in %s and %s" % (
+                    macro.name, m.definer.path, definer
+                ))
         except:
             m = Macro(
                 name = macro.name,
@@ -1215,8 +1215,9 @@ class Function(Type):
         indent = ""
         ch = FunctionDefinition(self, indent)
 
-        refs = gen_function_decl_ref_chunks(self, generator) + \
-               gen_function_def_ref_chunks(self, generator)
+        refs = (gen_function_decl_ref_chunks(self, generator) +
+            gen_function_def_ref_chunks(self, generator)
+        )
 
         ch.add_references(refs)
         return [ch]
@@ -1227,7 +1228,6 @@ class Function(Type):
         inline = False,
         used_types = []
     ):
-
         return Function(
             name = name,
             body = body,
