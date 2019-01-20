@@ -32,6 +32,10 @@ __all__ = [
   , "SourceTreeContainer"
   , "TypeReferencesVisitor"
   , "NodeVisitor"
+  , "ANC"
+  , "CAN"
+  , "NBS"
+  , "NSS"
 ]
 
 from os import (
@@ -96,6 +100,12 @@ from .tools import (
 sys_stdout_recovery = sys.stdout
 
 macro_forbidden = compile("[^0-9A-Z_]")
+
+ANC = "@a" # indent anchor
+CAN = "@c" # cancel indent anchor
+NBS = "@b" # non-breaking space
+NSS = "@s" # non-slash space
+common_re = "(?<!@)((?:@@)*)(%s)"
 
 
 # Code generation model
@@ -1658,16 +1668,10 @@ class SourceChunk(object):
             self.del_reference(r)
 
     def check_cols_fix_up(self, max_cols = 80, indent = "    "):
-        anc = "@a" # indent anchor
-        can = "@c" # cancel indent anchor
-        nbs = "@b" # non-breaking space
-        nss = "@s" # non-slash space
-
-        common_re = "(?<!@)((?:@@)*)({})"
-        re_anc = compile(common_re.format(anc))
-        re_can = compile(common_re.format(can))
-        re_nbs = compile(common_re.format(nbs))
-        re_nss = compile(common_re.format(nss))
+        re_anc = compile(common_re % ANC)
+        re_can = compile(common_re % CAN)
+        re_nbs = compile(common_re % NBS)
+        re_nss = compile(common_re % NSS)
         re_clr = compile("@(.|$)")
 
         lines = self.code.split('\n')
@@ -1700,13 +1704,13 @@ class SourceChunk(object):
             """
             words = list(filter(None, map(
                 lambda a: re_nbs.sub("\\1 ", a),
-                re_nss.sub("\\1 " + nss + ' ', line.lstrip(' ')).split(' ')
+                re_nss.sub("\\1 " + NSS + ' ', line.lstrip(' ')).split(' ')
             )))
 
             ll = 0 # line length
             last_word = len(words) - 1
             for idx2, word in enumerate(words):
-                if word == nss:
+                if word == NSS:
                     slash = False
                     continue
 
@@ -1719,9 +1723,9 @@ class SourceChunk(object):
                 word = ""
                 subword_indents = []
                 for subword in subwords:
-                    if subword == anc:
+                    if subword == ANC:
                         subword_indents.append(len(word))
-                    elif subword == can:
+                    elif subword == CAN:
                         if subword_indents:
                             subword_indents.pop()
                         else:
@@ -1737,7 +1741,7 @@ class SourceChunk(object):
                 if ll > 0:
                     # The variable r reserves characters for " \\"
                     # that can be added after current word
-                    if idx2 == last_word or words[idx2 + 1] == nss:
+                    if idx2 == last_word or words[idx2 + 1] == NSS:
                         r = 0
                     else:
                         r = 2
