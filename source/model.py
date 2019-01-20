@@ -1998,7 +1998,7 @@ class EnumerationDeclaration(SourceChunk):
             "Ending of enumeration %s declaration" % enum.enum_name,
             """\
 {indent}}};\n
-""".format(indent = indent, enum_name = enum.enum_name)
+""".format(indent = indent)
         )
 
 
