@@ -2168,7 +2168,7 @@ class StructureTypedefDeclarationEnd(SourceChunk):
     indent = indent,
     struct_name = struct.name,
     nl = "\n" if append_nl else ""
-            ),
+            )
         )
 
 
