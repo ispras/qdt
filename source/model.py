@@ -101,6 +101,17 @@ sys_stdout_recovery = sys.stdout
 
 macro_forbidden = compile("[^0-9A-Z_]")
 
+anc = "@a" # indent anchor
+can = "@c" # cancel indent anchor
+nbs = "@b" # non-breaking space
+nss = "@s" # non-slash space
+common_re = "(?<!@)((?:@@)*)(%s)"
+re_anc = compile(common_re % anc)
+re_can = compile(common_re % can)
+re_nbs = compile(common_re % nbs)
+re_nss = compile(common_re % nss)
+re_clr = compile("@(.|$)")
+
 
 # Code generation model
 class ChunkGenerator(object):
@@ -1777,18 +1788,6 @@ class SourceChunk(object):
             self.del_reference(r)
 
     def check_cols_fix_up(self, max_cols = 80, indent = "    "):
-        anc = "@a" # indent anchor
-        can = "@c" # cancel indent anchor
-        nbs = "@b" # non-breaking space
-        nss = "@s" # non-slash space
-
-        common_re = "(?<!@)((?:@@)*)({})"
-        re_anc = compile(common_re.format(anc))
-        re_can = compile(common_re.format(can))
-        re_nbs = compile(common_re.format(nbs))
-        re_nss = compile(common_re.format(nss))
-        re_clr = compile("@(.|$)")
-
         lines = self.code.split('\n')
         code = ""
         last_line = len(lines) - 1
