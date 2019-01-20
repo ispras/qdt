@@ -1809,11 +1809,11 @@ class SourceChunk(object):
         nbs = "@b" # non-breaking space
         nss = "@s" # non-slash space
 
-        common_re = "(?<!@)((?:@@)*)({})"
-        re_anc = compile(common_re.format(anc))
-        re_can = compile(common_re.format(can))
-        re_nbs = compile(common_re.format(nbs))
-        re_nss = compile(common_re.format(nss))
+        common_re = "(?<!@)((?:@@)*)(%s)"
+        re_anc = compile(common_re % anc)
+        re_can = compile(common_re % can)
+        re_nbs = compile(common_re % nbs)
+        re_nss = compile(common_re % nss)
         re_clr = compile("@(.|$)")
 
         lines = self.code.split('\n')
