@@ -1093,7 +1093,8 @@ class Enumeration(Type):
         for key, val in elems_dict.items():
             self.elems.append(
                 Variable(key, self,
-                    initializer = Initializer(str(val), t)
+                    initializer = Initializer(str(val), t),
+                    used = True
                 )
             )
 
