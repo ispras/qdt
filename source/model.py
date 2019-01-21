@@ -1820,8 +1820,8 @@ class PointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(PointerTypeDeclaration, self).__init__(_type,
-            "Definition of pointer to type " + self.type.name,
-            "typedef@b" + self.type.name + "@b" + def_name
+            "Definition of pointer to type " + _type.name,
+            "typedef@b" + _type.name + "@b" + def_name + ";\n"
         )
 
 
@@ -1831,7 +1831,7 @@ class FunctionPointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(FunctionPointerTypeDeclaration, self).__init__(_type,
-            "Definition of function pointer type " + self.type.name,
+            "Definition of function pointer type " + _type.name,
             ("typedef@b"
               + gen_function_declaration_string("", _type,
                     pointer_name = def_name
