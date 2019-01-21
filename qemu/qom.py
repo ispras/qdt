@@ -9,6 +9,7 @@ __all__ = [
   , "QemuTypeName"
   , "QOMType"
       , "QOMDevice"
+      , "QOMCPU"
   , "Register"
       , "MemoryRegister"
 ]
@@ -1360,4 +1361,135 @@ class QOMDevice(QOMType):
             self.net_client_info_name(index),
             initializer = init,
             static = True
+        )
+
+
+class QOMCPU(QOMType):
+    def __init__(self, name):
+        super(QOMCPU, self).__init__(name + "-cpu")
+        self.arch_name = name.lower()
+
+    def gen_state(self):
+        s = Structure(self.struct_state_name())
+        for f in self.state_fields:
+            s.append_field(f.type.gen_var(f.name, array_size = f.num))
+        s.append_field(Type["CPU_COMMON"].gen_usage())
+        return s
+
+    def gen_vmstate_initializer(self, state_struct):
+        code = ("""{
+    .name@b=@s\"cpu\",
+    .version_id@b=@s1,
+    .minimum_version_id@b=@s1,
+    .fields@b=@s(VMStateField[])@b{
+""")
+
+        used_macros = set()
+        global type2vmstate
+
+        for f in self.state_fields:
+            fdict = {
+                "_f": f.name,
+                "_s": state_struct.name
+            }
+
+            try:
+                vms_macro_name = type2vmstate[f.type.name]
+            except KeyError:
+                raise Exception(
+                    "VMState generation for type %s is not implemented" % \
+                        f.type.name
+                )
+
+            if f.num is not None:
+                vms_macro_name += "_ARRAY"
+                fdict["_n"] = str(f.num)
+
+            vms_macro = Type[vms_macro_name]
+            used_macros.add(vms_macro)
+
+            code += (" " * 8 + vms_macro.gen_usage_string(Initializer(fdict)) +
+                ",\n"
+            )
+
+        code += " " * 8 + Type["VMSTATE_END_OF_LIST"].gen_usage_string()
+
+        code += "\n    }\n}"
+
+        init = Initializer(
+            code = code,
+            used_types = used_macros.union([
+                Type["VMStateField"],
+                state_struct
+            ])
+        )
+        return init
+
+    def gen_vmstate_var(self, state_struct):
+        init = self.gen_vmstate_initializer(state_struct)
+
+        vmstate = Variable(
+            "vmstate_" + self.qtn.for_id_name,
+            Type["VMStateDescription"],
+            initializer = init,
+            const = True,
+            used = True
+        )
+
+        return vmstate
+
+    def func_name(self, func):
+        return self.qtn.for_id_name + '_' + func
+
+    def struct_name(self):
+        return self.qtn.for_struct_name.upper()
+
+    def struct_class_name(self):
+        return self.qtn.for_struct_name.upper() + "Class"
+
+    def struct_state_name(self):
+        return "CPU" + self.arch_name.upper() + "State"
+
+    def env_get_cpu_name(self):
+        return self.arch_name.lower() + "_env_get_cpu"
+
+    def tcg_init_name(self):
+        return self.arch_name.lower() + "_tcg_init"
+
+    def cpu_init_name(self):
+        return "cpu_" + self.arch_name.lower() + "_init"
+
+    def type_info_name(self):
+        return self.arch_name.upper() + "_type_info"
+
+    def class_macro(self):
+        return self.qtn.for_macros + "_CLASS"
+
+    def get_class_macro(self):
+        return self.qtn.for_macros + "_GET_CLASS"
+
+    def raise_exception(self):
+        return Function(
+            name = "raise_exception",
+            args = [
+                Type[self.struct_state_name()].gen_var("env", pointer = True),
+                Type["uint32_t"].gen_var("index")
+            ],
+            static = True
+        )
+
+    def helper_debug(self):
+        return Function(
+            name = "helper_debug",
+            args = [
+                Type[self.struct_state_name()].gen_var("env", pointer = True)
+            ]
+        )
+
+    def helper_illegal(self):
+        return Function(
+            name = "helper_illegal",
+            args = [
+                Type[self.struct_state_name()].gen_var("env", pointer = True)
+            ]
         )
