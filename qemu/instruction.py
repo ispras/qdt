@@ -25,11 +25,14 @@ BYTE_SIZE = 8
 def parse_endian(string):
     res = string.lower()
     if res not in ["little", "big"]:
-        raise Exception("Wrong endianness option: " + string)
+        raise ValueError("Wrong endianness option: " + string)
     return res == "big"
 
 
 class InstructionNode(object):
+    # TODO: it's not an instruction encoding descriptor. It should be in
+    # another place.
+
     def __init__(self, opcode = None):
         self.opcode = opcode
         self.opc_dict = {}
@@ -55,7 +58,10 @@ class InstructionNode(object):
 
 
 class InstrField(object):
+
     def __init__(self, length, val, num = 0):
+        # TODO: according to `check`, `self.length == len(self.val)`. So, why
+        # `length` arg is needed?
         self.length = length
         self.val = val
         self.num = num
@@ -78,7 +84,9 @@ class InstrField(object):
 
 
 class Operand(InstrField):
+
     def __init__(self, length, name, num = 0):
+        # TODO: arguments are same. Remove this?
         super(Operand, self).__init__(length, name, num)
 
     def __str__(self):
@@ -86,7 +94,10 @@ class Operand(InstrField):
 
 
 class Opcode(InstrField):
+
     def __init__(self, length, val, num = 0):
+        # TODO: "%%0%ub" % length % val
+        # TODO: CINT meets it
         str_val = ("{0:0%ub}" % length).format(val)
 
         super(Opcode, self).__init__(length, str_val, num)
@@ -96,7 +107,9 @@ class Opcode(InstrField):
 
 
 class Reserved(InstrField):
+
     def __init__(self, length, val = 0, num = 0):
+        # TODO: why InstrField.__init__'s val is not 0 by default?
         super(Reserved, self).__init__(length, str(val), num)
 
     def __str__(self):
@@ -109,6 +122,9 @@ def expand_instruction(cur_iter, cur_path, res_list):
     """ Given instruction class as a prefix tree of opcodes, this function
 recursively generates all instruction encoding variants as paths on the tree.
     """
+    # TODO: is `cur_iter` the "prefix tree"? Improve the doc.
+    # TODO: this function is given an iter of Instruction.args. So, what is
+    # "instruction class"?
     try:
         cur = next(cur_iter)
     except StopIteration:
@@ -123,15 +139,22 @@ recursively generates all instruction encoding variants as paths on the tree.
 
 
 class Instruction(object):
+    # TODO: A global API overview is required. Look the module for some
+    # questions.
+
     def __init__(self, name, *args, **kw_args):
+        # TODO: mnem mnem mnem
         self.mnem = name
         fields_dict = defaultdict(list)
 
         for a in args:
             if isinstance(a, Operand):
+                # TODO: multiple Operands per a field? Or multiple fields per
+                # operand?
                 fields_dict[a.val].append(a)
 
         for k, l in fields_dict.items():
+            # TODO: k? field?
             offset = 0
             l = sorted(l, key = lambda x: x.num)
             for j, f in enumerate(l):
@@ -143,11 +166,11 @@ class Instruction(object):
                 f.end = offset + f.length - 1
                 offset += f.length
 
-        self.args = list(args)
+        self.args = list(args) # TODO: is copying really needed?
 
         self.branch = kw_args.get("branch", False)
 
-        # try to get format line for disas
+        # try to get format line for disassembler
         format_ = kw_args.get("format", name)
         self.format = format_
 
@@ -173,8 +196,10 @@ class Instruction(object):
         return result
 
     def set_comment(self, comment):
+        # TODO: just assignment, is a method needed?
         self.comment = comment
 
+    # TODO: fetch_size? Instruction fetching?
     def expand(self, read_size):
         res = []
         tmp = []
@@ -191,7 +216,10 @@ class Instruction(object):
         return res
 
 
+# TODO: Raw? It's looks like a processed one.
 class RawInstruction(object):
+    # TODO: some doc
+
     existing_names = defaultdict(int)
 
     @staticmethod
@@ -213,6 +241,7 @@ class RawInstruction(object):
         self.comment = comment
         self.format = format
         self.branch = branch
+
         offset = 0
         for arg in args:
             if isinstance(arg, InstrField):
@@ -223,14 +252,22 @@ class RawInstruction(object):
                 if (   offset // read_size
                     != (offset + arg.length - 1) // read_size
                 ):
+                    # TODO: extract this predicate to the top?
                     if not isinstance(arg, Operand):
+                        # TODO: offset += ... ?
                         self.add_field(arg)
                         continue
+
+                    # TODO: a comment about what this code does (tries to do)
+                    # TODO: "cur"? maybe "rest" (length)?
                     cur = arg.length - 1
                     cur_off = offset
                     shift = arg.start
                     while cur >= 0:
+                        # TODO: shift is not adjusted. Is this alg correct?
+                        # TODO: this code should be refactored to be more clear
                         new_arg = copy(arg)
+                        # TODO: end is not assigned to new_arg.end
                         end = (cur_off // read_size + 1) * read_size
                         new_arg.start = (max(0, cur - (end - cur_off) + 1) +
                             shift
@@ -257,8 +294,10 @@ class RawInstruction(object):
                 offset += arg.length
 
             elif isinstance(arg, str):
+                # TODO: what is a "parent" of an instruction?
                 self.parent = arg
 
+        # TODO: a lazy property?
         self.string = self.get_string()
 
     def __eq__(self, other):
@@ -266,6 +305,7 @@ class RawInstruction(object):
 
     def __hash__(self):
         if self.parent != "":
+            # TODO: it's strange. what is this hashing principle?
             return self.parent.__hash__()
         else:
             return self.mnem.__hash__()
@@ -293,6 +333,8 @@ class RawInstruction(object):
         self.fields.append(field)
 
     def get_field(self, offset, length):
+        # TODO: is it better to specify just an offset and look for a field
+        # overlapping it?
         cur_off = 0
         for f in self.fields:
             if f.length == length and cur_off == offset:
@@ -306,6 +348,7 @@ class RawInstruction(object):
             for field in self.fields:
                 field.dump()
 
+    # TODO: make it a doc str
     # opcode is a list of tuples: [(val_1, len_1), ..., (val_k, len_k), ...]
     def get_full_opcode(self):
         res = []
@@ -319,6 +362,7 @@ class RawInstruction(object):
     def get_opcode_part(self, pos):
         offset, length = pos
         res = self.string[offset:offset + length]
+        # TODO: what "x" means? a doc is required
         if res.find("x") != -1:
             return None
         return res
@@ -348,6 +392,7 @@ def find_common_opcode(instructions):
 
     :returns: list of tuples: [(off_1, len_1), ..., (off_k, len_k), ...]
     """
+    # TODO: why "common" opcode? it can differ
 
     strs = [instr.string for instr in instructions]
     result = []
@@ -371,12 +416,14 @@ def find_common_opcode(instructions):
 
 
 class InstructionSet(object):
+
     def __init__(self,
         name_to_format = {},
         instruction_list = [],
         endianess = "little",
         read_size = 1
     ):
+        # TODO: some doc
         self.name_to_format = name_to_format
         self.instruction_list = instruction_list
         self.desc_bigendian = parse_endian(endianess)
