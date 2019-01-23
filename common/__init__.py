@@ -17,6 +17,7 @@ from .ml import *
 from .notifier import *
 from .ordered_set import *
 from .os_wrappers import *
+from .persistent import *
 from .ply_tools import *
 from .pygen import *
 from .pypath import *
