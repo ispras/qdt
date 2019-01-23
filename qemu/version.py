@@ -452,7 +452,7 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
-    if get_vp()["v2.8 chardev"]:
+    if get_vp("v2.8 chardev"):
         chardev_types = [
             Function("qemu_chr_fe_set_handlers"),
             Structure("CharBackend")
@@ -484,8 +484,8 @@ def define_only_qemu_2_6_0_types():
         Type("IsaDmaTransferHandler")
     ])
 
-    if get_vp()["include/hw/isa/i8257.h have IsaDmaTransferHandler reference"]:
-        Header[get_vp()["i8257.h path"]].add_references([
+    if get_vp("include/hw/isa/i8257.h have IsaDmaTransferHandler reference"):
+        Header[get_vp("i8257.h path")].add_references([
             Type["IsaDmaTransferHandler"],
             Type["MemoryRegion"]
         ])
@@ -717,7 +717,7 @@ def machine_register_2_5(mach):
     mach.source.add_type(mach.type_reg_func)
 
     # Main machine registration macro
-    def_type = get_vp()["machine initialization function register type name"]
+    def_type = get_vp("machine initialization function register type name")
     machine_init_def_args = Initializer(
         code = { "function": mach.type_reg_func }
     )
