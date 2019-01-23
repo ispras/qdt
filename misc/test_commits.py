@@ -9,6 +9,8 @@ from subprocess import (
     Popen
 )
 from os.path import (
+    isfile,
+    isdir,
     abspath,
     dirname
 )
@@ -27,6 +29,7 @@ from common import (
     Extensible
 )
 from argparse import (
+    ArgumentTypeError,
     ArgumentParser,
     ArgumentDefaultsHelpFormatter
 )
@@ -98,6 +101,51 @@ class Measurement(Extensible):
 
 
 M = Measurement
+
+def project_measurements(qdtrepo, qemurepo, ctx, commit_list, m_count,
+    qproject,
+    env = "python2"
+):
+    if m_count < 1:
+        return
+
+    machine = uname()
+
+    for sha1 in commit_list:
+        print("Measuring %s\n\n" % sha1)
+
+        qdtwc = qdtrepo.get_tmp_wc(sha1)
+        qemuwc = qemurepo.get_tmp_wc(qproject.target_version)
+
+        print("\n\n...\n\n")
+
+        for i in range(m_count):
+            t0 = time()
+            # TODO
+            proc = Popen()
+            proc.wait()
+            t1 = time()
+
+            total = t1 - t0
+
+            print("\n\ntotal: %s\n\n" % total)
+
+            ctx.mes.setdefault(sha1, []).append(M(
+                i = i,
+                time = total,
+                returncode = proc.returncode,
+                env = env,
+                machine = machine
+            ))
+
+            if proc.returncode:
+                break
+
+        ctx._save()
+
+        rmtree(qdtwc)
+        rmtree(qemuwc)
+
 
 def tox_measurements(gitrepo, ctx, commit_list, m_count = 5, env = "py27"):
     if m_count < 1:
@@ -306,6 +354,19 @@ class CommitsTestResults(Persistent):
         return {}
 
 
+def arg_type_directory(string):
+    if not isdir(string):
+        raise ArgumentTypeError(
+            "'%s' is not a directory" % string)
+    return string
+
+def arg_type_file(string):
+    if not isfile(string):
+        raise ArgumentTypeError(
+            "'%s' is not a file" % string)
+    return string
+
+
 if __name__ == "__main__":
     ap = ArgumentParser(
         description = "Test helper fot a Git branch.",
@@ -313,6 +374,7 @@ if __name__ == "__main__":
     )
     ap.add_argument("-r", "--repo",
         default = abspath(dirname(dirname(__file__))),
+        type = arg_type_directory,
         metavar = "dir",
         help = "repository location"
     )
@@ -322,19 +384,43 @@ if __name__ == "__main__":
         metavar = "count",
         help = "measurements count, 0 (to only view previous results)"
     )
+    ap.add_argument("-p", "--project",
+        default = "project.py",
+        type = arg_type_file,
+        metavar = "file.py",
+        help = "a script containing definition of a project to generate"
+    )
+    ap.add_argument(
+        "--qemu-build", "-b",
+        default = ".",
+        type = arg_type_directory,
+        metavar = "dir",
+        help = "override QEMU build path of the project"
+    )
+    ap.add_argument(
+        "--target-version", "-t",
+        default = None,
+        metavar = "<tree-ish>", # like in Git's docs
+        help = "assume given version of Qemu"
+        " (overrides project's target_version)"
+    )
     ap.add_argument("current",
         nargs='?',
         default = "HEAD",
+        metavar = "<current-tree-ish>",
         help = "branch to test"
     )
     ap.add_argument("base",
         nargs='?',
         default = "master",
+        metavar = "<base-tree-ish>",
         help = "base version"
     )
 
 
     args = ap.parse_args()
+
+    # TODO: outline QProject loading from qemu_device_creator.py
 
     repo = GitRepo(args.repo)
 
