@@ -43,6 +43,8 @@ class RegisterGroup(object):
     """ this exists for more convenient handling of different CPUState register
 arrays (dregs, qregs, ...) - one group is one such array
     """
+
+    # TODO: "dregs" and "qregs" says nothing to unfamiliar user
     def __init__(self, name, regs):
         self.name = name
         self.size = None
@@ -57,6 +59,7 @@ arrays (dregs, qregs, ...) - one group is one such array
             if self.size != reg.size:
                 raise ValueError(
 "Register sizes in RegisterGroup must be identical"
+                    # TODO: indent?
                 )
 
     def add_registers(self, regs):
@@ -68,6 +71,7 @@ arrays (dregs, qregs, ...) - one group is one such array
 
 
 class IterationHandler(object):
+
     def __init__(self, tcg, gen_node, instr_node, field_read, field_read_args,
         epilogue, result, default_switch_case,
         verbose = True
@@ -199,9 +203,11 @@ class TargetCodeGenerator(object):
     """ This class contains glue utilities to get rid of direct body tree
 filling in arch creation code
     """
+
     def __init__(self, cpu):
         self.cpu = cpu
 
+    # TODO: fit_endian ?
     def byte_swap(self, i, len):
         if not self.cpu.byte_swap:
             return i
@@ -228,12 +234,14 @@ filling in arch creation code
             shift_val = cur_read * BYTE_SIZE - (cur_offset + length)
 
         if shift_val < 0:
+            # TODO: replace >> with <<?
             raise ValueError()
 
         return OpAssign(
             res,
             OpAnd(
                 OpRShift(var, shift_val),
+                # TODO: is binary mask more convenient?
                 CINT((1 << length) - 1, base = 16)
             )
         )
