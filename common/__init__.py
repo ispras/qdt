@@ -4,6 +4,7 @@ from .co_dispatcher import *
 from .co_signal import *
 from .code_writer import *
 from .compat import *
+from .extensible import *
 from .extra_math import *
 from .formated_string_var import *
 from .git_tools import *
