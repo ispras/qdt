@@ -2,6 +2,7 @@ __all__ = [
     "PyGenerator"
   , "pythonize"
   , "PyGenVisitor"
+  , "pythonizable"
 ]
 
 from six import (
@@ -25,6 +26,9 @@ from .visitor import (
 )
 
 const_types = (float, text_type, binary_type, bool) + integer_types
+
+# Those standard types are supported by `PyGenerator` without specific code.
+pythonizable = const_types + (list, set, dict, tuple)
 
 NOT_GENERATED = 0
 GENERATING = 1
