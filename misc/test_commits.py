@@ -322,16 +322,17 @@ if __name__ == "__main__":
         metavar = "count",
         help = "measurements count, 0 (to only view previous results)"
     )
-    ap.add_argument("base",
-        nargs='?',
-        default = "master",
-        help = "base version"
-    )
     ap.add_argument("current",
         nargs='?',
         default = "HEAD",
         help = "branch to test"
     )
+    ap.add_argument("base",
+        nargs='?',
+        default = "master",
+        help = "base version"
+    )
+
 
     args = ap.parse_args()
 
