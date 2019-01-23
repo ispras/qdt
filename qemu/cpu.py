@@ -58,6 +58,8 @@ from .target_code_generator import (
 )
 
 
+# TODO: name_start -> name_prefix, name_base, base_name?
+# TODO: name_end -> ... suffix, .... ?
 def gen_registers_range(name_start, size,
         name_end = "",
         start = 0,
@@ -65,11 +67,12 @@ def gen_registers_range(name_start, size,
         step = 1
     ):
         assert(type(start) == type(end))
-        if isinstance(start, Integral):
+        if isinstance(start, Integral): # six.ineger_types ?
             func = str
         elif isinstance(start, str) and len(start) == 1:
             func = chr
             start = ord(start[0])
+            # TODO: end?
         else:
             raise ValueError(
 "Error creating register range: only integer or one char ranges are allowed"
@@ -80,6 +83,7 @@ def gen_registers_range(name_start, size,
 
 
 class TargetCPU(object):
+
     def __init__(self, name, ins_set,
         endianess = "little",
         qemu_root = None,
@@ -89,6 +93,7 @@ class TargetCPU(object):
     ):
         self.qom_cpu = QOMCPU(name)
 
+        # XXX: objects in default values are shared among all instances
         self.attrs = attributes
         self.raw_args = registers
         self.fields = []
@@ -105,6 +110,7 @@ class TargetCPU(object):
 
         self.byte_swap = ins_set.desc_bigendian == self.arch_bigendian
 
+        # TODO: instrs
         tmp = []
         for i in ins_set.instruction_list:
             tmp.extend(i.expand(self.read_size * BYTE_SIZE))
@@ -128,6 +134,8 @@ class TargetCPU(object):
         )
 
     def gen_state(self):
+        # TODO: There is QOMType.add_fields_for_regs, see
+        # SysBusDeviceType.__init__ for an example
         for arg in self.raw_args:
             if isinstance(arg, QOMStateField):
                 self.fields.append(arg)
@@ -138,6 +146,7 @@ class TargetCPU(object):
                 elif arg.size <= 64:
                     size = 64
                 else:
+                    # XXX: ValueError
                     raise Exception("Wrong register size: " + arg.name)
                 self.fields.append(
                     QOMStateField(
@@ -153,6 +162,7 @@ class TargetCPU(object):
                 elif arg.size <= 64:
                     size = 64
                 else:
+                    # XXX: ValueError
                     raise Exception("Wrong registers size: " + arg.name)
                 self.fields.append(
                     QOMStateField(
@@ -163,6 +173,7 @@ class TargetCPU(object):
                     )
                 )
             else:
+                # XXX: ValueError
                 raise Exception("Unexpected field of CPU")
 
         self.qom_cpu.add_state_fields(self.fields)
@@ -420,9 +431,12 @@ class TargetCPU(object):
             res = None
         return res
 
+    # TODO: does self.qemu_root == qemu_src?
     def gen_target_code(self, qemu_src, verbose = False):
         # maybe should correct opc index (e.g. common opcode is in the middle,
         # but some instructions have common parts before
+
+        # TODO: self is not used. Can it be a global function?
         def build_instruction_tree(instructions,
             cur_node = None,
             depth = 0,
@@ -431,6 +445,7 @@ class TargetCPU(object):
             verbose = False
         ):
             if instructions == prev_instructions:
+                # XXX: RuntimeError, ValueError?
                 raise Exception("Recursion error")
 
             orig_opc = find_common_opcode(instructions)
@@ -533,6 +548,7 @@ class TargetCPU(object):
 
             return cur_node
 
+        # TODO: it's a regular method
         def create_default_config(src):
             with open(
                 join(src, "default-configs",
@@ -544,6 +560,9 @@ class TargetCPU(object):
                     "-softmmu"
                 )
 
+        # TODO: can it be a regular method?
+        # TODO: src == self.qemu_root?
+        # TODO: patch_configure?
         def update_configure(src):
             configure_path = join(src, "configure")
             with open(configure_path, "r") as f:
@@ -602,6 +621,8 @@ class TargetCPU(object):
             with open(configure_path, "w") as f:
                 f.write("".join(lines))
 
+        # TODO: can it be a regular method?
+        # TODO: src == self.qemu_root?
         def update_archinit(src):
             arch_init_header = join(src, "include", "sysemu", "arch_init.h")
             with open(arch_init_header, "r") as f:
@@ -646,12 +667,15 @@ class TargetCPU(object):
 #elif defined({})
 #define QEMU_ARCH QEMU_ARCH_{}
 """.format(str_target, self.target_name.upper())
+    # TODO: nameless arguments, use % 
                     )
                     break
 
             with open(arch_init_source, "w") as f:
                 f.write("".join(lines))
 
+        # TODO: can it be a regular method?
+        # TODO: src == self.qemu_root?
         def update_bfd(src):
             bfd_header = join(src, "include", "disas", "bfd.h")
             with open(bfd_header, "r") as f:
@@ -695,6 +719,7 @@ class TargetCPU(object):
                     if line == decl_func:
                         break
                 elif to_print:
+                    # TODO: 1 line is enough
                     lines.insert(
                         i,
                         decl_func
@@ -704,6 +729,7 @@ class TargetCPU(object):
             with open(bfd_header, "w") as f:
                 f.write("".join(lines))
 
+        # TODO: can it be a regular method?
         # here mkdir target-$(ARCH_NAME) and gen all necessary files
         def gen_target_files():
             hdr = self.gen_files["cpu.h"]
@@ -902,6 +928,7 @@ class TargetCPU(object):
             helper_c.add_type(handle_mmu_fault)
             helper_c.add_type(tlb_fill)
 
+        # TODO: can it be a regular method?
         def gen_instruction_funcs_file():
             h = self.gen_files["translate.inc.c"]
 
@@ -939,12 +966,15 @@ class TargetCPU(object):
             self.g.gen_set_pc(set_pc, h.global_variables["pc"])
             h.add_type(set_pc)
 
+        # TODO: can it be a regular method?
         def gen_vmstate_description():
             src = self.gen_files["machine.c"]
             cpu_arch_state = Type[self.qom_cpu.struct_state_name()]
             vmstate = self.qom_cpu.gen_vmstate_var(cpu_arch_state)
             src.add_global_variable(vmstate)
 
+        # TODO: can it be a regular method?
+        # TODO: src == self.qemu_root?
         def gen_target_makefile(src):
             target_makefile = join(src, self.target_folder, "Makefile.objs")
             with open(target_makefile, "w") as mkf:
@@ -954,11 +984,14 @@ class TargetCPU(object):
                         mkf.write(' ' + splitext(basename(f.path))[0] + ".o")
                 mkf.write("\n")
 
+        # TODO: can it be a regular method?
+        # TODO: src == self.qemu_root?
         def gen_helper_header(src):
             with open(join(src, self.target_folder, "helper.h"), "w") as h:
                 h.write("DEF_HELPER_1(debug, void, env)\n")
                 h.write("DEF_HELPER_1(illegal, void, env)\n")
 
+        # TODO: can it be a regular method?
         def gen_translation_code():
             src = self.gen_files["translate.c"]
             qom_cpu = self.qom_cpu
@@ -1018,9 +1051,11 @@ class TargetCPU(object):
             self.g.gen_restore_state_to_opc(restore_state)
             src.add_type(restore_state)
 
+        # TODO: can it be a regular method?
         def gen_disas():
             disas = self.gen_files[self.target_name + ".c"]
 
+            # TODO: it's a constant mapping, make it global
             type_by_specifier_and_length = {
                 ('d', 'i'): {
                     None: "int",
@@ -1068,6 +1103,7 @@ class TargetCPU(object):
                     't': "ptrdiff_t*"
                 }
             }
+            # TODO: ftr?
             ftr = {}
             for specifiers, info in type_by_specifier_and_length.items():
                 subftr = {}
@@ -1095,6 +1131,8 @@ class TargetCPU(object):
 
                 disas.add_global_variable(reg_var)
 
+            # TODO: it can be global too
+            # TODO: re_spec?
             re_spec = compile("(?<!%)(?:%%)*(%(?:"
                 "(?:[-+ #0]{0,5})"         # flags
                 "(?:\d+|\*)?"              # width
@@ -1146,6 +1184,7 @@ class TargetCPU(object):
                     disas.add_type(f)
                     added[v[1]] = (arg_count, v[0] is None)
                 elif added[v[1]] != (arg_count, v[0] is None):
+                    # TODO: it's `repr`, or %r
                     def xstr(a):
                         return "None" if a is None else '"' + a + '"'
                     raise Exception(
@@ -1214,6 +1253,7 @@ class TargetCPU(object):
         self.gen_target_code(qemu_src, verbose)
 
         for f in self.gen_files.values():
+            # TODO: does self.qemu_root == qemu_src?
             path = join(qemu_src, f.path)
             with open(path, mode = "w", encoding = "utf-8") as f_writer:
                 sf = f.generate()
