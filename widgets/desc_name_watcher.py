@@ -39,7 +39,7 @@ refactoring:
             return
         if op.attr != "name":
             return
-        desc = op.find_desc()
+        desc = self.p.find1(__sn__ = op.sn)
         if QOMDevice not in getmro(desc.__qom_template__):
             return
 

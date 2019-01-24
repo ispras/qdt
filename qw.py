@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from qemu import (
+    POp_AddDesc,
     MachineNode,
     MOp_AddIRQHub,
     MOp_AddIRQLine,
@@ -75,10 +76,16 @@ from six.moves.tkinter_messagebox import (
 from traceback import (
     print_exc
 )
+from threading import (
+    Thread
+)
 # use ours pyrsp
 with pypath("pyrsp"):
-    from pyrsp.targets import (
+    from pyrsp.rsp import (
         AMD64
+    )
+    from pyrsp.utils import (
+        wait_for_tcp_port
     )
 
 class RQOMTree(object):
@@ -304,7 +311,7 @@ the QOM tree by fetching relevant data.
         "vl.c:3075"
 
         if self.interrupt:
-            self.rt.target.interrupt()
+            self.rt.target.exit = True
 
     def to_file(self, dot_file_name):
         "Writes QOM tree to Graphviz file."
@@ -448,6 +455,7 @@ class RQInstance(object):
 
 
 @notifier(
+    "machine_created", # RQInstance
     "device_creating", # RQInstance
     "device_created", # RQInstance
     "bus_created", # RQInstance
@@ -566,6 +574,8 @@ Notifications are issued for many machine composition events.
 
         desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
 
+        self.__notify_machine_created(inst)
+
         if not self.verbose:
             return
 
@@ -603,7 +613,7 @@ Notifications are issued for many machine composition events.
 
         self.remove_breakpoints()
         if self.interrupt:
-            self.rt.target.interrupt()
+            self.rt.target.exit = True
 
         if not self.verbose:
             return
@@ -979,16 +989,13 @@ class MachineReverser(object):
 description for QDT project.
     """
 
-    def __init__(self, watcher, machine, tracker):
+    def __init__(self, watcher, tracker):
         """
     :type watcher: MachineWatcher
-    :type machine: MachineNode
     :type tracker: GUIProjectHistoryTracker
         """
         self.watcher = watcher
-        self.machine = machine
         self.tracker = tracker
-        self.proxy = tracker.get_machine_proxy(machine)
 
         # auto assign event handlers
         for name, ref in getmembers(type(self)):
@@ -1008,6 +1015,18 @@ description for QDT project.
     def _on_runtime_set(self, rt):
         self.rt = rt
         self.target = rt.target
+
+    def _on_machine_created(self, m):
+        tracker = self.tracker
+        tracker.stage(POp_AddDesc, "MachineNode",
+            tracker.p.next_serial_number(),
+            name = m.type.name,
+            directory = ""
+        )
+        tracker.commit()
+
+        self.machine = machine = tracker.p.find1(name = m.type.name)
+        self.proxy = tracker.get_machine_proxy(machine)
 
     def _on_device_creating(self, inst):
         _id = self.__id()
@@ -1031,17 +1050,18 @@ description for QDT project.
         self.proxy.commit()
 
         target = self.target
+        rt = self.rt
         cc = CastCatcher(inst)
 
         ii = _type.instance_init
         if ii:
             for addr in ii.epilogues:
-                target.add_br(target.get_hex_str(addr), cc)
+                rt.add_br(target.reg_fmt % addr, cc)
 
         realize = _type.realize
         if realize:
             for addr in realize.epilogues:
-                target.add_br(target.get_hex_str(addr), cc)
+                rt.add_br(target.reg_fmt % addr, cc)
 
     def _on_bus_created(self, bus):
         _id = self.__id()
@@ -1181,7 +1201,7 @@ class QArgumentParser(ArgumentParser):
 class QEmuWatcherGUI(GUITk):
     "Showing runtime state of machine."
 
-    def __init__(self, pht, mach_desc, runtime):
+    def __init__(self, pht, runtime):
         GUITk.__init__(self, wait_msec = 1)
 
         self.title(_("QEmu Watcher"))
@@ -1192,14 +1212,7 @@ class QEmuWatcherGUI(GUITk):
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
 
-        mdsw = MachineDescriptionSettingsWidget(mach_desc, self)
-        mdsw.grid(row = 0, column = 0, sticky = "NESW")
-        mdsw.mw.mdw.var_physical_layout.set(False)
-        self.mdsw = mdsw
-
-        # magic with layouts
-        pht.p.add_layout(mach_desc.name, mdsw.gen_layout()).widget = mdsw
-
+        self._killed = False
         self.task_manager.enqueue(self.co_rsp_poller())
 
         self.hk = hk = HotKey(self)
@@ -1222,6 +1235,31 @@ class QEmuWatcherGUI(GUITk):
             command = self._on_save,
             accelerator = hk.get_keycode_string(self._on_save)
         )
+        self._exiting = False
+        self.protocol("WM_DELETE_WINDOW", self._on_wm_delete_window)
+
+        pht.watch_changed(self._on_changed)
+
+    def _on_changed(self, op):
+        if not isinstance(op, POp_AddDesc):
+            return
+
+        for d in self.pht.p.descriptions:
+            if isinstance(d, MachineNode):
+                break
+        else:
+            return
+
+        mdsw = MachineDescriptionSettingsWidget(d, self)
+        mdsw.grid(row = 0, column = 0, sticky = "NESW")
+        mdsw.mw.mdw.var_physical_layout.set(False)
+        self.mdsw = mdsw
+
+        # magic with layouts
+        self.pht.p.add_layout(d.name, mdsw.gen_layout()).widget = mdsw
+
+        # only one machine is supported
+        self.pht.unwatch_changed(self._on_changed)
 
     def _on_save(self):
         fname = asksaveas(self,
@@ -1268,24 +1306,37 @@ class QEmuWatcherGUI(GUITk):
         rt = self.rt
         target = rt.target
 
-        target.run_no_block()
-
-        target.finished = False
-        target._interrupt = False
-        while not target._interrupt:
-            yield
+        def run():
             try:
-                target.poll()
+                target.run(setpc = False)
             except:
                 print_exc()
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
-                break
 
-        yield
+            try:
+                target.send("k")
+            except:
+                pass
 
-        if not target.finished:
-            target.finished = True
-            target.rsp.finish()
+        t = Thread(target = run)
+        t.start()
+
+        while t.isAlive():
+            yield False
+
+        self._killed = True
+
+        if self._exiting:
+            self.destroy()
+
+    def _on_wm_delete_window(self):
+        if self._killed:
+            self.destroy()
+            return
+
+        # co_rsp_poller will destroy the window after RSP thread ended.
+        self._exiting = True
+        self.rt.target.exit = True
 
 
 def main():
@@ -1336,13 +1387,10 @@ def main():
         interrupt = True
     )
 
-    mach_desc = MachineNode("runtime-machine", "")
-    proj = GUIProject(
-        descriptions = [mach_desc]
-    )
+    proj = GUIProject()
     pht = GUIProjectHistoryTracker(proj, proj.history)
 
-    MachineReverser(mw, mach_desc, pht)
+    MachineReverser(mw, pht)
 
     # auto select free port for gdb-server
     for port in range(4321, 1 << 16):
@@ -1366,22 +1414,41 @@ def main():
 
     qemu_proc.start()
 
-    qemu_debugger = AMD64(qemu_debug_addr,
-        host = True
-    )
+    if not wait_for_tcp_port(port):
+        raise RuntimeError("gdbserver does not listen %u" % port)
+
+    qemu_debugger = AMD64(str(port), noack = True)
 
     rt = Runtime(qemu_debugger, dic)
 
     qomtr.init_runtime(rt)
     mw.init_runtime(rt)
 
-    tk = QEmuWatcherGUI(pht, mach_desc, rt)
+    # Because pyrsp (with machine reconstruction suite) works in a separate
+    # thread, tracker's "changed" notifications are racing with GUI. So, GUI
+    # must not watch those notifications. To maintain GUI consistency
+    # other project and tracker are created with same history. The GUI is
+    # watching this second tracker. A special coroutine working in GUI thread
+    # will poll first (master) tracker position and adjust second (slave)
+    # tracker updating the GUI without races.
+    proj2 = GUIProject()
+    # different context (project) but same history
+    slave_pht = GUIProjectHistoryTracker(proj2, proj.history)
+
+    def co_syncronizer():
+        while True:
+            if slave_pht.pos != pht.pos:
+                yield True
+                slave_pht.do()
+            else:
+                yield False
+
+    tk = QEmuWatcherGUI(slave_pht, rt)
+
+    tk.task_manager.enqueue(co_syncronizer())
 
     tk.geometry("1024x1024")
     tk.mainloop()
-
-    if not qemu_debugger.finished:
-        qemu_debugger.rsp.finish()
 
     qomtr.to_file("qom-by-q.i.dot")
 

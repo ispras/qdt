@@ -70,17 +70,15 @@ http://legacy.python.org/workshops/1997-10/proceedings/zukowski.html
 Life cycle:
                                    ___---> __description__
         / after first call \      /                ^
-        \ to __do__ only]  / -->(!)                |
+        \ to __do__ only   / -->(!)                |
                                  |                 |   / all referenced   \
-                                 |  done = True    |   | objects should   |
-              backed_up = True   |   |             |   | be in same state |
-                          |      |   |            (!)<-| as during first  |
+                                 |                 |   | objects should   |
+              backed_up = True   |                 |   | be in same state |
+                          |      |                (!)<-| as during first  |
  __init__ --> __backup__ --> __do__ --> __undo__   |   | call to __do__   |
            \                               .       |   | (use r/w sets    |
  backed_up = False             ^           |-------'   | to control this, |
-      done = False             `-----------'           \ for instance)]   /
-                                     \
-                                    done = False
+                               `-----------'           \ for instance)    /
 
 "__init__" is called same time the operation is created during "stage"
 (by Python).
@@ -90,12 +88,21 @@ Life cycle:
 """
 
 class InverseOperation(object):
+    """ Describes a deterministic operation that can be done on a context and
+consequently undone resulting in the same context state. An operation should
+be as basic as possible. A complex "operation" should be presented by a
+`sequence` of basic operations. An operation must only contain information
+required to perform it. It must be context free and independent. Before an
+operation is done it is given a chance to get a backup required for consequent
+undoing. The backup must be context independent too. It's possible because of
+determinism.
+    """
+
     def __init__(self, previous = None, sequence = None):
         self.prev = previous
         self.next = []
         self.seq = sequence
         self.backed_up = False
-        self.done = False
 
     def backlog(self):
         cur = self
@@ -103,23 +110,13 @@ class InverseOperation(object):
             yield cur
             cur = cur.prev
 
-    def skipped(self):
-        for op in self.backlog():
-            if not op.done:
-                yield op
-
-    def committed(self):
-        for op in self.backlog():
-            if op.done:
-                yield op
-
-    def __backup__(self):
+    def __backup__(self, context):
         raise UnimplementedInverseOperation()
 
-    def __do__(self):
+    def __do__(self, context):
         raise UnimplementedInverseOperation()
 
-    def __undo__(self):
+    def __undo__(self, context):
         raise UnimplementedInverseOperation()
 
     def __read_set__(self):
@@ -131,7 +128,7 @@ class InverseOperation(object):
     def writes(self, entry):
         return set_touches_entry(self.__write_set__(), entry)
 
-    def __description__(self):
+    def __description__(self, context):
         return _("Reversible operation with unimplemented description \
 (class %s).") % type(self).__name__
 
@@ -139,17 +136,14 @@ class InitialOperationCall(TypeError):
     pass
 
 class InitialOperation(InverseOperation):
-    def __init__(self):
-        InverseOperation.__init__(self)
-        self.done = True
 
-    def __backup__(self):
+    def __backup__(self, _):
         raise InitialOperationCall()
 
-    def __do__(self):
+    def __do__(self, _):
         raise InitialOperationCall()
 
-    def __undo__(self):
+    def __undo__(self, _):
         raise InitialOperationCall()
 
     def __read_set__(self):
@@ -158,7 +152,7 @@ class InitialOperation(InverseOperation):
     def __write_set__(self):
         return []
 
-    def __description__(self):
+    def __description__(self, _):
         return _("The beginning of known history.")
 
 class History(object):
@@ -204,10 +198,13 @@ It's like a transaction in a data base management system.
     "changed"
 )
 class HistoryTracker(object):
-    def __init__(self, history):
+    def __init__(self, context, history):
+        self.ctx = context
         self.history = history
         self.pos = history.leafs[0]
         self.delayed = []
+        # root (initial) operation is always done
+        self.done = set([history.root])
 
     def begin(self):
         "Begins an operation sequence that will be applied during next commit."
@@ -216,10 +213,11 @@ class HistoryTracker(object):
         return seq
 
     def undo(self, including = None):
+        done = self.done
         queue = []
 
         while True:
-            if self.pos.done:
+            if self.pos in done:
                 queue.append(self.pos)
 
             cur = self.pos
@@ -232,9 +230,10 @@ class HistoryTracker(object):
                 break
 
         if queue:
+            ctx = self.ctx
             for p in queue:
-                p.__undo__()
-                p.done = False
+                p.__undo__(ctx)
+                done.remove(p)
 
                 self.__notify_changed(p)
 
@@ -305,6 +304,18 @@ class HistoryTracker(object):
 
         return op
 
+    def skipped(self, last):
+        done = self.done
+        for op in last.backlog():
+            if op not in done:
+                yield op
+
+    def committed(self, last):
+        done = self.done
+        for op in last.backlog():
+            if op in done:
+                yield op
+
     def get_branch(self):
         return list(reversed(tuple(self.pos.backlog())))
 
@@ -312,15 +323,18 @@ class HistoryTracker(object):
         if including is None:
             including = self.pos
 
-        for p in reversed(tuple(including.skipped())):
+        ctx = self.ctx
+        done = self.done
+
+        for p in reversed(tuple(self.skipped(including))):
             # TODO:  check read/write sets before
             # some operations could be skipped if not required
             if not p.backed_up:
-                p.__backup__()
+                p.__backup__(ctx)
                 p.backed_up = True
 
-            p.__do__()
-            p.done = True
+            p.__do__(ctx)
+            done.add(p)
 
             self.__notify_changed(p)
 

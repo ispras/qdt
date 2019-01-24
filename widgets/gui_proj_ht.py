@@ -34,7 +34,7 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
 
     def on_operation(self, op):
         if op not in self.operation_strings:
-            self.operation_strings[op] = op.__description__()
+            self.operation_strings[op] = op.__description__(self.p)
 
     def set_sequence_description(self, desc):
         self.sequence_strings[self.current_sequence] = desc
