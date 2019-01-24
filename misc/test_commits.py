@@ -9,12 +9,14 @@ from subprocess import (
     Popen
 )
 from os.path import (
+    join,
     isfile,
     isdir,
     abspath,
     dirname
 )
 from shutil import (
+    copytree,
     rmtree
 )
 from time import (
@@ -24,6 +26,7 @@ from matplotlib import (
     pyplot as plt
 )
 from common import (
+    execfile,
     lazy,
     Persistent,
     Extensible
@@ -36,9 +39,16 @@ from argparse import (
 from platform import (
     uname
 )
+import qdt
+from traceback import (
+    print_exc
+)
+from qemu import (
+    qvd_get
+)
 
 
-class GitRepo(object):
+class GitHelper(object):
 
     def __init__(self, path):
         self.path = path
@@ -51,17 +61,18 @@ class GitRepo(object):
     def version(self, tree_ish):
         return self.repo.commit(tree_ish).hexsha
 
-    def get_tmp_wc(self, version = None):
+    def get_tmp_wc(self, version = None, prefix = "repo"):
         if version is None:
             version = self.head
         else:
             version = self.version(version)
 
-        tmp_wc = mkdtemp("-%s" % version)
+        tmp_wc = mkdtemp(prefix = "%s-%s-" % (prefix, version))
 
         for cmd in [
             ["git", "clone", "-n", "-s", self.path, "."],
-            ["git", "checkout", "-f", version]
+            ["git", "checkout", "-f", version],
+            ["git", "submodule", "update", "--init", "--recursive"]
         ]:
 
             p = Popen(cmd, cwd = tmp_wc, stderr = PIPE, stdout = PIPE)
@@ -102,8 +113,9 @@ class Measurement(Extensible):
 
 M = Measurement
 
-def project_measurements(qdtrepo, qemurepo, ctx, commit_list, m_count,
-    qproject,
+
+def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
+    m_count = 5,
     env = "python2"
 ):
     if m_count < 1:
@@ -111,18 +123,54 @@ def project_measurements(qdtrepo, qemurepo, ctx, commit_list, m_count,
 
     machine = uname()
 
+    print("Checking Qemu out...")
+    qemuwc = qemugit.get_tmp_wc(qproject.target_version, "qemu")
+    tmp_build = mkdtemp(prefix = "qemu-%s-build-" % qproject.target_version)
+
+    print("Configuring Qemu...")
+    configure = Popen(
+        [
+            join(qemugit.path, "configure"),
+            "--target-list=" + ",".join(["x86_64-softmmu"])
+        ],
+        cwd = tmp_build,
+        stderr = PIPE,
+        stdout = PIPE
+    )
+    configure.wait()
+    if configure.returncode:
+        raise RuntimeError(
+            "Qemu configuration failed %u\nstdout:\n%s\nstderr:\n%s\n" % (
+                configure.returncode, configure.stdout.read(),
+                configure.stderr.read()
+            )
+        )
+
+    print("Backing Qemu configuration...")
+    q_back = mkdtemp(prefix = "qemu-%s-back-" % qproject.target_version)
+
+    copytree(qemuwc, join(q_back, "src"))
+    copytree(tmp_build, join(q_back, "build"))
+
     for sha1 in commit_list:
-        print("Measuring %s\n\n" % sha1)
-
-        qdtwc = qdtrepo.get_tmp_wc(sha1)
-        qemuwc = qemurepo.get_tmp_wc(qproject.target_version)
-
-        print("\n\n...\n\n")
+        print("Checking QDT out (%s)..." % sha1)
+        qdtwc = qdtgit.get_tmp_wc(sha1, "qdt")
 
         for i in range(m_count):
+            print("Measuring...\n\n" % sha1)
+
+            qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
+
             t0 = time()
-            # TODO
-            proc = Popen()
+            proc = Popen(
+                [
+                    join(qdtwc, "qemu-device-creator.py"),
+                    "-b", tmp_build,
+                    "-t", qproject.target_version,
+                    qp_path
+                ],
+                cwd = qdt_cwd
+            )
             proc.wait()
             t1 = time()
 
@@ -138,13 +186,18 @@ def project_measurements(qdtrepo, qemurepo, ctx, commit_list, m_count,
                 machine = machine
             ))
 
+            rmtree(qdt_cwd)
+
             if proc.returncode:
                 break
 
         ctx._save()
 
         rmtree(qdtwc)
-        rmtree(qemuwc)
+
+    rmtree(tmp_build)
+    rmtree(qemuwc)
+    rmtree(q_back)
 
 
 def tox_measurements(gitrepo, ctx, commit_list, m_count = 5, env = "py27"):
@@ -354,6 +407,13 @@ class CommitsTestResults(Persistent):
         return {}
 
 
+class default(str):
+    """ Unique string. Used to distinguish a default CLI argument value and a
+user provided value which is equal to default. They are different objects in
+Python.
+    """
+
+
 def arg_type_directory(string):
     if not isdir(string):
         raise ArgumentTypeError(
@@ -367,7 +427,7 @@ def arg_type_file(string):
     return string
 
 
-if __name__ == "__main__":
+def main():
     ap = ArgumentParser(
         description = "Test helper fot a Git branch.",
         formatter_class = ArgumentDefaultsHelpFormatter
@@ -384,22 +444,20 @@ if __name__ == "__main__":
         metavar = "count",
         help = "measurements count, 0 (to only view previous results)"
     )
-    ap.add_argument("-p", "--project",
+    ap.add_argument("-s", "--script",
         default = "project.py",
         type = arg_type_file,
         metavar = "file.py",
         help = "a script containing definition of a project to generate"
     )
-    ap.add_argument(
-        "--qemu-build", "-b",
-        default = ".",
+    ap.add_argument("-b", "--qemu-build",
+        default = default("."),
         type = arg_type_directory,
         metavar = "dir",
         help = "override QEMU build path of the project"
     )
-    ap.add_argument(
-        "--target-version", "-t",
-        default = None,
+    ap.add_argument("-t", "--target-version",
+        default = default("master"),
         metavar = "<tree-ish>", # like in Git's docs
         help = "assume given version of Qemu"
         " (overrides project's target_version)"
@@ -421,15 +479,57 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     # TODO: outline QProject loading from qemu_device_creator.py
+    script = args.script
 
-    repo = GitRepo(args.repo)
+    loaded = {}
+    try:
+        execfile(script, dict(qdt.__dict__), loaded)
+    except:
+        print("Cannot load configuration from '%s'" % script)
+        print_exc()
+        return -1
+
+    for v in loaded.values():
+        if isinstance(v, qdt.QProject):
+            project = v
+            break
+    else:
+        print("Script '%s' does not define a project to generate." % script)
+        return -1
+
+    if (    not isinstance(args.qemu_build, default)
+         or not getattr(project, "build_path", None)
+    ):
+        project.build_path = args.qemu_build
+
+    if (    not isinstance(args.target_version, default)
+         or not getattr(project, "target_version", None)
+    ):
+        project.target_version = args.target_version
+
+
+    qdtgit = GitHelper(args.repo)
+
+    qvd = qvd_get(project.build_path, version = project.target_version)
+
+    qemugit = GitHelper(qvd.src_path)
 
     with CommitsTestResults() as c:
         commit_list = tuple(reversed(
-            list(repo.commits(args.current, early_tree_ish = args.base))
+            list(qdtgit.commits(args.current, early_tree_ish = args.base))
         ))
 
-        tox_measurements(repo, c, commit_list,
-            m_count = args.measurements
+        project_measurements(qdtgit, qemugit, c, commit_list, project, script,
+            m_count = args.measurements,
         )
-        plot_measurements(repo.repo, c, commit_list)
+
+        # TODO
+        # tox_measurements(repo, c, commit_list,
+        #     m_count = args.measurements
+        # )
+        plot_measurements(qdtgit.repo, c, commit_list)
+
+    return 0
+
+if __name__ == "__main__":
+    exit(main())
