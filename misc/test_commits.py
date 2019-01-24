@@ -16,6 +16,7 @@ from os.path import (
     dirname
 )
 from shutil import (
+    copyfile,
     copytree,
     rmtree
 )
@@ -69,20 +70,44 @@ class GitHelper(object):
 
         tmp_wc = mkdtemp(prefix = "%s-%s-" % (prefix, version))
 
-        for cmd in [
-            ["git", "clone", "-n", "-s", self.path, "."],
-            ["git", "checkout", "-f", version],
-            ["git", "submodule", "update", "--init", "--recursive"]
-        ]:
-
+        def gitcmd(*cmd):
             p = Popen(cmd, cwd = tmp_wc, stderr = PIPE, stdout = PIPE)
 
             p.wait()
 
             if p.returncode:
                 raise RuntimeError(
-                    "Failed to checkout source: %s" % p.returncode
+                    "Git command failed %u\nstdout:\n%s\nstderr:\n%s\n" % (
+                        p.returncode, p.stdout.read(),
+                        p.stderr.read()
+                    )
                 )
+
+            return p
+
+        for cmd in [
+            ["git", "clone", "-n", "-s", self.path, "."],
+            ["git", "checkout", "-f", version],
+        ]:
+            gitcmd(*cmd)
+
+        # redirect submodule URLs to local caches inside repository
+        status = gitcmd("git", "submodule", "status", "--recursive")
+
+        submodules = []
+        for l in status.stdout.readlines():
+            # format: "-SHA1 dir"
+            submodules.append(l.rstrip().split(' ')[1])
+
+        if submodules:
+            for sm in submodules:
+                # https://stackoverflow.com/a/30675130/7623015
+                gitcmd("git", "config", "--file=.gitmodules",
+                    "submodule." + sm + ".url",
+                    join(self.path, ".git", "modules", sm)
+                )
+
+            gitcmd("git", "submodule", "update", "--init", "--recursive")
 
         return tmp_wc
 
@@ -123,6 +148,8 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
     machine = uname()
 
+    qvc = "qvc_%s.py" % qemugit.repo.commit(qproject.target_version).hexsha
+
     print("Checking Qemu out...")
     qemuwc = qemugit.get_tmp_wc(qproject.target_version, "qemu")
     tmp_build = mkdtemp(prefix = "qemu-%s-build-" % qproject.target_version)
@@ -161,6 +188,10 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
             qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
 
+            if i > 0:
+                # restore cache
+                copyfile(join(qdtwc, qvc), join(tmp_build, qvc))
+
             t0 = time()
             proc = Popen(
                 [
@@ -173,6 +204,10 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
             )
             proc.wait()
             t1 = time()
+
+            if i == 0:
+                # preserve cache
+                copyfile(join(tmp_build, qvc), join(qdtwc, qvc))
 
             total = t1 - t0
 
@@ -187,6 +222,12 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
             ))
 
             rmtree(qdt_cwd)
+
+            # restore qemu src and build from backup
+            rmtree(tmp_build)
+            rmtree(qemuwc)
+            copytree(join(q_back, "src"), qemuwc)
+            copytree(join(q_back, "build"), tmp_build)
 
             if proc.returncode:
                 break
@@ -262,14 +303,16 @@ def plot_measurements(repo, ctx, commit_seq):
 
     for x, sha1 in enumerate(commit_seq):
         xmes = []
-        for _, t, res, env, machine in mes.get(sha1, []):
+        for i, t, res, env, machine in mes.get(sha1, []):
             if machine != cur_machine:
                 # TODO: different plot (graph)
                 continue
-            if env != "py27":
+            if env != "python2":
                 # TODO: different line (errorbar) with annotations on the plot
                 continue
             if res: # failed, do not show
+                continue
+            if i == 0: # cache building, too long
                 continue
 
             xmes.append(t)
