@@ -157,14 +157,14 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
         qdtwc = qdtgit.get_tmp_wc(sha1, "qdt")
 
         for i in range(m_count):
-            print("Measuring...\n\n" % sha1)
+            print("Measuring...\n\n")
 
             qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
 
             t0 = time()
             proc = Popen(
                 [
-                    join(qdtwc, "qemu-device-creator.py"),
+                    join(qdtwc, "qemu_device_creator.py"),
                     "-b", tmp_build,
                     "-t", qproject.target_version,
                     qp_path
@@ -479,7 +479,7 @@ def main():
     args = ap.parse_args()
 
     # TODO: outline QProject loading from qemu_device_creator.py
-    script = args.script
+    script = abspath(args.script)
 
     loaded = {}
     try:
