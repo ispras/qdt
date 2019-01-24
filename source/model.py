@@ -1053,7 +1053,9 @@ class Enumeration(Type):
 
         for f in self.elems:
             # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = generator.provide_chunks(f, indent = field_indent)
+            decl_chunks = generator.provide_chunks(f, indent = field_indent,
+                separ = ","
+            )
 
             field_declaration = decl_chunks[0]
 
@@ -1506,9 +1508,10 @@ class Variable(object):
     def get_definition_chunks(self, generator,
         indent = "",
         enum = False,
-        append_nl = True
+        append_nl = True,
+        separ = ";"
     ):
-        ch = VariableDefinition(self, indent, append_nl, enum)
+        ch = VariableDefinition(self, indent, append_nl, enum, separ)
 
         refs = list(generator.provide_chunks(self.type))
 
@@ -1937,7 +1940,12 @@ class VariableDeclaration(SourceChunk):
 class VariableDefinition(SourceChunk):
     weight = 5
 
-    def __init__(self, var, indent = "", append_nl = True, enum = False):
+    def __init__(self, var,
+        indent = "",
+        append_nl = True,
+        enum = False,
+        separ = ";"
+    ):
         init_code = ""
         if var.initializer is not None:
             raw_code = var.type.gen_usage_string(var.initializer)
@@ -1961,7 +1969,7 @@ class VariableDefinition(SourceChunk):
     var_name = var.name,
     array_decl = gen_array_declaration(var.array_size),
     init = init_code,
-    separ = "," if enum else ";",
+    separ = separ,
     nl = "\n" if append_nl else ""
             )
         )
