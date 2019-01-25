@@ -323,6 +323,9 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                             stdin = PIPE
                         )
 
+            prev_diff = diff
+
+            # remember results
             ctx.mes.setdefault(sha1, []).append(M(
                 i = i,
                 time = total,
@@ -332,8 +335,6 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                 cache_ready = cache_ready,
                 differences = differences
             ))
-
-            prev_diff = diff
 
             # restore qemu src and build from backup
             rmtree(tmp_build)
@@ -353,6 +354,8 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     rmtree(q_back)
 
 
+# TODO: setuptools support
+# TODO: tox support
 def tox_measurements(gitrepo, ctx, commit_list, m_count = 5, env = "py27"):
     if m_count < 1:
         return
