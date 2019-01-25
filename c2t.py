@@ -47,20 +47,21 @@ from signal import (
 from platform import (
     machine
 )
+from common import (
+    pypath
+)
 
-# use custom pyrsp and pyelftools
-path.insert(0, join(split(__file__)[0], "pyrsp"))
-path.insert(0, join(split(__file__)[0], "debug", "pyelftools"))
+with pypath("pyrsp"):
+    from pyrsp.rsp import (
+        RemoteTarget
+    )
+    from pyrsp import (
+        targets
+    )
+    from pyrsp.utils import (
+        pack
+    )
 
-from pyrsp.rsp import (
-    RemoteTarget
-)
-from pyrsp import (
-    targets
-)
-from pyrsp.utils import (
-    pack
-)
 from elftools.elf.elffile import (
     ELFFile
 )
@@ -72,10 +73,10 @@ from c2t import (
     DebugComparison
 )
 
-ARCHMAP = {
-    name.lower(): obj for name, obj in getmembers(targets)
-        if isclass(obj) and RemoteTarget in getmro(obj)[1:]
-}
+# ARCHMAP = {
+#     name.lower(): obj for name, obj in getmembers(targets)
+#         if isclass(obj) and RemoteTarget in getmro(obj)[1:]
+# }
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg} {arg}\n"
 
