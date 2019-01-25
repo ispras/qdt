@@ -15,3 +15,5 @@ with pypath("pyelftools"):
     from .type import *
     from .value import *
     from .watcher import *
+# this module uses official pyelftools
+from .preloader import *
