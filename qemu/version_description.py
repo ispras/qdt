@@ -3,12 +3,9 @@ __all__ = [
   , "ProcessingModifiedFile"
   , "QVCWasNotInitialized"
   , "BadBuildPath"
-  , "MultipleQVCInitialization"
   , "QVCIsNotReady"
   , "QemuVersionDescription"
-  , "qvd_create"
   , "qvd_get"
-  , "qvd_get_registered"
   , "qvds_load"
   , "qvd_load_with_cache"
   , "qvds_load_with_cache"
@@ -60,10 +57,22 @@ from git import (
 from six import (
     u
 )
+from tempfile import (
+    mkdtemp
+)
+from shutil import (
+    rmtree
+)
+from subprocess import (
+    Popen
+)
 
 bp_file_name = "build_path_list"
 
-qvd_reg = {}
+# Two level dict:
+# 1. path (of Qemu Git repo)
+# 2. Qemu version (SHA1 id of Git commit)
+qvd_reg = None
 
 class ProcessingUntrackedFile(RuntimeError):
     def __init__(self, file_name):
@@ -80,17 +89,26 @@ class ProcessingModifiedFile(RuntimeError):
         return (_("Source has modified file: %s.") % self.args[0]).get()
 
 def load_build_path_list():
+    global qvd_reg
+
+    if qvd_reg is not None:
+        return
+
+    qvd_reg = {}
+
     if not isfile(bp_file_name):
         return
 
-    build_path_f = open(bp_file_name)
-    build_path_list = build_path_f.readlines()
-    build_path_f.close()
+    with open(bp_file_name) as f:
+        build_path_list = f.readlines()
+
     for val in build_path_list:
         v = val.rstrip()
-        qvd_reg[v] = None
+        qvd_reg[v] = {}
 
 def account_build_path(path):
+    load_build_path_list()
+
     if path in qvd_reg.keys():
         return
     if not isfile(bp_file_name):
@@ -101,73 +119,70 @@ def account_build_path(path):
     f.write(path + "\n")
     f.close()
 
-    qvd_reg[path] = None
+    qvd_reg[path] = {}
 
 def forget_build_path(path):
+    load_build_path_list()
+
     if not path in qvd_reg.keys():
-        raise Exception("%s is not registered." % path)
+        raise RuntimeError("%s is not registered." % path)
 
     del qvd_reg[path]
 
-    f = open(bp_file_name, 'w')
-    for val in qvd_reg.keys():
-        f.write(val + "\n")
-    f.close()
+    with open(bp_file_name, 'w') as f:
+        f.write("\n".join(qvd_reg.keys()))
 
-def qvd_create(path):
-    account_build_path(path)
+def qvd_get(path, version = None):
+    load_build_path_list()
 
-    qvd = qvd_reg[path]
-
-    if qvd is None:
-        qvd = QemuVersionDescription(path)
-    else:
-        raise Exception("Multiple Qemu version descriptions for %s." % path)
-
-    qvd_reg[path] = qvd
-    return qvd
-
-def qvd_get(path):
     if path is None:
         raise BadBuildPath("Build path is None.")
 
     try:
-        qvd = qvd_reg[path]
+        qvds = qvd_reg[path]
     except KeyError:
-        qvd = None
+        # before accounting because it can raise an exception
+        qvd = QemuVersionDescription(path, version = version)
+        account_build_path(path)
+        qvd_reg[path][qvd.commit_sha] = qvd
+        return qvd
 
-    if qvd is None:
-        qvd = qvd_create(path)
+    if version is None and qvds:
+        # Legacy behavior. Return QVD for HEAD if version is omitted.
+        # Note, Git repository at this path can be obtained from any QVD.
+        version = next(iter(qvds.values())).repo.head.commit.hexsha
 
-    return qvd
+    try:
+        return qvds[version]
+    except KeyError:
+        qvd = QemuVersionDescription(path, version = version)
+        # Version aliasing is possible. SHA1 is an invariant. Return existing
+        # QVD instead of just created one.
+        return qvds.setdefault(qvd.commit_sha, qvd)
 
-def qvd_get_registered(path):
-    if not path in qvd_reg.keys():
-        raise Exception("%s was not registered." % path)
-
-    return qvd_get(path)
-
-def qvds_load():
-    for k, v in qvd_reg.items():
-        if v is None:
-            qvd_reg[k] = QemuVersionDescription(k)
-
-def qvd_load_with_cache(build_path):
-    qvd = qvd_get(build_path)
+def qvd_load_with_cache(build_path, version = None):
+    qvd = qvd_get(build_path, version = version)
     qvd.init_cache()
     return qvd
 
-def qvds_load_with_cache():
-    for k, v in qvd_reg.items():
-        if v is None:
-            qvd_reg[k] = QemuVersionDescription(k)
-        qvd = qvd_reg[k]
-        qvd.init_cache()
+def qvds_load():
+    load_build_path_list()
+
+    for path in list(qvd_reg):
+        qvd_get(path)
 
 def qvds_init_cache():
-    for v in qvd_reg.values():
-        if v is not None:
-            v.init_cache()
+    if qvd_reg is None:
+        return
+
+    for qvds in qvd_reg.values():
+        for v in qvds:
+            if v.qvc is None:
+                v.init_cache()
+
+def qvds_load_with_cache():
+    qvds_load()
+    qvds_init_cache()
 
 class QemuCommitDesc(CommitDesc):
     def __init__(self, sha, parents, children):
@@ -197,7 +212,7 @@ class QemuVersionCache(object):
         self.stc = SourceTreeContainer()
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
-    def co_computing_parameters(self, repo):
+    def co_computing_parameters(self, repo, version):
         print("Build QEMU Git graph ...")
         self.commit_desc_nodes = {}
         yield QemuCommitDesc.co_build_git_graph(repo, self.commit_desc_nodes)
@@ -205,7 +220,7 @@ class QemuVersionCache(object):
 
         yield self.co_propagate_param()
 
-        c = self.commit_desc_nodes[repo.head.commit.hexsha]
+        c = self.commit_desc_nodes[repo.commit(version).hexsha]
         param = self.version_desc = QVHDict()
         for k, v in c.param_nval.items():
             param[k] = v
@@ -456,9 +471,6 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
 class BadBuildPath(ValueError):
     pass
 
-class MultipleQVCInitialization(RuntimeError):
-    pass
-
 class QVCWasNotInitialized(RuntimeError):
     pass
 
@@ -479,7 +491,7 @@ QVD_QH_HASH = "qh_hash"
 class QemuVersionDescription(object):
     current = None
 
-    def __init__(self, build_path):
+    def __init__(self, build_path, version = None):
         config_host_path = join(build_path, 'config-host.mak')
         if not isfile(config_host_path):
             forget_build_path(build_path)
@@ -502,23 +514,27 @@ class QemuVersionDescription(object):
 
         # Get SHA
         self.repo = Repo(self.src_path)
-        self.commit_sha = self.repo.head.commit.hexsha
 
-        VERSION_path = join(self.src_path, 'VERSION')
+        if version is None:
+            c = self.repo.head.commit
+        else:
+            c = self.repo.commit(version)
 
-        if not  isfile(VERSION_path):
-            raise BadBuildPath("{} does not exists\n".format(VERSION_path))
+        self.commit_sha = c.hexsha
 
-        VERSION_f = open(VERSION_path)
-        self.qemu_version = VERSION_f.readline().rstrip("\n")
-        VERSION_f.close()
+        VERSION = c.tree["VERSION"]
+        self.qemu_version = VERSION.data_stream.read().strip().decode()
 
         print("Qemu version is {}".format(self.qemu_version))
 
-        self.include_paths = [
-            join(self.src_path, 'include'),
-            join(self.src_path, 'tcg')
-        ]
+        self.include_paths = (
+            "include",
+            "tcg"
+        )
+
+        self.include_abs_paths = list(
+            join(self.src_path, d) for d in self.include_paths
+        )
 
         self.qvc = None
         self.qvc_is_ready = False
@@ -554,7 +570,8 @@ class QemuVersionDescription(object):
 
     def co_init_cache(self):
         if self.qvc is not None:
-            raise MultipleQVCInitialization(self.src_path)
+            print("Multiple QVC initialization " + self.src_path)
+            self.qvc = None
 
         qvc_file_name = u"qvc_" + self.commit_sha + u".py"
         qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
@@ -564,25 +581,57 @@ class QemuVersionDescription(object):
         yield True
 
         if not isfile(qvc_path):
-            yield self.co_check_untracked_files()
-
             self.qvc = QemuVersionCache()
+
+            # Check out Qemu source to a temporary directory and analyze it
+            # there. This avoids problems with user changes in main working
+            # directory.
+
+            tmp_work_dir = mkdtemp("qdt-qemu-%s" % self.commit_sha)
+
+            print("Checking out temporary source tree in %s" % tmp_work_dir)
+
+            # Note. Alternatively, checking out can be performed without
+            # cloning. Instead, a magic might be casted on GIT_DIR and
+            # GIT_WORK_TREE environment variables. But, this approach resets
+            # staged files in src_path repository which can be inconvenient
+            # for a user.
+            # Current approach uses "-s" (--shared) option to avoid copying
+            # of history and "-n" (--no-checkout) to avoid redundant checking
+            # out of src_path repo HEAD. Therefore, overhead of cloning is
+            # low enough.
+
+            for cmd in [
+                ["git", "clone", "-n", "-s", self.src_path, "."],
+                ["git", "checkout", "-f", self.commit_sha]
+            ]:
+
+                p = Popen(cmd, cwd = tmp_work_dir)
+
+                while p.returncode is None:
+                    yield False
+                    p.poll()
+
+                if p.returncode:
+                    raise RuntimeError(
+                        "Failed to checkout Qemu source: %s" % p.returncode
+                    )
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
             for path in self.include_paths:
-                yield Header.co_build_inclusions(path)
+                yield Header.co_build_inclusions(join(tmp_work_dir, path))
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
-            yield self.co_check_modified_files()
+            rmtree(tmp_work_dir)
 
             yield self.co_gen_device_tree()
 
             yield self.co_gen_known_targets()
 
             # gen version description
-            yield self.qvc.co_computing_parameters(self.repo)
+            yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
             self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
 
             # Search for PCI Ids
@@ -613,7 +662,7 @@ class QemuVersionDescription(object):
                 if not checksum == qemu_heuristic_hash:
                     is_outdated = True
             if is_outdated:
-                yield self.qvc.co_computing_parameters(self.repo)
+                yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
                 pythonize(self.qvc, qvc_path)
 
@@ -665,7 +714,7 @@ class QemuVersionDescription(object):
         # index.diff(None) returns diff between index and working directory
         for e in self.repo.index.diff(None) + self.repo.index.diff('HEAD'):
             abs_path = join(u(self.src_path), e.a_path)
-            for include in self.include_paths:
+            for include in self.include_abs_paths:
                 if abs_path.startswith(include + sep):
                     modified_files.add(abs_path[len(include)+1:])
 
@@ -686,7 +735,7 @@ class QemuVersionDescription(object):
         i2y = QVD_CUF_IBY
         for path in self.repo.untracked_files:
             abs_path = join(self.src_path, path)
-            for include in self.include_paths:
+            for include in self.include_abs_paths:
                 if abs_path.startswith(include + sep):
                     raise ProcessingUntrackedFile(path)
 

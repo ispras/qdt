@@ -17,13 +17,20 @@ from itertools import (
 )
 
 class GUIProject(QProject):
-    def __init__(self, layouts = [], build_path = None, **kw):
+
+    def __init__(self,
+        layouts = [],
+        build_path = None,
+        target_version = None,
+        **kw
+    ):
         # Any description in GUI project has a serial number.
         self.__next_id = 0
 
         QProject.__init__(self, **kw)
 
         self.build_path = build_path
+        self.target_version = target_version
 
         self.layouts = {}
         for l in layouts:
@@ -130,6 +137,10 @@ exists." % (l.lid, l.desc_name)
         gen.gen_field("layouts = ")
         gen.pprint(self.get_all_layouts_sorted())
         gen.gen_field("build_path = " + gen.gen_const(self.build_path))
+        if self.target_version is not None:
+            gen.gen_field("target_version = " + gen.gen_const(
+                self.target_version
+            ))
         gen.gen_field("descriptions = ")
         gen.pprint(self.descriptions)
         gen.gen_end()
