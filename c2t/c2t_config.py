@@ -37,7 +37,7 @@ class C2TUnit(object):
         return ' '.join([run.executable, run.args])
 
     @abstractmethod
-    def get_run(self):
+    def run_script(self):
         """
     :returns:
         cmdline 'run' for unit
@@ -51,7 +51,8 @@ class DebugUnit(C2TUnit):
     def __init__(self, run):
         self.run = run
 
-    def get_run(self):
+    @property
+    def run_script(self):
         return self.assemble_run(self.run)
 
 
@@ -75,6 +76,7 @@ class CompileUnit(C2TUnit):
         )
 
     # TODO: how process when runs = []
-    def get_run(self):
+    @property
+    def run_script(self):
         for run in self.runs:
             yield self.assemble_run(run)
