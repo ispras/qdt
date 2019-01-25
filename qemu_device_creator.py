@@ -111,6 +111,8 @@ def main():
     if arguments.gen_header_tree is not None:
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
+    print("gen to " + qvd.src_path)
+
     project.gen_all(qvd.src_path,
         with_chunk_graph = arguments.gen_chunk_graphs
     )
