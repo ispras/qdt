@@ -522,12 +522,13 @@ class QemuVersionDescription(object):
         print("Qemu version is {}".format(self.qemu_version))
 
         self.include_paths = (
-            "include",
-            "tcg"
+            # path, need recursion
+            ("include", True),
+            ("tcg", False)
         )
 
         self.include_abs_paths = list(
-            join(self.src_path, d) for d in self.include_paths
+            join(self.src_path, d) for d, _ in self.include_paths
         )
 
         self.qvc = None
@@ -595,8 +596,10 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
-            for path in self.include_paths:
-                yield Header.co_build_inclusions(join(tmp_work_dir, path))
+            for path, recursive in self.include_paths:
+                yield Header.co_build_inclusions(join(tmp_work_dir, path),
+                    recursive
+                )
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
