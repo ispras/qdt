@@ -561,13 +561,14 @@ class Header(Source):
             h.add_type(m)
 
     @staticmethod
-    def _build_inclusions_recursive(start_dir, prefix):
+    def _build_inclusions_recursive(start_dir, prefix, recursive):
         full_name = join(start_dir, prefix)
-        if (isdir(full_name)):
+        if recursive and isdir(full_name):
             for entry in listdir(full_name):
                 yield Header._build_inclusions_recursive(
                     start_dir,
-                    join(prefix, entry)
+                    join(prefix, entry),
+                    recursive
                 )
         else:
             (name, ext) = splitext(prefix)
@@ -619,7 +620,7 @@ class Header(Source):
                     Header.yields_per_header.append(yields_per_current_header)
 
     @staticmethod
-    def co_build_inclusions(dname):
+    def co_build_inclusions(dname, recursive):
         # Default include search folders should be specified to
         # locate and parse standard headers.
         # parse `cpp -v` output to get actual list of default
@@ -636,7 +637,7 @@ class Header(Source):
             h.parsed = False
 
         for entry in listdir(dname):
-            yield Header._build_inclusions_recursive(dname, entry)
+            yield Header._build_inclusions_recursive(dname, entry, recursive)
 
         for h in Header.reg.values():
             del h.parsed
