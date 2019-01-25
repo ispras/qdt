@@ -98,7 +98,7 @@ def qtn_char(c):
     # ["A", "Z"] middle1 ["a"; "z"]
     if "Z" < c:
         # middle1 ["a"; "z"]
-        return "A" <= c
+        return "a" <= c
     # ["A", "Z"]
     return True
 
@@ -179,7 +179,7 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     init_code["_field"] = init_code["_f"]
 
     # _conf is name of argument of macro DEFINE_NIC_PROPERTIES that
-    # corresponds to structure filed name
+    # corresponds to structure field name
     init_code["_conf"] = init_code["_f"]
 
     if default_default is not None:
@@ -547,7 +547,7 @@ class QOMType(object):
                     self.add_state_field_h("uint8_t", name, num = size)
 
     def gen_state(self):
-        s = Structure(self.qtn.for_struct_name + 'State')
+        s = Structure(self.qtn.for_struct_name + "State")
         for f in self.state_fields:
             s.append_field(f.type.gen_var(f.name, array_size = f.num))
         return s
@@ -625,13 +625,13 @@ class QOMType(object):
         code = ("""{
     .name@b=@s%s,
     .version_id@b=@s1,
-    .fields@b=@s(VMStateField[])@b{""" % type_macro.name
+    .fields@b=@s(VMStateField[])@b{
+""" % type_macro.name
         )
 
         used_macros = set()
         global type2vmstate
 
-        first = True
         for f in self.state_fields:
             if not f.save:
                 continue
@@ -662,20 +662,9 @@ class QOMType(object):
                     "_state": state_struct.name
                 }
             )
-
-            if first:
-                first = False
-                code += "\n"
-            else:
-                code += ",\n"
-
-            code += " " * 8 + vms_macro.gen_usage_string(init)
+            code += " " * 8 + vms_macro.gen_usage_string(init) + ",\n"
 
         # Generate VM state list terminator macro.
-        if first:
-            code += "\n"
-        else:
-            code += ",\n"
         code += " " * 8 + Type.lookup("VMSTATE_END_OF_LIST").gen_usage_string()
 
         code += "\n    }\n}"
@@ -851,10 +840,9 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
-        func = Type["MemoryRegionOps"].read.type.use_as_prototype(
-            name = name,
-            static = True,
-            body = BodyTree()
+        func = Type["MemoryRegionOps"].read.type.use_as_prototype(name,
+            body = BodyTree(),
+            static = True
         )
         root = func.body
         s = Type.lookup(struct_name).gen_var("s", pointer = True)
@@ -916,10 +904,9 @@ class QOMType(object):
 
     @staticmethod
     def gen_mmio_write(name, struct_name, type_cast_macro, regs = None):
-        func = Type["MemoryRegionOps"].write.type.use_as_prototype(
-            name = name,
-            static = True,
-            body = BodyTree()
+        func = Type["MemoryRegionOps"].write.type.use_as_prototype(name,
+            body = BodyTree(),
+            static = True
         )
         root = func.body
 
@@ -1273,10 +1260,10 @@ class QOMDevice(QOMType):
     {unused}{Struct}@b*s@b=@s{UPPER}(dev);
 {extra_code}\
 """.format(
-        unused = "" if s_is_used else "__attribute__((unused))@b",
-        Struct = self.state_struct.name,
-        UPPER = self.type_cast_macro.name,
-        extra_code = code
+    unused = "" if s_is_used else "__attribute__((unused))@b",
+    Struct = self.state_struct.name,
+    UPPER = self.type_cast_macro.name,
+    extra_code = code
             ),
             args = [
                 Type.lookup(dev_type_name).gen_var("dev", pointer = True),
@@ -1330,8 +1317,7 @@ class QOMDevice(QOMType):
 
     def gen_nic_helper(self, helper, cbtn, index):
         cbt = Type.lookup(cbtn)
-        return cbt.use_as_prototype(
-            self.nic_helper_name(helper, index),
+        return cbt.use_as_prototype(self.nic_helper_name(helper, index),
             body = "    return 0;\n" if cbt.ret_type.name != "void" else "",
             static = True,
             used_types = [ Type.lookup(self.struct_name) ]

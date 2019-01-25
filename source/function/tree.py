@@ -393,7 +393,7 @@ class Call(SemicolonPresence):
         self.func = func
         if isinstance(func, str):
             self.type = Type.lookup(func)
-        elif isinstance(func, Variable) or isinstance(func, OpSDeref):
+        elif isinstance(func, (Variable, OpSDeref)):
             # Pointer to the function
             self.type = func
         else:
@@ -417,7 +417,7 @@ class Call(SemicolonPresence):
                 writer.write(",@s")
                 c.__c__(writer)
 
-        writer.write(")")
+        writer.write("@c)")
 
 
 class Declare(SemicolonPresence):
@@ -492,7 +492,7 @@ class MCall(SemicolonPresence):
         writer.write(self.type.name)
 
         if self.children:
-            writer.write("(")
+            writer.write("(@a")
 
             first_child = self.children[0]
             first_child.__c__(writer)
@@ -501,7 +501,7 @@ class MCall(SemicolonPresence):
                 writer.write(",@s")
                 c.__c__(writer)
 
-            writer.write(")")
+            writer.write("@c)")
 
 
 class Return(SemicolonPresence):
@@ -527,7 +527,7 @@ class Goto(SemicolonPresence):
         self.label = label
 
     def __c__(self, writer):
-        writer.line("goto@b" + self.label.name)
+        writer.write("goto@b" + self.label.name)
 
 
 class Operator(SemicolonPresence):
@@ -680,8 +680,8 @@ class OpAssign(BinaryOperator):
 
 class OpCombAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, comb_op, parenthesis = False):
-        super(OpCombAssign, self).__init__(comb_op.op_str + "=",
+    def __init__(self, arg1, arg2, op_str, parenthesis = False):
+        super(OpCombAssign, self).__init__(op_str + "=",
             arg1, arg2, parenthesis
         )
 

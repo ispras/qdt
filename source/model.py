@@ -103,8 +103,8 @@ class ChunkGenerator(object):
     def __init__(self, for_header = False):
         self.chunk_cache = {}
         self.for_header = for_header
-        """ Tracking of recursive calls of `provide_chunks`. Currently used only
-        to generate "extern" keyword for global variables in header and to
+        """ Tracking of recursive calls of `provide_chunks`. Currently used
+        only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
         self.stack = []
 
@@ -122,7 +122,9 @@ class ChunkGenerator(object):
             self.stack.append(origin)
 
             if isinstance(origin, Function):
-                if self.for_header and (not origin.static or not origin.inline):
+                if (    self.for_header
+                    and (not origin.static or not origin.inline)
+                ):
                     chunks = origin.gen_declaration_chunks(self, **kw)
                 else:
                     chunks = origin.gen_definition_chunks(self, **kw)
@@ -245,8 +247,8 @@ class Source(object):
 
     def add_inclusion(self, header):
         if not isinstance(header, Header):
-            raise ValueError("Inclusion of a non-header file is forbidden (%s)"
-                % header.path
+            raise ValueError(
+"Inclusion of a non-header file is forbidden (%s)" % header.path
             )
 
         if header.path not in self.inclusions:
@@ -263,8 +265,8 @@ class Source(object):
                     pass
 
             if self in header.includers:
-                raise RuntimeError("Header %s is among includers of %s but does"
-                    " not includes it" % (self.path, header.path)
+                raise RuntimeError("Header %s is among includers of %s but"
+                    " does not includes it" % (self.path, header.path)
                 )
 
             header.includers.append(self)
@@ -528,9 +530,9 @@ class Header(Source):
         try:
             m = Type.lookup(macro.name)
             if not m.definer.path == definer:
-                print("Info: multiple definitions of macro %s in %s and %s"\
-                     % (macro.name, m.definer.path, definer)
-                )
+                print("Info: multiple definitions of macro %s in %s and %s" % (
+                    macro.name, m.definer.path, definer
+                ))
         except:
             m = Macro(
                 name = macro.name,
@@ -574,9 +576,13 @@ class Header(Source):
                     p.on_define.append(Header._on_define)
 
                     if sys.version_info[0] == 3:
-                        header_input = open(full_name, "r", encoding = "UTF-8").read()
+                        header_input = (
+                            open(full_name, "r", encoding = "UTF-8").read()
+                        )
                     else:
-                        header_input = open(full_name, "rb").read().decode("UTF-8")
+                        header_input = (
+                            open(full_name, "rb").read().decode("UTF-8")
+                        )
 
                     p.parse(input = header_input, source = prefix)
 
@@ -659,9 +665,10 @@ class Header(Source):
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
-            raise AddTypeRefToDefinerException("Adding a type reference (%s) to"
-                " a file (%s) defining the type"
-                % (type_ref.type.name, self.path)
+            raise AddTypeRefToDefinerException(
+"Adding a type reference (%s) to a file (%s) defining the type" % (
+    type_ref.type.name, self.path
+)
             )
 
         # Preventing infinite recursion by header inclusion loop
@@ -688,8 +695,9 @@ class Header(Source):
         # 'g' and 'l' are used to distinguish global and local
         # headers with same
         return hash("{}{}".format(
-                "g" if self.is_global else "l",
-                self.path))
+            "g" if self.is_global else "l",
+            self.path
+        ))
 
     @staticmethod
     def _propagate_reference(h, ref):
@@ -1122,8 +1130,9 @@ class Function(Type):
         indent = ""
         ch = FunctionDefinition(self, indent)
 
-        refs = gen_function_decl_ref_chunks(self, generator) + \
-               gen_function_def_ref_chunks(self, generator)
+        refs = (gen_function_decl_ref_chunks(self, generator) +
+            gen_function_def_ref_chunks(self, generator)
+        )
 
         ch.add_references(refs)
         return [ch]
@@ -1134,7 +1143,6 @@ class Function(Type):
         inline = False,
         used_types = []
     ):
-
         return Function(name,
             body = body,
             ret_type = self.ret_type,
@@ -1265,7 +1273,7 @@ class Macro(Type):
         if self.args is None:
             return self.name
         else:
-            arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + ")"
+            arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + "@c)"
 
         return "%s%s" % (self.name, arg_val)
 
@@ -1661,7 +1669,8 @@ class SourceChunk(object):
 
             """
             1. cut off indent of the line
-            2. surround non-slash spaces with ' ' moving them to separated words
+            2. surround non-slash spaces with ' ' moving them to separated
+               words
             3. split the line onto words
             4. replace any non-breaking space with a regular space in each word
             """
@@ -1708,10 +1717,11 @@ class SourceChunk(object):
                         r = 0
                     else:
                         r = 2
-                    """ If the line will be broken _after_ this word, its length
-may be still longer than max_cols because of safe breaking (' \'). If so, brake
-the line _before_ this word. Safe breaking is presented by 'r' variable in
-the expression which is 0 if safe breaking is not required after this word.
+                    """ If the line will be broken _after_ this word,
+its length may be still longer than max_cols because of safe breaking (' \').
+If so, brake the line _before_ this word. Safe breaking is presented by
+'r' variable in the expression which is 0 if safe breaking is not required
+after this word.
                     """
                     if ll + 1 + len(word) + r > max_cols:
                         if slash:
@@ -1755,10 +1765,10 @@ class HeaderInclusion(SourceChunk):
             """\
 #include {lq}{path}{rq}
 """.format(
-        lq = "<" if header.is_global else '"',
-        # Always use UNIX path separator in `#include` directive.
-        path = "/".join(path2tuple(header.path)),
-        rq = ">" if header.is_global else '"'
+    lq = "<" if header.is_global else '"',
+    # Always use UNIX path separator in `#include` directive.
+    path = "/".join(path2tuple(header.path)),
+    rq = ">" if header.is_global else '"'
             ),
             references = []
         )
@@ -1775,7 +1785,7 @@ class HeaderInclusion(SourceChunk):
             if sg == og:
                 return shdr.path < ohdr.path
             else:
-                # If self `is_global` flag is greater then order weight is less.
+                # If self `is_global` flag is greater then order weight is less
                 return sg > og
         else:
             return super(HeaderInclusion, self).__lt__(other)
@@ -1810,8 +1820,8 @@ class PointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(PointerTypeDeclaration, self).__init__(_type,
-            "Definition of pointer to type " + self.type.name,
-            "typedef@b" + self.type.name + "@b" + def_name
+            "Definition of pointer to type " + _type.name,
+            "typedef@b" + _type.name + "@b" + def_name + ";\n"
         )
 
 
@@ -1821,7 +1831,7 @@ class FunctionPointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(FunctionPointerTypeDeclaration, self).__init__(_type,
-            "Definition of function pointer type " + self.type.name,
+            "Definition of function pointer type " + _type.name,
             ("typedef@b"
               + gen_function_declaration_string("", _type,
                     pointer_name = def_name
@@ -1852,11 +1862,11 @@ class PointerVariableDeclaration(SourceChunk):
             """\
 {indent}{extern}{const}{type_name}@b*{var_name};
 """.format(
-                indent = indent,
-                const = "const@b" if var.const else "",
-                type_name = t.name,
-                var_name = var.name,
-                extern = "extern@b" if extern else ""
+    indent = indent,
+    const = "const@b" if var.const else "",
+    type_name = t.name,
+    var_name = var.name,
+    extern = "extern@b" if extern else ""
             )
         )
 
@@ -1870,12 +1880,12 @@ class FunctionPointerDeclaration(SourceChunk):
             """\
 {indent}{extern}{decl_str};
 """.format(
-        indent = indent,
-        extern = "extern@b" if extern else "",
-        decl_str = gen_function_declaration_string("", t,
-            pointer_name = var.name,
-            array_size = var.array_size
-        )
+    indent = indent,
+    extern = "extern@b" if extern else "",
+    decl_str = gen_function_declaration_string("", t,
+        pointer_name = var.name,
+        array_size = var.array_size
+    )
             )
         )
 
@@ -1892,14 +1902,14 @@ class VariableDeclaration(SourceChunk):
             """\
 {indent}{extern}{const}{type_name}@b{var_name}{array_decl};
 """.format(
-        indent = indent,
-        const = "const@b" if var.const else "",
-        type_name = var.type.name,
-        var_name = var.name,
-        array_decl = gen_array_declaration(var.array_size),
-        extern = "extern@b" if extern else ""
-    )
+    indent = indent,
+    const = "const@b" if var.const else "",
+    type_name = var.type.name,
+    var_name = var.name,
+    array_decl = gen_array_declaration(var.array_size),
+    extern = "extern@b" if extern else ""
             )
+        )
 
 
 class VariableDefinition(SourceChunk):
@@ -1920,18 +1930,18 @@ class VariableDefinition(SourceChunk):
                 var.name, var.type.name
             ),
             """\
-{indent}{static}{const}{type_name}@b{var_name}{array_decl}{init}{separ}{nl}
+{indent}{static}{const}{type_name}{var_name}{array_decl}{init}{separ}{nl}
 """.format(
-        indent = indent,
-        static = "static@b" if var.static else "",
-        const = "const@b" if var.const else "",
-        type_name = "" if enum else var.type.name,
-        var_name = var.name,
-        array_decl = gen_array_declaration(var.array_size),
-        init = init_code,
-        separ = "," if enum else ";",
-        nl = "\n" if append_nl else ""
-    )
+    indent = indent,
+    static = "static@b" if var.static else "",
+    const = "const@b" if var.const else "",
+    type_name = "" if enum else var.type.name + "@b",
+    var_name = var.name,
+    array_decl = gen_array_declaration(var.array_size),
+    init = init_code,
+    separ = "," if enum else ";",
+    nl = "\n" if append_nl else ""
+            )
         )
 
 
@@ -1962,7 +1972,7 @@ class StructureDeclaration(SourceChunk):
     indent = indent,
     struct_name = struct.name,
     nl = "\n" if append_nl else ""
-            ),
+            )
         )
 
 
@@ -1972,10 +1982,10 @@ class EnumerationDeclarationBegin(SourceChunk):
         super(EnumerationDeclarationBegin, self).__init__(enum,
             "Beginning of enumeration %s declaration" % enum.enum_name,
             """\
-{indent}enum@b{enum_name}@b{{
+{indent}enum@b{enum_name}{{
 """.format(
     indent = indent,
-    enum_name = enum.enum_name
+    enum_name = enum.enum_name + "@b" if enum.enum_name else ""
             )
         )
 
@@ -1988,7 +1998,7 @@ class EnumerationDeclaration(SourceChunk):
             "Ending of enumeration %s declaration" % enum.enum_name,
             """\
 {indent}}};\n
-""".format(indent = indent, enum_name = enum.enum_name)
+""".format(indent = indent)
         )
 
 
@@ -2029,7 +2039,7 @@ def gen_function_declaration_string(indent, function,
     else:
         decl_name = function.name
 
-    return "{indent}{static}{inline}{ret_type}{name}(@a{args})".format(
+    return "{indent}{static}{inline}{ret_type}{name}(@a{args}@c)".format(
         indent = indent,
         static = "static@b" if function.static else "",
         inline = "inline@b" if function.inline else "",
