@@ -152,7 +152,7 @@ class InitialOperation(InverseOperation):
     def __write_set__(self):
         return []
 
-    def __description__(self, _):
+    def __description__(self, __):
         return _("The beginning of known history.")
 
 class History(object):
