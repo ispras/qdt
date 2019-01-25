@@ -493,6 +493,8 @@ def plot_measurements(repo, ctx, commit_seq):
     )
     annot.set_visible(False)
 
+    ax.set_xlim(-1, max(xcoords) + 1)
+
     ebar = plt.errorbar(xcoords, ycoords, yerr = yerr)
     ebar.lines[0].set_pickradius(15)
 
