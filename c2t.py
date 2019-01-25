@@ -375,7 +375,7 @@ class TestBuilder(Process):
         test_bin = join(C2T_TEST_BIN_DIR, test_name + self.suffix)
         run_script = ''
 
-        for run_script in self.cmpl_unit.get_run():
+        for run_script in self.cmpl_unit.run_script:
             cmpl_unit = ProcessWithErrCatching(run_script.format(
                 src = test_src,
                 ir = test_ir,
@@ -458,10 +458,10 @@ class CpuTestingTool(object):
             test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
 
             qemu = ProcessWithErrCatching(
-                self.config.qemu.get_run().format(bin = target_elf)
+                self.config.qemu.run_script.format(bin = target_elf)
             )
             gdbserver = ProcessWithErrCatching(
-                self.config.gdbserver.get_run().format(bin = oracle_elf)
+                self.config.gdbserver.run_script.format(bin = oracle_elf)
             )
 
             qemu.daemon = True
