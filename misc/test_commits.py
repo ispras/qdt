@@ -54,6 +54,9 @@ from os import (
 from datetime import (
     datetime
 )
+from filecmp import (
+    cmp
+)
 
 
 class GitWC(str):
@@ -155,6 +158,17 @@ class Measurement(Extensible):
         yield self.returncode
         yield self.env
         yield self.machine
+        yield self.cache_ready
+
+    # default values for previous versions
+
+    @lazy
+    def cache_ready(self):
+        return True
+
+    @lazy
+    def differences(self):
+        return False
 
 
 M = Measurement
@@ -223,6 +237,8 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(qemuwc, join(q_back, "src"))
     copytree(tmp_build, join(q_back, "build"))
 
+    prev_diff = None
+
     for t, sha1 in enumerate(commit_list):
         print("Checking QDT out (%s)...\n%s" % (
             sha1,
@@ -237,12 +253,15 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
             qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
 
+            cache_ready = False
             if i > 0:
                 # restore cache
                 copyfile(join(qdtwc, qvc), join(tmp_build, qvc))
+                cache_ready = True
             elif caches is not None and isfile(join(caches, qvc)):
                 # use existing cache
                 copyfile(join(caches, qvc), join(tmp_build, qvc))
+                cache_ready = True
 
             print("Measuring...")
 
@@ -271,14 +290,6 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
             print("\ntotal: %s\n" % total)
 
-            ctx.mes.setdefault(sha1, []).append(M(
-                i = i,
-                time = total,
-                returncode = proc.returncode,
-                env = env,
-                machine = machine
-            ))
-
             rmtree(qdt_cwd)
 
             # save patch
@@ -288,6 +299,41 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
             qemuwc.cmd("git", "add", "-A")
             qemuwc.cmd("git diff --cached > " + diff, shell = True)
+
+            # check if patches are different
+            differences = False
+
+            if prev_diff is not None:
+                if not cmp(prev_diff, diff):
+                    print("Changes to Qemu are different.")
+                    differences = True
+
+                    p_diff = Popen(["diff", prev_diff, diff],
+                        stdout = PIPE,
+                        stderr = PIPE,
+                    )
+                    p_diff.wait()
+                    with open(diff + ".diff", "w") as f:
+                        f.write(p_diff.stdout.read())
+
+                    if environ.get("TC_NO_MELD", "0") != "1":
+                        Popen(["meld", prev_diff, diff],
+                            stdout = PIPE,
+                            stderr = PIPE,
+                            stdin = PIPE
+                        )
+
+            ctx.mes.setdefault(sha1, []).append(M(
+                i = i,
+                time = total,
+                returncode = proc.returncode,
+                env = env,
+                machine = machine,
+                cache_ready = cache_ready,
+                differences = differences
+            ))
+
+            prev_diff = diff
 
             # restore qemu src and build from backup
             rmtree(tmp_build)
@@ -369,16 +415,16 @@ def plot_measurements(repo, ctx, commit_seq):
 
     for x, sha1 in enumerate(commit_seq):
         xmes = []
-        for i, t, res, env, machine in mes.get(sha1, []):
+        for _, t, res, env, machine, cache_ready in mes.get(sha1, []):
             if machine != cur_machine:
                 # TODO: different plot (graph)
                 continue
-            if env != "python2":
+            if env != "py2":
                 # TODO: different line (errorbar) with annotations on the plot
                 continue
             if res: # failed, do not show
                 continue
-            if i == 0: # cache building, too long
+            if not cache_ready: # cache building, too long
                 continue
 
             xmes.append(t)
@@ -405,7 +451,7 @@ def plot_measurements(repo, ctx, commit_seq):
         else:
             _err /= _len
 
-        if _err < 0:
+        if _err < 1.0 and _err > 0.0:
             t_fmt = "%%.%uf" % accuracy(_err)
         else:
             t_fmt = "%f"
@@ -508,12 +554,22 @@ class CommitsTestResults(Persistent):
 
     def __init__(self):
         super(CommitsTestResults, self).__init__("_commits_test_results.py",
-            glob = globals()
+            glob = globals(),
+            version = 1.1
         )
 
     @lazy
     def mes(self):
         return {}
+
+    def __update__(self, loaded_version):
+        if loaded_version == 1.0:
+            for mess in self.mes.values():
+                for m in mess:
+                    if m.env == "python2":
+                        m.env = "py2"
+        else:
+            raise ValueError("Unsupported loaded version %s" % loaded_version)
 
 
 class default(str):
