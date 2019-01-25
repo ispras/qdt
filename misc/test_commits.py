@@ -91,7 +91,7 @@ class GitHelper(object):
         ]:
             gitcmd(*cmd)
 
-        # redirect submodule URLs to local caches inside repository
+        # redirect submodule URLs to local caches inside main repository
         status = gitcmd("git", "submodule", "status", "--recursive")
 
         submodules = []
@@ -140,9 +140,15 @@ M = Measurement
 
 
 def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
+    caches = None,
     m_count = 5,
     env = "python2"
 ):
+    """
+    :param caches:
+        Path to directory with existing QVCs. Use it iff QVC building
+        algorithm testing is not required.
+    """
     if m_count < 1:
         return
 
@@ -180,21 +186,32 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(tmp_build, join(q_back, "build"))
 
     for sha1 in commit_list:
-        print("Checking QDT out (%s)..." % sha1)
+        print("Checking QDT out (%s)...\n%s" % (
+            sha1,
+            "\n".join((("> " + l) if l else ">") for l in
+                qdtgit.repo.commit(sha1).message.splitlines()
+            )
+        ))
         qdtwc = qdtgit.get_tmp_wc(sha1, "qdt")
 
         for i in range(m_count):
-            print("Measuring...\n\n")
+            print("Preparing CWD...")
 
             qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
 
             if i > 0:
                 # restore cache
                 copyfile(join(qdtwc, qvc), join(tmp_build, qvc))
+            elif caches is not None and isfile(join(caches, qvc)):
+                # use existing cache
+                copyfile(join(caches, qvc), join(tmp_build, qvc))
+
+            print("Measuring...")
 
             t0 = time()
             proc = Popen(
                 [
+                    env,
                     join(qdtwc, "qemu_device_creator.py"),
                     "-b", tmp_build,
                     "-t", qproject.target_version,
@@ -211,7 +228,7 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
             total = t1 - t0
 
-            print("\n\ntotal: %s\n\n" % total)
+            print("\ntotal: %s\n" % total)
 
             ctx.mes.setdefault(sha1, []).append(M(
                 i = i,
@@ -563,6 +580,7 @@ def main():
         ))
 
         project_measurements(qdtgit, qemugit, c, commit_list, project, script,
+            caches = project.build_path,
             m_count = args.measurements,
         )
 
