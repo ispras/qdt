@@ -47,6 +47,40 @@ from traceback import (
 from qemu import (
     qvd_get
 )
+from os import (
+    makedirs,
+    environ
+)
+from datetime import (
+    datetime
+)
+
+
+class GitWC(str):
+    "Working copy"
+
+    def __new__(cls, path, producer):
+        res = str.__new__(cls, path)
+        res.producer = producer
+        return res
+
+    def __str__(self):
+        return self.path
+
+    def cmd(self, *cmd, **kw):
+        p = Popen(cmd, cwd = self, stderr = PIPE, stdout = PIPE, **kw)
+
+        p.wait()
+
+        if p.returncode:
+            raise RuntimeError(
+                "Git command failed %u\nstdout:\n%s\nstderr:\n%s\n" % (
+                    p.returncode, p.stdout.read(),
+                    p.stderr.read()
+                )
+            )
+
+        return p
 
 
 class GitHelper(object):
@@ -69,30 +103,17 @@ class GitHelper(object):
             version = self.version(version)
 
         tmp_wc = mkdtemp(prefix = "%s-%s-" % (prefix, version))
+        wc = GitWC(tmp_wc, self)
 
-        def gitcmd(*cmd):
-            p = Popen(cmd, cwd = tmp_wc, stderr = PIPE, stdout = PIPE)
-
-            p.wait()
-
-            if p.returncode:
-                raise RuntimeError(
-                    "Git command failed %u\nstdout:\n%s\nstderr:\n%s\n" % (
-                        p.returncode, p.stdout.read(),
-                        p.stderr.read()
-                    )
-                )
-
-            return p
 
         for cmd in [
             ["git", "clone", "-n", "-s", self.path, "."],
             ["git", "checkout", "-f", version],
         ]:
-            gitcmd(*cmd)
+            wc.cmd(*cmd)
 
         # redirect submodule URLs to local caches inside main repository
-        status = gitcmd("git", "submodule", "status", "--recursive")
+        status = wc.cmd("git", "submodule", "status", "--recursive")
 
         submodules = []
         for l in status.stdout.readlines():
@@ -102,14 +123,14 @@ class GitHelper(object):
         if submodules:
             for sm in submodules:
                 # https://stackoverflow.com/a/30675130/7623015
-                gitcmd("git", "config", "--file=.gitmodules",
+                wc.cmd("git", "config", "--file=.gitmodules",
                     "submodule." + sm + ".url",
                     join(self.path, ".git", "modules", sm)
                 )
 
-            gitcmd("git", "submodule", "update", "--init", "--recursive")
+            wc.cmd("git", "submodule", "update", "--init", "--recursive")
 
-        return tmp_wc
+        return wc
 
     def commits(self, tree_ish, early_tree_ish = None):
         version = self.version(tree_ish)
@@ -139,18 +160,35 @@ class Measurement(Extensible):
 M = Measurement
 
 
+envs = dict(
+    py2 = dict(
+        interpreter = "python2"
+    ),
+    py3 = dict(
+        interpreter = "python3"
+    )
+)
+
+
 def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     caches = None,
     m_count = 5,
-    env = "python2"
+    env = "py2",
+    diffs = join(".", "proj_mes_diffs")
 ):
     """
     :param caches:
         Path to directory with existing QVCs. Use it iff QVC building
         algorithm testing is not required.
     """
+
     if m_count < 1:
         return
+
+    # generated code will be saved as a patch
+    diffs = join(abspath(diffs), datetime.now().strftime("%Y%m%d-%H%M%S"))
+    if not isdir(diffs):
+        makedirs(diffs)
 
     machine = uname()
 
@@ -163,7 +201,7 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     print("Configuring Qemu...")
     configure = Popen(
         [
-            join(qemugit.path, "configure"),
+            join(qemuwc, "configure"),
             "--target-list=" + ",".join(["x86_64-softmmu"])
         ],
         cwd = tmp_build,
@@ -185,7 +223,7 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(qemuwc, join(q_back, "src"))
     copytree(tmp_build, join(q_back, "build"))
 
-    for sha1 in commit_list:
+    for t, sha1 in enumerate(commit_list):
         print("Checking QDT out (%s)...\n%s" % (
             sha1,
             "\n".join((("> " + l) if l else ">") for l in
@@ -208,16 +246,19 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
             print("Measuring...")
 
+            cmds = [
+                envs[env]["interpreter"],
+                join(qdtwc, "qemu_device_creator.py"),
+                "-b", tmp_build,
+                "-t", qproject.target_version,
+                qp_path
+            ]
+
+            if environ.get("TC_PRINT_COMMANDS", "0") == "1":
+                print(" ".join(cmds))
+
             t0 = time()
-            proc = Popen(
-                [
-                    env,
-                    join(qdtwc, "qemu_device_creator.py"),
-                    "-b", tmp_build,
-                    "-t", qproject.target_version,
-                    qp_path
-                ],
-                cwd = qdt_cwd
+            proc = Popen(cmds, cwd = qdt_cwd
             )
             proc.wait()
             t1 = time()
@@ -239,6 +280,14 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
             ))
 
             rmtree(qdt_cwd)
+
+            # save patch
+            diff = join(diffs, "%u-%s-for-%s-%u.patch" % (
+                t, sha1, qproject.target_version, i
+            ))
+
+            qemuwc.cmd("git", "add", "-A")
+            qemuwc.cmd("git diff --cached > " + diff, shell = True)
 
             # restore qemu src and build from backup
             rmtree(tmp_build)
