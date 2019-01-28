@@ -410,7 +410,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
         if access in reg.access:
             qtn = QemuTypeName(name)
-            s_deref_war = OpSDeref(
+            s_deref_war = lambda : OpSDeref(
                 s,
                 qtn.for_id_name + "_war"
             )
@@ -434,7 +434,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         # no read only bits: set WAR mask to 0xF...F
                         case.add_child(
                             OpAssign(
-                                s_deref_war,
+                                s_deref_war(),
                                 OpNot(0)
                             )
                         )
@@ -443,7 +443,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         # write mask
                         case.add_child(
                             OpAssign(
-                                s_deref_war,
+                                s_deref_war(),
                                 wm
                             )
                         )
@@ -460,13 +460,13 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                             OpOr(
                                 OpAnd(
                                     val,
-                                    s_deref_war,
+                                    s_deref_war(),
                                     parenthesis = True
                                 ),
                                 OpAnd(
                                     s_deref,
                                     OpNot(
-                                        s_deref_war
+                                        s_deref_war()
                                     ),
                                     parenthesis = True
                                 )
