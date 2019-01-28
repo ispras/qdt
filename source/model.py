@@ -1116,7 +1116,7 @@ class Enumeration(Type):
         for f in self.elems:
             # Note that 0-th chunk is field and rest are its dependencies
             decl_chunks = generator.provide_chunks(f, indent = field_indent,
-                separ = ","
+                separ = "" if f == self.elems[-1] else ","
             )
 
             field_declaration = decl_chunks[0]
