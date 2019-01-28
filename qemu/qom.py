@@ -11,6 +11,7 @@ __all__ = [
       , "QOMDevice"
   , "SimpleRegister"
       , "Register"
+      , "CPURegister"
   , "idon"
 ]
 
@@ -289,6 +290,10 @@ for U in ["", "U"]:
 class SimpleRegister(object):
     def __init__(self, name, size):
         self.name, self.size = name, size
+
+
+class CPURegister(SimpleRegister):
+    pass
 
 
 class Register(SimpleRegister):
