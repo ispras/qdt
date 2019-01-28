@@ -25,6 +25,9 @@ Range = namedtuple("Range", "lineno count")
 # 'base_range' - range for base version of file
 Chunk = namedtuple("Chunk", "curr_range base_range")
 
+# TODO: curr_range -> old,  base_range -> new
+# because it's just a diff format, our context is not involved
+
 re_chunks = compile("@@ -(\d+)(?:,?(\d*)) \+(\d+)(?:,?(\d*)) @@")
 
 
@@ -38,7 +41,52 @@ def iter_chunks(diff):
         )
 
 
+""" TODO: possible tests (it's an idea only)
+
+$ cat 1/cur
+a
+b
+c
+d
+
+$ cat 1/base
+a
+c
+d
+
+$ git diff -U0 1/cur 1/base
+diff --git a/1/cur b/1/base
+index 8709f80..40cb831 100644
+--- a/1/cur
++++ b/1/base
+@@ -2 +1,0 @@ a
+-b
+
+
+$ cat 2/cur
+a
+b
+d
+
+$ cat 2/base
+a
+b
+c
+d
+
+$ git diff -U0 2/cur 2/base
+diff --git a/2/cur b/2/base
+index 39c5e1d..8709f80 100644
+--- a/2/cur
++++ b/2/base
+@@ -2,0 +3 @@ b
++c
+
+"""
+
 def git_diff2delta_intervals(diff):
+    # TODO: current version of file / current file version
+    # TODO: same for "base..."
     """
 :param diff:
     is 'git diff' information between current version file and base version
@@ -52,6 +100,10 @@ def git_diff2delta_intervals(diff):
     delta = 0
 
     for chunk in iter_chunks(diff):
+        # TODO: account our context
+        # diff is reversive, i.e. how to get the base version from a current.
+        # curr_range = chunk.old
+        # base_range = chunk.new
         curr_range = chunk.curr_range
         base_range = chunk.base_range
 
