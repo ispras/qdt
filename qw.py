@@ -578,6 +578,7 @@ Notifications are issued for many machine composition events.
     def on_board_init_start(self):
         # machine_run_board_init
 
+        # TODO: 43ac51e66b421216856c752f9382cb6de3cfccad is not public
         """ hw/core/machine.c:829 v2.12.0
             vl.c:4510 43ac51e66b421216856c752f9382cb6de3cfccad
         """
@@ -1370,6 +1371,7 @@ def main():
         nargs = "+",
         help = "QEMU executable and arguments to it. Prefix them with `--`."
     )
+    # TODO: Move it to the top of qarg
     ap.add_argument("-q",
         dest = "qsrc",
         help = "QEMU src directory."
@@ -1403,6 +1405,7 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
+    # TODO: it must be optional feature, if Qemu src dir is provided.
     gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
 
     qomtr = QOMTreeReverser(dic,
