@@ -47,8 +47,14 @@ intervals.
             for changes in diff:
                 if changes.raw_rename_to:
                     val = (changes.diff, changes.raw_rename_to)
+                    # "new" file name is the name of the file at base version
+                    # TODO: file_name = changes.b_rawpath
                 else:
                     val = (changes.diff, None)
+                    # if b_rawpath:
+                    #     file_name = b_rawpath
+                    # else:
+                    #     does this file exist in base version?
                 if changes.a_rawpath:
                     file_name = changes.a_rawpath
                 else:
@@ -85,9 +91,12 @@ class GlvAdptrCacheManager(object):
     """ This class is manager that loads and stores a line version cache. """
 
     def __init__(self, curr_version):
+        # It is not GDB. line_cache_{sha}?
         self.cache_file = "gdb_w_cache_{sha}.gwc".format(sha = curr_version)
 
         if isfile(self.cache_file):
+            # XXX: what about bad file (an exception)? Should we create an
+            # empty cache?
             execfile(self.cache_file, {
                 "cache_manager": self,
                 "intervalmap": intervalmap,
@@ -101,9 +110,11 @@ class GlvAdptrCacheManager(object):
 
 
 class GitLineVersionAdapter(LineAdapter):
+# TODO: "according to" ?
     """ A line adapter class that implements line adaptation according with
 'git diff' information.
 """
+# TODO: """ indent
 
     def __init__(self, src_dir):
         repo = Repo(src_dir)
