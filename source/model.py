@@ -339,8 +339,7 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
-        tf = TypeFixerVisitor(self, self.global_variables)
-        tf.visit()
+        TypeFixerVisitor(self, self.global_variables).visit()
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
@@ -374,10 +373,7 @@ switching to that mode.
                 if not isinstance(t, TypeReference):
                     continue
 
-                tfv = TypeFixerVisitor(self, t)
-                tfv.visit()
-
-                if tfv.replaced:
+                if TypeFixerVisitor(self, t).visit().replaced:
                     replaced = True
 
             if not replaced:
@@ -1421,9 +1417,7 @@ class Initializer(object):
             self.__type_references__ = self.__type_references__ + ["code"]
 
             # automatically get types used in the code
-            tc = TypesCollector(code)
-            tc.visit()
-            self.used_types.update(tc.used_types)
+            self.used_types.update(TypesCollector(code).visit().used_types)
 
     def __getitem__(self, key):
         val = self.code[key]
@@ -2064,10 +2058,7 @@ def gen_function_decl_ref_chunks(function, generator):
 def gen_function_def_ref_chunks(f, generator):
     references = []
 
-    v = TypesCollector(f.body)
-    v.visit()
-
-    for t in v.used_types:
+    for t in TypesCollector(f.body).visit().used_types:
         references.extend(generator.provide_chunks(t))
 
     if isinstance(f.body, FunctionBodyString):

@@ -20,6 +20,7 @@ from .machine_description import (
     MachineNode
 )
 from common import (
+    same_sets,
     callco,
     co_find_eq
 )
@@ -33,8 +34,8 @@ from collections import (
     defaultdict
 )
 
-""" TODO: Selection of configuration flag and accumulator variable
-name is Qemu version specific. Version API must be used there. """
+# TODO: Selection of configuration flag and accumulator variable
+# name is Qemu version specific. Version API must be used there.
 
 obj_var_names = defaultdict(lambda : "obj")
 obj_var_names["pci"] = "common-obj"
@@ -44,12 +45,13 @@ config_flags = defaultdict(lambda: "y")
 config_flags["pci"] = "$(CONFIG_PCI)"
 config_flags["hw"] = "$(CONFIG_SOFTMMU)"
 
-""" Note that different subdirectories and modules could be registered in "hw"
-using other settings. But as this tool generates devices only. So, the settings
-is chosen this way.
-"""
+# Note that different subdirectories and modules could be registered in "hw"
+# using other settings. But as this tool generates devices only. So, the
+# settings is chosen this way.
+
 
 class QProject(object):
+
     def __init__(self,
         descriptions = None
     ):
@@ -58,8 +60,9 @@ class QProject(object):
         if not descriptions is None:
             for d in descriptions:
                 if d.project is not None:
-                    raise Exception("The description '" + d.name + "' is \
-already in another project.")
+                    raise ValueError("The description '" + d.name
+                        +"' is already in another project."
+                    )
                 else:
                     self.add_description(d)
 
@@ -85,8 +88,8 @@ already in another project.")
     def find1(self, **kw):
         return next(self.find(**kw))
 
-    """ Backward compatibility wrapper for co_gen_all """
     def gen_all(self, *args, **kw):
+        "Backward compatibility wrapper for co_gen_all"
         callco(self.co_gen_all(*args, **kw))
 
     def co_gen_all(self, qemu_src, **gen_cfg):
@@ -132,8 +135,8 @@ already in another project.")
 
         self.register_in_build_system(full_path, known_targets)
 
-    """ Backward compatibility wrapper for co_gen """
     def gen(self, *args, **kw):
+        "Backward compatibility wrapper for co_gen"
         callco(self.co_gen(*args, **kw))
 
     def co_gen(self, desc, src,
@@ -204,12 +207,12 @@ already in another project.")
 
         yield True
 
-        (source_name, source_ext) = splitext(source_base_name)
+        source_name, _ = splitext(source_base_name)
         object_base_name = source_name + ".o"
 
         hw_path = join(src, "hw")
         class_hw_path = join(hw_path, desc.directory)
-        Makefile_objs_class_path = join(class_hw_path, 'Makefile.objs')
+        Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
 
         patch_makefile(Makefile_objs_class_path, object_base_name,
             obj_var_names[desc.directory], config_flags[desc.directory]
@@ -217,3 +220,17 @@ already in another project.")
 
     def __var_base__(self):
         return "project"
+
+    def __same__(self, o):
+        if type(self) is not type(o):
+            return False
+
+        # Descriptions order is not significant
+        if same_sets(self.descriptions, o.descriptions):
+            return True
+        return False
+
+    __pygen_deps__ = ("descriptions",)
+
+    def __gen_code__(self, gen):
+        gen.gen_code(self)

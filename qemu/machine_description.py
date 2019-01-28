@@ -1,5 +1,6 @@
 __all__ = [
-    "MachineNode"
+    "MachineDescription"
+  , "MachineNode" # Alias of MachineDescription. Legacy. Do not use it.
   , "MultipleSystemBusesInMachine"
   , "NodeHasId"
   , "NodeIdIsAlreadyInUse"
@@ -39,18 +40,21 @@ class NodeIdIsAlreadyInUse(RuntimeError):
     pass
 
 @descriptionOf(MachineType)
-class MachineNode(QOMDescription):
+class MachineDescription(QOMDescription):
     def __description_init__(self):
         self.max_id = 0
         self.id2node = {}
 
-        for n in self.devices + self.buses + self.irqs + self.mems + \
-        self.irq_hubs:
+        for n in (self.devices + self.buses + self.irqs + self.mems +
+            self.irq_hubs
+        ):
             self.assign_id(n)
 
-    def __dfs_children__(self):
-        return QOMDescription.__dfs_children__(self) \
-            + self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
+    @property
+    def __pygen_deps__(self):
+        self.link()
+
+        return ("devices", "buses", "irqs", "mems", "irq_hubs")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -196,3 +200,13 @@ class MachineNode(QOMDescription):
         for i in count(0):
             if not i in self.id2node:
                 return i
+
+    def __same__(self, o):
+        # Join all the nodes before comparison
+        self.link()
+        o.link()
+        # descriptionOf.__same__ will do actual comparison
+        return True
+
+
+MachineNode = MachineDescription

@@ -1,6 +1,7 @@
 __all__ = [
     "PyGenerator"
   , "pythonize"
+  , "PyGenVisitor"
 ]
 
 from six import (
@@ -12,32 +13,102 @@ from six import (
 from itertools import (
     count
 )
-
-if __name__ == "__main__":
-    from sys import (
-        stdout
-    )
-    from code_writer import (
-        CodeWriter
-    )
-    from topology import (
-        sort_topologically
-    )
-    from reflection import (
-        get_class_total_args
-    )
-else:
-    from .code_writer import (
-        CodeWriter
-    )
-    from .topology import (
-        sort_topologically
-    )
-    from .reflection import (
-        get_class_total_args
-    )
+from .code_writer import (
+    CodeWriter
+)
+from .reflection import (
+    get_class_total_args
+)
+from .visitor import (
+    BreakVisiting,
+    ObjectVisitor
+)
 
 const_types = (float, text_type, binary_type, bool) + integer_types
+
+NOT_GENERATED = 0
+GENERATING = 1
+GENERATED = 2
+
+
+class PyGenVisitor(ObjectVisitor):
+
+    def __init__(self, root, backend = None, **genkw):
+        super(PyGenVisitor, self).__init__(root,
+            field_name = "__pygen_deps__"
+        )
+
+        if backend is None:
+            backend = StringIO()
+
+        self.gen = PyGenerator(backend = backend, **genkw)
+
+    def on_visit(self):
+        oid = id(self.cur)
+        state = self.state.get(oid, NOT_GENERATED)
+
+        if state is GENERATING:
+            raise RuntimeError("Recursive dependencies")
+
+        if state is GENERATED:
+            raise BreakVisiting()
+
+        self.state[oid] = GENERATING
+
+    def on_leave(self):
+        o = self.cur
+        oid = id(o)
+
+        # prevent garbage collection
+        self.keepalive.append(o)
+
+        if self.state[oid] is GENERATING:
+            self.state[oid] = GENERATED
+        else:
+            return
+
+        try:
+            gen_code = o.__gen_code__
+        except AttributeError:
+            return
+
+        g = self.gen
+
+        g.write(g.nameof(o) + " = ")
+        gen_code(g)
+        g.line()
+
+    def visit(self):
+        self.gen.reset()
+
+        self.state = {}
+        # List of generated & skipped objects.
+        # This prevents garbage collection and re-usage of ids during
+        # generation.
+        # It can happen when the value of an attribute listed in
+        # `__pygen_deps__` is generated dynamically using [non-]data
+        # descriptor like `property`.
+        self.keepalive = []
+
+        ret = super(PyGenVisitor, self).visit()
+
+        # generate root
+        o = self.cur
+
+        if id(o) not in self.state:
+            g = self.gen
+            g.write(g.nameof(o) + " = ")
+
+            try:
+                gen_code = o.__gen_code__
+            except AttributeError:
+                g.pprint(o)
+            else:
+                gen_code(g)
+
+            g.line()
+
+        return ret
 
 
 class PyGenerator(CodeWriter):
@@ -102,25 +173,8 @@ accuracy.
 
         return self.id2name[obj_id]
 
-    def serialize(self, root):
-        self.reset()
-
-        objects = sort_topologically([root])
-
-        for o in objects:
-            self.write(self.nameof(o) + " = ")
-            try:
-                gen_code = o.__gen_code__
-            except AttributeError:
-                print("Object %s of type %s does not provide __gen_code__" % (
-                    str(o), type(o).__name__
-                ))
-                self.line("None")
-            else:
-                gen_code(self)
-            self.line()
-
-    def gen_const(self, c):
+    @staticmethod
+    def gen_const(c):
         # `bool` is an integer type (not in all Python versions probably) and
         # this type information must be preserved.
         if isinstance(c, bool):
@@ -263,39 +317,54 @@ accuracy.
 
     def pprint(self, val):
         if isinstance(val, list):
+            if type(val) is not list:
+                self.write(type(val).__name__ + "(")
             if not val:
                 self.write("[]")
-                return
-            self.pprint_list(val)
+            else:
+                self.pprint_list(val)
+            if type(val) is not list:
+                self.write(")")
         elif isinstance(val, set):
             if not val:
-                self.write("set([])")
-                return
-            self.write("set(")
-            self.pprint_list(sorted(val))
-            self.write(")")
+                self.write(type(val).__name__ + "()")
+            else:
+                self.write(type(val).__name__ + "(")
+                self.pprint_list(sorted(val))
+                self.write(")")
         elif isinstance(val, dict):
+            if type(val) is not dict:
+                self.write(type(val).__name__ + "(")
             if not val:
                 self.write("{}")
-                return
-            self.line("{")
-            self.push_indent()
+            else:
+                self.line("{")
+                self.push_indent()
 
-            items = sorted(val.items(), key = lambda t : t[0])
+                items = sorted(val.items(), key = lambda t : t[0])
 
-            k, v = items[0]
-            self.pprint(k)
-            self.write(": ")
-            self.pprint(v)
-            for k, v in items[1:]:
-                self.line(",")
+                k, v = items[0]
                 self.pprint(k)
                 self.write(": ")
                 self.pprint(v)
-            self.pop_indent()
-            self.line()
-            self.write("}")
+                for k, v in items[1:]:
+                    self.line(",")
+                    self.pprint(k)
+                    self.write(": ")
+                    self.pprint(v)
+                self.pop_indent()
+                self.line()
+                self.write("}")
+            if type(val) is not dict:
+                self.write(")")
         elif isinstance(val, tuple):
+            if type(val) is not tuple:
+                # Unlike another containers, a `tuple` subclass is expected to
+                # override `__new__` to get fixed number of arguments instead
+                # of building itself from another `tuple` (its subclass) as
+                # one argument. `collections.namedtuple` is an example.
+                # So, just add name of the subclass before the parentheses.
+                self.write(type(val).__name__)
             if not val:
                 self.write("()")
                 return
@@ -333,19 +402,8 @@ def pythonize(root, path):
     :path: of target file
     """
 
-    res = StringIO()
-    gen = PyGenerator(backend = res)
-    gen.serialize(root)
+    res = PyGenVisitor(root).visit().gen.w
 
     with open(path, "wb") as _file:
         _file.write(res.getvalue().encode("utf-8"))
 
-
-if __name__ == "__main__":
-    g = PyGenerator()
-
-    class Writer():
-        def write(self, val):
-            stdout.write(str(type(val)) + " : " + repr(val) + "\n")
-
-    g.w = Writer()

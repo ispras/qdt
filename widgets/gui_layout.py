@@ -8,6 +8,10 @@ from copy import (
 from qemu import (
     QemuTypeName
 )
+from common import (
+    same_attrs
+)
+
 
 class GUILayout(object):
     def __init__(self, desc_name, opaque, shown = None):
@@ -44,6 +48,14 @@ class GUILayout(object):
                 # remove empty configuration
                 del self.opaque[-1]
 
+    def __same__(self, o):
+        if type(self) is not type(o):
+            return False
+
+        if same_attrs(self, o, "desc_name", "shown", "opaque"):
+            return True
+        return False
+
     def __deepcopy__(self, memo):
         ret = type(self)(self.desc_name, deepcopy(self.opaque, memo))
         ret.lid = self.lid
@@ -53,13 +65,7 @@ class GUILayout(object):
         if self.widget:
             self.opaque = self.widget.gen_layout()
 
-    def __dfs_children__(self):
-        try:
-            (self.opaque.__gen_code__)
-        except AttributeError:
-            return []
-        else:
-            return [self.opaque]
+    __pygen_deps__ = ("opaque",)
 
     def __var_base__(self):
         return "%s_l%s" % (

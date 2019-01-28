@@ -10,6 +10,7 @@ __all__ = [
   , "QOMType"
       , "QOMDevice"
   , "Register"
+  , "idon"
 ]
 
 from source import (
@@ -34,6 +35,7 @@ from six import (
     integer_types
 )
 from common import (
+    same,
     OrderedSet,
     is_pow2,
     mlget as _
@@ -48,6 +50,14 @@ from math import (
     log
 )
 from source.function import *
+
+
+def idon(node):
+    "ID Or None. Given an object returns `id` attr. Given a None returns None."
+    if node is None:
+        return None
+    return node.id
+
 
 # properties
 class QOMPropertyType(object):
@@ -81,6 +91,21 @@ class QOMPropertyValue(object):
         self.prop_type = prop_type
         self.prop_name = prop_name
         self.prop_val = prop_val
+
+    def __same__(self, o):
+        if type(self) is not type(o):
+            return False
+        if not same(self.prop_type, o.prop_type):
+            return False
+        if not same(self.prop_name, o.prop_name):
+            return False
+        s_val, o_val = self.prop_val, o.prop_val
+        if isinstance(self.prop_type, QOMPropertyTypeLink):
+            s_val, o_val = idon(s_val), idon(o_val)
+        if same(s_val, o_val):
+            return True
+        return False
+
 
 def qtn_char(c):
     # low ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"] high
