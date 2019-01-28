@@ -9,7 +9,8 @@ __all__ = [
   , "QemuTypeName"
   , "QOMType"
       , "QOMDevice"
-  , "Register"
+  , "OpaqueRegister"
+      , "Register"
   , "idon"
 ]
 
@@ -294,7 +295,15 @@ for U in ["", "U"]:
 
         type2vmstate[ctn] = "VMSTATE_" + msfx
 
-class Register(object):
+
+class OpaqueRegister(object):
+
+    def __init__(self, name, size):
+        self.name, self.size = name, size
+
+
+class Register(OpaqueRegister):
+
     def __init__(self, size,
         # None or "gap" named registers are not backed by a state field
         name = None,
@@ -307,7 +316,8 @@ class Register(object):
         # corresponds to 0b00...00, all bits can be written without reading.
         warbits = None
     ):
-        self.size, self.name, self.access = size, name, access
+        super(Register, self).__init__(name, size)
+        self.access = access
         self.reset = CINT(reset, 16, size)
         self.full_name = full_name
 
