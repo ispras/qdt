@@ -1190,6 +1190,7 @@ class Function(Type):
         self.inline = inline
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
         self.args = args
+        self.declaration = None
 
         if isinstance(body, str):
             self.body = FunctionBodyString(
@@ -1260,6 +1261,25 @@ class Function(Type):
         CopyFixerVisitor(new_f).visit()
         return new_f
 
+    def gen_definition(self,
+        body = None,
+        used_types = None,
+        used_globals = None
+    ):
+        new_f = Function(
+            name = self.name + ".definition",
+            body = body,
+            ret_type = self.ret_type,
+            args = self.args,
+            static = self.static,
+            inline = self.inline,
+            used_types = used_types,
+            used_globals = used_globals
+        )
+        CopyFixerVisitor(new_f).visit()
+        new_f.declaration = self
+        return new_f
+
     def gen_var(self, name, initializer = None, static = False):
         return Variable(name, Pointer(self),
             initializer = initializer,
@@ -1269,7 +1289,7 @@ class Function(Type):
     def __c__(self, writer):
         writer.write(self.name)
 
-    __type_references__ = ["ret_type", "args", "body"]
+    __type_references__ = ["ret_type", "args", "body", "declaration"]
 
 
 class Pointer(Type):
@@ -1686,6 +1706,12 @@ class TypeFixerVisitor(ObjectVisitor):
 
             if t.definer is self.source:
                 return
+
+            # Make TypeReference to declaration instead of definition
+            if isinstance(t, Function) and t.declaration is not None:
+                t = t.declaration
+                if type(t) is TypeReference:
+                    t = t.type
 
             # replace foreign type with reference to it
             try:
