@@ -106,7 +106,7 @@ class DWARFInfoCache(DWARFInfoAccelerator):
             if pubtypes is None:
                 offsets = None
             else:
-                offsets = di.pubtypes[name]
+                offsets = pubtypes[name]
 
         # Third, search in .symtab
         if offsets is None:
