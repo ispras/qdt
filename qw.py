@@ -1394,7 +1394,7 @@ def main():
 
     di = elf.get_dwarf_info()
 
-    if di.pubtypes is None:
+    if not di.debug_pubnames_sec:
         print("%s does not contain .debug_pubtypes section. Provide"
             " -gpubnames flag to the compiler" % qemu_debug
         )
