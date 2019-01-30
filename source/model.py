@@ -1217,23 +1217,13 @@ class Pointer(Type):
         """
         const: pointer to constant (not a constant pointer).
         """
-        self.is_named = name is not None
+        super(Pointer, self).__init__(name = name, incomplete = False)
+
         if not self.is_named:
             name = _type.name + '*'
             if const:
                 name = "const@b" + name
-
-        # do not add nameless pointers to type registry
-        if self.is_named:
-            super(Pointer, self).__init__(
-                name = name,
-                incomplete = False,
-                base = False
-            )
-        else:
             self.name = name
-            self.incomplete = False
-            self.base = False
 
         self.type = _type
         self.const = const
