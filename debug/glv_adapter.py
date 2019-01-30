@@ -25,6 +25,7 @@ from debug import (
 
 # regular expression for git version of file and eps
 re_glv_expr = compile("^(?:\s+([\w\-.]+))?(?:\s+(\d+))?(\s?.*)$")
+# TODO: can we just skip last group    (?:\s?.*)    ?
 
 
 class GitDiffsTrie(object):
@@ -74,6 +75,8 @@ intervals.
         except KeyError:
             return None, None
         else:
+            # XXX: Currently, parsed diffs are added to `GlvAdptrCache` only.
+            # So, val[0] cannot be an `intervalmap`.
             if val[0] and not isinstance(val[0], intervalmap):
                 diff, rename = val
                 # conversion of git diff information into delta intervals
@@ -126,11 +129,14 @@ class GitLineVersionAdapter(LineAdapter):
     def calc_lineno(delta_intervals, lineno):
         return lineno + delta_intervals[lineno]
 
+    # TODO: line_block_is_changed?
     @staticmethod
     def ischanged_line_block(delta_intervals, lineno, eps = 3):
         # TODO: do it better, add slice support to intervalmap
 
         # eps is value that defines unchanged line block
+        # TODO: it's better to skip exception if caller provided something wrong
+        # if not isinstance(eps, six.integer_types): eps = int(eps)
         try:
             eps = int(eps)
         except (TypeError, ValueError):
@@ -143,10 +149,13 @@ class GitLineVersionAdapter(LineAdapter):
                 return True
             else:
                 deltas.append(delta_intervals[i])
+
+        # TODO: use `set` initially?
         if len(set(deltas)) != 1:
             return True
         return False
 
+    # TODO: let us avoid "mung" commits =)
     def find_mung_commit(self, lineno, log, regexp):
         mung_commit = None
 
@@ -170,6 +179,7 @@ class GitLineVersionAdapter(LineAdapter):
 
     def get_glv_data(self, version, fname):
         try:
+            # XXX: both self.cm.cache[version] and trie_find raises `KeyError`
             return trie_find(self.cm.cache[version],
                 tuple(reversed(fname.split(sep)))
             )[0]
@@ -178,6 +188,8 @@ class GitLineVersionAdapter(LineAdapter):
                 self.cm.cache[version] = {}
                 self.gdt.add_git_diff(version)
             elif version not in self.gdt.git_diffs:
+                # XXX: it's an encapsulation violation
+                # it's better qdt manages its diffs by self
                 self.gdt.add_git_diff(version)
 
             val = self.gdt.find_git_diff(version, fname)
@@ -190,6 +202,8 @@ class GitLineVersionAdapter(LineAdapter):
         lineno = int(lineno)
 
         if opaque:
+            # TODO: can we just use re_glv_expr.match?
+            # We will got None if no eps presents
             version, eps, _ = re_glv_expr.findall(opaque)[0]
             if version:
                 delta_intervals, rename = self.get_glv_data(version, fname)
@@ -210,7 +224,8 @@ class GitLineVersionAdapter(LineAdapter):
     def failback(self):
         """ Raises exception and displays the closest mung commits for all
 breakpoint positions.
-"""
+        """
+
         msg = []
         re_log = compile("<@>(.+?)</@>", flags = S)
         log_args = ("--pretty=format:</@><@>%H", "--no-merges", "-U0")
