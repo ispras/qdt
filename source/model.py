@@ -1147,7 +1147,8 @@ class FunctionBodyString(object):
 
 class Function(Type):
 
-    def __init__(self, name,
+    def __init__(self,
+        name = None,
         body = None,
         ret_type = None,
         args = None,
@@ -1164,6 +1165,10 @@ class Function(Type):
             # pointer type is permitted.
             incomplete = True
         )
+
+        #XXX eliminate all usages of empty c_name
+        if not self.is_named:
+            self.c_name = ""
 
         self.static = static
         self.inline = inline
@@ -1245,6 +1250,12 @@ class Function(Type):
             initializer = initializer,
             static = static
         )
+
+    def __str__(self):
+        if self.is_named:
+            return super(Function, self).__str__()
+        else:
+            return "nameless function"
 
     __type_references__ = ["ret_type", "args", "body"]
 
