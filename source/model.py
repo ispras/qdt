@@ -1107,7 +1107,8 @@ class FunctionBodyString(object):
 
 class Function(Type):
 
-    def __init__(self, name,
+    def __init__(self,
+        name = None,
         body = None,
         ret_type = None,
         args = None,
