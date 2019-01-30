@@ -21,8 +21,8 @@ GGB_IBY = 100
 # Unified Diff Format:
 # https://www.artima.com/weblogs/viewpost.jsp?thread=164293
 Range = namedtuple("Range", "lineno count")
-# 'old' - range for current version of file
-# 'new' - range for base version of file
+# 'old' - range removed from previous version of file
+# 'new' - range added to new version of file
 Chunk = namedtuple("Chunk", "old new")
 
 re_chunks = compile("@@ -(\d+)(?:,?(\d*)) \+(\d+)(?:,?(\d*)) @@")
