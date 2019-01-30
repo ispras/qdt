@@ -1016,7 +1016,7 @@ class Enumeration(Type):
         super(Enumeration, self).__init__(type_name)
         self.elems = []
         self.enum_name = enum_name
-        t = [Type.lookup("int")]
+        t = [ Type["int"] ]
         for key, val in elems_dict.items():
             self.elems.append(
                 Variable(key, self,
