@@ -19,7 +19,7 @@ class LineAdaptationTestHelper(object):
 
     def test(self):
         tests_dir = join(dirname(__file__), "line_adaptation_tests")
-        diff = popen("git diff -U0 %s %s" % (
+        diff = popen("git diff --no-index -U0 %s %s" % (
             join(tests_dir, self._old), join(tests_dir, self._new)
         )).read()
         intrvls = git_diff2delta_intervals(diff)
