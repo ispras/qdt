@@ -10,9 +10,7 @@ from unittest import (
     main
 )
 from common import (
-    git_diff2delta_intervals
-)
-from common import (
+    git_diff2delta_intervals,
     same
 )
 
