@@ -1364,21 +1364,12 @@ class MacroType(Type):
             raise ValueError("Attempt to create macrotype from "
                 " %s which is not macro." % _macro.name
             )
-        if is_usage or (name is not None):
-            self.is_named = True
-            if name is None:
-                name = _macro.name + ".usage" + str(id(self))
-            super(MacroType, self).__init__(
-                name = name,
-                incomplete = False,
-                base = False
-            )
-        else:
-            # do not add nameless macrotypes to type registry
-            self.is_named = False
+
+        if is_usage and name is None:
+            name = _macro.name + ".usage" + str(id(self))
+        super(MacroType, self).__init__(name = name, incomplete = False)
+        if not self.is_named:
             self.name = _macro.gen_usage_string(initializer)
-            self.incomplete = False
-            self.base = False
 
         self.macro = _macro
         self.initializer = initializer
