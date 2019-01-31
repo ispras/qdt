@@ -109,21 +109,21 @@ renaming for file name)
 
     def get_glv_data(self, version, fname):
         "data is delta intervals and renaming for `fname`"
-        if version in self._cache:
-            try:
-                return trie_find(self._cache[version],
-                    tuple(reversed(fname.split(sep)))
-                )[0]
-            except KeyError:
-                pass
-        else:
-            self._cache[version] = {}
+
+        version_trie = self._cache.setdefault(version, {})
+
+        try:
+            return trie_find(version_trie,
+                tuple(reversed(fname.split(sep)))
+            )[0]
+        except KeyError:
+            pass
 
         if version not in self._draft_diffs:
             self._add_git_diff(version)
 
         val = self._find_git_diff(version, fname)
-        trie_add(self._cache[version],
+        trie_add(version_trie,
             tuple(reversed(fname.split(sep))), val
         )
         return val
