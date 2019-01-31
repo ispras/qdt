@@ -108,7 +108,7 @@ renaming for file name)
             return val
 
     def get_glv_data(self, version, fname):
-        # data is delta intervals and renaming for `fname`
+        "data is delta intervals and renaming for `fname`"
         if version in self._cache:
             try:
                 return trie_find(self._cache[version],
