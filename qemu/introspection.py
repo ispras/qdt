@@ -1,6 +1,6 @@
 __all__ = [
     "SourcePosition",
-    "QEvent",
+    "QBreakpoint",
     "q_event_dict",
     "q_event_list"
 ]
@@ -63,7 +63,7 @@ class SourcePosition(object):
 
 
 @notifier("happened")
-class QEvent(object):
+class QBreakpoint(object):
     def __init__(self,
         position,
         description,
@@ -88,15 +88,15 @@ class QEvent(object):
 
 
 q_event_list = [
-    QEvent(
+    QBreakpoint(
         ("type_register_internal",),
         "QOM Type registration"
     ),
-    QEvent(
+    QBreakpoint(
         ("object_initialize_with_type", 379,),
         "Object initialization started"
     ),
-    QEvent(
+    QBreakpoint(
         ("object_initialize_with_type", 386,),
         "Object initialization finished"
     ),
