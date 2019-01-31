@@ -64,6 +64,14 @@ class SourcePosition(object):
 
 @notifier("happened")
 class QBreakpoint(object):
+    """ The breakpoint handling is split onto two halves (like IRQ handling in
+Linux). The `__top_half__` and the `__bottom_half__`. First one is being called
+while QEmu is stopped on the breakpoint. It can fetch actual short-living
+runtime information. It should not perform expensive computing because it slows
+QEmu process down. That work is for the `__bottom_half__`. The last one can
+fetch long-living data from QEmu but be warned the it is likely running
+simultaneously.
+    """
     def __init__(self,
         position,
         description,
@@ -85,6 +93,16 @@ class QBreakpoint(object):
         self.position, self.description = (
             position, description
         )
+
+    def __top_half__(self, runtime):
+        pass
+
+    def __bottom_half__(self, runtime):
+        pass
+
+    def __happened__(self, *a, **kw):
+        "Provides access to private `__notify_happened`"
+        self.__notify_happened(*a, **kw)
 
 
 q_event_list = [
