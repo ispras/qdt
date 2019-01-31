@@ -46,19 +46,20 @@ renaming for file name)
 
         @staticmethod
         def __var_base__():
-            return "glv_cache"
+            return "glvcm._cache"
 
     def __init__(self, curr_commit):
         self.curr_commit = curr_commit
         self.cache_file = "glv_cache_{sha}.py".format(
             sha = curr_commit.hexsha
         )
+        glob = {
+            "glvcm": self,
+            "intervalmap": intervalmap,
+            "GLVCache": self.GLVCache
+        }
         try:
-            execfile(self.cache_file, {
-                "glv_cache": self._cache,
-                "intervalmap": intervalmap,
-                "GLVCache": self.GLVCache
-            })
+            execfile(self.cache_file, glob)
         except Exception:
             self._cache = self.GLVCache()
         # trie that contains unhandled git diff information
