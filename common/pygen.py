@@ -120,9 +120,9 @@ script.
     - __gen_code__, a method that is given a `PyGenerator` instance. It should
         use the instance to write Python code that is equivalent to the object.
 
-    - __dfs_children__, a method that is used by `PyGenerator` to locate
-        objects this object does depend on.
-        See `common.topology.sort_topologically` for details.
+    - __pygen_deps__, an attribute that is used by `PyGenerator` to locate
+        objects this object does depend on. It must list names of
+        corresponding attributes. See `ObjectVisitor.field_name` description.
 
     An object may have:
 
