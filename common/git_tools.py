@@ -1,10 +1,86 @@
 __all__ = [
     "GGB_IBY"
   , "CommitDesc"
+  , "iter_chunks"
+  , "git_diff2delta_intervals"
 ]
+
+from collections import (
+    namedtuple
+)
+from re import (
+    compile
+)
+from .intervalmap import (
+    intervalmap
+)
 
 # Iterations Between Yields of Git Graph Building task
 GGB_IBY = 100
+
+# Unified Diff Format:
+# https://www.artima.com/weblogs/viewpost.jsp?thread=164293
+Range = namedtuple("Range", "lineno count")
+# 'old' - range removed from previous version of file
+# 'new' - range added to new version of file
+Chunk = namedtuple("Chunk", "old new")
+
+re_chunks = compile("@@ -(\d+)(?:,?(\d*)) \+(\d+)(?:,?(\d*)) @@")
+
+
+def iter_chunks(diff):
+    for chunk in re_chunks.findall(diff):
+        c_lineno, c_count, b_lineno, b_count = chunk
+        yield Chunk(
+            # empty '*_count' is equivalent to '*_count' == 1
+            Range(int(c_lineno), int(c_count) if c_count != '' else 1),
+            Range(int(b_lineno), int(b_count) if b_count != '' else 1)
+        )
+
+
+def git_diff2delta_intervals(diff):
+    """
+:param diff:
+    is 'git diff' information between current version of file and base version
+    of file
+:returns:
+    the line-to-delta intervalmap built from `diff`
+
+    """
+    intervals = intervalmap()
+    lineno = 1
+    delta = 0
+
+    for chunk in iter_chunks(diff):
+        # diff is reversive, i.e. how to get the base version from a current.
+        curr_range = chunk.old
+        base_range = chunk.new
+
+        # `inclusive`: 0 - exclude `lineno` from current interval
+        #              1 - include `lineno` in current interval
+        #
+        # `gap_size` - the size of gap between the current and next intervals
+        #
+        if base_range.count:
+            # add a gap including `lineno`
+            inclusive, gap_size = 0, base_range.count
+        else:
+            # include `lineno` in `intervals`
+            inclusive, gap_size = 1, 1
+
+        # current interval
+        intervals[lineno: base_range.lineno + inclusive] = delta
+
+        # calculate the left boundary for the next interval
+        lineno = base_range.lineno + gap_size
+        # calculate the delta for the next interval
+        delta += curr_range.count - base_range.count
+
+    # default interval if diff is empty and last interval otherwise
+    intervals[lineno: None] = delta
+
+    return intervals
+
 
 class CommitDesc(object):
     def __init__(self, sha, parents, children):

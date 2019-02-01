@@ -22,7 +22,8 @@ from debug import (
     InMemoryELFFile,
     DWARFInfoCache,
     Watcher,
-    TYPE_CODE_PTR
+    TYPE_CODE_PTR,
+    GitLineVersionAdapter
 )
 from common import (
     pypath,
@@ -254,12 +255,15 @@ class QOMTreeReverser(Watcher):
 the QOM tree by fetching relevant data.
     """
 
-    def __init__(self, dic, interrupt = True, verbose = False):
+    def __init__(self, dic, interrupt = True, verbose = False, **kw):
         """
     :param interrupt:
         Stop QEmu and exit `RemoteTarget.run` after QOM module is initialized.
         """
-        super(QOMTreeReverser, self).__init__(dic, verbose = verbose)
+        super(QOMTreeReverser, self).__init__(dic,
+            verbose = verbose,
+            **kw
+        )
 
         self.tree = RQOMTree()
         self.interrupt = interrupt
@@ -267,8 +271,7 @@ the QOM tree by fetching relevant data.
     def on_type_register_internal(self):
         # type_register_internal
 
-        # v2.12.0
-        "object.c:139"
+        "object.c:139 v2.12.0"
 
         t = self.tree.account(self.rt["ti"])
 
@@ -278,8 +281,9 @@ the QOM tree by fetching relevant data.
     def on_type_initialize(self):
         # now the type and its ancestors are initialized
 
-        # v2.12.0
-        "object.c:344"
+        """ object.c:344 v2.12.0
+            object.c:333 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        """
 
         rt = self.rt
         type_impl = rt["ti"]
@@ -307,8 +311,9 @@ the QOM tree by fetching relevant data.
     def on_main(self):
         # main, just after QOM module initialization
 
-        # v2.12.0
-        "vl.c:3075"
+        """ vl.c:3075 v2.12.0
+            vl.c:2980 d0dff238a87fa81393ed72754d4dc8b09e50b08b
+        """
 
         if self.interrupt:
             self.rt.target.exit = True
@@ -472,7 +477,11 @@ corresponding QEmu API. It remembers instances composing the machine.
 Notifications are issued for many machine composition events.
     """
 
-    def __init__(self, dic, qom_tree, verbose = False, interrupt = False):
+    def __init__(self, dic, qom_tree,
+        interrupt = False,
+        verbose = False,
+        **kw
+    ):
         """
     :type qom_tree: RQOMTree
 
@@ -480,7 +489,10 @@ Notifications are issued for many machine composition events.
         Interrupt QEmu process after machine is fully created.
 
         """
-        super(MachineWatcher, self).__init__(dic, verbose = verbose)
+        super(MachineWatcher, self).__init__(dic,
+            verbose = verbose,
+            **kw
+        )
         self.tree = qom_tree
         # addr -> RQInstance mapping
         self.instances = {}
@@ -519,8 +531,9 @@ Notifications are issued for many machine composition events.
     def on_obj_init_start(self):
         # object_initialize_with_type, before `object_init_with_type`
 
-        # v2.12.0
-        "object.c:384"
+        """ object.c:384 v2.12.0
+            object.c:376 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        """
 
         machine = self.machine
         if machine is None:
@@ -547,8 +560,9 @@ Notifications are issued for many machine composition events.
     def on_obj_init_end(self):
         # object_initialize_with_type, return
 
-        # v2.12.0
-        "object.c:386"
+        """ object.c:386 v2.12.0
+            object.c:378 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        """
 
         if self.machine is None:
             return
@@ -564,8 +578,9 @@ Notifications are issued for many machine composition events.
     def on_board_init_start(self):
         # machine_run_board_init
 
-        # v2.12.0
-        "hw/core/machine.c:829"
+        """ hw/core/machine.c:829 v2.12.0
+            vl.c:4562 3b8a8557f781c4216744d9ab69bee43b526b0c64 0
+        """
 
         rt = self.rt
 
@@ -586,8 +601,9 @@ Notifications are issued for many machine composition events.
     def on_mem_init_end(self):
         # return from memory_region_init
 
-        # v2.12.0
-        "memory.c:1153"
+        """ memory.c:1153 v2.12.0
+            memory.c:1009 0ab8ed18a6fe98bfc82705b0f041fbf2a8ca5b60
+        """
 
         if self.machine is None:
             return
@@ -608,8 +624,9 @@ Notifications are issued for many machine composition events.
     def on_board_init_end(self):
         # machine_run_board_init
 
-        # v2.12.0
-        "hw/core/machine.c:830"
+        """ hw/core/machine.c:830 v2.12.0
+            vl.c:4476 ad584d37f2a86b392c25f3f00cc1f1532676c2d1 1
+        """
 
         self.remove_breakpoints()
         if self.interrupt:
@@ -628,8 +645,9 @@ Notifications are issued for many machine composition events.
         # Do NOT set this breakpoint on `return` because it will catch all
         # `return` statements in the function.
 
-        # v2.12.0
-        "object.c:975"
+        """ object.c:975 v2.12.0
+            object.c:954 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        """
 
         if self.machine is None:
             return
@@ -666,8 +684,9 @@ Notifications are issued for many machine composition events.
     def on_obj_prop_set(self):
         # object_property_set (prop. exists and has a setter)
 
-        # v2.12.0
-        "object.c:1122"
+        """ object.c:1122 v2.12.0
+            object.c:1094 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+        """
 
         if self.machine is None:
             return
@@ -701,8 +720,7 @@ Notifications are issued for many machine composition events.
     def on_qbus_realize(self):
         # qbus_realize, parent may be NULL
 
-        # v2.12.0
-        "hw/core/bus.c:101"
+        "hw/core/bus.c:101 v2.12.0"
 
         rt = self.rt
         bus = rt["bus"]
@@ -746,8 +764,7 @@ Notifications are issued for many machine composition events.
     def on_bus_unparent(self):
         # bus_unparent, before actual unparenting
 
-        # v2.12.0
-        "hw/core/bus.c:123"
+        "hw/core/bus.c:123 v2.12.0"
 
         # TODO: this code is not tested because this event never happens
         rt = self.rt
@@ -775,8 +792,9 @@ Notifications are issued for many machine composition events.
     def on_bus_add_child(self):
         # bus_add_child
 
-        # v2.12.0
-        "hw/core/qdev.c:73"
+        """ hw/core/qdev.c:73 v2.12.0
+            hw/core/qdev.c:101 67980031d234aa90524b83bb80bb5d1601d29076
+        """
 
         rt = self.rt
         bus = rt["bus"]
@@ -804,15 +822,18 @@ Notifications are issued for many machine composition events.
         # bus_remove_child, before actual unparenting
 
         # v2.12.0
-        "hw/core/qdev.c:57"
+        """ hw/core/qdev.c:57 v2.12.0
+            hw/core/qdev.c:70 67980031d234aa90524b83bb80bb5d1601d29076
+        """
 
         print("not implemented")
 
     def on_qdev_get_gpio_in_named(self):
         # qdev_get_gpio_in_named, return
 
-        # v2.12.0
-        "core/qdev.c:456"
+        """ core/qdev.c:456 v2.12.0
+            core/qdev.c:473 67980031d234aa90524b83bb80bb5d1601d29076
+        """
 
         instances = self.instances
         rt = self.rt
@@ -833,8 +854,9 @@ Notifications are issued for many machine composition events.
         # qdev_connect_gpio_out_named, after IRQ was assigned and before
         # property name `propname` freed.
 
-        # v2.12.0
-        "core/qdev.c:479"
+        """ core/qdev.c:479 v2.12.0
+            core/qdev.c:496 67980031d234aa90524b83bb80bb5d1601d29076
+        """
 
         rt = self.rt
 
@@ -868,8 +890,9 @@ Notifications are issued for many machine composition events.
     def on_qemu_irq_split(self):
         # returning from `qemu_irq_split`
 
-        # v2.12.0
-        "core/irq.c:122"
+        """ core/irq.c:122 v2.12.0
+            core/irq.c:121 67980031d234aa90524b83bb80bb5d1601d29076
+        """
 
         rt = self.rt
         instances = self.instances
@@ -897,8 +920,8 @@ class PCMachineWatcher(MachineWatcher):
     """
 
     def on_pc_piix_gsi(self):
-        # v2.12.0
-        "pc_piix.c:301"
+
+        "pc_piix.c:301 v2.12.0"
 
         rt = self.rt
         instances = self.instances
@@ -934,8 +957,8 @@ class PCMachineWatcher(MachineWatcher):
                     self.check_irq_connected(i8259_inst)
 
     def on_piix4_pm_gsi(self):
-        # v.2.12.0
-        "piix4.c:578"
+
+        "piix4.c:578 v2.12.0"
 
         rt = self.rt
 
@@ -1343,6 +1366,10 @@ def main():
     ap = QArgumentParser(
         description = "QEMU runtime introspection tool"
     )
+    ap.add_argument("-q",
+        dest = "qsrc",
+        help = "QEMU src directory."
+    )
     ap.add_argument("qarg",
         nargs = "+",
         help = "QEMU executable and arguments to it. Prefix them with `--`."
@@ -1351,6 +1378,9 @@ def main():
 
     # executable
     qemu_cmd_args = args.qarg
+
+    # src directory
+    qemu_src_dir = args.qsrc
 
     # debug info
     qemu_debug = qemu_cmd_args[0]
@@ -1373,9 +1403,15 @@ def main():
         symtab = elf.get_section_by_name(b".symtab")
     )
 
+    if qemu_src_dir:
+        gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
+    else:
+        gvl_adptr = None
+
     qomtr = QOMTreeReverser(dic,
         interrupt = False,
-        verbose = True
+        verbose = True,
+        line_adapter = gvl_adptr
     )
 
     if "-i386" in qemu_debug or "-x86_64" in qemu_debug:
@@ -1384,7 +1420,8 @@ def main():
         MWClass = MachineWatcher
 
     mw = MWClass(dic, qomtr.tree,
-        interrupt = True
+        interrupt = True,
+        line_adapter = gvl_adptr
     )
 
     proj = GUIProject()
@@ -1453,6 +1490,9 @@ def main():
     qomtr.to_file("qom-by-q.i.dot")
 
     qemu_proc.join()
+
+    if gvl_adptr is not None:
+        gvl_adptr.cm.store_cache()
 
 
 if __name__ == "__main__":
