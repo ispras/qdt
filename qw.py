@@ -578,7 +578,9 @@ Notifications are issued for many machine composition events.
     def on_board_init_start(self):
         # machine_run_board_init
 
-        "hw/core/machine.c:829 v2.12.0"
+        """ hw/core/machine.c:829 v2.12.0
+            vl.c:4562 3b8a8557f781c4216744d9ab69bee43b526b0c64 0
+        """
 
         rt = self.rt
 
@@ -622,7 +624,9 @@ Notifications are issued for many machine composition events.
     def on_board_init_end(self):
         # machine_run_board_init
 
-        "hw/core/machine.c:830 v2.12.0"
+        """ hw/core/machine.c:830 v2.12.0
+            vl.c:4476 ad584d37f2a86b392c25f3f00cc1f1532676c2d1 1
+        """
 
         self.remove_breakpoints()
         if self.interrupt:
