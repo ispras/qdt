@@ -6,7 +6,7 @@
 	url = https://github.com/WojciechMula/canvas2svg.git
 [submodule "debug/pyelftools"]
 	path = debug/pyelftools
-	url = git@nasredin.intra.ispras.ru:qemu/pyelftools.git
+	url = https://github.com/ispras/pyelftools.git
 [submodule "pyrsp"]
 	path = pyrsp
 	url = https://github.com/stef/pyrsp.git

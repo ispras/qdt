@@ -6,6 +6,7 @@ from .dia import (
     DWARFInfoAccelerator
 )
 from common import (
+    lazy,
     intervalmap
 )
 from collections import (
@@ -94,7 +95,7 @@ class DWARFInfoCache(DWARFInfoAccelerator):
         di = self.di
 
         # First, search in .debug_pubnames
-        pubnames = di.pubnames
+        pubnames = self.pubnames
         if pubnames is None:
             offsets = None
         else:
@@ -102,11 +103,11 @@ class DWARFInfoCache(DWARFInfoAccelerator):
 
         # Second, search in .debug_pubtypes
         if offsets is None:
-            pubtypes = di.pubtypes
+            pubtypes = self.pubtypes
             if pubtypes is None:
                 offsets = None
             else:
-                offsets = di.pubtypes[name]
+                offsets = pubtypes[name]
 
         # Third, search in .symtab
         if offsets is None:
@@ -143,7 +144,7 @@ class DWARFInfoCache(DWARFInfoAccelerator):
             # Note that last cu and die variable definitions are looked for
         else:
             cu = di._parse_CU_at_offset(offsets[0])
-            die = cu.get_DIE_at_offset(offsets[1])
+            die = cu.get_DIE_at_offset(offsets[1] - offsets[0])
 
         tag = die.tag[7:] # DW_TAG_*
 
@@ -226,3 +227,11 @@ unit (`cu`). Adds address intervals of subprograms to `addr2subprog` mapping.
             cu_sps.append(sp)
 
         return cu_sps
+
+    @lazy
+    def pubnames(self):
+        return self.di.get_pubnames()
+
+    @lazy
+    def pubtypes(self):
+        return self.di.get_pubtypes()
