@@ -58,6 +58,15 @@ class CodeWriter(object):
 
         self.w.write(string)
 
+    def join(self, delim, args, method = "__c__"):
+        if args:
+            first = args[0]
+            getattr(first, method)(self)
+
+            for a in args[1:]:
+                self.write(delim)
+                getattr(a, method)(self)
+
     def push_indent(self):
         "Increases current indent by one indentation step."
 
