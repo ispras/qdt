@@ -74,6 +74,17 @@ class CodeWriter(object):
 
         self.w.write(string)
 
+    def join(self, delim, items, out_method):
+        "Prints items that are separated by a delimiter."
+
+        if items:
+            first = items[0]
+            out_method(first, self)
+
+            for a in items[1:]:
+                self.write(delim)
+                out_method(a, self)
+
     def push_indent(self):
         "Increases current indent by one indentation step."
 
