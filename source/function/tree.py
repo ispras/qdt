@@ -459,12 +459,7 @@ class StrConcat(CNode):
         self.delim = kw_args.get("delim", "")
 
     def __c__(self, writer):
-        first_child = self.children[0]
-        first_child.__c__(writer)
-
-        for c in self.children[1:]:
-            writer.write(self.delim)
-            c.__c__(writer)
+        writer.join(self.delim, self.children, "__c__")
 
 
 class SemicolonPresence(CNode):
@@ -502,14 +497,7 @@ class Call(SemicolonPresence):
         self.func.__c__(writer)
 
         writer.write("(@a")
-        if self.args:
-            first_child = self.args[0]
-            first_child.__c__(writer)
-
-            for c in self.args[1:]:
-                writer.write(",@s")
-                c.__c__(writer)
-
+        writer.join(",@s", self.args, "__c__")
         writer.write("@c)")
 
 
@@ -586,14 +574,7 @@ class MCall(SemicolonPresence):
 
         if self.children:
             writer.write("(@a")
-
-            first_child = self.children[0]
-            first_child.__c__(writer)
-
-            for c in self.children[1:]:
-                writer.write(",@s")
-                c.__c__(writer)
-
+            writer.join(",@s", self.children, "__c__")
             writer.write("@c)")
 
 
@@ -643,15 +624,7 @@ class Operator(SemicolonPresence):
             writer.write("(")
 
         writer.write(self.prefix)
-
-        if self.children:
-            first_child = self.children[0]
-            first_child.__c__(writer)
-
-            for c in self.children[1:]:
-                writer.write(self.delim)
-                c.__c__(writer)
-
+        writer.join(self.delim, self.children, "__c__")
         writer.write(self.suffix)
         if self.parenthesis:
             writer.write(")")
