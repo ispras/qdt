@@ -16,6 +16,7 @@ from qemu import (
     MachineNode
 )
 from six.moves.tkinter import (
+    RAISED,
     NO,
     PanedWindow
 )
@@ -141,6 +142,7 @@ class DescriptionsTreeview(VarTreeview):
 
 class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def __init__(self, project, *args, **kw):
+        kw["sashrelief"] = RAISED
         PanedWindow.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
 
