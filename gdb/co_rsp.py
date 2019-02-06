@@ -4,6 +4,9 @@ __all__ = [
     "assert_ok"
 ]
 
+from pyrsp.utils import (
+    split_by_n
+)
 from socket import (
     socket,
     AF_INET,
@@ -13,7 +16,6 @@ from .rsp_features import (
     Features
 )
 from common import (
-    split_by_n,
     CoTask,
     mlget as _
 )
