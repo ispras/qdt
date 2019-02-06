@@ -204,7 +204,7 @@ class SysBusDeviceType(QOMDevice):
                     ))
 
         self.device_reset = Function(
-        "%s_reset" % self.qtn.for_id_name,
+            name = "%s_reset" % self.qtn.for_id_name,
             body = """\
     {unused}{Struct}@b*s@b=@s{UPPER}(dev);{reset}
 """.format(
@@ -449,7 +449,7 @@ class SysBusDeviceType(QOMDevice):
 """.format(timerN = self.timer_name(timerN))
 
         self.device_unrealize = Function(
-            self.qtn.for_id_name + "_unrealize",
+            name = self.qtn.for_id_name + "_unrealize",
             args = [
                 Pointer(Type.lookup("DeviceState")).gen_var("dev"),
                 Pointer(Pointer(Type.lookup("Error"))).gen_var("errp")
