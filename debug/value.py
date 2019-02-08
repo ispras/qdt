@@ -276,13 +276,13 @@ Related: `dereference`
                     print_exc()
                     break
 
-                pos = substring.find("\0")
+                pos = substring.find(b"\0")
                 if pos != -1:
                     substring = substring[:pos]
                 value.append(substring)
                 addr = addr + 64
 
-            return "".join(value)
+            return b"".join(value)
         else:
             # NULL pointer dereference
             return None
