@@ -13,6 +13,7 @@ __all__ = [
           , "BranchSwitch"
           , "BranchElse"
           , "SwitchCase"
+          , "SwitchCaseDefault"
           , "StrConcat"
           # SemicolonPresence
               , "Break"
@@ -411,6 +412,30 @@ class SwitchCase(CNode):
             writer.write("case@b")
         writer.line(const_str + ":")
         self.out_children(writer)
+
+
+class SwitchCaseDefault(CNode):
+
+    def __init__(self, add_break = True):
+        super(SwitchCaseDefault, self).__init__()
+        self.add_break = add_break
+
+    def __c__(self, writer):
+        if (   self.add_break
+            and (   self.children
+                 and not isinstance(self.children[-1], Break)
+                 or not self.children
+            )
+        ):
+            self.add_child(Break())
+
+        if DeclarationInChildrenSearcher(self).visit().have_declaration:
+            writer.line("default:@b{")
+            self.out_children(writer)
+            writer.line("}")
+        else:
+            writer.line("default:")
+            self.out_children(writer)
 
 
 class StrConcat(CNode):
