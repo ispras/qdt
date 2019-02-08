@@ -1019,7 +1019,7 @@ description for QDT project.
         self.tracker = tracker
 
         # auto assign event handlers
-        for name, ref in getmembers(type(self)):
+        for name, ref in getmembers(self):
             if name[:4] == "_on_" and ismethod(ref):
                 watcher.watch(name[4:], getattr(self, name))
 
