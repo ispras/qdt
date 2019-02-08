@@ -35,6 +35,7 @@ __all__ = [
 ]
 
 from common import (
+    bstr,
     lazy
 )
 from .expression import (
@@ -230,8 +231,10 @@ it is a method here. But it is just a proxy for the `members` "lazy" attribute.
 
         members = self.members
 
-        if name in members:
-            return members[name]
+        bname = bstr(name)
+
+        if bname in members:
+            return members[bname]
 
         # A declaration is expected to do not contain members. Hence, try to
         # find definition and get the member from it.
