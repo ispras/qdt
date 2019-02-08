@@ -243,7 +243,7 @@ Related: `dereference`
     def fetch_pointer(self):
         return self.fetch(self.runtime.address_size)
 
-    def fetch_c_string(self, limit = 10):
+    def fetch_c_string(self, limit = 10, encoding = "utf-8"):
         """
         Reads C-string from remote.
 
@@ -282,7 +282,11 @@ Related: `dereference`
                 value.append(substring)
                 addr = addr + 64
 
-            return b"".join(value)
+            res = b"".join(value)
+            if encoding is None:
+                return res
+            else:
+                return res.decode(encoding)
         else:
             # NULL pointer dereference
             return None
