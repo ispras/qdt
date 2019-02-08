@@ -15,6 +15,9 @@ from git import (
 from six import (
     integer_types
 )
+from six.moves import (
+    range
+)
 from common import (
     intervalmap,
     trie_add,
@@ -160,7 +163,7 @@ class GitLineVersionAdapter(LineAdapter):
 
         deltas = set()
 
-        for i in xrange(lineno - eps, lineno + eps + 1):
+        for i in range(lineno - eps, lineno + eps + 1):
             if delta_intervals[i] is None:
                 return True
             else:
