@@ -12,6 +12,7 @@ from re import (
     compile
 )
 from common import (
+    bstr,
     notifier
 )
 from .line_adapter import (
@@ -69,7 +70,11 @@ Leading spaces are ignored.
         for _, cb in getmembers(self, predicate = is_breakpoint_cb):
             mi = None
             for mi in breakpoint_matches(cb.__doc__.splitlines()):
-                file_name, line = line_adapter.adapt_lineno(*mi.groups())
+                file_name, lineno, opaque = mi.groups()
+                raw_file_name = bstr(file_name)
+                raw_file_name, line = line_adapter.adapt_lineno(
+                    raw_file_name, lineno, opaque
+                )
                 if line is not None:
                     break
             else:
@@ -77,9 +82,9 @@ Leading spaces are ignored.
                     # No position specification was found.
                     # It's not a breakpoint handler.
                     continue
-                file_name, line = line_adapter.failback()
+                raw_file_name, line = line_adapter.failback()
 
-            line_map = dic.find_line_map(file_name)
+            line_map = dic.find_line_map(raw_file_name)
             line_descs = line_map[line]
 
             for desc in line_descs:
@@ -101,7 +106,9 @@ Leading spaces are ignored.
             addr_str = target.reg_fmt % addr
 
             if v:
-                print("br 0x" + addr_str + ", handler = " + cb.__name__)
+                print("br 0x" + addr_str.decode("charmap")
+                    + ", handler = " + cb.__name__
+                )
 
             rt.add_br(addr_str, cb, quiet = quiet)
 

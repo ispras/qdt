@@ -2,9 +2,7 @@ __all__ = [
     "GitLineVersionAdapter"
 ]
 
-from os.path import (
-    sep
-)
+
 from re import (
     compile,
     S
@@ -19,6 +17,7 @@ from six.moves import (
     range
 )
 from common import (
+    bsep,
     intervalmap,
     trie_add,
     trie_find,
@@ -93,13 +92,13 @@ renaming for file name)
                         # for any lineno delta = None
                         val = (None, None)
                 trie_add(self._draft_diffs[version],
-                    tuple(reversed(fname.split(sep))), val
+                    tuple(reversed(fname.split(bsep))), val
                 )
 
     def _find_git_diff(self, version, fname):
         try:
             val, _ = trie_find(self._draft_diffs[version],
-                tuple(reversed(fname.split(sep)))
+                tuple(reversed(fname.split(bsep)))
             )
         except KeyError:
             return identity_map, None
@@ -117,7 +116,7 @@ renaming for file name)
 
         try:
             return trie_find(version_trie,
-                tuple(reversed(fname.split(sep)))
+                tuple(reversed(fname.split(bsep)))
             )[0]
         except KeyError:
             pass
@@ -127,7 +126,7 @@ renaming for file name)
 
         val = self._find_git_diff(version, fname)
         trie_add(version_trie,
-            tuple(reversed(fname.split(sep))), val
+            tuple(reversed(fname.split(bsep))), val
         )
         return val
 
@@ -208,7 +207,7 @@ class GitLineVersionAdapter(LineAdapter):
                 lineno = new_lineno
             else:
                 self.failures.append(
-                    (fname, lineno, version, delta_intervals)
+                    (fname.decode("utf-8"), lineno, version, delta_intervals)
                 )
                 return fname, None
 
