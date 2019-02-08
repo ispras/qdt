@@ -10,6 +10,7 @@ from itertools import (
     repeat
 )
 from common import (
+    bstr,
     notifier,
     cached,
     reset_cache
@@ -206,14 +207,15 @@ TODO: target registers
 
         prog = self.subprogram
         _locals = prog.data
+        bname = bstr(name)
 
         try:
-            datum = _locals[name]
+            datum = _locals[bname]
         except KeyError:
             cu = prog.die.cu
             _globals = self.dic.get_CU_global_variables(cu)
             try:
-                datum = _globals[name]
+                datum = _globals[bname]
             except KeyError:
                 raise KeyError("No name '%s' found in runtime" % name)
 
