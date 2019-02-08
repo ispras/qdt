@@ -1,5 +1,6 @@
 __all__ = [
     "execfile"
+  , "bstr"
 ]
 
 from sys import (
@@ -11,6 +12,13 @@ from os.path import (
 from os import (
     getcwd
 )
+from six import (
+    PY3
+)
+from six.moves import (
+    map
+)
+
 
 def execfile(filename, globals = None, locals = None):
     f = open(filename, "rb")
@@ -38,3 +46,24 @@ def execfile(filename, globals = None, locals = None):
     finally:
         if new_path:
             py_path.remove(file_path)
+
+
+if PY3:
+    def bstr(v):
+        if isinstance(v, str):
+            return v.encode("utf-8")
+        elif isinstance(v, bytes):
+            return v
+        else:
+            raise ValueError("Incorrect value type %s" % type(v))
+else:
+    def bstr(v):
+        if isinstance(v, str):
+            return v
+        elif isinstance(v, unicode):
+            return v.encode("utf-8")
+        else:
+            raise ValueError("Incorrect value type %s" % type(v))
+
+bstr.__doc__ = "Given a string-like object, returns it as bytes."
+" Unicode strings are encoded in UTF-8."
