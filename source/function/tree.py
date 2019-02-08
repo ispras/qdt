@@ -1,5 +1,6 @@
 __all__ = [
     "Node"
+      , "Ifdef"
       , "CNode"
           , "Comment"
           , "Label"
@@ -64,7 +65,8 @@ from ..c_const import (
 from ..model import (
     Type,
     Pointer,
-    Variable
+    Variable,
+    Macro
 )
 from common import (
     lazy
@@ -114,6 +116,32 @@ class Node(object):
     def __c__(self, writer):
         writer.write(self.val)
         self.out_children(writer)
+
+
+class Ifdef(Node):
+
+    def __init__(self, val, *args):
+        # Since there is no guarantee that the macro is defined and we do not
+        # need type references, so we use strings
+        if isinstance(val, Macro):
+            val = val.name
+        elif not isinstance(val, str):
+            raise ValueError("Invalid type in Ifdef: " + type(val).__name__)
+
+        super(Ifdef, self).__init__(
+            val = val,
+            indent_children = False,
+            children = args
+        )
+
+    def __c__(self, writer):
+        writer.push_state(reset = True)
+        writer.line("#ifdef " + self.val)
+        writer.pop_state()
+        self.out_children(writer)
+        writer.push_state(reset = True)
+        writer.line("#endif")
+        writer.pop_state()
 
 
 class CNode(Node):
