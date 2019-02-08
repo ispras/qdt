@@ -10,6 +10,7 @@ from itertools import (
     repeat
 )
 from common import (
+    charcodes,
     bstr,
     notifier,
     cached,
@@ -178,11 +179,11 @@ normally correct only when the target is stopped at the subprogram epilogue.
             data = reversed(data)
 
         # there the data is big-endian
-        di = iter(data)
-        val = ord(next(di))
+        di = charcodes(data)
+        val = next(di)
         for d in di:
             val <<= 8
-            val += ord(d)
+            val += d
 
         return val
 
