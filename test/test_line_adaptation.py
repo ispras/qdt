@@ -11,6 +11,7 @@ from unittest import (
     main
 )
 from common import (
+    bstr,
     git_diff2delta_intervals,
     same
 )
@@ -66,8 +67,9 @@ class LineAdaptationTestHelper(object):
             unified = 0
         )
         file_name = split(self._new)[0]
+        raw_file_name = bstr(file_name)
         for change in diff:
-            if change.b_rawpath == file_name:
+            if change.b_rawpath == raw_file_name:
                 self._check(change.diff)
                 break
         else:
