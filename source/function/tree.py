@@ -1,5 +1,5 @@
 __all__ = [
-    "Node"
+    "CNode"
       , "Comment"
       , "Label"
       , "NewLine"
@@ -73,7 +73,7 @@ from six import (
 )
 
 
-class Node(object):
+class CNode(object):
 
     # traverse order indicator for `ObjectVisitor`
     __node__ = ("children",)
@@ -114,7 +114,7 @@ class Node(object):
             writer.pop_indent()
 
 
-class Comment(Node):
+class Comment(CNode):
 
     def __init__(self, text):
         super(Comment, self).__init__()
@@ -124,7 +124,7 @@ class Comment(Node):
         writer.line("/*@s" + self.text.replace(" ", "@s") + "@s*/")
 
 
-class Label(Node):
+class Label(CNode):
 
     def __init__(self, name):
         super(Label, self).__init__()
@@ -137,7 +137,7 @@ class Label(Node):
         writer.pop_state()
 
 
-class NewLine(Node):
+class NewLine(CNode):
 
     def __init__(self):
         super(NewLine, self).__init__()
@@ -146,7 +146,7 @@ class NewLine(Node):
         writer.line("")
 
 
-class MacroBranch(Node):
+class MacroBranch(CNode):
     """ MacroBranch describes construction like MACRO(x, y) { ... } """
 
     __node__ = ("children", "macro_call")
@@ -163,7 +163,7 @@ class MacroBranch(Node):
         writer.line("}")
 
 
-class LoopWhile(Node):
+class LoopWhile(CNode):
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
@@ -180,7 +180,7 @@ class LoopWhile(Node):
         writer.line("}")
 
 
-class LoopDoWhile(Node):
+class LoopDoWhile(CNode):
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
@@ -197,7 +197,7 @@ class LoopDoWhile(Node):
         writer.line(");")
 
 
-class LoopFor(Node):
+class LoopFor(CNode):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = __node__
@@ -225,7 +225,7 @@ class LoopFor(Node):
         writer.line("}")
 
 
-class BranchIf(Node):
+class BranchIf(CNode):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = __node__
@@ -259,7 +259,7 @@ class BranchIf(Node):
         writer.line("}")
 
 
-class BranchElse(Node):
+class BranchElse(CNode):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
@@ -279,7 +279,7 @@ class BranchElse(Node):
         self.out_children(writer)
 
 
-class BranchSwitch(Node):
+class BranchSwitch(CNode):
 
     __node__ = ("children", "var")
     __type_references__ = __node__
@@ -329,7 +329,7 @@ class BranchSwitch(Node):
         writer.line("}")
 
 
-class SwitchCase(Node):
+class SwitchCase(CNode):
 
     def __init__(self, const, add_break = True):
         super(SwitchCase, self).__init__()
@@ -356,7 +356,7 @@ class SwitchCase(Node):
         self.out_children(writer)
 
 
-class StrConcat(Node):
+class StrConcat(CNode):
 
     def __init__(self, *args, **kw_args):
         super(StrConcat, self).__init__(children = args)
@@ -371,7 +371,7 @@ class StrConcat(Node):
             c.__c__(writer)
 
 
-class SemicolonPresence(Node):
+class SemicolonPresence(CNode):
     """ SemicolonPresence class is used to decide when
     to print semicolon.
     """

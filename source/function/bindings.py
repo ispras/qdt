@@ -5,7 +5,7 @@ __all__ = [
 from .tree import (
     Declare,
     OpAssign,
-    Node
+    CNode
 )
 from ..model import (
     Variable
@@ -49,7 +49,7 @@ class VarUsageAnalyzer(ObjectVisitor):
             cur.used = True
 
 
-class BodyTree(Node):
+class BodyTree(CNode):
 
     def __init__(self):
         super(BodyTree, self).__init__()
