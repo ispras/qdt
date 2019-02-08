@@ -69,11 +69,27 @@ from ..model import (
     Macro
 )
 from common import (
-    lazy
+    lazy,
+    ObjectVisitor,
+    BreakVisiting
 )
 from six import (
     integer_types
 )
+
+
+class DeclarationInChildrenSearcher(ObjectVisitor):
+
+    def __init__(self, root):
+        super(DeclarationInChildrenSearcher, self).__init__(root,
+            field_name = "__node__"
+        )
+        self.have_declaration = False
+
+    def on_visit(self):
+        if isinstance(self.cur, Declare):
+            self.have_declaration = True
+            raise BreakVisiting()
 
 
 class Node(object):
