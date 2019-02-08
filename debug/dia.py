@@ -328,7 +328,7 @@ pyelftools's `DWARFInfo`.
                 # first in the loop. Temporally occupy all lines above the line
                 # of this entry. If there are entries whose occupied those
                 # lines then the corresponding interval will be overwritten.
-                line_map[None:right_bound] = [e]
+                line_map[1:right_bound] = [e]
             else:
                 # this file already is in srcmap
                 left, right = line_map.interval(s.line)
