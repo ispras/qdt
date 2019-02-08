@@ -10,6 +10,7 @@ from itertools import (
     repeat
 )
 from common import (
+    pypath,
     bstr,
     notifier,
     cached,
@@ -19,6 +20,10 @@ from .value import (
     Returned,
     Value
 )
+with pypath("..pyrsp"):
+    from pyrsp.utils import (
+        charcodes
+    )
 
 
 @notifier("break")
@@ -178,11 +183,11 @@ normally correct only when the target is stopped at the subprogram epilogue.
             data = reversed(data)
 
         # there the data is big-endian
-        di = iter(data)
-        val = ord(next(di))
+        di = charcodes(data)
+        val = next(di)
         for d in di:
             val <<= 8
-            val += ord(d)
+            val += d
 
         return val
 
