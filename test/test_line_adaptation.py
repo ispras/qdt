@@ -1,8 +1,10 @@
 from os.path import (
+    split,
     dirname,
     join
 )
 from os import (
+    environ,
     popen
 )
 from unittest import (
@@ -13,15 +15,16 @@ from common import (
     git_diff2delta_intervals,
     same
 )
+from git import (
+    Repo
+)
 
+
+test_dir = dirname(__file__)
 
 class LineAdaptationTestHelper(object):
 
-    def test(self):
-        tests_dir = join(dirname(__file__), "line_adaptation_tests")
-        diff = popen("git diff --no-index -U0 %s %s" % (
-            join(tests_dir, self._old), join(tests_dir, self._new)
-        )).read()
+    def _check(self, diff):
         intrvls = git_diff2delta_intervals(diff)
         lines_map = {}
 
@@ -38,6 +41,32 @@ class LineAdaptationTestHelper(object):
             eq = False
 
         self.assertTrue(eq, "Intervals differ.")
+
+    def test(self):
+        tests_dir = join(test_dir, "line_adaptation_tests")
+        diff = popen("git diff --no-index -U0 %s %s" % (
+            join(tests_dir, self._old), join(tests_dir, self._new)
+        )).read()
+
+        self._check(diff)
+
+    def test_gitpython(self):
+        repo_dir = join(test_dir, "line_adaptation_tests", "gitrepo", "_git")
+
+        # gitpython launches git during diff obtaining
+        environ["GIT_DIR"] = repo_dir
+        repo = Repo(repo_dir)
+        diff = repo.commit("curr").diff("base",
+            create_patch = True,
+            unified = 0
+        )
+        file_name = split(self._new)[0]
+        for change in diff:
+            if change.b_rawpath == file_name:
+                self._check(change.diff)
+                break
+        else:
+            self.fail("No diff for file " + file_name)
 
 
 class TestLineAdaptation1(TestCase, LineAdaptationTestHelper):
