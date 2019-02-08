@@ -1416,7 +1416,7 @@ def main():
         )
 
     dic = DWARFInfoCache(di,
-        symtab = elf.get_section_by_name(b".symtab")
+        symtab = elf.get_section_by_name(".symtab")
     )
 
     if qemu_src_dir:
