@@ -4,8 +4,7 @@ from os.path import (
     join
 )
 from os import (
-    environ,
-    popen
+    environ
 )
 from unittest import (
     TestCase,
@@ -17,6 +16,10 @@ from common import (
 )
 from git import (
     Repo
+)
+from subprocess import (
+    PIPE,
+    Popen
 )
 
 
@@ -44,9 +47,11 @@ class LineAdaptationTestHelper(object):
 
     def test(self):
         tests_dir = join(test_dir, "line_adaptation_tests")
-        diff = popen("git diff --no-index -U0 %s %s" % (
-            join(tests_dir, self._old), join(tests_dir, self._new)
-        )).read()
+        diff, _ = Popen(["git", "diff", "--no-index", "-U0",
+                join(tests_dir, self._old), join(tests_dir, self._new)
+            ],
+            stdout = PIPE
+        ).communicate()
 
         self._check(diff)
 
