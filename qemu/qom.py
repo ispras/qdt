@@ -936,7 +936,7 @@ class QOMType(object):
             cases = cases,
             separate_cases = True
         )
-        case_default = SwitchCase("default")
+        case_default = SwitchCaseDefault()
         case_default.add_child(
             Call(
                 "printf",
@@ -992,7 +992,7 @@ class QOMType(object):
             cases = cases,
             separate_cases = True
         )
-        case_default = SwitchCase("default")
+        case_default = SwitchCaseDefault()
         case_default.add_child(
             Call(
                 "printf",
