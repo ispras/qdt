@@ -664,6 +664,13 @@ class OpSDeref(Operator):
         # for type collection
         self.struct = struct
 
+        try:
+            self.struct.fields[field]
+        except:
+            raise RuntimeError('Structure "%s" has no field "%s"' % (
+                self.struct.name, field
+            ))
+
         if isinstance(_type, Pointer):
             self.suffix = "->" + field
         else:
