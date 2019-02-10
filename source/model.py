@@ -1324,23 +1324,6 @@ class Function(Type):
         CopyFixerVisitor(new_f).visit()
         return new_f
 
-    def gen_body(self, used_types = None, used_globals = None):
-        new_used_types = [self]
-        new_used_types.extend([] if used_types is None else used_types)
-        new_used_globals = [] if used_globals is None else used_globals
-        new_f = Function(
-            name = self.name + ".body",
-            body = self.body,
-            ret_type = self.ret_type,
-            args = self.args,
-            static = self.static,
-            inline = self.inline,
-            used_types = new_used_types,
-            used_globals = new_used_globals
-        )
-        CopyFixerVisitor(new_f).visit()
-        return new_f
-
     def gen_definition(self,
         body = None,
         used_types = None,
