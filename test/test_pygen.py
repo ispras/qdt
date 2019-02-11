@@ -9,6 +9,7 @@ from examples import (
     Q35Project_2_6_0
 )
 from common import (
+    notifier,
     ee,
     intervalmap,
     same,
@@ -176,6 +177,27 @@ class TestQ35(TestCase, PyGeneratorTestHelper):
     def setUp(self):
         self._namespace = dict(qdt.__dict__)
         self._original = Q35Project_2_6_0()
+
+
+@notifier("event")
+class ANotifier(object):
+
+    def __init__(self, arg, kwarg = None):
+        self.arg = arg
+        self.kwarg = kwarg
+
+    def __gen_code__(self, g):
+        g.gen_code(self)
+
+    def __same__(self, o):
+        return self.arg == o.arg and self.kwarg == self.kwarg
+
+
+class TestNotifier(TestCase, PyGeneratorTestHelper):
+
+    def setUp(self):
+        self._original = ANotifier("a value", kwarg = "another value")
+        self._namespace = dict(ANotifier = ANotifier)
 
 
 if __name__ == "__main__":
