@@ -12,15 +12,19 @@ from six.moves.tkinter import (
 
 READONLY = "readonly"
 
+from sys import (
+    version_info
+)
 try:
-    from idlelib.WidgetRedirector import (
-        WidgetRedirector
-    )
+    if version_info[0] < 3 or version_info[0] == 3 and version_info[1] <= 5:
+        from idlelib.WidgetRedirector import (
+            WidgetRedirector
+        )
+    else:
+        from idlelib.redirector import (
+            WidgetRedirector
+        )
 except ImportError as e:
-    from sys import (
-        version_info
-    )
-
     raise ImportError("Cannot import from idlelib. Try:"
         " sudo apt-get install idle-python%d.%d" % version_info[:2]
     )
