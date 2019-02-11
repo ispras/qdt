@@ -2,9 +2,11 @@ __all__ = [
     "remove_file"
   , "fixpath"
   , "path2tuple"
+  , "ee"
 ]
 
 from os import (
+    environ,
     sep,
     name as os_name,
     remove
@@ -48,3 +50,10 @@ def path2tuple(path):
     "Splits file path by both UNIX and DOS separators returning a tuple."
     parts = re_sep.split(path)
     return tuple(parts)
+
+def ee(env_var, default = "False"):
+    """ Evaluate Environment variable.
+
+It's not secure but that library is not about it.
+    """
+    return eval(environ.get(env_var, default), {})
