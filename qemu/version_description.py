@@ -688,7 +688,8 @@ class QemuVersionDescription(object):
             print("Loading QVC from " + self.qvc_path)
             variables = {}
             context = {
-                "QemuVersionCache": QemuVersionCache
+                "QemuVersionCache": QemuVersionCache,
+                "QVHDict": QVHDict
             }
 
             import qemu
