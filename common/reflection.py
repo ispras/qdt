@@ -42,6 +42,12 @@ def get_class_total_args(Class):
     merge_kwa = True
 
     for Class in getmro(Class):
+        if Class is object:
+            # `object.__init__` is a slot wrapper under Py2, so `getargspec`
+            # will fail.
+            # Moreover, `object.__init__` has no arguments.
+            continue
+
         args, varargs, keywords, defaults = getargspec(Class.__init__)
 
         kwargs_count = 0 if defaults is None else  len(defaults)
