@@ -9,6 +9,7 @@ from examples import (
     Q35Project_2_6_0
 )
 from common import (
+    ee,
     intervalmap,
     same,
     PyGenVisitor
@@ -21,7 +22,7 @@ from collections import (
 )
 import qdt
 
-PYGEN_VERBOSE = environ.get("PYGEN_VERBOSE", False)
+PYGEN_VERBOSE = ee("PYGEN_VERBOSE")
 
 
 class PyGeneratorTestHelper(object):
