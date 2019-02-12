@@ -413,9 +413,8 @@ class StrConcat(CNode):
 
 
 class SemicolonPresence(CNode):
-    """ SemicolonPresence class is used to decide when
-    to print semicolon.
-    """
+    "SemicolonPresence class is used to decide when to print semicolon."
+
 
 
 class Break(SemicolonPresence):
