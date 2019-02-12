@@ -17,6 +17,9 @@ from common import (
     pypath,
     gen_tokens
 )
+from six import (
+    integer_types
+)
 # PLY is used to parse C constants
 with pypath("..ply"):
     from ply.lex import lex
@@ -76,7 +79,7 @@ class CINT(CConst):
         if value is None:
             raise ValueError("There is no integer equivalent for None in C")
 
-        if isinstance(value, int):
+        if isinstance(value, integer_types):
             self.v = value
         elif isinstance(value, str):
             try:
