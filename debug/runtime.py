@@ -36,13 +36,19 @@ class Breakpoints(object):
         self._alive = True
 
     def __call__(self):
+        rt = self._rt
+        target = rt.target
+        event = target.stop_event
+        thread = target.thread
+
+        rt._Runtime__notify_stop(*event)
+
         self.__notify_break()
 
-        rt = self._rt
-        rt.on_resume()
+        rt.on_resume(thread)
         # This breakpoint can be removed during preceding notification.
         if self._alive:
-            rt.target.step_over_br()
+            target.step_over_br()
 
     # See: https://stackoverflow.com/a/5288992/7623015
     def __bool__(self): # Py3
@@ -51,6 +57,10 @@ class Breakpoints(object):
     __nonzero__ = __bool__ # Py2
 
 
+@notifier(
+    "stop", # RSP stop event parts: kind, `int` signal, `dict` data
+    "resume" # thread id
+)
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
 
@@ -111,7 +121,7 @@ class Runtime(object):
             cbs._alive = False
             self.target.del_br(addr_str, quiet)
 
-    def on_resume(self, *_, **__):
+    def on_resume(self, thread, *_, **__):
         """ When target resumes all cached data must be reset because it is
 not actual now.
         """
@@ -121,6 +131,8 @@ not actual now.
         self.regs[:] = repeat(None, len(self.regs))
 
         reset_cache(self)
+
+        self.__notify_resume(thread)
 
     def get_reg(self, idx):
         regs = self.regs
