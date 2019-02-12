@@ -81,9 +81,11 @@ class Node(object):
     __type_references__ = __node__
 
     def __init__(self,
+        val = "",
         indent_children = True,
         children = []
     ):
+        self.val = val
         self.indent_children = indent_children
         self.children = []
         for child in children:
@@ -108,6 +110,10 @@ class Node(object):
 
         if self.indent_children:
             writer.pop_indent()
+
+    def __c__(self, writer):
+        writer.write(self.val)
+        self.out_children(writer)
 
 
 class CNode(Node):
@@ -387,10 +393,7 @@ class SemicolonPresence(CNode):
 class Break(SemicolonPresence):
 
     def __init__(self):
-        super(Break, self).__init__()
-
-    def __c__(self, writer):
-        writer.write("break")
+        super(Break, self).__init__(val = "break")
 
 
 class Call(SemicolonPresence):
@@ -519,13 +522,13 @@ class Return(SemicolonPresence):
     def __init__(self, arg = None):
         super(Return, self).__init__()
         if arg is not None:
-            self.prefix = "return" + "@b"
+            self.val = "return" + "@b"
             self.add_child(arg)
         else:
-            self.prefix = "return"
+            self.val = "return"
 
     def __c__(self, writer):
-        writer.write(self.prefix)
+        writer.write(self.val)
         if self.children:
             self.children[0].__c__(writer)
 
@@ -534,10 +537,7 @@ class Goto(SemicolonPresence):
 
     def __init__(self, label):
         super(Goto, self).__init__()
-        self.label = label
-
-    def __c__(self, writer):
-        writer.write("goto@b" + self.label.name)
+        self.val = "goto@b" + label.name
 
 
 class Operator(SemicolonPresence):
