@@ -3,6 +3,7 @@ __all__ = [
   , "fixpath"
   , "path2tuple"
   , "ee"
+  , "bsep"
 ]
 
 from os import (
@@ -17,6 +18,17 @@ from errno import (
 from re import (
     compile
 )
+from six import (
+    PY3
+)
+
+
+# OS file path separator in binary type
+if PY3:
+    bsep = sep.encode("utf-8")
+else:
+    bsep = sep
+
 
 def remove_file(file_name):
     try:
