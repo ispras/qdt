@@ -6,6 +6,7 @@ __all__ = [
 ]
 
 from six.moves.tkinter import (
+    RAISED,
     VERTICAL,
     StringVar,
     Spinbox,
@@ -54,6 +55,7 @@ class MachineWidgetLayout(object):
 
 class MachinePanedWidget(PanedWindow):
     def __init__(self, machine_description, *args, **kw):
+        kw["sashrelief"] = RAISED
         PanedWindow.__init__(self, *args, **kw)
 
         self.mach = machine_description
