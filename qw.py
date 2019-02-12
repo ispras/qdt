@@ -83,6 +83,7 @@ with pypath("pyrsp"):
         AMD64
     )
     from pyrsp.utils import (
+        s,
         find_free_port,
         wait_for_tcp_port
     )
@@ -341,13 +342,13 @@ the QOM tree by fetching relevant data.
             if t.instance_casts:
                 label += "\\n*"
                 for cast in t.instance_casts:
-                    label += "\\n" + cast.name
+                    label += "\\n" + s(cast.name)
 
             graph.node(n, label = label)
             if t.parent:
                 graph.edge(gv_node(t.parent), n)
 
-        with open(dot_file_name, "wb") as f:
+        with open(dot_file_name, "w") as f:
             f.write(graph.source)
 
 
