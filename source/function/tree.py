@@ -103,10 +103,12 @@ class Node(object):
 
     def __init__(self,
         val = "",
+        new_line = "",
         indent_children = True,
         children = []
     ):
         self.val = val
+        self.new_line = new_line
         self.indent_children = indent_children
         self.children = []
         for child in children:
@@ -126,8 +128,8 @@ class Node(object):
 
         for child in self.children:
             child.__c__(writer)
-            if isinstance(child, SemicolonPresence):
-                writer.line(";")
+            if getattr(child, "new_line", None) is not None:
+                writer.line(child.new_line)
 
         if self.indent_children:
             writer.pop_indent()
@@ -159,7 +161,7 @@ class Ifdef(Node):
         writer.pop_state()
         self.out_children(writer)
         writer.push_state(reset = True)
-        writer.line("#endif")
+        writer.write("#endif")
         writer.pop_state()
 
 
@@ -181,7 +183,7 @@ class Comment(CNode):
         self.text = text
 
     def __c__(self, writer):
-        writer.line("/*@s" + self.text.replace(" ", "@s") + "@s*/")
+        writer.write("/*@s" + self.text.replace(" ", "@s") + "@s*/")
 
 
 class Label(CNode):
@@ -193,17 +195,12 @@ class Label(CNode):
     def __c__(self, writer):
         # A label must be written without an indent.
         writer.push_state(reset = True)
-        writer.line(self.name + ":")
+        writer.write(self.name + ":")
         writer.pop_state()
 
 
 class NewLine(CNode):
-
-    def __init__(self):
-        super(NewLine, self).__init__()
-
-    def __c__(self, writer):
-        writer.line("")
+    pass
 
 
 class MacroBranch(CNode):
@@ -220,7 +217,7 @@ class MacroBranch(CNode):
         self.macro_call.__c__(writer)
         writer.line("@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
 class LoopWhile(CNode):
@@ -237,7 +234,7 @@ class LoopWhile(CNode):
         self.cond.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
 class LoopDoWhile(CNode):
@@ -254,7 +251,7 @@ class LoopDoWhile(CNode):
         self.out_children(writer)
         writer.write("}@bwhile@b(")
         self.cond.__c__(writer)
-        writer.line(");")
+        writer.write(");")
 
 
 class LoopFor(CNode):
@@ -282,7 +279,7 @@ class LoopFor(CNode):
             self.step.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
 class BranchIf(CNode):
@@ -316,7 +313,7 @@ class BranchIf(CNode):
         for e in self.else_blocks:
             e.__c__(writer)
 
-        writer.line("}")
+        writer.write("}")
 
 
 class BranchElse(CNode):
@@ -395,7 +392,7 @@ class BranchSwitch(CNode):
         self.var.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
 class SwitchCase(CNode):
@@ -425,10 +422,11 @@ class SwitchCase(CNode):
         if DeclarationInChildrenSearcher(self).visit().have_declaration:
             writer.line(":@b{")
             self.out_children(writer)
-            writer.line("}")
+            self.new_line = "}"
         else:
             writer.line(":")
             self.out_children(writer)
+            self.new_line = None
 
 
 class SwitchCaseDefault(CNode):
@@ -449,10 +447,11 @@ class SwitchCaseDefault(CNode):
         if DeclarationInChildrenSearcher(self).visit().have_declaration:
             writer.line("default:@b{")
             self.out_children(writer)
-            writer.line("}")
+            self.new_line = "}"
         else:
             writer.line("default:")
             self.out_children(writer)
+            self.new_line = None
 
 
 class StrConcat(CNode):
@@ -468,6 +467,9 @@ class StrConcat(CNode):
 class SemicolonPresence(CNode):
     "SemicolonPresence class is used to decide when to print semicolon."
 
+    def __init__(self, *args, **kw_args):
+        kw_args["new_line"] = ";"
+        super(SemicolonPresence, self).__init__(*args, **kw_args)
 
 
 class Break(SemicolonPresence):
