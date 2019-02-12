@@ -3,6 +3,7 @@ __all__ = [
   , "fixpath"
   , "path2tuple"
   , "ee"
+  , "bsep"
 ]
 
 from os import (
@@ -17,6 +18,14 @@ from errno import (
 from re import (
     compile
 )
+from .compat import (
+    bstr
+)
+
+
+# OS file path separator in binary type
+bsep = bstr(sep)
+
 
 
 def remove_file(file_name):
