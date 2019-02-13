@@ -2583,24 +2583,22 @@ them must be replaced with reference to h. """
                 func_dec[f] = ch
 
     def header_paths_shortening(self):
-        include_path = self.origin.path
+        origin_dir = dirname(self.origin.path)
+
         for ch in self.chunks:
-            if isinstance(ch, HeaderInclusion):
-                header = ch.origin
-                if dirname(include_path) == dirname(header.path):
-                    path = (basename(header.path),)
-                else:
-                    path = path2tuple(header.path)
-                    if path[0] in ("include", "tcg"):
-                        path = path[1:]
-                ch.code = """\
-#include {lq}{path}{rq}
-""".format(
-    lq = "<" if header.is_global else '"',
-    # Always use UNIX path separator in `#include` directive.
-    path = "/".join(path),
-    rq = ">" if header.is_global else '"'
-                )
+            if not isinstance(ch, HeaderInclusion):
+                continue
+
+            header = ch.origin
+            if origin_dir == dirname(header.path):
+                path = (basename(header.path),)
+            else:
+                path = path2tuple(header.path)
+                # TODO: those are domain specific values, make them global
+                # parameters
+                if path[0] in ("include", "tcg"):
+                    path = path[1:]
+            header.path = path
 
     def generate(self, writer,
         gen_debug_comments = False,
