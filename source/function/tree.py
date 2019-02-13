@@ -538,12 +538,8 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        v_type = v.type
-        asterisks = "@b"
-        while isinstance(v_type, Pointer):
-            v_type = v_type.type
-            asterisks += "*"
-        writer.write(v_type.name + asterisks)
+        v_type = v.full_deref
+        writer.write(v_type.name + "@b" + v.asterisks)
         self._write_child(child, writer)
 
         for child in self.children[1:]:
@@ -552,18 +548,12 @@ class Declare(SemicolonPresence):
             else:
                 v = child
 
-            asterisks = ""
-            t = v.type
-            while isinstance(t, Pointer):
-                t = t.type
-                asterisks += "*"
-
-            if t is not v_type:
+            if v.full_deref is not v_type:
                 raise TypeError(
                     "All variable in Declare must have the same type"
                 )
 
-            writer.write(",@s" + asterisks)
+            writer.write(",@s" + v.asterisks)
             self._write_child(child, writer)
 
     @staticmethod
