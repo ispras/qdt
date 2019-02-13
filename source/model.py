@@ -963,12 +963,11 @@ class TypeReference(Type):
 
 class Structure(Type):
 
-    def __init__(self, name, fields = None):
+    def __init__(self, name, *fields):
         super(Structure, self).__init__(name = name, incomplete = False)
 
         self.fields = OrderedDict()
-        if fields is not None:
-            self.append_fields(fields)
+        self.append_fields(fields)
         self.nested = False
 
     def __getattr__(self, name):
