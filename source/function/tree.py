@@ -539,13 +539,7 @@ class Declare(SemicolonPresence):
 
         v_type = v.type
         writer.write(v_type.name + "@b" + v.asterisks)
-        child.__c__(writer)
-        if isinstance(child, Variable):
-            if child.array_size is not None:
-                writer.write("[%d]" % child.array_size)
-            if child.initializer:
-                writer.write("@b=@s")
-                writer.write(child.type.gen_usage_string(child.initializer))
+        self._write_child(child, writer)
 
         for child in self.children[1:]:
             if isinstance(child, OpAssign):
@@ -560,15 +554,17 @@ class Declare(SemicolonPresence):
                 )
 
             writer.write(",@s" + v.asterisks)
-            child.__c__(writer)
-            if isinstance(child, Variable):
-                if child.array_size is not None:
-                    writer.write("[%d]" % child.array_size)
-                if child.initializer:
-                    writer.write("@b=@s")
-                    writer.write(
-                        child.type.gen_usage_string(child.initializer)
-                    )
+            self._write_child(child, writer)
+
+    @staticmethod
+    def _write_child(child, writer):
+        child.__c__(writer)
+        if isinstance(child, Variable):
+            if child.array_size is not None:
+                writer.write("[%d]" % child.array_size)
+            if child.initializer:
+                writer.write("@b=@s")
+                writer.write(child.type.gen_usage_string(child.initializer))
 
 
 class MCall(SemicolonPresence):
