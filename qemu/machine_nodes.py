@@ -42,6 +42,7 @@ from source import (
     CINT
 )
 from common import (
+    flatten,
     same,
     same_sets,
     same_vectors,
@@ -68,6 +69,12 @@ class Node(object):
         if type(self) is not type(o):
             return False
         return same_attrs(self, o, "id", "var_base")
+
+    def __dfs_children__(self):
+        "Defines order of instructions in machine initialization function."
+        for n in flatten(getattr(self, attr) for attr in self.__pygen_deps__):
+            if n is not None:
+                yield n
 
 
 # bus models
