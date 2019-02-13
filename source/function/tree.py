@@ -142,8 +142,8 @@ class Node(object):
 class Ifdef(Node):
 
     def __init__(self, val, *args):
-        # Since there is no guarantee that the macro is defined and we do not
-        # need type references, so we use strings
+        # Since the macro can be undefined and unknown to the model, we refer
+        # it using its string name.
         if isinstance(val, Macro):
             val = val.name
         elif not isinstance(val, str):
