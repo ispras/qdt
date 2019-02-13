@@ -101,6 +101,7 @@ sys_stdout_recovery = sys.stdout
 
 macro_forbidden = compile("[^0-9A-Z_]")
 
+# TODO: what about using of full names in CAPS and export it (__all__)?
 anc = "@a" # indent anchor
 can = "@c" # cancel indent anchor
 nbs = "@b" # non-breaking space
@@ -995,6 +996,7 @@ class Structure(Type):
                 " the structure %s" % (v_name, self.name)
             )
 
+        # XXX: `variable` is not a `type_object`
         if NeedForwardDeclarationChecker(variable, self).visit().need:
             self.nested = True
 
@@ -1520,11 +1522,19 @@ class GlobalsCollector(ObjectVisitor):
             self.used_globals.add(cur)
 
 
+# TODO: This can find both self and cross references but the model can
+# resolve only self references. See `TestCrossDeclaration`. Probably, another
+# type is required to handle this. Forward structure declaration is lake a
+# forward function declaration. It can be made in a different file even.
+# So, either use some simple approach like `field.type is self` or solve the
+# problem to the end. Because half-solution may do a step on a wrong way.
 class NeedForwardDeclarationChecker(ObjectVisitor):
     "This visitor checks that the nested type is the same as the root type."
 
     def __init__(self, type_object, root_struct):
         super(NeedForwardDeclarationChecker, self).__init__(type_object,
+            # TODO: too many visitors with for that field.
+            # To introduce an intermediate class?
             field_name = "__type_references__"
         )
         self.root_struct = root_struct
@@ -1532,12 +1542,14 @@ class NeedForwardDeclarationChecker(ObjectVisitor):
 
     def on_visit(self):
         t = self.cur
+        # XXX: Why is it needed? A comment?
         if (    isinstance(t, Structure)
             and t.nested
             and t in self.previous
         ):
             raise BreakVisiting()
 
+        # TODO: `is`?
         if t == self.root_struct:
             self.need = True
             raise BreakVisiting()

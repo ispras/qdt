@@ -58,7 +58,10 @@ class CodeWriter(object):
 
         self.w.write(string)
 
+    # TODO: args -> items
+    # XXX: __c__ is too domain specific
     def join(self, delim, args, method = "__c__"):
+        # TODO: a comment
         if args:
             first = args[0]
             getattr(first, method)(self)

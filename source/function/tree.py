@@ -176,6 +176,7 @@ class CNode(Node):
         self.children.append(child)
 
 
+# TODO: is it a `CNode`? Sometimes comments are removed by CPP.
 class Comment(CNode):
 
     def __init__(self, text):
@@ -199,10 +200,12 @@ class Label(CNode):
         writer.pop_state()
 
 
+# TODO: `CNode`?
 class NewLine(CNode):
     pass
 
 
+# TODO: `CNode`?
 class MacroBranch(CNode):
     """ MacroBranch describes construction like MACRO(x, y) { ... } """
 
@@ -336,15 +339,20 @@ class BranchElse(CNode):
         self.out_children(writer)
 
 
+# TODO: why is it not a method of BranchSwitch?
+# TODO: Else, "nodes", not "children"
 def add_empty_lines(children):
     new_ch = [ children[0] ]
     need_nl = not isinstance(new_ch[0], NewLine)
     for ch in children[1:]:
+        # TODO: is_not_nl?
         not_is_nl = not isinstance(ch, NewLine)
         if need_nl and not_is_nl:
             new_ch.append(NewLine())
         new_ch.append(ch)
         need_nl = not_is_nl
+    # TODO: children[:] = new_ch
+    # Else, it's not an "add" action
     return new_ch
 
 
@@ -552,6 +560,7 @@ class Declare(SemicolonPresence):
                 raise TypeError(
                     "All variable in Declare must have the same type"
                 )
+            # TODO: what about static & const
 
             writer.write(",@s" + v.asterisks)
             self._write_child(child, writer)
@@ -695,6 +704,9 @@ class UnaryOperator(Operator):
         else:
             self.prefix = op_str
 
+# TODO: what if we left OpDec & OpInc and just add OpPostDec & OpPostInc
+# aliases?
+# A doc strings can also be added to classes.
 
 class OpPredDec(UnaryOperator):
 
@@ -884,6 +896,7 @@ class OpLower(BinaryOperator):
         super(OpLower, self).__init__("<", arg1, arg2, parenthesis)
 
 
+# XXX: Why `Ext`?
 class ExtCaseRange(BinaryOperator):
 
     def __init__(self, arg1, arg2, parenthesis = False):
