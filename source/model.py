@@ -1657,6 +1657,13 @@ class Variable(object):
 
         return res
 
+    @property
+    def full_deref(self):
+        t = self.type
+        while isinstance(t, Pointer):
+            t = t.type
+        return t
+
     def gen_declaration_chunks(self, generator,
         indent = "",
         extern = False
