@@ -1534,7 +1534,7 @@ class NeedForwardDeclarationChecker(ObjectVisitor):
         t = self.cur
         if (    isinstance(t, Structure)
             and t.nested
-            and t in [x[0] for x in self.path[:-1]]
+            and t in self.previous
         ):
             raise BreakVisiting()
 
