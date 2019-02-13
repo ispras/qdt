@@ -115,7 +115,7 @@ re_clr = compile("@(.|$)")
 
 # Code generation model
 class ChunkGenerator(object):
-    """ Maintains context of source code chunks generation precess."""
+    """ Maintains context of source code chunks generation process. """
 
     def __init__(self, definer):
         self.chunk_cache = { definer: [] }
