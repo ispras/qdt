@@ -1786,15 +1786,30 @@ class HeaderInclusion(SourceChunk):
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
             "Header %s inclusion" % header.path,
-            """\
+            "",
+            references = []
+        )
+        self._path = None
+        self.path = path2tuple(header.path)
+
+    @property
+    def path(self):
+        return self._path
+
+    @path.setter
+    def path(self, _path):
+        if self._path == _path:
+            return
+
+        self._path = _path
+
+        self.code = """\
 #include {lq}{path}{rq}
 """.format(
-    lq = "<" if header.is_global else '"',
+    lq = "<" if self.origin.is_global else '"',
     # Always use UNIX path separator in `#include` directive.
-    path = "/".join(path2tuple(header.path)),
-    rq = ">" if header.is_global else '"'
-            ),
-            references = []
+    path = "/".join(_path),
+    rq = ">" if self.origin.is_global else '"'
         )
 
     def __lt__(self, other):
