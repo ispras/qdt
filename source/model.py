@@ -1748,6 +1748,18 @@ class Variable(object):
         # a module
         self.definer = None
 
+    @property
+    def asterisks(self):
+        "String of * required to full dereference of this as a pointer."
+        res = ""
+
+        t = self.type
+        while isinstance(t, Pointer):
+            res += "*"
+            t = t.type
+
+        return res
+
     def gen_declaration_chunks(self, generator,
         indent = "",
         extern = False
