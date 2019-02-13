@@ -114,6 +114,13 @@ Features (+) implemented, (-) TODO:
     def path_str(self):
         return ".".join(str(n) + "{%s}" % str(o) for o, n in self.path[1:])
 
+    @property
+    def previous(self):
+        "Iterates objects visited before the current."
+
+        for obj, _ in self.path[:-1]:
+            yield obj
+
     def __push__(self, destination, path_name):
         self.path.append((destination, path_name))
         self.cur = destination
