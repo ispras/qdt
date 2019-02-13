@@ -98,7 +98,7 @@ macro_forbidden = compile("[^0-9A-Z_]")
 
 # Code generation model
 class ChunkGenerator(object):
-    """ Maintains context of source code chunks generation precess."""
+    """ Maintains context of source code chunks generation process. """
 
     def __init__(self, for_header = False):
         self.chunk_cache = {}
