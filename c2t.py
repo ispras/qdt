@@ -2,7 +2,6 @@
 """QEMU CPU Testing Tool"""
 
 from sys import (
-    path,
     stderr
 )
 from os import (
@@ -13,16 +12,15 @@ from os import (
 )
 from os.path import (
     join,
-    split,
     dirname,
     exists,
     basename
 )
-from inspect import (
-    getmembers,
-    getmro,
-    isclass
-)
+# from inspect import (
+#     getmembers,
+#     getmro,
+#     isclass
+# )
 from errno import (
     EEXIST
 )
@@ -47,35 +45,34 @@ from signal import (
 from platform import (
     machine
 )
-
-# use custom pyrsp and pyelftools
-path.insert(0, join(split(__file__)[0], "pyrsp"))
-path.insert(0, join(split(__file__)[0], "debug", "pyelftools"))
-
-from pyrsp.rsp import (
-    RemoteTarget
-)
-from pyrsp import (
-    targets
-)
-from pyrsp.utils import (
-    pack
-)
-from elftools.elf.elffile import (
-    ELFFile
+from common import (
+    pypath,
+    lazy
 )
 from debug import (
-    PreLoader
+    InMemoryELFFile,
+    DWARFInfoCache,
+    PreLoader,
+    Runtime
 )
+with pypath("pyrsp"):
+    from pyrsp.rsp import (
+        archmap
+    )
+    from pyrsp.utils import (
+        pack,
+        wait_for_tcp_port,
+        QMP
+    )
 from c2t import (
     CommentParser,
     DebugComparison
 )
 
-ARCHMAP = {
-    name.lower(): obj for name, obj in getmembers(targets)
-        if isclass(obj) and RemoteTarget in getmro(obj)[1:]
-}
+# ARCHMAP = {
+#     name.lower(): obj for name, obj in getmembers(targets)
+#         if isclass(obj) and RemoteTarget in getmro(obj)[1:]
+# }
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg} {arg}\n"
 
@@ -90,9 +87,11 @@ try:
     makedirs(C2T_TEST_BIN_DIR)
 except OSError as e:
     if e.errno != EEXIST:
+        # TODO: raise exception or error message?
         raise
 
 
+# TODO: improve this
 def errmsg(msg,
     prog = __file__,
     arg = '',
@@ -107,232 +106,175 @@ def errmsg(msg,
         exit(1)
 
 
-class DebugProcess(Process):
-    """ Debug session process """
+# TODO: add good name
+class C2tRuntime(Process):
+    # TODO: add good comment
+    """ Debug session unit """
 
-    def __init__(self, target, srcfile, port, elffile, queue, verbose,
-                 oracle = False):
-        Process.__init__(self)
-        self.target = target(port, elffile,
-            verbose = verbose,
-            host = oracle
+    def __init__(self, target, srcfile, port, elffile, queue, verbose):
+        self.elf = InMemoryELFFile(elffile)
+        di = self.elf.get_dwarf_info()
+        dic = DWARFInfoCache(di,
+            symtab = self.elf.get_section_by_name(b".symtab")
         )
+        # TODO: rename this
+        target = target(port, elffile,
+            verbose = verbose
+        )
+        self.rt = Runtime(target, dic)
+        super(C2tRuntime, self).__init__()
         self.srcfile = srcfile
-        self.elffile = elffile
         self.port = port
         self.queue = queue
-        self.cb = {
-            "br": self.__br,
-            "bre": self.__bre,
-            "brc": self.__brc,
-            "ch": self.__ch
-        }
+        self.addr2line = {}
+        self.line2var = {}
 
-    def __br(self, lineno, param = None):
-        addr = self.target.get_hex_str(
-            self.target.elf.src_map[lineno]["start"]
-        )
-        self.target.set_br(addr, self.continue_cb)
-
-    def __brc(self, lineno, param = None):
-        addr_s = self.target.get_hex_str(
-            self.target.elf.src_map[lineno]["start"]
-        )
-        addr_e = self.target.elf.src_map[lineno]["end"]
-
-        if addr_e:
-            addr_e = self.target.get_hex_str(addr_e)
-
-            self.target.set_br(addr_s, self.cycle_cb,
-                lineno = lineno,
-                old = addr_e
-            ) # check in start
-            self.target.set_br(addr_e, self.cycle_cb,
-                lineno = lineno,
-                old = addr_s
-            ) # check in end
-        else :
-            self.target.set_br(addr_s, self.continue_cb, lineno = lineno)
-
-    def __bre(self, lineno, param = None):
-        addr = self.target.get_hex_str(
-            self.target.elf.src_map[lineno]["start"]
-        )
-        self.target.set_br(addr, self.finish_cb)
-
-    def __ch(self, lineno, param = None):
-        addr = self.target.elf.src_map[lineno]["end"]
-
-        if addr:
-            addr = self.target.get_hex_str(
-                self.target.elf.src_map[lineno]["end"]
-            )
+    def __call__(self, command, lineno, var_name = None):
+        if command is "br":
+            self._set_br_by_line(lineno, self.continue_cb)
+        elif command is "bre":
+            self._set_br_by_line(lineno, self.finish_cb)
+        elif command is "brc":
+            self._set_br_by_line(lineno, self.cycle_cb)
+        elif command is "chc":
+            self._set_br_by_line(lineno, self.cycle_dump_cb, var_name)
+        elif command is "ch":
+            self._set_br_by_line(lineno, self.dump_cb, var_name)
         else:
-            addr = self.target.get_hex_str(
-                self.target.elf.src_map[lineno]["start"]
-            )
+            raise RuntimeError
 
-        self.target.set_br(addr, self.dump_cb,
-            lineno = lineno,
-            name = param
-        ) # check in start
+    def _set_br_by_line(self, lineno, cb, var_name = None):
+        line_map = self.rt.dic.find_line_map(self.srcfile)
+        line_descs = line_map[lineno]
+        if var_name is not None:
+            self.line2var[lineno] = var_name
+        for desc in line_descs:
+            addr = self.rt.target.reg_fmt % desc.state.address
+            self.addr2line[addr] = lineno
+            self.rt.target.set_br_a(addr, cb)
 
-    def __set_breakpoints(self):
-        lineno = 0
+    def _set_breakpoints(self):
+        lineno = 1
 
         with open(self.srcfile, 'r') as f:
+            re_command = compile("^.*//\$(.*)$")
             for line in f:
-                lineno = lineno + 1
-                pos = line.find("//$")
-                if pos != -1:
-                    command = line[pos:]
-                    command = command[command.find('$') + 1:]
+                mi = re_command.match(line)
+                if mi:
+                    command = mi.group(1)
                     exec(command, {}, CommentParser(locals(), lineno))
-        self.target.on_finish.append(self.finish_cb)
+                lineno += 1
+
+    @lazy
+    def _var_size(self):
+        re_size = compile("^.+_(?:u?(\d+))_.+$")
+        size_str = re_size.match(basename(self.srcfile)).group(1)
+        return int(size_str) / 8
+
+    def dump(self):
+        """ rsp_dump callback, hit if rsp_dump is called. Outputs to
+stdout the source line, and a hexdump of the memory pointed by $r0
+with a size of $r1 bytes. Then it resumes running.
+        """
+
+        addr = self.rt.target.regs[self.rt.target.pc_reg]
+        lineno = self.addr2line[addr]
+
+        var_name = self.line2var.get(lineno)
+        var_names, var_vals = (
+            ([var_name], [self.rt[var_name].fetch(self._var_size)])
+            if var_name is not None else
+            ([name for name in self.rt],
+            [self.rt[name].fetch(self._var_size) for name in self.rt])
+        )
+
+        dump = {
+            addr: {
+                "vars": {
+                    name: val for name, val in zip(var_names, var_vals)
+                },
+                "lineno": lineno,
+                "regs": self.rt.target.regs
+            }
+        }
+        if self.rt.target.verbose:
+            print(dump.values())
+        self.queue.put(dump.copy())
+        dump.clear()
+        return addr
+
+    def dump_cb(self):
+        addr = self.dump()
+        self.rt.target.del_br(addr, quiet = True)
+
+    def cycle_dump_cb(self):
+        self.dump()
+        self.rt.target.step_over_br()
+
+    def continue_cb(self):
+        self.rt.target.del_br(self.rt.target.regs[self.rt.target.pc_reg],
+            quiet = True
+        )
+
+    def cycle_cb(self):
+        self.rt.target.step_over_br()
+
+    def finish_cb(self):
+        """ final breakpoint, if hit it deletes all breakpoints,
+continues running the cpu, and detaches from the debugging device
+        """
+        if self.queue:
+            self.queue.put("CMP_EXIT")
+        self.rt.target.finish_cb()
+        self.rt.target.port.close()
+
+
+class C2tOracle(C2tRuntime):
+
+    def run(self):
+        self._set_breakpoints()
+        self.rt.target.start = "main"
+        self.rt.target.refresh_regs()
+        self.rt.target.run(setpc = False)
+
+
+class C2tTarget(C2tRuntime):
 
     def load(self, verify):
         """ loads binary belonging to elf to beginning of .text
 segment (alias self.elf.workarea), and if verify is set read
 it back and check if it matches with the uploaded binary.
         """
-        if self.target.verbose:
-            print("load %s" % self.target.elf.name)
+        if self.rt.target.verbose:
+            print("load %s" % self.rt.target.elf.name)
 
-        with open(self.elffile, "rb") as stream:
-            sections_names = [".text", ".rodata", ".data", ".bss"]
-            preloader = PreLoader(sections_names, ELFFile(stream))
-            sections_data = preloader.get_sections_data()
-            addr = self.target.elf.workarea
-            for name in sections_names:
-                if sections_data[name].data is not None:
-                    self.target.store(sections_data[name].data, addr)
-                    addr = addr + sections_data[name].data_size
+        sections_names = [".text", ".rodata", ".data", ".bss"]
+        preloader = PreLoader(sections_names, self.elf)
+        sections_data = preloader.get_sections_data()
+        addr = self.rt.target.elf.workarea
+        for name in sections_names:
+            if sections_data[name].data is not None:
+                self.rt.target.store(sections_data[name].data, addr)
+                addr = addr + sections_data[name].data_size
 
-            buf = sections_data[".text"].data
-            if verify:
-                if self.target.verbose:
-                    print("verify test")
-                if not self.target.dump(len(buf)) == buf:
-                    raise ValueError("uploaded binary failed to verify")
-                if self.target.verbose:
-                    print("OK")
-
-    def run_session(self):
-        """ Runs the target handling breakpoints.
-For non-oracle target it also sets program counter to either the start
-symbol (if configured) or entry point by the ELF file header (if not).
-        """
-        if not self.target.rsp.host:
-            if self.start:
-                entry = self.target.get_hex_str(
-                    self.target.elf.symbols[self.target.start]
-                )
-            else:
-                entry = self.target.get_hex_str(self.target.elf.entry)
-
-            if self.target.verbose:
-                print("set new pc: @test (0x%s) OK" % entry)
-            self.target.set_reg(self.target.pc, entry)
-            if self.target.verbose:
-                print("continuing")
-
-        sig = self.target.rsp.run()
-        while sig[:3] in ["T05", "S05"]:
-            self.target.handle_br()
-            sig = self.target.rsp.run()
-
-        self.finish_cb()
+        buf = sections_data[".text"].data
+        if verify:
+            if self.rt.target.verbose:
+                print("verify test")
+            if not self.rt.target.dump(len(buf)) == buf:
+                raise ValueError("uploaded binary failed to verify")
+            if self.rt.target.verbose:
+                print("OK")
 
     def run(self):
-        self.__set_breakpoints()
-        self.target.start = "main"
-        self.target.refresh_regs()
-        if not self.target.rsp.host:
-            self.load(True)
-            self.target.set_sp()
-        self.run_session()
-
-    def stop(self):
-        """Stopping the process
-        """
-        self.target.rsp.port.write(pack('k'))
-        self.target.rsp.port.close()
-        self.terminate()
-
-    def dump_cb(self):
-        """ rsp_dump callback, hit if rsp_dump is called. Outputs to
-stdout the source line, and a hexdump of the memory pointed by $r0
-with a size of $r1 bytes. Then it resumes running.
-        """
-        self.target.dump_regs()
-
-        vals = self.target.dump_vars("ch")
-        addr = self.target.regs[self.target.pc]
-
-        dump = {
-            addr: {
-                "variables": vals,
-                "lineno"   : self.target.br[addr]["lineno"],
-                "regs"     : self.target.dump_regs()
-            }
-        }
-        if self.target.verbose:
-            print(dump.values())
-        self.queue.put(dump.copy())
-        dump.clear()
-        self.target.del_br(addr, quiet = True)
-
-    def continue_cb(self):
-        self.target.dump_regs()
-
-        self.target.del_br(self.target.regs[self.target.pc], quiet = True)
-
-    def cycle_cb(self):
-        self.target.dump_regs()
-
-        addr = self.target.regs[self.target.pc]
-
-        if addr < self.target.br[addr]["old"] and self.target.br[addr]["old"]:
-            vals = self.target.dump_vars("brc")
-            dump = {
-                addr: {
-                    "variables" : vals,
-                    "lineno"    : self.target.br[addr]["lineno"],
-                    "regs"      : self.target.dump_regs()
-                }
-            }
-            if self.target.verbose:
-                print(dump.values())
-            self.queue.put(dump.copy())
-            dump.clear()
-
-        if (    self.target.br[addr]["old"]
-            and self.target.br[addr]["old"] not in self.target.br
-        ):
-            self.target.set_br(self.target.br[addr]["old"],
-                self.target.br[addr]["cb"],
-                lineno = self.target.br[addr]["lineno"],
-                old = addr
-            )
-
-        self.target.del_br(addr, quiet = True)
-
-    def finish_cb(self):
-        """ final breakpoint, if hit it deletes all breakpoints,
-continues running the cpu, and detaches from the debugging device
-        """
-        self.target.dump_regs()
-
-        for br in self.target.br.keys()[:]:
-            self.target.del_br(br)
-
-        if self.target.verbose:
-            print("\ncontinuing and detaching")
-
-        if self.queue:
-            self.queue.put("CMP_EXIT")
-        self.target.rsp.finish()
-        exit(0)
+        self._set_breakpoints()
+        self.rt.target.start = "main"
+        self.rt.target.refresh_regs()
+        self.load(True)
+        addr = "%0*x" % (self.rt.target.arch['bitsize'] >> 2, 65536)
+        # TODO: don't hardcode this
+        self.rt.target.set_reg('sp', addr)
+        self.rt.target.run(start = "main", setpc = True)
 
 
 class ProcessWithErrCatching(Process):
@@ -420,7 +362,7 @@ class CpuTestingTool(object):
             errmsg(e, prog = config)
 
     def verify_config(self, config):
-        if self.config.march in ARCHMAP:
+        if self.config.march in archmap:
             self.machine_type = self.config.march
         else:
             errmsg("unsupported target:", arg = self.config.march)
@@ -453,33 +395,44 @@ class CpuTestingTool(object):
         self.target_builder.start()
         self.oracle_builder.start()
 
+        test_src, target_elf = self.target_elf_queue.get(block = True)
+
+        qemu = ProcessWithErrCatching(
+            self.config.qemu.run_script.format(bin = target_elf)
+        )
+
+        qemu.daemon = True
+
+        oracle_queue = Queue(0)
+        target_queue = Queue(0)
+
+        qemu.start()
+
+        # TODO: select port automatically or manually (from config) and
+        # use find_free_port()
+        if not wait_for_tcp_port(1234) or not wait_for_tcp_port(5678):
+            killpg(0, SIGKILL)
+
+        qmp = QMP(5678)
+
         while 1:
-            test_src, target_elf = self.target_elf_queue.get(block = True)
             test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
 
-            qemu = ProcessWithErrCatching(
-                self.config.qemu.run_script.format(bin = target_elf)
-            )
             gdbserver = ProcessWithErrCatching(
                 self.config.gdbserver.run_script.format(bin = oracle_elf)
             )
 
-            qemu.daemon = True
             gdbserver.daemon = True
-
-            oracle_queue = Queue(0)
-            target_queue = Queue(0)
-
-            qemu.start()
             gdbserver.start()
 
-            oracle_session = DebugProcess(ARCHMAP[self.oracle_cpu],
-                test_src, "localhost:4321", oracle_elf, oracle_queue,
-                self.verbose, oracle = True
+            if not wait_for_tcp_port(4321):
+                killpg(0, SIGKILL)
+
+            oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
+                "4321", oracle_elf, oracle_queue, self.verbose
             )
-            target_session = DebugProcess(ARCHMAP[self.machine_type],
-                test_src, "localhost:1234", target_elf, target_queue,
-                self.verbose
+            target_session = C2tTarget(archmap[self.machine_type], test_src,
+                "1234", target_elf, target_queue, self.verbose
             )
             debug_comparison = DebugComparison(oracle_queue, target_queue)
 
@@ -488,30 +441,25 @@ class CpuTestingTool(object):
             try:
                 debug_comparison.start()
             except RuntimeError:
-                # TODO: Use gdb remote protocol vKill and k
                 killpg(0, SIGKILL)
-                # oracle_session.stop()
-                # target_session.stop()
-            else:
-                qemu.join()
-                gdbserver.join()
-                oracle_session.join()
-                target_session.join()
 
             if self.target_elf_queue.empty() and self.oracle_elf_queue.empty():
                 break
 
+            oracle_session.join()
+            target_session.join()
+
+            qmp("system_reset")
+            # TODO: wtf?
+            gdbserver.terminate()
+
+            test_src, target_elf = self.target_elf_queue.get(block = True)
+
+        killpg(0, SIGKILL)
+
 
 class C2TArgumentParser(ArgumentParser):
-    """ Custom ArgumentParser """
-
-    def __init__(self):
-        ArgumentParser.__init__(self,
-            description = "CPU Testing Tool",
-            epilog = ("supported targets: {targets}".format(
-                targets = ', '.join("%s" % arch for arch in ARCHMAP)
-            ))
-        )
+    """ ArgumentParser with custom error method """
 
     def error(self, msg, optval = ''):
         self.print_usage(stderr)
@@ -528,7 +476,12 @@ def get_tests(regexp):
 
 
 def main():
-    parser = C2TArgumentParser()
+    parser = C2TArgumentParser(
+        description = "CPU Testing Tool",
+        epilog = ("supported targets: {targets}".format(
+            targets = ', '.join("%s" % arch for arch in archmap)
+        ))
+    )
     parser.add_argument("-c", "--config",
         type = str,
         dest = "config",
