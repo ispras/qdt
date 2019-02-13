@@ -128,13 +128,11 @@ def define_only_qemu_2_6_0_types():
         Type("Object", False),
         Type("InterfaceInfo", False),
         Structure("TypeInfo",
-            fields = [
-                # These are required fields only
-                Pointer(Type["const char"]).gen_var("name"),
-                Pointer(Type["const char"]).gen_var("parent"),
-                Pointer(Type["void"]).gen_var("class_init"),
-                Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
-            ]
+            # These are required fields only
+            Pointer(Type["const char"]).gen_var("name"),
+            Pointer(Type["const char"]).gen_var("parent"),
+            Pointer(Type["void"]).gen_var("class_init"),
+            Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
         ),
         Type("Type", False),
         Type("TypeImpl", False),
@@ -243,9 +241,8 @@ def define_only_qemu_2_6_0_types():
             ]
         ),
         Structure("MemoryRegionOps",
-            [   Type["MemoryRegionOps_read"].gen_var("read"),
-                Type["MemoryRegionOps_write"].gen_var("write"),
-             ]
+            Type["MemoryRegionOps_read"].gen_var("read"),
+            Type["MemoryRegionOps_write"].gen_var("write"),
         ),
         Function(
             name = "memory_region_init_io",
@@ -536,17 +533,15 @@ def define_only_qemu_2_6_0_types():
             args = [ Pointer(Type["NetClientState"]).gen_var("nc") ]
         ),
         Structure("NetClientInfo",
-            fields = [
-                # "type" field type is enum NetClientDriver, but enum is not
-                # supported by model
-                Type["int"].gen_var("type"),
-                Type["size_t"].gen_var("size"),
-                Type["NetReceive"].gen_var("receive"),
-                Type["NetCanReceive"].gen_var("can_receive"),
-                Type["NetCleanup"].gen_var("cleanup"),
-                Type["LinkStatusChanged"].gen_var("link_status_changed")
-                # There are other fields but they are not needed.
-            ]
+            # "type" field type is enum NetClientDriver, but enum is not
+            # supported by model
+            Type["int"].gen_var("type"),
+            Type["size_t"].gen_var("size"),
+            Type["NetReceive"].gen_var("receive"),
+            Type["NetCanReceive"].gen_var("can_receive"),
+            Type["NetCleanup"].gen_var("cleanup"),
+            Type["LinkStatusChanged"].gen_var("link_status_changed")
+            # There are other fields but they are not needed.
         ),
         Macro("NET_CLIENT_DRIVER_NIC") # This is an enum item actually. It
         # is defined in auto generated "qapi-types.h" which is not presented in
