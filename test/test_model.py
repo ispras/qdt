@@ -24,6 +24,10 @@ from source import (
 from common import (
     ee
 )
+from difflib import (
+    unified_diff
+)
+
 
 MODEL_VERBOSE = ee("MODEL_VERBOSE")
 SAVE_CHUNK_GRAPH = ee("SAVE_CHUNK_GRAPH")
@@ -51,7 +55,18 @@ class SourceModelTestHelper(object):
                 with open(file.path, "w") as f:
                     f.write(gen_content)
 
-            self.assertEqual(gen_content, content)
+            self._compate_content(content, gen_content)
+
+    def _compate_content(self, expected, generated):
+        if expected == generated:
+            return
+
+        print("\n".join(unified_diff(
+            expected.split('\n'),
+            generated.split('\n')
+        )))
+
+        self.fail("Generated code differs from expected value")
 
 
 class FunctionTreeTestDoubleGenerationHelper(object):
