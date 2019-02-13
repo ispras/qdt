@@ -561,11 +561,11 @@ class Header(Source):
             h.add_type(m)
 
     @staticmethod
-    def _build_inclusions_recursive(start_dir, prefix, recursive):
+    def _build_inclusions(start_dir, prefix, recursive):
         full_name = join(start_dir, prefix)
         if recursive and isdir(full_name):
             for entry in listdir(full_name):
-                yield Header._build_inclusions_recursive(
+                yield Header._build_inclusions(
                     start_dir,
                     join(prefix, entry),
                     recursive
@@ -637,7 +637,7 @@ class Header(Source):
             h.parsed = False
 
         for entry in listdir(dname):
-            yield Header._build_inclusions_recursive(dname, entry, recursive)
+            yield Header._build_inclusions(dname, entry, recursive)
 
         for h in Header.reg.values():
             del h.parsed
