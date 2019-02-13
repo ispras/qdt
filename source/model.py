@@ -961,7 +961,8 @@ class Structure(Type):
         super(Structure, self).__init__(name = name, incomplete = False)
 
         self.fields = OrderedDict()
-        self.append_fields(fields)
+        if fields is not None:
+            self.append_fields(fields)
         self.nested = False
 
     def __getattr__(self, name):
@@ -1001,9 +1002,8 @@ class Structure(Type):
         self.fields[v_name] = variable
 
     def append_fields(self, fields):
-        if fields is not None:
-            for v in fields:
-                self.append_field(v)
+        for v in fields:
+            self.append_field(v)
 
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
