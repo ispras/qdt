@@ -606,7 +606,7 @@ class Header(Source):
     @staticmethod
     def _build_inclusions(start_dir, prefix, recursive):
         full_name = join(start_dir, prefix)
-        if (isdir(full_name) and recursive):
+        if recursive and isdir(full_name):
             for entry in listdir(full_name):
                 yield Header._build_inclusions(
                     start_dir,
