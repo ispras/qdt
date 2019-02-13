@@ -148,6 +148,41 @@ typedef struct B {{
         ]
 
 
+class TestCrossDeclaration(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestCrossDeclaration, self).setUp()
+
+        src = Source(type(self).__name__.lower() + ".c")
+
+        a = Structure("A")
+
+        b = Structure("B")
+        b.append_field(a.gen_var("ref", pointer = True))
+
+        a.append_field(b.gen_var("ref", pointer = True))
+
+        src.add_types([a, b])
+
+        src_content = """\
+/* {} */
+typedef struct A A;
+
+typedef struct B {{
+    A *ref;
+}} B;
+
+struct A {{
+    B *ref;
+}};
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
 class TestForwardDeclarationHeader(SourceModelTestHelper, TestCase):
 
     def setUp(self):
