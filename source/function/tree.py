@@ -538,11 +538,7 @@ class Declare(SemicolonPresence):
             writer.write("const@b")
 
         v_type = v.type
-        asterisks = "@b"
-        while isinstance(v_type, Pointer):
-            v_type = v_type.type
-            asterisks += "*"
-        writer.write(v_type.name + asterisks)
+        writer.write(v_type.name + "@b" + v.asterisks)
         child.__c__(writer)
         if isinstance(child, Variable):
             if child.array_size is not None:
@@ -557,18 +553,13 @@ class Declare(SemicolonPresence):
             else:
                 v = child
 
-            asterisks = ""
-            t = v.type
-            while isinstance(t, Pointer):
-                t = t.type
-                asterisks += "*"
-
-            if t is not v_type:
+            # Note that `Pointer` type implements deep comparison in `__eq__`.
+            if v.type == v_type:
                 raise TypeError(
                     "All variable in Declare must have the same type"
                 )
 
-            writer.write(",@s" + asterisks)
+            writer.write(",@s" + v.asterisks)
             child.__c__(writer)
             if isinstance(child, Variable):
                 if child.array_size is not None:
