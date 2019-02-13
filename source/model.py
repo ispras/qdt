@@ -1256,6 +1256,7 @@ class FunctionBodyString(object):
         return self.body
 
     __type_references__ = ["used_types"]
+    __node__ = ["used_globals"]
 
 
 class Function(Type):
