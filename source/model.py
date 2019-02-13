@@ -1710,7 +1710,7 @@ class TypeFixerVisitor(ObjectVisitor):
             if ((   isinstance(t, Structure) and t.nested
                  or isinstance(t, Enumeration)
                 )
-                and t in [x[0] for x in self.path[:-1]]
+                and t in self.previous
             ):
                 raise BreakVisiting()
 
