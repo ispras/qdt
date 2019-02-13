@@ -340,15 +340,21 @@ def define_only_qemu_2_6_0_types():
         Function(name = "error_propagate")
     ]).add_reference(osdep_fake_type)
 
-    Header["exec/exec-all.h"].add_types([
-        Structure("TranslationBlock",
-            # These are required fields only
-            Type["target_ulong"].gen_var("pc"),
-            Type["uint16_t"].gen_var("size"),
-            Type["uint16_t"].gen_var("icount"),
-            Type["uint32_t"].gen_var("cflags")
-        ),
-        Function(
+    if get_vp("tlb_fill has SIZE argument"):
+        tlb_fill = Function(
+            name = "tlb_fill",
+            args = [
+                Type["CPUState"].gen_var("cs", pointer = True),
+                Type["target_ulong"].gen_var("addr"),
+                Type["int"].gen_var("size"),
+                Type["MMUAccessType"].gen_var("access_type"),
+                Type["int"].gen_var("mmu_idx"),
+                Type["uintptr_t"].gen_var("retaddr")
+            ],
+            used_types = []
+        )
+    else:
+        tlb_fill = Function(
             name = "tlb_fill",
             args = [
                 Type["CPUState"].gen_var("cs", pointer = True),
@@ -358,7 +364,16 @@ def define_only_qemu_2_6_0_types():
                 Type["uintptr_t"].gen_var("retaddr")
             ],
             used_types = []
+        )
+    Header["exec/exec-all.h"].add_types([
+        Structure("TranslationBlock",
+            # These are required fields only
+            Type["target_ulong"].gen_var("pc"),
+            Type["uint16_t"].gen_var("size"),
+            Type["uint16_t"].gen_var("icount"),
+            Type["uint32_t"].gen_var("cflags")
         ),
+        tlb_fill,
         Function(
             name = "cpu_exec_init",
             args = [
@@ -1047,6 +1062,13 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("Create cpu_init",
             old_value = True,
             new_value = False
+        )
+    ],
+    u'98670d47cd8d63a529ff230fd39ddaa186156f8c':
+    [
+        QEMUVersionParameterDescription("tlb_fill has SIZE argument",
+            old_value = False,
+            new_value = True
         )
     ]
 }
