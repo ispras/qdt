@@ -174,6 +174,8 @@ class SysBusDeviceType(QOMDevice):
 
         reg_resets = []
 
+        used_types = set([self.state_struct])
+
         for reg in all_regs:
             name = reg.name
             if name is None or name == "gap":
@@ -192,8 +194,18 @@ class SysBusDeviceType(QOMDevice):
                 # forbid writing to WAR bits just after reset
                 wm = reg.wmask
                 if wm.v == (1 << (8 * reg.size)) - 1:
-                    reg_resets.append("s->%s_war@b=@s~%s;" % (
+                    if reg.size < 4:
+                        # Avoid gcc "overflow" warning: large integer
+                        # implicitly truncated to unsigned type
+                        cast_type = "uint%u_t" % (8 * reg.size)
+                        used_types.add(Type[cast_type])
+                        cast = "(%s)" % cast_type
+                    else:
+                        cast = ""
+
+                    reg_resets.append("s->%s_war@b=@s%s~%s;" % (
                         qtn.for_id_name,
+                        cast,
                         warb.gen_c_code()
                     ))
                 elif wm.v:
@@ -215,7 +227,7 @@ class SysBusDeviceType(QOMDevice):
             ),
             args = [Type.lookup("DeviceState").gen_var("dev", True)],
             static = True,
-            used_types = [self.state_struct]
+            used_types = used_types
         )
 
         self.source.add_type(self.device_reset)
