@@ -1414,12 +1414,10 @@ class NodeVisitor(ObjectVisitor):
         )
 
 
-class TypesCollector(ObjectVisitor):
+class TypesCollector(TypeReferencesVisitor):
 
     def __init__(self, code):
-        super(TypesCollector, self).__init__(code,
-            field_name = "__type_references__"
-        )
+        super(TypesCollector, self).__init__(code)
         self.used_types = set()
 
     def on_visit(self):
@@ -1529,18 +1527,17 @@ class Variable(object):
 # Type inspecting
 
 
-class TypeFixerVisitor(ObjectVisitor):
+class TypeFixerVisitor(TypeReferencesVisitor):
 
-    def __init__(self, source, type_object, *args, **kw):
-        kw["field_name"] = "__type_references__"
-        ObjectVisitor.__init__(self, type_object, *args, **kw)
+    def __init__(self, source, type_object):
+        super(TypeFixerVisitor, self).__init__(type_object)
 
         self.source = source
         self.replaced = False
 
     def replace(self, new_value):
         self.replaced = True
-        ObjectVisitor.replace(self, new_value)
+        super(TypeFixerVisitor, self).replace(new_value)
 
     def on_visit(self):
         if isinstance(self.cur, Type):
@@ -1591,11 +1588,7 @@ class TypeFixerVisitor(ObjectVisitor):
     """
 
 
-class CopyFixerVisitor(ObjectVisitor):
-
-    def __init__(self, type_object, *args, **kw):
-        kw["field_name"] = "__type_references__"
-        ObjectVisitor.__init__(self, type_object, *args, **kw)
+class CopyFixerVisitor(TypeReferencesVisitor):
 
     def on_visit(self):
         t = self.cur
