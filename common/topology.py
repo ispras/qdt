@@ -1,7 +1,25 @@
 __all__ = [
     "GraphIsNotAcyclic"
   , "sort_topologically"
+  , "flatten"
 ]
+
+
+def flatten(i):
+    "Recursively flattens iterable in depth first order"
+    # Refs:
+    # https://stackoverflow.com/questions/1952464/in-python-how-do-i-determine-if-an-object-is-iterable
+    # https://codereview.stackexchange.com/questions/49877/recursive-flatten-with-lazy-evaluation-iterator
+    try:
+        # if `i` is an iterable then iterate its `item`s and flatten them
+        # recursively.
+        for item in i:
+            for subitem in flatten(item):
+                yield subitem
+    except TypeError:
+        # Else, just yield `i`
+        yield i
+
 
 class GraphIsNotAcyclic(ValueError):
     pass
