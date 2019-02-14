@@ -33,6 +33,8 @@ __all__ = [
       , "UsageTerminator"
   , "SourceFile"
   , "SourceTreeContainer"
+  , "TypeReferencesVisitor"
+  , "NodeVisitor"
 ]
 
 from os import (
@@ -1403,6 +1405,22 @@ class CPPMacro(Macro):
 
 
 # Data models
+
+
+class TypeReferencesVisitor(ObjectVisitor):
+
+    def __init__(self, root):
+        super(TypeReferencesVisitor, self).__init__(root,
+            field_name = "__type_references__"
+        )
+
+
+class NodeVisitor(ObjectVisitor):
+
+    def __init__(self, root):
+        super(NodeVisitor, self).__init__(root,
+            field_name = "__node__"
+        )
 
 
 class TypesCollector(ObjectVisitor):
