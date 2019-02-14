@@ -30,7 +30,8 @@ transparent.
             (a + " = " + a) for a in args[-len(defaults):]
         )
     else:
-        arg_strs = arg_to_init = args
+        arg_strs = args
+        arg_to_init = list(args)
 
     if varargs:
         arg_strs.append("*" + varargs)
