@@ -1,6 +1,3 @@
-from os import (
-    environ
-)
 from unittest import (
     TestCase,
     main
