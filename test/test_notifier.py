@@ -28,6 +28,12 @@ def _n2_with_var_args_and_kw_args():
     return N2WithVarArgsAndKWArgs
 
 
+def _no_init_notifier():
+
+    @notifier("e1", "e2")
+    class Notifier1(object): pass
+
+
 class TestNotifier(TestCase):
 
     def test_var_args(self):
@@ -35,6 +41,9 @@ class TestNotifier(TestCase):
 
     def test_var_args_and_kw_args(self):
         _n2_with_var_args_and_kw_args()
+
+    def test_no_init_notifier(self):
+        _no_init_notifier()
 
     def test_event_list(self):
         n2 = _n2_with_var_args_and_kw_args()
