@@ -75,27 +75,3 @@ temporally replaces self.set with nope lambda to bypass this.
     def set(self, value):
         # External formated string changing is forbidden.
         raise FormatedStringChangindException()
-
-# Test
-if __name__ == "__main__":
-    # at least one Tk instance should exist
-    from six.moves.tkinter import (
-        Tk
-    )
-    root = Tk()
-
-    fmt = FormatVar(value = "Text example is '%s'")
-    text = StringVar(value = "[ a text will be here ]")
-    res = fmt % text
-
-    def on_w(*args):
-        print(res.get())
-
-    res.trace_variable("w", on_w)
-
-    for action in (
-        on_w,
-        lambda : text.set("A text"),
-        lambda : fmt.set("'%s' is the text example.")
-    ):
-        action()
