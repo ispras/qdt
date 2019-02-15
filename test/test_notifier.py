@@ -36,6 +36,14 @@ class TestNotifier(TestCase):
     def test_var_args_and_kw_args(self):
         _n2_with_var_args_and_kw_args()
 
+    def test_event_list(self):
+        n2 = _n2_with_var_args_and_kw_args()
+        n1 = n2.__base__
+
+        self.assertEqual(n1._events, ("event1",))
+
+        self.assertEqual(n2._events, ("event1", "event2"))
+
 
 if __name__ == "__main__":
     main()
