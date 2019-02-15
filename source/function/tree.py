@@ -70,7 +70,8 @@ from ..model import (
     Pointer,
     Variable,
     Macro,
-    NodeVisitor
+    NodeVisitor,
+    Function
 )
 from common import (
     lazy,
@@ -479,35 +480,33 @@ class Break(SemicolonPresence):
 
 class Call(SemicolonPresence):
 
-    __type_references__ = ("children", "type")
-
     def __init__(self, func, *args):
-        super(Call, self).__init__(children = args)
-
-        self.func = func
         if isinstance(func, str):
-            self.type = Type.lookup(func)
-        elif isinstance(func, (Variable, OpSDeref)):
-            # Pointer to the function
-            self.type = func
-        else:
+            func = Type[func]
+        elif not isinstance(func, (Variable, Function, CNode)):
             raise ValueError(
                 "Invalid type of func in Call: " + type(func).__name__
             )
 
-    def __c__(self, writer):
-        if isinstance(self.func, OpSDeref):
-            self.func.__c__(writer)
-        else:
-            writer.write(self.type.name)
+        super(Call, self).__init__(children = (func,) + args)
 
+    @property
+    def func(self):
+        return self.children[0]
+
+    @property
+    def args(self):
+        return self.children[1:]
+
+    def __c__(self, writer):
+        self.func.__c__(writer)
 
         writer.write("(@a")
-        if self.children:
-            first_child = self.children[0]
+        if self.args:
+            first_child = self.args[0]
             first_child.__c__(writer)
 
-            for c in self.children[1:]:
+            for c in self.args[1:]:
                 writer.write(",@s")
                 c.__c__(writer)
 
