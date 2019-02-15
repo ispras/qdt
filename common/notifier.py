@@ -18,7 +18,14 @@ transparent.
     """
     code = "def __init__("
 
-    args, varargs, keywords, defaults = getargspec(wrapped_init)
+    try:
+        args, varargs, keywords, defaults = getargspec(wrapped_init)
+    except TypeError:
+        # XXX: Is there a technique to get argspec for a builtin function?
+        # Because of `notifier` is a class decorator, `wrapped_init` must have
+        # `self` argument. But amount of rest arguments is unpredictable.
+        # But varargs are used for flexibility.
+        args, varargs, keywords, defaults = ["self"], "a", "kw", []
 
     if defaults:
         arg_strs = list(args[:-len(defaults)]) + list(
