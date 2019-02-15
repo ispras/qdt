@@ -79,7 +79,9 @@ class ML(FormatVar):
                 self.set(raw.decode("utf8"))
     else:
         def update(self):
-            self.set(ML.current_translation.lgettext(self.key_value))
+            raw = ML.current_translation.lgettext(self.key_value)
+            trans = raw if isinstance(raw, unicode) else raw.decode("utf8")
+            self.set(trans)
 
 def mlget(key_value):
     for mls in ML.multi_language_strings:
