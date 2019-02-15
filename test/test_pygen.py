@@ -1,6 +1,3 @@
-from os import (
-    environ
-)
 from unittest import (
     TestCase,
     main
@@ -22,8 +19,16 @@ from collections import (
     namedtuple
 )
 import qdt
+from os.path import (
+    join,
+    dirname
+)
+
 
 PYGEN_VERBOSE = ee("PYGEN_VERBOSE")
+
+
+verbose_dir = join(dirname(__file__), "pygen_code")
 
 
 class PyGeneratorTestHelper(object):
@@ -47,8 +52,9 @@ class PyGeneratorTestHelper(object):
                 eq = False
 
         if PYGEN_VERBOSE or not eq:
+            code_file = join(verbose_dir, type(self).__name__ + ".py")
             # save serialized code to the file for developer
-            with open(type(self).__name__ + "__code.py", "w") as f:
+            with open(code_file, "w") as f:
                 f.write(code)
 
         self.assertTrue(eq, "Loaded object differs.")
