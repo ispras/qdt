@@ -3,6 +3,7 @@ __all__ = [
       , "Comment"
       , "NewLine"
       , "MacroBranch"
+      , "Ifdef"
       , "CNode"
           , "Label"
           , "LoopWhile"
@@ -66,7 +67,8 @@ from ..c_const import (
 from ..model import (
     Type,
     Pointer,
-    Variable
+    Variable,
+    Macro
 )
 from common import (
     lazy
@@ -116,6 +118,32 @@ class Node(object):
     def __c__(self, writer):
         writer.write(self.val)
         self.out_children(writer)
+
+
+class Ifdef(Node):
+
+    def __init__(self, val, *args):
+        # Since the macro can be undefined and unknown to the model, we refer
+        # it using its string name.
+        if isinstance(val, Macro):
+            val = val.name
+        elif not isinstance(val, str):
+            raise ValueError("Invalid type in Ifdef: " + type(val).__name__)
+
+        super(Ifdef, self).__init__(
+            val = val,
+            indent_children = False,
+            children = args
+        )
+
+    def __c__(self, writer):
+        writer.push_state(reset = True)
+        writer.line("#ifdef " + self.val)
+        writer.pop_state()
+        self.out_children(writer)
+        writer.push_state(reset = True)
+        writer.line("#endif")
+        writer.pop_state()
 
 
 class CNode(Node):
