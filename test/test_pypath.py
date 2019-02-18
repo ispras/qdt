@@ -10,14 +10,15 @@ from cProfile import (
 )
 
 
+def _import_a_module():
+    with pypath(".pypath_test"):
+        import a_module
+
+
 class TestPyPath(TestCase):
 
     def test_cProfile(self):
-        runctx("""
-with pypath(".pypath_test"):
-    import a_module
-        """, globals(), locals()
-        )
+        runctx("_import_a_module()", globals(), locals())
 
 
 if __name__ == "__main__":
