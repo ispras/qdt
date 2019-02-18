@@ -16,6 +16,19 @@ from inspect import (
     getmodule
 )
 
+
+def caller_file_name():
+    "Returns name of file defining caller of that function caller."
+    # https://stackoverflow.com/questions/13699283/how-to-get-the-callers-filename-method-name-in-python
+
+    # stack[0] - caller_file_name
+    # stack[1] - caller of `caller_file_name`
+    # stack[2] - caller which file name is requested
+    frame = stack()[2]
+    module = getmodule(frame[0])
+    return module.__file__
+
+
 def pypath(rel_path):
     """ Configures PYTHONPATH (sys.path) to import custom module version
 instead of system version of that module. Path to custom module is
@@ -31,10 +44,7 @@ with pypath("..sister_directory"):
     import a_module
 
     """
-    # https://stackoverflow.com/questions/13699283/how-to-get-the-callers-filename-method-name-in-python
-    frame = stack()[1]
-    module = getmodule(frame[0])
-    return _pypath(module.__file__, rel_path)
+    return _pypath(caller_file_name(), rel_path)
 
 @contextmanager
 def _pypath(caller_file_name, rel_path):
