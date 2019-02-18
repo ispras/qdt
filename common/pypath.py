@@ -1,11 +1,14 @@
 __all__ = [
     "pypath"
+  , "iter_submodules"
 ]
 
 from contextlib import (
     contextmanager
 )
 from os.path import (
+    isdir,
+    isfile,
     abspath,
     dirname,
     join
@@ -15,6 +18,24 @@ from inspect import (
     stack,
     getmodule
 )
+from os import (
+    listdir
+)
+
+
+def iter_submodules():
+    cur_dir = dirname(caller_file_name())
+
+    for item in listdir(cur_dir):
+        if item[-3:] == ".py":
+            name = item[:-3]
+            if name != "__init__":
+                yield name
+        else:
+            fullname = join(cur_dir, item)
+
+            if isdir(fullname) and isfile(join(fullname, "__init__.py")):
+                yield item
 
 
 def caller_file_name():
