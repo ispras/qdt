@@ -3,6 +3,7 @@ __all__ = [
       , "Comment"
       , "NewLine"
       , "MacroBranch"
+      , "Ifdef"
       , "CNode"
           , "Label"
           , "LoopWhile"
@@ -66,6 +67,7 @@ from ..c_const import (
 from ..model import (
     Type,
     Pointer,
+    Macro,
     Variable
 )
 from common import (
@@ -116,6 +118,29 @@ class Node(object):
     def __c__(self, writer):
         writer.write(self.val)
         self.out_children(writer)
+
+
+class Ifdef(Node):
+
+    def __init__(self, val, *args):
+        if isinstance(val, Macro):
+            val = val.name
+        super(Ifdef, self).__init__(
+            # Since the macro can be undefined and unknown to the model,
+            # we refer it using its string name.
+            val = str(val),
+            indent_children = False,
+            children = args
+        )
+
+    def __c__(self, writer):
+        with writer.cpp:
+            writer.line("ifdef@b" + self.val)
+            writer.push_indent()
+        self.out_children(writer)
+        with writer.cpp:
+            writer.pop_indent()
+            writer.line("endif")
 
 
 class CNode(Node):
