@@ -1,10 +1,10 @@
 __all__ = [
     "Node"
+      , "Comment"
+      , "NewLine"
+      , "MacroBranch"
       , "CNode"
-          , "Comment"
           , "Label"
-          , "NewLine"
-          , "MacroBranch"
           , "LoopWhile"
           , "LoopDoWhile"
           , "LoopFor"
@@ -123,7 +123,7 @@ class CNode(Node):
         super(CNode, self).add_child(child)
 
 
-class Comment(CNode):
+class Comment(Node):
 
     def __init__(self, text):
         super(Comment, self).__init__()
@@ -146,7 +146,7 @@ class Label(CNode):
         writer.load_indent()
 
 
-class NewLine(CNode):
+class NewLine(Node):
 
     def __init__(self):
         super(NewLine, self).__init__()
@@ -155,7 +155,7 @@ class NewLine(CNode):
         writer.line("")
 
 
-class MacroBranch(CNode):
+class MacroBranch(Node):
     """ MacroBranch describes construction like MACRO(x, y) { ... } """
 
     __node__ = ("children", "macro_call")
