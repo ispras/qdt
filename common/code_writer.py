@@ -59,6 +59,7 @@ class CodeWriter(object):
         self.w.write(string)
 
     def join(self, delim, items, method):
+        # TODO: a comment
         if items:
             first = items[0]
             getattr(first, method)(self)

@@ -534,6 +534,7 @@ class Declare(SemicolonPresence):
                 raise TypeError(
                     "All variable in Declare must have the same type"
                 )
+                # TODO: what about static & const
 
     def __c__(self, writer):
         child = self.children[0]
@@ -698,6 +699,7 @@ class UnaryOperator(Operator):
         else:
             self.prefix = op_str
 
+# TODO: A doc strings can also be added to classes.
 
 class OpInc(UnaryOperator):
 

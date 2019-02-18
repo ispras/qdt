@@ -1538,6 +1538,12 @@ class GlobalsCollector(NodeVisitor):
             self.used_globals.add(cur)
 
 
+# TODO: This can find both self and cross references but the model can
+# resolve only self references. See `TestCrossDeclaration`. Probably, another
+# type is required to handle this. Forward structure declaration is lake a
+# forward function declaration. It can be made in a different file even.
+# So, either use some simple approach like `field.type is self` or solve the
+# problem to the end. Because half-solution may do a step on a wrong way.
 class NeedForwardDeclarationChecker(TypeReferencesVisitor):
     "This visitor checks that the nested type is the same as the root type."
 
@@ -1549,6 +1555,7 @@ class NeedForwardDeclarationChecker(TypeReferencesVisitor):
 
     def on_visit(self):
         t = self.cur
+        # XXX: Why is it needed? A comment?
         if (    isinstance(t, Structure)
             and t.nested
             and t in self.previous
