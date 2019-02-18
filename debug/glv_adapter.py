@@ -22,7 +22,7 @@ from common import (
     git_diff2delta_intervals,
     pythonize
 )
-from debug import (
+from .line_adapter import (
     LineAdapter
 )
 
