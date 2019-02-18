@@ -1,19 +1,9 @@
 from common import (
+    iter_submodules,
     pypath
 )
 
 # this module uses custom pyelftools
 with pypath("pyelftools"):
-    from .elf import *
-    from .expression import *
-    from .dia import *
-    from .dic import *
-    from .dwarf_expr_builder import *
-    from .glob import *
-    from .gv import *
-    from .runtime import *
-    from .type import *
-    from .value import *
-    from .watcher import *
-    from .line_adapter import *
-    from .glv_adapter import *
+    for mod in iter_submodules():
+        exec("from ." + mod + " import *")
