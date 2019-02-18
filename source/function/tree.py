@@ -26,6 +26,8 @@ __all__ = [
                   , "OpAddr"
                   , "OpDec"
                   , "OpInc"
+                  , "OpPostDec"
+                  , "OpPostInc"
                   , "OpDeref"
                   , "OpNot"
                   , "OpCast"
@@ -627,6 +629,12 @@ class OpDec(UnaryOperator):
 
     def __init__(self, var):
         super(OpDec, self).__init__("--", var, suffix_op = True)
+
+
+OpPostDec = OpDec
+
+
+OpPostInc = OpInc
 
 
 class OpCast(UnaryOperator):
