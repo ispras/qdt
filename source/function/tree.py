@@ -26,6 +26,8 @@ __all__ = [
                   , "OpAddr"
                   , "OpDec"
                   , "OpInc"
+                  , "OpPostDec"
+                  , "OpPostInc"
                   , "OpDeref"
                   , "OpNot"
                   , "OpCast"
@@ -629,6 +631,12 @@ class OpDec(UnaryOperator):
         super(OpDec, self).__init__("--", var, suffix_op = True)
 
 
+OpPostDec = OpDec
+
+
+OpPostInc = OpInc
+
+
 class OpCast(UnaryOperator):
 
     __type_references__ = ("children", "type")
@@ -805,6 +813,8 @@ op_priority = {
     OpSDeref:     1,
     OpDec:        1,
     OpInc:        1,
+    OpPostDec:    1,
+    OpPostInc:    1,
     OpDeref:      2,
     OpAddr:       2,
     OpNot:        2,
