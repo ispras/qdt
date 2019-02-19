@@ -34,13 +34,18 @@ variables = (Variable, TkVariable)
 
 class VarCheckbutton(Checkbutton):
     def __init__(self, *args, **kw):
-        if "text" in kw:
-            self.text_var = kw.pop("text")
-            kw["text"] = self.text_var.get()
-        else:
-            self.text_var = StringVar(self, "")
+        text = kw.get("text", "")
+        if isinstance(text, variables):
+            kw["text"] = text.get()
+
         Checkbutton.__init__(self, *args, **kw)
-        self.text_var.trace_variable("w", self.on_var_changed)
+
+        # `StringVar` requires its master to be initialized.
+        if not isinstance(text, variables):
+            text = StringVar(self, text)
+
+        self.text_var = text
+        text.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
         Checkbutton.config(self, text = self.text_var.get())
