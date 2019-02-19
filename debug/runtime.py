@@ -45,10 +45,21 @@ class Breakpoints(object):
 
         self.__notify_break()
 
-        rt.on_resume(thread)
-        # This breakpoint can be removed during preceding notification.
-        if self._alive:
-            target.step_over_br()
+        if rt._pause:
+            rt._pause = False
+
+            # `run` should return control
+            target.exit = True
+
+            # Remember the breakpoint because a step over will likely be
+            # needed before target resumption.
+            rt._breakpoint = self
+        else:
+            rt.on_resume(thread)
+
+            # This breakpoint can be removed during preceding notification.
+            if self._alive:
+                target.step_over_br()
 
     # See: https://stackoverflow.com/a/5288992/7623015
     def __bool__(self): # Py3
@@ -107,6 +118,44 @@ class Runtime(object):
 
         # breakpoints and its handlers
         self.brs = defaultdict(lambda : Breakpoints(self))
+
+        # Is there a request to pause the target?
+        self._pause = False
+        # If the target has been paused on a breakpoint, this attribute refers
+        # to the breakpoint.
+        self._breakpoint = None
+
+    def pause(self):
+        """ Ask to pause after current or soonest breakpoint handling. Method
+`run` will return control.
+        """
+        self._pause = True
+        # TODO: Ctrl-C (0x03) target interruption.
+        # See: https://sourceware.org/gdb/onlinedocs/gdb/Interrupts.html
+        # But `pyrsp` does not support it now.
+
+    def run(self):
+        "Start the target for a first time or resume it after pause."
+        t, br = self.target, self._breakpoint
+
+        if br is not None: # paused?
+            self.on_resume(t.thread)
+
+            # Do it exactly after `on_resume` because it allows "resume" event
+            # watchers to distinguish immediate resumption after a breakpoint
+            # handling and a resumption after a pause. Last case, `paused`
+            # returns `True`.
+            self._breakpoint = None
+
+            if br._alive:
+                t.step_over_br()
+
+        t.run(setpc = False)
+
+    @property
+    def paused(self):
+        "If the target is paused. I.e. after a breakpoint handling."
+        return self._breakpoint is not None
 
     def add_br(self, addr_str, cb, quiet = False):
         cbs = self.brs[addr_str]
