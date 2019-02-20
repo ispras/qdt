@@ -16,8 +16,12 @@ from os.path import (
 from re import (
     compile
 )
+from collections import (
+    OrderedDict
+)
 
-locale_files = []
+
+locale_files = OrderedDict()
 # Using of explicitly set (b)inary modifier for the pattern is required to
 # support both Py2 and Py3.
 # Note that files are also opened in (b)inary mode to avoid any internal
@@ -43,9 +47,13 @@ for root, dirs, files in walk(root_dir):
         else:
             continue
 
-        locale_files.append(file_name[root_prefix_len:])
+        locale_files[file_name] = file_name[root_prefix_len:]
 
-locale_files.sort()
+
+locale_files = OrderedDict(
+    (full, locale_files[full]) for full in sorted(locale_files)
+)
+
 
 langs = [
     "ru_RU"
@@ -53,7 +61,7 @@ langs = [
 
 print("Root directory: " + root_dir)
 print("Updating *.po file by those files:")
-for f in locale_files:
+for f in locale_files.values():
     print("    " + f)
 print("...")
 
@@ -62,39 +70,15 @@ for l in langs:
     if not isdir(directory):
         makedirs(directory)
 
-    call(
-        [   "xgettext",
-            "-o", join(directory, "messages.po"),
-        ] + [
-            join(root_dir, f) for f in locale_files
-        ]
-    )
+    messages_po = join(directory, "messages.po")
+    qdc_po = join(directory, "qdc.po")
 
-    if isfile(join(directory, "qdc.po")):
-        call(
-            [   "msgmerge",
-                "-U",
-                "-N", join(directory, "qdc.po"),
-                join(directory,"messages.po")
-            ]
-        )
-        call(
-            [   "rm",
-                join(directory, "messages.po")
-            ]
-        )
+    call(["xgettext", "-o", messages_po] + list(locale_files.keys()))
+
+    if isfile(qdc_po):
+        call(["msgmerge", "-U", "-N", qdc_po, messages_po])
+        call(["rm", messages_po])
     else:
-        call(
-            [   "mv",
-                join(directory, "messages.po"),
-                join(directory, "qdc.po")
-            ]
-        )
+        call(["mv", messages_po, qdc_po])
 
-    call(
-        [
-            "msgfmt",
-            "-o", join(directory, "qdc.mo"),
-            join(directory, "qdc.po")
-        ]
-    )
+    call(["msgfmt", "-o", join(directory, "qdc.mo"), qdc_po])
