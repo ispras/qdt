@@ -34,9 +34,24 @@ vertical scroll bar for created widget.
         orient = "vertical",
         command = canvas.yview
     )
-    scrollbar.grid(row = 0, column = 1, sticky = "NESW")
+    scrollbar._visible = False
 
     canvas.configure(yscrollcommand = scrollbar.set)
+
+    def scrollbar_visibility():
+        "Automatically shows & hides the scroll bar."
+
+        cnv_h = canvas.winfo_height()
+        inner_h = inner.winfo_height()
+
+        if inner_h <= cnv_h:
+            if scrollbar._visible:
+                scrollbar.grid_forget()
+                scrollbar._visible = False
+        elif inner_h > cnv_h:
+            if not scrollbar._visible:
+                scrollbar.grid(row = 0, column = 1, sticky = "NESW")
+                scrollbar._visible = True
 
     def inner_configure(_):
         cnf = dict(
@@ -47,12 +62,17 @@ vertical scroll bar for created widget.
 
         if inner_h < cnv_h:
             cnf["height"] = inner_h
+            # `scrollbar_visibility` will be called during the canvas
+            # resizing by `canvas_configure`
+        else:
+            scrollbar_visibility()
 
         canvas.configure(**cnf)
 
     inner.bind("<Configure>", inner_configure, "+")
 
     def canvas_configure(_):
+        scrollbar_visibility()
         canvas.itemconfig(inner_id, width = canvas.winfo_width())
 
     canvas.bind("<Configure>", canvas_configure, "+")
