@@ -446,7 +446,6 @@ def main():
 
     tk.task_manager.enqueue(co_syncronizer())
 
-    tk.geometry("1474x1024")
     tk.mainloop()
 
     qomtr.to_file("qom-by-q.i.dot")
