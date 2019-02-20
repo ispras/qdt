@@ -16,6 +16,14 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
+#: common/co_dispatcher.py:45
+msgid "Coroutine based task without description"
+msgstr "Задача-сопрограмма без описания"
+
+#: common/co_signal.py:36
+msgid "Signal Dispatcher"
+msgstr "Диспетчер сигналов"
+
 #: common/inverse_operation.py:132
 #, python-format
 msgid "Reversible operation with unimplemented description (class %s)."
@@ -43,6 +51,10 @@ msgstr "Повторить"
 #: qdc-gui.py:297
 msgid "Edit"
 msgstr "Правка"
+
+#: qdc-gui.py:82
+msgid "Generation"
+msgstr "Генерация"
 
 #: qdc-gui.py:98
 msgid "Generation completed"
@@ -214,6 +226,12 @@ msgstr "Кэш версии QEMU ещё не готов. Попробуйте п
 msgid "Cannot save project"
 msgstr "Невозможно сохранить проект"
 
+#: qdc-gui.py:672
+#: qdc-gui.py:715
+#: qw.py:1405
+msgid "QDC GUI Project defining script"
+msgstr "скрипт-проект для ГИП QDT"
+
 #: qdc-gui.py:673
 msgid "Save project"
 msgstr "Сохранить проект"
@@ -282,6 +300,11 @@ msgstr "Исключить участок памяти %s (%d) из %s (%d)."
 #: qemu/machine_editing.py:266
 msgid "container"
 msgstr "контейнер"
+
+#: qemu/machine_editing.py:276
+#, python-format
+msgid "alias of %s (%d) with offset %s"
+msgstr "перенаправление на %s (%d) со смещением %s"
 
 #: qemu/machine_editing.py:285
 msgid "system address space"
@@ -355,6 +378,11 @@ msgstr "Сделать устройство %s (%d) контроллером ш�
 msgid "Disconnect bus %s (%d) from index %d of controller %s (%d)."
 msgstr "Отсоединить шину %s (%d) с индексом %d от контроллера %s (%d)."
 
+#: qemu/machine_editing.py:517
+#, python-format
+msgid "Replace bus %s (%d) with %s (%d) in controller %s (%d) at index %d."
+msgstr "Заменить шину %s (%d) на %s (%d) в контроллере %s (%d) по индексу %d."
+
 #: qemu/machine_editing.py:582
 #, python-format
 msgid "IRQ hub (%d)"
@@ -385,6 +413,18 @@ msgstr "Удалить концентратор IRQ (%d)."
 #: widgets/memory_tree_widget.py:145
 msgid "Size"
 msgstr "Размер"
+
+#: qw.py:1238
+msgid "All events"
+msgstr "Все"
+
+#: qw.py:1244
+msgid "None events"
+msgstr "Ни одного"
+
+#: qw.py:1250
+msgid "Invert selection"
+msgstr "Инвертировать"
 
 #: widgets/add_desc_dialog.py:87
 #: widgets/device_settings.py:412
