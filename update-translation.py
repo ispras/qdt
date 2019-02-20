@@ -58,6 +58,7 @@ locale_files = OrderedDict(
 
 
 langs = [
+    "en_US",
     "ru_RU"
 ]
 
