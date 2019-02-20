@@ -189,7 +189,7 @@ class QEmuWatcherGUI(GUITk):
         panes.add(sew, minsize = 150)
 
         self.tw = tw = ThreadControl(panes)
-        panes.add(tw, minsize = 300)
+        panes.add(tw, minsize = 150)
         tw.set_runtime(runtime)
 
         self._killed = False
