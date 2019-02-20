@@ -183,7 +183,7 @@ class QEmuWatcherGUI(GUITk):
 
         # placeholder for future machine widget
         holder = Frame(panes)
-        panes.add(holder, width = 1024, minsize = 200)
+        panes.add(holder, width = 1024, height = 1024, minsize = 200)
 
         sew = StopEventSelector(panes, runtime, notifiers)
         panes.add(sew, minsize = 150)
