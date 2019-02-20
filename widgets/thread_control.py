@@ -154,18 +154,22 @@ Thread ID |     ...     |      Controls ...
             command = self._on_stop_all,
             state = DISABLED
         )
+        """ TODO: extra API required
         bt.grid(row = tid_row, column = COLUMN_STOP, sticky = "NESW")
+        """
 
         self.bt_resume_all = bt = VarButton(self,
             text = _("Resume"),
             command = self._on_resume_all,
             state = DISABLED
         )
+        """ TODO: extra API required
         bt.grid(
             row = tid_row,
             column = COLUMN_RESUME,
             sticky = "NESW"
         )
+        """
 
         self.runtime = None
 
