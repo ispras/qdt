@@ -74,8 +74,8 @@ class Runtime(object):
 
         # XXX: currently a host is always AMD64
         # TODO: account targets's calling convention
-        return_reg_name = "rax"
-        self.return_reg = target.registers.index(return_reg_name)
+        # return_reg_name = "rax"
+        # self.return_reg = target.registers.index(return_reg_name)
 
         # TODO: this must be done using DWARF because "bitsize" and address
         # size are not same values semantically (but same by implementation).
