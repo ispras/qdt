@@ -185,6 +185,19 @@ normally correct only when the target is stopped at the subprogram epilogue.
 
         return val
 
+    def __iter__(self):
+        prog = self.subprogram
+        _locals = prog.data
+
+        if _locals is not None:
+            for _local in _locals:
+                yield _local
+        else:
+            cu = prog.die.cu
+            _globals = self.dic.get_CU_global_variables(cu)
+            for _global in _globals:
+                yield _global
+
     def __getitem__(self, name):
         """ Accessing variables by name.
 
