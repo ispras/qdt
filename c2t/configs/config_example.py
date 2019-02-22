@@ -9,9 +9,7 @@ c2t_cfg = C2TConfig(
     march = "cortexm3",
     qemu = DebugUnit(Run(
         executable = "/usr/bin/qemu-system-arm",
-        args = ("-M versatilepb -m 128M -S -s -nographic "
-                "-qmp tcp:localhost:5678,server,nowait"
-        )
+        args = "-M versatilepb -m 128M -S -s -nographic "
     )),
     gdbserver = DebugUnit(Run(
         executable = "/usr/bin/gdbserver",

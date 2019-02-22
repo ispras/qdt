@@ -225,8 +225,12 @@ continues running the cpu, and detaches from the debugging device
         """
         if self.queue:
             self.queue.put("CMP_EXIT")
-        self.rt.target.finish_cb()
+        self.rt.target.exit = True
+        self.kill_target()
         self.rt.target.port.close()
+
+    def kill_target(self):
+        self.rt.target.send('k')
 
 
 class C2tOracle(C2tRuntime):
@@ -395,37 +399,29 @@ class CpuTestingTool(object):
         self.target_builder.start()
         self.oracle_builder.start()
 
-        test_src, target_elf = self.target_elf_queue.get(block = True)
-
-        qemu = ProcessWithErrCatching(
-            self.config.qemu.run_script.format(bin = target_elf)
-        )
-
-        qemu.daemon = True
-
-        oracle_queue = Queue(0)
-        target_queue = Queue(0)
-
-        qemu.start()
-
-        # TODO: select port automatically or manually (from config) and
-        # use find_free_port()
-        if not wait_for_tcp_port(1234) or not wait_for_tcp_port(5678):
-            killpg(0, SIGKILL)
-
-        qmp = QMP(5678)
-
         while 1:
             test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
+            test_src, target_elf = self.target_elf_queue.get(block = True)
 
+            qemu = ProcessWithErrCatching(
+                self.config.qemu.run_script.format(bin = target_elf)
+            )
             gdbserver = ProcessWithErrCatching(
                 self.config.gdbserver.run_script.format(bin = oracle_elf)
             )
 
+            qemu.daemon = True
             gdbserver.daemon = True
+
+            oracle_queue = Queue(0)
+            target_queue = Queue(0)
+
+            qemu.start()
             gdbserver.start()
 
-            if not wait_for_tcp_port(4321):
+            # TODO: select port automatically or manually (from config) and
+            # use find_free_port()
+            if not wait_for_tcp_port(1234) or not wait_for_tcp_port(4321):
                 killpg(0, SIGKILL)
 
             oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
@@ -442,18 +438,14 @@ class CpuTestingTool(object):
                 debug_comparison.start()
             except RuntimeError:
                 killpg(0, SIGKILL)
+            else:
+                qemu.join()
+                gdbserver.join()
+                oracle_session.join()
+                target_session.join()
 
             if self.target_elf_queue.empty() and self.oracle_elf_queue.empty():
                 break
-
-            oracle_session.join()
-            target_session.join()
-
-            qmp("system_reset")
-            # TODO: wtf?
-            gdbserver.terminate()
-
-            test_src, target_elf = self.target_elf_queue.get(block = True)
 
         killpg(0, SIGKILL)
 
