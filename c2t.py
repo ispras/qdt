@@ -64,6 +64,9 @@ with pypath("pyrsp"):
         wait_for_tcp_port,
         QMP
     )
+    from pyrsp.elf import (
+        ELF
+    )
 from c2t import (
     CommentParser,
     DebugComparison
@@ -111,7 +114,9 @@ class C2tRuntime(Process):
     # TODO: add good comment
     """ Debug session unit """
 
-    def __init__(self, target, srcfile, port, elffile, queue, verbose):
+    def __init__(self, target, srcfile, port, elffile, queue, nonkill,
+        verbose
+    ):
         self.elf = InMemoryELFFile(elffile)
         di = self.elf.get_dwarf_info()
         dic = DWARFInfoCache(di,
@@ -126,6 +131,7 @@ class C2tRuntime(Process):
         self.srcfile = srcfile
         self.port = port
         self.queue = queue
+        self.nonkill = nonkill
         self.addr2line = {}
         self.line2var = {}
 
@@ -149,9 +155,11 @@ class C2tRuntime(Process):
         if var_name is not None:
             self.line2var[lineno] = var_name
         for desc in line_descs:
+            # if desc.state.is_stmt:
             addr = self.rt.target.reg_fmt % desc.state.address
             self.addr2line[addr] = lineno
             self.rt.target.set_br_a(addr, cb)
+                # break
 
     def _set_breakpoints(self):
         lineno = 1
@@ -225,7 +233,13 @@ continues running the cpu, and detaches from the debugging device
         """
         if self.queue:
             self.queue.put("CMP_EXIT")
-        self.rt.target.finish_cb()
+        self.rt.target.exit = True
+        for br in self.rt.target.br.keys()[:]:
+            self.rt.target.del_br(br)
+        self.kill_target()
+
+    def kill_target(self):
+        self.rt.target.send('k')
         self.rt.target.port.close()
 
 
@@ -268,13 +282,30 @@ it back and check if it matches with the uploaded binary.
 
     def run(self):
         self._set_breakpoints()
-        self.rt.target.start = "main"
+        # self.rt.target.start = "main"
         self.rt.target.refresh_regs()
         self.load(True)
         addr = "%0*x" % (self.rt.target.arch['bitsize'] >> 2, 65536)
         # TODO: don't hardcode this
         self.rt.target.set_reg('sp', addr)
         self.rt.target.run(start = "main", setpc = True)
+
+    def reset(self, srcfile, elffile):
+        self.srcfile = srcfile
+        self.elf = InMemoryELFFile(elffile)
+        di = self.elf.get_dwarf_info()
+        dic = DWARFInfoCache(di,
+            symtab = self.elf.get_section_by_name(b".symtab")
+        )
+        self.rt.target.elf = ELF(elffile)
+        self.rt.dic = dic
+        self.addr2line = {}
+        self.line2var = {}
+
+    def kill_target(self):
+        if not self.nonkill:
+            self.rt.target.send('k')
+            self.rt.target.port.close()
 
 
 class ProcessWithErrCatching(Process):
@@ -339,7 +370,7 @@ class TestBuilder(Process):
 
 class CpuTestingTool(object):
 
-    def __init__(self, config, tests, verbose):
+    def __init__(self, config, tests, nonkill, verbose):
         self.config = self.get_cfg(config)
         self.verify_config(config)
         self.oracle_cpu = "amd64" if machine() == "x86_64" else "i386"
@@ -351,6 +382,7 @@ class CpuTestingTool(object):
         self.oracle_builder = TestBuilder(self.oracle_cpu,
             self.config.oracle_compiler, tests, self.oracle_elf_queue
         )
+        self.nonkill = nonkill
         self.verbose = verbose
 
     @staticmethod
@@ -415,6 +447,11 @@ class CpuTestingTool(object):
 
         qmp = QMP(5678)
 
+        target_session = C2tTarget(archmap[self.machine_type], test_src,
+            "1234", target_elf, target_queue, self.nonkill, self.verbose
+        )
+
+        is_reset = False
         while 1:
             test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
 
@@ -429,15 +466,16 @@ class CpuTestingTool(object):
                 killpg(0, SIGKILL)
 
             oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
-                "4321", oracle_elf, oracle_queue, self.verbose
+                "4321", oracle_elf, oracle_queue, self.nonkill, self.verbose
             )
-            target_session = C2tTarget(archmap[self.machine_type], test_src,
-                "1234", target_elf, target_queue, self.verbose
-            )
+
             debug_comparison = DebugComparison(oracle_queue, target_queue)
 
             oracle_session.start()
-            target_session.start()
+            if not is_reset:
+                target_session.start()
+            else:
+                target_session.run()
             try:
                 debug_comparison.start()
             except RuntimeError:
@@ -446,16 +484,22 @@ class CpuTestingTool(object):
             if self.target_elf_queue.empty() and self.oracle_elf_queue.empty():
                 break
 
+            gdbserver.join()
             oracle_session.join()
-            target_session.join()
-
-            qmp("system_reset")
-            # TODO: wtf?
-            gdbserver.terminate()
 
             test_src, target_elf = self.target_elf_queue.get(block = True)
 
-        killpg(0, SIGKILL)
+            qmp("stop")
+            qmp("system_reset")
+            # target_session.terminate()
+            target_session.reset(test_src, target_elf)
+            is_reset = True
+
+        target_session.nonkill = False
+        target_session.kill_target()
+        qemu.join()
+        target_session.join()
+        # killpg(0, SIGKILL)
 
 
 class C2TArgumentParser(ArgumentParser):
@@ -494,6 +538,11 @@ def main():
              " (tests are located in %s)"
         ) % C2T_TEST_DIR
     )
+    # TODO: comment it better
+    parser.add_argument("-k", "--nonkill",
+        action = "store_true",
+        help = "not kill the targets"
+    )
     parser.add_argument("-v", "--verbose",
         action = "store_true",
         help = "increase output verbosity"
@@ -518,7 +567,7 @@ def main():
             optval = args.regexp
         )
 
-    tf = CpuTestingTool(config, tests, args.verbose)
+    tf = CpuTestingTool(config, tests, args.nonkill, args.verbose)
     tf.start()
 
 
