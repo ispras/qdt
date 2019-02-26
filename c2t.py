@@ -62,7 +62,8 @@ with pypath("pyrsp"):
     from pyrsp.utils import (
         pack,
         wait_for_tcp_port,
-        QMP
+        QMP,
+        find_free_port
     )
     from pyrsp.elf import (
         ELF
@@ -432,9 +433,14 @@ class CpuTestingTool(object):
 
         test_src, target_elf = self.target_elf_queue.get(block = True)
 
-        qemu = ProcessWithErrCatching(
-            self.config.qemu.run_script.format(bin = target_elf)
+        qemu_port = find_free_port()
+        qmp_port = find_free_port(qemu_port + 1)
+        qmp_run = " -qmp tcp:localhost:{port},server,nowait"
+        qemu_run = (self.config.qemu.run_script.format(port = qemu_port,
+            bin = target_elf) + qmp_run.format(port = qmp_port)
         )
+
+        qemu = ProcessWithErrCatching(qemu_run)
 
         qemu.daemon = True
 
@@ -443,33 +449,36 @@ class CpuTestingTool(object):
 
         qemu.start()
 
-        # TODO: select port automatically or manually (from config) and
-        # use find_free_port()
-        if not wait_for_tcp_port(1234) or not wait_for_tcp_port(5678):
+        # TODO: add support for port setting from config
+        if not wait_for_tcp_port(qemu_port) or not wait_for_tcp_port(qmp_port):
             killpg(0, SIGKILL)
 
-        qmp = QMP(5678)
+        qmp = QMP(qmp_port)
 
         target_session = C2tTarget(archmap[self.machine_type], test_src,
-            "1234", target_elf, target_queue, self.kill, self.verbose
+            str(qemu_port), target_elf, target_queue, self.kill, self.verbose
         )
 
         is_reset = False
         while 1:
             test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
 
+            gdbserver_port = find_free_port(qmp_port + 1)
             gdbserver = ProcessWithErrCatching(
-                self.config.gdbserver.run_script.format(bin = oracle_elf)
+                self.config.gdbserver.run_script.format(port = gdbserver_port,
+                    bin = oracle_elf
+                )
             )
 
             gdbserver.daemon = True
             gdbserver.start()
 
-            if not wait_for_tcp_port(4321):
+            if not wait_for_tcp_port(gdbserver_port):
                 killpg(0, SIGKILL)
 
             oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
-                "4321", oracle_elf, oracle_queue, self.kill, self.verbose
+                str(gdbserver_port), oracle_elf, oracle_queue, self.kill,
+                self.verbose
             )
 
             debug_comparison = DebugComparison(oracle_queue, target_queue)
@@ -513,11 +522,18 @@ class CpuTestingTool(object):
             test_src, target_elf = self.target_elf_queue.get(block = True)
             test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
 
+            qemu_port = find_free_port()
+            gdbserver_port = find_free_port(qemu_port + 1)
+
             qemu = ProcessWithErrCatching(
-                self.config.qemu.run_script.format(bin = target_elf)
+                self.config.qemu.run_script.format(port = qemu_port,
+                    bin = target_elf
+                )
             )
             gdbserver = ProcessWithErrCatching(
-                self.config.gdbserver.run_script.format(bin = oracle_elf)
+                self.config.gdbserver.run_script.format(port = gdbserver_port,
+                    bin = oracle_elf
+                )
             )
 
             qemu.daemon = True
@@ -529,16 +545,19 @@ class CpuTestingTool(object):
             qemu.start()
             gdbserver.start()
 
-            # TODO: select port automatically or manually (from config) and
-            # use find_free_port()
-            if not wait_for_tcp_port(1234) or  not wait_for_tcp_port(4321):
+            # TODO: add support for port setting from config
+            if (   not wait_for_tcp_port(qemu_port)
+                or not wait_for_tcp_port(gdbserver_port)
+            ):
                 killpg(0, SIGKILL)
 
             target_session = C2tTarget(archmap[self.machine_type], test_src,
-                "1234", target_elf, target_queue, self.kill, self.verbose
+                str(qemu_port), target_elf, target_queue, self.kill,
+                self.verbose
             )
             oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
-                "4321", oracle_elf, oracle_queue, self.kill, self.verbose
+                str(gdbserver_port), oracle_elf, oracle_queue, self.kill,
+                self.verbose
             )
 
             debug_comparison = DebugComparison(oracle_queue, target_queue)
