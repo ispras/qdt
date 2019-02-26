@@ -114,9 +114,7 @@ class C2tRuntime(Process):
     # TODO: add good comment
     """ Debug session unit """
 
-    def __init__(self, target, srcfile, port, elffile, queue, nonkill,
-        verbose
-    ):
+    def __init__(self, target, srcfile, port, elffile, queue, kill, verbose):
         self.elf = InMemoryELFFile(elffile)
         di = self.elf.get_dwarf_info()
         dic = DWARFInfoCache(di,
@@ -131,7 +129,7 @@ class C2tRuntime(Process):
         self.srcfile = srcfile
         self.port = port
         self.queue = queue
-        self.nonkill = nonkill
+        self.kill = kill
         self.addr2line = {}
         self.line2var = {}
 
@@ -303,7 +301,7 @@ it back and check if it matches with the uploaded binary.
         self.line2var = {}
 
     def kill_target(self):
-        if not self.nonkill:
+        if self.kill:
             self.rt.target.send('k')
             self.rt.target.port.close()
 
@@ -370,7 +368,7 @@ class TestBuilder(Process):
 
 class CpuTestingTool(object):
 
-    def __init__(self, config, tests, nonkill, verbose):
+    def __init__(self, config, tests, kill, verbose):
         self.config = self.get_cfg(config)
         self.verify_config(config)
         self.oracle_cpu = "amd64" if machine() == "x86_64" else "i386"
@@ -382,7 +380,12 @@ class CpuTestingTool(object):
         self.oracle_builder = TestBuilder(self.oracle_cpu,
             self.config.oracle_compiler, tests, self.oracle_elf_queue
         )
-        self.nonkill = nonkill
+        self.kill = kill
+        # TODO: use it
+        if not kill:
+            self.start = self.nonkill_start
+        else:
+            self.start = self.kill_start
         self.verbose = verbose
 
     @staticmethod
@@ -421,7 +424,7 @@ class CpuTestingTool(object):
         ):
             errmsg(errmsg2, prog = "%s: oracle_compiler" % config)
 
-    def start(self):
+    def nonkill_start(self):
         setpgrp()
 
         self.target_builder.start()
@@ -448,7 +451,7 @@ class CpuTestingTool(object):
         qmp = QMP(5678)
 
         target_session = C2tTarget(archmap[self.machine_type], test_src,
-            "1234", target_elf, target_queue, self.nonkill, self.verbose
+            "1234", target_elf, target_queue, self.kill, self.verbose
         )
 
         is_reset = False
@@ -466,7 +469,7 @@ class CpuTestingTool(object):
                 killpg(0, SIGKILL)
 
             oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
-                "4321", oracle_elf, oracle_queue, self.nonkill, self.verbose
+                "4321", oracle_elf, oracle_queue, self.kill, self.verbose
             )
 
             debug_comparison = DebugComparison(oracle_queue, target_queue)
@@ -491,16 +494,70 @@ class CpuTestingTool(object):
 
             qmp("stop")
             qmp("system_reset")
-            # target_session.terminate()
             target_session.reset(test_src, target_elf)
             is_reset = True
 
         # TODO: add 2 debug modes
-        target_session.nonkill = False
+        target_session.kill = True
         target_session.kill_target()
         qemu.join()
         target_session.join()
-        # killpg(0, SIGKILL)
+
+    def kill_start(self):
+        setpgrp()
+
+        self.target_builder.start()
+        self.oracle_builder.start()
+
+        while 1:
+            test_src, target_elf = self.target_elf_queue.get(block = True)
+            test_src, oracle_elf = self.oracle_elf_queue.get(block = True)
+
+            qemu = ProcessWithErrCatching(
+                self.config.qemu.run_script.format(bin = target_elf)
+            )
+            gdbserver = ProcessWithErrCatching(
+                self.config.gdbserver.run_script.format(bin = oracle_elf)
+            )
+
+            qemu.daemon = True
+            gdbserver.daemon = True
+
+            oracle_queue = Queue(0)
+            target_queue = Queue(0)
+
+            qemu.start()
+            gdbserver.start()
+
+            # TODO: select port automatically or manually (from config) and
+            # use find_free_port()
+            if not wait_for_tcp_port(1234) or  not wait_for_tcp_port(4321):
+                killpg(0, SIGKILL)
+
+            target_session = C2tTarget(archmap[self.machine_type], test_src,
+                "1234", target_elf, target_queue, self.kill, self.verbose
+            )
+            oracle_session = C2tOracle(archmap[self.oracle_cpu], test_src,
+                "4321", oracle_elf, oracle_queue, self.kill, self.verbose
+            )
+
+            debug_comparison = DebugComparison(oracle_queue, target_queue)
+
+            oracle_session.start()
+            target_session.start()
+
+            try:
+                debug_comparison.start()
+            except RuntimeError:
+                killpg(0, SIGKILL)
+            else:
+                qemu.join()
+                gdbserver.join()
+                target_session.join()
+                oracle_session.join()
+
+            if self.target_elf_queue.empty() and self.oracle_elf_queue.empty():
+                break
 
 
 class C2TArgumentParser(ArgumentParser):
@@ -540,9 +597,9 @@ def main():
         ) % C2T_TEST_DIR
     )
     # TODO: comment it better
-    parser.add_argument("-k", "--nonkill",
+    parser.add_argument("-k", "--kill",
         action = "store_true",
-        help = "not kill the targets"
+        help = "kill the targets"
     )
     parser.add_argument("-v", "--verbose",
         action = "store_true",
@@ -568,7 +625,7 @@ def main():
             optval = args.regexp
         )
 
-    tf = CpuTestingTool(config, tests, args.nonkill, args.verbose)
+    tf = CpuTestingTool(config, tests, args.kill, args.verbose)
     tf.start()
 
 
