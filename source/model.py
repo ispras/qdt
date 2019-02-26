@@ -1493,7 +1493,7 @@ class Variable(object):
         used = False
     ):
         self.name = name
-        self.type = _type
+        self.type = _type if isinstance(_type, Type) else Type[_type]
         self.initializer = initializer
         self.static = static
         self.const = const
