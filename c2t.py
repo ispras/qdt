@@ -495,6 +495,7 @@ class CpuTestingTool(object):
             target_session.reset(test_src, target_elf)
             is_reset = True
 
+        # TODO: add 2 debug modes
         target_session.nonkill = False
         target_session.kill_target()
         qemu.join()
