@@ -333,12 +333,13 @@ class ProcessWithErrCatching(Process):
 class TestBuilder(Process):
     """ A helper class that builds tests """
 
-    def __init__(self, march, cmpl_unit, tests, elf_queue):
+    def __init__(self, march, cmpl_unit, tests, elf_queue, verbose):
         Process.__init__(self)
         self.suffix = "_%s" % march
         self.cmpl_unit = cmpl_unit
         self.tests = tests
         self.elf_queue = elf_queue
+        self.verbose = verbose
 
     def test_build(self, test):
         test_name = test[:-2]
@@ -348,11 +349,14 @@ class TestBuilder(Process):
         run_script = ''
 
         for run_script in self.cmpl_unit.run_script:
-            cmpl_unit = ProcessWithErrCatching(run_script.format(
+            cmd = run_script.format(
                 src = test_src,
                 ir = test_ir,
                 bin = test_bin
-            ))
+            )
+            if self.verbose:
+                print(cmd)
+            cmpl_unit = ProcessWithErrCatching(cmd)
             cmpl_unit.start()
             cmpl_unit.join()
 
@@ -376,10 +380,10 @@ class CpuTestingTool(object):
         self.target_elf_queue = Queue(0)
         self.oracle_elf_queue = Queue(0)
         self.target_builder = TestBuilder(self.machine_type,
-            self.config.target_compiler, tests, self.target_elf_queue
+            self.config.target_compiler, tests, self.target_elf_queue, verbose
         )
         self.oracle_builder = TestBuilder(self.oracle_cpu,
-            self.config.oracle_compiler, tests, self.oracle_elf_queue
+            self.config.oracle_compiler, tests, self.oracle_elf_queue, verbose
         )
         self.kill = kill
         # TODO: use it
