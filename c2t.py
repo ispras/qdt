@@ -402,8 +402,11 @@ class CpuTestingTool(object):
             errmsg(e, prog = config)
 
     def verify_config(self, config):
-        if self.config.march in archmap:
-            self.machine_type = self.config.march
+        self.machine_type = self.config.march
+        if self.config.gdbserver.gdb_target is not None:
+            self.target_type = self.config.gdbserver.gdb_target
+        elif self.machine_type in archmap:
+            self.target_type = archmap[self.machine_type]
         else:
             errmsg("unsupported target:", arg = self.config.march)
 
@@ -459,7 +462,7 @@ class CpuTestingTool(object):
 
         qmp = QMP(qmp_port)
 
-        target_session = C2tTarget(archmap[self.machine_type], test_src,
+        target_session = C2tTarget(self.target_type, test_src,
             str(qemu_port), target_elf, target_queue, self.kill, self.verbose
         )
 
@@ -555,7 +558,7 @@ class CpuTestingTool(object):
             ):
                 killpg(0, SIGKILL)
 
-            target_session = C2tTarget(archmap[self.machine_type], test_src,
+            target_session = C2tTarget(self.target_type, test_src,
                 str(qemu_port), target_elf, target_queue, self.kill,
                 self.verbose
             )

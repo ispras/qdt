@@ -3,6 +3,7 @@ __all__ = [
   , "Run"
   , "DebugUnit"
   , "CompileUnit"
+  , "rsp_target"
 ]
 
 from abc import (
@@ -12,6 +13,14 @@ from abc import (
 from collections import (
     namedtuple
 )
+from common import (
+    pypath
+)
+with pypath("..pyrsp"):
+    from pyrsp.rsp import (
+        RSP
+    )
+
 
 # CPU Testing Tool configuration components
 C2TConfig = namedtuple(
@@ -48,8 +57,9 @@ class C2TUnit(object):
 
 class DebugUnit(C2TUnit):
 
-    def __init__(self, run):
+    def __init__(self, run, gdb_target = None):
         self.run = run
+        self.gdb_target = gdb_target
 
     @property
     def run_script(self):
@@ -80,3 +90,21 @@ class CompileUnit(C2TUnit):
     def run_script(self):
         for run in self.runs:
             yield self.assemble_run(run)
+
+
+def rsp_target(regs, pc, regsize, little_endian = True):
+    """Helper defining custom description of remote target CPU architecture
+    for RSP.
+    """
+
+    class CustomRSP(RSP):
+        def __init__(self, *a, **kw):
+            self.arch = dict(
+                regs = regs,
+                endian = little_endian,
+                bitsize = regsize
+            )
+            self.pc_reg = pc
+            super(CustomRSP, self).__init__(*a, **kw)
+
+    return CustomRSP
