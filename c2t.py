@@ -631,13 +631,15 @@ def main():
     if not args.config or not args.regexp:
         parser.error("requires more input arguments to run")
 
-    config = join(C2T_CONFIGS_DIR, "%s.py" % args.config)
-    if not exists(config):
-        config = join(C2T_DIR, "%s.py" % args.config)
+    config = args.config
+    if not exists(args.config):
+        config = join(C2T_CONFIGS_DIR, "%s.py" % args.config)
         if not exists(config):
-            parser.error("configuration file doesn't exist:",
-                optval = args.config
-            )
+            config = join(C2T_DIR, "%s.py" % args.config)
+            if not exists(config):
+                parser.error("configuration file doesn't exist:",
+                    optval = args.config
+                )
 
     tests = get_tests(args.regexp)
     if not tests:
