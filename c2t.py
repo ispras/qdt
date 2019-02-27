@@ -611,6 +611,7 @@ def main():
     parser.add_argument("-t", "--test",
         type = str,
         dest="regexp",
+        default = ".*",
         help = ("regular expression that defines a test set"
              " (tests are located in %s)"
         ) % C2T_TEST_DIR
