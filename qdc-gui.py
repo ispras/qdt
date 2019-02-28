@@ -5,6 +5,7 @@ from examples import (
     Q35MachineNode_2_6_0
 )
 from widgets import (
+    QDCGUISignalHelper,
     DescNameWatcher,
     GUIPOp_SetBuildPath,
     Statusbar,
@@ -47,6 +48,8 @@ from os import (
     remove
 )
 from common import (
+    Variable,
+    as_variable,
     FormatVar,
     execfile,
     CoSignal,
@@ -106,7 +109,7 @@ class ProjectGeneration(CoTask):
         self.finished = True
         self.sig.emit()
 
-class QDCGUIWindow(GUITk):
+class QDCGUIWindow(GUITk, QDCGUISignalHelper):
     def __init__(self, project = None):
         GUITk.__init__(self, wait_msec = 1)
 
@@ -308,6 +311,20 @@ show it else hide it.")
         self.sb = sb = Statusbar(self)
         sb.grid(row = 1, column = 0, sticky = "NEWS")
 
+        # Target Qemu version in the status bar
+        self._target_qemu = Variable(None)
+
+        # This complicated scheme is required because the status must also
+        # be updated on language change.
+        @as_variable(self._target_qemu, _("No target"), _("Target Qemu: %s"))
+        def var_target_qemu(target, no_target, target_qemu):
+            if target is None:
+                return no_target
+            else:
+                return target_qemu % target
+
+        sb.left(var_target_qemu)
+
         # QEMU build path displaying
         self.var_qemu_build_path = StringVar()
         sb.left(self.var_qemu_build_path)
@@ -335,6 +352,8 @@ show it else hide it.")
 
         self.__update_title__()
         self.__check_saved_asterisk__()
+
+        self.qsig_watch("qvc_available", self.__on_qvc_available)
 
     def __on_task_state_changed(self, task):
         for group in [ "tasks", "callers", "active_tasks", "finished_tasks" ]:
@@ -448,6 +467,7 @@ show it else hide it.")
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
         self.update_qemu_build_path(project.build_path)
+        self.update_target_qemu()
 
         self.pht.watch_changed(self.on_changed)
         self.check_undo_redo()
@@ -474,6 +494,8 @@ show it else hide it.")
             proj = self.proj
             if op.p is proj:
                 self.update_qemu_build_path(proj.build_path)
+                # Note that target Qemu version info will be update when QVC
+                # will be ready.
 
     def undo(self):
         self.pht.undo_sequence()
@@ -732,6 +754,14 @@ all changes are saved. """
             self.var_qemu_build_path.set(_("No QEMU build path selected").get())
         else:
             self.var_qemu_build_path.set("QEMU: " + bp)
+
+    def update_target_qemu(self):
+        p, qvd = self.proj, QemuVersionDescription.current
+        self._target_qemu.set(p and p.target_version or qvd and qvd.commit_sha)
+
+    def __on_qvc_available(self):
+        self.update_target_qemu()
+
 
 def main():
     parser = ArgumentParser()
