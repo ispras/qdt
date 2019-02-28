@@ -11,7 +11,6 @@ from six.moves.tkinter import (
     Tk
 )
 from common import (
-    FormatedStringVar,
     FormatVar
 )
 
@@ -48,7 +47,7 @@ class FSVTest(FSVTestBase):
         text = StringVar(value = "[ a text will be here ]")
         res = fmt % text
 
-        self.assertIsInstance(res, FormatedStringVar)
+        self.assertIsInstance(res, StringVar)
 
         self.assertEqual(res.get(), "Text is '[ a text will be here ]'")
 
