@@ -13,6 +13,7 @@ from common import (
     mlget as _
 )
 from .gui_editing import (
+    GUIPOp_SetTarget,
     GUIPOp_SetBuildPath
 )
 
@@ -159,4 +160,13 @@ class GUIProjectHistoryTracker(ProjectHistoryTracker):
         self.stage(GUIPOp_SetBuildPath, path)
         self.commit(sequence_description =
             _("Qemu build path configuration.")
+        )
+
+    def set_target(self, git_version):
+        if self.p.target_version == git_version:
+            return
+
+        self.stage(GUIPOp_SetTarget, git_version)
+        self.commit(sequence_description =
+            _("Setting of target Qemu version.")
         )
