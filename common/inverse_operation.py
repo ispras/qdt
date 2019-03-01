@@ -21,6 +21,7 @@ from .notifier import (
     notifier
 )
 
+
 class UnimplementedInverseOperation(NotImplementedError):
     pass
 
@@ -154,6 +155,7 @@ class InitialOperation(InverseOperation):
 
     def __description__(self, __):
         return _("The beginning of known history.")
+
 
 class History(object):
     def __init__(self):
