@@ -9,6 +9,7 @@ from .device_settings import *
 from .device_settings_window import *
 from .device_tree_widget import *
 from .DnDCanvas import *
+from .git_ref_selector import *
 from .gui_dialog import *
 from .gui_editing import *
 from .gui_error import *
