@@ -1,6 +1,7 @@
 __all__ = [
     "GUIProjectOperation"
       , "GUIPOp_SetBuildPath"
+      , "GUIPOp_SetTarget"
       , "GUIDescriptionOperation"
           , "POp_SetDescLayout"
 ]
@@ -64,6 +65,27 @@ class GUIPOp_SetBuildPath(GUIProjectOperation):
             return _("Change project build path value '%s' to '%s'") % (
                 self._old, self._new
             )
+
+
+@changes_attr("target_version")
+class GUIPOp_SetTarget(GUIProjectOperation):
+
+    def __init__(self, target, *a, **kw):
+        super(GUIPOp_SetTarget, self).__init__(*a, **kw)
+        self._new = target
+
+    def __description__(self, p):
+        # Assume that the operation is not used to change Qemu target version
+        # from None to None.
+        if self._old is None:
+            return _("Set target Qemu version '%s'" % self._new)
+        elif self._new is None:
+            return _("Forget target Qemu version '%s'" % self._old)
+        else:
+            return _("Change target Qemu version '%s' to '%s'" % (
+                self._old, self._new
+            ))
+
 
 class GUIDescriptionOperation(GUIProjectOperation):
     def __init__(self, description, *args, **kw):
