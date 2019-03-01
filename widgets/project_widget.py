@@ -52,6 +52,7 @@ from .add_desc_dialog import (
     AddDescriptionDialog
 )
 from .gui_editing import (
+    GUIPOp_SetTarget,
     GUIPOp_SetBuildPath,
     POp_SetDescLayout
 )
@@ -413,7 +414,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                         break
                 else:
                     w.destroy()
-        elif isinstance(op, GUIPOp_SetBuildPath):
+        elif isinstance(op, (GUIPOp_SetBuildPath, GUIPOp_SetTarget)):
             try:
                 self.__account_build_path
             except AttributeError:
