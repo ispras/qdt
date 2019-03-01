@@ -5,6 +5,7 @@ from examples import (
     Q35MachineNode_2_6_0
 )
 from widgets import (
+    GitVerSelDialog,
     QDCGUISignalHelper,
     DescNameWatcher,
     GUIPOp_SetBuildPath,
@@ -173,6 +174,11 @@ show it else hide it.")
                 description = _("Set Qemu build path for the project")
             ),
             HotKeyBinding(
+                self.on_sel_tgt_qemu_version,
+                key_code = 28, # T
+                description = _("Select target Qemu version for the project")
+            ),
+            HotKeyBinding(
                 self.on_generate,
                 key_code = 42, # G
                 description = _("Launch code generation")
@@ -205,6 +211,7 @@ show it else hide it.")
         ])
 
         hotkeys.add_key_symbols({
+            28: "T",
             27: "R",
             43: "H",
             32: "O",
@@ -235,6 +242,13 @@ show it else hide it.")
             command = self.on_set_qemu_build_path,
             accelerator = hotkeys.get_keycode_string(
                 self.on_set_qemu_build_path
+            )
+        )
+        filemenu.add_command(
+            label = _("Select target Qemu version"),
+            command = self.on_sel_tgt_qemu_version,
+            accelerator = hotkeys.get_keycode_string(
+                self.on_sel_tgt_qemu_version
             )
         )
         filemenu.add_command(
@@ -635,6 +649,21 @@ in process. Do you want to start cache rebuilding?")
             return
 
         self.pht.set_build_path(dir)
+
+    def on_sel_tgt_qemu_version(self):
+        try:
+            qvd = qvd_get(self.proj.build_path)
+        except:
+            repo = None
+        else:
+            repo = qvd.repo
+
+        new_target = GitVerSelDialog(self, repo).wait()
+
+        if new_target is None:
+            return
+
+        self.pht.set_target(new_target)
 
     def on_generate(self):
         try:
