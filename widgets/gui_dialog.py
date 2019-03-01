@@ -2,11 +2,14 @@ __all__ = [
     "GUIDialog"
 ]
 
+
 from .gui_toplevel import (
     GUIToplevel
 )
 
+
 class GUIDialog(GUIToplevel):
+
     def __init__(self, *args, **kw):
         GUIToplevel.__init__(self, *args, **kw)
 
