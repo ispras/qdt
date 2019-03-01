@@ -21,8 +21,10 @@ from .notifier import (
     notifier
 )
 
+
 class UnimplementedInverseOperation(NotImplementedError):
     pass
+
 
 simple_eq_types = (
     bool,
@@ -87,6 +89,7 @@ Life cycle:
 
 """
 
+
 class InverseOperation(object):
     """ Describes a deterministic operation that can be done on a context and
 consequently undone resulting in the same context state. An operation should
@@ -132,8 +135,10 @@ determinism.
         return _("Reversible operation with unimplemented description \
 (class %s).") % type(self).__name__
 
+
 class InitialOperationCall(TypeError):
     pass
+
 
 class InitialOperation(InverseOperation):
 
@@ -155,7 +160,9 @@ class InitialOperation(InverseOperation):
     def __description__(self, __):
         return _("The beginning of known history.")
 
+
 class History(object):
+
     def __init__(self):
         self.root = InitialOperation()
         self.leafs = [self.root]
@@ -193,11 +200,13 @@ It's like a transaction in a data base management system.
         for method, a, kw in calls:
             getattr(ht, method)(*a, **kw)
 
+
 @notifier(
     "staged",
     "changed"
 )
 class HistoryTracker(object):
+
     def __init__(self, context, history):
         self.ctx = context
         self.history = history
@@ -343,4 +352,3 @@ class HistoryTracker(object):
             del self.delayed[:]
             for seq in delayed:
                 seq.__apply__()
-
