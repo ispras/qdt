@@ -1281,7 +1281,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        mt = MacroType(self,  initializer = macro_initializer)
+        mt = MacroType(self, initializer = macro_initializer)
         return mt.gen_var(name,
             pointer = pointer,
             initializer = initializer,
