@@ -1249,16 +1249,24 @@ class Pointer(Type):
             return self.type.get_definers()
 
     def gen_chunks(self, generator):
-        if not self.is_named:
-            return []
+        type = self.type
+        is_function = isinstance(type, Function)
 
         # strip function definition chunk, its references is only needed
-        if isinstance(self.type, Function):
-            ch = FunctionPointerTypeDeclaration(self.type, self.name)
-            refs = gen_function_decl_ref_chunks(self.type, generator)
+        if is_function:
+            refs = gen_function_decl_ref_chunks(type, generator)
         else:
-            ch = PointerTypeDeclaration(self.type, self.name)
-            refs = generator.provide_chunks(self.type)
+            refs = generator.provide_chunks(type)
+
+        if not self.is_named:
+            return refs
+
+        name = self.name
+
+        if is_function:
+            ch = FunctionPointerTypeDeclaration(type, name)
+        else:
+            ch = PointerTypeDeclaration(type, name)
 
         """ 'typedef' does not require refererenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
