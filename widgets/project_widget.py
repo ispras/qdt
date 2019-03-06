@@ -342,12 +342,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             else:
                 del self.reload_build_path_task
 
-            try:
-                self.reload_build_path_task = ReloadBuildPathTask(self)
-            except BadBuildPath as bbpe:
-                showerror(_("Bad build path").get(), str(bbpe))
-            else:
-                self.tm.enqueue(self.reload_build_path_task)
+            self.reload_build_path_task = ReloadBuildPathTask(self)
+            self.tm.enqueue(self.reload_build_path_task)
         else:
             """ If no task manager is available then account build path right
             now. It will cause GUI to freeze but there are no more options. """
