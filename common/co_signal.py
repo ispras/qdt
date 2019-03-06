@@ -18,11 +18,14 @@ from sys import (
     exc_info
 )
 
+
 class SignalIsAlreadyAttached(RuntimeError):
     pass
 
+
 class SignalIsNotAttached(RuntimeError):
     pass
+
 
 @notifier("failed")
 class SignalDispatcherTask(CoTask):
@@ -33,6 +36,11 @@ class SignalDispatcherTask(CoTask):
             description = _("Signal Dispatcher")
         )
         self.queue = []
+
+    def new_signal(self):
+        "Create a new signal and attach it to self."
+        s = CoSignal()
+        return s.attach(self)
 
     def co_deliver(self):
         while True:
@@ -100,8 +108,8 @@ class CoSignal(object):
 
         return self
 
-    def emit(self, *args, **kw):
-        return self.emit_args(args, kw)
+    def emit(self, *a, **kw):
+        return self.emit_args(a if a else None, kw if kw else None)
 
     def watch(self, callback):
         self.listeners.add(callback)
