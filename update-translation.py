@@ -81,4 +81,31 @@ for l in langs:
     else:
         call(["mv", messages_po, qdc_po])
 
+    # Post process .po file:
+    # - replace full file names with source root relative names
+    # - one file name per line
+    # replacement is binary, so first encode file mapping
+    repalcements = OrderedDict(
+        (full.encode("utf-8"), short.encode("utf-8"))
+        for (full, short) in locale_files.items()
+    )
+
+    with open(qdc_po + ".tmp", "wb") as po_out:
+        with open(qdc_po, "rb") as po_in:
+            for l in po_in.readlines():
+                if l.startswith(b"#: "):
+                    l = l[3:].rstrip()
+                    for l in l.split(b" "):
+                        for full, short in repalcements.items():
+                            i = l.find(full)
+                            if i < 0:
+                                continue
+                            l = l[:i] + short + l[i + len(full):]
+                            break
+                        po_out.write(b"#: " + l + b"\n")
+                else:
+                    po_out.write(l)
+
+    call(["mv", qdc_po + ".tmp", qdc_po])
+
     call(["msgfmt", "-o", join(directory, "qdc.mo"), qdc_po])
