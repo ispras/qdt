@@ -68,8 +68,6 @@ from .qdc_gui_signal_helper import (
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
-        proj = project_widget.p
-        self.qvd = qvd_get(proj.build_path, version = proj.target_version)
         CoTask.__init__(
             self,
             self.main(),
@@ -77,6 +75,8 @@ class ReloadBuildPathTask(CoTask):
         )
 
     def main(self):
+        proj = self.pw.p
+        self.qvd = qvd_get(proj.build_path, version = proj.target_version)
         if self.qvd.qvc is None:
             yield self.qvd.co_init_cache()
         self.pw.qvd = self.qvd
