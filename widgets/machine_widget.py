@@ -35,6 +35,12 @@ from .var_widgets import (
 from common import (
     mlget as _
 )
+from .scrollframe import (
+    add_scrollbars
+)
+from .gui_frame import (
+    GUIFrame
+)
 
 class MachineWidgetLayout(object):
     """
@@ -62,8 +68,9 @@ class MachinePanedWidget(PanedWindow):
 
         self.pack(fill = "both", expand = "yes")
 
-        self.mtw = MemoryTreeWidget(self, self.mach)
-        self.add(self.mtw)
+        self.mtw_frame = GUIFrame(self)
+        self.add(self.mtw_frame)
+        self.mtw = add_scrollbars(self.mtw_frame, MemoryTreeWidget, self.mach)
 
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw)
@@ -79,8 +86,9 @@ class MachineTabsWidget(VarNotebook):
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw, text = "Device diagram")
 
-        self.mtw = MemoryTreeWidget(self, self.mach)
-        self.add(self.mtw, text = "Memory")
+        self.mtw_frame = GUIFrame(self)
+        self.add(self.mtw_frame, text = "Memory")
+        self.mtw = add_scrollbars(self.mtw_frame, MemoryTreeWidget, self.mach)
 
 class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, *args, **kw):
