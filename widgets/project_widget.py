@@ -90,12 +90,12 @@ class ReloadBuildPathTask(CoTask):
         self.pw.qsig_emit("qvd_failed")
 
 class DescriptionsTreeview(VarTreeview):
-    def __init__(self, descriptions, *args, **kw):
+    def __init__(self, master, descriptions, *args, **kw):
         kw["columns"] = [
             "directory"
         ]
 
-        VarTreeview.__init__(self, *args, **kw)
+        VarTreeview.__init__(self, master, *args, **kw)
 
         self.descs = descriptions
 
@@ -170,7 +170,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         fr.columnconfigure(0, weight = 1)
         fr.columnconfigure(1, weight = 0)
 
-        tv = self.tv_descs = DescriptionsTreeview(self.p.descriptions, fr)
+        tv = self.tv_descs = DescriptionsTreeview(fr, self.p.descriptions)
         tv.grid(row = 0, column = 0, sticky = "NEWS")
 
         vsb = Scrollbar(fr, orient = "vertical", command = tv.yview)
