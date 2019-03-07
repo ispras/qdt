@@ -39,16 +39,12 @@ vertical scroll bar for created widget.
     canvas.configure(yscrollcommand = scrollbar.set)
 
     def inner_configure(_):
-        cnf = dict(
-            scrollregion = canvas.bbox(ALL)
+        canvas.configure(
+            scrollregion = canvas.bbox(ALL),
+            # Require as many space as inner widget do.
+            width = inner.winfo_reqwidth(),
+            height = inner.winfo_reqheight()
         )
-        cnv_h = canvas.winfo_height()
-        inner_h = inner.winfo_height()
-
-        if inner_h < cnv_h:
-            cnf["height"] = inner_h
-
-        canvas.configure(**cnf)
 
     inner.bind("<Configure>", inner_configure, "+")
 
