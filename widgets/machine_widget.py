@@ -3,6 +3,7 @@ __all__ = [
   , "MachineDescriptionSettingsWidget"
   , "MachineTabsWidget"
   , "MachinePanedWidget"
+  , "MemoryTreeFrame"
 ]
 
 from six.moves.tkinter import (
@@ -16,6 +17,7 @@ from .auto_paned import (
     AutoPanedWindow
 )
 from six.moves.tkinter_ttk import (
+    Scrollbar,
     Separator
 )
 from .machine_diagram_widget import (
@@ -37,6 +39,10 @@ from .var_widgets import (
 from common import (
     mlget as _
 )
+from .gui_frame import (
+    GUIFrame
+)
+
 
 class MachineWidgetLayout(object):
     """
@@ -56,6 +62,37 @@ class MachineWidgetLayout(object):
         g.gen_end()
 
 
+class MemoryTreeFrame(GUIFrame):
+    "A MemoryTreeWidget wrapper with scroll bars."
+
+    def __init__(self, master, machine_description, *a, **kw):
+        GUIFrame.__init__(self, master, *a, **kw)
+
+        self.rowconfigure(0, weight = 1)
+        self.rowconfigure(1, weight = 0)
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 0)
+
+        mtw = MemoryTreeWidget(self, machine_description)
+        mtw.grid(row = 0, column = 0, sticky = "NESW")
+
+        vsb = Scrollbar(self, orient = "vertical", command = mtw.yview)
+        vsb.grid(row = 0, column = 1, sticky = "NS")
+
+        hsb = Scrollbar(self, orient = "horizontal", command = mtw.xview)
+        hsb.grid(row = 1, column = 0, sticky = "EW")
+
+        mtw.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)
+
+        self.mtw = mtw
+
+    def gen_layout(self):
+        return self.mtw.gen_layout()
+
+    def set_layout(self, *a, **kw):
+        return self.mtw.set_layout(*a, **kw)
+
+
 class MachinePanedWidget(AutoPanedWindow):
     def __init__(self, machine_description, *args, **kw):
         kw["sashrelief"] = RAISED
@@ -65,8 +102,8 @@ class MachinePanedWidget(AutoPanedWindow):
 
         self.pack(fill = "both", expand = "yes")
 
-        self.mtw = MemoryTreeWidget(self, self.mach)
-        self.add(self.mtw)
+        self.mtf = MemoryTreeFrame(self, self.mach)
+        self.add(self.mtf)
 
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw)
@@ -82,8 +119,9 @@ class MachineTabsWidget(VarNotebook):
         self.mdw = MachineDiagramWidget(self, self.mach)
         self.add(self.mdw, text = "Device diagram")
 
-        self.mtw = MemoryTreeWidget(self, self.mach)
-        self.add(self.mtw, text = "Memory")
+        self.mtf = MemoryTreeFrame(self, self.mach)
+        self.add(self.mtf, text = "Memory")
+
 
 class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def __init__(self, *args, **kw):
@@ -153,7 +191,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             if self.mw is None:
                 layout = [ {}, None ]
             else:
-                layout = [ w.gen_layout() for w in [self.mw.mdw, self.mw.mtw] ]
+                layout = [ w.gen_layout() for w in [self.mw.mdw, self.mw.mtf] ]
                 self.mw.destroy()
 
             # 'self' is used as master widget (instead of self.settings_fr)
@@ -164,7 +202,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             self.mw.pack()
 
-            for w, l in zip([self.mw.mdw, self.mw.mtw], layout):
+            for w, l in zip([self.mw.mdw, self.mw.mtf], layout):
                 w.set_layout(l)
 
             self.var_mesh_step.set(self.mw.mdw.mesh_step.get())
@@ -172,7 +210,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
     def gen_layout(self):
         return MachineWidgetLayout(
             self.mw.mdw.gen_layout(),
-            self.mw.mtw.gen_layout(),
+            self.mw.mtf.gen_layout(),
             use_tabs = isinstance(self.mw, MachineTabsWidget)
         )
 
@@ -180,7 +218,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
         if isinstance(layout, MachineWidgetLayout):
             self.var_tabs.set(layout.use_tabs)
             self.mw.mdw.set_layout(layout.mdwl)
-            self.mw.mtw.set_layout(layout.mtwl)
+            self.mw.mtf.set_layout(layout.mtwl)
         else: # Previous version compatibility
             try:
                 extra = layout[-1]
@@ -194,7 +232,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
 
             self.var_tabs.set(use_tabs)
             self.mw.mdw.set_layout(layout)
-            self.mw.mtw.set_layout(None)
+            self.mw.mtf.set_layout(None)
 
         self.var_mesh_step.set(self.mw.mdw.mesh_step.get())
 
