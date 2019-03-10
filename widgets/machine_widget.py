@@ -10,8 +10,10 @@ from six.moves.tkinter import (
     VERTICAL,
     StringVar,
     Spinbox,
-    BooleanVar,
-    PanedWindow
+    BooleanVar
+)
+from .auto_paned import (
+    AutoPanedWindow
 )
 from six.moves.tkinter_ttk import (
     Separator
@@ -53,10 +55,11 @@ class MachineWidgetLayout(object):
         g.gen_field("use_tabs = " + g.gen_const(self.use_tabs))
         g.gen_end()
 
-class MachinePanedWidget(PanedWindow):
+
+class MachinePanedWidget(AutoPanedWindow):
     def __init__(self, machine_description, *args, **kw):
         kw["sashrelief"] = RAISED
-        PanedWindow.__init__(self, *args, **kw)
+        AutoPanedWindow.__init__(self, *args, **kw)
 
         self.mach = machine_description
 
