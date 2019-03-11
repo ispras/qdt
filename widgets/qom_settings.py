@@ -37,13 +37,6 @@ from .pci_id_widget import (
     PCIIdWidget
 )
 
-def validate_int(var, entry):
-    try:
-        (int(var.get(), base = 0))
-    except ValueError:
-        entry.config(bg = "red")
-    else:
-        entry.config(bg = "white")
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
@@ -69,6 +62,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(1, weight = 1)
 
         have_pciid = False
+        all_highlights = []
 
         for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
@@ -96,9 +90,24 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                     )
 
                 v, w = generator(f)
+
+                if v is not None:
+                    def do_highlight(w = w, v = v, attr = attr):
+                        if not w._validate():
+                            w._set_color("red")
+                        elif w._cast(v.get()) != getattr(self.desc, attr):
+                            w._set_color("#ffffcc")
+                        else:
+                            w._set_color("white")
+
+                    all_highlights.append(do_highlight)
+                    v.trace_variable("w", lambda *_: do_highlight())
+
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_var_" + attr, v)
             setattr(self, "_w_" + attr, w)
+
+        self._all_highlights = all_highlights
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -131,20 +140,33 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         v = StringVar()
         w = HKEntry(master, textvariable = v)
 
-        def validate(*a):
-            validate_int(v, entry = w)
+        def validate():
+            try:
+                (int(v.get(), base = 0))
+            except ValueError:
+                return False
+            else:
+                return True
 
-        v.trace_variable("w", validate)
+        w._validate = validate
+        w._set_color = lambda color : w.config(bg = color)
+        w._cast = lambda x : int(x, base = 0)
         return v, w
 
     def gen_str_widgets(self, master):
         v = StringVar()
         w = HKEntry(master, textvariable = v)
+        w._validate = lambda : True
+        w._set_color = lambda color : w.config(bg = color)
+        w._cast = lambda x : x
         return v, w
 
     def gen_bool_widgets(self, master):
         v = BooleanVar()
         w = Checkbutton(master, variable = v)
+        w._validate = lambda : True
+        w._set_color = lambda color : w.config(selectcolor = color)
+        w._cast = lambda x : x
         return v, w
 
     def gen_PCIId_widgets(self, master):
@@ -212,6 +234,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
 
             if widget_val != cur_val:
                 v.set(cur_val)
+
+        for cb in self._all_highlights:
+            cb()
 
     def __apply__(self):
         if self.pht is None:
