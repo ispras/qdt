@@ -83,35 +83,19 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 v = StringVar()
                 w = HKEntry(f, textvariable = v, state = "readonly")
             else:
-                if _input is str:
-                    v = StringVar()
-                    w = HKEntry(f, textvariable = v)
-                elif _input is int:
-                    v = StringVar()
-                    w = HKEntry(f, textvariable = v)
-
-                    def validate(varname, junk, act, entry = w, var = v):
-                        validate_int(var, entry = entry)
-
-                    v.trace_variable("w", validate)
-                elif _input is PCIId:
+                if _input is PCIId:
                     have_pciid = True
-                    """ Value of PCI Id could be presented either by PCIId
-object or by a string. So the actual widget/variable pair will be assigned
-during refresh.     """
-                    v = None
-                    w = GUIFrame(f)
-                    w.grid()
-                    w.rowconfigure(0, weight = 1)
-                    w.columnconfigure(0, weight = 1)
-                elif _input is bool:
-                    v = BooleanVar()
-                    w = Checkbutton(f, variable = v)
-                else:
+
+                _input_name = _input.__name__
+
+                try:
+                    generator = getattr(self, "gen_%s_widgets" % _input_name)
+                except AttributeError:
                     raise RuntimeError("Input of QOM template attribute %s of"
-                        " type %s is not supported" % (attr, _input.__name__)
+                        " type %s is not supported" % (attr, _input_name)
                     )
 
+                v, w = generator(f)
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_var_" + attr, v)
             setattr(self, "_w_" + attr, w)
@@ -142,6 +126,37 @@ during refresh.     """
         self.__have_pciid = have_pciid
         if have_pciid:
             self.qsig_watch("qvc_available", self.__on_qvc_available)
+
+    def gen_int_widgets(self, master):
+        v = StringVar()
+        w = HKEntry(master, textvariable = v)
+
+        def validate(*a):
+            validate_int(v, entry = w)
+
+        v.trace_variable("w", validate)
+        return v, w
+
+    def gen_str_widgets(self, master):
+        v = StringVar()
+        w = HKEntry(master, textvariable = v)
+        return v, w
+
+    def gen_bool_widgets(self, master):
+        v = BooleanVar()
+        w = Checkbutton(master, variable = v)
+        return v, w
+
+    def gen_PCIId_widgets(self, master):
+        # Value of PCI Id could be presented either by PCIId object or by a
+        # string depending on QVC availability. Hence, the actual
+        # widget/variable pair will be assigned during refresh.
+        v = None
+        w = GUIFrame(master)
+        w.grid()
+        w.rowconfigure(0, weight = 1)
+        w.columnconfigure(0, weight = 1)
+        return v, w
 
     def __on_qvc_available(self):
         self.__refresh__()
