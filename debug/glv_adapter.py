@@ -140,8 +140,9 @@ class GitLineVersionAdapter(LineAdapter):
 'git diff' information.
     """
 
-    def __init__(self, src_dir):
-        repo = Repo(src_dir)
+    def __init__(self, repo):
+        if not isinstance(repo, Repo):
+            repo = Repo(repo)
         curr_version = repo.head.object.hexsha
         self.curr_commit = repo.commit(curr_version)
         self.cm = GLVCacheManager(self.curr_commit)
