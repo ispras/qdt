@@ -179,7 +179,10 @@ class VarMenu(Menu):
                 elif param in kw:
                     var = kw.pop(param)
                 else:
-                    var = StringVar()
+                    var = ""
+
+                if not isinstance(var, variables):
+                    var = StringVar(self, var)
 
                 binding = MenuVarBinding(self, var, self.count, param)
                 var.trace_variable("w", binding.on_var_changed)

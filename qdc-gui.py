@@ -38,6 +38,7 @@ from qemu import (
     QemuVersionDescription
 )
 from six.moves.tkinter import (
+    END,
     IntVar
 )
 from six.moves.cPickle import (
@@ -47,6 +48,8 @@ from os import (
     remove
 )
 from common import (
+    OrderedSet,
+    Persistent,
     FormatVar,
     execfile,
     CoSignal,
@@ -69,6 +72,12 @@ from traceback import (
     format_exception
 )
 import sys
+from os.path import (
+    join,
+    isfile,
+    expanduser
+)
+
 
 class ProjectGeneration(CoTask):
     def __init__(self, project, source_path, signal):
@@ -205,10 +214,13 @@ show it else hide it.")
             39: "S"
         })
 
+        # see `set_user_settings`
+        self._user_settings = None
+
         # Menu bar
         menubar = VarMenu(self)
 
-        filemenu = VarMenu(menubar, tearoff = False)
+        self.filemenu = filemenu = VarMenu(menubar, tearoff = False)
         filemenu.add_command(
             label = _("Add description"),
             command = self.on_add_description,
@@ -248,6 +260,13 @@ show it else hide it.")
             command = self.on_load,
             accelerator = hotkeys.get_keycode_string(self.on_load)
         ),
+        self.recentmenu = recentmenu = VarMenu(filemenu, tearoff = False)
+        filemenu.add_cascade(
+            label = _("Recent projects"),
+            menu = recentmenu,
+            state = "disabled" # a user settings instance is required
+        )
+
         filemenu.add_separator()
         filemenu.add_command(
             label = _("Quit"),
@@ -335,6 +354,41 @@ show it else hide it.")
 
         self.__update_title__()
         self.__check_saved_asterisk__()
+
+    def set_user_settings(self, val):
+        if self._user_settings is val:
+            return
+        self._user_settings = val
+        self._update_recent_projects()
+
+    def _update_recent_projects(self):
+        settings = self._user_settings
+        menu = self.recentmenu
+
+        # first, clear recent menu
+        last = menu.index(END)
+        if last is not None:
+            menu.delete(0, last)
+
+        added = 0
+        if settings is not None:
+            for f in reversed(list(settings.recent_projects)):
+                # a simple check
+                if not isfile(f):
+                    settings.recent_projects.discard(f)
+                    continue
+
+                def do_load(file_name = f):
+                    self._do_load(file_name)
+
+                menu.add_command(label = f, command = do_load)
+
+                added += 1
+
+        self.filemenu.entryconfigure(
+            self.filemenu.index(_("Recent projects").get()),
+            state = "active" if added else "disabled"
+        )
 
     def __on_task_state_changed(self, task):
         for group in [ "tasks", "callers", "active_tasks", "finished_tasks" ]:
@@ -633,6 +687,10 @@ later.").get()
             self.saved_operation = self.pht.pos
             self.__check_saved_asterisk__()
 
+            if self._user_settings:
+                self._user_settings.account_project(file_name)
+                self._update_recent_projects()
+
     def save_project_to_file(self, file_name):
         self.pw.refresh_layouts()
 
@@ -666,6 +724,10 @@ later.").get()
             return
 
         self.save_project_to_file(file_name)
+
+        if self._user_settings:
+            self._user_settings.account_project(file_name)
+            self._update_recent_projects()
 
     def on_save_as(self):
         fname = asksaveas(self,
@@ -716,9 +778,10 @@ all changes are saved. """
             title = _("Load project")
         )
 
-        if not fname:
-            return
+        if fname:
+            self._do_load(fname)
 
+    def _do_load(self, fname):
         try:
             self.load_project_from_file(fname)
         except Exception as e:
@@ -732,6 +795,25 @@ all changes are saved. """
             self.var_qemu_build_path.set(_("No QEMU build path selected").get())
         else:
             self.var_qemu_build_path.set("QEMU: " + bp)
+
+
+class Settings(Persistent):
+    "Keeps user settings in a file."
+
+    def __init__(self, file_name):
+        super(Settings, self).__init__(file_name,
+            glob = globals(),
+            version = 1.0,
+            # default values
+            recent_projects = OrderedSet()
+        )
+
+    def account_project(self, file_name):
+        # re-add file name to preserve recent order
+        if file_name in self.recent_projects:
+            self.recent_projects.discard(file_name)
+        self.recent_projects.add(file_name)
+
 
 def main():
     parser = ArgumentParser()
@@ -798,9 +880,12 @@ def main():
         account_build_path(arguments.qemu_build)
         root.pht.set_build_path(arguments.qemu_build)
 
-    root.geometry("1000x750")
+    with Settings(expanduser(join("~", ".qdt.py"))) as settings:
+        root.set_user_settings(settings)
 
-    root.mainloop()
+        root.geometry("1000x750")
+
+        root.mainloop()
 
     root.save_project_to_file("project.py")
 
