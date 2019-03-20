@@ -233,7 +233,7 @@ Related: `dereference`
             expr = datum.expression
         else:
             if size is None:
-                size = self.type.size_expr
+                size = datum.fetch_size
             expr = Deref(loc_expr, size)
 
         fetched = self.eval(expr)
