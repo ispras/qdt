@@ -83,6 +83,29 @@ class Field(object):
             return self.type.size_expr
 
     @lazy
+    def bit_offset(self):
+        try:
+            # DWARF v3
+            return self.die.attributes["DW_AT_bit_offset"].value
+        except KeyError:
+            return None
+
+    @lazy
+    def data_bit_offset(self):
+        try:
+            # DWARF v4
+            return self.die.attributes["DW_AT_data_bit_offset"].value
+        except KeyError:
+            return None
+
+    @lazy
+    def bit_size(self):
+        try:
+            return self.die.attributes["DW_AT_bit_size"].value
+        except KeyError:
+            return None
+
+    @lazy
     def location(self):
         """ Location is a symbolic expression that can be used to get the value
 of this field at runtime.
