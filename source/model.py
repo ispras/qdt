@@ -1523,6 +1523,20 @@ class TypesCollector(TypeReferencesVisitor):
             raise BreakVisiting()
 
 
+class GlobalsCollector(NodeVisitor):
+
+    def __init__(self, code):
+        super(GlobalsCollector, self).__init__(code)
+        self.used_globals = set()
+
+    def on_visit(self):
+        cur = self.cur
+        if (    isinstance(cur, Variable)
+            and (cur.declarer is not None or cur.definer is not None)
+        ):
+            self.used_globals.add(cur)
+
+
 class ForwardDeclarationFixerVisitor(TypeReferencesVisitor):
     "This visitor replaces nested type by declaration of this type."
 
