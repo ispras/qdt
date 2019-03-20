@@ -75,6 +75,14 @@ class Field(object):
     # assembly level terms
 
     @lazy
+    def fetch_size(self):
+        "Minimum bytes count that must be fetched to get entire field."
+        try:
+            return self.die.attributes["DW_AT_byte_size"].value
+        except KeyError:
+            return self.type.size_expr
+
+    @lazy
     def location(self):
         """ Location is a symbolic expression that can be used to get the value
 of this field at runtime.
