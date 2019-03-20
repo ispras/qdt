@@ -33,13 +33,9 @@ if __name__ == "__main__":
     _i = Variable("i", t("int"))
     _a = Variable("a", t("int"))
     _p = Structure("Test",
-        fields = [
-            Variable("i", Structure("Test2",
-                fields = [
-                    t("int").gen_var("ii", pointer = True)
-                ]
-            ))
-        ]
+        Variable("i", Structure("Test2",
+            t("int").gen_var("ii", pointer = True)
+        ))
     ).gen_var("p", pointer = True)
 
     _pi = OpSDeref(_p, "i")
