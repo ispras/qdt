@@ -238,6 +238,36 @@ Related: `dereference`
 
         fetched = self.eval(expr)
 
+        if isinstance(datum, Field):
+            # Support for bit fields
+            dboff = datum.data_bit_offset
+
+            if dboff is not None:
+                fetched >>= dboff & 0x7
+                # Full offset bytes are accounted in location
+
+            boff, bsize = datum.bit_offset, datum.bit_size
+
+            if boff is not None and bsize is not None:
+                # XXX: According to DWARF v4 2010.06.10 (p. 90, PDF p.104),
+                # both LE and BE bit offsets must have less values for top bit
+                # fields in `strict`.
+                # But, experiments shown that for a binary by GCC 5.4.0 for LE
+                # architecture (AMD 64) bit offset points to MSB of bit field
+                # where 0 offset corresponds to MSB of fetched value. Moreover,
+                # offset is NOT given relative to the container (struct) start.
+                # Instead, a byte aligned field is implicitly allocated in the
+                # container. Location expression from DIE points to that
+                # implicit field relative to the container. And bit offset is
+                # given relative to MSB of the implicit field.
+                # So, implicit field is fetched first and then the bit field is
+                # evaluated from the fetched value.
+                shift = (size << 3) - boff - bsize
+                fetched >>= shift
+
+            if bsize is not None:
+                fetched &= (1 << bsize) - 1
+
         return fetched
 
     def fetch_pointer(self):
