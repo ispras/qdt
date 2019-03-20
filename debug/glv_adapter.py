@@ -1,8 +1,11 @@
 __all__ = [
     "GitLineVersionAdapter"
+  , "get_glv_adapter"
 ]
 
 from os.path import (
+    abspath,
+    dirname,
     sep
 )
 from re import (
@@ -258,3 +261,30 @@ breakpoint positions.
                 (fname, lineno, version, obstructive_commit)
             )
         raise RuntimeError('\n'.join(msg))
+
+
+def get_glv_adapter(dwarf_info):
+    """ Given a DWARF Info (pyelftools), the helper searches for a related Git
+repository. Then it returns `GitLineVersionAdapter` basing on the repository
+found.
+    """
+
+    cu = next(dwarf_info.iter_CUs())
+    src_file = cu.get_top_DIE().attributes["DW_AT_name"].value
+    src_path = abspath(dirname(src_file))
+
+    # Start from directory of one of files and go towards file system root
+    # until a Git repository is found
+    while src_path:
+        try:
+            repo = Repo(src_path)
+        except:
+            src_path = dirname(src_path)
+        else:
+            break
+    else:
+        raise ValueError("Can't find a source tree under Git.")
+
+    gvl_adapter = GitLineVersionAdapter(repo)
+    return gvl_adapter
+
