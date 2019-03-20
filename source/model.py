@@ -556,6 +556,11 @@ order does not meet all requirements.
         return file
 
 
+class CPP(object):
+    "This class used as definer for CPPMacro"
+    references = set()
+
+
 class AddTypeRefToDefinerException(RuntimeError):
     pass
 
