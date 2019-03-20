@@ -23,6 +23,9 @@ __all__ = [
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
+      , "StructureForwardDeclaration"
+      , "StructureDeclarationBegin"
+      , "StructureDeclarationEnd"
       , "StructureTypedefDeclarationBegin"
       , "StructureTypedefDeclarationEnd"
       , "FunctionDeclaration"
@@ -2021,6 +2024,21 @@ class VariableDefinition(SourceChunk):
         )
 
 
+class StructureForwardDeclaration(SourceChunk):
+
+    def __init__(self, struct, indent = "", append_nl = True):
+        super(StructureForwardDeclaration, self).__init__(struct,
+            "Structure %s forward declaration" % struct.name,
+            """\
+{indent}typedef@bstruct@b{struct_name}@b{struct_name};{nl}
+""".format(
+    indent = indent,
+    struct_name = struct.name.split('.', 1)[0],
+    nl = "\n" if append_nl else ""
+            )
+        )
+
+
 class StructureTypedefDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
@@ -2050,6 +2068,39 @@ class StructureTypedefDeclarationEnd(SourceChunk):
 """.format(
     indent = indent,
     struct_name = struct.name,
+    nl = "\n" if append_nl else ""
+            )
+        )
+
+
+class StructureDeclarationBegin(SourceChunk):
+
+    def __init__(self, struct, indent):
+        super(StructureDeclarationBegin, self).__init__(struct,
+            "Beginning of structure %s declaration" % struct.name,
+            """\
+{indent}struct@b{struct_name}@b{{
+""".format(
+    indent = indent,
+    struct_name = struct.name
+            )
+        )
+
+
+class StructureDeclarationEnd(SourceChunk):
+    weight = 2
+
+    def __init__(self, struct,
+        fields_indent = "    ",
+        indent = "",
+        append_nl = True
+    ):
+        super(StructureDeclarationEnd, self).__init__(struct,
+            "Ending of structure %s declaration" % struct.name,
+            """\
+{indent}}};{nl}
+""".format(
+    indent = indent,
     nl = "\n" if append_nl else ""
             )
         )
