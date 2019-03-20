@@ -117,3 +117,6 @@ Leading spaces are ignored.
         for addr, cb in self.breakpoints:
             addr_str = target.reg_fmt % addr
             rt.remove_br(addr_str, cb, quiet = quiet)
+
+    def __getattr__(self, name):
+        return self.rt[name]
