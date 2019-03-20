@@ -55,6 +55,11 @@ class Datum(object):
     # assembly level terms
 
     @lazy
+    def fetch_size(self):
+        "Minimum bytes count that must be fetched to get entire datum."
+        return self.type.size_expr
+
+    @lazy
     def location(self):
         """ Location is a symbolic expression that can be used to get the value
 of this datum at runtime.
