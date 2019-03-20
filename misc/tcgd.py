@@ -45,11 +45,21 @@ class TCGWatcher(Watcher):
         # tcg_ctx = self.rt["tcg_init_ctx"] # it's initial value only
         tcg_ctx = self.tcg_ctx
         ops = tcg_ctx["ops"]
-        tqh_first = ops["tqh_first"]
-        if tqh_first.fetch_pointer():
-            opc = tqh_first["opc"]
-            v = opc.fetch(4)
-            print("opc: %s" % v)
+        op = ops["tqh_first"]
+        while op.fetch_pointer():
+            opc = op["opc"]
+            param1 = op["param1"]
+            param2 = op["param2"]
+            life = op["life"]
+
+            print(map(lambda v : v.fetch(), (opc, param1, param2, life)))
+
+            # Field access chains memory location expressions.
+            # So, convert intermediate value to a global to prevent a deep
+            # expressions during handling of a long list.
+            op = op["link"]["tqe_next"].to_global()
+
+        print("")
 
 
 if __name__ == "__main__":
