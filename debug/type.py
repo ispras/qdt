@@ -102,7 +102,7 @@ of this field at runtime.
 # TODO: assign values according to GDB Python API
 c = count(1)
 
-TYPE_CODE_PTR = next(c)
+TYPE_CODE_PTR = next(c) # 1
 TYPE_CODE_ARRAY = next(c)
 TYPE_CODE_STRUCT = next(c)
 TYPE_CODE_UNION = next(c)
@@ -111,7 +111,7 @@ TYPE_CODE_FLAGS = next(c)
 TYPE_CODE_FUNC = next(c)
 TYPE_CODE_INT = next(c)
 TYPE_CODE_FLT = next(c)
-TYPE_CODE_VOID = next(c)
+TYPE_CODE_VOID = next(c) # 10
 TYPE_CODE_SET = next(c)
 TYPE_CODE_RANGE = next(c)
 TYPE_CODE_STRING = next(c)
@@ -121,7 +121,7 @@ TYPE_CODE_METHOD = next(c)
 TYPE_CODE_METHODPTR = next(c)
 TYPE_CODE_MEMBERPTR = next(c)
 TYPE_CODE_REF = next(c)
-TYPE_CODE_RVALUE_REF = next(c)
+TYPE_CODE_RVALUE_REF = next(c) # 20
 TYPE_CODE_CHAR = next(c)
 TYPE_CODE_BOOL = next(c)
 TYPE_CODE_COMPLEX = next(c)
