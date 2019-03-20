@@ -241,6 +241,10 @@ Related: `dereference`
         return fetched
 
     def fetch_pointer(self):
+        """ If a user is completely sure that the value is a pointer then this
+way to fetch it is faster than common `fetch()` because automatic size
+evaluation is time consuming.
+        """
         return self.fetch(self.runtime.address_size)
 
     def fetch_c_string(self, limit = 10, encoding = "utf-8"):
