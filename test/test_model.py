@@ -28,6 +28,9 @@ from os.path import (
     join,
     dirname
 )
+from difflib import (
+    unified_diff
+)
 
 
 MODEL_VERBOSE = ee("MODEL_VERBOSE")
@@ -61,7 +64,18 @@ class SourceModelTestHelper(object):
                 with open(join(verbose_dir, file.path), "w") as f:
                     f.write(gen_content)
 
-            self.assertEqual(gen_content, content)
+            self._compate_content(content, gen_content)
+
+    def _compate_content(self, expected, generated):
+        if expected == generated:
+            return
+
+        print("\n".join(unified_diff(
+            expected.split('\n'),
+            generated.split('\n')
+        )))
+
+        self.fail("Generated code differs from expected value")
 
 
 class FunctionTreeTestDoubleGenerationHelper(object):
