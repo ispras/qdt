@@ -902,12 +902,11 @@ class TypeReference(Type):
 
 class Structure(Type):
 
-    def __init__(self, name, fields = None):
+    def __init__(self, name, *fields):
         super(Structure, self).__init__(name, incomplete = False)
 
         self.fields = OrderedDict()
-        if fields is not None:
-            self.append_fields(fields)
+        self.append_fields(fields)
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
