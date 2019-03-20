@@ -1,6 +1,7 @@
 __all__ = [
     "Source"
       , "Header"
+      , "Fileless"
   , "AddTypeRefToDefinerException"
   , "TypeNotRegistered"
   , "Type"
@@ -533,6 +534,13 @@ order does not meet all requirements.
         file.add_chunks(self.gen_chunks(inherit_references))
 
         return file
+
+
+class Fileless(Source):
+    "This class used as definer for CPPMacro and command-line defined macroses"
+
+    def __init__(self):
+        super(Fileless, self).__init__(path = None)
 
 
 class AddTypeRefToDefinerException(RuntimeError):
