@@ -52,6 +52,7 @@ from .add_desc_dialog import (
     AddDescriptionDialog
 )
 from .gui_editing import (
+    GUIPOp_SetTarget,
     GUIPOp_SetBuildPath,
     POp_SetDescLayout
 )
@@ -68,8 +69,6 @@ from .qdc_gui_signal_helper import (
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
         self.pw = project_widget
-        proj = project_widget.p
-        self.qvd = qvd_get(proj.build_path, version = proj.target_version)
         CoTask.__init__(
             self,
             self.main(),
@@ -77,6 +76,8 @@ class ReloadBuildPathTask(CoTask):
         )
 
     def main(self):
+        proj = self.pw.p
+        self.qvd = qvd_get(proj.build_path, version = proj.target_version)
         if self.qvd.qvc is None:
             yield self.qvd.co_init_cache()
         self.pw.qvd = self.qvd
@@ -342,12 +343,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             else:
                 del self.reload_build_path_task
 
-            try:
-                self.reload_build_path_task = ReloadBuildPathTask(self)
-            except BadBuildPath as bbpe:
-                showerror(_("Bad build path").get(), str(bbpe))
-            else:
-                self.tm.enqueue(self.reload_build_path_task)
+            self.reload_build_path_task = ReloadBuildPathTask(self)
+            self.tm.enqueue(self.reload_build_path_task)
         else:
             """ If no task manager is available then account build path right
             now. It will cause GUI to freeze but there are no more options. """
@@ -417,7 +414,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                         break
                 else:
                     w.destroy()
-        elif isinstance(op, GUIPOp_SetBuildPath):
+        elif isinstance(op, (GUIPOp_SetBuildPath, GUIPOp_SetTarget)):
             try:
                 self.__account_build_path
             except AttributeError:

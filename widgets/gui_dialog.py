@@ -2,15 +2,21 @@ __all__ = [
     "GUIDialog"
 ]
 
+
 from .gui_toplevel import (
     GUIToplevel
 )
 
+
 class GUIDialog(GUIToplevel):
+
     def __init__(self, *args, **kw):
         GUIToplevel.__init__(self, *args, **kw)
 
         master = self.master
+
+        self._result = None
+        self._alive = True
 
         while master:
             top = master.winfo_toplevel()
@@ -41,3 +47,13 @@ class GUIDialog(GUIToplevel):
     def __on_destroy(self, e, **kw):
         if e.widget is self:
             self.hk.enable_hotkeys()
+        self._alive = False
+
+    def wait(self):
+        "Grabs control until the dialog destroyed. Returns a value."
+
+        while self._alive:
+            self.update()
+            self.update_idletasks()
+
+        return self._result

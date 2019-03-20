@@ -1,7 +1,7 @@
 __all__ = [
     "FormatedStringChangindException"
   , "FormatVar"
-  , "FormatedStringVar"
+  , "as_variable"
 ]
 
 from six.moves.tkinter import (
@@ -12,10 +12,51 @@ from .variable import (
     Variable
 )
 
+
 variables = (Variable, TkVariable)
+
+
+def as_variable(*args):
+    """ Decorator for a callable. It transforms the callable to a `Variable`
+which value is evaluated by the callable using values of `args`. The value
+will be automatically recomputed when one of `args` changed. Changes of values
+of non-`Variable` `args` cannot be accounted.
+    """
+
+    def create_variable(f):
+        var = Variable()
+
+        def _on_arg_changed(*_):
+            "When an arg changed, this function updates var using f"
+            vals = []
+            for a in args:
+                if isinstance(a, variables):
+                    vals.append(a.get())
+                else:
+                    vals.append(a)
+
+            var.set(f(*vals))
+
+        for a in args:
+            if isinstance(a, variables):
+                a.trace_variable("w", _on_arg_changed)
+
+        # initial computing
+        _on_arg_changed()
+
+        # TODO: a lazy computation, during `get` method
+        return var
+
+    return create_variable
+
 
 class FormatedStringChangindException(TypeError):
     pass
+
+
+def forbid_set(self, value):
+    # External formated string changing is forbidden.
+    raise FormatedStringChangindException()
 
 # The class just implements % (__mod__) operator for StringVar
 class FormatVar(Variable):
@@ -24,54 +65,23 @@ class FormatVar(Variable):
         if not isinstance(args, tuple):
             args = (args,)
 
-        return FormatedStringVar(
-            fmt = self,
-            fmt_args = args
+        @as_variable(self, *args)
+        def do_format(fmt, *args):
+            return fmt % args
+
+        # Wrapping do_format in `StringVar` is required because
+        # `Variable` instance cannot be used with Tk.
+        # TODO: move that mechanics elsewhere making `FormatVar` Tk
+        # independent.
+
+        # Initial setting
+        ret = StringVar(value = do_format.get())
+
+        # Auto update
+        do_format.trace_variable("w",
+            lambda : StringVar.set(ret, do_format.get())
         )
 
-class FormatedStringVar(StringVar):
-    def __init__(self, fmt, fmt_args):
-        self.fmt = fmt
-        self.fmt_args = fmt_args
+        ret.set = forbid_set
 
-        for a in ( fmt, ) + fmt_args:
-            if isinstance(a, variables):
-                a.trace_variable("w", self.__on_fmt_arg_changed__)
-
-        """ FormatedStringVar.set method forbids setting of self value. But
-Variable.__init__ calls self.set which is normally FormatedStringVar.set. It
-temporally replaces self.set with nope lambda to bypass this.
-        """
-        tmp = self.set
-        self.set = lambda x: None
-
-        StringVar.__init__(self)
-
-        self.set = tmp
-
-        StringVar.set(self, self.__gen_string__())
-
-    @staticmethod
-    def __arg_get__(arg):
-        if isinstance(arg, variables):
-            return arg.get()
-        else:
-            return arg
-
-    def __gen_string__(self):
-        fmt = self.fmt
-
-        if isinstance(fmt, variables):
-            fmt = fmt.get()
-
-        args = [ FormatedStringVar.__arg_get__(arg) for arg in self.fmt_args ]
-
-        return fmt % tuple(args)
-
-    def __on_fmt_arg_changed__(self, *args, **hw):
-        # Format or argument is changed - update value
-        StringVar.set(self, self.__gen_string__())
-
-    def set(self, value):
-        # External formated string changing is forbidden.
-        raise FormatedStringChangindException()
+        return ret

@@ -6,8 +6,12 @@ __all__ = [
   , "History"
   , "Sequence"
   , "HistoryTracker"
+  , "changes_attr"
 ]
 
+from copy import (
+    deepcopy
+)
 from six import (
     integer_types
 )
@@ -21,8 +25,10 @@ from .notifier import (
     notifier
 )
 
+
 class UnimplementedInverseOperation(NotImplementedError):
     pass
+
 
 simple_eq_types = (
     bool,
@@ -87,6 +93,7 @@ Life cycle:
 
 """
 
+
 class InverseOperation(object):
     """ Describes a deterministic operation that can be done on a context and
 consequently undone resulting in the same context state. An operation should
@@ -132,8 +139,10 @@ determinism.
         return _("Reversible operation with unimplemented description \
 (class %s).") % type(self).__name__
 
+
 class InitialOperationCall(TypeError):
     pass
+
 
 class InitialOperation(InverseOperation):
 
@@ -155,7 +164,36 @@ class InitialOperation(InverseOperation):
     def __description__(self, __):
         return _("The beginning of known history.")
 
+
+def changes_attr(attr):
+    """ Adds __backup__, __do__ & __undo__ methods which manage attribute with
+name `attr`. `__init__` must set new value (self._new). Previous value is
+backed up in `_old` attribute.
+    """
+
+    def __backup__(self, o):
+        old = getattr(o, attr)
+        self._old = None if old is None else deepcopy(old)
+
+    def __do__(self, o):
+        _new = self._new
+        setattr(o, attr, None if _new is None else deepcopy(_new))
+
+    def __undo__(self, o):
+        old = self._old
+        setattr(o, attr, None if old is None else deepcopy(old))
+
+    def decorate(cls):
+        cls.__backup__ = __backup__
+        cls.__do__ = __do__
+        cls.__undo__ = __undo__
+        return cls
+
+    return decorate
+
+
 class History(object):
+
     def __init__(self):
         self.root = InitialOperation()
         self.leafs = [self.root]
@@ -193,11 +231,13 @@ It's like a transaction in a data base management system.
         for method, a, kw in calls:
             getattr(ht, method)(*a, **kw)
 
+
 @notifier(
     "staged",
     "changed"
 )
 class HistoryTracker(object):
+
     def __init__(self, context, history):
         self.ctx = context
         self.history = history
@@ -343,4 +383,3 @@ class HistoryTracker(object):
             del self.delayed[:]
             for seq in delayed:
                 seq.__apply__()
-

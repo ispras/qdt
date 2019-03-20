@@ -1,6 +1,7 @@
 __all__ = [
     "GUIProjectOperation"
       , "GUIPOp_SetBuildPath"
+      , "GUIPOp_SetTarget"
       , "GUIDescriptionOperation"
           , "POp_SetDescLayout"
 ]
@@ -12,6 +13,7 @@ from copy import (
     deepcopy
 )
 from common import (
+    changes_attr,
     mlget as _
 )
 from .gui_project import (
@@ -43,22 +45,11 @@ class GUIProjectOperation(ProjectOperation):
         return super(GUIProjectOperation, self).__description__(project)
 
 
+@changes_attr("build_path")
 class GUIPOp_SetBuildPath(GUIProjectOperation):
     def __init__(self, path, *args, **kw):
         GUIProjectOperation.__init__(self, *args, **kw)
-        self.new_path = None if path is None else deepcopy(path)
-
-    def _backup(self):
-        self.old_path = \
-            None if self.p.build_path is None else deepcopy(self.p.build_path)
-
-    def _do(self):
-        self.p.build_path = \
-            None if self.new_path is None else deepcopy(self.new_path)
-
-    def _undo(self):
-        self.p.build_path = \
-            None if self.old_path is None else deepcopy(self.old_path)
+        self._new = path
 
     def __write_set__(self):
         return GUIProjectOperation.__write_set__(self) + [
@@ -66,14 +57,35 @@ class GUIPOp_SetBuildPath(GUIProjectOperation):
         ]
 
     def _description(self):
-        if self.new_path is None:
-            return _("Forget project build path value '%s'") % self.old_path
-        elif self.old_path is None:
-            return _("Specify project build path value '%s'") % self.new_path
+        if self._new is None:
+            return _("Forget project build path value '%s'") % self._old
+        elif self._old is None:
+            return _("Specify project build path value '%s'") % self._new
         else:
             return _("Change project build path value '%s' to '%s'") % (
-                self.old_path, self.new_path
+                self._old, self._new
             )
+
+
+@changes_attr("target_version")
+class GUIPOp_SetTarget(GUIProjectOperation):
+
+    def __init__(self, target, *a, **kw):
+        super(GUIPOp_SetTarget, self).__init__(*a, **kw)
+        self._new = target
+
+    def __description__(self, p):
+        # Assume that the operation is not used to change Qemu target version
+        # from None to None.
+        if self._old is None:
+            return _("Set target Qemu version '%s'" % self._new)
+        elif self._new is None:
+            return _("Forget target Qemu version '%s'" % self._old)
+        else:
+            return _("Change target Qemu version '%s' to '%s'" % (
+                self._old, self._new
+            ))
+
 
 class GUIDescriptionOperation(GUIProjectOperation):
     def __init__(self, description, *args, **kw):

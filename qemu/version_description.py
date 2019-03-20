@@ -493,7 +493,6 @@ class QemuVersionDescription(object):
     def __init__(self, build_path, version = None):
         config_host_path = join(build_path, 'config-host.mak')
         if not isfile(config_host_path):
-            forget_build_path(build_path)
             raise BadBuildPath("%s does not exists." % config_host_path)
 
         self.build_path = build_path

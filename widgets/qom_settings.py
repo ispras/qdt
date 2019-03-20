@@ -37,13 +37,6 @@ from .pci_id_widget import (
     PCIIdWidget
 )
 
-def validate_int(var, entry):
-    try:
-        (int(var.get(), base = 0))
-    except ValueError:
-        entry.config(bg = "red")
-    else:
-        entry.config(bg = "white")
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
@@ -69,6 +62,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(1, weight = 1)
 
         have_pciid = False
+        all_highlights = []
 
         for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
@@ -83,38 +77,37 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 v = StringVar()
                 w = HKEntry(f, textvariable = v, state = "readonly")
             else:
-                if _input is str:
-                    v = StringVar()
-                    w = HKEntry(f, textvariable = v)
-                elif _input is int:
-                    v = StringVar()
-                    w = HKEntry(f, textvariable = v)
-
-                    def validate(varname, junk, act, entry = w, var = v):
-                        validate_int(var, entry = entry)
-
-                    v.trace_variable("w", validate)
-                elif _input is PCIId:
+                if _input is PCIId:
                     have_pciid = True
-                    """ Value of PCI Id could be presented either by PCIId
-object or by a string. So the actual widget/variable pair will be assigned
-during refresh.     """
-                    v = None
-                    w = GUIFrame(f)
-                    w.grid()
-                    w.rowconfigure(0, weight = 1)
-                    w.columnconfigure(0, weight = 1)
-                elif _input is bool:
-                    v = BooleanVar()
-                    w = Checkbutton(f, variable = v)
-                else:
+
+                _input_name = _input.__name__
+
+                try:
+                    generator = getattr(self, "gen_%s_widgets" % _input_name)
+                except AttributeError:
                     raise RuntimeError("Input of QOM template attribute %s of"
-                        " type %s is not supported" % (attr, _input.__name__)
+                        " type %s is not supported" % (attr, _input_name)
                     )
+
+                v, w = generator(f)
+
+                if v is not None:
+                    def do_highlight(w = w, v = v, attr = attr):
+                        if not w._validate():
+                            w._set_color("red")
+                        elif w._cast(v.get()) != getattr(self.desc, attr):
+                            w._set_color("#ffffcc")
+                        else:
+                            w._set_color("white")
+
+                    all_highlights.append(do_highlight)
+                    v.trace_variable("w", lambda *_: do_highlight())
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_var_" + attr, v)
             setattr(self, "_w_" + attr, w)
+
+        self._all_highlights = all_highlights
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -142,6 +135,50 @@ during refresh.     """
         self.__have_pciid = have_pciid
         if have_pciid:
             self.qsig_watch("qvc_available", self.__on_qvc_available)
+
+    def gen_int_widgets(self, master):
+        v = StringVar()
+        w = HKEntry(master, textvariable = v)
+
+        def validate():
+            try:
+                (int(v.get(), base = 0))
+            except ValueError:
+                return False
+            else:
+                return True
+
+        w._validate = validate
+        w._set_color = lambda color : w.config(bg = color)
+        w._cast = lambda x : int(x, base = 0)
+        return v, w
+
+    def gen_str_widgets(self, master):
+        v = StringVar()
+        w = HKEntry(master, textvariable = v)
+        w._validate = lambda : True
+        w._set_color = lambda color : w.config(bg = color)
+        w._cast = lambda x : x
+        return v, w
+
+    def gen_bool_widgets(self, master):
+        v = BooleanVar()
+        w = Checkbutton(master, variable = v)
+        w._validate = lambda : True
+        w._set_color = lambda color : w.config(selectcolor = color)
+        w._cast = lambda x : x
+        return v, w
+
+    def gen_PCIId_widgets(self, master):
+        # Value of PCI Id could be presented either by PCIId object or by a
+        # string depending on QVC availability. Hence, the actual
+        # widget/variable pair will be assigned during refresh.
+        v = None
+        w = GUIFrame(master)
+        w.grid()
+        w.rowconfigure(0, weight = 1)
+        w.columnconfigure(0, weight = 1)
+        return v, w
 
     def __on_qvc_available(self):
         self.__refresh__()
@@ -197,6 +234,9 @@ during refresh.     """
 
             if widget_val != cur_val:
                 v.set(cur_val)
+
+        for cb in self._all_highlights:
+            cb()
 
     def __apply__(self):
         if self.pht is None:

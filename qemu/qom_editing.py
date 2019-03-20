@@ -19,7 +19,9 @@ from .pci_ids import (
     PCIClassId
 )
 
+
 class DOp_SetAttr(DescriptionOperation):
+
     def __init__(self, attribute_name, new_value, *args, **kw):
         DescriptionOperation.__init__(self, *args, **kw)
 
@@ -57,7 +59,9 @@ class DOp_SetAttr(DescriptionOperation):
             str(self.val)
         )
 
+
 class SetDescriptionReferenceAttribute(DescriptionOperation):
+
     def __init__(self, attribute_name, new_value, *args, **kw):
         DescriptionOperation.__init__(self, *args, **kw)
 
@@ -84,6 +88,7 @@ class SetDescriptionReferenceAttribute(DescriptionOperation):
     def _undo(self):
         setattr(self.find_desc(), self.attr, self.old_val)
 
+
 def get_pci_id_kind_str(pci_id):
     if type(pci_id) is PCIVendorId:
         return _("vendor")
@@ -98,6 +103,7 @@ def gen_pci_id_str(pci_id):
         pci_id.name,
         pci_id.id
     )
+
 
 class DOp_SetPCIIdAttr(SetDescriptionReferenceAttribute):
 
