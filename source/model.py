@@ -1958,7 +1958,7 @@ class PointerVariableDeclaration(SourceChunk):
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
-    type_name = t.name,
+    type_name = t.name.split('.', 1)[0],
     var_name = var.name,
     extern = "extern@b" if extern else ""
             )
@@ -1998,7 +1998,7 @@ class VariableDeclaration(SourceChunk):
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
-    type_name = var.type.name,
+    type_name = var.type.name.split('.', 1)[0],
     var_name = var.name,
     array_decl = gen_array_declaration(var.array_size),
     extern = "extern@b" if extern else ""
