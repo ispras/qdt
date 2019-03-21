@@ -51,7 +51,8 @@ from common import (
 from debug import (
     InMemoryELFFile,
     DWARFInfoCache,
-    Runtime
+    Runtime,
+    get_elffile_loading
 )
 with pypath("pyrsp"):
     from pyrsp.rsp import (
@@ -229,6 +230,28 @@ class C2tOracleSession(C2tDebugSession):
     def run(self):
         self._execute_debug_comment()
         self.rt.target.run(setpc = False)
+
+
+class C2tTargetSession(C2tDebugSession):
+
+    def load(self):
+        if self.rt.target.verbose:
+            print("load %s" % self.rt.target.elf.name)
+
+        loading = get_elffile_loading(self.elf)
+        for data, addr in loading:
+            self.rt.target.store(data, addr)
+
+    def run(self):
+        self._execute_debug_comment()
+        self.load()
+        if c2t_cfg.rsp_target.sp is not None:
+            self.rt.target.set_reg(c2t_cfg.rsp_target.sp,
+                self.rt.target.reg_fmt % (
+                    self.rt.target.elf.symbols["main"] + 0x10000
+                )
+            )
+        self.rt.target.run(start = "main")
 
 
 class ProcessWithErrCatching(Process):
