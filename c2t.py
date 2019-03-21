@@ -99,6 +99,14 @@ class ProcessWithErrCatching(Process):
             c2t_exit(err, prog = self.prog)
 
 
+def tests_perform_nonkill(tests_queue, res_queue, verbose):
+    pass
+
+
+def tests_perform_kill(tests_queue, res_queue, verbose):
+    pass
+
+
 class C2TTestBuilder(Process):
     """ A helper class that builds tests """
 
