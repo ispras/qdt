@@ -31,7 +31,8 @@ from re import (
 from multiprocessing import (
     cpu_count,
     Process,
-    Queue
+    Queue,
+    Lock
 )
 from subprocess import (
     Popen,
@@ -61,6 +62,9 @@ with pypath("pyrsp"):
     )
     from pyrsp.elf import (
         ELF
+    )
+    from pyrsp.utils import (
+        find_free_port
     )
 from c2t import (
     C2TConfig,
@@ -272,6 +276,21 @@ class ProcessWithErrCatching(Process):
         _, err = process.communicate()
         if process.returncode != 0:
             c2t_exit(err, prog = self.prog)
+
+
+lock = Lock()
+
+
+def free_ports(start = 4321):
+    while True:
+        with lock:
+            free = find_free_port(start)
+            yield free
+            start = free + 1
+            # TODO: overflow 0x10000
+
+
+port_pool = free_ports()
 
 
 def tests_perform_nonkill(tests_queue, res_queue, verbose):
