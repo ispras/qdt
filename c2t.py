@@ -25,7 +25,8 @@ from argparse import (
     ArgumentDefaultsHelpFormatter
 )
 from re import (
-    compile
+    compile,
+    findall
 )
 from multiprocessing import (
     cpu_count,
@@ -37,6 +38,9 @@ from subprocess import (
 )
 from errno import (
     EEXIST
+)
+from platform import (
+    machine
 )
 from common import (
     pypath
@@ -71,6 +75,8 @@ C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
 C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
 
+ORACLE_CPU = machine()
+
 c2t_cfg = None
 
 
@@ -91,6 +97,56 @@ class ProcessWithErrCatching(Process):
         _, err = process.communicate()
         if process.returncode != 0:
             c2t_exit(err, prog = self.prog)
+
+
+class C2TTestBuilder(Process):
+    """ A helper class that builds tests """
+
+    def __init__(self, tests, tests_queue, queue_min, verbose):
+        super(C2TTestBuilder, self).__init__()
+        self.tests = tests
+        self.tests_queue = tests_queue
+        self.queue_min = queue_min
+        self.verbose = verbose
+
+    def test_build(self, cmpl_unit, test_src, test_ir, test_bin):
+        # TODO: do terminate in this case
+        run_script = ''
+
+        for run_script in cmpl_unit.run_script:
+            cmd = run_script.format(
+                src = test_src,
+                ir = test_ir,
+                bin = test_bin,
+                c2t_dir = C2T_DIR,
+                c2t_test_dir = C2T_TEST_DIR
+            )
+            if self.verbose:
+                print(cmd)
+            cmpl_unit = ProcessWithErrCatching(cmd)
+            cmpl_unit.start()
+            cmpl_unit.join()
+
+        ext = findall("-o {bin}(\S*)", run_script).pop()
+        return test_bin + ext
+
+    def run(self):
+        for test in self.tests:
+            while self.tests_queue.qsize() > self.queue_min:
+                pass
+            test_name = test[:-2]
+            test_src = join(C2T_TEST_DIR, test)
+            test_ir = join(C2T_TEST_IR_DIR, test_name)
+            test_bin = join(C2T_TEST_BIN_DIR, test_name)
+
+            oracle_elf = self.test_build(c2t_cfg.oracle_compiler, test_src,
+                test_ir, test_bin + "_%s" % ORACLE_CPU
+            )
+            target_elf = self.test_build(c2t_cfg.target_compiler, test_src,
+                test_ir, test_bin + "_%s" % c2t_cfg.rsp_target.march
+            )
+
+            self.tests_queue.put((test_src, oracle_elf,  target_elf))
 
 
 def start_cpu_testing(tests, jobs, kill, verbose):
