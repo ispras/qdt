@@ -63,6 +63,10 @@ C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 c2t_cfg = None
 
 
+def start_cpu_testing(tests, jobs, kill, verbose):
+    pass
+
+
 def find_tests(regexps):
     tests = listdir(C2T_TEST_DIR)
 
@@ -246,6 +250,8 @@ def main():
         parser.error("wrong number of jobs: %s" % jobs)
     else:
         jobs = min(jobs, cpu_count() - 1)
+
+    start_cpu_testing(tests, jobs, args.kill, args.verbose)
 
 
 if __name__ == "__main__":
