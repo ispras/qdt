@@ -240,6 +240,12 @@ Related: `dereference`
 
         if isinstance(datum, Field):
             # Support for bit fields
+            dboff = datum.data_bit_offset
+
+            if dboff is not None:
+                fetched >>= dboff & 0x7
+                # Full offset bytes are accounted in location
+
             boff, bsize = datum.bit_offset, datum.bit_size
 
             if boff is not None and bsize is not None:
@@ -258,6 +264,8 @@ Related: `dereference`
                 # evaluated from the fetched value.
                 shift = (size << 3) - boff - bsize
                 fetched >>= shift
+
+            if bsize is not None:
                 fetched &= (1 << bsize) - 1
 
         return fetched
