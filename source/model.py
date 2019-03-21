@@ -942,15 +942,17 @@ class TypeReference(Type):
                 " pass." % self.name
             )
 
-        inc = HeaderInclusion(self.type.definer)
-
         refs = []
         for r in self.definer_references:
             refs.extend(generator.provide_chunks(r))
 
-        inc.add_references(refs)
-
-        return [inc]
+        definer = self.type.definer
+        if isinstance(definer, Fileless):
+            return refs
+        else:
+            inc = HeaderInclusion(definer)
+            inc.add_references(refs)
+            return [inc]
 
     def gen_var(self, *args, **kw):
         raise ValueError("Attempt to generate variable of type %s"
