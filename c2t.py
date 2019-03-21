@@ -11,6 +11,7 @@ from os.path import (
     basename
 )
 from os import (
+    listdir,
     killpg,
     setpgrp
 )
@@ -18,7 +19,12 @@ from signal import (
     SIGKILL
 )
 from argparse import (
+    Action,
+    ArgumentDefaultsHelpFormatter,
     ArgumentParser
+)
+from re import (
+    compile
 )
 from common import (
     pypath
@@ -49,8 +55,36 @@ def c2t_exit(msg, prog = __file__):
 
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
+C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 
 c2t_cfg = None
+
+
+def find_tests(regexps):
+    tests = listdir(C2T_TEST_DIR)
+
+    for re_type, regexp in regexps:
+        r = compile(regexp)
+        if re_type == "RE_INCLD":
+                tests = filter(r.match, tests)
+        else:
+            for test in filter(r.match, tests):
+                tests.remove(test)
+        if not tests:
+            break
+    return re_type, regexp, tests
+
+
+class Extender(Action):
+
+    def __call__(self, parser, namespace, values, option_strings = None):
+        dest = getattr(namespace, self.dest, None)
+        try:
+            dest.extend([(self.metavar, values)])
+        except AttributeError:
+            dest = []
+            setattr(namespace, self.dest, dest)
+            dest.append([(self.metavar, values)])
 
 
 def verify_config_components(config):
@@ -98,7 +132,8 @@ def main():
         description = "QEMU CPU Testing Tool",
         epilog = ("supported GDB RSP targets: {rsp}".format(
             rsp = ', '.join(archmap.keys())
-        ))
+        )),
+        formatter_class = ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
         type = str,
@@ -108,6 +143,25 @@ def main():
                 prog = parser.prog,
                 dir = C2T_CONFIGS_DIR
             )
+        )
+    )
+    parser.add_argument("-t", "--include",
+        type = str,
+        metavar = "RE_INCLD",
+        action = Extender,
+        dest = "regexps",
+        default = ".*\.c",
+        help = ("regular expressions to include a test set "
+            "(tests are located in %s)" % C2T_TEST_DIR
+        )
+    )
+    parser.add_argument("-s", "--exclude",
+        type = str,
+        metavar = "RE_EXCLD",
+        action = Extender,
+        dest = "regexps",
+        help = ("regular expressions to exclude a test set "
+            "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
 
@@ -153,6 +207,17 @@ def main():
                 prog = config
             )
     verify_config_components(config)
+
+    regexps = args.regexps
+    if type(args.regexps) is str:
+        regexps = [("RE_INCLD", ".*\.c")]
+    re_var, regexp, tests = find_tests(regexps)
+    if not tests:
+        parser.error("no matches in {dir} with: {var} = '{regexp}'".format(
+            dir = C2T_TEST_DIR,
+            var = re_var,
+            regexp = regexp
+        ))
 
 
 if __name__ == "__main__":
