@@ -161,6 +161,10 @@ class DWARFInfoCache(DWARFInfoAccelerator):
 
         return symbol
 
+    def find_all_subprogram(self):
+        for cu in self.iter_CUs():
+            self.account_subprograms(cu)
+
     def subprogram(self, addr):
         """
     :param addr:
@@ -175,8 +179,11 @@ class DWARFInfoCache(DWARFInfoAccelerator):
         sp = a2s[addr]
 
         if sp is None:
-            cu_for_addr = self.cu(addr)
-            self.account_subprograms(cu_for_addr)
+            if self.aranges is not None:
+                cu_for_addr = self.cu(addr)
+                self.account_subprograms(cu_for_addr)
+            else:
+                self.find_all_subprogram()
 
             # `account_subprograms` was filled `addr2subprog` with subprograms
             # of the compilation unit. Try to look for the subprogram again.
