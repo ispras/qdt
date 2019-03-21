@@ -1967,8 +1967,11 @@ class StructureTypedefDeclarationBegin(SourceChunk):
 class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct, fields_indent = "    ", indent = "",
-                 append_nl = True):
+    def __init__(self, struct,
+        fields_indent = "    ",
+        indent = "",
+        append_nl = True
+    ):
         super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct.name,
             """\
