@@ -373,10 +373,10 @@ class Source(object):
                 " source (%s) externally" % (_type, self.path)
             )
 
-        fixer = TypeFixerVisitor(self, _type).visit()
-
         _type.definer = self
         self.types[_type.name] = _type
+
+        fixer = TypeFixerVisitor(self, _type).visit()
 
         # Auto add references to types this one does depend on
         self.add_references(tr.type for tr in fixer.new_type_references)
