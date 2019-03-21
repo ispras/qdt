@@ -17,7 +17,8 @@ from os import (
     mkdir
 )
 from signal import (
-    SIGKILL
+    SIGKILL,
+    SIGTERM
 )
 from argparse import (
     ArgumentParser,
@@ -46,6 +47,9 @@ from platform import (
 from collections import (
     defaultdict
 )
+from struct import (
+    pack
+)
 from common import (
     pypath
 )
@@ -63,7 +67,9 @@ with pypath("pyrsp"):
         ELF
     )
     from pyrsp.utils import (
-        find_free_port
+        find_free_port,
+        wait_for_tcp_port,
+        QMP
     )
 from c2t import (
     C2TConfig,
@@ -73,6 +79,7 @@ from c2t import (
     DebugServer,
     TestBuilder,
     DebugCommandExecutor,
+    DebugComparison
 )
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
@@ -292,12 +299,198 @@ def free_ports(start = 4321):
 port_pool = free_ports()
 
 
+# TODO: not kill gdbserver
 def tests_perform_nonkill(tests_queue, res_queue, verbose):
-    pass
+    test_src, oracle_elf, target_elf = tests_queue.get(block = True)
+
+    qemu_port = next(port_pool)
+    qmp_port = next(port_pool)
+
+    qmp_run = " -qmp tcp:localhost:{port},server,nowait"
+    qemu_run = (c2t_cfg.qemu.run_script.format(
+        port = qemu_port,
+        bin = target_elf,
+        c2t_dir = C2T_DIR,
+        c2t_test_dir = C2T_TEST_DIR
+    ) + qmp_run.format(port = qmp_port))
+    qemu = ProcessWithErrCatching(qemu_run)
+
+    qemu.daemon = True
+    qemu.start()
+
+    # TODO: add support for port setting from config
+    if not wait_for_tcp_port(qemu_port) or not wait_for_tcp_port(qmp_port):
+        c2t_exit("QEMU malfunction")
+
+    qmp = QMP(qmp_port)
+
+    oracle_queue = Queue(0)
+    target_queue = Queue(0)
+
+    target_session = C2tTargetSession(c2t_cfg.rsp_target.rsp, test_src,
+        str(qemu_port), target_elf, target_queue, verbose
+    )
+
+    if c2t_cfg.rsp_target.qemu_reset:
+        target_session.rt.target[4] = pack("<I",
+            target_session.rt.target.elf.entry
+        )
+        qmp("system_reset")
+
+    target_session.start()
+
+    while 1:
+        gdbserver_port = next(port_pool)
+
+        gdbserver = ProcessWithErrCatching(
+            c2t_cfg.gdbserver.run_script.format(
+                port = gdbserver_port,
+                bin = oracle_elf,
+                c2t_dir = C2T_DIR,
+                c2t_test_dir = C2T_TEST_DIR
+            )
+        )
+
+        gdbserver.daemon = True
+        gdbserver.start()
+
+        if not wait_for_tcp_port(gdbserver_port):
+            c2t_exit("gdbserver malfunction")
+
+        oracle_session = C2tOracleSession(archmap[ORACLE_CPU], test_src,
+            str(gdbserver_port), oracle_elf, oracle_queue, verbose
+        )
+
+        oracle_session.start()
+
+        while 1:
+            oracle_dump = oracle_queue.get(block = True)
+            target_dump = target_queue.get(block = True)
+            if oracle_dump != "DEBUG_EXIT" and target_dump != "DEBUG_EXIT":
+                dump = dict(
+                    test = test_src,
+                    oracle = (oracle_elf, oracle_dump),
+                    target = (target_elf, target_dump)
+                )
+                res_queue.put(dump)
+            else:
+                dump = dict(TEST_END = test_src)
+                res_queue.put(dump)
+                break
+
+        oracle_session.join()
+        target_session.join()
+        oracle_session.kill()
+        gdbserver.join()
+        oracle_session.port_close()
+
+        if tests_queue.empty():
+            break
+
+        test_src, oracle_elf, target_elf = tests_queue.get(block = True)
+
+        qmp("stop")
+        qmp("system_reset")
+
+        target_session.reset(test_src, target_elf)
+        target_session.run()
+
+    target_session.kill()
+    qemu.join()
+    target_session.port_close()
+    res_queue.put("CMP_EXIT")
 
 
 def tests_perform_kill(tests_queue, res_queue, verbose):
-    pass
+    oracle_queue = Queue(0)
+    target_queue = Queue(0)
+
+    while 1:
+        test_src, oracle_elf, target_elf = tests_queue.get(block = True)
+
+        qemu_port = next(port_pool)
+        qmp_port = next(port_pool)
+        gdbserver_port = next(port_pool)
+
+        qmp_run = " -qmp tcp:localhost:{port},server,nowait"
+        qemu = ProcessWithErrCatching(
+            c2t_cfg.qemu.run_script.format(
+                port = qemu_port,
+                bin = target_elf,
+                c2t_dir = C2T_DIR,
+                c2t_test_dir = C2T_TEST_DIR
+            ) + qmp_run.format(port = qmp_port)
+        )
+        gdbserver = ProcessWithErrCatching(
+            c2t_cfg.gdbserver.run_script.format(
+                port = gdbserver_port,
+                bin = oracle_elf,
+                c2t_dir = C2T_DIR,
+                c2t_test_dir = C2T_TEST_DIR
+            )
+        )
+
+        qemu.daemon = True
+        gdbserver.daemon = True
+
+        qemu.start()
+        gdbserver.start()
+
+        # TODO: add support for port setting from config
+        if (    not wait_for_tcp_port(qemu_port)
+            and not wait_for_tcp_port(qmp_port)
+        ):
+            c2t_exit("QEMU malfunction")
+        if not wait_for_tcp_port(gdbserver_port):
+            c2t_exit("gdbserver malfunction")
+
+        qmp = QMP(qmp_port)
+
+        target_session = C2tTargetSession(c2t_cfg.rsp_target.rsp, test_src,
+            str(qemu_port), target_elf, target_queue, verbose
+        )
+        oracle_session = C2tOracleSession(archmap[ORACLE_CPU], test_src,
+            str(gdbserver_port), oracle_elf, oracle_queue, verbose
+        )
+
+        if c2t_cfg.rsp_target.qemu_reset:
+            target_session.rt.target[4] = pack("<I",
+                target_session.rt.target.elf.entry
+            )
+            qmp("system_reset")
+
+        oracle_session.start()
+        target_session.start()
+
+        while 1:
+            oracle_dump = oracle_queue.get(block = True)
+            target_dump = target_queue.get(block = True)
+            if (    oracle_dump != "DEBUG_EXIT"
+                and target_dump != "DEBUG_EXIT"):
+                dump = dict(
+                    test = test_src,
+                    oracle = (oracle_elf, oracle_dump),
+                    target = (target_elf, target_dump)
+                )
+                res_queue.put(dump)
+            else:
+                dump = dict(TEST_END = test_src)
+                res_queue.put(dump)
+                break
+
+        oracle_session.join()
+        target_session.join()
+        oracle_session.kill()
+        target_session.kill()
+        qemu.join()
+        gdbserver.join()
+        oracle_session.port_close()
+        target_session.port_close()
+
+        if tests_queue.empty():
+            break
+
+    res_queue.put("CMP_EXIT")
 
 
 class C2TTestBuilder(Process):
@@ -373,6 +566,12 @@ def start_cpu_testing(tests, jobs, kill, verbose):
         )
         performers.append(p)
         p.start()
+
+    dc = DebugComparison(res_queue, jobs)
+    try:
+        dc.start()
+    except RuntimeError:
+        killpg(0, SIGKILL)
 
     tb.join()
     for performer in performers:
@@ -588,6 +787,8 @@ def main():
             c2t_exit("{dir} creation error".format(dir = C2T_TEST_BIN_DIR))
 
     start_cpu_testing(tests, args.jobs, args.kill, args.verbose)
+    # TODO: delete it
+    killpg(0, SIGTERM)
 
 
 if __name__ == "__main__":
