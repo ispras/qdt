@@ -225,6 +225,13 @@ class C2tDebugSession(Process):
         self.rt.target.port.close()
 
 
+class C2tOracleSession(C2tDebugSession):
+
+    def run(self):
+        self._execute_debug_comment()
+        self.rt.target.run(setpc = False)
+
+
 class ProcessWithErrCatching(Process):
     """ Process with error catching """
 
