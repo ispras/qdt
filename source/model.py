@@ -1588,6 +1588,7 @@ class CPPMacro(Macro):
 
     def __init__(self, *args, **kw):
         super(CPPMacro, self).__init__(*args, **kw)
+        self.definer = CPP
 
     def gen_chunks(self, _):
         # CPPMacro does't require referenced types
