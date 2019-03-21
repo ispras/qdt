@@ -26,6 +26,9 @@ from argparse import (
 from re import (
     compile
 )
+from multiprocessing import (
+    cpu_count
+)
 from common import (
     pypath
 )
@@ -163,6 +166,14 @@ def main():
             "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
+    parser.add_argument("-j", "--jobs",
+        type = int,
+        dest = "jobs",
+        default = 1,
+        help = ("allow N debugging jobs at once (N = [1, NCPU]) "
+                "(default N = 1)"
+        )
+    )
 
     args = parser.parse_args()
 
@@ -214,6 +225,12 @@ def main():
             var = re_var,
             regexp = regexp
         ))
+
+    jobs = args.jobs
+    if jobs < 1:
+        parser.error("wrong number of jobs: %s" % jobs)
+    else:
+        jobs = min(jobs, cpu_count())
 
 
 if __name__ == "__main__":
