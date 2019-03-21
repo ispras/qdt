@@ -18,9 +18,16 @@ from signal import (
     SIGKILL
 )
 from argparse import (
+    Action,
     ArgumentParser
 )
+from re import (
+    compile
+)
 from common import (
+    filefilter,
+    cli_repr,
+    HelpFormatter,
     pypath
 )
 with pypath("pyrsp"):
@@ -49,8 +56,29 @@ def c2t_exit(msg, prog = __file__):
 
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
+C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 
 c2t_cfg = None
+
+
+class testfilter(filefilter):
+
+    def __str__(self):
+        res = []
+        for inclusive, pattern in self:
+            res.append(("-t " if inclusive else "-s ") + cli_repr(pattern))
+        return " ".join(res)
+
+
+class TestfilterCLI(Action):
+
+    def __call__(self, parser, namespace, values, option_strings = None):
+        dest = getattr(namespace, self.dest, self.default)
+        val = (getattr(dest, self.metavar), values)
+        if dest is self.default:
+            setattr(namespace, self.dest, testfilter([val]))
+        else:
+            dest.append(val)
 
 
 def verify_config_components(config):
@@ -92,7 +120,8 @@ def main():
         description = "QEMU CPU Testing Tool",
         epilog = ("supported GDB RSP targets: {rsp}".format(
             rsp = ', '.join(archmap.keys())
-        ))
+        )),
+        formatter_class = HelpFormatter
     )
     parser.add_argument("config",
         type = str,
@@ -101,6 +130,27 @@ def main():
                 prog = parser.prog,
                 dir = C2T_CONFIGS_DIR
             )
+        )
+    )
+    DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*\.c"),])
+    parser.add_argument("-t", "--include",
+        type = str,
+        metavar = "RE_INCLD",
+        action = TestfilterCLI,
+        dest = "regexps",
+        default = DEFAULT_REGEXPS,
+        help = ("regular expressions to include a test set "
+            "(tests are located in %s)" % C2T_TEST_DIR
+        )
+    )
+    parser.add_argument("-s", "--exclude",
+        type = str,
+        metavar = "RE_EXCLD",
+        action = TestfilterCLI,
+        dest = "regexps",
+        default = DEFAULT_REGEXPS,
+        help = ("regular expressions to exclude a test set "
+            "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
 
@@ -148,6 +198,14 @@ def main():
             )
 
     verify_config_components(config)
+
+    incl, regexp, tests = args.regexps.find_files(C2T_TEST_DIR)
+    if not tests:
+        parser.error("no matches in {dir} with {var} {regexp}".format(
+            dir = C2T_TEST_DIR,
+            var = "inclusive" if incl else "exclusive",
+            regexp = cli_repr(regexp)
+        ))
 
 
 if __name__ == "__main__":
