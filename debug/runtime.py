@@ -46,7 +46,7 @@ class Breakpoints(object):
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
 
-    def __init__(self, target, dic):
+    def __init__(self, target, dic, return_reg_name = None):
         """
     :type target:
         pyrsp.rsp.RemoteTarget
@@ -74,8 +74,8 @@ class Runtime(object):
 
         # XXX: currently a host is always AMD64
         # TODO: account targets's calling convention
-        return_reg_name = "rax"
-        self.return_reg = target.registers.index(return_reg_name)
+        if return_reg_name is not None:
+            self.return_reg = target.registers.index(return_reg_name)
 
         # TODO: this must be done using DWARF because "bitsize" and address
         # size are not same values semantically (but same by implementation).
