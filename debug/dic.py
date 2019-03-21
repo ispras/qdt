@@ -161,6 +161,10 @@ class DWARFInfoCache(DWARFInfoAccelerator):
 
         return symbol
 
+    def account_all_subprograms(self):
+        for cu in self.iter_CUs():
+            self.account_subprograms(cu)
+
     def subprogram(self, addr):
         """
     :param addr:

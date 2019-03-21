@@ -204,6 +204,9 @@ TODO: target registers
 
         """
 
+        if self.dic.aranges is None:
+            self.dic.account_all_subprograms()
+
         prog = self.subprogram
         _locals = prog.data
 
