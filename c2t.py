@@ -159,6 +159,10 @@ def main():
         default = 1,
         help = "allow N debugging jobs at once"
     )
+    parser.add_argument("-r", "--reuse",
+        action = "store_true",
+        help = "reuse debug servers after each test (now only QEMU)"
+    )
 
     args = parser.parse_args()
 
