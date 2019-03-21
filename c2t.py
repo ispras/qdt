@@ -44,6 +44,8 @@ from struct import (
     pack
 )
 from common import (
+    execfile,
+    bstr,
     filefilter,
     cli_repr,
     HelpFormatter,
@@ -126,7 +128,7 @@ class DebugSession(object):
         self.chc_line2var = defaultdict(list)
 
     def set_br_by_line(self, lineno, cb):
-        line_map = self.rt.dic.find_line_map(basename(self.srcfile))
+        line_map = self.rt.dic.find_line_map(bstr(basename(self.srcfile)))
         line_descs = line_map[lineno]
         for desc in line_descs:
             # TODO: set a breakpoint at one address by line number?
@@ -154,7 +156,7 @@ class DebugSession(object):
     def _var_size(self):
         re_size = compile("^.+_(?:u?(\d+))_.+$")
         size_str = re_size.match(basename(self.srcfile)).group(1)
-        return int(size_str) / 8
+        return int(size_str) // 8
 
     def _dump_var(self, addr, lineno, var_names):
         dump = (self.session_type, self.srcfile, dict(
@@ -218,16 +220,16 @@ class DebugSession(object):
         addr = self.rt.target.regs[self.rt.target.pc_reg]
         self.rt.remove_br(addr, self.finish_cb)
 
-        for br in self.rt.target.br.keys()[:]:
+        for br in list(self.rt.target.br):
             self.rt.target.del_br(br)
         self.rt.target.exit = True
     # end debugging callbacks
 
     def kill(self):
-        self.rt.target.send('k')
+        self.rt.target.send(b'k')
 
     def detach(self):
-        self.rt.target.send('D')
+        self.rt.target.send(b'D')
 
     def port_close(self):
         self.rt.target.port.close()
