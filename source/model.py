@@ -1144,7 +1144,7 @@ class Function(Type):
         inline = False,
         used_types = []
     ):
-        return Function(name,
+        new_f = Function(name,
             body = body,
             ret_type = self.ret_type,
             args = self.args,
@@ -1152,6 +1152,8 @@ class Function(Type):
             inline = inline,
             used_types = used_types
         )
+        CopyFixerVisitor(new_f).visit()
+        return new_f
 
     def gen_body(self, used_types = None, used_globals = None):
         new_used_types = [self]
