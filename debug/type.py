@@ -84,14 +84,18 @@ class Field(object):
     @lazy
     def bit_offset(self):
         try:
+            # DWARF v3
+            return self.die.attributes["DW_AT_bit_offset"].value
+        except KeyError:
+            return None
+
+    @lazy
+    def data_bit_offset(self):
+        try:
             # DWARF v4
             return self.die.attributes["DW_AT_data_bit_offset"].value
         except KeyError:
-            try:
-                # DWARF v3
-                return self.die.attributes["DW_AT_bit_offset"].value
-            except KeyError:
-                return None
+            return None
 
     @lazy
     def bit_size(self):
