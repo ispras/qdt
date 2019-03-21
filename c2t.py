@@ -29,6 +29,7 @@ from re import (
     compile
 )
 from multiprocessing import (
+    Queue,
     Process,
     cpu_count
 )
@@ -139,7 +140,21 @@ class C2TTestBuilder(Process):
 
 
 def start_cpu_testing(tests, jobs, kill, verbose):
-    pass
+    oracle_tests_queue = Queue(0)
+    target_tests_queue = Queue(0)
+
+    oracle_tb = C2TTestBuilder(c2t_cfg.oracle_compiler, tests,
+        ORACLE_CPU, oracle_tests_queue, verbose
+    )
+    target_tb = C2TTestBuilder(c2t_cfg.target_compiler, tests,
+        c2t_cfg.rsp_target.march, target_tests_queue, verbose
+    )
+
+    oracle_tb.start()
+    target_tb.start()
+
+    oracle_tb.join()
+    target_tb.join()
 
 
 def find_tests(regexps):
