@@ -162,7 +162,28 @@ def start_cpu_testing(tests, jobs, kill, verbose):
     tb = C2TTestBuilder(tests, tests_queue, jobs, verbose)
     tb.start()
 
+    res_queue = Queue(0)
+
+    if not kill:
+        f = tests_perform_nonkill
+    else:
+        f = tests_perform_kill
+
+    if jobs > len(tests):
+        jobs = len(tests)
+
+    performers = []
+    for i in range(0, jobs):
+        p = Process(
+            target = f,
+            args = [tests_queue, res_queue, verbose]
+        )
+        performers.append(p)
+        p.start()
+
     tb.join()
+    for performer in performers:
+        performer.join()
 
 
 def find_tests(regexps):
