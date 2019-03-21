@@ -153,6 +153,12 @@ def main():
             "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
+    parser.add_argument("-j", "--jobs",
+        type = int,
+        dest = "jobs",
+        default = 1,
+        help = "allow N debugging jobs at once"
+    )
 
     args = parser.parse_args()
 
@@ -206,6 +212,10 @@ def main():
             var = "inclusive" if incl else "exclusive",
             regexp = cli_repr(regexp)
         ))
+
+    jobs = args.jobs
+    if jobs < 1:
+        parser.error("wrong number of jobs: %s" % jobs)
 
 
 if __name__ == "__main__":
