@@ -36,11 +36,21 @@ from subprocess import (
 from platform import (
     machine
 )
+from collections import (
+    defaultdict
+)
 from common import (
+    execfile,
+    bstr,
     filefilter,
     cli_repr,
     HelpFormatter,
     pypath
+)
+from debug import (
+    InMemoryELFFile,
+    DWARFInfoCache,
+    Runtime
 )
 with pypath("pyrsp"):
     from pyrsp.rsp import (
@@ -50,6 +60,7 @@ with pypath("pyrsp"):
         find_free_port
     )
 from c2t import (
+    DebugCommandExecutor,
     C2TConfig,
     Run,
     get_new_rsp,
@@ -78,6 +89,142 @@ C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
 ORACLE_CPU = machine()
 
 c2t_cfg = None
+
+
+class DebugSession(object):
+    """ This class manages debugging session """
+
+    def __init__(self, target, srcfile, port, elffile, queue, verbose):
+        super(DebugSession, self).__init__()
+        self.rsp = target(port, elffile,
+            verbose = verbose
+        )
+        self.port = port
+        self.queue = queue
+        self.reset(srcfile, elffile)
+        self.session_type = None
+
+    def reset(self, srcfile, elffile):
+        self.srcfile = srcfile
+        self.elffile = elffile
+        self.elf = InMemoryELFFile(elffile)
+        di = self.elf.get_dwarf_info()
+        dic = DWARFInfoCache(di,
+            symtab = self.elf.get_section_by_name(".symtab")
+        )
+        if dic.aranges is None:
+            dic.account_all_subprograms()
+        self.rt = Runtime(self.rsp, dic)
+        self.addr2line = {}
+        self.ch_line2var = defaultdict(list)
+        self.chc_line2var = defaultdict(list)
+
+    def set_br_by_line(self, lineno, cb):
+        line_map = self.rt.dic.find_line_map(bstr(basename(self.srcfile)))
+        line_descs = line_map[lineno]
+        for desc in line_descs:
+            # TODO: set a breakpoint at one address by line number?
+            # if desc.state.is_stmt:
+            addr = self.rt.target.reg_fmt % desc.state.address
+            self.addr2line[addr] = lineno
+            self.rt.add_br(addr, cb)
+                # break
+
+    def _execute_debug_comment(self):
+        lineno = 1
+
+        with open(self.srcfile, 'r') as f:
+            re_comment = compile("^.*//\$(.+)$")
+            re_command = compile("([^, ]+)+")
+            for line in f:
+                mi = re_comment.match(line)
+                if mi:
+                    commands = re_command.findall(mi.group(1))
+                    glob = DebugCommandExecutor(locals(), lineno)
+                    exec('\n'.join(commands), glob)
+                lineno += 1
+
+    @property
+    def _var_size(self):
+        re_size = compile("^.+_(?:u?(\d+))_.+$")
+        size_str = re_size.match(basename(self.srcfile)).group(1)
+        return int(size_str) // 8
+
+    def _dump_var(self, addr, lineno, var_names):
+        dump = (self.session_type, self.srcfile, dict(
+            elf = self.elffile,
+            addr = addr,
+            lineno = lineno,
+            vars = dict(
+                map(lambda x: (x, self.rt[x].fetch(self._var_size)),
+                    var_names if var_names else self.rt
+                )
+            ),
+            regs = self.rt.target.regs
+        ))
+        if self.rt.target.verbose:
+            print(dump[2].values())
+        self.queue.put(dump)
+
+    def _dump(self, addr, lineno):
+        dump = (self.session_type, self.srcfile, dict(
+            elf = self.elffile,
+            addr = addr,
+            lineno = lineno,
+            regs = self.rt.target.regs
+        ))
+        if self.rt.target.verbose:
+            print(dump[2].values())
+        self.queue.put(dump)
+
+    # debugging callbacks
+    def check_cb(self):
+        addr = self.rt.target.regs[self.rt.target.pc_reg]
+        lineno = self.addr2line[addr]
+
+        self._dump(addr, lineno)
+        self.rt.remove_br(addr, self.check_cb)
+
+    def cycle_check_cb(self):
+        addr = self.rt.target.regs[self.rt.target.pc_reg]
+        lineno = self.addr2line[addr]
+
+        self._dump(addr, lineno)
+
+    def check_vars_cb(self):
+        addr = self.rt.target.regs[self.rt.target.pc_reg]
+        lineno = self.addr2line[addr]
+
+        var_names = self.ch_line2var.get(lineno)
+
+        self._dump_var(addr, lineno, var_names)
+        self.rt.remove_br(addr, self.check_vars_cb)
+
+    def cycle_check_vars_cb(self):
+        addr = self.rt.target.regs[self.rt.target.pc_reg]
+        lineno = self.addr2line[addr]
+
+        var_names = self.chc_line2var.get(lineno)
+
+        self._dump_var(addr, lineno, var_names)
+
+    def finish_cb(self):
+        addr = self.rt.target.regs[self.rt.target.pc_reg]
+        self.rt.remove_br(addr, self.finish_cb)
+
+        for br in list(self.rt.target.br):
+            self.rt.target.del_br(br)
+        self.rt.target.exit = True
+    # end debugging callbacks
+
+    def kill(self):
+        self.rt.target.send(b'k')
+
+    def detach(self):
+        self.rt.target.send(b'D')
+
+    def port_close(self):
+        self.rt.target.port.close()
 
 
 class ProcessWithErrCatching(Process):
