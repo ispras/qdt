@@ -319,6 +319,8 @@ attribute.
             return AddressSize()
         elif code == TYPE_CODE_TYPEDEF:
             return self.target_type.size_expr
+        elif code == TYPE_CODE_STRUCT:
+            return self.die.attributes["DW_AT_byte_size"].value
         else:
             raise NotImplementedError(
                 "Unknown size of type with code %u" % code

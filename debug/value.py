@@ -325,6 +325,14 @@ evaluation is time consuming.
     def type(self):
         return self.datum.type
 
+    @lazy
+    def enum_name(self):
+        idx = self.fetch(1)
+        try:
+            return self.type.target_type.die.children[idx].attributes["DW_AT_name"].value
+        except (ValueError, AttributeError, IndexError):
+            return None
+
     def dereference(self):
         _type = self.type
         while _type.code != TYPE_CODE_PTR:
