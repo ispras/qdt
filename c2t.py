@@ -27,7 +27,12 @@ from re import (
     compile
 )
 from multiprocessing import (
+    Process,
     cpu_count
+)
+from subprocess import (
+    Popen,
+    PIPE
 )
 from common import (
     pypath
@@ -61,6 +66,24 @@ C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 
 c2t_cfg = None
+
+
+class ProcessWithErrCatching(Process):
+
+    def __init__(self, command):
+        Process.__init__(self)
+        self.cmd = command
+        self.prog = command.split(' ')[0]
+
+    def run(self):
+        process = Popen(self.cmd,
+            shell = True,
+            stdout = PIPE,
+            stderr = PIPE
+        )
+        _, err = process.communicate()
+        if process.returncode != 0:
+            c2t_exit(err, prog = self.prog)
 
 
 def start_cpu_testing(tests, jobs, kill, verbose):
