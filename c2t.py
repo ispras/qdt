@@ -25,6 +25,7 @@ from argparse import (
     ArgumentParser
 )
 from re import (
+    findall,
     compile
 )
 from multiprocessing import (
@@ -34,6 +35,9 @@ from multiprocessing import (
 from subprocess import (
     Popen,
     PIPE
+)
+from platform import (
+    machine
 )
 from common import (
     pypath
@@ -68,6 +72,8 @@ C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
 C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
 
+ORACLE_CPU = machine()
+
 c2t_cfg = None
 
 
@@ -87,6 +93,49 @@ class ProcessWithErrCatching(Process):
         _, err = process.communicate()
         if process.returncode != 0:
             c2t_exit(err, prog = self.prog)
+
+
+class C2TTestBuilder(Process):
+    """ A helper class that builds tests """
+
+    def __init__(self, compiler, tests, tests_tail, tests_queue, verbose):
+        super(C2TTestBuilder, self).__init__()
+        self.compiler = compiler
+        self.tests = tests
+        self.tests_tail = tests_tail
+        self.tests_queue = tests_queue
+        self.verbose = verbose
+
+    def test_build(self, test_src, test_ir, test_bin):
+        for run_script in self.compiler.run_script:
+            cmd = run_script.format(
+                src = test_src,
+                ir = test_ir,
+                bin = test_bin,
+                c2t_dir = C2T_DIR,
+                c2t_test_dir = C2T_TEST_DIR
+            )
+            if self.verbose:
+                print(cmd)
+            cmpl_unit = ProcessWithErrCatching(cmd)
+            cmpl_unit.start()
+            cmpl_unit.join()
+
+        ext = findall("-o {bin}(\S*)", run_script).pop()
+        return test_bin + ext
+
+    def run(self):
+        for test in self.tests:
+            test_name = test[:-2]
+            test_src = join(C2T_TEST_DIR, test)
+            test_ir = join(C2T_TEST_IR_DIR, test_name)
+            test_bin = join(C2T_TEST_BIN_DIR, test_name)
+
+            test_elf = self.test_build(test_src, test_ir,
+                test_bin + "_%s" % self.tests_tail
+            )
+
+            self.tests_queue.put((test_src, test_elf))
 
 
 def start_cpu_testing(tests, jobs, kill, verbose):
