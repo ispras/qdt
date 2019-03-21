@@ -225,6 +225,17 @@ class DebugSession(object):
         self.rt.target.port.close()
 
 
+class OracleSession(DebugSession):
+
+    def __init__(self, *args):
+        super(OracleSession, self).__init__(*args)
+        self.session_type = "oracle"
+
+    def run(self):
+        self._execute_debug_comment()
+        self.rt.target.run(setpc = False)
+
+
 class ProcessWithErrCatching(Process):
 
     def __init__(self, command):
