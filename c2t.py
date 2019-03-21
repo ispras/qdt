@@ -12,13 +12,18 @@ from os.path import (
 )
 from os import (
     killpg,
-    setpgrp
+    setpgrp,
+    listdir
 )
 from signal import (
     SIGKILL
 )
 from argparse import (
-    ArgumentParser
+    ArgumentParser,
+    Action
+)
+from re import (
+    compile
 )
 from common import (
     pypath
@@ -49,8 +54,44 @@ def c2t_exit(msg, prog = __file__):
 
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
+C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
 
 c2t_cfg = None
+
+
+def find_tests(regexps):
+    tests = listdir(C2T_TEST_DIR)
+
+    for re_type, regexp in regexps:
+        r = compile(regexp)
+        if re_type == "RE_INCLD":
+                tests = filter(r.match, tests)
+        else:
+            for test in filter(r.match, tests):
+                tests.remove(test)
+        if not tests:
+            break
+    return re_type, regexp, tests
+
+
+# https://stackoverflow.com/questions/12460989/argparse-how-can-i-allow-
+# multiple-values-to-override-a-default
+class Extender(Action):
+
+    def __call__(self, parser, namespace, values, option_strings = None):
+        dest = getattr(namespace, self.dest, None)
+        if not hasattr(dest, "extend") or dest == self.default:
+            dest = []
+            setattr(namespace, self.dest, dest)
+            parser.set_defaults(**{self.dest: None})
+
+        if not values:
+            values = [""]
+
+        try:
+            dest.extend(map(lambda x: (self.metavar, x), values))
+        except ValueError:
+            dest.append(map(lambda x: (self.metavar, x), values))
 
 
 def verify_config_components(config):
@@ -113,6 +154,29 @@ def main():
             )
         )
     )
+    parser.add_argument("-t", "--include",
+        type = str,
+        nargs = '*',
+        metavar = "RE_INCLD",
+        action = Extender,
+        dest = "regexps",
+        default = [("RE_INCLD", ".*\.c")],
+        help = (("regular expressions to include a test set "
+            "(tests are located in {dir}) (default value = '.*\.c')".format(
+                dir = C2T_TEST_DIR
+            )
+        ))
+    )
+    parser.add_argument("-s", "--exclude",
+        type = str,
+        nargs = '*',
+        metavar = "RE_EXCLD",
+        action = Extender,
+        dest = "regexps",
+        help = (("regular expressions to exclude a test set "
+            "(tests are located in {dir})".format(dir = C2T_TEST_DIR)
+        ))
+    )
 
     args = parser.parse_args()
 
@@ -159,6 +223,14 @@ def main():
                 prog = config
             )
     verify_config_components(config)
+
+    re_var, regexp, tests = find_tests(args.regexps)
+    if not tests:
+        parser.error("no matches in {dir} with: {var} = '{regexp}'".format(
+            dir = C2T_TEST_DIR,
+            var = re_var,
+            regexp = regexp
+        ))
 
 
 if __name__ == "__main__":
