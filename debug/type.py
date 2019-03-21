@@ -115,14 +115,18 @@ of this field at runtime.
             loc_attr = attrs["DW_AT_data_member_location"]
             # location list is not expected there
             if loc_attr.form == "DW_FORM_exprloc":
-                return self.container.dic.expr_parser.build(loc_attr.value)
+                loc = self.container.dic.expr_parser.build(loc_attr.value)
             else: # integer constant
-                return Plus(ObjectAddress(), loc_attr.value)
-        elif "DW_AT_data_bit_offset" in attrs:
-            # See DWARF3, p.88 (PDF p. 102)
-            raise NotImplementedError("Bit offset of fields")
+                loc = Plus(ObjectAddress(), loc_attr.value)
         else:
-            return ObjectAddress()
+            loc = ObjectAddress()
+
+        off = self.data_bit_offset
+
+        if off is not None:
+            loc = Plus(loc, off >> 3)
+
+        return loc
 
     # DWARF specific
 
