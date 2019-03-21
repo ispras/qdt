@@ -29,7 +29,8 @@ from re import (
 )
 from multiprocessing import (
     cpu_count,
-    Process
+    Process,
+    Queue
 )
 from subprocess import (
     Popen,
@@ -149,7 +150,11 @@ class C2TTestBuilder(Process):
 
 
 def start_cpu_testing(tests, jobs, kill, verbose):
-    pass
+    tests_queue = Queue(0)
+    tb = C2TTestBuilder(tests, tests_queue, jobs, verbose)
+    tb.start()
+
+    tb.join()
 
 
 def find_tests(regexps):
