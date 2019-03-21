@@ -1470,7 +1470,7 @@ def main():
 
     qemu_debugger = AMD64(str(port), noack = True)
 
-    rt = Runtime(qemu_debugger, dic)
+    rt = Runtime(qemu_debugger, dic, return_reg_name = "rax")
 
     qomtr.init_runtime(rt)
     mw.init_runtime(rt)
