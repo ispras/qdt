@@ -178,6 +178,10 @@ def main():
                 "(default N = 1)"
         )
     )
+    parser.add_argument("-k", "--kill",
+        action = "store_true",
+        help = "kill debug servers after each test (now only QEMU)"
+    )
 
     args = parser.parse_args()
 
