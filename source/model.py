@@ -1796,8 +1796,11 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if isinstance(t, (Pointer, MacroType)) and not t.is_named:
                 return
 
-            # Do not add definerless types to the Source automatically
+            # Add definerless types to the Source automatically
             if t.definer is None:
+                if t.is_named:
+                    self.source.add_type(t)
+                    raise BreakVisiting()
                 return
 
             if t.definer is self.source:
