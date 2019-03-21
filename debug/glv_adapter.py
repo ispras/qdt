@@ -4,6 +4,7 @@ __all__ = [
 ]
 
 from os.path import (
+    abspath,
     dirname,
     sep
 )
@@ -270,7 +271,7 @@ found.
 
     cu = next(dwarf_info.iter_CUs())
     src_file = cu.get_top_DIE().attributes["DW_AT_name"].value
-    src_path = dirname(src_file)
+    src_path = abspath(dirname(src_file))
 
     # Start from directory of one of files and go towards file system root
     # until a Git repository is found
