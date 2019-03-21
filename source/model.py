@@ -1358,13 +1358,9 @@ class MacroType(Type):
             return self.macro.get_definers()
 
     def gen_chunks(self, generator, indent = ""):
-        if not self.is_named:
-            return []
-
         macro = self.macro
         initializer = self.initializer
 
-        ch = MacroTypeUsage(macro, initializer, indent)
         refs = list(generator.provide_chunks(macro))
 
         if initializer is not None:
@@ -1376,8 +1372,12 @@ class MacroType(Type):
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
 
-        ch.add_references(refs)
-        return [ch]
+        if self.is_named:
+            ch = MacroTypeUsage(macro, initializer, indent)
+            ch.add_references(refs)
+            return [ch]
+        else:
+            return refs
 
     __type_references__ = ["macro", "initializer"]
 
