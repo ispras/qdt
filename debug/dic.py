@@ -166,6 +166,11 @@ class DWARFInfoCache(DWARFInfoAccelerator):
 
         return symbol
 
+    def account_all_subprograms(self):
+        "Note that it may consume too many time on a large DWARF."
+        for cu in self.iter_CUs():
+            self.account_subprograms(cu)
+
     def subprogram(self, addr):
         """
     :param addr:
