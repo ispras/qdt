@@ -126,9 +126,7 @@ def main():
             config = join(C2T_DIR, cfg_file)
             if not exists(config):
                 parser.error(
-                    "configuration file doesn't exist: {config}".format(
-                        config = args.config
-                    )
+                    "configuration file doesn't exist: " + args.config
                 )
 
     glob = {
