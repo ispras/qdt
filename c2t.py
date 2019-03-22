@@ -133,9 +133,8 @@ def main():
         )),
         formatter_class = ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument(
+    parser.add_argument("config",
         type = str,
-        dest = "config",
         help = ("configuration file for {prog} (see sample and examples in "
             "{dir})".format(
                 prog = parser.prog,
