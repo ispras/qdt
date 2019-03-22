@@ -78,13 +78,11 @@ def find_tests(regexps):
 class Extender(Action):
 
     def __call__(self, parser, namespace, values, option_strings = None):
-        dest = getattr(namespace, self.dest, None)
-        try:
-            dest.extend([(self.metavar, values)])
-        except AttributeError:
-            dest = []
-            setattr(namespace, self.dest, dest)
-            dest.append([(self.metavar, values)])
+        dest = getattr(namespace, self.dest, self.default)
+        if dest is self.default:
+            setattr(namespace, self.dest, [(self.metavar, values)])
+        else:
+            dest.append((self.metavar, values))
 
 
 def verify_config_components(config):
@@ -148,12 +146,13 @@ def main():
             )
         )
     )
+    DEFAULT_REGEXPS = (("RE_INCLD", ".*\.c"),)
     parser.add_argument("-t", "--include",
         type = str,
         metavar = "RE_INCLD",
         action = Extender,
         dest = "regexps",
-        default = ".*\.c",
+        default = DEFAULT_REGEXPS,
         help = ("regular expressions to include a test set "
             "(tests are located in %s)" % C2T_TEST_DIR
         )
@@ -163,6 +162,7 @@ def main():
         metavar = "RE_EXCLD",
         action = Extender,
         dest = "regexps",
+        default = DEFAULT_REGEXPS,
         help = ("regular expressions to exclude a test set "
             "(tests are located in %s)" % C2T_TEST_DIR
         )
@@ -211,10 +211,7 @@ def main():
             )
     verify_config_components(config)
 
-    regexps = args.regexps
-    if type(args.regexps) is str:
-        regexps = [("RE_INCLD", ".*\.c")]
-    re_var, regexp, tests = find_tests(regexps)
+    re_var, regexp, tests = find_tests(args.regexps)
     if not tests:
         parser.error("no matches in {dir} with: {var} = '{regexp}'".format(
             dir = C2T_TEST_DIR,
