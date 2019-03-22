@@ -13,7 +13,8 @@ from os.path import (
 from os import (
     killpg,
     setpgrp,
-    listdir
+    listdir,
+    makedirs
 )
 from signal import (
     SIGKILL
@@ -33,6 +34,9 @@ from multiprocessing import (
 from subprocess import (
     Popen,
     PIPE
+)
+from errno import (
+    EEXIST
 )
 from common import (
     pypath
@@ -64,6 +68,8 @@ def c2t_exit(msg, prog = __file__):
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
+C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
+C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
 
 c2t_cfg = None
 
@@ -274,6 +280,18 @@ def main():
         parser.error("wrong number of jobs: %s" % jobs)
     else:
         jobs = min(jobs, cpu_count() - 1)
+
+    # creates tests subdirectories if they don't exist
+    try:
+        makedirs(C2T_TEST_IR_DIR)
+    except OSError as e:
+        if e.errno != EEXIST:
+            c2t_exit("%s creation error" % C2T_TEST_IR_DIR)
+    try:
+        makedirs(C2T_TEST_BIN_DIR)
+    except OSError as e:
+        if e.errno != EEXIST:
+            c2t_exit("%s creation error" % C2T_TEST_BIN_DIR)
 
     start_cpu_testing(tests, jobs, args.kill, args.verbose)
 
