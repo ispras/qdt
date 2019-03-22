@@ -163,6 +163,10 @@ def main():
         action = "store_true",
         help = "reuse debug servers after each test (now only QEMU)"
     )
+    parser.add_argument("-v", "--verbose",
+        action = "store_true",
+        help = "increase output verbosity"
+    )
 
     args = parser.parse_args()
 
