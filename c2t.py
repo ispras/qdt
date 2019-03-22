@@ -117,8 +117,10 @@ def main():
     args = parser.parse_args()
 
     config = args.config
+    cfg_file = "%s.py" % config if not config.endswith(".py") else config
+
+    config = cfg_file
     if not exists(config):
-        cfg_file = "%s.py" % config if not config.endswith(".py") else config
         config = join(C2T_CONFIGS_DIR, cfg_file)
         if not exists(config):
             config = join(C2T_DIR, cfg_file)
