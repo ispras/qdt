@@ -857,6 +857,7 @@ class Type(object):
         self.is_named = name is not None
 
         self.name = name or ""
+        self.c_name = self.name.split('.', 1)[0]
         self.incomplete = incomplete
         self.definer = None
         self.base = base
@@ -942,6 +943,7 @@ class TypeReference(Type):
         )
 
         self.name = _type.name
+        self.c_name = _type.c_name
         self.type = _type
         self.definer_references = None
 
@@ -1333,6 +1335,7 @@ class Pointer(Type):
             if const:
                 name = "const@b" + name
             self.name = name
+            self.c_name = name
 
         self.type = _type
         self.const = const
