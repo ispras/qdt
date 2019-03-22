@@ -1338,7 +1338,7 @@ class QEmuWatcherGUI(GUITk):
             try:
                 target.send("k")
             except:
-                pass
+                print_exc()
 
         t = Thread(target = run)
         t.start()
