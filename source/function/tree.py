@@ -550,7 +550,7 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        writer.write(v.full_deref.name + "@b" + v.asterisks)
+        writer.write(v.full_deref.view_name + "@b" + v.asterisks)
         self._write_child(child, writer)
 
         for child in self.children[1:]:
@@ -582,7 +582,7 @@ class MCall(SemicolonPresence):
         self.type = Type.lookup(macro)
 
     def __c__(self, writer):
-        writer.write(self.type.name)
+        writer.write(self.type.view_name)
 
         if self.children:
             writer.write("(@a")
