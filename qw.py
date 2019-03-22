@@ -1336,7 +1336,7 @@ class QEmuWatcherGUI(GUITk):
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
 
             try:
-                target.send("k")
+                target.send(b"k")
             except:
                 print_exc()
 
