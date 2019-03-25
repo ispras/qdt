@@ -12,7 +12,6 @@ from os.path import (
 )
 from os import (
     makedirs,
-    listdir,
     killpg,
     setpgrp
 )
@@ -48,6 +47,8 @@ from struct import (
     pack
 )
 from common import (
+    filefilter,
+    cli_repr,
     pypath
 )
 from debug import (
@@ -555,29 +556,24 @@ def start_cpu_testing(tests, jobs, kill, verbose):
         target_trp.join()
 
 
-def find_tests(regexps):
-    tests = listdir(C2T_TEST_DIR)
+class testfilter(filefilter):
 
-    for re_type, regexp in regexps:
-        r = compile(regexp)
-        if re_type == "RE_INCLD":
-                tests = filter(r.match, tests)
-        else:
-            for test in filter(r.match, tests):
-                tests.remove(test)
-        if not tests:
-            break
-    return re_type, regexp, tests
+    def __str__(self):
+        res = []
+        for inclusive, pattern in self:
+            res.append(("-t " if inclusive else "-s ") + cli_repr(pattern))
+        return " ".join(res)
 
 
-class Extender(Action):
+class TestfilterCLI(Action):
 
     def __call__(self, parser, namespace, values, option_strings = None):
         dest = getattr(namespace, self.dest, self.default)
+        val = (getattr(dest, self.metavar), values)
         if dest is self.default:
-            setattr(namespace, self.dest, [(self.metavar, values)])
+            setattr(namespace, self.dest, testfilter([val]))
         else:
-            dest.append((self.metavar, values))
+            dest.append(val)
 
 
 def verify_config_components(config):
@@ -637,11 +633,11 @@ def main():
             )
         )
     )
-    DEFAULT_REGEXPS = (("RE_INCLD", ".*\.c"),)
+    DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*\.c"),])
     parser.add_argument("-t", "--include",
         type = str,
         metavar = "RE_INCLD",
-        action = Extender,
+        action = TestfilterCLI,
         dest = "regexps",
         default = DEFAULT_REGEXPS,
         help = ("regular expressions to include a test set "
@@ -651,7 +647,7 @@ def main():
     parser.add_argument("-s", "--exclude",
         type = str,
         metavar = "RE_EXCLD",
-        action = Extender,
+        action = TestfilterCLI,
         dest = "regexps",
         default = DEFAULT_REGEXPS,
         help = ("regular expressions to exclude a test set "
@@ -716,12 +712,12 @@ def main():
             )
     verify_config_components(config)
 
-    re_var, regexp, tests = find_tests(args.regexps)
+    incl, regexp, tests = args.regexps.find_tests(C2T_TEST_DIR)
     if not tests:
-        parser.error("no matches in {dir} with: {var} = '{regexp}'".format(
+        parser.error("no matches in {dir} with {var} {regexp}".format(
             dir = C2T_TEST_DIR,
-            var = re_var,
-            regexp = regexp
+            var = "inclusive" if incl else "exclusive",
+            regexp = cli_repr(regexp)
         ))
 
     jobs = args.jobs
