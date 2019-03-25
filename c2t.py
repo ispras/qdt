@@ -662,9 +662,7 @@ def main():
         type = int,
         dest = "jobs",
         default = 1,
-        help = ("allow N debugging jobs at once (N = [1, NCPU]) "
-                "(default N = 1)"
-        )
+        help = "allow N debugging jobs at once (N = [1, NCPU])"
     )
     parser.add_argument("-k", "--kill",
         action = "store_true",
