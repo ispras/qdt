@@ -1,5 +1,6 @@
 __all__ = [
     "execfile"
+  , "HelpFormatter"
 ]
 
 from sys import (
@@ -11,6 +12,12 @@ from os.path import (
 from os import (
     getcwd
 )
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    _CountAction,
+    _StoreConstAction
+)
+
 
 def execfile(filename, globals = None, locals = None):
     f = open(filename, "rb")
@@ -38,3 +45,14 @@ def execfile(filename, globals = None, locals = None):
     finally:
         if new_path:
             py_path.remove(file_path)
+
+
+class HelpFormatter(ArgumentDefaultsHelpFormatter):
+    """ Like `ArgumentDefaultsHelpFormatter` but it does not print defaults
+for flags.
+    """
+
+    def _get_help_string(self, action):
+        if isinstance(action, (_CountAction, _StoreConstAction)):
+            return action.help
+        return super(HelpFormatter, self)._get_help_string(action)
