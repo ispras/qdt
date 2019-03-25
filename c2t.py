@@ -21,7 +21,6 @@ from signal import (
 )
 from argparse import (
     Action,
-    ArgumentDefaultsHelpFormatter,
     ArgumentParser
 )
 from re import (
@@ -47,6 +46,7 @@ from struct import (
     pack
 )
 from common import (
+    HelpFormatter,
     filefilter,
     cli_repr,
     pypath
@@ -622,7 +622,7 @@ def main():
         epilog = ("supported GDB RSP targets: {rsp}".format(
             rsp = ', '.join(archmap.keys())
         )),
-        formatter_class = ArgumentDefaultsHelpFormatter
+        formatter_class = HelpFormatter
     )
     parser.add_argument("config",
         type = str,
