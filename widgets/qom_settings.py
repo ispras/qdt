@@ -92,7 +92,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 v, w = generator(f)
 
                 if v is not None:
-                    def do_highlight(w = w, v = v, attr = attr):
+                    def do_highlight(*_, w = w, v = v, attr = attr):
                         if not w._validate():
                             w._set_color("red")
                         elif w._cast(v.get()) != getattr(self.desc, attr):
@@ -101,7 +101,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                             w._set_color("white")
 
                     all_highlights.append(do_highlight)
-                    v.trace_variable("w", lambda *_: do_highlight())
+                    v.trace_variable("w", do_highlight)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_var_" + attr, v)
