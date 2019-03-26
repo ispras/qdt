@@ -797,21 +797,16 @@ class QOMType(object):
         )
 
     def gen_register_types_fn(self, *infos):
-        body = ""
-        for info in infos:
-            body += "    type_register_static(&%s);\n" % info.name
-
-        fn = Function(
+        return Function(
             name = self.gen_register_types_name(),
-            body = body,
-            static = True,
-            used_types = [
-                Type["type_register_static"]
-            ],
-            used_globals = list(infos)
+            body = BodyTree()(*[
+                Call(
+                    Type["type_register_static"],
+                    OpAddr(info)
+                ) for info in infos
+            ]),
+            static = True
         )
-
-        return fn
 
     @staticmethod
     def gen_mmio_read(name, struct_name, type_cast_macro, regs = None):
