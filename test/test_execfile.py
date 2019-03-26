@@ -60,6 +60,21 @@ class TestExecfile(TestCase):
         self.assertIs(self.log.e_type, None, "An exception happened")
         self.assertOut("Hello, World!\n")
 
+    def test_exception(self):
+        f = self.ex("exception.py")
+
+        self.assertIs(self.log.e_type, RuntimeError)
+        self.assertEqual(self.log.e_file, f, "Exception position missed")
+
+    def test_syntax_error(self):
+        f = self.ex("syntaxerror.py")
+
+        self.assertIs(self.log.e_type, SyntaxError)
+        self.assertEqual(self.log.e.lineno, 2, "Exception position missed")
+        self.assertEqual(self.log.e.filename, f,
+            "Exception position missed"
+        )
+
 
 if __name__ == "__main__":
     main()
