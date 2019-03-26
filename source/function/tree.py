@@ -1,61 +1,62 @@
 __all__ = [
-    "CNode"
-      , "Comment"
-      , "Label"
-      , "NewLine"
-      , "MacroBranch"
-      , "LoopWhile"
-      , "LoopDoWhile"
-      , "LoopFor"
-      , "BranchIf"
-      , "BranchSwitch"
-      , "BranchElse"
-      , "SwitchCase"
-      , "StrConcat"
-      # SemicolonPresence
-          , "Break"
-          , "Call"
-          , "Goto"
-          , "Declare"
-          , "MCall"
-          , "Return"
-          # Operator
-              , "OpIndex"
-              , "OpSDeref"
-              # UnaryOperator
-                  , "OpAddr"
-                  , "OpDec"
-                  , "OpInc"
-                  , "OpPostDec"
-                  , "OpPostInc"
-                  , "OpPreDec"
-                  , "OpPreInc"
-                  , "OpDeref"
-                  , "OpNot"
-                  , "OpCast"
-              # BinaryOperator
-                  , "OpAssign"
-                  , "OpCombAssign"
-                  , "OpAdd"
-                  , "OpSub"
-                  , "OpMul"
-                  , "OpDiv"
-                  , "OpRem"
-                  , "OpAnd"
-                  , "OpOr"
-                  , "OpXor"
-                  , "OpLShift"
-                  , "OpRShift"
-                  , "OpLogAnd"
-                  , "OpLogOr"
-                  , "OpLogNot"
-                  , "OpEq"
-                  , "OpNEq"
-                  , "OpGE"
-                  , "OpLE"
-                  , "OpGreater"
-                  , "OpLower"
-                  , "CaseRange"
+    "Node"
+      , "CNode"
+          , "Comment"
+          , "Label"
+          , "NewLine"
+          , "MacroBranch"
+          , "LoopWhile"
+          , "LoopDoWhile"
+          , "LoopFor"
+          , "BranchIf"
+          , "BranchSwitch"
+          , "BranchElse"
+          , "SwitchCase"
+          , "StrConcat"
+          # SemicolonPresence
+              , "Break"
+              , "Call"
+              , "Goto"
+              , "Declare"
+              , "MCall"
+              , "Return"
+              # Operator
+                  , "OpIndex"
+                  , "OpSDeref"
+                  # UnaryOperator
+                      , "OpAddr"
+                      , "OpDec"
+                      , "OpInc"
+                      , "OpPostDec"
+                      , "OpPostInc"
+                      , "OpPreDec"
+                      , "OpPreInc"
+                      , "OpDeref"
+                      , "OpNot"
+                      , "OpCast"
+                  # BinaryOperator
+                      , "OpAssign"
+                      , "OpCombAssign"
+                      , "OpAdd"
+                      , "OpSub"
+                      , "OpMul"
+                      , "OpDiv"
+                      , "OpRem"
+                      , "OpAnd"
+                      , "OpOr"
+                      , "OpXor"
+                      , "OpLShift"
+                      , "OpRShift"
+                      , "OpLogAnd"
+                      , "OpLogOr"
+                      , "OpLogNot"
+                      , "OpEq"
+                      , "OpNEq"
+                      , "OpGE"
+                      , "OpLE"
+                      , "OpGreater"
+                      , "OpLower"
+                      , "CaseRange"
 ]
 
 from ..c_const import (
@@ -75,7 +76,7 @@ from six import (
 )
 
 
-class CNode(object):
+class Node(object):
 
     # traverse order indicator for `ObjectVisitor`
     __node__ = ("children",)
@@ -96,11 +97,6 @@ class CNode(object):
         return self
 
     def add_child(self, child):
-        if isinstance(child, str):
-            child = CConst.parse(child)
-        elif isinstance(child, integer_types):
-            child = CINT(child)
-
         self.children.append(child)
 
     def out_children(self, writer):
@@ -114,6 +110,17 @@ class CNode(object):
 
         if self.indent_children:
             writer.pop_indent()
+
+
+class CNode(Node):
+
+    def add_child(self, child):
+        if isinstance(child, str):
+            child = CConst.parse(child)
+        elif isinstance(child, integer_types):
+            child = CINT(child)
+
+        super(CNode, self).add_child(child)
 
 
 class Comment(CNode):
