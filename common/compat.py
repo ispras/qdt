@@ -6,7 +6,7 @@ from sys import (
     path as py_path
 )
 from os.path import (
-    split
+    dirname
 )
 from os import (
     getcwd
@@ -22,7 +22,7 @@ def execfile(filename, globals = None, locals = None):
     globals["__file__"] = filename
     globals["__name__"] = "__main__"
 
-    file_path = split(filename)[0]
+    file_path = dirname(filename)
 
     if not file_path:
         file_path = getcwd()
