@@ -894,6 +894,8 @@ class Structure(Type):
         self.fields = OrderedDict()
         if fields is not None:
             self.append_fields(fields)
+        self.declaration = None
+        self.definition = None
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
@@ -1015,7 +1017,7 @@ class Structure(Type):
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
 
-    __type_references__ = ["fields"]
+    __type_references__ = ["fields", "declaration"]
 
 
 class Enumeration(Type):
@@ -1434,6 +1436,31 @@ class TypesCollector(TypeReferencesVisitor):
         if isinstance(cur, Type):
             self.used_types.add(cur)
             raise BreakVisiting()
+
+
+class StructureCycleFixer(TypeReferencesVisitor):
+    "This visitor replaces nested structure type by declaration of this type."
+
+    def __init__(self, variable, root_struct):
+        super(StructureCycleFixer, self).__init__(variable)
+
+        self.root_struct = root_struct
+
+    def on_visit(self):
+        t = self.cur
+        if (   t is self.root_struct
+            or isinstance(t, Structure) and t in self.previous
+        ):
+            if t.declaration is not None:
+                decl = t.declaration
+            else:
+                decl = Structure(t.name + ".declaration")
+                t.declaration = decl
+                decl.definition = t
+                if t.definer is not None:
+                    t.definer.add_type(decl)
+
+            self.replace(decl)
 
 
 class Initializer(object):
