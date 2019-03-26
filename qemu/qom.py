@@ -2,6 +2,7 @@ __all__ = [
     "QOMStateField"
   , "QOMType"
       , "QOMDevice"
+      , "QOMCPU"
   , "OpaqueRegister"
       , "Register"
 ]
@@ -13,6 +14,8 @@ from source import (
     Source,
     Header,
     Structure,
+    OpaqueCode,
+    TopComment,
     TypeNotRegistered,
     Initializer,
     Function,
@@ -1284,4 +1287,153 @@ class QOMDevice(QOMType):
             self.net_client_info_name(index),
             initializer = Initializer(code, used_types = types),
             static = True
+        )
+
+
+class QOMCPU(QOMType):
+
+    def __init__(self, name, directory):
+        super(QOMCPU, self).__init__(name + "-cpu", directory)
+        self.cpu_name = name.lower()
+        self.target_name = directory
+        self.struct_name = self.qtn.for_struct_name.upper()
+
+    def gen_state(self):
+        s = Structure(self.struct_state_name())
+        for f in self.state_fields:
+            s.append_field(f.type(f.name, array_size = f.num))
+        if get_vp("move tlb_flush to cpu_common_reset"):
+            s.append_field(TopComment(
+                "Fields up to this point are cleared by a CPU reset"
+            ))
+            s.append_field(Structure()("end_reset_fields"))
+        if get_vp("CPU_COMMON exists"):
+            cpu_common_usage = Type["CPU_COMMON"].gen_type()
+            s.append_field(cpu_common_usage)
+            # XXX: extra reference guarantiee that NB_MMU_MODES defined before
+            # CPU_COMMON usage
+            cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
+        return s
+
+    def gen_vmstate_initializer(self, state_struct):
+        code = ("""{
+    .name@b=@s\"cpu\",
+    .version_id@b=@s1,
+    .minimum_version_id@b=@s1,
+    .fields@b=@s(VMStateField[])@b{
+""")
+
+        used_macros = set()
+        global type2vmstate
+
+        for f in self.state_fields:
+            fdict = {
+                "_f": f.name,
+                "_s": state_struct.name
+            }
+
+            try:
+                vms_macro_name = type2vmstate[f.type.c_name]
+            except KeyError:
+                raise Exception("VMState generation for type %s is not"
+                    " implemented" % f.type
+                )
+
+            if f.num is not None:
+                vms_macro_name += "_ARRAY"
+                fdict["_n"] = str(f.num)
+
+            vms_macro = Type[vms_macro_name]
+            used_macros.add(vms_macro)
+
+            code += "%s%s,\n" % (
+                " " * 8,
+                vms_macro.gen_usage_string(Initializer(fdict))
+            )
+
+        code += "%s%s\n    }\n}" % (
+            " " * 8,
+            Type["VMSTATE_END_OF_LIST"].gen_usage_string()
+        )
+
+        init = Initializer(
+            code = code,
+            used_types = used_macros.union([
+                Type["VMStateField"],
+                state_struct
+            ])
+        )
+
+        return init
+
+    def gen_vmstate_var(self, state_struct):
+        init = self.gen_vmstate_initializer(state_struct)
+
+        vmstate = Type["VMStateDescription"]("vmstate_" + self.qtn.for_id_name,
+            initializer = init,
+            const = True,
+            used = True
+        )
+
+        return vmstate
+
+    def func_name(self, func):
+        return self.qtn.for_id_name + '_' + func
+
+    def struct_class_name(self):
+        return self.qtn.for_struct_name.upper() + "Class"
+
+    def struct_state_name(self):
+        return "CPU" + self.cpu_name.upper() + "State"
+
+    def env_get_cpu_name(self):
+        return self.cpu_name.lower() + "_env_get_cpu"
+
+    def tcg_init_name(self):
+        return self.cpu_name.lower() + "_tcg_init"
+
+    def cpu_init_name(self):
+        return "cpu_" + self.cpu_name.lower() + "_init"
+
+    def type_info_name(self):
+        return self.cpu_name.upper() + "_type_info"
+
+    def print_insn_name(self):
+        return "print_insn_" + self.target_name
+
+    def bfd_arch_name(self):
+        return "bfd_arch_" + self.target_name
+
+    def class_macro(self):
+        return self.qtn.for_macros + "_CLASS"
+
+    def get_class_macro(self):
+        return self.qtn.for_macros + "_GET_CLASS"
+
+    def target_arch(self):
+        return "TARGET_" + self.target_name.upper()
+
+    def config_arch_dis(self):
+        return "CONFIG_" + self.target_name.upper() + "_DIS"
+
+    def raise_exception(self):
+        return Function(
+            name = "raise_exception",
+            args = [
+                Pointer(Type[self.struct_state_name()])("env"),
+                Type["uint32_t"]("index")
+            ],
+            static = True
+        )
+
+    def helper_debug(self):
+        return Function(
+            name = "helper_debug",
+            args = [ Pointer(Type[self.struct_state_name()])("env") ]
+        )
+
+    def helper_illegal(self):
+        return Function(
+            name = "helper_illegal",
+            args = [ Pointer(Type[self.struct_state_name()])("env") ]
         )
