@@ -64,14 +64,18 @@ class QOMPropertyType(object):
     set_f = None
     build_val = None
 
+
 class QOMPropertyTypeLink(QOMPropertyType):
     set_f = "object_property_set_link"
+
 
 class QOMPropertyTypeString(QOMPropertyType):
     set_f = "object_property_set_str"
 
+
 class QOMPropertyTypeBoolean(QOMPropertyType):
     set_f = "object_property_set_bool"
+
 
 class QOMPropertyTypeInteger(QOMPropertyType):
     set_f = "object_property_set_int"
@@ -82,7 +86,9 @@ class QOMPropertyTypeInteger(QOMPropertyType):
             return str(prop_val)
         return "0x%0x" % prop_val
 
+
 class QOMPropertyValue(object):
+
     def __init__(self,
         prop_type,
         prop_name,
@@ -140,7 +146,9 @@ qtn_struct_char_map = {
 qtn_macro_char_map = qtn_id_char_map
 # same default
 
+
 class QemuTypeName(object):
+
     def __init__(self, name):
         self.name = name
 
@@ -180,6 +188,7 @@ class QemuTypeName(object):
 
         self.for_macros = tmp
         self.type_macro = "TYPE_%s" % tmp
+
 
 # Property declaration generation helpers
 
@@ -349,6 +358,7 @@ class Register(object):
 
         ret += ")"
         return ret
+
 
 def get_reg_range(regs):
     return sum(reg.size for reg in regs)
@@ -996,7 +1006,9 @@ class QOMType(object):
             digits = int(log(reg_range, 16)) + 1
             return CINT(reg_range, 16, digits)
 
+
 class QOMStateField(object):
+
     def __init__(self, ftype, name,
             num = None,
             save = True,
@@ -1010,6 +1022,7 @@ class QOMStateField(object):
         self.save = save
         self.prop = prop
         self.default = default
+
 
 class QOMDevice(QOMType):
     __attribute_info__ = OrderedDict([
