@@ -13,9 +13,8 @@ from os import (
 )
 
 def execfile(filename, globals = None, locals = None):
-    f = open(filename, "rb")
-    content = f.read()
-    f.close()
+    with open(filename, "rb") as f:
+        content = f.read()
 
     if globals is None:
         globals = {}
