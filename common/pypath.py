@@ -1,6 +1,7 @@
 __all__ = [
     "pypath"
   , "iter_submodules"
+  , "pythonpath"
 ]
 
 from contextlib import (
@@ -65,19 +66,12 @@ with pypath("..sister_directory"):
     import a_module
 
     """
-    return _pypath(caller_file_name(), rel_path)
 
-@contextmanager
-def _pypath(caller_file_name, rel_path):
-    """ Caller file name evaluation is moved to a wrapper because usage of
-contextmanager affects the stack making caller's directory path evaluation a
-bit harder.
-    """
     if rel_path[0] == '.':
         # .dir is same as dir
         rel_path = rel_path[1:]
 
-    cur_dir = dirname(abspath(caller_file_name))
+    cur_dir = dirname(abspath(caller_file_name()))
 
     parts =  rel_path.split('.')
     for p in parts:
@@ -88,12 +82,25 @@ bit harder.
             # ..
             cur_dir = dirname(cur_dir)
 
-    # Setup PYTHONPATH for the time of `with` block.
+    # Caller file name evaluation is separated because usage of
+    # contextmanager affects the stack making caller's directory path
+    # evaluation a bit harder.
+    # Also `setpypath` might be used independently if the caller can evaluate
+    # directory name.
+
+    return pythonpath(cur_dir)
+
+
+@contextmanager
+def pythonpath(dirname):
+    "Prepend PYTHONPATH with `dirname` for the time of a `with` block."
+
     # See here about how this context manager works.
     # https://jeffknupp.com/blog/2016/03/07/python-with-context-managers/
-    if cur_dir in sys.path:
+
+    if dirname in sys.path:
         yield
     else:
-        sys.path.insert(0, cur_dir)
+        sys.path.insert(0, dirname)
         yield
-        sys.path.remove(cur_dir)
+        sys.path.remove(dirname)
