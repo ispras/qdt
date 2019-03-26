@@ -23,5 +23,7 @@ def execfile(filename, globals = None, locals = None):
 
     file_path = abspath(dirname(filename))
 
+    code = compile(content, filename, "exec")
+
     with pythonpath(file_path):
-        exec(content, globals, locals)
+        exec(code, globals, locals)
