@@ -2,15 +2,14 @@ __all__ = [
     "execfile"
 ]
 
-from sys import (
-    path as py_path
+from .pypath import (
+    abspath,
+    pythonpath
 )
 from os.path import (
     dirname
 )
-from os import (
-    getcwd
-)
+
 
 def execfile(filename, globals = None, locals = None):
     with open(filename, "rb") as f:
@@ -22,18 +21,7 @@ def execfile(filename, globals = None, locals = None):
     globals["__file__"] = filename
     globals["__name__"] = "__main__"
 
-    file_path = dirname(filename)
+    file_path = abspath(dirname(filename))
 
-    if not file_path:
-        file_path = getcwd()
-
-    new_path = file_path not in py_path
-
-    if new_path:
-        py_path.append(file_path)
-
-    try:
+    with pythonpath(file_path):
         exec(content, globals, locals)
-    finally:
-        if new_path:
-            py_path.remove(file_path)
