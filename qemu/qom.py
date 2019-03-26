@@ -2,6 +2,7 @@ __all__ = [
     "QOMStateField"
   , "QOMType"
       , "QOMDevice"
+      , "QOMCPU"
   , "OpaqueRegister"
       , "Register"
 ]
@@ -13,6 +14,8 @@ from source import (
     Source,
     Header,
     Structure,
+    OpaqueCode,
+    TopComment,
     TypeNotRegistered,
     Initializer,
     Function,
@@ -1292,4 +1295,83 @@ class QOMDevice(QOMType):
             self.net_client_info_name(index),
             initializer = Initializer(code, used_types = types),
             static = True
+        )
+
+
+class QOMCPU(QOMType):
+
+    def __init__(self, name, directory):
+        super(QOMCPU, self).__init__(name + "-cpu", directory)
+        self.cpu_name = name.lower()
+        self.target_name = directory
+
+        # redefinition of struct_name
+        self.struct_name = "CPU" + self.cpu_name.upper() + "State"
+
+        # all derived strings in one place
+        self.struct_instance_name = self.qtn.for_struct_name.upper()
+        self.struct_class_name = self.qtn.for_struct_name.upper() + "Class"
+        self.env_get_cpu_name = self.cpu_name.lower() + "_env_get_cpu"
+        self.tcg_init_name = self.cpu_name.lower() + "_tcg_init"
+        self.cpu_init_name = "cpu_" + self.cpu_name.lower() + "_init"
+        self.type_info_name = self.cpu_name.upper() + "_type_info"
+        self.print_insn_name = "print_insn_" + self.target_name
+        self.bfd_arch_name = "bfd_arch_" + self.target_name
+        self.class_macro = self.qtn.for_macros + "_CLASS"
+        self.get_class_macro =  self.qtn.for_macros + "_GET_CLASS"
+        self.target_arch = "TARGET_" + self.target_name.upper()
+        self.config_arch_dis = "CONFIG_" + self.target_name.upper() + "_DIS"
+
+    def gen_state(self):
+        s = super(QOMCPU, self).gen_state()
+        if get_vp("move tlb_flush to cpu_common_reset"):
+            s.append_field(TopComment(
+                "Fields up to this point are cleared by a CPU reset"
+            ))
+            s.append_field(Structure()("end_reset_fields"))
+        if get_vp("CPU_COMMON exists"):
+            cpu_common_usage = Type["CPU_COMMON"].gen_type()
+            s.append_field(cpu_common_usage)
+            # XXX: extra reference guarantiee that NB_MMU_MODES defined before
+            # CPU_COMMON usage
+            cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
+        return s
+
+    def gen_vmstate_initializer(self, _, state_struct):
+        init = super(QOMCPU, self).gen_vmstate_initializer('"cpu"',
+            state_struct,
+            min_version_id = 1
+        )
+        return init
+
+    def gen_vmstate_var(self, state_struct):
+        vmstate = super(QOMCPU, self).gen_vmstate_var(state_struct)
+        vmstate.static = False
+        vmstate.used = True
+
+        return vmstate
+
+    def gen_func_name(self, func):
+        return self.qtn.for_id_name + '_' + func
+
+    def gen_raise_exception(self):
+        return Function(
+            name = "raise_exception",
+            args = [
+                Pointer(Type[self.struct_name])("env"),
+                Type["uint32_t"]("index")
+            ],
+            static = True
+        )
+
+    def gen_helper_debug(self):
+        return Function(
+            name = "helper_debug",
+            args = [ Pointer(Type[self.struct_name])("env") ]
+        )
+
+    def gen_helper_illegal(self):
+        return Function(
+            name = "helper_illegal",
+            args = [ Pointer(Type[self.struct_name])("env") ]
         )
