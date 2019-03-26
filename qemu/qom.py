@@ -11,6 +11,7 @@ __all__ = [
       , "QOMDevice"
   , "OpaqueRegister"
       , "Register"
+      , "CPURegister"
   , "idon"
 ]
 
@@ -300,6 +301,10 @@ class OpaqueRegister(object):
 
     def __init__(self, name, size):
         self.name, self.size = name, size
+
+
+class CPURegister(OpaqueRegister):
+    pass
 
 
 class Register(OpaqueRegister):
