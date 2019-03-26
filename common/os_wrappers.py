@@ -18,6 +18,7 @@ from re import (
     compile
 )
 
+
 def remove_file(file_name):
     try:
         remove(file_name)
