@@ -144,7 +144,7 @@ class Ifdef(Node):
 
     def __init__(self, val, *args):
         if isinstance(val, Macro):
-            val = val.name
+            val = val.c_name
         super(Ifdef, self).__init__(
             # Since the macro can be undefined and unknown to the model,
             # we refer it using its string name.
@@ -555,7 +555,7 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        writer.write(v.full_deref.name + "@b" + v.asterisks)
+        writer.write(v.full_deref.c_name + "@b" + v.asterisks)
         self._write_child(child, writer)
 
         for child in self.children[1:]:
@@ -595,7 +595,7 @@ class MCall(SemicolonPresence):
         self.type = Type.lookup(macro)
 
     def __c__(self, writer):
-        writer.write(self.type.name)
+        writer.write(self.type.c_name)
 
         if self.children:
             writer.write("(@a")
