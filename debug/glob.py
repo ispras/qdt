@@ -159,6 +159,22 @@ class Subprogram(object):
     # assembly level terms
 
     @lazy
+    def entry(self):
+        "Entry point to the subprogram."
+
+        # See DWARF4 2.18 Entry Address, p. 40 (PDF p. 54)
+        attrs = self.die.attributes
+        try:
+            return attrs["DW_AT_entry_pc"].value
+        except KeyError:
+            try:
+                return attrs["DW_AT_low_pc"].value
+            except KeyError:
+                pass
+
+        raise RuntimeError("Can't get entry point of %s" % self.name)
+
+    @lazy
     def line_map(self):
         """ Mapping from addresses to line program entries (DWARF) describing
 source code of that subprogram.
