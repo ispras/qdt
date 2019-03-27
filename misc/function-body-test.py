@@ -102,7 +102,17 @@ if __name__ == "__main__":
         Call(OpSDeref(_p, "i")),
 
         OpSDeref(_pi, "ii"),
-        OpSDeref(_p, "i")
+        OpSDeref(_p, "i"),
+
+        Ifdef("test1"),
+        Ifdef(Macro("test2")),
+
+        Ifdef("A")(
+            OpAssign(_a, 1),
+            Ifdef("B")(
+                OpAssign(_a, 2)
+            )
+        )
     )
 
     print_code(str(root))
