@@ -62,7 +62,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(1, weight = 1)
 
         have_pciid = False
-        all_highlights = []
+        self._all_highlights = []
 
         for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
@@ -92,22 +92,11 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 v, w = generator(f)
 
                 if v is not None:
-                    def do_highlight(w = w, v = v, attr = attr):
-                        if not w._validate():
-                            w._set_color("red")
-                        elif w._cast(v.get()) != getattr(self.desc, attr):
-                            w._set_color("#ffffcc")
-                        else:
-                            w._set_color("white")
-
-                    all_highlights.append(do_highlight)
-                    v.trace_variable("w", lambda *_: do_highlight())
+                    self._add_highlighting(v, w, attr)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_var_" + attr, v)
             setattr(self, "_w_" + attr, w)
-
-        self._all_highlights = all_highlights
 
         btf = self.buttons_fr = GUIFrame(self)
         btf.pack(fill = BOTH, expand = False)
@@ -135,6 +124,22 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         self.__have_pciid = have_pciid
         if have_pciid:
             self.qsig_watch("qvc_available", self.__on_qvc_available)
+
+    def _add_highlighting(self, var, widget, attr):
+        def do_highlight(w = widget, v = var, attr = attr):
+            if not w._validate():
+                w._set_color("red")
+            elif w._cast(v.get()) != getattr(self.desc, attr):
+                w._set_color("#ffffcc")
+            else:
+                w._set_color("white")
+
+        self._all_highlights.append(do_highlight)
+
+        # This code is outlined from the loop because of late binding of
+        # `do_highlight` in the lambda.
+        # See: https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+        var.trace_variable("w", lambda *_: do_highlight())
 
     def gen_int_widgets(self, master):
         v = StringVar()
