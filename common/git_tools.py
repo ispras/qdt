@@ -3,6 +3,7 @@ __all__ = [
   , "CommitDesc"
   , "iter_chunks"
   , "git_diff2delta_intervals"
+  , "fast_repo_clone"
 ]
 
 from collections import (
@@ -14,6 +15,13 @@ from re import (
 from .intervalmap import (
     intervalmap
 )
+from tempfile import (
+    mkdtemp
+)
+from os.path import (
+    join
+)
+
 
 # Iterations Between Yields of Git Graph Building task
 GGB_IBY = 100
@@ -174,3 +182,56 @@ class CommitDesc(object):
                         i2y = GGB_IBY
                     else:
                         i2y -= 1
+
+
+def fast_repo_clone(repo, version = None, prefix = "repo"):
+    """ Creates Git repository clone with working copy in temporal directory
+as fast as possible. A clone is nether honest nor independent, so be careful.
+    """
+    if version is None:
+        version = repo.head.commit.hexsha
+    else:
+        version = repo.commit(version).hexsha
+
+    tmp_wc = mkdtemp(prefix = "%s-%s-" % (prefix, version))
+
+    # Current approach uses "-s" (--shared) option to avoid copying
+    # of history and "-n" (--no-checkout) to avoid redundant checking
+    # out of repo's HEAD in the new clone. Requested version is checked out
+    # explicitly. Therefore, overhead of cloning is low enough.
+    new_repo = repo.clone(tmp_wc, no_checkout = True, shared = True)
+
+    git = new_repo.git
+
+    git.checkout(version, force = True)
+
+    # Submodules also must be recursively initialized. But straightforward
+    # invocation of of "update --init" command will result in downloading of
+    # submodules history. Instead, submodules URLs are redirected to local
+    # history copies inside original repo. As a result, submodules
+    # initialization is done without redundant copying.
+    # However! ".gitmodules" file is considered changed by Git because of that
+    # redirection.
+
+    # TODO: it must be done for submodules of submodules too (recursively).
+
+    # This works incorrect with `recursive = True` because "--recursive" is
+    # added before "status"
+    status = git.submodule("status", "--recursive")
+
+    submodules = []
+    for l in status.splitlines(False):
+        submodules.append(l.split(' ')[1])
+
+    if submodules:
+        for sm in submodules:
+            # https://stackoverflow.com/a/30675130/7623015
+            git.config(
+                "submodule." + sm + ".url",
+                join(repo.working_tree_dir, ".git", "modules", sm),
+                file = ".gitmodules"
+            )
+
+        git.submodule("update", "--init", "--recursive")
+
+    return new_repo
