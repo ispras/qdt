@@ -47,6 +47,7 @@ from common import (
     pypath
 )
 from debug import (
+    get_elffile_loading,
     InMemoryELFFile,
     DWARFInfoCache,
     Runtime
@@ -232,6 +233,33 @@ class OracleSession(DebugSession):
 
     def run(self):
         self._execute_debug_comment()
+        self.rt.target.run(setpc = False)
+
+
+class TargetSession(DebugSession):
+
+    def __init__(self, *args):
+        super(TargetSession, self).__init__(*args)
+        self.session_type = "target"
+
+    def load(self):
+        if self.rt.target.verbose:
+            print("load %s" % self.elffile)
+
+        loading = get_elffile_loading(self.elf)
+        for data, addr in loading:
+            self.rt.target.store(data, addr)
+
+    def run(self):
+        self._execute_debug_comment()
+        self.load()
+        # TODO: use future 'entry' feature
+        new_pc = (
+            self.rt.dic.symtab.get_symbol_by_name("main")[0].entry.st_value
+        )
+        if c2t_cfg.rsp_target.sp is not None:
+            self.rt.target.set_reg(c2t_cfg.rsp_target.sp, new_pc + 0x10000)
+        self.rt.target.set_reg(self.rt.target.pc_reg, new_pc)
         self.rt.target.run(setpc = False)
 
 
