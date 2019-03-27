@@ -120,6 +120,12 @@ sudo pip3 install --upgrade six
 sudo pip install --upgrade graphviz
 sudo pip3 install --upgrade graphviz
 ```
+`path.py` is used by unit tests.
+
+```bash
+sudo pip install --upgrade path.py
+sudo pip3 install --upgrade path.py
+```
 
 Now the all environment prerequisites are satisfied.
 
