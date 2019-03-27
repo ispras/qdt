@@ -3,7 +3,6 @@ __all__ = [
 ]
 
 from .pygen import (
-    const_types,
     pythonizable
 )
 
