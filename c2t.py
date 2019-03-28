@@ -99,6 +99,18 @@ class ProcessWithErrCatching(Process):
             c2t_exit(err, prog = self.prog)
 
 
+def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
+    pass
+
+
+def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
+    pass
+
+
+def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
+    pass
+
+
 class FreePortFinder(Process):
 
     def __init__(self, queue, count,  start = 4321):
