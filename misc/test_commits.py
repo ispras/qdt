@@ -85,15 +85,6 @@ if TC_PRINT_STARTUP_ENVIRONMENT:
     print("\n".join(("%s=%s" % i) for i in TEST_STARTUP_ENV.items()))
 
 
-def commits(repo, tree_ish, early_tree_ish):
-    version = repo.commit(tree_ish).hexsha
-    early = repo.commit(early_tree_ish).hexsha
-
-    log = repo.git.rev_list(early + ".." + version)
-    for l in log.split("\n"):
-        yield l.strip()
-
-
 class Measurement(Extensible):
 
     def __var_base__(self):
@@ -145,44 +136,60 @@ def py3(ctx):
     yield
 
 
-def project_measurements(measurer, result, commit_list,
-    m_count = 5,
-    envs = (py2, py3)
-):
-    if m_count < 1:
-        return
+class Measurer(object):
 
-    measurements = result.mes
-    machine = uname()
+    def __init__(self, repo, current, base):
+        self.repo = repo
+        self.base, self.current = base, current
 
-    with measurer as ctx:
-        ctx.machine = machine
+        self.base_sha = repo.commit(base).hexsha
+        self.current_sha = repo.commit(current).hexsha
 
-        for t, sha1 in enumerate(commit_list):
-            ctx.commit_number = t
-            ctx.sha1 = sha1
+    @property
+    def commits(self):
+        log = self.repo.git.rev_list(self.base_sha + ".." + self.current_sha)
+        for l in log.split("\n"):
+            yield l.strip()
 
-            with version(ctx):
-                for env in envs:
-                    with env(ctx):
-                        with environment(ctx):
-                            for i in range(m_count):
-                                ctx.launch_number = i
-                                ctx.break_request = False
+    @lazy
+    def commit_queue(self):
+        return tuple(reversed(list(self.commits) + [self.base_sha]))
 
-                                with launch(ctx):
-                                    results = dict(test_program(ctx))
+    def measure(self, result, m_count = 5, envs = (py2, py3)):
+        if m_count < 1:
+            return
 
-                                # remember results
-                                measurements.setdefault(sha1, []).append(M(
-                                    machine = machine,
-                                    **results
-                                ))
+        measurements = result.mes
+        machine = uname()
 
-                                result._save()
+        with self as ctx:
+            ctx.machine = machine
 
-                                if ctx.break_request:
-                                    break
+            for t, sha1 in enumerate(self.commit_queue):
+                ctx.commit_number = t
+                ctx.sha1 = sha1
+
+                with version(ctx):
+                    for env in envs:
+                        with env(ctx):
+                            with environment(ctx):
+                                for i in range(m_count):
+                                    ctx.launch_number = i
+                                    ctx.break_request = False
+
+                                    with launch(ctx):
+                                        results = dict(test_program(ctx))
+
+                                    # remember results
+                                    measurements.setdefault(sha1, []).append(M(
+                                        machine = machine,
+                                        **results
+                                    ))
+
+                                    result._save()
+
+                                    if ctx.break_request:
+                                        break
 
 
 def accuracy(err):
@@ -368,9 +375,9 @@ def plot_measurements(repo, ctx, commit_seq):
     plt.show()
 
 
-class QDTMeasurer(object):
+class QDTMeasurer(Measurer):
 
-    def __init__(self, repo, project, project_path,
+    def __init__(self, repo, current, base, project, project_path,
         caches = None,
         diffs = join(".", "proj_mes_diffs")
     ):
@@ -379,6 +386,7 @@ class QDTMeasurer(object):
     Path to directory with existing QVCs. Use it iff QVC building
     algorithm testing is not required.
         """
+        super(QDTMeasurer, self).__init__(repo, current, base)
 
         self.qdtgit = repo
 
@@ -748,25 +756,18 @@ def main():
 
     repo = Repo(args.repo)
 
-    measurements = QDTMeasurer(repo, project, script,
+    measurer = QDTMeasurer(repo, args.current, args.base, project, script,
         caches = project.build_path
     )
 
     with CommitsTestResults() as results:
-        commit_list = tuple(reversed(
-            list(commits(repo, args.current, early_tree_ish = args.base))
-            + [repo.commit(args.base).hexsha]
-        ))
-
-        project_measurements(measurements, results, commit_list,
-            m_count = args.measurements,
-        )
+        measurer.measure(results, m_count = args.measurements)
 
         # TODO
         # tox_measurements(repo, c, commit_list,
         #     m_count = args.measurements
         # )
-        plot_measurements(repo, results, commit_list)
+        plot_measurements(repo, results, measurer.commit_queue)
 
     return 0
 
