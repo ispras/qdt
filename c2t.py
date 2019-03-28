@@ -191,9 +191,36 @@ def start_cpu_testing(tests, jobs, kill, verbose):
 
     pf.start()
 
+    res_queue = Queue(0)
+
+    if not kill:
+        target_tests_run = target_tests_run_nonkill
+    else:
+        target_tests_run = target_tests_run_kill
+
+    if jobs > len(tests):
+        jobs = len(tests)
+
+    tests_run_processes = []
+    for i in range(0, jobs):
+        oracle_trp = Process(
+            target = oracle_tests_run,
+            args = [oracle_tests_queue, port_queue, res_queue, verbose]
+        )
+        target_trp = Process(
+            target = target_tests_run,
+            args = [target_tests_queue, port_queue, res_queue, verbose]
+        )
+        tests_run_processes.append((oracle_trp, target_trp))
+        oracle_trp.start()
+        target_trp.start()
+
     oracle_tb.join()
     target_tb.join()
     pf.join()
+    for oracle_trp, target_trp in tests_run_processes:
+        oracle_trp.join()
+        target_trp.join()
 
 
 def find_tests(regexps):
