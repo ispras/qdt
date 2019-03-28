@@ -171,8 +171,15 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
     oracle_tb.start()
     target_tb.start()
 
+    port_queue = Queue(0)
+
+    pf = FreePortFinder(port_queue, len(tests) * 3)
+
+    pf.start()
+
     oracle_tb.join()
     target_tb.join()
+    pf.join()
 
 
 class testfilter(filefilter):
