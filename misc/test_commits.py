@@ -162,8 +162,6 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
 
     machine = uname()
 
-    qvc = "qvc_%s.py" % qemugit.commit(qproject.target_version).hexsha
-
     print("Checking Qemu out...")
     qemuwc = fast_repo_clone(qemugit, qproject.target_version, "qemu")
     tmp_build = mkdtemp(prefix = "qemu-%s-build-" % qproject.target_version)
@@ -194,7 +192,15 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(qemuwc.working_tree_dir, join(q_back, "src"))
     copytree(tmp_build, join(q_back, "build"))
 
-    prev_diff = None
+    test_program_ctx = Extensible(
+        qemuwc = qemuwc,
+        prev_diff = None,
+        qvc = "qvc_%s.py" % qemugit.commit(qproject.target_version).hexsha,
+        tmp_build = tmp_build,
+        qp_path = qp_path,
+        qproject = qproject,
+        diffs = diffs
+    )
 
     for t, sha1 in enumerate(commit_list):
         print("Checking QDT out (%s)...\n%s" % (
@@ -203,131 +209,35 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                 qdtgit.commit(sha1).message.splitlines()
             )
         ))
-        qdtwc = fast_repo_clone(qdtgit, sha1, "qdt")
 
-        errors = False
+        test_program_ctx.commit_number = t
+        test_program_ctx.sha1 = sha1,
+        test_program_ctx.errors = False
+        test_program_ctx.qdtwc = fast_repo_clone(qdtgit, sha1, "qdt")
 
         for env in envs:
             print("Testing for environment '%s'" % env)
 
+            qdt_cache = None
+            if caches is not None and join(caches, test_program_ctx.qvc):
+                # use existing cache
+                qdt_cache = join(caches, test_program_ctx.qvc)
+
+            test_program_ctx.env = env
+            test_program_ctx.qdt_cache = qdt_cache
+            test_program_ctx.interpreter = ENVS[env]["interpreter"]
+
             for i in range(m_count):
-                print("Preparing CWD...")
-
-                qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
-
-                cache_ready = False
-                if i > 0:
-                    # restore cache
-                    copyfile(
-                        join(qdtwc.working_tree_dir, qvc),
-                        join(tmp_build, qvc)
-                    )
-                    cache_ready = True
-                elif caches is not None and isfile(join(caches, qvc)):
-                    # use existing cache
-                    copyfile(join(caches, qvc), join(tmp_build, qvc))
-                    cache_ready = True
-
-                print("Measuring...")
-
-                cmds = [
-                    ENVS[env]["interpreter"],
-                    join(qdtwc.working_tree_dir, "qemu_device_creator.py"),
-                    "-b", tmp_build,
-                    "-t", qproject.target_version,
-                    qp_path
-                ]
-
-                if TC_PRINT_COMMANDS:
-                    print(" ".join(cmds))
-
-                t0 = time()
-                proc = Popen(cmds, cwd = qdt_cwd, env = dict(TEST_STARTUP_ENV))
-                proc.wait()
-                t1 = time()
-
-                total = t1 - t0
-
-                print("\ntotal: %s\n" % total)
-
-                if i == 0:
-                    # preserve cache
-                    copyfile(
-                        join(tmp_build, qvc),
-                        join(qdtwc.working_tree_dir, qvc)
-                    )
-
-                print("Running test...")
-                test_cmds = [
-                    ENVS[env]["interpreter"],
-                    "-m", "unittest",
-                    "test"
-                ]
-
-                if TC_PRINT_COMMANDS:
-                    print(" ".join(test_cmds))
-
-                t0 = time()
-                test_proc = Popen(test_cmds,
-                    cwd = qdtwc.working_tree_dir,
-                    env = dict(TEST_STARTUP_ENV)
-                )
-                test_proc.wait()
-                t1 = time()
-                test_total = t1 - t0
-
-                print("\ntotal: %s\n" % test_total)
-
-                rmtree(qdt_cwd)
-
-                # save patch
-                diff = join(diffs, "%u-%s-for-%s-under-%s-%u.patch" % (
-                    t, sha1, qproject.target_version, env, i
-                ))
-
-                qemuwc.git.add("-A")
-                with open(diff, "w") as diff_stream:
-                    diff_str = qemuwc.git.diff(cached = True)
-                    diff_stream.write(diff_str)
-
-                # check if patches are different
-                differences = False
-
-                if prev_diff is not None:
-                    if not cmp(prev_diff, diff):
-                        print("Changes to Qemu are different.")
-                        differences = True
-
-                        p_diff = Popen(["diff", prev_diff, diff],
-                            env = dict(TEST_STARTUP_ENV),
-                            stdout = PIPE,
-                            stderr = PIPE,
-                        )
-                        out = p_diff.communicate()[0]
-                        with open(diff + ".diff", "w") as f:
-                            f.write(out)
-
-                        if TC_MELD:
-                            Popen(["meld", prev_diff, diff],
-                                env = dict(TEST_STARTUP_ENV),
-                                stdout = PIPE,
-                                stderr = PIPE,
-                                stdin = PIPE
-                            )
-
-                prev_diff = diff
+                test_program_ctx.i = i
+                test_program_ctx.break_request = False
 
                 # remember results
+                results = dict(test_program(test_program_ctx))
                 ctx.mes.setdefault(sha1, []).append(M(
                     i = i,
-                    time = total,
-                    returncode = proc.returncode,
-                    test_time = test_total,
-                    test_returncode = test_proc.returncode,
                     env = env,
                     machine = machine,
-                    cache_ready = cache_ready,
-                    differences = differences
+                    **results
                 ))
 
                 ctx._save()
@@ -338,31 +248,12 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                 copytree(join(q_back, "src"), qemuwc.working_tree_dir)
                 copytree(join(q_back, "build"), tmp_build)
 
-                do_break = False
-
-                if proc.returncode:
-                    errors = True
-                    do_break = True
-
-                    if not TC_PRINT_COMMANDS:
-                        # always print commands for bad runs
-                        print("Command was:")
-                        print(" ".join(cmds))
-
-                if test_proc.returncode:
-                    errors = True
-                    do_break = True
-
-                    if not TC_PRINT_COMMANDS:
-                        print("Test launch command was:")
-                        print(" ".join(test_cmds))
-
-                if do_break:
+                if test_program_ctx.break_request:
                     break
 
-        if not errors:
+        if not test_program_ctx.errors:
             # allow user to work with bad version
-            rmtree(qdtwc.working_tree_dir)
+            rmtree(test_program_ctx.qdtwc.working_tree_dir)
 
     rmtree(tmp_build)
     rmtree(qemuwc.working_tree_dir)
@@ -550,6 +441,137 @@ def plot_measurements(repo, ctx, commit_seq):
 
     plt.grid()
     plt.show()
+
+
+def test_program(ctx):
+    print("Preparing CWD...")
+
+    qdt_cache = ctx.qdt_cache
+
+    if qdt_cache:
+        # restore cache
+        copyfile(
+            qdt_cache,
+            join(ctx.tmp_build, ctx.qvc)
+        )
+        yield "cache_ready", True
+    else:
+        yield "cache_ready", False
+
+    qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
+
+    print("Measuring...")
+    cmds = [
+        ctx.interpreter,
+        join(ctx.qdtwc.working_tree_dir, "qemu_device_creator.py"),
+        "-b", ctx.tmp_build,
+        "-t", ctx.qproject.target_version,
+        ctx.qp_path
+    ]
+
+    if TC_PRINT_COMMANDS:
+        print(" ".join(cmds))
+
+    t0 = time()
+    proc = Popen(cmds, cwd = qdt_cwd, env = dict(TEST_STARTUP_ENV))
+    proc.wait()
+    t1 = time()
+
+    total = t1 - t0
+
+    print("\ntotal: %s\n" % total)
+
+    yield "returncode", proc.returncode
+    yield "time", total
+
+    if proc.returncode:
+        ctx.break_request = True
+        ctx.errors = True
+
+        if not TC_PRINT_COMMANDS:
+            # always print commands for bad runs
+            print("Command was:")
+            print(" ".join(cmds))
+
+    if qdt_cache is None:
+        # preserve cache
+        qdt_cache = join(ctx.qdtwc.working_tree_dir, ctx.qvc)
+        copyfile(join(ctx.tmp_build, ctx.qvc), qdt_cache)
+        ctx.qdt_cache = qdt_cache
+
+    rmtree(qdt_cwd)
+
+    print("Running test...")
+
+    test_cmds = [
+        ctx.interpreter,
+        "-m", "unittest",
+        "test"
+    ]
+
+    if TC_PRINT_COMMANDS:
+        print(" ".join(test_cmds))
+
+    t0 = time()
+    test_proc = Popen(test_cmds,
+        cwd = ctx.qdtwc.working_tree_dir,
+        env = dict(TEST_STARTUP_ENV)
+    )
+    test_proc.wait()
+    t1 = time()
+    test_total = t1 - t0
+
+    print("\ntotal: %s\n" % test_total)
+
+    yield "test_returncode", test_proc.returncode
+    yield "test_time", test_total
+
+    if test_proc.returncode:
+        ctx.break_request = True
+        ctx.errors = True
+
+        if not TC_PRINT_COMMANDS:
+            print("Test launch command was:")
+            print(" ".join(test_cmds))
+
+    # save patch
+    diff = join(ctx.diffs, "%u-%s-for-%s-under-%s-%u.patch" % (
+        ctx.commit_number, ctx.sha1, ctx.qproject.target_version, ctx.env,
+        ctx.i
+    ))
+
+    ctx.qemuwc.git.add("-A")
+    with open(diff, "w") as diff_stream:
+        diff_str = ctx.qemuwc.git.diff(cached = True)
+        diff_stream.write(diff_str)
+
+    # check if patches are different
+    prev_diff = ctx.prev_diff
+    if prev_diff is not None and not cmp(prev_diff, diff):
+        print("Changes to Qemu are different.")
+
+        p_diff = Popen(["diff", prev_diff, diff],
+            env = dict(TEST_STARTUP_ENV),
+            stdout = PIPE,
+            stderr = PIPE,
+        )
+        out = p_diff.communicate()[0]
+        with open(diff + ".diff", "w") as f:
+            f.write(out)
+
+        if TC_MELD:
+            Popen(["meld", prev_diff, diff],
+                env = dict(TEST_STARTUP_ENV),
+                stdout = PIPE,
+                stderr = PIPE,
+                stdin = PIPE
+            )
+
+        yield "differences", True
+    else:
+        yield "differences", False
+
+    ctx.prev_diff = diff
 
 
 class CommitsTestResults(Persistent):
