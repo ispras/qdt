@@ -65,6 +65,9 @@ from collections import (
 from contextlib import (
     contextmanager
 )
+from six.moves import (
+    range
+)
 
 
 TC_PRINT_COMMANDS = ee("TC_PRINT_COMMANDS")
@@ -121,6 +124,7 @@ class Measurement(Extensible):
 
 M = Measurement
 
+# Measurer environments
 
 @contextmanager
 def py2(ctx):
@@ -137,6 +141,19 @@ def py3(ctx):
 
 
 class Measurer(object):
+    """ Given a `git.Repo` iterates versions (commits) from `base` to `current`
+(inclusively). Each commit is measured using a protocol defined by those
+methods:
+
+    __enter__
+    __version__
+    __environment__
+    __launch__
+    __exit__
+
+Where `__enter__` and `__exit__` are standard context manager interface.
+Roles of those methods are described in base method implementations below.
+    """
 
     def __init__(self, repo, current, base):
         self.repo = repo
@@ -145,15 +162,96 @@ class Measurer(object):
         self.base_sha = repo.commit(base).hexsha
         self.current_sha = repo.commit(current).hexsha
 
-    @property
-    def commits(self):
-        log = self.repo.git.rev_list(self.base_sha + ".." + self.current_sha)
-        for l in log.split("\n"):
-            yield l.strip()
+    def __enter__(self):
+        """ Called before any measuring. It MUST initialize and return a global
+measurement context. The context is considered constant. It does depend no
+neither environment nor version.
+        """
+        return self
 
-    @lazy
-    def commit_queue(self):
-        return tuple(reversed(list(self.commits) + [self.base_sha]))
+    @contextmanager
+    def __version__(self, global_context):
+        """ A version context manager. It is used for each version tested.
+It MUST initialize and yield a version context. Also, it can prepare OS
+environment according to current version (`global_context.sha1`).
+
+The `yield` instruction either raises exception from consequent stages or
+simply returns control.
+After that OS environment should be cleaned up.
+
+Sequence number of current version in measurements queue is available in
+`global_context.commit_number`.
+        """
+        try:
+            # Do NOT yield `self` if simultaneous measurements are involved!
+            yield self
+        finally:
+            "Do cleanup here."
+
+        # Note, `try-finally` block is not necessary if no external resources
+        # (like sockets or temporal files/directories) have been
+        # acquired/created.
+
+    @contextmanager
+    def __environment__(self, version_context):
+        """ An environment context manager.
+
+Each version is measured under one or several environments. Each environment
+is initialized by two context managers.
+
+1. By one of `envs` of `measure` method (see below). Either standard or user
+    defined, it sets those attributes of `version_context`:
+
+    * `interpreter`
+    * `env_name`
+
+    See `py2` & `py3` implementations.
+
+2. This one. It MUST yield an environment context which is used for each
+measurement launch of current version. It also may configure OS environment
+according to current measuring environment.
+
+The `yield` instruction is utilized similarly (see `__version__` c. m. above).
+        """
+        try:
+            yield self
+        finally:
+            "Do cleanup here."
+
+    @contextmanager
+    def __launch__(self, environment_context):
+        """ A launch context. It is used for each measurement launch. It may
+prepare OS environment for the launch. Because a launch may raise an exception,
+OS environment cleaning up is strongly recommended to to hare. It also must
+yield a launch context.
+
+Current launch number is available in `environment_context.launch_number`.
+
+It may set `environment_context.break_request = True` to stop measurements for
+current environment AFTER current launch.
+        """
+
+        try:
+            yield self
+        finally:
+            "Do cleanup here."
+
+    def __measure__(self, launch_context):
+        """ A coroutine implemented as a generator. Given version, environment
+& launch, it may perform measurements yielding results as name-value tuples.
+A name MUST be keyword argument compatible.
+
+It may set `launch_context.break_request = True` to stop measurements for
+current environment.
+
+Raised exception is caught by `yield` in `__launch__` (see above) and the
+measurement is natively stopped.
+        """
+
+        yield "eaten", 0xdeadbeef
+        yield "result", "death"
+        yield "conclusion", 0xbadf00d
+
 
     def measure(self, result, m_count = 5, envs = (py2, py3)):
         if m_count < 1:
@@ -162,34 +260,49 @@ class Measurer(object):
         measurements = result.mes
         machine = uname()
 
-        with self as ctx:
-            ctx.machine = machine
+        with self as gctx:
+            gctx.machine = machine
 
             for t, sha1 in enumerate(self.commit_queue):
-                ctx.commit_number = t
-                ctx.sha1 = sha1
+                gctx.commit_number = t
+                gctx.sha1 = sha1
 
-                with self.version(ctx):
+                with self.__version__(gctx) as vctx:
                     for env in envs:
-                        with env(ctx):
-                            with self.environment(ctx):
+                        with env(vctx):
+                            with self.__environment__(vctx) as ectx:
                                 for i in range(m_count):
-                                    ctx.launch_number = i
-                                    ctx.break_request = False
+                                    ectx.launch_number = i
+                                    break_request = False
 
-                                    with self.launch(ctx):
-                                        results = dict(self.__measure__(ctx))
+                                    with self.__launch__(ectx) as lctx:
+                                        lctx.break_request = False
+
+                                        res = list(self.__measure__(lctx))
+
+                                    if lctx.break_request or ectx.break_request:
+                                        break_request = True
 
                                     # remember results
                                     measurements.setdefault(sha1, []).append(M(
                                         machine = machine,
-                                        **results
+                                        **dict(res)
                                     ))
 
                                     result._save()
 
-                                    if ctx.break_request:
+                                    if break_request:
                                         break
+
+    @lazy
+    def commit_queue(self):
+        return tuple(reversed(list(self.commits) + [self.base_sha]))
+
+    @property
+    def commits(self):
+        log = self.repo.git.rev_list(self.base_sha + ".." + self.current_sha)
+        for l in log.split("\n"):
+            yield l.strip()
 
 
 def accuracy(err):
@@ -455,7 +568,7 @@ class QDTMeasurer(Measurer):
         rmtree(self.q_back)
 
     @contextmanager
-    def version(self, ctx):
+    def __version__(self, ctx):
         print("Checking QDT out (%s)...\n%s" % (
             ctx.sha1,
             "\n".join((("> " + l) if l else ">") for l in
@@ -467,14 +580,14 @@ class QDTMeasurer(Measurer):
         ctx.errors = False
 
         try:
-            yield
+            yield self
         finally:
             if not ctx.errors:
                 # allow user to work with bad version
                 rmtree(ctx.qdtwc.working_tree_dir)
 
     @contextmanager
-    def environment(self, ctx):
+    def __environment__(self, ctx):
         print("Testing for environment '%s'" % ctx.env_name)
 
         if ctx.caches is not None and join(ctx.caches, ctx.qvc):
@@ -482,14 +595,14 @@ class QDTMeasurer(Measurer):
             ctx.qv_cache = join(ctx.caches, ctx.qvc)
         else:
             ctx.qv_cache = None
-        yield
+        yield self
         # No cleanups for after environment
 
     @contextmanager
-    def launch(self, ctx):
+    def __launch__(self, ctx):
         # no pre-launch preparations
         try:
-            yield
+            yield self
         finally:
             # restore Qemu source and build directories from backup
             rmtree(ctx.tmp_build)
