@@ -133,20 +133,25 @@ class Measurement(Extensible):
 
 M = Measurement
 
-ENVS = dict(
-    py2 = dict(
-        interpreter = "python2"
-    ),
-    py3 = dict(
-        interpreter = "python3"
-    )
-)
+
+@contextmanager
+def py2(ctx):
+    ctx.interpreter = "python2"
+    ctx.env_name = "py2"
+    yield
+
+
+@contextmanager
+def py3(ctx):
+    ctx.interpreter = "python3"
+    ctx.env_name = "py3"
+    yield
 
 
 def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     caches = None,
     m_count = 5,
-    envs = ("py3", "py2"),
+    envs = (py2, py3),
     diffs = join(".", "proj_mes_diffs")
 ):
     """
@@ -196,6 +201,7 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(tmp_build, join(q_back, "build"))
 
     test_program_ctx = Extensible(
+        caches = caches,
         q_back = q_back,
         qemuwc = qemuwc,
         prev_diff = None,
@@ -220,35 +226,25 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
         test_program_ctx.qdtwc = fast_repo_clone(qdtgit, sha1, "qdt")
 
         for env in envs:
-            print("Testing for environment '%s'" % env)
+            with env(test_program_ctx):
+                with environment(test_program_ctx):
+                    for i in range(m_count):
+                        test_program_ctx.launch_number = i
+                        test_program_ctx.break_request = False
 
-            qv_cache = None
-            if caches is not None and join(caches, test_program_ctx.qvc):
-                # use existing cache
-                qv_cache = join(caches, test_program_ctx.qvc)
+                        with launch(test_program_ctx):
+                            results = dict(test_program(test_program_ctx))
 
-            test_program_ctx.env = env
-            test_program_ctx.qv_cache = qv_cache
-            test_program_ctx.interpreter = ENVS[env]["interpreter"]
+                        # remember results
+                        ctx.mes.setdefault(sha1, []).append(M(
+                            machine = machine,
+                            **results
+                        ))
 
-            for i in range(m_count):
-                test_program_ctx.launch_number = i
-                test_program_ctx.break_request = False
+                        ctx._save()
 
-                with launch(test_program_ctx):
-                    results = dict(test_program(test_program_ctx))
-
-                # remember results
-                ctx.mes.setdefault(sha1, []).append(M(
-                    env = env,
-                    machine = machine,
-                    **results
-                ))
-
-                ctx._save()
-
-                if test_program_ctx.break_request:
-                    break
+                        if test_program_ctx.break_request:
+                            break
 
         if not test_program_ctx.errors:
             # allow user to work with bad version
@@ -443,6 +439,19 @@ def plot_measurements(repo, ctx, commit_seq):
 
 
 @contextmanager
+def environment(ctx):
+    print("Testing for environment '%s'" % ctx.env_name)
+
+    if ctx.caches is not None and join(ctx.caches, ctx.qvc):
+        # use existing cache
+        ctx.qv_cache = join(ctx.caches, ctx.qvc)
+    else:
+        ctx.qv_cache = None
+    yield
+    # No cleanups for after environment
+
+
+@contextmanager
 def launch(ctx):
     # no pre-launch preparations
     try:
@@ -456,6 +465,7 @@ def launch(ctx):
 
 
 def test_program(ctx):
+    yield "env", ctx.env_name
     yield "i", ctx.launch_number
 
     print("Preparing CWD...")
@@ -550,7 +560,7 @@ def test_program(ctx):
 
     # save patch
     diff = join(ctx.diffs, "%u-%s-for-%s-under-%s-%u.patch" % (
-        ctx.commit_number, ctx.sha1, ctx.qproject.target_version, ctx.env,
+        ctx.commit_number, ctx.sha1, ctx.qproject.target_version, ctx.env_name,
         ctx.launch_number
     ))
 
