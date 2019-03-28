@@ -201,6 +201,7 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(tmp_build, join(q_back, "build"))
 
     test_program_ctx = Extensible(
+        qdtgit = qdtgit,
         caches = caches,
         q_back = q_back,
         qemuwc = qemuwc,
@@ -213,42 +214,30 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     )
 
     for t, sha1 in enumerate(commit_list):
-        print("Checking QDT out (%s)...\n%s" % (
-            sha1,
-            "\n".join((("> " + l) if l else ">") for l in
-                qdtgit.commit(sha1).message.splitlines()
-            )
-        ))
-
         test_program_ctx.commit_number = t
-        test_program_ctx.sha1 = sha1,
-        test_program_ctx.errors = False
-        test_program_ctx.qdtwc = fast_repo_clone(qdtgit, sha1, "qdt")
+        test_program_ctx.sha1 = sha1
 
-        for env in envs:
-            with env(test_program_ctx):
-                with environment(test_program_ctx):
-                    for i in range(m_count):
-                        test_program_ctx.launch_number = i
-                        test_program_ctx.break_request = False
+        with version(test_program_ctx):
+            for env in envs:
+                with env(test_program_ctx):
+                    with environment(test_program_ctx):
+                        for i in range(m_count):
+                            test_program_ctx.launch_number = i
+                            test_program_ctx.break_request = False
 
-                        with launch(test_program_ctx):
-                            results = dict(test_program(test_program_ctx))
+                            with launch(test_program_ctx):
+                                results = dict(test_program(test_program_ctx))
 
-                        # remember results
-                        ctx.mes.setdefault(sha1, []).append(M(
-                            machine = machine,
-                            **results
-                        ))
+                            # remember results
+                            ctx.mes.setdefault(sha1, []).append(M(
+                                machine = machine,
+                                **results
+                            ))
 
-                        ctx._save()
+                            ctx._save()
 
-                        if test_program_ctx.break_request:
-                            break
-
-        if not test_program_ctx.errors:
-            # allow user to work with bad version
-            rmtree(test_program_ctx.qdtwc.working_tree_dir)
+                            if test_program_ctx.break_request:
+                                break
 
     rmtree(tmp_build)
     rmtree(qemuwc.working_tree_dir)
@@ -436,6 +425,26 @@ def plot_measurements(repo, ctx, commit_seq):
 
     plt.grid()
     plt.show()
+
+
+@contextmanager
+def version(ctx):
+    print("Checking QDT out (%s)...\n%s" % (
+        ctx.sha1,
+        "\n".join((("> " + l) if l else ">") for l in
+            ctx.qdtgit.commit(ctx.sha1).message.splitlines()
+        )
+    ))
+
+    ctx.qdtwc = fast_repo_clone(ctx.qdtgit, ctx.sha1, "qdt")
+    ctx.errors = False
+
+    try:
+        yield
+    finally:
+        if not ctx.errors:
+            # allow user to work with bad version
+            rmtree(ctx.qdtwc.working_tree_dir)
 
 
 @contextmanager
