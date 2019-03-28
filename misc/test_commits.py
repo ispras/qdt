@@ -222,13 +222,13 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
         for env in envs:
             print("Testing for environment '%s'" % env)
 
-            qdt_cache = None
+            qv_cache = None
             if caches is not None and join(caches, test_program_ctx.qvc):
                 # use existing cache
-                qdt_cache = join(caches, test_program_ctx.qvc)
+                qv_cache = join(caches, test_program_ctx.qvc)
 
             test_program_ctx.env = env
-            test_program_ctx.qdt_cache = qdt_cache
+            test_program_ctx.qv_cache = qv_cache
             test_program_ctx.interpreter = ENVS[env]["interpreter"]
 
             for i in range(m_count):
@@ -460,12 +460,12 @@ def test_program(ctx):
 
     print("Preparing CWD...")
 
-    qdt_cache = ctx.qdt_cache
+    qv_cache = ctx.qv_cache
 
-    if qdt_cache:
+    if qv_cache:
         # restore cache
         copyfile(
-            qdt_cache,
+            qv_cache,
             join(ctx.tmp_build, ctx.qvc)
         )
         yield "cache_ready", True
@@ -507,11 +507,11 @@ def test_program(ctx):
             print("Command was:")
             print(" ".join(cmds))
 
-    if qdt_cache is None:
+    if qv_cache is None:
         # preserve cache
-        qdt_cache = join(ctx.qdtwc.working_tree_dir, ctx.qvc)
-        copyfile(join(ctx.tmp_build, ctx.qvc), qdt_cache)
-        ctx.qdt_cache = qdt_cache
+        qv_cache = join(ctx.qdtwc.working_tree_dir, ctx.qvc)
+        copyfile(join(ctx.tmp_build, ctx.qvc), qv_cache)
+        ctx.qv_cache = qv_cache
 
     rmtree(qdt_cwd)
 
