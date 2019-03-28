@@ -228,13 +228,12 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
             test_program_ctx.interpreter = ENVS[env]["interpreter"]
 
             for i in range(m_count):
-                test_program_ctx.i = i
+                test_program_ctx.launch_number = i
                 test_program_ctx.break_request = False
 
                 # remember results
                 results = dict(test_program(test_program_ctx))
                 ctx.mes.setdefault(sha1, []).append(M(
-                    i = i,
                     env = env,
                     machine = machine,
                     **results
@@ -444,6 +443,8 @@ def plot_measurements(repo, ctx, commit_seq):
 
 
 def test_program(ctx):
+    yield "i", ctx.launch_number
+
     print("Preparing CWD...")
 
     qdt_cache = ctx.qdt_cache
