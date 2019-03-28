@@ -46,6 +46,9 @@ with pypath("pyrsp"):
     from pyrsp.rsp import (
         archmap
     )
+    from pyrsp.utils import (
+        find_free_port
+    )
 from c2t import (
     C2TConfig,
     Run,
@@ -93,6 +96,23 @@ class ProcessWithErrCatching(Process):
         _, err = process.communicate()
         if process.returncode != 0:
             c2t_exit(err, prog = self.prog)
+
+
+class FreePortFinder(Process):
+
+    def __init__(self, queue, count,  start = 4321):
+        super(FreePortFinder, self).__init__()
+        self.port_queue = queue
+        self.count = count
+        self.port_start = start
+
+    def run(self):
+        start = self.port_start
+        for i in range(0, self.count):
+            free = find_free_port(start)
+            self.port_queue.put(free)
+            # TODO: overflow 0x10000
+            start = free + 1
 
 
 class C2TTestBuilder(Process):
