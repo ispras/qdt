@@ -85,12 +85,9 @@ if TC_PRINT_STARTUP_ENVIRONMENT:
     print("\n".join(("%s=%s" % i) for i in TEST_STARTUP_ENV.items()))
 
 
-def commits(repo, tree_ish, early_tree_ish = None):
+def commits(repo, tree_ish, early_tree_ish):
     version = repo.commit(tree_ish).hexsha
-    if early_tree_ish is None:
-        early = None
-    else:
-        early = repo.commit(early_tree_ish).hexsha
+    early = repo.commit(early_tree_ish).hexsha
 
     log = repo.git.rev_list(early + ".." + version)
     for l in log.split("\n"):
