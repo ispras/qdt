@@ -178,7 +178,7 @@ class Measurer(object):
                                     ctx.break_request = False
 
                                     with self.launch(ctx):
-                                        results = dict(self.test_program(ctx))
+                                        results = dict(self.__measure__(ctx))
 
                                     # remember results
                                     measurements.setdefault(sha1, []).append(M(
@@ -497,7 +497,7 @@ class QDTMeasurer(Measurer):
             copytree(join(ctx.q_back, "src"), ctx.qemuwc.working_tree_dir)
             copytree(join(ctx.q_back, "build"), ctx.tmp_build)
 
-    def test_program(self, ctx):
+    def __measure__(self, ctx):
         yield "env", ctx.env_name
         yield "i", ctx.launch_number
 
