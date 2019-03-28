@@ -62,6 +62,9 @@ from filecmp import (
 from collections import (
     defaultdict
 )
+from contextlib import (
+    contextmanager
+)
 
 
 TC_PRINT_COMMANDS = ee("TC_PRINT_COMMANDS")
@@ -193,6 +196,7 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
     copytree(tmp_build, join(q_back, "build"))
 
     test_program_ctx = Extensible(
+        q_back = q_back,
         qemuwc = qemuwc,
         prev_diff = None,
         qvc = "qvc_%s.py" % qemugit.commit(qproject.target_version).hexsha,
@@ -231,8 +235,10 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                 test_program_ctx.launch_number = i
                 test_program_ctx.break_request = False
 
+                with launch(test_program_ctx):
+                    results = dict(test_program(test_program_ctx))
+
                 # remember results
-                results = dict(test_program(test_program_ctx))
                 ctx.mes.setdefault(sha1, []).append(M(
                     env = env,
                     machine = machine,
@@ -240,12 +246,6 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                 ))
 
                 ctx._save()
-
-                # restore qemu src and build from backup
-                rmtree(tmp_build)
-                rmtree(qemuwc.working_tree_dir)
-                copytree(join(q_back, "src"), qemuwc.working_tree_dir)
-                copytree(join(q_back, "build"), tmp_build)
 
                 if test_program_ctx.break_request:
                     break
@@ -442,6 +442,19 @@ def plot_measurements(repo, ctx, commit_seq):
     plt.show()
 
 
+@contextmanager
+def launch(ctx):
+    # no pre-launch preparations
+    try:
+        yield
+    finally:
+        # restore Qemu source and build directories from backup
+        rmtree(ctx.tmp_build)
+        rmtree(ctx.qemuwc.working_tree_dir)
+        copytree(join(ctx.q_back, "src"), ctx.qemuwc.working_tree_dir)
+        copytree(join(ctx.q_back, "build"), ctx.tmp_build)
+
+
 def test_program(ctx):
     yield "i", ctx.launch_number
 
@@ -538,7 +551,7 @@ def test_program(ctx):
     # save patch
     diff = join(ctx.diffs, "%u-%s-for-%s-under-%s-%u.patch" % (
         ctx.commit_number, ctx.sha1, ctx.qproject.target_version, ctx.env,
-        ctx.i
+        ctx.launch_number
     ))
 
     ctx.qemuwc.git.add("-A")
