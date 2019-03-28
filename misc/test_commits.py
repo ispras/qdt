@@ -106,6 +106,8 @@ class Measurement(Extensible):
         yield self.env
         yield self.machine
         yield self.cache_ready
+        yield self.test_time
+        yield self.test_returncode
 
     # default values for previous versions
 
@@ -116,6 +118,14 @@ class Measurement(Extensible):
     @lazy
     def differences(self):
         return False
+
+    @lazy
+    def test_time(self):
+        return None
+
+    @lazy
+    def test_returncode(self):
+        return None
 
 
 M = Measurement
@@ -247,6 +257,27 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                         join(qdtwc.working_tree_dir, qvc)
                     )
 
+                print("Running test...")
+                test_cmds = [
+                    ENVS[env]["interpreter"],
+                    "-m", "unittest",
+                    "test"
+                ]
+
+                if TC_PRINT_COMMANDS:
+                    print(" ".join(test_cmds))
+
+                t0 = time()
+                test_proc = Popen(test_cmds,
+                    cwd = qdtwc.working_tree_dir,
+                    env = dict(TEST_STARTUP_ENV)
+                )
+                test_proc.wait()
+                t1 = time()
+                test_total = t1 - t0
+
+                print("\ntotal: %s\n" % test_total)
+
                 rmtree(qdt_cwd)
 
                 # save patch
@@ -291,6 +322,8 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                     i = i,
                     time = total,
                     returncode = proc.returncode,
+                    test_time = test_total,
+                    test_returncode = test_proc.returncode,
                     env = env,
                     machine = machine,
                     cache_ready = cache_ready,
@@ -305,13 +338,26 @@ def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
                 copytree(join(q_back, "src"), qemuwc.working_tree_dir)
                 copytree(join(q_back, "build"), tmp_build)
 
+                do_break = False
+
                 if proc.returncode:
                     errors = True
+                    do_break = True
 
                     if not TC_PRINT_COMMANDS:
                         # always print commands for bad runs
                         print("Command was:")
                         print(" ".join(cmds))
+
+                if test_proc.returncode:
+                    errors = True
+                    do_break = True
+
+                    if not TC_PRINT_COMMANDS:
+                        print("Test launch command was:")
+                        print(" ".join(test_cmds))
+
+                if do_break:
                     break
 
         if not errors:
@@ -398,7 +444,7 @@ def plot_measurements(repo, ctx, commit_seq):
     mes = ctx.mes
 
     for x, sha1 in enumerate(commit_seq):
-        for _, t, res, env, machine, cache_ready in mes.get(sha1, []):
+        for _, t, res, env, machine, cache_ready, _, _ in mes.get(sha1, []):
             if machine != cur_machine:
                 # TODO: different plot (graph)
                 continue
@@ -408,6 +454,16 @@ def plot_measurements(repo, ctx, commit_seq):
                 continue
 
             plots[env].mes.append(t)
+
+        # Graph for tests
+        for _, _, _, env, machine, _, t, res in mes.get(sha1, []):
+            if machine != cur_machine:
+                # TODO: different plot (graph)
+                continue
+            if res: # failed, do not show
+                continue
+
+            plots[env + " (tests)"].mes.append(t)
 
         for plot in plots.values():
             plot._commit(x, sha1, repo.commit(sha1).message)
