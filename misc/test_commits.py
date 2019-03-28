@@ -148,100 +148,44 @@ def py3(ctx):
     yield
 
 
-def project_measurements(qdtgit, qemugit, ctx, commit_list, qproject, qp_path,
-    caches = None,
+def project_measurements(measurer, result, commit_list,
     m_count = 5,
-    envs = (py2, py3),
-    diffs = join(".", "proj_mes_diffs")
+    envs = (py2, py3)
 ):
-    """
-    :param caches:
-        Path to directory with existing QVCs. Use it iff QVC building
-        algorithm testing is not required.
-    """
-
     if m_count < 1:
         return
 
-    # generated code will be saved as a patch
-    diffs = join(abspath(diffs), datetime.now().strftime("%Y%m%d-%H%M%S"))
-    if not isdir(diffs):
-        makedirs(diffs)
-
+    measurements = result.mes
     machine = uname()
 
-    print("Checking Qemu out...")
-    qemuwc = fast_repo_clone(qemugit, qproject.target_version, "qemu")
-    tmp_build = mkdtemp(prefix = "qemu-%s-build-" % qproject.target_version)
+    with measurer as ctx:
+        ctx.machine = machine
 
-    print("Configuring Qemu...")
-    configure = Popen(
-        [
-            join(qemuwc.working_tree_dir, "configure"),
-            "--target-list=" + ",".join(["x86_64-softmmu"])
-        ],
-        env = dict(TEST_STARTUP_ENV),
-        cwd = tmp_build,
-        stderr = PIPE,
-        stdout = PIPE
-    )
-    configure.wait()
-    if configure.returncode:
-        raise RuntimeError(
-            "Qemu configuration failed %u\nstdout:\n%s\nstderr:\n%s\n" % (
-                configure.returncode, configure.stdout.read(),
-                configure.stderr.read()
-            )
-        )
+        for t, sha1 in enumerate(commit_list):
+            ctx.commit_number = t
+            ctx.sha1 = sha1
 
-    print("Backing Qemu configuration...")
-    q_back = mkdtemp(prefix = "qemu-%s-back-" % qproject.target_version)
+            with version(ctx):
+                for env in envs:
+                    with env(ctx):
+                        with environment(ctx):
+                            for i in range(m_count):
+                                ctx.launch_number = i
+                                ctx.break_request = False
 
-    copytree(qemuwc.working_tree_dir, join(q_back, "src"))
-    copytree(tmp_build, join(q_back, "build"))
+                                with launch(ctx):
+                                    results = dict(test_program(ctx))
 
-    test_program_ctx = Extensible(
-        qdtgit = qdtgit,
-        caches = caches,
-        q_back = q_back,
-        qemuwc = qemuwc,
-        prev_diff = None,
-        qvc = "qvc_%s.py" % qemugit.commit(qproject.target_version).hexsha,
-        tmp_build = tmp_build,
-        qp_path = qp_path,
-        qproject = qproject,
-        diffs = diffs
-    )
+                                # remember results
+                                measurements.setdefault(sha1, []).append(M(
+                                    machine = machine,
+                                    **results
+                                ))
 
-    for t, sha1 in enumerate(commit_list):
-        test_program_ctx.commit_number = t
-        test_program_ctx.sha1 = sha1
+                                result._save()
 
-        with version(test_program_ctx):
-            for env in envs:
-                with env(test_program_ctx):
-                    with environment(test_program_ctx):
-                        for i in range(m_count):
-                            test_program_ctx.launch_number = i
-                            test_program_ctx.break_request = False
-
-                            with launch(test_program_ctx):
-                                results = dict(test_program(test_program_ctx))
-
-                            # remember results
-                            ctx.mes.setdefault(sha1, []).append(M(
-                                machine = machine,
-                                **results
-                            ))
-
-                            ctx._save()
-
-                            if test_program_ctx.break_request:
-                                break
-
-    rmtree(tmp_build)
-    rmtree(qemuwc.working_tree_dir)
-    rmtree(q_back)
+                                if ctx.break_request:
+                                    break
 
 
 def accuracy(err):
@@ -425,6 +369,85 @@ def plot_measurements(repo, ctx, commit_seq):
 
     plt.grid()
     plt.show()
+
+
+class QDTMeasurer(object):
+
+    def __init__(self, repo, project, project_path,
+        caches = None,
+        diffs = join(".", "proj_mes_diffs")
+    ):
+        """
+:param caches:
+    Path to directory with existing QVCs. Use it iff QVC building
+    algorithm testing is not required.
+        """
+
+        self.qdtgit = repo
+
+        qvd = qvd_get(project.build_path, version = project.target_version)
+
+        self.qproject = project
+        self.qemugit = qemugit = Repo(qvd.src_path)
+        self.qp_path = project_path
+        self.caches = caches
+
+        # generated code will be saved as a patch
+        diffs = join(abspath(diffs), datetime.now().strftime("%Y%m%d-%H%M%S"))
+        if not isdir(diffs):
+            makedirs(diffs)
+
+        self.diffs = diffs
+
+        self.qvc = "qvc_%s.py" % qemugit.commit(project.target_version).hexsha
+
+    def __enter__(self):
+        print("Checking Qemu out...")
+        self.qemuwc = qemuwc = fast_repo_clone(self.qemugit,
+            version = self.qproject.target_version,
+            prefix = "qemu"
+        )
+
+        self.tmp_build = tmp_build = mkdtemp(
+            prefix = "qemu-%s-build-" % self.qproject.target_version
+        )
+
+        print("Configuring Qemu...")
+        configure = Popen(
+            [
+                join(qemuwc.working_tree_dir, "configure"),
+                "--target-list=" + ",".join(["x86_64-softmmu"])
+            ],
+            env = dict(TEST_STARTUP_ENV),
+            cwd = tmp_build,
+            stderr = PIPE,
+            stdout = PIPE
+        )
+        configure.wait()
+        if configure.returncode:
+            raise RuntimeError(
+                "Qemu configuration failed %u\nstdout:\n%s\nstderr:\n%s\n" % (
+                    configure.returncode, configure.stdout.read(),
+                    configure.stderr.read()
+                )
+            )
+
+        print("Backing Qemu configuration...")
+        self.q_back = q_back = mkdtemp(
+            prefix = "qemu-%s-back-" % self.qproject.target_version
+        )
+
+        copytree(qemuwc.working_tree_dir, join(q_back, "src"))
+        copytree(tmp_build, join(q_back, "build"))
+
+        self.prev_diff = None
+
+        return self
+
+    def __exit__(self, *_):
+        rmtree(self.tmp_build)
+        rmtree(self.qemuwc.working_tree_dir)
+        rmtree(self.q_back)
 
 
 @contextmanager
@@ -726,20 +749,19 @@ def main():
     ):
         project.target_version = args.target_version
 
-    qdtgit = Repo(args.repo)
+    repo = Repo(args.repo)
 
-    qvd = qvd_get(project.build_path, version = project.target_version)
+    measurements = QDTMeasurer(repo, project, script,
+        caches = project.build_path
+    )
 
-    qemugit = Repo(qvd.src_path)
-
-    with CommitsTestResults() as c:
+    with CommitsTestResults() as results:
         commit_list = tuple(reversed(
-            list(commits(qdtgit, args.current, early_tree_ish = args.base))
-            +[qdtgit.commit(args.base).hexsha]
+            list(commits(repo, args.current, early_tree_ish = args.base))
+            + [repo.commit(args.base).hexsha]
         ))
 
-        project_measurements(qdtgit, qemugit, c, commit_list, project, script,
-            caches = project.build_path,
+        project_measurements(measurements, results, commit_list,
             m_count = args.measurements,
         )
 
@@ -747,7 +769,7 @@ def main():
         # tox_measurements(repo, c, commit_list,
         #     m_count = args.measurements
         # )
-        plot_measurements(qdtgit, c, commit_list)
+        plot_measurements(repo, results, commit_list)
 
     return 0
 
