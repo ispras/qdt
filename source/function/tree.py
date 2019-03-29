@@ -533,9 +533,12 @@ class Declare(SemicolonPresence):
                 v = first_child.children[0]
             else:
                 v = first_child
-            if v.full_deref != var.full_deref:
-                raise TypeError(
-                    "All variables in Declare must have the same type"
+            if (   v.full_deref != var.full_deref
+                or v.static != var.static
+                or v.const != var.const
+            ):
+                raise TypeError("All variables in Declare must have the same"
+                    " type and qualifiers"
                 )
 
         super(Declare, self).add_child(child)
