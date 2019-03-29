@@ -24,11 +24,36 @@ comparison report
         self.dump_queue = dump_queue
 
     @staticmethod
-    def _prepare_dump4print(dump):
-        return ''.join(["\n               {k} = {v} ".format(k = k, v = v)
-            if i and not (i % 3) else "{k} = {v} ".format(k = k, v = v)
-            for i, (k, v) in enumerate(dump.items())
-        ])
+    def _format_variables(_vars):
+        for n, v in _vars.items():
+            yield "{n} = {v} (0x{v:x})".format(n = n, v = v)
+
+    @staticmethod
+    def _format_rows(records, columns = 3):
+        for i, r in enumerate(records):
+            if i:
+                if i % columns:
+                    yield " "
+                else:
+                    yield "\n               "
+            yield r
+
+    @staticmethod
+    def _prepare_vars4print(_vars):
+        return "".join(
+            DebugComparator._format_rows(
+                DebugComparator._format_variables(_vars),
+                columns = 2
+            )
+        )
+
+    @staticmethod
+    def _prepare_regs4print(regs):
+        return "".join(
+            DebugComparator._format_rows(
+                map("%s = %s".__mod__, regs.items())
+            )
+        )
 
     def _print_report(self, msg, dump):
         report = msg
@@ -43,9 +68,9 @@ comparison report
                     lineno = val["lineno"],
                     addr = val["addr"]
                 ) + ("    Variables: {vars}\n".format(
-                    vars = self._prepare_dump4print(val["vars"])
+                    vars = self._prepare_vars4print(val["vars"])
                 ) if "vars" in val else '') + "    Registers: {regs}".format(
-                    regs = self._prepare_dump4print(val["regs"])
+                    regs = self._prepare_regs4print(val["regs"])
                 )
             )
         print(report)
