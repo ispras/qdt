@@ -14,24 +14,24 @@ c2t_cfg = C2TConfig(
         args = "localhost:{port} {bin}"
     )),
     target_compiler = TestBuilder(
-        compiler = Run(
+        Run( # compiler
             executable = "/usr/bin/arm-none-eabi-gcc",
             args = ("-DTEST -mno-unaligned-access -g -Wall -O0 "
                 "-mfix-cortex-m3-ldrd -msoft-float -mthumb "
                 "-Wno-strict-aliasing -fomit-frame-pointer -mcpu=cortex-m3 "
-                "-c {src} -o {bin}.o"
+                "-c {src} -o {ir}.o"
             )
         ),
-        linker = Run(
+        Run( # linker
             executable = "/usr/bin/arm-none-eabi-gcc",
             args = ("-mthumb -mcpu=cortex-m3 -fno-common "
                 "-T {c2t_test_dir}/misc/cortexm3_memmap -nostartfiles "
-                "-Wl,--gc-sections -Wl,-z,relro {bin}.o -o {bin}"
+                "-Wl,--gc-sections -Wl,-z,relro {ir}.o -o {bin}"
             )
         )
     ),
     oracle_compiler = TestBuilder(
-        compiler = Run(
+        Run( # compiler
             executable = "/usr/bin/gcc",
             args = "-g -O0 {src} -o {bin}"
         )

@@ -68,27 +68,13 @@ class DebugServer(object):
         return ' '.join(self.run)
 
 
-class TestBuilder(object):
+class TestBuilder(tuple):
 
-    def __init__(self,
-        compiler = None,
-        frontend = None,
-        backend = None,
-        linker = None
-    ):
-        self.compiler = compiler
-        self.frontend = frontend
-        self.backend = backend
-        self.linker = linker
-        self.runs = (
-            filter(
-                lambda v: v is not None,
-                list([self.compiler, self.frontend, self.backend, self.linker])
-            )
-        )
+    def __new__(cls, *runs):
+        return tuple.__new__(cls, runs)
 
     # TODO: how process when runs = []
     @property
     def run_script(self):
-        for run in self.runs:
+        for run in self:
             yield ' '.join(run)
