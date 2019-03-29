@@ -579,6 +579,9 @@ def verify_config_components(config):
             prog = config
         )
 
+    # TODO: check for {bin} usage
+    return
+
     for compiler, compiler_name in (
         (c2t_cfg.target_compiler, "target_compiler"),
         (c2t_cfg.oracle_compiler, "oracle_compiler")
