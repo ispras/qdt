@@ -1,7 +1,8 @@
 c2t_cfg = C2TConfig(
     rsp_target = DebugClient(
         march = "cortexm3",
-        qemu_reset = True
+        qemu_reset = True,
+        sp = "sp"
     ),
     qemu = DebugServer(Run(
         executable = "/usr/bin/qemu-system-arm",
