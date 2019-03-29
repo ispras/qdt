@@ -2,6 +2,7 @@ __all__ = [
     "CodeWriter"
 ]
 
+
 class CodeWriter(object):
     """Helper for writing program code.
 
