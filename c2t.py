@@ -324,12 +324,7 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
     res_queue.put((session.session_type, None, "TEST_EXIT"))
 
 
-def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
-    test_src, test_elf = tests_queue.get(block = True)
-
-    qemu_port = port_queue.get(block = True)
-    qmp_port = port_queue.get(block = True)
-
+def run_qemu(test_elf, qemu_port, qmp_port):
     qmp_run = " -qmp tcp:localhost:{port},server,nowait"
     qemu = ProcessWithErrCatching(
         c2t_cfg.qemu.run_script.format(
@@ -341,6 +336,16 @@ def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
     )
     qemu.daemon = True
     qemu.start()
+    return qemu
+
+
+def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
+    test_src, test_elf = tests_queue.get(block = True)
+
+    qemu_port = port_queue.get(block = True)
+    qmp_port = port_queue.get(block = True)
+
+    qemu = run_qemu(test_elf, qemu_port, qmp_port)
 
     if (not wait_for_tcp_port(qemu_port)
             and not wait_for_tcp_port(qmp_port)
@@ -390,17 +395,7 @@ def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
         qemu_port = port_queue.get(block = True)
         qmp_port = port_queue.get(block = True)
 
-        qmp_run = " -qmp tcp:localhost:{port},server,nowait"
-        qemu = ProcessWithErrCatching(
-            c2t_cfg.qemu.run_script.format(
-                port = qemu_port,
-                bin = test_elf,
-                c2t_dir = C2T_DIR,
-                c2t_test_dir = C2T_TEST_DIR
-            ) + qmp_run.format(port = qmp_port)
-        )
-        qemu.daemon = True
-        qemu.start()
+        qemu = run_qemu(test_elf, qemu_port, qmp_port)
 
         if (    not wait_for_tcp_port(qemu_port)
             and not wait_for_tcp_port(qmp_port)
