@@ -28,6 +28,14 @@ c2t_cfg = C2TConfig(
                 "-T {c2t_test_dir}/misc/cortexm3_memmap -nostartfiles "
                 "-Wl,--gc-sections -Wl,-z,relro {ir}.o -o {bin}"
             )
+        ),
+        Run( # dissassembler
+            executable = "/usr/bin/arm-none-eabi-gcc",
+            args = ("-DTEST -mno-unaligned-access -g -Wall -O0 "
+                "-mfix-cortex-m3-ldrd -msoft-float -mthumb "
+                "-Wno-strict-aliasing -fomit-frame-pointer -mcpu=cortex-m3 "
+                "-c {src} -Wa,-adhln > {ir}.disas"
+            )
         )
     ),
     oracle_compiler = TestBuilder(
