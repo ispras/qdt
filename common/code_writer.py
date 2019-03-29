@@ -10,19 +10,32 @@ class CodeWriter(object):
     - indentation
     """
 
-    def __init__(self, backend = None, indent = "    "):
+    def __init__(self, backend = None):
         """
         :backend: is a "writer" that will be given an output produced by this
             instance. It must implement `write` method for byte data.
-
-        :indent: is string value of single indentation step.
         """
 
-        self.indent = indent
         self.w = backend
-        self.indents = []
+
+        self.previous_states = [
+            # indent, indents, prefix
+            ["  ", [""], "#"], # CPP lang
+            ["    ", [], ""] # C lang
+        ]
+        self.next_states = []
+
+        self.load_state()
 
         self.reset()
+
+    def load_state(self):
+        "Loads current state."
+
+        if self.previous_states:
+            self.indent, self.indents, self.prefix = self.previous_states[-1]
+        else:
+            raise RuntimeError("Cannot load current state - stack empty")
 
     def reset(self):
         """ Resets current indent to empty string and starts new line *without*
@@ -40,6 +53,7 @@ class CodeWriter(object):
         """
 
         if self.new_line:
+            self.w.write(self.prefix)
             self.w.write(self.current_indent)
         else:
             self.new_line = True
@@ -54,6 +68,7 @@ class CodeWriter(object):
         """
 
         if self.new_line:
+            self.w.write(self.prefix)
             self.w.write(self.current_indent)
             self.new_line = False
 
@@ -83,3 +98,27 @@ class CodeWriter(object):
             self.current_indent = self.indents.pop()
         else:
             raise RuntimeError("Cannot load previous indent - stack empty")
+
+    def __enter__(self):
+        "Switches to previous state."
+
+        if self.previous_states:
+            self.save_indent()
+            self.next_states.append(self.previous_states.pop())
+            self.load_state()
+            self.load_indent()
+        else:
+            raise RuntimeError("Cannot save previous state - stack empty")
+
+        return self
+
+    def __exit__(self, e, *_): # value, traceback
+        "Switches to next state."
+
+        if self.next_states:
+            self.save_indent()
+            self.previous_states.append(self.next_states.pop())
+            self.load_state()
+            self.load_indent()
+        else:
+            raise RuntimeError("Cannot load next state - stack empty")
