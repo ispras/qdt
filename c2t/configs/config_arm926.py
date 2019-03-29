@@ -26,8 +26,8 @@ c2t_cfg = C2TConfig(
         args = "localhost:{port} {bin}"
     )),
     target_compiler = TestBuilder(
-        frontend = common_frontend,
-        backend = Run(
+        common_frontend,
+        Run( # backend
             executable = "/usr/local/bin/llc",
             args = ("-O0 -march=arm -mcpu=arm926ej-s -filetype=obj {ir}.bc -o "
                 "{bin}.o"
@@ -35,14 +35,14 @@ c2t_cfg = C2TConfig(
         )
     ),
     oracle_compiler = TestBuilder(
-        frontend = common_frontend,
-        backend = Run(
+        common_frontend,
+        Run( # backend
             executable = "/usr/local/bin/llc",
-            args = "-O0 -march=x86-64 -filetype=obj {ir}.bc -o {bin}.o"
+            args = "-O0 -march=x86-64 -filetype=obj {ir}.bc -o {ir}.o"
         ),
-        linker = Run(
+        Run( # linker
             executable = "/usr/bin/ld",
-            args = "-e main {bin}.o -o {bin}"
+            args = "-e main {ir}.o -o {bin}"
         )
     )
 )

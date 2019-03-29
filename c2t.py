@@ -481,21 +481,18 @@ class C2TTestBuilder(Process):
             cmpl_unit.start()
             cmpl_unit.join()
 
-        ext = findall("-o {bin}(\S*)", run_script).pop()
-        return test_bin + ext
-
     def run(self):
         for test in self.tests:
             test_name = test[:-2]
             test_src = join(C2T_TEST_DIR, test)
             test_ir = join(C2T_TEST_IR_DIR, test_name)
-            test_bin = join(C2T_TEST_BIN_DIR, test_name)
-
-            test_elf = self.test_build(test_src, test_ir,
-                test_bin + "_%s" % self.tests_tail
+            test_bin = join(C2T_TEST_BIN_DIR,
+                test_name + "_%s" % self.tests_tail
             )
 
-            self.tests_queue.put((test_src, test_elf))
+            self.test_build(test_src, test_ir, test_bin)
+
+            self.tests_queue.put((test_src, test_bin))
 
 
 def start_cpu_testing(tests, jobs, kill, verbose):
