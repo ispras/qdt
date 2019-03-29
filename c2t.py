@@ -658,7 +658,7 @@ def main():
         type = int,
         dest = "jobs",
         default = 1,
-        help = "allow N debugging jobs at once (N = [1, NCPU])"
+        help = "allow N debugging jobs at once"
     )
     parser.add_argument("-k", "--kill",
         action = "store_true",
@@ -723,8 +723,6 @@ def main():
     jobs = args.jobs
     if jobs < 1:
         parser.error("wrong number of jobs: %s" % jobs)
-    else:
-        jobs = min(jobs, cpu_count())
 
     # creates tests subdirectories if they don't exist
     for sub_dir in (C2T_TEST_IR_DIR, C2T_TEST_BIN_DIR):
