@@ -578,28 +578,17 @@ def verify_config_components(config):
             prog = config
         )
 
-    # TODO: check for {bin} usage
-    return
-
     for compiler, compiler_name in (
         (c2t_cfg.target_compiler, "target_compiler"),
         (c2t_cfg.oracle_compiler, "oracle_compiler")
     ):
-        if not any((compiler.compiler, compiler.frontend, compiler.backend)):
-            c2t_exit("%s is not specified" % compiler_name, prog = config)
+        for run in compiler.run_script:
+            if run.find("{bin}") != -1:
+                break
         else:
-            if compiler.compiler:
-                if compiler.frontend or compiler.backend:
-                    msg = "compiler specified with %s" % (
-                        "frontend" if compiler.frontend else "backend"
-                    )
-                    c2t_exit(msg, prog = "%s: %s" % (config, compiler_name))
-            else:
-                if not compiler.frontend or not compiler.backend:
-                    msg = "%s is not specified" % (
-                        "frontend" if not compiler.frontend else "backend"
-                    )
-                    c2t_exit(msg, prog = "%s: %s" % (config, compiler_name))
+            c2t_exit("{bin} doesn't exist", prog = "%s: %s" % (
+                config, compiler_name
+            ))
 
 
 class C2TArgumentParser(ArgumentParser):
