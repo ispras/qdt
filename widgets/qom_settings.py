@@ -38,6 +38,13 @@ from .pci_id_widget import (
 )
 
 
+def gen_readonly_widgets(master):
+    v = StringVar()
+    w = HKEntry(master, textvariable = v, state = "readonly")
+
+    return v, w
+
+
 def gen_int_widgets(master):
     v = StringVar()
     w = HKEntry(master, textvariable = v)
@@ -119,8 +126,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 _input = info["input"]
             except KeyError:
                 # attribute is read-only
-                v = StringVar()
-                w = HKEntry(f, textvariable = v, state = "readonly")
+                v, w = gen_readonly_widgets(f)
             else:
                 if _input is PCIId:
                     have_pciid = True
