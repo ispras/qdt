@@ -55,7 +55,10 @@ class gen_readonly_widgets(HKEntry):
 class SimpleEditWidget: # old style class, like Tkinter classes
 
     def _refresh(self):
-        widget_val, cur_val = self._v.get(), getattr(self._obj, self._attr)
+        cur_val = getattr(self._obj, self._attr)
+        if not self._validate():
+            self._v.set(cur_val)
+        widget_val = self._cast(self._v.get())
         if widget_val != cur_val:
             self._v.set(cur_val)
         else:
@@ -93,17 +96,6 @@ class gen_int_widgets(HKEntry, SimpleEditWidget):
 
     _set_color = lambda self, color : self.config(bg = color)
     _cast = lambda self, x : int(x, base = 0)
-
-    def _refresh(self):
-        widget_val, cur_val = self._v.get(), getattr(self._obj, self._attr)
-        try:
-            widget_val = int(widget_val, base = 0)
-        except ValueError:
-            widget_val = None
-        if widget_val != cur_val:
-            self._v.set(cur_val)
-        else:
-            self._do_highlight()
 
 
 class gen_str_widgets(HKEntry, SimpleEditWidget):
