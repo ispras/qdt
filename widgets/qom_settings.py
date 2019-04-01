@@ -41,13 +41,15 @@ from .pci_id_widget import (
 def gen_readonly_widgets(master):
     v = StringVar()
     w = HKEntry(master, textvariable = v, state = "readonly")
+    w._v = v
 
-    return v, w
+    return w
 
 
 def gen_int_widgets(master):
     v = StringVar()
     w = HKEntry(master, textvariable = v)
+    w._v = v
 
     def validate():
         try:
@@ -60,23 +62,25 @@ def gen_int_widgets(master):
     w._validate = validate
     w._set_color = lambda color : w.config(bg = color)
     w._cast = lambda x : int(x, base = 0)
-    return v, w
+    return w
 
 def gen_str_widgets(master):
     v = StringVar()
     w = HKEntry(master, textvariable = v)
+    w._v = v
     w._validate = lambda : True
     w._set_color = lambda color : w.config(bg = color)
     w._cast = lambda x : x
-    return v, w
+    return w
 
 def gen_bool_widgets(master):
     v = BooleanVar()
     w = Checkbutton(master, variable = v)
+    w._v = v
     w._validate = lambda : True
     w._set_color = lambda color : w.config(selectcolor = color)
     w._cast = lambda x : x
-    return v, w
+    return w
 
 def gen_PCIId_widgets(master):
     # Value of PCI Id could be presented either by PCIId object or by a
@@ -84,10 +88,11 @@ def gen_PCIId_widgets(master):
     # widget/variable pair will be assigned during refresh.
     v = None
     w = GUIFrame(master)
+    w._v = v
     w.grid()
     w.rowconfigure(0, weight = 1)
     w.columnconfigure(0, weight = 1)
-    return v, w
+    return w
 
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
@@ -126,7 +131,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 _input = info["input"]
             except KeyError:
                 # attribute is read-only
-                v, w = gen_readonly_widgets(f)
+                w = gen_readonly_widgets(f)
             else:
                 if _input is PCIId:
                     have_pciid = True
@@ -140,13 +145,12 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                         " type %s is not supported" % (attr, _input_name)
                     )
 
-                v, w = generator(f)
+                w = generator(f)
 
-                if v is not None:
-                    self._add_highlighting(v, w, attr)
+                if w._v is not None:
+                    self._add_highlighting(w, attr)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
-            setattr(self, "_var_" + attr, v)
             setattr(self, "_w_" + attr, w)
 
         btf = self.buttons_fr = GUIFrame(self)
@@ -176,11 +180,11 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         if have_pciid:
             self.qsig_watch("qvc_available", self.__on_qvc_available)
 
-    def _add_highlighting(self, var, widget, attr):
-        def do_highlight(w = widget, v = var, attr = attr):
+    def _add_highlighting(self, widget, attr):
+        def do_highlight(w = widget, attr = attr):
             if not w._validate():
                 w._set_color("red")
-            elif w._cast(v.get()) != getattr(self.desc, attr):
+            elif w._cast(widget._v.get()) != getattr(self.desc, attr):
                 w._set_color("#ffffcc")
             else:
                 w._set_color("white")
@@ -190,7 +194,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         # This code is outlined from the loop because of late binding of
         # `do_highlight` in the lambda.
         # See: https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
-        var.trace_variable("w", lambda *_: do_highlight())
+        widget._v.trace_variable("w", lambda *_: do_highlight())
 
 
 
@@ -206,7 +210,8 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 _input = None
 
             cur_val = getattr(desc, attr)
-            v = getattr(self, "_var_" + attr)
+            w = getattr(self, "_w_" + attr)
+            v = w._v
 
             if _input is PCIId:
                 if not PCIId.db.built and cur_val is None:
@@ -215,28 +220,23 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 # use appropriate widget/variable pair
                 if isinstance(cur_val, str):
                     if not isinstance(v, StringVar):
-                        v = StringVar()
-                        setattr(self, "_var_" + attr, v)
+                        w._v = v = StringVar()
 
                         # Fill frame with appropriate widget
-                        frame = getattr(self, "_w_" + attr)
-                        for w in frame.winfo_children():
-                            w.destroy()
+                        for cw in w.winfo_children():
+                            cw.destroy()
 
-                        w = HKEntry(frame, textvariable = v)
-                        w.grid(row = 0, column = 0, sticky = "NEWS")
+                        cw = HKEntry(w, textvariable = v)
+                        cw.grid(row = 0, column = 0, sticky = "NEWS")
                 elif cur_val is None or isinstance(cur_val, PCIId):
                     if not isinstance(v, ObjRefVar):
-                        v = ObjRefVar()
-                        setattr(self, "_var_" + attr, v)
+                        w._v = v = ObjRefVar()
 
-                        frame = getattr(self, "_w_" + attr)
+                        for cw in w.winfo_children():
+                            cw.destroy()
 
-                        for w in frame.winfo_children():
-                            w.destroy()
-
-                        w = PCIIdWidget(v, frame)
-                        w.grid(row = 0, column = 0, sticky = "NEWS")
+                        cw = PCIIdWidget(v, w)
+                        cw.grid(row = 0, column = 0, sticky = "NEWS")
 
             widget_val = v.get()
 
@@ -268,7 +268,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
             except KeyError: # read-only
                 continue
 
-            v = getattr(self, "_var_" + attr)
+            v = getattr(self, "_w_" + attr)._v
             cur_val = getattr(desc, attr)
             new_val = v.get()
 
