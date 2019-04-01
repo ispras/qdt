@@ -65,7 +65,14 @@ class SimpleEditWidget: # old style class, like Tkinter classes
             self._do_highlight()
 
     _cast = lambda self, x : x
-    _validate = lambda self : True
+
+    def _validate(self):
+        try:
+            self._cast(self._v.get())
+        except ValueError:
+            return False
+        else:
+            return True
 
     def _changes(self):
         if not self._validate():
@@ -85,14 +92,6 @@ class gen_int_widgets(HKEntry, SimpleEditWidget):
         HKEntry.__init__(self, master, textvariable = v)
         self._v, self._obj, self._attr = v, obj, attr
         add_highlighting(obj, self, attr)
-
-    def _validate(self):
-        try:
-            (int(self._v.get(), base = 0))
-        except ValueError:
-            return False
-        else:
-            return True
 
     _set_color = lambda self, color : self.config(bg = color)
     _cast = lambda self, x : int(x, base = 0)
