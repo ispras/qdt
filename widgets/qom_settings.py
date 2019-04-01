@@ -48,8 +48,34 @@ class gen_readonly_widgets(HKEntry):
     def _refresh(self):
         self._v.set(getattr(self._obj, self._attr))
 
+    def _changes(self):
+        return []
 
-class gen_int_widgets(HKEntry):
+
+class SimpleEditWidget: # old style class, like Tkinter classes
+
+    def _refresh(self):
+        widget_val, cur_val = self._v.get(), getattr(self._obj, self._attr)
+        if widget_val != cur_val:
+            self._v.set(cur_val)
+        else:
+            self._do_highlight()
+
+    _cast = lambda self, x : x
+    _validate = lambda self : True
+
+    def _changes(self):
+        if not self._validate():
+            return
+
+        new_val = self._cast(self._v.get())
+        cur_val = getattr(self._obj, self._attr)
+
+        if new_val != cur_val:
+            yield DOp_SetAttr, self._attr, new_val
+
+
+class gen_int_widgets(HKEntry, SimpleEditWidget):
 
     def __init__(self, master, obj, attr):
         v = StringVar()
@@ -78,19 +104,6 @@ class gen_int_widgets(HKEntry):
             self._v.set(cur_val)
         else:
             self._do_highlight()
-
-
-class SimpleEditWidget: # old style class, like Tkinter classes
-
-    def _refresh(self):
-        widget_val, cur_val = self._v.get(), getattr(self._obj, self._attr)
-        if widget_val != cur_val:
-            self._v.set(cur_val)
-        else:
-            self._do_highlight()
-
-    _cast = lambda self, x : x
-    _validate = lambda self : True
 
 
 class gen_str_widgets(HKEntry, SimpleEditWidget):
@@ -159,6 +172,37 @@ def gen_PCIId_widgets(master, obj, attr):
             _v.set(cur_val)
 
     w._refresh = refresh
+
+    def changes():
+        cur_val =  getattr(obj, attr)
+        new_val = w._v.get()
+
+        if new_val == "":
+            new_val = None
+
+        if isinstance(new_val, str): # handle new string value
+            # Was type of value changed?
+            if isinstance(cur_val, str):
+                if new_val != cur_val:
+                    yield DOp_SetAttr, attr, new_val
+            else:
+                """ Yes. Current value must first become the None and
+                then become the new string value. """
+                if cur_val is not None:
+                    yield DOp_SetPCIIdAttr, attr, None
+                yield DOp_SetAttr, attr, new_val
+        else: # Handle new value as PCIId (None equivalent to a PCIId)
+            if cur_val is None or isinstance(cur_val, PCIId):
+                if cur_val is not new_val:
+                    yield DOp_SetPCIIdAttr, attr, new_val
+            else:
+                """ Current string value must first be replaced with
+                None and then set to new PCIId value. """
+                yield DOp_SetAttr, attr, None
+                if new_val is not None:
+                    yield DOp_SetPCIIdAttr, attr, new_val
+
+    w._changes = changes
 
     return w
 
@@ -279,56 +323,9 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         desc = self.desc
         desc_sn = desc.__sn__
 
-        for attr, info in desc.__attribute_info__.items():
-            try:
-                _input = info["input"]
-            except KeyError: # read-only
-                continue
-
-            v = getattr(self, "_w_" + attr)._v
-            cur_val = getattr(desc, attr)
-            new_val = v.get()
-
-            if _input is PCIId:
-                if new_val == "":
-                    new_val = None
-
-                if isinstance(new_val, str): # handle new string value
-                    # Was type of value changed?
-                    if isinstance(cur_val, str):
-                        if new_val != cur_val:
-                            self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
-                    else:
-                        """ Yes. Current value must first become the None and
-                        then become the new string value. """
-                        if cur_val is not None:
-                            self.pht.stage(DOp_SetPCIIdAttr, attr, None,
-                                desc_sn
-                            )
-                        self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
-                else: # Handle new value as PCIId (None equivalent to a PCIId)
-                    if cur_val is None or isinstance(cur_val, PCIId):
-                        if cur_val is not new_val:
-                            self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
-                                desc_sn
-                            )
-                    else:
-                        """ Current string value must first be replaced with
-                        None and then set to new PCIId value. """
-                        self.pht.stage(DOp_SetAttr, attr, None, desc_sn)
-                        if new_val is not None:
-                            self.pht.stage(DOp_SetPCIIdAttr, attr, new_val,
-                                desc_sn
-                            )
-            else:
-                if _input is int:
-                    try:
-                        new_val = int(new_val, base = 0)
-                    except ValueError: # bad value cannot be applied
-                        continue
-
-                if new_val != cur_val:
-                    self.pht.stage(DOp_SetAttr, attr, new_val, desc_sn)
+        for attr in desc.__attribute_info__:
+            for args in getattr(self, "_w_" + attr)._changes():
+                self.pht.stage(*(args + (desc_sn,)))
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
