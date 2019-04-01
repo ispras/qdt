@@ -76,8 +76,12 @@ def gen_int_widgets(master, obj, attr):
             widget_val = None
         if widget_val != cur_val:
             v.set(cur_val)
+        else:
+            w._do_highlight()
 
     w._refresh = refresh
+
+    add_highlighting(obj, w, attr)
 
     return w
 
@@ -93,8 +97,12 @@ def gen_str_widgets(master, obj, attr):
         widget_val, cur_val = v.get(), getattr(obj, attr)
         if widget_val != cur_val:
             v.set(cur_val)
+        else:
+            w._do_highlight()
 
     w._refresh = refresh
+
+    add_highlighting(obj, w, attr)
 
     return w
 
@@ -110,8 +118,12 @@ def gen_bool_widgets(master, obj, attr):
         widget_val, cur_val = v.get(), getattr(obj, attr)
         if widget_val != cur_val:
             v.set(cur_val)
+        else:
+            w._do_highlight()
 
     w._refresh = refresh
+
+    add_highlighting(obj, w, attr)
 
     return w
 
@@ -163,6 +175,23 @@ def gen_PCIId_widgets(master, obj, attr):
     return w
 
 
+def add_highlighting(desc, widget, attr):
+    def do_highlight(w = widget, attr = attr):
+        if not w._validate():
+            w._set_color("red")
+        elif w._cast(widget._v.get()) != getattr(desc, attr):
+            w._set_color("#ffffcc")
+        else:
+            w._set_color("white")
+
+    widget._do_highlight = do_highlight
+
+    # This code is outlined from the loop because of late binding of
+    # `do_highlight` in the lambda.
+    # See: https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+    widget._v.trace_variable("w", lambda *_: do_highlight())
+
+
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
@@ -187,7 +216,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(1, weight = 1)
 
         have_pciid = False
-        self._all_highlights = []
 
         for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
@@ -214,9 +242,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                     )
 
                 w = generator(f, qom_desc, attr)
-
-                if w._v is not None:
-                    self._add_highlighting(w, attr)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_w_" + attr, w)
@@ -248,23 +273,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         if have_pciid:
             self.qsig_watch("qvc_available", self.__on_qvc_available)
 
-    def _add_highlighting(self, widget, attr):
-        def do_highlight(w = widget, attr = attr):
-            if not w._validate():
-                w._set_color("red")
-            elif w._cast(widget._v.get()) != getattr(self.desc, attr):
-                w._set_color("#ffffcc")
-            else:
-                w._set_color("white")
-
-        self._all_highlights.append(do_highlight)
-
-        # This code is outlined from the loop because of late binding of
-        # `do_highlight` in the lambda.
-        # See: https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
-        widget._v.trace_variable("w", lambda *_: do_highlight())
-
-
 
     def __on_qvc_available(self):
         self.__refresh__()
@@ -272,9 +280,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __refresh__(self):
         for attr in self.desc.__attribute_info__:
             getattr(self, "_w_" + attr)._refresh()
-
-        for cb in self._all_highlights:
-            cb()
 
     def __apply__(self):
         if self.pht is None:
