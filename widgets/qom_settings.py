@@ -84,6 +84,8 @@ class SimpleEditWidget: # old style class, like Tkinter classes
         if new_val != cur_val:
             yield DOp_SetAttr, self._attr, new_val
 
+    _set_color = lambda self, color : self.config(bg = color)
+
 
 class gen_int_widgets(HKEntry, SimpleEditWidget):
 
@@ -93,7 +95,6 @@ class gen_int_widgets(HKEntry, SimpleEditWidget):
         self._v, self._obj, self._attr = v, obj, attr
         add_highlighting(obj, self, attr)
 
-    _set_color = lambda self, color : self.config(bg = color)
     _cast = lambda self, x : int(x, base = 0)
 
 
@@ -104,8 +105,6 @@ class gen_str_widgets(HKEntry, SimpleEditWidget):
         HKEntry.__init__(self, master, textvariable = v)
         self._v, self._obj, self._attr = v, obj, attr
         add_highlighting(obj, self, attr)
-
-    _set_color = lambda self, color : self.config(bg = color)
 
 
 class gen_bool_widgets(Checkbutton, SimpleEditWidget):
