@@ -38,6 +38,51 @@ from .pci_id_widget import (
 )
 
 
+def gen_int_widgets(master):
+    v = StringVar()
+    w = HKEntry(master, textvariable = v)
+
+    def validate():
+        try:
+            (int(v.get(), base = 0))
+        except ValueError:
+            return False
+        else:
+            return True
+
+    w._validate = validate
+    w._set_color = lambda color : w.config(bg = color)
+    w._cast = lambda x : int(x, base = 0)
+    return v, w
+
+def gen_str_widgets(master):
+    v = StringVar()
+    w = HKEntry(master, textvariable = v)
+    w._validate = lambda : True
+    w._set_color = lambda color : w.config(bg = color)
+    w._cast = lambda x : x
+    return v, w
+
+def gen_bool_widgets(master):
+    v = BooleanVar()
+    w = Checkbutton(master, variable = v)
+    w._validate = lambda : True
+    w._set_color = lambda color : w.config(selectcolor = color)
+    w._cast = lambda x : x
+    return v, w
+
+def gen_PCIId_widgets(master):
+    # Value of PCI Id could be presented either by PCIId object or by a
+    # string depending on QVC availability. Hence, the actual
+    # widget/variable pair will be assigned during refresh.
+    v = None
+    w = GUIFrame(master)
+    w.grid()
+    w.rowconfigure(0, weight = 1)
+    w.columnconfigure(0, weight = 1)
+    return v, w
+
+
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
@@ -83,7 +128,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 _input_name = _input.__name__
 
                 try:
-                    generator = getattr(self, "gen_%s_widgets" % _input_name)
+                    generator = globals()["gen_%s_widgets" % _input_name]
                 except AttributeError:
                     raise RuntimeError("Input of QOM template attribute %s of"
                         " type %s is not supported" % (attr, _input_name)
@@ -141,49 +186,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         # See: https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
         var.trace_variable("w", lambda *_: do_highlight())
 
-    def gen_int_widgets(self, master):
-        v = StringVar()
-        w = HKEntry(master, textvariable = v)
 
-        def validate():
-            try:
-                (int(v.get(), base = 0))
-            except ValueError:
-                return False
-            else:
-                return True
-
-        w._validate = validate
-        w._set_color = lambda color : w.config(bg = color)
-        w._cast = lambda x : int(x, base = 0)
-        return v, w
-
-    def gen_str_widgets(self, master):
-        v = StringVar()
-        w = HKEntry(master, textvariable = v)
-        w._validate = lambda : True
-        w._set_color = lambda color : w.config(bg = color)
-        w._cast = lambda x : x
-        return v, w
-
-    def gen_bool_widgets(self, master):
-        v = BooleanVar()
-        w = Checkbutton(master, variable = v)
-        w._validate = lambda : True
-        w._set_color = lambda color : w.config(selectcolor = color)
-        w._cast = lambda x : x
-        return v, w
-
-    def gen_PCIId_widgets(self, master):
-        # Value of PCI Id could be presented either by PCIId object or by a
-        # string depending on QVC availability. Hence, the actual
-        # widget/variable pair will be assigned during refresh.
-        v = None
-        w = GUIFrame(master)
-        w.grid()
-        w.rowconfigure(0, weight = 1)
-        w.columnconfigure(0, weight = 1)
-        return v, w
 
     def __on_qvc_available(self):
         self.__refresh__()
