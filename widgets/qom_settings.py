@@ -38,94 +38,82 @@ from .pci_id_widget import (
 )
 
 
-def gen_readonly_widgets(master, obj, attr):
-    v = StringVar()
-    w = HKEntry(master, textvariable = v, state = "readonly")
-    w._v = v
+class gen_readonly_widgets(HKEntry):
 
-    def refresh():
-        v.set(getattr(obj, attr))
+    def __init__(self, master, obj, attr):
+        v = StringVar()
+        HKEntry.__init__(self, master, textvariable = v, state = "readonly")
+        self._v, self._obj, self._attr = v, obj, attr
 
-    w._refresh = refresh
-
-    return w
+    def _refresh(self):
+        self._v.set(getattr(self._obj, self._attr))
 
 
-def gen_int_widgets(master, obj, attr):
-    v = StringVar()
-    w = HKEntry(master, textvariable = v)
-    w._v = v
+class gen_int_widgets(HKEntry):
 
-    def validate():
+    def __init__(self, master, obj, attr):
+        v = StringVar()
+        HKEntry.__init__(self, master, textvariable = v)
+        self._v, self._obj, self._attr = v, obj, attr
+        add_highlighting(obj, self, attr)
+
+    def _validate(self):
         try:
-            (int(v.get(), base = 0))
+            (int(self._v.get(), base = 0))
         except ValueError:
             return False
         else:
             return True
 
-    w._validate = validate
-    w._set_color = lambda color : w.config(bg = color)
-    w._cast = lambda x : int(x, base = 0)
+    _set_color = lambda self, color : self.config(bg = color)
+    _cast = lambda self, x : int(x, base = 0)
 
-    def refresh():
-        widget_val, cur_val = v.get(), getattr(obj, attr)
+    def _refresh(self):
+        widget_val, cur_val = self._v.get(), getattr(self._obj, self._attr)
         try:
             widget_val = int(widget_val, base = 0)
         except ValueError:
             widget_val = None
         if widget_val != cur_val:
-            v.set(cur_val)
+            self._v.set(cur_val)
         else:
-            w._do_highlight()
+            self._do_highlight()
 
-    w._refresh = refresh
 
-    add_highlighting(obj, w, attr)
+class SimpleEditWidget: # old style class, like Tkinter classes
 
-    return w
-
-def gen_str_widgets(master, obj, attr):
-    v = StringVar()
-    w = HKEntry(master, textvariable = v)
-    w._v = v
-    w._validate = lambda : True
-    w._set_color = lambda color : w.config(bg = color)
-    w._cast = lambda x : x
-
-    def refresh():
-        widget_val, cur_val = v.get(), getattr(obj, attr)
+    def _refresh(self):
+        widget_val, cur_val = self._v.get(), getattr(self._obj, self._attr)
         if widget_val != cur_val:
-            v.set(cur_val)
+            self._v.set(cur_val)
         else:
-            w._do_highlight()
+            self._do_highlight()
 
-    w._refresh = refresh
+    _cast = lambda self, x : x
+    _validate = lambda self : True
 
-    add_highlighting(obj, w, attr)
 
-    return w
+class gen_str_widgets(HKEntry, SimpleEditWidget):
 
-def gen_bool_widgets(master, obj, attr):
-    v = BooleanVar()
-    w = Checkbutton(master, variable = v)
-    w._v = v
-    w._validate = lambda : True
-    w._set_color = lambda color : w.config(selectcolor = color)
-    w._cast = lambda x : x
+    def __init__(self, master, obj, attr):
+        v = StringVar()
+        HKEntry.__init__(self, master, textvariable = v)
+        self._v, self._obj, self._attr = v, obj, attr
+        add_highlighting(obj, self, attr)
 
-    def refresh():
-        widget_val, cur_val = v.get(), getattr(obj, attr)
-        if widget_val != cur_val:
-            v.set(cur_val)
-        else:
-            w._do_highlight()
+    _set_color = lambda self, color : self.config(bg = color)
 
-    w._refresh = refresh
 
-    add_highlighting(obj, w, attr)
+class gen_bool_widgets(Checkbutton, SimpleEditWidget):
 
-    return w
+    def __init__(self, master, obj, attr):
+        v = BooleanVar()
+        Checkbutton.__init__(self, master, variable = v)
+        self._v, self._obj, self._attr = v, obj, attr
+        add_highlighting(obj, self, attr)
+
+    _set_color = lambda self, color : self.config(selectcolor = color)
+
 
 def gen_PCIId_widgets(master, obj, attr):
     # Value of PCI Id could be presented either by PCIId object or by a
