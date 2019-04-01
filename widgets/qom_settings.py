@@ -38,15 +38,20 @@ from .pci_id_widget import (
 )
 
 
-def gen_readonly_widgets(master):
+def gen_readonly_widgets(master, obj, attr):
     v = StringVar()
     w = HKEntry(master, textvariable = v, state = "readonly")
     w._v = v
 
+    def refresh():
+        v.set(getattr(obj, attr))
+
+    w._refresh = refresh
+
     return w
 
 
-def gen_int_widgets(master):
+def gen_int_widgets(master, obj, attr):
     v = StringVar()
     w = HKEntry(master, textvariable = v)
     w._v = v
@@ -62,27 +67,55 @@ def gen_int_widgets(master):
     w._validate = validate
     w._set_color = lambda color : w.config(bg = color)
     w._cast = lambda x : int(x, base = 0)
+
+    def refresh():
+        widget_val, cur_val = v.get(), getattr(obj, attr)
+        try:
+            widget_val = int(widget_val, base = 0)
+        except ValueError:
+            widget_val = None
+        if widget_val != cur_val:
+            v.set(cur_val)
+
+    w._refresh = refresh
+
     return w
 
-def gen_str_widgets(master):
+def gen_str_widgets(master, obj, attr):
     v = StringVar()
     w = HKEntry(master, textvariable = v)
     w._v = v
     w._validate = lambda : True
     w._set_color = lambda color : w.config(bg = color)
     w._cast = lambda x : x
+
+    def refresh():
+        widget_val, cur_val = v.get(), getattr(obj, attr)
+        if widget_val != cur_val:
+            v.set(cur_val)
+
+    w._refresh = refresh
+
     return w
 
-def gen_bool_widgets(master):
+def gen_bool_widgets(master, obj, attr):
     v = BooleanVar()
     w = Checkbutton(master, variable = v)
     w._v = v
     w._validate = lambda : True
     w._set_color = lambda color : w.config(selectcolor = color)
     w._cast = lambda x : x
+
+    def refresh():
+        widget_val, cur_val = v.get(), getattr(obj, attr)
+        if widget_val != cur_val:
+            v.set(cur_val)
+
+    w._refresh = refresh
+
     return w
 
-def gen_PCIId_widgets(master):
+def gen_PCIId_widgets(master, obj, attr):
     # Value of PCI Id could be presented either by PCIId object or by a
     # string depending on QVC availability. Hence, the actual
     # widget/variable pair will be assigned during refresh.
@@ -92,6 +125,41 @@ def gen_PCIId_widgets(master):
     w.grid()
     w.rowconfigure(0, weight = 1)
     w.columnconfigure(0, weight = 1)
+
+    def refresh():
+        cur_val =  getattr(obj, attr)
+        if not PCIId.db.built and cur_val is None:
+            # use string values only without database
+            cur_val = ""
+                # use appropriate widget/variable pair
+
+        _v = w._v
+        if isinstance(cur_val, str):
+            if not isinstance(_v, StringVar):
+                w._v = _v = StringVar()
+                # Fill frame with appropriate widget
+                for cw in w.winfo_children():
+                    cw.destroy()
+
+                cw = HKEntry(w, textvariable = _v)
+                cw.grid(row = 0, column = 0, sticky = "NEWS")
+        elif cur_val is None or isinstance(cur_val, PCIId):
+            if not isinstance(_v, ObjRefVar):
+                w._v = _v = ObjRefVar()
+
+                for cw in w.winfo_children():
+                    cw.destroy()
+
+                cw = PCIIdWidget(_v, w)
+                cw.grid(row = 0, column = 0, sticky = "NEWS")
+
+        widget_val = _v.get()
+
+        if widget_val != cur_val:
+            _v.set(cur_val)
+
+    w._refresh = refresh
+
     return w
 
 
@@ -131,7 +199,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 _input = info["input"]
             except KeyError:
                 # attribute is read-only
-                w = gen_readonly_widgets(f)
+                w = gen_readonly_widgets(f, qom_desc, attr)
             else:
                 if _input is PCIId:
                     have_pciid = True
@@ -145,7 +213,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                         " type %s is not supported" % (attr, _input_name)
                     )
 
-                w = generator(f)
+                w = generator(f, qom_desc, attr)
 
                 if w._v is not None:
                     self._add_highlighting(w, attr)
@@ -202,52 +270,8 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         self.__refresh__()
 
     def __refresh__(self):
-        desc = self.desc
-        for attr, info in desc.__attribute_info__.items():
-            try:
-                _input = info["input"]
-            except KeyError:
-                _input = None
-
-            cur_val = getattr(desc, attr)
-            w = getattr(self, "_w_" + attr)
-            v = w._v
-
-            if _input is PCIId:
-                if not PCIId.db.built and cur_val is None:
-                    # use string values only without database
-                    cur_val = ""
-                # use appropriate widget/variable pair
-                if isinstance(cur_val, str):
-                    if not isinstance(v, StringVar):
-                        w._v = v = StringVar()
-
-                        # Fill frame with appropriate widget
-                        for cw in w.winfo_children():
-                            cw.destroy()
-
-                        cw = HKEntry(w, textvariable = v)
-                        cw.grid(row = 0, column = 0, sticky = "NEWS")
-                elif cur_val is None or isinstance(cur_val, PCIId):
-                    if not isinstance(v, ObjRefVar):
-                        w._v = v = ObjRefVar()
-
-                        for cw in w.winfo_children():
-                            cw.destroy()
-
-                        cw = PCIIdWidget(v, w)
-                        cw.grid(row = 0, column = 0, sticky = "NEWS")
-
-            widget_val = v.get()
-
-            if _input is int:
-                try:
-                    widget_val = int(widget_val, base = 0)
-                except ValueError:
-                    widget_val = None
-
-            if widget_val != cur_val:
-                v.set(cur_val)
+        for attr in self.desc.__attribute_info__:
+            getattr(self, "_w_" + attr)._refresh()
 
         for cb in self._all_highlights:
             cb()
