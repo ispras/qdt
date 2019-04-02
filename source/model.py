@@ -1212,6 +1212,7 @@ class Function(Type):
         self.inline = inline
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
         self.args = args
+        self.declaration = None
 
         if isinstance(body, str):
             self.body = FunctionBodyString(
@@ -1284,6 +1285,25 @@ class Function(Type):
         CopyFixerVisitor(new_f).visit()
         return new_f
 
+    def gen_definition(self,
+        body = None,
+        used_types = None,
+        used_globals = None
+    ):
+        new_f = Function(
+            name = self.name + ".definition",
+            body = body,
+            ret_type = self.ret_type,
+            args = self.args,
+            static = self.static,
+            inline = self.inline,
+            used_types = used_types,
+            used_globals = used_globals
+        )
+        CopyFixerVisitor(new_f).visit()
+        new_f.declaration = self
+        return new_f
+
     def gen_var(self, name, initializer = None, static = False):
         return Variable(name, Pointer(self),
             initializer = initializer,
@@ -1293,7 +1313,7 @@ class Function(Type):
     def __c__(self, writer):
         writer.write(self.name)
 
-    __type_references__ = ["ret_type", "args", "body"]
+    __type_references__ = ["ret_type", "args", "body", "declaration"]
 
 
 class Pointer(Type):
@@ -1732,7 +1752,9 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             # In a case when a declaration and a definition are in
             # different files, it is necessary to inlude the file with
             # the declaration
-            if isinstance(t, Structure) and t.declaration is not None:
+            if (    isinstance(t, (Structure, Function))
+                and t.declaration is not None
+            ):
                 t = t.declaration
                 if type(t) is TypeReference:
                     t = t.type
