@@ -1,11 +1,3 @@
-# If 'target' and 'oracle' have the same frontend, then uncomment, implement
-# and use following:
-
-# frontend = Run(
-#     executable = "",
-#     args = ""
-# )
-
 # Cpu Testing Tool configuration
 c2t_cfg = C2TConfig(
     # describe RSP target for QEMU
@@ -46,68 +38,32 @@ c2t_cfg = C2TConfig(
     ),
     # set command line runs description of test building for 'target'
     target_compiler = TestBuilder(
-        # combination options
-
-        ###################
-        #        1        #
-        ###################
-        compiler = Run(
+        Run(
             executable = "",
             args = "",
         ),
-        # linker is optional
-        linker = Run(
-            executable = "",
-            args = ""
-        )
-
-        ###################
-        #        2        #
-        ###################
-        frontend = Run(
-            executable = "",
-            args = "",
-        ),
-        backend = Run(
+        Run(
             executable = "",
             args = ""
         ),
-        # linker is optional
-        linker = Run(
+        # ...
+        Run(
             executable = "",
             args = ""
         )
     ),
     # set command line runs description of test building for 'oracle'
     oracle_compiler = TestBuilder(
-        # combination options
-
-        ###################
-        #        1        #
-        ###################
-        compiler = Run(
+        Run(
             executable = "",
             args = "",
         ),
-        # linker is optional
-        linker = Run(
-            executable = "",
-            args = ""
-        )
-
-        ###################
-        #        2        #
-        ###################
-        frontend = Run(
-            executable = "",
-            args = "",
-        ),
-        backend = Run(
+        Run(
             executable = "",
             args = ""
         ),
-        # linker is optional
-        linker = Run(
+        # ...
+        Run(
             executable = "",
             args = ""
         )
