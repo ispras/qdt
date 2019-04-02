@@ -482,12 +482,14 @@ class C2TTestBuilder(Process):
         for test in self.tests:
             test_name = test[:-2]
             test_src = join(C2T_TEST_DIR, test)
-            test_ir = join(C2T_TEST_IR_DIR, test_name)
             test_bin = join(C2T_TEST_BIN_DIR,
                 test_name + "_%s" % self.tests_tail
             )
 
-            self.test_build(test_src, test_ir, test_bin)
+            if not exists(test_bin):
+                test_ir = join(C2T_TEST_IR_DIR, test_name)
+
+                self.test_build(test_src, test_ir, test_bin)
 
             self.tests_queue.put((test_src, test_bin))
 
