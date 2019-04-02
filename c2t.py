@@ -494,7 +494,7 @@ class C2TTestBuilder(Process):
             self.tests_queue.put((test_src, test_bin))
 
 
-def start_cpu_testing(tests, jobs, kill, verbose):
+def start_cpu_testing(tests, jobs, reuse, verbose):
     oracle_tests_queue = Queue(0)
     target_tests_queue = Queue(0)
 
@@ -516,10 +516,10 @@ def start_cpu_testing(tests, jobs, kill, verbose):
 
     res_queue = Queue(0)
 
-    if not kill:
-        target_tests_run = target_tests_run_nonkill
-    else:
+    if not reuse:
         target_tests_run = target_tests_run_kill
+    else:
+        target_tests_run = target_tests_run_nonkill
 
     if jobs > len(tests):
         jobs = len(tests)
@@ -648,9 +648,9 @@ def main():
         default = 1,
         help = "allow N debugging jobs at once"
     )
-    parser.add_argument("-k", "--kill",
+    parser.add_argument("-r", "--reuse",
         action = "store_true",
-        help = "kill debug servers after each test (now only QEMU)"
+        help = "reuse debug servers after each test (now only QEMU)"
     )
     parser.add_argument("-v", "--verbose",
         action = "store_true",
@@ -717,7 +717,7 @@ def main():
         if not exists(sub_dir):
             makedirs(sub_dir)
 
-    start_cpu_testing(tests, jobs, args.kill, args.verbose)
+    start_cpu_testing(tests, jobs, args.reuse, args.verbose)
     killpg(0, SIGTERM)
 
 
