@@ -124,7 +124,7 @@ class DebugSession(object):
         self.chc_line2var = defaultdict(list)
 
     def set_br_by_line(self, lineno, cb):
-        line_map = self.rt.dic.find_line_map(self.srcfile)
+        line_map = self.rt.dic.find_line_map(basename(self.srcfile))
         line_descs = line_map[lineno]
         for desc in line_descs:
             # TODO: set a breakpoint at one address by line number?
