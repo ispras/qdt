@@ -1607,6 +1607,15 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.definer is self.source:
                 return
 
+            # Make TypeReference to declaration instead of definition:
+            # In a case when a declaration and a definition are in
+            # different files, it is necessary to inlude the file with
+            # the declaration
+            if isinstance(t, Structure) and t.declaration is not None:
+                t = t.declaration
+                if type(t) is TypeReference:
+                    t = t.type
+
             try:
                 tr = self.source.types[t.name]
             except KeyError:
