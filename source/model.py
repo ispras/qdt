@@ -2210,15 +2210,6 @@ class VariableDefinition(SourceChunk):
         enum = False,
         separ = ";"
     ):
-        init_code = ""
-        if var.initializer is not None:
-            raw_code = var.type.gen_usage_string(var.initializer)
-            # add indent to initializer code
-            init_code_lines = raw_code.split('\n')
-            init_code = "@b=@b" + init_code_lines[0]
-            for line in init_code_lines[1:]:
-                init_code += "\n" + indent + line
-
         super(VariableDefinition, self).__init__(var,
             "Variable %s of type %s definition" % (var, var.type),
             """\
@@ -2233,7 +2224,7 @@ class VariableDefinition(SourceChunk):
     var_name = var,
     array_decl = gen_array_declaration(var.array_size),
     used = "" if var.used else "@b__attribute__((unused))",
-    init = init_code,
+    init = gen_init_string(var.type, var.initializer, indent),
     separ = separ,
     nl = "\n" if append_nl else ""
             )
@@ -2390,6 +2381,18 @@ def gen_function_declaration_string(indent, function,
         ),
         args = args
     )
+
+
+def gen_init_string(type, initializer, indent):
+    init_code = ""
+    if initializer is not None:
+        raw_code = type.gen_usage_string(initializer)
+        # add indent to initializer code
+        init_code_lines = raw_code.split('\n')
+        init_code = "@b=@b" + init_code_lines[0]
+        for line in init_code_lines[1:]:
+            init_code += "\n" + indent + line
+    return init_code
 
 
 def gen_function_decl_ref_chunks(function, generator):
