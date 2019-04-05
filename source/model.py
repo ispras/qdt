@@ -1228,6 +1228,19 @@ class Enumeration(Type):
 
         return [enum_end, enum_begin]
 
+    def get_definers(self):
+        if self.definer is None:
+            raise RuntimeError("Getting definers for enumeration %s that is"
+                " not added to a source", self
+            )
+
+        definers = [self.definer]
+
+        for f in self.elems:
+            definers.extend(f.get_definers())
+
+        return definers
+
     __type_references__ = ["elems"]
 
 
