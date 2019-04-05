@@ -11,6 +11,7 @@ __all__ = [
       , "Macro"
       , "MacroType"
       , "Enumeration"
+      , "EnumerationElement"
   , "Initializer"
   , "Variable"
   , "SourceChunk"
@@ -30,6 +31,7 @@ __all__ = [
       , "StructureTypedefDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
+      , "EnumerationElementDeclaration"
       , "UsageTerminator"
   , "SourceFile"
   , "SourceTreeContainer"
@@ -1214,6 +1216,37 @@ class Enumeration(Type):
     __type_references__ = ["elems"]
 
 
+class EnumerationElement(Type):
+
+    def __init__(self, enum_parent, name, initializer):
+        super(EnumerationElement, self).__init__(name = name)
+
+        self.enum_parent = enum_parent
+        self.initializer = initializer
+
+    def gen_chunks(self, generator, **kw):
+        return list(generator.provide_chunks(self.enum_parent, **kw))
+
+    def get_definers(self):
+        if self.definer is None:
+            raise RuntimeError("Getting definers for enumeration element %s"
+                " that is not added to a source", self
+            )
+
+        definers = [self.definer]
+
+        if self.initializer is not None:
+            for t in self.initializer.used_types:
+                definers.extend(t.get_definers())
+
+        return definers
+
+    def __c__(self, writer):
+        writer.write(self.c_name)
+
+    __type_references__ = ["initializer"]
+
+
 class FunctionBodyString(object):
 
     def __init__(self, body = None, used_types = None, used_globals = None):
@@ -2319,6 +2352,25 @@ class EnumerationDeclarationEnd(SourceChunk):
             """\
 {indent}}};\n
 """.format(indent = indent)
+        )
+
+
+class EnumerationElementDeclaration(SourceChunk):
+
+    def __init__(self, elem,
+        indent = "",
+        separ = ","
+    ):
+        super(EnumerationElementDeclaration, self).__init__(elem,
+            "Enumeration element %s declaration" % elem,
+            """\
+{indent}{name}{init}{separ}
+""".format(
+    indent = indent,
+    name = elem.c_name,
+    init = gen_init_string(elem, elem.initializer, indent),
+    separ = separ
+            )
         )
 
 
