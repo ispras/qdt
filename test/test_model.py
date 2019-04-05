@@ -20,6 +20,7 @@ from source import (
     Declare,
     BranchSwitch,
     SwitchCase,
+    Enumeration,
     Call
 )
 from common import (
@@ -395,6 +396,55 @@ typedef struct s {{
             (src, src_content)
         ]
 
+
+class TestEnumerations(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestEnumerations, self).setUp()
+        name = type(self).__name__
+
+        try:
+            h = Header["enums.h"]
+        except:
+            h = Header("enums.h")
+        h.add_type(Enumeration("A", {"one": 1, "two": 2}))
+
+        a = Type["int"].gen_var("a")
+        b = Type["int"].gen_var("b")
+        c = Type["int"].gen_var("c")
+
+        src = Source(name.lower() + ".c").add_types([
+            Enumeration("B", {"three": 3, "four": 4}, "B"),
+            Function(name = "main", body = BodyTree()(
+                Declare(a, b, c),
+                OpAssign(a, Type["A"].get_field("one")),
+                OpAssign(b, Type["B"].get_field("three")),
+                OpAssign(c, Type["four"])
+            ))
+        ])
+
+        src_content = """\
+/* {} */
+#include "enums.h"
+
+enum B {{
+    three = 3,
+    four = 4
+}};
+
+void main(void)
+{{
+    int a, b, c;
+    a = one;
+    b = three;
+    c = four;
+}}
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
 
 if __name__ == "__main__":
     main()
