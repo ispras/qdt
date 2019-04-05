@@ -1060,7 +1060,7 @@ class Enumeration(Type):
         indent = ""
 
         enum_begin = EnumerationDeclarationBegin(self, indent)
-        enum_end = EnumerationDeclaration(self, indent)
+        enum_end = EnumerationDeclarationEnd(self, indent)
 
         field_indent = indent + fields_indent
         field_refs = []
@@ -2042,11 +2042,11 @@ class EnumerationDeclarationBegin(SourceChunk):
         )
 
 
-class EnumerationDeclaration(SourceChunk):
+class EnumerationDeclarationEnd(SourceChunk):
     weight = 3
 
     def __init__(self, enum, indent = ""):
-        super(EnumerationDeclaration, self).__init__(enum,
+        super(EnumerationDeclarationEnd, self).__init__(enum,
             "Ending of enumeration %s declaration" % enum.enum_name,
             """\
 {indent}}};\n
