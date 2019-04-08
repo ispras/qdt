@@ -27,7 +27,7 @@ def main():
     parser = ArgumentParser(
         description = "QEMU Project Generator\n"
         "The tool generates source files inside QEMU source tree according to"
-        "settings read from project script."
+        " settings read from project script."
     )
 
     parser.add_argument(
