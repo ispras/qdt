@@ -1150,9 +1150,7 @@ class Enumeration(Type):
         t = [ Type["int"] ]
         for key, val in elems_dict.items():
             self.elems.append(
-                Variable(key, self,
-                    initializer = Initializer(str(val), t)
-                )
+                EnumerationElement(self, key, Initializer(str(val), t))
             )
 
         self.elems.sort(key = lambda x: int(x.initializer.code))
@@ -1175,16 +1173,16 @@ class Enumeration(Type):
         top_chunk = enum_begin
 
         for f in self.elems:
-            # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = generator.provide_chunks(f, indent = field_indent,
+            field_declaration = EnumerationElementDeclaration(f,
+                indent = field_indent,
                 separ = "" if f == self.elems[-1] else ","
             )
-
-            field_declaration = decl_chunks[0]
-
-            field_refs.extend(list(field_declaration.references))
-            field_declaration.clean_references()
             field_declaration.add_reference(top_chunk)
+
+            if f.initializer is not None:
+                for t in f.initializer.used_types:
+                    field_refs.extend(list(generator.provide_chunks(t)))
+
             top_chunk = field_declaration
 
         enum_begin.add_references(field_refs)
