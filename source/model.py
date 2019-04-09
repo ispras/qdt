@@ -113,6 +113,11 @@ CAN = "@c" # cancel indent anchor
 NBS = "@b" # non-breaking space
 NSS = "@s" # non-slash space
 common_re = "(?<!@)((?:@@)*)(%s)"
+re_anc = compile(common_re % ANC)
+re_can = compile(common_re % CAN)
+re_nbs = compile(common_re % NBS)
+re_nss = compile(common_re % NSS)
+re_clr = compile("@(.|$)")
 
 
 # Code generation model
@@ -1826,12 +1831,6 @@ class SourceChunk(object):
             self.del_reference(r)
 
     def check_cols_fix_up(self, max_cols = 80, indent = "    "):
-        re_anc = compile(common_re % ANC)
-        re_can = compile(common_re % CAN)
-        re_nbs = compile(common_re % NBS)
-        re_nss = compile(common_re % NSS)
-        re_clr = compile("@(.|$)")
-
         lines = self.code.split('\n')
         code = ""
         last_line = len(lines) - 1
