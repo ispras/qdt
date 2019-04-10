@@ -169,6 +169,10 @@ class CNode(Node):
 
         self.children.append(child)
 
+    @staticmethod
+    def out_child(child, writer):
+        child.__c__(writer)
+
 
 class Comment(Node):
 
