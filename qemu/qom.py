@@ -886,7 +886,7 @@ class QOMType(object):
 
         root.add_child(
             Declare(
-                OpAssign(
+                OpDeclareAssign(
                     s,
                     MCall(
                         type_cast_macro,
@@ -898,7 +898,7 @@ class QOMType(object):
 
         root.add_child(
             Declare(
-                OpAssign(
+                OpDeclareAssign(
                     ret,
                     0
                 )
@@ -949,7 +949,7 @@ class QOMType(object):
 
         root.add_child(
             Declare(
-                OpAssign(
+                OpDeclareAssign(
                     s,
                     MCall(
                         type_cast_macro,
