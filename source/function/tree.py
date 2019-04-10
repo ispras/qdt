@@ -515,19 +515,19 @@ class Declare(SemicolonPresence):
     def add_child(self, child):
         super(Declare, self).add_child(child)
 
-        if isinstance(child, OpAssign):
+        if isinstance(child, OpDeclareAssign):
             if not isinstance(child.children[0], Variable):
                 raise TypeError(
                     "Wrong child type: expected Variable"
                 )
         elif not isinstance(child, Variable):
             raise TypeError(
-                "Wrong child type: expected Variable or OpAssign"
+                "Wrong child type: expected Variable or OpDeclareAssign"
             )
 
     def __c__(self, writer):
         child = self.children[0]
-        if isinstance(child, OpAssign):
+        if isinstance(child, OpDeclareAssign):
             v = child.children[0]
         else:
             v = child
@@ -546,7 +546,7 @@ class Declare(SemicolonPresence):
         self._write_child(child, writer)
 
         for child in self.children[1:]:
-            if isinstance(child, OpAssign):
+            if isinstance(child, OpDeclareAssign):
                 v = child.children[0]
             else:
                 v = child
