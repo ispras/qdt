@@ -41,7 +41,7 @@ if __name__ == "__main__":
     _pi = OpSDeref(_p, "i")
 
     root = BodyTree()(
-        Declare(OpAssign(_i, 1), _a),
+        Declare(OpDeclareAssign(_i, 1), _a),
 
         Comment("It is expected to be a `do {... } while (...);`"),
         LoopDoWhile(_i)(

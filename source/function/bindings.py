@@ -4,7 +4,7 @@ __all__ = [
 
 from .tree import (
     Declare,
-    OpAssign,
+    OpDeclareAssign,
     CNode
 )
 from ..model import (
@@ -29,17 +29,14 @@ class VarUsageAnalyzer(NodeVisitor):
 
             if isinstance(parent, Declare):
                 return
-            elif isinstance(parent, OpAssign):
+            elif isinstance(parent, OpDeclareAssign):
                 """ Presence of a function local variable at the left
                 of an assignment inside a variable declaration is not a usage
                 this analyzer does looking for.
                 """
-                parent_1 = self.path[-5][0]
-
-                if isinstance(parent_1, Declare):
-                    cur_idx = self.path[-1][1]
-                    if cur_idx == 0:
-                        return
+                cur_idx = self.path[-1][1]
+                if cur_idx == 0:
+                    return
 
             cur.used = True
 
