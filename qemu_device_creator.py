@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 from argparse import (
     ArgumentTypeError,
@@ -32,7 +32,7 @@ def main():
 
     parser.add_argument(
         "--qemu-build", "-b",
-        default = ".",
+        default = None,
         type = arg_type_directory,
         metavar = "/path/to/qemu/build/directory",
         help = "Override QEMU build path of the project."
@@ -84,13 +84,12 @@ def main():
         print("Script '%s' does not define a project to generate." % script)
         return -1
 
-    try:
-        qemu_build_path = project.build_path
-    except:
-        qemu_build_path = arguments.qemu_build
+    if arguments.qemu_build is None:
+        qemu_build_path = getattr(project, "build_path", None)
     else:
-        if not qemu_build_path:
-            qemu_build_path = arguments.qemu_build
+        qemu_build_path = arguments.qemu_build
+    if not qemu_build_path: # None, empty
+        qemu_build_path = "."
 
     version = arguments.target_version
 
