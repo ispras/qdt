@@ -120,6 +120,12 @@ sudo pip3 install --upgrade six
 sudo pip install --upgrade graphviz
 sudo pip3 install --upgrade graphviz
 ```
+`path.py` is used by unit tests.
+
+```bash
+sudo pip install --upgrade path.py
+sudo pip3 install --upgrade path.py
+```
 
 Now the all environment prerequisites are satisfied.
 
@@ -153,10 +159,10 @@ If it is not your case then there is an informative
 [discussion](https://stackoverflow.com/questions/4750806/how-do-i-install-pip-on-windows)
 at stackoverflow.
 
-`gitpython` and `six` are only to be installed by command below.
+Rest of required libraries can be installed using a command like below.
 
 ```batch
-pip install --upgrade gitpython six
+pip install --upgrade gitpython six graphviz path.py
 ```
 
 Note that, this command is for Windows `cmd.exe` utility, that could be
