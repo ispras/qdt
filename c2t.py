@@ -16,6 +16,7 @@ from os import (
     setpgrp
 )
 from signal import (
+    SIGTERM,
     SIGKILL
 )
 from argparse import (
@@ -39,6 +40,9 @@ from platform import (
 from collections import (
     defaultdict
 )
+from struct import (
+    pack
+)
 from common import (
     filefilter,
     cli_repr,
@@ -56,9 +60,12 @@ with pypath("pyrsp"):
         archmap
     )
     from pyrsp.utils import (
+        wait_for_tcp_port,
+        QMP,
         find_free_port
     )
 from c2t import (
+    DebugComparator,
     DebugCommandExecutor,
     C2TConfig,
     Run,
@@ -283,15 +290,151 @@ class ProcessWithErrCatching(Process):
 
 
 def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
-    pass
+    while True:
+        test_src, test_elf = tests_queue.get(block = True)
+
+        gdbserver_port = port_queue.get(block = True)
+
+        gdbserver = ProcessWithErrCatching(
+            c2t_cfg.gdbserver.run_script.format(
+                port = gdbserver_port,
+                bin = test_elf,
+                c2t_dir = C2T_DIR,
+                c2t_test_dir = C2T_TEST_DIR
+            )
+        )
+        gdbserver.daemon = True
+        gdbserver.start()
+
+        if not wait_for_tcp_port(gdbserver_port):
+            c2t_exit("gdbserver malfunction")
+
+        session = OracleSession(archmap[ORACLE_CPU], test_src,
+            str(gdbserver_port), test_elf, res_queue, verbose
+        )
+        session.run()
+
+        res_queue.put((session.session_type, test_src, "TEST_END"))
+
+        session.kill()
+        gdbserver.join()
+        session.port_close()
+
+        if tests_queue.empty():
+            break
+
+    res_queue.put((session.session_type, None, "TEST_EXIT"))
+
+
+def run_qemu(test_elf, qemu_port, qmp_port, verbose):
+    qmp_run = " -qmp tcp:localhost:{port},server,nowait"
+
+    cmd = c2t_cfg.qemu.run_script.format(
+        port = qemu_port,
+        bin = test_elf,
+        c2t_dir = C2T_DIR,
+        c2t_test_dir = C2T_TEST_DIR
+    ) + qmp_run.format(port = qmp_port)
+
+    if verbose:
+        print(cmd)
+
+    qemu = ProcessWithErrCatching(cmd)
+    qemu.daemon = True
+    qemu.start()
+    return qemu
 
 
 def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
-    pass
+    test_src, test_elf = tests_queue.get(block = True)
+
+    qemu_port = port_queue.get(block = True)
+    qmp_port = port_queue.get(block = True)
+
+    qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
+
+    if (not wait_for_tcp_port(qemu_port)
+            and not wait_for_tcp_port(qmp_port)
+    ):
+        c2t_exit("qemu malfunction")
+
+    qmp = QMP(qmp_port)
+
+    session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
+        str(qemu_port), test_elf, res_queue, verbose
+    )
+
+    while True:
+        if c2t_cfg.rsp_target.qemu_reset:
+            # TODO: use future 'entry' feature
+            session.rt.target[4] = pack("<I",
+                session.rt.dic.symtab.get_symbol_by_name(
+                    "main"
+                )[0].entry.st_value
+            )
+            qmp("system_reset")
+
+        session.run()
+
+        res_queue.put((session.session_type, test_src, "TEST_END"))
+
+        if tests_queue.empty():
+            break
+
+        test_src, test_elf = tests_queue.get(block = True)
+
+        qmp("stop")
+        qmp("system_reset")
+
+        session.reset(test_src, test_elf)
+
+    session.kill()
+    qemu.join()
+    session.port_close()
+    res_queue.put((session.session_type, None, "TEST_EXIT"))
 
 
 def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
-    pass
+    while True:
+        test_src, test_elf = tests_queue.get(block = True)
+
+        qemu_port = port_queue.get(block = True)
+        qmp_port = port_queue.get(block = True)
+
+        qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
+
+        if (    not wait_for_tcp_port(qemu_port)
+            and not wait_for_tcp_port(qmp_port)
+        ):
+            c2t_exit("qemu malfunction")
+
+        qmp = QMP(qmp_port)
+
+        session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
+            str(qemu_port), test_elf, res_queue, verbose
+        )
+
+        if c2t_cfg.rsp_target.qemu_reset:
+            # TODO: use future 'entry' feature
+            session.rt.target[4] = pack("<I",
+                session.rt.dic.symtab.get_symbol_by_name(
+                    "main"
+                )[0].entry.st_value
+            )
+            qmp("system_reset")
+
+        session.run()
+
+        res_queue.put((session.session_type, test_src, "TEST_END"))
+
+        session.kill()
+        qemu.join()
+        session.port_close()
+
+        if tests_queue.empty():
+            break
+
+    res_queue.put((session.session_type, None, "TEST_EXIT"))
 
 
 class FreePortFinder(Process):
@@ -396,6 +539,12 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
         tests_run_processes.append((oracle_trp, target_trp))
         oracle_trp.start()
         target_trp.start()
+
+    dc = DebugComparator(res_queue, jobs)
+    try:
+        dc.start()
+    except RuntimeError:
+        killpg(0, SIGKILL)
 
     oracle_tb.join()
     target_tb.join()
@@ -575,6 +724,7 @@ def main():
             makedirs(sub_dir)
 
     start_cpu_testing(tests, jobs, args.reuse, args.verbose)
+    killpg(0, SIGTERM)
 
 
 if __name__ == "__main__":
