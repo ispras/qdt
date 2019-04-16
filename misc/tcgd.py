@@ -33,6 +33,12 @@ from subprocess import (
 
 class TCGWatcher(Watcher):
 
+    def on_tcg_context_init(self):
+        "tcg/tcg.c:742 v2.12.1"
+        ctx = self.rt["s"]
+        res = ctx.dereference()
+        pass
+
     def on_tcg_register_thread(self):
         "tcg/tcg.c:565 v2.12.1"
 
