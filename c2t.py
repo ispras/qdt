@@ -26,6 +26,7 @@ from re import (
     compile
 )
 from multiprocessing import (
+    Queue,
     Process
 )
 from subprocess import (
@@ -134,6 +135,24 @@ class C2TTestBuilder(Process):
                 self.test_build(test_src, test_ir, test_bin)
 
             self.tests_queue.put((test_src, test_bin))
+
+
+def start_cpu_testing(tests, jobs, reuse, verbose):
+    oracle_tests_queue = Queue(0)
+    target_tests_queue = Queue(0)
+
+    oracle_tb = C2TTestBuilder(c2t_cfg.oracle_compiler, tests,
+        ORACLE_CPU, oracle_tests_queue, verbose
+    )
+    target_tb = C2TTestBuilder(c2t_cfg.target_compiler, tests,
+        c2t_cfg.rsp_target.march, target_tests_queue, verbose
+    )
+
+    oracle_tb.start()
+    target_tb.start()
+
+    oracle_tb.join()
+    target_tb.join()
 
 
 class testfilter(filefilter):
@@ -304,6 +323,8 @@ def main():
     for sub_dir in (C2T_TEST_IR_DIR, C2T_TEST_BIN_DIR):
         if not exists(sub_dir):
             makedirs(sub_dir)
+
+    start_cpu_testing(tests, jobs, args.reuse, args.verbose)
 
 
 if __name__ == "__main__":
