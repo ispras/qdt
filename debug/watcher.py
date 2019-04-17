@@ -89,7 +89,7 @@ Leading spaces are ignored.
 
             for desc in line_descs:
                 addr = desc.state.address
-                brs.append((addr, cb))
+                brs.append((addr, cb, raw_file_name, line))
 
     def init_runtime(self, rt):
         """ Setup breakpoint handlers
@@ -102,13 +102,17 @@ Leading spaces are ignored.
         self.rt = rt
         target = rt.target
 
-        for addr, cb in self.breakpoints:
+        for addr, cb, raw_file_name, line in self.breakpoints:
             addr_str = target.reg_fmt % addr
 
             if v:
-                print("br 0x" + addr_str.decode("charmap")
-                    + ", handler = " + cb.__name__
-                )
+                print("br 0x%s (%s:%d), handler = %s" % (
+                    addr_str.decode("charmap"),
+                    # XXX: encoding may be wrong but it's just a debug code
+                    raw_file_name.decode("utf-8"),
+                    line,
+                    cb.__name__
+                ))
 
             rt.add_br(addr_str, cb, quiet = quiet)
 
@@ -121,6 +125,6 @@ Leading spaces are ignored.
         target = rt.target
         quiet = not self.verbose
 
-        for addr, cb in self.breakpoints:
+        for addr, cb, _, _ in self.breakpoints:
             addr_str = target.reg_fmt % addr
             rt.remove_br(addr_str, cb, quiet = quiet)
