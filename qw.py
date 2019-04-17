@@ -83,6 +83,7 @@ with pypath("pyrsp"):
         AMD64
     )
     from pyrsp.utils import (
+        s,
         find_free_port,
         wait_for_tcp_port
     )
@@ -341,13 +342,13 @@ the QOM tree by fetching relevant data.
             if t.instance_casts:
                 label += "\\n*"
                 for cast in t.instance_casts:
-                    label += "\\n" + cast.name
+                    label += "\\n" + s(cast.name)
 
             graph.node(n, label = label)
             if t.parent:
                 graph.edge(gv_node(t.parent), n)
 
-        with open(dot_file_name, "wb") as f:
+        with open(dot_file_name, "w") as f:
             f.write(graph.source)
 
 
@@ -1019,7 +1020,7 @@ description for QDT project.
         self.tracker = tracker
 
         # auto assign event handlers
-        for name, ref in getmembers(type(self)):
+        for name, ref in getmembers(self):
             if name[:4] == "_on_" and ismethod(ref):
                 watcher.watch(name[4:], getattr(self, name))
 
@@ -1335,9 +1336,9 @@ class QEmuWatcherGUI(GUITk):
                 print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
 
             try:
-                target.send("k")
+                target.send(b"k")
             except:
-                pass
+                print_exc()
 
         t = Thread(target = run)
         t.start()
@@ -1416,7 +1417,7 @@ def main():
         )
 
     dic = DWARFInfoCache(di,
-        symtab = elf.get_section_by_name(b".symtab")
+        symtab = elf.get_section_by_name(".symtab")
     )
 
     if qemu_src_dir:

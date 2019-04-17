@@ -2,9 +2,7 @@ __all__ = [
     "GitLineVersionAdapter"
 ]
 
-from os.path import (
-    sep
-)
+
 from re import (
     compile,
     S
@@ -19,6 +17,8 @@ from six.moves import (
     range
 )
 from common import (
+    bstr,
+    bsep,
     intervalmap,
     trie_add,
     trie_find,
@@ -93,13 +93,13 @@ renaming for file name)
                         # for any lineno delta = None
                         val = (None, None)
                 trie_add(self._draft_diffs[version],
-                    tuple(reversed(fname.split(sep))), val
+                    tuple(reversed(fname.split(bsep))), val
                 )
 
     def _find_git_diff(self, version, fname):
         try:
             val, _ = trie_find(self._draft_diffs[version],
-                tuple(reversed(fname.split(sep)))
+                tuple(reversed(fname.split(bsep)))
             )
         except KeyError:
             return identity_map, None
@@ -117,7 +117,7 @@ renaming for file name)
 
         try:
             return trie_find(version_trie,
-                tuple(reversed(fname.split(sep)))
+                tuple(reversed(fname.split(bsep)))
             )[0]
         except KeyError:
             pass
@@ -127,7 +127,7 @@ renaming for file name)
 
         val = self._find_git_diff(version, fname)
         trie_add(version_trie,
-            tuple(reversed(fname.split(sep))), val
+            tuple(reversed(fname.split(bsep))), val
         )
         return val
 
@@ -208,7 +208,7 @@ class GitLineVersionAdapter(LineAdapter):
                 lineno = new_lineno
             else:
                 self.failures.append(
-                    (fname, lineno, version, delta_intervals)
+                    (fname.decode("utf-8"), lineno, version, delta_intervals)
                 )
                 return fname, None
 
@@ -221,16 +221,16 @@ breakpoint positions.
         """
 
         msg = []
-        re_log = compile("<@>(.+?)</@>", flags = S)
+        re_log = compile(b"<@>(.+?)</@>", flags = S)
         log_args = ("--pretty=format:</@><@>%H", "--no-merges", "-U0")
 
         for fname, lineno, version, delta_intervals in self.failures:
             log = self.curr_commit.repo.git.log(log_args,
-                "HEAD..%s" % version, fname, p = True
+                "HEAD..%s" % version, "--", fname, p = True
             )[4:] + "</@>"
 
-            obstructive_commit = self.find_obstructive_commit(lineno, log,
-                re_log
+            obstructive_commit = self.find_obstructive_commit(lineno,
+                bstr(log), re_log
             )
 
             if obstructive_commit is None:
@@ -238,11 +238,11 @@ breakpoint positions.
                     new_lineno = self.calc_lineno(delta_intervals, lineno)
 
                     log = self.curr_commit.repo.git.log(log_args,
-                        "%s..HEAD" % version, fname, p = True
+                        "%s..HEAD" % version, "--", fname, p = True
                     )[4:] + "</@>"
 
                     obstructive_commit = self.find_obstructive_commit(
-                        new_lineno, log, re_log
+                        new_lineno, bstr(log), re_log
                     )
                 else:
                     msg.append((

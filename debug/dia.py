@@ -3,13 +3,13 @@ __all__ = [
 ]
 
 from common import (
+    bsep,
     lazy,
     trie_add,
     trie_find,
     intervalmap
 )
 from os.path import (
-    sep,
     join
 )
 from elftools.dwarf.callframe import (
@@ -229,7 +229,7 @@ pyelftools's `DWARFInfo`.
         return fde
 
     def find_line_map(self, file_name):
-        rpath = tuple(reversed(file_name.split(sep)))
+        rpath = tuple(reversed(file_name.split(bsep)))
         try:
             lm, _ = trie_find(self.srcmap, rpath)
         except KeyError:
@@ -285,8 +285,8 @@ pyelftools's `DWARFInfo`.
                 _dir = ["."]
             else:
                 # in include_directories section of the header
-                _dir = dnames[dir_index - 1].split(sep)
-            name = f["name"].split(sep)
+                _dir = dnames[dir_index - 1].split(bsep)
+            name = f["name"].split(bsep)
             _path = _dir + name
             files.append(_path)
 
@@ -328,7 +328,7 @@ pyelftools's `DWARFInfo`.
                 # first in the loop. Temporally occupy all lines above the line
                 # of this entry. If there are entries whose occupied those
                 # lines then the corresponding interval will be overwritten.
-                line_map[None:right_bound] = [e]
+                line_map[1:right_bound] = [e]
             else:
                 # this file already is in srcmap
                 left, right = line_map.interval(s.line)
@@ -366,7 +366,7 @@ pyelftools's `DWARFInfo`.
         for cu in citer:
             idx2cu.append(cu)
             name = cu.get_top_DIE().attributes["DW_AT_name"].value
-            parts = name.split(sep)
+            parts = name.split(bsep)
             rparts = tuple(reversed(parts))
             self._account_cu_by_reversed_name(rparts, cu)
 
@@ -396,7 +396,7 @@ pyelftools's `DWARFInfo`.
         return cu
 
     def get_CU_by_name(self, suffix):
-        parts = suffix.split(sep)
+        parts = suffix.split(bsep)
         rparts = tuple(reversed(parts))
         return self.get_CU_by_reversed_path(rparts)
 

@@ -6,6 +6,7 @@ from .dia import (
     DWARFInfoAccelerator
 )
 from common import (
+    bstr,
     lazy,
     intervalmap
 )
@@ -85,12 +86,14 @@ class DWARFInfoCache(DWARFInfoAccelerator):
     def __getitem__(self, name):
         sps = self.subprograms
 
-        if name in sps:
-            return sps[name]
+        bname = bstr(name)
+
+        if bname in sps:
+            return sps[bname]
 
         types = self.types
-        if name in types:
-            return types[name]
+        if bname in types:
+            return types[bname]
 
         di = self.di
 
@@ -115,6 +118,8 @@ class DWARFInfoCache(DWARFInfoAccelerator):
             if symtab is None:
                 raise KeyError(name)
 
+            # Note that `bname` is not required there, `get_symbol_by_name`
+            # can work with strings under both Py2 and Py3.
             symbols = symtab.get_symbol_by_name(name)
             if symbols is None:
                 raise KeyError(name)
@@ -131,7 +136,7 @@ class DWARFInfoCache(DWARFInfoAccelerator):
                     attrs = die.attributes
                     if "DW_AT_name" not in attrs:
                         continue
-                    if attrs["DW_AT_name"].value == name:
+                    if attrs["DW_AT_name"].value == bname:
                         break
                 else:
                     # No DIE with such name found in current CU
