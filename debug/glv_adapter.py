@@ -226,7 +226,7 @@ breakpoint positions.
 
         for fname, lineno, version, delta_intervals in self.failures:
             log = self.curr_commit.repo.git.log(log_args,
-                "HEAD..%s" % version, fname, p = True
+                "HEAD..%s" % version, "--", fname, p = True
             )[4:] + "</@>"
 
             obstructive_commit = self.find_obstructive_commit(lineno,
@@ -238,7 +238,7 @@ breakpoint positions.
                     new_lineno = self.calc_lineno(delta_intervals, lineno)
 
                     log = self.curr_commit.repo.git.log(log_args,
-                        "%s..HEAD" % version, fname, p = True
+                        "%s..HEAD" % version, "--", fname, p = True
                     )[4:] + "</@>"
 
                     obstructive_commit = self.find_obstructive_commit(
