@@ -17,6 +17,7 @@ from six.moves import (
     range
 )
 from common import (
+    bstr,
     bsep,
     intervalmap,
     trie_add,
@@ -220,7 +221,7 @@ breakpoint positions.
         """
 
         msg = []
-        re_log = compile("<@>(.+?)</@>", flags = S)
+        re_log = compile(b"<@>(.+?)</@>", flags = S)
         log_args = ("--pretty=format:</@><@>%H", "--no-merges", "-U0")
 
         for fname, lineno, version, delta_intervals in self.failures:
@@ -228,8 +229,8 @@ breakpoint positions.
                 "HEAD..%s" % version, fname, p = True
             )[4:] + "</@>"
 
-            obstructive_commit = self.find_obstructive_commit(lineno, log,
-                re_log
+            obstructive_commit = self.find_obstructive_commit(lineno,
+                bstr(log), re_log
             )
 
             if obstructive_commit is None:
@@ -241,7 +242,7 @@ breakpoint positions.
                     )[4:] + "</@>"
 
                     obstructive_commit = self.find_obstructive_commit(
-                        new_lineno, log, re_log
+                        new_lineno, bstr(log), re_log
                     )
                 else:
                     msg.append((
