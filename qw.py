@@ -583,7 +583,13 @@ Notifications are issued for many machine composition events.
 
         rt = self.rt
 
-        machine_obj = rt["machine"]
+        try:
+            machine_obj = rt["machine"]
+        except KeyError:
+            # old Qemu, machine_class->init(current_machine) is called by main
+            machine_obj = rt["current_machine"]
+            # TODO: use heuristics
+
         self.machine = inst = self.account_instance(machine_obj)
 
         desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
