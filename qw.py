@@ -632,6 +632,7 @@ Notifications are issued for many machine composition events.
 
         """ hw/core/machine.c:830 v2.12.0
             vl.c:4476 ad584d37f2a86b392c25f3f00cc1f1532676c2d1 1
+            vl.c:4510 2ae45973d61070c1a1883c1f3c43f7154cc85a91
         """
 
         self.remove_breakpoints()
