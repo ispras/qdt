@@ -602,6 +602,7 @@ Notifications are issued for many machine composition events.
 
         """ memory.c:1153 v2.12.0
             memory.c:1009 0ab8ed18a6fe98bfc82705b0f041fbf2a8ca5b60
+            memory.c:930 v2.5.0
         """
 
         if self.machine is None:
@@ -685,6 +686,7 @@ Notifications are issued for many machine composition events.
 
         """ object.c:1122 v2.12.0
             object.c:1094 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
+            object.c:1021 v2.5.0
         """
 
         if self.machine is None:
@@ -719,7 +721,9 @@ Notifications are issued for many machine composition events.
     def on_qbus_realize(self):
         # qbus_realize, parent may be NULL
 
-        "hw/core/bus.c:101 v2.12.0"
+        """ hw/core/bus.c:101 v2.12.0
+            hw/core/qdev.c:716 v2.5.0
+        """
 
         rt = self.rt
         bus = rt["bus"]
@@ -763,7 +767,9 @@ Notifications are issued for many machine composition events.
     def on_bus_unparent(self):
         # bus_unparent, before actual unparenting
 
-        "hw/core/bus.c:123 v2.12.0"
+        """ hw/core/bus.c:123 v2.12.0
+            hw/core/qdev.c:737 v2.5.0
+        """
 
         # TODO: this code is not tested because this event never happens
         rt = self.rt
