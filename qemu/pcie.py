@@ -273,7 +273,10 @@ corresponding vendor is given" % attr
 
         # TODO: current value of inherit_references is dictated by Qemu coding
         # policy. Hence, version API must be used there.
-        return self.header.generate(inherit_references = True)
+        return self.header.generate(
+            inherit_references = True,
+            inherit_global_headers = True
+        )
 
     def generate_source(self):
         self.device_reset = Function(

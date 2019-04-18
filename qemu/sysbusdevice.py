@@ -155,7 +155,10 @@ class SysBusDeviceType(QOMDevice):
 
         # TODO: current value of inherit_references is dictated by Qemu coding
         # policy. Hence, version API must be used there.
-        header_source = self.header.generate(inherit_references = True)
+        header_source = self.header.generate(
+            inherit_references = True,
+            inherit_global_headers = True
+        )
 
         return header_source
 

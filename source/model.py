@@ -123,9 +123,10 @@ re_clr = compile("@(.|$)")
 class ChunkGenerator(object):
     """ Maintains context of source code chunks generation process. """
 
-    def __init__(self, for_header = False):
+    def __init__(self, for_header = False, inherit_global_headers = False):
         self.chunk_cache = {}
         self.for_header = for_header
+        self.inherit_global_headers = inherit_global_headers
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
@@ -193,6 +194,11 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
+            elif (    isinstance(origin, TypeReference)
+                  and self.inherit_global_headers
+                  and origin.type.definer.is_global
+            ):
+                chunks = []
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
@@ -368,7 +374,10 @@ class Source(object):
 
         return self
 
-    def gen_chunks(self, inherit_references = False):
+    def gen_chunks(self,
+        inherit_references = False,
+        inherit_global_headers = False
+    ):
         """ In some use cases header should not satisfy references of its
 inclusions by itself. Instead, it must inherit them. A source file must
 satisfy the references in such case. Set inherit_references to True for
@@ -428,7 +437,9 @@ switching to that mode.
             # Preserve current types list. See the comment above.
             l = list(self.types.values()) + ref_list
 
-        gen = ChunkGenerator(for_header = isinstance(self, Header))
+        gen = ChunkGenerator(for_header = isinstance(self, Header),
+            inherit_global_headers = inherit_global_headers
+        )
 
         for t in self.types.values():
             if isinstance(t, TypeReference):
@@ -486,12 +497,17 @@ order does not meet all requirements.
 
         return chunks
 
-    def generate(self, inherit_references = False):
+    def generate(self,
+        inherit_references = False,
+        inherit_global_headers = False
+    ):
         Header.propagate_references()
 
         file = SourceFile(self, protection = self.protection)
 
-        file.add_chunks(self.gen_chunks(inherit_references))
+        file.add_chunks(
+            self.gen_chunks(inherit_references, inherit_global_headers)
+        )
 
         return file
 
