@@ -85,7 +85,7 @@ class CINT(CConst):
             if value == "":
                 raise ValueError("No integer can be an empty string")
             try:
-                new = parser.parse(value)
+                new = parser.parse(value, lexer = lexer)
             except (QCParserError, QCLexerError):
                 # an integer may be given by a macro
                 self.v = value
