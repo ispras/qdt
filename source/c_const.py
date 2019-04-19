@@ -272,7 +272,9 @@ def p_0d(p):
 
 def p_00(p):
     "uint : LEADING_ZEROS"
-    p[0] = CINT(0, 10, p[1])
+    # Single zero have no "leading zeros".
+    zeros = p[1]
+    p[0] = CINT(0, 10, 0 if zeros == 1 else zeros)
 
 def p_d(p):
     "uint : dec"
