@@ -22,9 +22,9 @@ class filefilter(list):
         for inclusive, pattern in self:
             r = compile(pattern)
             if inclusive:
-                    files = filter(r.match, files)
+                    files = list(filter(r.match, files))
             else:
-                for test in filter(r.match, files):
+                for test in list(filter(r.match, files)):
                     files.remove(test)
             if not files:
                 break
