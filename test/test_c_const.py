@@ -87,6 +87,12 @@ class DeciamlZeroTest(CINTTest, TestCase):
     data = "0"
 
 
+class EmptyCINTTest(TestCase):
+
+    def test(self):
+        self.assertRaises(ValueError, lambda : CINT(""))
+
+
 class HexZeroTest(CINTTest, TestCase):
     data = "0x0"
 
