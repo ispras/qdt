@@ -58,7 +58,7 @@ comparison report
     def _print_report(self, msg, dump):
         report = msg
 
-        for key, val in dump.iteritems():
+        for key, val in dump.items():
             report += (
                 "\n\n{dump} dump ({elf}):\n"
                 "    Source code line number: {lineno}\n"
