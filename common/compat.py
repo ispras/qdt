@@ -3,6 +3,7 @@ __all__ = [
   , "bstr"
   , "charcodes"
   , "characters"
+  , "HelpFormatter"
 ]
 
 from .pypath import (
@@ -18,6 +19,11 @@ from six import (
 )
 from six.moves import (
     map
+)
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    _CountAction,
+    _StoreConstAction
 )
 
 
@@ -66,3 +72,14 @@ bstr.__doc__ = "Given a string-like object, returns it as bytes."
 " Unicode strings are encoded in UTF-8."
 charcodes.__doc__ = "Given bytes, iterates them as integers."
 characters.__doc__ = "Given bytes, iterates them as one character strings."
+
+
+class HelpFormatter(ArgumentDefaultsHelpFormatter):
+    """ Like `ArgumentDefaultsHelpFormatter` but it does not print defaults
+for flags.
+    """
+
+    def _get_help_string(self, action):
+        if isinstance(action, (_CountAction, _StoreConstAction)):
+            return action.help
+        return super(HelpFormatter, self)._get_help_string(action)
