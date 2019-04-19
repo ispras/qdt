@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from .qom import (
+    Register,
     QemuTypeName,
     QOMDevice,
     QOMType
@@ -28,13 +29,19 @@ from copy import (
     deepcopy as dcp
 )
 
+
+REGS_ATTR = { int : [Register] }
+
+
 @describable
 class SysBusDeviceType(QOMDevice):
     __attribute_info__ = OrderedDict([
         ("out_irq_num", { "short": _("Output IRQ quantity"), "input": int }),
         ("in_irq_num", { "short": _("Input IRQ quantity"), "input": int }),
         ("mmio_num", { "short": _("MMIO quantity"), "input": int }),
-        ("pio_num", { "short": _("PMIO (PIO) quantity"), "input": int })
+        ("mmio", dict(short = _("MMIO registers"), input = REGS_ATTR)),
+        ("pio_num", { "short": _("PMIO (PIO) quantity"), "input": int }),
+        ("pio", dict(short = _("PIO registers"), input = REGS_ATTR)),
     ])
 
     def __init__(self,
