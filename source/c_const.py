@@ -289,31 +289,3 @@ tokens = tuple(gen_tokens(globals()))
 # Build lexer and parser
 lexer = lex()
 parser = yacc()
-
-if __name__ == "__main__":
-    print(tokens)
-
-    for data, expected in [
-        ("0x1F000", CINT),
-        ('''an arbitrary
-string with new line and quoted "@" and Windows\r\nnewline''', CSTR),
-        ("-1", CINT),
-        ("1", CINT),
-        ("0x0001", CINT),
-        ("0b01011010101", CINT),
-        ("1223235324", CINT),
-        ("0b00000", CINT),
-        ("0", CINT),
-        ("0x000", CINT),
-        ("0b0", CINT),
-        ("0x0", CINT),
-        ("-0xDEADBEEF", CINT)
-    ]:
-        print("== " + data + " ==")
-        q = CConst.parse(data)
-        if type(q) is not expected:
-            raise AssertionError("%s / %s" % (type(q), expected))
-        res = str(q)
-        print(res, repr(q))
-        print(q.gen_c_code())
-        assert res == data
