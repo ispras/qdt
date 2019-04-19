@@ -218,7 +218,9 @@ for U in ["", "U"]:
 
         type2vmstate[ctn] = "VMSTATE_" + msfx
 
+
 class Register(object):
+
     def __init__(self, size,
         # None or "gap" named registers are not backed by a state field
         name = None,
