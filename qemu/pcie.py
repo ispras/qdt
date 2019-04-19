@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from source import (
+    CINT,
     line_origins,
     Pointer,
     Type,
@@ -55,7 +56,7 @@ class PCIExpressDeviceType(QOMDevice):
             "short": _("MSI message quantity"),
             "input" : int
         }),
-        ("revision", { "short": _("Revision"), "input" : int })
+        ("revision", { "short": _("Revision"), "input" : CINT })
     ])
 
     def __init__(self,
