@@ -82,6 +82,8 @@ class CINT(CConst):
         if isinstance(value, integer_types):
             self.v = value
         elif isinstance(value, str):
+            if value == "":
+                raise ValueError("No integer can be an empty string")
             try:
                 new = parser.parse(value)
             except (QCParserError, QCLexerError):
