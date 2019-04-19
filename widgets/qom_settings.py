@@ -39,6 +39,9 @@ from .obj_ref_var import (
 from .pci_id_widget import (
     PCIIdWidget
 )
+from source import (
+    CINT
+)
 
 
 class gen_readonly_widgets(HKEntry):
@@ -99,6 +102,14 @@ class gen_int_widgets(HKEntry, SimpleEditWidget):
         add_highlighting(obj, self, attr)
 
     _cast = lambda self, x : int(x, base = 0)
+
+
+class gen_CINT_widgets(gen_int_widgets):
+
+    _cast = lambda self, x : CINT(x)
+
+    # Note that `_refresh` is not required because `StringVar` internally
+    # convert `CINT` to `str` during `set`ting.
 
 
 class gen_str_widgets(HKEntry, SimpleEditWidget):
