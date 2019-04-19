@@ -29,7 +29,7 @@ class CConst(object):
     @staticmethod
     def parse(s):
         try:
-            return parser.parse(s)
+            return parser.parse(s, lexer = lexer)
         except (QCParserError, QCLexerError):
             return CSTR(s)
 
