@@ -125,5 +125,11 @@ class HexZeroTest(CINTTest, TestCase):
     data = "0x0"
 
 
+class TestCINTParser(TestCase):
+
+    def test(self):
+        self.assertEqual(CINT("0"), 0)
+
+
 if __name__ == "__main__":
     main()
