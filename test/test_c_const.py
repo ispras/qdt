@@ -8,8 +8,24 @@ from source import (
     CConst
 )
 from common import (
+    pypath,
     ee
 )
+with pypath("..ply"):
+    from ply.lex import lex
+
+
+# Defining a lexer affects `ply.yacc.LRParser.parse` invocations without
+# explicit `lexer` argument value because a new lexer overwrites existing lexer
+# inside `ply` (it's a global reference).
+def t_ANY(t):
+    ".+"
+    return t
+
+t_error = lambda _ : None
+
+tokens = ["ANY"]
+lex()
 
 
 TEST_CCONST_VERBOSE = ee("TEST_CCONST_VERBOSE")
