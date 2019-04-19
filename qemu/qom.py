@@ -220,6 +220,14 @@ for U in ["", "U"]:
 
 
 class Register(object):
+    __attribute_info__ = OrderedDict([
+        ("name", dict(short = _("Short name (for macros)"), input = str)),
+        ("full_name", dict(short = _("Comprehensible name"), input = str)),
+        ("access", dict(short = _("Register access"), input = str)),
+        ("reset", dict(short = _("Reset value"), input = CINT)),
+        ("wmask", dict(short = _("Writable bits"), input = CINT)),
+        ("warbits", dict(short = _("Writable-after-read bits"), input = CINT)),
+    ])
 
     def __init__(self, size,
         # None or "gap" named registers are not backed by a state field
