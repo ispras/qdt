@@ -48,7 +48,7 @@ class Breakpoints(object):
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
 
-    def __init__(self, target, dic):
+    def __init__(self, target, dic, return_reg_name = None):
         """
     :type target:
         pyrsp.rsp.RemoteTarget
@@ -74,10 +74,11 @@ class Runtime(object):
 
         self.object_stack = deque()
 
-        # XXX: currently a host is always AMD64
-        # TODO: account targets's calling convention
-        return_reg_name = "rax"
-        self.return_reg = target.registers.index(return_reg_name)
+        if return_reg_name is None:
+            # TODO: account targets's calling convention
+            self.return_reg = 0
+        else:
+            self.return_reg = target.registers.index(return_reg_name)
 
         # TODO: this must be done using DWARF because "bitsize" and address
         # size are not same values semantically (but same by implementation).
@@ -186,6 +187,19 @@ normally correct only when the target is stopped at the subprogram epilogue.
             val += d
 
         return val
+
+    def __iter__(self):
+        prog = self.subprogram
+        _locals = prog.data
+
+        if _locals is not None:
+            for _local in _locals:
+                yield _local
+        else:
+            cu = prog.die.cu
+            _globals = self.dic.get_CU_global_variables(cu)
+            for _global in _globals:
+                yield _global
 
     def __getitem__(self, name):
         """ Accessing variables by name.

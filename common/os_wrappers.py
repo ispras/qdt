@@ -4,6 +4,7 @@ __all__ = [
   , "path2tuple"
   , "ee"
   , "bsep"
+  , "cli_repr"
 ]
 
 from os import (
@@ -67,3 +68,14 @@ def ee(env_var, default = "False"):
 It's not secure but that library is not about it.
     """
     return eval(environ.get(env_var, default), {})
+
+def cli_repr(obj):
+    """ Variant of standard `repr` that returns string suitable for using with
+a Command Line Interface, like the one enforced by `bash`. This is designed to
+get a `str`. Other input can be incompatible.
+    """
+    # Replace ' with " because it is for CLI mostly (bash)
+    # and there is no difference for Python.
+    # Also `repr` replaces ' with \' because it wraps result in '.
+    # This function re-wraps result in ", so the replacement must be reverted.
+    return '"' + repr(obj).replace('"', r'\"').replace(r"\'", "'")[1:-1] + '"'
