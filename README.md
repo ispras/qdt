@@ -47,8 +47,8 @@ A machine model in QEMU is a module in C language.
 The main part of a machine module is the machine initialization function.
 The function is a sequence of device, bus, IRQ and memory instantiations.
 QEMU provides common API to instantiate and interconnect those machine nodes.
-Of course there is some auxilary code in the module.
-The toolset uses an object model describing the content of a machine.
+Of course there is some auxiliary code in the module.
+The toolkit uses an object model describing the content of a machine.
 Each class of this model describes corresponding machine node.
 There is a graphical editor which provides a schematic visualization of
 machine content.
@@ -56,12 +56,12 @@ The editor is paired with a generator producing a module boilerplate for the
 machine represented in the editor.
 
 A generated machine boilerplate contains most of the machine code.
-It includes the initialization function and most of the auxilary code.
+It includes the initialization function and most of the auxiliary code.
 The boilerplate is also registered in QEMU build system and ready to build.
 
 ## Getting started
 
-The toolset is written in Python.
+The toolkit is written in Python.
 Both 2.7.3+ and 3.3+ versions are supported.
 
 ### Environment preparation
@@ -136,7 +136,7 @@ except for several specifics.
 
 - `apt-get` command must be used everywhere instead of `apt`
 
-- Python 3.2 grammar version is too old and does not supported by the toolset.
+- Python 3.2 grammar version is too old and does not supported by the toolkit.
 I.e. only Python 2 can be used.
 
 - `python-pip` package is too old.
@@ -194,7 +194,7 @@ git submodule init
 git submodule update --recursive
 ```
 
-The toolset works with a build directory.
+The toolkit works with a build directory.
 Hence, QEMU build system have to be configured.
 Of course, the QEMU build dependencies must be satisfied first.
 
