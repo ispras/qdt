@@ -327,7 +327,7 @@ evaluation is time consuming.
 
     @lazy
     def enum_name(self):
-        idx = self.fetch(1)
+        idx = self.fetch()
         try:
             return self.type.target_type.die.children[idx].attributes["DW_AT_name"].value
         except (ValueError, AttributeError, IndexError):

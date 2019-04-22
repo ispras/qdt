@@ -235,3 +235,7 @@ unit (`cu`). Adds address intervals of subprograms to `addr2subprog` mapping.
     @lazy
     def pubtypes(self):
         return self.di.get_pubtypes()
+
+    @lazy
+    def locs(self):
+        return self.di.location_lists()

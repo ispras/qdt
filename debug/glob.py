@@ -72,6 +72,11 @@ of this datum at runtime.
         if loc.form == "DW_FORM_exprloc":
             return self.dic.expr_builder.build(loc.value)
         else: # loc.form == "DW_FORM_loclistptr"
+            location = self.dic.locs.get_location_list_at_offset(loc.raw_value)
+            if location is not None:
+                for entry in location[:-1]:
+                    self.dic.expr_builder.process_expr(entry.loc_expr)
+                return self.dic.expr_builder.build(location[-1].loc_expr)
             raise NotImplementedError("location list")
 
     # DWARF specific
