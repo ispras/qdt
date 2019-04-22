@@ -123,9 +123,9 @@ re_clr = compile("@(.|$)")
 class ChunkGenerator(object):
     """ Maintains context of source code chunks generation process. """
 
-    def __init__(self, for_header = False, inherit_global_headers = False):
-        self.chunk_cache = {}
-        self.for_header = for_header
+    def __init__(self, definer, inherit_global_headers = False):
+        self.chunk_cache = { definer: [] }
+        self.for_header = isinstance(definer, Header)
         self.inherit_global_headers = inherit_global_headers
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
@@ -471,7 +471,7 @@ switching to that mode.
             # Preserve current types list. See the comment above.
             l = list(self.types.values()) + ref_list
 
-        gen = ChunkGenerator(for_header = isinstance(self, Header),
+        gen = ChunkGenerator(self,
             inherit_global_headers = inherit_global_headers
         )
 
