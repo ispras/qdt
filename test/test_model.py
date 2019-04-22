@@ -486,5 +486,56 @@ void main(void)
             (src, src_content)
         ]
 
+
+class TestGlobalHeadersInclusion(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestGlobalHeadersInclusion, self).setUp()
+        name = type(self).__name__
+
+        hg = Header("global_types.h", is_global = True)
+        hl = Header("local_types.h")
+
+        hg.add_type(Type("GT", incomplete = False))
+        hl.add_type(Type("LT", incomplete = False))
+
+        hdr = Header(name.lower() + ".h").add_type(Structure("Fields",
+            Type["GT"].gen_var("f1"),
+            Type["LT"].gen_var("f2")
+        ))
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+#include "local_types.h"
+
+typedef struct Fields {{
+    GT f1;
+    LT f2;
+}} Fields;
+
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        src = Source(name.lower() + ".c").add_global_variable(
+            Type["Fields"].gen_var("fv")
+        )
+
+        src_content = """\
+/* {} */
+#include <global_types.h>
+#include "{}"
+
+Fields fv __attribute__((unused));
+
+""".format(src.path, hdr.path)
+
+        self.files = [
+            (hdr, hdr_content),
+            (src, src_content)
+        ]
+
+
 if __name__ == "__main__":
     main()
