@@ -40,7 +40,7 @@ from .pci_id_widget import (
 
 class gen_readonly_widgets(HKEntry):
 
-    def __init__(self, master, obj, attr):
+    def __init__(self, master, obj, attr, _input):
         v = StringVar()
         HKEntry.__init__(self, master, textvariable = v, state = "readonly")
         self._v, self._obj, self._attr = v, obj, attr
@@ -89,7 +89,7 @@ class SimpleEditWidget: # old style class, like Tkinter classes
 
 class gen_int_widgets(HKEntry, SimpleEditWidget):
 
-    def __init__(self, master, obj, attr):
+    def __init__(self, master, obj, attr, _input):
         v = StringVar()
         HKEntry.__init__(self, master, textvariable = v)
         self._v, self._obj, self._attr = v, obj, attr
@@ -100,7 +100,7 @@ class gen_int_widgets(HKEntry, SimpleEditWidget):
 
 class gen_str_widgets(HKEntry, SimpleEditWidget):
 
-    def __init__(self, master, obj, attr):
+    def __init__(self, master, obj, attr, _input):
         v = StringVar()
         HKEntry.__init__(self, master, textvariable = v)
         self._v, self._obj, self._attr = v, obj, attr
@@ -109,7 +109,7 @@ class gen_str_widgets(HKEntry, SimpleEditWidget):
 
 class gen_bool_widgets(Checkbutton, SimpleEditWidget):
 
-    def __init__(self, master, obj, attr):
+    def __init__(self, master, obj, attr, _input):
         v = BooleanVar()
         Checkbutton.__init__(self, master, variable = v)
         self._v, self._obj, self._attr = v, obj, attr
@@ -118,7 +118,7 @@ class gen_bool_widgets(Checkbutton, SimpleEditWidget):
     _set_color = lambda self, color : self.config(selectcolor = color)
 
 
-def gen_PCIId_widgets(master, obj, attr):
+def gen_PCIId_widgets(master, obj, attr, _input):
     # Value of PCI Id could be presented either by PCIId object or by a
     # string depending on QVC availability. Hence, the actual
     # widget/variable pair will be assigned during refresh.
@@ -254,7 +254,13 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 if _input is PCIId:
                     have_pciid = True
 
-                _input_name = _input.__name__
+                # An input descriptor may be given by an instance rather than
+                # a type. The instance may contain extra information for
+                # corresponding widget generator.
+                if isinstance(_input, type):
+                    _input_name = _input.__name__
+                else:
+                    _input_name = type(_input).__name__
 
                 try:
                     generator = globals()["gen_%s_widgets" % _input_name]
@@ -263,7 +269,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                         " type %s is not supported" % (attr, _input_name)
                     )
 
-                w = generator(f, qom_desc, attr)
+                w = generator(f, qom_desc, attr, _input)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_w_" + attr, w)
