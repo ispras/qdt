@@ -2,6 +2,7 @@ __all__ = [
     "CodeWriter"
 ]
 
+
 class CodeWriter(object):
     """Helper for writing program code.
 
@@ -23,7 +24,7 @@ class CodeWriter(object):
         self.reset()
 
     def reset(self):
-        """Resets current indent to empty string and starts new line *without*
+        """ Resets current indent to empty string and starts new line *without*
         outputting new line marker.
         """
 

@@ -127,13 +127,11 @@ def define_only_qemu_2_6_0_types():
         Type("Object", False),
         Type("InterfaceInfo", False),
         Structure("TypeInfo",
-            fields = [
-                # These are required fields only
-                Pointer(Type["const char"]).gen_var("name"),
-                Pointer(Type["const char"]).gen_var("parent"),
-                Pointer(Type["void"]).gen_var("class_init"),
-                Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
-            ]
+            # These are required fields only
+            Pointer(Type["const char"]).gen_var("name"),
+            Pointer(Type["const char"]).gen_var("parent"),
+            Pointer(Type["void"]).gen_var("class_init"),
+            Type["InterfaceInfo"].gen_var("interfaces", pointer = True)
         ),
         Type("Type", False),
         Type("TypeImpl", False),
@@ -237,9 +235,8 @@ def define_only_qemu_2_6_0_types():
             ]
         ),
         Structure("MemoryRegionOps",
-            [   Type["MemoryRegionOps_read"].gen_var("read"),
-                Type["MemoryRegionOps_write"].gen_var("write"),
-             ]
+            Type["MemoryRegionOps_read"].gen_var("read"),
+            Type["MemoryRegionOps_write"].gen_var("write"),
         ),
         Function("memory_region_init_io",
             args = [
@@ -267,9 +264,12 @@ def define_only_qemu_2_6_0_types():
         Function("gdb_get_reg64")
     ]).add_reference(osdep_fake_type)
 
-    Header["exec/ioport.h"].add_types([
-        Type("pio_addr_t", incomplete = False)
-    ]).add_reference(osdep_fake_type)
+    if get_vp("pio_addr_t exists"):
+        Header["exec/ioport.h"].add_types([
+            Type("pio_addr_t", incomplete = False)
+        ]).add_reference(osdep_fake_type)
+    else:
+        Header["exec/ioport.h"].add_reference(osdep_fake_type)
 
     Header["hw/boards.h"].add_types([
         Structure("MachineClass"),
@@ -305,8 +305,12 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["void"],
             args = [
                 Type["SysBusDevice"].gen_var("dev", pointer = True),
-                Type["pio_addr_t"].gen_var("dev"),
-                Type["pio_addr_t"].gen_var("dev")
+                Type[
+                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
+                ].gen_var("ioport"),
+                Type[
+                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
+                ].gen_var("size")
             ]
         ),
         Function("sysbus_mmio_map"),
@@ -514,17 +518,15 @@ def define_only_qemu_2_6_0_types():
             ]
         ),
         Structure("NetClientInfo",
-            fields = [
-                # "type" field type is enum NetClientDriver, but enum is not
-                # supported by model
-                Type["int"].gen_var("type"),
-                Type["size_t"].gen_var("size"),
-                Type["NetReceive"].gen_var("receive"),
-                Type["NetCanReceive"].gen_var("can_receive"),
-                Type["NetCleanup"].gen_var("cleanup"),
-                Type["LinkStatusChanged"].gen_var("link_status_changed")
-                # There are other fields but they are not needed.
-            ]
+            # "type" field type is enum NetClientDriver, but enum is not
+            # supported by model
+            Type["int"].gen_var("type"),
+            Type["size_t"].gen_var("size"),
+            Type["NetReceive"].gen_var("receive"),
+            Type["NetCanReceive"].gen_var("can_receive"),
+            Type["NetCleanup"].gen_var("cleanup"),
+            Type["LinkStatusChanged"].gen_var("link_status_changed")
+            # There are other fields but they are not needed.
         ),
         Macro("NET_CLIENT_DRIVER_NIC") # This is an enum item actually. It
         # is defined in auto generated "qapi-types.h" which is not presented in
@@ -759,6 +761,13 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("char backend hotswap handler",
             new_value = True,
             old_value = False
+        )
+    ],
+    # hw: remove pio_addr_t
+    u'89a80e7400f7225d9401b35ef32454b4ab29dc67' : [
+        QEMUVersionParameterDescription("pio_addr_t exists",
+            new_value = False,
+            old_value = True
         )
     ],
     u'fcf5ef2ab52c621a4617ebbef36bf43b4003f4c0' : [

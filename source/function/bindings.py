@@ -8,23 +8,18 @@ from .tree import (
     Node
 )
 from ..model import (
+    NodeVisitor,
     Variable
 )
 from six import (
     StringIO
 )
 from common import (
-    ObjectVisitor,
     CodeWriter
 )
 
 
-class VarUsageAnalyzer(ObjectVisitor):
-
-    def __init__(self, root):
-        super(VarUsageAnalyzer, self).__init__(root,
-            field_name = "__node__"
-        )
+class VarUsageAnalyzer(NodeVisitor):
 
     def on_visit(self):
         cur = self.cur

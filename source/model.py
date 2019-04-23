@@ -23,13 +23,19 @@ __all__ = [
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
-      , "StructureDeclarationBegin"
-      , "StructureDeclaration"
+      , "StructureTypedefDeclarationBegin"
+      , "StructureTypedefDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "UsageTerminator"
   , "SourceFile"
   , "SourceTreeContainer"
+  , "TypeReferencesVisitor"
+  , "NodeVisitor"
+  , "ANC"
+  , "CAN"
+  , "NBS"
+  , "NSS"
 ]
 
 from os import (
@@ -95,10 +101,21 @@ sys_stdout_recovery = sys.stdout
 
 macro_forbidden = compile("[^0-9A-Z_]")
 
+ANC = "@a" # indent anchor
+CAN = "@c" # cancel indent anchor
+NBS = "@b" # non-breaking space
+NSS = "@s" # non-slash space
+common_re = "(?<!@)((?:@@)*)(%s)"
+re_anc = compile(common_re % ANC)
+re_can = compile(common_re % CAN)
+re_nbs = compile(common_re % NBS)
+re_nss = compile(common_re % NSS)
+re_clr = compile("@(.|$)")
+
 
 # Code generation model
 class ChunkGenerator(object):
-    """ Maintains context of source code chunks generation precess."""
+    """ Maintains context of source code chunks generation process. """
 
     def __init__(self, for_header = False):
         self.chunk_cache = {}
@@ -144,6 +161,7 @@ class ChunkGenerator(object):
                         chunks = origin.gen_declaration_chunks(self, **kw)
                     elif isinstance(self.stack[-2], Enumeration):
                         kw["enum"] = True
+                        kw["append_nl"] = False
                         chunks = origin.get_definition_chunks(self, **kw)
                     else:
                         # Something like a static inline function in a header
@@ -884,12 +902,11 @@ class TypeReference(Type):
 
 class Structure(Type):
 
-    def __init__(self, name, fields = None):
+    def __init__(self, name, *fields):
         super(Structure, self).__init__(name, incomplete = False)
+
         self.fields = OrderedDict()
-        if fields is not None:
-            for v in fields:
-                self.append_field(v)
+        self.append_fields(fields)
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
@@ -924,6 +941,10 @@ class Structure(Type):
 
         self.fields[v_name] = variable
 
+    def append_fields(self, fields):
+        for v in fields:
+            self.append_field(v)
+
     def append_field_t(self, _type, name, pointer = False):
         self.append_field(_type.gen_var(name, pointer))
 
@@ -934,9 +955,9 @@ class Structure(Type):
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureDeclarationBegin(self, indent)
+        struct_begin = StructureTypedefDeclarationBegin(self, indent)
 
-        struct_end = StructureDeclaration(self, fields_indent, indent, True)
+        struct_end = StructureTypedefDeclarationEnd(self, fields_indent, indent, True)
 
         """
         References map of structure definition chunks:
@@ -1014,9 +1035,10 @@ class Enumeration(Type):
 
     def __init__(self, type_name, elems_dict, enum_name = ""):
         super(Enumeration, self).__init__(type_name)
+
         self.elems = []
         self.enum_name = enum_name
-        t = [Type.lookup("int")]
+        t = [ Type["int"] ]
         for key, val in elems_dict.items():
             self.elems.append(
                 Variable(key, self,
@@ -1037,7 +1059,7 @@ class Enumeration(Type):
         indent = ""
 
         enum_begin = EnumerationDeclarationBegin(self, indent)
-        enum_end = EnumerationDeclaration(self, indent)
+        enum_end = EnumerationDeclarationEnd(self, indent)
 
         field_indent = indent + fields_indent
         field_refs = []
@@ -1045,7 +1067,9 @@ class Enumeration(Type):
 
         for f in self.elems:
             # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = generator.provide_chunks(f, indent = field_indent)
+            decl_chunks = generator.provide_chunks(f, indent = field_indent,
+                separ = ","
+            )
 
             field_declaration = decl_chunks[0]
 
@@ -1087,11 +1111,13 @@ class Function(Type):
         used_globals = None
     ):
         # args is list of Variables
+
         super(Function, self).__init__(name,
             # function cannot be a 'type' of variable. Only function
             # pointer type is permitted.
             incomplete = True
         )
+
         self.static = static
         self.inline = inline
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
@@ -1135,18 +1161,20 @@ class Function(Type):
 
     def use_as_prototype(self, name,
         body = None,
-        static = False,
+        static = None,
         inline = False,
         used_types = []
     ):
-        return Function(name,
+        new_f = Function(name,
             body = body,
             ret_type = self.ret_type,
             args = self.args,
-            static = static,
+            static = self.static if static is None else static,
             inline = inline,
             used_types = used_types
         )
+        CopyFixerVisitor(new_f).visit()
+        return new_f
 
     def gen_body(self, used_types = None, used_globals = None):
         new_used_types = [self]
@@ -1154,19 +1182,22 @@ class Function(Type):
         new_used_globals = [] if used_globals is None else used_globals
         new_f = Function(
             self.name + ".body",
-            self.body,
-            self.ret_type,
-            self.args,
-            self.static,
-            self.inline,
-            new_used_types,
-            new_used_globals
+            body = self.body,
+            ret_type = self.ret_type,
+            args = self.args,
+            static = self.static,
+            inline = self.inline,
+            used_types = new_used_types,
+            used_globals = new_used_globals
         )
         CopyFixerVisitor(new_f).visit()
         return new_f
 
     def gen_var(self, name, initializer = None, static = False):
-        return Variable(name, self, initializer = initializer, static = static)
+        return Variable(name, Pointer(self),
+            initializer = initializer,
+            static = static
+        )
 
     __type_references__ = ["ret_type", "args", "body"]
 
@@ -1281,7 +1312,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        mt = MacroType(self,  initializer = macro_initializer)
+        mt = MacroType(self, initializer = macro_initializer)
         return mt.gen_var(name,
             pointer = pointer,
             initializer = initializer,
@@ -1391,12 +1422,26 @@ class CPPMacro(Macro):
 # Data models
 
 
-class TypesCollector(ObjectVisitor):
+class TypeReferencesVisitor(ObjectVisitor):
 
-    def __init__(self, code):
-        super(TypesCollector, self).__init__(code,
+    def __init__(self, root):
+        super(TypeReferencesVisitor, self).__init__(root,
             field_name = "__type_references__"
         )
+
+
+class NodeVisitor(ObjectVisitor):
+
+    def __init__(self, root):
+        super(NodeVisitor, self).__init__(root,
+            field_name = "__node__"
+        )
+
+
+class TypesCollector(TypeReferencesVisitor):
+
+    def __init__(self, code):
+        super(TypesCollector, self).__init__(code)
         self.used_types = set()
 
     def on_visit(self):
@@ -1447,7 +1492,7 @@ class Variable(object):
         used = False
     ):
         self.name = name
-        self.type = _type
+        self.type = _type if isinstance(_type, Type) else Type[_type]
         self.initializer = initializer
         self.static = static
         self.const = const
@@ -1473,9 +1518,13 @@ class Variable(object):
 
         return [ch]
 
-    def get_definition_chunks(self, generator, indent = "", enum = False):
-        append_nl = True
-        ch = VariableDefinition(self, indent, append_nl, enum)
+    def get_definition_chunks(self, generator,
+        indent = "",
+        enum = False,
+        append_nl = True,
+        separ = ";"
+    ):
+        ch = VariableDefinition(self, indent, append_nl, enum, separ)
 
         refs = list(generator.provide_chunks(self.type))
 
@@ -1506,18 +1555,17 @@ class Variable(object):
 # Type inspecting
 
 
-class TypeFixerVisitor(ObjectVisitor):
+class TypeFixerVisitor(TypeReferencesVisitor):
 
-    def __init__(self, source, type_object, *args, **kw):
-        kw["field_name"] = "__type_references__"
-        ObjectVisitor.__init__(self, type_object, *args, **kw)
+    def __init__(self, source, type_object):
+        super(TypeFixerVisitor, self).__init__(type_object)
 
         self.source = source
         self.replaced = False
 
     def replace(self, new_value):
         self.replaced = True
-        ObjectVisitor.replace(self, new_value)
+        super(TypeFixerVisitor, self).replace(new_value)
 
     def on_visit(self):
         if isinstance(self.cur, Type):
@@ -1568,11 +1616,7 @@ class TypeFixerVisitor(ObjectVisitor):
     """
 
 
-class CopyFixerVisitor(ObjectVisitor):
-
-    def __init__(self, type_object, *args, **kw):
-        kw["field_name"] = "__type_references__"
-        ObjectVisitor.__init__(self, type_object, *args, **kw)
+class CopyFixerVisitor(TypeReferencesVisitor):
 
     def on_visit(self):
         t = self.cur
@@ -1628,18 +1672,6 @@ class SourceChunk(object):
             self.del_reference(r)
 
     def check_cols_fix_up(self, max_cols = 80, indent = "    "):
-        anc = "@a" # indent anchor
-        can = "@c" # cancel indent anchor
-        nbs = "@b" # non-breaking space
-        nss = "@s" # non-slash space
-
-        common_re = "(?<!@)((?:@@)*)({})"
-        re_anc = compile(common_re.format(anc))
-        re_can = compile(common_re.format(can))
-        re_nbs = compile(common_re.format(nbs))
-        re_nss = compile(common_re.format(nss))
-        re_clr = compile("@(.|$)")
-
         lines = self.code.split('\n')
         code = ""
         last_line = len(lines) - 1
@@ -1670,13 +1702,13 @@ class SourceChunk(object):
             """
             words = list(filter(None, map(
                 lambda a: re_nbs.sub("\\1 ", a),
-                re_nss.sub("\\1 " + nss + ' ', line.lstrip(' ')).split(' ')
+                re_nss.sub("\\1 " + NSS + ' ', line.lstrip(' ')).split(' ')
             )))
 
             ll = 0 # line length
             last_word = len(words) - 1
             for idx2, word in enumerate(words):
-                if word == nss:
+                if word == NSS:
                     slash = False
                     continue
 
@@ -1689,9 +1721,9 @@ class SourceChunk(object):
                 word = ""
                 subword_indents = []
                 for subword in subwords:
-                    if subword == anc:
+                    if subword == ANC:
                         subword_indents.append(len(word))
-                    elif subword == can:
+                    elif subword == CAN:
                         if subword_indents:
                             subword_indents.pop()
                         else:
@@ -1707,7 +1739,7 @@ class SourceChunk(object):
                 if ll > 0:
                     # The variable r reserves characters for " \\"
                     # that can be added after current word
-                    if idx2 == last_word or words[idx2 + 1] == nss:
+                    if idx2 == last_word or words[idx2 + 1] == NSS:
                         r = 0
                     else:
                         r = 2
@@ -1756,15 +1788,30 @@ class HeaderInclusion(SourceChunk):
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
             "Header %s inclusion" % header.path,
-            """\
+            "",
+            references = []
+        )
+        self._path = None
+        self.path = path2tuple(header.path)
+
+    @property
+    def path(self):
+        return self._path
+
+    @path.setter
+    def path(self, _path):
+        if self._path == _path:
+            return
+
+        self._path = _path
+
+        self.code = """\
 #include {lq}{path}{rq}
 """.format(
-    lq = "<" if header.is_global else '"',
+    lq = "<" if self.origin.is_global else '"',
     # Always use UNIX path separator in `#include` directive.
-    path = "/".join(path2tuple(header.path)),
-    rq = ">" if header.is_global else '"'
-            ),
-            references = []
+    path = "/".join(_path),
+    rq = ">" if self.origin.is_global else '"'
         )
 
     def __lt__(self, other):
@@ -1909,7 +1956,12 @@ class VariableDeclaration(SourceChunk):
 class VariableDefinition(SourceChunk):
     weight = 5
 
-    def __init__(self, var, indent = "", append_nl = True, enum = False):
+    def __init__(self, var,
+        indent = "",
+        append_nl = True,
+        enum = False,
+        separ = ";"
+    ):
         init_code = ""
         if var.initializer is not None:
             raw_code = var.type.gen_usage_string(var.initializer)
@@ -1924,7 +1976,7 @@ class VariableDefinition(SourceChunk):
                 var.name, var.type.name
             ),
             """\
-{indent}{static}{const}{type_name}{var_name}{array_decl}{init}{separ}{nl}
+{indent}{static}{const}{type_name}{var_name}{array_decl}{used}{init}{separ}{nl}
 """.format(
     indent = indent,
     static = "static@b" if var.static else "",
@@ -1932,17 +1984,18 @@ class VariableDefinition(SourceChunk):
     type_name = "" if enum else var.type.name + "@b",
     var_name = var.name,
     array_decl = gen_array_declaration(var.array_size),
+    used = "" if var.used else "@b__attribute__((unused))",
     init = init_code,
-    separ = "," if enum else ";",
+    separ = separ,
     nl = "\n" if append_nl else ""
             )
         )
 
 
-class StructureDeclarationBegin(SourceChunk):
+class StructureTypedefDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
-        super(StructureDeclarationBegin, self).__init__(struct,
+        super(StructureTypedefDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct.name,
             """\
 {indent}typedef@bstruct@b{struct_name}@b{{
@@ -1953,12 +2006,15 @@ class StructureDeclarationBegin(SourceChunk):
         )
 
 
-class StructureDeclaration(SourceChunk):
+class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct, fields_indent = "    ", indent = "",
-                 append_nl = True):
-        super(StructureDeclaration, self).__init__(struct,
+    def __init__(self, struct,
+        fields_indent = "    ",
+        indent = "",
+        append_nl = True
+    ):
+        super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct.name,
             """\
 {indent}}}@b{struct_name};{nl}
@@ -1984,11 +2040,11 @@ class EnumerationDeclarationBegin(SourceChunk):
         )
 
 
-class EnumerationDeclaration(SourceChunk):
+class EnumerationDeclarationEnd(SourceChunk):
     weight = 3
 
     def __init__(self, enum, indent = ""):
-        super(EnumerationDeclaration, self).__init__(enum,
+        super(EnumerationDeclarationEnd, self).__init__(enum,
             "Ending of enumeration %s declaration" % enum.enum_name,
             """\
 {indent}}};\n
