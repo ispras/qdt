@@ -36,6 +36,20 @@ c2t_cfg = C2TConfig(
             args = ""
         )
     ),
+    # symbolic values for `args` string that can be used to construct file
+    # names:
+    #
+    # {c2t_dir} -- folder of `c2t.py`
+    # {test_dir} -- path to `qdt/c2t/tests`
+    #
+    # {src} -- name of source file that is located in `qdt/c2t/tests`
+    # {ir} -- base for intermediate file names, it has prefix
+    # `qdt/c2t/tests/ir`
+    # {bin} -- output binary file of compiled test, that is located in
+    # `qdt/c2t/tests/bin`
+    #
+    # Note: one of the runs must produce {bin} file
+    #
     # set command line runs description of test building for 'target'
     target_compiler = TestBuilder(
         Run(
@@ -49,7 +63,7 @@ c2t_cfg = C2TConfig(
         # ...
         Run(
             executable = "",
-            args = ""
+            args = "{bin}"
         )
     ),
     # set command line runs description of test building for 'oracle'
@@ -65,7 +79,7 @@ c2t_cfg = C2TConfig(
         # ...
         Run(
             executable = "",
-            args = ""
+            args = "{bin}"
         )
     )
 )

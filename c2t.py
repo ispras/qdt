@@ -302,7 +302,7 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
                 port = gdbserver_port,
                 bin = test_elf,
                 c2t_dir = C2T_DIR,
-                c2t_test_dir = C2T_TEST_DIR
+                test_dir = C2T_TEST_DIR
             )
         )
         gdbserver.daemon = True
@@ -335,7 +335,7 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
         port = qemu_port,
         bin = test_elf,
         c2t_dir = C2T_DIR,
-        c2t_test_dir = C2T_TEST_DIR
+        test_dir = C2T_TEST_DIR
     ) + qmp_run.format(port = qmp_port)
 
     if verbose:
@@ -474,7 +474,7 @@ class C2TTestBuilder(Process):
                 ir = test_ir,
                 bin = test_bin,
                 c2t_dir = C2T_DIR,
-                c2t_test_dir = C2T_TEST_DIR
+                test_dir = C2T_TEST_DIR
             )
             if self.verbose:
                 print(cmd)
