@@ -916,6 +916,9 @@ class Structure(Type):
     def __init__(self, name, *fields):
         super(Structure, self).__init__(name, incomplete = False)
 
+        self.declaration = None
+        self._definition = None
+
         self.fields = OrderedDict()
         self.append_fields(fields)
 
@@ -1487,6 +1490,27 @@ class TypesCollector(TypeReferencesVisitor):
         if isinstance(cur, Type):
             self.used_types.add(cur)
             raise BreakVisiting()
+
+
+class ForwardDeclarator(TypeReferencesVisitor):
+    """ This visitor detects a cyclic type dependency and replaces the
+    structure declaration with a forward declaration of the structure
+    """
+
+    def __init__(self, variable):
+        super(ForwardDeclarator, self).__init__(variable)
+
+    def on_visit(self):
+        t = self.cur
+        if isinstance(t, Structure) and t in self.previous:
+            if t.declaration is not None:
+                decl = t.declaration
+            else:
+                decl = t.gen_forward_declaration()
+                if t.definer is not None:
+                    t.definer.add_type(decl)
+
+            self.replace(decl)
 
 
 class Initializer(object):
