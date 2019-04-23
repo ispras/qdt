@@ -36,6 +36,15 @@ c2t_cfg = C2TConfig(
             args = ""
         )
     ),
+    # {c2t_dir} -- path to `c2t.py`
+    # {c2t_test_dir} -- path to `qdt/c2t/tests`
+    #
+    # {src} -- source code file is located in `qdt/c2t/tests`
+    # {ir} -- intermediate files are located in `qdt/c2t/tests/ir`
+    # {bin} -- ELF file is located in `qdt/c2t/tests/bin`
+    #
+    # Note: one of the runs must contain '{bin}'
+    #
     # set command line runs description of test building for 'target'
     target_compiler = TestBuilder(
         Run(
@@ -49,7 +58,7 @@ c2t_cfg = C2TConfig(
         # ...
         Run(
             executable = "",
-            args = ""
+            args = "{bin}"
         )
     ),
     # set command line runs description of test building for 'oracle'
@@ -65,7 +74,7 @@ c2t_cfg = C2TConfig(
         # ...
         Run(
             executable = "",
-            args = ""
+            args = "{bin}"
         )
     )
 )
