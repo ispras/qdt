@@ -372,7 +372,6 @@ class SemicolonPresence(Node):
     "SemicolonPresence class is used to decide when to print semicolon."
 
 
-
 class Break(SemicolonPresence):
 
     def __init__(self):
