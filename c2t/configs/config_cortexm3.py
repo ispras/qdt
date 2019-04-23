@@ -26,7 +26,7 @@ c2t_cfg = C2TConfig(
         Run( # linker
             executable = "/usr/bin/arm-none-eabi-gcc",
             args = ("-mthumb -mcpu=cortex-m3 -fno-common "
-                "-T {c2t_test_dir}/misc/cortexm3_memmap -nostartfiles "
+                "-T {test_dir}/misc/cortexm3_memmap -nostartfiles "
                 "-Wl,--gc-sections -Wl,-z,relro {ir}.o -o {bin}"
             )
         ),
