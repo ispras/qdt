@@ -888,6 +888,7 @@ class Structure(Type):
 
     def __init__(self, name, fields = None):
         super(Structure, self).__init__(name, incomplete = False)
+
         self.fields = OrderedDict()
         if fields is not None:
             self.append_fields(fields)
@@ -1019,6 +1020,7 @@ class Enumeration(Type):
 
     def __init__(self, type_name, elems_dict, enum_name = ""):
         super(Enumeration, self).__init__(type_name)
+
         self.elems = []
         self.enum_name = enum_name
         t = [ Type["int"] ]
@@ -1092,11 +1094,13 @@ class Function(Type):
         used_globals = None
     ):
         # args is list of Variables
+
         super(Function, self).__init__(name,
             # function cannot be a 'type' of variable. Only function
             # pointer type is permitted.
             incomplete = True
         )
+
         self.static = static
         self.inline = inline
         self.ret_type = Type.lookup("void") if ret_type is None else ret_type
