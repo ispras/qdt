@@ -1,4 +1,5 @@
 from os.path import (
+    abspath,
     split,
     dirname,
     join
@@ -24,7 +25,7 @@ from subprocess import (
 )
 
 
-test_dir = dirname(__file__)
+test_dir = dirname(abspath(__file__))
 
 class LineAdaptationTestHelper(object):
 
