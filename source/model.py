@@ -926,7 +926,7 @@ class TypeReference(Type):
 class Structure(Type):
 
     def __init__(self, name, *fields):
-        super(Structure, self).__init__(name, incomplete = False)
+        super(Structure, self).__init__(name = name, incomplete = False)
 
         self._declaration = None
         self._definition = None
@@ -1076,7 +1076,7 @@ class Structure(Type):
 class Enumeration(Type):
 
     def __init__(self, type_name, elems_dict, enum_name = ""):
-        super(Enumeration, self).__init__(type_name)
+        super(Enumeration, self).__init__(name = type_name)
 
         self.elems = []
         self.enum_name = enum_name
@@ -1154,7 +1154,8 @@ class Function(Type):
     ):
         # args is list of Variables
 
-        super(Function, self).__init__(name,
+        super(Function, self).__init__(
+            name = name,
             # function cannot be a 'type' of variable. Only function
             # pointer type is permitted.
             incomplete = True
@@ -1261,7 +1262,8 @@ class Pointer(Type):
 
         # do not add nameless pointers to type registry
         if self.is_named:
-            super(Pointer, self).__init__(name,
+            super(Pointer, self).__init__(
+                name = name,
                 incomplete = False,
                 base = False
             )
@@ -1348,7 +1350,7 @@ class Macro(Type):
 
     # args is list of strings
     def __init__(self, name, args = None, text = None):
-        super(Macro, self).__init__(name, incomplete = False)
+        super(Macro, self).__init__(name = name, incomplete = False)
 
         self.args = args
         self.text = text
@@ -1420,7 +1422,8 @@ class MacroType(Type):
             self.is_named = True
             if name is None:
                 name = _macro.name + ".usage" + str(id(self))
-            super(MacroType, self).__init__(name,
+            super(MacroType, self).__init__(
+                name = name,
                 incomplete = False,
                 base = False
             )
