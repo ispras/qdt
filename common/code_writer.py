@@ -1,6 +1,59 @@
 __all__ = [
     "CodeWriter"
+  , "LanguageState"
 ]
+
+
+class LanguageState(object):
+
+    def __init__(self, writer, indent, prefix = None):
+        self.w = writer
+
+        self.prefix = prefix or ""
+        self.indent = indent
+
+        self.indents = []
+        self._previous = []
+
+        self.reset()
+
+    def reset(self):
+        self.indents[:] = []
+        self.current_indent = ""
+        self._previous[:] = []
+
+    def __enter__(self):
+        self._previous.append(self.w.s)
+        self.w.s = self
+        return self.w
+
+    def __exit__(self, e, *_): # value, traceback
+        self.w.s = self._previous.pop()
+
+    def push_indent(self):
+        "Increases current indent by one indentation step."
+
+        self.current_indent = self.current_indent + self.indent
+
+    def pop_indent(self):
+        "Decreases current indent by one indentation step."
+
+        self.current_indent = self.current_indent[:-len(self.indent)]
+
+    def save_indent(self, reset = True):
+        "Saves current indent."
+
+        self.indents.append(self.current_indent)
+        if reset:
+            self.current_indent = ""
+
+    def load_indent(self):
+        "Loads previous indent."
+
+        if self.indents:
+            self.current_indent = self.indents.pop()
+        else:
+            raise RuntimeError("Cannot load previous indent - stack empty")
 
 
 class CodeWriter(object):
