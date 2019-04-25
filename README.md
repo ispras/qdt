@@ -10,6 +10,13 @@ QEMU.
 It able to generate a machine boilerplate.
 - A common graphical user interface integrating both device and machine
 generators.
+- A gdbserver [remote serial protocol][rsp] client providing an inferior
+process control API (Python) that understands high level language entities
+(variables, functions, types, etc.).
+- A tool for testing of TCG front-end implementation (CPU) based on high
+level language (C) comparison of control flow and variable values.
+
+[rsp]: https://sourceware.org/gdb/onlinedocs/gdb/Remote-Protocol.html
 
 *Current implementation limitations*:
 
@@ -47,8 +54,8 @@ A machine model in QEMU is a module in C language.
 The main part of a machine module is the machine initialization function.
 The function is a sequence of device, bus, IRQ and memory instantiations.
 QEMU provides common API to instantiate and interconnect those machine nodes.
-Of course there is some auxilary code in the module.
-The toolset uses an object model describing the content of a machine.
+Of course there is some auxiliary code in the module.
+The toolkit uses an object model describing the content of a machine.
 Each class of this model describes corresponding machine node.
 There is a graphical editor which provides a schematic visualization of
 machine content.
@@ -56,12 +63,67 @@ The editor is paired with a generator producing a module boilerplate for the
 machine represented in the editor.
 
 A generated machine boilerplate contains most of the machine code.
-It includes the initialization function and most of the auxilary code.
+It includes the initialization function and most of the auxiliary code.
 The boilerplate is also registered in QEMU build system and ready to build.
+
+### gdbserver client overview
+
+The gdbserver client is a Python module that provides API for controlling of
+inferior execution and fetching its runtime values.
+It operates over GDB RSP protocol implemented by [pyrsp][pyrsp] API.
+Inferior controlling uses high level language (C, in particular) terms.
+Low level terms (register, memory address, thread/CPU#, etc.) are also
+supported, of course.
+High level terms support is based on DWARF debug information parsing by
+[pyelftools][pyelftools].
+The client API is an analog of
+[gdb's internal Python interpreter API][gdbPythonAPI] but a
+debugging script is much easy to debug (*yes, that is a debugging of a script*
+*that debugs a program, gdb inferior*) because a regular Python interpreter
+executes both user script and client API implementation.
+And a developer may use an IDE she prefer.
+The client API implementation also provides additional useful features.
+
+- Lazy DWARF analysis which is critical for big binaries (like QEMU) because
+the parsing is implemented in pure Python.
+- Automated line number adjustment for breakpoint positions based on Git
+history analysis.
+It makes breakpoint handlers robust against most of unrelated changes in
+source code above the breakpoint.
+
+[pyrsp]: https://github.com/stef/pyrsp
+[pyelftools]: https://github.com/eliben/pyelftools
+[gdbPythonAPI]: https://sourceware.org/gdb/onlinedocs/gdb/Python-API.html
+
+### TCG front-end tester overview
+
+TCG front-end is a main part of a CPU model.
+It defines logic of the instruction set emulation.
+I.e. how does a guest program work in terms of QEMU emulation model.
+
+The testing approach is based on an observation that an accurately written C
+program must work identically on any processor until it relies on
+processor specific features.
+For example, using of `int` or `long` is processor specific (size may
+differ) while using of `int32_t` or `int64_t` is not.
+A host processor (AMD64, normally) can be used as an oracle for validation of
+guest CPU implementation.
+I.e. tests are C programs.
+This approach is suitable for arithmetic, logic, bitwise, memory (load/store)
+and branch instructions which a most part of any instruction set.
+
+Comparison is performed by launching of two binary code variants under host
+OS (a process) and QEMU full system (a machine firmware), correspondingly.
+The binary code variants are previously compiled from a single C program using
+corresponding toolchains.
+Execution comparison is based on execution flow tracking and runtime values
+fetching by GDB RSP.
+Host code is running under `gdbserver` while guest code is managed using
+GDB RSP implementation of QEMU for guest debugging.
 
 ## Getting started
 
-The toolset is written in Python.
+The toolkit is written in Python.
 Both 2.7.3+ and 3.3+ versions are supported.
 
 ### Environment preparation
@@ -101,6 +163,7 @@ QDT adapts to changes in QEMU infrastructure.
 It has a set of heuristics referring to specific commits in QEMU Git history.
 `gitpython` package is used to analyze Git graph and get effective heuristics
 for the current QEMU version.
+It also required by breakpoint adjustment mechanism of gdbserver client.
 
 ```bash
 sudo pip install --upgrade gitpython
@@ -127,6 +190,13 @@ sudo pip install --upgrade path.py
 sudo pip3 install --upgrade path.py
 ```
 
+Embedded `pyrsp` and `pyelftools` require some packages.
+
+```bash
+sudo pip install --upgrade construct serial
+sudo pip3 install --upgrade construct serial
+```
+
 Now the all environment prerequisites are satisfied.
 
 #### Debian Linux
@@ -136,7 +206,7 @@ except for several specifics.
 
 - `apt-get` command must be used everywhere instead of `apt`
 
-- Python 3.2 grammar version is too old and does not supported by the toolset.
+- Python 3.2 grammar version is too old and does not supported by the toolkit.
 I.e. only Python 2 can be used.
 
 - `python-pip` package is too old.
@@ -194,7 +264,7 @@ git submodule init
 git submodule update --recursive
 ```
 
-The toolset works with a build directory.
+The toolkit works with a build directory.
 Hence, QEMU build system have to be configured.
 Of course, the QEMU build dependencies must be satisfied first.
 
@@ -605,6 +675,83 @@ The project is based on `q35` machine implementation in QEMU.
 ~/qemu$
 
 qdt/qdc-gui.py qdt/examples/q35-for-q2.6.py
+```
+
+### TCG front-end testing
+
+TCG front-end testing is performed by `c2t.py` script (CPU Testing Tool,
+C2T).
+Its work is configured by both a configuration file (`c2t/configs`
+folder) and CLI.
+There are few configurations for existing ARM CPUs and toolchains (GCC and
+LLVM).
+It mostly verifies `c2t.py` script rather that TCG front-end because ARM
+front-end is already well tested by community.
+Those configuration files are examples for developers of new TCG front-ends.
+A front-end testing can be launched by the following command:
+
+```bash
+~/qemu$
+
+qdt/c2t.py config_cortexm3
+```
+
+Consider reading of `qdt/c2t.py --help` output for extra information.
+
+Tests for TCG front-end testing contain comments (that starts with `$`) with
+special commands.
+These commands specify breakpoints positions and names of variables to be
+compared.
+The following commands are supported:
+* `br` &mdash; set breakpoint for single checking of line number accordance;
+* `brc` &mdash; the same but multiple times;
+* `bre` &mdash; end the test on that line (it's also a breakpoint);
+* `ch` &mdash; set breakpoint for single checking of line number accordance and
+variables values equality;
+* `chc` &mdash; the same but multiple times.
+
+#### Example of test in C
+
+Ready-to-use tests are located in `c2t/tests`.
+There is an example of test with explanation of special commands.
+
+```c
+int main(void) {
+    volatile uint32_t a = 0xABCDEF, b = 0x12345678, c = 0, i;
+
+    for(i = 0; i < 20; i++) {
+        if(i % 2) {
+            // this breakpoint is removed after the first hit
+            c = b - a; //$br
+        }
+        else {
+            // this breakpoint lives during the all the test
+            c = b + a; //$brc
+        }
+
+        /* Note: value of a varible set on a line should be checked on
+        the consequently executed line.
+        */
+
+        // check values of the all variables once, on the first iteration
+        c = b & a; //$ch
+
+        // check only value of `c` and only once
+        c = b | a; //$ch.c
+
+        // check only value of `c` during all iterations
+        c = b ^ a; //$chc.c
+
+        /* A combination of commands is possible:
+          - on the first iteration: check line number, values of `a` and `b`
+          - on the all iterations: check value of `c`
+        */
+        c = 0; //$br, chc.c, ch.a, ch.b
+    }
+
+    // set breakpoint to end the test
+    return 0; //$bre
+}
 ```
 
 ## Miscellaneous
