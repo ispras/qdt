@@ -118,7 +118,7 @@ class gen_bool_widgets(Checkbutton, SimpleEditWidget):
     _set_color = lambda self, color : self.config(selectcolor = color)
 
 
-class gen_PCIId_widgets(GUIFrame):
+class gen_PCIId_widgets(GUIFrame, QDCGUISignalHelper):
 
     def __init__(self, master, obj, attr, _input):
         GUIFrame.__init__(self, master)
@@ -130,6 +130,10 @@ class gen_PCIId_widgets(GUIFrame):
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
+
+        self.qsig_watch("qvc_available", self._refresh)
+
+        self.bind("<Destroy>", self._on_destroy, "+")
 
     def _refresh(self):
         cur_val = getattr(self._obj, self._attr)
@@ -193,6 +197,9 @@ class gen_PCIId_widgets(GUIFrame):
                 if new_val is not None:
                     yield DOp_SetPCIIdAttr, attr, new_val
 
+    def _on_destroy(self, *_, **__):
+        self.qsig_unwatch("qvc_available", self._refresh)
+
 
 def gen_widgets(master, obj, attr, _input):
     # An input descriptor may be given by an instance rather than
@@ -230,7 +237,7 @@ def add_highlighting(desc, widget, attr):
     widget._v.trace_variable("w", lambda *_: do_highlight())
 
 
-class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
+class QOMDescriptionSettingsWidget(GUIFrame):
     def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
@@ -253,8 +260,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         f.columnconfigure(0, weight = 0)
         f.columnconfigure(1, weight = 1)
 
-        have_pciid = False
-
         for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
             f.rowconfigure(row, weight = 0)
 
@@ -267,9 +272,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 # attribute is read-only
                 w = gen_readonly_widgets(f, qom_desc, attr)
             else:
-                if _input is PCIId:
-                    have_pciid = True
-
                 w = gen_widgets(f, qom_desc, attr, _input)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
@@ -297,11 +299,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
         self.after(0, self.__refresh__)
 
         self.bind("<Destroy>", self.__on_destroy__, "+")
-
-        self.__have_pciid = have_pciid
-        if have_pciid:
-            self.qsig_watch("qvc_available", self.__on_qvc_available)
-
 
     def __on_qvc_available(self):
         self.__refresh__()
@@ -350,9 +347,6 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
     def __on_destroy__(self, *args, **kw):
         if self.pht is not None:
             self.pht.unwatch_changed(self.__on_changed__)
-
-        if self.__have_pciid:
-            self.qsig_unwatch("qvc_available", self.__on_qvc_available)
 
     def __on_apply__(self):
         self.__apply__()
