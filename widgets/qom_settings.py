@@ -18,6 +18,9 @@ from .var_widgets import (
 from common import (
     mlget as _
 )
+from .scrollframe import (
+    add_scrollbars
+)
 from .hotkey import (
     HKEntry
 )
@@ -267,7 +270,9 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         sf = self.settings_fr = GUIFrame(main_frame)
         sf.grid(row = 0, column = 0, sticky = "NESW")
 
-        f = self.qomd_fr = GUIFrame(sf)
+        scrolled = add_scrollbars(sf, GUIFrame)
+
+        f = self.qomd_fr = GUIFrame(scrolled)
         f.pack(fill = BOTH, expand = False)
 
         f.columnconfigure(0, weight = 0)
