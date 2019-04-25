@@ -6,7 +6,6 @@ __all__ = [
       , "QOMPropertyTypeInteger"
   , "QOMPropertyValue"
   , "QOMStateField"
-  , "QemuTypeName"
   , "QOMType"
       , "QOMDevice"
   , "Register"
@@ -45,6 +44,9 @@ from collections import (
 )
 from .version import (
     get_vp
+)
+from .qtn import (
+    QemuTypeName
 )
 from math import (
     log
@@ -111,83 +113,6 @@ class QOMPropertyValue(object):
         if same(s_val, o_val):
             return True
         return False
-
-
-def qtn_char(c):
-    # low ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"] high
-    if c < "0":
-        # low
-        return False
-    # ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"] high
-    if "z" < c:
-        # high
-        return False
-    # ["0"; "9"] middle0 ["A", "Z"] middle1 ["a"; "z"]
-    if c < "A":
-        # ["0"; "9"] middle0
-        return c <= "9"
-    # ["A", "Z"] middle1 ["a"; "z"]
-    if "Z" < c:
-        # middle1 ["a"; "z"]
-        return "a" <= c
-    # ["A", "Z"]
-    return True
-
-# Replacements for characters
-qtn_id_char_map = {
-    "/" : ""
-    # default : c if qtn_char(c) else "_"
-}
-
-qtn_struct_char_map = {
-    # default : c if qtn_char(c) else ""
-}
-
-qtn_macro_char_map = qtn_id_char_map
-# same default
-
-
-class QemuTypeName(object):
-
-    def __init__(self, name):
-        self.name = name
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value.strip()
-
-        tmp = ""
-        for c in self._name.lower():
-            if c in qtn_id_char_map:
-                tmp += qtn_id_char_map[c]
-            else:
-                tmp += c if qtn_char(c) else "_"
-
-        self.for_id_name = tmp
-        self.for_header_name = tmp
-
-        tmp = ""
-        for c in self._name:
-            if c in qtn_struct_char_map:
-                tmp += qtn_struct_char_map[c]
-            else:
-                tmp += c if qtn_char(c) else ""
-
-        self.for_struct_name = tmp
-
-        tmp = ""
-        for c in self._name.upper():
-            if c in qtn_macro_char_map:
-                tmp += qtn_macro_char_map[c]
-            else:
-                tmp += c if qtn_char(c) else "_"
-
-        self.for_macros = tmp
-        self.type_macro = "TYPE_%s" % tmp
 
 
 # Property declaration generation helpers
