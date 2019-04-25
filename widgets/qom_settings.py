@@ -118,42 +118,44 @@ class gen_bool_widgets(Checkbutton, SimpleEditWidget):
     _set_color = lambda self, color : self.config(selectcolor = color)
 
 
-def gen_PCIId_widgets(master, obj, attr, _input):
-    # Value of PCI Id could be presented either by PCIId object or by a
-    # string depending on QVC availability. Hence, the actual
-    # widget/variable pair will be assigned during refresh.
-    v = None
-    w = GUIFrame(master)
-    w._v = v
-    w.grid()
-    w.rowconfigure(0, weight = 1)
-    w.columnconfigure(0, weight = 1)
+class gen_PCIId_widgets(GUIFrame):
 
-    def refresh():
-        cur_val =  getattr(obj, attr)
+    def __init__(self, master, obj, attr, _input):
+        GUIFrame.__init__(self, master)
+        # Value of PCI Id could be presented either by PCIId object or by a
+        # string depending on QVC availability. Hence, the actual
+        # widget/variable pair will be assigned during refresh.
+        self._v = None
+        self._obj, self._attr = obj, attr
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+    def _refresh(self):
+        cur_val = getattr(self._obj, self._attr)
         if not PCIId.db.built and cur_val is None:
             # use string values only without database
             cur_val = ""
                 # use appropriate widget/variable pair
 
-        _v = w._v
+        _v = self._v
         if isinstance(cur_val, str):
             if not isinstance(_v, StringVar):
-                w._v = _v = StringVar()
+                self._v = _v = StringVar()
                 # Fill frame with appropriate widget
-                for cw in w.winfo_children():
+                for cw in self.winfo_children():
                     cw.destroy()
 
-                cw = HKEntry(w, textvariable = _v)
+                cw = HKEntry(self, textvariable = _v)
                 cw.grid(row = 0, column = 0, sticky = "NEWS")
         elif cur_val is None or isinstance(cur_val, PCIId):
             if not isinstance(_v, ObjRefVar):
-                w._v = _v = ObjRefVar()
+                self._v = _v = ObjRefVar()
 
-                for cw in w.winfo_children():
+                for cw in self.winfo_children():
                     cw.destroy()
 
-                cw = PCIIdWidget(_v, w)
+                cw = PCIIdWidget(_v, self)
                 cw.grid(row = 0, column = 0, sticky = "NEWS")
 
         widget_val = _v.get()
@@ -161,11 +163,10 @@ def gen_PCIId_widgets(master, obj, attr, _input):
         if widget_val != cur_val:
             _v.set(cur_val)
 
-    w._refresh = refresh
-
-    def changes():
-        cur_val =  getattr(obj, attr)
-        new_val = w._v.get()
+    def _changes(self):
+        attr = self._attr
+        cur_val = getattr(self._obj, attr)
+        new_val = self._v.get()
 
         if new_val == "":
             new_val = None
@@ -191,10 +192,6 @@ def gen_PCIId_widgets(master, obj, attr, _input):
                 yield DOp_SetAttr, attr, None
                 if new_val is not None:
                     yield DOp_SetPCIIdAttr, attr, new_val
-
-    w._changes = changes
-
-    return w
 
 
 def gen_widgets(master, obj, attr, _input):
