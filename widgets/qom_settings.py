@@ -47,6 +47,63 @@ from source import (
 )
 
 
+class AttributeProxy(object):
+
+    def __init__(self, container, attr):
+        self._container = container
+        self._attr = attr
+
+    def __getattr__(self, name):
+        if name[0] == "_":
+            return object.__getattr__(self, name)
+
+        return getattr(getattr(self._container, self._attr), name)
+
+
+class AttributeEditor(GUIFrame):
+
+    def __init__(self, master, obj, attr, _input):
+        GUIFrame.__init__(self, master)
+
+        self.columnconfigure(0, weight = 0)
+        self.columnconfigure(1, weight = 1)
+
+        self._attr_editors = attr_editors = []
+
+        proxy = AttributeProxy(obj, attr)
+
+        for row, (obj_attr, info) in enumerate(
+            _input.__attribute_info__.items()
+        ):
+            self.rowconfigure(row, weight = 0)
+
+            l = VarLabel(self, text = info["short"])
+            l.grid(row = row, column = 0, sticky = "NES")
+
+            try:
+                attr_input = info["input"]
+            except KeyError:
+                # attribute is read-only
+                w = gen_readonly_widgets(self, proxy, obj_attr)
+            else:
+                w = gen_widgets(self, proxy, obj_attr, attr_input)
+
+            w.grid(row = row, column = 1, sticky = "NEWS")
+            attr_editors.append(w)
+
+        self._obj, self._attr = obj, attr
+
+    def _refresh(self):
+        for w in self._attr_editors:
+            w._refresh()
+
+    def _changes(self):
+        # account self._attr and self._obj
+        for w in self._attr_editors:
+            for c in w._changes():
+                yield c
+
+
 class gen_readonly_widgets(HKEntry):
 
     def __init__(self, master, obj, attr, _input):
@@ -219,6 +276,8 @@ class gen_PCIId_widgets(GUIFrame, QDCGUISignalHelper):
 
 
 def gen_widgets(master, obj, attr, _input):
+    if hasattr(_input, "__attribute_info__"):
+        return AttributeEditor(master, obj, attr, _input)
     # An input descriptor may be given by an instance rather than
     # a type. The instance may contain extra information for
     # corresponding widget generator.
@@ -452,28 +511,8 @@ class QOMDescriptionSettingsWidget(GUIFrame):
 
         scrolled = add_scrollbars(sf, GUIFrame)
 
-        f = self.qomd_fr = GUIFrame(scrolled)
+        f = self.qomd_fr = gen_widgets(scrolled, self, "desc", type(qom_desc))
         f.pack(fill = BOTH, expand = False)
-
-        f.columnconfigure(0, weight = 0)
-        f.columnconfigure(1, weight = 1)
-
-        for row, (attr, info) in enumerate(qom_desc.__attribute_info__.items()):
-            f.rowconfigure(row, weight = 0)
-
-            l = VarLabel(f, text = info["short"])
-            l.grid(row = row, column = 0, sticky = "NES")
-
-            try:
-                _input = info["input"]
-            except KeyError:
-                # attribute is read-only
-                w = gen_readonly_widgets(f, qom_desc, attr)
-            else:
-                w = gen_widgets(f, qom_desc, attr, _input)
-
-            w.grid(row = row, column = 1, sticky = "NEWS")
-            setattr(self, "_w_" + attr, w)
 
         btf = self.buttons_fr = GUIFrame(main_frame)
         btf.grid(row = 1, column = 0, sticky = "NESW")
@@ -502,8 +541,7 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         self.__refresh__()
 
     def __refresh__(self):
-        for attr in self.desc.__attribute_info__:
-            getattr(self, "_w_" + attr)._refresh()
+        self.qomd_fr._refresh()
 
     def __apply__(self):
         if self.pht is None:
@@ -512,12 +550,10 @@ class QOMDescriptionSettingsWidget(GUIFrame):
 
         prev_pos = self.pht.pos
 
-        desc = self.desc
-        desc_sn = desc.__sn__
+        desc_sn = self.desc.__sn__
 
-        for attr in desc.__attribute_info__:
-            for args in getattr(self, "_w_" + attr)._changes():
-                self.pht.stage(*(args + (desc_sn,)))
+        for args in self.qomd_fr._changes():
+            self.pht.stage(*(args + (desc_sn,)))
 
         if prev_pos is not self.pht.pos:
             self.pht.set_sequence_description(_("QOM object configuration."))
