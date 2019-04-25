@@ -241,6 +241,19 @@ class QOMDescriptionSettingsWidget(GUIFrame):
     def __init__(self, qom_desc, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
+        # Main frame defines appearance of base widget content. Subclasses
+        # may append widgets using `pack` manager but those extra widgets
+        # must not affect base widgets.
+        main_frame = GUIFrame(self)
+        main_frame.pack(fill = BOTH, expand = False)
+
+        main_frame.columnconfigure(0, weight = 1)
+        main_frame.rowconfigure(0, weight = 1) # settings
+        # buttons, must always be visible
+        # XXX: Probably because of a bug, but zero weight (default) results
+        # in granting all required space to corresponding row.
+        main_frame.rowconfigure(1)
+
         self.desc = qom_desc
         try:
             self.pht = self.winfo_toplevel().pht
@@ -251,8 +264,8 @@ class QOMDescriptionSettingsWidget(GUIFrame):
         if self.pht is not None:
             self.pht.watch_changed(self.__on_changed__)
 
-        sf = self.settings_fr = GUIFrame(self)
-        sf.pack(fill = BOTH, expand = False)
+        sf = self.settings_fr = GUIFrame(main_frame)
+        sf.grid(row = 0, column = 0, sticky = "NESW")
 
         f = self.qomd_fr = GUIFrame(sf)
         f.pack(fill = BOTH, expand = False)
@@ -277,8 +290,8 @@ class QOMDescriptionSettingsWidget(GUIFrame):
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_w_" + attr, w)
 
-        btf = self.buttons_fr = GUIFrame(self)
-        btf.pack(fill = BOTH, expand = False)
+        btf = self.buttons_fr = GUIFrame(main_frame)
+        btf.grid(row = 1, column = 0, sticky = "NESW")
 
         btf.rowconfigure(0, weight = 0)
         btf.columnconfigure(0, weight = 1)
