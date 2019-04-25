@@ -8,6 +8,7 @@ from re import (
     S
 )
 from git import (
+    BadName,
     Repo
 )
 from six import (
@@ -202,7 +203,7 @@ class GitLineVersionAdapter(LineAdapter):
         if version:
             try:
                 self.repo.commit(version)
-            except ValueError:
+            except (ValueError, BadName):
                 print("WARNING: '%s' commit doesn't exist" % version)
                 return fname, None
 
