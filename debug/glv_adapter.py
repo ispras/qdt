@@ -141,9 +141,9 @@ class GitLineVersionAdapter(LineAdapter):
     """
 
     def __init__(self, src_dir):
-        repo = Repo(src_dir)
-        curr_version = repo.head.object.hexsha
-        self.curr_commit = repo.commit(curr_version)
+        self.repo = Repo(src_dir)
+        curr_version = self.repo.head.object.hexsha
+        self.curr_commit = self.repo.commit(curr_version)
         self.cm = GLVCacheManager(self.curr_commit)
         self.failures = []
 
@@ -200,6 +200,12 @@ class GitLineVersionAdapter(LineAdapter):
 
         version, eps = re_glv_expr.match(opaque).groups()
         if version:
+            try:
+                self.repo.commit(version)
+            except ValueError:
+                print("WARNING: '%s' commit doesn't exist" % version)
+                return fname, None
+
             delta_intervals, rename = self.cm.get_glv_data(version, fname)
             fname = fname if rename is None else rename
             new_lineno = self.do_adapt(delta_intervals, lineno, eps)
