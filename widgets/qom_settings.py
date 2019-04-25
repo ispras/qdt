@@ -197,6 +197,25 @@ def gen_PCIId_widgets(master, obj, attr, _input):
     return w
 
 
+def gen_widgets(master, obj, attr, _input):
+    # An input descriptor may be given by an instance rather than
+    # a type. The instance may contain extra information for
+    # corresponding widget generator.
+    if isinstance(_input, type):
+        _input_name = _input.__name__
+    else:
+        _input_name = type(_input).__name__
+
+    try:
+        generator = globals()["gen_%s_widgets" % _input_name]
+    except AttributeError:
+        raise RuntimeError("Input of QOM template attribute %s of"
+            " type %s is not supported" % (attr, _input_name)
+        )
+
+    return generator(master, obj, attr, _input)
+
+
 def add_highlighting(desc, widget, attr):
     def do_highlight(w = widget, attr = attr):
         if not w._validate():
@@ -254,22 +273,7 @@ class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
                 if _input is PCIId:
                     have_pciid = True
 
-                # An input descriptor may be given by an instance rather than
-                # a type. The instance may contain extra information for
-                # corresponding widget generator.
-                if isinstance(_input, type):
-                    _input_name = _input.__name__
-                else:
-                    _input_name = type(_input).__name__
-
-                try:
-                    generator = globals()["gen_%s_widgets" % _input_name]
-                except AttributeError:
-                    raise RuntimeError("Input of QOM template attribute %s of"
-                        " type %s is not supported" % (attr, _input_name)
-                    )
-
-                w = generator(f, qom_desc, attr, _input)
+                w = gen_widgets(f, qom_desc, attr, _input)
 
             w.grid(row = row, column = 1, sticky = "NEWS")
             setattr(self, "_w_" + attr, w)
