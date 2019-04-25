@@ -94,6 +94,9 @@ class RQOMTree(object):
     def __init__(self):
         self.name2type = {}
         self.addr2type = {}
+        # Class type name -> list of RQObjectProperty
+        # RQObjectProperty's obj will be None
+        self.name2props = defaultdict(list)
 
         # Types are found randomly (i.e. not in parent-first order).
         self.unknown_parents = defaultdict(list)
@@ -523,6 +526,17 @@ Notifications are issued for many machine composition events.
 
         i = RQInstance(obj, rqom_type)
         self.instances[obj.address] = i
+
+        # account class properties considering the parent
+        p_type = rqom_type
+        while p_type.name != "object":
+            if p_type.name in self.tree.name2props:
+                for prop in self.tree.name2props[p_type.name]:
+                    prop.obj = i
+                    i.properties[prop.name] = prop
+                    self.__notify_property_added(i, prop)
+            p_type = self.tree.name2type[p_type.parent]
+
         return i
 
     # Breakpoint handlers
@@ -678,6 +692,24 @@ Notifications are issued for many machine composition events.
             prop.name,
             prop.type
         ))
+
+    def on_obj_class_prop_add(self):
+        # object_class_property_add, before insertion to prop. table;
+
+        "object.c:1152 a9b305ba291fb74f7ff732b3d7b8f4c812431ddf"
+
+        rt = self.rt
+        name = rt["klass"]["type"]["name"].fetch_c_string()
+        prop = rt["prop"]
+
+        if prop.type.code == TYPE_CODE_PTR:
+            prop = prop.dereference()
+        if not prop.is_global:
+            prop = prop.to_global()
+
+        self.tree.name2props[name].append(
+            RQObjectProperty(None, prop)
+        )
 
     def on_obj_prop_set(self):
         # object_property_set (prop. exists and has a setter)
