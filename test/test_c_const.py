@@ -133,6 +133,17 @@ class TestCINTParser(TestCase):
     def test_0x18(self):
         self.assertEqual(CINT("0x18"), CINT(24, 16, 2))
 
+    def test_0b11100111(self):
+        # If difference of digits amount in two CINT does not affects
+        # string form, then it is negligible.
+
+        # Right CINT requires at least 0 digits, It does not result in leading
+        # zeros. Left CINT requires 8 digits, according to original string
+        # form. It has no leading zeros, apparently. So, CINTs are considered
+        # equal.
+        self.assertEqual(CINT("0b11100111"), CINT(231, 2, 0))
+        # Right CINT has 1 leading zero, CINTs are not equal.
+        self.assertNotEqual(CINT("0b11100111"), CINT(231, 2, 9))
 
 if __name__ == "__main__":
     main()
