@@ -223,6 +223,12 @@ ancestors.
             yield t
             cur = t.parent
 
+    def iter_inheritance(self):
+        yield self
+
+        for a in self.iter_ancestors():
+            yield a
+
     def implements(self, name):
         if name == self.name:
             return True
