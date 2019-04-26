@@ -130,6 +130,9 @@ class TestCINTParser(TestCase):
     def test(self):
         self.assertEqual(CINT("0"), 0)
 
+    def test_0x18(self):
+        self.assertEqual(CINT("0x18"), CINT(24, 16, 2))
+
 
 if __name__ == "__main__":
     main()
