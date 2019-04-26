@@ -575,22 +575,13 @@ Notifications are issued for many machine composition events.
             self.__notify_device_created(inst)
 
     def on_board_init_start(self):
-        # machine_run_board_init
+        # machine_initfn
 
-        """ hw/core/machine.c:829 v2.12.0
-            vl.c:4562 3b8a8557f781c4216744d9ab69bee43b526b0c64 0
+        """ hw/core/machine.c:656 b2fc91db84470a78f8e93f5b5f913c17188792c8
+            hw/core/machine.c:654 v2.12.0
         """
 
-        rt = self.rt
-
-        try:
-            machine_obj = rt["machine"]
-        except KeyError:
-            # old Qemu, machine_class->init(current_machine) is called by main
-            machine_obj = rt["current_machine"]
-            # TODO: use heuristics
-
-        self.machine = inst = self.account_instance(machine_obj)
+        self.machine = inst = self.account_instance(self.rt["ms"])
 
         desc = inst.type.impl["class"].cast("MachineClass*")["desc"]
 
