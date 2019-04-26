@@ -170,6 +170,8 @@ class RQOMType(object):
             # Parent may be None
         self.name, self.parent = name, parent
 
+        self.properties = []
+
         self.children = []
 
         # Instance pointer can be casted to different C types. Remember those
@@ -525,6 +527,14 @@ Notifications are issued for many machine composition events.
 
         i = RQInstance(obj, rqom_type)
         self.instances[obj.address] = i
+
+        # account class properties
+        for t in rqom_type.iter_self_and_ancestors():
+            for prop in t.properties:
+                # save unique RQObjectProperty for each insteanse
+                i.properties[prop.name] = RQObjectProperty(prop.prop)
+                self.__notify_property_added(i, prop)
+
         return i
 
     # Breakpoint handlers
@@ -680,6 +690,22 @@ Notifications are issued for many machine composition events.
             prop.name,
             prop.type
         ))
+
+    def on_obj_class_prop_add(self):
+        # object_class_property_add, before insertion to prop. table;
+
+        "object.c:1152 a9b305ba291fb74f7ff732b3d7b8f4c812431ddf"
+
+        rt = self.rt
+        type_addr = rt["klass"]["type"].fetch_pointer()
+        prop = rt["prop"]
+
+        prop = prop.dereference()
+        prop = prop.to_global()
+
+        self.tree.addr2type[type_addr].properties.append(
+            RQObjectProperty(prop)
+        )
 
     def on_obj_prop_set(self):
         # object_property_set (prop. exists and has a setter)
