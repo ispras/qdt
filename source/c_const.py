@@ -138,19 +138,20 @@ class CINT(CConst):
     __str__ = gen_c_code
 
     __hash__ = CConst.__hash__
-    def __eq__(self, v):
-        if isinstance(v, CINT):
-            return (self.v, self.b, self.d) == (v.v, v.b, v.d)
-        elif isinstance(v, int):
-            if self.d <= len(str(abs(v))) and self.b == 10:
-                return self.v == v
+    def __eq__(self, o):
+        v, b, d = self.v, self.b, self.d
+        if isinstance(o, CINT):
+            return (v, b, d) == (o.v, o.b, o.d)
+        elif isinstance(o, int):
+            if d <= len(str(abs(o))) and b == 10:
+                return v == o
             # else:
                 # `int` does not have appearance information. So, if this CINT
                 # has non-default settings, it is assumed to be not equal.
                 # Fall to `return` False.
-        elif isinstance(v, str):
+        elif isinstance(o, str):
             # Reminder that an integer can be given by a macro.
-            return self.v == v
+            return v == o
 
         # Some other type
         return False
