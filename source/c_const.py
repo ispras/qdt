@@ -9,6 +9,9 @@ if __name__ == "__main__":
 else:
     from .c_str_adapter import str2c
 
+from math import (
+    log
+)
 from string import (
     digits,
     ascii_uppercase
@@ -141,7 +144,23 @@ class CINT(CConst):
     def __eq__(self, o):
         v, b, d = self.v, self.b, self.d
         if isinstance(o, CINT):
-            return (v, b, d) == (o.v, o.b, o.d)
+            if (v, b) != (o.v, o.b):
+                return False
+
+            if isinstance(v, str):
+                # value is a macro, digits amount is not significant
+                return True
+
+            # digits amount are equal iff both resulting in the same string
+            # from of number.
+            min_digits = self.min_digits
+            if min_digits < d:
+                # There is at least one leading zero, amount of leading zeros
+                # must be equal
+                return d == o.d
+            else:
+                # self has no leading zeros, the other must too
+                return o.d <= min_digits
         elif isinstance(o, int):
             if d <= len(str(abs(o))) and b == 10:
                 return v == o
@@ -155,6 +174,19 @@ class CINT(CConst):
 
         # Some other type
         return False
+
+    @property
+    def min_digits(self):
+        v = self.v
+        if v:
+            if isinstance(v, str):
+                raise RuntimeError(
+                    "No minimum digits count is defined for a macro"
+                )
+            return int(log(v, self.b)) + 1
+        else:
+            # log(0) is a math error. Zero requires 1 digit to display.
+            return 1
 
 
 class CSTR(CConst):
