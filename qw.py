@@ -630,7 +630,7 @@ Notifications are issued for many machine composition events.
     def on_board_init_end(self):
         # machine_run_board_init
 
-        """ hw/core/machine.c:830 v2.12.0
+        """ hw/core/machine.c:830 v2.12.0 1
             vl.c:4476 ad584d37f2a86b392c25f3f00cc1f1532676c2d1 1
             vl.c:4510 2ae45973d61070c1a1883c1f3c43f7154cc85a91
         """
@@ -933,7 +933,7 @@ class PCMachineWatcher(MachineWatcher):
 
     def on_pc_piix_gsi(self):
 
-        "pc_piix.c:301 v2.12.0"
+        "pc_piix.c:301 v2.12.0 1"
 
         rt = self.rt
         instances = self.instances
