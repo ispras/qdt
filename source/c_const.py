@@ -72,6 +72,11 @@ int_prefixes = {
 
 class CINT(CConst):
     def __init__(self, value, base = 10, digits = 0):
+        """
+:param digits:
+    Minimum amount of digits in the number. Prefixes like "0x" and "0b" and
+    "-" (negative sign) are not accounted.
+        """
         self.b, self.d = base, digits
         self.set(value)
 
@@ -137,7 +142,7 @@ class CINT(CConst):
         if isinstance(v, CINT):
             return (self.v, self.b, self.d) == (v.v, v.b, v.d)
         elif isinstance(v, int):
-            if self.d == 0 and self.b == 10:
+            if self.d <= len(str(abs(v))) and self.b == 10:
                 return self.v == v
             # else:
                 # `int` does not have appearance information. So, if this CINT
@@ -264,7 +269,7 @@ def p_p00(p):
 def p_pd(p):
     """uint : HEX_PREFIX hex
             | BIN_PREFIX BIN"""
-    p[0] = CINT(int(p[2], base = p[1]), p[1])
+    p[0] = CINT(int(p[2], base = p[1]), p[1], len(p[2]))
 
 def p_0d(p):
     "uint : LEADING_ZEROS dec"
@@ -272,13 +277,11 @@ def p_0d(p):
 
 def p_00(p):
     "uint : LEADING_ZEROS"
-    # Single zero have no "leading zeros".
-    zeros = p[1]
-    p[0] = CINT(0, 10, 0 if zeros == 1 else zeros)
+    p[0] = CINT(0, 10, p[1])
 
 def p_d(p):
     "uint : dec"
-    p[0] = CINT(int(p[1]))
+    p[0] = CINT(int(p[1]), digits = len(p[1]))
 
 def p_digits(p):
     """dec : BIN
