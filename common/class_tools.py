@@ -16,12 +16,13 @@ def get_class(full_class_name):
     module, class_name = ".".join(segments[:-1]), segments[-1]
     return getattr(import_module(module), class_name)
 
-def gen_class_args(full_class_name):
+def gen_class_args(Class):
     """ The function returns lists of positional and key word arguments of
 class constructor.
     """
 
-    Class = get_class(full_class_name)
+    if isinstance(Class, str):
+        Class = get_class(Class)
 
     all_vars = Class.__init__.__code__.co_varnames
     # Get all arguments without "self".
