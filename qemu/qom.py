@@ -35,6 +35,7 @@ from six import (
     integer_types
 )
 from common import (
+    same_attrs,
     same,
     OrderedSet,
     is_pow2,
@@ -317,6 +318,13 @@ class Register(object):
         if warbits is None:
             warbits = 0
         self.warbits = CINT(warbits, 2, size * 8)
+
+    def __same__(self, o):
+        if not isinstance(o, Register):
+            return False
+        return same_attrs(self, o, "name", "access", "reset", "full_name",
+            "wmask", "warbits"
+        )
 
     def __repr__(self, *args, **kwargs):
         # TODO: adapt and utilize PyGenerator.gen_args for this use case
