@@ -7,6 +7,7 @@ __all__ = [
 ]
 
 from common import (
+    get_default_args,
     mlget as _,
     get_class,
     gen_class_args,
@@ -34,6 +35,10 @@ from copy import (
 from source import (
     CConst
 )
+from .qom import (
+    Register
+)
+
 
 class ProjectOperation(InverseOperation):
 
@@ -95,6 +100,77 @@ basic_types = [
 def basic_import_helper(val, helper):
     return type(val)(val)
 
+def dict_import_helper(val, helper):
+    return dict((k, helper.import_value(v)) for k, v in val.items())
+
+def dict_export_helper(val, helper):
+    return dict((k, helper.export_value(*v)) for k, v in val.items())
+
+def list_import_helper(val, helper):
+    return tuple(map(helper.import_value, val))
+
+def list_export_helper(val, helper):
+    return list(map(lambda v: helper.export_value(*v), val))
+
+def object_import_helper(origin, helper):
+    Class = type(origin)
+
+    try:
+        import_method = Class.__get_init_arg_val__
+    except AttributeError:
+        import_method = getattr
+
+    al, kwl = gen_class_args(Class)
+
+    args = []
+    for attr_name in al:
+        try:
+            val = import_method(origin, attr_name)
+        except AttributeError:
+            raise Exception(
+                "Cannot import value of argument with name '%s'" % attr_name
+            )
+
+        try:
+            valdesc = helper.import_value(val)
+        except QemuObjectCreationHelper.CannotImport:
+            print("skipping %s of type %s" % (attr_name, type(val).__name__))
+            continue
+
+        args.append(valdesc)
+
+    # TODO: use `get_class_total_args`
+    def_args = get_default_args(Class.__init__)
+
+    kw = {}
+    for attr_name in kwl:
+        try:
+            val = import_method(origin, attr_name)
+        except AttributeError:
+            # values of arguments with defaults are not important enough.
+            continue
+
+        # do not store default values
+        if def_args[attr_name] == val:
+            continue
+
+        try:
+            valdesc = helper.import_value(val)
+        except QemuObjectCreationHelper.CannotImport:
+            print("skipping %s of type %s" % (attr_name, type(val).__name__))
+            continue
+
+        kw[attr_name] = valdesc
+
+    return dict(args = args, kw = kw, Class = Class.__name__)
+
+def object_export_helper(val, helper):
+    args = [ helper.export_value(*v) for v in val["args"] ]
+    kw = dict(((n, helper.export_value(*v)) for n, v in val["kw"].items()))
+    Class = get_class("qemu." + val["Class"])
+    return Class(*args, **kw)
+
+
 class QemuObjectCreationHelper(object):
     """ The class helps implement Qemu model object creation operations. It
     automates handling of arguments for __init__ method of created objects.
@@ -146,9 +222,16 @@ choose the helper.
 slot of the tuple) is not restricted.
     """
 
-    value_export_helpers = {}
+    value_export_helpers = {
+        list: list_export_helper,
+        dict: dict_export_helper,
+        Register: object_export_helper
+    }
 
     value_import_helpers = {
+        list: list_import_helper,
+        dict: dict_import_helper,
+        Register: object_import_helper,
         type(None): none_import_hepler,
         CConst: cconst_import_helper
     }
