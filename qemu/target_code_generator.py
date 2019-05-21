@@ -271,10 +271,12 @@ filling in arch creation code
             shift_val = var_len * BYTE_SIZE - (cur_offset + oper.length)
 
         if shift_val < 0:
+            # TODO: replace >> with <<?
             raise ValueError()
 
         res = OpAnd(
             OpRShift(var, shift_val) if shift_val else var,
+            # TODO: is binary mask more convenient?
             CINT((1 << oper.length) - 1, base = 16)
         )
 
