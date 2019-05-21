@@ -16,8 +16,8 @@
 # It is not theoretically necessary but it forces user to follow well
 # workflow.
 #
-# This is prof-of-concept implementation mostly because of the QDC is not
-# implemented external configuration yet. The script should evolve with QDC.
+# This is prof-of-concept implementation mostly because of the QDT is not
+# implemented external configuration yet. The script should evolve with QDT.
 
 # Extra parameters
 
@@ -27,7 +27,7 @@ else
     QemuSrc="$QDT_QEMU_SRC"
 fi
 
-QDCSuffix="qemu_device_creator.py"
+QDTSuffix="qemu_device_creator.py"
 
 # Constants
 BranchRegEx="^[a-zA-Z_][a-zA-Z_0-9]*$"
@@ -47,7 +47,7 @@ fi
 if [ "$3" == "" ] ; then
     echo "No commit message was provided (3-rd argument). Default one will be \
 used."
-    Msg="QDC auto commit"
+    Msg="QDT auto commit"
 else
     Msg="$3"
 fi
@@ -68,11 +68,11 @@ if ! [ "${GitStatus}" == "" ] ; then
     exit 1
 fi
 
-Tag="${1}_QDC"
+Tag="${1}_QDT"
 StartTag="${Tag}_start"
 LastTag="${Tag}_last"
 DirName=`dirname "$0"`
-QDC="$DirName/$QDCSuffix"
+QDT="$DirName/$QDTSuffix"
 
 CurrentBranch=`_git rev-parse --abbrev-ref HEAD`
 #echo "$CurrentBranch"
@@ -92,7 +92,7 @@ if [ "$BranchExists" == "" ] ; then
 
     if _git branch "$1" ; then
         if _git checkout "$1" ; then
-            if python "$QDC" "$2" ; then
+            if python "$QDT" "$2" ; then
                 if _git add -A ; then
                     if _git commit -m "$Msg" ; then
                         if _git tag "$LastTag" ; then
@@ -111,9 +111,9 @@ Automatic update will fail. Manual recovery is needed!"
                     echo "Cannot add generated code to index."
                 fi
             else
-                echo "QDC have failed."
+                echo "QDT have failed."
             fi
-            # Remove changes made by QDC script (they could be made even in
+            # Remove changes made by QDT script (they could be made even in
             # case of error).
             _git checkout .
             git clean -f 
@@ -128,13 +128,13 @@ Automatic update will fail. Manual recovery is needed!"
 else
     echo "Update."
 
-    NewBase="${1}_QDC_tmp"
-    PreviousBase="${1}_QDC_tmp2"
+    NewBase="${1}_QDT_tmp"
+    PreviousBase="${1}_QDT_tmp2"
 
     if _git checkout "$StartTag" ; then
         if _git branch "$NewBase" ; then
             if _git checkout "$NewBase" ; then
-                if python "$QDC" "$2" ; then
+                if python "$QDT" "$2" ; then
                     if _git add -A ; then
                         if _git commit -m "$Msg" ; then
 if _git checkout -b "$PreviousBase" "$LastTag" ; then
@@ -180,7 +180,7 @@ fi
                         echo "Cannot stage changes."
                     fi
                 else
-                    echo "QDC have failed."
+                    echo "QDT have failed."
                 fi
                 _git checkout .
                 git clean -f 
