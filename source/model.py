@@ -1647,6 +1647,20 @@ class TypesCollector(TypeReferencesVisitor):
             raise BreakVisiting()
 
 
+class GlobalsCollector(NodeVisitor):
+
+    def __init__(self, code):
+        super(GlobalsCollector, self).__init__(code)
+        self.used_globals = set()
+
+    def on_visit(self):
+        cur = self.cur
+        if (    isinstance(cur, Variable)
+            and (cur.declarer is not None or cur.definer is not None)
+        ):
+            self.used_globals.add(cur)
+
+
 class ForwardDeclarator(TypeReferencesVisitor):
     """ This visitor detects a cyclic type dependency and replaces the
     structure declaration with a forward declaration of the structure
