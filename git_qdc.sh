@@ -20,7 +20,13 @@
 # implemented external configuration yet. The script should evolve with QDC.
 
 # Extra parameters
-QemuSrc="/home/real/work/qemu/src"
+
+if [ "$QDT_QEMU_SRC" == "" ] ; then
+    QemuSrc="$HOME/work/qemu/src"
+else
+    QemuSrc="$QDT_QEMU_SRC"
+fi
+
 QDCSuffix="qemu_device_creator.py"
 
 # Constants
