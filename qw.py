@@ -1248,9 +1248,6 @@ description for QDT project.
         self.proxy.commit()
 
 
-re_qemu_system_x = compile(".*qemu-system-.+$")
-
-
 class QArgumentParser(ArgumentParser):
 
     def error(self, *args, **kw):
