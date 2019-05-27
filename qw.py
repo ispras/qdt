@@ -47,9 +47,6 @@ from argparse import (
 from sys import (
     stderr
 )
-from multiprocessing import (
-    Process
-)
 from os import (
     remove,
     system
@@ -76,6 +73,9 @@ from traceback import (
 )
 from threading import (
     Thread
+)
+from subprocess import (
+    Popen
 )
 # use ours pyrsp
 with pypath("pyrsp"):
@@ -1467,13 +1467,9 @@ def main():
 
         qemu_debug_addr = "localhost:%u" % port
 
-        qemu_proc = Process(
-            target = system,
-            # XXX: if there are spaces in arguments this code will not work.
-            args = (" ".join(["gdbserver", qemu_debug_addr] + qemu_cmd_args),)
+        qemu_proc = Popen(
+            ["gdbserver", qemu_debug_addr] + qemu_cmd_args
         )
-
-        qemu_proc.start()
     else:
         port = args.port
         qemu_debug_addr = qemu_debug_addr_fmt % port
@@ -1518,7 +1514,7 @@ def main():
     qomtr.to_file("qom-by-q.i.dot")
 
     if qemu_proc is not None:
-        qemu_proc.join()
+        qemu_proc.wait()
 
     if gvl_adptr is not None:
         gvl_adptr.cm.store_cache()
