@@ -951,6 +951,8 @@ class Structure(Type):
 
         self.fields[v_name] = variable
 
+        ForwardDeclarator(variable).visit()
+
     def append_fields(self, fields):
         for v in fields:
             self.append_field(v)
