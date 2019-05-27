@@ -919,6 +919,19 @@ class Structure(Type):
     def __init__(self, name, *fields):
         super(Structure, self).__init__(name, incomplete = False)
 
+        # A `struct`ure may have a forward declaration: a `typedef` construct
+        # without fields.
+        #
+        # typedef struct AStructure AStructure;
+        #
+        # If it does, the "full" declaration must not have `typedef` keyword.
+        # Else, because of Qemu coding style (not C syntax), the full
+        # declaration must have the keyword. Mostly because, `struct` keyword
+        # is not required for variable type specification in that case.
+
+        # Only one of those attributes may be non-`None`. If `_definition` is
+        # not `None`, then `self` is forward declaration. Else, it's  "full"
+        # definition (with a declaration or without).
         self.declaration = None
         self._definition = None
 
@@ -978,9 +991,19 @@ class Structure(Type):
         fields_indent = "    "
         indent = ""
 
-        struct_begin = StructureTypedefDeclarationBegin(self, indent)
+        if self._definition is not None:
+            return [StructureForwardDeclaration(self, indent)]
 
-        struct_end = StructureTypedefDeclarationEnd(self, fields_indent, indent, True)
+        if self.declaration is None:
+            struct_begin = StructureTypedefDeclarationBegin(self, indent)
+            struct_end = StructureTypedefDeclarationEnd(self, fields_indent,
+                indent, True
+            )
+        else:
+            struct_begin = StructureDeclarationBegin(self, indent)
+            struct_end = StructureDeclarationEnd(self, fields_indent,
+                indent, True
+            )
 
         """
         References map of structure definition chunks:
