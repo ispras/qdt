@@ -8,7 +8,12 @@ from qdt import (
     Register
 )
 from common import (
+    History,
+    HistoryTracker,
     same
+)
+from qemu import (
+    POp_DelDesc
 )
 
 
@@ -32,6 +37,17 @@ class InvOpTest(TestCase):
     def test_equality(self):
         self.assertTrue(same(gen_proj(), gen_proj()))
 
+    def test_description_deletion(self):
+        ht = HistoryTracker(gen_proj(), History())
+        ht.stage(POp_DelDesc, 0)
+
+        p2 = gen_proj()
+        self.assertTrue(same(ht.ctx, p2))
+
+        ht.commit()
+        ht.undo()
+
+        self.assertTrue(same(ht.ctx, p2))
 
 if __name__ == "__main__":
     main()
