@@ -793,6 +793,7 @@ class Type(object):
         base = False
     ):
         self.name = name
+        self.c_name = name.split('.', 1)[0]
         self.incomplete = incomplete
         self.definer = None
         self.base = base
@@ -876,6 +877,7 @@ class TypeReference(Type):
 
         # super(TypeReference, self).__init__(_type.name, _type.incomplete)
         self.name = _type.name
+        self.c_name = _type.c_name
         self.incomplete = _type.incomplete
         self.base = _type.base
         self.type = _type
@@ -1286,6 +1288,9 @@ class Pointer(Type):
             name = _type.name + '*'
             if const:
                 name = "const@b" + name
+            c_name = _type.c_name + '*'
+            if const:
+                c_name = "const@b" + c_name
 
         # do not add nameless pointers to type registry
         if self.is_named:
@@ -1295,6 +1300,7 @@ class Pointer(Type):
             )
         else:
             self.name = name
+            self.c_name = c_name
             self.incomplete = False
             self.base = False
 
@@ -1468,6 +1474,7 @@ class MacroType(Type):
             # do not add nameless macrotypes to type registry
             self.is_named = False
             self.name = _macro.gen_usage_string(initializer)
+            self.c_name = self.name
             self.incomplete = False
             self.base = False
 
