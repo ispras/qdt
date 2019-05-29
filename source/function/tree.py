@@ -520,17 +520,31 @@ class Declare(SemicolonPresence):
         super(Declare, self).__init__(children = variables)
 
     def add_child(self, child):
-        super(Declare, self).add_child(child)
-
         if isinstance(child, OpDeclareAssign):
             if not isinstance(child.children[0], Variable):
                 raise TypeError(
                     "Wrong child type: expected Variable"
                 )
-        elif not isinstance(child, Variable):
+            var = child.children[0]
+        elif isinstance(child, Variable):
+            var = child
+        else:
             raise TypeError(
                 "Wrong child type: expected Variable or OpDeclareAssign"
             )
+
+        if self.children:
+            first_child = self.children[0]
+            if isinstance(first_child, OpDeclareAssign):
+                v = first_child.children[0]
+            else:
+                v = first_child
+            if v.full_deref != var.full_deref:
+                raise TypeError(
+                    "All variables in Declare must have the same type"
+                )
+
+        super(Declare, self).add_child(child)
 
     def __c__(self, writer):
         child = self.children[0]
@@ -544,8 +558,7 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        v_type = v.full_deref
-        writer.write(v_type.c_name + "@b" + v.asterisks)
+        writer.write(v.full_deref.c_name + "@b" + v.asterisks)
         self._write_child(child, writer)
 
         for child in self.children[1:]:
@@ -553,11 +566,6 @@ class Declare(SemicolonPresence):
                 v = child.children[0]
             else:
                 v = child
-
-            if v.full_deref is not v_type:
-                raise TypeError(
-                    "All variable in Declare must have the same type"
-                )
 
             writer.write(",@s" + v.asterisks)
             self._write_child(child, writer)
