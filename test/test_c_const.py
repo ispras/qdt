@@ -43,6 +43,18 @@ class CINTTest(CConstTest):
     expected_type = CINT
 
 
+class RegularIntTest(CINTTest):
+    """ `CINT` assumes decimal representation of `int` without leading zeros to
+be regular. A regular CINT is assumed to be equal to a same valued `int`
+ignoring the absence of an appearance information.
+    """
+
+    def test(self):
+        super(RegularIntTest, self).test()
+
+        self.assertEqual(self.parsed, self.parsed.v)
+
+
 class PositiveHexTest(CINTTest, TestCase):
     data = "0x1F000"
 
@@ -51,15 +63,15 @@ class NegativeHexTest(CINTTest, TestCase):
     data = "-0xDEADBEEF"
 
 
-class PositiveDecimalTest1(CINTTest, TestCase):
+class PositiveDecimalTest1(RegularIntTest, TestCase):
     data = "1"
 
 
-class PositiveDecimalTest2(CINTTest, TestCase):
+class PositiveDecimalTest2(RegularIntTest, TestCase):
     data = "1223235324"
 
 
-class NegativeDecimalTest(CINTTest, TestCase):
+class NegativeDecimalTest(RegularIntTest, TestCase):
     data = "-1"
 
 
@@ -83,7 +95,7 @@ class BinZeroTest(CINTTest, TestCase):
     data = "0b0"
 
 
-class DecimalZeroTest(CINTTest, TestCase):
+class DecimalZeroTest(RegularIntTest, TestCase):
     data = "0"
 
 
