@@ -233,7 +233,7 @@ class Register(object):
         warbits = None
     ):
         self.size, self.name, self.access = size, name, access
-        self.reset = None if reset is None else CINT(reset, 16, size)
+        self.reset = None if reset is None else CINT(reset, 16, size * 2)
         self.full_name = full_name
 
         if wmask is None:
@@ -268,7 +268,7 @@ class Register(object):
             ret += ", access = " + repr(access)
 
         reset = self.reset
-        if reset != CINT(0, 16, size):
+        if reset != CINT(0, 16, size * 2):
             ret += ", reset = " + repr(reset)
 
         fn = self.full_name
