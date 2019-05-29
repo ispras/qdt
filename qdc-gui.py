@@ -40,6 +40,8 @@ from qemu import (
     QemuVersionDescription
 )
 from six.moves.tkinter import (
+    NORMAL,
+    DISABLED,
     END,
     IntVar
 )
@@ -282,7 +284,7 @@ show it else hide it.")
         filemenu.add_cascade(
             label = _("Recent projects"),
             menu = recentmenu,
-            state = "disabled" # a user settings instance is required
+            state = DISABLED # a user settings instance is required
         )
 
         filemenu.add_separator()
@@ -421,7 +423,7 @@ show it else hide it.")
 
         self.filemenu.entryconfigure(
             self.filemenu.index(_("Recent projects").get()),
-            state = "active" if added else "disabled"
+            state = "active" if added else DISABLED
         )
 
     def __on_task_state_changed(self, task):
@@ -485,17 +487,17 @@ show it else hide it.")
 
         self.hk.set_enabled(self.redo, can_do)
         if can_do:
-            self.editmenu.entryconfig(self.redo_idx, state = "normal")
+            self.editmenu.entryconfig(self.redo_idx, state = NORMAL)
         else:
-            self.editmenu.entryconfig(self.redo_idx, state = "disabled")
+            self.editmenu.entryconfig(self.redo_idx, state = DISABLED)
 
         can_undo = self.pht.can_undo()
 
         self.hk.set_enabled(self.undo, can_undo)
         if can_undo:
-            self.editmenu.entryconfig(self.undo_idx, state = "normal")
+            self.editmenu.entryconfig(self.undo_idx, state = NORMAL)
         else:
-            self.editmenu.entryconfig(self.undo_idx, state = "disabled")
+            self.editmenu.entryconfig(self.undo_idx, state = DISABLED)
 
     def set_current_file_name(self, file_name = None):
         if file_name is None:
