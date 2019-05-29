@@ -873,13 +873,17 @@ class TypeReference(Type):
                 " another type reference %s." % _type
             )
 
-        # super(TypeReference, self).__init__(_type.name, _type.incomplete)
-        self.name = _type.name
-        self.c_name = _type.c_name
-        self.incomplete = _type.incomplete
-        self.base = _type.base
-        self.type = _type
+        # Do not pass name to Type.__init__ to prevent TypeReference addition
+        # to the registry.
+        super(TypeReference, self).__init__(
+            incomplete = _type.incomplete,
+            base = _type.base
+        )
 
+        if _type.is_named:
+            self.name = _type.name
+        self.c_name = _type.c_name
+        self.type = _type
         self.definer_references = None
 
     def get_definers(self):
