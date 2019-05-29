@@ -862,6 +862,9 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return self.name
+
 
 class TypeReference(Type):
 
@@ -915,6 +918,9 @@ class TypeReference(Type):
 
     def __hash__(self):
         return hash(self.type)
+
+    def __str__(self):
+        return str(self.type)
 
 
 class Structure(Type):
@@ -1364,6 +1370,12 @@ chunk. The references is to be added to `users` of the 'typedef'.
             stars += "*"
         return hash(hash(t) + hash(stars))
 
+    def __str__(self):
+        if self.is_named:
+            return super(Pointer, self).__str__()
+        else:
+            return "pointer to %s" % self.type
+
     __type_references__ = ["type"]
 
 
@@ -1489,6 +1501,12 @@ class MacroType(Type):
             return [ch]
         else:
             return refs
+
+    def __str__(self):
+        if self.is_named:
+            return super(MacroType, self).__str__()
+        else:
+            return "macro type from %s" % self.macro
 
     __type_references__ = ["macro", "initializer"]
 
@@ -1658,6 +1676,9 @@ class Variable(object):
             writer.write("[%d]" % self.array_size)
         if not self.used:
             writer.write("@b__attribute__((unused))")
+
+    def __str__(self):
+        return self.name
 
     __type_references__ = ["type", "initializer"]
 
