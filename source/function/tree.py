@@ -548,7 +548,7 @@ class Declare(SemicolonPresence):
             v_type = v_type.type
             asterisks += "*"
         writer.write(v_type.c_name + asterisks)
-        child.__c__(writer)
+        self._write_child(child, writer)
 
         for child in self.children[1:]:
             if isinstance(child, OpAssign):
@@ -568,6 +568,24 @@ class Declare(SemicolonPresence):
                 )
 
             writer.write(",@s" + asterisks)
+            self._write_child(child, writer)
+
+    @staticmethod
+    def _write_child(child, writer):
+        if isinstance(child, Variable):
+            if child.array_size is not None:
+                if not child.used:
+                    writer.write("__attribute__((unused))@b")
+                child.__c__(writer)
+                writer.write("[%d]" % child.array_size)
+            else:
+                child.__c__(writer)
+                if not child.used:
+                    writer.write("@b__attribute__((unused))")
+            if child.initializer:
+                writer.write("@b=@s")
+                writer.write(child.type.gen_usage_string(child.initializer))
+        else:
             child.__c__(writer)
 
 
