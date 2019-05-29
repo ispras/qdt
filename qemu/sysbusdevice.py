@@ -182,12 +182,12 @@ class SysBusDeviceType(QOMDevice):
                 continue
             qtn = QemuTypeName(name)
 
-            s_is_used = True
-
-            reg_resets.append("s->%s@b=@s%s;" % (
-                qtn.for_id_name,
-                reg.reset.gen_c_code()
-            ))
+            if reg.reset is not None:
+                reg_resets.append("s->%s@b=@s%s;" % (
+                    qtn.for_id_name,
+                    reg.reset.gen_c_code()
+                ))
+                s_is_used = True
 
             warb = reg.warbits
             if warb.v:
@@ -208,12 +208,14 @@ class SysBusDeviceType(QOMDevice):
                         cast,
                         warb.gen_c_code()
                     ))
+                    s_is_used = True
                 elif wm.v:
                     reg_resets.append("s->%s_war@b=@s%s@s&@b~%s;" % (
                         qtn.for_id_name,
                         wm.gen_c_code(),
                         warb.gen_c_code()
                     ))
+                    s_is_used = True
 
         self.device_reset = Function(
         "%s_reset" % self.qtn.for_id_name,
