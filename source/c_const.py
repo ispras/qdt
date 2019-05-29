@@ -9,6 +9,9 @@ if __name__ == "__main__":
 else:
     from .c_str_adapter import str2c
 
+from math import (
+    log
+)
 from string import (
     digits,
     ascii_uppercase
@@ -29,7 +32,7 @@ class CConst(object):
     @staticmethod
     def parse(s):
         try:
-            return parser.parse(s)
+            return parser.parse(s, lexer = lexer)
         except (QCParserError, QCLexerError):
             return CSTR(s)
 
@@ -72,6 +75,11 @@ int_prefixes = {
 
 class CINT(CConst):
     def __init__(self, value, base = 10, digits = 0):
+        """
+:param digits:
+    Minimum amount of digits in the number. Prefixes like "0x" and "0b" and
+    "-" (negative sign) are not accounted.
+        """
         self.b, self.d = base, digits
         self.set(value)
 
@@ -82,8 +90,10 @@ class CINT(CConst):
         if isinstance(value, integer_types):
             self.v = value
         elif isinstance(value, str):
+            if value == "":
+                raise ValueError("No integer can be an empty string")
             try:
-                new = parser.parse(value)
+                new = parser.parse(value, lexer = lexer)
             except (QCParserError, QCLexerError):
                 # an integer may be given by a macro
                 self.v = value
@@ -131,22 +141,52 @@ class CINT(CConst):
     __str__ = gen_c_code
 
     __hash__ = CConst.__hash__
-    def __eq__(self, v):
-        if isinstance(v, CINT):
-            return (self.v, self.b, self.d) == (v.v, v.b, v.d)
-        elif isinstance(v, int):
-            if self.d == 0 and self.b == 10:
-                return self.v == v
+    def __eq__(self, o):
+        v, b, d = self.v, self.b, self.d
+        if isinstance(o, CINT):
+            if (v, b) != (o.v, o.b):
+                return False
+
+            if isinstance(v, str):
+                # value is a macro, digits amount is not significant
+                return True
+
+            # digits amount are equal iff both resulting in the same string
+            # from of number.
+            min_digits = self.min_digits
+            if min_digits < d:
+                # There is at least one leading zero, amount of leading zeros
+                # must be equal
+                return d == o.d
+            else:
+                # self has no leading zeros, the other must too
+                return o.d <= min_digits
+        elif isinstance(o, int):
+            if d <= len(str(abs(o))) and b == 10:
+                return v == o
             # else:
                 # `int` does not have appearance information. So, if this CINT
                 # has non-default settings, it is assumed to be not equal.
                 # Fall to `return` False.
-        elif isinstance(v, str):
+        elif isinstance(o, str):
             # Reminder that an integer can be given by a macro.
-            return self.v == v
+            return v == o
 
         # Some other type
         return False
+
+    @property
+    def min_digits(self):
+        v = self.v
+        if v:
+            if isinstance(v, str):
+                raise RuntimeError(
+                    "No minimum digits count is defined for a macro"
+                )
+            return int(log(v, self.b)) + 1
+        else:
+            # log(0) is a math error. Zero requires 1 digit to display.
+            return 1
 
 
 class CSTR(CConst):
@@ -262,7 +302,7 @@ def p_p00(p):
 def p_pd(p):
     """uint : HEX_PREFIX hex
             | BIN_PREFIX BIN"""
-    p[0] = CINT(int(p[2], base = p[1]), p[1])
+    p[0] = CINT(int(p[2], base = p[1]), p[1], len(p[2]))
 
 def p_0d(p):
     "uint : LEADING_ZEROS dec"
@@ -274,7 +314,7 @@ def p_00(p):
 
 def p_d(p):
     "uint : dec"
-    p[0] = CINT(int(p[1]))
+    p[0] = CINT(int(p[1]), digits = len(p[1]))
 
 def p_digits(p):
     """dec : BIN
@@ -289,31 +329,3 @@ tokens = tuple(gen_tokens(globals()))
 # Build lexer and parser
 lexer = lex()
 parser = yacc()
-
-if __name__ == "__main__":
-    print(tokens)
-
-    for data, expected in [
-        ("0x1F000", CINT),
-        ('''an arbitrary
-string with new line and quoted "@" and Windows\r\nnewline''', CSTR),
-        ("-1", CINT),
-        ("1", CINT),
-        ("0x0001", CINT),
-        ("0b01011010101", CINT),
-        ("1223235324", CINT),
-        ("0b00000", CINT),
-        ("0", CINT),
-        ("0x000", CINT),
-        ("0b0", CINT),
-        ("0x0", CINT),
-        ("-0xDEADBEEF", CINT)
-    ]:
-        print("== " + data + " ==")
-        q = CConst.parse(data)
-        if type(q) is not expected:
-            raise AssertionError("%s / %s" % (type(q), expected))
-        res = str(q)
-        print(res, repr(q))
-        print(q.gen_c_code())
-        assert res == data
