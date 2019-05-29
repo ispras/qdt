@@ -231,7 +231,7 @@ class Source(object):
     def add_global_variable(self, var):
         if var.name in self.global_variables:
             raise RuntimeError("Variable with name %s is already in file %s"
-                % (var.name, self.name)
+                % (var, self.name)
             )
 
         TypeFixerVisitor(self, var).visit()
@@ -256,8 +256,8 @@ class Source(object):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
                                 " defined in non-header file {file}".format(
-                                var = var.name,
-                                t = t.name,
+                                var = var,
+                                t = t,
                                 file = s.path
                             ))
                         self.add_inclusion(s)
@@ -302,7 +302,7 @@ class Source(object):
                 if not t.type.definer == type_ref.type.definer:
                     raise RuntimeError("Conflict reference to type %s found in"
                         " source %s. The type is defined both in %s and %s"
-                        % (t.name, self.path, type_ref.type.definer.path,
+                        % (t, self.path, type_ref.type.definer.path,
                             t.type.definer.path
                         )
                     )
@@ -321,7 +321,7 @@ class Source(object):
     def add_type(self, _type):
         if isinstance(_type, TypeReference):
             raise ValueError("A type reference (%s) cannot be added to a"
-                " source (%s) externally" % (_type.name, self.path)
+                " source (%s) externally" % (_type, self.path)
             )
 
         TypeFixerVisitor(self, _type).visit()
@@ -417,7 +417,7 @@ switching to that mode.
 
             if t.definer is not self:
                 raise RuntimeError("Type %s is defined in %s but presented in"
-" %s not by a reference." % (t.name, t.definer.path, self.path)
+" %s not by a reference." % (t, t.definer.path, self.path)
                 )
 
             gen.provide_chunks(t)
@@ -685,7 +685,7 @@ class Header(Source):
         if type_ref.type.definer == self:
             raise AddTypeRefToDefinerException(
 "Adding a type reference (%s) to a file (%s) defining the type" % (
-    type_ref.type.name, self.path
+    type_ref.type, self.path
 )
             )
 
@@ -799,7 +799,7 @@ class Type(object):
         if self.incomplete:
             if not pointer:
                 raise ValueError("Cannon create non-pointer variable %s"
-                    " of incomplete type %s." % (name, self.name)
+                    " of incomplete type %s." % (name, self)
                 )
 
         if pointer:
@@ -825,7 +825,7 @@ class Type(object):
 
     def gen_chunks(self, generator):
         raise ValueError("Attempt to generate source chunks for stub"
-            " type %s" % self.name
+            " type %s" % self
         )
 
     def gen_defining_chunk_list(self, generator, **kw):
@@ -858,7 +858,7 @@ class TypeReference(Type):
     def __init__(self, _type):
         if isinstance(_type, TypeReference):
             raise ValueError("Attempt to create type reference to"
-                " another type reference %s." % _type.name
+                " another type reference %s." % _type
             )
 
         # super(TypeReference, self).__init__(_type.name, _type.incomplete)
@@ -876,7 +876,7 @@ class TypeReference(Type):
         if self.definer_references is None:
             raise RuntimeError("Attempt to generate chunks for reference to"
                 " type %s without the type reference adjusting"
-                " pass." % self.name
+                " pass." % self
             )
 
         inc = HeaderInclusion(self.type.definer)
@@ -891,7 +891,7 @@ class TypeReference(Type):
 
     def gen_var(self, *args, **kw):
         raise ValueError("Attempt to generate variable of type %s"
-            " using a reference" % self.type.name
+            " using a reference" % self.type
         )
 
     def gen_usage_string(self, initializer):
@@ -935,7 +935,7 @@ class Structure(Type):
     def get_definers(self):
         if self.definer is None:
             raise RuntimeError("Getting definers for structure %s that is not"
-                " added to a source", self.name
+                " added to a source", self
             )
 
         definers = [self.definer]
@@ -953,7 +953,7 @@ class Structure(Type):
         v_name = variable.name
         if v_name in self.fields:
             raise RuntimeError("A field with name %s already exists in"
-                " the structure %s" % (v_name, self.name)
+                " the structure %s" % (v_name, self)
             )
 
         self.fields[v_name] = variable
@@ -1397,7 +1397,7 @@ class MacroType(Type):
     ):
         if not isinstance(_macro, Macro):
             raise ValueError("Attempt to create macrotype from "
-                " %s which is not macro." % _macro.name
+                " %s which is not macro." % _macro
             )
         if is_usage or (name is not None):
             self.is_named = True
@@ -1920,7 +1920,7 @@ class MacroDefinition(SourceChunk):
             args_txt += macro.args[-1] + ')'
 
         super(MacroDefinition, self).__init__(macro,
-            "Definition of macro %s" % macro.name,
+            "Definition of macro %s" % macro,
             "%s#define %s%s%s" % (
                 indent,
                 macro.name,
@@ -1936,7 +1936,7 @@ class PointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(PointerTypeDeclaration, self).__init__(_type,
-            "Definition of pointer to type " + _type.name,
+            "Definition of pointer to type %s" % _type,
             "typedef@b" + _type.name + "@b" + def_name + ";\n"
         )
 
@@ -1947,7 +1947,7 @@ class FunctionPointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(FunctionPointerTypeDeclaration, self).__init__(_type,
-            "Definition of function pointer type " + _type.name,
+            "Definition of function pointer type %s" % _type,
             ("typedef@b"
               + gen_function_declaration_string("", _type,
                     pointer_name = def_name
@@ -1964,7 +1964,7 @@ class MacroTypeUsage(SourceChunk):
         self.initializer = initializer
 
         super(MacroTypeUsage, self).__init__(macro,
-            "Usage of macro type " + macro.name,
+            "Usage of macro type %s" % macro,
             code = indent + macro.gen_usage_string(initializer)
         )
 
@@ -1974,14 +1974,14 @@ class PointerVariableDeclaration(SourceChunk):
     def __init__(self, var, indent = "", extern = False):
         t = var.type.type
         super(PointerVariableDeclaration, self).__init__(var,
-            "Declaration of pointer %s to type %s" % (var.name, t.name),
+            "Declaration of pointer %s to type %s" % (var, t),
             """\
 {indent}{extern}{const}{type_name}@b*{var_name};
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
     type_name = t.name.split('.', 1)[0],
-    var_name = var.name,
+    var_name = var,
     extern = "extern@b" if extern else ""
             )
         )
@@ -1992,7 +1992,7 @@ class FunctionPointerDeclaration(SourceChunk):
     def __init__(self, var, indent = "", extern = False):
         t = var.type.type
         super(FunctionPointerDeclaration, self).__init__(var,
-            "Declaration of pointer %s to function %s" % (var.name, t.name),
+            "Declaration of pointer %s to function %s" % (var, t),
             """\
 {indent}{extern}{decl_str};
 """.format(
@@ -2011,17 +2011,14 @@ class VariableDeclaration(SourceChunk):
 
     def __init__(self, var, indent = "", extern = False):
         super(VariableDeclaration, self).__init__(var,
-            "Variable %s of type %s declaration" % (
-                var.name,
-                var.type.name
-            ),
+            "Variable %s of type %s declaration" % (var, var.type),
             """\
 {indent}{extern}{const}{type_name}@b{var_name}{array_decl};
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
     type_name = var.type.name.split('.', 1)[0],
-    var_name = var.name,
+    var_name = var,
     array_decl = gen_array_declaration(var.array_size),
     extern = "extern@b" if extern else ""
             )
@@ -2047,9 +2044,7 @@ class VariableDefinition(SourceChunk):
                 init_code += "\n" + indent + line
 
         super(VariableDefinition, self).__init__(var,
-            "Variable %s of type %s definition" % (
-                var.name, var.type.name
-            ),
+            "Variable %s of type %s definition" % (var, var.type),
             """\
 {indent}{static}{const}{type_name}{var_name}{array_decl}{used}{init}{separ}{nl}
 """.format(
@@ -2057,7 +2052,7 @@ class VariableDefinition(SourceChunk):
     static = "static@b" if var.static else "",
     const = "const@b" if var.const else "",
     type_name = "" if enum else var.type.name + "@b",
-    var_name = var.name,
+    var_name = var,
     array_decl = gen_array_declaration(var.array_size),
     used = "" if var.used else "@b__attribute__((unused))",
     init = init_code,
@@ -2071,7 +2066,7 @@ class StructureForwardDeclaration(SourceChunk):
 
     def __init__(self, struct, indent = "", append_nl = True):
         super(StructureForwardDeclaration, self).__init__(struct,
-            "Structure %s forward declaration" % struct.name,
+            "Structure %s forward declaration" % struct,
             """\
 {indent}typedef@bstruct@b{struct_name}@b{struct_name};{nl}
 """.format(
@@ -2086,7 +2081,7 @@ class StructureTypedefDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
         super(StructureTypedefDeclarationBegin, self).__init__(struct,
-            "Beginning of structure %s declaration" % struct.name,
+            "Beginning of structure %s declaration" % struct,
             """\
 {indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
@@ -2105,7 +2100,7 @@ class StructureTypedefDeclarationEnd(SourceChunk):
         append_nl = True
     ):
         super(StructureTypedefDeclarationEnd, self).__init__(struct,
-            "Ending of structure %s declaration" % struct.name,
+            "Ending of structure %s declaration" % struct,
             """\
 {indent}}}@b{struct_name};{nl}
 """.format(
@@ -2120,7 +2115,7 @@ class StructureDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent):
         super(StructureDeclarationBegin, self).__init__(struct,
-            "Beginning of structure %s declaration" % struct.name,
+            "Beginning of structure %s declaration" % struct,
             """\
 {indent}struct@b{struct_name}@b{{
 """.format(
@@ -2139,7 +2134,7 @@ class StructureDeclarationEnd(SourceChunk):
         append_nl = True
     ):
         super(StructureDeclarationEnd, self).__init__(struct,
-            "Ending of structure %s declaration" % struct.name,
+            "Ending of structure %s declaration" % struct,
             """\
 {indent}}};{nl}
 """.format(
@@ -2253,7 +2248,7 @@ class FunctionDeclaration(SourceChunk):
 
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
-            "Declaration of function %s" % function.name,
+            "Declaration of function %s" % function,
             "%s;" % gen_function_declaration_string(indent, function)
         )
 
@@ -2267,7 +2262,7 @@ class FunctionDefinition(SourceChunk):
             body += "\n"
 
         super(FunctionDefinition, self).__init__(function,
-            "Definition of function %s" % function.name,
+            "Definition of function %s" % function,
             "{dec}{body}\n".format(
                 dec = gen_function_declaration_string(indent, function),
                 body = body
