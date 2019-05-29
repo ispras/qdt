@@ -305,6 +305,12 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
     for reg in regs:
         size = reg.size
+
+        name = reg.name
+        if name is None or name == "gap":
+            offset += size
+            continue
+
         if size == 1:
             case_cond = CINT(offset, base = 16, digits = digits)
         else:
@@ -315,9 +321,8 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
         offset += size
 
         case = SwitchCase(case_cond)
-        name = reg.name
-        if name is not None:
-            case.add_child(Comment(reg.name))
+
+        case.add_child(Comment(reg.name))
 
         if access in reg.access:
             qtn = QemuTypeName(name)
