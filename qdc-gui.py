@@ -423,7 +423,7 @@ show it else hide it.")
 
         self.filemenu.entryconfigure(
             self.filemenu.index(_("Recent projects").get()),
-            state = "active" if added else DISABLED
+            state = NORMAL if added else DISABLED
         )
 
     def __on_task_state_changed(self, task):
