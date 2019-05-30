@@ -322,7 +322,11 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
         case = SwitchCase(case_cond)
 
-        case.add_child(Comment(reg.name))
+        comment = name
+        if reg.full_name: # neither `None` nor empty string
+            comment += ", " + reg.full_name
+
+        case.add_child(Comment(comment))
 
         if access in reg.access:
             qtn = QemuTypeName(name)
