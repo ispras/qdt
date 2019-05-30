@@ -16,22 +16,21 @@ def get_class(full_class_name):
     module, class_name = ".".join(segments[:-1]), segments[-1]
     return getattr(import_module(module), class_name)
 
-"""
-The function returns lists of positional and key word arguments of
-class constructor. 
-"""
-def gen_class_args(full_class_name):
-    Class = get_class(full_class_name)
+def gen_class_args(Class):
+    """ The function returns lists of positional and key word arguments of
+class constructor.
+    """
+
+    if isinstance(Class, str):
+        Class = get_class(Class)
 
     all_vars = Class.__init__.__code__.co_varnames
     # Get all arguments without "self".
     all_args = all_vars[:Class.__init__.__code__.co_argcount][1:]
 
-    """
-    The code below distinguishes positional arguments and key word
-    arguments. Assume that all key word arguments do have defaults and
-    only they do.
-    """
+    # The code below distinguishes positional arguments and key word
+    # arguments.
+    # Assume that all key word arguments do have defaults and only they do.
 
     if Class.__init__.__defaults__ is not None:
         kwarg_count = len(Class.__init__.__defaults__)
