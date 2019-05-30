@@ -362,9 +362,9 @@ arguments then it is skipped.
             try:
                 valdesc = self.import_value(val)
             except QemuObjectCreationHelper.CannotImport:
-                # print "skipping %s of type %s" % (
-                #    attr_name, type(val).__name__
-                # )
+                print("skipping %s of type %s" % (
+                    attr_name, type(val).__name__
+                ))
                 continue
 
             setattr(self, self.prefix + attr_name, valdesc)
@@ -385,9 +385,9 @@ arguments then it is skipped.
             try:
                 valdesc = self.import_value(val)
             except QemuObjectCreationHelper.CannotImport:
-                # print "skipping %s of type %s" % (
-                #    attr_name, type(val).__name__
-                # )
+                print("skipping %s of type %s" % (
+                    attr_name, type(val).__name__
+                ))
                 continue
 
             setattr(self, self.prefix + attr_name, valdesc)
