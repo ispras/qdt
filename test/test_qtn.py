@@ -47,6 +47,14 @@ class TestQTN(TestCase):
             "TYPE_DEVICE_V_2_EX"
         ))
 
+    def test_only_junk(self):
+        self.assertEqual(names("+!@#$%."), (
+            "",
+            "",
+            "",
+            "TYPE_"
+        ))
+
 
 if __name__ == "__main__":
     main()
