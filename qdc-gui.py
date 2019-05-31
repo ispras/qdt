@@ -40,6 +40,8 @@ from qemu import (
     QemuVersionDescription
 )
 from six.moves.tkinter import (
+    NORMAL,
+    DISABLED,
     END,
     IntVar
 )
@@ -204,9 +206,9 @@ show it else hide it.")
                 description = _("Save project.")
             ),
             HotKeyBinding(
-                self.rebuild_cache,
+                self.on_reload,
                 key_code = 27, # R
-                description = _("Rebuild Cache.")
+                description = _("Reload current project from file.")
             )
         ])
 
@@ -278,11 +280,17 @@ show it else hide it.")
             command = self.on_load,
             accelerator = hotkeys.get_keycode_string(self.on_load)
         ),
+        self.reload_idx = filemenu.count
+        filemenu.add_command(
+            label = _("Reload"),
+            command = self.on_reload,
+            accelerator = hotkeys.get_keycode_string(self.on_reload)
+        ),
         self.recentmenu = recentmenu = VarMenu(filemenu, tearoff = False)
         filemenu.add_cascade(
             label = _("Recent projects"),
             menu = recentmenu,
-            state = "disabled" # a user settings instance is required
+            state = DISABLED # a user settings instance is required
         )
 
         filemenu.add_separator()
@@ -421,7 +429,7 @@ show it else hide it.")
 
         self.filemenu.entryconfigure(
             self.filemenu.index(_("Recent projects").get()),
-            state = "active" if added else "disabled"
+            state = NORMAL if added else DISABLED
         )
 
     def __on_task_state_changed(self, task):
@@ -485,26 +493,30 @@ show it else hide it.")
 
         self.hk.set_enabled(self.redo, can_do)
         if can_do:
-            self.editmenu.entryconfig(self.redo_idx, state = "normal")
+            self.editmenu.entryconfig(self.redo_idx, state = NORMAL)
         else:
-            self.editmenu.entryconfig(self.redo_idx, state = "disabled")
+            self.editmenu.entryconfig(self.redo_idx, state = DISABLED)
 
         can_undo = self.pht.can_undo()
 
         self.hk.set_enabled(self.undo, can_undo)
         if can_undo:
-            self.editmenu.entryconfig(self.undo_idx, state = "normal")
+            self.editmenu.entryconfig(self.undo_idx, state = NORMAL)
         else:
-            self.editmenu.entryconfig(self.undo_idx, state = "disabled")
+            self.editmenu.entryconfig(self.undo_idx, state = DISABLED)
 
     def set_current_file_name(self, file_name = None):
         if file_name is None:
             try:
                 del self.current_file_name
             except AttributeError:
-                pass
+                pass # already deleted
+            else:
+                self.filemenu.entryconfig(self.reload_idx, state = DISABLED)
         else:
+            # TODO: watch the file in FS and auto ask user to reload
             self.current_file_name = file_name
+            self.filemenu.entryconfig(self.reload_idx, state = NORMAL)
 
         self.__update_title__()
 
@@ -841,6 +853,18 @@ all changes are saved. """
                 title = _("Project loading failed").get(),
                 message = str(e)
             )
+
+    def on_reload(self):
+        try:
+            fname = self.current_file_name
+        except AttributeError:
+            # No file is selected for the project yet
+            return
+
+        if not self.check_unsaved():
+            return
+
+        self._do_load(fname)
 
     def update_qemu_build_path(self, bp):
         if bp is None:
