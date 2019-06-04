@@ -37,7 +37,6 @@ class DeviceTreeWidget(GUIDialog):
 
         self.columnconfigure(2, minsize = 200)
 
-        self.attributes("-topmost", 1)
         geom = "+" + str(int(root.winfo_rootx())) \
              + "+" + str(int(root.winfo_rooty()))
         self.geometry(geom)
