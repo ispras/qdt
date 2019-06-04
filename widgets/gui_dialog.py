@@ -15,6 +15,9 @@ class GUIDialog(GUIToplevel):
 
         master = self.master
 
+        # Before `master` is changed during the loop below
+        self.transient(master.winfo_toplevel())
+
         self._result = None
         self._alive = True
 
@@ -41,7 +44,6 @@ class GUIDialog(GUIToplevel):
                 "Cannot found a top level window with hot key context\n"
             ).get())
 
-        self.transient(master)
         self.grab_set()
 
     def __on_destroy(self, e, **kw):
