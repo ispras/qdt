@@ -124,7 +124,7 @@ class Ifdef(Node):
 
     def __init__(self, val, *args):
         if isinstance(val, Macro):
-            val = val.name
+            val = val.c_name
         super(Ifdef, self).__init__(
             # Since the macro can be undefined and unknown to the model,
             # we refer it using its string name.
@@ -445,7 +445,7 @@ class Call(SemicolonPresence):
         if isinstance(self.func, OpSDeref):
             self.func.__c__(writer)
         else:
-            writer.write(self.type.name)
+            writer.write(self.type.c_name)
 
 
         writer.write("(@a")
@@ -496,7 +496,7 @@ class Declare(SemicolonPresence):
         while isinstance(v_type, Pointer):
             v_type = v_type.type
             asterisks += "*"
-        writer.write(v_type.name + asterisks)
+        writer.write(v_type.c_name + asterisks)
         child.__c__(writer)
 
         for child in self.children[1:]:
@@ -529,7 +529,7 @@ class MCall(SemicolonPresence):
         self.type = Type.lookup(macro)
 
     def __c__(self, writer):
-        writer.write(self.type.name)
+        writer.write(self.type.c_name)
 
         if self.children:
             writer.write("(@a")
