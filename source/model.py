@@ -1296,7 +1296,7 @@ class Pointer(Type):
         if not self.is_named:
             return refs
 
-        name = self.name
+        name = self.c_name
 
         if is_function:
             ch = FunctionPointerTypeDeclaration(type, name)
@@ -1347,11 +1347,11 @@ class Macro(Type):
 
     def gen_usage_string(self, init = None):
         if self.args is None:
-            return self.name
+            return self.c_name
         else:
             arg_val = "(@a" + ",@s".join(init[a] for a in self.args) + "@c)"
 
-        return "%s%s" % (self.name, arg_val)
+        return "%s%s" % (self.c_name, arg_val)
 
     def gen_var(self, name,
         pointer = False,
@@ -1550,7 +1550,7 @@ class Initializer(object):
         if isinstance(val, (string_types, text_type, binary_type)):
             val_str = val
         elif isinstance(val, Type):
-            val_str = val.name
+            val_str = val.c_name
         else:
             raise TypeError("Unsupported initializer entry type '%s'"
                 % type(val).__name__
@@ -1930,7 +1930,7 @@ class MacroDefinition(SourceChunk):
             "Definition of macro %s" % macro,
             "%s#define %s%s%s" % (
                 indent,
-                macro.name,
+                macro.c_name,
                 args_txt,
                 "" if macro.text is None else (" %s" % macro.text)
             )
@@ -1944,7 +1944,7 @@ class PointerTypeDeclaration(SourceChunk):
 
         super(PointerTypeDeclaration, self).__init__(_type,
             "Definition of pointer to type %s" % _type,
-            "typedef@b" + _type.name + "@b" + def_name + ";\n"
+            "typedef@b" + _type.c_name + "@b" + def_name + ";\n"
         )
 
 
@@ -1987,7 +1987,7 @@ class PointerVariableDeclaration(SourceChunk):
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
-    type_name = t.name.split('.', 1)[0],
+    type_name = t.c_name,
     var_name = var,
     extern = "extern@b" if extern else ""
             )
@@ -2024,7 +2024,7 @@ class VariableDeclaration(SourceChunk):
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
-    type_name = var.type.name.split('.', 1)[0],
+    type_name = var.type.c_name,
     var_name = var,
     array_decl = gen_array_declaration(var.array_size),
     extern = "extern@b" if extern else ""
@@ -2058,7 +2058,7 @@ class VariableDefinition(SourceChunk):
     indent = indent,
     static = "static@b" if var.static else "",
     const = "const@b" if var.const else "",
-    type_name = "" if enum else var.type.name + "@b",
+    type_name = "" if enum else var.type.c_name + "@b",
     var_name = var,
     array_decl = gen_array_declaration(var.array_size),
     used = "" if var.used else "@b__attribute__((unused))",
@@ -2078,7 +2078,7 @@ class StructureForwardDeclaration(SourceChunk):
 {indent}typedef@bstruct@b{struct_name}@b{struct_name};{nl}
 """.format(
     indent = indent,
-    struct_name = struct.name.split('.', 1)[0],
+    struct_name = struct.c_name,
     nl = "\n" if append_nl else ""
             )
         )
@@ -2093,7 +2093,7 @@ class StructureTypedefDeclarationBegin(SourceChunk):
 {indent}typedef@bstruct@b{struct_name}@b{{
 """.format(
     indent = indent,
-    struct_name = struct.name
+    struct_name = struct.c_name
             )
         )
 
@@ -2112,7 +2112,7 @@ class StructureTypedefDeclarationEnd(SourceChunk):
 {indent}}}@b{struct_name};{nl}
 """.format(
     indent = indent,
-    struct_name = struct.name,
+    struct_name = struct.c_name,
     nl = "\n" if append_nl else ""
             )
         )
@@ -2127,7 +2127,7 @@ class StructureDeclarationBegin(SourceChunk):
 {indent}struct@b{struct_name}@b{{
 """.format(
     indent = indent,
-    struct_name = struct.name
+    struct_name = struct.c_name
             )
         )
 
@@ -2205,21 +2205,16 @@ def gen_function_declaration_string(indent, function,
     else:
         args = ""
         for a in function.args:
-            args += a.type.name + "@b" + a.name
+            args += a.type.c_name + "@b" + a.name
             if not a == function.args[-1]:
                 args += ",@s"
-
-    if function.name.find(".body") != -1:
-        decl_name = function.name[:-5]
-    else:
-        decl_name = function.name
 
     return "{indent}{static}{inline}{ret_type}{name}(@a{args}@c)".format(
         indent = indent,
         static = "static@b" if function.static else "",
         inline = "inline@b" if function.inline else "",
-        ret_type = function.ret_type.name + "@b",
-        name = decl_name if pointer_name is None else (
+        ret_type = function.ret_type.c_name + "@b",
+        name = function.c_name if pointer_name is None else (
             "(*" + pointer_name + gen_array_declaration(array_size) + ')'
         ),
         args = args
