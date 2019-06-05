@@ -122,15 +122,19 @@ class CodeWriter(object):
         self.w.write(string)
 
     def push_indent(self):
+        # TODO: revert comment?
         self.s.push_indent()
 
     def pop_indent(self):
+        # TODO: revert comment?
         self.s.pop_indent()
 
     def save_indent(self, reset = True):
+        # TODO: add comment?
         self.s.save_indent(reset)
 
     def load_indent(self):
+        # TODO: add comment?
         self.s.load_indent()
 
     def add_lang(self, lang_name, indent, prefix = None):
@@ -139,7 +143,7 @@ class CodeWriter(object):
         self._langs[lang_name] = LanguageState(self, indent, prefix)
 
     def __getattr__(self, name):
-        "Tries to find undefined attributes among langs."
+        "Assume an undefined attribute to be one of language states."
 
         d = self.__dict__
         try:
