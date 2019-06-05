@@ -16,6 +16,13 @@ from source import (
     OpAdd,
     Label,
     Goto,
+    Structure,
+    Macro,
+    Initializer,
+    OpDeclareAssign,
+    BranchSwitch,
+    SwitchCase,
+    Call,
     add_base_types
 )
 from common import (
@@ -141,6 +148,254 @@ begin:
     i = i + 1;
     goto begin;
 }}
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestForwardDeclaration(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestForwardDeclaration, self).setUp()
+        name = type(self).__name__
+
+        src = Source(name.lower() + ".c")
+
+        a = Structure("A")
+        a.append_field(a.gen_var("next", pointer = True))
+
+        b = Structure("B")
+        b.append_field(a.gen_var("next", pointer = True))
+
+        src.add_types([a, b])
+
+        src_content = """\
+/* {} */
+typedef struct A A;
+
+struct A {{
+    A *next;
+}};
+
+typedef struct B {{
+    A *next;
+}} B;
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestForwardDeclarationHeader(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestForwardDeclarationHeader, self).setUp()
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h")
+        src = Source(name.lower() + ".c")
+
+        a = Structure("A")
+        a.append_field(a.gen_var("next", pointer = True))
+
+        b = Structure("B")
+        b.append_field(a.gen_var("next", pointer = True))
+
+        hdr.add_type(a)
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+typedef struct A A;
+
+struct A {{
+    A *next;
+}};
+
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        src.add_type(b)
+        src_content = """\
+/* {} */
+#include "{}"
+
+typedef struct B {{
+    A *next;
+}} B;
+
+""".format(src.path, hdr.path)
+
+        self.files = [
+            (hdr, hdr_content),
+            (src, src_content)
+        ]
+
+
+class TestMacroType(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestMacroType, self).setUp()
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h")
+        hdr.add_type(Macro("QTAIL_ENTRY", args = ["type"]))
+
+        struct = Structure("StructA")
+        struct.append_field(
+            Type["QTAIL_ENTRY"].gen_var("entry",
+                macro_initializer = Initializer({ "type":  struct })
+            )
+        )
+        struct.append_field(
+            struct.gen_var("next", pointer = True)
+        )
+        hdr.add_type(struct)
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+#define QTAIL_ENTRY(type)
+typedef struct StructA StructA;
+
+struct StructA {{
+    QTAIL_ENTRY(StructA) entry;
+    StructA *next;
+}};
+
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        self.files = [
+            (hdr, hdr_content)
+        ]
+
+
+class TestSeparateCases(FunctionTreeTestDoubleGenerationHelper, TestCase):
+
+    def setUp(self):
+        super(TestSeparateCases, self).setUp()
+
+        src = Source(type(self).__name__.lower() + ".c")
+
+        i = Type["int"].gen_var("i")
+        src.add_type(
+            Function(
+                name = "func_a",
+                body = BodyTree()(
+                    Declare(OpDeclareAssign(i, 0)),
+                    BranchSwitch(i, separate_cases = True)(
+                        SwitchCase(1),
+                        SwitchCase(2)
+                    )
+                )
+            )
+        )
+
+        src_content = """\
+/* {} */
+void func_a(void)
+{{
+    int i = 0;
+    switch (i) {{
+    case 1:
+        break;
+
+    case 2:
+        break;
+
+    default:
+        break;
+    }}
+}}
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestHeaderInclusion(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestHeaderInclusion, self).setUp()
+        name = type(self).__name__
+
+        f = Function(name = "test_f")
+        f_def = f.gen_definition()
+
+        hdr = Header(name.lower() + ".h").add_type(f)
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+void test_f(void);
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        src1 = Source(name.lower() + ".c").add_type(f_def)
+        src1_content = """\
+/* {} */
+void test_f(void) {{}}
+
+""".format(src1.path)
+
+        src2 = Source(name.lower() + "2.c").add_type(
+            Function(
+                name = "func_a",
+                body = BodyTree()(
+                    Call(f_def) # use function definition to Call
+                )
+            )
+        )
+        src2_content = """\
+/* {} */
+#include "{}"
+
+void func_a(void)
+{{
+    test_f();
+}}
+
+""".format(src2.path, hdr.path)
+
+        self.files = [
+            (hdr, hdr_content),
+            (src1, src1_content),
+            (src2, src2_content)
+        ]
+
+
+class TestPointerReferences(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestPointerReferences, self).setUp()
+        name = type(self).__name__
+
+        try:
+            h = Header["type_a.h"]
+        except:
+            h = Header("type_a.h")
+        h.add_type(Type("a", incomplete = False, base = False))
+
+        src = Source(name.lower() + ".c").add_type(
+            Structure("s", Type["a"].gen_var("next", pointer = True))
+        )
+
+        src_content = """\
+/* {} */
+#include "type_a.h"
+
+typedef struct s {{
+    a *next;
+}} s;
 
 """.format(src.path)
 
