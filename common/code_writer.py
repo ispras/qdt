@@ -12,7 +12,9 @@ class LanguageState(object):
         self.prefix = prefix or ""
         self.indent = indent
 
+        # Stack of indents?
         self.indents = []
+        # Stack of states?
         self._previous = []
 
         self.reset()
@@ -28,6 +30,7 @@ class LanguageState(object):
         return self.w
 
     def __exit__(self, e, *_): # value, traceback
+        # XXX: e is not used too
         self.w.s = self._previous.pop()
 
     def push_indent(self):
@@ -53,7 +56,7 @@ class LanguageState(object):
         if self.indents:
             self.current_indent = self.indents.pop()
         else:
-            raise RuntimeError("Cannot load previous indent - stack empty")
+            raise RuntimeError("Cannot load previous indent: stack is empty")
 
 
 class CodeWriter(object):
