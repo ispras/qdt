@@ -775,20 +775,25 @@ class Type(object):
         except TypeNotRegistered:
             return False
 
-    def __init__(self, name,
+    def __init__(self,
+        name = None,
         incomplete = True,
         base = False
     ):
-        self.name = name
-        self.c_name = name.split('.', 1)[0]
+        self.is_named = name is not None
+
         self.incomplete = incomplete
         self.definer = None
         self.base = base
 
-        if name in Type.reg:
-            raise RuntimeError("Type %s is already registered" % name)
+        if self.is_named:
+            self.name = name
+            self.c_name = name.split('.', 1)[0]
 
-        Type.reg[name] = self
+            if name in Type.reg:
+                raise RuntimeError("Type %s is already registered" % name)
+
+            Type.reg[name] = self
 
     def gen_var(self, name,
         pointer = False,
@@ -848,10 +853,16 @@ class Type(object):
         return self is other
 
     def __hash__(self):
-        return hash(self.name)
+        if self.is_named:
+            return hash(self.name)
+        else:
+            return hash(id(self))
 
     def __str__(self):
-        return self.name
+        if self.is_named:
+            return self.name
+        else:
+            raise RuntimeError("Stringifying generic nameless type")
 
 
 class TypeReference(Type):
