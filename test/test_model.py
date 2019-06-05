@@ -1,5 +1,5 @@
 from unittest import (
-    TestCase,
+    TestCase, # XXX: is not used yet
     main
 )
 from six import (
@@ -35,6 +35,7 @@ class SourceModelTestHelper(object):
 
     def test(self):
         for file, content in self.files:
+            # XXX: file is reserved
             sf = file.generate()
 
             if SAVE_CHUNK_GRAPH:
@@ -62,6 +63,7 @@ class FunctionTreeTestDoubleGenerationHelper(object):
 
     def test(self):
         for file, content in self.files:
+            # XXX: file is reserved
             sf_first = file.generate()
             sf_second = file.generate()
 
