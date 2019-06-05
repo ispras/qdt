@@ -8,6 +8,14 @@ from six import (
 from source import (
     Type,
     Header,
+    Source,
+    Function,
+    BodyTree,
+    Declare,
+    OpAssign,
+    OpAdd,
+    Label,
+    Goto,
     add_base_types
 )
 from common import (
@@ -98,6 +106,44 @@ class FunctionTreeTestDoubleGenerationHelper(object):
 
             self.assertEqual(first_gen_content, content)
             self.assertEqual(second_gen_content, first_gen_content)
+
+
+class TestLabelAndGotoGeneration(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestLabelAndGotoGeneration, self).setUp()
+        name = type(self).__name__
+
+        src = Source(name.lower() + ".c")
+
+        lbl = Label("begin")
+        i = Type["int"].gen_var("i")
+
+        src.add_type(Function(
+            name = "main",
+            body = BodyTree()(
+                Declare(i),
+                lbl,
+                OpAssign(i, OpAdd(i, 1)),
+                Goto(lbl)
+            )
+        ))
+
+        src_content = """\
+/* {} */
+void main(void)
+{{
+    int i;
+begin:
+    i = i + 1;
+    goto begin;
+}}
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
 
 
 if __name__ == "__main__":
