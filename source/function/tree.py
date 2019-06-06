@@ -667,6 +667,8 @@ class OpSDeref(Operator):
         self.struct = struct
 
         try:
+            # TODO: can we just copy reference to `fields` list from definition
+            # to declaration?
             if struct._definition is not None:
                 struct._definition.fields[field]
             else:
