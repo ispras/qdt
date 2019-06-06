@@ -30,9 +30,6 @@ from common import (
     execfile,
     pythonize
 )
-from json import (
-    load
-)
 from .version import (
     QVHDict,
     initialize_version,
@@ -602,8 +599,6 @@ class QemuVersionDescription(object):
 
             rmtree(tmp_work_dir)
 
-            yield self.co_gen_device_tree()
-
             yield self.co_gen_known_targets()
 
             # gen version description
@@ -736,24 +731,6 @@ class QemuVersionDescription(object):
         option = config_host[indx_begin:indx_end]
         return option.split("=")[1]
 
-    # TODO: get dt from qemu
-
-    def co_gen_device_tree(self):
-        dt_db_fname = join(self.build_path, "dt.json")
-        if  isfile(dt_db_fname):
-            print("Loading Device Tree from " + dt_db_fname + "...")
-            dt_db_reader = open(dt_db_fname, "r")
-            self.qvc.device_tree = load(dt_db_reader)
-            dt_db_reader.close()
-            print("Device Tree was loaded from " + dt_db_fname)
-            yield True
-
-            print("Adding macros to device tree ...")
-            yield self.co_add_dt_macro(self.qvc.device_tree)
-            print("Macros were added to device tree")
-        else:
-            self.qvc.device_tree = None
-
     def co_gen_known_targets(self):
         print("Making known targets set...")
         dconfigs = join(self.src_path, "default-configs")
@@ -766,89 +743,3 @@ class QemuVersionDescription(object):
                     break
         print("Known targets set was made")
         self.qvc.known_targets = kts
-
-    def co_add_dt_macro(self, list_dt, text2macros = None):
-        # iterations to yield
-        i2y = QVD_DTM_IBY
-
-        if text2macros is None:
-            print("Building text to macros mapping...")
-
-            text2macros = {}
-            for t in self.qvc.stc.reg_type.values():
-                if i2y == 0:
-                    yield True
-                    i2y = QVD_DTM_IBY
-                else:
-                    i2y -= 1
-
-                if not isinstance(t, Macro):
-                    continue
-
-                text = t.text
-                try:
-                    aliases = text2macros[text]
-                except KeyError:
-                    text2macros[text] = [t.name]
-                else:
-                    aliases.append(t.name)
-
-            print("The mapping was built.")
-
-        # Use the mapping to build "list_dt"
-        for dict_dt in list_dt:
-            if i2y == 0:
-                yield True
-                i2y = QVD_DTM_IBY
-            else:
-                i2y -= 1
-
-            dt_type = dict_dt["type"]
-            dt_type_text = '"' + dt_type + '"'
-            try:
-                aliases = text2macros[dt_type_text]
-            except KeyError:
-                # No macros for this type
-                if "macro" in dict_dt:
-                    print(
-"No macros for type %s now, removing previous cache..." % dt_type_text
-                    )
-                    del dict_dt["macro"]
-            else:
-                if "macro" in dict_dt:
-                    print("Override macros for type %s" % dt_type_text)
-                dict_dt["macro"] = list(aliases)
-
-            try:
-                dt_properties = dict_dt["property"]
-            except KeyError:
-                pass # QOM type have no properties
-            else:
-                for dt_property in dt_properties:
-                    if i2y == 0:
-                        yield True
-                        i2y = QVD_DTM_IBY
-                    else:
-                        i2y -= 1
-
-                    dt_property_name_text = '"' + dt_property["name"] + '"'
-                    try:
-                        aliases = text2macros[dt_property_name_text]
-                    except KeyError:
-                        # No macros for this property
-                        if "macro" in dt_property:
-                            print(
-"No macros for property %s of type %s, removing previous cache..." % (
-    dt_property_name_text, dt_type_text
-)
-                            )
-                            del dt_property["macro"]
-                        continue
-                    if "macro" in dt_property:
-                        print("Override macros for property %s of type %s" % (
-                            dt_property_name_text, dt_type_text
-                        ))
-                    dt_property["macro"] = list(aliases)
-
-            if "children" in dict_dt:
-                yield self.co_add_dt_macro(dict_dt["children"], text2macros)
