@@ -357,6 +357,7 @@ class BranchSwitch(CNode):
     def add_child(self, case):
         if isinstance(case, SwitchCaseDefault):
             if self.default_case:
+                # XXX any duplicates were reported previously
                 raise ValueError("Multiple default labels in one switch")
             self.default_case = case
         self.children.append(case)
