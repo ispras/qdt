@@ -298,6 +298,10 @@ for U in ["", "U"]:
 
 class OpaqueRegister(object):
 
+    # XXX: I don't like `name` & `size` are swapped. Actually, a register may
+    # be nameless but cannot be without a size. Because a register without a
+    # size is donut hole. It's not habitual but life is painful.
+
     def __init__(self, name, size):
         self.name, self.size = name, size
 
