@@ -940,6 +940,7 @@ class Structure(Type):
 
     def append_field(self, variable):
         if self._definition is not None:
+            # `self` is a declaration of the structure, it have no fields
             self._definition.append_field(variable)
             return
 
