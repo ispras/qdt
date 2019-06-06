@@ -2067,6 +2067,8 @@ class VariableDefinition(SourceChunk):
     static = "static@b" if var.static else "",
     const = "const@b" if var.const else "",
     type_name = "" if enum else var.type.name + "@b",
+    # XXX: this is not a simple stringification of variable, it's a syntax
+    # token. See other same places.
     var_name = var,
     array_decl = gen_array_declaration(var.array_size),
     used = "" if var.used else "@b__attribute__((unused))",
