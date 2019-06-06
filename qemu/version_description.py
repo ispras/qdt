@@ -734,11 +734,7 @@ class QemuVersionDescription(object):
         indx_end = config_host.find("\n", indx_begin)
 
         option = config_host[indx_begin:indx_end]
-        l = option.split("=")
-        if len(l) > 1:
-            return l[1]
-        else:
-            return None
+        return option.split("=")[1]
 
     # TODO: get dt from qemu
 
