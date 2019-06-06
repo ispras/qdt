@@ -11,13 +11,16 @@ from common import (
 
 class QType(object):
     """ Node in QOM type tree """
-    def __init__(self, name, children = None):
+    def __init__(self, name, children = None, macro = None):
         self.name = name
 
         # name: reference
         self.children = children if children else {}
         for c in self.children.values():
             c.parent = self
+
+        # list of macros corresponding to QType.name
+        self.macro = macro if macro else []
 
         self.parent = None
 
