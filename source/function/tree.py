@@ -120,6 +120,7 @@ class CNode(Node):
         elif isinstance(child, integer_types):
             child = CINT(child)
 
+        # XXX: super(CNode, self).add_child(child)?
         self.children.append(child)
 
 
