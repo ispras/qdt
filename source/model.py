@@ -568,9 +568,10 @@ class Header(Source):
                 yield Header._build_inclusions_recursive(
                     start_dir,
                     join(prefix, entry),
-                    recursive
+                    recursive # XXX: True
                 )
         else:
+            # XXX: (not recursive) and isdir(full_name): we are here!
             (name, ext) = splitext(prefix)
             if ext == ".h":
                 if path2tuple(prefix) not in Header.reg:
