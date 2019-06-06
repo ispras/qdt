@@ -67,4 +67,3 @@ class QType(object):
         gen.reset_gen(self)
         gen.gen_args(self)
         gen.gen_end()
-
