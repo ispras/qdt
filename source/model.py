@@ -32,7 +32,6 @@ __all__ = [
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "EnumerationElementDeclaration"
-      , "UsageTerminator"
   , "SourceFile"
   , "SourceTreeContainer"
   , "TypeReferencesVisitor"
@@ -171,8 +170,8 @@ class ChunkGenerator(object):
                     chunks = origin.gen_definition_chunks(self, **kw)
             elif isinstance(origin, Variable):
                 # A variable in a header does always have `extern` modifier.
-                # Note that some "variables" do describe `struct`/`enum`
-                # entries and must not have it.
+                # Note that some "variables" do describe `struct` entries and
+                # must not have it.
                 if len(self.stack) == 1:
                     if self.for_header:
                         kw["extern"] = True
@@ -183,10 +182,6 @@ class ChunkGenerator(object):
                     if isinstance(self.stack[-2], Structure):
                         # structure fields
                         chunks = origin.gen_declaration_chunks(self, **kw)
-                    elif isinstance(self.stack[-2], Enumeration):
-                        kw["enum"] = True
-                        kw["append_nl"] = False
-                        chunks = origin.get_definition_chunks(self, **kw)
                     elif (
                         # Generate a header inclusion for global variable
                         # from other module.
@@ -1801,11 +1796,10 @@ class Variable(object):
 
     def get_definition_chunks(self, generator,
         indent = "",
-        enum = False,
         append_nl = True,
         separ = ";"
     ):
-        ch = VariableDefinition(self, indent, append_nl, enum, separ)
+        ch = VariableDefinition(self, indent, append_nl, separ)
 
         refs = list(generator.provide_chunks(self.type))
 
@@ -2251,7 +2245,6 @@ class VariableDefinition(SourceChunk):
     def __init__(self, var,
         indent = "",
         append_nl = True,
-        enum = False,
         separ = ";"
     ):
         super(VariableDefinition, self).__init__(var,
@@ -2262,7 +2255,7 @@ class VariableDefinition(SourceChunk):
     indent = indent,
     static = "static@b" if var.static else "",
     const = "const@b" if var.const else "",
-    type_name = "" if enum else var.type.c_name + "@b",
+    type_name = var.type.c_name + "@b",
     # XXX: this is not a simple stringification of variable, it's a syntax
     # token. See other same places.
     var_name = var,
@@ -2399,14 +2392,6 @@ class EnumerationElementDeclaration(SourceChunk):
     init = gen_init_string(elem, elem.initializer, indent),
     separ = separ
             )
-        )
-
-
-class UsageTerminator(SourceChunk):
-
-    def __init__(self, usage, **kw):
-        super(UsageTerminator, self).__init__(usage,
-            "Variable %s usage terminator" % usage.name, ";\n", **kw
         )
 
 
