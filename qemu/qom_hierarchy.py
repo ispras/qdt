@@ -1,6 +1,5 @@
 __all__ = [
     "QType"
-  , "from_legacy_dict"
 ]
 
 from copy import (
@@ -68,30 +67,4 @@ class QType(object):
         gen.reset_gen(self)
         gen.gen_args(self)
         gen.gen_end()
-
-def from_dict(d, parent = None):
-    res = QType(d["type"], parent = parent)
-    for key, val in d.items():
-        if key == "children":
-            continue
-        if key == "type":
-            continue
-        setattr(res, key, dcp(val))
-    return res
-
-def from_legacy_dict(dt):
-    stack = [(None, dt[0])]
-    while stack:
-        parent, tdict = stack.pop()
-        t = from_dict(tdict, parent = parent)
-
-        try:
-            children = tdict["children"]
-        except KeyError:
-            continue
-
-        stack.extend((t, child_dict) for child_dict in children)
-
-    # note that any intermediate value is proper
-    return t.root()
 

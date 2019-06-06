@@ -29,7 +29,6 @@ from qemu import (
     QemuTypeName,
     SysBusDeviceDescription,
     PCIExpressDeviceDescription,
-    from_legacy_dict,
     BadBuildPath,
     qvd_get,
     qvd_load_with_cache,
