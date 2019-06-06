@@ -813,6 +813,8 @@ op_priority = {
     OpSDeref:     1,
     OpDec:        1,
     OpInc:        1,
+    # XXX: because it's references (not string names), those assignment of
+    # aliases has no effect.
     OpPostDec:    1,
     OpPostInc:    1,
     OpDeref:      2,
