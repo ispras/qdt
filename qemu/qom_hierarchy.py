@@ -11,16 +11,15 @@ from common import (
 
 class QType(object):
     """ Node in QOM type tree """
-    def __init__(self, name, parent = None):
+    def __init__(self, name, children = None):
         self.name = name
 
-        # name : reference
-        self.children = {}
+        # name: reference
+        self.children = children if children else {}
+        for c in self.children.values():
+            c.parent = self
 
-        if parent is None:
-            self.parent = None
-        else:
-            parent.__add_child(self)
+        self.parent = None
 
     def __add_child(self, child):
         self.children[child.name] = child
@@ -60,8 +59,9 @@ class QType(object):
             yield t
 
     # Python serialization
-    # This only means that the parent must be serialized first
-    __pygen_deps__ = ("parent",)
+    # Tree will be traversed from the root to the child nodes
+    # And the children will be serialized first
+    __pygen_deps__ = ("children",)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
