@@ -47,7 +47,9 @@ class SourceModelTestHelper(object):
     def test(self):
         for file, content in self.files:
             # XXX: file is reserved
-            sf = file.generate()
+            sf = file.generate(
+                inherit_global_headers = isinstance(file, Header)
+            )
 
             if SAVE_CHUNK_GRAPH:
                 sf.gen_chunks_gv_file(
@@ -86,8 +88,9 @@ class FunctionTreeTestDoubleGenerationHelper(object):
     def test(self):
         for file, content in self.files:
             # XXX: file is reserved
-            sf_first = file.generate()
-            sf_second = file.generate()
+            is_header = isinstance(file, Header)
+            sf_first = file.generate(inherit_global_headers = is_header)
+            sf_second = file.generate(inherit_global_headers = is_header)
 
             sio_first = StringIO()
             sio_second = StringIO()
