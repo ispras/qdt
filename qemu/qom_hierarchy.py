@@ -24,13 +24,13 @@ class QType(object):
 
         self.parent = None
 
-    def __add_child(self, child):
-        self.children[child.name] = child
-        child.parent = self
-
     def __remove_child(self, child):
         child.parent = None
         del self.children[child.name]
+
+    def add_child(self, child):
+        self.children[child.name] = child
+        child.parent = self
 
     def unparent(self):
         self.parent.__remove_child(self)
