@@ -724,7 +724,9 @@ class QemuVersionDescription(object):
 
     @staticmethod
     def ch_lookup(config_host, parameter):
-        indx_begin = config_host.find(parameter)
+        # Parameter initialization described as "parameter=value"
+        # in config-host.mak and therefore we are looking for "parameter=".
+        indx_begin = config_host.find(parameter + "=")
         if indx_begin == -1:
             raise Exception('Parameter "{}" does not exists.'.format(
                 parameter
@@ -732,11 +734,7 @@ class QemuVersionDescription(object):
         indx_end = config_host.find("\n", indx_begin)
 
         option = config_host[indx_begin:indx_end]
-        l = option.split("=")
-        if len(l) > 1:
-            return l[1]
-        else:
-            return None
+        return option.split("=")[1]
 
     # TODO: get dt from qemu
 
