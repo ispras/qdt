@@ -2,9 +2,6 @@ __all__ = [
     "QType"
 ]
 
-from copy import (
-    deepcopy as dcp
-)
 from common import (
     co_find_eq
 )
