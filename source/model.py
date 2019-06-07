@@ -103,6 +103,9 @@ from .tools import (
 
 # List of coding style specific code generation settings.
 
+# Pointers are automatically re-directed to declarations of types if available.
+POINTER_TO_DECLARATION = ee("QDT_POINTER_TO_DECLARATION", "True")
+
 # Reduces amount of #include directives
 OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 
@@ -1247,6 +1250,9 @@ class Pointer(Type):
             self.name = name
             self.incomplete = False
             self.base = False
+
+        if POINTER_TO_DECLARATION and isinstance(_type, Structure):
+            _type = _type.declaration or _type
 
         self.type = _type
         self.const = const
