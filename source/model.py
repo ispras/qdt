@@ -759,6 +759,12 @@ class Header(Source):
 
         Header.reg[tpath] = self
 
+    def __str__(self):
+        if self.is_global:
+            return "<%s>" % self.path
+        else:
+            return '"%s"' % self.path
+
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
             raise AddTypeRefToDefinerException(
