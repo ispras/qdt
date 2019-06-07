@@ -214,7 +214,9 @@ class ChunkGenerator(object):
                         try:
                             chunks = self.chunk_cache[declarer]
                         except KeyError:
-                            chunks = [ HeaderInclusion(declarer) ]
+                            chunks = [
+                                HeaderInclusion(declarer).add_reason(origin)
+                            ]
                     else:
                         # Something like a static inline function in a header
                         # may request chunks for a global variable. This case
@@ -238,6 +240,13 @@ class ChunkGenerator(object):
             # Note that conversion to a tuple is performed to prevent further
             # modifications of chunk list.
             self.chunk_cache[key] = tuple(chunks)
+        else:
+            if isinstance(origin, TypeReference):
+                if chunks:
+                    # It's HeaderInclusion
+                    chunks[0].add_reason(origin.type)
+                # else:
+                #     print("reference to %s provided no inclusion" % origin)
 
         return chunks
 
@@ -980,16 +989,27 @@ class TypeReference(Type):
                 " pass." % self
             )
 
+        definer = self.type.definer
+
         refs = []
         for r in self.definer_references:
-            refs.extend(generator.provide_chunks(r))
+            chunks = generator.provide_chunks(r)
 
-        definer = self.type.definer
+            if not chunks:
+                continue
+
+            # not only `HeaderInclusion` can satisfies reference
+            if isinstance(chunks[0], HeaderInclusion):
+                chunks[0].add_reason(r, kind = "satisfies %s by" % definer)
+
+            refs.extend(chunks)
+
         if definer is CPP:
             return refs
         else:
             inc = HeaderInclusion(definer)
             inc.add_references(refs)
+            inc.add_reason(self.type)
             return [inc]
 
     def gen_var(self, *args, **kw):
@@ -2118,6 +2138,11 @@ class HeaderInclusion(SourceChunk):
         )
         self._path = None
         self.path = path2tuple(header.path)
+        self.reasons = OrderedSet()
+
+    def add_reason(self, _type, kind = "defines"):
+        self.reasons.add((kind, _type))
+        return self
 
     @property
     def path(self):
@@ -2588,7 +2613,16 @@ digraph Chunks {
         upper_cnn = None
         for ch in self.chunks:
             cnn = chunk_node_name(ch)
-            w.write('\n    %s [label="%s"]\n' % (cnn, ch.name))
+            label = ch.name
+
+            if isinstance(ch, HeaderInclusion):
+                label += "\\n*\\n"
+                for r in ch.reasons:
+                    label += "%s %s\\l" % r
+
+            label = label.replace('"', '\\"')
+
+            w.write('\n    %s [label="%s"]\n' % (cnn, label))
 
             # invisible edges provides vertical order like in the output file
             if upper_cnn is not None:
@@ -2613,6 +2647,9 @@ digraph Chunks {
             # prevent self references
             if user is not ch:
                 user.add_reference(ch)
+
+        for _, _type in ch_remove.reasons:
+            ch.add_reason(_type, kind = "provides")
 
         self.chunks.remove(ch_remove)
 
