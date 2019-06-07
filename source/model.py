@@ -104,6 +104,13 @@ from collections import (
     deque
 )
 
+
+# List of coding style specific code generation settings.
+
+# Reduces amount of #include directives
+OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
+
+
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
 
@@ -2800,7 +2807,8 @@ them must be replaced with reference to h. """
 
         self.sort_chunks()
 
-        self.optimize_inclusions()
+        if OPTIMIZE_INCLUSIONS:
+            self.optimize_inclusions()
 
         self.header_paths_shortening()
 
