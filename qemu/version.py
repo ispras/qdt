@@ -173,6 +173,16 @@ def define_only_qemu_2_6_0_types():
         Structure("Error")
     ]).add_reference(osdep_fake_type)
 
+    # Move typedefs.h upper forcing headers below to use declarations from it
+    Header["qemu/typedefs.h"].add_types([
+        Type["Error"].gen_forward_declaration(),
+        # BlockBackend is defined in internal block_int.h. Its fields may not
+        # be accessed outside internal code. Methods from block-backend.h must
+        # be used instead.
+        Structure("BlockBackend"),
+        Structure("I2CBus") # the structure is defined in .c file
+    ]).add_reference(osdep_fake_type)
+
     Header["disas/bfd.h"].add_types([
         Type("disassemble_info", False)
     ]).add_reference(osdep_fake_type)
@@ -391,15 +401,6 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
     Header["hw/pci/pci_host.h"].add_reference(osdep_fake_type)
-
-    Header["qemu/typedefs.h"].add_types([
-        Type["Error"].gen_forward_declaration(),
-        # BlockBackend is defined in internal block_int.h. Its fields may not
-        # be accessed outside internal code. Methods from block-backend.h must
-        # be used instead.
-        Structure("BlockBackend"),
-        Structure("I2CBus") # the structure is defined in .c file
-    ]).add_reference(osdep_fake_type)
 
     Header["qemu/bswap.h"].add_types([
         Function("bswap64"),
