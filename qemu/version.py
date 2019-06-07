@@ -172,7 +172,7 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     Header["qapi/error.h"].add_types([
-        Type("Error")
+        Structure("Error")
     ]).add_reference(osdep_fake_type)
 
     Header["disas/bfd.h"].add_types([
@@ -407,6 +407,7 @@ def define_only_qemu_2_6_0_types():
     Header["hw/pci/pci_host.h"].add_reference(osdep_fake_type)
 
     Header["qemu/typedefs.h"].add_types([
+        Type["Error"].gen_forward_declaration(),
         # BlockBackend is defined in internal block_int.h. Its fields may not
         # be accessed outside internal code. Methods from block-backend.h must
         # be used instead.
