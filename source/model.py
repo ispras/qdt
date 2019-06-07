@@ -1022,7 +1022,7 @@ class Structure(Type):
         # Only one of those attributes may be non-`None`. If `_definition` is
         # not `None`, then `self` is forward declaration. Else, it's  "full"
         # definition (with a declaration or without).
-        self._declaration = None
+        self.declaration = None
         self._definition = None
 
         self.fields = OrderedDict()
@@ -1085,7 +1085,7 @@ class Structure(Type):
         if self._definition is not None:
             return [StructureForwardDeclaration(self, indent)]
 
-        if self._declaration is None:
+        if self.declaration is None:
             struct_begin = StructureTypedefDeclarationBegin(self, indent)
             struct_end = StructureTypedefDeclarationEnd(self, fields_indent,
                 indent, True
@@ -1692,11 +1692,11 @@ class ForwardDeclarator(TypeReferencesVisitor):
     def on_visit(self):
         t = self.cur
         if isinstance(t, Structure) and t in self.previous:
-            if t._declaration is not None:
-                decl = t._declaration
+            if t.declaration is not None:
+                decl = t.declaration
             else:
                 decl = Structure(t.name + ".declaration")
-                t._declaration = decl
+                t.declaration = decl
                 decl._definition = t
                 if t.definer is not None:
                     t.definer.add_type(decl)
