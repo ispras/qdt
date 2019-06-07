@@ -1028,6 +1028,12 @@ class Structure(Type):
         self.fields = OrderedDict()
         self.append_fields(fields)
 
+    def gen_forward_declaration(self):
+        decl = Structure(self.name + ".declaration")
+        self.declaration = decl
+        decl._definition = self
+        return decl
+
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
         d = self.__dict__
@@ -1695,9 +1701,7 @@ class ForwardDeclarator(TypeReferencesVisitor):
             if t.declaration is not None:
                 decl = t.declaration
             else:
-                decl = Structure(t.name + ".declaration")
-                t.declaration = decl
-                decl._definition = t
+                decl = t.gen_forward_declaration()
                 if t.definer is not None:
                     t.definer.add_type(decl)
 
