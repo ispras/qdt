@@ -1467,11 +1467,21 @@ class Pointer(Type):
 
     def gen_chunks(self, generator):
         type = self.type
-        is_function = isinstance(type, Function)
+
+        # `Function` related helpers below can't get a `TypeReference`.
+        # `func` variable is added to solve it.
+        if isinstance(type, TypeReference):
+            func = type.type
+            is_function = isinstance(func, Function)
+        elif isinstance(type, Function):
+            func = type
+            is_function = True
+        else:
+            is_function = False
 
         # strip function definition chunk, its references is only needed
         if is_function:
-            refs = gen_function_decl_ref_chunks(type, generator)
+            refs = gen_function_decl_ref_chunks(func, generator)
         else:
             refs = generator.provide_chunks(type)
 
@@ -1481,7 +1491,7 @@ class Pointer(Type):
         name = self.c_name
 
         if is_function:
-            ch = FunctionPointerTypeDeclaration(type, name)
+            ch = FunctionPointerTypeDeclaration(func, name)
         else:
             ch = PointerTypeDeclaration(type, name)
 
