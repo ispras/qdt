@@ -18,6 +18,7 @@ from collections import (
     defaultdict
 )
 from debug import (
+    create_dwarf_cache,
     Runtime,
     InMemoryELFFile,
     DWARFInfoCache,
@@ -1439,23 +1440,7 @@ def main():
     # debug info
     qemu_debug = qemu_cmd_args[0]
 
-    elf = InMemoryELFFile(qemu_debug)
-    if not elf.has_dwarf_info():
-        stderr("%s does not have DWARF info. Provide a debug QEMU build\n" % (
-            qemu_debug
-        ))
-        return -1
-
-    di = elf.get_dwarf_info()
-
-    if not di.debug_pubnames_sec:
-        print("%s does not contain .debug_pubtypes section. Provide"
-            " -gpubnames flag to the compiler" % qemu_debug
-        )
-
-    dic = DWARFInfoCache(di,
-        symtab = elf.get_section_by_name(".symtab")
-    )
+    dic = create_dwarf_cache(qemu_debug)
 
     if qemu_src_dir:
         gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
