@@ -1815,6 +1815,7 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.definer is None:
                 if t.is_named:
                     self.source.add_type(t)
+                    # XXX: what about types inside?
                     raise BreakVisiting()
                 return
 
