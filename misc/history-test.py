@@ -79,11 +79,13 @@ def reg_hotkeys():
     hotkeys.add_bindings([
         HotKeyBinding(
             callback = undo,
-            key_code = 52 # Z
+            key_code = 52,
+            symbol = "Z"
         ),
         HotKeyBinding(
             callback = redo,
-            key_code = 29 # Y
+            key_code = 29,
+            symbol = "Y"
         )
     ])
 
