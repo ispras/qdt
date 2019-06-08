@@ -340,32 +340,30 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             self.bindings = [
                 HotKeyBinding(
                     self.__switch_show_mesh,
-                    key_code = 58, # M
-                    description = _("Show/hide mesh.")
+                    key_code = 58,
+                    description = _("Show/hide mesh."),
+                    symbol = "M"
                 ),
                 HotKeyBinding(
                     self.on_export_diagram,
-                    key_code = 26, # E
-                    description = _("Export of machine diagram.")
+                    key_code = 26,
+                    description = _("Export of machine diagram."),
+                    symbol = "E"
                 ),
                 HotKeyBinding(
                     self.on_diagram_finding,
-                    key_code = 41, # F
-                    description = _("Finding of machine diagram.")
+                    key_code = 41,
+                    description = _("Finding of machine diagram."),
+                    symbol = "F"
                 ),
                 HotKeyBinding(
                     self.on_diagram_centering,
-                    key_code = 54, # C
-                    description = _("Centering of machine diagram.")
+                    key_code = 54,
+                    description = _("Centering of machine diagram."),
+                    symbol = "C"
                 )
             ]
             hotkeys.add_bindings(self.bindings)
-            hotkeys.add_key_symbols({
-                58: "M",
-                26: "E",
-                41: "F",
-                54: "C"
-            })
 
         try:
             pht = self.winfo_toplevel().pht
