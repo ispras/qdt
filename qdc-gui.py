@@ -151,81 +151,78 @@ class QDCGUIWindow(GUITk, QDCGUISignalHelper):
         hotkeys.add_bindings([
             HotKeyBinding(
                 self.invert_history_window,
-                key_code = 43, # H
+                key_code = 43,
                 description = _("If editing history window is hidden then \
-show it else hide it.")
+show it else hide it."),
+                symbol = "H"
             ),
             HotKeyBinding(
                 self.on_load,
-                key_code = 32, # O
-                description = _("Load project from file.")
+                key_code = 32,
+                description = _("Load project from file."),
+                symbol = "O"
             ),
             HotKeyBinding(
                 self.on_new_project,
-                key_code = 57, # N
-                description = _("Create new project.")
+                key_code = 57,
+                description = _("Create new project."),
+                symbol = "N"
             ),
             HotKeyBinding(
                 self.on_add_description,
-                key_code = 40, # D
-                description = _("Add description to the project")
+                key_code = 40,
+                description = _("Add description to the project"),
+                symbol = "D"
             ),
             HotKeyBinding(
                 self.on_set_qemu_build_path,
-                key_code = 56, # B
-                description = _("Set Qemu build path for the project")
+                key_code = 56,
+                description = _("Set Qemu build path for the project"),
+                symbol = "B"
             ),
             HotKeyBinding(
                 self.on_sel_tgt_qemu_version,
-                key_code = 28, # T
-                description = _("Select target Qemu version for the project")
+                key_code = 28,
+                description = _("Select target Qemu version for the project"),
+                symbol = "T"
             ),
             HotKeyBinding(
                 self.on_generate,
-                key_code = 42, # G
-                description = _("Launch code generation")
+                key_code = 42,
+                description = _("Launch code generation"),
+                symbol = "G"
             ),
             HotKeyBinding(
                 self.on_delete,
-                key_code = 24, # Q
-                description = _("Shutdown the application.")
+                key_code = 24,
+                description = _("Shutdown the application."),
+                symbol = "Q"
             ),
             HotKeyBinding(
                 self.undo,
-                key_code = 52, # Z
-                description = _("Revert previous editing.")
+                key_code = 52,
+                description = _("Revert previous editing."),
+                symbol = "Z"
             ),
             HotKeyBinding(
                 self.redo,
-                key_code = 29, # Y
-                description = _("Make reverted editing again.")
+                key_code = 29,
+                description = _("Make reverted editing again."),
+                symbol = "Y"
             ),
             HotKeyBinding(
                 self.on_save,
-                key_code = 39, # S
-                description = _("Save project.")
+                key_code = 39,
+                description = _("Save project."),
+                symbol = "S"
             ),
             HotKeyBinding(
                 self.on_reload,
-                key_code = 27, # R
-                description = _("Reload current project from file.")
+                key_code = 27,
+                description = _("Reload current project from file."),
+                symbol = "R"
             )
         ])
-
-        hotkeys.add_key_symbols({
-            28: "T",
-            27: "R",
-            43: "H",
-            32: "O",
-            57: "N",
-            40: "D",
-            56: "B",
-            42: "G",
-            24: "Q",
-            52: "Z",
-            29: "Y",
-            39: "S"
-        })
 
         # see `set_user_settings`
         self._user_settings = None
