@@ -60,7 +60,7 @@ persistent object. See `common.pygen.pythonizable`.
     def __update__(self, loaded_version):
         raise NotImplementedError(
             "Update from %f to %f is not implemented" % (
-                self._version, loaded_version
+                loaded_version, self._version
             )
         )
 
