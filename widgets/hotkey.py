@@ -2,16 +2,26 @@ __all__ = [
     "HKEntry"
   , "HotKeyBinding"
   , "HotKey"
+  , "KeyboardSettings"
 ]
 
 # ML should be used there (instead of mlget) because the key will be modified
 from common import (
+    Persistent,
     mlget as _
 )
 from six.moves.tkinter import (
     END,
     Entry
 )
+from os.path import (
+    dirname,
+    join
+)
+from os import (
+    name as os_name
+)
+
 
 class HKEntry(Entry):
     def __init__(self, *args, **kw):
@@ -58,6 +68,9 @@ class HotKey(object):
         root.bind_all("<Control-Key>", self.on_ctrl_key)
         root.bind_all("<<Control-Y-Breaked>>", self.on_ctrl_y_breaked)
 
+        with KeyboardSettings() as kbd:
+            self.code_translation = kbd.gen_translation_to_posix()
+
     def add_key_symbols(self, keys2sym):
         for key, sym in keys2sym.items():
             self.keys2sym[key] = sym
@@ -74,7 +87,7 @@ class HotKey(object):
         if self.disabled:
             return
 
-        kc = keycode
+        kc = self.code_translation.get(keycode, keycode)
 
         if not (kc in self.keys2sym and self.keys2sym[kc] == keysym):
             self.keys2sym[kc] = keysym
@@ -150,3 +163,47 @@ class HotKey(object):
 
     def enable_hotkeys(self):
         self.disabled = False
+
+
+KBD_STATE = join(dirname(__file__), "keyboard_settings.py")
+
+
+class KeyboardSettings(Persistent):
+
+    def __init__(self, file_name = KBD_STATE, **kw):
+        super(KeyboardSettings, self).__init__(file_name,
+            version = 1.1,
+            **kw
+    )
+
+    def __update__(self, version):
+        if version < 1.1:
+            os_codes = {}
+            for name, codes in self.os_codes.items():
+                os_codes[name] = dict(enumerate(codes))
+            self.os_codes = os_codes
+
+    __var_base__ = lambda _ : "keyboard_settings"
+
+    def gen_translation_to_posix(self):
+        if os_name == "posix":
+            return {}
+
+        try:
+            current_codes = self.os_codes[os_name]
+        except KeyError:
+            # no special mapping
+            return {}
+        posix_codes = self.os_codes["posix"]
+
+        mapping = {}
+        for i, code in current_codes.items():
+            try:
+                posix_code = posix_codes[i]
+            except KeyError:
+                # no such code for that key index under POSIX
+                continue
+            mapping[code[0]] = posix_code[0]
+
+        return mapping
+
