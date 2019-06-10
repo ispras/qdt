@@ -3,8 +3,6 @@
 from six.moves.tkinter import (
     X,
     Label,
-    CURRENT,
-    PhotoImage,
     BOTH,
     Tk,
     Canvas
@@ -12,23 +10,237 @@ from six.moves.tkinter import (
 from os import (
     name as os_name
 )
-from os.path import (
-    dirname,
-    join
-)
-from PIL import (
-    Image,
-    ImageTk
-)
 from widgets import (
     KeyboardSettings
 )
+from common import (
+    bidict
+)
 
-# Use 63 DPI to get keyboard.png from keyboard.svg
-# Ex.:
-# inkscape --without-gui --export-dpi=63 keyboard.svg --export-png=keyboard.png
 
-KBD_IMG = join(dirname(__file__), "keyboard.png")
+inner_pad = 4
+outer_pad = 10
+default_w = 40
+default_h = 40
+
+
+class PlaceHolder(object):
+
+    def __init__(self, w = 0, h = default_h):
+        # w = 0 - minimal width of PlaceHolder
+        self.x = None
+        self.y = None
+        self.w = w
+        self.h = h
+        self.expandable = False
+
+
+class RowHolder(PlaceHolder):
+
+    def __init__(self, h = default_h):
+        super(RowHolder, self).__init__(h = h)
+        self.expandable = True
+
+
+RH = RowHolder
+
+
+class ButtonHolder(PlaceHolder):
+
+    def __init__(self):
+        super(ButtonHolder, self).__init__(w = default_w, h = default_h)
+
+
+BH = ButtonHolder
+
+
+class Separator(PlaceHolder):
+
+    def __init__(self):
+        super(Separator, self).__init__()
+        self.expandable = True
+
+
+S = Separator
+
+
+class GroupSeparator(PlaceHolder):
+
+    def __init__(self):
+        super(GroupSeparator, self).__init__(w = 30)
+
+
+GS = GroupSeparator
+
+
+class Button(PlaceHolder):
+
+    def __init__(self, w = default_w, h = default_h):
+        super(Button, self).__init__(w = w, h = h)
+
+
+B = Button
+
+
+class LShift(Button):
+
+    def __init__(self):
+        super(LShift, self).__init__(w = 50)
+
+
+Super = LShift
+
+
+Alt = LShift
+
+
+Menu = LShift
+
+
+class Tab(Button):
+
+    def __init__(self):
+        super(Tab, self).__init__(w = 60)
+
+
+Ctrl = Tab
+
+
+class Caps(Button):
+
+    def __init__(self):
+        super(Caps, self).__init__(w = 70)
+
+
+class TwoRowButton(Button):
+
+    def __init__(self):
+        super(TwoRowButton, self).__init__(h = 2 * default_h + inner_pad)
+
+
+Plus = TwoRowButton
+
+
+REnter = TwoRowButton
+
+
+class TwoColumnButton(Button):
+
+    def __init__(self):
+        super(TwoColumnButton, self).__init__(w = 2 * default_w + inner_pad)
+
+
+Zero = TwoColumnButton
+
+
+class ExpandableButton(Button):
+
+    def __init__(self):
+        super(ExpandableButton, self).__init__(w = 0)
+        self.expandable = True
+
+
+LEnter = ExpandableButton
+
+
+RShift = ExpandableButton
+
+
+Space = ExpandableButton
+
+
+BackSlash = ExpandableButton
+
+
+def prepare_group(group, global_offset_w):
+    rows_w = map(
+        lambda row : sum(b.w for b in row) + inner_pad * max(len(row) - 1, 0),
+        group
+    )
+    max_w = max(rows_w)
+
+    for w, row in zip(rows_w, group):
+        if w == max_w:
+            continue
+        expandable = list(filter(lambda x: x.expandable, row))
+        count = len(expandable)
+        if count == 0:
+            raise ValueError(
+                "Wrong layout: no expanding elements in a short row"
+            )
+        w1, w2 = divmod(max_w - w, count)
+        for i, item in enumerate(expandable):
+            item.w = w1 + int(i < w2)
+
+    offset_h = outer_pad
+    for row in group:
+        offset_w = global_offset_w
+        for item in row:
+            item.x = offset_w
+            item.y = offset_h
+            offset_w += item.w + inner_pad
+        offset_h += min(item.h for item in row) + inner_pad
+
+    return max_w
+
+def rB(count):
+    return [B() for _ in range(count)]
+
+def generate_buttons():
+    # See:
+    # https://support.microsoft.com/en-us/help/17073/windows-using-keyboard
+
+    # Use UK and US keyboard layout at the same time
+    # See: https://en.wikipedia.org/wiki/British_and_American_keyboards
+
+    layout = [
+        [B(), S()] + rB(4) + [S()] + rB(4) + [S()] + rB(4) + [GS()] + rB(3) +
+            [GS(), RH()],
+        [RH(h = 10), GS(), RH(h = 10), GS(), RH(h = 10)],
+        rB(15) + [GS()] + rB(3) + [GS()] + rB(4),
+        [Tab()] + rB(12) + [BackSlash(), GS()] + rB(3) + [GS()] + rB(3) +
+            [Plus()],
+        [Caps()] + rB(12) + [LEnter(), GS(), RH(), GS()] + rB(3) + [BH()],
+        [LShift()] + rB(11) + [RShift(), GS()] + rB(3) + [GS()] + rB(3) +
+            [REnter()],
+        [Ctrl(), Super(), Alt(), Space(), Alt(), Super(), Menu(), Ctrl()] +
+            [GS()] + rB(3) + [GS(), Zero(), B(), BH()]
+    ]
+
+    row = 0
+    all_buttons = []
+    for line in layout:
+        only_buttons = list(filter(lambda x: isinstance(x, Button), line))
+        for column, button in enumerate(only_buttons):
+            button.pos = (row, column)
+        if only_buttons:
+            all_buttons.extend(only_buttons)
+            row += 1
+
+    groups = []
+    for row in layout:
+        new_row = []
+        sub_row = []
+        for item in row:
+            sub_row.append(item)
+            if isinstance(item, GS):
+                new_row.append(sub_row)
+                sub_row = []
+        else:
+            if sub_row:
+                new_row.append(sub_row)
+        groups.append(new_row)
+
+    if len(set(len(row) for row in groups)) > 1:
+        raise ValueError("Wrong layout: different number of groups in rows")
+
+    offset_w = outer_pad
+    for group in zip(*groups):
+        offset_w += prepare_group(group, offset_w)
+
+    w = offset_w + outer_pad
+    h = max(b.h + b.y for b in all_buttons) + outer_pad
+    return all_buttons, w, h
 
 if __name__ == "__main__":
     root = Tk()
@@ -37,33 +249,32 @@ if __name__ == "__main__":
     cnv = Canvas(root, bg = "white")
     cnv.pack(fill = BOTH, expand = True)
 
-    image = Image.open(KBD_IMG)
-    imagetk = ImageTk.PhotoImage(image)
+    buttons, w, h = generate_buttons()
 
-    cnv.create_image(image.size[0] >> 1, image.size[1] >> 1, image = imagetk)
-    cnv.configure(width = image.size[0], height = image.size[1])
+    cnv.configure(width = w, height = h)
 
     lb_code = Label(root)
     lb_code.pack(fill = X, expand = False)
 
     def resize():
         # XXX: it's a bit less that ideally needed because of borders
-        w, h = image.size
-        h += lb_code.winfo_reqheight()
-        root.geometry("%ux%u" % (w, h))
+        root.geometry("%ux%u" % (w, h + lb_code.winfo_reqheight()))
 
     root.after(10, resize)
 
-    def shift_key_positions(kbd, dx, dy):
-        for i, p in enumerate(kbd.points):
-            kbd.points[i] = p[0] + dx, p[1] + dy
+    id2b = bidict()
+    b2id = id2b.mirror
 
-    with KeyboardSettings(points = [], os_codes = {}) as kbd:
+    for b in buttons:
+        iid = cnv.create_rectangle(b.x, b.y, b.x + b.w, b.y + b.h,
+            fill = "white" # non transparent rectangles
+        )
+        id2b[iid] = b.pos
+
+    with KeyboardSettings(os_codes = {}) as kbd:
         button_index = None
 
         kbd._codes = kbd.os_codes.setdefault(os_name, {})
-
-        # shift_key_positions(-25, -30)
 
         MSG_SET = ("Press LMB again to remove the point, "
             "keyboard to change or RMB to reset selection. Current: "
@@ -85,11 +296,8 @@ if __name__ == "__main__":
                 else:
                     lb_code.configure(text = message + "%s %s" % code_data)
 
-        def draw_point(x, y, fill = "red"):
-            cnv.create_oval(x - 5, y - 5, x + 5, y + 5, fill = fill)
-
-        for x, y in kbd.points:
-            draw_point(x, y)
+        for b_index in kbd._codes.keys():
+            cnv.itemconfig(b2id[b_index], fill = "red")
 
         def unselect():
             global button_index
@@ -97,37 +305,43 @@ if __name__ == "__main__":
             if button_index is None:
                 return
 
-            cnv.itemconfig(cnv.find_closest(*kbd.points[button_index]),
-                fill = "red"
-            )
+            if kbd._codes.get(button_index, None):
+                color = "red"
+            else:
+                color = "white"
+
+            cnv.itemconfig(b2id[button_index], fill = color)
 
         def on_click_1(e):
             global button_index
 
             unpress()
 
-            for i, (x, y) in enumerate(kbd.points):
-                if (x - e.x) ** 2 + (y - e.y) ** 2 <= 25:
-                    break
-            else:
+            iids = cnv.find_overlapping(e.x, e.y, e.x, e.y)
+
+            if not iids:
+                return
+
+            iid = iids[0]
+            b_index = id2b[iid]
+
+            if kbd._codes.get(b_index, None) is None:
                 unselect()
-                button_index = len(kbd.points)
-                kbd.points.append((e.x, e.y))
-                draw_point(e.x, e.y, fill = "green")
+                button_index = b_index
+                cnv.itemconfig(iid, fill = "green")
                 update()
                 return
 
-            if i == button_index: # remove on second click
+            if b_index == button_index: # remove on second click
                 unselect()
                 button_index = None
-                del kbd.points[i]
-                kbd._codes.pop(i, None) # ignore absence
-                cnv.delete(CURRENT)
+                kbd._codes.pop(b_index, None) # ignore absence
+                cnv.itemconfig(iid, fill = "white")
                 update()
             else:
                 unselect()
-                button_index = i
-                cnv.itemconfig(CURRENT, fill = "green")
+                button_index = b_index
+                cnv.itemconfig(iid, fill = "green")
                 update(message = MSG_SET)
 
         cnv.bind("<Button-1>", on_click_1, "+")
@@ -164,7 +378,7 @@ if __name__ == "__main__":
                         continue
                     if code_data[0] != e.keycode:
                         continue
-                    iid = cnv.find_closest(*kbd.points[i])
+                    iid = b2id[i]
                     cnv.itemconfig(iid, fill = "orange")
                     pressed.append(iid)
 
