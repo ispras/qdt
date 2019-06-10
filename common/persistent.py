@@ -39,9 +39,15 @@ persistent object. See `common.pygen.pythonizable`.
             loaded = dict(self._globals)
             try:
                 execfile(self._file_name, loaded)
-                ctx = loaded["persistent_context"]
             except:
                 return
+            else:
+                base = self.__var_base__()
+                for name, ctx in loaded.items():
+                    if name.startswith(base):
+                        break
+                else:
+                    print("No persistent data found in " + self._file_name)
 
             ctx_version = ctx.pop("_version", self._version)
 
