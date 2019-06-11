@@ -773,10 +773,10 @@ later.").get()
         self.task_manager.enqueue(self._project_generation_task)
 
     def load_project_from_file(self, file_name):
-        loaded_variables = {}
+        loaded_variables = dict(qdt.__dict__)
 
         try:
-            execfile(file_name, qdt.__dict__, loaded_variables)
+            execfile(file_name, loaded_variables)
         except Exception as e:
             raise e
         else:
