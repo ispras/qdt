@@ -206,6 +206,9 @@ class CINT(CConst):
                 raise RuntimeError(
                     "No minimum digits count is defined for a macro"
                 )
+            if v < 0:
+                # Note that sign is *not* accounted in minimum digits count.
+                v = -v
             try:
                 return int(log(v, self.b)) + 1
             except ValueError: # math domain error
