@@ -28,6 +28,16 @@ from argparse import (
 
 
 def execfile(filename, globals = None, locals = None):
+    """ Cross Python wrapper for `exec`. Py2's `execfile` analogue.
+Preservers file name for the script (`__file__`), a debugger and an exception
+traceback. Executes the script as "__main__".
+
+Notes:
+ *  Using same `dict` for globals and locals of `execfile` allows a script to
+    use self-defined names (global variables, functions...) inside nested name
+    spaces (custom functions, classes, ...) _without_ `global` declaration.
+    """
+
     with open(filename, "rb") as f:
         content = f.read()
 
