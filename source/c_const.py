@@ -206,7 +206,11 @@ class CINT(CConst):
                 raise RuntimeError(
                     "No minimum digits count is defined for a macro"
                 )
-            return int(log(v, self.b)) + 1
+            try:
+                return int(log(v, self.b)) + 1
+            except ValueError: # math domain error
+                print("v = %s, base = %s" % (v, self.b))
+                raise
         else:
             # log(0) is a math error. Zero requires 1 digit to display.
             return 1
