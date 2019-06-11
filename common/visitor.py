@@ -165,7 +165,7 @@ Features (+) implemented, (-) TODO:
             self.on_leave()
 
     def __visit_set__(self, attr):
-        for e in attr:
+        for e in sorted(attr):
             self.__push__(e, None) # objects in a set are not named.
             self.__visit__(e)
             self.__pop__()
@@ -177,7 +177,7 @@ Features (+) implemented, (-) TODO:
             self.__pop__()
 
     def __visit_dictionary__(self, attr):
-        for k, e in attr.items():
+        for k, e in sorted(attr.items()):
             self.__push__(e, k)
             self.__visit__(e)
             self.__pop__()
