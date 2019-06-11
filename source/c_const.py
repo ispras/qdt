@@ -136,7 +136,30 @@ class CINT(CConst):
         return prefix + "0" * max(0, self.d - len(val_str)) + val_str
 
     def __repr__(self):
-        return "CINT(%s, %d, %d)" % (repr(self.v), self.b, self.d)
+        val = self.v
+
+        if isinstance(val, str):
+            # assuming that the value is a macro
+            val_s = '"%s"' % val
+        else:
+            # Use the same form of integer constant as defined by `b`ase and
+            # `d`igits.
+            base = self.b
+            try:
+                prefix = int_prefixes[base]
+            except KeyError:
+                # A non-regular base, using standard form for integer
+                val_s = repr(val)
+            else:
+                if val < 0:
+                    prefix = "-" + prefix
+                    val = -val
+
+                val_s0 = uint2base(val, base)
+
+                val_s = prefix + "0" * max(0, self.d - len(val_s0)) + val_s0
+
+        return "CINT(%s, %d, %d)" % (val_s, self.b, self.d)
 
     __str__ = gen_c_code
 
