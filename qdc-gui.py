@@ -99,7 +99,11 @@ class ProjectGeneration(CoTask):
         )
 
     def main(self):
-        yield self.reload_build_path_task
+        try:
+            yield self.reload_build_path_task
+        except:
+            self.prev_qvd = None # for `__finalize`
+            raise RuntimeError("Cannot continue without a cache")
 
         cur_qvd = qvd_get(self.p.build_path, version = self.p.target_version)
         self.prev_qvd = cur_qvd.use()
