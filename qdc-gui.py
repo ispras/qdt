@@ -86,11 +86,12 @@ from os.path import (
 
 
 class ProjectGeneration(CoTask):
-    def __init__(self, project, source_path, signal):
+    def __init__(self, project, source_path, signal, reload_build_path_task):
         self.p = project
         self.s = source_path
         self.sig = signal
         self.finished = False
+        self.reload_build_path_task = reload_build_path_task
         CoTask.__init__(
             self,
             self.main(),
@@ -98,6 +99,12 @@ class ProjectGeneration(CoTask):
         )
 
     def main(self):
+        try:
+            yield self.reload_build_path_task
+        except:
+            self.prev_qvd = None # for `__finalize`
+            raise RuntimeError("Cannot continue without a cache")
+
         cur_qvd = qvd_get(self.p.build_path, version = self.p.target_version)
         self.prev_qvd = cur_qvd.use()
 
@@ -341,6 +348,22 @@ show it else hide it.")
 
         menubar.add_cascade(label = _("Edit"), menu = editmenu)
 
+        self.optionsmenu = optionsmenu = VarMenu(menubar, tearoff = False)
+
+        v = self.var_schedule_generation = BooleanVar()
+        v.set(False)
+
+        self.__on_var_schedule_generation = v.trace_variable("w",
+            self.__on_var_schedule_generation__
+        )
+
+        optionsmenu.add_checkbutton(
+            label = _("Schedule generation after cache loading"),
+            variable = v
+        )
+
+        menubar.add_cascade(label = _("Options"), menu = optionsmenu)
+
         self.config(menu = menubar)
 
         # Widget layout
@@ -402,6 +425,7 @@ show it else hide it.")
             return
         self._user_settings = val
         self._update_recent_projects()
+        self._update_options()
 
     def _update_recent_projects(self):
         settings = self._user_settings
@@ -431,6 +455,14 @@ show it else hide it.")
             self.filemenu.index(_("Recent projects").get()),
             state = NORMAL if added else DISABLED
         )
+
+    def _update_options(self):
+        settings = self._user_settings
+
+        if settings is None:
+            return
+
+        self.var_schedule_generation.set(settings.schedule_generation)
 
     def __on_task_state_changed(self, task):
         for group in [ "tasks", "callers", "active_tasks", "finished_tasks" ]:
@@ -471,6 +503,12 @@ show it else hide it.")
 
     def invert_history_window(self):
         self.var_history_window.set(not self.var_history_window.get())
+
+    def __on_var_schedule_generation__(self, *args):
+        settings = self._user_settings
+
+        if settings is not None:
+            settings.schedule_generation = self.var_schedule_generation.get()
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -711,7 +749,14 @@ in process.").get()
             )
             return
 
-        if not qvd.qvc_is_ready:
+        if not hasattr(self.pw, "reload_build_path_task"):
+            showerror(
+                title = _("Generation is impossible").get(),
+                message = _("Qemu version cache loading failed.").get()
+            )
+            return
+
+        if not qvd.qvc_is_ready and not self.var_schedule_generation.get():
             showerror(
                 title = _("Generation is cancelled").get(),
                 message = _("Qemu version cache is not ready yet. Try \
@@ -722,7 +767,8 @@ later.").get()
         self._project_generation_task = ProjectGeneration(
             self.proj,
             qvd.src_path,
-            self.sig_qvc_dirtied
+            self.sig_qvc_dirtied,
+            self.pw.reload_build_path_task
         )
         self.task_manager.enqueue(self._project_generation_task)
 
@@ -888,6 +934,7 @@ class Settings(Persistent):
             glob = globals(),
             version = 1.0,
             # default values
+            schedule_generation = False,
             recent_projects = OrderedSet()
         )
 

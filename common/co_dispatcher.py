@@ -53,6 +53,8 @@ class CoTask(object):
         # conversation here:
         # https://stackoverflow.com/questions/49710035/how-to-get-last-line-executed-by-a-generator-in-python
         self.gi_frame = None
+        # Exception to be injected into that task at current `yield`.
+        self._to_raise = None
 
     def on_activated(self):
         # do nothing by default
@@ -112,10 +114,19 @@ after last statement in the corresponding callable object.
             # a reference to its `gi_frame` must be preserved.
             catch_frame = task.gi_frame is None
 
-            try:
-                t0 = time()
+            to_raise = task._to_raise
 
-                ret = next(generator)
+            try:
+                if to_raise is None:
+                    t0 = time()
+
+                    ret = next(generator)
+                else:
+                    task._to_raise = None
+
+                    t0 = time()
+
+                    ret = generator.throw(type(to_raise), to_raise)
             except StopIteration:
                 t1 = time()
 
@@ -239,8 +250,7 @@ after last statement in the corresponding callable object.
         except KeyError:
             pass
         else:
-            # Callers of the task cannot continue and must be removed
-            self.__cancel_tasks(callers, CancelledCallee(task))
+            self.__inject_into_callers(callers, CancelledCallee(task))
 
         if task in self.callers:
             callee = self.callers.pop(task)
@@ -283,10 +293,13 @@ after last statement in the corresponding callable object.
         self.tasks.append(task)
         # print 'Task %s was enqueued' % str(task)
 
-    def __cancel_tasks(self, tasks, reason):
+    def __inject_into_callers(self, tasks, exception):
         for c in list(tasks):
+            c._to_raise = exception
+            # Wake the caller up giving it a chance to catch the exception
+            # around current `yield`.
             del self.callers[c]
-            self.__failed__(c, reason)
+            self.tasks.insert(0, c)
 
     def __failed__(self, task, exception):
         task.exception = exception
@@ -300,8 +313,7 @@ after last statement in the corresponding callable object.
         except KeyError:
             self.__root_task_failed__(task)
         else:
-            # Callers of the task cannot continue and must be removed
-            self.__cancel_tasks(callers, FailedCallee(task))
+            self.__inject_into_callers(callers, FailedCallee(task))
 
     def __root_task_failed__(self, task):
         pass
