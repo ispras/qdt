@@ -8,7 +8,7 @@ from common import (
 
 class QType(object):
     """ Node in QOM type tree """
-    def __init__(self, name, children = None, macro = None):
+    def __init__(self, name, children = None, macro = None, arches = None):
         self.name = name
 
         # name: reference
@@ -20,6 +20,9 @@ class QType(object):
         self.macro = macro if macro else []
 
         self.parent = None
+
+        # set of CPU architectures found in QOM type tree
+        self.arches = arches if arches else set()
 
     def __remove_child(self, child):
         child.parent = None
