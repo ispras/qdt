@@ -38,6 +38,7 @@ __all__ = [
                       , "OpCast"
                   # BinaryOperator
                       , "OpAssign"
+                      , "OpDeclareAssign"
                       , "OpCombAssign"
                       , "OpAdd"
                       , "OpSub"
@@ -796,6 +797,27 @@ class OpAssign(BinaryOperator):
         super(OpAssign, self).__init__("=", arg1, arg2, parenthesis)
 
 
+class OpDeclareAssign(BinaryOperator):
+
+    def __init__(self, arg1, arg2, parenthesis = False):
+        super(OpDeclareAssign, self).__init__("=", arg1, arg2, parenthesis)
+
+    @staticmethod
+    def out_child(child, writer):
+        if isinstance(child, Variable):
+            if child.array_size is not None:
+                if not child.used:
+                    writer.write("__attribute__((unused))@b")
+                child.__c__(writer)
+                writer.write("[%d]" % child.array_size)
+            else:
+                child.__c__(writer)
+                if not child.used:
+                    writer.write("@b__attribute__((unused))")
+        else:
+            child.__c__(writer)
+
+
 class OpCombAssign(BinaryOperator):
 
     def __init__(self, arg1, arg2, op_str, parenthesis = False):
@@ -919,36 +941,37 @@ class CaseRange(BinaryOperator):
 
 
 op_priority = {
-    CaseRange:    1,
-    OpIndex:      1,
-    OpSDeref:     1,
-    OpDec:        1,
-    OpInc:        1,
-    OpPreDec:     1,
-    OpPreInc:     1,
-    OpDeref:      2,
-    OpAddr:       2,
-    OpNot:        2,
-    OpLogNot:     2,
-    OpCast:       2,
-    OpMul:        3,
-    OpDiv:        3,
-    OpRem:        3,
-    OpAdd:        4,
-    OpSub:        4,
-    OpLShift:     5,
-    OpRShift:     5,
-    OpGE:         6,
-    OpLE:         6,
-    OpGreater:    6,
-    OpLower:      6,
-    OpEq:         7,
-    OpNEq:        7,
-    OpAnd:        8,
-    OpXor:        9,
-    OpOr:         10,
-    OpLogAnd:     11,
-    OpLogOr:      12,
-    OpAssign:     13,
-    OpCombAssign: 13,
+    CaseRange:       1,
+    OpIndex:         1,
+    OpSDeref:        1,
+    OpDec:           1,
+    OpInc:           1,
+    OpPreDec:        1,
+    OpPreInc:        1,
+    OpDeref:         2,
+    OpAddr:          2,
+    OpNot:           2,
+    OpLogNot:        2,
+    OpCast:          2,
+    OpMul:           3,
+    OpDiv:           3,
+    OpRem:           3,
+    OpAdd:           4,
+    OpSub:           4,
+    OpLShift:        5,
+    OpRShift:        5,
+    OpGE:            6,
+    OpLE:            6,
+    OpGreater:       6,
+    OpLower:         6,
+    OpEq:            7,
+    OpNEq:           7,
+    OpAnd:           8,
+    OpXor:           9,
+    OpOr:            10,
+    OpLogAnd:        11,
+    OpLogOr:         12,
+    OpAssign:        13,
+    OpDeclareAssign: 13,
+    OpCombAssign:    13,
 }
