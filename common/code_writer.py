@@ -59,7 +59,17 @@ class CodeWriter(object):
 
         If current line has been just started then current indent will be
         written before the :string:.
+        If :string: is multilined then each line is prefixed with indent
+        except _empty_ last line.
         """
+
+        lines = string.split("\n")
+        if len(lines) > 1:
+            for l in lines[:-1]:
+                self.line(l)
+            string = lines[-1]
+            if not string:
+                return
 
         if self.new_line:
             self.w.write(self.current_indent)
