@@ -170,6 +170,7 @@ class MachineDescription(QOMDescription):
         elif isinstance(n, IRQHub):
             self.irq_hubs.append(n)
         else:
+            print("Unsupported node of type %s" % type(n).__name__)
             return
 
         if with_id is not None:
