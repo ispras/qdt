@@ -957,6 +957,11 @@ class Type(object):
         else:
             raise RuntimeError("Stringifying generic nameless type")
 
+    def __lt__(self, other):
+        if not isinstance(other, Type):
+            return NotImplemented
+        return self.name < other.name
+
 
 class TypeReference(Type):
 
