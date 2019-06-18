@@ -27,6 +27,15 @@ from .qom_desc import (
 from copy import (
     deepcopy as dcp
 )
+from .machine_nodes import (
+    MemoryLeafNode,
+    MemoryRAMNode,
+    MemoryROMNode
+)
+from itertools import (
+    count
+)
+
 
 @describable
 class SysBusDeviceType(QOMDevice):
@@ -63,6 +72,8 @@ class SysBusDeviceType(QOMDevice):
         self.mmio = {} if mmio is None else dcp(mmio)
         self.pio = {} if pio is None else dcp(pio)
 
+        self.mmio_names = {}
+
         self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
 
         for irqN in range(0, self.out_irq_num):
@@ -75,7 +86,7 @@ class SysBusDeviceType(QOMDevice):
                 self.get_Ith_mmio_name(mmioN),
                 save = False
             )
-            self.add_fields_for_regs(self.mmio.get(mmioN, list()))
+            self.add_fields_for_mmio(self.mmio.get(mmioN, list()))
 
         for ioN in range(0, self.pio_num):
             self.add_state_field_h("MemoryRegion",
@@ -87,6 +98,14 @@ class SysBusDeviceType(QOMDevice):
         self.timer_declare_fields()
         self.char_declare_fields()
         self.block_declare_fields()
+
+    def add_fields_for_mmio(self, desc):
+        if isinstance(desc, list):
+            self.add_fields_for_regs(desc)
+        elif isinstance(desc, MemoryLeafNode):
+            return # No extra fields
+        else:
+            raise ValueError("Unsupported MMIO description %s" % desc)
 
     def generate_header(self):
         self.state_struct = self.gen_state()
@@ -165,6 +184,8 @@ class SysBusDeviceType(QOMDevice):
         all_regs = []
         for idx, regs in self.mmio.items():
             if idx >= self.mmio_num:
+                continue
+            if isinstance(regs, MemoryLeafNode):
                 continue
             all_regs.extend(regs)
         for idx, regs in self.pio.items():
@@ -245,7 +266,6 @@ class SysBusDeviceType(QOMDevice):
         if self.mmio_num > 0:
             instance_init_used_types.update([
                 Type.lookup("sysbus_init_mmio"),
-                Type.lookup("memory_region_init_io"),
                 Type.lookup("Object")
             ])
 
@@ -257,69 +277,121 @@ class SysBusDeviceType(QOMDevice):
 
             regs = self.mmio.get(mmioN, None)
 
-            read_func = QOMType.gen_mmio_read(
-                name = self.qtn.for_id_name + "_" + component + "_read",
-                struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name,
-                regs = regs
-            )
+            ops_types = set()
 
-            write_func = QOMType.gen_mmio_write(
-                name = self.qtn.for_id_name + "_" + component + "_write",
-                struct_name = self.state_struct.name,
-                type_cast_macro = self.type_cast_macro.name,
-                regs = regs
-            )
-
-            impl = ""
-
-            if regs:
-                reg_sizes = set(reg.size for reg in regs)
-
-                size = regs[0].size # note that all sizes are equal
-
-                if len(reg_sizes) == 1 and size < 8: # 8 is max size by impl.
-                    impl = """,
-    .impl = {{
-        .max_access_size = {size}
-    }}""".format(size = size)
-
-            write_func.extra_references = {read_func}
-
-            self.source.add_types([read_func, write_func])
-
-            ops_init = Initializer(
-                used_types = [read_func, write_func],
-                code = """{{
-    .read@b=@s{read},
-    .write@b=@s{write}{impl}
-}}""".format(
-    read = read_func.name,
-    write = write_func.name,
-    impl = impl
+            if isinstance(regs, MemoryROMNode):
+                write_func = QOMType.gen_mmio_write(
+                    name = self.qtn.for_id_name + "_" + component + "_write",
+                    struct_name = self.state_struct.name,
+                    type_cast_macro = self.type_cast_macro.name
                 )
-            )
 
-            ops = Type.lookup("MemoryRegionOps").gen_var(
-                name = self.gen_Ith_mmio_ops_name(mmioN),
-                pointer = False,
-                initializer = ops_init,
-                static = True
-            )
+                ops_types.add(write_func)
 
-            self.source.add_global_variable(ops)
-            instance_init_used_globals.append(ops)
+                self.source.add_type(write_func)
 
-            instance_init_code += """
-    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@s{TYPE_MACRO},\
-@s{size});
-    sysbus_init_mmio(@aSYS_BUS_DEVICE(obj),@s&s->{mmio});
+                read = ""
+
+            elif isinstance(regs, MemoryRAMNode):
+                pass
+            else:
+                read_func = QOMType.gen_mmio_read(
+                    name = self.qtn.for_id_name + "_" + component + "_read",
+                    struct_name = self.state_struct.name,
+                    type_cast_macro = self.type_cast_macro.name,
+                    regs = regs
+                )
+
+                read = "\n    .read@b=@s" + read_func.name + ","
+
+                write_func = QOMType.gen_mmio_write(
+                    name = self.qtn.for_id_name + "_" + component + "_write",
+                    struct_name = self.state_struct.name,
+                    type_cast_macro = self.type_cast_macro.name,
+                    regs = regs
+                )
+
+                write_func.extra_references = {read_func}
+
+                ops_types.add(read_func)
+                ops_types.add(write_func)
+
+                self.source.add_types([read_func, write_func])
+
+            if isinstance(regs, MemoryRAMNode):
+                instance_init_code += """
+    memory_region_init_ram(@a&s->{mmio},@sobj,@s{TYPE_MACRO},@s{size},@sNULL);
 """.format(
     mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
     TYPE_MACRO = self.qtn.type_macro,
     size = size_macro.name
+                )
+                instance_init_used_types.add(Type["memory_region_init_ram"])
+            else:
+                impl = ""
+
+                if isinstance(regs, list):
+                    reg_sizes = set(reg.size for reg in regs)
+
+                    size = regs[0].size # note that all sizes are equal
+
+                    if len(reg_sizes) == 1 and size < 8: # 8 is max size by impl.
+                        impl = """,
+    .impl = {{
+        .max_access_size = {size}
+    }}""".format(size = size)
+
+                ops_init = Initializer(
+                    used_types = ops_types,
+                    code = """{{{read}
+    .write@b=@s{write}{impl}
+}}""".format(
+        read = read,
+        write = write_func.name,
+        impl = impl
+                    )
+                )
+
+                ops = Type.lookup("MemoryRegionOps").gen_var(
+                    name = self.gen_Ith_mmio_ops_name(mmioN),
+                    pointer = False,
+                    initializer = ops_init,
+                    static = True
+                )
+
+                self.source.add_global_variable(ops)
+                instance_init_used_globals.append(ops)
+
+                if isinstance(regs, MemoryROMNode):
+                    instance_init_code += """
+    memory_region_init_rom_device(@a&s->{mmio},@sobj,@s&{ops},@ss,\
+@s{TYPE_MACRO},@s{size},@sNULL);""".format(
+    mmio = self.get_Ith_mmio_name(mmioN),
+    ops = self.gen_Ith_mmio_ops_name(mmioN),
+    TYPE_MACRO = self.qtn.type_macro,
+    size = size_macro.name
+                    )
+                    instance_init_used_types.add(
+                        Type["memory_region_init_rom_device"]
+                    )
+                else:
+                    instance_init_code += """
+    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@s{TYPE_MACRO},\
+@s{size});""".format(
+    mmio = self.get_Ith_mmio_name(mmioN),
+    ops = self.gen_Ith_mmio_ops_name(mmioN),
+    TYPE_MACRO = self.qtn.type_macro,
+    size = size_macro.name
+                    )
+                    instance_init_used_types.add(Type["memory_region_init_io"])
+
+            instance_init_code += """
+    sysbus_init_mmio(@aSYS_BUS_DEVICE(obj),@s&s->{mmio});
+""".format(
+    mmio = self.get_Ith_mmio_name(mmioN)
             )
+
             s_is_used = True
 
         if self.pio_num > 0:
@@ -578,10 +650,34 @@ Type.lookup("void").gen_var("opaque", True),
             return "out_irq_{}".format(i)
 
     def get_Ith_mmio_name(self, i):
-        if self.mmio_num == 1:
-            return "mmio"
-        else:
-            return "mmio_{}".format(i)
+        try:
+            name = self.mmio_names[i]
+        except KeyError:
+            desc = self.mmio.get(i, None)
+
+            if isinstance(desc, MemoryLeafNode):
+                base = desc.var_base
+                name = base
+            else:
+                base = "mmio"
+                # legacy behavior: when multiple MMIOs present then there is
+                # no MMIO name without an index suffix
+                if self.mmio_num == 1:
+                    name = base
+                else:
+                    name = "%s_0" % base
+
+            all_names = self.fields_names
+
+            if name in all_names:
+                for j in count(0):
+                    name = "%s_%d" % (base, j)
+                    if name not in all_names:
+                        break
+
+            self.mmio_names[i] = name
+
+        return name
 
     def get_Ith_io_name(self, i):
         if self.pio_num == 1:
