@@ -1247,6 +1247,28 @@ description for QDT project.
         self.proxy.commit()
 
 
+def co_run_target(rt):
+    target = rt.target
+
+    def run():
+        try:
+            target.run(setpc = False)
+        except:
+            print_exc()
+            print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
+
+        try:
+            target.send(b"k")
+        except:
+            print_exc()
+
+    t = Thread(target = run)
+    t.start()
+
+    while t.isAlive():
+        yield False
+
+
 class QArgumentParser(ArgumentParser):
 
     def error(self, *args, **kw):
@@ -1361,26 +1383,7 @@ class QEmuWatcherGUI(GUITk):
         pythonize(project, file_name)
 
     def co_rsp_poller(self):
-        rt = self.rt
-        target = rt.target
-
-        def run():
-            try:
-                target.run(setpc = False)
-            except:
-                print_exc()
-                print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
-
-            try:
-                target.send(b"k")
-            except:
-                print_exc()
-
-        t = Thread(target = run)
-        t.start()
-
-        while t.isAlive():
-            yield False
+        yield co_run_target(self.rt)
 
         self._killed = True
 
