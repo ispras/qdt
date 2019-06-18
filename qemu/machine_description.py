@@ -13,7 +13,7 @@ from .qom_desc import (
 from itertools import (
     count
 )
-from .qom import (
+from .qom_common import (
     QOMPropertyTypeLink
 )
 from .machine import (
