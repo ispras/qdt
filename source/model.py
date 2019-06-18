@@ -1051,7 +1051,12 @@ class Structure(Type):
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
 
-    __type_references__ = ["fields"]
+    @property
+    def __type_references__(self):
+        if self._definition is None:
+            return ["fields"]
+        else:
+            return []
 
 
 class Enumeration(Type):
