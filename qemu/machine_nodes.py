@@ -1,6 +1,7 @@
 __all__ = [
     # Machine nodes
     "Node"
+      , "CPUNode"
       , "BusNode"
           , "SystemBusNode"
           , "PCIExpressBusNode"
@@ -83,6 +84,16 @@ class Node(object):
         gen = PyGenerator()
         self.__gen_code__(gen)
         return gen.w.getvalue()[:-1] # remove extra new line
+
+
+class CPUNode(Node):
+
+    def __init__(self, qom_type, var_base = "cpu", **kw):
+        super(CPUNode, self).__init__(var_base = var_base, **kw)
+
+        self.qom_type = qom_type
+
+    __pygen_deps__ = tuple()
 
 
 # bus models
