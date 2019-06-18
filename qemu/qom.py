@@ -422,6 +422,10 @@ class QOMType(object):
             default = True
         )
 
+    @property
+    def fields_names(self):
+        return set(f.name for f in self.state_fields)
+
     def add_state_fields(self, fields):
         for field in fields:
             self.add_state_field(field)
