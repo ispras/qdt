@@ -845,6 +845,11 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
+    def __lt__(self, other):
+        if not isinstance(other, Type):
+            return NotImplemented
+        return self.name < other.name
+
 
 class TypeReference(Type):
 
