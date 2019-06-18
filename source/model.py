@@ -922,7 +922,7 @@ class Structure(Type):
         self.declaration = None
         self._definition = None
 
-        self.fields = OrderedDict()
+        self._fields = OrderedDict()
         self.append_fields(fields)
 
     def gen_forward_declaration(self):
@@ -938,7 +938,7 @@ class Structure(Type):
             return d[name]
         except KeyError:
             try:
-                return d["fields"][name]
+                return d["_fields"][name]
             except KeyError:
                 return super(Structure, self).__getattr__(name)
 
@@ -1050,6 +1050,14 @@ class Structure(Type):
             fields_code.append("    .%s@b=@s%s" % (name, val_str))
 
         return "{\n" + ",\n".join(fields_code) + "\n}";
+
+    @property
+    def fields(self):
+        if self._definition is None:
+            return self._fields
+        else:
+            print("Warning: getting fields from structure declaration")
+            return self._definition.fields
 
     @property
     def __type_references__(self):
