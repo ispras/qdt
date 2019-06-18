@@ -17,6 +17,7 @@ from six.moves.tkinter import (
     BOTH
 )
 from qemu import (
+    QemuTypeName,
     MOp_SetNodeVarNameBase
 )
 from .gui_toplevel import (
@@ -130,6 +131,31 @@ class SettingsWidget(GUIFrame):
             self.after_cancel(self.refresh_after)
         except AttributeError:
             pass
+
+
+class QOMInstanceSettingsWidget(SettingsWidget):
+    """ Intermediate class for any machine node which allows QOM type name
+customization.
+    """
+
+    def _on_qom_type_var_changed(self, *__):
+        vvb = self.v_var_base
+        vb = vvb.get()
+
+        try:
+            prev_qt = self.__prev_qom_type
+        except AttributeError:
+            # QOM type was not edited yet
+            prev_qt = self.node.qom_type
+
+        if vb == "dev" or vb == qom_type_to_var_base(prev_qt):
+            """ If current variable name base is default or corresponds to
+            previous QOM type name then auto suggest new variable name base
+            with account of just entered QOM type. """
+            qt = self.qom_type_var.get()
+            vvb.set(qom_type_to_var_base(qt))
+            self.__prev_qom_type = qt
+
 
 # Remembers runtime size of settings windows. One record per window type.
 window_sizes = dict()
@@ -252,4 +278,10 @@ class SettingsWindow(GUIToplevel):
     def __on_configure(self, event):
         if event.widget is self:
             window_sizes[type(self)] = (event.width, event.height)
+
+
+def qom_type_to_var_base(qom_type):
+    type_base = qom_type[5:] if qom_type[0:5] == "TYPE_" else qom_type
+    qtn = QemuTypeName(type_base)
+    return qtn.for_id_name
 
