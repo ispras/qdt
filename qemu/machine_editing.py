@@ -39,7 +39,7 @@ __all__ = [
           , "MOp_SetChildBus"
 ]
 
-from .qom import (
+from .qom_common import (
     QOMPropertyValue
 )
 from .machine_nodes import (

@@ -30,7 +30,7 @@ from six.moves import (
     zip_longest,
     range as xrange
 )
-from .qom import (
+from .qom_common import (
     idon,
     QOMPropertyTypeLink
 )
