@@ -3,6 +3,11 @@ __all__ = [
 ]
 
 
+from six import (
+    StringIO
+)
+
+
 class CodeWriter(object):
     """Helper for writing program code.
 
@@ -14,9 +19,13 @@ class CodeWriter(object):
         """
         :backend: is a "writer" that will be given an output produced by this
             instance. It must implement `write` method for byte data.
+            Default is StringIO.
 
         :indent: is string value of single indentation step.
         """
+
+        if backend is None:
+            backend = StringIO()
 
         self.indent = indent
         self.w = backend

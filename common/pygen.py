@@ -42,9 +42,6 @@ class PyGenVisitor(ObjectVisitor):
             field_name = "__pygen_deps__"
         )
 
-        if backend is None:
-            backend = StringIO()
-
         self.gen = PyGenerator(backend = backend, **genkw)
 
     def on_visit(self):
