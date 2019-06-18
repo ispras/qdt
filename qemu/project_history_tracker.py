@@ -7,6 +7,8 @@ from common import (
     HistoryTracker
 )
 from .machine_editing import (
+    MOp_DelCPU,
+    MOp_AddCPU,
     MOp_SetMemNodeAttr,
     MOp_RemoveMemChild,
     MOp_AddMemoryNode,
@@ -24,6 +26,7 @@ from .machine_editing import (
     MOp_DelIRQHub
 )
 from .machine_nodes import (
+    CPUNode,
     MemoryAliasNode,
     DeviceNode,
     BusNode,
@@ -177,6 +180,21 @@ class MachineProxyTracker(object):
 
         self.set_sequence_description(_("Delete device."))
 
+    def delete_cpu(self, cpu_id):
+        self.stage(MOp_DelCPU, cpu_id)
+
+        self.set_sequence_description(_("Delete CPU."))
+
+    def add_cpu(self, new_id, **cpu_arguments):
+        # TODO: how to get TCG target?
+        default_qom_type = "TYPE_CPU"
+
+        cpu_arguments.setdefault("qom_type", default_qom_type)
+
+        self.stage(MOp_AddCPU, "CPUNode", new_id, **cpu_arguments)
+
+        self.set_sequence_description(_("Add CPU."))
+
     def add_device(self, class_name, new_id, **device_arguments):
         default_qom_type = "TYPE_DEVICE"
         if class_name == "SystemBusDeviceNode":
@@ -285,6 +303,8 @@ class MachineProxyTracker(object):
                 self.delete_irq_line(node_id)
             elif isinstance(n, MemoryNode):
                 self.delete_memory_node(n.id)
+            elif isinstance(n, CPUNode):
+                self.delete_cpu(node_id)
             else:
                 raise Exception(
 "No helper for deletion of node %d of type %s was defined" % \

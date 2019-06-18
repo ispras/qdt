@@ -23,6 +23,7 @@ from source import (
     Function
 )
 from .machine_nodes import (
+    CPUNode,
     SystemBusDeviceNode,
     BusNode,
     SystemBusNode,
@@ -147,6 +148,7 @@ class MachineType(QOMType):
     ])
 
     def __init__(self, name, directory,
+            cpus = [],
             devices = [],
             buses = [],
             irqs = [],
@@ -157,6 +159,7 @@ class MachineType(QOMType):
 
         self.desc = "TODO: provide description for " + name
 
+        self.cpus = cpus
         self.devices = devices
         self.buses = buses
         self.irqs = irqs
@@ -202,6 +205,7 @@ class MachineType(QOMType):
 
     def provide_node_names(self):
         for nodes in [
+            self.cpus,
             self.devices,
             self.buses,
             self.irqs,
@@ -342,7 +346,12 @@ class MachineType(QOMType):
         self.source = Source(self.source_path)
 
         all_nodes = sort_topologically(
-            self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
+            self.cpus +
+            self.devices +
+            self.buses +
+            self.irqs +
+            self.mems +
+            self.irq_hubs
         )
 
         decl_code = ""
@@ -647,6 +656,25 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                         # A source hub does connects to this hub by itself
                         continue
                     def_code += self.gen_irq_connect(src, hub_in_name)
+            elif isinstance(node, CPUNode):
+                self.use_type_name("CPUState")
+                self.use_type_name("cpu_create")
+
+                cpu_name = self.node_map[node]
+
+                decl_code += "    CPUState *%s;\n" % cpu_name
+
+                if Type.exists(node.qom_type):
+                    qom_type = node.qom_type
+                else:
+                    qom_type = "\"%s\"" % node.qom_type
+
+                def_code += """\
+    {var_name}@b=@scpu_create(@a{qom_type});
+""".format(
+    var_name = cpu_name,
+    qom_type = qom_type
+                )
             else:
                 raise UnknownMachineNodeType(str(type(node)))
 
