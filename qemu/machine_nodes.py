@@ -42,6 +42,7 @@ from source import (
     CINT
 )
 from common import (
+    PyGenerator,
     flatten,
     same,
     same_sets,
@@ -75,6 +76,13 @@ class Node(object):
         for n in flatten(getattr(self, attr) for attr in self.__pygen_deps__):
             if n is not None:
                 yield n
+
+    # Note that it may result in a very wide code because `PyGenVisitor` is
+    # not involved. Also, it works incorrectly when reference loops exist.
+    def __repr__(self):
+        gen = PyGenerator()
+        self.__gen_code__(gen)
+        return gen.w.getvalue()[:-1] # remove extra new line
 
 
 # bus models
