@@ -361,16 +361,16 @@ the QOM tree by fetching relevant data.
 class RQObjectProperty(object):
     "Represents runtime state of QOM object property"
 
-    def __init__(self, obj, prop, name = None, _type = None):
+    def __init__(self, owner, prop, name = None, _type = None):
         """
-    :type obj: RQInstance
-    :param obj:
+    :type owner: RQInstance
+    :param owner:
         is owner of that property
     :type prop: debug.Value
     :param prop:
         represents corresponding variable of type `ObjectProperty`
         """
-        self.obj = obj
+        self.owner = owner
         self.prop = prop
         if name is None:
             name = prop["name"].fetch_c_string()
@@ -679,8 +679,8 @@ Notifications are issued for many machine composition events.
             return
 
         print("Object 0x%x (%s) -> %s (%s)" % (
-            prop.obj.obj.address,
-            prop.obj.type.name,
+            prop.owner.obj.address,
+            prop.owner.type.name,
             prop.name,
             prop.type
         ))
@@ -715,8 +715,8 @@ Notifications are issued for many machine composition events.
             return
 
         print("Object 0x%x (%s) -> %s (%s) = 0x%x (Visitor)" % (
-            prop.obj.obj.address,
-            prop.obj.type.name,
+            prop.owner.obj.address,
+            prop.owner.type.name,
             prop.name,
             prop.type,
             rt["v"].fetch_pointer()
