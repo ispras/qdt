@@ -30,12 +30,18 @@ from common import (
     execfile,
     pythonize
 )
+from .qom_hierarchy import (
+    co_gen_device_tree
+)
 from .version import (
     QVHDict,
     initialize_version,
     qemu_heuristic_db,
     calculate_qh_hash,
     get_vp
+)
+from .qom_hierarchy import (
+    QType
 )
 from os import (
     listdir
@@ -430,7 +436,7 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
             else:
                 commit.param_oval[param.name] = param.old_value
 
-    __pygen_deps__ = ("pci_c",)
+    __pygen_deps__ = ("pci_c", "device_tree")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -559,6 +565,26 @@ class QemuVersionDescription(object):
             self.qvc_is_ready = False
             remove_file(self.qvc_path)
 
+    def co_init_device_tree(self, root, target_list):
+        print("Creating Device Tree for " +
+              ', '.join(str(e) for e in target_list) + "..."
+        )
+        self.qvc.device_tree = root
+        yield co_gen_device_tree(
+            self.build_path,
+            self.src_path,
+            target_list,
+            root
+        )
+        print("Device Tree was created")
+
+        t2m = {}
+        yield self.co_text2macros(t2m)
+
+        print("Adding macros to device tree ...")
+        yield self.co_add_dt_macro(root.children, t2m)
+        print("Macros were added to device tree")
+
     def co_init_cache(self):
         if self.qvc is not None:
             print("Multiple QVC initialization " + self.src_path)
@@ -603,6 +629,12 @@ class QemuVersionDescription(object):
 
             # gen version description
             yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
+
+            root = QType("device")
+            for t in self.target_list:
+                root.arches.add(t.split("-")[0])
+            yield self.co_init_device_tree(root, root.arches)
+
             self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
 
             # Search for PCI Ids
@@ -638,6 +670,23 @@ class QemuVersionDescription(object):
                     self.commit_sha
                 )
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
+
+            device_tree = self.qvc.device_tree
+            qvc_target_list = self.qvc.device_tree.arches
+
+            config_target_list = set()
+            for t in self.target_list:
+                config_target_list.add(t.split("-")[0])
+
+            # Targets to be added to the cache
+            new_target_list = config_target_list - qvc_target_list
+
+            has_new_target = len(new_target_list) > 0
+            if has_new_target:
+                device_tree.arches = config_target_list
+                yield self.co_init_device_tree(device_tree, new_target_list)
+
+            if is_outdated or has_new_target:
                 pythonize(self.qvc, qvc_path)
 
         yield True
