@@ -119,7 +119,7 @@ class DeviceTreeWidget(GUIDialog):
 
             dt_type = self.device_tree.item(item, "text")
             self.v = StringVar()
-            self.v.set(dt_type) # initialize
+            self.v.set(dt_type)
 
             b = Radiobutton(self.fr,
                 text = dt_type, 
