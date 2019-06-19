@@ -112,32 +112,35 @@ class DeviceTreeWidget(GUIDialog):
     # write selected qom type in qom_type_var
     def on_b1_press_dt(self, event):
         item = self.device_tree.identify('item', event.x, event.y)
-        if item:
-            self.add_button.config(state = "active")
-            for widget in self.fr.winfo_children():
-                widget.destroy()
 
-            dt_type = self.device_tree.item(item, "text")
-            self.v = StringVar()
-            self.v.set(dt_type)
+        if not item:
+            return
 
-            b = Radiobutton(self.fr,
-                text = dt_type, 
-                variable = self.v,
-                value = dt_type
-            )
-            b.pack(anchor = "w")
+        self.add_button.config(state = "active")
+        for widget in self.fr.winfo_children():
+            widget.destroy()
 
-            macros = self.device_tree.item(item, "values")[0]
-            if not macros == "None":
-                l = macros.split(" ")
-                for mstr in l:
-                    b = Radiobutton(
-                        self.fr,
-                        text = mstr, 
-                        variable = self.v,
-                        value = mstr
-                    )
-                    b.pack(anchor = "w")
+        dt_type = self.device_tree.item(item, "text")
+        self.v = StringVar()
+        self.v.set(dt_type)
 
-            b.select()
+        b = Radiobutton(self.fr,
+            text = dt_type,
+            variable = self.v,
+            value = dt_type
+        )
+        b.pack(anchor = "w")
+
+        macros = self.device_tree.item(item, "values")[0]
+        if not macros == "None":
+            l = macros.split(" ")
+            for mstr in l:
+                b = Radiobutton(
+                    self.fr,
+                    text = mstr,
+                    variable = self.v,
+                    value = mstr
+                )
+                b.pack(anchor = "w")
+
+        b.select()
