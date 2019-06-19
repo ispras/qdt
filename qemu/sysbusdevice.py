@@ -16,6 +16,7 @@ from source import (
     Type
 )
 from common import (
+    ee,
     mlget as _
 )
 from collections import (
@@ -35,6 +36,9 @@ from .machine_nodes import (
 from itertools import (
     count
 )
+
+
+MACROS_2_HEADER = ee("QDT_SBD_MMIO_MACROS_TO_HEADER")
 
 
 @describable
@@ -142,7 +146,10 @@ class SysBusDeviceType(QOMDevice):
                 text = self.gen_mmio_size(self.mmio.get(mmioN, None))
             )
 
-            self.header.add_type(size_macro)
+            (self.header if MACROS_2_HEADER else self.source).add_type(
+                size_macro
+            )
+
             self.mmio_size_macros.append(size_macro)
 
         pio_def_size = 0x4
