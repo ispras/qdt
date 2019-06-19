@@ -746,3 +746,50 @@ class QemuVersionDescription(object):
                     break
         print("Known targets set was made")
         self.qvc.known_targets = kts
+
+    def co_text2macros(self, text2macros):
+        # iterations to yield
+        i2y = QVD_DTM_IBY
+        print("Building text to macros mapping...")
+
+        for t in self.qvc.stc.reg_type.values():
+            if i2y == 0:
+                yield True
+                i2y = QVD_DTM_IBY
+            else:
+                i2y -= 1
+
+            if not isinstance(t, Macro):
+                continue
+
+            text = t.text
+            try:
+                aliases = text2macros[text]
+            except KeyError:
+                text2macros[text] = [t.name]
+            else:
+                aliases.append(t.name)
+
+        print("The mapping was built")
+
+    def co_add_dt_macro(self, dt, text2macros):
+        # iterations to yield
+        i2y = QVD_DTM_IBY
+
+        # Use the mapping to build "list_dt"
+        for qt in dt.values():
+            if i2y == 0:
+                yield True
+                i2y = QVD_DTM_IBY
+            else:
+                i2y -= 1
+
+            dt_type = qt.name
+            dt_type_text = '"' + dt_type + '"'
+
+            if dt_type_text in text2macros:
+                if qt.macro:
+                    print("Override macros for type %s" % dt_type_text)
+                qt.macro = list(text2macros[dt_type_text])
+
+            yield self.co_add_dt_macro(qt.children, text2macros)
