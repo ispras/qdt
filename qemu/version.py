@@ -586,6 +586,16 @@ def define_only_qemu_2_6_0_types():
         Function(name = "log_target_disas")
     ])
 
+    Header["sysemu/reset.h"].add_types([
+        # XXX: It's neither a function nor a function pointer. It's something
+        # between.
+        Function(name = "QEMUResetHandler",
+            ret_type = Type["void"],
+            args = [ Pointer(Type["void"])("opaque") ]
+        ),
+        Function(name = "qemu_register_reset")
+    ])
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
