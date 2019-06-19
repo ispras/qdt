@@ -70,6 +70,10 @@ class SysBusDeviceType(QOMDevice):
         self.pio_num = pio_num
 
         self.mmio_size_macros = []
+        # Qemu requires that any RAM/ROM/ROM device has unique name. Some
+        # devices has such MMIOs. Also, different names simplify understanding
+        # of `info mtree` HMP command output during debugging.
+        self.mmio_name_macros = []
         self.pio_size_macros = []
         self.pio_address_macros = []
 
@@ -145,12 +149,21 @@ class SysBusDeviceType(QOMDevice):
                 name = self.gen_Ith_mmio_size_macro_name(mmioN),
                 text = self.gen_mmio_size(self.mmio.get(mmioN, None))
             )
-
-            (self.header if MACROS_2_HEADER else self.source).add_type(
-                size_macro
+            name_macro = Macro(
+                name = self.get_Ith_mmio_name_macro_name(mmioN),
+                text = '%s "_%s"' % (
+                    self.qtn.type_macro,
+                    self.get_Ith_mmio_id_component(mmioN)
+                )
             )
 
+            (self.header if MACROS_2_HEADER else self.source).add_types([
+                size_macro,
+                name_macro
+            ])
+
             self.mmio_size_macros.append(size_macro)
+            self.mmio_name_macros.append(name_macro)
 
         pio_def_size = 0x4
         pio_cur_addres = 0x1000
@@ -278,7 +291,8 @@ class SysBusDeviceType(QOMDevice):
 
         for mmioN in range(0, self.mmio_num):
             size_macro = self.mmio_size_macros[mmioN]
-            instance_init_used_types.add(size_macro)
+            name_macro = self.mmio_name_macros[mmioN]
+            instance_init_used_types.update([size_macro, name_macro])
 
             component = self.get_Ith_mmio_id_component(mmioN)
 
@@ -327,11 +341,11 @@ class SysBusDeviceType(QOMDevice):
 
             if isinstance(regs, MemoryRAMNode):
                 instance_init_code += """
-    memory_region_init_ram(@a&s->{mmio},@sobj,@s{TYPE_MACRO},@s{size},@sNULL);
+    memory_region_init_ram(@a&s->{mmio},@sobj,@s{NAME_MACRO},@s{size},@sNULL);
 """.format(
     mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
-    TYPE_MACRO = self.qtn.type_macro,
+    NAME_MACRO = name_macro.name,
     size = size_macro.name
                 )
                 instance_init_used_types.add(Type["memory_region_init_ram"])
@@ -373,10 +387,10 @@ class SysBusDeviceType(QOMDevice):
                 if isinstance(regs, MemoryROMNode):
                     instance_init_code += """
     memory_region_init_rom_device(@a&s->{mmio},@sobj,@s&{ops},@ss,\
-@s{TYPE_MACRO},@s{size},@sNULL);""".format(
+@s{NAME_MACRO},@s{size},@sNULL);""".format(
     mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
-    TYPE_MACRO = self.qtn.type_macro,
+    NAME_MACRO = name_macro.name,
     size = size_macro.name
                     )
                     instance_init_used_types.add(
@@ -384,11 +398,11 @@ class SysBusDeviceType(QOMDevice):
                     )
                 else:
                     instance_init_code += """
-    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@s{TYPE_MACRO},\
+    memory_region_init_io(@a&s->{mmio},@sobj,@s&{ops},@ss,@s{NAME_MACRO},\
 @s{size});""".format(
     mmio = self.get_Ith_mmio_name(mmioN),
     ops = self.gen_Ith_mmio_ops_name(mmioN),
-    TYPE_MACRO = self.qtn.type_macro,
+    NAME_MACRO = name_macro.name,
     size = size_macro.name
                     )
                     instance_init_used_types.add(Type["memory_region_init_io"])
@@ -685,6 +699,9 @@ Type.lookup("void").gen_var("opaque", True),
             self.mmio_names[i] = name
 
         return name
+
+    def get_Ith_mmio_name_macro_name(self, i):
+        return self.qtn.for_macros + "_" + self.get_Ith_mmio_name(i).upper()
 
     def get_Ith_io_name(self, i):
         if self.pio_num == 1:
