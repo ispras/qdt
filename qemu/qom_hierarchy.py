@@ -1,10 +1,39 @@
 __all__ = [
     "QType"
+  , "co_gen_device_tree"
 ]
 
+from .machine_watcher import (
+    QOMTreeReverser,
+    co_run_target
+)
+from debug import (
+    create_dwarf_cache,
+    Runtime,
+    GitLineVersionAdapter
+)
 from common import (
+    pypath,
     co_find_eq
 )
+from os.path import (
+    join
+)
+from multiprocessing import (
+    Process
+)
+from os import (
+    system
+)
+# use ours pyrsp
+with pypath("..pyrsp"):
+    from pyrsp.rsp import (
+        AMD64
+    )
+    from pyrsp.utils import (
+        find_free_port,
+        wait_for_tcp_port
+    )
 
 class QType(object):
     """ Node in QOM type tree """
@@ -70,3 +99,58 @@ class QType(object):
         gen.reset_gen(self)
         gen.gen_args(self)
         gen.gen_end()
+
+
+def co_gen_device_tree(build_path, src_path, target_list, root):
+    bin_folder = join(build_path, "bin")
+    for arch_name in target_list:
+        qemu_exec = join(bin_folder, "qemu-system-" + arch_name)
+
+        dic = create_dwarf_cache(qemu_exec)
+
+        gvl_adptr = GitLineVersionAdapter(src_path)
+
+        qomtr = QOMTreeReverser(dic,
+            interrupt = True,
+            verbose = True,
+            line_adapter = gvl_adptr
+        )
+
+        port = find_free_port(4321)
+        qemu_debug_addr = "localhost:%u" % port
+        qemu_proc = Process(
+            target = system,
+            args = (" ".join(["gdbserver", qemu_debug_addr, qemu_exec]),)
+        )
+        qemu_proc.start()
+
+        if not wait_for_tcp_port(port):
+            raise RuntimeError("gdbserver does not listen %u" % port)
+
+        yield True
+
+        qemu_debugger = AMD64(str(port), noack = True)
+        rt = Runtime(qemu_debugger, dic)
+
+        qomtr.init_runtime(rt)
+
+        yield co_run_target(rt)
+
+        def co_fill_children(qomtr_node, qtype_node):
+            for c in qomtr_node.children:
+                name = c.name
+                if name in qtype_node.children:
+                    # Node already exists.
+                    # We only need to add the new CPU arch
+                    qt = qtype_node.children[name]
+                    qt.arches.add(arch_name)
+                else:
+                    qt = QType(name, arches = set([arch_name]))
+                    qtype_node.add_child(qt)
+
+                yield co_fill_children(c, qt)
+
+        yield co_fill_children(
+            qomtr.tree.name2type["device"],
+            root
+        )
