@@ -59,6 +59,7 @@ from itertools import (
     chain
 )
 from common import (
+    ee,
     path2tuple,
     pypath,
     OrderedSet,
@@ -111,6 +112,9 @@ re_can = compile(common_re % CAN)
 re_nbs = compile(common_re % NBS)
 re_nss = compile(common_re % NSS)
 re_clr = compile("@(.|$)")
+
+
+APPEND_NL_AFTER_MACROS = not ee("QDT_NO_NL_AFTER_MACROS")
 
 
 # Code generation model
@@ -2455,14 +2459,23 @@ them must be replaced with reference to h. """
             )
 
         prev_header = False
+        prev_macro = False
 
         for chunk in self.chunks:
+            # Add empty lines after some chunk groups for prettiness.
             if isinstance(chunk, HeaderInclusion):
                 prev_header = True
             else:
                 if append_nl_after_headers and prev_header:
                     writer.write("\n")
                 prev_header = False
+
+                if isinstance(chunk, MacroDefinition):
+                    prev_macro = True
+                else:
+                    if APPEND_NL_AFTER_MACROS and prev_macro:
+                        writer.write("\n")
+                    prev_macro = False
 
             chunk.check_cols_fix_up()
 
