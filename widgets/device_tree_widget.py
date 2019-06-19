@@ -15,6 +15,7 @@ from six.moves.tkinter_ttk import (
 )
 from six.moves.tkinter import (
     Radiobutton,
+    Checkbutton,
     StringVar
 )
 from common import (
@@ -54,6 +55,7 @@ class DeviceTreeWidget(GUIDialog):
         self.device_tree.grid(
             row = 0,
             column = 0,
+            rowspan = 3,
             sticky = "NEWS"
         )
 
@@ -68,26 +70,49 @@ class DeviceTreeWidget(GUIDialog):
         )
         self.device_tree['yscroll'] = ysb.set
         self.device_tree['xscroll'] = xsb.set
-        ysb.grid(row = 0, column = 1, sticky = "NS")
-        xsb.grid(row = 1, column = 0, sticky = "EW")
+        ysb.grid(row = 0, column = 1, rowspan = 3, sticky = "NS")
+        xsb.grid(row = 3, column = 0, sticky = "EW")
 
         self.add_button = VarButton(
             self,
             text = _("Select"),
             command = self.on_select_qom_type
         )
-        self.add_button.grid(row = 1, column = 2, sticky = "WE")
+        self.add_button.grid(row = 2, rowspan = 2, column = 2, sticky = "WE")
         self.add_button.config(state = "disabled")
 
         self.fr_qt = VarLabelFrame(self, text = _("Select QOM type"))
         self.fr_qt.grid(row = 0, column = 2, sticky = "SEWN")
+
+        self.fr_at = VarLabelFrame(self, text = _("Select arch filter"))
+        self.fr_at.grid(row = 1, column = 2, sticky = "SEWN")
 
         qom_hierarchy = self.qom_hierarchy = qvd_get(
             root.mach.project.build_path,
             version = root.mach.project.target_version
         ).qvc.device_tree
 
-        self.qom_create_tree("", qom_hierarchy)
+        self.arch_vars = []
+        for a in sorted(list(qom_hierarchy.arches)):
+            var = StringVar()
+            c = Checkbutton(self.fr_at,
+                text = a,
+                variable = var,
+                onvalue = a,
+                offvalue = '',
+                command = self.on_select_arch_type
+            )
+            c.pack(anchor = "w")
+            self.arch_vars.append(var)
+            c.select()
+
+        # Counter of Disabled Arch
+        self.cda = 0
+
+        # list of tuple(item, parent, index, tags) with desc detached nodes
+        self.detach_nodes = []
+
+        self.qom_create_tree("", qom_hierarchy.children)
 
     def qom_create_tree(self, parent_id, dt):
         for key in sorted(dt.keys()):
@@ -105,6 +130,45 @@ class DeviceTreeWidget(GUIDialog):
             )
             if qt.children:
                 self.qom_create_tree(cur_id, qt.children)
+
+    def on_select_arch_type(self):
+        included_arch = set()
+        for v in self.arch_vars:
+            arch_str = v.get()
+            if arch_str != '':
+                included_arch.add(arch_str)
+
+        disabled_arch = self.qom_hierarchy.arches - included_arch
+        detach_items = []
+
+        new_cda = len(disabled_arch)
+        if new_cda > self.cda:
+            # one of architectures has been enabled
+            for a in disabled_arch:
+                nodes = self.device_tree.tag_has(a)
+                for n in nodes:
+                    cur_tags = set(self.device_tree.item(n, option = "tags"))
+                    if not(cur_tags - disabled_arch):
+                        # All tags in disabled_arch
+                        # Save desc of detach node
+                        self.detach_nodes.append((
+                            n,
+                            self.device_tree.parent(n),
+                            self.device_tree.index(n),
+                            cur_tags
+                        ))
+                        detach_items.append(n)
+
+            if detach_items:
+                self.device_tree.detach(*detach_items)
+        else:
+            # one of architectures has been disabled
+            for n_desc in self.detach_nodes:
+                # One or more arch in tags enabled
+                if n_desc[3].intersection(included_arch):
+                    self.device_tree.move(n_desc[0], n_desc[1], n_desc[2])
+
+        self.cda = new_cda
 
     def on_select_qom_type(self):
         self.qom_type_var.set(self.v.get())
