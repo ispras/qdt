@@ -85,6 +85,7 @@ if [ "$BranchExists" == "" ] ; then
 
     if _git tag "$StartTag" ; then
         echo "Start tag has been set ($StartTag)."
+        StartTagIsJustSet="yes"
     else
         echo "Cannot set start tag ($StartTag)."
         exit 1
@@ -124,6 +125,10 @@ Automatic update will fail. Manual recovery is needed!"
         _git branch -d "$1"
     else
         echo "Failed create branch with name '$1'."
+    fi
+
+    if [ "$StartTagIsJustSet" == "yes" ] ; then
+        _git tag -d "$StartTag"
     fi
 else
     echo "Update."
