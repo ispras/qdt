@@ -136,6 +136,9 @@ re_nss = compile(common_re % NSS)
 re_clr = compile("@(.|$)")
 
 
+APPEND_NL_AFTER_MACROS = not ee("QDT_NO_NL_AFTER_MACROS")
+
+
 # Code generation model
 class ChunkGenerator(object):
     """ Maintains context of source code chunks generation process. """
@@ -2903,8 +2906,10 @@ them must be replaced with reference to h. """
             )
 
         prev_header = False
+        prev_macro = False
 
         for chunk in self.chunks:
+            # Add empty lines after some chunk groups for prettiness.
             if isinstance(chunk, HeaderInclusion):
                 # propagate actual inclusions back to the origin
                 if self.is_header:
@@ -2915,6 +2920,13 @@ them must be replaced with reference to h. """
                 if append_nl_after_headers and prev_header:
                     writer.write("\n")
                 prev_header = False
+
+                if isinstance(chunk, MacroDefinition):
+                    prev_macro = True
+                else:
+                    if APPEND_NL_AFTER_MACROS and prev_macro:
+                        writer.write("\n")
+                    prev_macro = False
 
             chunk.check_cols_fix_up()
 
