@@ -112,6 +112,10 @@ POINTER_TO_DECLARATION = ee("QDT_POINTER_TO_DECLARATION", "True")
 # Reduces amount of #include directives
 OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 
+# Skip global headers inclusions. All needed global headers included in
+# "qemu/osdep.h".
+SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
+
 
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
@@ -204,6 +208,12 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
+            elif (    SKIP_GLOBAL_HEADERS
+                  and isinstance(origin, TypeReference)
+                  and self.for_header
+                  and origin.type.definer.is_global
+            ):
+                chunks = []
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
