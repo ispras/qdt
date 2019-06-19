@@ -639,7 +639,10 @@ class QemuVersionDescription(object):
                 if not checksum == qemu_heuristic_hash:
                     is_outdated = True
             if is_outdated:
-                yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
+                yield self.qvc.co_computing_parameters(
+                    self.repo,
+                    self.commit_sha
+                )
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
                 pythonize(self.qvc, qvc_path)
 
