@@ -813,6 +813,8 @@ class Type(object):
                 used = used
             )
 
+    __call__ = gen_var
+
     def get_definers(self):
         if self.definer is None:
             return []
