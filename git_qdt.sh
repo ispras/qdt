@@ -10,7 +10,7 @@
 # commit using a tag. On template update (it actually generates new device
 # template) script trunks from the tag, creating a commit with new version of
 # template. Then it rebases custom changes on new template. The resolution of
-# possible conflicts with correct rebase complation is up to user.
+# possible conflicts with correct rebase completion is up to user.
 #
 # The implementation requires a specific branch should be created per device.
 # It is not theoretically necessary but it forces user to follow well
@@ -19,7 +19,9 @@
 # This is prof-of-concept implementation mostly because of the QDT is not
 # implemented external configuration yet. The script should evolve with QDT.
 
-# Extra parameters
+# Extra parameters passed through environment variable:
+# QDT_QEMU_SRC
+#    Path to Qemu source tree
 
 if [ "$QDT_QEMU_SRC" == "" ] ; then
     QemuSrc="$HOME/work/qemu/src"
