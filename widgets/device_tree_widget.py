@@ -79,8 +79,8 @@ class DeviceTreeWidget(GUIDialog):
         self.add_button.grid(row = 1, column = 2, sticky = "WE")
         self.add_button.config(state = "disabled")
 
-        self.fr = VarLabelFrame(self, text = _("Select QOM type"))
-        self.fr.grid(row = 0, column = 2, sticky = "SEWN")
+        self.fr_qt = VarLabelFrame(self, text = _("Select QOM type"))
+        self.fr_qt.grid(row = 0, column = 2, sticky = "SEWN")
 
         # Check exception before __init__ call.
         bp = root.mach.project.build_path
@@ -117,14 +117,14 @@ class DeviceTreeWidget(GUIDialog):
             return
 
         self.add_button.config(state = "active")
-        for widget in self.fr.winfo_children():
+        for widget in self.fr_qt.winfo_children():
             widget.destroy()
 
         dt_type = self.device_tree.item(item, "text")
         self.v = StringVar()
         self.v.set(dt_type)
 
-        b = Radiobutton(self.fr,
+        b = Radiobutton(self.fr_qt,
             text = dt_type,
             variable = self.v,
             value = dt_type
@@ -136,7 +136,7 @@ class DeviceTreeWidget(GUIDialog):
             l = macros.split(" ")
             for mstr in l:
                 b = Radiobutton(
-                    self.fr,
+                    self.fr_qt,
                     text = mstr,
                     variable = self.v,
                     value = mstr
