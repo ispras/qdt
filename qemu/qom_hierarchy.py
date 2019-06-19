@@ -12,7 +12,7 @@ from common import (
 
 class QType(object):
     """ Node in QOM type tree """
-    def __init__(self, name, parent = None, children = None):
+    def __init__(self, name, parent = None, children = None, macros = None):
         self.name = name
 
         # name: reference
@@ -24,6 +24,8 @@ class QType(object):
             self.parent = None
         else:
             parent.__add_child(self)
+
+        self.macros = macros if macros else []
 
     def __add_child(self, child):
         self.children[child.name] = child
@@ -78,6 +80,8 @@ def from_dict(d, parent = None):
             continue
         if key == "type":
             continue
+        if key == "macros":
+            res.macros = d["macros"]
         setattr(res, key, dcp(val))
     return res
 
