@@ -509,28 +509,30 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             parent = next(parent.find(name = "pci-device"))
 
         qtn = QemuTypeName(desc.name)
-        QType(qtn.for_id_name, parent).macro = [
-            qtn.type_macro
-        ]
+        qt = QType(qtn.for_id_name,
+            macro = [qtn.type_macro],
+            arches = set(parent.arches)
+        )
+        parent.add_child(qt)
 
     def on_qvc_available(self):
         pht = self.pht
         if pht is not None:
             pht.all_pci_ids_2_objects()
 
-        # TODO: building device tree as QType from qemu exec file
-        #qvc = self.qvd.qvc
-        #if qvc.device_tree:
-        #    qt = self.p.qom_tree
+        # convert device tree to more convenient form
+        qvc = self.qvd.qvc
+        if qvc.device_tree:
+            self.p.qom_tree = qvc.device_tree
 
             # Note that system bus device have no standard name for input IRQ.
-        #    next(qt.find(name = "sys-bus-device")).out_gpio_names = [
-        #        "SYSBUS_DEVICE_GPIO_IRQ"
-        #    ]
+            next(
+                qvc.device_tree.find(name = "sys-bus-device")
+            ).out_gpio_names = ["SYSBUS_DEVICE_GPIO_IRQ"]
 
         # extend QOM tree with types from project
-        #for d in self.p.descriptions:
-        #    self.__add_qtype_for_description(d)
+        for d in self.p.descriptions:
+            self.__add_qtype_for_description(d)
 
     def __on_qvd_failed(self):
         del self.reload_build_path_task
