@@ -296,6 +296,7 @@ the QOM tree by fetching relevant data.
         """
 
         if self.interrupt:
+            self.remove_breakpoints()
             self.rt.target.exit = True
 
     def to_file(self, dot_file_name):
