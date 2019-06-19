@@ -919,6 +919,12 @@ class Structure(Type):
         self.fields = OrderedDict()
         self.append_fields(fields)
 
+    def gen_forward_declaration(self):
+        decl = Structure(self.name + ".declaration")
+        self.declaration = decl
+        decl._definition = self
+        return decl
+
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
         d = self.__dict__
