@@ -6,9 +6,11 @@ __all__ = [
           , "MachineNodeAdding"
               , "MachineNodeDeletion"
                   , "MOp_DelMemoryNode"
+                  , "MOp_DelCPU"
               , "MOp_AddMemoryNode"
               , "MOp_AddBus"
                   , "MOp_DelBus"
+              , "MOp_AddCPU"
               , "MOp_AddDevice"
                   , "MOp_DelDevice"
           , "MOp_DelIRQLine"
@@ -16,6 +18,7 @@ __all__ = [
           , "MOp_AddIRQHub"
               , "MOp_DelIRQHub"
           , "MachineNodeSetAttributeOperation"
+              , "MOp_SetCPUAttr"
               , "MOp_SetNodeVarNameBase"
               , "MOp_SetMemNodeAttr"
               , "MachineNodeSetLinkAttributeOperation"
@@ -305,6 +308,33 @@ class MOp_DelMemoryNode(MachineNodeDeletion, MOp_AddMemoryNode):
             name, self.node_id,
             self.get_kind_str()
         )
+
+
+class MOp_AddCPU(MachineNodeAdding):
+
+    def _backup(self):
+        pass
+
+    def __description__(self, __):
+        return _("Create CPU (%d)") % (self.node_id)
+
+    def _undo(self):
+        cpu = self.mach.id2node[self.node_id]
+        self.mach.cpus.remove(cpu)
+        del self.mach.id2node[self.node_id]
+        cpu.id = -1
+
+
+class MOp_DelCPU(MachineNodeDeletion, MOp_AddCPU):
+
+    def __init__(self, *args, **kw):
+        MachineNodeDeletion.__init__(self, *args, **kw)
+
+    _do =  MOp_AddCPU._undo
+
+    def __description__(self, __):
+        return _("Delete CPU (%d)") % (self.node_id)
+
 
 class MOp_AddDevice(MachineNodeAdding):
     def __init__(self, device_class_name, *args, **kw):
@@ -704,6 +734,11 @@ class MachineNodeSetAttributeOperation(MachineNodeOperation):
             self.gen_id_str(self.node_id),
             self.gen_val_str(self.new_val)
         )
+
+
+class MOp_SetCPUAttr(MachineNodeSetAttributeOperation):
+    pass
+
 
 class MOp_SetNodeVarNameBase(MachineNodeSetAttributeOperation):
     def __init__(self, new_base, *args, **kw):
