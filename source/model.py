@@ -204,6 +204,14 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
+            elif (    isinstance(origin, TypeReference)
+                  and self.for_header
+                  and origin.type.definer.is_global
+            ):
+                # TODO: skip global headers is dictated by incomplete optimize
+                # inclusions realisation. All needed global headers included in
+                # "qemu/osdep.h".
+                chunks = []
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
