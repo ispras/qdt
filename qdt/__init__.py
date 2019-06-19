@@ -19,6 +19,10 @@ from qemu import (
 # Machine draft generation settings
   , MachineDescription
   , MachineNode # Alias of MachineDescription. Legacy. Do not use it.
+
+  # CPU instantiation and interconnection parameters
+  , CPUNode
+
   # Device instantiation and interconnection parameters
   , DeviceNode
       , SystemBusDeviceNode
