@@ -552,7 +552,7 @@ class QOMType(object):
                 continue
 
             try:
-                helper = type2prop[f.type.name]
+                helper = type2prop[f.type.c_name]
             except KeyError:
                 raise Exception(
                     "Property generation for type %s is not implemented" % \
@@ -620,7 +620,7 @@ class QOMType(object):
                 )
 
             try:
-                vms_macro_name = type2vmstate[f.type.name]
+                vms_macro_name = type2vmstate[f.type.c_name]
             except KeyError:
                 raise Exception(
                     "VMState generation for type %s is not implemented" % \
