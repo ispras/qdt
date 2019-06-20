@@ -8,6 +8,9 @@ from inspect import (
 from .os_wrappers import (
     ee
 )
+from time import (
+    time
+)
 
 
 def gen_init_wrapper(wrapped_init, cb_list_name):
@@ -55,6 +58,10 @@ transparent.
     # Define callback list before calling of original __init__ to allow
     # it assign watchers.
     code += "    setattr(self, '" + cb_list_name + "', [])\n"
+
+    if True:
+        code += "    setattr(self, '" + cb_list_name + "_stats', {})\n"
+
     # code += "    print(wrapped_init)\n"
     code += "    wrapped_init(" + ", ".join(arg_to_init) + ")\n"
 
@@ -81,11 +88,16 @@ def gen_event_helpers(wrapped_init, cb_list_name):
 
     def notify(self, *args, **kw):
         callbacks = getattr(self, cb_list_name)
+        stats = getattr(self, cb_list_name + "_stats")
         """ Because listeners could add and/or remove callbacks during
         notification, the listener list should be copied before the process. """
         for callback in list(callbacks):
             # Callback denial does not take effect during current notification.
+            t0 = time()
             callback(*args, **kw)
+            t1 = time()
+
+            stats.setdefault(callback, []).append(t1 - t0)
 
     return init_wrapper, add_callback, remove_callback, notify
 
@@ -129,6 +141,17 @@ https://docs.python.org/3/reference/expressions.html#atom-identifiers
             klass._events = tuple(events)
         else:
             klass._events += tuple(events)
+
+        def _del(self):
+            for e in events:
+                stats = getattr(self, "_" + klass.__name__ + "__" + e + "_stats")
+                print(klass.__name__ + "." + e)
+                for cb, times in stats.items():
+                    print("%s %f %f %f" % (cb.__name__, min(times), max(times),
+                        sum(times) / len(times)
+                    ))
+
+        klass.__del__ = _del
 
         return klass
 
