@@ -1411,7 +1411,7 @@ class Pointer(Type):
                 c_name = "const@b" + c_name
             self.c_name = c_name
 
-        if POINTER_TO_DECLARATION and isinstance(_type, Structure):
+        if POINTER_TO_DECLARATION and isinstance(_type, (Structure, Function)):
             _type = _type.declaration or _type
 
         self.type = _type
