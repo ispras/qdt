@@ -532,7 +532,7 @@ Notifications are issued for many machine composition events.
         i = RQInstance(obj, rqom_type)
         self.instances[obj.address] = i
 
-        # account class properties
+        # propagate class properties to the instance
         for t in rqom_type.iter_inheritance():
             for prop in t.properties:
                 i.properties[prop.name] = RQObjectProperty(i, prop.prop,
@@ -710,6 +710,9 @@ Notifications are issued for many machine composition events.
         prop = prop.to_global()
 
         ct = self.tree.addr2type[type_addr]
+        # This code assumes that no class property is added after at least one
+        # instance has been created. Because all class properties are added
+        # during class initialization.
         ct.properties.append(RQObjectProperty(ct, prop))
 
     def on_obj_prop_set(self):
