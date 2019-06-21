@@ -23,6 +23,7 @@ from source import (
     BranchSwitch,
     SwitchCase,
     Call,
+    Pointer,
     add_base_types
 )
 from common import (
@@ -393,6 +394,46 @@ typedef struct s {{
 }} s;
 
 """.format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestRedirectionToDeclaration(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestRedirectionToDeclaration, self).setUp()
+        name = type(self).__name__
+
+        private_h = Header("private.h")
+        private_h.add_type(Structure("Private"))
+
+        public_h = Header("public.h")
+        public_h.add_types([
+            Type["Private"].gen_forward_declaration(),
+            Function("public_func")
+        ])
+
+        private_c = Source("private.c")
+        public_func_impl = Type["public_func"].gen_definition()
+        private_c.add_type(public_func_impl)
+
+        src = Source(name.lower() + ".c").add_global_variable(
+            # It must internally re-direct pointer from type "Private"
+            # to "Private.declaration", its forward declaration.
+            Type["Private"].gen_var("handler", pointer = True)
+        )
+        src.add_type(Pointer(public_func_impl, name = "cb_ptr"))
+
+        src_content = """\
+/* %s */
+#include "public.h"
+
+typedef void (*cb_ptr)(void);
+Private* handler __attribute__((unused));
+
+""" % (name.lower() + ".c")
 
         self.files = [
             (src, src_content)
