@@ -20,8 +20,6 @@ from collections import (
 from debug import (
     create_dwarf_cache,
     Runtime,
-    InMemoryELFFile,
-    DWARFInfoCache,
     Watcher,
     TYPE_CODE_PTR,
     GitLineVersionAdapter
