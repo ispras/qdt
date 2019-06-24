@@ -2329,7 +2329,18 @@ digraph Chunks {
             + "\n".join(h.path for h in included_headers)
         )
 
-        stack = list(included_headers)
+        # Sorting is necessary for deterministic stack building.
+        # Sorting criteria:
+        # 1) Headers with a larger number of users are preferable to use for
+        #    substitution since the number of references will decrease faster.
+        # 2) Headers with a same number of users ordered by its chunks.
+        stack = list(sorted(included_headers,
+            key = lambda header: (
+                -len(included_headers[header].users),
+                included_headers[header]
+            ),
+            reverse = True
+        ))
 
         while stack:
             h = stack.pop()
