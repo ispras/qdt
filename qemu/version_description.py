@@ -505,7 +505,7 @@ class QemuVersionDescription(object):
         self.target_list = fixpath(QemuVersionDescription.ch_lookup(
             config_host,
             "TARGET_DIRS"
-        ))
+        )).split(" ")
 
         # Get SHA
         self.repo = Repo(self.src_path)
