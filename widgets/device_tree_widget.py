@@ -138,6 +138,6 @@ class DeviceTreeWidget(GUIDialog):
                         variable = self.v,
                         value = mstr
                     )
-                b.pack(anchor = "w")
+                    b.pack(anchor = "w")
 
             b.select()
