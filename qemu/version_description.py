@@ -44,6 +44,7 @@ from os import (
     listdir
 )
 from os.path import (
+    dirname,
     sep,
     join,
     isfile
@@ -740,6 +741,11 @@ class QemuVersionDescription(object):
 
     def co_gen_device_tree(self):
         dt_db_fname = join(self.build_path, "dt.json")
+
+        # No device tree for current Qemu. Use QDT's one.
+        if not isfile(dt_db_fname):
+            dt_db_fname = join(dirname(__file__), "dt.json")
+
         if  isfile(dt_db_fname):
             print("Loading Device Tree from " + dt_db_fname + "...")
             dt_db_reader = open(dt_db_fname, "r")
