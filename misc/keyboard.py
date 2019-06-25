@@ -22,6 +22,7 @@ inner_pad = 4
 outer_pad = 10
 default_w = 40
 default_h = 40
+separator_w = 30
 
 
 class PlaceHolder(object):
@@ -67,7 +68,7 @@ S = Separator
 class GroupSeparator(PlaceHolder):
 
     def __init__(self):
-        super(GroupSeparator, self).__init__(w = 30)
+        super(GroupSeparator, self).__init__(w = separator_w)
 
 
 GS = GroupSeparator
