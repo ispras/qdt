@@ -48,7 +48,7 @@ RH = RowHolder
 class ButtonHolder(PlaceHolder):
 
     def __init__(self):
-        super(ButtonHolder, self).__init__(w = default_w, h = default_h)
+        super(ButtonHolder, self).__init__(w = default_w)
 
 
 BH = ButtonHolder
