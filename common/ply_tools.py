@@ -1,5 +1,6 @@
 __all__ = [
     "gen_tokens"
+  , "def_tokens"
 ]
 
 def gen_tokens(glob):
@@ -10,3 +11,6 @@ def gen_tokens(glob):
             if name in ("error", "ignore"):
                 continue
             yield name
+
+def def_tokens(glob):
+    glob["tokens"] = tuple(gen_tokens(glob))
