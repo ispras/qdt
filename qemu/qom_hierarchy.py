@@ -12,11 +12,13 @@ from common import (
 
 class QType(object):
     """ Node in QOM type tree """
-    def __init__(self, name, parent = None):
+    def __init__(self, name, parent = None, children = None):
         self.name = name
 
-        # name : reference
-        self.children = {}
+        # name: reference
+        self.children = children if children else {}
+        for c in self.children.values():
+            c.parent = self
 
         if parent is None:
             self.parent = None
