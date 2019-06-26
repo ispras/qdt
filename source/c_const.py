@@ -18,7 +18,7 @@ from string import (
 )
 from common import (
     pypath,
-    gen_tokens
+    def_tokens
 )
 from six import (
     integer_types
@@ -353,8 +353,7 @@ def p_digits(p):
            | HEX"""
     p[0] = p[1]
 
-# Define tokens
-tokens = tuple(gen_tokens(globals()))
+def_tokens(globals())
 
 # Build lexer and parser
 lexer = lex()
