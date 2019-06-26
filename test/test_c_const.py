@@ -8,6 +8,7 @@ from source import (
     CConst
 )
 from common import (
+    def_tokens,
     pypath,
     ee
 )
@@ -24,7 +25,7 @@ def t_ANY(t):
 
 t_error = lambda _ : None
 
-tokens = ["ANY"]
+def_tokens(globals())
 lex()
 
 
