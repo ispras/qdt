@@ -109,7 +109,7 @@ class CommitDesc(object):
         # to_enum is used during topological sorting
         # it contains commit to enumerate
         to_enum = None
-        # build_stack contains eges represented by tuples
+        # build_stack contains edges represented by tuples
         # (parent, child), where parent is instance of
         # git.Commit, child is instance of QemuCommitDesc
         build_stack = []
