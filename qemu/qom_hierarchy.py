@@ -62,13 +62,13 @@ class QType(object):
         for t in co_find_eq(self.root().descendants(), **request):
             yield t
 
-    # Python serialization
-    # This only means that the parent must be serialized first
-    __pygen_deps__ = ("parent",)
+    # Tree will be traversed from the root to the child nodes
+    # The children will be serialized first
+    __pygen_deps__ = ("children",)
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
-        gen.gen_args(self)
+        gen.gen_args(self, skip_list = ["parent"])
         gen.gen_end()
 
 def from_dict(d, parent = None):
