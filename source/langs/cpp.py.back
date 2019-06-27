@@ -1,0 +1,166 @@
+__all__ = [
+    "cpp_lexer"
+  , "cpp_parser"
+]
+
+from common import (
+    def_tokens,
+    unify_rules,
+    make_count_columns
+)
+from ply.lex import (
+    lex
+)
+from ply.yacc import (
+    yacc
+)
+
+# This language corresponds to 3-nd and 4-th translation phases defined by
+# 5.1.1.2 of ISO/IEC 9899:202x (~C 17)
+
+for d in ["if", "ifdef", "ifndef", "elif", "else", "endif", "include",
+    "define", "undef", "line", "error", "pragma"
+]:
+    code = """
+def t_{D}(t):
+    r"\\#\\s*{d}(?=\\s)"
+    t.tags = ("keyword",)
+    t.lexer.columnno += len(t.value)
+    return t
+""".format(
+        d = d,
+        D = d.upper()
+    )
+    exec(code)
+
+def t_DEF_ID(t):
+    r"\w+(?!\s)"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("id",)
+    return t
+
+def t_ID(t):
+    r"\w+"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("id",)
+    return t
+
+def t_DEFINED(t):
+    r"defined"
+    t.tags = ("keyword",)
+    t.lexer.columnno += len(t.value)
+    return t
+
+def t_NL(t):
+    r"\n+"
+    t.lexer.lineno += len(t.value)
+    t.lexer.columnno = 1
+    return t
+
+t_DOTS = r"\.\.\."
+t_LPAREN = r"\("
+t_RPAREN = r"\)"
+t_COMMA = r","
+
+make_count_columns(globals())
+
+def_tokens(globals())
+
+# ignore whitespaces
+t_ignore = " \t"
+
+def t_error(t):
+    raise AssertionError("How could this happen?")
+
+cpp_lexer = lex()
+
+def p_preprocessing_file(p):
+    "preprocessing_file : group_opt"
+
+def p_group_opt(p):
+    """ group_opt :
+                  | group
+    """
+
+def p_group(p):
+    """ group : group_part
+              | group group_part
+    """
+
+def p_group_part(p):
+    """ group_part : if_section
+                   | control_line
+                   | text_line
+    """
+    # | # non-directive
+
+def p_if_section(p):
+    """ if_section : if_group ENDIF NL
+                   | if_group elif_groups ENDIF NL
+                   | if_group else_group ENDIF NL
+                   | if_group elif_groups else_group ENDIF NL
+    """
+
+def p_if_group(p):
+    "if_group : if_group_heading group_opt"
+
+def p_if_group_heading(p):
+    """ if_group_heading : IF constant_expression NL
+                         | IFDEF ID NL
+                         | IFNDEF ID NL
+    """
+
+def p_elif_groups(p):
+    """ elif_groups : elif_group
+                    | elif_groups elif_group
+    """
+
+def p_elif_group(p):
+    "elif_group : ELIF constant_expression NL group_opt"
+
+def p_else_group(p):
+    "else_group : ELSE NL group_opt"
+
+def p_pp_tokens_opt(p):
+    """ pp_tokens_opt :
+                      | pp_tokens
+    """
+
+def p_pp_tokens(p):
+    """ pp_tokens : preprocessing_token
+                  | pp_tokens preprocessing_token
+    """
+
+def p_control_line(p):
+    """ control_line : INCLUDE pp_tokens NL
+            | DEFINE ID replacement_list NL
+            | DEFINE def_id id_list RPAREN replacement_list NL
+            | DEFINE def_id DOTS RPAREN replacement_list NL
+            | DEFINE def_id id_list COMMA DOTS RPAREN replacement_list NL
+            | UNDEF ID NL
+            | LINE pp_tokens NL
+            | ERROR pp_tokens_opt NL
+            | PRAGMA pp_tokens_opt NL
+            | NL
+    """
+
+def p_def_id(p):
+    "def_id : DEF_ID LPAREN"
+
+def p_text_line(p):
+    "text_line : pp_tokens_opt NL"
+
+def p_replacement_list(p):
+    "replacement_list : pp_tokens_opt"
+
+def p_id_list(p):
+    """ id_list : ID
+                | id_list COMMA ID
+    """
+
+unify_rules(globals())
+
+def p_error(p):
+    raise ValueError("bad preprocessor syntax")
+
+cpp_parser = yacc(write_tables = False)
