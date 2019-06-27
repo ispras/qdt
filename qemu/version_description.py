@@ -40,6 +40,9 @@ from .version import (
     calculate_qh_hash,
     get_vp
 )
+from .qom_hierarchy import (
+    from_legacy_dict
+)
 from os import (
     listdir
 )
@@ -434,7 +437,7 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
             else:
                 commit.param_oval[param.name] = param.old_value
 
-    __pygen_deps__ = ("pci_c",)
+    __pygen_deps__ = ("pci_c", "device_tree")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -760,6 +763,8 @@ class QemuVersionDescription(object):
             print("Adding macros to device tree ...")
             yield self.co_add_dt_macro(self.qvc.device_tree)
             print("Macros were added to device tree")
+
+            self.qvc.device_tree = from_legacy_dict(self.qvc.device_tree)
         else:
             self.qvc.device_tree = None
 
