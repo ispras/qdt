@@ -761,7 +761,10 @@ class QemuVersionDescription(object):
             yield True
 
             print("Adding macros to device tree ...")
-            yield self.co_add_dt_macro(self.qvc.device_tree)
+            t2m = {}
+            yield self.co_text2macros(t2m)
+
+            yield self.co_add_dt_macro(self.qvc.device_tree, t2m)
             print("Macros were added to device tree")
 
             self.qvc.device_tree = from_legacy_dict(self.qvc.device_tree)
@@ -781,33 +784,34 @@ class QemuVersionDescription(object):
         print("Known targets set was made")
         self.qvc.known_targets = kts
 
-    def co_add_dt_macro(self, list_dt, text2macros = None):
+    def co_text2macros(self, text2macros):
         # iterations to yield
         i2y = QVD_DTM_IBY
+        print("Building text to macros mapping...")
 
-        if text2macros is None:
-            print("Building text to macros mapping...")
+        for t in self.qvc.stc.reg_type.values():
+            if i2y == 0:
+                yield True
+                i2y = QVD_DTM_IBY
+            else:
+                i2y -= 1
 
-            text2macros = {}
-            for t in self.qvc.stc.reg_type.values():
-                if i2y == 0:
-                    yield True
-                    i2y = QVD_DTM_IBY
-                else:
-                    i2y -= 1
+            if not isinstance(t, Macro):
+                continue
 
-                if not isinstance(t, Macro):
-                    continue
+            text = t.text
+            try:
+                aliases = text2macros[text]
+            except KeyError:
+                text2macros[text] = [t.name]
+            else:
+                aliases.append(t.name)
 
-                text = t.text
-                try:
-                    aliases = text2macros[text]
-                except KeyError:
-                    text2macros[text] = [t.name]
-                else:
-                    aliases.append(t.name)
+        print("The mapping was built")
 
-            print("The mapping was built.")
+    def co_add_dt_macro(self, list_dt, text2macros):
+        # iterations to yield
+        i2y = QVD_DTM_IBY
 
         # Use the mapping to build "list_dt"
         for dict_dt in list_dt:
