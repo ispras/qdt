@@ -80,8 +80,6 @@ def from_dict(d, parent = None):
             continue
         if key == "type":
             continue
-        if key == "macros":
-            res.macros = d["macros"]
         setattr(res, key, dcp(val))
     return res
 

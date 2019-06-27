@@ -760,14 +760,14 @@ class QemuVersionDescription(object):
             print("Device Tree was loaded from " + dt_db_fname)
             yield True
 
+            dt = self.qvc.device_tree = from_legacy_dict(self.qvc.device_tree)
+
             print("Adding macros to device tree ...")
             t2m = {}
             yield self.co_text2macros(t2m)
 
-            yield self.co_add_dt_macro(self.qvc.device_tree, t2m)
+            yield self.co_add_dt_macro(dt.children, t2m)
             print("Macros were added to device tree")
-
-            self.qvc.device_tree = from_legacy_dict(self.qvc.device_tree)
         else:
             self.qvc.device_tree = None
 
@@ -809,33 +809,24 @@ class QemuVersionDescription(object):
 
         print("The mapping was built")
 
-    def co_add_dt_macro(self, list_dt, text2macros):
+    def co_add_dt_macro(self, dt, text2macros):
         # iterations to yield
         i2y = QVD_DTM_IBY
 
         # Use the mapping to build "list_dt"
-        for dict_dt in list_dt:
+        for qt in dt.values():
             if i2y == 0:
                 yield True
                 i2y = QVD_DTM_IBY
             else:
                 i2y -= 1
 
-            dt_type = dict_dt["type"]
+            dt_type = qt.name
             dt_type_text = '"' + dt_type + '"'
-            try:
-                aliases = text2macros[dt_type_text]
-            except KeyError:
-                # No macros for this type
-                if "macros" in dict_dt:
-                    print(
-"No macros for type %s now, removing previous cache..." % dt_type_text
-                    )
-                    del dict_dt["macros"]
-            else:
-                if "macros" in dict_dt:
-                    print("Override macros for type %s" % dt_type_text)
-                dict_dt["macros"] = list(aliases)
 
-            if "children" in dict_dt:
-                yield self.co_add_dt_macro(dict_dt["children"], text2macros)
+            if dt_type_text in text2macros:
+                if qt.macros:
+                    print("Override macros for type %s" % dt_type_text)
+                qt.macros = list(text2macros[dt_type_text])
+
+            yield self.co_add_dt_macro(qt.children, text2macros)
