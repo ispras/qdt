@@ -82,28 +82,27 @@ class DeviceTreeWidget(GUIDialog):
         self.fr_qt = VarLabelFrame(self, text = _("Select QOM type"))
         self.fr_qt.grid(row = 0, column = 2, sticky = "SEWN")
 
-        # Check exception before __init__ call.
-        bp = root.mach.project.build_path
-        qvd = qvd_get(bp, version = root.mach.project.target_version)
-        # the QOM type of roots[0] is "device"
-        roots = qvd.qvc.device_tree[0]["children"]
-        self.qom_create_tree("", roots)
+        qtype_dt = qvd_get(
+            root.mach.project.build_path,
+            version = root.mach.project.target_version
+        ).qvc.device_tree
 
-    def qom_create_tree(self, parent_id, dt_list):
-        dt_list.sort(key = lambda x: x["type"])
-        for dict_dt in dt_list:
-            if "macros" in dict_dt:
-                value = ""
-                for macro in dict_dt["macros"]:
-                    value = value + " " + macro
+        self.qom_create_tree("", qtype_dt.children)
+
+    def qom_create_tree(self, parent_id, dt):
+        for key in sorted(dt.keys()):
+            qt = dt[key]
+            if qt.macros:
+                value = " ".join(qt.macros)
             else:
                 value= "None"
-            tr_id = self.device_tree.insert(parent_id, "end",
-                text = dict_dt["type"],
+
+            cur_id = self.device_tree.insert(parent_id, "end",
+                text = qt.name,
                 values = value
             )
-            if "children" in dict_dt:
-                self.qom_create_tree(tr_id, dict_dt["children"])
+            if qt.children:
+                self.qom_create_tree(cur_id, qt.children)
 
     def on_select_qom_type(self):
         self.qom_type_var.set(self.v.get())

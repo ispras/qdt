@@ -522,7 +522,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         # convert device tree to more convenient form
         qvc = self.qvd.qvc
         if qvc.device_tree:
-            qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+            qt = self.p.qom_tree = qvc.device_tree
 
             # Note that system bus device have no standard name for input IRQ.
             next(qt.find(name = "sys-bus-device")).out_gpio_names = [
