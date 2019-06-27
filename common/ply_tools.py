@@ -3,6 +3,7 @@ __all__ = [
   , "def_tokens"
   , "iter_rules"
   , "unify_rules"
+  , "join_tokens"
   , "make_count_columns"
 ]
 
@@ -10,6 +11,13 @@ from types import (
     FunctionType,
     MethodType
 )
+from .pypath import (
+    pypath
+)
+with pypath("..ply"):
+    from ply.helpers import (
+        iter_tokens
+    )
 
 
 def gen_tokens(glob):
@@ -79,3 +87,9 @@ def {tok}(t):
     regexp = v
             )
             exec(code, glob)
+
+def join_tokens(root):
+    res = ""
+    for t in iter_tokens(root):
+        res += t.value
+    return res
