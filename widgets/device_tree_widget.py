@@ -95,7 +95,7 @@ class DeviceTreeWidget(GUIDialog):
             if qt.macros:
                 value = ",".join(qt.macros)
             else:
-                value= "None"
+                value = "None"
 
             cur_id = self.device_tree.insert(parent_id, "end",
                 text = qt.name,
