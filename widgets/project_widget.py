@@ -510,9 +510,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             parent = next(parent.find(name = "pci-device"))
 
         qtn = QemuTypeName(desc.name)
-        QType(qtn.for_id_name, parent).macro = [
-            qtn.type_macro
-        ]
+        QType(qtn.for_id_name,
+            parent = parent,
+            macros = [qtn.type_macro]
+        )
 
     def on_qvc_available(self):
         pht = self.pht
