@@ -16,11 +16,16 @@ from subprocess import (
     Popen,
     PIPE
 )
+from source import (
+    ctags_parser,
+    ctags_lexer
+)
 
 ENERGIA_PATH = ee("ENERGIA_PATH")
 TOOLCHAIN_PATH = join(ENERGIA_PATH, "hardware", "tools", "msp430", "bin")
 
-GCC = join(TOOLCHAIN_PATH, "msp430-g++")
+GPP = join(TOOLCHAIN_PATH, "msp430-g++")
+GCC = join(TOOLCHAIN_PATH, "msp430-gcc")
 
 CORE_SFX = ["hardware", "energia", "msp430", "cores", "msp430"]
 TOOLCHAIN_INC_SFX = ["hardware", "tools", "msp430", "include"]
@@ -33,8 +38,10 @@ def EI(*tail):
     return "-I" + join(ENERGIA_PATH, *tail)
 
 
+mcu_flag = "-mmcu=msp430g2553"
+
 target_flags = [
-    "-mmcu=msp430g2553", # AVR specific options. But! it's not AVR, it's MSP
+    mcu_flag, # AVR specific options. But! it's not AVR, it's MSP
 
     "-DF_CPU=16000000L", # macro, CPU frequency
 
@@ -118,6 +125,25 @@ lib_gcc_flags = small_size_flags + [
     "-Wextra",
 ] + target_flags
 
+pass4_link_flags = [
+    "-w",
+
+    "-Os",
+    "-fno-rtti",
+    "-fno-exceptions",
+
+    "-W" + ",".join([
+        "l",
+        "--gc-sections",
+        "-u",
+        "main"
+    ]),
+
+    mcu_flag,
+
+    "-L" + join(ENERGIA_PATH, *TOOLCHAIN_INC_SFX),
+]
+
 MODULE_EXT = set([".c", ".cpp"])
 
 
@@ -133,10 +159,19 @@ def iter_modules(root):
 
 
 def Run(*a, **kw):
+    print(" ".join(a[0]))
     kw["stdin"] = PIPE
     kw["stdout"] = PIPE
     kw["stderr"] = PIPE
     return Popen(*a, **kw)
+
+
+class CFunction(object):
+    __slots__ = ("name", "has_prototype", "line", "prototype", "t")
+
+    def __init__(self, name):
+        self.name = name
+        self.has_prototype = False
 
 
 def main():
@@ -145,12 +180,13 @@ def main():
 
     core_objs = []
 
-    for src, sfx in iter_modules(ENERGIA_CORE):
+    # TODO: also build avr folder
+    for src, sfx in sorted(iter_modules(ENERGIA_CORE)):
         obj = join("build", splitext(sfx)[0] + ".o")
 
         print("%s -> %s" % (sfx, obj))
 
-        gcc = Run([GCC] + lib_gcc_flags + ["-o", obj, src])
+        gcc = Run([GPP] + lib_gcc_flags + ["-o", obj, src])
         rc = gcc.wait()
         gccout, gccerr = gcc.stdout.read(), gcc.stderr.read()
 
@@ -168,7 +204,7 @@ def main():
 
     # print(" ".join(pass1_gcc_flags))
 
-    p1 = Run([GCC] + pass1_gcc_flags + [ino, "-"])
+    p1 = Run([GPP] + pass1_gcc_flags + [ino, "-"])
     p1out, p1err = p1.communicate()
 
     ctags_target = ino + ".4ctags"
@@ -200,24 +236,116 @@ def main():
     with open(ctags, "wb") as f:
         f.write(p2out)
 
+    functions = {}
+
+    ctags = ctags_parser.parse(p2out, lexer = ctags_lexer)
+
+    for t in ctags.tags:
+        if t.kind == "prototype":
+            f = functions.setdefault(t.name, CFunction(t.name))
+            f.has_prototype = True
+        elif t.kind == "function":
+            f = functions.setdefault(t.name, CFunction(t.name))
+            f.line = int(t.line)
+        f.t = t
+
+    # this functions are known to have prototypes in headers
+    for f in [
+        # by Energia.h
+        "loop",
+        "setup"
+    ]:
+        functions[f].has_prototype = True
+
+    # some ctags based preprocessing is required
+
+    with open(ino, "rb") as fin:
+        ino_content = fin.read()
+
+    ino_lines = ino_content.splitlines()
+
+    # recover prototypes
+    for f in functions.values():
+        if f.has_prototype:
+            continue
+
+        braces = 0
+        prototype = ""
+        for l in ino_lines[f.line - 1:]:
+            for c in l:
+                prototype += c
+                if c == "(":
+                    braces += 1
+                elif c == ")":
+                    braces -= 1
+                    if braces == 0:
+                        break
+            else:
+                continue
+            break
+        else:
+            raise RuntimeError("Cannot get end of function prototype %s" % f.t)
+
+        print(f.name + ": " + repr(prototype))
+
+        f.prototype = prototype
+
+    # add prototype (forward declarations) for each function which have no one
+    ino_content = "\n" + ino_content
+
+    for f in functions.values():
+        if f.has_prototype:
+            continue
+        ino_content = f.prototype + ";\n" + ino_content
+
+    # add Energia header inclusion
+    ino_content = "#include <Energia.h>\n\n" + ino_content
+
     cpp = ino + ".cpp"
 
-    # TODO: some ctags based preprocessing is required
-    with open(ino, "rb") as fin:
-        with open(cpp, "wb") as fout:
-            fout.write(fin.read())
+    with open(cpp, "wb") as fout:
+        fout.write(ino_content)
 
-    obj = ino + ".obj"
+    obj = ino + ".o"
 
-    p3 = Run([GCC] + pass3_gcc_flags + [cpp, "-o", obj])
+    p3 = Run([GPP] + pass3_gcc_flags + [cpp, "-o", obj])
     p3out, p3err = p3.communicate()
 
     print("\n\ncompile")
     if p3out:
         print("\nstdout\n\n" + p3out)
     if p3err:
+        errs = ino + ".errs"
+        with open(errs, "wb") as f:
+            f.write(p3err)
+
         print("\nstderr\n\n" + p3err)
 
+    if p3.returncode != 0:
+        # GPP failed to compile
+        return
+
+    elf = ino + ".elf"
+
+    p4 = Run([GCC] + pass4_link_flags +
+        ["-o", elf, obj] +
+        # core_objs +
+        # TODO: get it by self using msp430-ar rcs
+        ["/tmp/arduino_build_393450/core/core.a"] +
+        ["-L" + "build"] +
+        # ["-L/tmp/arduino_build_393450"] +
+        ["-lm"]
+    )
+    p4out, p4err = p4.communicate()
+    print("\n\nlink")
+    if p4out:
+        print("\nstdout\n\n" + p4out)
+    if p4err:
+        print("\nstderr\n\n" + p4err)
+
+    if p4.returncode != 0:
+        # GPP failed to link
+        return
 
 if __name__ == "__main__":
     main()
