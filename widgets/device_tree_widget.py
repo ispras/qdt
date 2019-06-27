@@ -92,9 +92,9 @@ class DeviceTreeWidget(GUIDialog):
     def qom_create_tree(self, parent_id, dt_list):
         dt_list.sort(key = lambda x: x["type"])
         for dict_dt in dt_list:
-            if "macro" in dict_dt:
+            if "macros" in dict_dt:
                 value = ""
-                for macro in dict_dt["macro"]:
+                for macro in dict_dt["macros"]:
                     value = value + " " + macro
             else:
                 value= "None"
