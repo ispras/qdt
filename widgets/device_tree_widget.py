@@ -93,7 +93,7 @@ class DeviceTreeWidget(GUIDialog):
         for key in sorted(dt.keys()):
             qt = dt[key]
             if qt.macros:
-                value = " ".join(qt.macros)
+                value = ",".join(qt.macros)
             else:
                 value= "None"
 
@@ -132,7 +132,7 @@ class DeviceTreeWidget(GUIDialog):
 
         macros = self.device_tree.item(item, "values")[0]
         if not macros == "None":
-            l = macros.split(" ")
+            l = macros.split(",")
             for mstr in l:
                 b = Radiobutton(
                     self.fr_qt,
