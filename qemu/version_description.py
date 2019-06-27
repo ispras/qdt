@@ -833,36 +833,5 @@ class QemuVersionDescription(object):
                     print("Override macros for type %s" % dt_type_text)
                 dict_dt["macros"] = list(aliases)
 
-            try:
-                dt_properties = dict_dt["property"]
-            except KeyError:
-                pass # QOM type have no properties
-            else:
-                for dt_property in dt_properties:
-                    if i2y == 0:
-                        yield True
-                        i2y = QVD_DTM_IBY
-                    else:
-                        i2y -= 1
-
-                    dt_property_name_text = '"' + dt_property["name"] + '"'
-                    try:
-                        aliases = text2macros[dt_property_name_text]
-                    except KeyError:
-                        # No macros for this property
-                        if "macros" in dt_property:
-                            print(
-"No macros for property %s of type %s, removing previous cache..." % (
-    dt_property_name_text, dt_type_text
-)
-                            )
-                            del dt_property["macros"]
-                        continue
-                    if "macros" in dt_property:
-                        print("Override macros for property %s of type %s" % (
-                            dt_property_name_text, dt_type_text
-                        ))
-                    dt_property["macros"] = list(aliases)
-
             if "children" in dict_dt:
                 yield self.co_add_dt_macro(dict_dt["children"], text2macros)
