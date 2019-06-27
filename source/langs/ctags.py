@@ -69,6 +69,8 @@ def p_extension_fields(p):
 
 def p_pair(p):
     "pair : PAIR_ITEM COLON PAIR_ITEM"
+    p.slice[1].tags = ["id"]
+    p.slice[3].tags = ["string"]
 
 
 unify_rules(globals(), unifier = inodify_rule)
