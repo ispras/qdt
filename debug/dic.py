@@ -25,9 +25,6 @@ from .glob import (
 from .elf import (
     InMemoryELFFile
 )
-from sys import (
-    stderr
-)
 
 
 class DWARFInfoCache(DWARFInfoAccelerator):
@@ -256,10 +253,9 @@ unit (`cu`). Adds address intervals of subprograms to `addr2subprog` mapping.
 def create_dwarf_cache(exec_file):
     elf = InMemoryELFFile(exec_file)
     if not elf.has_dwarf_info():
-        stderr("%s does not have DWARF info. Provide a debug build\n" % (
+        raise ValueError("%s does not have DWARF info. Provide a debug build\n" % (
             exec_file
         ))
-        return -1
 
     di = elf.get_dwarf_info()
 
