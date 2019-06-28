@@ -2,6 +2,12 @@ __all__ = [
     "Runtime"
 ]
 
+from traceback import (
+    print_exc
+)
+from threading import (
+    Thread
+)
 from collections import (
     defaultdict,
     deque
@@ -127,6 +133,27 @@ not actual now.
             regs[idx] = val
 
         return val
+
+    def co_run_target(self):
+        target = self.target
+
+        def run():
+            try:
+                target.run(setpc = False)
+            except:
+                print_exc()
+                print("Target PC 0x%x" % (self.get_reg(self.pc)))
+
+            try:
+                target.send(b"k")
+            except:
+                print_exc()
+
+        t = Thread(target = run)
+        t.start()
+
+        while t.isAlive():
+            yield False
 
     @cached
     def returned_value(self):
