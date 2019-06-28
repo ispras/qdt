@@ -28,20 +28,20 @@ class QType(object):
         if parent is None:
             self.parent = None
         else:
-            parent.__add_child(self)
+            parent.add_child(self)
 
         self.macros = macros if macros else []
 
         # set of CPU architectures found in QOM type tree
         self.arches = arches if arches else set()
 
-    def __add_child(self, child):
-        self.children[child.name] = child
-        child.parent = self
-
     def __remove_child(self, child):
         child.parent = None
         del self.children[child.name]
+
+    def add_child(self, child):
+        self.children[child.name] = child
+        child.parent = self
 
     def unparent(self):
         self.parent.__remove_child(self)
