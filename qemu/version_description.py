@@ -509,6 +509,10 @@ class QemuVersionDescription(object):
             config_host,
             "TARGET_DIRS"
         )).split(" ")
+        self.bindir = join(
+            fixpath(QemuVersionDescription.ch_lookup(config_host, "prefix")),
+            "bin"
+        )
 
         # Get SHA
         self.repo = Repo(self.src_path)
