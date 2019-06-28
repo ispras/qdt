@@ -12,7 +12,12 @@ from common import (
 
 class QType(object):
     """ Node in QOM type tree """
-    def __init__(self, name, parent = None, children = None, macros = None):
+    def __init__(self, name,
+            parent = None,
+            children = None,
+            macros = None,
+            arches = None
+        ):
         self.name = name
 
         # name: reference
@@ -26,6 +31,9 @@ class QType(object):
             parent.__add_child(self)
 
         self.macros = macros if macros else []
+
+        # set of CPU architectures found in QOM type tree
+        self.arches = arches if arches else set()
 
     def __add_child(self, child):
         self.children[child.name] = child
