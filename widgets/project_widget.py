@@ -512,7 +512,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         qtn = QemuTypeName(desc.name)
         QType(qtn.for_id_name,
             parent = parent,
-            macros = [qtn.type_macro]
+            macros = [qtn.type_macro],
+            arches = set(parent.arches)
         )
 
     def on_qvc_available(self):
