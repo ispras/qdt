@@ -67,12 +67,6 @@ from widgets import (
 from six.moves.tkinter_messagebox import (
     showerror
 )
-from traceback import (
-    print_exc
-)
-from threading import (
-    Thread
-)
 from subprocess import (
     Popen
 )
@@ -1361,26 +1355,7 @@ class QEmuWatcherGUI(GUITk):
         pythonize(project, file_name)
 
     def co_rsp_poller(self):
-        rt = self.rt
-        target = rt.target
-
-        def run():
-            try:
-                target.run(setpc = False)
-            except:
-                print_exc()
-                print("Target PC 0x%x" % (rt.get_reg(rt.pc)))
-
-            try:
-                target.send(b"k")
-            except:
-                print_exc()
-
-        t = Thread(target = run)
-        t.start()
-
-        while t.isAlive():
-            yield False
+        yield self.rt.co_run_target()
 
         self._killed = True
 
