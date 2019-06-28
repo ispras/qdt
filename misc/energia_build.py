@@ -1,15 +1,18 @@
 from os.path import (
+    exists,
+    dirname,
     isdir,
-    isfile,
     expanduser,
     join,
     splitext
 )
 from os import (
+    sep,
     mkdir,
     listdir
 )
 from common import (
+    makedirs,
     ee
 )
 from subprocess import (
@@ -26,6 +29,9 @@ TOOLCHAIN_PATH = join(ENERGIA_PATH, "hardware", "tools", "msp430", "bin")
 
 GPP = join(TOOLCHAIN_PATH, "msp430-g++")
 GCC = join(TOOLCHAIN_PATH, "msp430-gcc")
+AR = join(TOOLCHAIN_PATH, "msp430-ar")
+OBJCOPY = join(TOOLCHAIN_PATH, "msp430-objcopy")
+READELF = join(TOOLCHAIN_PATH, "msp430-readelf")
 
 CORE_SFX = ["hardware", "energia", "msp430", "cores", "msp430"]
 TOOLCHAIN_INC_SFX = ["hardware", "tools", "msp430", "include"]
@@ -126,10 +132,10 @@ lib_gcc_flags = small_size_flags + [
 ] + target_flags
 
 pass4_link_flags = [
-    "-w",
+    # "-w", # Inhibit all warning messages.
 
     "-Os",
-    "-fno-rtti",
+    "-fno-rtti", # do not generate code for runtime type identification
     "-fno-exceptions",
 
     "-W" + ",".join([
@@ -144,18 +150,38 @@ pass4_link_flags = [
     "-L" + join(ENERGIA_PATH, *TOOLCHAIN_INC_SFX),
 ]
 
+readelf_flags = [
+    "--all",
+    "--section-details",
+]
+
+pass5_objcopy_eeprom_flags = [
+    "-O", "ihex",
+    "-j", ".eeprom",
+    "--set-section-flags=.eeprom=alloc,load",
+    "--no-change-warnings",
+    "--change-section-lma", ".eeprom=0"
+]
+
+pass5_objcopy_noeeprom_flags = [
+    "-O", "ihex",
+    "-R", ".eeprom"
+]
+
 MODULE_EXT = set([".c", ".cpp"])
 
 
-def iter_modules(root):
+def iter_modules(root, prefix = ""):
     for node in listdir(root):
         full_name = join(root, node)
-        if not isfile(full_name):
+        if isdir(full_name):
+            for tmp in iter_modules(full_name, prefix = prefix + node + sep):
+                yield tmp
             continue
 
         ext = splitext(node)[1]
         if ext in MODULE_EXT:
-            yield full_name, node
+            yield full_name, prefix + node
 
 
 def Run(*a, **kw):
@@ -180,9 +206,12 @@ def main():
 
     core_objs = []
 
-    # TODO: also build avr folder
     for src, sfx in sorted(iter_modules(ENERGIA_CORE)):
         obj = join("build", splitext(sfx)[0] + ".o")
+
+        objdir = dirname(obj)
+        if objdir:
+            makedirs(objdir, exist_ok = True)
 
         print("%s -> %s" % (sfx, obj))
 
@@ -199,6 +228,24 @@ def main():
             return
 
         core_objs.append(obj)
+
+    core = join("build", "core.a")
+    if not exists(core):
+        for obj in core_objs:
+            ar = Run([AR, "rcs", core, obj])
+            arrc = ar.wait()
+
+            arout, arerr = ar.stdout.read(), ar.stderr.read()
+
+            print("ar " + obj)
+
+            if arerr:
+                print(arerr)
+            if arout:
+                print(arout)
+
+            if arrc:
+                return
 
     ino = join(expanduser("~"), "Energia", "ASCIITable", "ASCIITable.ino")
 
@@ -329,11 +376,8 @@ def main():
 
     p4 = Run([GCC] + pass4_link_flags +
         ["-o", elf, obj] +
-        # core_objs +
-        # TODO: get it by self using msp430-ar rcs
-        ["/tmp/arduino_build_393450/core/core.a"] +
+        [ core ] +
         ["-L" + "build"] +
-        # ["-L/tmp/arduino_build_393450"] +
         ["-lm"]
     )
     p4out, p4err = p4.communicate()
@@ -346,6 +390,46 @@ def main():
     if p4.returncode != 0:
         # GPP failed to link
         return
+
+    readelf = Run([READELF] + readelf_flags + [elf])
+    readelf.wait()
+    reout, reerr = readelf.communicate()
+    if reerr:
+        print("readelf stderr\n\n" + reerr)
+
+    elftxt = elf + ".txt"
+    with open(elftxt, "wb") as f:
+        f.write(reout)
+
+    eep = ino + ".eep.hex"
+
+    p5 = Run([OBJCOPY] + pass5_objcopy_eeprom_flags + [elf, eep])
+    p5.wait()
+    p5out, p5err = p5.communicate()
+    print("\n\nmake eeprom")
+    if p5out:
+        print("\nstdout\n\n" + p5out)
+    if p5err:
+        print("\nstderr\n\n" + p5err)
+
+    if p5.returncode != 0:
+        # objcopy failed
+        return
+
+    _hex = ino + ".hex"
+    p5_2 = Run([OBJCOPY] + pass5_objcopy_noeeprom_flags + [elf, _hex])
+    p5_2.wait()
+    p5_2out, p5_2err = p5_2.communicate()
+    print("\n\nmake noeeprom")
+    if p5_2out:
+        print("\nstdout\n\n" + p5_2out)
+    if p5_2err:
+        print("\nstderr\n\n" + p5_2err)
+
+    if p5_2.returncode != 0:
+        # objcopy failed
+        return
+
 
 if __name__ == "__main__":
     main()
