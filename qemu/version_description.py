@@ -652,6 +652,23 @@ class QemuVersionDescription(object):
                     self.commit_sha
                 )
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
+
+            device_tree = self.qvc.device_tree
+            qvc_target_list = self.qvc.device_tree.arches
+
+            config_target_list = set()
+            for t in self.target_list:
+                config_target_list.add(t.split("-")[0])
+
+            # Targets to be added to the cache
+            new_target_list = config_target_list - qvc_target_list
+
+            has_new_target = len(new_target_list) > 0
+            if has_new_target:
+                device_tree.arches = config_target_list
+                yield self.co_init_device_tree(device_tree, new_target_list)
+
+            if is_outdated or has_new_target:
                 pythonize(self.qvc, qvc_path)
 
         yield True
