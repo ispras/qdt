@@ -76,6 +76,10 @@ operator (except None).
             self.current_popup_tag = tag
             try:
                 try:
+                    # Save popup coordinates manually because tk_popup behaves
+                    # differently on Unix and on Windows
+                    # See: https://core.tcl-lang.org/tk/tktview?name=585003ffff
+                    self.popup_x, self.popup_y = x, y
                     popup.tk_popup(x, y)
                 except TclError as e:
                     """ If Shift is held then an error raised with message:
