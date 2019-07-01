@@ -1,14 +1,42 @@
 __all__ = [
     "QType"
+  , "co_gen_device_tree"
   , "from_legacy_dict"
 ]
 
+from .qemu_watcher import (
+    QOMTreeReverser
+)
+from debug import (
+    create_dwarf_cache,
+    Runtime,
+    GitLineVersionAdapter
+)
 from copy import (
     deepcopy as dcp
 )
 from common import (
+    pypath,
     co_find_eq
 )
+from os.path import (
+    join
+)
+from multiprocessing import (
+    Process
+)
+from os import (
+    system
+)
+# use ours pyrsp
+with pypath("..pyrsp"):
+    from pyrsp.rsp import (
+        AMD64
+    )
+    from pyrsp.utils import (
+        find_free_port,
+        wait_for_tcp_port
+    )
 
 class QType(object):
     """ Node in QOM type tree """
@@ -107,3 +135,59 @@ def from_legacy_dict(dt):
     # note that any intermediate value is proper
     return t.root()
 
+
+def co_fill_children(qomtr_node, qtype_node, arch):
+    for c in qomtr_node.children:
+        name = c.name
+        if name in qtype_node.children:
+            # Node already exists.
+            # We only need to add the new CPU arch
+            qt = qtype_node.children[name]
+        else:
+            qt = QType(name)
+            qtype_node.add_child(qt)
+
+        qt.arches.add(arch)
+
+        yield co_fill_children(c, qt, arch)
+
+
+def co_gen_device_tree(bindir, src_path, target_list, root):
+    for arch_name in target_list:
+        qemu_exec = join(bindir, "qemu-system-" + arch_name)
+
+        dic = create_dwarf_cache(qemu_exec)
+
+        gvl_adptr = GitLineVersionAdapter(src_path)
+
+        qomtr = QOMTreeReverser(dic,
+            interrupt = True,
+            verbose = True,
+            line_adapter = gvl_adptr
+        )
+
+        port = find_free_port(4321)
+        qemu_debug_addr = "localhost:%u" % port
+        qemu_proc = Process(
+            target = system,
+            args = (" ".join(["gdbserver", qemu_debug_addr, qemu_exec]),)
+        )
+        qemu_proc.start()
+
+        if not wait_for_tcp_port(port):
+            raise RuntimeError("gdbserver does not listen %u" % port)
+
+        yield True
+
+        qemu_debugger = AMD64(str(port), noack = True)
+        rt = Runtime(qemu_debugger, dic)
+
+        qomtr.init_runtime(rt)
+
+        yield rt.co_run_target()
+
+        yield co_fill_children(
+            qomtr.tree.name2type["device"],
+            root,
+            arch_name
+        )

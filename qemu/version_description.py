@@ -30,8 +30,9 @@ from common import (
     execfile,
     pythonize
 )
-from json import (
-    load
+from .qom_hierarchy import (
+    QType,
+    co_gen_device_tree
 )
 from .version import (
     QVHDict,
@@ -610,7 +611,7 @@ class QemuVersionDescription(object):
 
             rmtree(tmp_work_dir)
 
-            yield self.co_gen_device_tree()
+            yield self.co_init_device_tree()
 
             yield self.co_gen_known_targets()
 
@@ -747,34 +748,6 @@ class QemuVersionDescription(object):
         option = config_host[indx_begin:indx_end]
         return option.split("=")[1]
 
-    # TODO: get dt from qemu
-
-    def co_gen_device_tree(self):
-        dt_db_fname = join(self.build_path, "dt.json")
-
-        # No device tree for current Qemu. Use QDT's one.
-        if not isfile(dt_db_fname):
-            dt_db_fname = join(dirname(__file__), "dt.json")
-
-        if  isfile(dt_db_fname):
-            print("Loading Device Tree from " + dt_db_fname + "...")
-            dt_db_reader = open(dt_db_fname, "r")
-            self.qvc.device_tree = load(dt_db_reader)
-            dt_db_reader.close()
-            print("Device Tree was loaded from " + dt_db_fname)
-            yield True
-
-            dt = self.qvc.device_tree = from_legacy_dict(self.qvc.device_tree)
-
-            print("Adding macros to device tree ...")
-            t2m = {}
-            yield self.co_text2macros(t2m)
-
-            yield self.co_add_dt_macro(dt.children, t2m)
-            print("Macros were added to device tree")
-        else:
-            self.qvc.device_tree = None
-
     def co_gen_known_targets(self):
         print("Making known targets set...")
         dconfigs = join(self.src_path, "default-configs")
@@ -787,6 +760,43 @@ class QemuVersionDescription(object):
                     break
         print("Known targets set was made")
         self.qvc.known_targets = kts
+
+    def co_init_device_tree(self, target_list = None):
+        if not target_list:
+            target_list = set()
+            for t in self.target_list:
+                target_list.add(t.split("-")[0])
+
+        yield True
+
+        print("Creating Device Tree for " +
+              ', '.join(t for t in target_list) + "..."
+        )
+        try:
+            root = self.qvc.device_tree
+            if root is None:
+                root = QType("device")
+
+            yield co_gen_device_tree(
+                self.bindir,
+                self.src_path,
+                target_list,
+                root
+            )
+        except Exception as e:
+            print("Device Tree isn't created: %s") % (str(e))
+            return
+
+        root.arches.update(target_list)
+        self.qvc.device_tree = root
+        print("Device Tree was created")
+
+        t2m = {}
+        yield self.co_text2macros(t2m)
+
+        print("Adding macros to device tree ...")
+        yield self.co_add_dt_macro(self.qvc.device_tree.children, t2m)
+        print("Macros were added to device tree")
 
     def co_text2macros(self, text2macros):
         # iterations to yield
