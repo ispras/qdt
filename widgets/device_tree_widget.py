@@ -131,7 +131,7 @@ class DeviceTreeWidget(GUIDialog):
         b.pack(anchor = "w")
 
         macros = self.device_tree.item(item, "values")[0]
-        if not macros == "None":
+        if macros != "None":
             l = macros.split(",")
             for mstr in l:
                 b = Radiobutton(
