@@ -37,7 +37,7 @@ CORE_SFX = ["hardware", "energia", "msp430", "cores", "msp430"]
 TOOLCHAIN_INC_SFX = ["hardware", "tools", "msp430", "include"]
 
 ENERGIA_CORE = join(ENERGIA_PATH, *CORE_SFX)
-
+DEBUG = True
 
 def EI(*tail):
     "Energia Include"
@@ -63,9 +63,9 @@ target_flags = [
     EI("hardware", "energia", "msp430", "variants", "MSP-EXP430G2553LP"),
 ]
 
-small_size_flags = [
+small_size_flags = ([] if DEBUG else [
     "-Os", # optimize for size
-
+]) + [
     "-fno-exceptions", # do not generate code for exceptions
 
     # functions and data items are given its own section. With --gc-sections
@@ -86,7 +86,9 @@ pass1_gcc_flags = small_size_flags + [
     # preprocessor preserves comments and converts C++ comments (//) to
     # C-style comments (/**/) inside macros
     "-CC",
-] + target_flags
+] + target_flags + ([
+    "-O0", "-g"
+] if DEBUG else [])
 # the result of this pass is written to (-o) /dev/null
 
 pass2_ctags_flags = [
@@ -121,7 +123,9 @@ pass3_gcc_flags = small_size_flags + [
     "-Wextra",
 
     "-MMD", # generate rules for `make` utility for inclusions in .d file
-] + target_flags
+] + target_flags + ([
+    "-O0", "-g"
+] if DEBUG else [])
 
 lib_gcc_flags = small_size_flags + [
     "-c",
@@ -129,12 +133,16 @@ lib_gcc_flags = small_size_flags + [
     # as may warnings as possible
     "-Wall",
     "-Wextra",
-] + target_flags
+] + target_flags + ([
+    "-O0", "-g"
+] if DEBUG else [])
 
-pass4_link_flags = [
-    # "-w", # Inhibit all warning messages.
-
+pass4_link_flags = ([
+    "-O0", "-g"
+] if DEBUG else [
     "-Os",
+]) + [
+    # "-w", # Inhibit all warning messages.
     "-fno-rtti", # do not generate code for runtime type identification
     "-fno-exceptions",
 
@@ -374,9 +382,13 @@ def main():
 
     elf = ino + ".elf"
 
+    # because of multiple definition of `__isr_9' and `__isr_8'
+    core_objs = [f for f in core_objs if "Tone.o" not in f]
+
     p4 = Run([GCC] + pass4_link_flags +
         ["-o", elf, obj] +
-        [ core ] +
+        core_objs +
+        # [ core ] +
         ["-L" + "build"] +
         ["-lm"]
     )
