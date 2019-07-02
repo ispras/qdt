@@ -31,7 +31,7 @@ class DeviceTreeWidget(GUIDialog):
 
         self.title(_("Device Tree"))
         self.grid()
-        
+
         self.columnconfigure(0, weight = 1)
         self.rowconfigure(0, weight = 1)
 
