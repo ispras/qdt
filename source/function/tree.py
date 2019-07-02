@@ -1,56 +1,65 @@
 __all__ = [
     "Node"
       , "Comment"
-      , "Label"
       , "NewLine"
       , "MacroBranch"
-      , "LoopWhile"
-      , "LoopDoWhile"
-      , "LoopFor"
-      , "BranchIf"
-      , "BranchSwitch"
-      , "BranchElse"
-      , "SwitchCase"
-      , "StrConcat"
-      # SemicolonPresence
-          , "Break"
-          , "Call"
-          , "Goto"
-          , "Declare"
-          , "MCall"
-          , "Return"
-          # Operator
-              , "OpIndex"
-              , "OpSDeref"
-              # UnaryOperator
-                  , "OpAddr"
-                  , "OpDec"
-                  , "OpInc"
-                  , "OpDeref"
-                  , "OpNot"
-                  , "OpCast"
-              # BinaryOperator
-                  , "OpAssign"
-                  , "OpCombAssign"
-                  , "OpAdd"
-                  , "OpSub"
-                  , "OpMul"
-                  , "OpDiv"
-                  , "OpRem"
-                  , "OpAnd"
-                  , "OpOr"
-                  , "OpXor"
-                  , "OpLShift"
-                  , "OpRShift"
-                  , "OpLogAnd"
-                  , "OpLogOr"
-                  , "OpLogNot"
-                  , "OpEq"
-                  , "OpNEq"
-                  , "OpGE"
-                  , "OpLE"
-                  , "OpGreater"
-                  , "OpLower"
+      , "Ifdef"
+      , "CNode"
+          , "Label"
+          , "LoopWhile"
+          , "LoopDoWhile"
+          , "LoopFor"
+          , "BranchIf"
+          , "BranchSwitch"
+          , "BranchElse"
+          , "SwitchCase"
+          , "SwitchCaseDefault"
+          , "StrConcat"
+          # SemicolonPresence
+              , "Break"
+              , "Call"
+              , "Goto"
+              , "Declare"
+              , "MCall"
+              , "Return"
+              # Operator
+                  , "OpIndex"
+                  , "OpSDeref"
+                  # UnaryOperator
+                      , "OpAddr"
+                      , "OpDec"
+                      , "OpInc"
+                      , "OpPostDec"
+                      , "OpPostInc"
+                      , "OpPreDec"
+                      , "OpPreInc"
+                      , "OpDeref"
+                      , "OpNot"
+                      , "OpCast"
+                  # BinaryOperator
+                      , "OpAssign"
+                      , "OpDeclareAssign"
+                      , "OpCombAssign"
+                      , "OpAdd"
+                      , "OpSub"
+                      , "OpMul"
+                      , "OpDiv"
+                      , "OpRem"
+                      , "OpAnd"
+                      , "OpOr"
+                      , "OpXor"
+                      , "OpLShift"
+                      , "OpRShift"
+                      , "OpLogAnd"
+                      , "OpLogOr"
+                      , "OpLogNot"
+                      , "OpEq"
+                      , "OpNEq"
+                      , "OpGE"
+                      , "OpLE"
+                      , "OpGreater"
+                      , "OpLower"
+                      , "CaseRange"
 ]
 
 from ..c_const import (
@@ -59,15 +68,38 @@ from ..c_const import (
 )
 from ..model import (
     Type,
+    TypeReference,
     Pointer,
+    Macro,
+    NodeVisitor,
+    Function,
     Variable
 )
 from common import (
+    ee,
+    BreakVisiting,
     lazy
 )
 from six import (
     integer_types
 )
+
+
+# OpSDeref is automatically re-directed to definition of structure if
+# available.
+OPSDEREF_FROM_DEFINITION = ee("QDT_OPSDEREF_FROM_DEFINITION", "True")
+
+
+class DeclarationSearcher(NodeVisitor):
+
+    def __init__(self, root):
+        super(DeclarationSearcher, self).__init__(root)
+        self.have_declaration = False
+
+    def on_visit(self):
+        if isinstance(self.cur, Declare):
+            self.have_declaration = True
+            raise BreakVisiting()
 
 
 class Node(object):
@@ -77,9 +109,13 @@ class Node(object):
     __type_references__ = __node__
 
     def __init__(self,
+        val = "",
+        new_line = "",
         indent_children = True,
         children = []
     ):
+        self.val = val
+        self.new_line = new_line
         self.indent_children = indent_children
         self.children = []
         for child in children:
@@ -91,11 +127,6 @@ class Node(object):
         return self
 
     def add_child(self, child):
-        if isinstance(child, str):
-            child = CConst.parse(child)
-        elif isinstance(child, integer_types):
-            child = CINT(child)
-
         self.children.append(child)
 
     def out_children(self, writer):
@@ -104,24 +135,65 @@ class Node(object):
 
         for child in self.children:
             child.__c__(writer)
-            if isinstance(child, SemicolonPresence):
-                writer.line(";")
+            if child.new_line is not None:
+                writer.line(child.new_line)
 
         if self.indent_children:
             writer.pop_indent()
+
+    def __c__(self, writer):
+        writer.write(self.val)
+        self.out_children(writer)
+
+
+class Ifdef(Node):
+
+    def __init__(self, val, *args):
+        if isinstance(val, Macro):
+            val = val.c_name
+        super(Ifdef, self).__init__(
+            # Since the macro can be undefined and unknown to the model,
+            # we refer it using its string name.
+            val = str(val),
+            indent_children = False,
+            children = args
+        )
+        self.new_line = None
+
+    def __c__(self, writer):
+        with writer.cpp:
+            writer.line("ifdef@b" + self.val)
+            writer.push_indent()
+        self.out_children(writer)
+        with writer.cpp:
+            writer.pop_indent()
+            writer.line("endif")
+
+
+class CNode(Node):
+
+    def add_child(self, child):
+        if isinstance(child, str):
+            child = CConst.parse(child)
+        elif isinstance(child, integer_types):
+            child = CINT(child)
+
+        super(CNode, self).add_child(child)
+
+    @staticmethod
+    def out_child(child, writer):
+        child.__c__(writer)
 
 
 class Comment(Node):
 
     def __init__(self, text):
-        super(Comment, self).__init__()
-        self.text = text
-
-    def __c__(self, writer):
-        writer.line("/*@s" + self.text.replace(" ", "@s") + "@s*/")
+        super(Comment, self).__init__(
+            val = "/*@s" + text.replace(" ", "@s") + "@s*/"
+        )
 
 
-class Label(Node):
+class Label(CNode):
 
     def __init__(self, name):
         super(Label, self).__init__()
@@ -129,18 +201,13 @@ class Label(Node):
 
     def __c__(self, writer):
         # A label must be written without an indent.
-        # That is why `new_line` is set to `False`.
-        writer.new_line = False
-        writer.line(self.name + ":")
+        writer.save_indent()
+        writer.write(self.name + ":")
+        writer.load_indent()
 
 
 class NewLine(Node):
-
-    def __init__(self):
-        super(NewLine, self).__init__()
-
-    def __c__(self, writer):
-        writer.line("")
+    pass
 
 
 class MacroBranch(Node):
@@ -157,10 +224,10 @@ class MacroBranch(Node):
         self.macro_call.__c__(writer)
         writer.line("@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
-class LoopWhile(Node):
+class LoopWhile(CNode):
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
@@ -174,10 +241,10 @@ class LoopWhile(Node):
         self.cond.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
-class LoopDoWhile(Node):
+class LoopDoWhile(CNode):
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
@@ -191,10 +258,10 @@ class LoopDoWhile(Node):
         self.out_children(writer)
         writer.write("}@bwhile@b(")
         self.cond.__c__(writer)
-        writer.line(");")
+        writer.write(");")
 
 
-class LoopFor(Node):
+class LoopFor(CNode):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = __node__
@@ -219,10 +286,10 @@ class LoopFor(Node):
             self.step.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
 
 
-class BranchIf(Node):
+class BranchIf(CNode):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = __node__
@@ -253,10 +320,10 @@ class BranchIf(Node):
         for e in self.else_blocks:
             e.__c__(writer)
 
-        writer.line("}")
+        writer.write("}")
 
 
-class BranchElse(Node):
+class BranchElse(CNode):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
@@ -276,34 +343,30 @@ class BranchElse(Node):
         self.out_children(writer)
 
 
-class BranchSwitch(Node):
+class BranchSwitch(CNode):
 
     __node__ = ("children", "var")
     __type_references__ = __node__
 
     def __init__(self, var,
-        add_breaks = True,
+        add_break_in_default = True,
         cases = [],
         child_indent = False,
         separate_cases = False
     ):
         super(BranchSwitch, self).__init__(indent_children = child_indent)
-        self.added_cases = set()
-        self.add_breaks = add_breaks
+        self.default_case = None
+        self.add_break_in_default = add_break_in_default
         self.var = var
         self.separate_cases = separate_cases
         self.add_cases(cases)
 
     def add_child(self, case):
-        const = case.const
-        if const in self.added_cases:
-            raise ValueError(case.gen_const_str() +
-                " const-expression is duplicated in switch"
-            )
-        self.added_cases.add(const)
-        super(BranchSwitch, self).add_child(case)
-        if self.separate_cases and const != "default":
-            super(BranchSwitch, self).add_child(NewLine())
+        if isinstance(case, SwitchCaseDefault):
+            if self.default_case:
+                raise ValueError("Multiple default labels in one switch")
+            self.default_case = case
+        self.children.append(case)
 
     def add_cases(self, cases):
         for case in cases:
@@ -314,108 +377,139 @@ class BranchSwitch(Node):
         return self
 
     def __c__(self, writer):
-        if "default" not in self.added_cases:
-            child = SwitchCase("default", self.add_breaks)
-            self.added_cases.add("default")
-            self.add_child(child)
+        if not self.default_case:
+            self.add_child(SwitchCaseDefault(self.add_break_in_default))
+
+        if self.separate_cases and self.children:
+            self._add_empty_lines(self.children)
 
         writer.write("switch@b(")
         self.var.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
-        writer.line("}")
+        writer.write("}")
+
+    @staticmethod
+    def _add_empty_lines(children):
+        new_ch = [ children[0] ]
+        need_nl = not isinstance(new_ch[0], NewLine)
+        for ch in children[1:]:
+            is_not_nl = not isinstance(ch, NewLine)
+            if need_nl and is_not_nl:
+                new_ch.append(NewLine())
+            new_ch.append(ch)
+            need_nl = is_not_nl
+        children[:] = new_ch
 
 
-class SwitchCase(Node):
+class SwitchCase(CNode):
 
     def __init__(self, const, add_break = True):
         super(SwitchCase, self).__init__()
         self.add_break = add_break
+
+        if isinstance(const, integer_types):
+            const = CINT(const)
+        elif isinstance(const, tuple):
+            const = CaseRange(*const)
+
         self.const = const
 
-    def gen_const_str(self):
-        const = self.const
-        if const == "default":
-            return const
-        elif isinstance(const, tuple):
-            return str(const[0]) + "@b...@b" + str(const[1])
-        else:
-            return str(const)
-
     def __c__(self, writer):
-        if self.add_break:
+        if (   self.add_break
+            and (   self.children
+                 and not isinstance(self.children[-1], Break)
+                 or not self.children
+            )
+        ):
             self.add_child(Break())
 
-        const_str = self.gen_const_str()
-        if const_str != "default":
-            writer.write("case@b")
-        writer.line(const_str + ":")
-        self.out_children(writer)
+        writer.write("case@b")
+        self.const.__c__(writer)
+        if DeclarationSearcher(self).visit().have_declaration:
+            writer.line(":@b{")
+            self.out_children(writer)
+            self.new_line = "}"
+        else:
+            writer.line(":")
+            self.out_children(writer)
+            self.new_line = None
 
 
-class StrConcat(Node):
+class SwitchCaseDefault(CNode):
+
+    def __init__(self, add_break = True):
+        super(SwitchCaseDefault, self).__init__()
+        self.add_break = add_break
+
+    def __c__(self, writer):
+        if (   self.add_break
+            and (   self.children
+                 and not isinstance(self.children[-1], Break)
+                 or not self.children
+            )
+        ):
+            self.add_child(Break())
+
+        if DeclarationSearcher(self).visit().have_declaration:
+            writer.line("default:@b{")
+            self.out_children(writer)
+            self.new_line = "}"
+        else:
+            writer.line("default:")
+            self.out_children(writer)
+            self.new_line = None
+
+
+class StrConcat(CNode):
 
     def __init__(self, *args, **kw_args):
         super(StrConcat, self).__init__(children = args)
         self.delim = kw_args.get("delim", "")
 
     def __c__(self, writer):
-        first_child = self.children[0]
-        first_child.__c__(writer)
-
-        for c in self.children[1:]:
-            writer.write(self.delim)
-            c.__c__(writer)
+        writer.join(self.delim, self.children, self.out_child)
 
 
-class SemicolonPresence(Node):
+class SemicolonPresence(CNode):
     "SemicolonPresence class is used to decide when to print semicolon."
 
+    def __init__(self, *args, **kw_args):
+        kw_args["new_line"] = ";"
+        super(SemicolonPresence, self).__init__(*args, **kw_args)
 
 
 class Break(SemicolonPresence):
 
     def __init__(self):
-        super(Break, self).__init__()
-
-    def __c__(self, writer):
-        writer.write("break")
+        super(Break, self).__init__(val = "break")
 
 
 class Call(SemicolonPresence):
 
-    __type_references__ = ("children", "type")
-
     def __init__(self, func, *args):
-        super(Call, self).__init__(children = args)
-
-        self.func = func
         if isinstance(func, str):
-            self.type = Type.lookup(func)
-        elif isinstance(func, (Variable, OpSDeref)):
-            # Pointer to the function
-            self.type = func
-        else:
+            func = Type[func]
+        elif not isinstance(func, (Variable, Function, CNode)):
             raise ValueError(
                 "Invalid type of func in Call: " + type(func).__name__
             )
 
-    def __c__(self, writer):
-        if isinstance(self.func, OpSDeref):
-            self.func.__c__(writer)
-        else:
-            writer.write(self.type.name)
+        super(Call, self).__init__(children = (func,) + args)
 
+    @property
+    def func(self):
+        return self.children[0]
+
+    @property
+    def args(self):
+        return self.children[1:]
+
+    def __c__(self, writer):
+        self.func.__c__(writer)
 
         writer.write("(@a")
-        if self.children:
-            first_child = self.children[0]
-            first_child.__c__(writer)
-
-            for c in self.children[1:]:
-                writer.write(",@s")
-                c.__c__(writer)
-
+        writer.join(",@s", self.args, self.out_child)
         writer.write("@c)")
 
 
@@ -426,21 +520,38 @@ class Declare(SemicolonPresence):
         super(Declare, self).__init__(children = variables)
 
     def add_child(self, child):
-        super(Declare, self).add_child(child)
-
-        if isinstance(child, OpAssign):
+        if isinstance(child, OpDeclareAssign):
             if not isinstance(child.children[0], Variable):
                 raise TypeError(
                     "Wrong child type: expected Variable"
                 )
-        elif not isinstance(child, Variable):
+            var = child.children[0]
+        elif isinstance(child, Variable):
+            var = child
+        else:
             raise TypeError(
-                "Wrong child type: expected Variable or OpAssign"
+                "Wrong child type: expected Variable or OpDeclareAssign"
             )
+
+        if self.children:
+            first_child = self.children[0]
+            if isinstance(first_child, OpDeclareAssign):
+                v = first_child.children[0]
+            else:
+                v = first_child
+            if (   v.full_deref != var.full_deref
+                or v.static != var.static
+                or v.const != var.const
+            ):
+                raise TypeError("All variables in Declare must have the same"
+                    " type and qualifiers"
+                )
+
+        super(Declare, self).add_child(child)
 
     def __c__(self, writer):
         child = self.children[0]
-        if isinstance(child, OpAssign):
+        if isinstance(child, OpDeclareAssign):
             v = child.children[0]
         else:
             v = child
@@ -450,32 +561,34 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        v_type = v.type
-        asterisks = "@b"
-        while isinstance(v_type, Pointer):
-            v_type = v_type.type
-            asterisks += "*"
-        writer.write(v_type.name + asterisks)
-        child.__c__(writer)
+        writer.write(v.full_deref.c_name + "@b" + v.asterisks)
+        self._write_child(child, writer)
 
         for child in self.children[1:]:
-            if isinstance(child, OpAssign):
+            if isinstance(child, OpDeclareAssign):
                 v = child.children[0]
             else:
                 v = child
 
-            asterisks = ""
-            t = v.type
-            while isinstance(t, Pointer):
-                t = t.type
-                asterisks += "*"
+            writer.write(",@s" + v.asterisks)
+            self._write_child(child, writer)
 
-            if t is not v_type:
-                raise TypeError(
-                    "All variable in Declare must have the same type"
-                )
-
-            writer.write(",@s" + asterisks)
+    @staticmethod
+    def _write_child(child, writer):
+        if isinstance(child, Variable):
+            if child.array_size is not None:
+                if not child.used:
+                    writer.write("__attribute__((unused))@b")
+                child.__c__(writer)
+                writer.write("[%d]" % child.array_size)
+            else:
+                child.__c__(writer)
+                if not child.used:
+                    writer.write("@b__attribute__((unused))")
+            if child.initializer:
+                writer.write("@b=@s")
+                writer.write(child.type.gen_usage_string(child.initializer))
+        else:
             child.__c__(writer)
 
 
@@ -488,18 +601,11 @@ class MCall(SemicolonPresence):
         self.type = Type.lookup(macro)
 
     def __c__(self, writer):
-        writer.write(self.type.name)
+        writer.write(self.type.c_name)
 
         if self.children:
             writer.write("(@a")
-
-            first_child = self.children[0]
-            first_child.__c__(writer)
-
-            for c in self.children[1:]:
-                writer.write(",@s")
-                c.__c__(writer)
-
+            writer.join(",@s", self.children, self.out_child)
             writer.write("@c)")
 
 
@@ -508,13 +614,13 @@ class Return(SemicolonPresence):
     def __init__(self, arg = None):
         super(Return, self).__init__()
         if arg is not None:
-            self.prefix = "return" + "@b"
+            self.val = "return" + "@b"
             self.add_child(arg)
         else:
-            self.prefix = "return"
+            self.val = "return"
 
     def __c__(self, writer):
-        writer.write(self.prefix)
+        writer.write(self.val)
         if self.children:
             self.children[0].__c__(writer)
 
@@ -522,11 +628,7 @@ class Return(SemicolonPresence):
 class Goto(SemicolonPresence):
 
     def __init__(self, label):
-        super(Goto, self).__init__()
-        self.label = label
-
-    def __c__(self, writer):
-        writer.write("goto@b" + self.label.name)
+        super(Goto, self).__init__(val = "goto@b" + label.name)
 
 
 class Operator(SemicolonPresence):
@@ -552,15 +654,7 @@ class Operator(SemicolonPresence):
             writer.write("(")
 
         writer.write(self.prefix)
-
-        if self.children:
-            first_child = self.children[0]
-            first_child.__c__(writer)
-
-            for c in self.children[1:]:
-                writer.write(self.delim)
-                c.__c__(writer)
-
+        writer.join(self.delim, self.children, self.out_child)
         writer.write(self.suffix)
         if self.parenthesis:
             writer.write(")")
@@ -589,13 +683,23 @@ class OpSDeref(Operator):
         self.field = field
 
         _type = value.type
-        if isinstance(_type, Pointer):
-            struct = _type.type
-        else: # _type expected to be a Structure
-            struct = _type
+
+        struct = _type
+        while isinstance(struct, (Pointer, TypeReference)):
+            struct = struct.type
+
+        if OPSDEREF_FROM_DEFINITION:
+            struct = struct._definition or struct
 
         # for type collection
         self.struct = struct
+
+        try:
+            struct.fields[field]
+        except KeyError:
+            raise RuntimeError('Structure "%s" has no field "%s"' % (
+                struct, field
+            ))
 
         if isinstance(_type, Pointer):
             self.suffix = "->" + field
@@ -627,6 +731,24 @@ class OpDec(UnaryOperator):
 
     def __init__(self, var):
         super(OpDec, self).__init__("--", var, suffix_op = True)
+
+
+OpPostDec = OpDec
+
+
+OpPostInc = OpInc
+
+
+class OpPreDec(UnaryOperator):
+
+    def __init__(self, var):
+        super(OpPreDec, self).__init__("--", var, suffix_op = False)
+
+
+class OpPreInc(UnaryOperator):
+
+    def __init__(self, var):
+        super(OpPreInc, self).__init__("++", var, suffix_op = False)
 
 
 class OpCast(UnaryOperator):
@@ -675,6 +797,27 @@ class OpAssign(BinaryOperator):
 
     def __init__(self, arg1, arg2, parenthesis = False):
         super(OpAssign, self).__init__("=", arg1, arg2, parenthesis)
+
+
+class OpDeclareAssign(BinaryOperator):
+
+    def __init__(self, arg1, arg2, parenthesis = False):
+        super(OpDeclareAssign, self).__init__("=", arg1, arg2, parenthesis)
+
+    @staticmethod
+    def out_child(child, writer):
+        if isinstance(child, Variable):
+            if child.array_size is not None:
+                if not child.used:
+                    writer.write("__attribute__((unused))@b")
+                child.__c__(writer)
+                writer.write("[%d]" % child.array_size)
+            else:
+                child.__c__(writer)
+                if not child.used:
+                    writer.write("@b__attribute__((unused))")
+        else:
+            child.__c__(writer)
 
 
 class OpCombAssign(BinaryOperator):
@@ -793,34 +936,44 @@ class OpLower(BinaryOperator):
         super(OpLower, self).__init__("<", arg1, arg2, parenthesis)
 
 
+class CaseRange(BinaryOperator):
+
+    def __init__(self, arg1, arg2, parenthesis = False):
+        super(CaseRange, self).__init__("...", arg1, arg2, parenthesis)
+
+
 op_priority = {
-    OpIndex:      1,
-    OpSDeref:     1,
-    OpDec:        1,
-    OpInc:        1,
-    OpDeref:      2,
-    OpAddr:       2,
-    OpNot:        2,
-    OpLogNot:     2,
-    OpCast:       2,
-    OpMul:        3,
-    OpDiv:        3,
-    OpRem:        3,
-    OpAdd:        4,
-    OpSub:        4,
-    OpLShift:     5,
-    OpRShift:     5,
-    OpGE:         6,
-    OpLE:         6,
-    OpGreater:    6,
-    OpLower:      6,
-    OpEq:         7,
-    OpNEq:        7,
-    OpAnd:        8,
-    OpXor:        9,
-    OpOr:         10,
-    OpLogAnd:     11,
-    OpLogOr:      12,
-    OpAssign:     13,
-    OpCombAssign: 13,
+    CaseRange:       1,
+    OpIndex:         1,
+    OpSDeref:        1,
+    OpDec:           1,
+    OpInc:           1,
+    OpPreDec:        1,
+    OpPreInc:        1,
+    OpDeref:         2,
+    OpAddr:          2,
+    OpNot:           2,
+    OpLogNot:        2,
+    OpCast:          2,
+    OpMul:           3,
+    OpDiv:           3,
+    OpRem:           3,
+    OpAdd:           4,
+    OpSub:           4,
+    OpLShift:        5,
+    OpRShift:        5,
+    OpGE:            6,
+    OpLE:            6,
+    OpGreater:       6,
+    OpLower:         6,
+    OpEq:            7,
+    OpNEq:           7,
+    OpAnd:           8,
+    OpXor:           9,
+    OpOr:            10,
+    OpLogAnd:        11,
+    OpLogOr:         12,
+    OpAssign:        13,
+    OpDeclareAssign: 13,
+    OpCombAssign:    13,
 }

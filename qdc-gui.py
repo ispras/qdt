@@ -86,12 +86,15 @@ from os.path import (
 
 
 class ProjectGeneration(CoTask):
-    def __init__(self, project, source_path, signal, reload_build_path_task):
+    def __init__(self, project, source_path, signal, reload_build_path_task,
+        gen_chunk_graphs
+    ):
         self.p = project
         self.s = source_path
         self.sig = signal
         self.finished = False
         self.reload_build_path_task = reload_build_path_task
+        self.gen_chunk_graphs = gen_chunk_graphs
         CoTask.__init__(
             self,
             self.main(),
@@ -109,7 +112,8 @@ class ProjectGeneration(CoTask):
         self.prev_qvd = cur_qvd.use()
 
         yield self.p.co_gen_all(self.s,
-            known_targets = cur_qvd.qvc.known_targets
+            known_targets = cur_qvd.qvc.known_targets,
+            with_chunk_graph = self.gen_chunk_graphs
         )
 
     def on_failed(self):
@@ -359,6 +363,18 @@ show it else hide it."),
             variable = v
         )
 
+        v = self.var_gen_chunk_graphs = BooleanVar()
+        v.set(False)
+
+        self.__on_var_gen_chunk_graphs = v.trace_variable("w",
+            self.__on_var_gen_chunk_graphs__
+        )
+
+        optionsmenu.add_checkbutton(
+            label = _("Generate chunk graphs"),
+            variable = v
+        )
+
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
 
         self.config(menu = menubar)
@@ -460,6 +476,7 @@ show it else hide it."),
             return
 
         self.var_schedule_generation.set(settings.schedule_generation)
+        self.var_gen_chunk_graphs.set(settings.gen_chunk_graphs)
 
     def __on_task_state_changed(self, task):
         for group in [ "tasks", "callers", "active_tasks", "finished_tasks" ]:
@@ -506,6 +523,12 @@ show it else hide it."),
 
         if settings is not None:
             settings.schedule_generation = self.var_schedule_generation.get()
+
+    def __on_var_gen_chunk_graphs__(self, *args):
+        settings = self._user_settings
+
+        if settings is not None:
+            settings.gen_chunk_graphs = self.var_gen_chunk_graphs.get()
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -765,7 +788,8 @@ later.").get()
             self.proj,
             qvd.src_path,
             self.sig_qvc_dirtied,
-            self.pw.reload_build_path_task
+            self.pw.reload_build_path_task,
+            self.var_gen_chunk_graphs.get()
         )
         self.task_manager.enqueue(self._project_generation_task)
 
@@ -932,6 +956,7 @@ class Settings(Persistent):
             version = 1.0,
             # default values
             schedule_generation = False,
+            gen_chunk_graphs = False,
             recent_projects = OrderedSet()
         )
 

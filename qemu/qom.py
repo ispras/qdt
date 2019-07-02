@@ -8,7 +8,8 @@ __all__ = [
   , "QOMStateField"
   , "QOMType"
       , "QOMDevice"
-  , "Register"
+  , "OpaqueRegister"
+      , "Register"
   , "idon"
 ]
 
@@ -219,7 +220,15 @@ for U in ["", "U"]:
 
         type2vmstate[ctn] = "VMSTATE_" + msfx
 
-class Register(object):
+
+class OpaqueRegister(object):
+
+    def __init__(self, size, name):
+        self.size, self.name = size, name
+
+
+class Register(OpaqueRegister):
+
     def __init__(self, size,
         # None or "gap" named registers are not backed by a state field
         name = None,
@@ -232,7 +241,8 @@ class Register(object):
         # corresponds to 0b00...00, all bits can be written without reading.
         warbits = None
     ):
-        self.size, self.name, self.access = size, name, access
+        super(Register, self).__init__(size, name)
+        self.access = access
         self.reset = CINT(reset, 16, size)
         self.full_name = full_name
 
@@ -321,7 +331,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
         if access in reg.access:
             qtn = QemuTypeName(name)
-            s_deref_war = OpSDeref(
+            s_deref_war = lambda : OpSDeref(
                 s,
                 qtn.for_id_name + "_war"
             )
@@ -345,7 +355,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         # no read only bits: set WAR mask to 0xF...F
                         case.add_child(
                             OpAssign(
-                                s_deref_war,
+                                s_deref_war(),
                                 OpNot(0)
                             )
                         )
@@ -354,7 +364,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         # write mask
                         case.add_child(
                             OpAssign(
-                                s_deref_war,
+                                s_deref_war(),
                                 wm
                             )
                         )
@@ -371,13 +381,13 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                             OpOr(
                                 OpAnd(
                                     val,
-                                    s_deref_war,
+                                    s_deref_war(),
                                     parenthesis = True
                                 ),
                                 OpAnd(
                                     s_deref,
                                     OpNot(
-                                        s_deref_war
+                                        s_deref_war()
                                     ),
                                     parenthesis = True
                                 )
@@ -542,7 +552,7 @@ class QOMType(object):
                 continue
 
             try:
-                helper = type2prop[f.type.name]
+                helper = type2prop[f.type.c_name]
             except KeyError:
                 raise Exception(
                     "Property generation for type %s is not implemented" % \
@@ -610,7 +620,7 @@ class QOMType(object):
                 )
 
             try:
-                vms_macro_name = type2vmstate[f.type.name]
+                vms_macro_name = type2vmstate[f.type.c_name]
             except KeyError:
                 raise Exception(
                     "VMState generation for type %s is not implemented" % \
@@ -819,7 +829,7 @@ class QOMType(object):
 
         root.add_child(
             Declare(
-                OpAssign(
+                OpDeclareAssign(
                     s,
                     MCall(
                         type_cast_macro,
@@ -831,7 +841,7 @@ class QOMType(object):
 
         root.add_child(
             Declare(
-                OpAssign(
+                OpDeclareAssign(
                     ret,
                     0
                 )
@@ -847,7 +857,7 @@ class QOMType(object):
             cases = cases,
             separate_cases = True
         )
-        case_default = SwitchCase("default")
+        case_default = SwitchCaseDefault()
         case_default.add_child(
             Call(
                 "printf",
@@ -882,7 +892,7 @@ class QOMType(object):
 
         root.add_child(
             Declare(
-                OpAssign(
+                OpDeclareAssign(
                     s,
                     MCall(
                         type_cast_macro,
@@ -903,7 +913,7 @@ class QOMType(object):
             cases = cases,
             separate_cases = True
         )
-        case_default = SwitchCase("default")
+        case_default = SwitchCaseDefault()
         case_default.add_child(
             Call(
                 "printf",
@@ -981,7 +991,9 @@ class QOMDevice(QOMType):
         self.block_num = block_num
 
         # Define header file
-        header_path = join("hw", directory, self.qtn.for_header_name + ".h")
+        header_path = join("include", "hw", directory,
+            self.qtn.for_header_name + ".h"
+        )
         try:
             self.header = Header.lookup(header_path)
         except Exception:
@@ -1113,7 +1125,8 @@ class QOMDevice(QOMType):
             ))
 
     def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
-        timer_cb = Function(self.timer_cb_name(index),
+        timer_cb = Function(
+            name = self.timer_cb_name(index),
             body = """\
     __attribute__((unused))@b%s@b*s@b=@s%s(opaque);
 """ % (state_struct.name, self.type_cast_macro.name

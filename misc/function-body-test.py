@@ -41,7 +41,7 @@ if __name__ == "__main__":
     _pi = OpSDeref(_p, "i")
 
     root = BodyTree()(
-        Declare(OpAssign(_i, 1), _a),
+        Declare(OpDeclareAssign(_i, 1), _a),
 
         Comment("It is expected to be a `do {... } while (...);`"),
         LoopDoWhile(_i)(
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             SwitchCase((CINT("0b010"), CINT("0b110")))(
                 OpAssign(_i, 456),
             ),
-            SwitchCase("default")(
+            SwitchCaseDefault(
                 OpAssign(_i, 789)
             )
         ),
@@ -90,6 +90,10 @@ if __name__ == "__main__":
             Break()
         ),
 
+        LoopFor(None, None, OpPreInc(_i))(
+            Break()
+        ),
+
         Return(0),
 
         Return(),
@@ -98,7 +102,17 @@ if __name__ == "__main__":
         Call(OpSDeref(_p, "i")),
 
         OpSDeref(_pi, "ii"),
-        OpSDeref(_p, "i")
+        OpSDeref(_p, "i"),
+
+        Ifdef("test1"),
+        Ifdef(Macro("test2")),
+
+        Ifdef("A")(
+            OpAssign(_a, 1),
+            Ifdef("B")(
+                OpAssign(_a, 2)
+            )
+        )
     )
 
     print_code(str(root))
