@@ -270,6 +270,7 @@ def define_only_qemu_2_6_0_types():
         Function(name = "memory_region_init"),
         Function(name = "memory_region_init_alias"),
         Function(name = "memory_region_init_ram"),
+        Function(name = "memory_region_init_rom_device"),
         Function(name = "memory_region_add_subregion_overlap"),
         Function(name = "memory_region_add_subregion")
     ]).add_reference(osdep_fake_type)
