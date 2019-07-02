@@ -7,11 +7,13 @@ __all__ = [
   , "UnknownMemoryNodeType"
 ]
 
-from .qom import (
+from .qom_common import (
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
-    QOMPropertyTypeInteger,
+    QOMPropertyTypeInteger
+)
+from .qom import (
     QOMType
 )
 from source import (
