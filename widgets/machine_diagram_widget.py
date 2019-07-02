@@ -1325,11 +1325,9 @@ IRQ line creation
             self.notify_popup_command()
             return
 
-        p = self.current_popup
-
         self.show_irq_line_settings(self.node2dev[self.highlighted_irq_line],
-            p.winfo_rootx() - self.winfo_rootx(),
-            p.winfo_rooty() - self.winfo_rooty()
+            self.popup_x - self.winfo_rootx(),
+            self.popup_y - self.winfo_rooty()
         )
 
         # Allow highlighting of another lines when the command was done 
@@ -1422,9 +1420,8 @@ IRQ line creation
         self.mht.start_new_sequence()
 
     def on_add_irq_hub(self):
-        p = self.current_popup
-        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
-               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
+        x, y = self.popup_x - self.winfo_rootx() + self.canvas.canvasx(0), \
+               self.popup_y - self.winfo_rooty() + self.canvas.canvasy(0)
 
         # print("Adding IRQ hub: %i, %i" % (x, y))
 
@@ -1438,9 +1435,8 @@ IRQ line creation
         self.notify_popup_command()
 
     def add_bus_at_popup(self, class_name):
-        p = self.current_popup
-        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
-               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
+        x, y = self.popup_x - self.winfo_rootx() + self.canvas.canvasx(0), \
+               self.popup_y - self.winfo_rooty() + self.canvas.canvasy(0)
 
         node_id = self.mach.get_free_id()
 
@@ -1469,9 +1465,8 @@ IRQ line creation
         self.add_bus_at_popup("I2CBusNode")
 
     def add_device_at_popup(self, class_name, bus = None):
-        p = self.current_popup
-        x, y = p.winfo_rootx() - self.winfo_rootx() + self.canvas.canvasx(0), \
-               p.winfo_rooty() - self.winfo_rooty() + self.canvas.canvasy(0)
+        x, y = self.popup_x - self.winfo_rootx() + self.canvas.canvasx(0), \
+               self.popup_y - self.winfo_rooty() + self.canvas.canvasy(0)
 
         node_id = self.mach.get_free_id()
 
@@ -1492,8 +1487,7 @@ IRQ line creation
                 yield bl
 
     def get_bus_label_at_popup(self, bus_type_name):
-        x = self.current_popup.winfo_rootx() - self.winfo_rootx() \
-            + self.canvas.canvasx(0)
+        x = self.popup_x - self.winfo_rootx() + self.canvas.canvasx(0)
 
         ranged_bls = sorted(self.get_bus_labels(bus_type_name),
             key = lambda n : abs(n.busline.x - x)
