@@ -60,8 +60,8 @@ class SysBusDeviceType(QOMDevice):
         self.pio_size_macros = []
         self.pio_address_macros = []
 
-        self.mmio = {} if mmio is None else dcp(mmio);
-        self.pio = {} if pio is None else dcp(pio);
+        self.mmio = {} if mmio is None else dcp(mmio)
+        self.pio = {} if pio is None else dcp(pio)
 
         self.add_state_field_h("SysBusDevice", "parent_obj", save = False)
 
