@@ -243,7 +243,7 @@ class Register(OpaqueRegister):
     ):
         super(Register, self).__init__(size, name)
         self.access = access
-        self.reset = CINT(reset, 16, size)
+        self.reset = None if reset is None else CINT(reset, 16, size)
         self.full_name = full_name
 
         if wmask is None:
