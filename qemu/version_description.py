@@ -39,8 +39,7 @@ from .version import (
 )
 from .qom_hierarchy import (
     QType,
-    co_update_device_tree,
-    from_legacy_dict
+    co_update_device_tree
 )
 from os import (
     listdir
