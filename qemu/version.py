@@ -168,6 +168,7 @@ def define_only_qemu_2_6_0_types():
         ),
         Function(name = "cpu_exec_realizefn"),
         Function(name = "cpu_reset"),
+        Function(name = "cpu_create"),
         Function(name = "cpu_generic_init")
     ]).add_reference(osdep_fake_type)
 
