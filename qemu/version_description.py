@@ -825,8 +825,10 @@ class QemuVersionDescription(object):
             dt_type_text = '"' + dt_type + '"'
 
             if dt_type_text in text2macros:
+                macros = text2macros[dt_type_text]
                 if qt.macros:
-                    print("Override macros for type %s" % dt_type_text)
-                qt.macros = list(text2macros[dt_type_text])
+                    if set(qt.macros) not in set(macros):
+                        print("Override macros for type %s" % dt_type_text)
+                qt.macros = list(macros)
 
             yield self.co_add_dt_macro(qt.children, text2macros)
