@@ -370,12 +370,10 @@ snapshot mode or the command should be disabled too.
         wnd.geometry(geom)
 
     def on_popup_node_settings(self):
-        p = self.current_popup
-
         self.show_memory_settings(
             self.selected,
-            p.winfo_rootx() - self.winfo_rootx(),
-            p.winfo_rooty() - self.winfo_rooty()
+            self.popup_x - self.winfo_rootx(),
+            self.popup_y - self.winfo_rooty()
         )
 
         self.notify_popup_command()
