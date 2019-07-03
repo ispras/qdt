@@ -72,7 +72,7 @@ class PCIVendorId (PCIId):
         PCIId.db.vendors[self.name] = self
 
     def find_macro(self):
-        return Type.lookup("PCI_VENDOR_ID_%s" % self.name)
+        return Type["PCI_VENDOR_ID_%s" % self.name]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -97,8 +97,7 @@ class PCIDeviceId (PCIId):
         PCIId.db.devices[dev_key] = self
 
     def find_macro(self):
-        return Type.lookup("PCI_DEVICE_ID_%s_%s" % 
-                (self.vendor.name, self.name))
+        return Type["PCI_DEVICE_ID_%s_%s" % (self.vendor.name, self.name)]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -117,7 +116,7 @@ class PCIClassId (PCIId):
         PCIId.db.classes[self.name] = self
 
     def find_macro(self):
-        return Type.lookup("PCI_CLASS_%s" % self.name)
+        return Type["PCI_CLASS_%s" % self.name]
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)

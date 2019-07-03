@@ -56,10 +56,10 @@ from source.function import *
 def gen_prop_declaration(field, decl_macro_name, state_struct,
     default_default = None
 ):
-    decl_macro = Type.lookup(decl_macro_name)
+    decl_macro = Type[decl_macro_name]
     used_types = set([decl_macro])
-    bool_true = Type.lookup("true")
-    bool_false = Type.lookup("false")
+    bool_true = Type["true"]
+    bool_false = Type["false"]
 
     init_code = {
         "_f" : field.name,
@@ -67,7 +67,7 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     }
 
     if field.prop_macro_name is not None:
-        init_code["_n"] = Type.lookup(field.prop_macro_name)
+        init_code["_n"] = Type[field.prop_macro_name]
         init_code["_name"] = init_code["_n"]
 
     init_code["_state"] = init_code["_s"]
@@ -85,7 +85,7 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
 
         if isinstance(val, str):
             try:
-                val_macro = Type.lookup(val)
+                val_macro = Type[val]
             except TypeNotRegistered:
                 val = '"%s"' % val
             else:
@@ -440,7 +440,7 @@ class QOMType(object):
             prop = False,
             default = None
         ):
-        t = Type.lookup(type_name)
+        t = Type[type_name]
         f = QOMStateField(t, field_name,
             num = num,
             save = save,
@@ -518,7 +518,7 @@ class QOMType(object):
             code += "    " + decl_code
 
         # generate property list terminator
-        terminator_macro = Type.lookup("DEFINE_PROP_END_OF_LIST")
+        terminator_macro = Type["DEFINE_PROP_END_OF_LIST"]
         if first:
             code += "\n"
         else:
@@ -536,7 +536,7 @@ class QOMType(object):
 
     def gen_properties_global(self, state_struct):
         init = self.gen_properties_initializer(state_struct)
-        prop_type = Type.lookup("Property")
+        prop_type = Type["Property"]
         var = prop_type.gen_var(
             name = self.qtn.for_id_name + "_properties",
             initializer = init,
@@ -546,7 +546,7 @@ class QOMType(object):
         return var
 
     def gen_vmstate_initializer(self, state_struct):
-        type_macro = Type.lookup(self.qtn.type_macro)
+        type_macro = Type[self.qtn.type_macro]
         code = ("""{
     .name@b=@s%s,
     .version_id@b=@s1,
@@ -574,7 +574,7 @@ class QOMType(object):
                         f.type.name
                 )
 
-            vms_macro = Type.lookup(vms_macro_name)
+            vms_macro = Type[vms_macro_name]
             used_macros.add(vms_macro)
 
             init = Initializer(
@@ -590,7 +590,7 @@ class QOMType(object):
             code += " " * 8 + vms_macro.gen_usage_string(init) + ",\n"
 
         # Generate VM state list terminator macro.
-        code += " " * 8 + Type.lookup("VMSTATE_END_OF_LIST").gen_usage_string()
+        code += " " * 8 + Type["VMSTATE_END_OF_LIST"].gen_usage_string()
 
         code += "\n    }\n}"
 
@@ -598,7 +598,7 @@ class QOMType(object):
             code = code,
             used_types = used_macros.union([
                 type_macro,
-                Type.lookup("VMStateField"),
+                Type["VMStateField"],
                 state_struct
             ])
         )
@@ -607,7 +607,7 @@ class QOMType(object):
     def gen_vmstate_var(self, state_struct):
         init = self.gen_vmstate_initializer(state_struct)
 
-        vmstate = Type.lookup("VMStateDescription").gen_var(
+        vmstate = Type["VMStateDescription"].gen_var(
             name = "vmstate_%s" % self.qtn.for_id_name,
             static = True,
             initializer = init
@@ -630,15 +630,15 @@ class QOMType(object):
         used_types = [],
         used_globals = []
     ):
-        type_cast_macro = Type.lookup(self.qtn.for_macros)
+        type_cast_macro = Type[self.qtn.for_macros]
 
         total_used_types = set([state_struct, type_cast_macro])
         total_used_types.update(used_types)
 
         if self.timer_num > 0:
             total_used_types.update([
-                Type.lookup("QEMU_CLOCK_VIRTUAL"),
-                Type.lookup("timer_new_ns")
+                Type["QEMU_CLOCK_VIRTUAL"],
+                Type["timer_new_ns"]
             ])
             s_is_used = True
             code += "\n"
@@ -668,7 +668,7 @@ class QOMType(object):
             ),
             static = True,
             args = [
-                Type.lookup("Object").gen_var("obj", pointer = True)
+                Type["Object"].gen_var("obj", pointer = True)
             ],
             used_types = total_used_types,
             used_globals = used_globals
@@ -686,7 +686,7 @@ class QOMType(object):
         ]
 
         try:
-            parent_macro = Type.lookup(parent_tn)
+            parent_macro = Type[parent_tn]
         except TypeNotRegistered:
             parent_macro = None
         else:
@@ -738,7 +738,7 @@ class QOMType(object):
             used_types = used_types
         )
         # TypeInfo variable
-        tiv = Type.lookup("TypeInfo").gen_var(
+        tiv = Type["TypeInfo"].gen_var(
             name = self.gen_type_info_name(),
             static = True,
             initializer = tii
@@ -756,7 +756,7 @@ class QOMType(object):
             body = body,
             static = True,
             used_types = [
-                Type.lookup("type_register_static")
+                Type["type_register_static"]
             ],
             used_globals = list(infos)
         )
@@ -770,9 +770,9 @@ class QOMType(object):
             static = True
         )
         root = func.body
-        s = Type.lookup(struct_name).gen_var("s", pointer = True)
+        s = Type[struct_name].gen_var("s", pointer = True)
 
-        ret = Variable("ret", Type.lookup("uint64_t"))
+        ret = Variable("ret", Type["uint64_t"])
 
         root.add_child(
             Declare(
@@ -835,7 +835,7 @@ class QOMType(object):
         )
         root = func.body
 
-        s = Type.lookup(struct_name).gen_var("s", pointer = True)
+        s = Type[struct_name].gen_var("s", pointer = True)
 
         root.add_child(
             Declare(
@@ -944,7 +944,7 @@ class QOMDevice(QOMType):
             self.qtn.for_header_name + ".h"
         )
         try:
-            self.header = Header.lookup(header_path)
+            self.header = Header[header_path]
         except Exception:
             self.header = Header(header_path)
 
@@ -972,7 +972,7 @@ class QOMDevice(QOMType):
     def block_declare_fields(self):
         for index in range(self.block_num):
             f = QOMStateField(
-                Pointer(Type.lookup("BlockBackend")), self.block_name(index),
+                Pointer(Type["BlockBackend"]), self.block_name(index),
                 save = False,
                 prop = True
             )
@@ -1002,8 +1002,8 @@ class QOMDevice(QOMType):
         )
 
     def char_declare_fields(self):
-        field_type = (Type.lookup("CharBackend") if get_vp()["v2.8 chardev"]
-            else Pointer(Type.lookup("CharDriverState"))
+        field_type = (Type["CharBackend"] if get_vp()["v2.8 chardev"]
+            else Pointer(Type["CharDriverState"])
         )
 
         for index in range(self.char_num):
@@ -1016,7 +1016,7 @@ class QOMDevice(QOMType):
     def char_gen_cb(self, proto_name, handler_name, index, source,
         state_struct, type_cast_macro, ret
     ):
-        proto = Type.lookup(proto_name)
+        proto = Type[proto_name]
         cb = proto.use_as_prototype(handler_name,
             body = """\
     __attribute__((unused))@b%s@b*s@b=@s%s(opaque);%s
@@ -1069,7 +1069,7 @@ class QOMDevice(QOMType):
     def timer_declare_fields(self):
         for index in range(self.timer_num):
             self.add_state_field(QOMStateField(
-                Pointer(Type.lookup("QEMUTimer")), self.timer_name(index),
+                Pointer(Type["QEMUTimer"]), self.timer_name(index),
                 save = True
             ))
 
@@ -1080,7 +1080,7 @@ class QOMDevice(QOMType):
     __attribute__((unused))@b%s@b*s@b=@s%s(opaque);
 """ % (state_struct.name, self.type_cast_macro.name
             ),
-            args = [Type.lookup("void").gen_var("opaque", pointer = True)],
+            args = [Type["void"].gen_var("opaque", pointer = True)],
             static = True,
             used_types = set([state_struct, type_cast_macro])
         )
@@ -1109,7 +1109,7 @@ class QOMDevice(QOMType):
                 char_name_fmt = "s->%s"
                 extra_args = ""
 
-            total_used_types.add(Type.lookup(helper_name))
+            total_used_types.add(Type[helper_name])
             code += "\n"
             s_is_used = True
 
@@ -1134,7 +1134,7 @@ class QOMDevice(QOMType):
             code += "\n"
             s_is_used = True
             # actually not, but user probably needed functions from same header
-            total_used_types.add(Type.lookup("BlockDevOps"))
+            total_used_types.add(Type["BlockDevOps"])
 
             for blkN in range(self.block_num):
                 blk_name = self.block_name(blkN)
@@ -1149,13 +1149,13 @@ class QOMDevice(QOMType):
             code += "\n"
             s_is_used = True
 
-            def_mac = Type.lookup("qemu_macaddr_default_if_unset")
-            fmt_info = Type.lookup("qemu_format_nic_info_str")
-            obj_tn = Type.lookup("object_get_typename")
-            obj_cast = Type.lookup("OBJECT")
-            def_cast = Type.lookup("DEVICE")
-            new_nic = Type.lookup("qemu_new_nic")
-            get_queue = Type.lookup("qemu_get_queue")
+            def_mac = Type["qemu_macaddr_default_if_unset"]
+            fmt_info = Type["qemu_format_nic_info_str"]
+            obj_tn = Type["object_get_typename"]
+            obj_cast = Type["OBJECT"]
+            def_cast = Type["DEVICE"]
+            new_nic = Type["qemu_new_nic"]
+            get_queue = Type["qemu_get_queue"]
 
             total_used_types.update([def_mac, fmt_info, obj_tn, obj_cast,
                 def_cast, new_nic, get_queue
@@ -1199,8 +1199,8 @@ class QOMDevice(QOMType):
     extra_code = code
             ),
             args = [
-                Type.lookup(dev_type_name).gen_var("dev", pointer = True),
-                Pointer(Type.lookup("Error")).gen_var("errp", pointer = True)
+                Type[dev_type_name].gen_var("dev", pointer = True),
+                Pointer(Type["Error"]).gen_var("errp", pointer = True)
             ],
             static = True,
             used_types = total_used_types,
@@ -1231,12 +1231,12 @@ class QOMDevice(QOMType):
     def nic_declare_field(self, index):
         self.add_state_field(
             QOMStateField(
-                Pointer(Type.lookup("NICState")), self.nic_name(index),
+                Pointer(Type["NICState"]), self.nic_name(index),
                 save = False
             )
         )
         f = QOMStateField(
-            Type.lookup("NICConf"), self.nic_conf_name(index),
+            Type["NICConf"], self.nic_conf_name(index),
             save = False,
             prop = True
         )
@@ -1249,11 +1249,11 @@ class QOMDevice(QOMType):
             self.nic_declare_field(i)
 
     def gen_nic_helper(self, helper, cbtn, index):
-        cbt = Type.lookup(cbtn)
+        cbt = Type[cbtn]
         return cbt.use_as_prototype(self.nic_helper_name(helper, index),
             body = "    return 0;\n" if cbt.ret_type.name != "void" else "",
             static = True,
-            used_types = [ Type.lookup(self.struct_name) ]
+            used_types = [ Type[self.struct_name] ]
         )
 
     def gen_net_client_info(self, index):
@@ -1273,13 +1273,13 @@ class QOMDevice(QOMType):
         # Define relative order of helpers: link, can recv, recv, cleanup
         line_origins(helpers)
 
-        code["type"] = Type.lookup("NET_CLIENT_DRIVER_NIC")
-        types = set([Type.lookup("NICState")] + list(code.values()))
+        code["type"] = Type["NET_CLIENT_DRIVER_NIC"]
+        types = set([Type["NICState"]] + list(code.values()))
         code["size"] = "sizeof(NICState)"
 
         init = Initializer(code, used_types = types)
 
-        return Type.lookup("NetClientInfo").gen_var(
+        return Type["NetClientInfo"].gen_var(
             self.net_client_info_name(index),
             initializer = init,
             static = True

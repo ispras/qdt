@@ -284,7 +284,7 @@ corresponding vendor is given" % attr
     Struct = self.state_struct.name,
     UPPER = self.type_cast_macro.name,
             ),
-            args = [Type.lookup("DeviceState").gen_var("dev", True)],
+            args = [Type["DeviceState"].gen_var("dev", True)],
             static = True,
             used_types = [self.state_struct]
         )
@@ -298,9 +298,9 @@ corresponding vendor is given" % attr
         if self.mem_bar_num > 0:
             s_is_used = True
             realize_used_types.update([
-                Type.lookup("sysbus_init_mmio"),
-                Type.lookup("memory_region_init_io"),
-                Type.lookup("Object")
+                Type["sysbus_init_mmio"],
+                Type["memory_region_init_io"],
+                Type["Object"]
             ])
 
         for barN in range(0, self.mem_bar_num):
@@ -338,7 +338,7 @@ corresponding vendor is given" % attr
                 )
             )
 
-            ops = Type.lookup("MemoryRegionOps").gen_var(
+            ops = Type["MemoryRegionOps"].gen_var(
                 name = self.gen_Ith_mem_bar_ops_name(barN),
                 pointer = False,
                 initializer = ops_init,
@@ -360,7 +360,7 @@ corresponding vendor is given" % attr
             )
 
         if self.msi_messages_num > 0 :
-            msi_init_type = Type.lookup("msi_init")
+            msi_init_type = Type["msi_init"]
             s_is_used = True
 
             realize_code += """
@@ -370,7 +370,7 @@ corresponding vendor is given" % attr
        self.msi_64bit.gen_usage_string(),
        self.msi_masking.gen_usage_string(),
        ",@serrp" if msi_init_type.args[-1].type \
-                   == Pointer(Pointer(Type.lookup("Error"))) else ""
+                   == Pointer(Pointer(Type["Error"])) else ""
             )
 
             realize_used_types.update(self.msi_types)
@@ -392,13 +392,13 @@ corresponding vendor is given" % attr
             code += """
     msi_uninit(dev);
 """
-            used_types.add(Type.lookup("msi_uninit"))
+            used_types.add(Type["msi_uninit"])
 
         if self.nic_num > 0:
             code += "\n"
             used_s = True
 
-            del_nic = Type.lookup("qemu_del_nic")
+            del_nic = Type["qemu_del_nic"]
             used_types.add(del_nic)
 
             for nicN in xrange(self.nic_num):
@@ -409,8 +409,8 @@ corresponding vendor is given" % attr
             used_s = True
             code += "\n"
             used_types.update([
-                Type.lookup("timer_del"),
-                Type.lookup("timer_free")
+                Type["timer_del"],
+                Type["timer_free"]
             ])
 
             for timerN in range(self.timer_num):
@@ -422,7 +422,7 @@ corresponding vendor is given" % attr
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
-            args = [Type.lookup("PCIDevice").gen_var("dev", pointer = True)],
+            args = [Type["PCIDevice"].gen_var("dev", pointer = True)],
             static = True,
             used_types = used_types,
             body = """\
@@ -475,13 +475,13 @@ corresponding vendor is given" % attr
     pad = '@b@b@b@b@b@b@b@b@b@b' if self.subsystem_vendor_macro else ''
             ),
             args = [
-Type.lookup("ObjectClass").gen_var("oc", True),
-Type.lookup("void").gen_var("opaque", True),
+Type["ObjectClass"].gen_var("oc", True),
+Type["void"].gen_var("opaque", True),
             ],
             static = True,
             used_types = [
-                Type.lookup("DeviceClass"),
-                Type.lookup("PCIDeviceClass"),
+                Type["DeviceClass"],
+                Type["PCIDeviceClass"],
                 self.device_realize,
                 self.device_reset,
                 self.device_exit,
@@ -522,7 +522,7 @@ Type.lookup("void").gen_var("opaque", True),
             code = { "function": self.register_types }
         )
         self.source.add_type(
-            Type.lookup("type_init").gen_usage(type_init_usage_init)
+            Type["type_init"].gen_usage(type_init_usage_init)
         )
 
         # order life cycle functions

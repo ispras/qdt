@@ -18,7 +18,7 @@ def add_base_types():
     Type(name = "char", incomplete = False, base = True)
 
     try:
-        h = Header.lookup("stdint.h")
+        h = Header["stdint.h"]
     except:
         h = Header("stdint.h", is_global = True)
 
@@ -36,7 +36,7 @@ def add_base_types():
     ])
 
     try:
-        h = Header.lookup("stddef.h")
+        h = Header["stddef.h"]
     except:
         h = Header("stddef.h", is_global = True)
         h.add_types([
@@ -48,7 +48,7 @@ def add_base_types():
     ])
 
     try:
-        h = Header.lookup("stdbool.h")
+        h = Header["stdbool.h"]
     except:
         h = Header("stdbool.h", is_global = True)
 
@@ -62,7 +62,7 @@ def add_base_types():
         ])
 
     try:
-        h = Header.lookup("stdio.h")
+        h = Header["stdio.h"]
     except:
         h = Header("stdio.h", is_global = True)
 
@@ -74,7 +74,7 @@ def add_base_types():
     ])
 
     try:
-        h = Header.lookup("string.h")
+        h = Header["string.h"]
     except:
         h = Header("string.h", is_global = True)
 
@@ -97,7 +97,7 @@ def add_base_types():
         ])
 
     try:
-        h = Header.lookup("stdlib.h")
+        h = Header["stdlib.h"]
     except:
         h = Header("stdlib.h", is_global = True)
 

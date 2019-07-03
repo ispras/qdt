@@ -268,7 +268,7 @@ class SysBusDeviceType(QOMDevice):
     UPPER = self.type_cast_macro.name,
     reset = "\n\n    " + "\n    ".join(reg_resets) if reg_resets else ""
             ),
-            args = [Type.lookup("DeviceState").gen_var("dev", True)],
+            args = [Type["DeviceState"].gen_var("dev", True)],
             static = True,
             used_types = used_types
         )
@@ -285,8 +285,8 @@ class SysBusDeviceType(QOMDevice):
 
         if self.mmio_num > 0:
             instance_init_used_types.update([
-                Type.lookup("sysbus_init_mmio"),
-                Type.lookup("Object")
+                Type["sysbus_init_mmio"],
+                Type["Object"]
             ])
 
         for mmioN in range(0, self.mmio_num):
@@ -374,7 +374,7 @@ class SysBusDeviceType(QOMDevice):
                     )
                 )
 
-                ops = Type.lookup("MemoryRegionOps").gen_var(
+                ops = Type["MemoryRegionOps"].gen_var(
                     name = self.gen_Ith_mmio_ops_name(mmioN),
                     pointer = False,
                     initializer = ops_init,
@@ -417,10 +417,10 @@ class SysBusDeviceType(QOMDevice):
 
         if self.pio_num > 0:
             instance_init_used_types.update([
-                Type.lookup("sysbus_add_io"),
-                Type.lookup("memory_region_init_io"),
-                Type.lookup("Object"),
-                Type.lookup("sysbus_init_ioports")
+                Type["sysbus_add_io"],
+                Type["memory_region_init_io"],
+                Type["Object"],
+                Type["sysbus_init_ioports"]
             ])
 
         for pioN in range(0, self.pio_num):
@@ -459,7 +459,7 @@ class SysBusDeviceType(QOMDevice):
                 )
             )
 
-            ops = Type.lookup("MemoryRegionOps").gen_var(
+            ops = Type["MemoryRegionOps"].gen_var(
                 name = self.gen_Ith_pio_ops_name(pioN),
                 pointer = False,
                 initializer = ops_init,
@@ -485,8 +485,8 @@ class SysBusDeviceType(QOMDevice):
 
         if self.out_irq_num > 0:
             instance_init_used_types.update([
-                Type.lookup("qemu_irq"),
-                Type.lookup("sysbus_init_irq")
+                Type["qemu_irq"],
+                Type["sysbus_init_irq"]
             ])
 
             instance_init_code += "\n"
@@ -524,8 +524,8 @@ class SysBusDeviceType(QOMDevice):
             instance_init_used_types.update([
                 self.irq_handler,
                 self.in_irq_macro,
-                Type.lookup("qdev_init_gpio_in"),
-                Type.lookup("DEVICE")
+                Type["qdev_init_gpio_in"],
+                Type["DEVICE"]
             ])
 
         self.instance_init = self.gen_instance_init_fn(self.state_struct,
@@ -546,8 +546,8 @@ class SysBusDeviceType(QOMDevice):
             used_s = True
             code += "\n"
             used_types.update([
-                Type.lookup("timer_del"),
-                Type.lookup("timer_free")
+                Type["timer_del"],
+                Type["timer_free"]
             ])
 
             for timerN in range(self.timer_num):
@@ -558,8 +558,8 @@ class SysBusDeviceType(QOMDevice):
         self.device_unrealize = Function(
             name = self.qtn.for_id_name + "_unrealize",
             args = [
-                Pointer(Type.lookup("DeviceState")).gen_var("dev"),
-                Pointer(Pointer(Type.lookup("Error"))).gen_var("errp")
+                Pointer(Type["DeviceState"]).gen_var("dev"),
+                Pointer(Pointer(Type["Error"])).gen_var("errp")
             ],
             static = True,
             used_types = used_types,
@@ -595,12 +595,12 @@ class SysBusDeviceType(QOMDevice):
     dc->props@b@b@b@b@b=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name),
             args = [
-Type.lookup("ObjectClass").gen_var("oc", True),
-Type.lookup("void").gen_var("opaque", True),
+Type["ObjectClass"].gen_var("oc", True),
+Type["void"].gen_var("opaque", True),
             ],
             static = True,
             used_types = [
-                Type.lookup("DeviceClass"),
+                Type["DeviceClass"],
                 self.device_realize,
                 self.device_reset,
                 self.device_unrealize
@@ -628,7 +628,7 @@ Type.lookup("void").gen_var("opaque", True),
             code = { "function": self.register_types }
         )
         self.source.add_type(
-            Type.lookup("type_init").gen_usage(type_init_usage_init)
+            Type["type_init"].gen_usage(type_init_usage_init)
         )
 
         # order life cycle functions

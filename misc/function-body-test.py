@@ -4,8 +4,6 @@ from six.moves import (
     zip_longest
 )
 
-t = Type.lookup
-
 def fix_indents(code, width = 38):
     chunk = SourceChunk(None, None, code)
     chunk.check_cols_fix_up(max_cols = width)
@@ -30,11 +28,11 @@ def print_code(code):
 if __name__ == "__main__":
     add_base_types()
 
-    _i = Variable("i", t("int"))
-    _a = Variable("a", t("int"))
+    _i = Variable("i", Type["int"])
+    _a = Variable("a", Type["int"])
     _p = Structure("Test",
         Variable("i", Structure("Test2",
-            t("int").gen_var("ii", pointer = True)
+            Type["int"].gen_var("ii", pointer = True)
         ))
     ).gen_var("p", pointer = True)
 

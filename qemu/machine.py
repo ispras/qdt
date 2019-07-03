@@ -197,7 +197,7 @@ class MachineType(QOMType):
         self.init_used_types.append(t)
 
     def use_type_name(self, name):
-        t = Type.lookup(name)
+        t = Type[name]
         self.use_type(t)
 
     def provide_name_for_node(self, node, base):
@@ -282,13 +282,13 @@ class MachineType(QOMType):
         else:
             gpio_name = irq[2]
             try:
-                gpio_name_type = Type.lookup(gpio_name)
+                gpio_name_type = Type[gpio_name]
             except TypeNotRegistered:
                 gpio_name = '"%s"' % gpio_name
             else:
                 self.use_type(gpio_name_type)
 
-            irq_get = Type.lookup("qdev_get_gpio_in_named")
+            irq_get = Type["qdev_get_gpio_in_named"]
             self.use_type(irq_get)
             return """\
     {irq_name} = {irq_get}(@aDEVICE({dst_name}),@s{gpio_name},@s{dst_index});
@@ -319,7 +319,7 @@ class MachineType(QOMType):
     src_index = irq[1]
             )
         else:
-            sysbus_name = Type.lookup("SYSBUS_DEVICE_GPIO_IRQ").text
+            sysbus_name = Type["SYSBUS_DEVICE_GPIO_IRQ"].text
             if sysbus_name == "\"%s\"" % irq[2] or "SYSBUS_DEVICE_GPIO_IRQ" == irq[2]:
                 self.use_type_name("sysbus_connect_irq")
                 self.use_type_name("SYS_BUS_DEVICE")
@@ -702,7 +702,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
             name = "init_%s" % self.qtn.for_id_name,
             static = True,
             args = [
-                Type.lookup("MachineState").gen_var("machine", pointer = True)
+                Type["MachineState"].gen_var("machine", pointer = True)
             ],
             body = decl_code + "\n" + def_code,
             used_types = self.init_used_types
