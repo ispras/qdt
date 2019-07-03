@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
     _i = Variable("i", Type["int"])
     _a = Variable("a", Type["int"])
-    _p = Structure("Test",
+    _p = Pointer(Structure("Test",
         Variable("i", Structure("Test2",
-            Type["int"]("ii", pointer = True)
+            Pointer(Type["int"])("ii")
         ))
-    )("p", pointer = True)
+    ))("p")
 
     _pi = OpSDeref(_p, "i")
 

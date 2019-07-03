@@ -268,7 +268,7 @@ class SysBusDeviceType(QOMDevice):
     UPPER = self.type_cast_macro.name,
     reset = "\n\n    " + "\n    ".join(reg_resets) if reg_resets else ""
             ),
-            args = [Type["DeviceState"]("dev", True)],
+            args = [ Pointer(Type["DeviceState"])("dev") ],
             static = True,
             used_types = used_types
         )
@@ -595,8 +595,8 @@ class SysBusDeviceType(QOMDevice):
     dc->props@b@b@b@b@b=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name),
             args = [
-Type["ObjectClass"]("oc", True),
-Type["void"]("opaque", True),
+                Pointer(Type["ObjectClass"])("oc"),
+                Pointer(Type["void"])("opaque")
             ],
             static = True,
             used_types = [
@@ -606,10 +606,10 @@ Type["void"]("opaque", True),
                 self.device_unrealize
             ],
             used_globals = [
-                    self.vmstate,
-                    self.properties
-                ]
-            )
+                self.vmstate,
+                self.properties
+            ]
+        )
 
         self.source.add_type(self.class_init)
 

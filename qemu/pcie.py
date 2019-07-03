@@ -284,7 +284,7 @@ corresponding vendor is given" % attr
     Struct = self.state_struct.name,
     UPPER = self.type_cast_macro.name,
             ),
-            args = [Type["DeviceState"]("dev", True)],
+            args = [ Pointer(Type["DeviceState"])("dev") ],
             static = True,
             used_types = [self.state_struct]
         )
@@ -422,7 +422,7 @@ corresponding vendor is given" % attr
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
-            args = [Type["PCIDevice"]("dev", pointer = True)],
+            args = [ Pointer(Type["PCIDevice"])("dev") ],
             static = True,
             used_types = used_types,
             body = """\
@@ -475,8 +475,8 @@ corresponding vendor is given" % attr
     pad = '@b@b@b@b@b@b@b@b@b@b' if self.subsystem_vendor_macro else ''
             ),
             args = [
-Type["ObjectClass"].gen_var("oc", True),
-Type["void"].gen_var("opaque", True),
+                Pointer(Type["ObjectClass"])("oc"),
+                Pointer(Type["void"])("opaque")
             ],
             static = True,
             used_types = [

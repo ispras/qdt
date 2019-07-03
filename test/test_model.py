@@ -162,10 +162,10 @@ class TestForwardDeclaration(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c")
 
         a = Structure("A")
-        a.append_field(a("next", pointer = True))
+        a.append_field(Pointer(a)("next"))
 
         b = Structure("B")
-        b.append_field(a("next", pointer = True))
+        b.append_field(Pointer(a)("next"))
 
         src.add_types([a, b])
 
@@ -198,8 +198,8 @@ class TestCrossDeclaration(SourceModelTestHelper, TestCase):
         a = Structure("A")
         b = Structure("B")
 
-        b.append_field(a("ref", pointer = True))
-        a.append_field(b("ref", pointer = True))
+        b.append_field(Pointer(a)("ref"))
+        a.append_field(Pointer(b)("ref"))
 
         src.add_types([a, b])
 
@@ -232,10 +232,10 @@ class TestForwardDeclarationHeader(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c")
 
         a = Structure("A")
-        a.append_field(a("next", pointer = True))
+        a.append_field(Pointer(a)("next"))
 
         b = Structure("B")
-        b.append_field(a("next", pointer = True))
+        b.append_field(Pointer(a)("next"))
 
         hdr.add_type(a)
         hdr_content = """\
@@ -278,14 +278,12 @@ class TestMacroType(SourceModelTestHelper, TestCase):
         hdr.add_type(Macro("QTAIL_ENTRY", args = ["type"]))
 
         struct = Structure("StructA")
-        struct.append_field(
+        struct.append_fields([
             Type["QTAIL_ENTRY"]("entry",
                 macro_initializer = Initializer({ "type":  struct })
-            )
-        )
-        struct.append_field(
-            struct("next", pointer = True)
-        )
+            ),
+            Pointer(struct)("next")
+        ])
         hdr.add_type(struct)
 
         hdr_content = """\
@@ -418,7 +416,7 @@ class TestPointerReferences(SourceModelTestHelper, TestCase):
         h.add_type(Type("a", incomplete = False, base = False))
 
         src = Source(name.lower() + ".c").add_type(
-            Structure("s", Type["a"]("next", pointer = True))
+            Structure("s", Pointer(Type["a"])("next"))
         )
 
         src_content = """\
@@ -458,7 +456,7 @@ class TestRedirectionToDeclaration(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c").add_global_variable(
             # It must internally re-direct pointer from type "Private"
             # to "Private.declaration", its forward declaration.
-            Type["Private"]("handler", pointer = True)
+            Pointer(Type["Private"])("handler")
         )
         src.add_type(Pointer(public_func_impl, name = "cb_ptr"))
 

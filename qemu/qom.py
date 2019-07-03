@@ -535,15 +535,12 @@ class QOMType(object):
         return init
 
     def gen_properties_global(self, state_struct):
-        init = self.gen_properties_initializer(state_struct)
-        prop_type = Type["Property"]
-        var = prop_type(
+        return Type["Property"](
             name = self.qtn.for_id_name + "_properties",
-            initializer = init,
+            initializer = self.gen_properties_initializer(state_struct),
             static = True,
             array_size = 0
         )
-        return var
 
     def gen_vmstate_initializer(self, state_struct):
         type_macro = Type[self.qtn.type_macro]
@@ -605,15 +602,11 @@ class QOMType(object):
         return init
 
     def gen_vmstate_var(self, state_struct):
-        init = self.gen_vmstate_initializer(state_struct)
-
-        vmstate = Type["VMStateDescription"](
+        return Type["VMStateDescription"](
             name = "vmstate_%s" % self.qtn.for_id_name,
             static = True,
-            initializer = init
+            initializer = self.gen_vmstate_initializer(state_struct)
         )
-
-        return vmstate
 
     def gen_instance_init_name(self):
         return "%s_instance_init" % self.qtn.for_id_name
@@ -667,9 +660,7 @@ class QOMType(object):
     used = "" if s_is_used else "__attribute__((unused))@b"
             ),
             static = True,
-            args = [
-                Type["Object"]("obj", pointer = True)
-            ],
+            args = [ Pointer(Type["Object"])("obj") ],
             used_types = total_used_types,
             used_globals = used_globals
         )
@@ -738,13 +729,11 @@ class QOMType(object):
             used_types = used_types
         )
         # TypeInfo variable
-        tiv = Type["TypeInfo"](
+        return Type["TypeInfo"](
             name = self.gen_type_info_name(),
             static = True,
             initializer = tii
         )
-
-        return tiv
 
     def gen_register_types_fn(self, *infos):
         body = ""
@@ -770,7 +759,7 @@ class QOMType(object):
             static = True
         )
         root = func.body
-        s = Type[struct_name]("s", pointer = True)
+        s = Pointer(Type[struct_name])("s")
 
         ret = Variable("ret", Type["uint64_t"])
 
@@ -835,7 +824,7 @@ class QOMType(object):
         )
         root = func.body
 
-        s = Type[struct_name]("s", pointer = True)
+        s = Pointer(Type[struct_name])("s")
 
         root.add_child(
             Declare(
@@ -1080,7 +1069,7 @@ class QOMDevice(QOMType):
     __attribute__((unused))@b%s@b*s@b=@s%s(opaque);
 """ % (state_struct.name, self.type_cast_macro.name
             ),
-            args = [Type["void"]("opaque", pointer = True)],
+            args = [ Pointer(Type["void"])("opaque") ],
             static = True,
             used_types = set([state_struct, type_cast_macro])
         )
@@ -1199,8 +1188,8 @@ class QOMDevice(QOMType):
     extra_code = code
             ),
             args = [
-                Type[dev_type_name]("dev", pointer = True),
-                Pointer(Type["Error"])("errp", pointer = True)
+                Pointer(Type[dev_type_name])("dev"),
+                Pointer(Pointer(Type["Error"]))("errp")
             ],
             static = True,
             used_types = total_used_types,
@@ -1277,10 +1266,8 @@ class QOMDevice(QOMType):
         types = set([Type["NICState"]] + list(code.values()))
         code["size"] = "sizeof(NICState)"
 
-        init = Initializer(code, used_types = types)
-
         return Type["NetClientInfo"](
             self.net_client_info_name(index),
-            initializer = init,
+            initializer = Initializer(code, used_types = types),
             static = True
         )

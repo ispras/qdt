@@ -1593,8 +1593,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        mt = MacroType(self, initializer = macro_initializer)
-        return mt(name,
+        return MacroType(self, initializer = macro_initializer)(name,
             pointer = pointer,
             initializer = initializer,
             static = static,

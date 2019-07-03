@@ -701,9 +701,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
         self.instance_init = Function(
             name = "init_%s" % self.qtn.for_id_name,
             static = True,
-            args = [
-                Type["MachineState"]("machine", pointer = True)
-            ],
+            args = [ Pointer(Type["MachineState"])("machine") ],
             body = decl_code + "\n" + def_code,
             used_types = self.init_used_types
         )
