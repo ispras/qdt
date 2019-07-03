@@ -152,6 +152,19 @@ clean-report2:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report2.$(ext))
 	rm -f $(report2-PNGs)
 
+# paper about domain specific debugging of Qemu
+
+all : debugging/main.docx
+
+debugging/main.docx : REF_DOCX = debugging/ref.docx
+
+debugging/main.docx : \
+ debugging/ref.docx
+
+clean : clean-debugging
+clean-debugging:
+	rm -f debugging/main.docx debugging/main.pmd
+
 ################
 # Common rules #
 ################
