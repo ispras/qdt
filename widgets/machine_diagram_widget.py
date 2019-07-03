@@ -55,6 +55,10 @@ from common import (
     sign
 )
 from qemu import (
+    MOp_AddCPU,
+    MOp_DelCPU,
+    MOp_SetCPUAttr,
+    CPUNode,
     MOp_SetBusAttr,
     MOp_AddDevice,
     MOp_DelDevice,
@@ -85,6 +89,9 @@ from .irq_settings import (
 )
 from .bus_settings import (
     BusSettingsWindow
+)
+from .cpu_settings import (
+    CPUSettingsWindow
 )
 from .popup_helper import (
     TkPopupHelper
@@ -527,6 +534,12 @@ IRQ line creation
                 self.on_add_irq_hub
         )
 
+        p.add_command(
+            label = _("Add CPU"),
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_add_cpu
+        )
+
         p0 = VarMenu(p, tearoff = 0)
         for device_type in [
             _("Common device"),
@@ -672,6 +685,20 @@ IRQ line creation
         )
         self.popup_single_bus = p
 
+        # single CPU popup menu
+        p = VarMenu(self.winfo_toplevel(), tearoff = 0)
+        p.add_command(
+            label = _("Settings"),
+            command = self.on_popup_single_cpu_settings
+        )
+        p.add_separator()
+        p.add_command(
+            label = _("Delete"),
+            command = self.notify_popup_command if self.mht is None else \
+                self.on_popup_single_cpu_delete
+        )
+        self.popup_single_cpu = p
+
         # popup menu for multiple selection
         p = VarMenu(self.winfo_toplevel(), tearoff = 0)
         p.add_command(
@@ -731,6 +758,8 @@ IRQ line creation
                 handler = self.show_irq_line_settings
             elif isinstance(tdev, IRQHub):
                 handler = self.show_irq_hub_settings
+            elif isinstance(tdev, CPUNode):
+                handler = self.show_cpu_settings
 
             if handler is None:
                 continue
@@ -902,7 +931,9 @@ IRQ line creation
         if op.sn != self.mach.__sn__:
             return
 
-        if isinstance(op, MOp_SetDevQOMType):
+        if (isinstance(op, MOp_SetDevQOMType) or
+            isinstance(op, MOp_SetCPUAttr) and op.attr == "qom_type"
+        ):
             dev = self.mach.id2node[op.node_id]
             node = self.dev2node[dev]
             self.update_node_text(node)
@@ -1105,6 +1136,38 @@ IRQ line creation
 
                 self.dev2node[dev] = node
                 self.node2dev[node] = dev
+
+                self.add_node(node, None)
+
+            self.__update_var_names()
+
+        elif isinstance(op, (MOp_AddCPU, MOp_DelCPU)):
+            try:
+                cpu = self.mach.id2node[op.node_id]
+            except KeyError:
+                # deleted
+                for cpu, node in self.dev2node.items():
+                    if isinstance(cpu, CPUNode):
+                        if cpu.id == -1:
+                            break
+
+                node_id = self.node2id.pop(node)
+
+                if node_id in self.selected:
+                    self.selected.remove(node_id)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+
+                self.nodes.remove(node)
+                self.canvas.delete(node_id)
+                self.canvas.delete(node.text)
+                del self.dev2node[cpu]
+                del self.node2dev[node]
+            else:
+                # added
+                node = TextBox(cpu)
+
+                self.dev2node[cpu] = node
+                self.node2dev[node] = cpu
 
                 self.add_node(node, None)
 
@@ -1382,6 +1445,42 @@ IRQ line creation
 
         self.notify_popup_command()
 
+    def show_cpu_settings(self, cpu, x, y):
+        wnd = CPUSettingsWindow(cpu, self.mach, self.mht, self)
+
+        geom = "+" + str(int(self.winfo_rootx() + x)) \
+             + "+" + str(int(self.winfo_rooty() + y))
+
+        wnd.geometry(geom)
+
+    def on_popup_single_cpu_settings(self):
+        _id = self.current_popup_tag
+
+        x0, y0 = self.canvas.canvasx(0), self.canvas.canvasy(0)
+        x, y = self.canvas.coords(_id)[-2:]
+        x = x - x0
+        y = y - y0
+
+        cpu = self.node2dev[self.id2node[_id]]
+
+        self.show_cpu_settings(cpu, x, y)
+
+        self.notify_popup_command()
+
+    def on_popup_single_cpu_delete(self):
+        cpu_id = self.current_popup_tag
+        node = self.id2node[cpu_id]
+        cpu_id = self.node2dev[node].id
+
+        if node.x != 0 or node.y != 0:
+            # move node to 0, 0 to preserve its coordinates
+            self.mht.stage(MWOp_MoveNode, 0, 0, self, cpu_id)
+
+        self.mht.delete_cpu(cpu_id)
+        self.mht.commit()
+
+        self.notify_popup_command()
+
     def on_popup_multiple_delete(self):
         self.delete_ids(self.current_popup_tag)
         self.notify_popup_command()
@@ -1409,7 +1508,7 @@ IRQ line creation
             else:
                 node_id = mach_n.id
 
-                if isinstance(mach_n, (DeviceNode, BusNode, IRQHub)):
+                if isinstance(mach_n, (DeviceNode, BusNode, IRQHub, CPUNode)):
                     if n.x != 0 or n.y != 0:
                         # move node to 0, 0 to preserve its coordinates
                         self.mht.stage(MWOp_MoveNode, 0, 0, self, node_id)
@@ -1474,6 +1573,18 @@ IRQ line creation
         self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         if bus:
             self.mht.stage(MOp_SetDevParentBus, bus, node_id)
+        self.mht.commit()
+
+        self.notify_popup_command()
+
+    def on_add_cpu(self):
+        x = self.popup_x - self.winfo_rootx() + self.canvas.canvasx(0)
+        y = self.popup_y - self.winfo_rooty() + self.canvas.canvasy(0)
+
+        node_id = self.mach.get_free_id()
+
+        self.mht.add_cpu(node_id)
+        self.mht.stage(MWOp_MoveNode, x, y, self, node_id)
         self.mht.commit()
 
         self.notify_popup_command()
@@ -1860,6 +1971,8 @@ IRQ line creation
                             popup = self.popup_single_irq_hub
                         elif isinstance(tdev, BusNode):
                             popup = self.popup_single_bus
+                        elif isinstance(tdev, CPUNode):
+                            popup = self.popup_single_cpu
                         else:
                             continue
                         tag = tid
@@ -2107,6 +2220,16 @@ IRQ line creation
 
     def update(self):
         irqs = list(self.mach.irqs)
+
+        for cpu in self.mach.cpus:
+            if cpu in self.dev2node:
+                continue
+            cpu_node = TextBox(cpu)
+
+            self.dev2node[cpu] = cpu_node
+            self.node2dev[cpu_node] = cpu
+
+            self.add_node(cpu_node, None)
 
         for hub in self.mach.irq_hubs:
             if hub in self.dev2node:

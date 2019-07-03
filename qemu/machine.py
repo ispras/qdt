@@ -7,20 +7,31 @@ __all__ = [
   , "UnknownMemoryNodeType"
 ]
 
-from .qom import (
+from .qom_common import (
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
-    QOMPropertyTypeInteger,
+    QOMPropertyTypeInteger
+)
+from .qom import (
     QOMType
 )
 from source import (
+    BodyTree,
+    Declare,
+    OpDeclareAssign,
+    MCall,
+    NewLine,
+    Call,
+    Pointer,
+    Macro,
     Source,
     Type,
     TypeNotRegistered,
     Function
 )
 from .machine_nodes import (
+    CPUNode,
     SystemBusDeviceNode,
     BusNode,
     SystemBusNode,
@@ -36,6 +47,8 @@ from .machine_nodes import (
     PCIExpressDeviceNode
 )
 from common import (
+    cached,
+    reset_cache,
     mlget as _,
     sort_topologically
 )
@@ -145,6 +158,7 @@ class MachineType(QOMType):
     ])
 
     def __init__(self, name, directory,
+            cpus = [],
             devices = [],
             buses = [],
             irqs = [],
@@ -153,8 +167,11 @@ class MachineType(QOMType):
         ):
         super(MachineType, self).__init__(name)
 
+        self.__lazy__ = []
+
         self.desc = "TODO: provide description for " + name
 
+        self.cpus = cpus
         self.devices = devices
         self.buses = buses
         self.irqs = irqs
@@ -171,6 +188,8 @@ class MachineType(QOMType):
         self.init_used_types = []
         self.hub_layouts = {}
         self.provide_node_names()
+
+        reset_cache(self)
 
     def use_type(self, t):
         if t in self.init_used_types:
@@ -200,6 +219,7 @@ class MachineType(QOMType):
 
     def provide_node_names(self):
         for nodes in [
+            self.cpus,
             self.devices,
             self.buses,
             self.irqs,
@@ -340,7 +360,12 @@ class MachineType(QOMType):
         self.source = Source(self.source_path)
 
         all_nodes = sort_topologically(
-            self.devices + self.buses + self.irqs + self.mems + self.irq_hubs
+            self.cpus +
+            self.devices +
+            self.buses +
+            self.irqs +
+            self.mems +
+            self.irq_hubs
         )
 
         decl_code = ""
@@ -645,6 +670,30 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                         # A source hub does connects to this hub by itself
                         continue
                     def_code += self.gen_irq_connect(src, hub_in_name)
+            elif isinstance(node, CPUNode):
+                self.use_type_name("CPUState")
+                self.use_type_name("cpu_create")
+                self.use_type_name("qemu_register_reset")
+                cpu_reset = self.cpu_reset
+                self.use_type_name(cpu_reset.name)
+
+                cpu_name = self.node_map[node]
+
+                decl_code += "    CPUState *%s;\n" % cpu_name
+
+                if Type.exists(node.qom_type):
+                    qom_type = node.qom_type
+                else:
+                    qom_type = "\"%s\"" % node.qom_type
+
+                def_code += """\
+    {var_name}@b=@scpu_create(@a{qom_type});
+    qemu_register_reset(@a{reset},@s{var_name});
+""".format(
+    var_name = cpu_name,
+    qom_type = qom_type,
+    reset = cpu_reset.name
+                )
             else:
                 raise UnknownMachineNodeType(str(type(node)))
 
@@ -663,3 +712,27 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
         get_vp("machine type register template generator")(self)
 
         return self.source.generate()
+
+    @cached
+    def cpu_reset(self):
+        cpu_reset = Type["QEMUResetHandler"].use_as_prototype(
+            self.qtn.for_id_name + "_cpu_reset",
+            body = BodyTree(),
+            static = True
+        )
+
+        var_cpu = Pointer(Type["CPUState"])("cpu")
+
+        cpu_reset.body = BodyTree()(
+            Declare(OpDeclareAssign(
+                var_cpu,
+                MCall("CPU", cpu_reset.args[0])
+            )),
+            NewLine(),
+            Call("cpu_reset", var_cpu)
+        )
+
+        self.source.add_type(cpu_reset)
+
+        return cpu_reset
+

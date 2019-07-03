@@ -1,16 +1,9 @@
 __all__ = [
-    "QOMPropertyType"
-      , "QOMPropertyTypeLink"
-      , "QOMPropertyTypeString"
-      , "QOMPropertyTypeBoolean"
-      , "QOMPropertyTypeInteger"
-  , "QOMPropertyValue"
-  , "QOMStateField"
+    "QOMStateField"
   , "QOMType"
       , "QOMDevice"
   , "OpaqueRegister"
       , "Register"
-  , "idon"
 ]
 
 from source import (
@@ -36,7 +29,6 @@ from six import (
 )
 from common import (
     same_attrs,
-    same,
     OrderedSet,
     is_pow2,
     mlget as _
@@ -53,68 +45,10 @@ from .qtn import (
 from math import (
     log
 )
+from .machine_nodes import (
+    MemoryLeafNode
+)
 from source.function import *
-
-
-def idon(node):
-    "ID Or None. Given an object returns `id` attr. Given a None returns None."
-    if node is None:
-        return None
-    return node.id
-
-
-# properties
-class QOMPropertyType(object):
-    set_f = None
-    build_val = None
-
-
-class QOMPropertyTypeLink(QOMPropertyType):
-    set_f = "object_property_set_link"
-
-
-class QOMPropertyTypeString(QOMPropertyType):
-    set_f = "object_property_set_str"
-
-
-class QOMPropertyTypeBoolean(QOMPropertyType):
-    set_f = "object_property_set_bool"
-
-
-class QOMPropertyTypeInteger(QOMPropertyType):
-    set_f = "object_property_set_int"
-
-    @staticmethod
-    def build_val(prop_val):
-        if Type.exists(prop_val):
-            return str(prop_val)
-        return "0x%0x" % prop_val
-
-
-class QOMPropertyValue(object):
-
-    def __init__(self,
-        prop_type,
-        prop_name,
-        prop_val
-        ):
-        self.prop_type = prop_type
-        self.prop_name = prop_name
-        self.prop_val = prop_val
-
-    def __same__(self, o):
-        if type(self) is not type(o):
-            return False
-        if not same(self.prop_type, o.prop_type):
-            return False
-        if not same(self.prop_name, o.prop_name):
-            return False
-        s_val, o_val = self.prop_val, o.prop_val
-        if isinstance(self.prop_type, QOMPropertyTypeLink):
-            s_val, o_val = idon(s_val), idon(o_val)
-        if same(s_val, o_val):
-            return True
-        return False
 
 
 # Property declaration generation helpers
@@ -243,7 +177,7 @@ class Register(OpaqueRegister):
     ):
         super(Register, self).__init__(size, name)
         self.access = access
-        self.reset = CINT(reset, 16, size)
+        self.reset = None if reset is None else CINT(reset, 16, size * 2)
         self.full_name = full_name
 
         if wmask is None:
@@ -278,7 +212,7 @@ class Register(OpaqueRegister):
             ret += ", access = " + repr(access)
 
         reset = self.reset
-        if reset != CINT(0, 16, size):
+        if reset != CINT(0, 16, size * 2):
             ret += ", reset = " + repr(reset)
 
         fn = self.full_name
@@ -315,6 +249,12 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
     for reg in regs:
         size = reg.size
+
+        name = reg.name
+        if name is None or name == "gap":
+            offset += size
+            continue
+
         if size == 1:
             case_cond = CINT(offset, base = 16, digits = digits)
         else:
@@ -325,9 +265,12 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
         offset += size
 
         case = SwitchCase(case_cond)
-        name = reg.name
-        if name is not None:
-            case.add_child(Comment(reg.name))
+
+        comment = name
+        if reg.full_name: # neither `None` nor empty string
+            comment += ", " + reg.full_name
+
+        case.add_child(Comment(comment))
 
         if access in reg.access:
             qtn = QemuTypeName(name)
@@ -478,6 +421,10 @@ class QOMType(object):
         self.add_state_field_h("bool", "var_b1", save = False, prop = True,
             default = True
         )
+
+    @property
+    def fields_names(self):
+        return set(f.name for f in self.state_fields)
 
     def add_state_fields(self, fields):
         for field in fields:
@@ -944,6 +891,8 @@ class QOMType(object):
     def gen_mmio_size(regs):
         if regs is None:
             return CINT(0x100, 16, 3) # legacy default
+        elif isinstance(regs, MemoryLeafNode):
+            return regs.size
         else:
             reg_range = get_reg_range(regs)
             digits = int(log(reg_range, 16)) + 1

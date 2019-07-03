@@ -48,6 +48,12 @@ class CConstTest(object):
         def tearDown(self):
             print(self.back, repr(self.parsed))
 
+    def test_repr(self):
+        parsed = CConst.parse(self.data)
+        representation = repr(parsed)
+        evaluated_repr = eval(representation)
+
+        self.assertEqual(parsed, evaluated_repr)
 
 class AStringTest(CConstTest, TestCase):
     data = """an arbitrary

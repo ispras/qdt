@@ -13,13 +13,14 @@ from .qom_desc import (
 from itertools import (
     count
 )
-from .qom import (
+from .qom_common import (
     QOMPropertyTypeLink
 )
 from .machine import (
     MachineType
 )
 from .machine_nodes import (
+    CPUNode,
     SystemBusNode,
     SystemBusDeviceNode,
     DeviceNode,
@@ -45,7 +46,12 @@ class MachineDescription(QOMDescription):
         self.max_id = 0
         self.id2node = {}
 
-        for n in (self.devices + self.buses + self.irqs + self.mems +
+        for n in (
+            self.cpus +
+            self.devices +
+            self.buses +
+            self.irqs +
+            self.mems +
             self.irq_hubs
         ):
             self.assign_id(n)
@@ -54,7 +60,7 @@ class MachineDescription(QOMDescription):
     def __pygen_deps__(self):
         self.link()
 
-        return ("devices", "buses", "irqs", "mems", "irq_hubs")
+        return ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -155,6 +161,8 @@ class MachineDescription(QOMDescription):
             return n in self.mems
         elif isinstance(n, IRQHub):
             return n in self.irq_hubs
+        elif isinstance(n, CPUNode):
+            return n in self.cpus
         else:
             return False
 
@@ -169,7 +177,10 @@ class MachineDescription(QOMDescription):
             self.mems.append(n)
         elif isinstance(n, IRQHub):
             self.irq_hubs.append(n)
+        elif isinstance(n, CPUNode):
+            self.cpus.append(n)
         else:
+            print("Unsupported node of type %s" % type(n).__name__)
             return
 
         if with_id is not None:

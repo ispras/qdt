@@ -168,6 +168,7 @@ def define_only_qemu_2_6_0_types():
         ),
         Function(name = "cpu_exec_realizefn"),
         Function(name = "cpu_reset"),
+        Function(name = "cpu_create"),
         Function(name = "cpu_generic_init")
     ]).add_reference(osdep_fake_type)
 
@@ -270,6 +271,7 @@ def define_only_qemu_2_6_0_types():
         Function(name = "memory_region_init"),
         Function(name = "memory_region_init_alias"),
         Function(name = "memory_region_init_ram"),
+        Function(name = "memory_region_init_rom_device"),
         Function(name = "memory_region_add_subregion_overlap"),
         Function(name = "memory_region_add_subregion")
     ]).add_reference(osdep_fake_type)
@@ -582,6 +584,16 @@ def define_only_qemu_2_6_0_types():
 
     Header["exec/log.h"].add_types([
         Function(name = "log_target_disas")
+    ])
+
+    Header["sysemu/reset.h"].add_types([
+        # XXX: It's neither a function nor a function pointer. It's something
+        # between.
+        Function(name = "QEMUResetHandler",
+            ret_type = Type["void"],
+            args = [ Pointer(Type["void"])("opaque") ]
+        ),
+        Function(name = "qemu_register_reset")
     ])
 
 def define_qemu_2_6_5_types():

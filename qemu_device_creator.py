@@ -68,9 +68,9 @@ def main():
 
     script = arguments.script
 
-    loaded = {}
+    loaded = dict(qdt.__dict__)
     try:
-        execfile(script, qdt.__dict__, loaded)
+        execfile(script, loaded)
     except:
         print("Cannot load configuration from '%s'" % script)
         print_exc()

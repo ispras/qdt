@@ -1,6 +1,7 @@
 __all__ = [
     # Machine nodes
     "Node"
+      , "CPUNode"
       , "BusNode"
           , "SystemBusNode"
           , "PCIExpressBusNode"
@@ -30,7 +31,7 @@ from six.moves import (
     zip_longest,
     range as xrange
 )
-from .qom import (
+from .qom_common import (
     idon,
     QOMPropertyTypeLink
 )
@@ -42,6 +43,7 @@ from source import (
     CINT
 )
 from common import (
+    PyGenerator,
     flatten,
     same,
     same_sets,
@@ -75,6 +77,23 @@ class Node(object):
         for n in flatten(getattr(self, attr) for attr in self.__pygen_deps__):
             if n is not None:
                 yield n
+
+    # Note that it may result in a very wide code because `PyGenVisitor` is
+    # not involved. Also, it works incorrectly when reference loops exist.
+    def __repr__(self):
+        gen = PyGenerator()
+        self.__gen_code__(gen)
+        return gen.w.getvalue()[:-1] # remove extra new line
+
+
+class CPUNode(Node):
+
+    def __init__(self, qom_type, var_base = "cpu", **kw):
+        super(CPUNode, self).__init__(var_base = var_base, **kw)
+
+        self.qom_type = qom_type
+
+    __pygen_deps__ = tuple()
 
 
 # bus models

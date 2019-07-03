@@ -10,7 +10,7 @@
 # commit using a tag. On template update (it actually generates new device
 # template) script trunks from the tag, creating a commit with new version of
 # template. Then it rebases custom changes on new template. The resolution of
-# possible conflicts with correct rebase complation is up to user.
+# possible conflicts with correct rebase completion is up to user.
 #
 # The implementation requires a specific branch should be created per device.
 # It is not theoretically necessary but it forces user to follow well
@@ -19,7 +19,15 @@
 # This is prof-of-concept implementation mostly because of the QDT is not
 # implemented external configuration yet. The script should evolve with QDT.
 
-# Extra parameters
+# Extra parameters passed through environment variable:
+# QDT_QEMU_SRC
+#    Path to Qemu source tree
+#
+# QDT_EXTRA_ARGS
+#    The QDT is only given path to a project description, the 2-nd argument of
+#    that script. A user may pass extra arguments using this variable.
+#
+#    Ex.: QDT_EXTRA_ARGS="-b /home/user/qemu/build" git_qdt.sh [...]"
 
 if [ "$QDT_QEMU_SRC" == "" ] ; then
     QemuSrc="$HOME/work/qemu/src"
@@ -85,6 +93,7 @@ if [ "$BranchExists" == "" ] ; then
 
     if _git tag "$StartTag" ; then
         echo "Start tag has been set ($StartTag)."
+        StartTagIsJustSet="yes"
     else
         echo "Cannot set start tag ($StartTag)."
         exit 1
@@ -92,7 +101,7 @@ if [ "$BranchExists" == "" ] ; then
 
     if _git branch "$1" ; then
         if _git checkout "$1" ; then
-            if python "$QDT" "$2" ; then
+            if python "$QDT" "$2" $QDT_EXTRA_ARGS ; then
                 if _git add -A ; then
                     if _git commit -m "$Msg" ; then
                         if _git tag "$LastTag" ; then
@@ -125,6 +134,10 @@ Automatic update will fail. Manual recovery is needed!"
     else
         echo "Failed create branch with name '$1'."
     fi
+
+    if [ "$StartTagIsJustSet" == "yes" ] ; then
+        _git tag -d "$StartTag"
+    fi
 else
     echo "Update."
 
@@ -134,7 +147,7 @@ else
     if _git checkout "$StartTag" ; then
         if _git branch "$NewBase" ; then
             if _git checkout "$NewBase" ; then
-                if python "$QDT" "$2" ; then
+                if python "$QDT" "$2" $QDT_EXTRA_ARGS ; then
                     if _git add -A ; then
                         if _git commit -m "$Msg" ; then
 if _git checkout -b "$PreviousBase" "$LastTag" ; then
