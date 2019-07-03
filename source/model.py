@@ -1117,7 +1117,7 @@ class Structure(Type):
             self.append_field(v)
 
     def append_field_t(self, _type, name, pointer = False):
-        self.append_field(_type(name, pointer))
+        self.append_field(_type(name, pointer = pointer))
 
     def append_field_t_s(self, type_name, name, pointer = False):
         self.append_field_t(Type[type_name], name, pointer)
