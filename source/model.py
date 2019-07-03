@@ -919,7 +919,8 @@ class Type(object):
                 used = used
             )
 
-    __call__ = gen_var
+    def __call__(self, *args, **kw):
+        return self.gen_var(*args, **kw)
 
     def get_definers(self):
         if self.definer is None:
