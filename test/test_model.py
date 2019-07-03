@@ -293,6 +293,7 @@ class TestMacroType(SourceModelTestHelper, TestCase):
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
 #define QTAIL_ENTRY(type)
+
 typedef struct StructA StructA;
 
 struct StructA {{
