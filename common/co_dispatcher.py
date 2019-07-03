@@ -20,10 +20,18 @@ from .ml import (
 )
 import sys
 
+
 class FailedCallee(RuntimeError):
     def __init__(self, callee):
         super(FailedCallee, self).__init__()
         self.callee = callee
+
+    def __str__(self):
+        c = self.callee
+        return "Callee '%s' has failed with error %r" % (
+            c.generator, c.exception
+        )
+
 
 class CancelledCallee(RuntimeError):
     def __init__(self, callee):
