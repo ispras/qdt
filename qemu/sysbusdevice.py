@@ -268,7 +268,7 @@ class SysBusDeviceType(QOMDevice):
     UPPER = self.type_cast_macro.name,
     reset = "\n\n    " + "\n    ".join(reg_resets) if reg_resets else ""
             ),
-            args = [Type["DeviceState"].gen_var("dev", True)],
+            args = [Type["DeviceState"]("dev", True)],
             static = True,
             used_types = used_types
         )
@@ -374,7 +374,7 @@ class SysBusDeviceType(QOMDevice):
                     )
                 )
 
-                ops = Type["MemoryRegionOps"].gen_var(
+                ops = Type["MemoryRegionOps"](
                     name = self.gen_Ith_mmio_ops_name(mmioN),
                     pointer = False,
                     initializer = ops_init,
@@ -459,7 +459,7 @@ class SysBusDeviceType(QOMDevice):
                 )
             )
 
-            ops = Type["MemoryRegionOps"].gen_var(
+            ops = Type["MemoryRegionOps"](
                 name = self.gen_Ith_pio_ops_name(pioN),
                 pointer = False,
                 initializer = ops_init,
@@ -558,8 +558,8 @@ class SysBusDeviceType(QOMDevice):
         self.device_unrealize = Function(
             name = self.qtn.for_id_name + "_unrealize",
             args = [
-                Pointer(Type["DeviceState"]).gen_var("dev"),
-                Pointer(Pointer(Type["Error"])).gen_var("errp")
+                Pointer(Type["DeviceState"])("dev"),
+                Pointer(Pointer(Type["Error"]))("errp")
             ],
             static = True,
             used_types = used_types,
@@ -595,8 +595,8 @@ class SysBusDeviceType(QOMDevice):
     dc->props@b@b@b@b@b=@s{dev}_properties;
 """.format(dev = self.qtn.for_id_name),
             args = [
-Type["ObjectClass"].gen_var("oc", True),
-Type["void"].gen_var("opaque", True),
+Type["ObjectClass"]("oc", True),
+Type["void"]("opaque", True),
             ],
             static = True,
             used_types = [

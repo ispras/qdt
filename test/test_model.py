@@ -124,7 +124,7 @@ class TestLabelAndGotoGeneration(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c")
 
         lbl = Label("begin")
-        i = Type["int"].gen_var("i")
+        i = Type["int"]("i")
 
         src.add_type(Function(
             name = "main",
@@ -162,10 +162,10 @@ class TestForwardDeclaration(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c")
 
         a = Structure("A")
-        a.append_field(a.gen_var("next", pointer = True))
+        a.append_field(a("next", pointer = True))
 
         b = Structure("B")
-        b.append_field(a.gen_var("next", pointer = True))
+        b.append_field(a("next", pointer = True))
 
         src.add_types([a, b])
 
@@ -198,8 +198,8 @@ class TestCrossDeclaration(SourceModelTestHelper, TestCase):
         a = Structure("A")
         b = Structure("B")
 
-        b.append_field(a.gen_var("ref", pointer = True))
-        a.append_field(b.gen_var("ref", pointer = True))
+        b.append_field(a("ref", pointer = True))
+        a.append_field(b("ref", pointer = True))
 
         src.add_types([a, b])
 
@@ -232,10 +232,10 @@ class TestForwardDeclarationHeader(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c")
 
         a = Structure("A")
-        a.append_field(a.gen_var("next", pointer = True))
+        a.append_field(a("next", pointer = True))
 
         b = Structure("B")
-        b.append_field(a.gen_var("next", pointer = True))
+        b.append_field(a("next", pointer = True))
 
         hdr.add_type(a)
         hdr_content = """\
@@ -279,12 +279,12 @@ class TestMacroType(SourceModelTestHelper, TestCase):
 
         struct = Structure("StructA")
         struct.append_field(
-            Type["QTAIL_ENTRY"].gen_var("entry",
+            Type["QTAIL_ENTRY"]("entry",
                 macro_initializer = Initializer({ "type":  struct })
             )
         )
         struct.append_field(
-            struct.gen_var("next", pointer = True)
+            struct("next", pointer = True)
         )
         hdr.add_type(struct)
 
@@ -316,7 +316,7 @@ class TestSeparateCases(FunctionTreeTestDoubleGenerationHelper, TestCase):
 
         src = Source(type(self).__name__.lower() + ".c")
 
-        i = Type["int"].gen_var("i")
+        i = Type["int"]("i")
         src.add_type(
             Function(
                 name = "func_a",
@@ -418,7 +418,7 @@ class TestPointerReferences(SourceModelTestHelper, TestCase):
         h.add_type(Type("a", incomplete = False, base = False))
 
         src = Source(name.lower() + ".c").add_type(
-            Structure("s", Type["a"].gen_var("next", pointer = True))
+            Structure("s", Type["a"]("next", pointer = True))
         )
 
         src_content = """\
@@ -458,7 +458,7 @@ class TestRedirectionToDeclaration(SourceModelTestHelper, TestCase):
         src = Source(name.lower() + ".c").add_global_variable(
             # It must internally re-direct pointer from type "Private"
             # to "Private.declaration", its forward declaration.
-            Type["Private"].gen_var("handler", pointer = True)
+            Type["Private"]("handler", pointer = True)
         )
         src.add_type(Pointer(public_func_impl, name = "cb_ptr"))
 
@@ -488,9 +488,9 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             h = Header("enums.h")
         h.add_type(Enumeration("A", {"one": 1, "two": 2}))
 
-        a = Type["int"].gen_var("a")
-        b = Type["int"].gen_var("b")
-        c = Type["int"].gen_var("c")
+        a = Type["int"]("a")
+        b = Type["int"]("b")
+        c = Type["int"]("c")
 
         src = Source(name.lower() + ".c").add_types([
             Enumeration("B", {"three": 3, "four": 4}, "B"),
@@ -539,8 +539,8 @@ class TestGlobalHeadersInclusion(SourceModelTestHelper, TestCase):
         hl.add_type(Type("LT", incomplete = False))
 
         hdr = Header(name.lower() + ".h").add_type(Structure("Fields",
-            Type["GT"].gen_var("f1"),
-            Type["LT"].gen_var("f2")
+            Type["GT"]("f1"),
+            Type["LT"]("f2")
         ))
 
         hdr_content = """\
@@ -558,7 +558,7 @@ typedef struct Fields {{
 """.format(path = hdr.path, fname_upper = name.upper())
 
         src = Source(name.lower() + ".c").add_global_variable(
-            Type["Fields"].gen_var("fv")
+            Type["Fields"]("fv")
         )
 
         src_content = """\

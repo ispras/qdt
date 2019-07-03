@@ -702,7 +702,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
             name = "init_%s" % self.qtn.for_id_name,
             static = True,
             args = [
-                Type["MachineState"].gen_var("machine", pointer = True)
+                Type["MachineState"]("machine", pointer = True)
             ],
             body = decl_code + "\n" + def_code,
             used_types = self.init_used_types

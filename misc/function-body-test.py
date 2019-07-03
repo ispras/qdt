@@ -32,9 +32,9 @@ if __name__ == "__main__":
     _a = Variable("a", Type["int"])
     _p = Structure("Test",
         Variable("i", Structure("Test2",
-            Type["int"].gen_var("ii", pointer = True)
+            Type["int"]("ii", pointer = True)
         ))
-    ).gen_var("p", pointer = True)
+    )("p", pointer = True)
 
     _pi = OpSDeref(_p, "i")
 

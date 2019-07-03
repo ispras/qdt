@@ -284,7 +284,7 @@ corresponding vendor is given" % attr
     Struct = self.state_struct.name,
     UPPER = self.type_cast_macro.name,
             ),
-            args = [Type["DeviceState"].gen_var("dev", True)],
+            args = [Type["DeviceState"]("dev", True)],
             static = True,
             used_types = [self.state_struct]
         )
@@ -338,7 +338,7 @@ corresponding vendor is given" % attr
                 )
             )
 
-            ops = Type["MemoryRegionOps"].gen_var(
+            ops = Type["MemoryRegionOps"](
                 name = self.gen_Ith_mem_bar_ops_name(barN),
                 pointer = False,
                 initializer = ops_init,
@@ -422,7 +422,7 @@ corresponding vendor is given" % attr
 
         self.device_exit = Function(
             name = "%s_exit" % self.qtn.for_id_name,
-            args = [Type["PCIDevice"].gen_var("dev", pointer = True)],
+            args = [Type["PCIDevice"]("dev", pointer = True)],
             static = True,
             used_types = used_types,
             body = """\

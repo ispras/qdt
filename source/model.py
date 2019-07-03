@@ -1117,7 +1117,7 @@ class Structure(Type):
             self.append_field(v)
 
     def append_field_t(self, _type, name, pointer = False):
-        self.append_field(_type.gen_var(name, pointer))
+        self.append_field(_type(name, pointer))
 
     def append_field_t_s(self, type_name, name, pointer = False):
         self.append_field_t(Type[type_name], name, pointer)
@@ -1594,7 +1594,7 @@ class Macro(Type):
         macro_initializer = None
     ):
         mt = MacroType(self, initializer = macro_initializer)
-        return mt.gen_var(name,
+        return mt(name,
             pointer = pointer,
             initializer = initializer,
             static = static,
