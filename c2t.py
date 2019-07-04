@@ -262,7 +262,8 @@ class TargetSession(DebugSession):
 
     def run(self):
         self._execute_debug_comment()
-        self.load()
+        if not c2t_cfg.rsp_target.user:
+            self.load()
         # TODO: use future 'entry' feature
         new_pc = (
             self.rt.dic.symtab.get_symbol_by_name("main")[0].entry.st_value
@@ -328,8 +329,10 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
     res_queue.put((session.session_type, None, "TEST_EXIT"))
 
 
-def run_qemu(test_elf, qemu_port, qmp_port, verbose):
-    qmp_run = " -qmp tcp:localhost:{port},server,nowait"
+def run_qemu(test_elf, qemu_port,  verbose, qmp_port = None):
+    qmp_run = (" -qmp tcp:localhost:{port},server,nowait"
+        if qmp_port is not None else ""
+    )
 
     cmd = c2t_cfg.qemu.run_script.format(
         port = qemu_port,
@@ -353,7 +356,7 @@ def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
     qemu_port = port_queue.get(block = True)
     qmp_port = port_queue.get(block = True)
 
-    qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
+    qemu = run_qemu(test_elf, qemu_port, verbose, qmp_port)
 
     if (not wait_for_tcp_port(qemu_port)
             and not wait_for_tcp_port(qmp_port)
@@ -403,7 +406,7 @@ def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
         qemu_port = port_queue.get(block = True)
         qmp_port = port_queue.get(block = True)
 
-        qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
+        qemu = run_qemu(test_elf, qemu_port, verbose, qmp_port)
 
         if (    not wait_for_tcp_port(qemu_port)
             and not wait_for_tcp_port(qmp_port)
@@ -549,7 +552,9 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
 
     res_queue = Queue(0)
 
-    if reuse:
+    if c2t_cfg.rsp_target.user:
+        target_tests_run = target_tests_run_kill_user
+    elif reuse:
         target_tests_run = target_tests_run_nonkill
     else:
         target_tests_run = target_tests_run_kill
