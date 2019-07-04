@@ -262,7 +262,8 @@ class TargetSession(DebugSession):
 
     def run(self):
         self._execute_debug_comment()
-        self.load()
+        if not c2t_cfg.rsp_target.user:
+            self.load()
         # TODO: use future 'entry' feature
         new_pc = (
             self.rt.dic.symtab.get_symbol_by_name("main")[0].entry.st_value
@@ -329,14 +330,15 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
 
 
 def run_qemu(test_elf, qemu_port, qmp_port, verbose):
-    qmp_run = " -qmp tcp:localhost:{port},server,nowait"
-
     cmd = c2t_cfg.qemu.run_script.format(
         port = qemu_port,
         bin = test_elf,
         c2t_dir = C2T_DIR,
         test_dir = C2T_TEST_DIR
-    ) + qmp_run.format(port = qmp_port)
+    )
+
+    if qmp_port:
+        cmd += " -qmp tcp:localhost:%d,server,nowait" % qmp_port
 
     if verbose:
         print(cmd)
@@ -401,22 +403,28 @@ def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
         test_src, test_elf = tests_queue.get(block = True)
 
         qemu_port = port_queue.get(block = True)
-        qmp_port = port_queue.get(block = True)
+        if not c2t_cfg.rsp_target.user:
+            qmp_port = port_queue.get(block = True)
+        else:
+            qmp_port = None
 
         qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
         if (    not wait_for_tcp_port(qemu_port)
-            and not wait_for_tcp_port(qmp_port)
+            and not (wait_for_tcp_port(qmp_port) if qmp_port else True)
         ):
             c2t_exit("qemu malfunction")
 
-        qmp = QMP(qmp_port)
+        if qmp_port:
+            qmp = QMP(qmp_port)
+        else:
+            qmp = None
 
         session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
             str(qemu_port), test_elf, res_queue, verbose
         )
 
-        if c2t_cfg.rsp_target.qemu_reset:
+        if c2t_cfg.rsp_target.qemu_reset and qmp:
             # TODO: use future 'entry' feature
             session.rt.target[4] = pack("<I",
                 session.rt.dic.symtab.get_symbol_by_name(
@@ -514,7 +522,12 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
 
     port_queue = Queue(0)
 
-    pf = FreePortFinder(port_queue, len(tests) * 3)
+    if not c2t_cfg.rsp_target.user:
+        # Finding ports for Qemu, QMP server and gdbserver
+        pf = FreePortFinder(port_queue, len(tests) * 3)
+    else:
+        # Finding ports for Qemu and gdbserver
+        pf = FreePortFinder(port_queue, len(tests) * 2)
 
     pf.start()
 
