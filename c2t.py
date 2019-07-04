@@ -450,8 +450,11 @@ def target_tests_run_kill_user(tests_queue, port_queue, res_queue, verbose):
 
         qemu = run_qemu(test_elf, qemu_port, verbose)
 
-        if not wait_for_tcp_port(qemu_port):
-            c2t_exit("qemu malfunction")
+        #if not wait_for_tcp_port(qemu_port):
+        #    c2t_exit("qemu malfunction")
+        # XXX: use non-`connect` based method to check port readiness
+        from time import sleep
+        sleep(2)
 
         session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
             str(qemu_port), test_elf, res_queue, verbose
