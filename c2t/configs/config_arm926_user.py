@@ -22,7 +22,7 @@ c2t_cfg = C2TConfig(
     target_compiler = TestBuilder(
         Run( # compiler
             executable = "/usr/bin/arm-linux-gnueabihf-gcc",
-            args = "-O0 -g -mcpu=arm926ej-s {src} -o {bin} -static"
+            args = "-O0 -g -mcpu=arm926ej-s -nostdlib {src} -o {bin} -Wl,-emain"
         ),
     ),
     oracle_compiler = TestBuilder(
