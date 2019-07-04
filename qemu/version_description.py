@@ -30,6 +30,9 @@ from common import (
     execfile,
     pythonize
 )
+from collections import (
+    defaultdict
+)
 from .version import (
     QVHDict,
     initialize_version,
@@ -818,7 +821,7 @@ class QemuVersionDescription(object):
         self.qvc.device_tree = root
         print("Device Tree was created")
 
-        t2m = {}
+        t2m = defaultdict(list)
         yield self.co_text2macros(t2m)
 
         print("Adding macros to device tree ...")
@@ -826,6 +829,13 @@ class QemuVersionDescription(object):
         print("Macros were added to device tree")
 
     def co_text2macros(self, text2macros):
+        """
+            Creates text-to-macros `text2macros` dictionary.
+
+        text2macros
+            dictionary with list default value
+        """
+
         # iterations to yield
         i2y = QVD_DTM_IBY
         print("Building text to macros mapping...")
@@ -837,16 +847,8 @@ class QemuVersionDescription(object):
             else:
                 i2y -= 1
 
-            if not isinstance(t, Macro):
-                continue
-
-            text = t.text
-            try:
-                aliases = text2macros[text]
-            except KeyError:
-                text2macros[text] = [t.name]
-            else:
-                aliases.append(t.name)
+            if isinstance(t, Macro):
+                text2macros[t.text].append(t.name)
 
         print("The mapping was built")
 
