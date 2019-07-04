@@ -46,7 +46,9 @@ def get_new_rsp(regs, pc, regsize, little_endian = True):
 
 class DebugClient(object):
 
-    def __init__(self, march, new_rsp = None, sp = None, qemu_reset = False):
+    def __init__(self, march, new_rsp = None, user = False, sp = None,
+        qemu_reset = False
+    ):
         self.march = march
         if march in archmap:
             self.rsp = archmap[march]
@@ -54,6 +56,7 @@ class DebugClient(object):
             self.rsp = new_rsp
         else:
             self.rsp = None
+        self.user = user
         self.sp = sp
         self.qemu_reset = qemu_reset
 
