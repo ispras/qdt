@@ -598,7 +598,7 @@ class MCall(SemicolonPresence):
 
     def __init__(self, macro, *args):
         super(MCall, self).__init__(children = args)
-        self.type = Type.lookup(macro)
+        self.type = Type[macro]
 
     def __c__(self, writer):
         writer.write(self.type.c_name)
@@ -757,7 +757,7 @@ class OpCast(UnaryOperator):
 
     def __init__(self, type_name, arg):
         super(OpCast, self).__init__("(" + type_name + ")", arg)
-        self.type = Type.lookup(type_name)
+        self.type = Type[type_name]
 
 
 class OpAddr(UnaryOperator):

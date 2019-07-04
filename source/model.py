@@ -619,9 +619,9 @@ class Header(Source):
             h = Header(path = inclusion, is_global = is_global)
             h.parsed = True
         else:
-            h = Header.lookup(inclusion)
+            h = Header[inclusion]
 
-        Header.lookup(includer).add_inclusion(h)
+        Header[includer].add_inclusion(h)
 
     @staticmethod
     def _on_define(definer, macro):
@@ -630,10 +630,10 @@ class Header(Source):
         if "__FILE__" == macro.name:
             return
 
-        h = Header.lookup(definer)
+        h = Header[definer]
 
         try:
-            m = Type.lookup(macro.name)
+            m = Type[macro.name]
             if not m.definer.path == definer:
                 print("Info: multiple definitions of macro %s in %s and %s" % (
                     macro.name, m.definer.path, definer
@@ -667,7 +667,7 @@ class Header(Source):
                     h = Header(path = prefix, is_global = False)
                     h.parsed = False
                 else:
-                    h = Header.lookup(prefix)
+                    h = Header[prefix]
 
                 if not h.parsed:
                     h.parsed = True
@@ -866,7 +866,7 @@ class Type(object):
     @staticmethod
     def exists(name):
         try:
-            Type.lookup(name)
+            Type[name]
             return True
         except TypeNotRegistered:
             return False
@@ -919,7 +919,8 @@ class Type(object):
                 used = used
             )
 
-    __call__ = gen_var
+    def __call__(self, *args, **kw):
+        return self.gen_var(*args, **kw)
 
     def get_definers(self):
         if self.definer is None:
@@ -1116,10 +1117,10 @@ class Structure(Type):
             self.append_field(v)
 
     def append_field_t(self, _type, name, pointer = False):
-        self.append_field(_type.gen_var(name, pointer))
+        self.append_field(_type(name, pointer = pointer))
 
     def append_field_t_s(self, type_name, name, pointer = False):
-        self.append_field_t(Type.lookup(type_name), name, pointer)
+        self.append_field_t(Type[type_name], name, pointer)
 
     def gen_chunks(self, generator):
         fields_indent = "    "
@@ -1368,7 +1369,7 @@ class Function(Type):
 
         self.static = static
         self.inline = inline
-        self.ret_type = Type.lookup("void") if ret_type is None else ret_type
+        self.ret_type = Type["void"] if ret_type is None else ret_type
         self.args = args
         self.declaration = None
 
@@ -1592,8 +1593,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        mt = MacroType(self, initializer = macro_initializer)
-        return mt.gen_var(name,
+        return MacroType(self, initializer = macro_initializer)(name,
             pointer = pointer,
             initializer = initializer,
             static = static,
@@ -2773,7 +2773,7 @@ digraph Chunks {
             h = stack.pop()
 
             for sp in h.inclusions:
-                s = Header.lookup(sp)
+                s = Header[sp]
                 if s in included_headers:
                     """ If an originally included header (s) is transitively
 included from another one (h.root) then inclusion of s is redundant and must
