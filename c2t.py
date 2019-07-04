@@ -439,6 +439,35 @@ def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
     res_queue.put((session.session_type, None, "TEST_EXIT"))
 
 
+def target_tests_run_kill_user(tests_queue, port_queue, res_queue, verbose):
+    while True:
+        test_src, test_elf = tests_queue.get(block = True)
+
+        qemu_port = port_queue.get(block = True)
+
+        qemu = run_qemu(test_elf, qemu_port, verbose)
+
+        if not wait_for_tcp_port(qemu_port):
+            c2t_exit("qemu malfunction")
+
+        session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
+            str(qemu_port), test_elf, res_queue, verbose
+        )
+
+        session.run()
+
+        res_queue.put((session.session_type, test_src, "TEST_END"))
+
+        session.kill()
+        qemu.join()
+        session.port_close()
+
+        if tests_queue.empty():
+            break
+
+    res_queue.put((session.session_type, None, "TEST_EXIT"))
+
+
 class FreePortFinder(Process):
 
     def __init__(self, queue, count,  start = 4321):
