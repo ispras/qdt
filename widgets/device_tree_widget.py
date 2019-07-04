@@ -31,13 +31,12 @@ class DeviceTreeWidget(GUIDialog):
 
         self.title(_("Device Tree"))
         self.grid()
-        
+
         self.columnconfigure(0, weight = 1)
         self.rowconfigure(0, weight = 1)
 
         self.columnconfigure(2, minsize = 200)
 
-        self.attributes("-topmost", 1)
         geom = "+" + str(int(root.winfo_rootx())) \
              + "+" + str(int(root.winfo_rooty()))
         self.geometry(geom)
@@ -80,31 +79,30 @@ class DeviceTreeWidget(GUIDialog):
         self.add_button.grid(row = 1, column = 2, sticky = "WE")
         self.add_button.config(state = "disabled")
 
-        self.fr = VarLabelFrame(self, text = _("Select QOM type"))
-        self.fr.grid(row = 0, column = 2, sticky = "SEWN")
+        self.fr_qt = VarLabelFrame(self, text = _("Select QOM type"))
+        self.fr_qt.grid(row = 0, column = 2, sticky = "SEWN")
 
-        # Check exception before __init__ call.
-        bp = root.mach.project.build_path
-        qvd = qvd_get(bp, version = root.mach.project.target_version)
-        # the QOM type of roots[0] is "device"
-        roots = qvd.qvc.device_tree[0]["children"]
-        self.qom_create_tree("", roots)
+        qtype_dt = qvd_get(
+            root.mach.project.build_path,
+            version = root.mach.project.target_version
+        ).qvc.device_tree
 
-    def qom_create_tree(self, parent_id, dt_list):
-        dt_list.sort(key = lambda x: x["type"])
-        for dict_dt in dt_list:
-            if "macro" in dict_dt:
-                value = ""
-                for macro in dict_dt["macro"]:
-                    value = value + " " + macro
+        self.qom_create_tree("", qtype_dt.children)
+
+    def qom_create_tree(self, parent_id, dt):
+        for key in sorted(dt.keys()):
+            qt = dt[key]
+            if qt.macros:
+                value = ",".join(qt.macros)
             else:
-                value= "None"
-            tr_id = self.device_tree.insert(parent_id, "end",
-                text = dict_dt["type"],
+                value = "None"
+
+            cur_id = self.device_tree.insert(parent_id, "end",
+                text = qt.name,
                 values = value
             )
-            if "children" in dict_dt:
-                self.qom_create_tree(tr_id, dict_dt["children"])
+            if qt.children:
+                self.qom_create_tree(cur_id, qt.children)
 
     def on_select_qom_type(self):
         self.qom_type_var.set(self.v.get())
@@ -113,32 +111,35 @@ class DeviceTreeWidget(GUIDialog):
     # write selected qom type in qom_type_var
     def on_b1_press_dt(self, event):
         item = self.device_tree.identify('item', event.x, event.y)
-        if item:
-            self.add_button.config(state = "active")
-            for widget in self.fr.winfo_children():
-                widget.destroy()
 
-            dt_type = self.device_tree.item(item, "text")
-            self.v = StringVar()
-            self.v.set(dt_type) # initialize
+        if not item:
+            return
 
-            b = Radiobutton(self.fr,
-                text = dt_type, 
-                variable = self.v,
-                value = dt_type
-            )
-            b.pack(anchor = "w")
+        self.add_button.config(state = "active")
+        for widget in self.fr_qt.winfo_children():
+            widget.destroy()
 
-            macros = self.device_tree.item(item, "values")[0]
-            if not macros == "None":
-                l = macros.split(" ")
-                for mstr in l:
-                    b = Radiobutton(
-                        self.fr,
-                        text = mstr, 
-                        variable = self.v,
-                        value = mstr
-                    )
+        dt_type = self.device_tree.item(item, "text")
+        self.v = StringVar()
+        self.v.set(dt_type)
+
+        b = Radiobutton(self.fr_qt,
+            text = dt_type,
+            variable = self.v,
+            value = dt_type
+        )
+        b.pack(anchor = "w")
+
+        macros = self.device_tree.item(item, "values")[0]
+        if macros != "None":
+            l = macros.split(",")
+            for mstr in l:
+                b = Radiobutton(
+                    self.fr_qt,
+                    text = mstr,
+                    variable = self.v,
+                    value = mstr
+                )
                 b.pack(anchor = "w")
 
-            b.select()
+        b.select()

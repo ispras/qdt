@@ -29,7 +29,6 @@ from qemu import (
     QemuTypeName,
     SysBusDeviceDescription,
     PCIExpressDeviceDescription,
-    from_legacy_dict,
     BadBuildPath,
     qvd_get,
     qvd_load_with_cache,
@@ -510,9 +509,11 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             parent = next(parent.find(name = "pci-device"))
 
         qtn = QemuTypeName(desc.name)
-        QType(qtn.for_id_name, parent).macro = [
-            qtn.type_macro
-        ]
+        QType(qtn.for_id_name,
+            parent = parent,
+            macros = [qtn.type_macro],
+            arches = set(parent.arches)
+        )
 
     def on_qvc_available(self):
         pht = self.pht
@@ -522,7 +523,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         # convert device tree to more convenient form
         qvc = self.qvd.qvc
         if qvc.device_tree:
-            qt = self.p.qom_tree = from_legacy_dict(qvc.device_tree)
+            qt = self.p.qom_tree = qvc.device_tree
 
             # Note that system bus device have no standard name for input IRQ.
             next(qt.find(name = "sys-bus-device")).out_gpio_names = [

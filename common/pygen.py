@@ -242,7 +242,7 @@ accuracy.
             self.line(",")
             self.write(string)
 
-    def gen_args(self, obj, pa_names = False):
+    def gen_args(self, obj, pa_names = False, skip_kw = []):
         """
             Given object, this method generates positional and keyword argument
         assignments for `__init__` method of object's class. Lists of arguments
@@ -266,6 +266,9 @@ accuracy.
 
         pa_names
             whether positional arguments to be generated with names.
+
+        skip_kw
+            keyword arguments to be skipped (list, set or tuple)
         """
 
         pal, kwal = get_class_total_args(type(obj))
@@ -281,6 +284,9 @@ accuracy.
             self.pprint(v)
 
         for kwa, default in kwal.items():
+            if kwa in skip_kw:
+                continue
+
             try:
                 v = get_val(obj, kwa)
             except AttributeError:

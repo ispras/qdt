@@ -30,8 +30,8 @@ from common import (
     execfile,
     pythonize
 )
-from json import (
-    load
+from collections import (
+    defaultdict
 )
 from .version import (
     QVHDict,
@@ -39,6 +39,10 @@ from .version import (
     qemu_heuristic_db,
     calculate_qh_hash,
     get_vp
+)
+from .qom_hierarchy import (
+    QType,
+    co_update_device_tree
 )
 from os import (
     listdir
@@ -434,7 +438,7 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
             else:
                 commit.param_oval[param.name] = param.old_value
 
-    __pygen_deps__ = ("pci_c",)
+    __pygen_deps__ = ("pci_c", "device_tree")
 
     def __gen_code__(self, gen):
         gen.reset_gen(self)
@@ -505,7 +509,17 @@ class QemuVersionDescription(object):
         self.target_list = fixpath(QemuVersionDescription.ch_lookup(
             config_host,
             "TARGET_DIRS"
-        ))
+        )).split(" ")
+        self.bindir = join(
+            fixpath(QemuVersionDescription.ch_lookup(config_host, "prefix")),
+            "bin"
+        )
+
+        self.softmmu_targets = st = set()
+        for t in self.target_list:
+            target_desc = t.split("-")
+            if "softmmu" in target_desc:
+                st.add(target_desc[0])
 
         # Get SHA
         self.repo = Repo(self.src_path)
@@ -606,7 +620,7 @@ class QemuVersionDescription(object):
 
             rmtree(tmp_work_dir)
 
-            yield self.co_gen_device_tree()
+            yield self.co_init_device_tree()
 
             yield self.co_gen_known_targets()
 
@@ -642,8 +656,25 @@ class QemuVersionDescription(object):
                 if not checksum == qemu_heuristic_hash:
                     is_outdated = True
             if is_outdated:
-                yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
+                yield self.qvc.co_computing_parameters(
+                    self.repo,
+                    self.commit_sha
+                )
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
+
+            dt = self.qvc.device_tree
+            if dt:
+                # Targets to be added to the cache
+                new_targets = self.softmmu_targets - dt.arches
+                has_new_target = len(new_targets) > 0
+            else:
+                new_targets = self.softmmu_targets
+                has_new_target = True
+
+            if has_new_target:
+                yield self.co_init_device_tree(new_targets)
+
+            if is_outdated or has_new_target:
                 pythonize(self.qvc, qvc_path)
 
         yield True
@@ -740,29 +771,6 @@ class QemuVersionDescription(object):
         option = config_host[indx_begin:indx_end]
         return option.split("=")[1]
 
-    # TODO: get dt from qemu
-
-    def co_gen_device_tree(self):
-        dt_db_fname = join(self.build_path, "dt.json")
-
-        # No device tree for current Qemu. Use QDT's one.
-        if not isfile(dt_db_fname):
-            dt_db_fname = join(dirname(__file__), "dt.json")
-
-        if  isfile(dt_db_fname):
-            print("Loading Device Tree from " + dt_db_fname + "...")
-            dt_db_reader = open(dt_db_fname, "r")
-            self.qvc.device_tree = load(dt_db_reader)
-            dt_db_reader.close()
-            print("Device Tree was loaded from " + dt_db_fname)
-            yield True
-
-            print("Adding macros to device tree ...")
-            yield self.co_add_dt_macro(self.qvc.device_tree)
-            print("Macros were added to device tree")
-        else:
-            self.qvc.device_tree = None
-
     def co_gen_known_targets(self):
         print("Making known targets set...")
         dconfigs = join(self.src_path, "default-configs")
@@ -776,88 +784,99 @@ class QemuVersionDescription(object):
         print("Known targets set was made")
         self.qvc.known_targets = kts
 
-    def co_add_dt_macro(self, list_dt, text2macros = None):
+    def co_init_device_tree(self, targets = None):
+        if not targets:
+            targets = self.softmmu_targets
+
+        yield True
+
+        print("Creating Device Tree for " +
+              ", ".join(t for t in targets) + "..."
+        )
+
+        root = self.qvc.device_tree
+        if root is None:
+            root = QType("device")
+
+        arches_count = len(root.arches)
+        for arch in targets:
+            try:
+                yield co_update_device_tree(
+                    self.bindir,
+                    self.src_path,
+                    arch,
+                    root
+                )
+            except Exception as e:
+                print("Device Tree for %s isn't created: %s" % (arch, e))
+            else:
+                root.arches.add(arch)
+
+        if not root.children:
+            # Device Tree was not built
+            self.qvc.device_tree = None
+            return
+
+        if arches_count == len(root.arches):
+            # No new architecture has been added
+            return
+
+        self.qvc.device_tree = root
+        print("Device Tree was created")
+
+        t2m = defaultdict(list)
+        yield self.co_text2macros(t2m)
+
+        print("Adding macros to device tree ...")
+        yield self.co_add_dt_macro(self.qvc.device_tree.children, t2m)
+        print("Macros were added to device tree")
+
+    def co_text2macros(self, text2macros):
+        """
+            Creates text-to-macros `text2macros` dictionary.
+
+        text2macros
+            dictionary with list default value
+        """
+
         # iterations to yield
         i2y = QVD_DTM_IBY
+        print("Building text to macros mapping...")
 
-        if text2macros is None:
-            print("Building text to macros mapping...")
-
-            text2macros = {}
-            for t in self.qvc.stc.reg_type.values():
-                if i2y == 0:
-                    yield True
-                    i2y = QVD_DTM_IBY
-                else:
-                    i2y -= 1
-
-                if not isinstance(t, Macro):
-                    continue
-
-                text = t.text
-                try:
-                    aliases = text2macros[text]
-                except KeyError:
-                    text2macros[text] = [t.name]
-                else:
-                    aliases.append(t.name)
-
-            print("The mapping was built.")
-
-        # Use the mapping to build "list_dt"
-        for dict_dt in list_dt:
+        for t in self.qvc.stc.reg_type.values():
             if i2y == 0:
                 yield True
                 i2y = QVD_DTM_IBY
             else:
                 i2y -= 1
 
-            dt_type = dict_dt["type"]
+            if isinstance(t, Macro):
+                text2macros[t.text].append(t.name)
+
+        print("The mapping was built")
+
+    def co_add_dt_macro(self, dt, text2macros):
+        # iterations to yield
+        i2y = QVD_DTM_IBY
+
+        # Use the mapping to build "list_dt"
+        for qt in dt.values():
+            if i2y == 0:
+                yield True
+                i2y = QVD_DTM_IBY
+            else:
+                i2y -= 1
+
+            dt_type = qt.name
             dt_type_text = '"' + dt_type + '"'
-            try:
-                aliases = text2macros[dt_type_text]
-            except KeyError:
-                # No macros for this type
-                if "macro" in dict_dt:
-                    print(
-"No macros for type %s now, removing previous cache..." % dt_type_text
-                    )
-                    del dict_dt["macro"]
-            else:
-                if "macro" in dict_dt:
-                    print("Override macros for type %s" % dt_type_text)
-                dict_dt["macro"] = list(aliases)
 
-            try:
-                dt_properties = dict_dt["property"]
-            except KeyError:
-                pass # QOM type have no properties
-            else:
-                for dt_property in dt_properties:
-                    if i2y == 0:
-                        yield True
-                        i2y = QVD_DTM_IBY
-                    else:
-                        i2y -= 1
-
-                    dt_property_name_text = '"' + dt_property["name"] + '"'
-                    try:
-                        aliases = text2macros[dt_property_name_text]
-                    except KeyError:
-                        # No macros for this property
-                        if "macro" in dt_property:
-                            print(
-"No macros for property %s of type %s, removing previous cache..." % (
-    dt_property_name_text, dt_type_text
-)
-                            )
-                            del dt_property["macro"]
-                        continue
-                    if "macro" in dt_property:
-                        print("Override macros for property %s of type %s" % (
-                            dt_property_name_text, dt_type_text
+            if dt_type_text in text2macros:
+                macros = text2macros[dt_type_text]
+                if qt.macros:
+                    if set(macros) - set(qt.macros):
+                        print("Override macros for type %s (%r vs %r)" % (
+                            dt_type_text, qt.macros, macros
                         ))
-                    dt_property["macro"] = list(aliases)
+                qt.macros = list(macros)
 
-            if "children" in dict_dt:
-                yield self.co_add_dt_macro(dict_dt["children"], text2macros)
+            yield self.co_add_dt_macro(qt.children, text2macros)
