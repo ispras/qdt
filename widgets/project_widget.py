@@ -44,8 +44,8 @@ from six.moves.tkinter_font import (
 from .gui_frame import (
     GUIFrame
 )
-from six.moves.tkinter_ttk import (
-    Scrollbar
+from .scrollframe import (
+    add_scrollbars_native
 )
 from .add_desc_dialog import (
     AddDescriptionDialog
@@ -165,20 +165,12 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         fr = GUIFrame(self)
         fr.grid()
         fr.rowconfigure(0, weight = 1)
-        fr.rowconfigure(1, weight = 0)
         fr.columnconfigure(0, weight = 1)
-        fr.columnconfigure(1, weight = 0)
 
         tv = self.tv_descs = DescriptionsTreeview(self.p.descriptions, fr)
         tv.grid(row = 0, column = 0, sticky = "NEWS")
 
-        vsb = Scrollbar(fr, orient = "vertical", command = tv.yview)
-        vsb.grid(row = 0, column = 1, sticky = "NS")
-
-        hsb = Scrollbar(fr, orient = "horizontal", command = tv.xview)
-        hsb.grid(row = 1, column = 0, sticky = "EW")
-
-        tv.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)
+        add_scrollbars_native(fr, tv)
 
         self.add(fr)
 

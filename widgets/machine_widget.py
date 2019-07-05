@@ -17,7 +17,6 @@ from .auto_paned import (
     AutoPanedWindow
 )
 from six.moves.tkinter_ttk import (
-    Scrollbar,
     Separator
 )
 from .machine_diagram_widget import (
@@ -41,6 +40,9 @@ from common import (
 )
 from .gui_frame import (
     GUIFrame
+)
+from .scrollframe import (
+    add_scrollbars_native
 )
 
 
@@ -69,20 +71,12 @@ class MemoryTreeFrame(GUIFrame):
         GUIFrame.__init__(self, master, *a, **kw)
 
         self.rowconfigure(0, weight = 1)
-        self.rowconfigure(1, weight = 0)
         self.columnconfigure(0, weight = 1)
-        self.columnconfigure(1, weight = 0)
 
         mtw = MemoryTreeWidget(self, machine_description)
         mtw.grid(row = 0, column = 0, sticky = "NESW")
 
-        vsb = Scrollbar(self, orient = "vertical", command = mtw.yview)
-        vsb.grid(row = 0, column = 1, sticky = "NS")
-
-        hsb = Scrollbar(self, orient = "horizontal", command = mtw.xview)
-        hsb.grid(row = 1, column = 0, sticky = "EW")
-
-        mtw.configure(yscrollcommand = vsb.set, xscrollcommand = hsb.set)
+        add_scrollbars_native(self, mtw)
 
         self.mtw = mtw
 

@@ -10,13 +10,10 @@ from .gui_dialog import (
     GUIDialog
 )
 from six.moves.tkinter import (
-    VERTICAL,
-    HORIZONTAL,
     BOTH,
     ON,
     END,
-    NONE,
-    Scrollbar
+    NONE
 )
 from .gui_text import (
     GUIText,
@@ -31,6 +28,10 @@ from common import (
     FailedCallee,
     mlget as _
 )
+from .scrollframe import (
+    add_scrollbars_native
+)
+
 
 class TaskErrorWidget(GUIFrame):
     def __init__(self, task, **kw):
@@ -44,21 +45,7 @@ class TaskErrorWidget(GUIFrame):
         t = GUIText(master = self, state = READONLY, wrap = NONE)
         t.grid(row = 0, column = 0, sticky = "NESW")
 
-        # Vertical scrollbar
-        self.columnconfigure(1, weight = 0)
-        vsb = Scrollbar(master = self, orient = VERTICAL)
-        vsb.grid(row = 0, column = 1, sticky = "NESW")
-
-        # Horizontal scrollbar
-        self.rowconfigure(1, weight = 0)
-        hsb = Scrollbar(master = self, orient = HORIZONTAL)
-        hsb.grid(row = 1, column = 0, sticky = "NESW")
-
-        # Bind scrollbars and text
-        t.config(yscrollcommand = vsb.set)
-        vsb.config(command = t.yview)
-        t.config(xscrollcommand = hsb.set)
-        hsb.config(command = t.xview)
+        add_scrollbars_native(self, t)
 
         lines = []
 
