@@ -144,20 +144,29 @@ class VarToplevel(Toplevel):
     def on_var_changed(self, *_):
         Toplevel.title(self, self.var.get())
 
-    def title(self, stringvar = None):
-        if not stringvar:
-            return self.var
+    def title(self, value = None):
+        if value is None:
+            return self.var or Toplevel.title(self)
 
-        if stringvar != self.var:
+        if not isinstance(value, variables): # anything else, e.g. `str`
             if self.var:
-                self.var.trace_vdelete("w", self.observer_name)
-            self.var = stringvar
-            self.observer_name = self.var.trace_variable(
-                "w",
-                self.on_var_changed
-            )
+                self.var.set(value)
+            else:
+                Toplevel.title(self, value)
+            return
 
-            self.on_var_changed()
+        if value is self.var:
+            return
+
+        if self.var is not None:
+            self.var.trace_vdelete("w", self.observer_name)
+        self.var = value
+        self.observer_name = value.trace_variable(
+            "w",
+            self.on_var_changed
+        )
+
+        self.on_var_changed()
 
 
 class MenuVarBinding():
