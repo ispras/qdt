@@ -39,7 +39,7 @@ class GUIText(Text):
     * returning READONLY by config, configure, _configure e.t.c.
     * switching back to NORMAL, DISABLED
     """
-    def __init__(self, **kw):
+    def __init__(self, master, **kw):
         read_only = False
         try:
             state = kw["state"]
@@ -50,7 +50,7 @@ class GUIText(Text):
                 read_only = True
                 kw["state"] = NORMAL
 
-        Text.__init__(self, **kw)
+        Text.__init__(self, master, **kw)
 
         self.redirector = WidgetRedirector(self)
 
