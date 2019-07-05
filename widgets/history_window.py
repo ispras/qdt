@@ -15,7 +15,9 @@ from common import (
     mlget as _
 )
 
+
 class HistoryWindow(GUIToplevel):
+
     def __init__(self, gui_project_history_tracker, *args, **kw):
         GUIToplevel.__init__(self, *args, **kw)
 
