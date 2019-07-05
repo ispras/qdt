@@ -1,13 +1,38 @@
 __all__ = [
     "add_scrollbars"
+  , "add_scrollbars_native"
 ]
 
 
 from six.moves.tkinter import (
+    VERTICAL,
+    HORIZONTAL,
     ALL,
     Scrollbar,
     Canvas
 )
+
+
+def add_scrollbars_native(outer, inner, row = 0, column = 0):
+    "Adds scroll bars to a widget which supports them natively."
+    outer.rowconfigure(row + 1, weight = 0)
+    outer.columnconfigure(column + 1, weight = 0)
+
+    h_sb = Scrollbar(outer,
+        orient = HORIZONTAL,
+        command = inner.xview
+    )
+    h_sb.grid(row = row + 1, column = column, sticky = "NESW")
+
+    v_sb = Scrollbar(outer,
+        orient = VERTICAL,
+        command = inner.yview
+    )
+    v_sb.grid(row = row, column = column + 1, sticky = "NESW")
+
+    inner.configure(xscrollcommand = h_sb.set, yscrollcommand = v_sb.set)
+
+    return h_sb, v_sb
 
 
 def add_scrollbars(outer, InnerType, *inner_args, **inner_kw):
