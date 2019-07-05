@@ -5,7 +5,7 @@ __all__ = [
   , "RQInstance"
 ]
 
-from .qom import (
+from .qom_common import (
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
