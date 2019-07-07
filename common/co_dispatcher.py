@@ -372,14 +372,26 @@ after last statement in the corresponding callable object.
 # Call coroutine maintaining coroutine calling stack.
 def callco(co):
     stack = []
+    exc = None
     while True:
         try:
-            ret = next(co)
+            if exc:
+                local_exc = exc
+                exc = None
+                ret = co.throw(type(local_exc), local_exc)
+            else:
+                ret = next(co)
         except StopIteration:
             try:
                 co = stack.pop()
             except IndexError:
                 break
+        except Exception as e:
+            exc = e
+            try:
+                co = stack.pop()
+            except IndexError:
+                raise e
         else:
             if isinstance(ret, GeneratorType):
                 stack.append(co)
