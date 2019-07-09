@@ -990,7 +990,7 @@ def main():
     try:
         root.load_project_from_file(arguments.script)
     except Exception as e:
-        print("Project load filed: " + str(e) + "\n")
+        print("Project load failed: " + str(e) + "\n")
 
         project = GUIProject()
 
@@ -1014,7 +1014,7 @@ def main():
         try:
             layout = load_cPickled(open("layout.p", "rb"))
         except Exception as e:
-            print("Layout load filed: " + str(e) + "\n")
+            print("Layout load failed: " + str(e) + "\n")
         else:
             project.layouts.append((mach.name, layout))
 
