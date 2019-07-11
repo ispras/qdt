@@ -150,6 +150,7 @@ not actual now.
                 print_exc()
 
         t = Thread(target = run)
+        t.name = "RSP client"
         t.start()
 
         while t.isAlive():
