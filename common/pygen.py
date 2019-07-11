@@ -264,11 +264,11 @@ accuracy.
         argument assignment is skipped. Positional argument assignments cannot
         be skipped.
 
-        pa_names
-            whether positional arguments to be generated with names.
+    :param pa_names:
+        whether positional arguments to be generated with names.
 
-        skip_kw
-            keyword arguments to be skipped (list, set or tuple)
+    :param skip_kw:
+        keyword arguments to be skipped (list, set or tuple)
         """
 
         pal, kwal = get_class_total_args(type(obj))
