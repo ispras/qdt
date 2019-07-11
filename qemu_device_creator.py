@@ -94,7 +94,7 @@ def main():
     version = arguments.target_version
 
     if version is None:
-        version = project.target_version
+        version = getattr(project, "target_version", None)
 
     try:
         qvd = qvd_load_with_cache(qemu_build_path, version = version)
