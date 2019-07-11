@@ -8,6 +8,9 @@ from qemu import (
     MachineReverser,
     MachineNode
 )
+from collections import (
+    OrderedDict
+)
 from debug import (
     git_repo_by_dwarf,
     create_dwarf_cache,
@@ -31,6 +34,10 @@ from os import (
     remove
 )
 from widgets import (
+    VarButton,
+    GUIFrame,
+    Checklist,
+    add_scrollbars,
     ThreadControl,
     GUIProject,
     GUIProjectHistoryTracker,
@@ -62,6 +69,92 @@ with pypath("pyrsp"):
         wait_for_tcp_port
     )
 
+
+class StopEventSelector(GUIFrame):
+
+    def __init__(self, master, runtime, notifiers, *a, **kw):
+        GUIFrame.__init__(self, master, *a, **kw)
+
+        # row for buttons
+        self.rowconfigure(0, weight = 0)
+
+        # empty, for right alignment of buttons
+        self.columnconfigure(0, weight = 1)
+        # columns for buttons
+        self.columnconfigure(1, weight = 0)
+        self.columnconfigure(2, weight = 0)
+        self.columnconfigure(3, weight = 0)
+
+        self.bt_all_events = bt = VarButton(self,
+            text = _("All events"),
+            command = self._on_all_events
+        )
+        bt.grid(row = 0, column = 1, sticky = "NESW")
+
+        self.bt_none_events = bt = VarButton(self,
+            text = _("None events"),
+            command = self._on_none_events
+        )
+        bt.grid(row = 0, column = 2, sticky = "NESW")
+
+        self.bt_invert_selection = bt = VarButton(self,
+            text = _("Invert selection"),
+            command = self._on_invert_selection
+        )
+        bt.grid(row = 0, column = 3, sticky = "NESW")
+
+        # row for event list
+        self.elist_container = elc = GUIFrame(self)
+        self.rowconfigure(1, weight = 1)
+        elc.grid(row = 1, column = 0, columnspan = 4, sticky = "NESW")
+
+        self.all_events = all_events = OrderedDict()
+
+        for n in notifiers:
+            for e in n._events:
+                if e in all_events:
+                    desc = all_events.pop(e)
+                    e1 = e + " (" + type(desc[0]).__name__ + ")"
+                    e2 = e + " (" + type(n).__name__ + ")"
+                    all_events[e1] = desc
+                    all_events[e2] = n
+
+                all_events[e] = [n, None, False] # notifier, callback, assigned
+
+        self.clist = clist = add_scrollbars(elc, Checklist, all_events.keys())
+        clist.bind("<<Check>>", self._on_event_check, "+")
+
+    def _on_all_events(self):
+        self.clist.select_all()
+
+    def _on_none_events(self):
+        self.clist.unselect_all()
+
+    def _on_invert_selection(self):
+        self.clist.invert_selection()
+
+    def _on_event_check(self, _):
+        e = self.clist.current
+        notifier, cb, assigned = desc = self.all_events[e]
+
+        val = self.clist.get(e)
+
+        if val:
+            if not assigned:
+                if cb is None:
+                    def cb(*a, **kw):
+                        self._pause(e, *a, **kw)
+                    desc[1] = cb
+
+                notifier.watch(e, cb)
+                desc[2] = True
+        elif assigned:
+            notifier.unwatch(e, cb)
+            desc[2] = False
+
+    def _pause(self, event, *a, **kw):
+        print("pause %s %r %r" % (event, a, kw))
+
 class QArgumentParser(ArgumentParser):
 
     def error(self, *args, **kw):
@@ -74,7 +167,7 @@ class QArgumentParser(ArgumentParser):
 class QEmuWatcherGUI(GUITk):
     "Showing runtime state of machine."
 
-    def __init__(self, pht, runtime):
+    def __init__(self, pht, runtime, notifiers):
         GUITk.__init__(self, wait_msec = 1)
 
         self.title(_("QEmu Watcher"))
@@ -91,6 +184,9 @@ class QEmuWatcherGUI(GUITk):
         # placeholder for future machine widget
         holder = Frame(panes)
         panes.add(holder, width = 1024, minsize = 200)
+
+        sew = StopEventSelector(panes, runtime, notifiers)
+        panes.add(sew, minsize = 150)
 
         self.tw = tw = ThreadControl(panes)
         panes.add(tw, minsize = 300)
@@ -346,11 +442,11 @@ def main():
             else:
                 yield False
 
-    tk = QEmuWatcherGUI(slave_pht, rt)
+    tk = QEmuWatcherGUI(slave_pht, rt, notifiers = [mw])
 
     tk.task_manager.enqueue(co_syncronizer())
 
-    tk.geometry("1324x1024")
+    tk.geometry("1474x1024")
     tk.mainloop()
 
     qomtr.to_file("qom-by-q.i.dot")
