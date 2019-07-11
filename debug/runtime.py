@@ -6,6 +6,7 @@ from traceback import (
     print_exc
 )
 from threading import (
+    Event,
     Thread
 )
 from collections import (
@@ -121,6 +122,7 @@ class Runtime(object):
 
         # Is there a request to pause the target?
         self._pause = False
+        self._resumed = Event()
         # If the target has been paused on a breakpoint, this attribute refers
         # to the breakpoint.
         self._breakpoint = None
@@ -200,7 +202,16 @@ not actual now.
 
         def run():
             try:
-                target.run(setpc = False)
+                self.run()
+                while self.paused:
+                    while not self._resumed.wait(0.5):
+                        if self._exiting:
+                            break
+
+                    if self._exiting:
+                        break
+
+                    self.run()
             except:
                 print_exc()
                 print("Target PC 0x%x" % (self.get_reg(self.pc)))
