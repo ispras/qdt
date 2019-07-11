@@ -332,6 +332,8 @@ To generate a device boilerplate the two steps should be made.
 1. Create a Python script with generation parameters.
 2. Pass the script to the command line generator tool `qemu_device_creator.py`.
 
+#### Step 1. Create the script
+
 Simple `basic-device.py` script content is listed below.
 
 ```python
@@ -367,6 +369,8 @@ A Keyword argument is always set using its name across this manual.
 
 All generation parameters must be packed in a project (`QProject`).
 The generator expects one `QProject` in the input script.
+
+#### Step 2. Launch the tool
 
 Now the device model boilerplate can be generated.
 
