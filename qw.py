@@ -31,6 +31,7 @@ from os import (
     remove
 )
 from widgets import (
+    ThreadControl,
     GUIProject,
     GUIProjectHistoryTracker,
     asksaveas,
@@ -42,6 +43,11 @@ from widgets import (
 )
 from six.moves.tkinter_messagebox import (
     showerror
+)
+from six.moves.tkinter import (
+    RAISED,
+    Frame,
+    PanedWindow
 )
 from subprocess import (
     Popen
@@ -78,6 +84,17 @@ class QEmuWatcherGUI(GUITk):
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
+
+        self.panes = panes = PanedWindow(self, sashrelief = RAISED)
+        panes.grid(row = 0, column = 0, sticky = "NESW")
+
+        # placeholder for future machine widget
+        holder = Frame(panes)
+        panes.add(holder, width = 1024, minsize = 200)
+
+        self.tw = tw = ThreadControl(panes)
+        panes.add(tw, minsize = 300)
+        tw.set_runtime(runtime)
 
         self._killed = False
         self.task_manager.enqueue(self.co_rsp_poller())
@@ -117,10 +134,15 @@ class QEmuWatcherGUI(GUITk):
         else:
             return
 
-        mdsw = MachineDescriptionSettingsWidget(d, self)
-        mdsw.grid(row = 0, column = 0, sticky = "NESW")
+        mdsw = MachineDescriptionSettingsWidget(d, self.panes)
         mdsw.mw.mdw.var_physical_layout.set(False)
         self.mdsw = mdsw
+
+        # replace place holder Frame with machine widget
+        holder, wgt = self.panes.panes()[0:2]
+        h_widht = self.panes.sash_coord(0)[0]
+        self.panes.remove(holder)
+        self.panes.add(mdsw, before = wgt, width = h_widht, minsize = 200)
 
         # magic with layouts
         self.pht.p.add_layout(d.name, mdsw.gen_layout()).widget = mdsw
@@ -328,7 +350,7 @@ def main():
 
     tk.task_manager.enqueue(co_syncronizer())
 
-    tk.geometry("1024x1024")
+    tk.geometry("1324x1024")
     tk.mainloop()
 
     qomtr.to_file("qom-by-q.i.dot")
