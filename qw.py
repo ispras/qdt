@@ -9,6 +9,7 @@ from qemu import (
     MachineNode
 )
 from debug import (
+    git_repo_by_dwarf,
     create_dwarf_cache,
     Runtime,
     GitLineVersionAdapter
@@ -232,7 +233,12 @@ def main():
     if qemu_src_dir:
         gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
     else:
-        gvl_adptr = None
+        try:
+            repo = git_repo_by_dwarf(dic.di)
+        except ValueError:
+            gvl_adptr = None
+        else:
+            gvl_adptr = GitLineVersionAdapter(repo)
 
     qomtr = QOMTreeReverser(dic,
         interrupt = False,
