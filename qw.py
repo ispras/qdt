@@ -236,6 +236,9 @@ def main():
         try:
             repo = git_repo_by_dwarf(dic.di)
         except ValueError:
+            print("No Qemu Git was given. Breakpoint position adaptation is"
+                " disabled."
+            )
             gvl_adptr = None
         else:
             gvl_adptr = GitLineVersionAdapter(repo)
