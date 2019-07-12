@@ -1631,14 +1631,15 @@ class MacroType(Type):
                 " %s which is not macro." % _macro
             )
 
-        if is_usage and name is None:
-            name = _macro.name + ".usage" + str(id(self))
-
         super(MacroType, self).__init__(name = name, incomplete = False)
 
         # define c_name for nameless macrotypes
         if not self.is_named:
             self.c_name = _macro.gen_usage_string(initializer)
+            # XXX: A name attribute is required to use the macrotype usage as
+            # field in the structure
+            if is_usage:
+                self.name = _macro.name + ".usage" + str(id(self))
 
         self.macro = _macro
         self.initializer = initializer
