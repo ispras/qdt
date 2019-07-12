@@ -1624,6 +1624,7 @@ class Macro(Type):
 
 
 class MacroType(Type):
+
     def __init__(self, _macro,
         initializer = None,
         name = None,
@@ -1634,17 +1635,19 @@ class MacroType(Type):
                 " %s which is not macro." % _macro
             )
 
-        if is_usage and name is None:
-            name = _macro.name + ".usage" + str(id(self))
-
         super(MacroType, self).__init__(name = name, incomplete = False)
 
         # define c_name for nameless macrotypes
         if not self.is_named:
             self.c_name = _macro.gen_usage_string(initializer)
+            # a name attribute is required to use the macrotype usage as field
+            # in the structure
+            if is_usage:
+                self.name = _macro.name + ".usage" + str(id(self))
 
         self.macro = _macro
         self.initializer = initializer
+        self.is_usage = is_usage
 
     def get_definers(self):
         if self.is_named:
@@ -1667,7 +1670,7 @@ class MacroType(Type):
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
 
-        if self.is_named:
+        if self.is_usage:
             ch = MacroTypeUsage(macro, initializer, indent)
             ch.add_references(refs)
             return [ch]
