@@ -89,9 +89,9 @@ class DeviceTreeWidget(GUIDialog):
 
         self.qom_create_tree("", qtype_dt.children)
 
-    def qom_create_tree(self, parent_id, dt):
-        for key in sorted(dt.keys()):
-            qt = dt[key]
+    def qom_create_tree(self, parent_id, qt_children):
+        for key in sorted(qt_children.keys()):
+            qt = qt_children[key]
             if qt.macros:
                 value = ", ".join(qt.macros)
             else:
