@@ -211,13 +211,14 @@ class PropLineDesc(object):
             self.v_val = var_p_val
 
     def gen_prop_value_widget(self, prop_type, prop_val):
+        props_lf = self.dsw.props_lf
         if prop_type == QOMPropertyTypeLink:
             var = StringVar()
             keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
                     for n in [ None ] + list(self.dsw.mach.id2node.values())
                    ]
 
-            ret = Combobox(self.dsw.props_lf,
+            ret = Combobox(props_lf,
                 textvariable = var,
                 values = keys,
                 state = "readonly"
@@ -230,8 +231,7 @@ class PropLineDesc(object):
             var.set(current)
         elif prop_type == QOMPropertyTypeBoolean:
             var = BooleanVar()
-            ret = VarCheckbutton(
-                self.dsw.props_lf,
+            ret = VarCheckbutton(props_lf,
                 text = StringVar(""),
                 variable = var
             )
@@ -243,10 +243,7 @@ class PropLineDesc(object):
             var.set(current)
         else:
             var = StringVar()
-            ret = HKEntry(
-                self.dsw.props_lf,
-                textvariable = var
-            )
+            ret = HKEntry(props_lf, textvariable = var)
 
             if prop_val:
                 if prop_type == QOMPropertyTypeInteger:
@@ -264,9 +261,10 @@ class PropLineDesc(object):
         return ret, var
 
     def gen_row(self, row):
+        props_lf = self.dsw.props_lf
         var_p_name = StringVar()
         var_p_name.set(self.prop.prop_name)
-        e_p_name = HKEntry(self.dsw.props_lf, textvariable = var_p_name)
+        e_p_name = HKEntry(props_lf, textvariable = var_p_name)
         e_p_name.grid(
             column = 0,
             row = row,
@@ -274,7 +272,7 @@ class PropLineDesc(object):
         )
 
         om_p_type, var_p_type  = DeviceSettingsWidget.gen_prop_type_optionmenu(
-            self.dsw.props_lf,
+            props_lf,
             self.prop.prop_type
         )
         om_p_type.grid(
@@ -295,7 +293,7 @@ class PropLineDesc(object):
         )
 
         bt_del = VarButton(
-            self.dsw.props_lf,
+            props_lf,
             text = _("Delete"),
             command = self.on_delete
         )
