@@ -10,9 +10,6 @@ from .var_widgets import (
 from qemu import (
     qvd_get
 )
-from six.moves.tkinter_ttk import (
-    Scrollbar
-)
 from six.moves.tkinter import (
     Radiobutton,
     StringVar
@@ -22,6 +19,9 @@ from common import (
 )
 from .gui_dialog import (
     GUIDialog
+)
+from .scrollframe import (
+    add_scrollbars_native
 )
 
 class DeviceTreeWidget(GUIDialog):
@@ -50,26 +50,13 @@ class DeviceTreeWidget(GUIDialog):
         self.device_tree.heading("Macros", text = _("Macros"))
 
         self.device_tree.bind("<ButtonPress-1>", self.on_b1_press_dt)
+        add_scrollbars_native(self, self.device_tree)
 
         self.device_tree.grid(
             row = 0,
             column = 0,
             sticky = "NEWS"
         )
-
-        #Add Scrollbar
-        ysb = Scrollbar(self,
-            orient = "vertical",
-            command = self.device_tree.yview
-        )
-        xsb = Scrollbar(self,
-            orient = "horizontal",
-            command = self.device_tree.xview
-        )
-        self.device_tree['yscroll'] = ysb.set
-        self.device_tree['xscroll'] = xsb.set
-        ysb.grid(row = 0, column = 1, sticky = "NS")
-        xsb.grid(row = 1, column = 0, sticky = "EW")
 
         self.add_button = VarButton(
             self,
