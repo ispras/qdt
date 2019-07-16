@@ -110,9 +110,14 @@ class MousewheelSupport(object):
         widget.onMouseWheel = yscrollbar.onMouseWheel
 
 
+cur_tag_num = 0
+
+
 def add_scrollbars(outer, InnerType, *inner_args, **inner_kw):
     """ Creates widget of type `InnerType` inside `outer` widget and adds
 vertical and horizontal scroll bars for created widget.
+Returns tuple of InnerType instance and scroll tag. Scroll tag should be added
+to all widgets that affect scrolling.
     """
 
     outer.rowconfigure(0, weight = 1)
@@ -191,4 +196,16 @@ vertical and horizontal scroll bars for created widget.
 
     canvas.bind("<Configure>", canvas_configure, "+")
 
-    return inner
+    global cur_tag_num
+    cur_tag_num += 1
+    scrolltag = "tag_" + str(cur_tag_num)
+
+    inner.bindtags((scrolltag,) + inner.bindtags())
+
+    mousewheel_support = MousewheelSupport(outer, scrolltag)
+    mousewheel_support.add_support_to(canvas,
+        xscrollbar = h_sb,
+        yscrollbar = v_sb
+    )
+
+    return inner, scrolltag
