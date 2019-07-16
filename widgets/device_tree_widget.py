@@ -90,6 +90,8 @@ class DeviceTreeWidget(GUIDialog):
         self.qom_create_tree("", qtype_dt.children)
 
     def qom_create_tree(self, parent_id, qt_children):
+        dt = self.device_tree
+
         for key in sorted(qt_children.keys()):
             qt = qt_children[key]
             if qt.macros:
@@ -97,7 +99,7 @@ class DeviceTreeWidget(GUIDialog):
             else:
                 value = "None"
 
-            cur_id = self.device_tree.insert(parent_id, "end",
+            cur_id = dt.insert(parent_id, "end",
                 text = qt.name,
                 values = (value, ),
             )
