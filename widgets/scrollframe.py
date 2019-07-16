@@ -11,6 +11,10 @@ from six.moves.tkinter import (
     Scrollbar,
     Canvas
 )
+from platform import (
+    system
+)
+OS = system()
 
 
 def add_scrollbars_native(outer, inner, row = 0, column = 0):
@@ -33,6 +37,77 @@ def add_scrollbars_native(outer, inner, row = 0, column = 0):
     inner.configure(xscrollcommand = h_sb.set, yscrollcommand = v_sb.set)
 
     return h_sb, v_sb
+
+
+def get_mouse_wheel_handler(widget, orient, factor = 1, what = "units"):
+    view_command = getattr(widget, orient + 'view')
+
+    if OS == 'Linux':
+        def onMouseWheel(event):
+            if event.num == 4:
+                view_command("scroll", (-1) * factor, what)
+            elif event.num == 5:
+                view_command("scroll", factor, what)
+
+    elif OS == 'Windows':
+        def onMouseWheel(event):
+            view_command("scroll",
+                (-1) * int((event.delta / 120) * factor),
+                what
+            )
+
+    return onMouseWheel
+
+
+class MousewheelSupport(object):
+    def __init__(self, root, tag):
+        self._active_area = None
+
+        if OS == "Linux" :
+            root.bind_class(tag, "<4>", self._on_mousewheel, add ='+')
+            root.bind_class(tag, "<5>", self._on_mousewheel, add ='+')
+        else:
+            # Windows
+            root.bind_class(tag, "<MouseWheel>", self._on_mousewheel,
+                add = '+'
+            )
+
+    def _on_mousewheel(self, event):
+        if self._active_area:
+            self._active_area.onMouseWheel(event)
+
+    def _mousewheel_bind(self, widget):
+        self._active_area = widget
+
+    def _mousewheel_unbind(self, event):
+        self._active_area = None
+
+    def add_support_to(self, widget, xscrollbar, yscrollbar,
+            what = "units",
+            horizontal_factor = 2,
+            vertical_factor = 2
+        ):
+
+        xscrollbar.onMouseWheel = get_mouse_wheel_handler(
+            widget, 'x', horizontal_factor, what
+        )
+        xscrollbar.bind("<Enter>",
+            lambda _: self._mousewheel_bind(xscrollbar)
+        )
+        xscrollbar.bind("<Leave>", self._mousewheel_unbind)
+
+        yscrollbar.onMouseWheel = get_mouse_wheel_handler(
+            widget, 'y', vertical_factor, what
+        )
+        yscrollbar.bind("<Enter>",
+            lambda _: self._mousewheel_bind(yscrollbar)
+        )
+        yscrollbar.bind("<Leave>", self._mousewheel_unbind)
+
+        widget.bind("<Enter>", lambda _: self._mousewheel_bind(widget))
+        widget.bind("<Leave>", self._mousewheel_unbind)
+        # set main scrollbar
+        widget.onMouseWheel = yscrollbar.onMouseWheel
 
 
 def add_scrollbars(outer, InnerType, *inner_args, **inner_kw):
