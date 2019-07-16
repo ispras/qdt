@@ -17,22 +17,37 @@ from platform import (
 OS = system()
 
 
-def add_scrollbars_native(outer, inner, row = 0, column = 0):
+def add_scrollbars_native(outer, inner,
+        row = 0,
+        column = 0,
+        rowspan = 1,
+        columnspan = 1
+    ):
     "Adds scroll bars to a widget which supports them natively."
-    outer.rowconfigure(row + 1, weight = 0)
-    outer.columnconfigure(column + 1, weight = 0)
+    outer.rowconfigure(row + rowspan, weight = 0)
+    outer.columnconfigure(column + columnspan, weight = 0)
 
     h_sb = Scrollbar(outer,
         orient = HORIZONTAL,
         command = inner.xview
     )
-    h_sb.grid(row = row + 1, column = column, sticky = "NESW")
+    h_sb.grid(
+        row = row + rowspan,
+        column = column,
+        columnspan = columnspan,
+        sticky = "NESW"
+    )
 
     v_sb = Scrollbar(outer,
         orient = VERTICAL,
         command = inner.yview
     )
-    v_sb.grid(row = row, column = column + 1, sticky = "NESW")
+    v_sb.grid(
+        row = row,
+        rowspan = rowspan,
+        column = column + columnspan,
+        sticky = "NESW"
+    )
 
     inner.configure(xscrollcommand = h_sb.set, yscrollcommand = v_sb.set)
 
