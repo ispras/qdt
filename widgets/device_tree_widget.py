@@ -99,7 +99,7 @@ class DeviceTreeWidget(GUIDialog):
 
             cur_id = self.device_tree.insert(parent_id, "end",
                 text = qt.name,
-                values = value
+                values = (value, ),
             )
             if qt.children:
                 self.qom_create_tree(cur_id, qt.children)
