@@ -43,16 +43,16 @@ class DeviceTreeWidget(GUIDialog):
 
         self.focus()
 
-        self.device_tree = VarTreeview(self)
-        self.device_tree["columns"] = ("Macros")
+        self.device_tree = dt = VarTreeview(self)
+        dt["columns"] = "Macros"
 
-        self.device_tree.heading("#0", text = _("Devices"))
-        self.device_tree.heading("Macros", text = _("Macros"))
+        dt.heading("#0", text = _("Devices"))
+        dt.heading("Macros", text = _("Macros"))
 
-        self.device_tree.bind("<ButtonPress-1>", self.on_b1_press_dt)
-        add_scrollbars_native(self, self.device_tree)
+        dt.bind("<ButtonPress-1>", self.on_b1_press_dt)
+        add_scrollbars_native(self, dt)
 
-        self.device_tree.grid(
+        dt.grid(
             row = 0,
             column = 0,
             sticky = "NEWS"
