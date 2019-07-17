@@ -46,6 +46,9 @@ class GUIDialog(GUIToplevel):
                 "Cannot found a top level window with hot key context\n"
             ).get())
 
+        # window needs to be visible for the grab
+        # See: https://stackoverflow.com/questions/40861638/python-tkinter-treeview-not-allowing-modal-window-with-direct-binding-like-on-ri
+        self.wait_visibility()
         self.grab_set()
 
     def __on_destroy(self, e, **kw):
