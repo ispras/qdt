@@ -21,6 +21,14 @@ from six.moves.tkinter_ttk import (
 def main():
     root = Tk()
 
+    Label(root,
+        text = "Outer label"
+    ).pack(
+        fill = BOTH,
+        expand = True,
+        side = TOP
+    )
+
     frame = Frame(root)
     frame.pack(fill = BOTH, expand = True, side = TOP)
 
@@ -60,7 +68,18 @@ def main():
     scrollable = set(["TCombobox", "Scrollbar", "Text"])
 
     def event_all(e):
-        cls = e.widget.winfo_class()
+        w = e.widget
+
+        m = e.widget
+        while m is not None:
+            if m is frame:
+                break
+            m = m.master
+        else:
+            print("Outer widget")
+            return
+
+        cls = w.winfo_class()
         print("cls = " + cls)
         if cls in scrollable:
             return
