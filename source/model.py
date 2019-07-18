@@ -904,20 +904,14 @@ class Type(object):
                     " of incomplete type %s." % (name, self)
                 )
 
-        if pointer:
-            return Variable(name, Pointer(self),
-                initializer = initializer,
-                static = static,
-                array_size = array_size,
-                used = used
-            )
-        else:
-            return Variable(name, self,
-                initializer = initializer,
-                static = static,
-                array_size = array_size,
-                used = used
-            )
+        _type = Pointer(self) if pointer else self
+
+        return Variable(name, _type,
+            initializer = initializer,
+            static = static,
+            array_size = array_size,
+            used = used
+        )
 
     def __call__(self, *args, **kw):
         return self.gen_var(*args, **kw)
