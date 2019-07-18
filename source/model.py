@@ -895,6 +895,7 @@ class Type(object):
         pointer = False,
         initializer = None,
         static = False,
+        const = False,
         array_size = None,
         used = False
     ):
@@ -909,6 +910,7 @@ class Type(object):
         return Variable(name, _type,
             initializer = initializer,
             static = static,
+            const = const,
             array_size = array_size,
             used = used
         )
