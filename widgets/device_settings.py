@@ -212,6 +212,8 @@ class PropLineDesc(object):
 
     def gen_prop_value_widget(self, prop_type, prop_val):
         props_lf = self.dsw.props_lf
+        prop_scrolltag = self.dsw.prop_scrolltag
+
         if prop_type == QOMPropertyTypeLink:
             var = StringVar()
             keys = [ DeviceSettingsWidget.gen_node_link_text(n) \
@@ -235,6 +237,7 @@ class PropLineDesc(object):
                 text = StringVar(""),
                 variable = var
             )
+            ret.bindtags((prop_scrolltag, ) + ret.bindtags())
             if prop_val is None:
                 current = False
             else:
@@ -244,6 +247,7 @@ class PropLineDesc(object):
         else:
             var = StringVar()
             ret = HKEntry(props_lf, textvariable = var)
+            ret.bindtags((prop_scrolltag, ) + ret.bindtags())
 
             if prop_val:
                 if prop_type == QOMPropertyTypeInteger:
@@ -262,6 +266,7 @@ class PropLineDesc(object):
 
     def gen_row(self, row):
         props_lf = self.dsw.props_lf
+        prop_scrolltag = self.dsw.prop_scrolltag
         var_p_name = StringVar()
         var_p_name.set(self.prop.prop_name)
         e_p_name = HKEntry(props_lf, textvariable = var_p_name)
@@ -270,6 +275,7 @@ class PropLineDesc(object):
             row = row,
             sticky = "NEWS"
         )
+        e_p_name.bindtags((prop_scrolltag, ) + e_p_name.bindtags())
 
         om_p_type, var_p_type  = DeviceSettingsWidget.gen_prop_type_optionmenu(
             props_lf,
@@ -280,6 +286,7 @@ class PropLineDesc(object):
             row = row,
             sticky = "NEWS"
         )
+        om_p_type.bindtags((prop_scrolltag, ) + om_p_type.bindtags())
         var_p_type.trace_variable("w", self.on_prop_type_changed)
 
         w_p_val, var_p_val = self.gen_prop_value_widget(
@@ -302,6 +309,7 @@ class PropLineDesc(object):
             row = row,
             sticky = "NEWS"
         )
+        bt_del.bindtags((prop_scrolltag, ) + bt_del.bindtags())
 
         self.row = row
         self.e_name = e_p_name
@@ -391,7 +399,9 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         # pack properties inside a frame with scrolling
         outer_frame = VarLabelFrame(self, text = _("Properties"))
         outer_frame.pack(fill = BOTH, expand = True)
-        self.props_lf = add_scrollbars(outer_frame, GUIFrame)
+        self.props_lf, self.prop_scrolltag = add_scrollbars(
+            outer_frame, GUIFrame
+        )
 
         self.props_lf.columnconfigure(0, weight = 1)
         self.props_lf.columnconfigure(1, weight = 0)
@@ -407,6 +417,9 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         self.bt_add_prop.grid(
             column = 3,
             sticky = "NEWS"
+        )
+        self.bt_add_prop.bindtags(
+            (self.prop_scrolltag, ) + self.bt_add_prop.bindtags()
         )
 
     def __on_destroy__(self, *args):

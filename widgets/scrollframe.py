@@ -11,6 +11,16 @@ from six.moves.tkinter import (
     Scrollbar,
     Canvas
 )
+from itertools import (
+    count
+)
+from sys import (
+    stderr
+)
+from platform import (
+    system
+)
+OS = system()
 
 
 def add_scrollbars_native(outer, inner, row = 0, column = 0):
@@ -36,6 +46,7 @@ def add_scrollbars_native(outer, inner, row = 0, column = 0):
 
 
 class ScrollbarConfigure(object):
+    _ids = count(0)
 
     def __init__(self, outer, InnerType, *inner_args, **inner_kw):
         self.scrolltag = "tag_" + str(next(self._ids))
@@ -73,7 +84,13 @@ class ScrollbarConfigure(object):
         )
 
         inner.bind("<Configure>", self.inner_configure, "+")
+        inner.bindtags((self.scrolltag,) + inner.bindtags())
         canvas.bind("<Configure>", self.canvas_configure, "+")
+
+        self.h_sb.onMouseWheel = self.get_mouse_wheel_handler()
+        self.v_sb.onMouseWheel = self.get_mouse_wheel_handler(False)
+
+        canvas.onMouseWheel = self.v_sb.onMouseWheel
 
     def scrollbar_visibility(self):
         "Automatically shows & hides the scroll bar."
@@ -118,12 +135,61 @@ class ScrollbarConfigure(object):
             height = max(e.height, self.inner.winfo_reqheight())
         )
 
+    def _on_mousewheel(self, event):
+        self.canvas.onMouseWheel(event)
+
+    def get_mouse_wheel_handler(self, x_orient = True):
+        if OS == "Linux" :
+            self.inner.bind_class(self.scrolltag,
+                "<4>", self._on_mousewheel, '+'
+            )
+            self.inner.bind_class(self.scrolltag,
+                "<5>", self._on_mousewheel, '+'
+            )
+
+            if x_orient:
+                def onMouseWheel(event):
+                    if event.num == 4:
+                        self.canvas.xview("scroll", -1, "units")
+                    elif event.num == 5:
+                        self.canvas.xview("scroll", 1, "units")
+            else:
+                def onMouseWheel(event):
+                    if event.num == 4:
+                        self.canvas.yview("scroll", -1, "units")
+                    elif event.num == 5:
+                        self.canvas.yview("scroll", 1, "units")
+
+        elif OS == "Windows":
+            self.inner.bind_class(self.scrolltag,
+                "<MouseWheel>", self._on_mousewheel, '+'
+            )
+
+            if x_orient:
+                def onMouseWheel(event):
+                    self.canvas.xview("scroll", -event.delta // 120, "units")
+                return onMouseWheel
+            else:
+                def onMouseWheel(event):
+                    self.canvas.yview("scroll", -event.delta // 120, "units")
+        else:
+            def onMouseWheel(event):
+                pass
+
+            stderr.write(
+"get_mouse_wheel_handler: OS %s not supported" % (OS)
+            )
+
+        return onMouseWheel
+
 
 def add_scrollbars(outer, InnerType, *inner_args, **inner_kw):
     """ Creates widget of type `InnerType` inside `outer` widget and adds
 vertical and horizontal scroll bars for created widget.
+Returns tuple of InnerType instance and scroll tag. Scroll tag should be added
+to all `inner` child widgets that affect scrolling.
     """
 
     mws = ScrollbarConfigure(outer, InnerType, *inner_args, **inner_kw)
 
-    return mws.inner
+    return mws.inner, mws.scrolltag
