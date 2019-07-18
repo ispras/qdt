@@ -121,7 +121,7 @@ def define_only_qemu_2_6_0_types():
         # variables which are to be replaced by this tool
         # preprocessor (still in progress)
         # tcg is then converted to some existing QEMU types
-        Type("tcg")
+        Type("tcg", incomplete = False)
     ])
 
     Header["qemu/osdep.h"].add_types([
