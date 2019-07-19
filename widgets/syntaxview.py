@@ -25,6 +25,11 @@ from six.moves.tkinter import (
 from six.moves.tkinter_font import (
     NORMAL
 )
+from .gui_text import (
+    GUIText,
+    READONLY
+)
+
 
 main_font = ("Courier", 10, NORMAL)
 # Note that using ITALIC style results in different line height and
@@ -55,7 +60,8 @@ class ExText(GUIFrame):
         self.columnconfigure(2, weight = 0)
 
         # line numbers
-        self.ln = ln = Text(self,
+        self.ln = ln = GUIText(self,
+            state = READONLY,
             font = main_font,
             wrap = "none",
             background = "#BBBBBB",
