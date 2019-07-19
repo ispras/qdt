@@ -1,5 +1,6 @@
 __all__ = [
-    "SyntaxView"
+    "ExText"
+      , "SyntaxView"
 ]
 
 from common import (
@@ -11,6 +12,9 @@ with pypath("..ply"):
     )
 from .gui_frame import (
     GUIFrame
+)
+from six import (
+    range
 )
 from six.moves.tkinter import (
     HORIZONTAL,
@@ -39,7 +43,7 @@ def decorate_ignored(c):
         return c
 
 
-class SyntaxView(GUIFrame):
+class ExText(GUIFrame):
 
     def __init__(self, *a, **kw):
         GUIFrame.__init__(self, *a, **kw)
@@ -62,15 +66,6 @@ class SyntaxView(GUIFrame):
         # the text itself
         self.text = text = Text(self, font = main_font, wrap = "none")
         text.grid(row = 0, column = 1, sticky = "NESW")
-
-        text.tag_config("ignored", font = ignored_font, foreground = "#AAAAAA")
-
-        text.tag_config("keyword", foreground = "#FF0000")
-        text.tag_config("int", foreground = "#00AAFF")
-        text.tag_config("float", foreground = "#00AAFF")
-        text.tag_config("char", foreground = "#00AAFF")
-        text.tag_config("string", foreground = "#AA8800")
-        text.tag_config("id", foreground = "#00AAAA")
 
         self.sbv = sbv = Scrollbar(self)
         sbv.grid(row = 0, column = 2, sticky = "NESW")
@@ -98,29 +93,51 @@ class SyntaxView(GUIFrame):
         self.sbv.set(*a)
         self.text.yview("moveto", a[0])
 
+    def insert(self, index, text, *tags):
+        "See Tkinter Text for arguments description."
+
+        text = self.text
+        text.insert(index, text, *tags)
+
+        ln = self.ln
+        cur_lines = int(ln.index(END).split('.', 1)[1])
+        need_lines = int(text.index(END).split('.', 1)[1])
+
+        if cur_lines >= need_lines:
+            return
+
+        ln.insert(END,
+            "\n".join(str(l) for l in range(cur_lines + 1, need_lines + 1))
+        )
+
+
+class SyntaxView(ExText):
+
+    def __init__(self, *a, **kw):
+        ExText.__init__(self, *a, **kw)
+
+        text = self.text
+
+        text.tag_config("ignored", font = ignored_font, foreground = "#AAAAAA")
+        text.tag_config("keyword", foreground = "#FF0000")
+        text.tag_config("int", foreground = "#00AAFF")
+        text.tag_config("float", foreground = "#00AAFF")
+        text.tag_config("char", foreground = "#00AAFF")
+        text.tag_config("string", foreground = "#AA8800")
+        text.tag_config("id", foreground = "#00AAAA")
+
     def append_syntax_tree(self, tree, ignored_suffix = ""):
-        prev_lineno = 0
-
-        ln, text = self.ln, self.text
-
         for t in iter_tokens(tree):
-            while prev_lineno < t.lineno:
-                prev_lineno += 1
-                ln.insert(END, "%d\n" % prev_lineno)
-
             if t.prefix:
                 content = ""
                 for c in t.prefix:
                     content += decorate_ignored(c)
 
-                text.insert(END, content, "ignored")
+                self.insert(END, content, "ignored")
 
             tags = getattr(t, "tags", [])
-            text.insert(END, t.value, *tags)
+            self.insert(END, t.value, *tags)
 
         for c in ignored_suffix:
-            text.insert(END, decorate_ignored(c), "ignored")
-            if c == "\n":
-                prev_lineno += 1
-                ln.insert(END, "%d\n" % prev_lineno)
+            self.insert(END, decorate_ignored(c), "ignored")
 
