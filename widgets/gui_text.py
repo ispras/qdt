@@ -1,6 +1,7 @@
 __all__ = [
     "GUIText"
   , "READONLY"
+  , "generate_modified"
 ]
 
 # based on http://tkinter.unpythonic.net/wiki/ReadOnlyText
@@ -60,3 +61,26 @@ class GUIText(Text):
             "insert" and "delete". """
             self.insert = self.redirector.register("insert", _break)
             self.delete = self.redirector.register("delete", _break)
+
+
+# Based on: https://stackoverflow.com/questions/40617515/python-tkinter-text-modified-callback
+
+TEXT_CHANGERS = set(["insert", "delete", "replace"])
+
+def generate_modified(text):
+    "Adds report on commands changing Text widget"
+    tk, w = text.tk, text._w
+
+    orig = w + "_orig"
+
+    def proxy(command, *args):
+        cmd = (orig, command) + args
+        result = tk.call(cmd)
+
+        if command in TEXT_CHANGERS:
+            text.event_generate("<<TextModified>>")
+
+        return result
+
+    tk.call("rename", w, orig)
+    tk.createcommand(w, proxy)
