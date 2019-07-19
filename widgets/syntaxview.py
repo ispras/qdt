@@ -62,6 +62,7 @@ class ExText(GUIFrame):
             width = 4
         )
         ln.grid(row = 0, column = 0, sticky = "NESW")
+        ln.insert(END, "1")
 
         # the text itself
         self.text = text = Text(self, font = main_font, wrap = "none")
@@ -96,17 +97,17 @@ class ExText(GUIFrame):
     def insert(self, index, text, *tags):
         "See Tkinter Text for arguments description."
 
-        text = self.text
-        text.insert(index, text, *tags)
+        t = self.text
+        t.insert(index, text, *tags)
 
         ln = self.ln
-        cur_lines = int(ln.index(END).split('.', 1)[1])
-        need_lines = int(text.index(END).split('.', 1)[1])
+        cur_lines = int(ln.index(END).split('.', 1)[0])
+        need_lines = int(t.index(END).split('.', 1)[0])
 
         if cur_lines >= need_lines:
             return
 
-        ln.insert(END,
+        ln.insert(END, "\n" +
             "\n".join(str(l) for l in range(cur_lines + 1, need_lines + 1))
         )
 
