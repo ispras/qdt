@@ -13,7 +13,7 @@ with pypath("..ply"):
 from .gui_frame import (
     GUIFrame
 )
-from six import (
+from six.moves import (
     range
 )
 from six.moves.tkinter import (
