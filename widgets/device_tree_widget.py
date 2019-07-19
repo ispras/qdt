@@ -115,7 +115,7 @@ class DeviceTreeWidget(GUIDialog):
         if not item:
             return
 
-        self.add_button.config(state = "active")
+        self.add_button.config(state = "normal")
         for widget in self.fr_qt.winfo_children():
             widget.destroy()
 
