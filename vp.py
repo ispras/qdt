@@ -550,7 +550,7 @@ class DatumLine(object):
         src_bbox = cnv.bbox(src_iid)
         sx, sy = bbox_center(src_bbox)
 
-        color = w.data_colors[datum_id]
+        color = w.data_colors[datum_id][0]
         line_id = cnv.create_line(sx, sy, dx, dy, fill = color)
 
         cnv.lower(line_id)
