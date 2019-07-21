@@ -183,4 +183,6 @@ class CodeWriter(object):
             try:
                 return d["_langs"][name]
             except KeyError:
-                return super(CodeWriter, self).__getattr__(name)
+                # Note that`object` class has no  `__getattr__`.
+                # See: https://stackoverflow.com/questions/28530982/why-is-object-getattr-missing
+                return super(CodeWriter, self).__getattribute__(name)
