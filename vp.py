@@ -770,7 +770,7 @@ class CodeCanvas(CanvasDnD):
             else:
                 wgt = OpWgt(cls())
 
-            self.add_widget(wgt, *self.__b1_down, 0)
+            self.add_widget(wgt, *self.__b1_down, 0, 1.)
 
         self.hide_ops()
 
