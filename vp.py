@@ -1,6 +1,6 @@
 from common import (
     execfile,
-    PyGenerator,
+    pythonize,
     mlget as _
 )
 from widgets import (
@@ -86,6 +86,8 @@ class Op(object):
     def __dfs_children__(self):
         return [op for op in self.operands if op is not None]
 
+    __pygen_deps__ = ("operands",)
+
     def __var_base__(self):
         return type(self).__name__.lower()
 
@@ -106,6 +108,8 @@ class OpDef(object):
 
     def __dfs_children__(self):
         return [self.op]
+
+    __pygen_deps__ = ("op",)
 
     def __gen_code__(self, g):
         g.gen_code(self)
@@ -1070,6 +1074,8 @@ class SaveData(object):
     def __dfs_children__(self):
         return [p[0] for p in self.positions]
 
+    __pygen_deps__ = ("positions",)
+
     def __gen_code__(self, g):
         g.reset_gen_common(type(self).__name__)
         g.pprint(tuple(self.positions))
@@ -1107,8 +1113,7 @@ if __name__ == "__main__":
         save.from_canvas(dnd_cnv)
 
         try:
-            with open("vproject.py.tmp", "wb") as w:
-                PyGenerator().serialize(w, save)
+            pythonize(save, "vproject.py.tmp")
         except:
             print_exc()
             return
