@@ -23,8 +23,8 @@ from traceback import (
     print_exc
 )
 
-lexer = ctags_lexer # backslash_lexer
-parser = ctags_parser # backslash_parser
+lexer = backslash_lexer # ctags_lexer
+parser = backslash_parser # ctags_parser
 parse = bind(parser.parse, lexer = lexer)
 
 
@@ -60,11 +60,7 @@ def main():
             print_exc()
             continue
 
-        for tag in res.tags:
-            print(str(tag))
-
         sw.append_syntax_tree(res, lexer.ignored)
-        # print(join_tokens(res))
 
     with Persistent(".syntax-view-settings.py",
         geometry = (650, 900)
