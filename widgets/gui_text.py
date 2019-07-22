@@ -116,9 +116,16 @@ widget. An event handler is also given the Tcl command with arguments.
 
         return result
 
-    return notifier("modified")(type(TextClass.__name__ + "M", (TextClass,), {
-        "__init__" : __init__,
-        "_proxy" : _proxy
-    }))
+    return notifier("modified")(type(
+        TextClass.__name__ + "M",
+        # `object` is added as base class because of
+        #     TypeError: a new-style class can't have only classic bases
+        # under Py2
+        (TextClass, object),
+        {
+            "__init__" : __init__,
+            "_proxy" : _proxy
+        }
+    ))
 
 GUITextM = generates_modified(GUIText)
