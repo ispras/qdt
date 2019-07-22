@@ -59,7 +59,7 @@ class DeviceTreeWidget(GUIDialog):
 
         self.focus()
 
-        self.device_tree = dt = VarTreeview(self)
+        self.device_tree = dt = VarTreeview(self, selectmode = "browse")
         dt["columns"] = "Macros"
 
         dt.heading("#0", text = _("Devices"))
