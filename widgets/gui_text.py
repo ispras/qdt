@@ -1,5 +1,6 @@
 __all__ = [
     "GUIText"
+      , "GUITextM"
   , "READONLY"
   , "generate_modified"
   , "generates_modified"
@@ -119,3 +120,5 @@ widget. An event handler is also given the Tcl command with arguments.
         "__init__" : __init__,
         "_proxy" : _proxy
     }))
+
+GUITextM = generates_modified(GUIText)
