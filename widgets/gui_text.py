@@ -2,6 +2,7 @@ __all__ = [
     "GUIText"
   , "READONLY"
   , "generate_modified"
+  , "generates_modified"
 ]
 
 # based on http://tkinter.unpythonic.net/wiki/ReadOnlyText
@@ -9,6 +10,9 @@ __all__ = [
 from six.moves.tkinter import (
     Text,
     NORMAL
+)
+from common import (
+    notifier
 )
 
 READONLY = "readonly"
@@ -84,3 +88,34 @@ def generate_modified(text):
 
     tk.call("rename", w, orig)
     tk.createcommand(w, proxy)
+
+def generates_modified(TextClass):
+    """ A `notifier` issuing "modified" event on commands changing Text
+widget. An event handler is also given the Tcl command with arguments.
+    """
+
+    def __init__(self, *a, **kw):
+        TextClass.__init__(self, *a, **kw)
+
+        tk, w = self.tk, self._w
+
+        self.__orig = orig = w + "_original"
+
+        tk.call("rename", w, orig)
+        tk.createcommand(w, self._proxy)
+
+    def _proxy(self, command, *args):
+        cmd = (self.__orig, command) + args
+        result = self.tk.call(cmd)
+
+        if command in TEXT_CHANGERS:
+            # XXX: I don't know why, but `self.__notify_modified` raises an
+            # attribute error there
+            self._GUITextM__notify_modified(command, *args)
+
+        return result
+
+    return notifier("modified")(type(TextClass.__name__ + "M", (TextClass,), {
+        "__init__" : __init__,
+        "_proxy" : _proxy
+    }))
