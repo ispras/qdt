@@ -19,7 +19,6 @@ from six.moves import (
 from six.moves.tkinter import (
     HORIZONTAL,
     END,
-    Text,
     Scrollbar
 )
 from six.moves.tkinter_font import (
@@ -27,6 +26,7 @@ from six.moves.tkinter_font import (
 )
 from .gui_text import (
     GUIText,
+    GUITextM,
     READONLY
 )
 
@@ -71,7 +71,7 @@ class ExText(GUIFrame):
         ln.insert(END, "1")
 
         # the text itself
-        self.text = text = Text(self, font = main_font, wrap = "none")
+        self.text = text = GUITextM(self, font = main_font, wrap = "none")
         text.grid(row = 0, column = 1, sticky = "NESW")
 
         self.sbv = sbv = Scrollbar(self)
