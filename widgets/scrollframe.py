@@ -1,6 +1,7 @@
 __all__ = [
     "add_scrollbars"
   , "add_scrollbars_native"
+  , "add_scrollbars_with_tags"
 ]
 
 
@@ -10,6 +11,15 @@ from six.moves.tkinter import (
     ALL,
     Scrollbar,
     Canvas
+)
+from itertools import (
+    count
+)
+from sys import (
+    stderr
+)
+from platform import (
+    system
 )
 
 
@@ -117,3 +127,57 @@ vertical and horizontal scroll bars for created widget.
     canvas.bind("<Configure>", canvas_configure, "+")
 
     return inner
+
+
+OS = system()
+tags_count = count(0)
+
+
+def add_scrollbars_with_tags(outer, InnerType, *inner_args, **inner_kw):
+    """ Wrapper around `add_scrollbars`. Returns tuple of InnerType instance
+and scroll tag. Scroll tag should be added to all `inner` child widgets that
+affect scrolling.
+    """
+
+    scrolltag = "tag_" + str(next(tags_count))
+
+    inner = add_scrollbars(outer, InnerType, *inner_args, **inner_kw)
+    inner.bindtags((scrolltag, ) + inner.bindtags())
+
+    canvas = inner.master
+
+    def _on_mousewheel(event):
+        canvas.on_mouse_wheel(event)
+
+    if OS == "Linux" :
+        inner.bind_class(scrolltag,
+            "<ButtonPress-4>", _on_mousewheel, '+'
+        )
+        inner.bind_class(scrolltag,
+            "<ButtonPress-5>", _on_mousewheel, '+'
+        )
+
+        def mouse_wheel_handler(event):
+            if event.num == 4:
+                canvas.yview("scroll", -1, "units")
+            elif event.num == 5:
+                canvas.yview("scroll", 1, "units")
+
+    elif OS == "Windows":
+        inner.bind_class(scrolltag,
+            "<MouseWheel>", _on_mousewheel, '+'
+        )
+
+        def mouse_wheel_handler(event):
+            canvas.yview("scroll", -event.delta // 120, "units")
+
+    else:
+        def mouse_wheel_handler(event):
+            pass
+
+        stderr.write("add_scrollbars_with_tags: OS %s not supported" % (OS))
+
+
+    canvas.on_mouse_wheel = mouse_wheel_handler
+
+    return inner, scrolltag
