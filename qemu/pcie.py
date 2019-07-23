@@ -165,13 +165,13 @@ corresponding vendor is given" % attr
         self.header.add_type(self.state_struct)
 
         self.type_name_macros = Macro(
-            name = self.qtn.type_macro,
+            self.qtn.type_macro,
             text = '"%s"' % self.qtn.for_id_name
         )
         self.header.add_type(self.type_name_macros)
 
         self.type_cast_macro = Macro(
-            name = self.qtn.for_macros, 
+            self.qtn.for_macros,
             args = ["obj"],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
@@ -199,7 +199,7 @@ corresponding vendor is given" % attr
             # TODO: add device id macro to pci_ids.h
             self.header.add_type(
                 Macro(
-                    name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
+                    "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
                             self.device.name
                     ),
                     text = self.device.id
@@ -215,7 +215,7 @@ corresponding vendor is given" % attr
                 # TODO: add device id macro to pci_ids.h
                 self.header.add_type(
                     Macro(
-                        name = "PCI_DEVICE_ID_%s_%s" % (
+                        "PCI_DEVICE_ID_%s_%s" % (
                             self.subsystem_vendor.name,
                             self.subsystem.name
                         ),
@@ -233,7 +233,7 @@ corresponding vendor is given" % attr
 
         for barN in range(0, self.mem_bar_num):
             size_macro = Macro(
-                name = self.gen_Ith_mem_bar_size_macro_name(barN),
+                self.gen_Ith_mem_bar_size_macro_name(barN),
                 text = "0x%X" % mem_bar_def_size
             )
 
@@ -242,19 +242,19 @@ corresponding vendor is given" % attr
 
         if self.msi_messages_num > 0 :
             self.msi_cap_offset = Macro(
-                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
+                "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
                 text = "0x48"
             )
             self.msi_vectors = Macro(
-                name = "%s_MSI_VECTORS" % self.qtn.for_macros,
+                "%s_MSI_VECTORS" % self.qtn.for_macros,
                 text = "%u" % self.msi_messages_num
             )
             self.msi_64bit = Macro(
-                name = "%s_MSI_64BIT" % self.qtn.for_macros,
+                "%s_MSI_64BIT" % self.qtn.for_macros,
                 text = "1"
             )
             self.msi_masking = Macro(
-                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
+                "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
                 text = "1"
             )
 
