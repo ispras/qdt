@@ -711,9 +711,7 @@ def machine_register_2_5(mach):
         code = { "function": mach.type_reg_func }
     )
     mach.source.add_type(
-        Type[def_type].gen_usage(
-            initializer = machine_init_def_args
-        )
+        Type[def_type].gen_usage(initializer = machine_init_def_args)
     )
 
 def machine_register_2_6(mach):
@@ -771,9 +769,7 @@ def machine_register_2_6(mach):
     # Main machine registration macro
     machine_init_def_args = Initializer({ "function": mach.type_reg_func })
     mach.source.add_type(
-        Type["type_init"].gen_usage(
-            initializer = machine_init_def_args
-        )
+        Type["type_init"].gen_usage(initializer = machine_init_def_args)
     )
 
 qemu_heuristic_db = {
