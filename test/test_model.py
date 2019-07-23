@@ -276,31 +276,42 @@ class TestMacroType(SourceModelTestHelper, TestCase):
         super(TestMacroType, self).setUp()
         name = type(self).__name__
 
-        hdr = Header(name.lower() + ".h")
-        hdr.add_type(Macro("QTAIL_ENTRY", args = [ "type" ]))
+        Header("entry_macro.h").add_type(
+            Macro("QTAIL_ENTRY", args = [ "type" ])
+        )
+        Header("struct_end.h").add_type(Macro("END_STRUCT"))
+        Header("header_init.h").add_type(Macro("INIT_HEADER"))
 
+        hdr = Header(name.lower() + ".h")
         struct = Structure("StructA")
         struct.append_fields([
             Type["QTAIL_ENTRY"]("entry",
                 macro_initializer = Initializer({ "type":  struct })
             ),
-            Pointer(struct)("next")
+            Pointer(struct)("next"),
+            Type["END_STRUCT"].gen_usage()
         ])
         hdr.add_type(struct)
+
+        hdr.add_type(Type["INIT_HEADER"].gen_usage())
 
         hdr_content = """\
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
-#define QTAIL_ENTRY(type)
+#include "entry_macro.h"
+#include "header_init.h"
+#include "struct_end.h"
 
 typedef struct StructA StructA;
 
 struct StructA {{
     QTAIL_ENTRY(StructA) entry;
     StructA *next;
+    END_STRUCT
 }};
 
+INIT_HEADER
 #endif /* INCLUDE_{fname_upper}_H */
 """.format(path = hdr.path, fname_upper = name.upper())
 
