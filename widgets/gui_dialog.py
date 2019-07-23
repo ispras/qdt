@@ -21,6 +21,9 @@ class GUIDialog(GUIToplevel):
         self._result = None
         self._alive = True
 
+        self.hk = None
+        self.bind("<Destroy>", self.__on_destroy, "+")
+
         while master:
             top = master.winfo_toplevel()
             try:
@@ -29,7 +32,6 @@ class GUIDialog(GUIToplevel):
                 master = top.master
             else:
                 hk.disable_hotkeys()
-                self.bind("<Destroy>", self.__on_destroy, "+")
                 self.hk = hk
                 break
         else:
@@ -44,10 +46,15 @@ class GUIDialog(GUIToplevel):
                 "Cannot found a top level window with hot key context\n"
             ).get())
 
+        # window needs to be visible for the grab
+        # See: https://stackoverflow.com/questions/40861638/python-tkinter-treeview-not-allowing-modal-window-with-direct-binding-like-on-ri
+        self.wait_visibility()
         self.grab_set()
 
     def __on_destroy(self, e, **kw):
-        if e.widget is self:
+        if e.widget is not self:
+            return
+        if self.hk is not None:
             self.hk.enable_hotkeys()
         self._alive = False
 

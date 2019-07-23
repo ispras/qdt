@@ -32,7 +32,9 @@ from common import (
 
 variables = (Variable, TkVariable)
 
+
 class VarCheckbutton(Checkbutton):
+
     def __init__(self, *args, **kw):
         text = kw.get("text", "")
         if isinstance(text, variables):
@@ -50,7 +52,9 @@ class VarCheckbutton(Checkbutton):
     def on_var_changed(self, *args):
         Checkbutton.config(self, text = self.text_var.get())
 
+
 class VarLabelFrame(LabelFrame):
+
     def __init__(self, *args, **kw):
         if "text" in kw:
             self.text_var = kw.pop("text")
@@ -63,7 +67,9 @@ class VarLabelFrame(LabelFrame):
     def on_var_changed(self, *args):
         Label.config(self, text = self.text_var.get())
 
+
 class VarLabel(Label):
+
     def __init__(self, *args, **kw):
         # "textvariable" argument has same effect to VarLabel as "text"
         try:
@@ -88,7 +94,9 @@ class VarLabel(Label):
     def on_var_changed(self, *args):
         Label.config(self, text = self.text_var.get())
 
+
 class VarButton(Button):
+
     def __init__(self, *args, **kw):
         if "text" in kw:
             self.text_var = kw.pop("text")
@@ -101,7 +109,9 @@ class VarButton(Button):
     def on_var_changed(self, *args):
         Button.config(self, text = self.text_var.get())
 
+
 class VarTk(Tk):
+
     def __init__(self, **kw):
         Tk.__init__(self, **kw)
         self.var = None
@@ -124,38 +134,52 @@ class VarTk(Tk):
 
             self.on_var_changed()
 
+
 class VarToplevel(Toplevel):
+
     def __init__(self, *args, **kw):
         self.var = None
         Toplevel.__init__(self, *args, **kw)
 
-    def on_var_changed(self, *args):
+    def on_var_changed(self, *_):
         Toplevel.title(self, self.var.get())
 
-    def title(self, stringvar = None):
-        if not stringvar:
-            return self.var
+    def title(self, value = None):
+        if value is None:
+            return self.var or Toplevel.title(self)
 
-        if stringvar != self.var:
+        if not isinstance(value, variables): # anything else, e.g. `str`
             if self.var:
-                self.var.trace_vdelete("w", self.observer_name)
-            self.var = stringvar
-            self.observer_name = self.var.trace_variable(
-                "w",
-                self.on_var_changed
-            )
+                self.var.set(value)
+            else:
+                Toplevel.title(self, value)
+            return
 
-            self.on_var_changed()
+        if value is self.var:
+            return
+
+        if self.var is not None:
+            self.var.trace_vdelete("w", self.observer_name)
+        self.var = value
+        self.observer_name = value.trace_variable(
+            "w",
+            self.on_var_changed
+        )
+
+        self.on_var_changed()
 
 
 class MenuVarBinding():
+
     def __init__(self, menu, var, idx, param):
         self.menu, self.var, self.idx, self.param = menu, var, idx, param
 
     def on_var_changed(self, *args):
         self.menu.on_var_changed(self.var, self.idx, self.param)
 
+
 class VarMenu(Menu):
+
     def __init__(self, *args, **kw):
         Menu.__init__(self, *args, **kw)
         if (not "tearoff" in kw) or kw["tearoff"]:
@@ -201,14 +225,18 @@ class VarMenu(Menu):
 
         Menu.add(self, itemType, cnf or kw)
 
+
 class TreeviewHeaderBinding():
+
     def __init__(self, menu, column, var_str):
         self.menu, self.column, self.str = menu, column, var_str
 
     def on_var_changed(self, *args):
         self.menu.on_var_changed(self.column, self.str.get())
 
+
 class TreeviewCellBinding():
+
     def __init__(self, tv, col, row, var):
         self.tv, self.col, self.row, self.var = tv, col, row, var
 
@@ -219,7 +247,9 @@ class TreeviewCellBinding():
         values[self.col] = self.var.get()
         self.tv.item(self.row, values = values)
 
+
 class VarTreeview(Treeview):
+
     def __init__(self, *args, **kw):
         Treeview.__init__(self, *args, **kw)
 
@@ -237,6 +267,7 @@ class VarTreeview(Treeview):
 
     """ If at least one value is StringVar then the values should be a list, not
     a tuple. """
+
     def insert(self, *a, **kw):
         to_track = []
 
@@ -260,7 +291,9 @@ class VarTreeview(Treeview):
 
         return item_iid
 
+
 class ComboboxEntryBinding():
+
     def __init__(self, varcombobox, idx, variable):
         self.vcb = varcombobox
         self.var = variable
@@ -283,7 +316,9 @@ class ComboboxEntryBinding():
         if cur == self.idx:
             Combobox.current(self.vcb, cur)
 
+
 class VarCombobox(Combobox):
+
     def __init__(self, *args, **kw):
         self.bindings = []
 
@@ -314,9 +349,12 @@ class VarCombobox(Combobox):
 
         return Combobox.config(self, cnf, **kw)
 
+
 class VarNotebook(Notebook):
+
     def __init__(self, *args, **kw):
         Notebook.__init__(self, *args, **kw)
+
 
 if __name__ == "__main__":
     root = VarTk()
@@ -330,6 +368,7 @@ if __name__ == "__main__":
     )
 
     class TestTV(VarTreeview, TreeviewWidthHelper):
+
         def __init__(self, *args, **kw):
             kw["columns"] = ["0", "1", "2", "3"]
             VarTreeview.__init__(self, *args, **kw)
