@@ -277,7 +277,7 @@ class TestMacroType(SourceModelTestHelper, TestCase):
         name = type(self).__name__
 
         hdr = Header(name.lower() + ".h")
-        hdr.add_type(Macro("QTAIL_ENTRY", args = ["type"]))
+        hdr.add_type(Macro("QTAIL_ENTRY", args = [ "type" ]))
 
         struct = Structure("StructA")
         struct.append_fields([

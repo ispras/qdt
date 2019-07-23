@@ -129,7 +129,7 @@ class SysBusDeviceType(QOMDevice):
 
         self.type_cast_macro = Macro(
             name = self.qtn.for_macros,
-            args = ["obj"],
+            args = [ "obj" ],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
                 Struct = self.struct_name
