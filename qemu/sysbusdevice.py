@@ -120,16 +120,14 @@ class SysBusDeviceType(QOMDevice):
 
         self.header.add_type(self.state_struct)
 
-        self.type_name_macros = Macro(
-            self.qtn.type_macro,
+        self.type_name_macros = Macro(self.qtn.type_macro,
             text = '"%s"' % self.qtn.for_id_name
         )
 
         self.header.add_type(self.type_name_macros)
 
-        self.type_cast_macro = Macro(
-            self.qtn.for_macros,
-            args = ["obj"],
+        self.type_cast_macro = Macro(self.qtn.for_macros,
+            args = [ "obj" ],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
                 Struct = self.struct_name
@@ -145,12 +143,10 @@ class SysBusDeviceType(QOMDevice):
         ])
 
         for mmioN in range(0, self.mmio_num):
-            size_macro = Macro(
-                self.gen_Ith_mmio_size_macro_name(mmioN),
+            size_macro = Macro(self.gen_Ith_mmio_size_macro_name(mmioN),
                 text = self.gen_mmio_size(self.mmio.get(mmioN, None))
             )
-            name_macro = Macro(
-                self.get_Ith_mmio_name_macro_name(mmioN),
+            name_macro = Macro(self.get_Ith_mmio_name_macro_name(mmioN),
                 text = '%s "_%s"' % (
                     self.qtn.type_macro,
                     self.get_Ith_mmio_id_component(mmioN)
@@ -169,12 +165,12 @@ class SysBusDeviceType(QOMDevice):
         pio_cur_addres = 0x1000
 
         for pioN in range(0, self.pio_num):
-            size_macro = Macro(
-                self.gen_Ith_pio_size_macro_name(pioN),
-                text = "0x%X" % pio_def_size)
-            address_macro = Macro(
-                self.gen_Ith_pio_address_macro_name(pioN),
-                text = "0x%X" % pio_cur_addres)
+            size_macro = Macro(self.gen_Ith_pio_size_macro_name(pioN),
+                text = "0x%X" % pio_def_size
+            )
+            address_macro = Macro(self.gen_Ith_pio_address_macro_name(pioN),
+                text = "0x%X" % pio_cur_addres
+            )
             pio_cur_addres += pio_def_size
 
             self.header.add_types([size_macro, address_macro])
@@ -183,8 +179,7 @@ class SysBusDeviceType(QOMDevice):
             self.pio_address_macros.append(address_macro)
 
         if self.in_irq_num > 0:
-            self.in_irq_macro = Macro(
-                "%s_IN_IRQ_NUM" % self.qtn.for_macros,
+            self.in_irq_macro = Macro(self.qtn.for_macros + "_IN_IRQ_NUM",
                 text = "%d" % self.in_irq_num
             )
 
