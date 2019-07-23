@@ -628,7 +628,7 @@ class SysBusDeviceType(QOMDevice):
             code = { "function": self.register_types }
         )
         self.source.add_type(
-            Type["type_init"].gen_usage(type_init_usage_init)
+            Type["type_init"].gen_usage(initializer = type_init_usage_init)
         )
 
         # order life cycle functions
