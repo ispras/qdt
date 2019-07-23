@@ -126,15 +126,17 @@ class TestLabelAndGotoGeneration(SourceModelTestHelper, TestCase):
         lbl = Label("begin")
         i = Type["int"]("i")
 
-        src.add_type(Function(
-            name = "main",
-            body = BodyTree()(
-                Declare(i),
-                lbl,
-                OpAssign(i, OpAdd(i, 1)),
-                Goto(lbl)
+        src.add_type(
+            Function(
+                name = "main",
+                body = BodyTree()(
+                    Declare(i),
+                    lbl,
+                    OpAssign(i, OpAdd(i, 1)),
+                    Goto(lbl)
+                )
             )
-        ))
+        )
 
         src_content = """\
 /* {} */
@@ -536,10 +538,9 @@ class TestGlobalHeadersInclusion(SourceModelTestHelper, TestCase):
         hg.add_type(Type("GT", incomplete = False))
         hl.add_type(Type("LT", incomplete = False))
 
-        hdr = Header(name.lower() + ".h").add_type(Structure("Fields",
-            Type["GT"]("f1"),
-            Type["LT"]("f2")
-        ))
+        hdr = Header(name.lower() + ".h").add_type(
+            Structure("Fields", Type["GT"]("f1"), Type["LT"]("f2"))
+        )
 
         hdr_content = """\
 /* {path} */
