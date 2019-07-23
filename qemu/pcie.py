@@ -164,15 +164,13 @@ corresponding vendor is given" % attr
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 
-        self.type_name_macros = Macro(
-            self.qtn.type_macro,
+        self.type_name_macros = Macro(self.qtn.type_macro,
             text = '"%s"' % self.qtn.for_id_name
         )
         self.header.add_type(self.type_name_macros)
 
-        self.type_cast_macro = Macro(
-            self.qtn.for_macros,
-            args = ["obj"],
+        self.type_cast_macro = Macro(self.qtn.for_macros,
+            args = [ "obj" ],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
                 Struct = self.struct_name
@@ -198,9 +196,9 @@ corresponding vendor is given" % attr
         except TypeNotRegistered:
             # TODO: add device id macro to pci_ids.h
             self.header.add_type(
-                Macro(
-                    "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
-                            self.device.name
+                Macro("PCI_DEVICE_ID_%s_%s" % (
+                        self.vendor.name,
+                        self.device.name
                     ),
                     text = self.device.id
                 )
@@ -214,8 +212,7 @@ corresponding vendor is given" % attr
             except TypeNotRegistered:
                 # TODO: add device id macro to pci_ids.h
                 self.header.add_type(
-                    Macro(
-                        "PCI_DEVICE_ID_%s_%s" % (
+                    Macro("PCI_DEVICE_ID_%s_%s" % (
                             self.subsystem_vendor.name,
                             self.subsystem.name
                         ),
@@ -232,8 +229,7 @@ corresponding vendor is given" % attr
         mem_bar_def_size = 0x100
 
         for barN in range(0, self.mem_bar_num):
-            size_macro = Macro(
-                self.gen_Ith_mem_bar_size_macro_name(barN),
+            size_macro = Macro(self.gen_Ith_mem_bar_size_macro_name(barN),
                 text = "0x%X" % mem_bar_def_size
             )
 
@@ -241,20 +237,15 @@ corresponding vendor is given" % attr
             self.header.add_type(size_macro)
 
         if self.msi_messages_num > 0 :
-            self.msi_cap_offset = Macro(
-                "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
+            for_macros = self.qtn.for_macros
+            self.msi_cap_offset = Macro(for_macros + "_MSI_CAP_OFFSET",
                 text = "0x48"
             )
-            self.msi_vectors = Macro(
-                "%s_MSI_VECTORS" % self.qtn.for_macros,
+            self.msi_vectors = Macro(for_macros + "_MSI_VECTORS",
                 text = "%u" % self.msi_messages_num
             )
-            self.msi_64bit = Macro(
-                "%s_MSI_64BIT" % self.qtn.for_macros,
-                text = "1"
-            )
-            self.msi_masking = Macro(
-                "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
+            self.msi_64bit = Macro(for_macros + "_MSI_64BIT", text = "1")
+            self.msi_masking = Macro(for_macros + "_MSI_VECTOR_MASKING",
                 text = "1"
             )
 

@@ -639,12 +639,11 @@ class Header(Source):
                     macro.name, m.definer.path, definer
                 ))
         except:
-            m = Macro(
-                macro.name,
-                text = "".join(tok.value for tok in macro.value),
+            m = Macro(macro.name,
                 args = (
                     None if macro.arglist is None else list(macro.arglist)
-                )
+                ),
+                text = "".join(tok.value for tok in macro.value)
             )
             h.add_type(m)
 
@@ -1621,8 +1620,7 @@ class Macro(Type):
 
     @staticmethod
     def new_from_dict(_dict):
-        return Macro(
-            _dict[HDB_MACRO_NAME],
+        return Macro(_dict[HDB_MACRO_NAME],
             args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
