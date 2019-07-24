@@ -41,34 +41,34 @@ ctags_lexer = lex()
 
 
 def p_ctags(p):
-    """ ctags : line
-              | ctags line
+    """ : line
+        | ctags line
     """
     return CTags
 
 
 def p_line(p):
-    "line : field field field extension_fields NL"
+    ": field field field extension_fields NL"
     return Tag
 
 
 # fields may have colons inside
 def p_field(p):
-    """ field : PAIR_ITEM
-              | field COLON PAIR_ITEM
+    """ : PAIR_ITEM
+        | field COLON PAIR_ITEM
     """
     return Field
 
 
 def p_extension_fields(p):
-    """ extension_fields : pair
-                         | extension_fields pair
+    """ : pair
+        | extension_fields pair
     """
     return Fields
 
 
 def p_pair(p):
-    "pair : PAIR_ITEM COLON PAIR_ITEM"
+    ": PAIR_ITEM COLON PAIR_ITEM"
     p.slice[1].tags = ["id"]
     p.slice[3].tags = ["string"]
 
