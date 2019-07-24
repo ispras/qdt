@@ -46,13 +46,21 @@ def main():
     text.pack(fill = BOTH, expand = True, side = TOP)
     text.insert(END, "A\nMultiline\nMessage")
 
+    for i in range(3, 100):
+        text.insert(END, "line %d\n" % i)
+
+    text2 = Text(frame)
+    text2.pack(fill = BOTH, expand = True, side = TOP)
+
     bt1 = Button(frame, text = "Bt#1")
     bt1.pack(side = LEFT)
 
     bt2 = Button(frame, text = "Bt#2")
     bt2.pack(side = RIGHT)
 
-    root.rowconfigure(2, weight = 0)
+    for i in range(1, 200):
+        text2.insert(END, "line %d\n" % i)
+
     Label(root,
         text = "Outer label"
     ).grid(row = 2, column = 0, columnspan = 2, sticky = "EW")
