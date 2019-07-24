@@ -45,21 +45,34 @@ def add_scrollbars_native(outer, inner, row = 0, column = 0):
     return h_sb, v_sb
 
 
-def add_scrollbars(outer, InnerType, *inner_args, **inner_kw):
+def add_scrollbars(outer, InnerType, *inner_args, **kw):
     """ Creates widget of type `InnerType` inside `outer` widget and adds
 vertical and horizontal scroll bars for created widget.
+
+:param kw:
+    those arguments are passed to `InnerType` constructor except for:
+
+    - row/column: `grid` coordinates inside `outer` (default: 0)
+    - inner_kw: see below
+
+    To pass same named arguments to `InnerType` wrap them into a `dict` and
+pass it with name "inner_kw" in "kw".
     """
 
-    outer.rowconfigure(0, weight = 1)
-    outer.rowconfigure(1, weight = 0)
-    outer.columnconfigure(0, weight = 1)
-    outer.columnconfigure(1, weight = 0)
+    row, column = kw.pop("row", 0), kw.pop("column", 0)
+
+    kw.update(kw.pop("inner_kw", {}))
+
+    outer.rowconfigure(row, weight = 1)
+    outer.rowconfigure(row + 1, weight = 0)
+    outer.columnconfigure(column, weight = 1)
+    outer.columnconfigure(column + 1, weight = 0)
 
     # container for inner frame, it supports scrolling
     canvas = Canvas(outer, width = 1, height = 1)
-    canvas.grid(row = 0, column = 0, sticky = "NESW")
+    canvas.grid(row = row, column = row, sticky = "NESW")
 
-    inner = InnerType(canvas, *inner_args, **inner_kw)
+    inner = InnerType(canvas, *inner_args, **kw)
 
     inner_id = canvas.create_window((0, 0),
         window = inner,
@@ -92,7 +105,7 @@ vertical and horizontal scroll bars for created widget.
                 h_sb._visible = False
         else:
             if not h_sb._visible:
-                h_sb.grid(row = 1, column = 0, sticky = "NESW")
+                h_sb.grid(row = row + 1, column = column, sticky = "NESW")
                 h_sb._visible = True
 
         if inner_h <= cnv_h:
@@ -101,7 +114,7 @@ vertical and horizontal scroll bars for created widget.
                 v_sb._visible = False
         else:
             if not v_sb._visible:
-                v_sb.grid(row = 0, column = 1, sticky = "NESW")
+                v_sb.grid(row = row, column = column + 1, sticky = "NESW")
                 v_sb._visible = True
 
     def inner_configure(_):
