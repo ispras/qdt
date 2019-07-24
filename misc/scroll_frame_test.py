@@ -6,9 +6,9 @@ from Tkinter import *
 
 def data():
     for i in range(50):
-       Label(frame, text = i).grid(row = i, column = 0)
-       Label(frame, text = "my text" + str(i)).grid(row = i, column = 1)
-       Label(frame, text = "..........").grid(row = i, column = 2)
+        Label(frame, text = i).grid(row = i, column = 0)
+        Label(frame, text = "my text" + str(i)).grid(row = i, column = 1)
+        Label(frame, text = "..........").grid(row = i, column = 2)
 
 
 def myfunction(event):
