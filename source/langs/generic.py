@@ -3,6 +3,10 @@ __all__ = [
   , "inodify_rule"
 ]
 
+from common import (
+    autoname_rule
+)
+
 
 class INode(object):
     "Intermediate representation Node"
@@ -69,6 +73,6 @@ def _{p_func}(p):
     p[0] = inode_class(p.slice[1:])
 """.format(
         p_func = p_func.__name__,
-        rule = p_func.__doc__
+        rule = autoname_rule(p_func)
     )
     exec(code, globs_before)
