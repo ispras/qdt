@@ -56,15 +56,15 @@ def p_logical_source(p):
     "source : lines"
 
 def p_lines(p):
-    """ lines : line
-              | lines NL line
-              | lines NL
+    """ : line
+        | lines NL line
+        | lines NL
     """
 
 def p_line(p):
-    """ line : TEXT
-             | BS
-             | line line
+    """ : TEXT
+        | BS
+        | line line
     """
 
 unify_rules(globals())
