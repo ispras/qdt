@@ -46,6 +46,15 @@ def main():
     text.pack(fill = BOTH, expand = True, side = TOP)
     text.insert(END, "A\nMultiline\nMessage")
 
+    for i in range(3, 100):
+        text.insert(END, "line %d\n" % i)
+
+    text2 = Text(frame)
+    text2.pack(fill = BOTH, expand = True, side = TOP)
+
+    for i in range(1, 200):
+        text2.insert(END, "line %d\n" % i)
+
     bt1 = Button(frame, text = "Bt#1")
     bt1.pack(side = LEFT)
 
