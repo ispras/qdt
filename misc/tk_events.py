@@ -19,24 +19,15 @@ from six.moves.tkinter_ttk import (
 from common import (
     bind_all_mouse_wheel
 )
+from widgets import (
+    add_scrollbars
+)
 
 
 def main():
     root = Tk()
 
-    Label(root,
-        text = "Outer label"
-    ).pack(
-        fill = BOTH,
-        expand = True,
-        side = TOP
-    )
-
-    frame = Frame(root)
-    frame.pack(fill = BOTH, expand = True, side = TOP)
-
-    sb = Scrollbar(frame)
-    sb.pack(fill = BOTH, side = RIGHT)
+    frame = add_scrollbars(root, Frame)
 
     if False:
         def event_break(e):
@@ -61,6 +52,10 @@ def main():
     bt2 = Button(frame, text = "Bt#2")
     bt2.pack(side = RIGHT)
 
+    root.rowconfigure(2, weight = 0)
+    Label(root,
+        text = "Outer label"
+    ).grid(row = 2, column = 0, columnspan = 2, sticky = "EW")
 
     if False:
         def event(e):
