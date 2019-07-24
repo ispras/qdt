@@ -16,6 +16,9 @@ from six.moves.tkinter import (
 from six.moves.tkinter_ttk import (
     Combobox
 )
+from common import (
+    bind_all_mouse_wheel
+)
 
 
 def main():
@@ -85,7 +88,7 @@ def main():
             return
         # scroll here
 
-    frame.bind_all("<Button-4>", event_all, "+")
+    bind_all_mouse_wheel(frame, event_all, "+")
 
     root.mainloop()
 
