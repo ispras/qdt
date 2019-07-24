@@ -234,10 +234,10 @@ class SettingsWindow(GUIToplevel):
     def title(self, stringvar = None):
         """ Add the prefix with node ID. """
         if stringvar is None:
-            return GUIToplevel.title(self, stringvar = stringvar)
+            return GUIToplevel.title(self)
 
         title = FormatVar("(%u) %%s" % self.node.id) % stringvar
-        return GUIToplevel.title(self, stringvar = title)
+        return GUIToplevel.title(self, title)
 
     def on_escape(self, event):
         self.destroy()
