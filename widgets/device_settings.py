@@ -393,7 +393,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         # pack properties inside a frame with scrolling
         outer_frame = VarLabelFrame(self, text = _("Properties"))
         outer_frame.pack(fill = BOTH, expand = True)
-        self.props_lf = add_scrollbars(outer_frame, GUIFrame)
+        self.props_lf = add_scrollbars(outer_frame, GUIFrame, wheel = True)
 
         self.props_lf.columnconfigure(0, weight = 1)
         self.props_lf.columnconfigure(1, weight = 0)
