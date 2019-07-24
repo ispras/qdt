@@ -5,6 +5,7 @@ __all__ = [
   , "unify_rules"
   , "join_tokens"
   , "make_count_columns"
+  , "autoname_rule"
 ]
 
 from types import (
@@ -18,6 +19,9 @@ with pypath("..ply"):
     from ply.helpers import (
         iter_tokens
     )
+from re import (
+    compile
+)
 
 
 def gen_tokens(glob):
@@ -38,6 +42,17 @@ def iter_rules(glob):
             continue
         if isinstance(v, (FunctionType, MethodType)):
             yield k, v
+
+re_autoname_rule = compile(r"\s*:.*")
+
+def autoname_rule(p_func):
+    """ Append rule name before ":" if required.
+Rule name is p_func's name without "p_".
+    """
+    rule = p_func.__doc__
+    if re_autoname_rule.match(rule):
+        rule = p_func.__name__[2:] + " " + rule
+    return rule
 
 def _unify_rule(p_func, globs_before):
     line = getattr(p_func, "co_firstlineno", p_func.__code__.co_firstlineno)
