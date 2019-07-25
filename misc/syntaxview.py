@@ -9,6 +9,7 @@ from widgets import (
     SyntaxView
 )
 from common import (
+    bidict,
     pypath,
     join_tokens,
     bind,
@@ -117,11 +118,6 @@ def main():
     args = ap.parse_args()
 
     root = Tk()
-    sw = SyntaxView(root)
-    sw.pack(fill = BOTH, expand = True, side = LEFT)
-
-    resview = SyntaxView(root)
-    resview.pack(fill = BOTH, expand = True, side = RIGHT)
 
     for fn in args.files:
         try:
@@ -131,32 +127,55 @@ def main():
             print_exc()
             continue
 
-        res = do_stage(content, backslash_lexer, backslash_parser)
+        st2sv = bidict()
+        sv2st = st2sv.mirror
 
-        sw.append_syntax_tree(res, backslash_lexer.ignored)
+        st = None
 
-        st = Stage(res, backslash_lexer.ignored)
-        resview.insert(END, st.result)
+        for lexer, parser in [
+            (backslash_lexer, backslash_parser),
+        ]:
+            res = do_stage(content, lexer, parser)
+
+            stage_view = SyntaxView(root)
+            stage_view.pack(fill = BOTH, expand = True, side = LEFT)
+            stage_view.append_syntax_tree(res, lexer.ignored)
+
+            st2sv[st] = stage_view
+
+            st = Stage(res, lexer.ignored, st)
+            content = st.result
+
+        final_view = SyntaxView(root)
+        final_view.pack(fill = BOTH, expand = True, side = LEFT)
+        final_view.insert(END, content)
+        st2sv[st] = final_view
 
         # Token highlighting
-
-        rtext = resview.text
-        otext = sw.text
-
-        rtext.tag_configure("hl", background = "yellow")
-        otext.tag_configure("hl", background = "yellow")
-
-        res_hls = []
-        origin_hls = []
-
         def on_b1(e):
-            while res_hls:
-                rtext.tag_remove("hl", *res_hls.pop())
-            while origin_hls:
-                otext.tag_remove("hl", *origin_hls.pop())
+            # remove previous highlighting
+            for sv in sv2st:
+                text = sv.text
+                current = iter(text.tag_ranges("hl"))
+                while True:
+                    try:
+                        left = next(current)
+                    except StopIteration:
+                        break
+                    right = next(current)
+                    text.tag_remove("hl", left, right)
+
+            sv = e.widget.master
+            st = sv2st[sv]
+
+            if st is None:
+                # left most view
+                return
+
+            text = sv.text
 
             # line & column under mouse cursor
-            line, col = rtext.index("@%d,%d" % (e.x, e.y)).split(".")
+            line, col = sv.index_tuple("@%d,%d" % (e.x, e.y))
             try:
                 line_n = int(line)
                 col = int(col)
@@ -173,13 +192,15 @@ def main():
             i1_col = l - line_start
             i2_col = r - line_start
 
+            # syntax view replaces each tab with 4 symbols
+            i2_col += st.origin[l:r].count('\t') * 3
+
             i1 = "%d.%d" % (line_n, i1_col)
             i2 = "%d.%d" % (line_n, i2_col)
 
             hl = (i1, i2)
-            res_hls.append(hl)
 
-            rtext.tag_add("hl", *hl)
+            text.tag_add("hl", *hl)
 
             # highlight the token in original text
             tok = st.resmap[off]
@@ -194,12 +215,14 @@ def main():
             oi2 = "%d.%d" % (origin_line_n, oi2_col)
 
             ohl = (oi1, oi2)
-            origin_hls.append(ohl)
-            otext.tag_add("hl", *ohl)
 
+            otext = st2sv[st.prev_stage].text
+            otext.tag_add("hl", *ohl)
             otext.see(oi1)
 
-        rtext.bind("<Button-1>", on_b1, "+")
+        for sv in sv2st:
+            sv.text.tag_configure("hl", background = "yellow")
+            sv.text.bind("<Button-1>", on_b1, "+")
 
         break # only one file for now
 
