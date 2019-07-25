@@ -19,6 +19,8 @@ from argparse import (
     ArgumentParser
 )
 from source import (
+    cpp_lexer,
+    cpp_parser,
     backslash_lexer,
     backslash_parser,
     ctags_lexer,
@@ -134,6 +136,7 @@ def main():
 
         for lexer, parser in [
             (backslash_lexer, backslash_parser),
+            (cpp_lexer, cpp_parser),
         ]:
             res = do_stage(content, lexer, parser)
 
