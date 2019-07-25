@@ -148,3 +148,52 @@ class SyntaxView(ExText):
         for c in ignored_suffix:
             self.insert(END, decorate_ignored(c), "ignored")
 
+    def index(self, *a, **kw):
+        return "%s.%d" % self.index_(*a, **kw)
+
+    def index_(self, *a, **kw):
+        text = self.text
+
+        line, col = text.index(*a, **kw).split(".")
+
+        # because of ignored tabs are replaced with a string, some adjustments
+        # required
+        vcol = int(col)
+
+        limit = int(col)
+        pos = 0
+        while pos < limit:
+            posi = line + "." + str(pos)
+            if "ignored" not in text.tag_names(posi):
+                pos += 1
+                continue
+
+            c = text.get(posi)
+            if c != u"\u00BB":
+                pos += 1
+                continue
+
+            # tab
+
+            # User may request position for a symbol that replaces
+            # (decorates) ignored tan
+
+            # Scheme:
+            #    _ - real symbol position provided by text.index
+            #   [CAPS] - corresponding virtual symbol position
+            # xxxxT       limit == pos (loop exit condition)
+            # xxxxT_      limit == pos + 1        vcol -= 1
+            # xxxxT _     limit == pos + 2        vcol -= 2
+            # xxxxT  _    limit == pos + 3        vcol -= 3
+            # xxxxt   X   limit >= pos + 4        vcol -= 3
+            vcol -= min(3, limit - pos)
+
+            pos += 4
+
+        print(line, vcol)
+
+        return line, vcol
+
+    def index_tuple(self, *a, **kw):
+        l, c = self.index_(*a, **kw)
+        return int(l), c
