@@ -34,11 +34,6 @@ with pypath("..ply"):
         iter_tokens
     )
 
-lexer = backslash_lexer # ctags_lexer
-parser = backslash_parser # ctags_parser
-parse = bind(parser.parse, lexer = lexer)
-
-
 class Stage(object):
 
     def __init__(self, stree, suffix):
@@ -89,6 +84,27 @@ class Stage(object):
         self.orgmap = originmap
 
 
+def do_stage(content, lexer, parser, debug = False):
+    parse = bind(parser.parse, lexer = lexer)
+
+    lexer.lineno = 1
+    lexer.columnno = 1
+
+    try:
+        res = parse(content)
+    except:
+        if debug:
+            raise # it's already debug launch
+        do_stage(content, lexer, parser, debug = True)
+    else:
+        if debug:
+            raise AssertionError(
+                "The previous exception must be raised again by parse!"
+            )
+
+    return res
+
+
 def main():
     ap = ArgumentParser(
         "File syntax viewer"
@@ -108,25 +124,15 @@ def main():
         try:
             with open(fn, "r") as f:
                 content = f.read()
-
-            lexer.lineno = 1
-            lexer.columnno = 1
-
-            try:
-                res = parse(content)
-            except:
-                lexer.lineno = 1
-                parse(content, debug = True)
-                raise AssertionError(
-                    "The previous exception must be raised again by parse!"
-                )
         except:
             print_exc()
             continue
 
-        sw.append_syntax_tree(res, lexer.ignored)
+        res = do_stage(content, backslash_lexer, backslash_parser)
 
-        st = Stage(res, lexer.ignored)
+        sw.append_syntax_tree(res, backslash_lexer.ignored)
+
+        st = Stage(res, backslash_lexer.ignored)
         resview.insert(END, st.result)
 
         # Token highlighting
