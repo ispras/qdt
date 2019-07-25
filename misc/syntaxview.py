@@ -34,9 +34,12 @@ with pypath("..ply"):
         iter_tokens
     )
 
+
 class Stage(object):
 
-    def __init__(self, stree, suffix):
+    def __init__(self, stree, suffix, prev_stage = None):
+        self.prev_stage = prev_stage
+
         result = ""
         origin = ""
         prev = 0
