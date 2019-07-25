@@ -58,7 +58,7 @@ __all__ = [
                       , "OpGE"
                       , "OpLE"
                       , "OpGreater"
-                      , "OpLower"
+                      , "OpLess"
                       , "CaseRange"
 ]
 
@@ -930,10 +930,10 @@ class OpGreater(BinaryOperator):
         super(OpGreater, self).__init__(">", arg1, arg2, parenthesis)
 
 
-class OpLower(BinaryOperator):
+class OpLess(BinaryOperator):
 
     def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLower, self).__init__("<", arg1, arg2, parenthesis)
+        super(OpLess, self).__init__("<", arg1, arg2, parenthesis)
 
 
 class CaseRange(BinaryOperator):
@@ -965,7 +965,7 @@ op_priority = {
     OpGE:            6,
     OpLE:            6,
     OpGreater:       6,
-    OpLower:         6,
+    OpLess:          6,
     OpEq:            7,
     OpNEq:           7,
     OpAnd:           8,
