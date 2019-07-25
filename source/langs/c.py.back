@@ -9,12 +9,89 @@ from ply.lex import (
 )
 
 
+def t_DECIMAL(t):
+    r"[1-9][0-9]*"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("int",)
+    return t
+
+# also catches 0
+def t_OCTAL(t):
+    r"0[0-7]*"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("int",)
+    return t
+
+def t_HEXADECIMAL(t):
+    r"((0x)|(0X))[0-9a-fA-F]+"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("int",)
+    return t
+
+def t_INT_SFX(t):
+    r"([uU]([lL]|(ll)|(LL))?)|(([lL]|(ll)|(LL))[uU]?)"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("int",)
+    return t
+
+def t_ID(t):
+    r"\w+"
+    t.lexer.columnno += len(t.value)
+    t.tags = ("id",)
+    return t
+
 # Completely ignored characters
 t_ignore = ' \t\x0c'
 
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
+
+t_COLON = r':'
+t_COMMA = r","
+t_CONDOP = r'\?'
+t_LBRACKET = r'\['
+t_RBRACKET = r'\]'
+t_LBRACE = r'\{'
+t_RBRACE = r'\}'
+
+# multiplicative operators
+t_TIMES = r'\*'
+t_DIVIDE = r'/'
+t_MOD = r'%'
+
+# additive operators
+t_PLUS = r'\+'
+t_MINUS = r'-'
+
+# logical operators
+t_LAND = r'&&'
+t_LOR = r'\|\|'
+t_LNOT = r'!'
+
+# bit logic operators
+t_AND = r'&'
+t_OR = r'\|'
+t_XOR = r'\^'
+t_NOT = r'~'
+
+# bit shift operators
+t_LSHIFT = r'<<'
+t_RSHIFT = r'>>'
+
+# relational operators
+t_LT = r'<'
+t_GT = r'>'
+t_LE = r'<='
+t_GE = r'>='
+
+# equality operators
+t_EQ = r'=='
+t_NE = r'!='
+
+# Increment/decrement
+t_PLUSPLUS = r'\+\+'
+t_MINUSMINUS = r'--'
 
 # Operators
 t_PLUS = r'\+'
@@ -79,5 +156,143 @@ t_ELLIPSIS = r'\.\.\.'
 tokens = tuple(k[2:] for k in globals() if k[:2] == "t_")
 
 lexer = lex()
+
+def p_expr(p):
+    ": cond_expr"
+    # XXX: check it
+
+def p_const_expr(p):
+    ": cond_expr"
+
+def p_cond_expr(p):
+    """ : logical_or_expr
+        | logical_or_expr CONDOP expr COLON cond_expr
+    """
+
+def p_logical_or_expr(p):
+    """ : logical_and_expr
+        | logical_or_expr LOR logical_and_expr
+    """
+
+def p_logical_and_expression(p):
+    """ logical_and_expr : inclusive_or_expr
+                         | logical_and_expr LAND inclusive_or_expr
+    """
+
+def p_inclusive_or_expr(p):
+    """ : exclusive_or_expr
+        | inclusive_or_expr OR exclusive_or_expr
+    """
+
+def p_exclusive_or_expr(p):
+    """ : and_expr
+        | exclusive_or_expr XOR and_expr
+    """
+
+def p_and_expr(p):
+    """ : equality_expr
+        | and_expr AND equality_expr
+    """
+
+def p_equality_expr(p):
+    """ : relational_expr
+        | equality_expr EQ relational_expr
+        | equality_expr NE relational_expr
+    """
+
+def p_relational_expr(p):
+    """ : shift_expr
+        | relational_expr LT shift_expr
+        | relational_expr GT shift_expr
+        | relational_expr LE shift_expr
+        | relational_expr GE shift_expr
+    """
+
+def p_shift_expr(p):
+    """ : additive_expr
+        | shift_expr LSHIFT additive_expr
+        | shift_expr RSHIFT additive_expr
+    """
+
+def p_additive_expr(p):
+    """ : multiplicative_expr
+        | additive_expr PLUS multiplicative_expr
+        | additive_expr MINUS multiplicative_expr
+    """
+
+def p_multiplicative_expr(p):
+    """ : cast_expr
+        | multiplicative_expr TIMES cast_expr
+        | multiplicative_expr DIVIDE cast_expr
+        | multiplicative_expr MOD cast_expr
+    """
+
+def p_cast_expr(p):
+    """ : unary_expr
+        | LPAREN type_name RPAREN cast_expr
+    """
+
+def p_type_name(p):
+    ": ID"
+
+def p_unary_expr(p):
+    """ : postfix_expr
+        | PLUSPLUS unary_expr
+        | MINUS unary_expr
+        | unary_op cast_expr
+        | SIZEOF unary_expr
+        | SIZEOF LPAREN type_name RPAREN
+    """
+
+def p_unary_op(p):
+    """ : AND
+        | TIMES
+        | PLUS
+        | MINUS
+        | NOT
+        | LNOT
+    """
+
+def p_postfix_expr(p):
+    """ : primary_expr
+    """
+    # TODO: p.75 of ISO/IEC 9899:202x
+
+def p_primary_expr(p):
+    """ : ID
+        | const
+        | LPAREN expr RPAREN
+    """
+    # TODO: p.56 of ISO/IEC 9899:202x
+
+def p_const(p):
+    """ : int_const
+    """
+    # TODO: float_const, enum_const, char_const, p.45 of ISO/IEC 9899:202x
+
+def p_int_const(p):
+    """ : DECIMAL int_sfx_opt
+        | OCTAL int_sfx_opt
+        | HEXADECIMAL int_sfx_opt
+    """
+
+def p_int_sfx_opt(p):
+    """ :
+        | INT_SFX
+    """
+
+if False:
+    for kw in [ "defined", "sizeof" ]:
+        code = """
+    def t_{KW}(t):
+        r"{kw}(?=\\s)"
+        t.tags = ("keyword",)
+        t.lexer.columnno += len(t.value)
+        return t
+    """.format(
+            kw = kw,
+            KW = kw.upper()
+        )
+        exec(code)
 
 print("!")
