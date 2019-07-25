@@ -15,6 +15,10 @@ from types import (
 from .pypath import (
     pypath
 )
+from inspect import (
+    currentframe,
+    getframeinfo
+)
 with pypath("..ply"):
     from ply.helpers import (
         iter_tokens
@@ -85,14 +89,36 @@ according to the rule. It result in a full parsing tree.
 
         glob[k] = glob_snapshot["_" + k]
 
-def make_count_columns(glob):
-    """ Makes PLY token functions to count column. A user must initialize
+def make_count_columns(glob, line_shift = 0):
+    """ Given string-defined PLY tokens (in globa) converts them into
+function-defined tokens which counts columns. A user must initialize
 `columnno` attribute to 1 (recommended value) of lexer by self.
+
+Call this function after all function-defined tokens. If you want to add
+function-defined tokens after, then play with `line_shift`. It is probably
+should point to line of first string-defined token relative to this function
+call. It's also not recommended to mix function- & string-defined tokens.
     """
 
-    for n, v in dict(glob).items():
-        if isinstance(v, str) and n.startswith("t_"):
-            code = """
+    # It defines functions from `str`ing constants. The constants are assigned
+    # lowest priority by PLY. But, function priority is based on its line
+    # number. However, the priority must remain lowest. So, created functions
+    # are assigned line number of this function call..
+    line = getframeinfo(currentframe().f_back).lineno
+
+    # Also, PLY does assign highest priority to longest regular expressions.
+    # We should preserve this by adding extra line numbers.
+    for i, (n, v) in enumerate(
+        sorted(
+            filter(lambda p: isinstance(p[1], str),
+                   dict(glob).items()
+            ),
+            key = lambda p: -len(p[1])
+        ),
+        line_shift
+    ):
+        if n.startswith("t_"):
+            code =  "\n" * (line - 1 + i) + """
 def {tok}(t):
     r"{regexp}"
     t.lexer.columnno += len(t.value)
