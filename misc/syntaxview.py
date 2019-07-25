@@ -59,7 +59,7 @@ class Stage(object):
 
         origin += suffix
 
-        self.source = origin
+        self.origin = origin
         self.result = result
 
         self.resmap = resmap
