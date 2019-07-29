@@ -494,8 +494,8 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             Enumeration("B", { "three": 3, "four": 4 }, "B"),
             Function(name = "main", body = BodyTree()(
                 Declare(a, b, c),
-                OpAssign(a, Type["A"].get_field("one")),
-                OpAssign(b, Type["B"].get_field("three")),
+                OpAssign(a, Type["A"].one),
+                OpAssign(b, Type["B"].three),
                 OpAssign(c, Type["four"])
             ))
         ])
