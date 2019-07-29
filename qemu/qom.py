@@ -270,7 +270,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
         if reg.full_name: # neither `None` nor empty string
             comment += ", " + reg.full_name
 
-        case.add_child(Comment(comment))
+        case(Comment(comment))
 
         if access in reg.access:
             qtn = QemuTypeName(name)
@@ -284,7 +284,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
             )
 
             if access == "r":
-                case.add_child(
+                case(
                     OpAssign(
                         ret,
                         s_deref
@@ -296,7 +296,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                     wm = reg.wmask
                     if wm.v == (1 << (size * 8)) - 1:
                         # no read only bits: set WAR mask to 0xF...F
-                        case.add_child(
+                        case(
                             OpAssign(
                                 s_deref_war(),
                                 OpNot(0)
@@ -305,7 +305,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                     else:
                         # writable bits, read only bits: init WAR mask with
                         # write mask
-                        case.add_child(
+                        case(
                             OpAssign(
                                 s_deref_war(),
                                 wm
@@ -318,7 +318,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                 if warb.v and wm.v:
                     # WAR bits, writable, read only bits: use WAR mask as
                     # dynamic write mask
-                    case.add_child(
+                    case(
                         OpAssign(
                             s_deref,
                             OpOr(
@@ -340,7 +340,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                 elif wm.v == (1 << (size * 8)) - 1:
                     # no WAR bits, no read only bits
                     # write mask does not affect the value being assigned
-                    case.add_child(
+                    case(
                         OpAssign(
                             s_deref,
                             val
@@ -349,7 +349,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                 elif wm.v:
                     # no WAR bits, writable bits, read only bits: use static
                     # write mask
-                    case.add_child(
+                    case(
                         OpAssign(
                             s_deref,
                             OpOr(
@@ -369,7 +369,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         )
                     )
         else:
-            case.add_child(
+            case(
                 Call(
                     "fprintf",
                     MCall("stderr"),
@@ -760,44 +760,27 @@ class QOMType(object):
             body = BodyTree(),
             static = True
         )
-        root = func.body
         s = Pointer(Type[struct_name])("s")
-
         ret = Variable("ret", Type["uint64_t"])
-
-        root.add_child(
-            Declare(
-                OpDeclareAssign(
-                    s,
-                    MCall(
-                        type_cast_macro,
-                        func.args[0]
-                    )
-                )
-            )
-        )
-
-        root.add_child(
-            Declare(
-                OpDeclareAssign(
-                    ret,
-                    0
-                )
-            )
-        )
-        root.add_child(NewLine())
-
         if regs:
             cases = gen_reg_cases(regs, "r", func.args[1], None, ret, s)
         else:
             cases = []
-        switch = BranchSwitch(func.args[1],
-            cases = cases,
-            separate_cases = True
-        )
-        case_default = SwitchCaseDefault()
-        case_default.add_child(
-            Call(
+
+        func.body(
+            Declare(OpDeclareAssign(
+                s,
+                MCall(type_cast_macro, func.args[0])
+            )),
+            Declare(OpDeclareAssign(
+                ret,
+                0
+            )),
+            NewLine(),
+            BranchSwitch(func.args[1],
+                cases = cases,
+                separate_cases = True
+            )(SwitchCaseDefault()(Call(
                 "printf",
                 StrConcat(
                     "%s: unimplemented read from 0x%",
@@ -808,13 +791,10 @@ class QOMType(object):
                 MCall("__FUNCTION__"),
                 func.args[1],
                 func.args[2]
-            )
+            ))),
+            NewLine(),
+            Return(ret)
         )
-        switch.add_child(case_default)
-        root.add_child(switch)
-
-        root.add_child(NewLine())
-        root.add_child(Return(ret))
 
         return func
 
@@ -824,36 +804,24 @@ class QOMType(object):
             body = BodyTree(),
             static = True
         )
-        root = func.body
-
         s = Pointer(Type[struct_name])("s")
-
-        root.add_child(
-            Declare(
-                OpDeclareAssign(
-                    s,
-                    MCall(
-                        type_cast_macro,
-                        func.args[0]
-                    )
-                )
-            )
-        )
-        root.add_child(NewLine())
-
         if regs:
             cases = gen_reg_cases(
                 regs, "w", func.args[1], func.args[2], None, s
             )
         else:
             cases = []
-        switch = BranchSwitch(func.args[1],
-            cases = cases,
-            separate_cases = True
-        )
-        case_default = SwitchCaseDefault()
-        case_default.add_child(
-            Call(
+
+        func.body(
+            Declare(OpDeclareAssign(
+                s,
+                MCall(type_cast_macro, func.args[0])
+            )),
+            NewLine(),
+            BranchSwitch(func.args[1],
+                cases = cases,
+                separate_cases = True
+            )(SwitchCaseDefault()(Call(
                 "printf",
                 StrConcat(
                     "%s: unimplemented write to 0x%",
@@ -871,10 +839,8 @@ class QOMType(object):
                 func.args[1],
                 func.args[3],
                 func.args[2]
-            )
+            )))
         )
-        switch.add_child(case_default)
-        root.add_child(switch)
 
         return func
 
