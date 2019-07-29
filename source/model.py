@@ -1239,11 +1239,13 @@ class Enumeration(Type):
 
         self.elems.sort(key = lambda x: int(x.initializer.code))
 
-    def get_field(self, name):
+    def __getattr__(self, name):
+        "Tries to find undefined attributes among elements."
         for e in self.elems:
             if name == e.name:
                 return e
-        return None
+        else:
+            return super(Enumeration, self).__getattr__(name)
 
     def gen_chunks(self, generator):
         fields_indent = "    "
