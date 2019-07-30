@@ -482,7 +482,10 @@ switching to that mode.
                             if self_ref is ref:
                                 break
                         else:
-                            self.references.add(ref)
+                            if ref.definer is self:
+                                t.definer_references.add(ref)
+                            else:
+                                self.references.add(ref)
                 else:
                     t.definer_references = set(t.type.definer.references)
 
