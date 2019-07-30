@@ -43,15 +43,15 @@ class DeviceTreeWidget(GUIDialog):
 
         self.focus()
 
-        self.device_tree = VarTreeview(self)
-        self.device_tree["columns"] = ("Macros")
+        self.device_tree = dt = VarTreeview(self)
+        dt["columns"] = "Macros"
 
-        self.device_tree.heading("#0", text = _("Devices"))
-        self.device_tree.heading("Macros", text = _("Macros"))
+        dt.heading("#0", text = _("Devices"))
+        dt.heading("Macros", text = _("Macros"))
 
-        self.device_tree.bind("<ButtonPress-1>", self.on_b1_press_dt)
+        dt.bind("<ButtonPress-1>", self.on_b1_press_dt)
 
-        self.device_tree.grid(
+        dt.grid(
             row = 0,
             column = 0,
             sticky = "NEWS"
@@ -60,14 +60,14 @@ class DeviceTreeWidget(GUIDialog):
         #Add Scrollbar
         ysb = Scrollbar(self,
             orient = "vertical",
-            command = self.device_tree.yview
+            command = dt.yview
         )
         xsb = Scrollbar(self,
             orient = "horizontal",
-            command = self.device_tree.xview
+            command = dt.xview
         )
-        self.device_tree['yscroll'] = ysb.set
-        self.device_tree['xscroll'] = xsb.set
+        dt['yscroll'] = ysb.set
+        dt['xscroll'] = xsb.set
         ysb.grid(row = 0, column = 1, sticky = "NS")
         xsb.grid(row = 1, column = 0, sticky = "EW")
 
