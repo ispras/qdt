@@ -478,11 +478,19 @@ switching to that mode.
                 if inherit_references:
                     t.definer_references = set()
                     for ref in t.type.definer.references:
-                        for self_ref in self.references:
-                            if self_ref is ref:
-                                break
+                        # If the TypeReference depends on the type from the
+                        # current file, then we need to add this dependency to
+                        # the `definer_references`.
+                        if ref.definer is self:
+                            # Here ref is Type (not TypeReference) because
+                            # defined in the current file.
+                            t.definer_references.add(ref)
                         else:
-                            self.references.add(ref)
+                            for self_ref in self.references:
+                                if self_ref is ref:
+                                    break
+                            else:
+                                self.references.add(ref)
                 else:
                     t.definer_references = set(t.type.definer.references)
 
