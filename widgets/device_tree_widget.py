@@ -10,9 +10,6 @@ from .var_widgets import (
 from qemu import (
     qvd_get
 )
-from six.moves.tkinter_ttk import (
-    Scrollbar
-)
 from six.moves.tkinter import (
     Radiobutton,
     Checkbutton,
@@ -26,6 +23,7 @@ from .gui_dialog import (
     GUIDialog
 )
 from .scrollframe import (
+    add_scrollbars_native,
     add_scrollbars_with_tags
 )
 from .gui_frame import (
@@ -67,19 +65,7 @@ class DeviceTreeWidget(GUIDialog):
             sticky = "NEWS"
         )
 
-        #Add Scrollbar
-        ysb = Scrollbar(self,
-            orient = "vertical",
-            command = dt.yview
-        )
-        xsb = Scrollbar(self,
-            orient = "horizontal",
-            command = dt.xview
-        )
-        dt['yscroll'] = ysb.set
-        dt['xscroll'] = xsb.set
-        ysb.grid(row = 0, column = 1, sticky = "NS")
-        xsb.grid(row = 1, column = 0, sticky = "EW")
+        add_scrollbars_native(self, dt)
 
         column_fr = VarLabelFrame(self, borderwidth = 0)
         column_fr.grid(row = 0, column = 2, rowspan = 2, sticky = "SEWN")
