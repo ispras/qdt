@@ -477,11 +477,22 @@ switching to that mode.
                 if inherit_references:
                     t.definer_references = set()
                     for ref in t.type.definer.references:
-                        for self_ref in self.references:
-                            if self_ref is ref:
-                                break
+                        # Definer of a foreign type (t is TypeReference to it)
+                        # may depend on an inner type (ref) from the current
+                        # file (self). In this case, inclusion of that definer
+                        # must be placed below the inner type in resulting
+                        # file. Adding ref to definer_references results in the
+                        # required order among code chunks.
+                        if ref.definer is self:
+                            # Here ref is Type (not TypeReference) because
+                            # defined in the current file.
+                            t.definer_references.add(ref)
                         else:
-                            self.references.add(ref)
+                            for self_ref in self.references:
+                                if self_ref is ref:
+                                    break
+                            else:
+                                self.references.add(ref)
                 else:
                     t.definer_references = set(t.type.definer.references)
 
