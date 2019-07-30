@@ -43,6 +43,9 @@ from collections import (
 from struct import (
     pack
 )
+from binascii import (
+    hexlify
+)
 from common import (
     execfile,
     bstr,
@@ -257,19 +260,25 @@ class TargetSession(DebugSession):
             print("load %s" % self.elffile)
 
         loading = get_elffile_loading(self.elf)
+        end_loading = 0
         for data, addr in loading:
             self.rt.target.store(data, addr)
+            if addr > end_loading:
+                end_loading = addr + len(hexlify(data)) // 2
+        return end_loading
 
     def run(self):
         self._execute_debug_comment()
         if not c2t_cfg.rsp_target.user:
-            self.load()
+            end_loading = self.load()
+            if c2t_cfg.rsp_target.sp is not None:
+                self.rt.target.set_reg(c2t_cfg.rsp_target.sp,
+                    end_loading + 0x1000
+                )
         # TODO: use future 'entry' feature
         new_pc = (
             self.rt.dic.symtab.get_symbol_by_name("main")[0].entry.st_value
         )
-        if c2t_cfg.rsp_target.sp is not None:
-            self.rt.target.set_reg(c2t_cfg.rsp_target.sp, new_pc + 0x10000)
         self.rt.target.set_reg(self.rt.target.pc_reg, new_pc)
         self.rt.target.run(setpc = False)
 
