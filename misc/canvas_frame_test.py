@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from six.moves.tkinter import (
+    Text,
     Tk,
     Canvas,
     Label,
@@ -33,5 +34,12 @@ if __name__ == "__main__":
         print (e.x, e.y)
 
     f2.bind("<Motion>", on_motion, "+")
+
+    cf2 = CanvasFrame(cnv, 200, 200)
+
+    Text(cf2,
+        width = 10, # characters
+        height = 3
+    ).pack(fill = BOTH, expand = 1)
 
     root.mainloop()
