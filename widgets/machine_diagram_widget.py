@@ -448,8 +448,7 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
 
         self.canvas.bind("<Double-Button-1>", self.on_b1_double, "+")
 
-        # override super class method
-        self.canvas.bind("<Motion>", self.motion_all)
+        self.canvas.bind("<Motion>", self.motion_all, "+")
         self.last_canvas_mouse = (0, 0)
 
         self.display_mesh = False
@@ -2024,7 +2023,6 @@ IRQ line creation
                 self.canvas.lift(self.shown_irq_circle)
 
     def motion_all(self, event):
-        self.motion(event)
         # print("motion_all")
 
         mx, my = event.x, event.y
