@@ -30,9 +30,6 @@ SIDE_CURSORS = (
 class CanvasFrame(GUIFrame):
     """ A container allowing to place widgets onto a `Canvas` with moving and
 resizing capabilities.
-
-XXX: Because of unknown reason <Motion> event is received near padding only.
-As a result, hint cursor may appear over inner widgets.
     """
 
     def __init__(self, canvas, x, y, *a, **kw):
@@ -41,7 +38,10 @@ As a result, hint cursor may appear over inner widgets.
 
         # resizing and cursor
         self.bind("<Configure>", self.__on_configure, "+")
-        self.bind("<Motion>", self.__on_motion, "+")
+        # When using non-all binding, <Motion> event is received near padding
+        # only. As a result, hint cursor may appear over inner widgets.
+        # To prevent this, we binds to all and filter out outer widgets.
+        self.bind_all("<Motion>", self.__on_motion, "+")
         self.bind("<ButtonPress-1>", self.__down, "+")
         self.bind("<ButtonRelease-1>", self.__up, "+")
 
@@ -66,7 +66,14 @@ As a result, hint cursor may appear over inner widgets.
         self._update_cursor()
 
     def __on_motion(self, e):
-        if e.widget is not self:
+        # filter out events for outer widgets
+        w = e.widget
+        while w:
+            if w is self:
+                break
+            w = w.master
+        else:
+            # outer widget
             return
 
         self.x, self.y = x, y = e.x, e.y
