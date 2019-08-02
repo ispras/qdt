@@ -3,6 +3,7 @@
 
 __all__ = [
     "CanvasDnD"
+  , "dragging"
 ]
 
 from .gui_frame import (
@@ -17,6 +18,11 @@ from six.moves.tkinter import (
     RIDGE,
     BOTH
 )
+
+
+# CanvasDnD states, use them with `is` operator only
+dragging = object()
+
 
 class CanvasDnD(GUIFrame):
     def __init__(self, master,
@@ -37,13 +43,18 @@ class CanvasDnD(GUIFrame):
 
         self.align = False
         self.mesh_step = IntVar(value = mesh_step)
-        self.dragging = False
+        self._state = None
         self.off = None
         self.canvas.bind("<ButtonPress-1>", self.down, "+")
         self.canvas.bind("<ButtonRelease-1>", self.up, "+")
         self.canvas.bind("<Motion>", self.motion, "+")
 
         self.id_priority_sort_function = id_priority_sort_function
+
+    # backward compatibility properties
+    @property
+    def dragging(self):
+        return self._state is dragging
 
     def down(self, event):
         x, y = event.widget.canvasx(event.x), event.widget.canvasy(event.y)
@@ -62,11 +73,11 @@ class CanvasDnD(GUIFrame):
 
         #print str((x,y)) + " - " + str(self.off)
 
-        self.dragging = True
+        self._state = dragging
         self.event_generate('<<DnDDown>>')
 
     def motion(self, event):
-        if not self.dragging:
+        if self._state is not dragging:
             return
 
         self.master.config(cursor = "fleur")
@@ -120,9 +131,9 @@ class CanvasDnD(GUIFrame):
         self.event_generate('<<DnDMoved>>')
 
     def up(self, event):
-        if self.dragging:
+        if self._state is dragging:
             self.master.config(cursor = "")
-            self.dragging = False
+            self._state = None
             self.off = None
             self.event_generate('<<DnDUp>>')
             """ Right after event. Listeners should be able to get which id
