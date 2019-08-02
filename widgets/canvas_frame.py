@@ -27,6 +27,22 @@ SIDE_CURSORS = (
 )
 
 
+def translate(e, container):
+    "Translates mouse `e`vent relative to `container`."
+
+    w = e.widget
+    # container offsets
+    cx, cy = 0, 0
+    # e.x, e.y. are relative e.widget, but we need x, y relative self
+    while w:
+        if w is container:
+            return True, (e.x + cx), (e.y + cy)
+        cx += w.winfo_x()
+        cy += w.winfo_y()
+        w = w.master
+    return False, None, None
+
+
 class CanvasFrame(GUIFrame):
     """ A container allowing to place widgets onto a `Canvas` with moving and
 resizing capabilities.
@@ -66,22 +82,13 @@ resizing capabilities.
         self._update_cursor()
 
     def __on_motion(self, e):
+        inner, x, y = translate(e, self)
         # filter out events for outer widgets
-        w = e.widget
-        # self offsets
-        # e.x, e.y. are relative e.widget, but we need x, y relative self
-        sx, sy = 0, 0
-        while w:
-            if w is self:
-                break
-            sx += w.winfo_x()
-            sy += w.winfo_y()
-            w = w.master
-        else:
-            # outer widget
+
+        if not inner:
             return
 
-        self.x, self.y = x, y = e.x + sx, e.y + sy
+        self.x, self.y = x, y
 
         if self.resizing:
             cnv = self.master
