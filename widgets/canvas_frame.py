@@ -68,15 +68,20 @@ resizing capabilities.
     def __on_motion(self, e):
         # filter out events for outer widgets
         w = e.widget
+        # self offsets
+        # e.x, e.y. are relative e.widget, but we need x, y relative self
+        sx, sy = 0, 0
         while w:
             if w is self:
                 break
+            sx += w.winfo_x()
+            sy += w.winfo_y()
             w = w.master
         else:
             # outer widget
             return
 
-        self.x, self.y = x, y = e.x, e.y
+        self.x, self.y = x, y = e.x + sx, e.y + sy
 
         if self.dragging:
             cnv = self.master
