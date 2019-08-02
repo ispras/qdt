@@ -315,6 +315,13 @@ LAYOUT_MESH_STEP = "mesh step"
 LAYOUT_DYNAMIC = "physical layout" # this name difference is a legacy issue
 LAYOUT_IRQ_LINES_POINTS = "IRQ lines points"
 
+
+# MachineDiagramWidget states, use them with `is` operator only
+# They do extends CanvasDnD states list
+dragging_all = object()
+begin_drag_all = object()
+
+
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
 
@@ -460,8 +467,6 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
             self.mesh_step.set(MIN_MESH_STEP)
         self.mesh_step.trace_variable("w", self.__on_mesh_step)
 
-        self.begin_drag_all = False
-        self.dragging_all = False
         self.all_were_dragged = False
 
         self.current_ph_iteration = None
@@ -1871,8 +1876,7 @@ IRQ line creation
                 return
 
         # prepare for dragging of all
-        self.begin_drag_all = True
-        self.dragging_all = False
+        self._state = begin_drag_all
         self.all_were_dragged = False
         # print("on_b3_press")
 
@@ -1882,11 +1886,8 @@ IRQ line creation
             n.static = False
 
         # reset dragging of all
-        if self.dragging_all:
-            self.dragging_all = False
-            # begin_drag_all is already False
-        else:
-            self.begin_drag_all = False
+        if self._state in (dragging_all, begin_drag_all):
+            self._state = None
 
         self.master.config(cursor = "")
 
@@ -2063,23 +2064,22 @@ IRQ line creation
             self.update_highlighted_irq_line()
 
         # if user moved mouse far enough then begin dragging of all
-        if self.begin_drag_all:
+        if self._state is begin_drag_all:
             b3pp = self.b3_press_point
 
             dx = abs(mx - b3pp[0])
             dy = abs(my - b3pp[1])
             # Use Manchester metric to speed up the check
             if dx + dy > DRAG_GAP:
-                self.dragging_all = True
+                self._state = dragging_all
                 event.widget.scan_mark(
                     int(self.canvas.canvasx(b3pp[0])),
                     int(self.canvas.canvasy(b3pp[1]))
                 )
                 self.master.config(cursor = "fleur")
-                self.begin_drag_all = False
                 self.hide_popup()
 
-        if not self.dragging_all:
+        if self._state is not dragging_all:
             return
 
         self.__repaint_mesh()
