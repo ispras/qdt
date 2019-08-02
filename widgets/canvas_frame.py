@@ -43,6 +43,21 @@ def translate(e, container):
     return False, None, None
 
 
+# "Alt" keyboard button state checker
+# https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
+def alt(e):
+    try:
+        return e.state & 0x0088
+    except TypeError:
+        # sometimes e.state is `str`
+        return False
+
+
+# CanvasFrame states, use them with `is` operator only!
+resizing = object()
+dragging = object()
+
+
 # `object` is required by `property`
 class CanvasFrame(GUIFrame, object):
     """ A container allowing to place widgets onto a `Canvas` with moving and
@@ -59,10 +74,10 @@ resizing capabilities.
         # only. As a result, hint cursor may appear over inner widgets.
         # To prevent this, we binds to all and filter out outer widgets.
         self.bind_all("<Motion>", self.__on_motion, "+")
-        self.bind("<ButtonPress-1>", self.__down, "+")
-        self.bind("<ButtonRelease-1>", self.__up, "+")
+        self.bind_all("<ButtonPress-1>", self.__down, "+")
+        self.bind_all("<ButtonRelease-1>", self.__up, "+")
 
-        self.resizing = False
+        self.__state = None
         self.w, self.h = 0, 0
         self.x, self.y = RESIZE_GAP * 2, RESIZE_GAP * 2
         self.__cursor = self.cget("cursor")
@@ -76,14 +91,29 @@ resizing capabilities.
 
     cursor = property(fset = _set_cursor)
 
+    def _set_state(self, s):
+        self.__state = s
+        if s is dragging:
+            self.cursor = "fleur"
+        else:
+            self._update_cursor()
+
+    state = property(fset = _set_state)
+
     def __down(self, e):
-        side = self.__side
-        if side:
-            self.__offset_x, self.__offset_y = e.x, e.y
-            self.resizing = True
+        inner, x, y = translate(e, self)
+        if not inner:
+            return
+
+        if alt(e):
+            self.__offset_x, self.__offset_y = x, y
+            self.state = dragging
+        elif self.__side:
+            self.__offset_x, self.__offset_y = x, y
+            self.state = resizing
 
     def __up(self, _):
-        self.resizing = False
+        self.state = None
 
     def __on_configure(self, e):
         self.w, self.h = e.width, e.height
@@ -98,7 +128,8 @@ resizing capabilities.
 
         self.x, self.y = x, y
 
-        if self.resizing:
+        state = self.__state
+        if state is resizing:
             cnv = self.master
 
             ox, oy = self.__offset_x, self.__offset_y
@@ -138,11 +169,18 @@ resizing capabilities.
                     cnv.itemconfig(_id, height = h)
                     self.__offset_y = y - dy
 
+        elif state is dragging:
+            cnv, _id = self.master, self.id
+            ox, oy = self.__offset_x, self.__offset_y
+            dx, dy = x - ox, y - oy
+            curx, cury = cnv.coords(_id)
+            cnv.coords(_id, curx + dx, cury + dy)
+
         self._update_cursor()
 
     def _update_cursor(self):
-        if self.resizing:
-            # Update neither side nor cursor during resizing
+        if self.__state is not None:
+            # Update neither side nor cursor during drag actions
             return
 
         x, y = self.x, self.y
