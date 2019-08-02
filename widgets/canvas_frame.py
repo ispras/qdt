@@ -45,7 +45,7 @@ resizing capabilities.
         self.bind("<ButtonPress-1>", self.__down, "+")
         self.bind("<ButtonRelease-1>", self.__up, "+")
 
-        self.dragging = False
+        self.resizing = False
         self.w, self.h = 0, 0
         self.x, self.y = RESIZE_GAP * 2, RESIZE_GAP * 2
         self.cursor = self.cget("cursor")
@@ -56,10 +56,10 @@ resizing capabilities.
         side = self.__side
         if side:
             self.__offset_x, self.__offset_y = e.x, e.y
-            self.dragging = True
+            self.resizing = True
 
     def __up(self, _):
-        self.dragging = False
+        self.resizing = False
 
     def __on_configure(self, e):
         self.w, self.h = e.width, e.height
@@ -83,7 +83,7 @@ resizing capabilities.
 
         self.x, self.y = x, y = e.x + sx, e.y + sy
 
-        if self.dragging:
+        if self.resizing:
             cnv = self.master
 
             ox, oy = self.__offset_x, self.__offset_y
@@ -126,8 +126,8 @@ resizing capabilities.
         self._update_cursor()
 
     def _update_cursor(self):
-        if self.dragging:
-            # Update neither side nor cursor during dragging
+        if self.resizing:
+            # Update neither side nor cursor during resizing
             return
 
         x, y = self.x, self.y
