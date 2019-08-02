@@ -43,7 +43,8 @@ def translate(e, container):
     return False, None, None
 
 
-class CanvasFrame(GUIFrame):
+# `object` is required by `property`
+class CanvasFrame(GUIFrame, object):
     """ A container allowing to place widgets onto a `Canvas` with moving and
 resizing capabilities.
     """
@@ -64,9 +65,16 @@ resizing capabilities.
         self.resizing = False
         self.w, self.h = 0, 0
         self.x, self.y = RESIZE_GAP * 2, RESIZE_GAP * 2
-        self.cursor = self.cget("cursor")
+        self.__cursor = self.cget("cursor")
 
         self.id = canvas.create_window(x, y, window = self, anchor = NW)
+
+    def _set_cursor(self, c):
+        if self.__cursor != c:
+            self.__cursor = c
+            self.config(cursor = c)
+
+    cursor = property(fset = _set_cursor)
 
     def __down(self, e):
         side = self.__side
@@ -152,7 +160,4 @@ resizing capabilities.
 
         self.__side = side
 
-        side_cursor = SIDE_CURSORS[side]
-        if self.cursor != side_cursor:
-            self.cursor = side_cursor
-            self.config(cursor = side_cursor)
+        self.cursor = SIDE_CURSORS[side]
