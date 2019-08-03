@@ -144,7 +144,7 @@ class ChunkGenerator(object):
     """ Maintains context of source code chunks generation process. """
 
     def __init__(self, definer):
-        self.chunk_cache = { definer: [] }
+        self.chunk_cache = { definer: [], CPP: [] }
         self.for_header = isinstance(definer, Header)
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
