@@ -321,6 +321,8 @@ LAYOUT_IRQ_LINES_POINTS = "IRQ lines points"
 dragging_all = object()
 begin_drag_all = object()
 
+rect_selecting = object()
+
 
 class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
     EVENT_SELECT = "<<Select>>"
@@ -448,6 +450,9 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.bind('<<DnDDown>>', self.dnd_down, "+")
         self.bind('<<DnDUp>>', self.dnd_up, "+")
         self.dragged = []
+        # A canvas ID is considered "touched" since "<<DnDDown>>" and
+        # until "<<DnDMoved>>".
+        self.touched = None
 
         self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
         self.b3_press_point = (-1, -1)
@@ -478,7 +483,6 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.selection_marks = []
         self.selection_mark_color = "orange"
         self.selected = []
-        self.select_point = None
         self.canvas.bind("<ButtonPress-1>", self.on_b1_press, "+")
         self.canvas.bind("<ButtonRelease-1>", self.on_b1_release, "+")
 
@@ -852,6 +856,10 @@ IRQ line creation
     def on_diagram_finding(self, *args):
         cnv = self.canvas
 
+        # Disabled when user doing something with mouse
+        if self._state is not None:
+            return
+
         ids = cnv.find_withtag("DnD")
         if len(ids) == 0:
             return
@@ -871,14 +879,15 @@ IRQ line creation
 
         # cancel current physic iteration if moved
         self.invalidate()
-        self.select_point = None
-        cnv.delete(self.select_frame)
-        self.select_frame = None
 
         self.__repaint_mesh()
 
     def on_diagram_centering(self, *args):
         cnv = self.canvas
+
+        # Disabled when user doing something with mouse
+        if self._state is not None:
+            return
 
         ids = cnv.find_withtag("DnD")
         if len(ids) == 0:
@@ -900,9 +909,6 @@ IRQ line creation
 
         # cancel current physic iteration if moved
         self.invalidate()
-        self.select_point = None
-        cnv.delete(self.select_frame)
-        self.select_frame = None
 
         self.__repaint_mesh()
 
@@ -1741,6 +1747,13 @@ IRQ line creation
     def on_b1_press(self, event):
         event.widget.focus_set()
 
+        # If user pressed on a draggable item, the state is already set by
+        # <ButtonPress-1> handler of super class. Because this event handler
+        # is binded after it.
+        if self._state is not None:
+            return
+        self._state = rect_selecting
+
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         self.select_point = (x, y)
 
@@ -1749,7 +1762,6 @@ IRQ line creation
             fill = "",
             outline = self.select_frame_color
         )
-        self.select_by_frame = False
 
     def get_id_priority(self, _id):
         try:
@@ -1793,25 +1805,24 @@ IRQ line creation
         ))
 
     def on_b1_release(self, event):
-        if not self.select_point:
+        if self._state is not rect_selecting:
+            # select item if it has been touched but not been dragged
+            touched = self.touched
+            if touched is not None:
+                self._select_ids(True, touched)
             return
+        self._state = None
 
-        x, y = self.select_point[0], self.select_point[1] 
-
-        if self.select_by_frame:
-            bbox = self.canvas.bbox(self.select_frame)
-            touched = self.canvas.find_enclosed(*bbox)
-        else:
-            touched = self.canvas.find_overlapping(
-                x - 3, y - 3, x + 3, y + 3
-            )
-
+        bbox = self.canvas.bbox(self.select_frame)
+        touched = self.canvas.find_enclosed(*bbox)
         touched = self.sort_ids_by_priority(touched)
 
-        self.select_point = None
         self.canvas.delete(self.select_frame)
         self.select_frame = None
 
+        self._select_ids(False, *touched)
+
+    def _select_ids(self, exclude_selected, *touched):
         touched_ids = []
         for t in touched:
             if ("DnD" in self.canvas.gettags(t)) and (t in self.id2node):
@@ -1819,8 +1830,6 @@ IRQ line creation
                     # IRQ line selection is not supported yet.
                     continue
                 touched_ids.append(t)
-                if not self.select_by_frame:
-                    break
 
         shift = self.__shift_is_held()
 
@@ -1836,17 +1845,16 @@ IRQ line creation
 
         if shift:
             for tid in touched_ids:
-                if self.select_by_frame:
-                    if not tid in self.selected:
-                        self.selected.append(tid)
-                        self.event_generate(MachineDiagramWidget.EVENT_SELECT)
-                else:
+                if exclude_selected:
                     if tid in self.selected:
                         self.selected.remove(tid)
                         self.event_generate(MachineDiagramWidget.EVENT_SELECT)
                     else:
                         self.selected.append(tid)
                         self.event_generate(MachineDiagramWidget.EVENT_SELECT)
+                elif tid not in self.selected:
+                    self.selected.append(tid)
+                    self.event_generate(MachineDiagramWidget.EVENT_SELECT)
         elif not self.selected == touched_ids:
             self.selected = list(touched_ids)
             self.event_generate(MachineDiagramWidget.EVENT_SELECT)
@@ -1856,8 +1864,8 @@ IRQ line creation
     def on_b3_press(self, event):
         event.widget.focus_set()
 
-        if self.dragging or self.select_point:
-            return
+        if self._state is not None:
+            return # User already using mouse for something
 
         mx, my = event.x, event.y
         self.b3_press_point = (mx, my)
@@ -2030,13 +2038,17 @@ IRQ line creation
         x, y = self.canvas.canvasx(mx), self.canvas.canvasy(my)
         self.last_canvas_mouse = x, y
 
-        if self.select_point:
+        if self._state is rect_selecting:
+            # TODO: Because canvas reorders points of the rectangle (first
+            # point is always to the top & left of second one),
+            # we can't distinguish which of point is starting and which is
+            # "current" (to be replaced with event's (x, y)).
+            # So, we can't eliminate `select_point` now.
             self.canvas.coords(*[
                 self.select_frame,
                 self.select_point[0], self.select_point[1],
                 x, y
             ])
-            self.select_by_frame = True
             return
 
         if self.shown_irq_circle:
@@ -2096,12 +2108,11 @@ IRQ line creation
 
         # cancel current physic iteration if moved
         self.invalidate()
-        self.select_point = None
-        self.canvas.delete(self.select_frame)
-        self.select_frame = None
         self.all_were_dragged = True
 
     def dnd_moved(self, event):
+        self.touched = None
+
         _id = self.dnd_dragged
         if _id == self.shown_irq_circle:
             node = self.shown_irq_node
@@ -2144,12 +2155,11 @@ IRQ line creation
 
         # cancel current physic iteration if moved
         self.invalidate()
-        self.select_point = None
-        self.canvas.delete(self.select_frame)
-        self.select_frame = None
 
     def dnd_down(self, event):
         _id = self.dnd_dragged
+
+        self.touched = _id
 
         if _id == self.irq_circle_preview:
             self.tmp_irq_circle = (
