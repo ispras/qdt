@@ -3,12 +3,12 @@
 from six.moves.tkinter import (
     Text,
     Tk,
-    Canvas,
     Label,
     BOTH,
     Frame
 )
 from widgets import (
+    CanvasDnD,
     CanvasFrame
 )
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
 
-    cnv = Canvas(root, bg = "white")
+    cnv = CanvasDnD(root, bg = "white", width = 400, height = 400)
     cnv.grid(row = 0, column = 0, sticky = "NESW")
 
     cf = CanvasFrame(cnv, 100, 100)
