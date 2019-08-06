@@ -76,6 +76,7 @@ resizing capabilities.
     """
 
     def __init__(self, canvas, x, y, *a, **kw):
+        canvas_kw = kw.pop("canvas_kw", {})
         kw["padx"] = kw["pady"] = RESIZE_GAP + 2
         GUIFrame.__init__(self, canvas, *a, **kw)
 
@@ -93,7 +94,11 @@ resizing capabilities.
         self.x, self.y = RESIZE_GAP * 2, RESIZE_GAP * 2
         self.__cursor = self.cget("cursor")
 
-        self.id = canvas.create_window(x, y, window = self, anchor = NW)
+        canvas_kw = dict(canvas_kw) # preserve user's `dict`
+        canvas_kw["window"] = self
+        canvas_kw["anchor"] = NW
+
+        self.id = canvas.create_window(x, y, **canvas_kw)
 
     def _set_cursor(self, c):
         if self.__cursor != c:
