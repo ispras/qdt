@@ -31,7 +31,7 @@ class CanvasDnD(GUIFrame):
         ):
 
         GUIFrame.__init__ (self, master)
-        self.canvas = Canvas (self, 
+        self.canvas = cnv = Canvas (self,
             width = 100, # default width
             height = 100, # default height
             relief = RIDGE,
@@ -39,15 +39,15 @@ class CanvasDnD(GUIFrame):
             borderwidth = 1
         )
 
-        self.canvas.pack(expand = 1, fill = BOTH)
+        cnv.pack(expand = 1, fill = BOTH)
 
         self.align = False
         self.mesh_step = IntVar(value = mesh_step)
         self._state = None
         self.off = None
-        self.canvas.bind("<ButtonPress-1>", self.down, "+")
-        self.canvas.bind("<ButtonRelease-1>", self.up, "+")
-        self.canvas.bind("<Motion>", self.motion, "+")
+        cnv.bind("<ButtonPress-1>", self.down, "+")
+        cnv.bind("<ButtonRelease-1>", self.up, "+")
+        cnv.bind("<Motion>", self.motion, "+")
 
         self.id_priority_sort_function = id_priority_sort_function
 
