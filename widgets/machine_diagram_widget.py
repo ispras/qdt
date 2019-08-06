@@ -8,6 +8,7 @@ from .var_widgets import (
     VarMenu
 )
 from .DnDCanvas import (
+    dragging_all,
     CanvasDnD
 )
 from six import (
@@ -318,9 +319,6 @@ LAYOUT_IRQ_LINES_POINTS = "IRQ lines points"
 
 # MachineDiagramWidget states, use them with `is` operator only
 # They do extends CanvasDnD states list
-dragging_all = object()
-begin_drag_all = object()
-
 rect_selecting = object()
 
 
@@ -449,13 +447,20 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         self.bind('<<DnDMoved>>', self.dnd_moved, "+")
         self.bind('<<DnDDown>>', self.dnd_down, "+")
         self.bind('<<DnDUp>>', self.dnd_up, "+")
+        self.bind("<<DnDAll>>", self.dnd_all, "+")
+        self.bind("<<DnDAllMoved>>", self.dnd_all_moved, "+")
+        self.bind("<<DnDAllUp>>", self.dnd_all_up, "+")
         self.dragged = []
         # A canvas ID is considered "touched" since "<<DnDDown>>" and
         # until "<<DnDMoved>>".
         self.touched = None
 
-        self.canvas.bind("<ButtonPress-3>", self.on_b3_press, "+")
-        self.b3_press_point = (-1, -1)
+        # User may press Shift + RMB to remove IRQ line point.
+        # In that case, DnDCanvas should not begin drag all sequence.
+        # So, we override DnDCanvas's <ButtonPress-3> handler there and call
+        # it from `on_b3_press` when necessary.
+        self.canvas.bind("<ButtonPress-3>", self.on_b3_press)
+        self.all_were_dragged = False
         self.canvas.bind("<ButtonRelease-3>", self.on_b3_release, "+")
 
         self.canvas.bind("<Double-Button-1>", self.on_b1_double, "+")
@@ -471,8 +476,6 @@ class MachineDiagramWidget(CanvasDnD, TkPopupHelper):
         elif self.mesh_step.get() < MIN_MESH_STEP:
             self.mesh_step.set(MIN_MESH_STEP)
         self.mesh_step.trace_variable("w", self.__on_mesh_step)
-
-        self.all_were_dragged = False
 
         self.current_ph_iteration = None
 
@@ -1867,9 +1870,6 @@ IRQ line creation
         if self._state is not None:
             return # User already using mouse for something
 
-        mx, my = event.x, event.y
-        self.b3_press_point = (mx, my)
-
         # Shift + right button press => delete IRQ line circle
         self.circle_was_deleted = False
         if self.__shift_is_held():
@@ -1883,27 +1883,30 @@ IRQ line creation
                 self.circle_was_deleted = True
                 return
 
-        # prepare for dragging of all
-        self._state = begin_drag_all
-        self.all_were_dragged = False
+        CanvasDnD.b3down(self, event)
+
         # print("on_b3_press")
+
+    def dnd_all(self, _):
+        self.hide_popup()
+
+    def dnd_all_moved(self, _):
+        self.__repaint_mesh()
+        # cancel current physic iteration if moved
+        self.invalidate()
+
+    def dnd_all_up(self, e):
+        self.all_were_dragged = self._state is dragging_all
 
     def on_b3_release(self, event):
         # print("on_b3_release")
         for n in self.nodes + self.buslabels + self.circles:
             n.static = False
 
-        # reset dragging of all
-        if self._state in (dragging_all, begin_drag_all):
-            self._state = None
-
-        self.master.config(cursor = "")
-
         self.update_highlighted_irq_line()
 
         if self.all_were_dragged:
-            self.__repaint_mesh()
-            return
+            return # we should not show popup
 
         if self.circle_was_deleted:
             return
@@ -2075,41 +2078,6 @@ IRQ line creation
         # If IRQ line popup menu is showed, then do not change IRQ highlighting
         if self.current_popup is not self.popup_irq_line:
             self.update_highlighted_irq_line()
-
-        # if user moved mouse far enough then begin dragging of all
-        if self._state is begin_drag_all:
-            b3pp = self.b3_press_point
-
-            dx = abs(mx - b3pp[0])
-            dy = abs(my - b3pp[1])
-            # Use Manchester metric to speed up the check
-            if dx + dy > DRAG_GAP:
-                self._state = dragging_all
-                event.widget.scan_mark(
-                    int(self.canvas.canvasx(b3pp[0])),
-                    int(self.canvas.canvasy(b3pp[1]))
-                )
-                self.master.config(cursor = "fleur")
-                self.hide_popup()
-
-        if self._state is not dragging_all:
-            return
-
-        self.__repaint_mesh()
-
-        event.widget.scan_dragto(
-            int(event.widget.canvasx(event.x)),
-            int(event.widget.canvasy(event.y)),
-            gain = 1
-        )
-        event.widget.scan_mark(
-            int(event.widget.canvasx(event.x)),
-            int(event.widget.canvasy(event.y))
-        )
-
-        # cancel current physic iteration if moved
-        self.invalidate()
-        self.all_were_dragged = True
 
     def dnd_moved(self, event):
         self.touched = None
