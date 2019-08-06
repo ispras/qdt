@@ -315,6 +315,9 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
         session = OracleSession(archmap[ORACLE_CPU], test_src,
             str(gdbserver_port), test_elf, res_queue, verbose
         )
+
+        res_queue.put((session.session_type, test_src, "TEST_RUN"))
+
         session.run()
 
         res_queue.put((session.session_type, test_src, "TEST_END"))
@@ -378,6 +381,8 @@ def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
             )
             qmp("system_reset")
 
+        res_queue.put((session.session_type, test_src, "TEST_RUN"))
+
         session.run()
 
         res_queue.put((session.session_type, test_src, "TEST_END"))
@@ -432,6 +437,8 @@ def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
                 )[0].entry.st_value
             )
             qmp("system_reset")
+
+        res_queue.put((session.session_type, test_src, "TEST_RUN"))
 
         session.run()
 

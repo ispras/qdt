@@ -126,6 +126,8 @@ comparison report
 
             if dump == "TEST_EXIT" and cmp_dump == "TEST_EXIT":
                 self.end -= 1
+            elif dump == "TEST_RUN" and cmp_dump == "TEST_RUN":
+                print("%s: RUN" % test)
             elif dump == "TEST_END" and cmp_dump == "TEST_END":
                 print("%s: OK" % test)
             else:
