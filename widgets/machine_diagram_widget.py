@@ -2073,7 +2073,7 @@ IRQ line creation
                     break
 
         # If IRQ line popup menu is showed, then do not change IRQ highlighting
-        if not self.current_popup == self.popup_irq_line:
+        if self.current_popup is not self.popup_irq_line:
             self.update_highlighted_irq_line()
 
         # if user moved mouse far enough then begin dragging of all
