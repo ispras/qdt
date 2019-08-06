@@ -9,8 +9,8 @@ __all__ = [
   , "DRAG_GAP"
 ]
 
-from .gui_frame import (
-    GUIFrame
+from .tk_unbind import (
+    unbind
 )
 from six.moves import (
     range as xrange
@@ -32,32 +32,35 @@ begin_drag_all = object()
 dragging_all = object()
 
 
-class CanvasDnD(GUIFrame):
+class CanvasDnD(Canvas):
+    unbind = unbind
+
     def __init__(self, master,
             id_priority_sort_function = lambda ids : ids,
-            mesh_step = 20
+            mesh_step = 20,
+            **kw
         ):
+        # override some defaults
+        for arg, val in [
+            ("width", 100),
+            ("height", 100),
+            ("relief", RIDGE),
+            ("background", "white"),
+            ("borderwidth", 1)
+        ]:
+            kw.setdefault(arg, val)
 
-        GUIFrame.__init__ (self, master)
-        self.canvas = cnv = Canvas (self,
-            width = 100, # default width
-            height = 100, # default height
-            relief = RIDGE,
-            background = "white",
-            borderwidth = 1
-        )
-
-        cnv.pack(expand = 1, fill = BOTH)
+        Canvas.__init__ (self, master, **kw)
 
         self.align = False
         self.mesh_step = IntVar(value = mesh_step)
         self._state = None
         self.off = None
-        cnv.bind("<ButtonPress-1>", self.down, "+")
-        cnv.bind("<ButtonRelease-1>", self.up, "+")
-        cnv.bind("<ButtonPress-3>", self.b3down, "+")
-        cnv.bind("<ButtonRelease-3>", self.b3up, "+")
-        cnv.bind("<Motion>", self.motion, "+")
+        self.bind("<ButtonPress-1>", self.down, "+")
+        self.bind("<ButtonRelease-1>", self.up, "+")
+        self.bind("<ButtonPress-3>", self.b3down, "+")
+        self.bind("<ButtonRelease-3>", self.b3up, "+")
+        self.bind("<Motion>", self.motion, "+")
 
         self.id_priority_sort_function = id_priority_sort_function
 
@@ -69,8 +72,8 @@ class CanvasDnD(GUIFrame):
     def down(self, event):
         x, y = event.widget.canvasx(event.x), event.widget.canvasy(event.y)
 
-        touched = self.canvas.find_overlapping(x - 1, y - 1, x + 1, y + 1)
-        touched = [ t for t in touched if ("DnD" in self.canvas.gettags(t)) ]
+        touched = self.find_overlapping(x - 1, y - 1, x + 1, y + 1)
+        touched = [ t for t in touched if ("DnD" in self.gettags(t)) ]
 
         if not touched:
             return
@@ -87,7 +90,6 @@ class CanvasDnD(GUIFrame):
         self.event_generate('<<DnDDown>>')
 
     def motion(self, event):
-        c = self.canvas
         x, y = event.x, event.y
 
         if self._state is begin_drag_all:
@@ -97,14 +99,14 @@ class CanvasDnD(GUIFrame):
             dx, dy = abs(x - ox), abs(y - oy)
             if dx + dy > DRAG_GAP:
                 self._state = dragging_all
-                c.scan_mark(ox, oy)
+                self.scan_mark(ox, oy)
                 self.master.config(cursor = "fleur")
                 # Dragging of all items is just actually started
                 self.event_generate("<<DnDAll>>")
 
         if self._state is dragging_all:
-            c.scan_dragto(x, y, gain = 1)
-            c.scan_mark(x, y)
+            self.scan_dragto(x, y, gain = 1)
+            self.scan_mark(x, y)
             self.event_generate("<<DnDAllMoved>>")
             return
         elif self._state is not dragging:
@@ -112,8 +114,8 @@ class CanvasDnD(GUIFrame):
 
         self.master.config(cursor = "fleur")
 
-        xy = c.canvasx(event.x), c.canvasy(event.y)
-        points = c.coords(self.dnd_dragged)
+        xy = self.canvasx(event.x), self.canvasy(event.y)
+        points = self.coords(self.dnd_dragged)
 
         offset = self.off
 
@@ -143,7 +145,7 @@ class CanvasDnD(GUIFrame):
 
         #print str(points) + " - " + str(self.off)
 
-        tags = c.gettags(self.dnd_dragged)
+        tags = self.gettags(self.dnd_dragged)
 
         if "fixed_x" not in tags:
             for idx in xrange(0, len(points), 2):
@@ -155,7 +157,7 @@ class CanvasDnD(GUIFrame):
 
         #print points
 
-        c.coords(*([self.dnd_dragged] + points))
+        self.coords(*([self.dnd_dragged] + points))
 
         self.event_generate('<<DnDMoved>>')
 
