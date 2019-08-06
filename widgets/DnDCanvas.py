@@ -4,6 +4,9 @@
 __all__ = [
     "CanvasDnD"
   , "dragging"
+  , "begin_drag_all"
+  , "dragging_all"
+  , "DRAG_GAP"
 ]
 
 from .gui_frame import (
@@ -20,8 +23,13 @@ from six.moves.tkinter import (
 )
 
 
+DRAG_GAP = 5
+
+
 # CanvasDnD states, use them with `is` operator only
 dragging = object()
+begin_drag_all = object()
+dragging_all = object()
 
 
 class CanvasDnD(GUIFrame):
@@ -47,6 +55,8 @@ class CanvasDnD(GUIFrame):
         self.off = None
         cnv.bind("<ButtonPress-1>", self.down, "+")
         cnv.bind("<ButtonRelease-1>", self.up, "+")
+        cnv.bind("<ButtonPress-3>", self.b3down, "+")
+        cnv.bind("<ButtonRelease-3>", self.b3up, "+")
         cnv.bind("<Motion>", self.motion, "+")
 
         self.id_priority_sort_function = id_priority_sort_function
@@ -77,11 +87,30 @@ class CanvasDnD(GUIFrame):
         self.event_generate('<<DnDDown>>')
 
     def motion(self, event):
-        if self._state is not dragging:
+        c = self.canvas
+        x, y = event.x, event.y
+
+        if self._state is begin_drag_all:
+            # if user moved mouse far enough then begin dragging of all
+            ox, oy = self.off
+            # Use Manchester metric to speed up the check
+            dx, dy = abs(x - ox), abs(y - oy)
+            if dx + dy > DRAG_GAP:
+                self._state = dragging_all
+                c.scan_mark(ox, oy)
+                self.master.config(cursor = "fleur")
+                # Dragging of all items is just actually started
+                self.event_generate("<<DnDAll>>")
+
+        if self._state is dragging_all:
+            c.scan_dragto(x, y, gain = 1)
+            c.scan_mark(x, y)
+            self.event_generate("<<DnDAllMoved>>")
+            return
+        elif self._state is not dragging:
             return
 
         self.master.config(cursor = "fleur")
-        c = self.canvas
 
         xy = c.canvasx(event.x), c.canvasy(event.y)
         points = c.coords(self.dnd_dragged)
@@ -139,3 +168,24 @@ class CanvasDnD(GUIFrame):
             """ Right after event. Listeners should be able to get which id
             is not dragged now. """
             del self.dnd_dragged
+
+    def b3down(self, event):
+        if self._state is not None:
+            return # User already using mouse for something
+
+        # prepare for dragging of all
+        self.off = event.x, event.y
+        self._state = begin_drag_all
+
+        # Dragging all items sequence begun
+        self.event_generate("<<DnDAllDown>>")
+
+    def b3up(self, _):
+        if self._state in (dragging_all, begin_drag_all):
+            # reset dragging of all
+            self.master.config(cursor = "")
+            # Dragging all items sequence finished
+            self.event_generate("<<DnDAllUp>>")
+            # Reset _state after the event. So, user may distinguish was a
+            # dragging took place.
+            self._state = None
