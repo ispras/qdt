@@ -170,9 +170,17 @@ define do_pandoc
 endef
 
 define make_docx
-	$(call do_pandoc, \
-	--reference-doc=$(REF_DOCX) \
-	$(1), $(2))
+	$(eval DIR := $(dir $(1)))
+	if [ "$(DIR)" = "" ] ; then \
+		$(call do_pandoc, \
+		--reference-doc=$(REF_DOCX) \
+		$(1), $(2)); \
+	else \
+		cd $(DIR); \
+		$(call do_pandoc, \
+		--reference-doc=$(REF_DOCX) \
+		$(1:$(DIR)%=%), $(2:$(DIR)%=%)); \
+	fi
 endef
 
 %.docx : %.pmd
