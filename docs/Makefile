@@ -163,6 +163,28 @@ clean : clean-debugging
 clean-debugging:
 	rm -f debugging/main.docx debugging/main.pmd
 
+# paper about TCG front-end testing
+
+tcg-testing-files := tcg_testing/main.docx
+
+tcg-testing: $(tcg-testing-files)
+
+all: tcg-testing
+
+tcg-testing-PNGs := $(foreach f, \
+ approach.png \
+ system.png \
+, tcg_testing/$(f))
+
+tcg_testing/main.docx: \
+ tcg_testing/ref.docx \
+ $(tcg-testing-PNGs)
+
+clean: clean-tcg-testing
+clean-tcg-testing:
+	rm -f $(tcg-testing-files)
+	rm -f $(tcg-testing-PNGs)
+
 ################
 # Common rules #
 ################
