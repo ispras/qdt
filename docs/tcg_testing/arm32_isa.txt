@@ -1,0 +1,108 @@
+ADD + cc
+ADDS + cc
+ADC + cc
+ADCS + cc
+ADR + cc
+SUB + cc
+SUBS + cc
+SBC + cc
+SBCS + cc
+RSB + cc
+RSBS + cc
+RSC + cc
+RSCS + cc
+MUL + cc
+MULS + cc
+MLA + cc
+MLAS + cc
+UMULL + cc
+UMULLS + cc
+UMLAL + cc
+UMLALS+  cc
+SMULL + cc
+SMULLS + cc
+SMLAL + cc
+SMLALS + cc
+MOV + cc
+MOVS + cc
+MVN + cc
+MVNS + cc
+ASR + cc
+ASRS + cc
+LSL + cc
+LSLS + cc
+LSR + cc
+LSRS + cc
+ROR + cc
+RORS + cc
+RRX + cc
+RRXS + cc
+CMP + cc
+CMN + cc
+TST + cc
+TEQ + cc
+AND + cc
+ANDS + cc
+EOR + cc
+EORS + cc
+ORR + cc
+ORRS + cc
+BIC + cc
+BICS + cc
+B + cc
+BL + cc
+MRS + cc
+MSR + cc
+LDR + cc
+LDRB + cc
+LDRSB + cc
+LDRH + cc
+LDRSH + cc
+STR + cc
+STRB + cc
+STRH + cc
+LDM + cc
+LDMIA + cc
+LDMIB + cc
+LDMDA + cc
+LDMDB + cc
+POP + cc
+STM + cc
+STMIA + cc
+STMIB + cc
+STMDA + cc
+STMDB + cc
+PUSH + cc
+
+= 1200 insns
+
+Coprocessor:
+
+CDP
+MRC
+MCR
+------------
+
+SWP + cc
+SWPB + cc
+SVC/SWI + cc
+
+Total: 1251 insns
+
+Condition Codes:
+
+EQ
+NE
+CS / HS
+CC / LO
+MI
+PL
+VS
+VC
+HI
+LS
+GE
+LT
+GT
+LE
+AL
