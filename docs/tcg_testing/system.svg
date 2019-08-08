@@ -1,17 +1,59 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
 <!-- Создано Microsoft Visio 11.0, Экспорт SVG, версия 1.0 c2t_testing.svg Page-1 -->
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
-		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="11.6929in" height="8.26772in"
-		viewBox="0 0 841.89 595.276" xml:space="preserve" color-interpolation-filters="sRGB" class="st10">
-	<v:documentProperties v:langID="1049" v:metric="true" v:viewMarkup="false">
-		<v:userDefs>
-			<v:ud v:nameU="msvNoAutoConnect" v:val="VT0(0):26"/>
-		</v:userDefs>
-	</v:documentProperties>
 
-	<style type="text/css">
-	<![CDATA[
+<svg
+   xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="6.6179204in"
+   height="3.9801605in"
+   viewBox="0 0 476.49096 286.57162"
+   xml:space="preserve"
+   class="st10"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="system.svg"
+   style="font-size:12px;overflow:visible;color-interpolation-filters:sRGB;fill:none;fill-rule:evenodd;stroke-linecap:square;stroke-miterlimit:3"><metadata
+     id="metadata204"><rdf:RDF><cc:Work
+         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1855"
+     inkscape:window-height="1176"
+     id="namedview202"
+     showgrid="false"
+     inkscape:zoom="1.1326912"
+     inkscape:cx="498.95674"
+     inkscape:cy="182.93338"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="group1-1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" /><v:documentProperties
+     v:langID="1049"
+     v:metric="true"
+     v:viewMarkup="false"><v:userDefs><v:ud
+         v:nameU="msvNoAutoConnect"
+         v:val="VT0(0):26" /></v:userDefs></v:documentProperties><style
+     type="text/css"
+     id="style4"><![CDATA[
 		.st1 {visibility:visible}
 		.st2 {fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5;stroke-width:0.25}
 		.st3 {fill:#ffffff;stroke:#404040;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.25}
@@ -22,586 +64,1665 @@
 		.st8 {marker-end:url(#mrkr5-65);marker-start:url(#mrkr5-63);stroke:#404040;stroke-linecap:round;stroke-linejoin:round;stroke-width:1}
 		.st9 {fill:#404040;fill-opacity:1;stroke:#404040;stroke-opacity:1;stroke-width:0.28409090909091}
 		.st10 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
-	]]>
-	</style>
-
-	<defs id="Patterns_And_Gradients">
-		<linearGradient id="grad29-15" v:fillPattern="29" v:foreground="#fefefe" v:background="#ffffff" x1="0" y1="0" x2="0" y2="1">
-			<stop offset="0" style="stop-color:#ffffff;stop-opacity:1"/>
-			<stop offset="0.5" style="stop-color:#fefefe;stop-opacity:1"/>
-			<stop offset="1" style="stop-color:#ffffff;stop-opacity:1"/>
-		</linearGradient>
-		<linearGradient id="grad30-19" v:fillPattern="30" v:foreground="#fefefe" v:background="#ffffff" x1="0" y1="1" x2="0" y2="0">
-			<stop offset="0" style="stop-color:#fefefe;stop-opacity:1"/>
-			<stop offset="1" style="stop-color:#ffffff;stop-opacity:1"/>
-		</linearGradient>
-		<linearGradient id="grad30-46" v:fillPattern="30" v:foreground="#f0f0f0" v:background="#ffffff" x1="0" y1="1" x2="0" y2="0">
-			<stop offset="0" style="stop-color:#f0f0f0;stop-opacity:1"/>
-			<stop offset="1" style="stop-color:#ffffff;stop-opacity:1"/>
-		</linearGradient>
-	</defs>
-	<defs id="Markers">
-		<g id="lend5">
-			<path d="M 2 1 L 0 0 L 1.98117 -0.993387 C 1.67173 -0.364515 1.67301 0.372641 1.98465 1.00043 " style="stroke:none"/>
-		</g>
-		<marker id="mrkr5-63" class="st9" v:arrowType="5" v:arrowSize="2" v:setback="5.8" refX="5.8" orient="auto"
-				markerUnits="strokeWidth" overflow="visible">
-			<use xlink:href="#lend5" transform="scale(3.52) "/>
-		</marker>
-		<marker id="mrkr5-65" class="st9" v:arrowType="5" v:arrowSize="2" v:setback="6.16" refX="-6.16" orient="auto"
-				markerUnits="strokeWidth" overflow="visible">
-			<use xlink:href="#lend5" transform="scale(-3.52,-3.52) "/>
-		</marker>
-	</defs>
-	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
-		<v:userDefs>
-			<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-			<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			<v:ud v:nameU="msvThemeOrder" v:val="VT0(0):26"/>
-		</v:userDefs>
-		<title>Страница-1</title>
-		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50394"
-				v:shadowOffsetY="-8.50394"/>
-		<v:layer v:name="Контейнер" v:index="0"/>
-		<v:layer v:name="Блок-схема" v:index="1"/>
-		<v:layer v:name="Соединительная линия" v:index="2"/>
-		<g id="group1-1" transform="translate(324.186,-260.966)" v:mID="1" v:groupContext="group" v:layerMember="0">
-			<v:userDefs>
-				<v:ud v:nameU="msvShapeCategories" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT4(Container)"/>
-				<v:ud v:nameU="msvSDContainerMargin" v:prompt="" v:val="VT0(0.098425196850394):24"/>
-				<v:ud v:nameU="msvSDContainerResize" v:prompt="" v:val="VT0(1):26"/>
-				<v:ud v:nameU="msvSDContainerLocked" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="msvSDContainerNoHighlight" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="msvSDContainerNoRibbon" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="msvSDContainerStyle" v:prompt="" v:val="VT0(1):26"/>
-				<v:ud v:nameU="msvSDContainerStyleCount" v:prompt="" v:val="VT0(12):26"/>
-				<v:ud v:nameU="msvSDContainerRequiredCategories" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="msvSDContainerExcludedCategories" v:prompt="" v:val="VT4(DoNotContain)"/>
-				<v:ud v:nameU="msvSDHeadingStyle" v:prompt="" v:val="VT0(1):26"/>
-				<v:ud v:nameU="msvSDHeadingStyleCount" v:prompt="" v:val="VT0(20):26"/>
-				<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(16):26"/>
-				<v:ud v:nameU="HeadingSide" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="HeadingSpan" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="HeadingAlign" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="RTL" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="FnForceContrast" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="BaseColor" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="HColor1" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="HColor2" v:prompt="" v:val="VT5(#fefefe)"/>
-				<v:ud v:nameU="HColor3" v:prompt="" v:val="VT5(#e9e9e9)"/>
-				<v:ud v:nameU="HColor4" v:prompt="" v:val="VT5(#efefef)"/>
-				<v:ud v:nameU="BColor1" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="BColor2" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="LineColor" v:prompt="" v:val="VT5(#d5d5d5)"/>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-			</v:userDefs>
-			<title>Контейнер 1.38</title>
-			<g id="group2-2" v:mID="2" v:groupContext="group" v:layerMember="0">
-				<v:userDefs>
-					<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(36):26"/>
-					<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(16):26"/>
-					<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HSpan" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HorzAlign" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Corner6" v:prompt="" v:val="VT0(0.19685039370079):24"/>
-					<v:ud v:nameU="FillForegndIn" v:prompt="" v:val="VT5(#ffffff)"/>
-					<v:ud v:nameU="FillBkgndIn" v:prompt="" v:val="VT5(#f0f0f0)"/>
-					<v:ud v:nameU="FillPatternIn" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="BaseColor" v:prompt="" v:val="VT5(#ffffff)"/>
-				</v:userDefs>
-				<title>Лист.2</title>
-				<g id="shape3-3" v:mID="3" v:groupContext="shape" v:layerMember="0" transform="translate(2.83465,2.83465)">
-					<title>Лист.3</title>
-					<v:userDefs>
-						<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-						<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HSpan" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HorzAlign" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="OffsetX10" v:prompt="" v:val="VT0(0.039370078740157):24"/>
-						<v:ud v:nameU="OffsetY10" v:prompt="" v:val="VT0(-0.039370078740157):24"/>
-					</v:userDefs>
-					<g id="shadow3-4" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-							transform="matrix(1,0,0,1,1.44,1.44)" class="st1"/>
-				</g>
-				<g id="shape2-7" v:mID="2" v:groupContext="groupContent" v:layerMember="0">
-					<g id="shadow2-8" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-							transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-						<path d="M0 595.28 L63.78 595.28 L127.56 595.28 L127.56 415.28 L63.78 415.28 L0 415.28 L0 595.28 Z"
-								class="st2"/>
-					</g>
-					<path d="M0 595.28 L63.78 595.28 L127.56 595.28 L127.56 415.28 L63.78 415.28 L0 415.28 L0 595.28 Z" class="st3"/>
-				</g>
-			</g>
-			<g id="group4-11" transform="translate(0,-154.488)" v:mID="4" v:groupContext="group" v:layerMember="0">
-				<v:userDefs>
-					<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT4(Heading)"/>
-					<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(36):26"/>
-					<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(16):26"/>
-					<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HSpan" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Hidden" v:prompt="" v:val="VT0(0):5"/>
-					<v:ud v:nameU="HorzAlign" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Rounding" v:prompt="" v:val="VT0(0):0"/>
-					<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(3):26"/>
-					<v:ud v:nameU="Inset" v:prompt="" v:val="VT0(0):24"/>
-					<v:ud v:nameU="InsideRadius" v:prompt="" v:val="VT0(0):0"/>
-					<v:ud v:nameU="InsetXInt" v:prompt="" v:val="VT0(0):24"/>
-					<v:ud v:nameU="HTxtMargin" v:prompt="" v:val="VT0(0.059055118110236):24"/>
-					<v:ud v:nameU="HTxtWidth" v:prompt="" v:val="VT0(1.7716535433071):1"/>
-					<v:ud v:nameU="HLeft" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HRight" v:prompt="" v:val="VT0(1.7716535433071):1"/>
-					<v:ud v:nameU="SquareCorners7" v:prompt="" v:val="VT0(3):26"/>
-					<v:ud v:nameU="Offset" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Rounding8" v:prompt="" v:val="VT0(0.11811023622047):24"/>
-					<v:ud v:nameU="InsetX9" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="InsetY9" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="OffsetY11" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="OffsetY12" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Width12" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="msvSDContainerHeadingEdge" v:prompt="" v:val="VT4(Bottom)"/>
-					<v:ud v:nameU="HLineVisible" v:prompt="" v:val="VT0(0):5"/>
-					<v:ud v:nameU="HFillVisible" v:prompt="" v:val="VT0(0):5"/>
-					<v:ud v:nameU="FillForegndIn" v:prompt="" v:val="VT5(#f0f0f0)"/>
-					<v:ud v:nameU="FillBkgndIn" v:prompt="" v:val="VT5(#ffffff)"/>
-					<v:ud v:nameU="BaseColor" v:prompt="" v:val="VT5(#ffffff)"/>
-					<v:ud v:nameU="FillPatternIn" v:prompt="" v:val="VT0(30):26"/>
-				</v:userDefs>
-				<title>Лист.4</title>
-				<desc>QEMU</desc>
-				<g id="shape5-12" v:mID="5" v:groupContext="shape" v:layerMember="0">
-					<title>Лист.5</title>
-					<v:userDefs>
-						<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-						<v:ud v:nameU="Rounding" v:prompt="" v:val="VT0(0):0"/>
-						<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(3):26"/>
-						<v:ud v:nameU="HLeft" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HRight" v:prompt="" v:val="VT0(1.7716535433071):1"/>
-						<v:ud v:nameU="Hidden" v:prompt="" v:val="VT0(0):5"/>
-						<v:ud v:nameU="BowHeight7" v:prompt="" v:val="VT0(0.11811023622047):24"/>
-						<v:ud v:nameU="Offset7" v:prompt="" v:val="VT0(0.0017361111111111):29"/>
-						<v:ud v:nameU="AnchorPt7" v:prompt="" v:val="VT0(0.64787018810149):24"/>
-						<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-					</v:userDefs>
-				</g>
-				<g id="shape4-16" v:mID="4" v:groupContext="groupContent" v:layerMember="0">
-					<v:textBlock v:margins="rect(4,6,4,6)" v:tabSpace="42.5197"/>
-					<v:textRect cx="63.7795" cy="582.52" width="127.56" height="25.5118"/>
-					<text x="6" y="586.72" class="st4" v:langID="1033"><v:paragraph/><v:tabList/>QEMU</text>				</g>
-			</g>
-		</g>
-		<g id="group6-21" transform="translate(494.264,-156.084)" v:mID="6" v:groupContext="group" v:layerMember="0">
-			<v:userDefs>
-				<v:ud v:nameU="msvShapeCategories" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT4(Container)"/>
-				<v:ud v:nameU="msvSDContainerMargin" v:prompt="" v:val="VT0(0.098425196850394):24"/>
-				<v:ud v:nameU="msvSDContainerResize" v:prompt="" v:val="VT0(1):26"/>
-				<v:ud v:nameU="msvSDContainerLocked" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="msvSDContainerNoHighlight" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="msvSDContainerNoRibbon" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="msvSDContainerStyle" v:prompt="" v:val="VT0(1):26"/>
-				<v:ud v:nameU="msvSDContainerStyleCount" v:prompt="" v:val="VT0(12):26"/>
-				<v:ud v:nameU="msvSDContainerRequiredCategories" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="msvSDContainerExcludedCategories" v:prompt="" v:val="VT4(DoNotContain)"/>
-				<v:ud v:nameU="msvSDHeadingStyle" v:prompt="" v:val="VT0(1):26"/>
-				<v:ud v:nameU="msvSDHeadingStyleCount" v:prompt="" v:val="VT0(20):26"/>
-				<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(16):26"/>
-				<v:ud v:nameU="HeadingSide" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="HeadingSpan" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="HeadingAlign" v:prompt="" v:val="VT0(0):26"/>
-				<v:ud v:nameU="RTL" v:prompt="" v:val="VT0(0):5"/>
-				<v:ud v:nameU="FnForceContrast" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="BaseColor" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="HColor1" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="HColor2" v:prompt="" v:val="VT5(#fefefe)"/>
-				<v:ud v:nameU="HColor3" v:prompt="" v:val="VT5(#e9e9e9)"/>
-				<v:ud v:nameU="HColor4" v:prompt="" v:val="VT5(#efefef)"/>
-				<v:ud v:nameU="BColor1" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="BColor2" v:prompt="" v:val="VT5(#ffffff)"/>
-				<v:ud v:nameU="LineColor" v:prompt="" v:val="VT5(#d5d5d5)"/>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-			</v:userDefs>
-			<title>Контейнер 1.49</title>
-			<g id="group7-22" v:mID="7" v:groupContext="group" v:layerMember="0">
-				<v:userDefs>
-					<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(36):26"/>
-					<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(16):26"/>
-					<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HSpan" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HorzAlign" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Corner6" v:prompt="" v:val="VT0(0.19685039370079):24"/>
-					<v:ud v:nameU="FillForegndIn" v:prompt="" v:val="VT5(#ffffff)"/>
-					<v:ud v:nameU="FillBkgndIn" v:prompt="" v:val="VT5(#f0f0f0)"/>
-					<v:ud v:nameU="FillPatternIn" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="BaseColor" v:prompt="" v:val="VT5(#ffffff)"/>
-				</v:userDefs>
-				<title>Лист.7</title>
-				<g id="shape8-23" v:mID="8" v:groupContext="shape" v:layerMember="0" transform="translate(2.83465,2.83465)">
-					<title>Лист.8</title>
-					<v:userDefs>
-						<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-						<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HSpan" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HorzAlign" v:prompt="" v:val="VT0(1):26"/>
-						<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="OffsetX10" v:prompt="" v:val="VT0(0.039370078740157):24"/>
-						<v:ud v:nameU="OffsetY10" v:prompt="" v:val="VT0(-0.039370078740157):24"/>
-					</v:userDefs>
-					<g id="shadow8-24" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-							transform="matrix(1,0,0,1,1.44,1.44)" class="st1"/>
-				</g>
-				<g id="shape7-27" v:mID="7" v:groupContext="groupContent" v:layerMember="0">
-					<g id="shadow7-28" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-							transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-						<path d="M0 595.28 L81.5 595.28 L162.99 595.28 L162.99 352.91 L81.5 352.91 L0 352.91 L0 595.28 Z"
-								class="st2"/>
-					</g>
-					<path d="M0 595.28 L81.5 595.28 L162.99 595.28 L162.99 352.91 L81.5 352.91 L0 352.91 L0 595.28 Z" class="st3"/>
-				</g>
-			</g>
-			<g id="group9-31" transform="translate(0,-182.835)" v:mID="9" v:groupContext="group" v:layerMember="0">
-				<v:userDefs>
-					<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT4(Heading)"/>
-					<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(36):26"/>
-					<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(16):26"/>
-					<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HSpan" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Hidden" v:prompt="" v:val="VT0(0):5"/>
-					<v:ud v:nameU="HorzAlign" v:prompt="" v:val="VT0(1):26"/>
-					<v:ud v:nameU="Rounding" v:prompt="" v:val="VT0(0):0"/>
-					<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(3):26"/>
-					<v:ud v:nameU="Inset" v:prompt="" v:val="VT0(0):24"/>
-					<v:ud v:nameU="InsideRadius" v:prompt="" v:val="VT0(0):0"/>
-					<v:ud v:nameU="InsetXInt" v:prompt="" v:val="VT0(0):24"/>
-					<v:ud v:nameU="HTxtMargin" v:prompt="" v:val="VT0(0.059055118110236):24"/>
-					<v:ud v:nameU="HTxtWidth" v:prompt="" v:val="VT0(2.2637795275591):1"/>
-					<v:ud v:nameU="HLeft" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="HRight" v:prompt="" v:val="VT0(2.2637795275591):1"/>
-					<v:ud v:nameU="SquareCorners7" v:prompt="" v:val="VT0(3):26"/>
-					<v:ud v:nameU="Offset" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Rounding8" v:prompt="" v:val="VT0(0.11811023622047):24"/>
-					<v:ud v:nameU="InsetX9" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="InsetY9" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="OffsetY11" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="OffsetY12" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="Width12" v:prompt="" v:val="VT0(0):26"/>
-					<v:ud v:nameU="msvSDContainerHeadingEdge" v:prompt="" v:val="VT4(Bottom)"/>
-					<v:ud v:nameU="HLineVisible" v:prompt="" v:val="VT0(0):5"/>
-					<v:ud v:nameU="HFillVisible" v:prompt="" v:val="VT0(0):5"/>
-					<v:ud v:nameU="FillForegndIn" v:prompt="" v:val="VT5(#f0f0f0)"/>
-					<v:ud v:nameU="FillBkgndIn" v:prompt="" v:val="VT5(#ffffff)"/>
-					<v:ud v:nameU="BaseColor" v:prompt="" v:val="VT5(#ffffff)"/>
-					<v:ud v:nameU="FillPatternIn" v:prompt="" v:val="VT0(30):26"/>
-				</v:userDefs>
-				<title>Лист.9</title>
-				<desc>Средство автоматизированного тестирования</desc>
-				<g id="shape10-32" v:mID="10" v:groupContext="shape" v:layerMember="0">
-					<title>Лист.10</title>
-					<v:userDefs>
-						<v:ud v:nameU="msvStructureType" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeColors" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="msvThemeEffects" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="CStyle" v:prompt="" v:val="VT0(1):26"/>
-						<v:ud v:nameU="Rounding" v:prompt="" v:val="VT0(0):0"/>
-						<v:ud v:nameU="SquareCorners" v:prompt="" v:val="VT0(3):26"/>
-						<v:ud v:nameU="HLeft" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HRight" v:prompt="" v:val="VT0(2.2637795275591):1"/>
-						<v:ud v:nameU="Hidden" v:prompt="" v:val="VT0(0):5"/>
-						<v:ud v:nameU="BowHeight7" v:prompt="" v:val="VT0(0.11811023622047):24"/>
-						<v:ud v:nameU="Offset7" v:prompt="" v:val="VT0(0.0017361111111111):29"/>
-						<v:ud v:nameU="AnchorPt7" v:prompt="" v:val="VT0(1.3565316054243):24"/>
-						<v:ud v:nameU="HSide" v:prompt="" v:val="VT0(0):26"/>
-						<v:ud v:nameU="HAlign" v:prompt="" v:val="VT0(0):26"/>
-					</v:userDefs>
-				</g>
-				<g id="shape9-35" v:mID="9" v:groupContext="groupContent" v:layerMember="0">
-					<v:textBlock v:margins="rect(4,6,4,6)" v:tabSpace="42.5197"/>
-					<v:textRect cx="81.4961" cy="565.512" width="163" height="59.5276"/>
-					<text x="50.91" y="552.91" class="st4" v:langID="1049"><v:paragraph v:horizAlign="1"/><v:tabList/>Средство <tspan
-								x="10.44" dy="1.2em" class="st5">автоматизированного</tspan> <tspan x="37.27" dy="1.2em"
-								class="st5">тестирования</tspan></text>				</g>
-			</g>
-		</g>
-		<g id="shape11-41" v:mID="11" v:groupContext="shape" v:layerMember="1" transform="translate(338.359,-351.675)">
-			<title>Процесс.43</title>
-			<desc>Гостевой код (тест)</desc>
-			<v:custProps>
-				<v:cp v:nameU="Cost" v:lbl="Стоимость" v:prompt="" v:type="7" v:format="@" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="ProcessNumber" v:lbl="Номер процесса" v:prompt="" v:type="2" v:format="" v:sortKey=""
-						v:invis="false" v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Owner" v:lbl="Владелец" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Function" v:lbl="Функция" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-				<v:cp v:nameU="StartDate" v:lbl="Дата начала" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="EndDate" v:lbl="Дата окончания" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Status" v:lbl="Состояние" v:prompt="" v:type="4"
-						v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-			</v:custProps>
-			<v:userDefs>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-				<v:ud v:nameU="DefaultWidth" v:prompt="" v:val="VT0(0.98425196850394):24"/>
-				<v:ud v:nameU="DefaultHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="ResizeTxtHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<v:textBlock v:margins="rect(2,2,2,2)" v:tabSpace="42.5197"/>
-			<v:textRect cx="49.6063" cy="566.929" width="99.22" height="56.6929"/>
-			<g id="shadow11-42" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-					transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-				<rect x="0" y="538.583" width="99.2126" height="56.6929" class="st2"/>
-			</g>
-			<rect x="0" y="538.583" width="99.2126" height="56.6929" class="st6"/>
-			<text x="10.02" y="562.73" class="st7" v:langID="1049"><v:paragraph v:horizAlign="1"/><v:tabList/>Гостевой код <tspan
-						x="32.61" dy="1.2em" class="st5">(</tspan>тест)</text>		</g>
-		<g id="shape12-49" v:mID="12" v:groupContext="shape" v:layerMember="1" transform="translate(338.359,-275.139)">
-			<title>Процесс.45</title>
-			<desc>GDB сервер</desc>
-			<v:custProps>
-				<v:cp v:nameU="Cost" v:lbl="Стоимость" v:prompt="" v:type="7" v:format="@" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="ProcessNumber" v:lbl="Номер процесса" v:prompt="" v:type="2" v:format="" v:sortKey=""
-						v:invis="false" v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Owner" v:lbl="Владелец" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Function" v:lbl="Функция" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-				<v:cp v:nameU="StartDate" v:lbl="Дата начала" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="EndDate" v:lbl="Дата окончания" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Status" v:lbl="Состояние" v:prompt="" v:type="4"
-						v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-			</v:custProps>
-			<v:userDefs>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-				<v:ud v:nameU="DefaultWidth" v:prompt="" v:val="VT0(0.98425196850394):24"/>
-				<v:ud v:nameU="DefaultHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="ResizeTxtHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<v:textBlock v:margins="rect(2,2,2,2)" v:tabSpace="42.5197"/>
-			<v:textRect cx="49.6063" cy="566.929" width="99.22" height="56.6929"/>
-			<g id="shadow12-50" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-					transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-				<rect x="0" y="538.583" width="99.2126" height="56.6929" class="st2"/>
-			</g>
-			<rect x="0" y="538.583" width="99.2126" height="56.6929" class="st6"/>
-			<text x="13.45" y="571.13" class="st7" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>GDB <tspan
-						class="st5" v:langID="1049">сервер</tspan></text>		</g>
-		<g id="shape13-56" v:mID="13" v:groupContext="shape" v:layerMember="2" transform="translate(380.879,-351.675)">
-			<title>Динамическая соединительная линия.47</title>
-			<v:userDefs>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<path d="M7.09 601.08 L7.09 601.44 L7.09 608.96" class="st8"/>
-		</g>
-		<g id="shape14-66" v:mID="14" v:groupContext="shape" v:layerMember="1" transform="translate(324.186,-163.171)">
-			<title>Процесс.48</title>
-			<desc>GDB сервер</desc>
-			<v:custProps>
-				<v:cp v:nameU="Cost" v:lbl="Стоимость" v:prompt="" v:type="7" v:format="@" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="ProcessNumber" v:lbl="Номер процесса" v:prompt="" v:type="2" v:format="" v:sortKey=""
-						v:invis="false" v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Owner" v:lbl="Владелец" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Function" v:lbl="Функция" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-				<v:cp v:nameU="StartDate" v:lbl="Дата начала" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="EndDate" v:lbl="Дата окончания" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Status" v:lbl="Состояние" v:prompt="" v:type="4"
-						v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-			</v:custProps>
-			<v:userDefs>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-				<v:ud v:nameU="DefaultWidth" v:prompt="" v:val="VT0(0.98425196850394):24"/>
-				<v:ud v:nameU="DefaultHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="ResizeTxtHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<v:textBlock v:margins="rect(2,2,2,2)" v:tabSpace="42.5197"/>
-			<v:textRect cx="63.7795" cy="566.929" width="127.56" height="56.6929"/>
-			<g id="shadow14-67" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-					transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-				<rect x="0" y="538.583" width="127.559" height="56.6929" class="st2"/>
-			</g>
-			<rect x="0" y="538.583" width="127.559" height="56.6929" class="st6"/>
-			<text x="27.62" y="571.13" class="st7" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>GDB<tspan class="st5"
-						v:langID="1049"> </tspan><tspan class="st5" v:langID="1049">сервер</tspan></text>		</g>
-		<g id="shape15-74" v:mID="15" v:groupContext="shape" v:layerMember="1" transform="translate(182.453,-163.171)">
-			<title>Процесс.44</title>
-			<desc>Приложение (тест)</desc>
-			<v:custProps>
-				<v:cp v:nameU="Cost" v:lbl="Стоимость" v:prompt="" v:type="7" v:format="@" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="ProcessNumber" v:lbl="Номер процесса" v:prompt="" v:type="2" v:format="" v:sortKey=""
-						v:invis="false" v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Owner" v:lbl="Владелец" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Function" v:lbl="Функция" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-				<v:cp v:nameU="StartDate" v:lbl="Дата начала" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="EndDate" v:lbl="Дата окончания" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Status" v:lbl="Состояние" v:prompt="" v:type="4"
-						v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-			</v:custProps>
-			<v:userDefs>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-				<v:ud v:nameU="DefaultWidth" v:prompt="" v:val="VT0(0.98425196850394):24"/>
-				<v:ud v:nameU="DefaultHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="ResizeTxtHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<v:textBlock v:margins="rect(2,2,2,2)" v:tabSpace="42.5197"/>
-			<v:textRect cx="49.6063" cy="566.929" width="99.22" height="56.6929"/>
-			<g id="shadow15-75" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-					transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-				<rect x="0" y="538.583" width="99.2126" height="56.6929" class="st2"/>
-			</g>
-			<rect x="0" y="538.583" width="99.2126" height="56.6929" class="st6"/>
-			<text x="11.77" y="562.73" class="st7" v:langID="1049"><v:paragraph v:horizAlign="1"/><v:tabList/>Приложение <tspan
-						x="32.61" dy="1.2em" class="st5">(</tspan>тест)</text>		</g>
-		<g id="shape16-81" v:mID="16" v:groupContext="shape" v:layerMember="2" transform="translate(324.186,-184.431)">
-			<title>Динамическая соединительная линия.46</title>
-			<v:userDefs>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<path d="M-5.8 588.19 L-6.16 588.19 L-36.36 588.19" class="st8"/>
-		</g>
-		<g id="shape17-89" v:mID="17" v:groupContext="shape" v:layerMember="1" transform="translate(508.438,-275.139)">
-			<title>Процесс.54</title>
-			<desc>Модуль pyrsp</desc>
-			<v:custProps>
-				<v:cp v:nameU="Cost" v:lbl="Стоимость" v:prompt="" v:type="7" v:format="@" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="ProcessNumber" v:lbl="Номер процесса" v:prompt="" v:type="2" v:format="" v:sortKey=""
-						v:invis="false" v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Owner" v:lbl="Владелец" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Function" v:lbl="Функция" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-				<v:cp v:nameU="StartDate" v:lbl="Дата начала" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="EndDate" v:lbl="Дата окончания" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Status" v:lbl="Состояние" v:prompt="" v:type="4"
-						v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-			</v:custProps>
-			<v:userDefs>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-				<v:ud v:nameU="DefaultWidth" v:prompt="" v:val="VT0(0.98425196850394):24"/>
-				<v:ud v:nameU="DefaultHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="ResizeTxtHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<v:textBlock v:margins="rect(2,2,2,2)" v:tabSpace="42.5197"/>
-			<v:textRect cx="68.0315" cy="566.929" width="136.07" height="56.6929"/>
-			<g id="shadow17-90" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-					transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-				<rect x="0" y="538.583" width="136.063" height="56.6929" class="st2"/>
-			</g>
-			<rect x="0" y="538.583" width="136.063" height="56.6929" class="st6"/>
-			<text x="27.26" y="571.13" class="st7" v:langID="1049"><v:paragraph v:horizAlign="1"/><v:tabList/>Модуль <tspan
-						class="st5" v:langID="1033">pyrsp</tspan></text>		</g>
-		<g id="shape18-96" v:mID="18" v:groupContext="shape" v:layerMember="1" transform="translate(508.438,-163.171)">
-			<title>Процесс.55</title>
-			<desc>Модуль pyrsp</desc>
-			<v:custProps>
-				<v:cp v:nameU="Cost" v:lbl="Стоимость" v:prompt="" v:type="7" v:format="@" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="ProcessNumber" v:lbl="Номер процесса" v:prompt="" v:type="2" v:format="" v:sortKey=""
-						v:invis="false" v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Owner" v:lbl="Владелец" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Function" v:lbl="Функция" v:prompt="" v:type="0" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-				<v:cp v:nameU="StartDate" v:lbl="Дата начала" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="EndDate" v:lbl="Дата окончания" v:prompt="" v:type="5" v:format="" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0"/>
-				<v:cp v:nameU="Status" v:lbl="Состояние" v:prompt="" v:type="4"
-						v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод" v:sortKey="" v:invis="false"
-						v:ask="false" v:langID="1049" v:cal="0" v:val="VT4()"/>
-			</v:custProps>
-			<v:userDefs>
-				<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(14):26"/>
-				<v:ud v:nameU="DefaultWidth" v:prompt="" v:val="VT0(0.98425196850394):24"/>
-				<v:ud v:nameU="DefaultHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="ResizeTxtHeight" v:prompt="" v:val="VT0(0.59055118110236):24"/>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<v:textBlock v:margins="rect(2,2,2,2)" v:tabSpace="42.5197"/>
-			<v:textRect cx="68.0315" cy="566.929" width="136.07" height="56.6929"/>
-			<g id="shadow18-97" v:groupContext="shadow" v:shadowOffsetX="1.44" v:shadowOffsetY="-1.44" v:shadowType="1"
-					transform="matrix(1,0,0,1,1.44,1.44)" class="st1">
-				<rect x="0" y="538.583" width="136.063" height="56.6929" class="st2"/>
-			</g>
-			<rect x="0" y="538.583" width="136.063" height="56.6929" class="st6"/>
-			<text x="27.26" y="571.13" class="st7" v:langID="1049"><v:paragraph v:horizAlign="1"/><v:tabList/>Модуль <tspan
-						class="st5" v:langID="1033">pyrsp</tspan></text>		</g>
-		<g id="shape19-103" v:mID="19" v:groupContext="shape" v:layerMember="2" transform="translate(508.438,-296.399)">
-			<title>Динамическая соединительная линия.56</title>
-			<v:userDefs>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<path d="M-5.8 588.19 L-6.16 588.19 L-64.71 588.19" class="st8"/>
-		</g>
-		<g id="shape20-111" v:mID="20" v:groupContext="shape" v:layerMember="2" transform="translate(508.438,-184.431)">
-			<title>Динамическая соединительная линия.57</title>
-			<v:userDefs>
-				<v:ud v:nameU="msvThemeColors" v:val="VT0(36):26"/>
-				<v:ud v:nameU="msvThemeEffects" v:val="VT0(16):26"/>
-			</v:userDefs>
-			<path d="M-5.8 588.19 L-6.16 588.19 L-50.53 588.19" class="st8"/>
-		</g>
-	</g>
-</svg>
+	]]></style><defs
+     id="Patterns_And_Gradients"><linearGradient
+       id="grad29-15"
+       v:fillPattern="29"
+       v:foreground="#fefefe"
+       v:background="#ffffff"
+       x1="0"
+       y1="0"
+       x2="0"
+       y2="1"><stop
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1"
+         id="stop8" /><stop
+         offset="0.5"
+         style="stop-color:#fefefe;stop-opacity:1"
+         id="stop10" /><stop
+         offset="1"
+         style="stop-color:#ffffff;stop-opacity:1"
+         id="stop12" /></linearGradient><linearGradient
+       id="grad30-19"
+       v:fillPattern="30"
+       v:foreground="#fefefe"
+       v:background="#ffffff"
+       x1="0"
+       y1="1"
+       x2="0"
+       y2="0"><stop
+         offset="0"
+         style="stop-color:#fefefe;stop-opacity:1"
+         id="stop15" /><stop
+         offset="1"
+         style="stop-color:#ffffff;stop-opacity:1"
+         id="stop17" /></linearGradient><linearGradient
+       id="grad30-46"
+       v:fillPattern="30"
+       v:foreground="#f0f0f0"
+       v:background="#ffffff"
+       x1="0"
+       y1="1"
+       x2="0"
+       y2="0"><stop
+         offset="0"
+         style="stop-color:#f0f0f0;stop-opacity:1"
+         id="stop20" /><stop
+         offset="1"
+         style="stop-color:#ffffff;stop-opacity:1"
+         id="stop22" /></linearGradient><linearGradient
+       inkscape:collect="always"
+       xlink:href="#grad30-46"
+       id="linearGradient4426"
+       x1="-0.09458013"
+       y1="786.9001"
+       x2="-0.09458013"
+       y2="711.64262"
+       gradientTransform="scale(1.3216307,0.75664104)"
+       gradientUnits="userSpaceOnUse" /><linearGradient
+       inkscape:collect="always"
+       xlink:href="#grad30-46"
+       id="linearGradient4428"
+       x1="-0.09458013"
+       y1="786.9001"
+       x2="-0.09458013"
+       y2="711.64262"
+       gradientTransform="scale(1.3216307,0.75664104)"
+       gradientUnits="userSpaceOnUse" /><linearGradient
+       inkscape:collect="always"
+       xlink:href="#grad30-46"
+       id="linearGradient4430"
+       x1="-0.083435158"
+       y1="892.01142"
+       x2="-0.083435158"
+       y2="806.7013"
+       gradientTransform="scale(1.4981694,0.66748127)"
+       gradientUnits="userSpaceOnUse" /><linearGradient
+       inkscape:collect="always"
+       xlink:href="#grad30-46"
+       id="linearGradient4432"
+       x1="-0.09458013"
+       y1="786.9001"
+       x2="-0.09458013"
+       y2="711.64262"
+       gradientTransform="scale(1.3216307,0.75664104)"
+       gradientUnits="userSpaceOnUse" /><linearGradient
+       inkscape:collect="always"
+       xlink:href="#grad30-46"
+       id="linearGradient4434"
+       x1="-0.080790662"
+       y1="921.20936"
+       x2="-0.080790662"
+       y2="833.10681"
+       gradientTransform="scale(1.5472085,0.6463253)"
+       gradientUnits="userSpaceOnUse" /><linearGradient
+       inkscape:collect="always"
+       xlink:href="#grad30-46"
+       id="linearGradient4436"
+       x1="-0.080790662"
+       y1="921.20936"
+       x2="-0.080790662"
+       y2="833.10681"
+       gradientTransform="scale(1.5472085,0.6463253)"
+       gradientUnits="userSpaceOnUse" /></defs><defs
+     id="Markers"><g
+       id="lend5"><path
+         d="M 2,1 0,0 1.98117,-0.993387 C 1.67173,-0.364515 1.67301,0.372641 1.98465,1.00043"
+         style="stroke:none"
+         id="path26"
+         inkscape:connector-curvature="0" /></g><marker
+       id="mrkr5-63"
+       class="st9"
+       v:arrowType="5"
+       v:arrowSize="2"
+       v:setback="5.8"
+       refX="5.8000002"
+       orient="auto"
+       markerUnits="strokeWidth"
+       overflow="visible"
+       style="overflow:visible;fill:#404040;fill-opacity:1;stroke:#404040;stroke-width:0.28409091;stroke-opacity:1"><use
+         xlink:href="#lend5"
+         transform="scale(3.52,3.52)"
+         id="use29"
+         x="0"
+         y="0"
+         width="100%"
+         height="100%" /></marker><marker
+       id="mrkr5-65"
+       class="st9"
+       v:arrowType="5"
+       v:arrowSize="2"
+       v:setback="6.16"
+       refX="-6.1599998"
+       orient="auto"
+       markerUnits="strokeWidth"
+       overflow="visible"
+       style="overflow:visible;fill:#404040;fill-opacity:1;stroke:#404040;stroke-width:0.28409091;stroke-opacity:1"><use
+         xlink:href="#lend5"
+         transform="scale(-3.52,-3.52)"
+         id="use32"
+         x="0"
+         y="0"
+         width="100%"
+         height="100%" /></marker></defs><g
+     v:mID="0"
+     v:index="1"
+     v:groupContext="foregroundPage"
+     id="g34"
+     transform="translate(-182.328,-154.18939)"><v:userDefs><v:ud
+         v:nameU="msvThemeColors"
+         v:val="VT0(36):26" /><v:ud
+         v:nameU="msvThemeEffects"
+         v:val="VT0(16):26" /><v:ud
+         v:nameU="msvThemeOrder"
+         v:val="VT0(0):26" /></v:userDefs><title
+       id="title36">Страница-1</title><v:pageProperties
+       v:drawingScale="0.0393701"
+       v:pageScale="0.0393701"
+       v:drawingUnits="24"
+       v:shadowOffsetX="8.50394"
+       v:shadowOffsetY="-8.50394" /><v:layer
+       v:name="Контейнер"
+       v:index="0" /><v:layer
+       v:name="Блок-схема"
+       v:index="1" /><v:layer
+       v:name="Соединительная линия"
+       v:index="2" /><g
+       id="group1-1"
+       transform="translate(324.186,-260.966)"
+       v:mID="1"
+       v:groupContext="group"
+       v:layerMember="0"><v:userDefs><v:ud
+           v:nameU="msvShapeCategories"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="msvStructureType"
+           v:prompt=""
+           v:val="VT4(Container)" /><v:ud
+           v:nameU="msvSDContainerMargin"
+           v:prompt=""
+           v:val="VT0(0.098425196850394):24" /><v:ud
+           v:nameU="msvSDContainerResize"
+           v:prompt=""
+           v:val="VT0(1):26" /><v:ud
+           v:nameU="msvSDContainerLocked"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="msvSDContainerNoHighlight"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="msvSDContainerNoRibbon"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="msvSDContainerStyle"
+           v:prompt=""
+           v:val="VT0(1):26" /><v:ud
+           v:nameU="msvSDContainerStyleCount"
+           v:prompt=""
+           v:val="VT0(12):26" /><v:ud
+           v:nameU="msvSDContainerRequiredCategories"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="msvSDContainerExcludedCategories"
+           v:prompt=""
+           v:val="VT4(DoNotContain)" /><v:ud
+           v:nameU="msvSDHeadingStyle"
+           v:prompt=""
+           v:val="VT0(1):26" /><v:ud
+           v:nameU="msvSDHeadingStyleCount"
+           v:prompt=""
+           v:val="VT0(20):26" /><v:ud
+           v:nameU="msvThemeColors"
+           v:prompt=""
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:prompt=""
+           v:val="VT0(16):26" /><v:ud
+           v:nameU="HeadingSide"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="HeadingSpan"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="HeadingAlign"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="RTL"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="FnForceContrast"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="BaseColor"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="HColor1"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="HColor2"
+           v:prompt=""
+           v:val="VT5(#fefefe)" /><v:ud
+           v:nameU="HColor3"
+           v:prompt=""
+           v:val="VT5(#e9e9e9)" /><v:ud
+           v:nameU="HColor4"
+           v:prompt=""
+           v:val="VT5(#efefef)" /><v:ud
+           v:nameU="BColor1"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="BColor2"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="LineColor"
+           v:prompt=""
+           v:val="VT5(#d5d5d5)" /><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /></v:userDefs><title
+         id="title39">Контейнер 1.38</title><g
+         id="group2-2"
+         v:mID="2"
+         v:groupContext="group"
+         v:layerMember="0"><v:userDefs><v:ud
+             v:nameU="msvStructureType"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="msvThemeColors"
+             v:prompt=""
+             v:val="VT0(36):26" /><v:ud
+             v:nameU="msvThemeEffects"
+             v:prompt=""
+             v:val="VT0(16):26" /><v:ud
+             v:nameU="CStyle"
+             v:prompt=""
+             v:val="VT0(1):26" /><v:ud
+             v:nameU="HSide"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HSpan"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HAlign"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HorzAlign"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="SquareCorners"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="Corner6"
+             v:prompt=""
+             v:val="VT0(0.19685039370079):24" /><v:ud
+             v:nameU="FillForegndIn"
+             v:prompt=""
+             v:val="VT5(#ffffff)" /><v:ud
+             v:nameU="FillBkgndIn"
+             v:prompt=""
+             v:val="VT5(#f0f0f0)" /><v:ud
+             v:nameU="FillPatternIn"
+             v:prompt=""
+             v:val="VT0(1):26" /><v:ud
+             v:nameU="BaseColor"
+             v:prompt=""
+             v:val="VT5(#ffffff)" /></v:userDefs><title
+           id="title42">Лист.2</title><g
+           id="shape3-3"
+           v:mID="3"
+           v:groupContext="shape"
+           v:layerMember="0"
+           transform="translate(2.83465,2.83465)"><title
+             id="title45">Лист.3</title><v:userDefs><v:ud
+               v:nameU="msvStructureType"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="msvThemeColors"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="msvThemeEffects"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="CStyle"
+               v:prompt=""
+               v:val="VT0(1):26" /><v:ud
+               v:nameU="HSide"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HSpan"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HAlign"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HorzAlign"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="SquareCorners"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="OffsetX10"
+               v:prompt=""
+               v:val="VT0(0.039370078740157):24" /><v:ud
+               v:nameU="OffsetY10"
+               v:prompt=""
+               v:val="VT0(-0.039370078740157):24" /></v:userDefs><g
+             id="shadow3-4"
+             v:groupContext="shadow"
+             v:shadowOffsetX="1.44"
+             v:shadowOffsetY="-1.44"
+             v:shadowType="1"
+             transform="translate(1.44,1.44)"
+             class="st1"
+             style="visibility:visible" /></g><g
+           id="shape2-7"
+           v:mID="2"
+           v:groupContext="groupContent"
+           v:layerMember="0"><g
+             id="shadow2-8"
+             v:groupContext="shadow"
+             v:shadowOffsetX="1.44"
+             v:shadowOffsetY="-1.44"
+             v:shadowType="1"
+             transform="translate(1.44,1.44)"
+             class="st1"
+             style="visibility:visible"><path
+               d="m 0,595.28 63.78,0 63.78,0 0,-180 -63.78,0 -63.78,0 0,180 z"
+               class="st2"
+               id="path50"
+               inkscape:connector-curvature="0"
+               style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><path
+             d="m 0,595.28 63.78,0 63.78,0 0,-180 -63.78,0 -63.78,0 0,180 z"
+             class="st3"
+             id="path52"
+             inkscape:connector-curvature="0"
+             style="fill:#ffffff;stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g></g><g
+         id="group4-11"
+         transform="translate(0,-154.488)"
+         v:mID="4"
+         v:groupContext="group"
+         v:layerMember="0"
+         sodipodi:insensitive="true"><v:userDefs><v:ud
+             v:nameU="msvStructureType"
+             v:prompt=""
+             v:val="VT4(Heading)" /><v:ud
+             v:nameU="msvThemeColors"
+             v:prompt=""
+             v:val="VT0(36):26" /><v:ud
+             v:nameU="msvThemeEffects"
+             v:prompt=""
+             v:val="VT0(16):26" /><v:ud
+             v:nameU="CStyle"
+             v:prompt=""
+             v:val="VT0(1):26" /><v:ud
+             v:nameU="HSide"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HSpan"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HAlign"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="Hidden"
+             v:prompt=""
+             v:val="VT0(0):5" /><v:ud
+             v:nameU="HorzAlign"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="Rounding"
+             v:prompt=""
+             v:val="VT0(0):0" /><v:ud
+             v:nameU="SquareCorners"
+             v:prompt=""
+             v:val="VT0(3):26" /><v:ud
+             v:nameU="Inset"
+             v:prompt=""
+             v:val="VT0(0):24" /><v:ud
+             v:nameU="InsideRadius"
+             v:prompt=""
+             v:val="VT0(0):0" /><v:ud
+             v:nameU="InsetXInt"
+             v:prompt=""
+             v:val="VT0(0):24" /><v:ud
+             v:nameU="HTxtMargin"
+             v:prompt=""
+             v:val="VT0(0.059055118110236):24" /><v:ud
+             v:nameU="HTxtWidth"
+             v:prompt=""
+             v:val="VT0(1.7716535433071):1" /><v:ud
+             v:nameU="HLeft"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HRight"
+             v:prompt=""
+             v:val="VT0(1.7716535433071):1" /><v:ud
+             v:nameU="SquareCorners7"
+             v:prompt=""
+             v:val="VT0(3):26" /><v:ud
+             v:nameU="Offset"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="Rounding8"
+             v:prompt=""
+             v:val="VT0(0.11811023622047):24" /><v:ud
+             v:nameU="InsetX9"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="InsetY9"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="OffsetY11"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="OffsetY12"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="Width12"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="msvSDContainerHeadingEdge"
+             v:prompt=""
+             v:val="VT4(Bottom)" /><v:ud
+             v:nameU="HLineVisible"
+             v:prompt=""
+             v:val="VT0(0):5" /><v:ud
+             v:nameU="HFillVisible"
+             v:prompt=""
+             v:val="VT0(0):5" /><v:ud
+             v:nameU="FillForegndIn"
+             v:prompt=""
+             v:val="VT5(#f0f0f0)" /><v:ud
+             v:nameU="FillBkgndIn"
+             v:prompt=""
+             v:val="VT5(#ffffff)" /><v:ud
+             v:nameU="BaseColor"
+             v:prompt=""
+             v:val="VT5(#ffffff)" /><v:ud
+             v:nameU="FillPatternIn"
+             v:prompt=""
+             v:val="VT0(30):26" /></v:userDefs><title
+           id="title55">Лист.4</title><desc
+           id="desc57">QEMU</desc><g
+           id="shape5-12"
+           v:mID="5"
+           v:groupContext="shape"
+           v:layerMember="0"><title
+             id="title60">Лист.5</title><v:userDefs><v:ud
+               v:nameU="msvStructureType"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="msvThemeColors"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="msvThemeEffects"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="CStyle"
+               v:prompt=""
+               v:val="VT0(1):26" /><v:ud
+               v:nameU="Rounding"
+               v:prompt=""
+               v:val="VT0(0):0" /><v:ud
+               v:nameU="SquareCorners"
+               v:prompt=""
+               v:val="VT0(3):26" /><v:ud
+               v:nameU="HLeft"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HRight"
+               v:prompt=""
+               v:val="VT0(1.7716535433071):1" /><v:ud
+               v:nameU="Hidden"
+               v:prompt=""
+               v:val="VT0(0):5" /><v:ud
+               v:nameU="BowHeight7"
+               v:prompt=""
+               v:val="VT0(0.11811023622047):24" /><v:ud
+               v:nameU="Offset7"
+               v:prompt=""
+               v:val="VT0(0.0017361111111111):29" /><v:ud
+               v:nameU="AnchorPt7"
+               v:prompt=""
+               v:val="VT0(0.64787018810149):24" /><v:ud
+               v:nameU="HSide"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HAlign"
+               v:prompt=""
+               v:val="VT0(0):26" /></v:userDefs></g><g
+           id="shape4-16"
+           v:mID="4"
+           v:groupContext="groupContent"
+           v:layerMember="0"><v:textBlock
+             v:margins="rect(4,6,4,6)"
+             v:tabSpace="42.5197" /><v:textRect
+             cx="63.7795"
+             cy="582.52"
+             width="127.56"
+             height="25.5118" /><text
+             x="6"
+             y="586.71997"
+             class="st4"
+             v:langID="1033"
+             id="text63"
+             style="font-stretch:semi-expanded;font-size:13.99991989px;font-family:'Times New Roman';fill:#000000"><v:paragraph /><v:tabList />QEMU</text>
+</g></g></g><g
+       id="group6-21"
+       transform="translate(494.264,-156.084)"
+       v:mID="6"
+       v:groupContext="group"
+       v:layerMember="0"><v:userDefs><v:ud
+           v:nameU="msvShapeCategories"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="msvStructureType"
+           v:prompt=""
+           v:val="VT4(Container)" /><v:ud
+           v:nameU="msvSDContainerMargin"
+           v:prompt=""
+           v:val="VT0(0.098425196850394):24" /><v:ud
+           v:nameU="msvSDContainerResize"
+           v:prompt=""
+           v:val="VT0(1):26" /><v:ud
+           v:nameU="msvSDContainerLocked"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="msvSDContainerNoHighlight"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="msvSDContainerNoRibbon"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="msvSDContainerStyle"
+           v:prompt=""
+           v:val="VT0(1):26" /><v:ud
+           v:nameU="msvSDContainerStyleCount"
+           v:prompt=""
+           v:val="VT0(12):26" /><v:ud
+           v:nameU="msvSDContainerRequiredCategories"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="msvSDContainerExcludedCategories"
+           v:prompt=""
+           v:val="VT4(DoNotContain)" /><v:ud
+           v:nameU="msvSDHeadingStyle"
+           v:prompt=""
+           v:val="VT0(1):26" /><v:ud
+           v:nameU="msvSDHeadingStyleCount"
+           v:prompt=""
+           v:val="VT0(20):26" /><v:ud
+           v:nameU="msvThemeColors"
+           v:prompt=""
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:prompt=""
+           v:val="VT0(16):26" /><v:ud
+           v:nameU="HeadingSide"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="HeadingSpan"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="HeadingAlign"
+           v:prompt=""
+           v:val="VT0(0):26" /><v:ud
+           v:nameU="RTL"
+           v:prompt=""
+           v:val="VT0(0):5" /><v:ud
+           v:nameU="FnForceContrast"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="BaseColor"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="HColor1"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="HColor2"
+           v:prompt=""
+           v:val="VT5(#fefefe)" /><v:ud
+           v:nameU="HColor3"
+           v:prompt=""
+           v:val="VT5(#e9e9e9)" /><v:ud
+           v:nameU="HColor4"
+           v:prompt=""
+           v:val="VT5(#efefef)" /><v:ud
+           v:nameU="BColor1"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="BColor2"
+           v:prompt=""
+           v:val="VT5(#ffffff)" /><v:ud
+           v:nameU="LineColor"
+           v:prompt=""
+           v:val="VT5(#d5d5d5)" /><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /></v:userDefs><title
+         id="title66">Контейнер 1.49</title><g
+         id="group7-22"
+         v:mID="7"
+         v:groupContext="group"
+         v:layerMember="0"><v:userDefs><v:ud
+             v:nameU="msvStructureType"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="msvThemeColors"
+             v:prompt=""
+             v:val="VT0(36):26" /><v:ud
+             v:nameU="msvThemeEffects"
+             v:prompt=""
+             v:val="VT0(16):26" /><v:ud
+             v:nameU="CStyle"
+             v:prompt=""
+             v:val="VT0(1):26" /><v:ud
+             v:nameU="HSide"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HSpan"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HAlign"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="HorzAlign"
+             v:prompt=""
+             v:val="VT0(1):26" /><v:ud
+             v:nameU="SquareCorners"
+             v:prompt=""
+             v:val="VT0(0):26" /><v:ud
+             v:nameU="Corner6"
+             v:prompt=""
+             v:val="VT0(0.19685039370079):24" /><v:ud
+             v:nameU="FillForegndIn"
+             v:prompt=""
+             v:val="VT5(#ffffff)" /><v:ud
+             v:nameU="FillBkgndIn"
+             v:prompt=""
+             v:val="VT5(#f0f0f0)" /><v:ud
+             v:nameU="FillPatternIn"
+             v:prompt=""
+             v:val="VT0(1):26" /><v:ud
+             v:nameU="BaseColor"
+             v:prompt=""
+             v:val="VT5(#ffffff)" /></v:userDefs><title
+           id="title69">Лист.7</title><g
+           id="shape8-23"
+           v:mID="8"
+           v:groupContext="shape"
+           v:layerMember="0"
+           transform="translate(2.83465,2.83465)"><title
+             id="title72">Лист.8</title><v:userDefs><v:ud
+               v:nameU="msvStructureType"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="msvThemeColors"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="msvThemeEffects"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="CStyle"
+               v:prompt=""
+               v:val="VT0(1):26" /><v:ud
+               v:nameU="HSide"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HSpan"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HAlign"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="HorzAlign"
+               v:prompt=""
+               v:val="VT0(1):26" /><v:ud
+               v:nameU="SquareCorners"
+               v:prompt=""
+               v:val="VT0(0):26" /><v:ud
+               v:nameU="OffsetX10"
+               v:prompt=""
+               v:val="VT0(0.039370078740157):24" /><v:ud
+               v:nameU="OffsetY10"
+               v:prompt=""
+               v:val="VT0(-0.039370078740157):24" /></v:userDefs><g
+             id="shadow8-24"
+             v:groupContext="shadow"
+             v:shadowOffsetX="1.44"
+             v:shadowOffsetY="-1.44"
+             v:shadowType="1"
+             transform="translate(1.44,1.44)"
+             class="st1"
+             style="visibility:visible" /></g><g
+           id="shape7-27"
+           v:mID="7"
+           v:groupContext="groupContent"
+           v:layerMember="0"><g
+             id="shadow7-28"
+             v:groupContext="shadow"
+             v:shadowOffsetX="1.44"
+             v:shadowOffsetY="-1.44"
+             v:shadowType="1"
+             transform="translate(1.44,1.44)"
+             class="st1"
+             style="visibility:visible"><path
+               d="m 0,595.28 81.5,0 81.49,0 0,-242.37 -81.49,0 -81.5,0 0,242.37 z"
+               class="st2"
+               id="path77"
+               inkscape:connector-curvature="0"
+               style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><path
+             d="m 0,595.28 81.5,0 81.49,0 0,-242.37 -81.49,0 -81.5,0 0,242.37 z"
+             class="st3"
+             id="path79"
+             inkscape:connector-curvature="0"
+             style="fill:#ffffff;stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g></g></g><g
+       id="shape11-41"
+       v:mID="11"
+       v:groupContext="shape"
+       v:layerMember="1"
+       transform="translate(338.359,-351.675)"><title
+         id="title97">Процесс.43</title><desc
+         id="desc99">Гостевой код (тест)</desc><v:custProps><v:cp
+           v:nameU="Cost"
+           v:lbl="Стоимость"
+           v:prompt=""
+           v:type="7"
+           v:format="@"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="ProcessNumber"
+           v:lbl="Номер процесса"
+           v:prompt=""
+           v:type="2"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Owner"
+           v:lbl="Владелец"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Function"
+           v:lbl="Функция"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /><v:cp
+           v:nameU="StartDate"
+           v:lbl="Дата начала"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="EndDate"
+           v:lbl="Дата окончания"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Status"
+           v:lbl="Состояние"
+           v:prompt=""
+           v:type="4"
+           v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /></v:custProps><v:userDefs><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /><v:ud
+           v:nameU="DefaultWidth"
+           v:prompt=""
+           v:val="VT0(0.98425196850394):24" /><v:ud
+           v:nameU="DefaultHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="ResizeTxtHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><v:textBlock
+         v:margins="rect(2,2,2,2)"
+         v:tabSpace="42.5197" /><v:textRect
+         cx="49.6063"
+         cy="566.929"
+         width="99.22"
+         height="56.6929" /><g
+         id="shadow11-42"
+         v:groupContext="shadow"
+         v:shadowOffsetX="1.44"
+         v:shadowOffsetY="-1.44"
+         v:shadowType="1"
+         transform="translate(1.44,1.44)"
+         class="st1"
+         style="visibility:visible"><rect
+           x="0"
+           y="538.58301"
+           width="99.212601"
+           height="56.692902"
+           class="st2"
+           id="rect102"
+           style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><rect
+         x="0"
+         y="538.58301"
+         width="99.212601"
+         height="56.692902"
+         class="st6"
+         id="rect104"
+         style="fill:url(#linearGradient4426);stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g><g
+       id="shape12-49"
+       v:mID="12"
+       v:groupContext="shape"
+       v:layerMember="1"
+       transform="translate(338.359,-275.139)"><title
+         id="title111">Процесс.45</title><desc
+         id="desc113">GDB сервер</desc><v:custProps><v:cp
+           v:nameU="Cost"
+           v:lbl="Стоимость"
+           v:prompt=""
+           v:type="7"
+           v:format="@"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="ProcessNumber"
+           v:lbl="Номер процесса"
+           v:prompt=""
+           v:type="2"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Owner"
+           v:lbl="Владелец"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Function"
+           v:lbl="Функция"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /><v:cp
+           v:nameU="StartDate"
+           v:lbl="Дата начала"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="EndDate"
+           v:lbl="Дата окончания"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Status"
+           v:lbl="Состояние"
+           v:prompt=""
+           v:type="4"
+           v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /></v:custProps><v:userDefs><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /><v:ud
+           v:nameU="DefaultWidth"
+           v:prompt=""
+           v:val="VT0(0.98425196850394):24" /><v:ud
+           v:nameU="DefaultHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="ResizeTxtHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><v:textBlock
+         v:margins="rect(2,2,2,2)"
+         v:tabSpace="42.5197" /><v:textRect
+         cx="49.6063"
+         cy="566.929"
+         width="99.22"
+         height="56.6929" /><g
+         id="shadow12-50"
+         v:groupContext="shadow"
+         v:shadowOffsetX="1.44"
+         v:shadowOffsetY="-1.44"
+         v:shadowType="1"
+         transform="translate(1.44,1.44)"
+         class="st1"
+         style="visibility:visible"><rect
+           x="0"
+           y="538.58301"
+           width="99.212601"
+           height="56.692902"
+           class="st2"
+           id="rect116"
+           style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><rect
+         x="0"
+         y="538.58301"
+         width="99.212601"
+         height="56.692902"
+         class="st6"
+         id="rect118"
+         style="fill:url(#linearGradient4428);stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g><g
+       id="shape13-56"
+       v:mID="13"
+       v:groupContext="shape"
+       v:layerMember="2"
+       transform="translate(380.879,-351.675)"><title
+         id="title125">Динамическая соединительная линия.47</title><v:userDefs><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><path
+         d="m 7.09,601.08 0,0.36 0,7.52"
+         class="st8"
+         id="path127"
+         inkscape:connector-curvature="0"
+         style="stroke:#404040;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#mrkr5-63);marker-end:url(#mrkr5-65)" /></g><g
+       id="shape14-66"
+       v:mID="14"
+       v:groupContext="shape"
+       v:layerMember="1"
+       transform="translate(324.186,-163.171)"><title
+         id="title130">Процесс.48</title><desc
+         id="desc132">GDB сервер</desc><v:custProps><v:cp
+           v:nameU="Cost"
+           v:lbl="Стоимость"
+           v:prompt=""
+           v:type="7"
+           v:format="@"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="ProcessNumber"
+           v:lbl="Номер процесса"
+           v:prompt=""
+           v:type="2"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Owner"
+           v:lbl="Владелец"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Function"
+           v:lbl="Функция"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /><v:cp
+           v:nameU="StartDate"
+           v:lbl="Дата начала"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="EndDate"
+           v:lbl="Дата окончания"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Status"
+           v:lbl="Состояние"
+           v:prompt=""
+           v:type="4"
+           v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /></v:custProps><v:userDefs><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /><v:ud
+           v:nameU="DefaultWidth"
+           v:prompt=""
+           v:val="VT0(0.98425196850394):24" /><v:ud
+           v:nameU="DefaultHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="ResizeTxtHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><v:textBlock
+         v:margins="rect(2,2,2,2)"
+         v:tabSpace="42.5197" /><v:textRect
+         cx="63.7795"
+         cy="566.929"
+         width="127.56"
+         height="56.6929" /><g
+         id="shadow14-67"
+         v:groupContext="shadow"
+         v:shadowOffsetX="1.44"
+         v:shadowOffsetY="-1.44"
+         v:shadowType="1"
+         transform="translate(1.44,1.44)"
+         class="st1"
+         style="visibility:visible"><rect
+           x="0"
+           y="538.58301"
+           width="127.559"
+           height="56.692902"
+           class="st2"
+           id="rect135"
+           style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><rect
+         x="0"
+         y="538.58301"
+         width="127.559"
+         height="56.692902"
+         class="st6"
+         id="rect137"
+         style="fill:url(#linearGradient4430);stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g><g
+       id="shape15-74"
+       v:mID="15"
+       v:groupContext="shape"
+       v:layerMember="1"
+       transform="translate(182.453,-163.171)"><title
+         id="title146">Процесс.44</title><desc
+         id="desc148">Приложение (тест)</desc><v:custProps><v:cp
+           v:nameU="Cost"
+           v:lbl="Стоимость"
+           v:prompt=""
+           v:type="7"
+           v:format="@"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="ProcessNumber"
+           v:lbl="Номер процесса"
+           v:prompt=""
+           v:type="2"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Owner"
+           v:lbl="Владелец"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Function"
+           v:lbl="Функция"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /><v:cp
+           v:nameU="StartDate"
+           v:lbl="Дата начала"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="EndDate"
+           v:lbl="Дата окончания"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Status"
+           v:lbl="Состояние"
+           v:prompt=""
+           v:type="4"
+           v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /></v:custProps><v:userDefs><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /><v:ud
+           v:nameU="DefaultWidth"
+           v:prompt=""
+           v:val="VT0(0.98425196850394):24" /><v:ud
+           v:nameU="DefaultHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="ResizeTxtHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><v:textBlock
+         v:margins="rect(2,2,2,2)"
+         v:tabSpace="42.5197" /><v:textRect
+         cx="49.6063"
+         cy="566.929"
+         width="99.22"
+         height="56.6929" /><g
+         id="shadow15-75"
+         v:groupContext="shadow"
+         v:shadowOffsetX="1.44"
+         v:shadowOffsetY="-1.44"
+         v:shadowType="1"
+         transform="translate(1.44,1.44)"
+         class="st1"
+         style="visibility:visible"><rect
+           x="0"
+           y="538.58301"
+           width="99.212601"
+           height="56.692902"
+           class="st2"
+           id="rect151"
+           style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><rect
+         x="0"
+         y="538.58301"
+         width="99.212601"
+         height="56.692902"
+         class="st6"
+         id="rect153"
+         style="fill:url(#linearGradient4432);stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g><g
+       id="shape16-81"
+       v:mID="16"
+       v:groupContext="shape"
+       v:layerMember="2"
+       transform="translate(324.186,-184.431)"><title
+         id="title160">Динамическая соединительная линия.46</title><v:userDefs><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><path
+         d="m -5.8,588.19 -0.36,0 -30.2,0"
+         class="st8"
+         id="path162"
+         inkscape:connector-curvature="0"
+         style="stroke:#404040;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#mrkr5-63);marker-end:url(#mrkr5-65)" /></g><g
+       id="shape17-89"
+       v:mID="17"
+       v:groupContext="shape"
+       v:layerMember="1"
+       transform="translate(508.438,-275.139)"><title
+         id="title165">Процесс.54</title><desc
+         id="desc167">Модуль pyrsp</desc><v:custProps><v:cp
+           v:nameU="Cost"
+           v:lbl="Стоимость"
+           v:prompt=""
+           v:type="7"
+           v:format="@"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="ProcessNumber"
+           v:lbl="Номер процесса"
+           v:prompt=""
+           v:type="2"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Owner"
+           v:lbl="Владелец"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Function"
+           v:lbl="Функция"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /><v:cp
+           v:nameU="StartDate"
+           v:lbl="Дата начала"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="EndDate"
+           v:lbl="Дата окончания"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Status"
+           v:lbl="Состояние"
+           v:prompt=""
+           v:type="4"
+           v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /></v:custProps><v:userDefs><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /><v:ud
+           v:nameU="DefaultWidth"
+           v:prompt=""
+           v:val="VT0(0.98425196850394):24" /><v:ud
+           v:nameU="DefaultHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="ResizeTxtHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><v:textBlock
+         v:margins="rect(2,2,2,2)"
+         v:tabSpace="42.5197" /><v:textRect
+         cx="68.0315"
+         cy="566.929"
+         width="136.07"
+         height="56.6929" /><g
+         id="shadow17-90"
+         v:groupContext="shadow"
+         v:shadowOffsetX="1.44"
+         v:shadowOffsetY="-1.44"
+         v:shadowType="1"
+         transform="translate(1.44,1.44)"
+         class="st1"
+         style="visibility:visible"><rect
+           x="0"
+           y="538.58301"
+           width="136.063"
+           height="56.692902"
+           class="st2"
+           id="rect170"
+           style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><rect
+         x="0"
+         y="538.58301"
+         width="136.063"
+         height="56.692902"
+         class="st6"
+         id="rect172"
+         style="fill:url(#linearGradient4434);stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g><g
+       id="shape18-96"
+       v:mID="18"
+       v:groupContext="shape"
+       v:layerMember="1"
+       transform="translate(508.438,-163.171)"><title
+         id="title179">Процесс.55</title><desc
+         id="desc181">Модуль pyrsp</desc><v:custProps><v:cp
+           v:nameU="Cost"
+           v:lbl="Стоимость"
+           v:prompt=""
+           v:type="7"
+           v:format="@"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="ProcessNumber"
+           v:lbl="Номер процесса"
+           v:prompt=""
+           v:type="2"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Owner"
+           v:lbl="Владелец"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Function"
+           v:lbl="Функция"
+           v:prompt=""
+           v:type="0"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /><v:cp
+           v:nameU="StartDate"
+           v:lbl="Дата начала"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="EndDate"
+           v:lbl="Дата окончания"
+           v:prompt=""
+           v:type="5"
+           v:format=""
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0" /><v:cp
+           v:nameU="Status"
+           v:lbl="Состояние"
+           v:prompt=""
+           v:type="4"
+           v:format=";Не начато;Выполняется;Завершено;Отложено;Ожидается ввод"
+           v:sortKey=""
+           v:invis="false"
+           v:ask="false"
+           v:langID="1049"
+           v:cal="0"
+           v:val="VT4()" /></v:custProps><v:userDefs><v:ud
+           v:nameU="visVersion"
+           v:prompt=""
+           v:val="VT0(14):26" /><v:ud
+           v:nameU="DefaultWidth"
+           v:prompt=""
+           v:val="VT0(0.98425196850394):24" /><v:ud
+           v:nameU="DefaultHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="ResizeTxtHeight"
+           v:prompt=""
+           v:val="VT0(0.59055118110236):24" /><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><v:textBlock
+         v:margins="rect(2,2,2,2)"
+         v:tabSpace="42.5197" /><v:textRect
+         cx="68.0315"
+         cy="566.929"
+         width="136.07"
+         height="56.6929" /><g
+         id="shadow18-97"
+         v:groupContext="shadow"
+         v:shadowOffsetX="1.44"
+         v:shadowOffsetY="-1.44"
+         v:shadowType="1"
+         transform="translate(1.44,1.44)"
+         class="st1"
+         style="visibility:visible"><rect
+           x="0"
+           y="538.58301"
+           width="136.063"
+           height="56.692902"
+           class="st2"
+           id="rect184"
+           style="fill:#cdcdcd;fill-opacity:0.5;stroke:#cdcdcd;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.5" /></g><rect
+         x="0"
+         y="538.58301"
+         width="136.063"
+         height="56.692902"
+         class="st6"
+         id="rect186"
+         style="fill:url(#linearGradient4436);stroke:#404040;stroke-width:0.25;stroke-linecap:round;stroke-linejoin:round" /></g><g
+       id="shape19-103"
+       v:mID="19"
+       v:groupContext="shape"
+       v:layerMember="2"
+       transform="translate(508.438,-296.399)"><title
+         id="title193">Динамическая соединительная линия.56</title><v:userDefs><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><path
+         d="m -5.8,588.19 -0.36,0 -58.55,0"
+         class="st8"
+         id="path195"
+         inkscape:connector-curvature="0"
+         style="stroke:#404040;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#mrkr5-63);marker-end:url(#mrkr5-65)" /></g><g
+       id="shape20-111"
+       v:mID="20"
+       v:groupContext="shape"
+       v:layerMember="2"
+       transform="translate(508.438,-184.431)"><title
+         id="title198">Динамическая соединительная линия.57</title><v:userDefs><v:ud
+           v:nameU="msvThemeColors"
+           v:val="VT0(36):26" /><v:ud
+           v:nameU="msvThemeEffects"
+           v:val="VT0(16):26" /></v:userDefs><path
+         d="m -5.8,588.19 -0.36,0 -44.37,0"
+         class="st8"
+         id="path200"
+         inkscape:connector-curvature="0"
+         style="stroke:#404040;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;marker-start:url(#mrkr5-63);marker-end:url(#mrkr5-65)" /></g><text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="387.04343"
+       y="208.93924"
+       id="text4338"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4340"
+         x="387.04343"
+         y="208.93924"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Гостевой код</tspan><tspan
+         sodipodi:role="line"
+         x="387.04343"
+         y="226.43927"
+         id="tspan4342"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">(тест)</tspan></text>
+<text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="387.74969"
+       y="295.10583"
+       id="text4344"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4346"
+         x="387.74969"
+         y="295.10583"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">GDB сервер</tspan></text>
+<text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="575.62115"
+       y="211.76436"
+       id="text4348"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4350"
+         x="575.62115"
+         y="211.76436"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Средство</tspan><tspan
+         sodipodi:role="line"
+         x="575.62115"
+         y="229.26439"
+         id="tspan4354"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">автоматизированного</tspan><tspan
+         sodipodi:role="line"
+         x="575.62115"
+         y="246.7644"
+         id="tspan4352"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">тестирования</tspan></text>
+<text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="574.20856"
+       y="295.10587"
+       id="text4356"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4358"
+         x="574.20856"
+         y="295.10587"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Модуль pyrsp</tspan></text>
+<text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="575.62115"
+       y="406.69867"
+       id="text4410"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4412"
+         x="575.62115"
+         y="406.69867"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Модуль pyrsp</tspan></text>
+<text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="386.33713"
+       y="406.69867"
+       id="text4414"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4416"
+         x="386.33713"
+         y="406.69867"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">GDB сервер</tspan></text>
+<text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:18.0000267px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="232.36729"
+       y="396.81067"
+       id="text4418"
+       sodipodi:linespacing="125%"
+       sodipodi:insensitive="true"><tspan
+         sodipodi:role="line"
+         id="tspan4420"
+         x="232.36729"
+         y="396.81067"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Приложение</tspan><tspan
+         sodipodi:role="line"
+         x="232.36729"
+         y="414.3107"
+         id="tspan4422"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.00002098px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">(тест)</tspan></text>
+</g></svg>
