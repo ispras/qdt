@@ -642,71 +642,73 @@ Qemu.
 +---------+-----+------------------------------+------------------------------+
 |   ISA   |Класс|     Покрытые инструкции      |    Не покрытые инструкции    |
 +=========+=====+==============================+==============================+
-|  ARM32  |  1  | ldrb, pop, ldr, mov, movs,   | pop + cc, mrs + cc, msr + cc,|
-|         |     | str, movge, movcc, mvns,     | swp, swpb, ldm + cc,         |
-|         |     | strh, stmdb, movne, stm,     | ldmda + cc, ldmdb + cc       |
-|         |     | ldrh, moveq, ldmia, ldrsh,   | ldmib + cc, stmia + cc,      |
-|         |     | ldrsb, strb, push, mvn       | stmib + cc, stmda +cc        |
-|         |     |                              |                              |
-|         |  2  | sub, subs, lsl, lsr, eor,    | ror(s) + cc, cmn + cc,       |
-|         |     | orrcs, subcs, cmpeq, lsls,   | teq + cc, bic(s) + cc,       |
-|         |     | rsbmi, asreq, add, adc, ands | rrxs + cc, rscs + cc         |
-|         |     | lsrne, rsb, asr, rsbs, cmpcc,|                              |
-|         |     | adcs, mul, orrs, tst, mla,   |                              |
-|         |     | lsrs, cmp, and, sbcs, rrx,   |                              |
-|         |     | adds, lsrsne, orreq, orr,    |                              |
-|         |     | lsrcs, eors, lslcc, sbc,     |                              |
-|         |     | lsleq, rsc, umull, smulbb    |                              |
-|         |     |                              |                              |
-|         |  3  | b, bl, bmi, beq, bcs, ble,   | bpl, bvs, bvc, svc/swi + cc  |
-|         |     | blt, bhi, bne, bls, bcc, bgt,|                              |
-|         |     | bge                          |                              |
-|         |     |                              |                              |
+|  ARM32  |  1\ | ldrb, pop, ldr, mov, movs,\  | pop + cc, mrs + cc,\         |
+|         |  \  | str, movge, movcc, mvns,\    |  ldm + cc, msr + cc,\        |
+|         |  \  | strh, stmdb, movne, stm,\    | ldmda + cc, ldmdb + cc\      |
+|         |  \  | ldrh, moveq, ldmia, ldrsh,\  | ldmib + cc, stmia + cc,\     |
+|         |  \  | ldrsb, strb, push, mvn\      | stmib + cc, stmda +cc, swp,\ |
+|         |  \  |               \              | swpb\                        |
+|         |  \  |               \              |               \              |
+|         |  2\ | sub, subs, lsl, lsr, eor,\   | ror(s) + cc, cmn + cc,\      |
+|         |  \  | orrcs, subcs, cmpeq, lsls,\  | teq + cc, bic(s) + cc,\      |
+|         |  \  | rsbmi, asreq, add, adc,\     | rrxs + cc, rscs + cc\        |
+|         |  \  | ands, lsrne, rsb, asr, rsbs,\|               \              |
+|         |  \  | adcs, mul, orrs, tst, mla,\  |               \              |
+|         |  \  | lsrs, cmp, and, sbcs, rrx,\  |               \              |
+|         |  \  | adds, lsrsne, orreq, orr,\   |               \              |
+|         |  \  | lsrcs, eors, lslcc, sbc,\    |               \              |
+|         |  \  | lsleq, rsc, umull, smulbb,\  |               \              |
+|         |  \  | cmpcc\                       |               \              |
+|         |  \  |               \              |               \              |
+|         |  3\ | b, bl, bmi, beq, bcs, ble,\  | bpl, bvs, bvc, svc/swi + cc\ |
+|         |  \  | blt, bhi, bne, bls, bcc,\    |               \              |
+|         |  \  |  bgt, bge\                   |               \              |
+|         |  \  |               \              |               \              |
 |         |  4  |                              | cdp, mrc, mcr                |
 +---------+-----+------------------------------+------------------------------+
-| MIPS32  |  1  | movn, movz, lb, lw, ll, slt, | mthi, mtlo, lh, lwl, lwr,    |
-|         |     | sltiu, slti, sltu, lbu, mflo,| swl, swr, sc, pref, sync     |
-|         |     | mfhi, lui, sw, lhu, sh, sb   |                              |
-|         |     |                              |                              |
-|         |  2  | subu, addiu, mul, nor, sllv, | madd, maddu, msub, msubu,    |
-|         |     | srlv, multu, and, sll, addu, | xori                         |
-|         |     | xor, srav, ori, andi, divu,  |                              |
-|         |     | div, mult, sra, srl, or      |                              |
-|         |     |                              |                              |
-|         |  3  | bltz, beqz, jal, bne, bal,   | blez, bgtz, bgez, bltzal,    |
-|         |     | beq, bnez, teq, jr           | bgezal, beql, bnel, blezl,   |
-|         |     |                              | bgtzl, bltzl, bgezl, bltzall,|
-|         |     |                              | bgezall, j, jalr, syscall,   |
-|         |     |                              | break                        |
-|         |     |                              |                              |
-|         |  4  |                              | mtc0, mfc0, eret             |
-|         |     |                              |                              |
+| MIPS32  |  1\ | movn, movz, lb, lw, ll, slt,\| mthi, mtlo, lh, lwl, lwr,\   |
+|         |  \  | sltiu, slti, sltu, lbu, mflo\| swl, swr, sc, pref, sync\    |
+|         |  \  | mfhi, lui, sw, lhu, sh, sb\  |               \              |
+|         |  \  |               \              |               \              |
+|         |  2\ | subu, addiu, mul, nor, sllv,\| madd, maddu, msub, msubu,\   |
+|         |  \  | srlv, multu, and, sll, addu,\| xori\                        |
+|         |  \  | xor, srav, ori, andi, divu,\ |               \              |
+|         |  \  | div, mult, sra, srl, or\     |               \              |
+|         |  \  |               \              |               \              |
+|         |  3\ | bltz, beqz, jal, bne, bal,\  | blez, bgtz, bgez, bltzal,\   |
+|         |  \  | beq, bnez, teq, jr\          | bgezal, beql, bnel, blezl,\  |
+|         |  \  |               \              | bgtzl, bltzl, bgezl,\        |
+|         |  \  |               \              | bltzall, bgezall, j, jalr,\  |
+|         |  \  |               \              | syscall, break\              |
+|         |  \  |               \              |               \              |
+|         |  4\ |               \              | mtc0, mfc0, eret\            |
+|         |  \  |               \              |               \              |
 |         |  5  |                              | t + cc (trap)                |
 +---------+-----+------------------------------+------------------------------+
-|MSP430_1 |  1  | mov(.b), push, br, sxt       | push.b, pop(.b), nop, clr(.b)|
-|         |     |                              | swpb                         |
-|         |     |                              |                              |
-|         |  2  | add(.b), addc, inc(.b), incd,| inv.b, sbc(.b), tst.b        |
-|         |     | sub(.b), subc, decd, cmp(.b),| subc.b, addc.b, incd.b,      |
-|         |     | and(.b), bis(.b), xor(.b),   | decd.b, dadc(.b), rla.b,     |
-|         |     | inv, rla, rlc, rra, rrc, tst,| rlc.b, rra.b, rrc.b, tst.b,  |
-|         |     | bit                          | bit.b, dint, eint, setc,     |
-|         |     |                              | setn, setz, clrc, clrn, clrz,|
-|         |     |                              | bic(.b), dadd(.b), adc(.b),  |
-|         |     |                              | dec(.b)                      |
-|         |     |                              |                              |
-|         |  3  | call, ret, jnz, jge, jc, jeq,| reti, jmp, jn, jnc           |
-|         |     | jl                           |                              |
+|MSP430_1 |  1\ | mov(.b), push, br, sxt\      | push.b, pop(.b), nop,\       |
+|         |  \  |               \              | clr(.b), swpb\               |
+|         |  \  |               \              |               \              |
+|         |  2\ | add(.b), addc, inc(.b),\     | inv.b, sbc(.b), tst.b\       |
+|         |  \  | incd, sub(.b), subc, decd,\  | subc.b, addc.b, incd.b\      |
+|         |  \  | cmp(.b), and(.b), bis(.b),\  | decd.b, dadc(.b), rla.b,\    |
+|         |  \  | xor(.b), inv, rla, rlc,\     | rlc.b, rra.b, rrc.b, tst.b,\ |
+|         |  \  | rra, rrc, tst, bit\          | bit.b, dint, eint, setc,\    |
+|         |  \  |               \              | setn, setz, clrc, clrn,\     |
+|         |  \  |               \              | clrz, bic(.b), dadd(.b),\    |
+|         |  \  |               \              | adc(.b), dec(.b)\            |
+|         |  \  |               \              |               \              |
+|         |  3\ | call, ret, jnz, jge, jc,\    | reti, jmp, jn, jnc           |
+|         |     | jeq, jl                      |                              |
 +---------+-----+------------------------------+------------------------------+
-|MSP430_2 |  1  | mov(.b)                      | br, pop(.b), nop, clr(.b)    |
-|         |     |                              |                              |
-|         |  2  | add(.b), incd, sub(.b), decd,| inc(.b), incd.b, rla.b,      |
-|         |     | cmp(.b), and(.b), bis(.b),   | adc(.b), rlc(.b), bit(.b),   |
-|         |     | xor(.b), rla                 | dec(.b), decd.b, inv(.b),    |
-|         |     |                              | addc(.b), eint, setc, setn,  |
-|         |     |                              | setz, bic(.b), clrc, clrn,   |
-|         |     |                              | clrz, dint                   |
-|         |     |                              |                              |
+|MSP430_2 |  1\ | mov(.b)\                     | br, pop(.b), nop, clr(.b)\   |
+|         |  \  |               \              |               \              |
+|         |  2\ | add(.b), incd, sub(.b),\     | inc(.b), incd.b, rla.b,\     |
+|         |  \  | decd, cmp(.b), and(.b),\     | adc(.b), rlc(.b), bit(.b),\  |
+|         |  \  | bis(.b), xor(.b), rla\       | dec(.b), decd.b, inv(.b),\   |
+|         |  \  |               \              | addc(.b), eint, setc, setn,\ |
+|         |  \  |               \              | setz, bic(.b), clrc, clrn,\  |
+|         |  \  |               \              | clrz, dint\                  |
+|         |  \  |               \              |               \              |
 |         |  3  | call, ret, jnz, jeq, jge, jl | jc, jmp, jn, jnc             |
 +---------+-----+------------------------------+------------------------------+
 
