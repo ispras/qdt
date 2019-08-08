@@ -588,7 +588,7 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
         oracle_trp.start()
         target_trp.start()
 
-    dc = DebugComparator(res_queue, jobs)
+    dc = DebugComparator(res_queue, jobs, c2t_cfg.rsp_target.test_timeout)
     try:
         dc.start()
     except RuntimeError:

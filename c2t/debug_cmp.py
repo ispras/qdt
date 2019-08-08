@@ -7,6 +7,12 @@ from collections import (
     defaultdict,
     deque
 )
+from time import (
+    time
+)
+from Queue import (
+    Empty
+)
 from common import (
     same
 )
@@ -19,9 +25,10 @@ class DebugComparator(object):
 comparison report
     """
 
-    def __init__(self, dump_queue, count):
+    def __init__(self, dump_queue, count, timeout):
         self.end = count
         self.dump_queue = dump_queue
+        self.timeout = timeout
 
     @staticmethod
     def _format_variables(_vars):
@@ -102,9 +109,18 @@ comparison report
         """ Start debug comparison """
         oracle_dump_cache = defaultdict(deque)
         target_dump_cache = defaultdict(deque)
+        tests_timings = {}
 
         while self.end:
-            sender, test, dump = self.dump_queue.get(block = True)
+            for test, start in tests_timings.iteritems():
+                if time() - start > self.timeout:
+                    print("%s: TIMEOUT" % test)
+                    raise RuntimeError
+
+            try:
+                sender, test, dump = self.dump_queue.get(timeout = 0.1)
+            except Empty:
+                continue
 
             if sender == "oracle":
                 if test in target_dump_cache and target_dump_cache[test]:
@@ -127,8 +143,10 @@ comparison report
             if dump == "TEST_EXIT" and cmp_dump == "TEST_EXIT":
                 self.end -= 1
             elif dump == "TEST_RUN" and cmp_dump == "TEST_RUN":
+                tests_timings[test] = time()
                 print("%s: RUN" % test)
             elif dump == "TEST_END" and cmp_dump == "TEST_END":
+                tests_timings.pop(test)
                 print("%s: OK" % test)
             else:
                 self.compare(test, sender, dump, cmp_sender, cmp_dump)
