@@ -717,6 +717,15 @@ variables values equality;
 #### Example of test in C
 
 Ready-to-use tests are located in `c2t/tests`.
+These tests contain:
+
+* arithmetic operators: `=`, `+`, `-`, `*`, `/`
+* bitwise operators: `&`, `|`, `^`, `~`, `>>`, `<<`
+* comparison operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
+* cycles
+* functions calls
+* returns
+
 There is an example of test with explanation of special commands.
 
 ```c
