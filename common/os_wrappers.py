@@ -5,6 +5,7 @@ __all__ = [
   , "ee"
   , "bsep"
   , "cli_repr"
+  , "bind_all_mouse_wheel"
 ]
 
 from os import (
@@ -21,6 +22,9 @@ from re import (
 )
 from .compat import (
     bstr
+)
+from platform import (
+    system
 )
 
 
@@ -79,3 +83,36 @@ get a `str`. Other input can be incompatible.
     # Also `repr` replaces ' with \' because it wraps result in '.
     # This function re-wraps result in ", so the replacement must be reverted.
     return '"' + repr(obj).replace('"', r'\"').replace(r"\'", "'")[1:-1] + '"'
+
+
+# Binding to mouse wheel, see
+# https://stackoverflow.com/questions/17355902/python-tkinter-binding-mousewheel-to-scrollbar
+OS = system()
+if OS == "Linux":
+    def bind_all_mouse_wheel(w, handler, add = None):
+
+        def scroll_up(e):
+            e.delta = 1
+            handler(e)
+
+        def scroll_down(e):
+            e.delta = -1
+            handler(e)
+
+        w.bind_all("<ButtonPress-4>", scroll_up, add = add)
+        w.bind_all("<ButtonPress-5>", scroll_down, add = add)
+
+elif OS == "Windows":
+    def bind_all_mouse_wheel(w, handler, add = None):
+
+        def scale(e):
+            e.delta //= -120
+            handler(e)
+
+        w.bind_all("<MouseWheel>", scale, add = add)
+else:
+    def bind_all_mouse_wheel(*_, **__):
+        from sys import ( # required only there
+            stderr
+        )
+        stderr.write("bind_all_mouse_wheel is not implemented for %s\n" % OS)
