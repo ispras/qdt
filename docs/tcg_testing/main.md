@@ -922,3 +922,9 @@ RC-01.01.pdf
 \[Электронный ресурс\] — Режим доступа:
 http://www.ti.com/lit/ug/slau144j/slau144j.pdf
 (дата обращения 16.07.2019)
+
+[$]. <a name="ref.pyrsp"></a>pyrsp. \[Электронный ресурс\] — Режим
+доступа: https://github.com/stef/pyrsp (дата обращения 02.08.2019)
+
+[$]. <a name="ref.pyelftools"></a>pyelftools. \[Электронный ресурс\] — Режим
+доступа: https://github.com/eliben/pyelftools (дата обращения 23.09.2018)
