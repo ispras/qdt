@@ -1,7 +1,14 @@
 # base on
 # https://stackoverflow.com/questions/16188420/python-tkinter-scrollbar-for-frame
 
-from Tkinter import *
+from six.moves.tkinter import (
+    Label,
+    Tk,
+    Frame,
+    Canvas,
+    GROOVE,
+    Scrollbar
+)
 
 
 def data():
