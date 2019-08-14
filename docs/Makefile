@@ -165,7 +165,7 @@ clean-debugging:
 
 # paper about TCG front-end testing
 
-tcg-testing-files := tcg_testing/main.docx
+tcg-testing-files := tcg_testing/main.docx tcg_testing/main.html
 
 tcg-testing: $(tcg-testing-files)
 
@@ -179,6 +179,10 @@ tcg-testing-PNGs := $(foreach f, \
 tcg_testing/main.docx: \
  tcg_testing/ref.docx \
  $(tcg-testing-PNGs)
+
+tcg_testing/main.html: \
+ $(tcg-testing-PNGs)
+# Actually, original SVGs are enough, but main.md references PNGs.
 
 clean: clean-tcg-testing
 clean-tcg-testing:
