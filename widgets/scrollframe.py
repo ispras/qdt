@@ -1,5 +1,8 @@
 __all__ = [
     "add_scrollbars"
+# If there is a widget with mouse wheel support then `add` it
+# to `WHEELED_WIDGETS` `set`.
+  , "WHEELED_WIDGETS"
   , "add_scrollbars_native"
   , "add_scrollbars_with_tags"
 ]
@@ -11,6 +14,9 @@ from six.moves.tkinter import (
     ALL,
     Scrollbar,
     Canvas
+)
+from common import (
+    bind_all_mouse_wheel
 )
 from itertools import (
     count
@@ -45,21 +51,40 @@ def add_scrollbars_native(outer, inner, row = 0, column = 0):
     return h_sb, v_sb
 
 
-def add_scrollbars(outer, InnerType, *inner_args, **inner_kw):
+# widgets reacting on mouse wheel
+WHEELED_WIDGETS = set(["TCombobox", "Scrollbar", "Text"])
+
+def add_scrollbars(outer, InnerType, *inner_args, **kw):
     """ Creates widget of type `InnerType` inside `outer` widget and adds
 vertical and horizontal scroll bars for created widget.
+
+:param kw:
+    those arguments are passed to `InnerType` constructor except for:
+
+    - row/column: `grid` coordinates inside `outer` (default: 0)
+    - wheel: support wheel scrolling when mouse is over inner widget
+        (default: False)
+    - inner_kw: see below
+
+    To pass same named arguments to `InnerType` wrap them into a `dict` and
+pass it with name "inner_kw" in "kw".
     """
 
-    outer.rowconfigure(0, weight = 1)
-    outer.rowconfigure(1, weight = 0)
-    outer.columnconfigure(0, weight = 1)
-    outer.columnconfigure(1, weight = 0)
+    row, column = kw.pop("row", 0), kw.pop("column", 0)
+    wheel = kw.pop("wheel", False)
+
+    kw.update(kw.pop("inner_kw", {}))
+
+    outer.rowconfigure(row, weight = 1)
+    outer.rowconfigure(row + 1, weight = 0)
+    outer.columnconfigure(column, weight = 1)
+    outer.columnconfigure(column + 1, weight = 0)
 
     # container for inner frame, it supports scrolling
     canvas = Canvas(outer, width = 1, height = 1)
-    canvas.grid(row = 0, column = 0, sticky = "NESW")
+    canvas.grid(row = row, column = row, sticky = "NESW")
 
-    inner = InnerType(canvas, *inner_args, **inner_kw)
+    inner = InnerType(canvas, *inner_args, **kw)
 
     inner_id = canvas.create_window((0, 0),
         window = inner,
@@ -92,7 +117,7 @@ vertical and horizontal scroll bars for created widget.
                 h_sb._visible = False
         else:
             if not h_sb._visible:
-                h_sb.grid(row = 1, column = 0, sticky = "NESW")
+                h_sb.grid(row = row + 1, column = column, sticky = "NESW")
                 h_sb._visible = True
 
         if inner_h <= cnv_h:
@@ -101,7 +126,7 @@ vertical and horizontal scroll bars for created widget.
                 v_sb._visible = False
         else:
             if not v_sb._visible:
-                v_sb.grid(row = 0, column = 1, sticky = "NESW")
+                v_sb.grid(row = row, column = column + 1, sticky = "NESW")
                 v_sb._visible = True
 
     def inner_configure(_):
@@ -125,6 +150,60 @@ vertical and horizontal scroll bars for created widget.
         )
 
     canvas.bind("<Configure>", canvas_configure, "+")
+
+    if not wheel:
+        return inner
+
+    def on_wheel(e):
+        w = e.widget
+
+        # Is the `w`idget our inner?
+        m = w
+        while m is not None:
+            if m is inner:
+                break
+            m = m.master
+        else:
+            # Outer widget
+            return
+
+        cls = w.winfo_class()
+
+        if cls in WHEELED_WIDGETS:
+            # When mouse pointer is over `WHEELED_WIDGETS` the canvas
+            # must not be scrolled. But there are few exceptions for
+            # convenience.
+            try:
+                a, b = w.yview()
+            except:
+                # not all "wheeled" widgets provides `yview` and those values
+                # prevents heuristics about fully scrolled `w`idgets below.
+                a, b = None, None
+
+            if e.delta > 0:
+                if a == 0.0:
+                    pass # w is fully scrolled up
+                elif w.winfo_rooty() < canvas.winfo_rooty():
+                    pass # user does not see upper border of w
+                    # XXX: we also have to prevent scrolling of `w` but
+                    # returning "break" does not work.
+                else:
+                    return
+            elif e.delta < 0:
+                if b == 1.0:
+                    pass # w is fully scrolled down
+                elif (w.winfo_rooty() + w.winfo_height() >
+                    canvas.winfo_rooty() + canvas.winfo_height()
+                ):
+                    pass # user does not see bottom border of w
+                else:
+                    return
+            else:
+                return
+
+        canvas.yview("scroll", -e.delta, "units")
+
+    bind_all_mouse_wheel(inner, on_wheel, "+")
 
     return inner
 

@@ -27,12 +27,41 @@ SIDE_CURSORS = (
 )
 
 
-class CanvasFrame(GUIFrame):
+def translate(e, container):
+    "Translates mouse `e`vent relative to `container`."
+
+    w = e.widget
+    # container offsets
+    cx, cy = 0, 0
+    # e.x, e.y. are relative e.widget, but we need x, y relative self
+    while w:
+        if w is container:
+            return True, (e.x + cx), (e.y + cy)
+        cx += w.winfo_x()
+        cy += w.winfo_y()
+        w = w.master
+    return False, None, None
+
+
+# "Alt" keyboard button state checker
+# https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
+def alt(e):
+    try:
+        return e.state & 0x0088
+    except TypeError:
+        # sometimes e.state is `str`
+        return False
+
+
+# CanvasFrame states, use them with `is` operator only!
+resizing = object()
+dragging = object()
+
+
+# `object` is required by `property`
+class CanvasFrame(GUIFrame, object):
     """ A container allowing to place widgets onto a `Canvas` with moving and
 resizing capabilities.
-
-XXX: Because of unknown reason <Motion> event is received near padding only.
-As a result, hint cursor may appear over inner widgets.
     """
 
     def __init__(self, canvas, x, y, *a, **kw):
@@ -41,37 +70,65 @@ As a result, hint cursor may appear over inner widgets.
 
         # resizing and cursor
         self.bind("<Configure>", self.__on_configure, "+")
-        self.bind("<Motion>", self.__on_motion, "+")
-        self.bind("<ButtonPress-1>", self.__down, "+")
-        self.bind("<ButtonRelease-1>", self.__up, "+")
+        # When using non-all binding, <Motion> event is received near padding
+        # only. As a result, hint cursor may appear over inner widgets.
+        # To prevent this, we binds to all and filter out outer widgets.
+        self.bind_all("<Motion>", self.__on_motion, "+")
+        self.bind_all("<ButtonPress-1>", self.__down, "+")
+        self.bind_all("<ButtonRelease-1>", self.__up, "+")
 
-        self.dragging = False
+        self.__state = None
         self.w, self.h = 0, 0
         self.x, self.y = RESIZE_GAP * 2, RESIZE_GAP * 2
-        self.cursor = self.cget("cursor")
+        self.__cursor = self.cget("cursor")
 
         self.id = canvas.create_window(x, y, window = self, anchor = NW)
 
+    def _set_cursor(self, c):
+        if self.__cursor != c:
+            self.__cursor = c
+            self.config(cursor = c)
+
+    cursor = property(fset = _set_cursor)
+
+    def _set_state(self, s):
+        self.__state = s
+        if s is dragging:
+            self.cursor = "fleur"
+        else:
+            self._update_cursor()
+
+    state = property(fset = _set_state)
+
     def __down(self, e):
-        side = self.__side
-        if side:
-            self.__offset_x, self.__offset_y = e.x, e.y
-            self.dragging = True
+        inner, x, y = translate(e, self)
+        if not inner:
+            return
+
+        if alt(e):
+            self.__offset_x, self.__offset_y = x, y
+            self.state = dragging
+        elif self.__side:
+            self.__offset_x, self.__offset_y = x, y
+            self.state = resizing
 
     def __up(self, _):
-        self.dragging = False
+        self.state = None
 
     def __on_configure(self, e):
         self.w, self.h = e.width, e.height
         self._update_cursor()
 
     def __on_motion(self, e):
-        if e.widget is not self:
+        # filter out events for outer widgets
+        inner, x, y = translate(e, self)
+        if not inner:
             return
 
-        self.x, self.y = x, y = e.x, e.y
+        self.x, self.y = x, y
 
-        if self.dragging:
+        state = self.__state
+        if state is resizing:
             cnv = self.master
 
             ox, oy = self.__offset_x, self.__offset_y
@@ -111,11 +168,18 @@ As a result, hint cursor may appear over inner widgets.
                     cnv.itemconfig(_id, height = h)
                     self.__offset_y = y - dy
 
+        elif state is dragging:
+            cnv, _id = self.master, self.id
+            ox, oy = self.__offset_x, self.__offset_y
+            dx, dy = x - ox, y - oy
+            curx, cury = cnv.coords(_id)
+            cnv.coords(_id, curx + dx, cury + dy)
+
         self._update_cursor()
 
     def _update_cursor(self):
-        if self.dragging:
-            # Update neither side nor cursor during dragging
+        if self.__state is not None:
+            # Update neither side nor cursor during drag actions
             return
 
         x, y = self.x, self.y
@@ -134,7 +198,4 @@ As a result, hint cursor may appear over inner widgets.
 
         self.__side = side
 
-        side_cursor = SIDE_CURSORS[side]
-        if self.cursor != side_cursor:
-            self.cursor = side_cursor
-            self.config(cursor = side_cursor)
+        self.cursor = SIDE_CURSORS[side]

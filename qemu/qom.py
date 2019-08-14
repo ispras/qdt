@@ -543,6 +543,8 @@ class QOMType(object):
         )
 
     def gen_vmstate_initializer(self, state_struct):
+        # TODO: avoid using TYPE macros
+        # https://lists.gnu.org/archive/html/qemu-devel/2018-10/msg02175.html
         type_macro = Type[self.qtn.type_macro]
         code = ("""{
     .name@b=@s%s,
