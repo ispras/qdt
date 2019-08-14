@@ -27,7 +27,7 @@ from widgets import (
 def main():
     root = Tk()
 
-    frame = add_scrollbars(root, Frame)
+    frame = add_scrollbars(root, Frame, wheel = True)
 
     if False:
         def event_break(e):
