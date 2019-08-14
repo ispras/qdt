@@ -1,4 +1,5 @@
 *.docx
+*.html
 !ref.docx
 *.pmd
 approach.png
