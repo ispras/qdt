@@ -147,13 +147,11 @@ class DebugSession(object):
 
         with open(self.srcfile, 'r') as f:
             re_comment = compile("^.*//\$(.+)$")
-            re_command = compile("([^, ]+)+")
             for line in f:
                 mi = re_comment.match(line)
                 if mi:
-                    commands = re_command.findall(mi.group(1))
                     glob = DebugCommandExecutor(locals(), lineno)
-                    exec('\n'.join(commands), glob)
+                    exec(mi.group(1), glob)
                 lineno += 1
 
     @property
