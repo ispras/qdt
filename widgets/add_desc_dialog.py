@@ -74,7 +74,8 @@ class AddDescriptionDialog(GUIDialog):
             values = [
                 _("System bus device template"),
                 _("Machine draft"),
-                _("PCI(E) function template")
+                _("PCI(E) function template"),
+                _("CPU template")
             ],
             state = "readonly"
         )
@@ -150,6 +151,9 @@ class AddDescriptionDialog(GUIDialog):
         elif kind == 2:
             class_name = "PCIExpressDeviceDescription"
             directory = "pci"
+        elif kind == 3:
+            class_name = "CPUDescription"
+            directory = cur_name
 
         add_op = self.pht.stage(POp_AddDesc, class_name,
             self.pht.p.next_serial_number(),
