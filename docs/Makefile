@@ -154,7 +154,8 @@ clean-report2:
 
 # paper about TCG front-end testing
 
-tcg-testing-files := tcg_testing/main.docx tcg_testing/main.html
+tcg-testing-files := tcg_testing/main.docx tcg_testing/main.html \
+ tcg_testing/abstract_eng.docx
 
 tcg-testing: $(tcg-testing-files)
 
@@ -172,6 +173,9 @@ tcg_testing/main.docx: \
 tcg_testing/main.html: \
  $(tcg-testing-PNGs)
 # Actually, original SVGs are enough, but main.md references PNGs.
+
+tcg_testing/abstract_eng.docx: \
+ tcg_testing/ref.docx
 
 clean: clean-tcg-testing
 clean-tcg-testing:
