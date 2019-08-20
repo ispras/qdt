@@ -48,7 +48,6 @@ from os import (
     listdir
 )
 from os.path import (
-    dirname,
     sep,
     join,
     isfile
