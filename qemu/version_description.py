@@ -502,9 +502,8 @@ class QemuVersionDescription(object):
 
         self.build_path = build_path
 
-        config_host_f = open(config_host_path)
-        config_host = config_host_f.read()
-        config_host_f.close()
+        with open(config_host_path) as f:
+            config_host = f.read()
 
         self.src_path = fixpath(QemuVersionDescription.ch_lookup(
             config_host,
