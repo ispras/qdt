@@ -505,18 +505,11 @@ class QemuVersionDescription(object):
         with open(config_host_path) as f:
             config_host = f.read()
 
-        self.src_path = fixpath(QemuVersionDescription.ch_lookup(
-            config_host,
-            "SRC_PATH"
-        ))
-        self.target_list = fixpath(QemuVersionDescription.ch_lookup(
-            config_host,
-            "TARGET_DIRS"
-        )).split(" ")
-        self.bindir = join(
-            fixpath(QemuVersionDescription.ch_lookup(config_host, "prefix")),
-            "bin"
-        )
+        lkp = QemuVersionDescription.ch_lookup
+
+        self.src_path = fixpath(lkp(config_host, "SRC_PATH"))
+        self.target_list = fixpath(lkp(config_host, "TARGET_DIRS")).split(" ")
+        self.bindir = join(fixpath(lkp(config_host, "prefix")), "bin")
 
         self.softmmu_targets = st = set()
         for t in self.target_list:
