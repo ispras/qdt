@@ -472,6 +472,15 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         QemuVersionCache.current = self
         return previous
 
+class ConfigHost(object):
+
+    def __init__(self, config_host_path):
+        with open(config_host_path) as f:
+            self.content = f.read()
+
+    def __getattr__(self, parameter):
+        return QemuVersionDescription.ch_lookup(self.content, parameter)
+
 class BadBuildPath(ValueError):
     pass
 
