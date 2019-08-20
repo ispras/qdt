@@ -252,14 +252,16 @@ class QemuVersionCache(object):
         print("Params in graph of commit's description were propagated")
 
     def co_propagate_new_param(self, sorted_vd_keys, vd):
-        '''This method propagate QEMUVersionParameterDescription.new_value
+        """ This method propagate QEMUVersionParameterDescription.new_value
         in graph of commits. It must be called before old_value propagation.
 
-        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of QemuCommitDesc. It's necessary to optimize the graph
-        traversal.
-        vd: qemu_heuristic_db
-        '''
+    :param sorted_vd_keys:
+        keys of qemu_heuristic_db sorted in ascending order by num of
+        QemuCommitDesc. It's necessary to optimize the graph traversal.
+
+    :param vd:
+        qemu_heuristic_db
+        """
 
         # iterations to yield
         i2y = QVD_HP_IBY
@@ -328,17 +330,19 @@ class QemuVersionCache(object):
                     i2y -= 1
 
     def co_propagate_old_param(self, sorted_vd_keys, unknown_vd_keys, vd):
-        '''This method propagate QEMUVersionParameterDescription.old_value
+        """ This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
 
-        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of QemuCommitDesc. It's necessary to optimize the graph
-        traversal.
+    :param sorted_vd_keys:
+        keys of qemu_heuristic_db sorted in ascending order by num of
+        QemuCommitDesc. It's necessary to optimize the graph traversal.
 
-        unknown_vd_keys: set of keys which are not in commit_desc_nodes.
+    :param unknown_vd_keys:
+        set of keys which are not in commit_desc_nodes.
 
-        vd: qemu_heuristic_db
-        '''
+    :param vd:
+        qemu_heuristic_db
+        """
 
         # message for exceptions
         msg = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
