@@ -198,11 +198,11 @@ class QemuVersionCache(object):
     current = None
 
     def __init__(self,
-                 list_headers = None,
-                 device_tree = None,
-                 known_targets = None,
-                 version_desc = None,
-                 pci_classes = None
+        list_headers = None,
+        device_tree = None,
+        known_targets = None,
+        version_desc = None,
+        pci_classes = None
     ):
         self.device_tree = device_tree
         self.known_targets = known_targets
