@@ -35,13 +35,13 @@ abstract: |
   C language ​​was chosen for this purpose, because, on the one hand, it is
   fairly close to the hardware, and, on the other, it has good portability.
   The approach is implemented in CPU Testing Tool (c2t) which is
-  part of QDT [[$](# ref.QDT)].
+  part of QDT [[$](#ref.QDT)].
   Source code is available at https://github.com/ispras/qdt.
   The tool is implemented in Python programming language and supports
   testing of Qemu in both full system and user level emulation modes.
   c2t is suitable for testing TCG front-ends which are <!--either--> generated
   by the
-  automatic TCG front-end generation system [[$](# ref.TCGgen)] or implemented
+  automatic TCG front-end generation system [[$](#ref.TCGgen)] or implemented
   in the classical way (manually).
 
   **Keywords**:
@@ -53,36 +53,36 @@ abstract: |
 
 # References
 
-[$]. <a name="ref.QDT_eng"></a>Efimov V.Yu., Bezzubikov A.A., Bogomolov D.A.,
+[$]. <a name="ref.QDT"></a>Efimov V.Yu., Bezzubikov A.A., Bogomolov D.A.,
 Goremykin O.V., Padaryan V.A. Automation of device and machine development for
 QEMU. Trudy ISP RAN/Proc. ISP RAS, vol. 29, issue 6, 2017, pp. 77-104
 (In Russian). DOI: 10.15514/ISPRAS-2017-29(6)-4
 
-[$]. <a name="ref.TCGgen_eng"></a>Bezzubikov A., Belov N., Batuzov K. Automatic
+[$]. <a name="ref.TCGgen"></a>Bezzubikov A., Belov N., Batuzov K. Automatic
 dynamic binary translator generation from instruction set description // 2017
 Ivannikov ISPRAS Open Conference (ISPRAS). — Vol. 1. — United States: United
 States, 2017.
 
-[$]. <a name="ref.oracle_testing_eng"></a>W. E. Howden, "Theoretical and
+[$]. <a name="ref.oracle_testing"></a>W. E. Howden, "Theoretical and
 empirical studies of program testing", Proc. 3rd Int. Conf. Software
 Engineering, pp. 305-311, 1978.
 
-[$]. <a name="ref.EmuFuzzer_eng"></a>Lorenzo Martignoni, Roberto Paleari,
+[$]. <a name="ref.EmuFuzzer"></a>Lorenzo Martignoni, Roberto Paleari,
 Giampaolo Fresi Roglia, Danilo Bruschi, Testing CPU emulators, Proceedings of
 the eighteenth international symposium on Software testing and analysis, July
 19-23, 2009, Chicago, IL, USA.
 
-[$]. <a name="ref.KEmuFuzzer_eng"></a>Lorenzo Martignoni, Roberto Paleari,
+[$]. <a name="ref.KEmuFuzzer"></a>Lorenzo Martignoni, Roberto Paleari,
 Giampaolo Fresi Roglia, Danilo Bruschi, Testing system virtual machines,
 Proceedings of the 19th international symposium on Software testing and
 analysis, July 12-16, 2010, Trento, Italy.
 
-[$]. <a name="ref.hi_4_lo_eng"></a>L. Martignoni, S. McCamant, P. Poosankam,
+[$]. <a name="ref.hi_4_lo"></a>L. Martignoni, S. McCamant, P. Poosankam,
 D. Song, and P. Maniatis, "Path-exploration lifting: Hi-fi tests for lo-fi
 emulators," in Proc. of the International Conference on Architectural Support
 for Programming Languages and Operating Systems, London, UK, Mar. 2012.
 
-[$]. <a name="ref.pill_testing_eng"></a>Hao Shi, Abdulla Alwabel, and Jelena
+[$]. <a name="ref.pill_testing"></a>Hao Shi, Abdulla Alwabel, and Jelena
 Mirkovic. 2014. Cardinal pill testing of system virtual machines. In
 Proceedings of the 23rd USENIX Security Symposium (USENIX Security’14).
 271-285.
@@ -126,3 +126,4 @@ https://github.com/stef/pyrsp, accessed: 02.08.2019.
 
 [$]. <a name="ref.pyelftools"></a>pyelftools. Available at:
 https://github.com/eliben/pyelftools, accessed:23.09.2018.
+
