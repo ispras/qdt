@@ -827,14 +827,14 @@ Qemu.
 |         |  \  | slti, sltu, lbu, mflo, mfhi,\| lwl, lwr, swl, swr, sc\      |
 |         |  \  | lui, sw, lhu, sh, sb\        |               \              |
 |         |  \  |               \              |               \              |
-|         |  2\ | add, addu, addiu, subu, mul,\| addi, sub, clo, clz, madd,\  |
-|         |  \  | multu, mult, div, divu, nor,\| maddu, msub, msubu, xori\    |
-|         |  \  | sllv, srlv, and, sll, xor,\  |               \              |
+|         |  2\ | addu, addiu, subu, mul,\     | add, addi, sub, clo, clz,\   |
+|         |  \  | multu, mult, div, divu, nor,\| madd, maddu, msub, msubu,\   |
+|         |  \  | sllv, srlv, and, sll, xor,\  | xori\                        |
 |         |  \  | srav, ori, andi, sra, srl,\  |               \              |
 |         |  \  | or\                          |               \              |
 |         |  \  |               \              |               \              |
-|         |  3\ | bltz, jal, bne, beq, jr,\    | blez, bgtz, bgez, bltzal,\   |
-|         |  \  | bgezal\                      | j, jalr\                     |
+|         |  3\ | bltz, bgtz, jal, bne, beq,\  | blez, bgez, bltzal, j, jalr\ |
+|         |  \  | jr, bgezal\                  |               \              |
 +---------+-----+------------------------------+------------------------------+
 |MSP430_1 |  1\ | mov, push, sxt\              | swpb\                        |
 |         |  \  |               \              |               \              |
