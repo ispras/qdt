@@ -27,21 +27,21 @@ abstract: |
   is expected to execute equally regardless of processor architecture.
   In other words, one can use a real processor with a different architecture
   for comparison.
-  In this paper, it is the processor of a developer machine.
-  In fact, the oracle architecture is AMD64.
+  In this paper, it is the processor of a developer AMD64 machine.
   The comparison objects are the term <!--entities--> of a high-level
   programming language.
   I.e. tests are written in C.
   C language ​​was chosen for this purpose, because, on the one hand, it is
-  fairly close to the hardware, and, on the other, it has good portability.
+  fairly close to the hardware, and, on the other, it has compilers for many
+  processor architectures.
   The approach is implemented in CPU Testing Tool (c2t) which is
-  part of QDT [[$](#ref.QDT)].
+  part of QDT.
   Source code is available at https://github.com/ispras/qdt.
   The tool is implemented in Python programming language and supports
   testing of Qemu in both full system and user level emulation modes.
   c2t is suitable for testing TCG front-ends which are <!--either--> generated
   by the
-  automatic TCG front-end generation system [[$](#ref.TCGgen)] or implemented
+  automatic TCG front-end generation system or implemented
   in the classical way (manually).
 
   **Keywords**:
