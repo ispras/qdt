@@ -69,6 +69,11 @@ if __name__ == "__main__":
     ap.add_argument("in_file_name", nargs = "?", metavar = "in-file-name")
     ap.add_argument("--out-file-name", "-o", nargs = "?")
     ap.add_argument("--ispras", action = 'store_true')
+    ap.add_argument("--refs",
+        nargs = "?",
+        metavar = "index",
+        help = "Maintain references enumeration in the index file."
+    )
     ap.add_argument("--caption-number-prefix",
         action = "store_true",
         help = "Reset table & picture enumeration when 1st level caption"
@@ -77,6 +82,15 @@ if __name__ == "__main__":
     )
 
     args = ap.parse_args()
+
+    # load known reference numbers from the file
+    try:
+        refs_file = args.refs
+        with open(refs_file, "r") as f:
+            refs_data = f.read()
+    except:
+        refs_data = "{}"
+    refs = eval(refs_data)
 
     ispras = args.ispras
     cnp = args.caption_number_prefix
@@ -336,14 +350,19 @@ if __name__ == "__main__":
                 ref.type, ref.row, ref.start
             ))
 
-    # propagate both picture and table numbers to its references
     for a in anchors.values():
+        # propagate both picture and table numbers to its references
         if a.type == "pic":
             for ref in a.references:
                 ref.substitution = a.substitution
         elif a.type == "tbl":
             for ref in a.references:
                 ref.substitution = a.substitution
+        elif a.type == "ref":
+            if a.substitution is None:
+                # The reference is not referenced by anything in that file.
+                # Try to find its number in the index file.
+                a.substitution = refs.get(a.tag, None)
 
     # patch lines
     code_block = False
@@ -471,3 +490,10 @@ if __name__ == "__main__":
         out_file.write(str(l))
 
     out_file.close()
+
+    # Update references index file with only references used in just
+    # preprocessed file.
+    if refs_file:
+        refs.update((a.tag, a.substitution) for a in ref_anchors)
+        with open(refs_file, "w+") as f:
+            f.write(repr(refs))
