@@ -201,6 +201,10 @@ endef
 %.pmd : %.md
 	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
+# reference index
+%.mdr : %.md
+	python md-preprocessor.py $(MDP_ARGS) --refs $@ $< > /dev/null
+
 %.png : %.svg
 	if ! convert -density $(SVG2PNG_DPI) $< $@ ; then \
 	  inkscape --without-gui --export-dpi=$(SVG2PNG_DPI) $< --export-png=$@ ; \
