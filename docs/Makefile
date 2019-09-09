@@ -159,6 +159,9 @@ tcg-testing-files := tcg_testing/main.docx tcg_testing/main.html \
 
 tcg-testing: $(tcg-testing-files)
 
+tcg_testing/abstract_eng.docx: tcg_testing/main.mdr
+tcg_testing/abstract_eng.docx: MDP_ARGS += --refs tcg_testing/main.mdr
+
 all: tcg-testing
 
 tcg-testing-PNGs := $(foreach f, \
@@ -181,6 +184,7 @@ clean: clean-tcg-testing
 clean-tcg-testing:
 	rm -f $(tcg-testing-files)
 	rm -f $(tcg-testing-PNGs)
+	rm -f tcg_testing/main.mdr
 
 ################
 # Common rules #
