@@ -2,8 +2,9 @@
 title: |
   Automated testing of a TCG frontend for Qemu
 author:
-- Koltunov D.S. &lt;koltunov@ispras.ru>
-- Efimov V.Y. &lt;real@ispras.ru>
+- D.S. Koltunov &lt;koltunov@ispras.ru>
+- V.Y. Efimov &lt;real@ispras.ru>
+- V.A. Padaryan &lt;vartan@ispras.ru>
 tags: []
 abstract: |
   <br>
@@ -56,12 +57,11 @@ abstract: |
 [$]. <a name="ref.QDT"></a>Efimov V.Yu., Bezzubikov A.A., Bogomolov D.A.,
 Goremykin O.V., Padaryan V.A. Automation of device and machine development for
 QEMU. Trudy ISP RAN/Proc. ISP RAS, vol. 29, issue 6, 2017, pp. 77-104
-(In Russian). DOI: 10.15514/ISPRAS-2017-29(6)-4
+(In Russian). DOI: 10.15514/ISPRAS-2017-29(6)-4.
 
 [$]. <a name="ref.TCGgen"></a>Bezzubikov A., Belov N., Batuzov K. Automatic
 dynamic binary translator generation from instruction set description // 2017
-Ivannikov ISPRAS Open Conference (ISPRAS). — Vol. 1. — United States: United
-States, 2017.
+Ivannikov ISPRAS Open Conference (ISPRAS). — Vol. 1. — Moscow, Russia, 2017.
 
 [$]. <a name="ref.oracle_testing"></a>W. E. Howden, "Theoretical and
 empirical studies of program testing", Proc. 3rd Int. Conf. Software

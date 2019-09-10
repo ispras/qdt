@@ -165,6 +165,7 @@ tcg_testing/abstract_eng.docx: MDP_ARGS += --refs tcg_testing/main.mdr
 all: tcg-testing
 
 tcg-testing-PNGs := $(foreach f, \
+ approach_base.png \
  approach.png \
  system.png \
 , tcg_testing/$(f))
