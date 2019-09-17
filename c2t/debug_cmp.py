@@ -112,7 +112,7 @@ comparison report
         tests_timings = {}
 
         while self.end:
-            for test, start in tests_timings.iteritems():
+            for test, start in tests_timings.items():
                 if time() - start > self.timeout:
                     print("%s: TIMEOUT" % test)
                     raise RuntimeError
