@@ -14,13 +14,17 @@ c2t_cfg = C2TConfig(
             # register size in bits, e. g. 16, 32, 64
             regsize =
         ),
+        # test user mode Qemu (default False)
+        user =,
         # set the stack pointer in Qemu, if necessary
         # (value = ELF .text section address + 0x10000)
         # (it is optional)
         sp = "",
         # reset Qemu (full-system) before testing, if necessary (default False)
         # (it is optional)
-        qemu_reset =
+        qemu_reset =,
+        # a time limit for tests (default 10.0)
+        test_timeout =
     ),
     # set Qemu command line run description
     qemu = DebugServer(
