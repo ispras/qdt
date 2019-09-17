@@ -31,7 +31,7 @@ from multiprocessing import (
     Queue,
     Process
 )
-from Queue import (
+from six.moves.queue import (
     Empty
 )
 from subprocess import (

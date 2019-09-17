@@ -10,7 +10,7 @@ from collections import (
 from time import (
     time
 )
-from Queue import (
+from six.moves.queue import (
     Empty
 )
 from common import (
