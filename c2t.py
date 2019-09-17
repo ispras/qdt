@@ -108,9 +108,7 @@ class DebugSession(object):
 
     def __init__(self, target, srcfile, port, elffile, queue, verbose):
         super(DebugSession, self).__init__()
-        self.rsp = target(port, elffile,
-            verbose = verbose
-        )
+        self.rsp = target(port, verbose = verbose)
         self.port = port
         self.queue = queue
         self.reset(srcfile, elffile)
