@@ -356,116 +356,66 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
     return qemu
 
 
-def target_tests_run_nonkill(tests_queue, port_queue, res_queue, is_finish,
+def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
     verbose
 ):
     qemu = None
     session = None
+    qmp_port = None
     qmp = None
     while True:
         try:
             test_src, test_elf = tests_queue.get(timeout = 0.1)
         except Empty:
             if is_finish.value:
+                if reuse and qemu and session:
+                    session.kill()
+                    qemu.join()
+                    session.port_close()
+                res_queue.put(("target", None, "TEST_EXIT"))
                 break
             continue
-
-        if session and qmp:
-            qmp("stop")
-            qmp("system_reset")
-            session.reset(test_src, test_elf)
         else:
-            qemu_port = port_queue.get(block = True)
-            qmp_port = port_queue.get(block = True)
+            if reuse and session and qmp:
+                qmp("stop")
+                qmp("system_reset")
+                session.reset(test_src, test_elf)
+            else:
+                qemu_port = port_queue.get(block = True)
+                if reuse or c2t_cfg.rsp_target.qemu_reset:
+                    qmp_port = port_queue.get(block = True)
 
-            qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
+                qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
-            if (not wait_for_tcp_port(qemu_port)
-                    and not wait_for_tcp_port(qmp_port)
-            ):
-                c2t_exit("qemu malfunction")
+                if not wait_for_tcp_port(qemu_port):
+                    c2t_exit("qemu malfunction")
 
-            qmp = QMP(qmp_port)
+                if qmp_port and wait_for_tcp_port(qmp_port):
+                    qmp = QMP(qmp_port)
 
-            session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
-                str(qemu_port), test_elf, res_queue, verbose
-            )
+                session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
+                    str(qemu_port), test_elf, res_queue, verbose
+                )
 
-        if c2t_cfg.rsp_target.qemu_reset:
-            # TODO: use future 'entry' feature
-            session.rt.target[4] = pack("<I",
-                session.rt.dic.symtab.get_symbol_by_name(
-                    "main"
-                )[0].entry.st_value
-            )
-            qmp("system_reset")
+            if qmp and c2t_cfg.rsp_target.qemu_reset:
+                # TODO: use future 'entry' feature
+                session.rt.target[4] = pack("<I",
+                    session.rt.dic.symtab.get_symbol_by_name(
+                        "main"
+                    )[0].entry.st_value
+                )
+                qmp("system_reset")
 
-        res_queue.put((session.session_type, test_src, "TEST_RUN"))
+            res_queue.put((session.session_type, test_src, "TEST_RUN"))
 
-        session.run()
+            session.run()
 
-        res_queue.put((session.session_type, test_src, "TEST_END"))
+            res_queue.put((session.session_type, test_src, "TEST_END"))
 
-    if qemu and session:
-        session.kill()
-        qemu.join()
-        session.port_close()
-    res_queue.put(("target", None, "TEST_EXIT"))
-
-
-def target_tests_run_kill(tests_queue, port_queue, res_queue, is_finish,
-        verbose
-):
-    while True:
-        try:
-            test_src, test_elf = tests_queue.get(timeout = 0.1)
-        except Empty:
-            if is_finish.value:
-                break
-            continue
-
-        qemu_port = port_queue.get(block = True)
-        if not c2t_cfg.rsp_target.user:
-            qmp_port = port_queue.get(block = True)
-        else:
-            qmp_port = None
-
-        qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
-
-        if (    not wait_for_tcp_port(qemu_port)
-            and not (wait_for_tcp_port(qmp_port) if qmp_port else True)
-        ):
-            c2t_exit("qemu malfunction")
-
-        if qmp_port:
-            qmp = QMP(qmp_port)
-        else:
-            qmp = None
-
-        session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
-            str(qemu_port), test_elf, res_queue, verbose
-        )
-
-        if c2t_cfg.rsp_target.qemu_reset and qmp:
-            # TODO: use future 'entry' feature
-            session.rt.target[4] = pack("<I",
-                session.rt.dic.symtab.get_symbol_by_name(
-                    "main"
-                )[0].entry.st_value
-            )
-            qmp("system_reset")
-
-        res_queue.put((session.session_type, test_src, "TEST_RUN"))
-
-        session.run()
-
-        res_queue.put((session.session_type, test_src, "TEST_END"))
-
-        session.kill()
-        qemu.join()
-        session.port_close()
-
-    res_queue.put(("target", None, "TEST_EXIT"))
+            if not reuse:
+                session.kill()
+                qemu.join()
+                session.port_close()
 
 
 class FreePortFinder(Process):
@@ -560,11 +510,6 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
 
     res_queue = Queue(0)
 
-    if reuse:
-        target_tests_run = target_tests_run_nonkill
-    else:
-        target_tests_run = target_tests_run_kill
-
     if jobs > len(tests):
         jobs = len(tests)
 
@@ -579,7 +524,7 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
         target_trp = Process(
             target = target_tests_run,
             args = [target_tests_queue, port_queue, res_queue,
-                is_finish_target, verbose
+                is_finish_target, reuse, verbose
             ]
         )
         tests_run_processes.append((oracle_trp, target_trp))
