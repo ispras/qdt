@@ -27,8 +27,12 @@ from re import (
     compile
 )
 from multiprocessing import (
+    Value,
     Queue,
     Process
+)
+from six.moves.queue import (
+    Empty
 )
 from subprocess import (
     Popen,
@@ -104,9 +108,7 @@ class DebugSession(object):
 
     def __init__(self, target, srcfile, port, elffile, queue, verbose):
         super(DebugSession, self).__init__()
-        self.rsp = target(port, elffile,
-            verbose = verbose
-        )
+        self.rsp = target(port, verbose = verbose)
         self.port = port
         self.queue = queue
         self.reset(srcfile, elffile)
@@ -143,13 +145,11 @@ class DebugSession(object):
 
         with open(self.srcfile, 'r') as f:
             re_comment = compile("^.*//\$(.+)$")
-            re_command = compile("([^, ]+)+")
             for line in f:
                 mi = re_comment.match(line)
                 if mi:
-                    commands = re_command.findall(mi.group(1))
                     glob = DebugCommandExecutor(locals(), lineno)
-                    exec('\n'.join(commands), glob)
+                    exec(mi.group(1), glob)
                 lineno += 1
 
     @property
@@ -262,7 +262,8 @@ class TargetSession(DebugSession):
 
     def run(self):
         self._execute_debug_comment()
-        self.load()
+        if not c2t_cfg.rsp_target.user:
+            self.load()
         # TODO: use future 'entry' feature
         new_pc = (
             self.rt.dic.symtab.get_symbol_by_name("main")[0].entry.st_value
@@ -291,9 +292,14 @@ class ProcessWithErrCatching(Process):
             c2t_exit(err, prog = self.prog)
 
 
-def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
+def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose):
     while True:
-        test_src, test_elf = tests_queue.get(block = True)
+        try:
+            test_src, test_elf = tests_queue.get(timeout = 0.1)
+        except Empty:
+            if is_finish.value:
+                break
+            continue
 
         gdbserver_port = port_queue.get(block = True)
 
@@ -314,6 +320,9 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
         session = OracleSession(archmap[ORACLE_CPU], test_src,
             str(gdbserver_port), test_elf, res_queue, verbose
         )
+
+        res_queue.put((session.session_type, test_src, "TEST_RUN"))
+
         session.run()
 
         res_queue.put((session.session_type, test_src, "TEST_END"))
@@ -322,21 +331,19 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, verbose):
         gdbserver.join()
         session.port_close()
 
-        if tests_queue.empty():
-            break
-
-    res_queue.put((session.session_type, None, "TEST_EXIT"))
+    res_queue.put(("oracle", None, "TEST_EXIT"))
 
 
 def run_qemu(test_elf, qemu_port, qmp_port, verbose):
-    qmp_run = " -qmp tcp:localhost:{port},server,nowait"
-
     cmd = c2t_cfg.qemu.run_script.format(
         port = qemu_port,
         bin = test_elf,
         c2t_dir = C2T_DIR,
         test_dir = C2T_TEST_DIR
-    ) + qmp_run.format(port = qmp_port)
+    )
+
+    if qmp_port:
+        cmd += " -qmp tcp:localhost:%d,server,nowait" % qmp_port
 
     if verbose:
         print(cmd)
@@ -347,96 +354,68 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
     return qemu
 
 
-def target_tests_run_nonkill(tests_queue, port_queue, res_queue, verbose):
-    test_src, test_elf = tests_queue.get(block = True)
-
-    qemu_port = port_queue.get(block = True)
-    qmp_port = port_queue.get(block = True)
-
-    qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
-
-    if (not wait_for_tcp_port(qemu_port)
-            and not wait_for_tcp_port(qmp_port)
-    ):
-        c2t_exit("qemu malfunction")
-
-    qmp = QMP(qmp_port)
-
-    session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
-        str(qemu_port), test_elf, res_queue, verbose
-    )
-
+def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
+    verbose
+):
+    qemu = None
+    session = None
+    qmp_port = None
+    qmp = None
     while True:
-        if c2t_cfg.rsp_target.qemu_reset:
-            # TODO: use future 'entry' feature
-            session.rt.target[4] = pack("<I",
-                session.rt.dic.symtab.get_symbol_by_name(
-                    "main"
-                )[0].entry.st_value
-            )
-            qmp("system_reset")
+        try:
+            test_src, test_elf = tests_queue.get(timeout = 0.1)
+        except Empty:
+            if is_finish.value:
+                if reuse and qemu and session:
+                    session.kill()
+                    qemu.join()
+                    session.port_close()
+                res_queue.put(("target", None, "TEST_EXIT"))
+                break
+            continue
+        else:
+            if reuse and session and qmp:
+                qmp("stop")
+                qmp("system_reset")
+                session.reset(test_src, test_elf)
+            else:
+                qemu_port = port_queue.get(block = True)
+                if (not c2t_cfg.rsp_target.user
+                    and (reuse or c2t_cfg.rsp_target.qemu_reset)
+                ):
+                    qmp_port = port_queue.get(block = True)
 
-        session.run()
+                qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
 
-        res_queue.put((session.session_type, test_src, "TEST_END"))
+                if not wait_for_tcp_port(qemu_port):
+                    c2t_exit("qemu malfunction")
 
-        if tests_queue.empty():
-            break
+                if qmp_port and wait_for_tcp_port(qmp_port):
+                    qmp = QMP(qmp_port)
 
-        test_src, test_elf = tests_queue.get(block = True)
+                session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
+                    str(qemu_port), test_elf, res_queue, verbose
+                )
 
-        qmp("stop")
-        qmp("system_reset")
+            if qmp and c2t_cfg.rsp_target.qemu_reset:
+                # TODO: use future 'entry' feature
+                session.rt.target[4] = pack("<I",
+                    session.rt.dic.symtab.get_symbol_by_name(
+                        "main"
+                    )[0].entry.st_value
+                )
+                qmp("system_reset")
 
-        session.reset(test_src, test_elf)
+            res_queue.put((session.session_type, test_src, "TEST_RUN"))
 
-    session.kill()
-    qemu.join()
-    session.port_close()
-    res_queue.put((session.session_type, None, "TEST_EXIT"))
+            session.run()
 
+            res_queue.put((session.session_type, test_src, "TEST_END"))
 
-def target_tests_run_kill(tests_queue, port_queue, res_queue, verbose):
-    while True:
-        test_src, test_elf = tests_queue.get(block = True)
-
-        qemu_port = port_queue.get(block = True)
-        qmp_port = port_queue.get(block = True)
-
-        qemu = run_qemu(test_elf, qemu_port, qmp_port, verbose)
-
-        if (    not wait_for_tcp_port(qemu_port)
-            and not wait_for_tcp_port(qmp_port)
-        ):
-            c2t_exit("qemu malfunction")
-
-        qmp = QMP(qmp_port)
-
-        session = TargetSession(c2t_cfg.rsp_target.rsp, test_src,
-            str(qemu_port), test_elf, res_queue, verbose
-        )
-
-        if c2t_cfg.rsp_target.qemu_reset:
-            # TODO: use future 'entry' feature
-            session.rt.target[4] = pack("<I",
-                session.rt.dic.symtab.get_symbol_by_name(
-                    "main"
-                )[0].entry.st_value
-            )
-            qmp("system_reset")
-
-        session.run()
-
-        res_queue.put((session.session_type, test_src, "TEST_END"))
-
-        session.kill()
-        qemu.join()
-        session.port_close()
-
-        if tests_queue.empty():
-            break
-
-    res_queue.put((session.session_type, None, "TEST_EXIT"))
+            if not reuse:
+                session.kill()
+                qemu.join()
+                session.port_close()
 
 
 class FreePortFinder(Process):
@@ -459,12 +438,15 @@ class FreePortFinder(Process):
 class C2TTestBuilder(Process):
     """ A helper class that builds tests """
 
-    def __init__(self, compiler, tests, tests_tail, tests_queue, verbose):
+    def __init__(self, compiler, tests, tests_tail, tests_queue, is_finish,
+        verbose
+    ):
         super(C2TTestBuilder, self).__init__()
         self.compiler = compiler
         self.tests = tests
         self.tests_tail = tests_tail
         self.tests_queue = tests_queue
+        self.is_finish = is_finish
         self.verbose = verbose
 
     def test_build(self, test_src, test_ir, test_bin):
@@ -496,17 +478,20 @@ class C2TTestBuilder(Process):
                 self.test_build(test_src, test_ir, test_bin)
 
             self.tests_queue.put((test_src, test_bin))
+        self.is_finish.value = 1
 
 
 def start_cpu_testing(tests, jobs, reuse, verbose):
     oracle_tests_queue = Queue(0)
     target_tests_queue = Queue(0)
+    is_finish_oracle = Value('i', 0)
+    is_finish_target = Value('i', 0)
 
     oracle_tb = C2TTestBuilder(c2t_cfg.oracle_compiler, tests,
-        ORACLE_CPU, oracle_tests_queue, verbose
+        ORACLE_CPU, oracle_tests_queue, is_finish_oracle, verbose
     )
     target_tb = C2TTestBuilder(c2t_cfg.target_compiler, tests,
-        c2t_cfg.rsp_target.march, target_tests_queue, verbose
+        c2t_cfg.rsp_target.march, target_tests_queue, is_finish_target, verbose
     )
 
     oracle_tb.start()
@@ -514,16 +499,16 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
 
     port_queue = Queue(0)
 
-    pf = FreePortFinder(port_queue, len(tests) * 3)
+    if not c2t_cfg.rsp_target.user:
+        # Finding ports for Qemu, QMP server and gdbserver
+        pf = FreePortFinder(port_queue, len(tests) * 3)
+    else:
+        # Finding ports for Qemu and gdbserver
+        pf = FreePortFinder(port_queue, len(tests) * 2)
 
     pf.start()
 
     res_queue = Queue(0)
-
-    if reuse:
-        target_tests_run = target_tests_run_nonkill
-    else:
-        target_tests_run = target_tests_run_kill
 
     if jobs > len(tests):
         jobs = len(tests)
@@ -532,17 +517,21 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
     for i in range(0, jobs):
         oracle_trp = Process(
             target = oracle_tests_run,
-            args = [oracle_tests_queue, port_queue, res_queue, verbose]
+            args = [oracle_tests_queue, port_queue, res_queue,
+                is_finish_oracle, verbose
+            ]
         )
         target_trp = Process(
             target = target_tests_run,
-            args = [target_tests_queue, port_queue, res_queue, verbose]
+            args = [target_tests_queue, port_queue, res_queue,
+                is_finish_target, reuse, verbose
+            ]
         )
         tests_run_processes.append((oracle_trp, target_trp))
         oracle_trp.start()
         target_trp.start()
 
-    dc = DebugComparator(res_queue, jobs)
+    dc = DebugComparator(res_queue, jobs, c2t_cfg.rsp_target.test_timeout)
     try:
         dc.start()
     except RuntimeError:
