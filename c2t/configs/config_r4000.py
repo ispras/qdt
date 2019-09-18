@@ -14,6 +14,7 @@ c2t_cfg = C2TConfig(
             pc = "pc",
             regsize = 32
         ),
+        test_timeout = 20.,
         sp = "r29"
     ),
     qemu = DebugServer(Run(
