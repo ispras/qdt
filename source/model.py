@@ -1829,7 +1829,7 @@ class Variable(object):
         res = ""
 
         t = self.type
-        while isinstance(t, Pointer):
+        while isinstance(t, Pointer) and not t.is_named:
             res += "*"
             t = t.type
 
@@ -1838,7 +1838,7 @@ class Variable(object):
     @property
     def full_deref(self):
         t = self.type
-        while isinstance(t, Pointer):
+        while isinstance(t, Pointer) and not t.is_named:
             t = t.type
         return t
 
