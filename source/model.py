@@ -900,7 +900,7 @@ class Type(object):
     ):
         if self.incomplete:
             if not pointer:
-                raise ValueError("Cannon create non-pointer variable %s"
+                raise ValueError("Cannot create non-pointer variable %s"
                     " of incomplete type %s." % (name, self)
                 )
 

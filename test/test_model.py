@@ -484,14 +484,14 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             h = Header["enums.h"]
         except:
             h = Header("enums.h")
-        h.add_type(Enumeration("A", {"one": 1, "two": 2}))
+        h.add_type(Enumeration("A", { "one": 1, "two": 2 }))
 
         a = Type["int"]("a")
         b = Type["int"]("b")
         c = Type["int"]("c")
 
         src = Source(name.lower() + ".c").add_types([
-            Enumeration("B", {"three": 3, "four": 4}, "B"),
+            Enumeration("B", { "three": 3, "four": 4 }, "B"),
             Function(name = "main", body = BodyTree()(
                 Declare(a, b, c),
                 OpAssign(a, Type["A"].get_field("one")),
