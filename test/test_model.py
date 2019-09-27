@@ -575,5 +575,29 @@ Fields fv __attribute__((unused));
         ]
 
 
+class TestPointerDereferencing(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestPointerDereferencing, self).setUp()
+        name = type(self).__name__
+
+        Pointer(Type["int"], name = "myint")
+
+        src = Source(name.lower() + ".c").add_global_variable(
+            Type["myint"]("var")
+        )
+
+        src_content = """\
+/* {} */
+typedef int *myint;
+myint var __attribute__((unused));
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
 if __name__ == "__main__":
     main()
