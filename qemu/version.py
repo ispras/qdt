@@ -95,7 +95,7 @@ def define_only_qemu_2_6_0_types():
         Type("TCGv_i64"),
         Type("TCGv_ptr"),
         Type("TCGv_env", incomplete = False),
-        Type("TCGv"),
+        Pointer(Type["void"], name = "TCGv"),
         Structure("TCGContext"),
         Function(name = "tcg_global_mem_new_i32"),
         Function(name = "tcg_global_mem_new_i64"),
