@@ -1052,8 +1052,7 @@ http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001m/QRC0001_UAL.pdf
 
 [$]. <a name="ref.mips_isa"></a>MIPS Instruction Reference
 \[Электронный ресурс\] — Режим доступа:
-https://s3-eu-west-1.amazonaws.com/downloads-mips/documents/MD00565-2B-MIPS32-Q
-RC-01.01.pdf
+https://s3-eu-west-1.amazonaws.com/downloads-mips/documents/MD00565-2B-MIPS32-QRC-01.01.pdf
 (дата обращения 16.07.2019).
 
 [$]. <a name="ref.msp430_isa"></a>MSP430x2xx Family User's Guide
