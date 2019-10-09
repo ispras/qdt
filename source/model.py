@@ -1079,14 +1079,11 @@ class Structure(Type):
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
-        d = self.__dict__
         try:
-            return d[name]
+            return self._fields[name]
         except KeyError:
-            try:
-                return d["_fields"][name]
-            except KeyError:
-                return super(Structure, self).__getattr__(name)
+            pass
+        raise AttributeError(name)
 
     def get_definers(self):
         if self.definer is None:
