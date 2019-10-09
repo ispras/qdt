@@ -1230,13 +1230,13 @@ class Structure(Type):
 
 class Enumeration(Type):
 
-    def __init__(self, type_name, elems_dict, enum_name = ""):
+    def __init__(self, type_name, elems_list, enum_name = ""):
         super(Enumeration, self).__init__(name = type_name)
 
         self.elems = []
         self.enum_name = enum_name
         t = [ Type["int"] ]
-        for key, val in elems_dict.items():
+        for key, val in elems_list:
             self.elems.append(
                 EnumerationElement(self, key, Initializer(str(val), t))
             )
