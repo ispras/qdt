@@ -1826,21 +1826,23 @@ class Variable(object):
     @property
     def asterisks(self):
         "String of * required to full dereference of this as a pointer."
-        res = ""
-
-        t = self.type
-        while isinstance(t, Pointer) and not t.is_named:
-            res += "*"
-            t = t.type
-
-        return res
+        return "*" * (len(list(self.iter_deref())) - 1)
 
     @property
     def full_deref(self):
-        t = self.type
-        while isinstance(t, Pointer) and not t.is_named:
-            t = t.type
+        for t in self.iter_deref():
+            pass # We only need last `t` value.
+        # Note that at least one loop iteration always takes place.
         return t
+
+    def iter_deref(self):
+        "Iterates wrapping nameless pointer types including backing type."
+        t = self.type
+        while True:
+            yield t
+            if not isinstance(t, Pointer) or t.is_named:
+                break
+            t = t.type
 
     def gen_declaration_chunks(self, generator,
         indent = "",
