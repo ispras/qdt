@@ -508,24 +508,12 @@ class QemuVersionDescription(object):
         config_host_path = join(build_path, "config-host.mak")
         if not isfile(config_host_path):
             raise BadBuildPath("%s does not exists." % config_host_path)
+        config_host = ConfigHost(config_host_path)
 
         self.build_path = build_path
-
-        with open(config_host_path) as f:
-            config_host = f.read()
-
-        self.src_path = fixpath(QemuVersionDescription.ch_lookup(
-            config_host,
-            "SRC_PATH"
-        ))
-        self.target_list = fixpath(QemuVersionDescription.ch_lookup(
-            config_host,
-            "TARGET_DIRS"
-        )).split(" ")
-        self.bindir = join(
-            fixpath(QemuVersionDescription.ch_lookup(config_host, "prefix")),
-            "bin"
-        )
+        self.src_path = fixpath(config_host.SRC_PATH)
+        self.target_list = config_host.TARGET_DIRS.split(" ")
+        self.bindir = join(fixpath(config_host.prefix), "bin")
 
         self.softmmu_targets = st = set()
         for t in self.target_list:
