@@ -176,11 +176,7 @@ class CodeWriter(object):
     def __getattr__(self, name):
         "Assume an undefined attribute to be one of language states."
 
-        d = self.__dict__
         try:
-            return d[name]
+            return self._langs[name]
         except KeyError:
-            try:
-                return d["_langs"][name]
-            except KeyError:
-                return super(CodeWriter, self).__getattr__(name)
+            return super(CodeWriter, self).__getattr__(name)
