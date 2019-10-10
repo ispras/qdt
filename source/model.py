@@ -1229,19 +1229,19 @@ class Enumeration(Type):
     def __init__(self, type_name, elems_list, enum_name = ""):
         super(Enumeration, self).__init__(name = type_name)
 
-        self.elems = []
+        self._elems = []
         self.enum_name = enum_name
         t = [ Type["int"] ]
         for key, val in elems_list:
-            self.elems.append(
+            self._elems.append(
                 EnumerationElement(self, key, Initializer(str(val), t))
             )
 
-        self.elems.sort(key = lambda x: int(x.initializer.code))
+        self._elems.sort(key = lambda x: int(x.initializer.code))
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among elements."
-        for e in self.elems:
+        for e in self._elems:
             if name == e.name:
                 return e
         else:
@@ -1258,10 +1258,10 @@ class Enumeration(Type):
         field_refs = []
         top_chunk = enum_begin
 
-        for f in self.elems:
+        for f in self._elems:
             field_declaration = EnumerationElementDeclaration(f,
                 indent = field_indent,
-                separ = "" if f == self.elems[-1] else ","
+                separ = "" if f == self._elems[-1] else ","
             )
             field_declaration.add_reference(top_chunk)
 
@@ -1284,12 +1284,12 @@ class Enumeration(Type):
 
         definers = [self.definer]
 
-        for f in self.elems:
+        for f in self._elems:
             definers.extend(f.get_definers())
 
         return definers
 
-    __type_references__ = ["elems"]
+    __type_references__ = ["_elems"]
 
 
 class EnumerationElement(Type):
