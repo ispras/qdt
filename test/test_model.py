@@ -619,5 +619,40 @@ myint var __attribute__((unused));
         ]
 
 
+class TestlReferencingToSelfDefinedType(SourceModelTestHelper, TestCase):
+    inherit_references = True
+
+    def setUp(self):
+        super(TestlReferencingToSelfDefinedType, self).setUp()
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h")
+        m = Macro("M_OTHER_TYPE", text = "int")
+        hdr.add_type(m)
+
+        ht = Header("macro_types.h")
+        ht.add_type(Macro("M_TYPE", text = "M_OTHER_TYPE"))
+        ht.add_reference(m)
+
+        hdr.add_global_variable(Type["M_TYPE"].gen_var("var"))
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+#define M_OTHER_TYPE int
+
+#include "macro_types.h"
+
+extern M_TYPE var;
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        self.files = [
+            (hdr, hdr_content)
+        ]
+
+
 if __name__ == "__main__":
     main()
