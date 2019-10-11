@@ -1630,6 +1630,7 @@ class Macro(Type):
 
 
 class MacroType(Type):
+
     def __init__(self, _macro,
         initializer = None,
         name = None,
