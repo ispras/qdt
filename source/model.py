@@ -1643,6 +1643,7 @@ class MacroType(Type):
 
         self.macro = _macro
         self.initializer = initializer
+        self.is_usage = is_usage
 
     def get_definers(self):
         if self.is_named:
@@ -1665,7 +1666,7 @@ class MacroType(Type):
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
 
-        if self.is_named:
+        if self.is_usage:
             ch = MacroTypeUsage(macro, initializer, indent)
             ch.add_references(refs)
             return [ch]
