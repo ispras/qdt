@@ -52,10 +52,14 @@ class SourceModelTestHelper(object):
         Type.reg = {}
         Header.reg = {}
         add_base_types()
+        self.enable_inherit_references = False
 
     def test(self):
         for file_, content in self.files:
-            sf = file_.generate()
+            inherit_references = (
+                self.enable_inherit_references and isinstance(file_, Header)
+            )
+            sf = file_.generate(inherit_references = inherit_references)
 
             if SAVE_CHUNK_GRAPH:
                 sf.gen_chunks_gv_file(
