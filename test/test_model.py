@@ -47,6 +47,7 @@ verbose_dir = join(dirname(__file__), "model_code")
 
 
 class SourceModelTestHelper(object):
+    inherit_references = False
 
     def setUp(self):
         Type.reg = {}
@@ -55,7 +56,10 @@ class SourceModelTestHelper(object):
 
     def test(self):
         for file_, content in self.files:
-            sf = file_.generate()
+            kw = {}
+            if isinstance(file_, Header):
+                kw["inherit_references"] = self.inherit_references
+            sf = file_.generate(**kw)
 
             if SAVE_CHUNK_GRAPH:
                 sf.gen_chunks_gv_file(
