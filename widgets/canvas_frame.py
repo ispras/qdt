@@ -8,6 +8,9 @@ from .gui_frame import (
 from six.moves.tkinter import (
     NW
 )
+from os import (
+    name as os_name
+)
 
 RESIZE_GAP = 4
 DOUBLE_GAP = RESIZE_GAP << 1
@@ -45,12 +48,20 @@ def translate(e, container):
 
 # "Alt" keyboard button state checker
 # https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
-def alt(e):
-    try:
-        return e.state & 0x0088
-    except TypeError:
-        # sometimes e.state is `str`
-        return False
+if os_name == "nt":
+    def alt(e):
+        # There is no a confirmation found in a document, but it's observed
+        # that under Windows 7 bit 0x20000 is set when `Alt` key (left or
+        # right) is being held and bit 0x08 is always set (even when `Alt` is
+        # released).
+        return e.state & 0x20000
+else:
+    def alt(e):
+        try:
+            return e.state & 0x0088
+        except TypeError:
+            # sometimes e.state is `str`
+            return False
 
 
 # CanvasFrame states, use them with `is` operator only!
