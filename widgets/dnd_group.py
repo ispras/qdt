@@ -31,7 +31,7 @@ class DnDGroup(object):
         a_id = self.anchor_id
         if w.dnd_dragged != a_id:
             return
-        self.prev = w.canvas.coords(a_id)[:2]
+        self.prev = w.coords(a_id)[:2]
         self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
         self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
 
@@ -51,11 +51,11 @@ class DnDGroup(object):
         a_id = self.anchor_id
         px, py = self.prev
 
-        x, y = w.canvas.coords(a_id)[:2]
+        x, y = w.coords(a_id)[:2]
         dx, dy = x - px, y - py
         self.prev = x, y
 
-        coords = w.canvas.coords
+        coords = w.coords
         for i in self.items:
             if isinstance(i, integer_types):
                 xy = coords(i)
@@ -87,8 +87,8 @@ class DnDGroup(object):
         w.unbind("<<DnDUp>>", self.__up)
 
     def rotate(self, w, a, cx, cy):
-        coords = w.canvas.coords
-        bbox = w.canvas.bbox
+        coords = w.coords
+        bbox = w.bbox
         cosa, sina = cos(a), sin(a)
         for i in self.items:
             if isinstance(i, integer_types):
@@ -144,8 +144,8 @@ class DnDGroup(object):
                 )
 
     def scale(self, w, s, cx, cy):
-        coords = w.canvas.coords
-        bbox = w.canvas.bbox
+        coords = w.coords
+        bbox = w.bbox
         for i in self.items:
             if isinstance(i, integer_types):
                 # only "center point" of item is scalled, item's points are
