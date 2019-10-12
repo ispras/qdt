@@ -198,7 +198,7 @@ class OpWgt(Wgt):
         self.out_slots = OrderedDict()
 
     def __g_init__(self, w, x, y, angle, scale):
-        c = w.canvas
+        c = w
         op = self.inst
 
         rad = ROTATION_R1 * scale
@@ -246,7 +246,7 @@ class OpWgt(Wgt):
     def __g_update__(self, w):
         ops = self.inst.operands
         dc = w.data_colors
-        iconfig = w.canvas.itemconfig
+        iconfig = w.itemconfig
 
         for iid, idx in self.in_slots.items():
             datum_id = ops[idx]
@@ -265,8 +265,8 @@ class OpWgt(Wgt):
             iconfig(iid, fill = color1, outline = color2)
 
     def __g_coords__(self, w):
-        x, y = w.canvas.coords(self.op_id)
-        bbox = w.canvas.bbox(self.rot_id)
+        x, y = w.coords(self.op_id)
+        bbox = w.bbox(self.rot_id)
         rx, ry = bbox_center(bbox)
         dy, dx = ry - y, rx - x
         a = atan2(dy, dx)
@@ -316,7 +316,7 @@ class ConstWgt(Wgt):
         super(ConstWgt, self).__init__(Const() if const is None else const)
 
     def __g_init__(self, w, x, y, a, s):
-        c = w.canvas
+        c = w
 
         # actual frame and drag-box sizes will be assigned by `__g_update__`
         self.frame_id = c.create_rectangle(x, y, x, y, fill = "white")
@@ -331,7 +331,7 @@ class ConstWgt(Wgt):
         )
 
     def __g_update__(self, w):
-        c = w.canvas
+        c = w
         inst = self.inst
 
         text_id = self.text_id
@@ -369,7 +369,7 @@ class ConstWgt(Wgt):
         )
 
     def __g_coords__(self, w):
-        return w.canvas.coords(self.text_id) + [0, 1.0]
+        return w.coords(self.text_id) + [0, 1.0]
 
     def ids(self):
         return [self.text_id, self.frame_id, self.drag_id]
@@ -537,7 +537,7 @@ def color_string_generator(**kw):
 
 class DatumLine(object):
     def __init__(self, w, datum_id, dest_inst, dest_idx):
-        cnv = w.canvas
+        cnv = w
 
         dst_wgt = w.inst2wgt[dest_inst]
         dst_iid = list(dst_wgt.in_ids())[dest_idx]
@@ -573,7 +573,8 @@ class DatumLine(object):
         w.id2wgt[self.src_iid].dnd_group.del_item(line_id)
         w.id2wgt[self.dst_iid].dnd_group.del_item(line_id)
 
-        w.canvas.delete(line_id)
+        w.delete(line_id)
+
 
 class CodeCanvas(CanvasDnD):
     def __init__(self, *a, **kw):
@@ -592,7 +593,7 @@ class CodeCanvas(CanvasDnD):
         # widget rotation
         self.rot_ids = set()
 
-        self.canvas.bind("<Double-Button-1>", self.on_double_button_1, "+")
+        self.bind("<Double-Button-1>", self.on_double_button_1, "+")
 
         # data dragging
         self.__data_drag = False
@@ -619,12 +620,10 @@ class CodeCanvas(CanvasDnD):
         self.users = defaultdict(list)
 
     def on_double_button_1(self, event):
-        c = self.canvas
-
         ex, ey = event.x, event.y
-        x, y = c.canvasx(ex), c.canvasy(ey)
+        x, y = self.canvasx(ex), self.canvasy(ey)
 
-        touched = c.find_overlapping(x - 1, y - 1, x + 1, y + 1)
+        touched = self.find_overlapping(x - 1, y - 1, x + 1, y + 1)
         i2w = self.id2wgt
 
         for i in touched:
@@ -635,8 +634,8 @@ class CodeCanvas(CanvasDnD):
 
             if isinstance(wgt, ConstWgt):
                 move_centred(ConstEdit(wgt, self),
-                    c.winfo_rootx() + ex,
-                    c.winfo_rooty() + ey,
+                    self.winfo_rootx() + ex,
+                    self.winfo_rooty() + ey,
                     w = 200
                 )
                 break
@@ -644,19 +643,17 @@ class CodeCanvas(CanvasDnD):
     # overrides
     def down(self, event):
         # Before DnD tagged widgets drawing check for data dragging
-        cnv = self.canvas
-
         x, y = event.x, event.y
         self.__b1_down = (x, y)
 
         out_ids = self.out_ids
         in_ids = self.in_ids
         rot_ids = self.rot_ids
-        for _id in cnv.find_overlapping(x - 1, y - 1, x + 1, y + 1):
+        for _id in self.find_overlapping(x - 1, y - 1, x + 1, y + 1):
             if _id in out_ids:
                 self.__data_start = _id
                 self.__data_drag = True
-                self.__data_tmp_line = cnv.create_line(x, y, x + 1, y + 1)
+                self.__data_tmp_line = self.create_line(x, y, x + 1, y + 1)
                 self.master.config(cursor = "question_arrow")
                 return
             elif _id in in_ids:
@@ -666,10 +663,10 @@ class CodeCanvas(CanvasDnD):
                 self.__data_start = _id
                 self.__data_removing = True
 
-                bbox = cnv.bbox(_id)
+                bbox = self.bbox(_id)
                 ox, oy = bbox_center(bbox)
 
-                self.__data_tmp_oval = cnv.create_oval(
+                self.__data_tmp_oval = self.create_oval(
                     ox - DATA_REMOVE_R, oy - DATA_REMOVE_R,
                     ox + DATA_REMOVE_R, oy + DATA_REMOVE_R,
                     outline = "gray"
@@ -679,7 +676,7 @@ class CodeCanvas(CanvasDnD):
             elif _id in rot_ids:
                 self.__rotation = True
                 group = self.id2wgt[_id].dnd_group
-                cx, cy = bbox_center(cnv.bbox(group.anchor_id))
+                cx, cy = bbox_center(self.bbox(group.anchor_id))
                 dx, dy = x - cx, y - cy
                 self.__last_radius_2 = sqrt(dx * dx + dy * dy)
                 self.__last_angle = atan2(dy, dx)
@@ -697,14 +694,14 @@ class CodeCanvas(CanvasDnD):
     def up(self, event):
         if self.__data_drag:
             self.__data_drag = False
-            self.canvas.delete(self.__data_tmp_line)
+            self.delete(self.__data_tmp_line)
             self.__data_tmp_line = None
             self.master.config(cursor = "")
 
             x, y = event.x, event.y
             in_ids = self.in_ids
 
-            for end_id in self.canvas.find_overlapping(
+            for end_id in self.find_overlapping(
                 x - 1, y - 1, x + 1, y + 1
             ):
                 if end_id in in_ids:
@@ -737,18 +734,16 @@ class CodeCanvas(CanvasDnD):
             self.__data_removing = False
             self.master.config(cursor = "")
 
-            cnv = self.canvas
+            bbox = self.bbox(self.__data_tmp_oval)
 
-            bbox = cnv.bbox(self.__data_tmp_oval)
-
-            cnv.delete(self.__data_tmp_oval)
+            self.delete(self.__data_tmp_oval)
 
             ox, oy = bbox_center(bbox)
             x, y = event.x, event.y
             dx, dy = x - ox, y - oy
 
             in_ids = self.in_ids
-            for end_id in cnv.find_overlapping(
+            for end_id in self.find_overlapping(
                 x - 1, y - 1, x + 1, y + 1
             ):
                 if end_id == self.__data_start:
@@ -911,16 +906,14 @@ class CodeCanvas(CanvasDnD):
 
     def motion(self, event):
         if self.__data_drag:
-            cnv = self.canvas
-
             x1, y1 = self.__b1_down
             x2, y2 = event.x, event.y
             line_id = self.__data_tmp_line
 
-            cnv.coords(line_id, x1, y1, x2, y2)
+            self.coords(line_id, x1, y1, x2, y2)
 
             in_ids = self.in_ids
-            for end_id in cnv.find_overlapping(
+            for end_id in self.find_overlapping(
                 x2 - 1, y2 - 1, x2 + 1, y2 + 1
             ):
                 if end_id in in_ids:
@@ -930,14 +923,12 @@ class CodeCanvas(CanvasDnD):
                 self.master.config(cursor = "question_arrow")
             return
         elif self.__data_removing:
-            cnv = self.canvas
-
-            ox, oy = bbox_center(cnv.bbox(self.__data_tmp_oval))
+            ox, oy = bbox_center(self.bbox(self.__data_tmp_oval))
             x, y = event.x, event.y
             dx, dy = x - ox, y - oy
 
             in_ids = self.in_ids
-            for end_id in cnv.find_overlapping(
+            for end_id in self.find_overlapping(
                 x - 1, y - 1, x + 1, y + 1
             ):
                 if end_id == self.__data_start:
@@ -996,14 +987,12 @@ class CodeCanvas(CanvasDnD):
                     op_x + OP_HL_CIRCLE_R, op_y + OP_HL_CIRCLE_R
                 )
 
-                cnv = self.canvas
-
                 circ = self.__op_circle
                 if circ is None:
-                    circ = cnv.create_oval(oval)
+                    circ = self.create_oval(oval)
                     self.__op_circle = circ
                 else:
-                    cnv.coords(circ, oval)
+                    self.coords(circ, oval)
             else:
                 self.__hide_op_hl()
 
@@ -1011,7 +1000,7 @@ class CodeCanvas(CanvasDnD):
         "hides operator selection highlighting"
         circ = self.__op_circle
         if circ is not None:
-            self.canvas.delete(circ)
+            self.delete(circ)
             self.__op_circle = None
             self.__op_hl_idx = None
 
@@ -1021,7 +1010,6 @@ class CodeCanvas(CanvasDnD):
 
         self.__ops_shown = True
 
-        cnv = self.canvas
         ids = self.__ops_ids
 
         step = 2.0 * pi / len(SHORTCUTS)
@@ -1032,7 +1020,7 @@ class CodeCanvas(CanvasDnD):
         op_segments = []
         for op in SHORTCUTS:
             ids.append(
-                cnv.create_text(
+                self.create_text(
                     (x + OP_CIRCLE_R * cos(a), y + OP_CIRCLE_R * sin(a)),
                     text = op.ico
                 )
@@ -1048,9 +1036,8 @@ class CodeCanvas(CanvasDnD):
         if self.__ops_shown:
             self.__ops_shown = False
 
-            cnv = self.canvas
             for _id in self.__ops_ids:
-                cnv.delete(_id)
+                self.delete(_id)
             self.__ops_ids.clear()
 
             self.__hide_op_hl()
