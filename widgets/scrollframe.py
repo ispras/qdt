@@ -15,6 +15,9 @@ from six.moves.tkinter import (
     Scrollbar,
     Canvas
 )
+from six.moves.tkinter_ttk import (
+    Sizegrip
+)
 from common import (
     bind_all_mouse_wheel
 )
@@ -29,7 +32,7 @@ from platform import (
 )
 
 
-def add_scrollbars_native(outer, inner, row = 0, column = 0):
+def add_scrollbars_native(outer, inner, row = 0, column = 0, sizegrip = False):
     "Adds scroll bars to a widget which supports them natively."
     outer.rowconfigure(row + 1, weight = 0)
     outer.columnconfigure(column + 1, weight = 0)
@@ -48,7 +51,17 @@ def add_scrollbars_native(outer, inner, row = 0, column = 0):
 
     inner.configure(xscrollcommand = h_sb.set, yscrollcommand = v_sb.set)
 
-    return h_sb, v_sb
+    if sizegrip:
+        sg = Sizegrip(outer)
+        sg.grid(
+            row = row + 1,
+            column = column + 1,
+            sticky = "NESW"
+        )
+    else:
+        sg = None
+
+    return h_sb, v_sb, sg
 
 
 # widgets reacting on mouse wheel
