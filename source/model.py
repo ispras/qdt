@@ -2908,6 +2908,10 @@ them must be replaced with reference to h. """
                     self.origin.add_inclusion(chunk.origin)
 
                 prev_header = True
+
+                if APPEND_NL_AFTER_MACROS and prev_macro:
+                    writer.write("\n")
+                prev_macro = False
             else:
                 if append_nl_after_headers and prev_header:
                     writer.write("\n")
