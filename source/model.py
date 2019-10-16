@@ -1991,8 +1991,12 @@ class SourceChunk(object):
     are moved to the top of the file. Then all chunks are ordered topologically
     (with respect to inter-chunk references). But chunks which is not linked
     by references will preserve `weight`-based order.
+
+`group` is used during chunk printing. Chunks from different groups will be
+    separated by an empty line for prettiness. `group` is an unique reference.
     """
     weight = 5
+    group = 0
 
     def __init__(self, origin, name, code, references = None):
         self.origin = origin
@@ -2136,6 +2140,7 @@ after this word.
 
 class HeaderInclusion(SourceChunk):
     weight = 0
+    group = object() if APPEND_NL_AFTER_HEADERS else 0
 
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
@@ -2191,6 +2196,7 @@ class HeaderInclusion(SourceChunk):
 
 class MacroDefinition(SourceChunk):
     weight = 1
+    group = object() if APPEND_NL_AFTER_MACROS else 0
 
     def __init__(self, macro, indent = ""):
         if macro.args is None:
@@ -2898,28 +2904,16 @@ them must be replaced with reference to h. """
 """.format(name = self.name_for_macro())
             )
 
-        prev_header = False
-        prev_macro = False
+        prev_group = None
 
         for chunk in self.chunks:
-            # Add empty lines after some chunk groups for prettiness.
-            if isinstance(chunk, HeaderInclusion):
-                # propagate actual inclusions back to the origin
-                if self.is_header:
-                    self.origin.add_inclusion(chunk.origin)
+            # propagate actual inclusions back to the origin
+            if isinstance(chunk, HeaderInclusion) and self.is_header:
+                self.origin.add_inclusion(chunk.origin)
 
-                prev_header = True
-            else:
-                if APPEND_NL_AFTER_HEADERS and prev_header:
-                    writer.write("\n")
-                prev_header = False
-
-                if isinstance(chunk, MacroDefinition):
-                    prev_macro = True
-                else:
-                    if APPEND_NL_AFTER_MACROS and prev_macro:
-                        writer.write("\n")
-                    prev_macro = False
+            if prev_group and prev_group is not chunk.group:
+                writer.write("\n")
+            prev_group = chunk.group
 
             chunk.check_cols_fix_up()
 
