@@ -135,6 +135,8 @@ re_nss = compile(common_re % NSS)
 re_clr = compile("@(.|$)")
 
 
+APPEND_NL_AFTER_HEADERS = not ee("QDT_NO_NL_AFTER_HEADERS")
+
 APPEND_NL_AFTER_MACROS = not ee("QDT_NO_NL_AFTER_MACROS")
 
 
@@ -2858,8 +2860,7 @@ them must be replaced with reference to h. """
             ch.path = path
 
     def generate(self, writer,
-        gen_debug_comments = False,
-        append_nl_after_headers = True
+        gen_debug_comments = False
     ):
         # check for duplicate chunks for same origin
         self.remove_chunks_with_same_origin()
@@ -2901,7 +2902,7 @@ them must be replaced with reference to h. """
 
                 prev_header = True
             else:
-                if append_nl_after_headers and prev_header:
+                if APPEND_NL_AFTER_HEADERS and prev_header:
                     writer.write("\n")
                 prev_header = False
 
