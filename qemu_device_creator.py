@@ -109,7 +109,8 @@ def main():
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
     project.gen_all(qvd.src_path,
-        with_chunk_graph = arguments.gen_chunk_graphs
+        with_chunk_graph = arguments.gen_chunk_graphs,
+        known_targets = qvd.qvc.known_targets
     )
 
     return 0
