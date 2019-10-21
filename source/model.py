@@ -1217,7 +1217,10 @@ class Structure(Type):
     @property
     def __type_references__(self):
         if self._definition is None:
-            return ["fields"]
+            # It's a definition. A forward declaration cannot have fields.
+            # Hence, all fields are in _and only in_ `self._fields`.
+            # And the `property`s logic is not required for this case.
+            return ["_fields"]
         else:
             return []
 
