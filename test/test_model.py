@@ -6,6 +6,7 @@ from six import (
     StringIO
 )
 from source import (
+    MacroType,
     Type,
     Header,
     Source,
@@ -293,11 +294,11 @@ class TestMacroType(SourceModelTestHelper, TestCase):
                 macro_initializer = Initializer({ "type":  struct })
             ),
             Pointer(struct)("next"),
-            Type["END_STRUCT"].gen_usage()
+            MacroType(Type["END_STRUCT"])
         ])
         hdr.add_type(struct)
 
-        hdr.add_type(Type["INIT_HEADER"].gen_usage())
+        hdr.add_type(MacroType(Type["INIT_HEADER"]))
 
         hdr_content = """\
 /* {path} */

@@ -475,6 +475,14 @@ switching to that mode.
                     # References are already specified
                     continue
 
+                """
+                if not isinstance(t.type.definer, Source):
+                    # `definer_references` are collected for `HeaderInclusion`.
+                    # Only `Source` (`Header`) is presented by such chunk.
+                    # Other definers handles chunks binding by self.
+                    continue
+                """
+
                 if inherit_references:
                     t.definer_references = set()
                     for ref in t.type.definer.references:
@@ -1105,6 +1113,13 @@ class Structure(Type):
                 " the structure %s" % (v_name, self)
             )
 
+        if isinstance(variable, Type):
+            if variable.definer is not None:
+                raise RuntimeError(
+                    "The type %s is already has defined" % variable
+                )
+            variable.definer = self
+
         self.fields[v_name] = variable
 
         ForwardDeclarator(variable).visit()
@@ -1593,7 +1608,8 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        return MacroType(self, initializer = macro_initializer)(name,
+        return self.gen_usage(initializer = macro_initializer)(
+            name = name,
             pointer = pointer,
             initializer = initializer,
             static = static,
@@ -1602,10 +1618,9 @@ class Macro(Type):
         )
 
     def gen_usage(self, initializer = None, name = None):
-        return MacroType(self,
+        return MacroUsage(self,
             initializer = initializer,
-            name = name,
-            is_usage = True
+            name = name
         )
 
     def gen_dict(self):
@@ -1628,37 +1643,16 @@ class Macro(Type):
         writer.write(self.c_name)
 
 
-class MacroType(Type):
+class MacroUsage(Type):
 
-    def __init__(self, _macro,
-        initializer = None,
-        name = None,
-        is_usage = False
-    ):
-        if not isinstance(_macro, Macro):
-            raise ValueError("Attempt to create macrotype from "
-                " %s which is not macro." % _macro
-            )
+    def __init__(self, macro, name = None, initializer = None):
+        super(MacroUsage, self).__init__(name = name, incomplete = False)
 
-        super(MacroType, self).__init__(name = name, incomplete = False)
-
-        # define c_name for nameless macrotypes
-        if not self.is_named:
-            self.c_name = _macro.gen_usage_string(initializer)
-            # XXX: A name attribute is required to use the macrotype usage as
-            # field in the structure
-            if is_usage:
-                self.name = _macro.name + ".usage" + str(id(self))
-
-        self.macro = _macro
+        self.macro = macro
         self.initializer = initializer
-        self.is_usage = is_usage
 
-    def get_definers(self):
-        if self.is_named:
-            return super(MacroType, self).get_definers()
-        else:
-            return self.macro.get_definers()
+        if not self.is_named:
+            self.c_name = macro.gen_usage_string(initializer)
 
     def gen_chunks(self, generator, indent = ""):
         macro = self.macro
@@ -1675,20 +1669,42 @@ class MacroType(Type):
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
 
-        if self.is_usage:
-            ch = MacroTypeChunk(self, indent)
-            ch.add_references(refs)
-            return [ch]
-        else:
-            return refs
+        return refs
 
     def __str__(self):
         if self.is_named:
-            return super(MacroType, self).__str__()
+            return super(MacroUsage, self).__str__()
         else:
-            return "macro type from %s" % self.macro
+            return "usage of macro %s" % self.macro
 
     __type_references__ = ["macro", "initializer"]
+
+
+class MacroType(MacroUsage):
+
+    def __init__(self, macro,
+        initializer = None,
+        name = None
+    ):
+        if not isinstance(macro, Macro):
+            raise ValueError("Attempt to create macrotype from "
+                " %s which is not macro." % macro
+            )
+
+        if name is None:
+            name = macro.name + ".auto" + str(id(self))
+
+        super(MacroType, self).__init__(macro,
+            name = name,
+            initializer = initializer
+        )
+
+    def gen_chunks(self, generator, indent = ""):
+        refs = super(MacroType, self).gen_chunks(generator, indent = indent)
+
+        ch = MacroTypeChunk(self, indent)
+        ch.add_references(refs)
+        return [ch]
 
 
 class CPPMacro(Macro):
@@ -1956,6 +1972,19 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 t = t.declaration
                 if type(t) is TypeReference:
                     t = t.type
+
+            # A type defined inside another type is not subject of this fixer.
+            # Because internal type is always defined within its container and,
+            # hence, never defined by a header inclusion or directly by a
+            # source.
+            # Note that `definer` is not visited by this type fixer. Hence,
+            # the field is never a `TypeReference`.
+            # Note that if we are here then topmost container of the `t`ype is
+            # within `self.source`.
+            # Else, the topmost container is replaced with a `TypeReference`
+            # and a `BreakVisiting` is raised (see above).
+            if isinstance(t.definer, Type):
+                return
 
             # replace foreign type with reference to it
             try:
