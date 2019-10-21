@@ -1082,7 +1082,8 @@ class Structure(Type):
         try:
             return self._fields[name]
         except KeyError:
-            return super(Structure, self).__getattr__(name)
+            pass
+        raise AttributeError(name)
 
     def get_definers(self):
         if self.definer is None:
