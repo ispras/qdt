@@ -159,6 +159,18 @@ Note that `idle-python` package name suffix corresponds to the Python version.
 sudo apt install python-pip python3-pip
 ```
 
+**TL;DR**: This command installs all required Python packages (look below for
+its explanation):
+
+```bash
+sudo python -m pip install --upgrade gitpython six graphviz \
+  path.py construct serial
+```
+
+Use `python2` or `python3` explicitly when there are several Python
+versions.
+_Or when `pip3` command (below) does not work._
+
 QDT adapts to changes in QEMU infrastructure.
 It has a set of heuristics referring to specific commits in QEMU Git history.
 `gitpython` package is used to analyze Git graph and get effective heuristics
