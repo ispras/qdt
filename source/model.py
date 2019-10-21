@@ -19,7 +19,7 @@ __all__ = [
       , "MacroDefinition"
       , "PointerTypeDeclaration"
       , "FunctionPointerTypeDeclaration"
-      , "MacroTypeUsage"
+      , "MacroTypeChunk"
       , "PointerVariableDeclaration"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
@@ -1672,7 +1672,7 @@ class MacroType(Type):
                 refs.extend(generator.provide_chunks(t))
 
         if self.is_usage:
-            ch = MacroTypeUsage(self, indent)
+            ch = MacroTypeChunk(self, indent)
             ch.add_references(refs)
             return [ch]
         else:
@@ -2248,10 +2248,10 @@ class FunctionPointerTypeDeclaration(SourceChunk):
         )
 
 
-class MacroTypeUsage(SourceChunk):
+class MacroTypeChunk(SourceChunk):
 
     def __init__(self, _type, indent):
-        super(MacroTypeUsage, self).__init__(_type,
+        super(MacroTypeChunk, self).__init__(_type,
             "Usage of type %s" % _type,
             code = indent + _type.macro.gen_usage_string(_type.initializer)
         )
