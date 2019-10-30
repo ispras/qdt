@@ -641,10 +641,10 @@ class Header(Source):
         except:
             m = Macro(
                 name = macro.name,
-                text = "".join(tok.value for tok in macro.value),
                 args = (
                     None if macro.arglist is None else list(macro.arglist)
-                )
+                ),
+                text = "".join(tok.value for tok in macro.value)
             )
             h.add_type(m)
 
