@@ -1,4 +1,5 @@
-__all__ = [
+__all__ = []
+[
     "Operand"
       , "VariableOperand"
   , "Operator"
