@@ -171,10 +171,12 @@ class SysBusDeviceType(QOMDevice):
         for pioN in range(0, self.pio_num):
             size_macro = Macro(
                 name = self.gen_Ith_pio_size_macro_name(pioN),
-                text = "0x%X" % pio_def_size)
+                text = "0x%X" % pio_def_size
+            )
             address_macro = Macro(
                 name = self.gen_Ith_pio_address_macro_name(pioN),
-                text = "0x%X" % pio_cur_addres)
+                text = "0x%X" % pio_cur_addres
+            )
             pio_cur_addres += pio_def_size
 
             self.header.add_types([size_macro, address_macro])
