@@ -200,7 +200,7 @@ corresponding vendor is given" % attr
             self.header.add_type(
                 Macro(
                     name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
-                            self.device.name
+                        self.device.name
                     ),
                     text = self.device.id
                 )
