@@ -171,7 +171,7 @@ corresponding vendor is given" % attr
         self.header.add_type(self.type_name_macros)
 
         self.type_cast_macro = Macro(
-            name = self.qtn.for_macros, 
+            name = self.qtn.for_macros,
             args = [ "obj" ],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
