@@ -186,7 +186,7 @@ class SysBusDeviceType(QOMDevice):
 
         if self.in_irq_num > 0:
             self.in_irq_macro = Macro(
-                name = "%s_IN_IRQ_NUM" % self.qtn.for_macros,
+                name = self.qtn.for_macros + "_IN_IRQ_NUM",
                 text = "%d" % self.in_irq_num
             )
 
