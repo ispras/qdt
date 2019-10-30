@@ -243,19 +243,19 @@ corresponding vendor is given" % attr
         if self.msi_messages_num > 0 :
             for_macros = self.qtn.for_macros
             self.msi_cap_offset = Macro(
-                name = "%s_MSI_CAP_OFFSET" % for_macros,
+                name = for_macros + "_MSI_CAP_OFFSET",
                 text = "0x48"
             )
             self.msi_vectors = Macro(
-                name = "%s_MSI_VECTORS" % for_macros,
+                name = for_macros + "_MSI_VECTORS",
                 text = "%u" % self.msi_messages_num
             )
             self.msi_64bit = Macro(
-                name = "%s_MSI_64BIT" % for_macros,
+                name = for_macros + "_MSI_64BIT",
                 text = "1"
             )
             self.msi_masking = Macro(
-                name = "%s_MSI_VECTOR_MASKING" % for_macros,
+                name = for_macros + "_MSI_VECTOR_MASKING",
                 text = "1"
             )
 
