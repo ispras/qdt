@@ -241,20 +241,21 @@ corresponding vendor is given" % attr
             self.header.add_type(size_macro)
 
         if self.msi_messages_num > 0 :
+            for_macros = self.qtn.for_macros
             self.msi_cap_offset = Macro(
-                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
+                name = "%s_MSI_CAP_OFFSET" % for_macros,
                 text = "0x48"
             )
             self.msi_vectors = Macro(
-                name = "%s_MSI_VECTORS" % self.qtn.for_macros,
+                name = "%s_MSI_VECTORS" % for_macros,
                 text = "%u" % self.msi_messages_num
             )
             self.msi_64bit = Macro(
-                name = "%s_MSI_64BIT" % self.qtn.for_macros,
+                name = "%s_MSI_64BIT" % for_macros,
                 text = "1"
             )
             self.msi_masking = Macro(
-                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
+                name = "%s_MSI_VECTOR_MASKING" % for_macros,
                 text = "1"
             )
 
