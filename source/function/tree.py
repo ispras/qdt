@@ -51,6 +51,7 @@ __all__ = [
                       , "OpXor"
                       , "OpLShift"
                       , "OpRShift"
+                      , "OpRotR"
                       , "OpLogAnd"
                       , "OpLogOr"
                       , "OpLogNot"
@@ -916,6 +917,12 @@ class OpRShift(BinaryOperator):
         super(OpRShift, self).__init__(">>", arg1, arg2, parenthesis)
 
 
+class OpRotR(BinaryOperator):
+
+    def __init__(self, arg1, arg2, parenthesis = False):
+        super(OpRotR, self).__init__(">>>", arg1, arg2, parenthesis)
+
+
 class OpLogAnd(BinaryOperator):
 
     def __init__(self, arg1, arg2, parenthesis = False):
@@ -991,6 +998,7 @@ op_priority = {
     OpSub:           4,
     OpLShift:        5,
     OpRShift:        5,
+    OpRotR:          5,
     OpGE:            6,
     OpLE:            6,
     OpGreater:       6,
