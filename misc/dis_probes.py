@@ -1,3 +1,7 @@
+# Useful links:
+# https://docs.python.org/3/library/dis.html
+# https://github.com/scipy/weave/blob/master/weave/bytecodecompiler.py
+
 from sys import (
     version_info
 )
