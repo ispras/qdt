@@ -118,6 +118,7 @@ def py2i3s(inst_method):
             variables[name] = int_t.gen_var(name)
 
     stack = []
+    blocks = [func]
 
     def LOAD_FAST(i):
         var_num = i.arg
@@ -140,7 +141,7 @@ def py2i3s(inst_method):
         index = stack.pop()
         array = stack.pop()
         val = stack.pop()
-        func(OpAssign(OpIndex(array, index), val))
+        blocks[-1](OpAssign(OpIndex(array, index), val))
 
     def BINARY_MULTIPLY(_):
         right = stack.pop()
@@ -164,7 +165,7 @@ def py2i3s(inst_method):
         var_num = i.arg
         val = stack.pop()
         varname = code.co_varnames[var_num]
-        func(OpAssign(variables[varname], val))
+        blocks[-1](OpAssign(variables[varname], val))
 
     def LOAD_GLOBAL(i):
         namei = i.arg
@@ -209,7 +210,7 @@ def py2i3s(inst_method):
         stack.append(const)
 
     def RETURN_VALUE(_):
-        func(Return(stack.pop()))
+        blocks[-1](Return(stack.pop()))
 
     locs = dict(locals())
 
