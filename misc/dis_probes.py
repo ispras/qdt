@@ -119,11 +119,13 @@ def py2i3s(inst_method):
 
     stack = []
 
-    def LOAD_FAST(var_num):
+    def LOAD_FAST(i):
+        var_num = i.arg
         varname = code.co_varnames[var_num]
         stack.append(variables[varname])
 
-    def LOAD_ATTR(namei):
+    def LOAD_ATTR(i):
+        namei = i.arg
         container = stack.pop()
         deref = OpSDeref(container, code.co_names[namei])
         stack.append(deref)
@@ -158,12 +160,14 @@ def py2i3s(inst_method):
         res = OpOr(left, right)
         stack.append(res)
 
-    def STORE_FAST(var_num):
+    def STORE_FAST(i):
+        var_num = i.arg
         val = stack.pop()
         varname = code.co_varnames[var_num]
         func(OpAssign(variables[varname], val))
 
-    def LOAD_GLOBAL(namei):
+    def LOAD_GLOBAL(i):
+        namei = i.arg
         name = code.co_names[namei]
         try:
             val = globs[name]
@@ -176,7 +180,8 @@ def py2i3s(inst_method):
 
         stack.append(val)
 
-    def CALL_FUNCTION(argc):
+    def CALL_FUNCTION(i):
+        argc = i.arg
         args = stack[-argc:]
         func = stack[-argc - 1]
         del stack[-argc - 1:]
@@ -198,7 +203,8 @@ def py2i3s(inst_method):
     def POP_JUMP_IF_FALSE(_):
         stack.pop() # TODO
 
-    def LOAD_CONST(consti):
+    def LOAD_CONST(i):
+        consti = i.arg
         const = code.co_consts[consti]
         stack.append(const)
 
@@ -216,7 +222,7 @@ def py2i3s(inst_method):
             print("Unsupported opcode " + i.opname)
             continue
 
-        handler(i.arg)
+        handler(i)
 
     if stack:
         print("stack has unused values")
