@@ -1233,23 +1233,21 @@ class Enumeration(Type):
     def __init__(self, type_name, elems_list, enum_name = ""):
         super(Enumeration, self).__init__(name = type_name)
 
-        self.elems = []
+        self.elems = OrderedDict()
         self.enum_name = enum_name
         t = [ Type["int"] ]
         for key, val in elems_list:
-            self.elems.append(
-                EnumerationElement(self, key, Initializer(str(val), t))
+            self.elems[key] = EnumerationElement(self, key,
+                Initializer(str(val), t)
             )
-
-        self.elems.sort(key = lambda x: int(x.initializer.code))
 
     def __getattr__(self, name):
         "Tries to find undefined attributes among elements."
-        for e in self.elems:
-            if name == e.name:
-                return e
-        else:
-            raise AttributeError(name)
+        try:
+            return self.elems[name]
+        except KeyError:
+            pass
+        raise AttributeError(name)
 
     def gen_chunks(self, generator):
         fields_indent = "    "
@@ -1262,10 +1260,11 @@ class Enumeration(Type):
         field_refs = []
         top_chunk = enum_begin
 
-        for f in self.elems:
+        last_num = len(self.elems) - 1
+        for i, f in enumerate(self.elems.values()):
             field_declaration = EnumerationElementDeclaration(f,
                 indent = field_indent,
-                separ = "" if f == self.elems[-1] else ","
+                separ = "" if i == last_num else ","
             )
             field_declaration.add_reference(top_chunk)
 
@@ -1288,7 +1287,7 @@ class Enumeration(Type):
 
         definers = [self.definer]
 
-        for f in self.elems:
+        for f in self.elems.values():
             definers.extend(f.get_definers())
 
         return definers
