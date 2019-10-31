@@ -2127,6 +2127,19 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 if type(t) is TypeReference:
                     t = t.type
 
+            # A type defined inside another type is not subject of this fixer.
+            # Because internal type is always defined within its container and,
+            # hence, never defined by a header inclusion or directly by a
+            # source.
+            # Note that `definer` is not visited by this type fixer. Hence,
+            # the field is never a `TypeReference`.
+            # Note that if we are here then topmost container of the `t`ype is
+            # within `self.source`.
+            # Else, the topmost container is replaced with a `TypeReference`
+            # and a `BreakVisiting` is raised (see above).
+            if isinstance(t.definer, Type):
+                return
+
             # replace foreign type with reference to it
             try:
                 tr = self.source.types[t.name]
