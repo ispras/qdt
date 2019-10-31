@@ -1702,8 +1702,7 @@ class Macro(Type):
     def gen_usage(self, initializer = None, name = None):
         return MacroType(self,
             initializer = initializer,
-            name = name,
-            is_usage = True
+            name = name
         )
 
     def gen_dict(self):
@@ -1728,8 +1727,14 @@ class Macro(Type):
 
 
 class MacroUsage(Type):
+    "Something defined using a macro expansion."
 
     def __init__(self, macro, initializer = None, name = None):
+        if not isinstance(macro, Macro):
+            raise ValueError("Attempt to create %s from "
+                " %s which is not macro." % (type(self).__name__, macro)
+            )
+
         super(MacroUsage, self).__init__(name = name, incomplete = False)
 
         self.macro = macro
@@ -1737,61 +1742,6 @@ class MacroUsage(Type):
 
         if not self.is_named:
             self.c_name = macro.gen_usage_string(initializer)
-
-    def gen_chunks(self, generator, indent = ""):
-        macro = self.macro
-        initializer = self.initializer
-
-        refs = list(generator.provide_chunks(macro))
-
-        if initializer is not None:
-            for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
-                refs.append(generator.provide_chunks(v)[0])
-
-            for t in initializer.used_types:
-                refs.extend(generator.provide_chunks(t))
-
-        return refs
-
-    def __str__(self):
-        if self.is_named:
-            return super(MacroUsage, self).__str__()
-        else:
-            return "usage of macro %s" % self.macro
-
-    __type_references__ = ["macro", "initializer"]
-
-
-class MacroType(Type):
-    def __init__(self, _macro,
-        initializer = None,
-        name = None,
-        is_usage = False
-    ):
-        if not isinstance(_macro, Macro):
-            raise ValueError("Attempt to create macrotype from "
-                " %s which is not macro." % _macro
-            )
-
-        if is_usage and name is None:
-            name = _macro.name + ".usage" + str(id(self))
-
-        super(MacroType, self).__init__(name = name, incomplete = False)
-
-        # define c_name for nameless macrotypes
-        if not self.is_named:
-            self.c_name = _macro.gen_usage_string(initializer)
-
-        self.macro = _macro
-        self.initializer = initializer
-
-    def get_definers(self):
-        if self.is_named:
-            return super(MacroType, self).get_definers()
-        else:
-            return self.macro.get_definers()
 
     def gen_chunks(self, generator, indent = ""):
         macro = self.macro
@@ -1817,11 +1767,30 @@ class MacroType(Type):
 
     def __str__(self):
         if self.is_named:
-            return super(MacroType, self).__str__()
+            return super(MacroUsage, self).__str__()
         else:
-            return "macro type from %s" % self.macro
+            return "usage of macro %s" % self.macro
 
     __type_references__ = ["macro", "initializer"]
+
+
+class MacroType(MacroUsage):
+    "A helper that automatically generates a name for `MacroUsage`."
+    # TODO: replace with `Macro.gen_type`
+
+    counter = count(0)
+
+    def __init__(self, macro,
+        initializer = None,
+        name = None
+    ):
+        if name is None:
+            name = macro.name + ".auto" + str(next(self.counter))
+
+        super(MacroType, self).__init__(macro,
+            name = name,
+            initializer = initializer
+        )
 
 
 class CPPMacro(Macro):
@@ -2112,10 +2081,10 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.base:
                 raise BreakVisiting()
 
-            """ Skip pointer and macrotype types without name. Nameless pointer
-            or macrotype does not have definer and should not be replaced with
-            type reference """
-            if isinstance(t, (Pointer, MacroType)) and not t.is_named:
+            """ Skip pointer and macrousage types without name. Nameless
+            pointer or macrousage does not have definer and should not be
+            replaced with type reference """
+            if isinstance(t, (Pointer, MacroUsage)) and not t.is_named:
                 return
 
             # Add definerless types to the Source automatically
