@@ -8,6 +8,9 @@ from sys import (
 
 print("version_info=%s" % (version_info,))
 
+from collections import (
+    defaultdict
+)
 from dis import (
     get_instructions
 )
@@ -86,6 +89,23 @@ class CPU(object):
 cpu_mul_ = CPU.mul
 cpu_ror_ = CPU.ror
 
+# `elif`-ication does not work because we do not distinguish such cases:
+#
+# else:
+#    if:
+#        command
+#
+# and
+#
+# else:
+#    if:
+#        command1
+#    command2
+#
+# In second case command2 is moved to incorrect block
+# TODO: either backward re-factoring or forward analysis is required.
+ELIFication = False
+
 
 def py2i3s(inst_method):
 
@@ -119,6 +139,9 @@ def py2i3s(inst_method):
 
     stack = []
     blocks = [func]
+    # Functions those should be called on specific offset (instruction
+    # address).
+    forwards = defaultdict(list)
 
     def LOAD_FAST(i):
         var_num = i.arg
@@ -207,8 +230,42 @@ def py2i3s(inst_method):
     def UNARY_INVERT(_):
         stack.append(OpNot(stack.pop()))
 
-    def POP_JUMP_IF_FALSE(_):
-        stack.pop() # TODO
+    def POP_JUMP_IF_FALSE(i):
+        target = i.arg
+        cond = stack.pop()
+        if ELIFication:
+            if isinstance(blocks[-1], BranchElse) and blocks[-1].cond is None:
+                # elif
+                # Note that, if `blocks[-1].cond` is not `None` then this `if`
+                # branch is inside `elif` block.
+                blocks[-1].cond = cond
+                # find out topmost `if` branch
+                i = 2
+                while True:
+                    branch = blocks[-i]
+                    if isinstance(branch, BranchIf):
+                        break
+                    i += 1
+            else:
+                # if
+                branch = BranchIf(cond)
+                blocks[-1](branch)
+                blocks.append(branch)
+        else:
+            branch = BranchIf(cond)
+            blocks[-1](branch)
+            blocks.append(branch)
+
+        forwards[target].insert(0,
+            lambda br = branch: finish_true_branch(br)
+        )
+
+    def JUMP_FORWARD(i):
+        target = i.offset + i.arg + 2 # instruction size is always 2
+        forwards[target].insert(0, finish_false_block)
+        # Instructions below are jumped over. They are likely from an
+        # `else`/`elif` block.
+        blocks.append(CNode())
 
     def LOAD_CONST(i):
         consti = i.arg
@@ -218,11 +275,56 @@ def py2i3s(inst_method):
     def RETURN_VALUE(_):
         blocks[-1](Return(stack.pop()))
 
+    def finish_true_branch(ifbranch):
+        block = blocks.pop()
+        if ELIFication:
+            if isinstance(block, BranchIf):
+                # `if` without `else`
+                pass
+            elif isinstance(block, BranchElse) and block.cond is not None:
+                # `elif` without `else`
+                pass
+            elif type(block) is CNode:
+                # The block is started by `JUMP_FORWARD`. It's `else` block.
+                elsebranch = BranchElse()(*block.children)
+                ifbranch.add_else(elsebranch)
+                blocks.append(elsebranch)
+            else:
+                raise AssertionError
+        else:
+            if isinstance(block, BranchIf):
+                # `if` without `else`
+                pass
+            elif type(block) is CNode:
+                # The block is started by `JUMP_FORWARD`. It's `else` block.
+                elsebranch = BranchElse()(*block.children)
+                ifbranch.add_else(elsebranch)
+                blocks.append(elsebranch)
+            else:
+                raise AssertionError
+
+    def finish_false_block():
+        if ELIFication:
+            while True:
+                block = blocks.pop()
+                if isinstance(block, BranchIf):
+                    break
+                if isinstance(block, BranchElse) and block.cond is not None:
+                    break
+        else:
+            while not isinstance(blocks.pop(), BranchIf):
+                pass
+
     locs = dict(locals())
 
     for i in get_instructions(inst_method):
         print([str(v) for v in stack])
         print(i.opname, i.argval)
+
+        if i.offset in forwards:
+            for cb in forwards.pop(i.offset):
+                cb()
+
         try:
             handler = locs[i.opname]
         except KeyError:
