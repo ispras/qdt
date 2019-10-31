@@ -149,6 +149,12 @@ def py2i3s(inst_method):
         res = OpMul(left, right)
         stack.append(res)
 
+    def BINARY_ADD(_):
+        right = stack.pop()
+        left = stack.pop()
+        res = OpAdd(left, right)
+        stack.append(res)
+
     def INPLACE_AND(_):
         right = stack.pop()
         left = stack.pop()
