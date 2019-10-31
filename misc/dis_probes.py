@@ -85,9 +85,54 @@ class CPU(object):
         else:
             self.regs[REG_FLAGS] |= FLAG_Z
 
+    def test_i(self, op1, op2, op3):
+        if op1:
+            self.regs[0] = op3
+        if op2:
+            self.regs[1] = op3
+
+    def test_elif(self, op1, op2, op3):
+        if op3:
+            self.regs[10] = op3
+        else:
+            if op2:
+                self.regs[15] = op3
+            self.regs[11] = op3
+        if op2:
+            self.regs[16] = op3
+        else:
+            if op2:
+                self.regs[10] = op3
+        if op1 + 1:
+            self.regs[0] = op3
+        elif op2 + 1:
+            self.regs[1] = op3
+            if op3:
+                self.regs[4] = op3
+            if op1:
+                self.regs[7] = op3
+            else:
+                self.regs[8] = op3
+        elif op3 + 1:
+            self.regs[2] = op3
+        if op1 + 2:
+            self.regs[0] = 4
+        else:
+            self.regs[1] = 5
+        self.regs[4] = op3
+        if op1 + 3:
+            self.regs[6] = op1
+        elif op2 + 3:
+            self.regs[9] = op2
+        else:
+            self.regs[17] = op2
+        self.regs[18] = op3
+
 
 cpu_mul_ = CPU.mul
 cpu_ror_ = CPU.ror
+test_i_ = CPU.test_i
+test_elif_ = CPU.test_elif
 
 # `elif`-ication does not work because we do not distinguish such cases:
 #
@@ -382,7 +427,7 @@ def main():
 
         print("") # delimeter
 
-    py2i3s(cpu_ror_)
+    py2i3s(test_elif_)
 
 
 if __name__ == "__main__":
