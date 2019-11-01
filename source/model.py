@@ -1691,7 +1691,7 @@ class MacroType(Type):
 
 class CPPMacro(Macro):
     """ A kind of macro defined by the C preprocessor.
-    For example __FILE__, __LINE__, __FUNCTION__ and etc.
+    For example __FILE__, __LINE__, __func__ and etc.
     """
 
     def __init__(self, *args, **kw):
@@ -2963,7 +2963,7 @@ class SourceTreeContainer(object):
 
         CPPMacro("__FILE__")
         CPPMacro("__LINE__")
-        CPPMacro("__FUNCTION__")
+        CPPMacro("__func__")
 
         if prev is not None:
             prev.set_cur_stc()
