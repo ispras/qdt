@@ -381,7 +381,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
                         CSTR("\\n"),
                         delim = "@s"
                     ),
-                    MCall("__FUNCTION__"),
+                    MCall("__func__"),
                     offset_name
                 )
             )
@@ -791,7 +791,7 @@ class QOMType(object):
                             ", size %d\\n",
                             delim = "@s"
                         ),
-                        MCall("__FUNCTION__"),
+                        MCall("__func__"),
                         func.args[1],
                         func.args[2]
                     )
@@ -842,7 +842,7 @@ class QOMType(object):
                             "\\n",
                             delim = "@s"
                         ),
-                        MCall("__FUNCTION__"),
+                        MCall("__func__"),
                         func.args[1],
                         func.args[3],
                         func.args[2]
