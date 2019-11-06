@@ -1492,16 +1492,18 @@ class Pointer(Type):
 
     def __init__(self, _type, name = None, const = False):
         """
-        const: pointer to constant (not a constant pointer).
+        const: a constant pointer
         """
+        if const:
+            raise NotImplementedError(
+                "A constant pointer is not fully implemented"
+            )
+
         super(Pointer, self).__init__(name = name, incomplete = False)
 
         # define c_name for nameless pointers
         if not self.is_named:
-            c_name = _type.c_name + '*'
-            if const:
-                c_name = "const@b" + c_name
-            self.c_name = c_name
+            self.c_name = _type.c_name + '*'
 
         if POINTER_TO_DECLARATION and isinstance(_type, (Structure, Function)):
             _type = _type.declaration or _type
