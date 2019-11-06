@@ -343,7 +343,8 @@ corresponding vendor is given" % attr
                 name = self.gen_Ith_mem_bar_ops_name(barN),
                 pointer = False,
                 initializer = ops_init,
-                static = True
+                static = True,
+                const = True
             )
 
             self.source.add_global_variable(ops)
