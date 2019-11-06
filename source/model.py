@@ -1489,15 +1489,19 @@ class Pointer(Type):
 
     def __init__(self, _type, name = None, const = False):
         """
-        const: pointer to constant (not a constant pointer).
+        const:  a constant pointer
         """
+        if const:
+            raise NotImplementedError(
+                "A constant pointer is not currently supported"
+            )
+
         super(Pointer, self).__init__(name = name, incomplete = False)
 
         if POINTER_TO_DECLARATION and isinstance(_type, (Structure, Function)):
             _type = _type.declaration or _type
 
         self.type = _type
-        self.const = const
 
     def __eq__(self, other):
         if not isinstance(other, Pointer):
@@ -1511,7 +1515,7 @@ class Pointer(Type):
         if other.is_named:
             return False
 
-        return (self.type == other.type) and (self.const == other.const)
+        return self.type == other.type
 
     def get_definers(self):
         if self.is_named:
