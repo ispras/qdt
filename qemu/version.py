@@ -456,7 +456,7 @@ def define_only_qemu_2_6_0_types():
             name = "IOReadHandler",
             args = [
                 Pointer(Type["void"])("opaque"),
-                Pointer(Type["uint8_t"], const = True)("buf"),
+                Pointer(Type["uint8_t"])("buf", const = True),
                 Type["int"]("size")
             ]
         )
