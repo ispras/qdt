@@ -140,6 +140,7 @@ class TestLabelAndGotoGeneration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 void main(void)
 {{
     int i;
@@ -173,6 +174,7 @@ class TestForwardDeclaration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 typedef struct A A;
 
 struct A {{
@@ -207,6 +209,7 @@ class TestCrossDeclaration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 typedef struct B B;
 
 typedef struct A {{
@@ -244,6 +247,7 @@ class TestForwardDeclarationHeader(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 typedef struct A A;
 
 struct A {{
@@ -256,6 +260,7 @@ struct A {{
         src.add_type(b)
         src_content = """\
 /* {} */
+
 #include "{}"
 
 typedef struct B {{
@@ -292,6 +297,7 @@ class TestMacroType(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 #define QTAIL_ENTRY(type)
 
 typedef struct StructA StructA;
@@ -332,6 +338,7 @@ class TestSeparateCases(FunctionTreeTestDoubleGenerationHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 void func_a(void)
 {{
     int i = 0;
@@ -368,6 +375,7 @@ class TestHeaderInclusion(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 void test_f(void);
 #endif /* INCLUDE_{fname_upper}_H */
 """.format(path = hdr.path, fname_upper = name.upper())
@@ -375,6 +383,7 @@ void test_f(void);
         src1 = Source(name.lower() + ".c").add_type(f_def)
         src1_content = """\
 /* {} */
+
 void test_f(void) {{}}
 
 """.format(src1.path)
@@ -389,6 +398,7 @@ void test_f(void) {{}}
         )
         src2_content = """\
 /* {} */
+
 #include "{}"
 
 void func_a(void)
@@ -423,6 +433,7 @@ class TestPointerReferences(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 #include "type_a.h"
 
 typedef struct s {{
@@ -464,6 +475,7 @@ class TestRedirectionToDeclaration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* %s */
+
 #include "public.h"
 
 typedef void (*cb_ptr)(void);
@@ -504,6 +516,7 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 #include "enums.h"
 
 enum B {{
@@ -546,6 +559,7 @@ class TestGlobalHeadersInclusion(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 #include "local_types.h"
 
 typedef struct Fields {{
@@ -562,6 +576,7 @@ typedef struct Fields {{
 
         src_content = """\
 /* {} */
+
 #include <global_types.h>
 #include "{}"
 
@@ -589,6 +604,7 @@ class TestPointerDereferencing(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 typedef int *myint;
 myint var __attribute__((unused));
 
