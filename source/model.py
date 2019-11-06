@@ -2220,8 +2220,9 @@ class PointerTypeDeclaration(SourceChunk):
         self.def_name = def_name
 
         super(PointerTypeDeclaration, self).__init__(_type,
-            "Definition of pointer to type %s" % _type,
-            "typedef@b" + _type.c_name + "@b" + def_name + ";\n"
+            "Definition of pointer to type %s" % _type, (
+                "typedef@b" + _type.type_name + '*' + def_name + ";\n"
+            )
         )
 
 
@@ -2256,15 +2257,14 @@ class MacroTypeUsage(SourceChunk):
 class PointerVariableDeclaration(SourceChunk):
 
     def __init__(self, var, indent = "", extern = False):
-        t = var.type.type
         super(PointerVariableDeclaration, self).__init__(var,
-            "Declaration of pointer %s to type %s" % (var, t),
+            "Declaration of pointer %s to type %s" % (var, var.type.type),
             """\
-{indent}{extern}{const}{type_name}@b*{var_name};
+{indent}{extern}{const}{type_name}{var_name};
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
-    type_name = t.c_name,
+    type_name = var.type.type_name,
     var_name = var.name,
     extern = "extern@b" if extern else ""
             )
@@ -2297,11 +2297,11 @@ class VariableDeclaration(SourceChunk):
         super(VariableDeclaration, self).__init__(var,
             "Variable %s of type %s declaration" % (var, var.type),
             """\
-{indent}{extern}{const}{type_name}@b{var_name}{array_decl};
+{indent}{extern}{const}{type_name}{var_name}{array_decl};
 """.format(
     indent = indent,
     const = "const@b" if var.const else "",
-    type_name = var.type.c_name,
+    type_name = var.type.type_name,
     var_name = var.name,
     array_decl = gen_array_declaration(var.array_size),
     extern = "extern@b" if extern else ""
@@ -2325,7 +2325,7 @@ class VariableDefinition(SourceChunk):
     indent = indent,
     static = "static@b" if var.static else "",
     const = "const@b" if var.const else "",
-    type_name = var.type.c_name + "@b",
+    type_name = var.type.type_name,
     var_name = var.name,
     array_decl = gen_array_declaration(var.array_size),
     used = "" if var.used else "@b__attribute__((unused))",
@@ -2481,17 +2481,18 @@ def gen_function_declaration_string(indent, function,
     if function.args is None:
         args = "void"
     else:
-        args = ""
-        for a in function.args:
-            args += a.type.c_name + "@b" + a.name
-            if not a == function.args[-1]:
-                args += ",@s"
+        args = ",@s".join(
+            "{type_name}{name}".format(
+                type_name = a.type.type_name,
+                name = a.name
+            ) for a in function.args
+        )
 
     return "{indent}{static}{inline}{ret_type}{name}(@a{args}@c)".format(
         indent = indent,
         static = "static@b" if function.static else "",
         inline = "inline@b" if function.inline else "",
-        ret_type = function.ret_type.c_name + "@b",
+        ret_type = function.ret_type.type_name,
         name = function.c_name if pointer_name is None else (
             "(*" + pointer_name + gen_array_declaration(array_size) + ')'
         ),
