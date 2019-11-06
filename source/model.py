@@ -847,6 +847,15 @@ transitively includes definer of ref)"""
 # Type models
 
 
+def iter_deref(type_):
+    "Iterates wrapping nameless pointer types including backing type."
+    while True:
+        yield type_
+        if not isinstance(type_, Pointer) or type_.is_named:
+            break
+        type_ = type_.type
+
+
 class TypeNotRegistered(RuntimeError):
     pass
 
@@ -1831,15 +1840,6 @@ class Variable(object):
             pass # We only need last `t` value.
         # Note that at least one loop iteration always takes place.
         return t
-
-    def iter_deref(self):
-        "Iterates wrapping nameless pointer types including backing type."
-        t = self.type
-        while True:
-            yield t
-            if not isinstance(t, Pointer) or t.is_named:
-                break
-            t = t.type
 
     def gen_declaration_chunks(self, generator,
         indent = "",
