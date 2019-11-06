@@ -607,6 +607,7 @@ class QOMType(object):
         return Type["VMStateDescription"](
             name = "vmstate_%s" % self.qtn.for_id_name,
             static = True,
+            const = True,
             initializer = self.gen_vmstate_initializer(state_struct)
         )
 
