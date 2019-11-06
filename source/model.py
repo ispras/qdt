@@ -1562,12 +1562,8 @@ chunk. The references is to be added to `users` of the 'typedef'.
         return [ch]
 
     def __hash__(self):
-        stars = "*"
         t = self.type
-        while isinstance(t, Pointer) and not t.is_named:
-            t = t.type
-            stars += "*"
-        return hash(hash(t) + hash(stars))
+        return hash(hash(t.full_deref) + hash('*' + t.asterisks))
 
     def __str__(self):
         if self.is_named:
