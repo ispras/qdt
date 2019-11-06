@@ -380,7 +380,8 @@ class SysBusDeviceType(QOMDevice):
                     name = self.gen_Ith_mmio_ops_name(mmioN),
                     pointer = False,
                     initializer = ops_init,
-                    static = True
+                    static = True,
+                    const = True
                 )
 
                 self.source.add_global_variable(ops)
@@ -465,7 +466,8 @@ class SysBusDeviceType(QOMDevice):
                 name = self.gen_Ith_pio_ops_name(pioN),
                 pointer = False,
                 initializer = ops_init,
-                static = True
+                static = True,
+                const = True
             )
 
             self.source.add_global_variable(ops)
