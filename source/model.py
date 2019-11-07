@@ -10,6 +10,7 @@ __all__ = [
       , "Function"
       , "Pointer"
       , "Macro"
+      , "MacroUsage"
       , "MacroType"
       , "Enumeration"
       , "EnumerationElement"
@@ -1715,6 +1716,43 @@ class Macro(Type):
 
     def __c__(self, writer):
         writer.write(self.c_name)
+
+
+class MacroUsage(Type):
+
+    def __init__(self, macro, initializer = None, name = None):
+        super(MacroUsage, self).__init__(name = name, incomplete = False)
+
+        self.macro = macro
+        self.initializer = initializer
+
+        if not self.is_named:
+            self.c_name = macro.gen_usage_string(initializer)
+
+    def gen_chunks(self, generator, indent = ""):
+        macro = self.macro
+        initializer = self.initializer
+
+        refs = list(generator.provide_chunks(macro))
+
+        if initializer is not None:
+            for v in initializer.used_variables:
+                """ Note that 0-th chunk is variable and rest are its
+                dependencies """
+                refs.append(generator.provide_chunks(v)[0])
+
+            for t in initializer.used_types:
+                refs.extend(generator.provide_chunks(t))
+
+        return refs
+
+    def __str__(self):
+        if self.is_named:
+            return super(MacroUsage, self).__str__()
+        else:
+            return "usage of macro %s" % self.macro
+
+    __type_references__ = ["macro", "initializer"]
 
 
 class MacroType(Type):
