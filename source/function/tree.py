@@ -561,7 +561,7 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        writer.write(v.type.full_deref.c_name + "@b" + v.type.asterisks)
+        writer.write(v.type.type_name)
         self._write_child(child, writer)
 
         for child in self.children[1:]:
