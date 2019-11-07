@@ -1176,6 +1176,13 @@ class Structure(Type):
                 " the structure %s" % (v_name, self)
             )
 
+        if isinstance(variable, Type):
+            if variable.definer is not None:
+                raise RuntimeError(
+                    "The type %s is already has defined" % variable
+                )
+            variable.definer = self
+
         self.fields[v_name] = variable
 
         ForwardDeclarator(variable).visit()
