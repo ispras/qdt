@@ -1691,7 +1691,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        return MacroType(self, initializer = macro_initializer)(name,
+        return MacroUsage(self, initializer = macro_initializer)(name,
             pointer = pointer,
             initializer = initializer,
             static = static,
