@@ -2462,7 +2462,8 @@ def gen_function_declaration_string(indent, function,
         args = "void"
     else:
         args = ",@s".join(
-            "{type_name}{name}".format(
+            "{const}{type_name}{name}".format(
+                const = "const@b" if a.const else "",
                 type_name = a.type.type_name,
                 name = a.name
             ) for a in function.args
