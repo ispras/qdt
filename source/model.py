@@ -985,6 +985,10 @@ class Type(object):
         # Note that at least one loop iteration always takes place.
         return t
 
+    @property
+    def declaration_string(self):
+        return self.full_deref.c_name + "@b" + self.asterisks
+
 
 class TypeReference(Type):
 
