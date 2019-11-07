@@ -973,6 +973,18 @@ class Type(object):
             return NotImplemented
         return self.name < other.name
 
+    @property
+    def asterisks(self):
+        "String of * required to full dereference of this as a pointer."
+        return "*" * (len(list(iter_deref(self))) - 1)
+
+    @property
+    def full_deref(self):
+        for t in iter_deref(self):
+            pass # We only need last `t` value.
+        # Note that at least one loop iteration always takes place.
+        return t
+
 
 class TypeReference(Type):
 
@@ -1828,18 +1840,6 @@ class Variable(object):
         self.declarer = None
         # a module
         self.definer = None
-
-    @property
-    def asterisks(self):
-        "String of * required to full dereference of this as a pointer."
-        return "*" * (len(list(self.iter_deref())) - 1)
-
-    @property
-    def full_deref(self):
-        for t in self.iter_deref():
-            pass # We only need last `t` value.
-        # Note that at least one loop iteration always takes place.
-        return t
 
     def gen_declaration_chunks(self, generator,
         indent = "",

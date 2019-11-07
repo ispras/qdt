@@ -539,7 +539,7 @@ class Declare(SemicolonPresence):
                 v = first_child.children[0]
             else:
                 v = first_child
-            if (   v.full_deref != var.full_deref
+            if (   v.type.full_deref != var.type.full_deref
                 or v.static != var.static
                 or v.const != var.const
             ):
@@ -561,7 +561,7 @@ class Declare(SemicolonPresence):
         if v.const:
             writer.write("const@b")
 
-        writer.write(v.full_deref.c_name + "@b" + v.asterisks)
+        writer.write(v.type.full_deref.c_name + "@b" + v.type.asterisks)
         self._write_child(child, writer)
 
         for child in self.children[1:]:
@@ -570,7 +570,7 @@ class Declare(SemicolonPresence):
             else:
                 v = child
 
-            writer.write(",@s" + v.asterisks)
+            writer.write(",@s" + v.type.asterisks)
             self._write_child(child, writer)
 
     @staticmethod
