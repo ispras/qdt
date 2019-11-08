@@ -467,7 +467,7 @@ class TestRedirectionToDeclaration(SourceModelTestHelper, TestCase):
 #include "public.h"
 
 typedef void (*cb_ptr)(void);
-Private* handler __attribute__((unused));
+Private *handler __attribute__((unused));
 
 """ % (name.lower() + ".c")
 
