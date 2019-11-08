@@ -1565,8 +1565,7 @@ chunk. The references is to be added to `users` of the 'typedef'.
         if self.is_named:
             return hash(self.name)
         else:
-            t = self.type
-            return hash(hash(t.full_deref) + hash('*' + t.asterisks))
+            return hash(hash(self.full_deref) + hash(self.asterisks))
 
     def __str__(self):
         if self.is_named:
