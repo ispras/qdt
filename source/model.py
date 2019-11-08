@@ -1851,6 +1851,16 @@ class Variable(object):
     def full_deref(self):
         return self.type.full_deref
 
+    @property
+    def declaration_string(self):
+        return "{static}{const}{type}{var}{array_decl}".format(
+            static = "static@b" if self.static else "",
+            const = "const@b" if self.const else "",
+            type = self.type.declaration_string,
+            var = self.name,
+            array_decl = gen_array_declaration(self.array_size)
+        )
+
     def gen_declaration_chunks(self, generator,
         indent = "",
         extern = False
