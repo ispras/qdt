@@ -1843,15 +1843,11 @@ class Variable(object):
 
     @property
     def asterisks(self):
-        "String of * required to full dereference of this as a pointer."
-        return "*" * (len(list(self.iter_deref())) - 1)
+        return self.type.asterisks
 
     @property
     def full_deref(self):
-        for t in self.iter_deref():
-            pass # We only need last `t` value.
-        # Note that at least one loop iteration always takes place.
-        return t
+        return self.type.full_deref
 
     def gen_declaration_chunks(self, generator,
         indent = "",
