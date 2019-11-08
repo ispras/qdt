@@ -2244,7 +2244,7 @@ class PointerTypeDeclaration(SourceChunk):
 
         super(PointerTypeDeclaration, self).__init__(_type,
             "Definition of pointer to type %s" % _type,
-            "typedef@b" + _type.c_name + "@b" + def_name + ";\n"
+            "typedef@b" + _type.c_name + "@b*" + def_name + ";\n"
         )
 
 
