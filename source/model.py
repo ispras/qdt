@@ -20,7 +20,6 @@ __all__ = [
       , "PointerTypeDeclaration"
       , "FunctionPointerTypeDeclaration"
       , "MacroTypeUsage"
-      , "PointerVariableDeclaration"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
@@ -1868,18 +1867,16 @@ class Variable(object):
         indent = "",
         extern = False
     ):
-        if isinstance(self.type, Pointer) and not self.type.is_named:
-            if isinstance(self.type.type, Function):
-                ch = FunctionPointerDeclaration(self, indent, extern)
-                refs = gen_function_decl_ref_chunks(self.type.type, generator)
-            else:
-                ch = PointerVariableDeclaration(self, indent, extern)
-                refs = generator.provide_chunks(self.type.type)
-            ch.add_references(refs)
+        if (    isinstance(self.type, Pointer)
+            and not self.type.is_named
+            and isinstance(self.type.type, Function)
+        ):
+            ch = FunctionPointerDeclaration(self, indent, extern)
+            refs = gen_function_decl_ref_chunks(self.type.type, generator)
         else:
             ch = VariableDeclaration(self, indent, extern)
             refs = generator.provide_chunks(self.type)
-            ch.add_references(refs)
+        ch.add_references(refs)
 
         return [ch]
 
@@ -2273,21 +2270,6 @@ class MacroTypeUsage(SourceChunk):
         super(MacroTypeUsage, self).__init__(macro,
             "Usage of macro type %s" % macro,
             code = indent + macro.gen_usage_string(initializer)
-        )
-
-
-class PointerVariableDeclaration(SourceChunk):
-
-    def __init__(self, var, indent = "", extern = False):
-        super(PointerVariableDeclaration, self).__init__(var,
-            "Declaration of pointer %s to type %s" % (var, var.type.type),
-            """\
-{indent}{extern}{var_declaration};
-""".format(
-    indent = indent,
-    extern = "extern@b" if extern else "",
-    var_declaration = var.declaration_string
-            )
         )
 
 
