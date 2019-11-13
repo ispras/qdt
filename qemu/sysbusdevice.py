@@ -129,7 +129,7 @@ class SysBusDeviceType(QOMDevice):
 
         self.type_cast_macro = Macro(
             name = self.qtn.for_macros,
-            args = ["obj"],
+            args = [ "obj" ],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
                 Struct = self.struct_name
@@ -171,10 +171,12 @@ class SysBusDeviceType(QOMDevice):
         for pioN in range(0, self.pio_num):
             size_macro = Macro(
                 name = self.gen_Ith_pio_size_macro_name(pioN),
-                text = "0x%X" % pio_def_size)
+                text = "0x%X" % pio_def_size
+            )
             address_macro = Macro(
                 name = self.gen_Ith_pio_address_macro_name(pioN),
-                text = "0x%X" % pio_cur_addres)
+                text = "0x%X" % pio_cur_addres
+            )
             pio_cur_addres += pio_def_size
 
             self.header.add_types([size_macro, address_macro])
@@ -184,7 +186,7 @@ class SysBusDeviceType(QOMDevice):
 
         if self.in_irq_num > 0:
             self.in_irq_macro = Macro(
-                name = "%s_IN_IRQ_NUM" % self.qtn.for_macros,
+                name = self.qtn.for_macros + "_IN_IRQ_NUM",
                 text = "%d" % self.in_irq_num
             )
 
@@ -378,7 +380,8 @@ class SysBusDeviceType(QOMDevice):
                     name = self.gen_Ith_mmio_ops_name(mmioN),
                     pointer = False,
                     initializer = ops_init,
-                    static = True
+                    static = True,
+                    const = True
                 )
 
                 self.source.add_global_variable(ops)
@@ -463,7 +466,8 @@ class SysBusDeviceType(QOMDevice):
                 name = self.gen_Ith_pio_ops_name(pioN),
                 pointer = False,
                 initializer = ops_init,
-                static = True
+                static = True,
+                const = True
             )
 
             self.source.add_global_variable(ops)

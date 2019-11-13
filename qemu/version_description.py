@@ -48,7 +48,6 @@ from os import (
     listdir
 )
 from os.path import (
-    dirname,
     sep,
     join,
     isfile
@@ -198,11 +197,11 @@ class QemuVersionCache(object):
     current = None
 
     def __init__(self,
-                 list_headers = None,
-                 device_tree = None,
-                 known_targets = None,
-                 version_desc = None,
-                 pci_classes = None
+        list_headers = None,
+        device_tree = None,
+        known_targets = None,
+        version_desc = None,
+        pci_classes = None
     ):
         self.device_tree = device_tree
         self.known_targets = known_targets
@@ -252,14 +251,16 @@ class QemuVersionCache(object):
         print("Params in graph of commit's description were propagated")
 
     def co_propagate_new_param(self, sorted_vd_keys, vd):
-        '''This method propagate QEMUVersionParameterDescription.new_value
+        """ This method propagate QEMUVersionParameterDescription.new_value
         in graph of commits. It must be called before old_value propagation.
 
-        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of QemuCommitDesc. It's necessary to optimize the graph
-        traversal.
-        vd: qemu_heuristic_db
-        '''
+    :param sorted_vd_keys:
+        keys of qemu_heuristic_db sorted in ascending order by num of
+        QemuCommitDesc. It's necessary to optimize the graph traversal.
+
+    :param vd:
+        qemu_heuristic_db
+        """
 
         # iterations to yield
         i2y = QVD_HP_IBY
@@ -328,17 +329,19 @@ class QemuVersionCache(object):
                     i2y -= 1
 
     def co_propagate_old_param(self, sorted_vd_keys, unknown_vd_keys, vd):
-        '''This method propagate QEMUVersionParameterDescription.old_value
+        """ This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
 
-        sorted_vd_keys: keys of qemu_heuristic_db sorted in ascending order
-        by num of QemuCommitDesc. It's necessary to optimize the graph
-        traversal.
+    :param sorted_vd_keys:
+        keys of qemu_heuristic_db sorted in ascending order by num of
+        QemuCommitDesc. It's necessary to optimize the graph traversal.
 
-        unknown_vd_keys: set of keys which are not in commit_desc_nodes.
+    :param unknown_vd_keys:
+        set of keys which are not in commit_desc_nodes.
 
-        vd: qemu_heuristic_db
-        '''
+    :param vd:
+        qemu_heuristic_db
+        """
 
         # message for exceptions
         msg = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
@@ -468,6 +471,15 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         QemuVersionCache.current = self
         return previous
 
+class ConfigHost(object):
+
+    def __init__(self, config_host_path):
+        with open(config_host_path) as f:
+            self.content = f.read()
+
+    def __getattr__(self, parameter):
+        return QemuVersionDescription.ch_lookup(self.content, parameter)
+
 class BadBuildPath(ValueError):
     pass
 
@@ -492,28 +504,15 @@ class QemuVersionDescription(object):
     current = None
 
     def __init__(self, build_path, version = None):
-        config_host_path = join(build_path, 'config-host.mak')
+        config_host_path = join(build_path, "config-host.mak")
         if not isfile(config_host_path):
             raise BadBuildPath("%s does not exists." % config_host_path)
+        config_host = ConfigHost(config_host_path)
 
         self.build_path = build_path
-
-        config_host_f = open(config_host_path)
-        config_host = config_host_f.read()
-        config_host_f.close()
-
-        self.src_path = fixpath(QemuVersionDescription.ch_lookup(
-            config_host,
-            "SRC_PATH"
-        ))
-        self.target_list = fixpath(QemuVersionDescription.ch_lookup(
-            config_host,
-            "TARGET_DIRS"
-        )).split(" ")
-        self.bindir = join(
-            fixpath(QemuVersionDescription.ch_lookup(config_host, "prefix")),
-            "bin"
-        )
+        self.src_path = fixpath(config_host.SRC_PATH)
+        self.target_list = config_host.TARGET_DIRS.split(" ")
+        self.bindir = join(fixpath(config_host.prefix), "bin")
 
         self.softmmu_targets = st = set()
         for t in self.target_list:

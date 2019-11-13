@@ -47,6 +47,7 @@ verbose_dir = join(dirname(__file__), "model_code")
 
 
 class SourceModelTestHelper(object):
+    inherit_references = False
 
     def setUp(self):
         Type.reg = {}
@@ -55,7 +56,10 @@ class SourceModelTestHelper(object):
 
     def test(self):
         for file_, content in self.files:
-            sf = file_.generate()
+            kw = {}
+            if isinstance(file_, Header):
+                kw["inherit_references"] = self.inherit_references
+            sf = file_.generate(**kw)
 
             if SAVE_CHUNK_GRAPH:
                 sf.gen_chunks_gv_file(
@@ -126,18 +130,21 @@ class TestLabelAndGotoGeneration(SourceModelTestHelper, TestCase):
         lbl = Label("begin")
         i = Type["int"]("i")
 
-        src.add_type(Function(
-            name = "main",
-            body = BodyTree()(
-                Declare(i),
-                lbl,
-                OpAssign(i, OpAdd(i, 1)),
-                Goto(lbl)
+        src.add_type(
+            Function(
+                name = "main",
+                body = BodyTree()(
+                    Declare(i),
+                    lbl,
+                    OpAssign(i, OpAdd(i, 1)),
+                    Goto(lbl)
+                )
             )
-        ))
+        )
 
         src_content = """\
 /* {} */
+
 void main(void)
 {{
     int i;
@@ -171,6 +178,7 @@ class TestForwardDeclaration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 typedef struct A A;
 
 struct A {{
@@ -205,6 +213,7 @@ class TestCrossDeclaration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 typedef struct B B;
 
 typedef struct A {{
@@ -242,6 +251,7 @@ class TestForwardDeclarationHeader(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 typedef struct A A;
 
 struct A {{
@@ -254,6 +264,7 @@ struct A {{
         src.add_type(b)
         src_content = """\
 /* {} */
+
 #include "{}"
 
 typedef struct B {{
@@ -275,7 +286,7 @@ class TestMacroType(SourceModelTestHelper, TestCase):
         name = type(self).__name__
 
         hdr = Header(name.lower() + ".h")
-        hdr.add_type(Macro("QTAIL_ENTRY", args = ["type"]))
+        hdr.add_type(Macro("QTAIL_ENTRY", args = [ "type" ]))
 
         struct = Structure("StructA")
         struct.append_fields([
@@ -290,6 +301,7 @@ class TestMacroType(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 #define QTAIL_ENTRY(type)
 
 typedef struct StructA StructA;
@@ -330,6 +342,7 @@ class TestSeparateCases(FunctionTreeTestDoubleGenerationHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 void func_a(void)
 {{
     int i = 0;
@@ -366,6 +379,7 @@ class TestHeaderInclusion(SourceModelTestHelper, TestCase):
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 void test_f(void);
 #endif /* INCLUDE_{fname_upper}_H */
 """.format(path = hdr.path, fname_upper = name.upper())
@@ -373,6 +387,7 @@ void test_f(void);
         src1 = Source(name.lower() + ".c").add_type(f_def)
         src1_content = """\
 /* {} */
+
 void test_f(void) {{}}
 
 """.format(src1.path)
@@ -387,6 +402,7 @@ void test_f(void) {{}}
         )
         src2_content = """\
 /* {} */
+
 #include "{}"
 
 void func_a(void)
@@ -421,6 +437,7 @@ class TestPointerReferences(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* {} */
+
 #include "type_a.h"
 
 typedef struct s {{
@@ -462,10 +479,11 @@ class TestRedirectionToDeclaration(SourceModelTestHelper, TestCase):
 
         src_content = """\
 /* %s */
+
 #include "public.h"
 
 typedef void (*cb_ptr)(void);
-Private* handler __attribute__((unused));
+Private *handler __attribute__((unused));
 
 """ % (name.lower() + ".c")
 
@@ -484,24 +502,25 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             h = Header["enums.h"]
         except:
             h = Header("enums.h")
-        h.add_type(Enumeration("A", { "one": 1, "two": 2 }))
+        h.add_type(Enumeration("A", [("one", 1), ("two", 2)]))
 
         a = Type["int"]("a")
         b = Type["int"]("b")
         c = Type["int"]("c")
 
         src = Source(name.lower() + ".c").add_types([
-            Enumeration("B", { "three": 3, "four": 4 }, "B"),
+            Enumeration("B", [("three", 3), ("four", 4)], "B"),
             Function(name = "main", body = BodyTree()(
                 Declare(a, b, c),
-                OpAssign(a, Type["A"].get_field("one")),
-                OpAssign(b, Type["B"].get_field("three")),
+                OpAssign(a, Type["A"].one),
+                OpAssign(b, Type["B"].three),
                 OpAssign(c, Type["four"])
             ))
         ])
 
         src_content = """\
 /* {} */
+
 #include "enums.h"
 
 enum B {{
@@ -536,15 +555,15 @@ class TestGlobalHeadersInclusion(SourceModelTestHelper, TestCase):
         hg.add_type(Type("GT", incomplete = False))
         hl.add_type(Type("LT", incomplete = False))
 
-        hdr = Header(name.lower() + ".h").add_type(Structure("Fields",
-            Type["GT"]("f1"),
-            Type["LT"]("f2")
-        ))
+        hdr = Header(name.lower() + ".h").add_type(
+            Structure("Fields", Type["GT"]("f1"), Type["LT"]("f2"))
+        )
 
         hdr_content = """\
 /* {path} */
 #ifndef INCLUDE_{fname_upper}_H
 #define INCLUDE_{fname_upper}_H
+
 #include "local_types.h"
 
 typedef struct Fields {{
@@ -561,6 +580,7 @@ typedef struct Fields {{
 
         src_content = """\
 /* {} */
+
 #include <global_types.h>
 #include "{}"
 
@@ -571,6 +591,66 @@ Fields fv __attribute__((unused));
         self.files = [
             (hdr, hdr_content),
             (src, src_content)
+        ]
+
+
+class TestPointerDereferencing(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestPointerDereferencing, self).setUp()
+        name = type(self).__name__
+
+        Pointer(Type["int"], name = "myint")
+
+        src = Source(name.lower() + ".c").add_global_variable(
+            Type["myint"]("var")
+        )
+
+        src_content = """\
+/* {} */
+
+typedef int *myint;
+myint var __attribute__((unused));
+
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestlReferencingToSelfDefinedType(SourceModelTestHelper, TestCase):
+    inherit_references = True
+
+    def setUp(self):
+        super(TestlReferencingToSelfDefinedType, self).setUp()
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h")
+        m = Macro("M_OTHER_TYPE", text = "int")
+        hdr.add_type(m)
+
+        ht = Header("macro_types.h")
+        ht.add_type(Macro("M_TYPE", text = "M_OTHER_TYPE"))
+        ht.add_reference(m)
+
+        hdr.add_global_variable(Type["M_TYPE"]("var"))
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+#define M_OTHER_TYPE int
+
+#include "macro_types.h"
+
+extern M_TYPE var;
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        self.files = [
+            (hdr, hdr_content)
         ]
 
 

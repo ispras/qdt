@@ -171,8 +171,8 @@ corresponding vendor is given" % attr
         self.header.add_type(self.type_name_macros)
 
         self.type_cast_macro = Macro(
-            name = self.qtn.for_macros, 
-            args = ["obj"],
+            name = self.qtn.for_macros,
+            args = [ "obj" ],
             text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
                 TYPE_MACRO = self.qtn.type_macro,
                 Struct = self.struct_name
@@ -200,7 +200,7 @@ corresponding vendor is given" % attr
             self.header.add_type(
                 Macro(
                     name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
-                            self.device.name
+                        self.device.name
                     ),
                     text = self.device.id
                 )
@@ -241,20 +241,21 @@ corresponding vendor is given" % attr
             self.header.add_type(size_macro)
 
         if self.msi_messages_num > 0 :
+            for_macros = self.qtn.for_macros
             self.msi_cap_offset = Macro(
-                name = "%s_MSI_CAP_OFFSET" % self.qtn.for_macros,
+                name = for_macros + "_MSI_CAP_OFFSET",
                 text = "0x48"
             )
             self.msi_vectors = Macro(
-                name = "%s_MSI_VECTORS" % self.qtn.for_macros,
+                name = for_macros + "_MSI_VECTORS",
                 text = "%u" % self.msi_messages_num
             )
             self.msi_64bit = Macro(
-                name = "%s_MSI_64BIT" % self.qtn.for_macros,
+                name = for_macros + "_MSI_64BIT",
                 text = "1"
             )
             self.msi_masking = Macro(
-                name = "%s_MSI_VECTOR_MASKING" % self.qtn.for_macros,
+                name = for_macros + "_MSI_VECTOR_MASKING",
                 text = "1"
             )
 
@@ -342,7 +343,8 @@ corresponding vendor is given" % attr
                 name = self.gen_Ith_mem_bar_ops_name(barN),
                 pointer = False,
                 initializer = ops_init,
-                static = True
+                static = True,
+                const = True
             )
 
             self.source.add_global_variable(ops)
