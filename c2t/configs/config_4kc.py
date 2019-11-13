@@ -36,7 +36,7 @@ c2t_cfg = C2TConfig(
     oracle_compiler = TestBuilder(
         Run( # compiler
             executable = "/usr/bin/gcc",
-            args = "-g -O0 {src} -o {bin}"
+            args = "-g -O0 {src} -o {bin} -no-pie"
         )
     )
 )
