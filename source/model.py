@@ -1244,6 +1244,14 @@ class Enumeration(Type):
     def get_field(self, name):
         return self.elems[name]
 
+    def __getattr__(self, name):
+        "Tries to find undefined attributes among elements."
+        try:
+            return self.get_field(name)
+        except KeyError:
+            pass
+        raise AttributeError(name)
+
     def gen_chunks(self, generator):
         fields_indent = "    "
         indent = ""
