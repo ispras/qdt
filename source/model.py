@@ -1110,10 +1110,13 @@ class Structure(Type):
         decl._definition = self
         return decl
 
+    def get_field(self, name):
+        return self._fields[name]
+
     def __getattr__(self, name):
         "Tries to find undefined attributes among fields."
         try:
-            return self._fields[name]
+            return self.get_field(name)
         except KeyError:
             pass
         raise AttributeError(name)
