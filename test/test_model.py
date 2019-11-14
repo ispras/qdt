@@ -619,11 +619,11 @@ myint var __attribute__((unused));
         ]
 
 
-class TestlReferencingToSelfDefinedType(SourceModelTestHelper, TestCase):
+class TestReferencingToSelfDefinedType(SourceModelTestHelper, TestCase):
     inherit_references = True
 
     def setUp(self):
-        super(TestlReferencingToSelfDefinedType, self).setUp()
+        super(TestReferencingToSelfDefinedType, self).setUp()
         name = type(self).__name__
 
         hdr = Header(name.lower() + ".h")
