@@ -339,6 +339,8 @@ class Source(object):
                     for s in t.get_definers():
                         if s == self:
                             continue
+                        while not isinstance(s, Source):
+                            s = s.definer
                         if not isinstance(s, Header):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
