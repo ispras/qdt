@@ -338,6 +338,13 @@ class Source(object):
                     for s in t.get_definers():
                         if s == self:
                             continue
+
+                        # A `t`ype can be locally defined within something
+                        # (e.g. `Type`). There we looks for source-level
+                        # container of the `t`ype.
+                        while not isinstance(s, Source):
+                            s = s.definer
+
                         if not isinstance(s, Header):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
