@@ -438,7 +438,8 @@ def define_only_qemu_2_6_0_types():
         Function(name = "timer_new_ns"),
         Function(name = "timer_del"),
         Function(name = "timer_free"),
-        Type("QEMU_CLOCK_VIRTUAL") # It is enumeration entry...
+        # These are required elements only
+        Enumeration([("QEMU_CLOCK_VIRTUAL", 1)], name = "QEMUClockType")
     ]).add_references([
         osdep_fake_type
     ])
