@@ -553,7 +553,11 @@ def define_only_qemu_2_6_0_types():
         )
     ]).add_references([
         osdep_fake_type
-    ])
+    ]).add_inclusion(
+        # This inclusion is in the "net.h" file, but when building the cache it
+        # is thrown.
+        qapi_types_net_header
+    )
 
     Header["disas/bfd.h"].add_types([
         Type("bfd_vma", False),
