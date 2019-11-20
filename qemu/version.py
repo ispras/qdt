@@ -284,12 +284,11 @@ def define_only_qemu_2_6_0_types():
         Function(name = "gdb_get_reg64")
     ]).add_reference(osdep_fake_type)
 
+    ioport_header = Header["exec/ioport.h"].add_reference(osdep_fake_type)
     if get_vp("pio_addr_t exists"):
-        Header["exec/ioport.h"].add_types([
+        ioport_header.add_types([
             Type("pio_addr_t", incomplete = False)
-        ]).add_reference(osdep_fake_type)
-    else:
-        Header["exec/ioport.h"].add_reference(osdep_fake_type)
+        ])
 
     Header["hw/boards.h"].add_types([
         Structure("MachineClass"),
