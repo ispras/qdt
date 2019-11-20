@@ -560,7 +560,7 @@ def define_only_qemu_2_6_0_types():
         Function(
             name = name,
             ret_type = Type["bfd_vma"],
-            args = [ Pointer(Pointer(Type["bfd_byte"]))("addr", const = True) ]
+            args = [ Pointer(Type["bfd_byte"])("addr", const = True) ]
         ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32", "bfd_getl16",
             "bfd_getb16"
         ]
