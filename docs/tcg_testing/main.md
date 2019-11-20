@@ -270,7 +270,7 @@ PokeEMU также использует в качестве эталона KVM.
 
 ## $.$ RISU и MicroTESK
 
-Инструмент RISU (Random Instruction Sequences for Userspace) – инструмент для
+Инструмент RISU (Random Instruction Sequences for Userspace) — инструмент для
 проверки точности реализации набора инструкций процессора в таких виртуальных
 машинах, как Valgrind и Qemu.
 Он состоит из двух частей.
