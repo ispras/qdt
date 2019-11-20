@@ -356,7 +356,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="311.28573"
+     inkscape:cx="13.28573"
      inkscape:cy="321.12498"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -378,7 +378,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -555,32 +555,36 @@
          id="tspan4266-7"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle">информация</tspan></text>
     <rect
-       style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.89836383;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:3.75340939;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect4732"
-       width="174.89322"
-       height="97.16922"
-       x="296.48975"
-       y="677.01672" />
+       width="217.03818"
+       height="131.31418"
+       x="275.91724"
+       y="642.44421" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:24.40235138px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="383.66348"
-       y="698.9032"
+       y="666.96472"
        id="text4734"
        sodipodi:linespacing="125%"
        transform="scale(0.99808338,1.0019203)"><tspan
          sodipodi:role="line"
          id="tspan4736"
          x="383.66348"
-         y="698.9032">сравнение</tspan><tspan
+         y="666.96472">сравнение</tspan><tspan
          sodipodi:role="line"
          x="383.66348"
-         y="729.40613"
-         id="tspan4740">значений</tspan><tspan
+         y="697.46765"
+         id="tspan4331">выборочных</tspan><tspan
          sodipodi:role="line"
          x="383.66348"
-         y="759.90906"
-         id="tspan4738">переменных</tspan></text>
+         y="727.97058"
+         id="tspan4333">промежуточных</tspan><tspan
+         sodipodi:role="line"
+         x="383.66348"
+         y="758.47351"
+         id="tspan4738"> состояний</tspan></text>
     <image
        y="435.23602"
        x="179.55045"
@@ -634,13 +638,13 @@
        id="path8249-6"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker8978)"
-       d="m 292.74221,725.67887 -38.89088,0 0,-132.93607"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.46199095;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker8978)"
+       d="m 272.65335,703.34507 -24.87594,0 0,-111.05562"
        id="path8976"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker8978-2)"
-       d="m 476.70102,728.00435 38.89088,0 0,-132.93607"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.35826731;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker8978-2)"
+       d="m 497.61142,702.88746 21.99308,0 0,-108.42144"
        id="path8976-1"
        inkscape:connector-curvature="0" />
     <text
