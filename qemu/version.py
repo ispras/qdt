@@ -13,6 +13,7 @@ from source import (
     Type,
     Function,
     Macro,
+    Enumeration,
     Structure
 )
 
@@ -502,6 +503,13 @@ def define_only_qemu_2_6_0_types():
             Type["IsaDmaTransferHandler"],
             Type["MemoryRegion"]
         ])
+
+    # This is auto generated header which is not presented in registry.
+    qapi_types_net_header = Header("qapi/qapi-types-net.h")
+    qapi_types_net_header.add_types([
+        # The value is taken from a file and may change in the future.
+        Enumeration("NetClientDriver", [("NET_CLIENT_DRIVER_NIC", 1)])
+    ])
 
     Header["net/net.h"].add_types([
         Type("qemu_macaddr_default_if_unset"),
