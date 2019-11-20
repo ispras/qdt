@@ -633,7 +633,7 @@ class QOMType(object):
 
         if self.timer_num > 0:
             total_used_types.update([
-                Type["QEMU_CLOCK_VIRTUAL"],
+                Type["QEMUClockType"].QEMU_CLOCK_VIRTUAL,
                 Type["timer_new_ns"]
             ])
             s_is_used = True
