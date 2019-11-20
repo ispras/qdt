@@ -550,10 +550,7 @@ def define_only_qemu_2_6_0_types():
             Type["NetCleanup"]("cleanup"),
             Type["LinkStatusChanged"]("link_status_changed")
             # There are other fields but they are not needed.
-        ),
-        Macro("NET_CLIENT_DRIVER_NIC") # This is an enum item actually. It
-        # is defined in auto generated "qapi-types.h" which is not presented in
-        # registry but is included by "net.h" indirectly.
+        )
     ]).add_references([
         osdep_fake_type
     ])
