@@ -542,9 +542,7 @@ def define_only_qemu_2_6_0_types():
             args = [ Pointer(Type["NetClientState"])("nc") ]
         ),
         Structure("NetClientInfo",
-            # "type" field type is enum NetClientDriver, but enum is not
-            # supported by model
-            Type["int"]("type"),
+            Type["NetClientDriver"]("type"),
             Type["size_t"]("size"),
             Type["NetReceive"]("receive"),
             Type["NetCanReceive"]("can_receive"),
