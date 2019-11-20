@@ -295,6 +295,7 @@ def define_only_qemu_2_6_0_types():
         Structure("MachineState")
     ]).add_reference(osdep_fake_type)
 
+    t = Type["pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"]
     Header["hw/sysbus.h"].add_types([
         Type("SysBusDevice", False),
         Type("qemu_irq", False),
@@ -328,12 +329,8 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["void"],
             args = [
                 Pointer(Type["SysBusDevice"])("dev"),
-                Type[
-                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
-                ]("ioport"),
-                Type[
-                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
-                ]("size")
+                t("ioport"),
+                t("size")
             ]
         ),
         Function(name = "sysbus_mmio_map"),
