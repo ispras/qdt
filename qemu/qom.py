@@ -1239,7 +1239,7 @@ class QOMDevice(QOMType):
         # Define relative order of helpers: link, can recv, recv, cleanup
         line_origins(helpers)
 
-        code["type"] = Type["NET_CLIENT_DRIVER_NIC"]
+        code["type"] = Type["NetClientDriver"].NET_CLIENT_DRIVER_NIC
         types = set([Type["NICState"]] + list(code.values()))
         code["size"] = "sizeof(NICState)"
 
