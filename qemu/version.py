@@ -13,6 +13,7 @@ from source import (
     Type,
     Function,
     Macro,
+    Enumeration,
     Structure
 )
 
@@ -503,6 +504,12 @@ def define_only_qemu_2_6_0_types():
             Type["MemoryRegion"]
         ])
 
+    Header["qapi/qapi-types-net.h"].add_types([
+        # The value is taken from a auto generated file and may change in the
+        # future.
+        Enumeration([("NET_CLIENT_DRIVER_NIC", 1)], name = "NetClientDriver")
+    ])
+
     Header["net/net.h"].add_types([
         Type("qemu_macaddr_default_if_unset"),
         Type("qemu_format_nic_info_str"),
@@ -544,10 +551,7 @@ def define_only_qemu_2_6_0_types():
             Type["NetCleanup"]("cleanup"),
             Type["LinkStatusChanged"]("link_status_changed")
             # There are other fields but they are not needed.
-        ),
-        Macro("NET_CLIENT_DRIVER_NIC") # This is an enum item actually. It
-        # is defined in auto generated "qapi-types.h" which is not presented in
-        # registry but is included by "net.h" indirectly.
+        )
     ]).add_references([
         osdep_fake_type
     ])
