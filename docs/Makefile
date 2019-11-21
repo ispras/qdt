@@ -191,6 +191,11 @@ clean-tcg-testing:
 # Common rules #
 ################
 
+# Use file name "empty.png" to add formatting to description of a "figure"
+# which has no a backing file.
+%empty.png:
+	convert -size 1x1 xc:white $@
+
 clean:
 	rm -f *.pmd
 
