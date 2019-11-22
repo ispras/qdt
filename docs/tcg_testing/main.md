@@ -2,9 +2,9 @@
 title: |
   Автоматизированное тестирование фронтенда транслятора TCG для Qemu
 author:
-- Д.С. Колтунов &lt;koltunov@ispras.ru>
-- В.Ю. Ефимов &lt;real@ispras.ru>
-- В.А. Падарян &lt;vartan@ispras.ru>
+- Д.С. Колтунов, ORCID&#58; 0000&#45;0003&#45;4556&#45;9463 &lt;koltunov@ispras.ru>
+- В.Ю. Ефимов, ORCID&#58; 0000&#45;0003&#45;3433&#45;6787 &lt;real@ispras.ru>
+- В.А. Падарян, ORCID&#58; 0000&#45;0001&#45;7962&#45;9677 &lt;vartan@ispras.ru>
 tags: []
 abstract: |
   <br>
