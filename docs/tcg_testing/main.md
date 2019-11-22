@@ -444,7 +444,7 @@ EmuFuzzer и KEmuFuzzer, а позиция в коде тестового сце
 
 ![Рис. [$](#pic.Approach). Схема осуществления тестирования
 \
-Pic. <a name="pic.Approach">$</a>. Testing approach
+Fig. <a name="pic.Approach">$</a>. Testing approach
 ](approach.png)
 
 Сам факт наличия управляющего комментария к строке означает,
@@ -512,7 +512,7 @@ c2t
 
 ![Рис. [$](#pic.System). Схема проведения тестирования
 \
-Pic. <a name="pic.System">$</a>. Testing  scheme
+Fig. <a name="pic.System">$</a>. Testing  scheme
 ](system.png)
 
 Конфигурация тестирования реализуется путём добавления управляющих
@@ -578,7 +578,7 @@ Python, выполняемыми штатными средствами в окр
 ![Рис. [$](#pic.Test_example). Листинг теста с управляющими
 комментариями
 \
-Pic. <a name="pic.Test_example">$</a>. Test listing](empty.png)
+Fig. <a name="pic.Test_example">$</a>. Test listing](empty.png)
 
 <a name="rel.RSPNeed"></a>
 Для поддержки тестирования в Qemu необходимо добавить код, предоставляющий
@@ -883,7 +883,7 @@ Table <a name="tbl.isa_cover_num">$</a>. Number of covered instructions
 
 ![Рис. [$](#pic.addge_example). Листинг теста, покрывающего инструкцию `addge`
 \
-Pic. <a name="pic.addge_example">$</a>. Test listing covering `addge`
+Fig. <a name="pic.addge_example">$</a>. Test listing covering `addge`
 instruction](empty.png)
 
 При этом необходимо скомпилировать его, включив оптимизацию размера кода
