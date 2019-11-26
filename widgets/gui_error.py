@@ -45,7 +45,7 @@ class TaskErrorWidget(GUIFrame):
         t = GUIText(master = self, state = READONLY, wrap = NONE)
         t.grid(row = 0, column = 0, sticky = "NESW")
 
-        add_scrollbars_native(self, t)
+        add_scrollbars_native(self, t, sizegrip = True)
 
         lines = []
 

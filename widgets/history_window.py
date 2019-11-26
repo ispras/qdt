@@ -39,4 +39,4 @@ class HistoryWindow(GUIToplevel):
             sticky = "NEWS"
         )
 
-        add_scrollbars_native(self, tv)
+        add_scrollbars_native(self, tv, sizegrip = True)
