@@ -82,7 +82,12 @@ Leading spaces are ignored.
                     # No position specification was found.
                     # It's not a breakpoint handler.
                     continue
-                raw_file_name, line = line_adapter.failback()
+                try:
+                    raw_file_name, line = line_adapter.failback()
+                except Exception as e:
+                    raise RuntimeError("Failed to set breakpoint %s\n%s" % (
+                        cb.__name__, e
+                    ))
 
             line_map = dic.find_line_map(raw_file_name)
             line_descs = line_map[line]
