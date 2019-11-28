@@ -32,6 +32,8 @@ __all__ = [
       , "FunctionDefinition"
       , "EnumerationDeclarationBegin"
       , "EnumerationDeclarationEnd"
+      , "EnumerationTypedefDeclarationBegin"
+      , "EnumerationTypedefDeclarationEnd"
       , "EnumerationElementDeclaration"
   , "SourceFile"
   , "SourceTreeContainer"
@@ -2466,6 +2468,35 @@ class EnumerationDeclarationEnd(SourceChunk):
             """\
 {indent}}};\n
 """.format(indent = indent)
+        )
+
+
+class EnumerationTypedefDeclarationBegin(SourceChunk):
+
+    def __init__(self, enum, indent = ""):
+        super(EnumerationTypedefDeclarationBegin, self).__init__(enum,
+            "Beginning of enumeration %s declaration" % enum,
+            """\
+{indent}typedef@benum@b{enum_name}@b{{
+""".format(
+    indent = indent,
+    enum_name = enum.c_name
+            )
+        )
+
+
+class EnumerationTypedefDeclarationEnd(SourceChunk):
+    weight = 3
+
+    def __init__(self, enum, indent = ""):
+        super(EnumerationTypedefDeclarationEnd, self).__init__(enum,
+            "Ending of enumeration %s declaration" % enum,
+            """\
+{indent}}}@b{enum_name};\n
+""".format(
+    indent = indent,
+    enum_name = enum.c_name
+            )
         )
 
 
