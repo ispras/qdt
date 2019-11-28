@@ -47,8 +47,8 @@ from pyrsp.utils import (
 BLINK_THRESHOLD = 0.100 # sec
 
 STOP_REASONS = (
-    "watch", "rwatch", "awatch", "library", "replaylog", "swbreak", "hwbreak",
-    "fork", "vfork", "vforkdone", "exec", "create"
+    b"watch", b"rwatch", b"awatch", b"library", b"replaylog", b"swbreak",
+    b"hwbreak", b"fork", b"vfork", b"vforkdone", b"exec", b"create"
 )
 REASON_UNKNOWN = "[stopped]"
 REASON_BLINKING = "[blink]"
@@ -232,9 +232,9 @@ Thread ID |     ...     |      Controls ...
         return t
 
     def _on_stop(self, kind, sig, event):
-        if kind == 'T':
+        if kind == b'T':
             try:
-                raw_tid = event["thread"]
+                raw_tid = event[b"thread"]
             except KeyError:
                 print("Stop event without a thread ID: %s%02x%s" % (
                     kind, sig,
@@ -244,6 +244,7 @@ Thread ID |     ...     |      Controls ...
 
             for reason in STOP_REASONS:
                 if reason in event:
+                    reason = reason.decode("charmap")
                     break
             else:
                 reason = REASON_UNKNOWN
@@ -252,7 +253,7 @@ Thread ID |     ...     |      Controls ...
             t = self._provide_thread(tid)
             t.update_reason(reason)
         else:
-            print("Unknown stop event kind " + kind)
+            print("Unknown stop event kind " + kind.decode("charmap"))
 
     def _on_resume(self, tid):
         if tid[-2:] == "-1":
