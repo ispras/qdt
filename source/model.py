@@ -1270,11 +1270,13 @@ class Structure(Type):
 
 class Enumeration(Type):
 
-    def __init__(self, type_name, elems_list, enum_name = ""):
-        super(Enumeration, self).__init__(name = type_name, incomplete = False)
+    def __init__(self, elems_list, name = None):
+        super(Enumeration, self).__init__(name = name, incomplete = False)
+
+        if name is None:
+            self.name = "enum.auto" + str(id(self))
 
         self.elems = OrderedDict()
-        self.enum_name = enum_name
         t = [ Type["int"] ]
         for key, val in elems_list:
             self.elems[key] = EnumerationElement(self, key,
@@ -1296,8 +1298,12 @@ class Enumeration(Type):
         fields_indent = "    "
         indent = ""
 
-        enum_begin = EnumerationTypedefDeclarationBegin(self, indent)
-        enum_end = EnumerationTypedefDeclarationEnd(self, indent)
+        if self.is_named:
+            enum_begin = EnumerationTypedefDeclarationBegin(self, indent)
+            enum_end = EnumerationTypedefDeclarationEnd(self, indent)
+        else:
+            enum_begin = EnumerationDeclarationBegin(self, indent)
+            enum_end = EnumerationDeclarationEnd(self, indent)
 
         field_indent = indent + fields_indent
         field_refs = []
@@ -1334,6 +1340,9 @@ class Enumeration(Type):
             definers.extend(f.get_definers())
 
         return definers
+
+    def __str__(self):
+        return self.name
 
     __type_references__ = ["elems"]
 
