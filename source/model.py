@@ -1297,11 +1297,21 @@ class Structure(Type):
 
 class Enumeration(Type):
 
-    def __init__(self, type_name, elems_list, enum_name = ""):
-        super(Enumeration, self).__init__(name = type_name, incomplete = False)
+    def __init__(self, elems_list, enum_name = None, typedef_name = None):
+        super(Enumeration, self).__init__(
+            name = typedef_name or enum_name,
+            incomplete = False
+        )
+
+        self.enum_name = enum_name
+        self.typedef_name = typedef_name
+        self.typedef = typedef_name is not None
+
+        if self.is_named and not self.typedef:
+            # overwrite `c_name` to generate the correct variable type name
+            self.c_name = "enum@b" + self.c_name
 
         self.elems = OrderedDict()
-        self.enum_name = enum_name
         t = [ Type["int"] ]
         for key, val in elems_list:
             self.elems[key] = EnumerationElement(self, key,
@@ -1361,6 +1371,12 @@ class Enumeration(Type):
             definers.extend(f.get_definers())
 
         return definers
+
+    def __str__(self):
+        if self.is_named:
+            return super(Enumeration, self).__str__()
+        else:
+            return "anonymous enumeration"
 
     __type_references__ = ["elems"]
 
@@ -2539,10 +2555,11 @@ class EnumerationDeclarationBegin(SourceChunk):
         super(EnumerationDeclarationBegin, self).__init__(enum,
             "Beginning of enumeration %s declaration" % enum,
             """\
-{indent}enum@b{enum_name}{{
+{indent}{typedef}enum@b{enum_name}{{
 """.format(
     indent = indent,
-    enum_name = enum.enum_name + "@b" if enum.enum_name else ""
+    typedef = "typedef@b" if enum.typedef else "",
+    enum_name = (enum.enum_name + "@b") if enum.enum_name is not None else ""
             )
         )
 
@@ -2554,8 +2571,11 @@ class EnumerationDeclarationEnd(SourceChunk):
         super(EnumerationDeclarationEnd, self).__init__(enum,
             "Ending of enumeration %s declaration" % enum,
             """\
-{indent}}};\n
-""".format(indent = indent)
+{indent}}}{typedef_name};\n
+""".format(
+    indent = indent,
+    typedef_name = ("@b" + enum.typedef_name) if enum.typedef else ""
+            )
         )
 
 
