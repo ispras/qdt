@@ -1267,7 +1267,7 @@ class Structure(Type):
 class Enumeration(Type):
 
     def __init__(self, type_name, elems_list, enum_name = ""):
-        super(Enumeration, self).__init__(name = type_name)
+        super(Enumeration, self).__init__(name = type_name, incomplete = False)
 
         self.elems = OrderedDict()
         self.enum_name = enum_name
