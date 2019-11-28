@@ -39,6 +39,11 @@ def is_breakpoint_cb(obj):
     return bool(obj.__doc__)
 
 
+def cb_loc(cb):
+    code = cb.__code__
+    return code.co_filename, code.co_firstlineno
+
+
 @notifier("runtime_set")
 class Watcher(object):
     """ Automates breakpoint setting with handlers. A breakpoint handler is a
@@ -82,7 +87,15 @@ Leading spaces are ignored.
                     # No position specification was found.
                     # It's not a breakpoint handler.
                     continue
-                raw_file_name, line = line_adapter.failback()
+                try:
+                    raw_file_name, line = line_adapter.failback()
+                except Exception as e:
+                    # This location format is compatible with PyDev (Eclipse)
+                    # and same as one used in standard exception tracebacks.
+                    loc_str = '  File "%s", line %d' % cb_loc(cb)
+                    raise RuntimeError("Failed to set breakpoint %s\n%s\n%s" % (
+                        cb.__name__, loc_str, e
+                    ))
 
             line_map = dic.find_line_map(raw_file_name)
             line_descs = line_map[line]

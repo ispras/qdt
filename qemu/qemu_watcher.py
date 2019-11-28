@@ -493,7 +493,9 @@ Notifications are issued for many machine composition events.
     def on_bus_unparent(self):
         # bus_unparent, before actual unparenting
 
-        """ hw/core/bus.c:123 v2.12.0
+        """
+            hw/core/bus.c:118 v4.1.0
+            hw/core/bus.c:123 v2.12.0
             hw/core/qdev.c:737 v2.5.0
         """
 
