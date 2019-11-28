@@ -2522,7 +2522,7 @@ class EnumerationDeclarationBegin(SourceChunk):
 
     def __init__(self, enum, indent = ""):
         super(EnumerationDeclarationBegin, self).__init__(enum,
-            "Beginning of enumeration %s declaration" % enum.enum_name,
+            "Beginning of enumeration %s declaration" % enum,
             """\
 {indent}enum@b{enum_name}{{
 """.format(
@@ -2537,7 +2537,7 @@ class EnumerationDeclarationEnd(SourceChunk):
 
     def __init__(self, enum, indent = ""):
         super(EnumerationDeclarationEnd, self).__init__(enum,
-            "Ending of enumeration %s declaration" % enum.enum_name,
+            "Ending of enumeration %s declaration" % enum,
             """\
 {indent}}};\n
 """.format(indent = indent)
