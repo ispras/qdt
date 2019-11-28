@@ -1296,8 +1296,8 @@ class Enumeration(Type):
         fields_indent = "    "
         indent = ""
 
-        enum_begin = EnumerationDeclarationBegin(self, indent)
-        enum_end = EnumerationDeclarationEnd(self, indent)
+        enum_begin = EnumerationTypedefDeclarationBegin(self, indent)
+        enum_end = EnumerationTypedefDeclarationEnd(self, indent)
 
         field_indent = indent + fields_indent
         field_refs = []

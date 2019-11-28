@@ -523,10 +523,10 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
 
 #include "enums.h"
 
-enum B {{
+typedef enum B {{
     three = 3,
     four = 4
-}};
+}} B;
 
 void main(void)
 {{
