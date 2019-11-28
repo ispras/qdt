@@ -30,6 +30,8 @@ __all__ = [
       , "StructureTypedefDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
+      , "EnumerationDeclarationBegin"
+      , "EnumerationDeclarationEnd"
       , "EnumerationElementDeclaration"
   , "SourceFile"
   , "SourceTreeContainer"
