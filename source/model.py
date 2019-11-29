@@ -1957,15 +1957,16 @@ class Variable(object):
         indent = "",
         extern = False
     ):
-        if (    isinstance(self.type, Pointer)
-            and not self.type.is_named
-            and isinstance(self.type.type, Function)
+        type_ = self.type
+        if (    isinstance(type_, Pointer)
+            and not type_.is_named
+            and isinstance(type_.type, Function)
         ):
             ch = FunctionPointerDeclaration(self, indent, extern)
-            refs = gen_function_decl_ref_chunks(self.type.type, generator)
+            refs = gen_function_decl_ref_chunks(type_.type, generator)
         else:
             ch = VariableDeclaration(self, indent, extern)
-            refs = generator.provide_chunks(self.type)
+            refs = generator.provide_chunks(type_)
         ch.add_references(refs)
 
         return [ch]
