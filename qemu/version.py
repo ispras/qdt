@@ -545,13 +545,13 @@ def define_only_qemu_2_6_0_types():
             args = [ Pointer(Type["NetClientState"])("nc") ]
         ),
         Structure("NetClientInfo",
+            # These are required fields only
             Type["NetClientDriver"]("type"),
             Type["size_t"]("size"),
             Type["NetReceive"]("receive"),
             Type["NetCanReceive"]("can_receive"),
             Type["NetCleanup"]("cleanup"),
             Type["LinkStatusChanged"]("link_status_changed")
-            # There are other fields but they are not needed.
         ),
     ]).add_references([
         osdep_fake_type
