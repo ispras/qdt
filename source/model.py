@@ -4,7 +4,8 @@ __all__ = [
   , "AddTypeRefToDefinerException"
   , "TypeNotRegistered"
   , "Type"
-      , "TypeReference"
+      # must not be used externally
+      # "TypeReference"
       , "Structure"
       , "Function"
       , "Pointer"
