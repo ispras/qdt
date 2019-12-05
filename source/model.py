@@ -376,6 +376,8 @@ class Source(object):
 
             for t in header.types.values():
                 try:
+                    if not t.is_named:
+                        continue
                     if isinstance(t, TypeReference):
                         self._add_type_recursive(TypeReference(t.type))
                     else:
@@ -428,7 +430,10 @@ class Source(object):
             )
 
         _type.definer = self
-        self.types[_type.name] = _type
+        if _type.is_named:
+            self.types[_type.name] = _type
+        else:
+            self.types[".anonymous" + str(id(_type))] = _type
 
         # Some types (like `Enumeration`) contains types without definer or
         # may reference to other just created types.
@@ -835,8 +840,9 @@ class Header(Source):
         super(Header, self).add_type(_type)
 
         # Auto add type references to self includers
-        for s in self.includers:
-            s._add_type_recursive(TypeReference(_type))
+        if _type.is_named:
+            for s in self.includers:
+                s._add_type_recursive(TypeReference(_type))
 
         return self
 
@@ -1041,8 +1047,7 @@ class TypeReference(Type):
             base = _type.base
         )
 
-        if _type.is_named:
-            self.name = _type.name
+        self.name = _type.name
         self.c_name = _type.c_name
         self.type = _type
         self.definer_references = None
