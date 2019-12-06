@@ -21,6 +21,8 @@ from source import (
     Macro
 )
 from common import (
+    CancelledCallee,
+    FailedCallee,
     fast_repo_clone,
     fixpath,
     CommitDesc,
@@ -806,6 +808,12 @@ class QemuVersionDescription(object):
                     arch,
                     root
                 )
+            except (CancelledCallee, FailedCallee) as e:
+                message = e.callee.traceback_lines
+                message.insert(0,
+                    "Device Tree for %s isn't created:\n" % arch
+                )
+                print("".join(message))
             except Exception as e:
                 print("Device Tree for %s isn't created: %s" % (arch, e))
             else:
