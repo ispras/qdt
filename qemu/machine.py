@@ -153,9 +153,6 @@ class IRQHubLayout(object):
         return self._gen_irq_get(root_name, self.root, root_name)
 
 class MachineType(QOMType):
-    __attribute_info__ = OrderedDict([
-        ("directory", { "short": _("Directory"), "input": str })
-    ])
 
     def __init__(self, name, directory,
             cpus = [],
@@ -165,7 +162,7 @@ class MachineType(QOMType):
             mems = [],
             irq_hubs = []
         ):
-        super(MachineType, self).__init__(name)
+        super(MachineType, self).__init__(name, directory)
 
         self.__lazy__ = []
 

@@ -393,10 +393,12 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
-        ("name", { "short": _("Name"), "input": str })
+        ("name", { "short": _("Name"), "input": str }),
+        ("directory", { "short": _("Directory"), "input": str }),
     ])
 
-    def __init__(self, name):
+    def __init__(self, name, directory):
+        self.directory = directory
         self.qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
@@ -884,7 +886,6 @@ class QOMStateField(object):
 
 class QOMDevice(QOMType):
     __attribute_info__ = OrderedDict([
-        ("directory", { "short": _("Directory"), "input": str }),
         ("block_num", { "short": _("Block driver quantity"), "input": int }),
         ("char_num", { "short": _("Character driver quantity"), "input": int }),
         ("timer_num", { "short": _("Timer quantity"), "input": int })
@@ -897,9 +898,8 @@ class QOMDevice(QOMType):
             block_num = 0,
             **qom_kw
     ):
-        super(QOMDevice, self).__init__(name, **qom_kw)
+        super(QOMDevice, self).__init__(name, directory, **qom_kw)
 
-        self.directory = directory
         self.nic_num = nic_num
         self.timer_num = timer_num
         self.char_num = char_num
