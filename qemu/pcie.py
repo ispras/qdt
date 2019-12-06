@@ -160,7 +160,7 @@ corresponding vendor is given" % attr
 
         self.nic_declare_fields()
 
-    def generate_header(self):
+    def fill_header(self):
         self.state_struct = self.gen_state()
         self.header.add_type(self.state_struct)
 

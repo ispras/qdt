@@ -164,7 +164,7 @@ class QProject(object):
                 mode = "wb",
                 encoding = "utf-8"
             )
-            header = dev_t.generate_header()
+            header = dev_t.fill_header()
 
             yield True
 

@@ -115,7 +115,7 @@ class SysBusDeviceType(QOMDevice):
         else:
             raise ValueError("Unsupported MMIO description %s" % desc)
 
-    def generate_header(self):
+    def fill_header(self):
         self.state_struct = self.gen_state()
 
         self.header.add_type(self.state_struct)
