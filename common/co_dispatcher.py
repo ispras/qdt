@@ -21,6 +21,8 @@ from .ml import (
 )
 import sys
 from traceback import (
+    format_exception,
+    format_stack,
     print_exception
 )
 from six import (
@@ -70,6 +72,35 @@ class CoTask(object):
         self.gi_frame = None
         # Exception to be injected into that task at current `yield`.
         self._to_raise = None
+
+    @property
+    def traceback_lines(self):
+        task = self
+        e = task.exception
+
+        if e is None:
+            return []
+
+        lines = []
+
+        while isinstance(e, (CancelledCallee, FailedCallee)):
+            if task is not None:
+                g = task.generator
+                lines.append('In coroutine "%s" (%s):\n' % (
+                    g.__name__, task.description.get()
+                ))
+                lines.extend(format_stack(task.gi_frame))
+
+            task = e.callee
+            e = task.exception
+
+        g = task.generator
+        lines.append('In coroutine "%s" (%s):\n' % (
+            g.__name__, task.description.get()
+        ))
+        lines.extend(format_exception(type(e), e, task.traceback))
+
+        return lines
 
     def on_activated(self):
         # do nothing by default
