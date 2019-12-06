@@ -177,7 +177,7 @@ class QProject(object):
 
         yield True
 
-        source = dev_t.generate_source()
+        source = dev_t.fill_source()
 
         yield True
 

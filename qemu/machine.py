@@ -351,7 +351,7 @@ class MachineType(QOMType):
             self.hub_layouts[hub] = hubl
             return hubl
 
-    def generate_source(self):
+    def fill_source(self):
         glob_mem = get_vp("explicit global memory registration")
 
         self.source = Source(self.source_path)

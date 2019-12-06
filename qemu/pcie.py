@@ -276,7 +276,7 @@ corresponding vendor is given" % attr
         # policy. Hence, version API must be used there.
         return self.header.generate(inherit_references = True)
 
-    def generate_source(self):
+    def fill_source(self):
         self.device_reset = Function(
             name = "%s_reset" % self.qtn.for_id_name,
             body = """\

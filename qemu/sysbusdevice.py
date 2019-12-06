@@ -200,7 +200,7 @@ class SysBusDeviceType(QOMDevice):
 
         return header_source
 
-    def generate_source(self):
+    def fill_source(self):
         s_is_used = False
 
         all_regs = []
