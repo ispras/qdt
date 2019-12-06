@@ -175,11 +175,6 @@ class MachineType(QOMType):
         self.mems = mems
         self.irq_hubs = irq_hubs
 
-        # source file model
-        self.source_path = join_path("hw", directory,
-            self.qtn.for_header_name + ".c"
-        )
-
     def reset_generator(self):
         self.node_map = {}
         self.init_used_types = []
@@ -353,8 +348,6 @@ class MachineType(QOMType):
 
     def fill_source(self):
         glob_mem = get_vp("explicit global memory registration")
-
-        self.source = Source(self.source_path)
 
         all_nodes = sort_topologically(
             self.cpus +
@@ -705,8 +698,6 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
         self.source.add_type(self.instance_init)
 
         get_vp("machine type register template generator")(self)
-
-        return self.source.generate()
 
     @cached
     def cpu_reset(self):

@@ -272,10 +272,6 @@ corresponding vendor is given" % attr
 
         self.gen_property_macros(self.header)
 
-        # TODO: current value of inherit_references is dictated by Qemu coding
-        # policy. Hence, version API must be used there.
-        return self.header.generate(inherit_references = True)
-
     def fill_source(self):
         self.device_reset = Function(
             name = "%s_reset" % self.qtn.for_id_name,
@@ -530,8 +526,6 @@ corresponding vendor is given" % attr
         # order life cycle functions
         self.device_reset.extra_references = {self.device_realize}
         self.device_exit.extra_references = {self.device_reset}
-
-        return self.source.generate()
 
     def get_Ith_mem_bar_id_component(self, i):
         return self.get_Ith_mem_bar_name(i)
