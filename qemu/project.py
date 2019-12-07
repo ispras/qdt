@@ -33,6 +33,10 @@ from codecs import (
 from collections import (
     defaultdict
 )
+from source import (
+    Header,
+    Source
+)
 
 # TODO: Selection of configuration flag and accumulator variable
 # name is Qemu version specific. Version API must be used there.
@@ -143,79 +147,56 @@ class QProject(object):
         with_chunk_graph = False,
         known_targets = None
     ):
-        dev_t = desc.gen_type()
+        qom_t = desc.gen_type()
 
-        if "header" in dev_t.__dict__:
-            yield True
+        yield qom_t.co_gen_sources()
 
-            full_header_path = join(src, dev_t.header.path)
+        for s in qom_t.sources:
+            spath = join(src, s.path)
+            sdir, sname = split(spath)
 
-            # Create intermediate directories
-            header_dir = split(full_header_path)[0]
-            if not isdir(header_dir):
-                makedirs(header_dir)
+            if isfile(spath):
+                yield True
+                remove(spath)
+            elif not isdir(sdir):
+                yield True
+                makedirs(sdir)
 
-            if isfile(full_header_path):
-                remove(full_header_path)
-
-            yield True
-
-            header_writer = open(full_header_path,
-                mode = "wb",
-                encoding = "utf-8"
-            )
-            header = dev_t.generate_header()
+            if type(s) is Source: # Exactly a compile module
+                yield
+                self.register_in_build_system(sdir, known_targets)
 
             yield True
 
-            header.generate(header_writer)
-            header_writer.close()
+            # TODO: current value of inherit_references is dictated by Qemu
+            # coding policy. Hence, version API must be used there.
+            inherit_references = type(s) is Header
+
+            f = s.generate(inherit_references = inherit_references)
+
+            with open(spath, mode = "wb", encoding = "utf-8") as stream:
+                f.generate(stream)
 
             if with_chunk_graph:
                 yield True
-                header.gen_chunks_gv_file(full_header_path + ".chunks.gv")
+                s.gen_chunks_gv_file(spath + ".chunks.gv")
 
-        yield True
+            # Only sources need to be registered in the build system
+            if type(s) is not Source:
+                continue
 
-        source = dev_t.generate_source()
-
-        yield True
-
-        full_source_path = join(src, dev_t.source.path)
-        source_directory, source_base_name = split(full_source_path)
-
-        if isfile(full_source_path):
-            remove(full_source_path)
-        else:
-            self.make_src_dirs(source_directory, known_targets)
-
-        source_writer = open(full_source_path, mode = "wb", encoding = "utf-8")
-
-        yield True
-
-        source.generate(source_writer)
-
-        yield True
-
-        source_writer.close()
-
-        if with_chunk_graph:
             yield True
 
-            source.gen_chunks_gv_file(full_source_path + ".chunks.gv")
+            sbase, _ = splitext(sname)
+            object_name = sbase + ".o"
 
-        yield True
+            hw_path = join(src, "hw")
+            class_hw_path = join(hw_path, desc.directory)
+            Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
 
-        source_name, _ = splitext(source_base_name)
-        object_base_name = source_name + ".o"
-
-        hw_path = join(src, "hw")
-        class_hw_path = join(hw_path, desc.directory)
-        Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
-
-        patch_makefile(Makefile_objs_class_path, object_base_name,
-            obj_var_names[desc.directory], config_flags[desc.directory]
-        )
+            patch_makefile(Makefile_objs_class_path, object_name,
+                obj_var_names[desc.directory], config_flags[desc.directory]
+            )
 
     def __var_base__(self):
         return "project"

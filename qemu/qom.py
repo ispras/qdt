@@ -393,15 +393,73 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
 
 class QOMType(object):
     __attribute_info__ = OrderedDict([
-        ("name", { "short": _("Name"), "input": str })
+        ("name", { "short": _("Name"), "input": str }),
+        ("directory", { "short": _("Directory"), "input": str }),
     ])
 
-    def __init__(self, name):
+    def __init__(self, name, directory):
+        self.directory = directory
         self.qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
+
+    def co_gen_sources(self):
+        self._sources = sources = []
+
+        # Fill functions may require arbitrary file references.
+        # So, we first generate all files with no content and then fill
+        # them.
+
+        try:
+            fill_header = self.fill_header
+        except AttributeError:
+            # That type does not generate a header.
+            fill_header = lambda : None
+        else:
+            self.header = header = self.provide_header()
+            sources.append(header)
+
+        yield
+        self.source = source = self.gen_source()
+        sources.append(source)
+
+        yield
+        fill_header()
+
+        yield
+        self.fill_source()
+
+    def provide_header(self):
+        header_path = join("include", "hw", self.directory,
+            self.qtn.for_header_name + ".h"
+        )
+        try:
+            return Header[header_path]
+        except Exception:
+            return Header(header_path)
+
+    def gen_source(self):
+        source_path = join("hw", self.directory,
+            self.qtn.for_header_name + ".c"
+        )
+        return Source(source_path)
+
+    def fill_source(self):
+        raise NotImplementedError(
+            "You must implement module content generation for type %s" % (
+                self.qtn.name
+            )
+        )
+
+    @property
+    def sources(self):
+        try:
+            return self._sources
+        except AttributeError:
+            pass
+        raise RuntimeError("First generate sources!")
 
     def test_basic_state(self):
         for u, bits in [("", "32"), ("u", "8"), ("u", "16"), ("u", "32"),
@@ -884,7 +942,6 @@ class QOMStateField(object):
 
 class QOMDevice(QOMType):
     __attribute_info__ = OrderedDict([
-        ("directory", { "short": _("Directory"), "input": str }),
         ("block_num", { "short": _("Block driver quantity"), "input": int }),
         ("char_num", { "short": _("Character driver quantity"), "input": int }),
         ("timer_num", { "short": _("Timer quantity"), "input": int })
@@ -897,29 +954,12 @@ class QOMDevice(QOMType):
             block_num = 0,
             **qom_kw
     ):
-        super(QOMDevice, self).__init__(name, **qom_kw)
+        super(QOMDevice, self).__init__(name, directory, **qom_kw)
 
-        self.directory = directory
         self.nic_num = nic_num
         self.timer_num = timer_num
         self.char_num = char_num
         self.block_num = block_num
-
-        # Define header file
-        header_path = join("include", "hw", directory,
-            self.qtn.for_header_name + ".h"
-        )
-        try:
-            self.header = Header[header_path]
-        except Exception:
-            self.header = Header(header_path)
-
-        # Define source file
-        source_path = join("hw", directory, self.qtn.for_header_name + ".c")
-        self.source = Source(source_path)
-
-    def gen_source(self):
-        pass
 
     # Block driver
     def block_name(self, index):

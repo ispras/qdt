@@ -115,7 +115,7 @@ class SysBusDeviceType(QOMDevice):
         else:
             raise ValueError("Unsupported MMIO description %s" % desc)
 
-    def generate_header(self):
+    def fill_header(self):
         self.state_struct = self.gen_state()
 
         self.header.add_type(self.state_struct)
@@ -194,13 +194,7 @@ class SysBusDeviceType(QOMDevice):
 
         self.gen_property_macros(self.header)
 
-        # TODO: current value of inherit_references is dictated by Qemu coding
-        # policy. Hence, version API must be used there.
-        header_source = self.header.generate(inherit_references = True)
-
-        return header_source
-
-    def generate_source(self):
+    def fill_source(self):
         s_is_used = False
 
         all_regs = []
@@ -639,8 +633,6 @@ class SysBusDeviceType(QOMDevice):
         self.device_realize.extra_references = {self.instance_init}
         self.device_reset.extra_references = {self.device_realize}
         self.device_unrealize.extra_references = {self.device_reset}
-
-        return self.source.generate()
 
     def get_Ith_mmio_id_component(self, i):
         return self.get_Ith_mmio_name(i)
