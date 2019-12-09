@@ -186,11 +186,11 @@ def define_only_qemu_2_6_0_types():
         Structure("I2CBus") # the structure is defined in .c file
     ]).add_reference(osdep_fake_type)
 
-    Header["disas/bfd.h"].add_types([
+    Header[get_vp("disas header")].add_types([
         Type("disassemble_info", False)
     ]).add_reference(osdep_fake_type)
 
-    Header["qemu/fprintf-fn.h"].add_types([
+    Header[get_vp("fprintf_function definer")].add_types([
         Type("fprintf_function", False)
     ]).add_reference(osdep_fake_type)
 
@@ -552,13 +552,13 @@ def define_only_qemu_2_6_0_types():
         osdep_fake_type
     ])
 
-    Header["disas/bfd.h"].add_types([
+    Header[get_vp("disas header")].add_types([
         Type("bfd_vma", False),
         Type("bfd_byte", False),
         Type("const bfd_byte", False)
     ])
 
-    Header["disas/bfd.h"].add_types([
+    Header[get_vp("disas header")].add_types([
         Function(
             name = name,
             ret_type = Type["bfd_vma"],
@@ -777,6 +777,19 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # Next two commits precede v4.1.0-rc0. They are in one branch.
+    u'ede9a8a656c992deecce45f8175985dd81cc6be9' : [
+        QEMUVersionParameterDescription("fprintf_function definer",
+            new_value = "disas/dis-asm.h",
+            old_value = "qemu/fprintf-fn.h"
+        )
+    ],
+    u'3979fca4b69fc31c372687cd0bb6950592f248bd' : [
+        QEMUVersionParameterDescription("disas header",
+            new_value = "disas/dis-asm.h",
+            old_value = "disas/bfd.h"
+        )
+    ],
     u'b59821a95bd1d7cb4697fd7748725c910582e0e7' : [
         QEMUVersionParameterDescription("explicit global memory registration",
             new_value = False,
