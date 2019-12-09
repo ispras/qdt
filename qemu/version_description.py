@@ -13,6 +13,7 @@ __all__ = [
   , "forget_build_path"
   , "load_build_path_list"
   , "account_build_path"
+  , "gen_qvc_file_name"
 ]
 
 from source import (
@@ -502,8 +503,14 @@ QVD_CUF_IBY = 100
 
 QVD_QH_HASH = "qh_hash"
 
+def gen_qvc_file_name(commit_sha):
+    return u"qvc" + QemuVersionDescription.version + u"_" + commit_sha + u".py"
+
 class QemuVersionDescription(object):
     current = None
+    # Current version of the QVD. Please use notation `u"number"` for next
+    # versions. Increase number manually if current changes affect the QVD.
+    version = u""
 
     def __init__(self, build_path, version = None):
         config_host_path = join(build_path, "config-host.mak")
@@ -584,7 +591,7 @@ class QemuVersionDescription(object):
             print("Multiple QVC initialization " + self.src_path)
             self.qvc = None
 
-        qvc_file_name = u"qvc_" + self.commit_sha + u".py"
+        qvc_file_name = gen_qvc_file_name(self.commit_sha)
         qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
 
         qemu_heuristic_hash = calculate_qh_hash()
