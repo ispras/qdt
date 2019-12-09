@@ -322,10 +322,6 @@ class Source(object):
                 % (var, self.name)
             )
 
-        fixer = TypeFixerVisitor(self, var).visit()
-
-        # Auto add references to types this variable does depend on
-        self.add_references(tr.type for tr in fixer.new_type_references)
         # Auto add definers for types used by variable initializer
         if type(self) is Source: # exactly a module, not a header
             if var.definer is not None:
@@ -456,7 +452,10 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
-        TypeFixerVisitor(self, self.global_variables).visit()
+        fixer = TypeFixerVisitor(self, self.global_variables).visit()
+
+        # Auto add references to types required by global variables
+        self.add_references(tr.type for tr in fixer.new_type_references)
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
