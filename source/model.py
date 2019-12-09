@@ -456,7 +456,11 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
-        TypeFixerVisitor(self, self.global_variables).visit()
+        # Finally, we must fix types just before generation because user can
+        # change already added types.
+        fixer = TypeFixerVisitor(self, self).visit()
+
+        self.add_references(tr.type for tr in fixer.new_type_references)
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
@@ -575,6 +579,8 @@ order does not meet all requirements.
         file.add_chunks(self.gen_chunks(inherit_references))
 
         return file
+
+    __type_references__ = ("types", "global_variables")
 
 
 class CPP(object):
