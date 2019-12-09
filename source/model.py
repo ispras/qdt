@@ -423,11 +423,6 @@ class Source(object):
         _type.definer = self
         self.types[_type.name] = _type
 
-        fixer = TypeFixerVisitor(self, _type).visit()
-
-        # Auto add references to types this one does depend on
-        self.add_references(tr.type for tr in fixer.new_type_references)
-
         # Addition of a required type does satisfy the dependence.
         if _type in self.references:
             self.references.remove(_type)
@@ -452,9 +447,13 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
-        fixer = TypeFixerVisitor(self, self.global_variables).visit()
+        to_fix = tuple(self.global_variables.values())
+        to_fix += tuple(self.types.values())
 
-        # Auto add references to types required by global variables
+        fixer = TypeFixerVisitor(self, to_fix).visit()
+
+        # Auto add references to external types required by global variables
+        # and internal types.
         self.add_references(tr.type for tr in fixer.new_type_references)
 
         # fix up types for headers with references
