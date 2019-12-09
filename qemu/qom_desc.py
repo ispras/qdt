@@ -60,7 +60,10 @@ def describable(QOMTemplate):
     module.__dict__[desc_name] = desc_class
 
     # export the description class
-    module.__all__.append(desc_name)
+    try:
+        module.__all__.append(desc_name)
+    except AttributeError:
+        pass # The module does not define `__all__`
 
     # The template is not actually changed.
     return QOMTemplate
