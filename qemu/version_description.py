@@ -21,6 +21,7 @@ from source import (
     Macro
 )
 from common import (
+    lazy,
     CancelledCallee,
     FailedCallee,
     fast_repo_clone,
@@ -504,6 +505,9 @@ QVD_QH_HASH = "qh_hash"
 
 class QemuVersionDescription(object):
     current = None
+    # Current version of the QVD. Please use notation `u"_v{number}"` for next
+    # versions. Increase number manually if current changes affect the QVD.
+    version = u""
 
     def __init__(self, build_path, version = None):
         config_host_path = join(build_path, "config-host.mak")
@@ -579,13 +583,18 @@ class QemuVersionDescription(object):
             self.qvc_is_ready = False
             remove_file(self.qvc_path)
 
+    @lazy
+    def qvc_file_name(self):
+        return (u"qvc" + QemuVersionDescription.version + u"_" +
+            self.commit_sha + u".py"
+        )
+
     def co_init_cache(self):
         if self.qvc is not None:
             print("Multiple QVC initialization " + self.src_path)
             self.qvc = None
 
-        qvc_file_name = u"qvc_" + self.commit_sha + u".py"
-        qvc_path = self.qvc_path = join(self.build_path, qvc_file_name)
+        qvc_path = self.qvc_path = join(self.build_path, self.qvc_file_name)
 
         qemu_heuristic_hash = calculate_qh_hash()
 
