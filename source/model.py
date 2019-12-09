@@ -455,6 +455,8 @@ switching to that mode.
         if inherit_references:
             assert(isinstance(self, Header))
 
+        # This header includes other headers to provide types for includers
+        # of self. This is list of references to those types.
         ref_list = []
 
         if isinstance(self, Header):
