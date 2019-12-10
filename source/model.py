@@ -60,6 +60,7 @@ from re import (
     compile
 )
 from itertools import (
+    count,
     chain
 )
 from common import (
@@ -84,9 +85,6 @@ with pypath("..ply"):
     )
     exec("from ply.cpp import t_" + ", t_".join(tokens))
 
-from itertools import (
-    count
-)
 from six import (
     add_metaclass,
     string_types,
