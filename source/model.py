@@ -625,6 +625,12 @@ class Header(Source):
     reg = {}
 
     def __init__(self, path, is_global = False, protection = True):
+        """
+:param path: it is used in #include statements, as unique identifier and
+    somehow during code generation.
+:param is_global: inclusions will use <path> instead of "path".
+:param protection: wrap content in multiple inclusion protection macro logic.
+        """
         super(Header, self).__init__(path)
         self.is_global = is_global
         self.includers = []
