@@ -2187,8 +2187,8 @@ after this word.
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
     def __lt__(self, other):
-        sw = type(self).weight
-        ow = type(other).weight
+        sw = self.weight
+        ow = other.weight
         if sw < ow:
             return True
         elif sw > ow:
