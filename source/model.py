@@ -624,6 +624,18 @@ References:
 class Header(Source):
     reg = {}
 
+    def __init__(self, path, is_global = False, protection = True):
+        super(Header, self).__init__(path)
+        self.is_global = is_global
+        self.includers = []
+        self.protection = protection
+
+        tpath = path2tuple(path)
+        if tpath in Header.reg:
+            raise RuntimeError("Header %s is already registered" % path)
+
+        Header.reg[tpath] = self
+
     @staticmethod
     def _on_include(includer, inclusion, is_global):
         if path2tuple(inclusion) not in Header.reg:
@@ -770,18 +782,6 @@ class Header(Source):
         if tpath not in Header.reg:
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[tpath]
-
-    def __init__(self, path, is_global = False, protection = True):
-        super(Header, self).__init__(path)
-        self.is_global = is_global
-        self.includers = []
-        self.protection = protection
-
-        tpath = path2tuple(path)
-        if tpath in Header.reg:
-            raise RuntimeError("Header %s is already registered" % path)
-
-        Header.reg[tpath] = self
 
     def __str__(self):
         if self.is_global:
