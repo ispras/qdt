@@ -427,6 +427,13 @@ class Source(object):
         _type.definer = self
         self.types[_type.name] = _type
 
+        # Some types (like `Enumeration`) contains types without definer or
+        # may reference to other just created types.
+        # They must be added right now (by `TypeFixerVisitor`) to prevent
+        # capturing by other sources at generation begin.
+        # Note, replacement of foreign types with `TypeReference` is actually
+        # not required right now (see `gen_chunks`).
+
         fixer = TypeFixerVisitor(self, _type).visit()
 
         # Auto add references to types this one does depend on
