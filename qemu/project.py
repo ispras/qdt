@@ -132,13 +132,6 @@ class QProject(object):
         if not isfile(Makefile_obj):
             open(Makefile_obj, "w").close()
 
-    def make_src_dirs(self, full_path, known_targets):
-        if not isdir(full_path):
-            # Provide required directory.
-            makedirs(full_path)
-
-        self.register_in_build_system(full_path, known_targets)
-
     def gen(self, *args, **kw):
         "Backward compatibility wrapper for co_gen"
         callco(self.co_gen(*args, **kw))
