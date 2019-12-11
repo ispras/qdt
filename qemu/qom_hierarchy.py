@@ -155,8 +155,15 @@ def co_update_device_tree(bindir, src_path, arch_name, root):
 
     yield rt.co_run_target()
 
+    device_subtree = qomtr.tree.name2type.get("device", None)
+
+    if device_subtree is None:
+        raise RuntimeError('No "device" QOM subtree. Did you forget to pass ' +
+            '"--extra-cflags=-no-pie" and/or "--disable-pie" to `configure`?'
+        )
+
     yield co_fill_children(
-        qomtr.tree.name2type["device"],
+        device_subtree,
         root,
         arch_name
     )
