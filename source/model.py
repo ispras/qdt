@@ -427,6 +427,13 @@ class Source(object):
         _type.definer = self
         self.types[_type.name] = _type
 
+        # Some types (like `Enumeration`) contains types without definer or
+        # may reference to other just created types.
+        # They must be added right now (by `TypeFixerVisitor`) to prevent
+        # capturing by other sources at generation begin.
+        # Note, replacement of foreign types with `TypeReference` is actually
+        # not required right now (see `gen_chunks`).
+
         fixer = TypeFixerVisitor(self, _type).visit()
 
         # Auto add references to types this one does depend on
@@ -448,6 +455,8 @@ switching to that mode.
         if inherit_references:
             assert(isinstance(self, Header))
 
+        # This header includes other headers to provide types for includers
+        # of self. This is list of references to those types.
         ref_list = []
 
         if isinstance(self, Header):
@@ -456,7 +465,11 @@ switching to that mode.
                     if ref.definer not in user.inclusions:
                         ref_list.append(TypeReference(ref))
 
-        TypeFixerVisitor(self, self.global_variables).visit()
+        # Finally, we must fix types just before generation because user can
+        # change already added types.
+        fixer = TypeFixerVisitor(self, self).visit()
+
+        self.add_references(tr.type for tr in fixer.new_type_references)
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
@@ -576,6 +589,8 @@ order does not meet all requirements.
 
         return file
 
+    __type_references__ = ("types", "global_variables")
+
 
 class CPP(object):
     "This class used as definer for CPPMacro"
@@ -623,6 +638,24 @@ References:
 @add_metaclass(registry)
 class Header(Source):
     reg = {}
+
+    def __init__(self, path, is_global = False, protection = True):
+        """
+:param path: it is used in #include statements, as unique identifier and
+    somehow during code generation.
+:param is_global: inclusions will use <path> instead of "path".
+:param protection: wrap content in multiple inclusion protection macro logic.
+        """
+        super(Header, self).__init__(path)
+        self.is_global = is_global
+        self.includers = []
+        self.protection = protection
+
+        tpath = path2tuple(path)
+        if tpath in Header.reg:
+            raise RuntimeError("Header %s is already registered" % path)
+
+        Header.reg[tpath] = self
 
     @staticmethod
     def _on_include(includer, inclusion, is_global):
@@ -770,18 +803,6 @@ class Header(Source):
         if tpath not in Header.reg:
             raise RuntimeError("Header with path %s is not registered" % path)
         return Header.reg[tpath]
-
-    def __init__(self, path, is_global = False, protection = True):
-        super(Header, self).__init__(path)
-        self.is_global = is_global
-        self.includers = []
-        self.protection = protection
-
-        tpath = path2tuple(path)
-        if tpath in Header.reg:
-            raise RuntimeError("Header %s is already registered" % path)
-
-        Header.reg[tpath] = self
 
     def __str__(self):
         if self.is_global:
