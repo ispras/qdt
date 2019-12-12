@@ -12,6 +12,7 @@ __all__ = [
       , "MacroType"
       , "Enumeration"
       , "EnumerationElement"
+      , "OpaqueCode"
   , "Initializer"
   , "Variable"
   , "SourceChunk"
@@ -31,6 +32,7 @@ __all__ = [
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "EnumerationElementDeclaration"
+      , "OpaqueChunk"
   , "SourceFile"
   , "SourceTreeContainer"
   , "TypeReferencesVisitor"
@@ -60,6 +62,7 @@ from re import (
     compile
 )
 from itertools import (
+    count,
     chain
 )
 from common import (
@@ -84,9 +87,6 @@ with pypath("..ply"):
     )
     exec("from ply.cpp import t_" + ", t_".join(tokens))
 
-from itertools import (
-    count
-)
 from six import (
     add_metaclass,
     string_types,
@@ -1765,6 +1765,56 @@ class CPPMacro(Macro):
         return []
 
 
+class OpaqueCode(Type):
+    """ MONKEY STYLE WARNING: AVOID USING THIS IF POSSIBLE !!!
+
+Use this to insert top level code entities which are not supported by the
+model yet. Better implement required functionality and submit patches!
+    """
+
+    def __init__(self, code,
+        name = None,
+        used_types = None,
+        used_variables = None,
+        weight = None
+    ):
+        """
+:param code: the code (implementing `__str__`) to be inserted in file as is.
+:param used_types: iterable of types to be placed above.
+:param used_vars: iterable of global variables to be placed above.
+    Both can be used to satisfy def-use syntax order requirements.
+:param weight: overwrites default weight of `SourceChunk`.
+    Use it to adjust position in file.
+        """
+        if name is None:
+            # User does not worry about name. But the model require each
+            # generated type to have a name.
+            # Note, we can just use `id(self)` but a counter makes name more
+            # reproducible across launches.
+            name = "opaque.#%u" % next(type(self)._name_num)
+
+        super(OpaqueCode, self).__init__(name = name, incomplete = False)
+
+        self.code = code
+
+        # Items are just passed to code generator to get referenced chunks.
+        self.used = set() if used_types is None else set(used_types)
+        if used_variables is not None:
+            self.used.update(used_variables)
+
+        self.weight = weight
+
+    _name_num = count()
+
+    def gen_chunks(self, generator):
+        ch = OpaqueChunk(self)
+
+        for item in self.used:
+            ch.add_references(generator.provide_chunks(item))
+
+        return [ch]
+
+
 # Data models
 
 
@@ -2189,8 +2239,8 @@ after this word.
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
     def __lt__(self, other):
-        sw = type(self).weight
-        ow = type(other).weight
+        sw = self.weight
+        ow = other.weight
         if sw < ow:
             return True
         elif sw > ow:
@@ -2599,6 +2649,18 @@ class FunctionDefinition(SourceChunk):
                 body = body
             )
         )
+
+
+class OpaqueChunk(SourceChunk):
+
+    def __init__(self, origin):
+        name = "Opaque code named %s" % origin
+
+        super(OpaqueChunk, self).__init__(origin, name, str(origin.code))
+
+        # Ordering weight can be overwritten.
+        if origin.weight is not None:
+            self.weight = origin.weight
 
 
 def depth_first_sort(chunk, new_chunks):

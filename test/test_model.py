@@ -6,6 +6,7 @@ from six import (
     StringIO
 )
 from source import (
+    OpaqueCode,
     Type,
     Header,
     Source,
@@ -648,6 +649,74 @@ class TestReferencingToSelfDefinedType(SourceModelTestHelper, TestCase):
 extern M_TYPE var;
 #endif /* INCLUDE_{fname_upper}_H */
 """.format(path = hdr.path, fname_upper = name.upper())
+
+        self.files = [
+            (hdr, hdr_content)
+        ]
+
+
+class TestOpaqueCode(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestOpaqueCode, self).setUp()
+
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h", protection = False)
+
+        test_var = Type["int"]("test_var")
+        test_func = Function(name = "test_func")
+
+        opaque_top = OpaqueCode("""\
+/* Generic comment above macros */
+"""         ,
+            weight = 0
+        )
+
+        opaque_bottom = OpaqueCode("""
+/* A comment at bottom of file */
+"""         ,
+            weight = 10
+        )
+
+        opaque_middle = OpaqueCode("""
+/* How to use test_var and test_func. */
+
+""",
+            used_variables = [test_var],
+            used_types = [test_func]
+            # Default weight (5)
+        )
+
+        hdr.add_types([
+            # Yields #define statement with weight 1
+            Macro("TEST_MACRO"),
+            # Yields function declaration with weight 6
+            Function(name = "another_test_func"),
+
+            opaque_middle,
+            opaque_bottom,
+            opaque_top
+        ])
+
+        hdr_content = """\
+/* {path} */
+
+/* Generic comment above macros */
+
+#define TEST_MACRO
+
+extern int test_var;
+void test_func(void);
+
+/* How to use test_var and test_func. */
+
+void another_test_func(void);
+
+/* A comment at bottom of file */
+""".format(
+            path = hdr.path
+        )
 
         self.files = [
             (hdr, hdr_content)
