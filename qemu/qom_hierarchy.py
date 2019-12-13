@@ -18,11 +18,8 @@ from common import (
 from os.path import (
     join
 )
-from multiprocessing import (
-    Process
-)
-from os import (
-    system
+from subprocess import (
+    Popen
 )
 # use ours pyrsp
 with pypath("..pyrsp"):
@@ -135,11 +132,7 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     port = find_free_port(4321)
     qemu_debug_addr = "localhost:%u" % port
-    qemu_proc = Process(
-        target = system,
-        args = (" ".join(["gdbserver", qemu_debug_addr, qemu_exec]),)
-    )
-    qemu_proc.start()
+    Popen(["gdbserver", qemu_debug_addr, qemu_exec])
 
     if not wait_for_tcp_port(port):
         raise RuntimeError("gdbserver does not listen %u" % port)
