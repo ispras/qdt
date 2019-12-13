@@ -10,6 +10,9 @@ __all__ = [
   , "callco"
 ]
 
+from time import (
+    sleep
+)
 from types import (
     GeneratorType
 )
@@ -406,6 +409,17 @@ after last statement in the corresponding callable object.
     def has_work(self):
         return self.tasks or self.active_tasks
 
+    def dispatch_all(self, delay = 0.01):
+        has_work, iteration = self.has_work, self.iteration
+
+        if delay is None:
+            # No delay mode
+            while has_work():
+                iteration()
+        else:
+            while has_work():
+                if not iteration():
+                    sleep(delay)
 
 class CoStackFailure(RuntimeError):
 
