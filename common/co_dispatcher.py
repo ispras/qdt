@@ -2,7 +2,6 @@ __all__ = [
 # RuntimeError
     "FailedCallee"
   , "CancelledCallee"
-  , "CoStackFailure"
 # object
   , "CoTask"
   , "CoDispatcher"
@@ -26,10 +25,6 @@ import sys
 from traceback import (
     format_exception,
     format_stack,
-    print_exception
-)
-from six import (
-    StringIO
 )
 
 
@@ -421,74 +416,19 @@ after last statement in the corresponding callable object.
                 if not iteration():
                     sleep(delay)
 
-class CoStackFailure(RuntimeError):
 
-    def __init__(self, tracebacks):
-        super(CoStackFailure, self).__init__("Coroutine failure")
-        self.tracebacks = tracebacks
-
-    def __str__(self):
-        str_tracebacks = []
-
-        for etype, value, tb in reversed(self.tracebacks):
-            tmp = StringIO()
-            print_exception(etype, value, tb, file = tmp)
-            str_tracebacks.append(tmp.getvalue())
-
-        return ("Coroutine stack failure happened:\n" +
-            "\nAfter injection of exception:\n\n".join(str_tracebacks)
-        )
+class default: pass
 
 
-# Call coroutine maintaining coroutine calling stack.
-def callco(co):
-    stack = []
-    exc = None
-    while True:
-        try:
-            if exc:
-                ret = co.throw(type(exc), exc)
-                # `co` successfully handled callee's exception and continued
-                exc = None
-            else:
-                ret = next(co)
-        except StopIteration:
-            # If `exc` is not `None`, then `co` successfully handled callee's
-            # exception and finished.
-            exc = None
-            try:
-                co = stack.pop()
-            except IndexError:
-                break
-        except BaseException as e:
-            if exc is None:
-                # Actually two cases:
-                # 1. `cc` failed during handling of `exc` of its callee.
-                # 2. `cc` failed after the handling.
-                # In the first case, `exc` is likely the cause of current
-                # exception. Hence it must be reported. This information also
-                # may be useful in second case.
+def callco(co, delay = default):
+    """ Call `co`routine. See `CoDispatcher` for coroutine protocol.
 
-                # Because current exception can be caught by some caller in
-                # the `stack` we must not report something right now. Instead,
-                # we start a shadow log of tracebacks to report it all if no
-                # one will catch the failure.
-                shadow_tb = []
+:param delay: time to wait if a coroutine `yield`ed `False`.
 
-            shadow_tb.append(sys.exc_info())
-
-            # Let caller to handle `co` (callee's) exception
-            exc = e
-
-            try:
-                co = stack.pop()
-            except IndexError:
-                break
-        else:
-            if isinstance(ret, GeneratorType):
-                stack.append(co)
-                co = ret
-
-    if exc is not None:
-        # The `exc`eption has not been caught by last caller in the `stack`.
-        raise CoStackFailure(shadow_tb)
+    """
+    disp = CoDispatcher()
+    disp.enqueue(co)
+    if delay is default:
+        disp.dispatch_all()
+    else:
+        disp.dispatch_all(delay = delay)
