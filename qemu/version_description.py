@@ -67,6 +67,12 @@ from six import (
 from shutil import (
     rmtree
 )
+from traceback import (
+    format_exception
+)
+from sys import (
+    exc_info
+)
 
 
 bp_file_name = "build_path_list"
@@ -514,7 +520,6 @@ class QemuVersionDescription(object):
         self.build_path = build_path
         self.src_path = fixpath(config_host.SRC_PATH)
         self.target_list = config_host.TARGET_DIRS.split(" ")
-        self.bindir = join(fixpath(config_host.prefix), "bin")
 
         self.softmmu_targets = st = set()
         for t in self.target_list:
@@ -801,21 +806,47 @@ class QemuVersionDescription(object):
 
         arches_count = len(root.arches)
         for arch in targets:
-            try:
-                yield co_update_device_tree(
-                    self.bindir,
-                    self.src_path,
-                    arch,
-                    root
-                )
-            except (CancelledCallee, FailedCallee) as e:
-                message = e.callee.traceback_lines
+            # Try to get QOM tree using binaries from different places.
+            # Installed binary is tried first because in this case Qemu
+            # launched as during normal operation.
+            # However, if user did not install Qemu, we should try to use
+            # binary from build directory.
+            install_dir = join(fixpath(self.config_host.prefix), "bin")
+            build_dir = join(self.build_path, arch + "-softmmu")
+
+            binaries = [
+                join(install_dir, "qemu-system-" + arch),
+                join(build_dir, "qemu-system-" + arch)
+            ]
+
+            message = []
+
+            for qemu_exec in binaries:
+                try:
+                    yield co_update_device_tree(
+                        qemu_exec,
+                        self.src_path,
+                        arch,
+                        root
+                    )
+                except Exception as e:
+                    message.extend([
+                        "\n",
+                        "Failure for binary '%s':\n" % qemu_exec,
+                        "\n",
+                    ])
+                    if isinstance(e, (CancelledCallee, FailedCallee)):
+                        message.extend(e.callee.traceback_lines)
+                    else:
+                        message.extend(format_exception(*exc_info()))
+                else:
+                    root.arches.add(arch)
+                    # Stop on first successful update.
+                    break
+            else:
+                # All binaries are absent/useless.
                 message.insert(0, "Device Tree for %s isn't created:\n" % arch)
                 print("".join(message))
-            except Exception as e:
-                print("Device Tree for %s isn't created: %s" % (arch, e))
-            else:
-                root.arches.add(arch)
 
         if not root.children:
             # Device Tree was not built

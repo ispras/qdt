@@ -122,9 +122,7 @@ def co_fill_children(qomtr_node, qtype_node, arch):
         yield co_fill_children(c, qt, arch)
 
 
-def co_update_device_tree(bindir, src_path, arch_name, root):
-    qemu_exec = join(bindir, "qemu-system-" + arch_name)
-
+def co_update_device_tree(qemu_exec, src_path, arch_name, root):
     dic = create_dwarf_cache(qemu_exec)
 
     gvl_adptr = GitLineVersionAdapter(src_path)
