@@ -509,7 +509,7 @@ class QemuVersionDescription(object):
         config_host_path = join(build_path, "config-host.mak")
         if not isfile(config_host_path):
             raise BadBuildPath("%s does not exists." % config_host_path)
-        config_host = ConfigHost(config_host_path)
+        self.config_host = config_host = ConfigHost(config_host_path)
 
         self.build_path = build_path
         self.src_path = fixpath(config_host.SRC_PATH)
