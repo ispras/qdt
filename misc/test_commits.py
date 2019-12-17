@@ -41,6 +41,7 @@ from argparse import (
     ArgumentDefaultsHelpFormatter
 )
 from platform import (
+    uname_result,
     uname
 )
 import qdt
