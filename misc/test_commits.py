@@ -335,7 +335,7 @@ class QDTMeasurer(Measurer):
 
         self.diffs = diffs
 
-        self.qvc = "qvc_%s.py" % qemugit.commit(project.target_version).hexsha
+        self.commit_sha = qemugit.commit(project.target_version).hexsha
 
     def __enter__(self):
         print("Checking Qemu out...")
@@ -393,6 +393,21 @@ class QDTMeasurer(Measurer):
     @contextmanager
     def __environment__(self, ctx):
         print("Testing for environment '%s'" % ctx.env_name)
+
+        cmds = [
+            ctx.interpreter,
+            join(ctx.clone.working_tree_dir, "misc", "get_qvc_file_name.py"),
+            "-s", self.commit_sha
+        ]
+
+        get_qvc = Popen(
+            cmds,
+            env = dict(TEST_STARTUP_ENV),
+            cwd = ctx.clone.working_tree_dir,
+            stdout = PIPE
+        )
+        get_qvc.wait()
+        self.qvc = get_qvc.stdout.read().decode("utf-8").strip()
 
         # Prepare working directory for launches
         self.qdt_cwd = qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
