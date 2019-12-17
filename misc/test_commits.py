@@ -409,9 +409,10 @@ class QDTMeasurer(Measurer):
 
         Popen(cmds, cwd = qdt_cwd, env = dict(TEST_STARTUP_ENV)).wait()
 
-        if ctx.caches is not None and join(ctx.caches, ctx.qvc):
+        qvc_path = join(ctx.caches, ctx.qvc)
+        if ctx.caches is not None and isfile(qvc_path):
             # use existing cache
-            ctx.qv_cache = join(ctx.caches, ctx.qvc)
+            ctx.qv_cache = qvc_path
         else:
             ctx.qv_cache = None
 
