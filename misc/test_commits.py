@@ -486,7 +486,7 @@ class QDTMeasurer(Measurer):
 
         if qv_cache is None:
             # preserve cache
-            qv_cache = join(ctx.clone.working_tree_dir, ctx.qvc)
+            qv_cache = join(ctx.caches, ctx.qvc)
             copyfile(join(ctx.tmp_build, ctx.qvc), qv_cache)
             ctx.qv_cache = qv_cache
 
