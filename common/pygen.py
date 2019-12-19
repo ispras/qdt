@@ -4,6 +4,7 @@ __all__ = [
   , "PyGenDepsVisitor"
       , "PyGenVisitor"
   , "pythonizable"
+  , "gen_code_common"
 ]
 
 from six import (
@@ -103,17 +104,7 @@ class PyGenVisitor(PyGenDepsVisitor):
         o = self.cur
 
         if id(o) not in self.state:
-            g = self.gen
-            g.write(g.nameof(o) + " = ")
-
-            try:
-                gen_code = o.__gen_code__
-            except AttributeError:
-                g.pprint(o)
-            else:
-                gen_code(g)
-
-            g.line()
+            gen_code_common(o, self.gen)
 
         return ret
 
@@ -422,3 +413,14 @@ def pythonize(root, path):
     with open(path, "wb") as _file:
         _file.write(res.getvalue().encode("utf-8"))
 
+def gen_code_common(obj, gen):
+    gen.write(gen.nameof(obj) + " = ")
+
+    try:
+        gen_code = obj.__gen_code__
+    except AttributeError:
+        gen.pprint(obj)
+    else:
+        gen_code(gen)
+
+    gen.line()
