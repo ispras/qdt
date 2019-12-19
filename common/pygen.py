@@ -2,7 +2,6 @@ __all__ = [
     "PyGenerator"
   , "pythonize"
   , "PyGenDepsVisitor"
-      , "PyGenVisitor"
       , "PyGenDepsCatcher"
   , "pythonizable"
   , "pygenerate"
@@ -41,10 +40,6 @@ const_types = (float, text_type, binary_type, bool) + integer_types
 # Those standard types are supported by `PyGenerator` without specific code.
 pythonizable = const_types + (list, set, dict, tuple)
 
-NOT_GENERATED = 0
-GENERATING = 1
-GENERATED = 2
-
 
 class PyGenDepsVisitor(ObjectVisitor):
 
@@ -52,71 +47,6 @@ class PyGenDepsVisitor(ObjectVisitor):
         super(PyGenDepsVisitor, self).__init__(root,
             field_name = "__pygen_deps__"
         )
-
-
-class PyGenVisitor(PyGenDepsVisitor):
-
-    def __init__(self, root, backend = None, **genkw):
-        super(PyGenVisitor, self).__init__(root)
-
-        self.gen = PyGenerator(backend = backend, **genkw)
-
-    def on_visit(self):
-        oid = id(self.cur)
-        state = self.state.get(oid, NOT_GENERATED)
-
-        if state is GENERATING:
-            raise RuntimeError("Recursive dependencies")
-
-        if state is GENERATED:
-            raise BreakVisiting()
-
-        self.state[oid] = GENERATING
-
-    def on_leave(self):
-        o = self.cur
-        oid = id(o)
-
-        # prevent garbage collection
-        self.keepalive.append(o)
-
-        if self.state[oid] is GENERATING:
-            self.state[oid] = GENERATED
-        else:
-            return
-
-        try:
-            gen_code = o.__gen_code__
-        except AttributeError:
-            return
-
-        g = self.gen
-
-        g.write(g.nameof(o) + " = ")
-        gen_code(g)
-        g.line()
-
-    def visit(self):
-        self.gen.reset()
-
-        self.state = {}
-        # List of generated & skipped objects.
-        # This prevents garbage collection and re-usage of ids during
-        # generation.
-        # It can happen when the value of an attribute listed in
-        # `__pygen_deps__` is generated dynamically using [non-]data
-        # descriptor like `property`.
-        self.keepalive = []
-
-        ret = super(PyGenVisitor, self).visit()
-
-        # generate root
-        o = self.cur
-
-        if id(o) not in self.state:
-            gen_code_common(o, self.gen)
-
-        return ret
 
 
 class PyGenerator(CodeWriter):
