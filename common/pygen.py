@@ -1,7 +1,8 @@
 __all__ = [
     "PyGenerator"
   , "pythonize"
-  , "PyGenVisitor"
+  , "PyGenDepsVisitor"
+      , "PyGenVisitor"
   , "pythonizable"
 ]
 
@@ -34,12 +35,18 @@ GENERATING = 1
 GENERATED = 2
 
 
-class PyGenVisitor(ObjectVisitor):
+class PyGenDepsVisitor(ObjectVisitor):
 
-    def __init__(self, root, backend = None, **genkw):
-        super(PyGenVisitor, self).__init__(root,
+    def __init__(self, root):
+        super(PyGenDepsVisitor, self).__init__(root,
             field_name = "__pygen_deps__"
         )
+
+
+class PyGenVisitor(PyGenDepsVisitor):
+
+    def __init__(self, root, backend = None, **genkw):
+        super(PyGenVisitor, self).__init__(root)
 
         self.gen = PyGenerator(backend = backend, **genkw)
 
