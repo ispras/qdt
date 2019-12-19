@@ -4,6 +4,7 @@ __all__ = [
   , "PyGenDepsVisitor"
       , "PyGenVisitor"
   , "pythonizable"
+  , "pygenerate"
   , "gen_code_common"
 ]
 
@@ -408,10 +409,12 @@ def pythonize(root, path):
     :path: of target file
     """
 
-    res = PyGenVisitor(root).visit().gen.w
-
     with open(path, "wb") as _file:
-        _file.write(res.getvalue().encode("utf-8"))
+        _file.write(pygenerate(root).w.getvalue().encode("utf-8"))
+
+
+def pygenerate(root):
+    return PyGenVisitor(root).visit().gen
 
 def gen_code_common(obj, gen):
     gen.write(gen.nameof(obj) + " = ")
