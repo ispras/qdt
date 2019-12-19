@@ -6,7 +6,6 @@ __all__ = [
 ]
 
 from six import (
-    StringIO,
     text_type,
     binary_type,
     integer_types
