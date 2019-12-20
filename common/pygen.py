@@ -470,7 +470,7 @@ def pygen(objs):
     pass_state = {}
 
     # Dependencies between generation passes of objects.
-    deps = dict() # id(user) -> set(id(dep))
+    deps = dict() # id(user) -> dict(id(dep) -> required dep's pass #)
     users = dict() # id(dep) -> dict(id(user) -> user)
 
     # List of generated & skipped objects.
@@ -520,13 +520,11 @@ def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
     p, pass_generator = pass_state[oid]
 
     try:
-        next_pass_deps = next(pass_generator)
+        pass_result = next(pass_generator)
     except StopIteration:
-        next_pass_deps = None
+        pass_result = None
 
-    next_p = p + 1
-
-    if next_pass_deps is None:
+    if pass_result is None:
         generated.add(oid)
 
         # No more passes will be for `obj`.
@@ -534,7 +532,7 @@ def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
         obj_users = users.pop(oid)
         for uid in obj_users:
             user_deps = deps[uid]
-            user_deps.remove(oid)
+            del user_deps[oid]
 
             if not user_deps:
                 # This was last dependency of user.
@@ -542,21 +540,30 @@ def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
                 del deps[uid]
                 ready.append(obj_users[uid])
     else:
-        # pass #p of `obj` is finished, notify users
-        obj_users = users[oid]
-        for uid in tuple(obj_users):
-            user_deps = deps[uid]
-            if p > pass_state[oid][0]:
-                user_deps.remove(oid)
+        next_p = p + 1
 
-                if user_deps:
-                    del obj_users[uid]
-                else:
-                    del deps[uid]
-                    ready.append(obj_users.pop(uid))
+        next_pass_deps, pass_finished = pass_result
+        if pass_finished:
+            deps_p = next_p
+            # pass #p of `obj` is finished, notify users
+            pass_state[oid][0] = next_p
+            obj_users = users[oid]
+            for uid in tuple(obj_users):
+                user_deps = deps[uid]
+
+                if next_p >= user_deps[oid]:
+                    del user_deps[oid]
+
+                    if user_deps:
+                        del obj_users[uid]
+                    else:
+                        del deps[uid]
+                        ready.append(obj_users.pop(uid))
+        else:
+            deps_p = next_p
 
         # handle dependencies
-        obj_deps = set()
+        obj_deps = {}
         for dep in next_pass_deps:
             dep_id = id(dep)
 
@@ -570,13 +577,13 @@ def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
                 ready.append(dep)
                 dep_users = users[dep_id] = dict()
                 prepare_object(gen, pass_state, keepalive, dep)
-            elif dep_pass_state[0] > next_p:
+            elif dep_pass_state[0] >= deps_p:
                 # The `dep`endency generation process is already far enough.
                 continue
             else:
                 dep_users = users[dep_id]
 
-            obj_deps.add(dep_id)
+            obj_deps[dep_id] = deps_p
             dep_users[oid] = obj
 
         if obj_deps:
@@ -585,8 +592,6 @@ def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
             # All dependencies of `obj` is already satisfied,
             # It can continue generation instantly.
             ready.append(obj)
-
-    pass_state[oid][0] = next_p
 
 
 def prepare_object(gen, pass_state, keepalive, obj):
@@ -624,7 +629,7 @@ def default_gen_pass(obj, gen):
     deps = PyGenDepsCatcher(obj).visit().deps
 
     if deps:
-        yield deps
+        yield deps, False
 
     gen_code_common(obj, gen)
 
@@ -633,12 +638,12 @@ def gen_pass_to_coroutine(gen_pass, gen):
     "Converts generation function to coroutine."
 
     for p in count():
-        deps = gen_pass(gen, p)
+        res = gen_pass(gen, p)
 
-        if deps is None:
+        if res is None:
             break # generation finished
 
-        yield deps
+        yield res
 
 
 def gen_code_common(obj, gen):
