@@ -481,21 +481,37 @@ def pygen(objs):
 
         keepalive.append(obj)
 
-    while True:
-        ready = deque()
+    # `pygen_pass` makes one pass of one `obj`ect and fills `ready` with
+    # objects that can continue/begin its generation.
+    # They can be handled in any order.
+    # However, using stack first generates objects that became ready last.
+    # `iter` is used to pause an iteration and save its state in the `stack`
+    # when new objects are ready.
+    # This complicated approach results in locality of big object graphs.
+    # Such a layout seems more pretty to a human.
+    # A straightforward approach (process objects in readiness order) results
+    # in mixing of big object graphs.
+    stack = deque()
+    stack.append(iter(objs))
+    ready = deque()
 
-        for obj in objs:
+    while stack:
+        i = stack[-1]
+
+        for obj in i:
             pygen_pass(gen, generated, next_pass, deps, users, ready,
                 keepalive, obj
             )
+            if ready:
+                stack.append(iter(ready))
+                ready = deque()
+                break
+        else:
+            stack.pop()
 
-        if not ready:
-            if deps:
-                # TODO: output dependency graph
-                raise RuntimeError("Cross references")
-            break
-
-        objs = ready
+    if deps:
+        # TODO: output dependency graph
+        raise RuntimeError("Cross references")
 
     return gen
 
