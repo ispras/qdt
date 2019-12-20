@@ -31,6 +31,9 @@ from .visitor import (
 from collections import (
     deque
 )
+from inspect import (
+    isgeneratorfunction
+)
 
 
 const_types = (float, text_type, binary_type, bool) + integer_types
@@ -130,12 +133,18 @@ accuracy.
     - __pygen_pass__, a method that is given a `PyGenerator` instance and
         current pass number >= 0 (see below)
 
+    or
+
+    - __pygen_pass__, a generator that is given a `PyGenerator` instance and
+        `yield` states separates generation passes
+
 Object serialization is performed pass by pass using `__pygen_pass__` method.
 It uses the `PyGenerator` instance to output Python code.
 Pass #0 is performed unconditionally.
 If an object finished serialization, it `return`s nothing (i.e. `None`).
+A generator may `yield None` instead.
 If it requires other objects (dependencies) to be generated before its next
-pass started, it must `return` an interable of the dependencies.
+pass started, it must `return` / `yield` an interable of the dependencies.
 _The iterable can be empty but why to split generation without a reason?_
 A dependency is satisfied when either its pass #n became greater than
 pass #n of the dependent object or the dependency generation finished.
@@ -454,8 +463,11 @@ def pygen(objs):
     if not objs:
         return gen
 
-    # next_pass[id(obj)] == [# of last passed pass of obj] - 1
-    next_pass = {}
+    # pass_state[id(obj)]:
+    # [0] == [# of last passed pass of obj] - 1
+    # [1] is a coroutine that performs passes yielding dependencies for
+    #     next pass.
+    pass_state = {}
 
     # Dependencies between generation passes of objects.
     deps = dict() # id(user) -> set(id(dep))
@@ -470,16 +482,15 @@ def pygen(objs):
 
     for obj in objs:
         oid = id(obj)
-        if oid in next_pass:
+        if oid in pass_state:
             # duplicating reference
             continue
-        next_pass[oid] = 0
+
+        prepare_object(gen, pass_state, keepalive, obj)
 
         # When obj's generation finished, dependent objects become ready.
         # But there is no dependent object for starting objects.
         users[oid] = EMPTY
-
-        keepalive.append(obj)
 
     # `pygen_pass` makes one pass of one `obj`ect and fills `ready` with
     # objects that can continue/begin its generation.
@@ -499,7 +510,7 @@ def pygen(objs):
         i = stack[-1]
 
         for obj in i:
-            pygen_pass(gen, generated, next_pass, deps, users, ready,
+            pygen_pass(gen, generated, pass_state, deps, users, ready,
                 keepalive, obj
             )
             if ready:
@@ -516,20 +527,18 @@ def pygen(objs):
     return gen
 
 
-def pygen_pass(gen, generated, next_pass, deps, users, ready, keepalive, obj):
+def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
     oid = id(obj)
 
     # assert oid not in generated, "%s" % obj
     # assert oid not in deps, "%s" % obj
 
-    p = next_pass[oid]
+    p, pass_generator = pass_state[oid]
 
     try:
-        gen_pass = obj.__pygen_pass__
-    except AttributeError:
-        next_pass_deps = default_gen_pass(obj, gen, p)
-    else:
-        next_pass_deps = gen_pass(gen, p)
+        next_pass_deps = next(pass_generator)
+    except StopIteration:
+        next_pass_deps = None
 
     next_p = p + 1
 
@@ -553,7 +562,7 @@ def pygen_pass(gen, generated, next_pass, deps, users, ready, keepalive, obj):
         obj_users = users[oid]
         for uid in tuple(obj_users):
             user_deps = deps[uid]
-            if p > next_pass[oid]:
+            if p > pass_state[oid][0]:
                 user_deps.remove(oid)
 
                 if user_deps:
@@ -570,15 +579,14 @@ def pygen_pass(gen, generated, next_pass, deps, users, ready, keepalive, obj):
             if dep_id in generated:
                 continue
 
-            next_dep_pass = next_pass.get(dep_id, None)
+            dep_pass_state = pass_state.get(dep_id, None)
 
-            if next_dep_pass is None:
+            if dep_pass_state is None:
                 # new object
                 ready.append(dep)
-                keepalive.append(dep)
-                next_pass[dep_id] = 0
                 dep_users = users[dep_id] = dict()
-            elif next_dep_pass > next_p:
+                prepare_object(gen, pass_state, keepalive, dep)
+            elif dep_pass_state[0] > next_p:
                 # The `dep`endency generation process is already far enough.
                 continue
             else:
@@ -594,7 +602,23 @@ def pygen_pass(gen, generated, next_pass, deps, users, ready, keepalive, obj):
             # It can continue generation instantly.
             ready.append(obj)
 
-    next_pass[oid] = next_p
+    pass_state[oid][0] = next_p
+
+
+def prepare_object(gen, pass_state, keepalive, obj):
+    keepalive.append(obj)
+
+    try:
+        gen_pass = obj.__pygen_pass__
+    except AttributeError:
+        pass_generator = default_gen_pass(obj, gen)
+    else:
+        if isgeneratorfunction(gen_pass):
+            pass_generator = gen_pass(gen)
+        else:
+            pass_generator = gen_pass_to_coroutine(gen_pass, gen)
+
+    pass_state[id(obj)] = [0, pass_generator]
 
 
 class PyGenDepsCatcher(PyGenDepsVisitor):
@@ -611,14 +635,26 @@ class PyGenDepsCatcher(PyGenDepsVisitor):
             raise BreakVisiting()
 
 
-def default_gen_pass(obj, gen, p):
-    if p == 0:
-        # deprecated API support
-        deps = PyGenDepsCatcher(obj).visit().deps
-        if deps:
-            return deps
+def default_gen_pass(obj, gen):
+    # deprecated API support
+    deps = PyGenDepsCatcher(obj).visit().deps
+
+    if deps:
+        yield deps
 
     gen_code_common(obj, gen)
+
+
+def gen_pass_to_coroutine(gen_pass, gen):
+    "Converts generation function to coroutine."
+
+    for p in count():
+        deps = gen_pass(gen, p)
+
+        if deps is None:
+            break # generation finished
+
+        yield deps
 
 
 def gen_code_common(obj, gen):
