@@ -43,6 +43,7 @@ from source import (
     CINT
 )
 from common import (
+    gen_code_common,
     PyGenerator,
     flatten,
     same,
@@ -479,12 +480,14 @@ class DeviceNode(Node):
                 + ")"
             )
         gen.gen_end(suffix = "])")
+        gen.line()
 
-    def __gen_code__(self, gen):
-        super(DeviceNode, self).__gen_code__(gen)
+    def __pygen_pass__(self, gen):
+        if self.parent_bus is not None:
+            yield [self.parent_bus], False
+        gen_code_common(self, gen)
+        yield self.links, True
         self.gen_props(gen)
-
-    __pygen_deps__ = ("parent_bus", "links")
 
     @property
     def links(self):
