@@ -9,6 +9,7 @@ from subprocess import (
     Popen
 )
 from os.path import (
+    getmtime,
     join,
     isfile,
     isdir,
@@ -16,9 +17,12 @@ from os.path import (
     dirname
 )
 from shutil import (
-    copyfile,
+    copy,
     copytree,
     rmtree
+)
+from glob import (
+    glob
 )
 from time import (
     time
@@ -331,7 +335,9 @@ class QDTMeasurer(Measurer):
 
         self.diffs = diffs
 
-        self.qvc = "qvc_%s.py" % qemugit.commit(project.target_version).hexsha
+        self.qvc_pattern = (
+            "qvc*_%s.py" % qemugit.commit(project.target_version).hexsha
+        )
 
     def __enter__(self):
         print("Checking Qemu out...")
@@ -369,6 +375,10 @@ class QDTMeasurer(Measurer):
                 )
             )
 
+        if self.caches is not None:
+            for cache in glob(join(self.caches, self.qvc_pattern)):
+                copy(cache, tmp_build)
+
         print("Backing Qemu configuration...")
         self.q_back = q_back = mkdtemp(
             prefix = "qemu-%s-back-" % self.qproject.target_version
@@ -405,12 +415,6 @@ class QDTMeasurer(Measurer):
 
         Popen(cmds, cwd = qdt_cwd, env = dict(TEST_STARTUP_ENV)).wait()
 
-        if ctx.caches is not None and join(ctx.caches, ctx.qvc):
-            # use existing cache
-            ctx.qv_cache = join(ctx.caches, ctx.qvc)
-        else:
-            ctx.qv_cache = None
-
         try:
             yield self
         finally:
@@ -432,20 +436,6 @@ class QDTMeasurer(Measurer):
         yield "machine", ctx.machine
         yield "env", ctx.env_name
         yield "i", ctx.launch_number
-
-        print("Preparing CWD...")
-
-        qv_cache = ctx.qv_cache
-
-        if qv_cache:
-            # restore cache
-            copyfile(
-                qv_cache,
-                join(ctx.tmp_build, ctx.qvc)
-            )
-            yield "cache_ready", True
-        else:
-            yield "cache_ready", False
 
         print("Measuring...")
         cmds = [
@@ -480,11 +470,21 @@ class QDTMeasurer(Measurer):
                 print("Command was:")
                 print(" ".join(cmds))
 
-        if qv_cache is None:
-            # preserve cache
-            qv_cache = join(ctx.clone.working_tree_dir, ctx.qvc)
-            copyfile(join(ctx.tmp_build, ctx.qvc), qv_cache)
-            ctx.qv_cache = qv_cache
+        cache_changed = False
+
+        if ctx.errors:
+            # allow user to work with bad version
+            cache_preserve_path = ctx.clone.working_tree_dir
+        else:
+            # preserve cache for next runs
+            cache_preserve_path = join(ctx.q_back, "build")
+
+        for cache in glob(join(ctx.tmp_build, ctx.qvc_pattern)):
+            if getmtime(cache) > t0:
+                cache_changed = True
+                copy(cache, cache_preserve_path)
+
+        yield "cache_ready", not cache_changed
 
         print("Running test...")
 
