@@ -175,12 +175,12 @@ class Plot(object):
         t_fmt = "%%.%uf" % accuracy(_err)
 
         self.commits.append((
-                "%s\n%s--\nlaunches = %u, avg. t = " + t_fmt + " sec, err = "
-                +t_fmt + " sec"
-            ) % (
-                sha1, message, _len, _avg, _err
-            )
-        )
+            "%s\n%s--\nlaunches = %u, " +
+            "avg. t = " + t_fmt + " sec, " +
+            "err = " + t_fmt + " sec"
+        ) % (
+            sha1, message, _len, _avg, _err
+        ))
 
         self.xcoords.append(x)
         self.ycoords.append(_avg)
