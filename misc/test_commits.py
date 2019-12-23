@@ -150,12 +150,8 @@ class Plot(object):
             self.yerr.append(0)
             self.commits.append("-")
 
-        _sum = 0.0
-        _len = 0
-
-        for t in self.mes:
-            _len += 1
-            _sum += t
+        _sum = sum(self.mes)
+        _len = len(self.mes)
 
         if _len == 0:
             _avg = 0
