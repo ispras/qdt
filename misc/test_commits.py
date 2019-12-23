@@ -64,6 +64,9 @@ from collections import (
 from contextlib import (
     contextmanager
 )
+from math import (
+    sqrt
+)
 
 
 TC_PRINT_COMMANDS = ee("TC_PRINT_COMMANDS")
@@ -167,7 +170,7 @@ class Plot(object):
         if _len == 0:
             _err = 0
         else:
-            _err /= _len
+            _err = sqrt(_err / _len)
 
         t_fmt = "%%.%uf" % accuracy(_err)
 
