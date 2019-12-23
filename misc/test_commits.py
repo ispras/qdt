@@ -212,8 +212,8 @@ def plot_measurements(repo, ctx, commit_seq):
                 continue
             if res: # failed, do not show
                 continue
-            if not cache_ready: # cache building, too long
-                continue
+            #if not cache_ready: # cache building, too long
+            #    continue
 
             plots[env].mes.append(t)
 
