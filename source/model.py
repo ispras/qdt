@@ -734,6 +734,7 @@ class Header(Source):
                         p.add_path(path)
 
                     p.on_include = Header._on_include
+                    p.all_inclusions = True
                     p.on_define.append(Header._on_define)
 
                     if sys.version_info[0] == 3:
