@@ -171,18 +171,27 @@ class Plot(object):
         else:
             _err = sqrt(_err / _len)
 
+        smes = sorted(self.mes)
+        if _len == 0:
+            _median = 0
+        elif _len % 2:
+            _median = smes[_len // 2]
+        else:
+            _median = (smes[_len // 2 - 1] + smes[_len // 2]) / 2.0
+
         t_fmt = "%%.%uf" % accuracy(_err)
 
         self.commits.append((
-                "%s\n%s--\nlaunches = %u, avg. t = " + t_fmt + " sec, err = "
-                +t_fmt + " sec"
-            ) % (
-                sha1, message, _len, _avg, _err
-            )
-        )
+            "%s\n%s--\nlaunches = %u, " +
+            "avg. t = " + t_fmt + " sec, " +
+            "median t = " + t_fmt + " sec, " +
+            "err = " + t_fmt + " sec"
+        ) % (
+            sha1, message, _len, _avg, _median, _err
+        ))
 
         self.xcoords.append(x)
-        self.ycoords.append(_avg)
+        self.ycoords.append(_median)
 
         self.yerr.append(_err)
 
