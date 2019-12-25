@@ -503,19 +503,32 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             h = Header["enums.h"]
         except:
             h = Header("enums.h")
-        h.add_type(Enumeration([("one", 1), ("two", 2)], enum_name = "A"))
+        h.add_type(Enumeration([("EXT", 1)]))
+
+        src = Source(name.lower() + ".c").add_types([
+            Enumeration([("ONE", 1)]),
+            Enumeration([("TWO", 2)], enum_name = "A"),
+            Enumeration([("THREE", 3)], typedef_name = "B"),
+            Enumeration([("FOUR", 4)], enum_name = "C", typedef_name ="D")
+        ])
 
         a = Type["int"]("a")
         b = Type["int"]("b")
-        c = Type["int"]("c")
+        c = Type["A"]("c")
+        d = Type["B"]("d")
+        e = Type["D"]("e")
 
-        src = Source(name.lower() + ".c").add_types([
-            Enumeration([("three", 3), ("four", 4)], enum_name = "B"),
+        src.add_types([
             Function(name = "main", body = BodyTree()(
-                Declare(a, b, c),
-                OpAssign(a, Type["A"].one),
-                OpAssign(b, Type["B"].three),
-                OpAssign(c, Type["four"])
+                Declare(a, b),
+                OpAssign(a, Type["EXT"]),
+                OpAssign(b, Type["ONE"]),
+                Declare(c),
+                OpAssign(c, Type["TWO"]),
+                Declare(d),
+                OpAssign(d, Type["THREE"]),
+                Declare(e),
+                OpAssign(e, Type["FOUR"])
             ))
         ])
 
@@ -524,17 +537,33 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
 
 #include "enums.h"
 
-enum B {{
-    three = 3,
-    four = 4
+enum A {{
+    TWO = 2
+}};
+
+typedef enum {{
+    THREE = 3
+}} B;
+
+typedef enum C {{
+    FOUR = 4
+}} D;
+
+enum {{
+    ONE = 1
 }};
 
 void main(void)
 {{
-    int a, b, c;
-    a = one;
-    b = three;
-    c = four;
+    int a, b;
+    a = EXT;
+    b = ONE;
+    enum A c;
+    c = TWO;
+    B d;
+    d = THREE;
+    D e;
+    e = FOUR;
 }}
 
 """.format(src.path)
