@@ -144,7 +144,8 @@ class QProject(object):
 
     def co_gen(self, desc, src,
         with_chunk_graph = False,
-        known_targets = None
+        known_targets = None,
+        with_debug_comments = False
     ):
         qom_t = desc.gen_type()
 
@@ -174,7 +175,7 @@ class QProject(object):
             f = s.generate(inherit_references = inherit_references)
 
             with open(spath, mode = "wb", encoding = "utf-8") as stream:
-                f.generate(stream)
+                f.generate(stream, gen_debug_comments = with_debug_comments)
 
             if with_chunk_graph:
                 yield True
