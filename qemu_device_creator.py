@@ -5,6 +5,8 @@ from argparse import (
     ArgumentParser
 )
 from os.path import (
+    abspath,
+    dirname,
     isdir
 )
 from qemu import (
@@ -90,6 +92,8 @@ def main():
         print("Script '%s' does not define a project to generate." % script)
         return -1
 
+    project.replace_relpaths_to_abspaths(abspath(dirname(script)))
+
     if arguments.qemu_build is None:
         qemu_build_path = getattr(project, "build_path", None)
     else:
@@ -117,7 +121,8 @@ def main():
     project.gen_all(qvd.src_path,
         with_chunk_graph = arguments.gen_chunk_graphs,
         known_targets = qvd.qvc.known_targets,
-        with_debug_comments = arguments.gen_debug_comments
+        with_debug_comments = arguments.gen_debug_comments,
+        qvd = qvd
     )
 
     return 0

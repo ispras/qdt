@@ -11,6 +11,8 @@ from os.path import (
     join,
     splitext,
     isdir,
+    isabs,
+    relpath,
     isfile
 )
 from itertools import (
@@ -18,6 +20,9 @@ from itertools import (
 )
 from .machine_description import (
     MachineNode
+)
+from .cpu import (
+    CPUDescription
 )
 from common import (
     same_sets,
@@ -98,14 +103,34 @@ class QProject(object):
         "Backward compatibility wrapper for co_gen_all"
         callco(self.co_gen_all(*args, **kw))
 
-    def co_gen_all(self, qemu_src, **gen_cfg):
+    def co_gen_all(self, qemu_src,
+        qvd = None,
+        **gen_cfg
+    ):
         disable_auto_lock_sources()
 
-        # First, generate all devices, then generate machines
+        # Firstly, generate all CPUs
+        need_reinit_cache = False
         for desc in self.descriptions:
-            if not isinstance(desc, MachineNode):
+            if isinstance(desc, CPUDescription):
+                yield desc.gen_type().co_gen(qemu_src, **gen_cfg)
+
+                if not need_reinit_cache:
+                    need_reinit_cache = True
+                    continue
+
+                # re-init cache to prevent problems with same named types
+                if qvd.qvc is not None:
+                    qvd.forget_cache()
+                yield qvd.co_init_cache()
+                qvd.use()
+
+        # Secondly, generate all devices
+        for desc in self.descriptions:
+            if not isinstance(desc, (CPUDescription, MachineNode)):
                 yield self.co_gen(desc, qemu_src, **gen_cfg)
 
+        # Lastly, generate machines
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
                 desc.link()
@@ -197,6 +222,17 @@ class QProject(object):
             patch_makefile(Makefile_objs_class_path, object_name,
                 obj_var_names[desc.directory], config_flags[desc.directory]
             )
+
+    def replace_relpaths_to_abspaths(self, path):
+        for desc in self.descriptions:
+            if isinstance(desc, CPUDescription):
+                if not isabs(desc.info_path):
+                    desc.info_path = join(path, desc.info_path)
+
+    def replace_abspaths_to_relpaths(self, path):
+        for desc in self.descriptions:
+            if isinstance(desc, CPUDescription):
+                desc.info_path = relpath(desc.info_path, start = path)
 
     def __var_base__(self):
         return "project"

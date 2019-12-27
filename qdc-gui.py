@@ -83,6 +83,8 @@ import sys
 from os.path import (
     join,
     isfile,
+    abspath,
+    dirname,
     expanduser
 )
 
@@ -115,7 +117,8 @@ class ProjectGeneration(CoTask):
 
         yield self.p.co_gen_all(self.s,
             known_targets = cur_qvd.qvc.known_targets,
-            with_chunk_graph = self.gen_chunk_graphs
+            with_chunk_graph = self.gen_chunk_graphs,
+            qvd = cur_qvd
         )
 
     def on_failed(self):
@@ -793,6 +796,7 @@ later.").get()
                 else:
                     raise Exception("No project object was loaded")
 
+            v.replace_relpaths_to_abspaths(abspath(dirname(file_name)))
             self.set_project(v)
             self.set_current_file_name(file_name)
             self.saved_operation = self.pht.pos
@@ -806,6 +810,7 @@ later.").get()
         self.pw.refresh_layouts()
 
         project = self.proj
+        project.replace_abspaths_to_relpaths(abspath(dirname(file_name)))
 
         # Ensure that all machine nodes are in corresponding lists
         for d in project.descriptions:
