@@ -11,6 +11,7 @@ from source import (
     line_origins,
     Pointer,
     Macro,
+    MacroType,
     Initializer,
     Function,
     Type
@@ -626,7 +627,7 @@ class SysBusDeviceType(QOMDevice):
             code = { "function": self.register_types }
         )
         self.source.add_type(
-            Type["type_init"].gen_usage(type_init_usage_init)
+            MacroType(Type["type_init"], initializer = type_init_usage_init)
         )
 
         # order life cycle functions
