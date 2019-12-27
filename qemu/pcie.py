@@ -9,6 +9,7 @@ from source import (
     Function,
     Initializer,
     Macro,
+    MacroType,
     TypeNotRegistered
 )
 from .qom import (
@@ -520,7 +521,7 @@ corresponding vendor is given" % attr
             code = { "function": self.register_types }
         )
         self.source.add_type(
-            Type["type_init"].gen_usage(type_init_usage_init)
+            MacroType(Type["type_init"], initializer = type_init_usage_init)
         )
 
         # order life cycle functions
