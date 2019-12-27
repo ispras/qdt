@@ -1705,7 +1705,7 @@ class Macro(Type):
             used = used
         )
 
-    def gen_usage(self, initializer = None, name = None, counter = count(0)):
+    def gen_type(self, initializer = None, name = None, counter = count(0)):
         "A helper that automatically generates a name for `MacroUsage`."
         if name is None:
             name = self.name + ".auto" + str(next(counter))
