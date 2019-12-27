@@ -60,6 +60,12 @@ def main():
     )
 
     parser.add_argument(
+        "--gen-debug-comments",
+        action = "store_true",
+        help = "Generate source files with debug comments."
+    )
+
+    parser.add_argument(
         "script",
         help = "A Python script containing definition of a project to generate."
     )
@@ -110,7 +116,8 @@ def main():
 
     project.gen_all(qvd.src_path,
         with_chunk_graph = arguments.gen_chunk_graphs,
-        known_targets = qvd.qvc.known_targets
+        known_targets = qvd.qvc.known_targets,
+        with_debug_comments = arguments.gen_debug_comments
     )
 
     return 0
