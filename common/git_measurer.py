@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 
-from platform import (
+from common import (
     uname
 )
 from contextlib import (

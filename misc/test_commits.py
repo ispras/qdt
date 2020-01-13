@@ -27,6 +27,7 @@ from matplotlib import (
     pyplot as plt
 )
 from common import (
+    uname,
     Measurer,
     fast_repo_clone,
     ee,
@@ -39,9 +40,6 @@ from argparse import (
     ArgumentTypeError,
     ArgumentParser,
     ArgumentDefaultsHelpFormatter
-)
-from platform import (
-    uname
 )
 import qdt
 from traceback import (
