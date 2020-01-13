@@ -320,6 +320,22 @@ accuracy.
         self.gen_args(obj, pa_names = pa_names)
         self.gen_end(suffix = suffix)
 
+    def gen_instantiation(self, obj, **kw):
+        self.write(self.nameof(obj) + " = ")
+
+        try:
+            gen_code = obj.__gen_code__
+        except AttributeError:
+            if isinstance(obj, pythonizable):
+                self.pprint(obj)
+            else:
+                self.gen_code(obj, **kw)
+        else:
+            # deprecated API support
+            gen_code(self)
+
+        self.line()
+
     def pprint_list(self, val):
         self.line("[")
         self.push_indent()
