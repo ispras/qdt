@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 
-from platform import (
+from .compat import (
     uname
 )
 from contextlib import (
