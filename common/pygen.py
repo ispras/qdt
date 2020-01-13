@@ -3,6 +3,7 @@ __all__ = [
   , "pythonize"
   , "PyGenDepsVisitor"
       , "PyGenVisitor"
+      , "PyGenDepsCatcher"
   , "pythonizable"
   , "pygenerate"
 ]
@@ -25,6 +26,16 @@ from .visitor import (
     BreakVisiting,
     ObjectVisitor
 )
+from collections import (
+    deque
+)
+from inspect import (
+    isgeneratorfunction
+)
+from .ordered_set import (
+    OrderedSet
+)
+
 
 const_types = (float, text_type, binary_type, bool) + integer_types
 
@@ -123,14 +134,66 @@ class PyGenerator(CodeWriter):
     """ PyGenerator provides an API for serialization of objects in a Python
 script.
 
+    The goal is to produce a script, execution of which will result in a set
+of objects those are equivalent to original objects. However, `PyGenerator`
+only provides useful methods for it. Actual equivalence depends on user's
+accuracy.
+
     Each object must have:
 
-    - __gen_code__, a method that is given a `PyGenerator` instance. It should
-        use the instance to write Python code that is equivalent to the object.
+    - __pygen_pass__, a method that is given a `PyGenerator` instance and
+        current pass number >= 0 (see below)
 
-    - __pygen_deps__, an attribute that is used by `PyGenerator` to locate
-        objects this object does depend on. It must list names of
-        corresponding attributes. See `ObjectVisitor.field_name` description.
+    or
+
+    - __pygen_pass__, a generator that is given a `PyGenerator` instance and
+        `yield` statements separate generation passes
+
+Object serialization is performed pass by pass during `__pygen_pass__` method.
+It should use the `PyGenerator` instance to output Python code.
+
+The serialization is split into passes to support cyclic references between
+objects.
+The `pygen` implementation counts pass # internally for each object being
+serialized.
+Passes are separated by `return`s (if `__pygen_pass__` is a function) or
+`yield`s (if `__pygen_pass__` is a generator).
+But not every `return`/`yield` finishes the pass (see below).
+If an object finished serialization, its `__pygen_pass__` method must
+`return` nothing (i.e. `None`).
+A generator may either `yield None` or just `return`.
+
+Pass #0 is started unconditionally.
+If other objects (dependencies) are required to complete current pass or
+to begin next pass, a tuple must be `return`ed/`yield`ed.
+First part of the tuple should be an iterable of the dependencies.
+_The iterable can be empty if you wish to separate parts of code._
+Second part should be a boolean indicator of completion of current pass.
+`True` means the dependencies are for next pass and current pass finished.
+The next pass begins when all dependencies finished pass of same (or greater)
+number.
+`False` means the pass cannot be completed right now and should continue when
+all dependencies finished pass of same (or greater) number.
+If an object finished its serialization, it unconditionally satisfies everyone
+even if its last pass # was less.
+
+Objects must not require each other transitively with same pass #n
+(a dependency loop).
+A developer is responsible to cut dependency loops onto different passes.
+
+Normally, pass #0 generates a constructor invocation which gets references to
+other objects.
+Of course, pass #0 of that objects must finish before.
+Hence, dependent object first `yield`s ([list of deps], False).
+Its serialization will be paused until that deps all `yield` True (or
+finished).
+If at least one of them (or, transitively, one of its deps) yields the
+dependent object, then it's a dependency loop and the serialization fails.
+If there is a possibility of such a situation, a developer should do linkage
+during consequent passes.
+Consequent passes use implementation specific ways to setup references to
+objects those constructors (or other stages of initialization process)
+require reference to the current object.
 
     An object may have:
 
@@ -141,10 +204,14 @@ script.
     - __get_init_arg_val__, a method to transform values of arguments before
         serialization to Python. See `PyGenerator.gen_args`.
 
-    The goal is to produce a script, execution of which will result in a set
-of objects those are equivalent to original objects. However, `PyGenerator`
-only provides useful methods for it. Actual equivalence depends on user's
-accuracy.
+    (deprecated API) Each object must have:
+
+    - __gen_code__, a method that is given a `PyGenerator` instance. It should
+        use the instance to write Python code that is equivalent to the object.
+
+    - __pygen_deps__, an attribute that is used by `PyGenerator` to locate
+        objects this object does depend on. It must list names of
+        corresponding attributes. See `ObjectVisitor.field_name` description.
     """
 
     def reset(self):
@@ -438,6 +505,195 @@ def pythonize(root, path):
         _file.write(pygenerate(root).w.getvalue().encode("utf-8"))
 
 
-def pygenerate(root):
-    return PyGenVisitor(root).visit().gen
+EMPTY = tuple()
+
+
+def pygenerate(*objs):
+    # See `PyGenerator` for general algorithm description.
+
+    gen = PyGenerator()
+    gen.reset()
+
+    if not objs:
+        return gen
+
+    # pass_state[id(obj)]:
+    # [0] == [# of last passed pass of obj] - 1
+    # [1] is a coroutine that performs passes yielding dependencies for
+    #     next pass.
+    pass_state = {}
+
+    # Dependencies between generation passes of objects.
+    deps = dict() # id(user) -> dict(id(dep) -> required dep's pass #)
+    users = dict() # id(dep) -> OrderedSet(id(user))
+
+    # Registry of generated & skipped objects.
+    # This prevents garbage collection and re-usage of ids during
+    # generation.
+    # Also, this is used to lookup object by id of user.
+    keepalive = dict() # id(obj) -> obj
+
+    generated = set()
+
+    for obj in objs:
+        oid = id(obj)
+        if oid in pass_state:
+            # duplicating reference
+            continue
+
+        prepare_object(gen, pass_state, keepalive, obj)
+
+        # When obj's generation finished, dependent objects become ready.
+        # But there is no dependent object for starting objects.
+        users[oid] = EMPTY
+
+    while True:
+        ready = deque()
+
+        for obj in objs:
+            pygen_pass(gen, generated, pass_state, deps, users, ready,
+                keepalive, obj
+            )
+
+        if not ready:
+            if deps:
+                # TODO: output dependency graph
+                raise RuntimeError("Cross references")
+            break
+
+        objs = ready
+
+    return gen
+
+
+def pygen_pass(gen, generated, pass_state, deps, users, ready, keepalive, obj):
+    oid = id(obj)
+
+    # assert oid not in generated, "%s" % obj
+    # assert oid not in deps, "%s" % obj
+
+    p, pass_generator = pass_state[oid]
+
+    try:
+        pass_result = next(pass_generator)
+    except StopIteration:
+        pass_result = None
+
+    if pass_result is None:
+        generated.add(oid)
+
+        # No more passes will be for `obj`.
+        # All its users are satisfied unconditionally.
+        obj_users = users.pop(oid)
+        for uid in obj_users:
+            user_deps = deps[uid]
+            del user_deps[oid]
+
+            if not user_deps:
+                # This was last dependency of user.
+                # It's now ready for next pass.
+                del deps[uid]
+                ready.append(keepalive[uid])
+    else:
+        next_p = p + 1
+
+        next_pass_deps, pass_finished = pass_result
+        if pass_finished:
+            # pass #p of `obj` is finished, notify users
+            pass_state[oid][0] = next_p
+            obj_users = users[oid]
+            for uid in tuple(obj_users):
+                user_deps = deps[uid]
+
+                if next_p >= user_deps[oid]:
+                    del user_deps[oid]
+                    obj_users.remove(uid)
+
+                    if not user_deps:
+                        del deps[uid]
+                        ready.append(keepalive[uid])
+
+        # handle dependencies
+        obj_deps = {}
+        for dep in next_pass_deps:
+            dep_id = id(dep)
+
+            if dep_id in generated:
+                continue
+
+            dep_pass_state = pass_state.get(dep_id, None)
+
+            if dep_pass_state is None:
+                # new object
+                ready.append(dep)
+                dep_users = users[dep_id] = OrderedSet()
+                prepare_object(gen, pass_state, keepalive, dep)
+            elif dep_pass_state[0] >= next_p:
+                # The `dep`endency generation process is already far enough.
+                continue
+            else:
+                dep_users = users[dep_id]
+
+            obj_deps[dep_id] = next_p
+            dep_users.add(oid)
+
+        if obj_deps:
+            deps[oid] = obj_deps
+        else:
+            # All dependencies of `obj` is already satisfied,
+            # It can continue generation instantly.
+            ready.append(obj)
+
+
+def prepare_object(gen, pass_state, keepalive, obj):
+    oid = id(obj)
+    keepalive[oid] = obj
+
+    try:
+        gen_pass = obj.__pygen_pass__
+    except AttributeError:
+        pass_generator = default_gen_pass(obj, gen)
+    else:
+        if isgeneratorfunction(gen_pass):
+            pass_generator = gen_pass(gen)
+        else:
+            pass_generator = gen_pass_to_coroutine(gen_pass, gen)
+
+    pass_state[oid] = [0, pass_generator]
+
+
+class PyGenDepsCatcher(PyGenDepsVisitor):
+    "Gets dependencies according to deprecated `PyGenerator` API."
+
+    def __init__(self, root):
+        super(PyGenDepsCatcher, self).__init__(root)
+        self.deps = []
+
+    def on_visit(self):
+        cur = self.cur
+        if hasattr(cur, "__gen_code__") or hasattr(cur, "__pygen_pass__"):
+            self.deps.append(cur)
+            raise BreakVisiting()
+
+
+def default_gen_pass(obj, gen):
+    # deprecated API support
+    deps = PyGenDepsCatcher(obj).visit().deps
+
+    if deps:
+        yield deps, False
+
+    gen.gen_instantiation(obj)
+
+
+def gen_pass_to_coroutine(gen_pass, gen):
+    "Converts generation function to coroutine."
+
+    for p in count():
+        res = gen_pass(gen, p)
+
+        if res is None:
+            break # generation finished
+
+        yield res
 
