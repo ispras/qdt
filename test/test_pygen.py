@@ -46,7 +46,7 @@ class PyGeneratorTestHelper(object):
         else:
             try:
                 loaded = res[self._generator.nameof(self._original)]
-                eq = same(loaded, self._original)
+                eq = self._is_same(loaded)
             except:
                 print("\nLoaded object is bad:\n" + format_exc())
                 eq = False
@@ -58,6 +58,9 @@ class PyGeneratorTestHelper(object):
                 f.write(code)
 
         self.assertTrue(eq, "Loaded object differs.")
+
+    def _is_same(self, loaded):
+        return same(loaded, self._original)
 
 
 class TestDict(TestCase, PyGeneratorTestHelper):
@@ -205,6 +208,45 @@ class TestNotifier(TestCase, PyGeneratorTestHelper):
         self._original = ANotifier("a value", kwarg = "another value")
         self._namespace = dict(ANotifier = ANotifier)
 
+
+class Reference(object):
+
+    def __init__(self, target = None):
+        self.target = target
+
+    def __same__(self, o):
+        return same(self.target, o.target)
+
+    def __pygen_pass__(self, gen):
+        gen.line(gen.nameof(self) + " = " + type(self).__name__ + "()")
+
+        if self.target is not None:
+            yield [self.target], True
+
+            gen.line(gen.nameof(self) + ".target = " + gen.nameof(self.target))
+
+
+class TestCrossReference(PyGeneratorTestHelper, TestCase):
+
+    def setUp(self):
+        r0 = Reference()
+        r1 = Reference(r0)
+        r0.target = r1
+
+        self._original = r0
+        self._namespace = dict(Reference = Reference)
+
+    def _is_same(self, loaded):
+        try:
+            super(TestCrossReference, self)._is_same(loaded)
+        except RecursionError:
+            # TODO: `same` does not support comparison of object graphs with
+            # loops. If it raises `RecursionError` that the reference loop is
+            # likely successfully saved and loaded. It is the point of this
+            # test case.
+            return True
+        else:
+            return False
 
 if __name__ == "__main__":
     main()
