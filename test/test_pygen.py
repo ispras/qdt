@@ -10,7 +10,7 @@ from common import (
     ee,
     intervalmap,
     same,
-    PyGenVisitor
+    pygenerate,
 )
 from traceback import (
     format_exc
@@ -34,7 +34,7 @@ verbose_dir = join(dirname(__file__), "pygen_code")
 class PyGeneratorTestHelper(object):
 
     def test(self):
-        self._generator = gen = PyGenVisitor(self._original).visit().gen
+        self._generator = gen = pygenerate(self._original)
         buf = gen.w
         code = buf.getvalue()
         res = {}
