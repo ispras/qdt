@@ -4,6 +4,7 @@ __all__ = [
   , "charcodes"
   , "characters"
   , "HelpFormatter"
+  , "uname"
 ]
 
 from .pypath import (
@@ -12,6 +13,9 @@ from .pypath import (
 )
 from os.path import (
     dirname
+)
+from platform import (
+    uname as platform_uname
 )
 
 from six import (
@@ -93,3 +97,7 @@ for flags.
         if isinstance(action, (_CountAction, _StoreConstAction)):
             return action.help
         return super(HelpFormatter, self)._get_help_string(action)
+
+
+def uname():
+    return tuple(platform_uname())
