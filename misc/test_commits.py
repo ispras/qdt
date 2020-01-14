@@ -156,10 +156,16 @@ class Plot(object):
             _avg = 0
             _err = 0
         else:
-            _avg = sum(self.mes) / _len
+            # median filtering with a window size 3 and looped edges
+            mes = [self.mes[-1]] + self.mes + [self.mes[0]]
+            smes = [None] * _len
+            for i in range(0, _len):
+                smes[i] = sorted(mes[i:i + 3])[1]
+
+            _avg = sum(smes) / _len
 
             _err = 0
-            for t in self.mes:
+            for t in smes:
                 _err += (t - _avg) ** 2
             _err = sqrt(_err / _len)
 
