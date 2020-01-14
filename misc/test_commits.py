@@ -9,6 +9,7 @@ from subprocess import (
     Popen
 )
 from os.path import (
+    getmtime,
     join,
     isfile,
     isdir,
@@ -16,9 +17,12 @@ from os.path import (
     dirname
 )
 from shutil import (
-    copyfile,
+    copy,
     copytree,
     rmtree
+)
+from glob import (
+    glob
 )
 from time import (
     time
@@ -27,6 +31,7 @@ from matplotlib import (
     pyplot as plt
 )
 from common import (
+    uname,
     Measurer,
     fast_repo_clone,
     ee,
@@ -39,9 +44,6 @@ from argparse import (
     ArgumentTypeError,
     ArgumentParser,
     ArgumentDefaultsHelpFormatter
-)
-from platform import (
-    uname
 )
 import qdt
 from traceback import (
@@ -65,6 +67,9 @@ from collections import (
 )
 from contextlib import (
     contextmanager
+)
+from math import (
+    sqrt
 )
 
 
@@ -149,37 +154,34 @@ class Plot(object):
             self.yerr.append(0)
             self.commits.append("-")
 
-        _sum = 0.0
-        _len = 0
-
-        for t in self.mes:
-            _len += 1
-            _sum += t
+        _len = len(self.mes)
 
         if _len == 0:
             _avg = 0
-        else:
-            _avg = _sum / _len
-
-        _err = 0
-
-        for t in self.mes:
-            _err += (t - _avg) ** 2
-
-        if _len == 0:
             _err = 0
         else:
-            _err /= _len
+            # median filtering with a window size 3 and looped edges
+            mes = [self.mes[-1]] + self.mes + [self.mes[0]]
+            smes = [None] * _len
+            for i in range(0, _len):
+                smes[i] = sorted(mes[i:i + 3])[1]
+
+            _avg = sum(smes) / _len
+
+            _err = 0
+            for t in smes:
+                _err += (t - _avg) ** 2
+            _err = sqrt(_err / _len)
 
         t_fmt = "%%.%uf" % accuracy(_err)
 
         self.commits.append((
-                "%s\n%s--\nlaunches = %u, avg. t = " + t_fmt + " sec, err = "
-                +t_fmt + " sec"
-            ) % (
-                sha1, message, _len, _avg, _err
-            )
-        )
+            "%s\n%s--\nlaunches = %u, " +
+            "avg. t = " + t_fmt + " sec, " +
+            "err = " + t_fmt + " sec"
+        ) % (
+            sha1, message, _len, _avg, _err
+        ))
 
         self.xcoords.append(x)
         self.ycoords.append(_avg)
@@ -202,8 +204,6 @@ def plot_measurements(repo, ctx, commit_seq):
                 # TODO: different plot (graph)
                 continue
             if res: # failed, do not show
-                continue
-            if not cache_ready: # cache building, too long
                 continue
 
             plots[env].mes.append(t)
@@ -335,7 +335,9 @@ class QDTMeasurer(Measurer):
 
         self.diffs = diffs
 
-        self.qvc = "qvc_%s.py" % qemugit.commit(project.target_version).hexsha
+        self.qvc_pattern = (
+            "qvc*_%s.py" % qemugit.commit(project.target_version).hexsha
+        )
 
     def __enter__(self):
         print("Checking Qemu out...")
@@ -373,6 +375,10 @@ class QDTMeasurer(Measurer):
                 )
             )
 
+        if self.caches is not None:
+            for cache in glob(join(self.caches, self.qvc_pattern)):
+                copy(cache, tmp_build)
+
         print("Backing Qemu configuration...")
         self.q_back = q_back = mkdtemp(
             prefix = "qemu-%s-back-" % self.qproject.target_version
@@ -409,12 +415,6 @@ class QDTMeasurer(Measurer):
 
         Popen(cmds, cwd = qdt_cwd, env = dict(TEST_STARTUP_ENV)).wait()
 
-        if ctx.caches is not None and join(ctx.caches, ctx.qvc):
-            # use existing cache
-            ctx.qv_cache = join(ctx.caches, ctx.qvc)
-        else:
-            ctx.qv_cache = None
-
         try:
             yield self
         finally:
@@ -436,20 +436,6 @@ class QDTMeasurer(Measurer):
         yield "machine", ctx.machine
         yield "env", ctx.env_name
         yield "i", ctx.launch_number
-
-        print("Preparing CWD...")
-
-        qv_cache = ctx.qv_cache
-
-        if qv_cache:
-            # restore cache
-            copyfile(
-                qv_cache,
-                join(ctx.tmp_build, ctx.qvc)
-            )
-            yield "cache_ready", True
-        else:
-            yield "cache_ready", False
 
         print("Measuring...")
         cmds = [
@@ -484,11 +470,21 @@ class QDTMeasurer(Measurer):
                 print("Command was:")
                 print(" ".join(cmds))
 
-        if qv_cache is None:
-            # preserve cache
-            qv_cache = join(ctx.clone.working_tree_dir, ctx.qvc)
-            copyfile(join(ctx.tmp_build, ctx.qvc), qv_cache)
-            ctx.qv_cache = qv_cache
+        cache_changed = False
+
+        if ctx.errors:
+            # preserve cache from bad version to allow the user to analyze it
+            cache_preserve_path = ctx.clone.working_tree_dir
+        else:
+            # preserve cache for next runs
+            cache_preserve_path = join(ctx.q_back, "build")
+
+        for cache in glob(join(ctx.tmp_build, ctx.qvc_pattern)):
+            if getmtime(cache) > t0:
+                cache_changed = True
+                copy(cache, cache_preserve_path)
+
+        yield "cache_ready", not cache_changed
 
         print("Running test...")
 
