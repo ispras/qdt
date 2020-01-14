@@ -150,26 +150,17 @@ class Plot(object):
             self.yerr.append(0)
             self.commits.append("-")
 
-        _sum = 0.0
-        _len = 0
-
-        for t in self.mes:
-            _len += 1
-            _sum += t
+        _len = len(self.mes)
 
         if _len == 0:
             _avg = 0
-        else:
-            _avg = _sum / _len
-
-        _err = 0
-
-        for t in self.mes:
-            _err += (t - _avg) ** 2
-
-        if _len == 0:
             _err = 0
         else:
+            _avg = sum(self.mes) / _len
+
+            _err = 0
+            for t in self.mes:
+                _err += (t - _avg) ** 2
             _err = sqrt(_err / _len)
 
         t_fmt = "%%.%uf" % accuracy(_err)
