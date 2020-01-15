@@ -28,6 +28,12 @@ from traceback import (
 from six import (
     StringIO
 )
+from .os_wrappers import (
+    ee
+)
+
+
+PROFILE_COTASK = ee("QDT_PROFILE_COTASK")
 
 
 class FailedCallee(RuntimeError):
@@ -215,7 +221,7 @@ after last statement in the corresponding callable object.
                     ready = True
 
             ti = t1 - t0
-            if ti > 0.05:
+            if PROFILE_COTASK and ti > 0.05:
                 sys.stderr.write("Task %s consumed %f sec during iteration "
                     # file:line is the line reference format supported by
                     # Eclipse IDE Console.
