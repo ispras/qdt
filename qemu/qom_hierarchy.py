@@ -21,6 +21,9 @@ from os.path import (
 from subprocess import (
     Popen
 )
+from time import (
+    time
+)
 # use ours pyrsp
 with pypath("..pyrsp"):
     from pyrsp.rsp import (
@@ -119,7 +122,7 @@ def co_fill_children(qomtr_node, qtype_node, arch):
         yield co_fill_children(c, qt, arch)
 
 
-def co_update_device_tree(qemu_exec, src_path, arch_name, root):
+def co_update_device_tree(qemu_exec, src_path, arch_name, root, timeout = 5.):
     dic = create_dwarf_cache(qemu_exec)
 
     gvl_adptr = GitLineVersionAdapter(src_path)
@@ -132,7 +135,7 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     port = find_free_port(4321)
     qemu_debug_addr = "localhost:%u" % port
-    Popen(["gdbserver", qemu_debug_addr, qemu_exec])
+    proc = Popen(["gdbserver", qemu_debug_addr, qemu_exec])
 
     if not wait_for_tcp_port(port):
         raise RuntimeError("gdbserver does not listen %u" % port)
@@ -144,7 +147,29 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     qomtr.init_runtime(rt)
 
-    yield rt.co_run_target()
+    thread = rt.run_by_thread()
+
+    # `Runtime.version` is incremented each time the debug target (Qemu) is
+    # resumed (e.g. after a breakpoint). It's known that normally during QOM
+    # tree instantiation many types are registered per second. Each triggers a
+    # breakpoint. Hence, if no breakpoint triggered during few seconds then
+    # something is likely went wrong and the process should be stopped.
+    prev_ver, prev_t = rt.version, time()
+    while thread.isAlive():
+        if rt.version == prev_ver:
+            if time() - prev_t > timeout:
+                print("Stop QOM tree getting because no breakpoint reached"
+                    " during %f seconds" % timeout
+                )
+                proc.terminate()
+                # Wait until RSP client fails and its thread terminates.
+                # XXX: but it does no
+                while thread.isAlive():
+                    yield False
+                break
+        else:
+            prev_ver, prev_t = rt.version, time()
+            yield False
 
     device_subtree = qomtr.tree.name2type.get("device", None)
 
