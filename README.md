@@ -793,3 +793,15 @@ For example:
 
 PYTHONPATH=".." python canvas_frame_test.py
 ```
+
+## Development tips
+
+### Environment variables
+
+Environment variables affect operation of QDT modules and tools.
+Commonly, a value is an `eval`uated Python expression which must return
+a boolean.
+
+* `QDT_PROFILE_COTASK`: turns on messages about coroutine-like tasks
+    that consumed too many time between `yield`s.
+* `grep` for `ee(` for other.
