@@ -135,25 +135,25 @@ not actual now.
         return val
 
     def co_run_target(self):
-        target = self.target
-
-        def run():
-            try:
-                target.run(setpc = False)
-            except:
-                print_exc()
-                print("Target PC 0x%x" % (self.get_reg(self.pc)))
-
-            try:
-                target.send(b"k")
-            except:
-                print_exc()
-
-        t = Thread(target = run)
+        t = Thread(target = self.run)
         t.start()
 
         while t.isAlive():
             yield False
+
+    def run(self):
+        target = self.target
+
+        try:
+            target.run(setpc = False)
+        except:
+            print_exc()
+            print("Target PC 0x%x" % (self.get_reg(self.pc)))
+
+        try:
+            target.send(b"k")
+        except:
+            print_exc()
 
     @cached
     def returned_value(self):
