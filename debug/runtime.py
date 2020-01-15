@@ -140,8 +140,8 @@ not actual now.
         while t.isAlive():
             yield False
 
-    def run_by_thread(self):
-        t = Thread(target = self.run)
+    def run_by_thread(self, thread_name = "Debugger"):
+        t = Thread(target = self.run, name = thread_name)
         t.start()
         return t
 
