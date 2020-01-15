@@ -135,11 +135,15 @@ not actual now.
         return val
 
     def co_run_target(self):
-        t = Thread(target = self.run)
-        t.start()
+        t = self.run_by_thread()
 
         while t.isAlive():
             yield False
+
+    def run_by_thread(self):
+        t = Thread(target = self.run)
+        t.start()
+        return t
 
     def run(self):
         target = self.target
