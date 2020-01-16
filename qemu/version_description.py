@@ -21,6 +21,7 @@ from source import (
     Macro
 )
 from common import (
+    get_cleaner,
     lazy,
     CancelledCallee,
     FailedCallee,
@@ -622,6 +623,12 @@ class QemuVersionDescription(object):
             tmp_repo = fast_repo_clone(self.repo, self.commit_sha, "qdt-qemu")
             tmp_work_dir = tmp_repo.working_tree_dir
 
+            # Qemu source tree analysis is too long process and temporary
+            # clone of Qemu is big enough. If the process is terminated, the
+            # clone junks file system. Use `Cleaner`, a dedicated process,
+            # to remove the clone in that case.
+            clean_work_dir_task = get_cleaner().rmtree(tmp_work_dir)
+
             print("Temporary source tree: %s" % tmp_work_dir)
 
             # make new QVC active and begin construction
@@ -634,6 +641,7 @@ class QemuVersionDescription(object):
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
             rmtree(tmp_work_dir)
+            get_cleaner().cancel(clean_work_dir_task)
 
             yield self.co_init_device_tree()
 
