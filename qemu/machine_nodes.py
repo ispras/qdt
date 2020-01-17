@@ -479,11 +479,20 @@ class DeviceNode(Node):
                 + ")"
             )
         gen.gen_end(suffix = "])")
+        gen.line()
 
-    def __gen_code__(self, gen):
-        super(DeviceNode, self).__gen_code__(gen)
+    def __pygen_pass__(self, gen):
+        if self.parent_bus is not None:
+            yield [self.parent_bus], False
+        gen.gen_instantiation(self)
+        yield self.links, True
         self.gen_props(gen)
 
+    # TODO: this is still required for ordering during machine initialization
+    # function generation. See Node.__dfs_children__
+    # TODO: we still cannot generate machine with cross references but we can
+    # construct and save description of such a machine.
+    # See: DeviceNode.__pygen_pass__
     __pygen_deps__ = ("parent_bus", "links")
 
     @property
