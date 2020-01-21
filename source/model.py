@@ -1798,9 +1798,13 @@ model yet. Better implement required functionality and submit patches!
         self.code = code
 
         # Items are just passed to code generator to get referenced chunks.
-        self.used = set() if used_types is None else set(used_types)
-        if used_variables is not None:
-            self.used.update(used_variables)
+        self.used_types = set() if used_types is None else set(used_types)
+        self.used_variables = (
+            [] if used_variables is None else list(used_variables)
+        )
+
+        for i in self.used_variables:
+            i.used = True
 
         self.weight = weight
 
@@ -1809,10 +1813,16 @@ model yet. Better implement required functionality and submit patches!
     def gen_chunks(self, generator):
         ch = OpaqueChunk(self)
 
-        for item in self.used:
-            ch.add_references(generator.provide_chunks(item))
+        for t in self.used_types:
+            ch.add_references(generator.provide_chunks(t))
+
+        for v in self.used_variables:
+            # Note that 0-th chunk is the global and rest are its dependencies
+            ch.add_reference(generator.provide_chunks(v)[0])
 
         return [ch]
+
+    __type_references__ = ["used_types"]
 
 
 # Data models
