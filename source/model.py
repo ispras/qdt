@@ -511,8 +511,17 @@ switching to that mode.
                             # defined in the current file.
                             t.definer_references.add(ref)
                         else:
-                            for self_ref in self.references:
-                                if self_ref is ref:
+                            # Definer of a foreign type (t) may depend on a
+                            # foreign type (ref) from another file, which will
+                            # be included in resulting file (since we use some
+                            # type from it). In this case, inclusion of that
+                            # definer must be placed below the inclusion of
+                            # another file in resulting file.
+                            for tt in l:
+                                if not isinstance(tt, TypeReference):
+                                    continue
+                                if ref.definer is tt.type.definer:
+                                    t.definer_references.add(ref)
                                     break
                             else:
                                 self.references.add(ref)
