@@ -325,10 +325,8 @@ class Source(object):
                 % (var, self.name)
             )
 
-        fixer = TypeFixerVisitor(self, var).visit()
+        TypeFixerVisitor(self, var).visit()
 
-        # Auto add references to types this variable does depend on
-        self.add_references(tr.type for tr in fixer.new_type_references)
         # Auto add definers for types used by variable initializer
         if type(self) is Source: # exactly a module, not a header
             if var.definer is not None:
@@ -444,10 +442,7 @@ class Source(object):
         # Note, replacement of foreign types with `TypeReference` is actually
         # not required right now (see `gen_chunks`).
 
-        fixer = TypeFixerVisitor(self, _type).visit()
-
-        # Auto add references to types this one does depend on
-        self.add_references(tr.type for tr in fixer.new_type_references)
+        TypeFixerVisitor(self, _type).visit()
 
         # Addition of a required type does satisfy the dependence.
         if _type in self.references:
@@ -477,9 +472,7 @@ switching to that mode.
 
         # Finally, we must fix types just before generation because user can
         # change already added types.
-        fixer = TypeFixerVisitor(self, self).visit()
-
-        self.add_references(tr.type for tr in fixer.new_type_references)
+        TypeFixerVisitor(self, self).visit()
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
@@ -2117,6 +2110,14 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 self.new_type_references.append(tr)
 
             self.replace(tr)
+
+    def visit(self):
+        ret = super(TypeFixerVisitor, self).visit()
+
+        # Auto add references to types this type_object does depend on
+        self.source.add_references(tr.type for tr in self.new_type_references)
+
+        return ret
 
     """
     CopyVisitor is now used for true copying function body arguments
