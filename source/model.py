@@ -2742,6 +2742,21 @@ digraph Chunks {
 """
         )
 
+        if self.origin.references:
+            def ref_node_name(ref, mapping = {}, counter = count(0)):
+                try:
+                    name = mapping[ref]
+                except KeyError:
+                    name = "ref_%u" % next(counter)
+                    mapping[ref] = name
+                return name
+
+            w.write("    /* Source references */\n")
+            for ref in self.origin.references:
+                w.write('    %s [style=dashed label="%s"]\n\n' % (
+                    ref_node_name(ref), ref
+                ))
+
         w.write("    /* Chunks */\n")
 
         def chunk_node_name(chunk, mapping = {}, counter = count(0)):
