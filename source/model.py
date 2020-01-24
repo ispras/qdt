@@ -326,7 +326,6 @@ class Source(object):
 
         TypeFixerVisitor(self, var).visit()
 
-        # Auto add definers for types used by variable initializer
         if type(self) is Source: # exactly a module, not a header
             if var.definer is not None:
                 raise RuntimeError(
