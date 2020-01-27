@@ -69,8 +69,11 @@ transparent.
 # "Function factory" approach is used to meet "late binding" problem.
 # http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop/
 
-def gen_event_helpers(wrapped_init, cb_list_name):
-    init_wrapper = gen_init_wrapper(wrapped_init, cb_list_name)
+def gen_event_helpers(klass, event):
+    # Callback list is private.
+    cb_list_name = "_" + klass.__name__ + "__" + event
+
+    init_wrapper = gen_init_wrapper(klass.__init__, cb_list_name)
 
     def add_callback(self, callback):
         getattr(self, cb_list_name).append(callback)
@@ -92,11 +95,8 @@ def gen_event_helpers(wrapped_init, cb_list_name):
 def notifier(*events):
     def add_events(klass, events = events):
         for event in events:
-            # Callback list is private.
-            cb_list_name = "_" + klass.__name__ + "__" + event
-
             __init_wrapper__, add_callback, remove_callback, __notify = \
-                gen_event_helpers(klass.__init__, cb_list_name
+                gen_event_helpers(klass, event
             )
 
             klass.__init__ = __init_wrapper__
