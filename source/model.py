@@ -150,6 +150,7 @@ class ChunkGenerator(object):
     def __init__(self, definer):
         self.chunk_cache = { definer: [], CPP: [] }
         self.for_header = isinstance(definer, Header)
+        self.references = definer.references
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
@@ -233,10 +234,8 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
-            elif (    SKIP_GLOBAL_HEADERS
-                  and isinstance(origin, TypeReference)
-                  and self.for_header
-                  and origin.type.definer.is_global
+            elif (    isinstance(origin, TypeReference)
+                  and origin.type in self.references
             ):
                 chunks = []
             else:
@@ -2104,7 +2103,13 @@ class TypeFixerVisitor(TypeReferencesVisitor):
         ret = super(TypeFixerVisitor, self).visit()
 
         # Auto add references to types this type_object does depend on
-        self.source.add_references(tr.type for tr in self.new_type_references)
+        s = self.source
+        if isinstance(s, Header) and SKIP_GLOBAL_HEADERS:
+            for tr in self.new_type_references:
+                t = tr.type
+                definer = t.definer
+                if isinstance(definer, Header) and definer.is_global:
+                    s.references.add(t)
 
         return ret
 
