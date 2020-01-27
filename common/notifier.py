@@ -55,7 +55,6 @@ transparent.
     # Define callback list before calling of original __init__ to allow
     # it assign watchers.
     code += "    setattr(self, '" + cb_list_name + "', [])\n"
-    # code += "    print(wrapped_init)\n"
     code += "    wrapped_init(" + ", ".join(arg_to_init) + ")\n"
 
     if ee("QDT_DEBUG_NOTIFIER"):
@@ -81,8 +80,9 @@ def gen_event_helpers(wrapped_init, cb_list_name):
 
     def notify(self, *args, **kw):
         callbacks = getattr(self, cb_list_name)
-        """ Because listeners could add and/or remove callbacks during
-        notification, the listener list should be copied before the process. """
+        # Because a listener (callback) can add and/or remove
+        # listeners during operation, the listener list must be
+        # copied before the process.
         for callback in list(callbacks):
             # Callback denial does not take effect during current notification.
             callback(*args, **kw)
@@ -103,16 +103,14 @@ def notifier(*events):
             setattr(klass, "watch_" + event, add_callback)
             setattr(klass, "unwatch_" + event, remove_callback)
 
-            """ Notification method must be private.
+            # Notification method is private.
 
-About private methods:
-http://stackoverflow.com/questions/9990454
-https://docs.python.org/3/reference/expressions.html#atom-identifiers
-            """
+            # About private methods:
+            # http://stackoverflow.com/questions/9990454
+            # https://docs.python.org/3/reference/expressions.html#atom-identifiers
 
-            """ XXX: is there a recommended method to define class private
-            methods externally? While external definition of class private
-            methods is not recommended. """
+            # XXX: is there a recommended method to define class private
+            # methods externally?
             notify_name = "_" + klass.__name__ + "__notify_" + event
             setattr(klass, notify_name, __notify)
 
