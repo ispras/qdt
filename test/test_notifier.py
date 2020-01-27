@@ -53,6 +53,28 @@ class TestNotifier(TestCase):
 
         self.assertEqual(n2._events, ("event1", "event2"))
 
+@notifier("e")
+class N(object):
+
+    def e(self):
+        self.__notify_e()
+
 
 if __name__ == "__main__":
+
+    print(__file__)
+
+    from time import sleep
+
+    def cb():
+        print("cb")
+        sleep(1.)
+
+    n = N()
+    n.watch("e", cb)
+    n.e()
+    del n
+
+
+
     main()
