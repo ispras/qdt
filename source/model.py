@@ -430,7 +430,12 @@ class Source(object):
             )
 
         _type.definer = self
-        self.types[_type.name] = _type
+        if _type.is_named:
+            self.types[_type.name] = _type
+        else:
+            # Register the type with any name in order to be able to generate
+            # its chunks.
+            self.types[".anonymous" + str(id(_type))] = _type
 
         # Some types (like `Enumeration`) contains types without definer or
         # may reference to other just created types.
