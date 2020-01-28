@@ -5,6 +5,7 @@ __all__ = [
   , "characters"
   , "HelpFormatter"
   , "uname"
+  , "RecursionError"
 ]
 
 from .pypath import (
@@ -19,6 +20,7 @@ from platform import (
 )
 
 from six import (
+    PY2,
     PY3
 )
 from six.moves import (
@@ -101,3 +103,10 @@ for flags.
 
 def uname():
     return tuple(platform_uname())
+
+if PY2:
+    RecursionError = RuntimeError
+else:
+    # Under Py3 `RecursionError` is builtin.
+    # This assignment adds that name to module as declared by `__all__`.
+    RecursionError = RecursionError
