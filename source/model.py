@@ -2862,6 +2862,10 @@ digraph Chunks {
         w.write("}\n")
 
     def gen_chunks_gv_file(self, file_name):
+        # semantic sort
+        self.chunks = OrderedSet(sorted(self.chunks))
+        self.sort_chunks()
+
         f = open(file_name, "w")
         self.gen_chunks_graph(f)
         f.close()
