@@ -2875,8 +2875,10 @@ digraph Chunks {
         w.write("}\n")
 
     def gen_chunks_gv_file(self, file_name):
+        chunks = sort_chunks(OrderedSet(sorted(self.chunks)))
+
         f = open(file_name, "w")
-        self.gen_chunks_graph(f, self.chunks)
+        self.gen_chunks_graph(f, chunks)
         f.close()
 
     def remove_dup_chunk(self, ch, ch_remove):
