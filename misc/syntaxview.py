@@ -136,7 +136,8 @@ def main():
 
         for lexer, parser in [
             (backslash_lexer, backslash_parser),
-            (cpp_lexer, cpp_parser),
+            # (cpp_lexer, cpp_parser),
+            (ctags_lexer, ctags_parser),
         ]:
             res = do_stage(content, lexer, parser)
 
