@@ -6,6 +6,7 @@ from examples import (
     Q35Project_2_6_0
 )
 from common import (
+    RecursionError,
     notifier,
     ee,
     intervalmap,
