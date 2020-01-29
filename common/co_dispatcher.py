@@ -2,6 +2,8 @@ __all__ = [
 # RuntimeError
     "FailedCallee"
   , "CancelledCallee"
+# BaseException
+  , "CoReturn"
 # IOError
   , "IOException"
 # object
@@ -84,6 +86,8 @@ class CoTask(object):
         self.gi_frame = None
         # Exception to be injected into that task at current `yield`.
         self._to_raise = None
+        # Value returned by callee. It's returned by `yield`
+        self._co_ret = None
 
     @property
     def traceback_lines(self):
@@ -209,16 +213,25 @@ after last statement in the corresponding callable object.
 
             try:
                 if to_raise is None:
-                    t0 = time()
+                    co_ret = task._co_ret
 
-                    ret = next(generator)
+                    if co_ret is None:
+                        t0 = time()
+
+                        ret = next(generator)
+                    else:
+                        task._co_ret = None
+
+                        t0 = time()
+
+                        ret = generator.send(co_ret)
                 else:
                     task._to_raise = None
 
                     t0 = time()
 
                     ret = generator.throw(type(to_raise), to_raise)
-            except StopIteration:
+            except (StopIteration, CoReturn) as e:
                 t1 = time()
 
                 traceback = sys.exc_info()[2].tb_next
@@ -236,7 +249,12 @@ after last statement in the corresponding callable object.
                 else:
                     lineno = traceback.tb_frame.f_lineno
 
-                finished.append(task)
+                if isinstance(e, CoReturn):
+                    co_ret = e.args[0]
+                else:
+                    co_ret = None
+
+                finished.append((task, co_ret))
             except Exception as e:
                 t1 = time()
 
@@ -278,7 +296,7 @@ after last statement in the corresponding callable object.
 
             task.lineno = lineno
 
-        for task in finished:
+        for task, co_ret in finished:
             self.__finish__(task)
 
             try:
@@ -291,6 +309,7 @@ after last statement in the corresponding callable object.
             for caller in callers:
                 del self.callers[caller]
                 self.tasks.insert(0, caller)
+                caller._co_ret = co_ret
 
         for caller, callee in calls:
             # Cast callee to CoTask
@@ -497,3 +516,16 @@ def callco(co, delay = default):
         disp.dispatch_all()
     else:
         disp.dispatch_all(delay = delay)
+
+
+# TODO: There is no _known_ both Py3 & Py2 compatible way to `return` a
+# value from a coroutine without specific exception class.
+# See: misc/co_return.py
+
+# Note, `CoReturn` is not an _exception_ by meaning. It's a technique to
+# return a value from a generator.
+# So, it is derived from `BaseException`.
+class CoReturn(BaseException):
+    """ Use `CoReturn(value)` to return the value from callee. The caller's
+`yield` will return the value.
+    """
