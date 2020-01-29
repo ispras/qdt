@@ -21,6 +21,7 @@ from source import (
     Macro
 )
 from common import (
+    co_process,
     get_cleaner,
     lazy,
     CancelledCallee,
@@ -620,7 +621,13 @@ class QemuVersionDescription(object):
             # GIT_WORK_TREE environment variables. But, this approach resets
             # staged files in src_path repository which can be inconvenient
             # for a user.
-            tmp_repo = fast_repo_clone(self.repo, self.commit_sha, "qdt-qemu")
+            # `fast_repo_clone` relies on external library functions which
+            # grab control for a long time. Hence, we should call it in a
+            # dedicated process.
+            tmp_repo = yield co_process(
+                fast_repo_clone,
+                self.repo, self.commit_sha, "qdt-qemu"
+            )
             tmp_work_dir = tmp_repo.working_tree_dir
 
             # Qemu source tree analysis is too long process and temporary
