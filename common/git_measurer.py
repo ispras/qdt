@@ -27,6 +27,9 @@ from .lazy import (
 from traceback import (
     print_exc
 )
+from .cleaner import (
+    get_cleaner
+)
 
 
 @contextmanager
@@ -66,6 +69,7 @@ Roles of those methods are described in base method implementations below.
 
         self.base_sha = repo.commit(base).hexsha
         self.current_sha = repo.commit(current).hexsha
+        self.cleaner = get_cleaner()
 
     def __enter__(self):
         """ Called before any measuring. It MUST initialize and return a global
@@ -194,6 +198,7 @@ measurement is natively stopped.
                 )
 
                 clone = fast_repo_clone(self.repo, sha1, self.clone_prefix)
+                clean_task = self.cleaner(rmtree, clone.working_tree_dir)
                 gctx.clone = clone
 
                 try:
@@ -203,9 +208,10 @@ measurement is natively stopped.
                     errors = True
                     raise
                 finally:
+                    # allow user to work with bad version
                     if not errors or self._internal_error:
-                        # allow user to work with bad version
                         rmtree(clone.working_tree_dir)
+                    self.cleaner.cancel(clean_task)
 
                 if self._internal_error:
                     break
