@@ -11,6 +11,9 @@ from multiprocessing import (
 from os import (
     getpid
 )
+from os.path import (
+    exists
+)
 from psutil import (
     pid_exists
 )
@@ -135,8 +138,16 @@ Returns internal id that can be used to `cancel` the call.
 
     # Some helpers
 
-    def rmtree(self, path):
-        return self.schedule(rmtree, path)
+    def rmtree(self, path, absent_ok = False):
+        if absent_ok:
+            return self.schedule(rmtree_existing, path)
+        else:
+            return self.schedule(rmtree, path)
+
+
+def rmtree_existing(path):
+    if exists(path):
+        rmtree(path)
 
 
 def get_cleaner(*defult_args, **default_kw):
