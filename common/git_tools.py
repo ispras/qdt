@@ -19,7 +19,11 @@ from tempfile import (
     mkdtemp
 )
 from os.path import (
+    exists,
     join
+)
+from git import (
+    Repo
 )
 
 
@@ -205,33 +209,63 @@ as fast as possible. A clone is neither honest nor independent, so be careful.
 
     git.checkout(version, force = True)
 
-    # Submodules also must be recursively initialized. But straightforward
+    # Submodules also are recursively initialized. But straightforward
     # invocation of of "update --init" command will result in downloading of
     # submodules history. Instead, submodules URLs are redirected to local
-    # history copies inside original repo. As a result, submodules
+    # history copies inside original repo (if exist). As a result, submodules
     # initialization is done without redundant copying.
     # However! ".gitmodules" file is considered changed by Git because of that
     # redirection.
 
-    # TODO: it must be done for submodules of submodules too (recursively).
+    init_submodules_from_cache(new_repo,
+        join(repo.working_tree_dir, ".git", "modules")
+    )
 
-    # This works incorrect with `recursive = True` because "--recursive" is
-    # added before "status"
-    status = git.submodule("status", "--recursive")
+    return new_repo
 
-    submodules = []
-    for l in status.splitlines(False):
-        submodules.append(l.split(' ')[1])
+def init_submodules_from_cache(repo, cache_dir):
+    git = repo.git
 
-    if submodules:
-        for sm in submodules:
+    if not exists(join(repo.working_tree_dir, ".gitmodules")):
+        # Has no modules
+        return
+
+    submodules = {}
+
+    out = git.config(l = True, file = ".gitmodules")
+    lines = out.splitlines(False)
+    for l in lines:
+        if not l.startswith("submodule."):
+            continue
+        full_key, value = l[10:].split("=", 1)
+        # Note that name of a submodule may contain dots while dot is
+        # also separator in `full_key`.
+        for prop in (".url", ".path"):
+            if full_key.endswith(prop):
+                name = full_key[:-len(prop)]
+                submodules.setdefault(name, {})[prop] = value
+
+    for sm, props in submodules.items():
+        sub_cache = join(cache_dir, sm)
+        # If path is absent, it's considered equal to name.
+        sm_path = props.get(".path", sm)
+
+        if exists(sub_cache):
             # https://stackoverflow.com/a/30675130/7623015
             git.config(
                 "submodule." + sm + ".url",
-                join(repo.working_tree_dir, ".git", "modules", sm),
+                sub_cache,
                 file = ".gitmodules"
             )
+        else:
+            print("Submodule %s has no cache at '%s'."
+                  " Default URL will be used." % (
+                    sm if sm == sm_path else ("%s (%s)" % (sm, sm_path)),
+                    sub_cache
+                )
+            )
 
-        git.submodule("update", "--init", "--recursive")
+        git.submodule("update", "--init", sm_path)
 
-    return new_repo
+        sub_repo = Repo(join(repo.working_tree_dir, sm_path))
+        init_submodules_from_cache(sub_repo, join(sub_cache, "modules"))
