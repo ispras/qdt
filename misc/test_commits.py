@@ -356,6 +356,10 @@ class QDTMeasurer(Measurer):
             prefix = "qemu"
         )
 
+        # 1: Instead of canceling cleaning just ignore directory absence.
+        # It's easy to forget cancel the cleaning in future.
+        self.cleaner.rmtree(qemuwc.working_tree_dir, absent_ok = True)
+
         # `fast_repo_clone` changes `.gitmodules` file. This change is not
         # required for consequent operation. So, revert it to avoid junk in
         # diff files.
@@ -364,6 +368,8 @@ class QDTMeasurer(Measurer):
         self.tmp_build = tmp_build = mkdtemp(
             prefix = "qemu-%s-build-" % self.qproject.target_version
         )
+
+        self.cleaner.rmtree(tmp_build, absent_ok = True) # search for # 1:
 
         print("Configuring Qemu...")
         configure = Popen(
@@ -394,6 +400,8 @@ class QDTMeasurer(Measurer):
             prefix = "qemu-%s-back-" % self.qproject.target_version
         )
 
+        self.cleaner.rmtree(q_back, absent_ok = True) # search for # 1:
+
         copytree_ignore_error(qemuwc.working_tree_dir, join(q_back, "src"))
         copytree_ignore_error(tmp_build, join(q_back, "build"))
 
@@ -412,6 +420,8 @@ class QDTMeasurer(Measurer):
 
         # Prepare working directory for launches
         self.qdt_cwd = qdt_cwd = mkdtemp(prefix = "qdt-cwd-")
+
+        self.cleaner.rmtree(qdt_cwd, absent_ok = True) # search for # 1:
 
         # Launch QDC for generating LALR tables of PLY.
         cmds = [
