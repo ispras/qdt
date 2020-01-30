@@ -17,6 +17,7 @@ from os.path import (
     dirname
 )
 from shutil import (
+    Error as shutil_Error,
     copy,
     copytree,
     rmtree
@@ -89,6 +90,15 @@ for var in ["PYTHONPATH"]:
 
 if TC_PRINT_STARTUP_ENVIRONMENT:
     print("\n".join(("%s=%s" % i) for i in TEST_STARTUP_ENV.items()))
+
+
+def copytree_ignore_error(src, dst, *a, **kw):
+    try:
+        copytree(src, dst, *a, **kw)
+    except shutil_Error as e:
+        print("Errors during copying\n   %s\nto %s" % (src, dst))
+        for err in e.args[0]:
+            print(">   " + ("\n    ".join(str(msg) for msg in err)))
 
 
 class Measurement(Extensible):
@@ -384,8 +394,8 @@ class QDTMeasurer(Measurer):
             prefix = "qemu-%s-back-" % self.qproject.target_version
         )
 
-        copytree(qemuwc.working_tree_dir, join(q_back, "src"))
-        copytree(tmp_build, join(q_back, "build"))
+        copytree_ignore_error(qemuwc.working_tree_dir, join(q_back, "src"))
+        copytree_ignore_error(tmp_build, join(q_back, "build"))
 
         self.prev_diff = None
 
@@ -429,8 +439,10 @@ class QDTMeasurer(Measurer):
             # restore Qemu source and build directories from backup
             rmtree(ctx.tmp_build)
             rmtree(ctx.qemuwc.working_tree_dir)
-            copytree(join(ctx.q_back, "src"), ctx.qemuwc.working_tree_dir)
-            copytree(join(ctx.q_back, "build"), ctx.tmp_build)
+            copytree_ignore_error(join(ctx.q_back, "src"),
+                ctx.qemuwc.working_tree_dir
+            )
+            copytree_ignore_error(join(ctx.q_back, "build"), ctx.tmp_build)
 
     def __measure__(self, ctx):
         yield "machine", ctx.machine
