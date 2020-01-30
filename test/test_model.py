@@ -503,19 +503,32 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             h = Header["enums.h"]
         except:
             h = Header("enums.h")
-        h.add_type(Enumeration("A", [("one", 1), ("two", 2)]))
+        h.add_type(Enumeration([("EXT", 1)]))
+
+        src = Source(name.lower() + ".c").add_types([
+            Enumeration([("ONE", 1)]),
+            Enumeration([("TWO", 2)], enum_name = "A"),
+            Enumeration([("THREE", 3)], typedef_name = "B"),
+            Enumeration([("FOUR", 4)], enum_name = "C", typedef_name ="D")
+        ])
 
         a = Type["int"]("a")
         b = Type["int"]("b")
-        c = Type["int"]("c")
+        c = Type["A"]("c")
+        d = Type["B"]("d")
+        e = Type["D"]("e")
 
-        src = Source(name.lower() + ".c").add_types([
-            Enumeration("B", [("three", 3), ("four", 4)], "B"),
+        src.add_types([
             Function(name = "main", body = BodyTree()(
-                Declare(a, b, c),
-                OpAssign(a, Type["A"].one),
-                OpAssign(b, Type["B"].three),
-                OpAssign(c, Type["four"])
+                Declare(a, b),
+                OpAssign(a, Type["EXT"]),
+                OpAssign(b, Type["ONE"]),
+                Declare(c),
+                OpAssign(c, Type["TWO"]),
+                Declare(d),
+                OpAssign(d, Type["THREE"]),
+                Declare(e),
+                OpAssign(e, Type["FOUR"])
             ))
         ])
 
@@ -524,17 +537,33 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
 
 #include "enums.h"
 
-enum B {{
-    three = 3,
-    four = 4
+enum A {{
+    TWO = 2
+}};
+
+typedef enum {{
+    THREE = 3
+}} B;
+
+typedef enum C {{
+    FOUR = 4
+}} D;
+
+enum {{
+    ONE = 1
 }};
 
 void main(void)
 {{
-    int a, b, c;
-    a = one;
-    b = three;
-    c = four;
+    int a, b;
+    a = EXT;
+    b = ONE;
+    enum A c;
+    c = TWO;
+    B d;
+    d = THREE;
+    D e;
+    e = FOUR;
 }}
 
 """.format(src.path)
@@ -647,6 +676,49 @@ class TestReferencingToSelfDefinedType(SourceModelTestHelper, TestCase):
 #include "macro_types.h"
 
 extern M_TYPE var;
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        self.files = [
+            (hdr, hdr_content)
+        ]
+
+
+class TestReferencingToTypeInAnotherHeader(SourceModelTestHelper, TestCase):
+    inherit_references = True
+
+    def setUp(self):
+        super(TestReferencingToTypeInAnotherHeader, self).setUp()
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h")
+
+        h1 = Header("some_types.h")
+        h2 = Header("another_some_types.h")
+
+        h1.add_type(Type("f1", incomplete = False))
+        h2.add_type(Type("f2", incomplete = False))
+
+        # Without reference headers `another_some_types` and `some_types` would
+        # be in alphabetical order.
+        h2.add_reference(Type["f1"])
+
+        s = Structure("S", Type["f1"]("field1"), Type["f2"]("field2"))
+        hdr.add_type(s)
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+#include "some_types.h"
+#include "another_some_types.h"
+
+typedef struct S {{
+    f1 field1;
+    f2 field2;
+}} S;
+
 #endif /* INCLUDE_{fname_upper}_H */
 """.format(path = hdr.path, fname_upper = name.upper())
 

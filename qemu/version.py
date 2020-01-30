@@ -13,6 +13,7 @@ from source import (
     Type,
     Function,
     Macro,
+    Enumeration,
     Structure
 )
 
@@ -283,18 +284,18 @@ def define_only_qemu_2_6_0_types():
         Function(name = "gdb_get_reg64")
     ]).add_reference(osdep_fake_type)
 
+    ioport_header = Header["exec/ioport.h"].add_reference(osdep_fake_type)
     if get_vp("pio_addr_t exists"):
-        Header["exec/ioport.h"].add_types([
+        ioport_header.add_types([
             Type("pio_addr_t", incomplete = False)
-        ]).add_reference(osdep_fake_type)
-    else:
-        Header["exec/ioport.h"].add_reference(osdep_fake_type)
+        ])
 
     Header["hw/boards.h"].add_types([
         Structure("MachineClass"),
         Structure("MachineState")
     ]).add_reference(osdep_fake_type)
 
+    pio_t = Type["pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"]
     Header["hw/sysbus.h"].add_types([
         Type("SysBusDevice", False),
         Type("qemu_irq", False),
@@ -328,12 +329,8 @@ def define_only_qemu_2_6_0_types():
             ret_type = Type["void"],
             args = [
                 Pointer(Type["SysBusDevice"])("dev"),
-                Type[
-                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
-                ]("ioport"),
-                Type[
-                    "pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"
-                ]("size")
+                pio_t("ioport"),
+                pio_t("size")
             ]
         ),
         Function(name = "sysbus_mmio_map"),
@@ -441,7 +438,10 @@ def define_only_qemu_2_6_0_types():
         Function(name = "timer_new_ns"),
         Function(name = "timer_del"),
         Function(name = "timer_free"),
-        Type("QEMU_CLOCK_VIRTUAL") # It is enumeration entry...
+        # These are required elements only
+        Enumeration([("QEMU_CLOCK_VIRTUAL", 1)],
+            typedef_name = "QEMUClockType"
+        )
     ]).add_references([
         osdep_fake_type
     ])
@@ -503,6 +503,15 @@ def define_only_qemu_2_6_0_types():
             Type["MemoryRegion"]
         ])
 
+    Header["qapi/qapi-types-net.h"].add_types([
+        # The value is taken from a auto generated file and may change in the
+        # future.
+        Enumeration([("NET_CLIENT_DRIVER_NIC", 1)],
+            enum_name = "NetClientDriver",
+            typedef_name = "NetClientDriver"
+        )
+    ])
+
     Header["net/net.h"].add_types([
         Type("qemu_macaddr_default_if_unset"),
         Type("qemu_format_nic_info_str"),
@@ -535,19 +544,14 @@ def define_only_qemu_2_6_0_types():
             args = [ Pointer(Type["NetClientState"])("nc") ]
         ),
         Structure("NetClientInfo",
-            # "type" field type is enum NetClientDriver, but enum is not
-            # supported by model
-            Type["int"]("type"),
+            # These are required fields only
+            Type["NetClientDriver"]("type"),
             Type["size_t"]("size"),
             Type["NetReceive"]("receive"),
             Type["NetCanReceive"]("can_receive"),
             Type["NetCleanup"]("cleanup"),
             Type["LinkStatusChanged"]("link_status_changed")
-            # There are other fields but they are not needed.
         ),
-        Macro("NET_CLIENT_DRIVER_NIC") # This is an enum item actually. It
-        # is defined in auto generated "qapi-types.h" which is not presented in
-        # registry but is included by "net.h" indirectly.
     ]).add_references([
         osdep_fake_type
     ])
@@ -562,7 +566,7 @@ def define_only_qemu_2_6_0_types():
         Function(
             name = name,
             ret_type = Type["bfd_vma"],
-            args = [ Pointer(Pointer(Type["const bfd_byte"]))("addr") ]
+            args = [ Pointer(Type["const bfd_byte"])("addr") ]
         ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32", "bfd_getl16",
             "bfd_getb16"
         ]

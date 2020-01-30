@@ -4,7 +4,8 @@ __all__ = [
   , "AddTypeRefToDefinerException"
   , "TypeNotRegistered"
   , "Type"
-      , "TypeReference"
+      # must not be used externally
+      # "TypeReference"
       , "Structure"
       , "Function"
       , "Pointer"
@@ -31,6 +32,8 @@ __all__ = [
       , "StructureTypedefDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
+      , "EnumerationDeclarationBegin"
+      , "EnumerationDeclarationEnd"
       , "EnumerationElementDeclaration"
       , "OpaqueChunk"
   , "SourceFile"
@@ -147,6 +150,7 @@ class ChunkGenerator(object):
     def __init__(self, definer):
         self.chunk_cache = { definer: [], CPP: [] }
         self.for_header = isinstance(definer, Header)
+        self.references = definer.references
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
@@ -230,10 +234,8 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
-            elif (    SKIP_GLOBAL_HEADERS
-                  and isinstance(origin, TypeReference)
-                  and self.for_header
-                  and origin.type.definer.is_global
+            elif (    isinstance(origin, TypeReference)
+                  and origin.type in self.references
             ):
                 chunks = []
             else:
@@ -322,11 +324,8 @@ class Source(object):
                 % (var, self.name)
             )
 
-        fixer = TypeFixerVisitor(self, var).visit()
+        TypeFixerVisitor(self, var).visit()
 
-        # Auto add references to types this variable does depend on
-        self.add_references(tr.type for tr in fixer.new_type_references)
-        # Auto add definers for types used by variable initializer
         if type(self) is Source: # exactly a module, not a header
             if var.definer is not None:
                 raise RuntimeError(
@@ -373,6 +372,8 @@ class Source(object):
 
             for t in header.types.values():
                 try:
+                    if not t.is_named:
+                        continue
                     if isinstance(t, TypeReference):
                         self._add_type_recursive(TypeReference(t.type))
                     else:
@@ -425,7 +426,12 @@ class Source(object):
             )
 
         _type.definer = self
-        self.types[_type.name] = _type
+        if _type.is_named:
+            self.types[_type.name] = _type
+        else:
+            # Register the type with any name in order to be able to generate
+            # its chunks.
+            self.types[".anonymous" + str(id(_type))] = _type
 
         # Some types (like `Enumeration`) contains types without definer or
         # may reference to other just created types.
@@ -434,10 +440,7 @@ class Source(object):
         # Note, replacement of foreign types with `TypeReference` is actually
         # not required right now (see `gen_chunks`).
 
-        fixer = TypeFixerVisitor(self, _type).visit()
-
-        # Auto add references to types this one does depend on
-        self.add_references(tr.type for tr in fixer.new_type_references)
+        TypeFixerVisitor(self, _type).visit()
 
         # Addition of a required type does satisfy the dependence.
         if _type in self.references:
@@ -467,9 +470,7 @@ switching to that mode.
 
         # Finally, we must fix types just before generation because user can
         # change already added types.
-        fixer = TypeFixerVisitor(self, self).visit()
-
-        self.add_references(tr.type for tr in fixer.new_type_references)
+        TypeFixerVisitor(self, self).visit()
 
         # fix up types for headers with references
         # list of types must be copied because it is changed during each
@@ -501,8 +502,17 @@ switching to that mode.
                             # defined in the current file.
                             t.definer_references.add(ref)
                         else:
-                            for self_ref in self.references:
-                                if self_ref is ref:
+                            # Definer of a foreign type (t) may depend on a
+                            # foreign type (ref) from another file, which will
+                            # be included in the resulting file (since we use
+                            # some type from it). In this case, inclusion of
+                            # that definer must be placed below the inclusion
+                            # of another file in the resulting file.
+                            for tt in l:
+                                if not isinstance(tt, TypeReference):
+                                    continue
+                                if ref.definer is tt.type.definer:
+                                    t.definer_references.add(ref)
                                     break
                             else:
                                 self.references.add(ref)
@@ -726,6 +736,7 @@ class Header(Source):
                         p.add_path(path)
 
                     p.on_include = Header._on_include
+                    p.all_inclusions = True
                     p.on_define.append(Header._on_define)
 
                     if sys.version_info[0] == 3:
@@ -832,8 +843,9 @@ class Header(Source):
         super(Header, self).add_type(_type)
 
         # Auto add type references to self includers
-        for s in self.includers:
-            s._add_type_recursive(TypeReference(_type))
+        if _type.is_named:
+            for s in self.includers:
+                s._add_type_recursive(TypeReference(_type))
 
         return self
 
@@ -1038,8 +1050,7 @@ class TypeReference(Type):
             base = _type.base
         )
 
-        if _type.is_named:
-            self.name = _type.name
+        self.name = _type.name
         self.c_name = _type.c_name
         self.type = _type
         self.definer_references = None
@@ -1287,11 +1298,21 @@ class Structure(Type):
 
 class Enumeration(Type):
 
-    def __init__(self, type_name, elems_list, enum_name = ""):
-        super(Enumeration, self).__init__(name = type_name)
+    def __init__(self, elems_list, enum_name = None, typedef_name = None):
+        super(Enumeration, self).__init__(
+            name = typedef_name or enum_name,
+            incomplete = False
+        )
+
+        self.enum_name = enum_name
+        self.typedef_name = typedef_name
+        self.typedef = typedef_name is not None
+
+        if self.is_named and not self.typedef:
+            # overwrite `c_name` to generate a correct variable type name
+            self.c_name = "enum@b" + self.c_name
 
         self.elems = OrderedDict()
-        self.enum_name = enum_name
         t = [ Type["int"] ]
         for key, val in elems_list:
             self.elems[key] = EnumerationElement(self, key,
@@ -1351,6 +1372,12 @@ class Enumeration(Type):
             definers.extend(f.get_definers())
 
         return definers
+
+    def __str__(self):
+        if self.is_named:
+            return super(Enumeration, self).__str__()
+        else:
+            return "anonymous enumeration"
 
     __type_references__ = ["elems"]
 
@@ -1956,15 +1983,16 @@ class Variable(object):
         indent = "",
         extern = False
     ):
-        if (    isinstance(self.type, Pointer)
-            and not self.type.is_named
-            and isinstance(self.type.type, Function)
+        type_ = self.type
+        if (    isinstance(type_, Pointer)
+            and not type_.is_named
+            and isinstance(type_.type, Function)
         ):
             ch = FunctionPointerDeclaration(self, indent, extern)
-            refs = gen_function_decl_ref_chunks(self.type.type, generator)
+            refs = gen_function_decl_ref_chunks(type_.type, generator)
         else:
             ch = VariableDeclaration(self, indent, extern)
-            refs = generator.provide_chunks(self.type)
+            refs = generator.provide_chunks(type_)
         ch.add_references(refs)
 
         return [ch]
@@ -2070,6 +2098,25 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 self.new_type_references.append(tr)
 
             self.replace(tr)
+
+    def visit(self):
+        ret = super(TypeFixerVisitor, self).visit()
+
+        # Auto add references to types this type_object does depend on
+        s = self.source
+        # The current approach does not generate header inclusion chunks for
+        # foreign types which are contained in the `references` list.
+        if SKIP_GLOBAL_HEADERS and isinstance(s, Header):
+            for tr in self.new_type_references:
+                t = tr.type
+                definer = t.definer
+                # A type declared in a global header is added to the
+                # `references` list to prevent the inclusion of the global
+                # header.
+                if isinstance(definer, Header) and definer.is_global:
+                    s.references.add(t)
+
+        return ret
 
     """
     CopyVisitor is now used for true copying function body arguments
@@ -2516,12 +2563,13 @@ class EnumerationDeclarationBegin(SourceChunk):
 
     def __init__(self, enum, indent = ""):
         super(EnumerationDeclarationBegin, self).__init__(enum,
-            "Beginning of enumeration %s declaration" % enum.enum_name,
+            "Beginning of enumeration %s declaration" % enum,
             """\
-{indent}enum@b{enum_name}{{
+{indent}{typedef}enum@b{enum_name}{{
 """.format(
     indent = indent,
-    enum_name = enum.enum_name + "@b" if enum.enum_name else ""
+    typedef = "typedef@b" if enum.typedef else "",
+    enum_name = (enum.enum_name + "@b") if enum.enum_name is not None else ""
             )
         )
 
@@ -2531,10 +2579,13 @@ class EnumerationDeclarationEnd(SourceChunk):
 
     def __init__(self, enum, indent = ""):
         super(EnumerationDeclarationEnd, self).__init__(enum,
-            "Ending of enumeration %s declaration" % enum.enum_name,
+            "Ending of enumeration %s declaration" % enum,
             """\
-{indent}}};\n
-""".format(indent = indent)
+{indent}}}{typedef_name};\n
+""".format(
+    indent = indent,
+    typedef_name = ("@b" + enum.typedef_name) if enum.typedef else ""
+            )
         )
 
 
@@ -2711,6 +2762,21 @@ digraph Chunks {
 """
         )
 
+        if self.origin.references:
+            def ref_node_name(ref, mapping = {}, counter = count(0)):
+                try:
+                    name = mapping[ref]
+                except KeyError:
+                    name = "ref_%u" % next(counter)
+                    mapping[ref] = name
+                return name
+
+            w.write("    /* Source references */\n")
+            for ref in self.origin.references:
+                w.write('    %s [style=dashed label="%s"]\n\n' % (
+                    ref_node_name(ref), ref
+                ))
+
         w.write("    /* Chunks */\n")
 
         def chunk_node_name(chunk, mapping = {}, counter = count(0)):
@@ -2727,13 +2793,16 @@ digraph Chunks {
             label = ch.name
 
             if isinstance(ch, HeaderInclusion):
+                style = "style=filled "
                 label += "\\n*\\n"
                 for r in ch.reasons:
                     label += "%s %s\\l" % r
+            else:
+                style = ''
 
             label = label.replace('"', '\\"')
 
-            w.write('\n    %s [label="%s"]\n' % (cnn, label))
+            w.write('\n    %s [%slabel="%s"]\n' % (cnn, style, label))
 
             # invisible edges provides vertical order like in the output file
             if upper_cnn is not None:
