@@ -176,6 +176,36 @@ def define_only_qemu_2_6_0_types():
         Function(name = "object_class_is_abstract")
     ]).add_reference(osdep_fake_type)
 
+    Header[get_vp("fprintf_function definer")].add_types([
+        Type("fprintf_function", False)
+    ]).add_reference(osdep_fake_type)
+
+    Header[get_vp("disas header")].add_types([
+        Type("disassemble_info", False)
+    ]).add_reference(osdep_fake_type)
+
+    Header[get_vp("disas header")].add_types([
+        Type("bfd_vma", False),
+        Type("bfd_byte", False),
+        Type("const bfd_byte", False)
+    ])
+
+    Header[get_vp("disas header")].add_types([
+        Function(
+            name = name,
+            ret_type = Type["bfd_vma"],
+            args = [ Pointer(Type["const bfd_byte"])("addr") ]
+        ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32", "bfd_getl16",
+            "bfd_getb16"
+        ]
+    ])
+
+    Header["migration/vmstate.h"].add_types([
+        Type("VMStateDescription", False),
+        Type("VMStateField", False),
+        Function(name = "vmstate_register_ram_global")
+    ]).add_reference(osdep_fake_type)
+
     Header["qom/cpu.h"].add_types([
         Type("CPUState", False),
         Type("CPUClass", False),
@@ -204,14 +234,6 @@ def define_only_qemu_2_6_0_types():
         # be used instead.
         Structure("BlockBackend"),
         Structure("I2CBus") # the structure is defined in .c file
-    ]).add_reference(osdep_fake_type)
-
-    Header[get_vp("disas header")].add_types([
-        Type("disassemble_info", False)
-    ]).add_reference(osdep_fake_type)
-
-    Header[get_vp("fprintf_function definer")].add_types([
-        Type("fprintf_function", False)
     ]).add_reference(osdep_fake_type)
 
     Header["exec/exec-all.h"].add_types([
@@ -408,12 +430,6 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_connect_gpio_out_named")
     ]).add_reference(osdep_fake_type)
 
-    Header["migration/vmstate.h"].add_types([
-        Type("VMStateDescription", False),
-        Type("VMStateField", False),
-        Function(name = "vmstate_register_ram_global")
-    ]).add_reference(osdep_fake_type)
-
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
     Header["hw/pci/pci.h"].add_types([
@@ -580,22 +596,6 @@ def define_only_qemu_2_6_0_types():
         ),
     ]).add_references([
         osdep_fake_type
-    ])
-
-    Header[get_vp("disas header")].add_types([
-        Type("bfd_vma", False),
-        Type("bfd_byte", False),
-        Type("const bfd_byte", False)
-    ])
-
-    Header[get_vp("disas header")].add_types([
-        Function(
-            name = name,
-            ret_type = Type["bfd_vma"],
-            args = [ Pointer(Type["const bfd_byte"])("addr") ]
-        ) for name in ["bfd_getl64", "bfd_getl32", "bfd_getb32", "bfd_getl16",
-            "bfd_getb16"
-        ]
     ])
 
     Header["disas/disas.h"].add_types([
