@@ -6,6 +6,7 @@ from six import (
     StringIO
 )
 from source import (
+    disable_auto_lock_sources,
     OpaqueCode,
     Type,
     Header,
@@ -54,6 +55,7 @@ class SourceModelTestHelper(object):
         Type.reg = {}
         Header.reg = {}
         add_base_types()
+        disable_auto_lock_sources()
 
     def test(self):
         for file_, content in self.files:

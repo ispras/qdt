@@ -44,6 +44,8 @@ __all__ = [
   , "CAN"
   , "NBS"
   , "NSS"
+  , "disable_auto_lock_sources"
+  , "enable_auto_lock_sources"
 ]
 
 from os import (
@@ -141,6 +143,14 @@ re_clr = compile("@(.|$)")
 APPEND_NL_AFTER_HEADERS = not ee("QDT_NO_NL_AFTER_HEADERS")
 
 APPEND_NL_AFTER_MACROS = not ee("QDT_NO_NL_AFTER_MACROS")
+
+# All sources which are not created at the code generation stage considered
+# immutable. We believe that these files already exist. Therefore, we cannot
+# influence the list of their inclusions. To prevent the appearance of new
+# inclusions, the flag `locked` is set. Few exceptions:
+# - explicit `locked` setting
+# - `add_inclusion` method will add inclusion even to a locked file
+AUTO_LOCK_SOURCES = True
 
 
 # Code generation model
@@ -291,13 +301,17 @@ class ChunkGenerator(object):
 
 class Source(object):
 
-    def __init__(self, path):
+    def __init__(self, path, locked = None):
         self.path = path
         self.types = {}
         self.inclusions = {}
         self.global_variables = {}
         self.references = set()
         self.protection = False
+        if locked is not None:
+            self.locked = locked
+        else:
+            self.locked = AUTO_LOCK_SOURCES
 
     def add_reference(self, ref):
         if not isinstance(ref, Type) and not isinstance(ref, Variable):
@@ -656,14 +670,18 @@ References:
 class Header(Source):
     reg = {}
 
-    def __init__(self, path, is_global = False, protection = True):
+    def __init__(self, path,
+        is_global = False,
+        protection = True,
+        locked = None
+    ):
         """
 :param path: it is used in #include statements, as unique identifier and
     somehow during code generation.
 :param is_global: inclusions will use <path> instead of "path".
 :param protection: wrap content in multiple inclusion protection macro logic.
         """
-        super(Header, self).__init__(path)
+        super(Header, self).__init__(path, locked)
         self.is_global = is_global
         self.includers = []
         self.protection = protection
@@ -2129,7 +2147,9 @@ class TypeFixerVisitor(TypeReferencesVisitor):
         s = self.source
         # The current approach does not generate header inclusion chunks for
         # foreign types which are contained in the `references` list.
-        if SKIP_GLOBAL_HEADERS and isinstance(s, Header):
+        if s.locked:
+            s.add_references(tr.type for tr in self.new_type_references)
+        elif SKIP_GLOBAL_HEADERS and isinstance(s, Header):
             for tr in self.new_type_references:
                 t = tr.type
                 definer = t.definer
@@ -2138,7 +2158,6 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 # header.
                 if isinstance(definer, Header) and definer.is_global:
                     s.references.add(t)
-
         return ret
 
     """
@@ -3121,6 +3140,17 @@ them must be replaced with reference to h. """
 
     def name_for_macro(self):
         return macro_forbidden.sub('_', self.name.upper())
+
+
+def disable_auto_lock_sources():
+    global AUTO_LOCK_SOURCES
+    AUTO_LOCK_SOURCES = False
+
+
+def enable_auto_lock_sources():
+    global AUTO_LOCK_SOURCES
+    AUTO_LOCK_SOURCES = True
+
 
 # Source tree container
 
