@@ -339,8 +339,13 @@ class Source(object):
                     for s in t.get_definers():
                         if s == self:
                             continue
+
+                        # A `t`ype can be locally defined within something
+                        # (e.g. `Type`). There we looks for source-level
+                        # container of the `t`ype.
                         while not isinstance(s, Source):
                             s = s.definer
+
                         if not isinstance(s, Header):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
@@ -1745,8 +1750,8 @@ class MacroUsage(Type):
 
         if initializer is not None:
             for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
+                # Note that 0-th chunk is variable and rest are its
+                # dependencies.
                 refs.append(generator.provide_chunks(v)[0])
 
             for t in initializer.used_types:
@@ -1785,6 +1790,9 @@ class MacroType(MacroUsage):
             name = name,
             initializer = initializer
         )
+
+    # Note, because `MacroType` is _always_ named, super's `__str__` will
+    # never say that it's "usage".
 
 
 class CPPMacro(Macro):
@@ -2018,8 +2026,8 @@ class Variable(object):
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
+                # Note that 0-th chunk is variable and rest are its
+                # dependencies.
                 refs.append(generator.provide_chunks(v)[0])
 
             for t in self.initializer.used_types:
@@ -2075,9 +2083,9 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.base:
                 raise BreakVisiting()
 
-            """ Skip pointer and macrousage types without name. Nameless
-            pointer or macrousage does not have definer and should not be
-            replaced with type reference """
+            # Skip pointer and macrousage types without name. Nameless
+            # pointer or macrousage does not have definer and should not be
+            # replaced with type reference.
             if isinstance(t, (Pointer, MacroUsage)) and not t.is_named:
                 return
 
