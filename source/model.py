@@ -10,7 +10,7 @@ __all__ = [
       , "Function"
       , "Pointer"
       , "Macro"
-      , "MacroType"
+      , "MacroUsage"
       , "Enumeration"
       , "EnumerationElement"
       , "OpaqueCode"
@@ -1681,7 +1681,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        return MacroType(self, initializer = macro_initializer)(name,
+        return MacroUsage(self, initializer = macro_initializer)(name,
             pointer = pointer,
             initializer = initializer,
             static = static,
@@ -1690,7 +1690,7 @@ class Macro(Type):
         )
 
     def gen_usage(self, initializer = None, name = None):
-        return MacroType(self,
+        return MacroUsage(self,
             initializer = initializer,
             name = name,
             is_usage = True
@@ -1717,23 +1717,25 @@ class Macro(Type):
         writer.write(self.c_name)
 
 
-class MacroType(Type):
+class MacroUsage(Type):
+    "Something defined using a macro expansion."
+
     def __init__(self, macro,
         initializer = None,
         name = None,
         is_usage = False
     ):
         if not isinstance(macro, Macro):
-            raise ValueError("Attempt to create macrotype from "
-                " %s which is not macro." % macro
+            raise ValueError("Attempt to create %s from "
+                " %s which is not macro." % (type(self).__name__, macro)
             )
 
         if is_usage and name is None:
             name = macro.name + ".usage" + str(id(self))
 
-        super(MacroType, self).__init__(name = name, incomplete = False)
+        super(MacroUsage, self).__init__(name = name, incomplete = False)
 
-        # define c_name for nameless macrotypes
+        # define c_name for nameless macrousages
         if not self.is_named:
             self.c_name = macro.gen_usage_string(initializer)
 
@@ -1742,7 +1744,7 @@ class MacroType(Type):
 
     def get_definers(self):
         if self.is_named:
-            return super(MacroType, self).get_definers()
+            return super(MacroUsage, self).get_definers()
         else:
             return self.macro.get_definers()
 
@@ -1770,9 +1772,9 @@ class MacroType(Type):
 
     def __str__(self):
         if self.is_named:
-            return super(MacroType, self).__str__()
+            return super(MacroUsage, self).__str__()
         else:
-            return "macro type from %s" % self.macro
+            return "usage of macro %s" % self.macro
 
     __type_references__ = ["macro", "initializer"]
 
@@ -2065,10 +2067,10 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.base:
                 raise BreakVisiting()
 
-            """ Skip pointer and macrotype types without name. Nameless pointer
-            or macrotype does not have definer and should not be replaced with
-            type reference """
-            if isinstance(t, (Pointer, MacroType)) and not t.is_named:
+            # Skip pointer and macrousage types without name. Nameless
+            # pointer or macrousage does not have definer and should not be
+            # replaced with type reference.
+            if isinstance(t, (Pointer, MacroUsage)) and not t.is_named:
                 return
 
             # Add definerless types to the Source automatically
@@ -2132,7 +2134,7 @@ class CopyFixerVisitor(TypeReferencesVisitor):
         t = self.cur
 
         if (not isinstance(t, Type)
-            or (isinstance(t, (Pointer, MacroType)) and not t.is_named)
+            or (isinstance(t, (Pointer, MacroUsage)) and not t.is_named)
         ):
             new_t = copy(t)
 
