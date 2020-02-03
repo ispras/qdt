@@ -1764,8 +1764,8 @@ class MacroUsage(Type):
 
         if initializer is not None:
             for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
+                # Note that 0-th chunk is variable and rest are its
+                # dependencies.
                 refs.append(generator.provide_chunks(v)[0])
 
             for t in initializer.used_types:
@@ -2018,8 +2018,8 @@ class Variable(object):
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
+                # Note that 0-th chunk is variable and rest are its
+                # dependencies.
                 refs.append(generator.provide_chunks(v)[0])
 
             for t in self.initializer.used_types:
