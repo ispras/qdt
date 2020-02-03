@@ -1705,12 +1705,11 @@ class Macro(Type):
             used = used
         )
 
-    def gen_usage(self, initializer = None, name = None):
-        return MacroUsage(self,
-            initializer = initializer,
-            name = name,
-            is_usage = True
-        )
+    def gen_usage(self, initializer = None, name = None, counter = count(0)):
+        "A helper that automatically generates a name for `MacroUsage`."
+        if name is None:
+            name = self.name + ".auto" + str(next(counter))
+        return MacroUsage(self, initializer = initializer, name = name)
 
     def gen_dict(self):
         res = {HDB_MACRO_NAME : self.name}
@@ -1736,18 +1735,11 @@ class Macro(Type):
 class MacroUsage(Type):
     "Something defined using a macro expansion."
 
-    def __init__(self, macro,
-        initializer = None,
-        name = None,
-        is_usage = False
-    ):
+    def __init__(self, macro, initializer = None, name = None):
         if not isinstance(macro, Macro):
             raise ValueError("Attempt to create %s from "
                 " %s which is not macro." % (type(self).__name__, macro)
             )
-
-        if is_usage and name is None:
-            name = macro.name + ".usage" + str(id(self))
 
         super(MacroUsage, self).__init__(name = name, incomplete = False)
 
