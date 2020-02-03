@@ -10,7 +10,7 @@ __all__ = [
       , "Function"
       , "Pointer"
       , "Macro"
-      , "MacroType"
+      , "MacroUsage"
       , "Enumeration"
       , "EnumerationElement"
       , "OpaqueCode"
@@ -21,7 +21,7 @@ __all__ = [
       , "MacroDefinition"
       , "PointerTypeDeclaration"
       , "FunctionPointerTypeDeclaration"
-      , "MacroTypeUsage"
+      , "MacroTypeChunk"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
       , "VariableDefinition"
@@ -338,6 +338,13 @@ class Source(object):
                     for s in t.get_definers():
                         if s == self:
                             continue
+
+                        # A `t`ype can be locally defined within something
+                        # (e.g. `Type`). There we looks for source-level
+                        # container of the `t`ype.
+                        while not isinstance(s, Source):
+                            s = s.definer
+
                         if not isinstance(s, Header):
                             raise RuntimeError("Attempt to define variable"
                                 " {var} whose initializer code uses type {t}"
@@ -1173,6 +1180,15 @@ class Structure(Type):
                 " the structure %s" % (v_name, self)
             )
 
+        if isinstance(variable, Type):
+            if variable.definer is not None:
+                raise RuntimeError(
+                    "Type '%s' is already defined in '%s'" % (
+                        variable, variable.definer.path
+                    )
+                )
+            variable.definer = self
+
         self.fields[v_name] = variable
 
         ForwardDeclarator(variable).visit()
@@ -1681,7 +1697,7 @@ class Macro(Type):
         used = False,
         macro_initializer = None
     ):
-        return MacroType(self, initializer = macro_initializer)(name,
+        return MacroUsage(self, initializer = macro_initializer)(name,
             pointer = pointer,
             initializer = initializer,
             static = static,
@@ -1689,12 +1705,11 @@ class Macro(Type):
             used = used
         )
 
-    def gen_usage(self, initializer = None, name = None):
-        return MacroType(self,
-            initializer = initializer,
-            name = name,
-            is_usage = True
-        )
+    def gen_type(self, initializer = None, name = None, counter = count(0)):
+        "A helper that automatically generates a name for `MacroUsage`."
+        if name is None:
+            name = self.name + ".auto" + str(next(counter))
+        return MacroUsage(self, initializer = initializer, name = name)
 
     def gen_dict(self):
         res = {HDB_MACRO_NAME : self.name}
@@ -1717,32 +1732,27 @@ class Macro(Type):
         writer.write(self.c_name)
 
 
-class MacroType(Type):
-    def __init__(self, _macro,
-        initializer = None,
-        name = None,
-        is_usage = False
-    ):
-        if not isinstance(_macro, Macro):
-            raise ValueError("Attempt to create macrotype from "
-                " %s which is not macro." % _macro
+class MacroUsage(Type):
+    "Something defined using a macro expansion."
+
+    def __init__(self, macro, initializer = None, name = None):
+        if not isinstance(macro, Macro):
+            raise ValueError("Attempt to create %s from "
+                " %s which is not macro." % (type(self).__name__, macro)
             )
 
-        if is_usage and name is None:
-            name = _macro.name + ".usage" + str(id(self))
+        super(MacroUsage, self).__init__(name = name, incomplete = False)
 
-        super(MacroType, self).__init__(name = name, incomplete = False)
-
-        # define c_name for nameless macrotypes
+        # define c_name for nameless macrousages
         if not self.is_named:
-            self.c_name = _macro.gen_usage_string(initializer)
+            self.c_name = macro.gen_usage_string(initializer)
 
-        self.macro = _macro
+        self.macro = macro
         self.initializer = initializer
 
     def get_definers(self):
         if self.is_named:
-            return super(MacroType, self).get_definers()
+            return super(MacroUsage, self).get_definers()
         else:
             return self.macro.get_definers()
 
@@ -1754,15 +1764,15 @@ class MacroType(Type):
 
         if initializer is not None:
             for v in initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
+                # Note that 0-th chunk is variable and rest are its
+                # dependencies.
                 refs.append(generator.provide_chunks(v)[0])
 
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
 
         if self.is_named:
-            ch = MacroTypeUsage(macro, initializer, indent)
+            ch = MacroTypeChunk(self, indent)
             ch.add_references(refs)
             return [ch]
         else:
@@ -1770,9 +1780,9 @@ class MacroType(Type):
 
     def __str__(self):
         if self.is_named:
-            return super(MacroType, self).__str__()
+            return super(MacroUsage, self).__str__()
         else:
-            return "macro type from %s" % self.macro
+            return "usage of macro %s" % self.macro
 
     __type_references__ = ["macro", "initializer"]
 
@@ -2008,8 +2018,8 @@ class Variable(object):
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
-                """ Note that 0-th chunk is variable and rest are its
-                dependencies """
+                # Note that 0-th chunk is variable and rest are its
+                # dependencies.
                 refs.append(generator.provide_chunks(v)[0])
 
             for t in self.initializer.used_types:
@@ -2065,10 +2075,10 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.base:
                 raise BreakVisiting()
 
-            """ Skip pointer and macrotype types without name. Nameless pointer
-            or macrotype does not have definer and should not be replaced with
-            type reference """
-            if isinstance(t, (Pointer, MacroType)) and not t.is_named:
+            # Skip pointer and macrousage types without name. Nameless
+            # pointer or macrousage does not have definer and should not be
+            # replaced with type reference.
+            if isinstance(t, (Pointer, MacroUsage)) and not t.is_named:
                 return
 
             # Add definerless types to the Source automatically
@@ -2088,6 +2098,19 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 t = t.declaration
                 if type(t) is TypeReference:
                     t = t.type
+
+            # A type defined inside another type is not subject of this fixer.
+            # Because internal type is always defined within its container and,
+            # hence, never defined by a header inclusion or directly by a
+            # source.
+            # Note that `definer` is not visited by this type fixer. Hence,
+            # the field is never a `TypeReference`.
+            # Note that if we are here then topmost container of the `t`ype is
+            # within `self.source`.
+            # Else, the topmost container is replaced with a `TypeReference`
+            # and a `BreakVisiting` is raised (see above).
+            if isinstance(t.definer, Type):
+                return
 
             # replace foreign type with reference to it
             try:
@@ -2132,7 +2155,7 @@ class CopyFixerVisitor(TypeReferencesVisitor):
         t = self.cur
 
         if (not isinstance(t, Type)
-            or (isinstance(t, (Pointer, MacroType)) and not t.is_named)
+            or (isinstance(t, (Pointer, MacroUsage)) and not t.is_named)
         ):
             new_t = copy(t)
 
@@ -2407,15 +2430,12 @@ class FunctionPointerTypeDeclaration(SourceChunk):
         )
 
 
-class MacroTypeUsage(SourceChunk):
+class MacroTypeChunk(SourceChunk):
 
-    def __init__(self, macro, initializer, indent):
-        self.macro = macro
-        self.initializer = initializer
-
-        super(MacroTypeUsage, self).__init__(macro,
-            "Usage of macro type %s" % macro,
-            code = indent + macro.gen_usage_string(initializer)
+    def __init__(self, _type, indent):
+        super(MacroTypeChunk, self).__init__(_type,
+            "Usage of type %s" % _type,
+            code = indent + _type.macro.gen_usage_string(_type.initializer)
         )
 
 
