@@ -1718,26 +1718,26 @@ class Macro(Type):
 
 
 class MacroType(Type):
-    def __init__(self, _macro,
+    def __init__(self, macro,
         initializer = None,
         name = None,
         is_usage = False
     ):
-        if not isinstance(_macro, Macro):
+        if not isinstance(macro, Macro):
             raise ValueError("Attempt to create macrotype from "
-                " %s which is not macro." % _macro
+                " %s which is not macro." % macro
             )
 
         if is_usage and name is None:
-            name = _macro.name + ".usage" + str(id(self))
+            name = macro.name + ".usage" + str(id(self))
 
         super(MacroType, self).__init__(name = name, incomplete = False)
 
         # define c_name for nameless macrotypes
         if not self.is_named:
-            self.c_name = _macro.gen_usage_string(initializer)
+            self.c_name = macro.gen_usage_string(initializer)
 
-        self.macro = _macro
+        self.macro = macro
         self.initializer = initializer
 
     def get_definers(self):
