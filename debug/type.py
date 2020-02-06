@@ -166,9 +166,13 @@ TYPE_CODE_NAMESPACE = next(c)
 TYPE_CODE_DECFLOAT = next(c)
 TYPE_CODE_INTERNAL_FUNCTION = next(c)
 
+# Codes below are internal to this API
+_TYPE_CODE_BASE = next(c)
+
 del c
 
 tag2code = {
+    "DW_TAG_base_type" : _TYPE_CODE_BASE,
     "DW_TAG_pointer_type" : TYPE_CODE_PTR,
     "DW_TAG_array_type" : TYPE_CODE_ARRAY,
     "DW_TAG_structure_type": TYPE_CODE_STRUCT,
@@ -232,6 +236,7 @@ class Type(object):
 
         if tag in tag2code:
             self.code = tag2code[tag]
+            # TODO: convert TYPE_CODE_BASE code to INT, FLOAT, etc...
         else:
             # is not implemented yet
             self.code = None
@@ -322,6 +327,8 @@ attribute.
             return AddressSize()
         elif code == TYPE_CODE_TYPEDEF:
             return self.target_type.size_expr
+        elif code == _TYPE_CODE_BASE:
+            return self.die.attributes["DW_AT_byte_size"].value
         else:
             raise NotImplementedError(
                 "Unknown size of type with code %u" % code
