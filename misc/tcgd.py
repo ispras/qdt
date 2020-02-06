@@ -26,6 +26,26 @@ from subprocess import (
 )
 
 
+class RecWatcher(Watcher):
+
+    def on_retrace_initialize(self):
+        # end of function
+        "retrace.c:156 39d5c8f5191a4f2e56489dc0e1b02c9144b0df56"
+        self.ctx = ctx = self.rt["rtc_ctx"]
+        self.load_stream = ls = ctx["execution_load_stream"].to_global()
+        self.lc = ls["load_counter"].to_global()
+
+    def on_cpu_common_reset(self):
+        # remembering address of instruction counter
+        "qom/cpu.c:288 39d5c8f5191a4f2e56489dc0e1b02c9144b0df56"
+        self.ic = self.ctx["insn_counter"].dereference().to_global()
+
+    def on_retrace_misc_save(self):
+        # function entry
+        "retrace_misc.c:12 39d5c8f5191a4f2e56489dc0e1b02c9144b0df56"
+        print(self.ic.fetch(), self.lc.fetch())
+
+
 class TCGWatcher(Watcher):
 
     def on_tcg_context_init(self):
@@ -77,7 +97,7 @@ if __name__ == "__main__":
 
     repo = git_repo_by_dwarf(di)
     gvl_adptr = GitLineVersionAdapter(repo)
-    w = TCGWatcher(dic, line_adapter = gvl_adptr, verbose = True)
+    w = RecWatcher(dic, line_adapter = gvl_adptr, verbose = True)
 
     port = find_free_port(1234)
     qemu_debug_addr = "localhost:%u" % port
