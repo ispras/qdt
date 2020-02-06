@@ -34,6 +34,8 @@ from collections import (
     defaultdict
 )
 from source import (
+    disable_auto_lock_sources,
+    enable_auto_lock_sources,
     Header,
     Source
 )
@@ -97,6 +99,8 @@ class QProject(object):
         callco(self.co_gen_all(*args, **kw))
 
     def co_gen_all(self, qemu_src, **gen_cfg):
+        disable_auto_lock_sources()
+
         # First, generate all devices, then generate machines
         for desc in self.descriptions:
             if not isinstance(desc, MachineNode):
@@ -106,6 +110,8 @@ class QProject(object):
             if isinstance(desc, MachineNode):
                 desc.link()
                 yield self.co_gen(desc, qemu_src, **gen_cfg)
+
+        enable_auto_lock_sources()
 
     def register_in_build_system(self, folder, known_targets):
         tail, head = split(folder)

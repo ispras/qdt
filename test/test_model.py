@@ -6,6 +6,7 @@ from six import (
     StringIO
 )
 from source import (
+    disable_auto_lock_sources,
     OpaqueCode,
     Type,
     Header,
@@ -54,6 +55,7 @@ class SourceModelTestHelper(object):
         Type.reg = {}
         Header.reg = {}
         add_base_types()
+        disable_auto_lock_sources()
 
     def test(self):
         for file_, content in self.files:
@@ -800,6 +802,41 @@ void another_test_func(void);
 """.format(
             path = hdr.path
         )
+
+        self.files = [
+            (hdr, hdr_content)
+        ]
+
+
+class TestAddingTypeToLockedHeader(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestAddingTypeToLockedHeader, self).setUp()
+        name = type(self).__name__
+
+        Header("some_types.h").add_type(Type("t"))
+
+        # Without locking "some_types.h" header will be included in
+        # "lockedheader.h".
+        Header("lockedheader.h", locked = True).add_type(
+            Structure("S", Pointer(Type["t"])("f"))
+        )
+
+        hdr = Header(name.lower() + ".h")
+        hdr.add_type(Pointer(Type["S"], name = "ps"))
+
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+#include "some_types.h"
+#include "lockedheader.h"
+
+typedef S *ps;
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
 
         self.files = [
             (hdr, hdr_content)
