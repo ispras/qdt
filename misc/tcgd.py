@@ -1,4 +1,5 @@
 from debug import (
+    git_repo_by_dwarf,
     Runtime,
     Watcher,
     InMemoryELFFile,
@@ -7,12 +8,6 @@ from debug import (
 )
 from argparse import (
     ArgumentParser
-)
-from os.path import (
-    dirname
-)
-from git import (
-    Repo
 )
 from common import (
     pypath
@@ -80,28 +75,7 @@ if __name__ == "__main__":
         symtab = elf.get_section_by_name(".symtab")
     )
 
-    # find out Qemu source tree
-    src_file = next(di.iter_CUs()).get_top_DIE().attributes["DW_AT_name"].value
-    src_path = dirname(src_file)
-
-    # Start from directory of one of files and go towards file system root
-    # until Qemu repository is found
-    while src_path:
-        try:
-            repo = Repo(src_path)
-            tree = repo.heads.master.commit.tree
-            for b in tree.blobs:
-                if b.name == u"vl.c":
-                    break
-            else:
-                raise ValueError("Not a Qemu repo")
-        except:
-            src_path = dirname(src_path)
-        else:
-            break
-    else:
-        raise ValueError("Can't get Qemu source tree.")
-
+    repo = git_repo_by_dwarf(di)
     gvl_adptr = GitLineVersionAdapter(repo)
     w = TCGWatcher(dic, line_adapter = gvl_adptr, verbose = True)
 
