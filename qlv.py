@@ -17,6 +17,9 @@ from widgets import (
 from six.moves.tkinter import (
     Scrollbar
 )
+from six.moves.tkinter_ttk import (
+    Style
+)
 from common import (
     mlget as _
 )
@@ -412,11 +415,14 @@ if __name__ == "__main__":
 
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
-    tk.geometry("600x600")
+    tk.geometry("1000x600")
     tk.grid()
     tk.rowconfigure(0, weight = 1)
     tk.columnconfigure(0, weight = 1)
     tk.columnconfigure(1, weight = 0)
+
+    tkstyle = Style()
+    tkstyle.configure("Treeview", font = ("Courier", 10))
 
     columns = [
         "addr",
@@ -431,7 +437,7 @@ if __name__ == "__main__":
     tv.column("#0", width = 10)
     tv.column("addr", minwidth = 120, width = 120)
     tv.column("size", minwidth = 30, width = 30)
-    tv.column("disas", minwidth = 200)
+    tv.column("disas", width = 600)
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
     vscroll = Scrollbar(tk)
