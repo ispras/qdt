@@ -23,6 +23,10 @@ from six.moves.tkinter_ttk import (
 from common import (
     mlget as _
 )
+from six.moves import (
+    zip as izip,
+    range as xrange,
+)
 
 # less value = more info
 DEBUG = 3
@@ -149,6 +153,12 @@ class QTrace(object):
         self.bad = False
         self.next = None
 
+
+class EOL:
+    "End Of Log"
+    pass
+
+
 class QEMULog(object):
     def __init__(self):
         self.trace = []
@@ -161,6 +171,9 @@ class QEMULog(object):
         self.tbIdMap = {}
 
         self.prevTrace = None
+
+        self.feeder = self.feed()
+        next(self.feeder)
 
     def lookInstr(self, addr, fromCache = None):
         if fromCache is None:
@@ -364,47 +377,62 @@ class QEMULog(object):
             print("--- new_unrecognized line")
             print(l)
 
-    def feed(self, reader):
-        for l0 in reader:
-            while l0 is not None:
-                if is_in_asm(l0):
-                    in_asm = []
-                    for l1 in reader:
-                        if is_in_asm_instr(l1):
-                            in_asm.append(l1)
-                        else:
-                            l0 = l1
-                            break
+    def feed(self):
+        l0 = yield
+        while l0 is not EOL:
+            if is_in_asm(l0):
+                in_asm = []
+                l1 = yield
+                while l1 is not EOL:
+                    if is_in_asm_instr(l1):
+                        in_asm.append(l1)
                     else:
-                        l0 = None
+                        l0 = l1 # try that line in other `if`s
+                        break
+                    l1 = yield
+                else:
+                    l0 = l1
 
-                    self.new_in_asm(in_asm)
-                    continue
+                self.new_in_asm(in_asm)
+                continue
 
-                if is_trace(l0):
-                    trace = [l0]
+            if is_trace(l0):
+                trace = [l0]
 
-                    for l1 in reader:
-                        if is_trace(l1) or is_linking(l1) or is_in_asm(l1):
-                            l0 = l1
-                            break
-                        trace.append(l1)
-                    else:
-                        l0 = None
+                l1 = yield
+                while l1 is not EOL:
+                    # Traces are following one by one: user did not
+                    # passed other flags to -d.
+                    if is_trace(l0) or is_linking(l1) or is_in_asm(l1):
+                        l0 = l1
+                        break
+                    trace.append(l1)
+                    l1 = yield
+                else:
+                    l0 = l1
 
-                    self.new_trace(trace)
-                    continue
+                self.new_trace(trace)
+                continue
 
-                if is_linking(l0):
-                    self.new_linking(l0)
-                    break
+            if is_linking(l0):
+                self.new_linking(l0)
+                l0 = yield
+                continue
 
-                self.new_unrecognized(l0)
-                break
+            self.new_unrecognized(l0)
+            l0 = yield
+
+        # StopIteration` should not be raised because `send` method is used
+        # to input lines. Just ignore consequent input.
+        while True:
+            yield
 
     def feed_file(self, f):
         # iterate file line by line
-        self.feed(iter(f))
+        feeder = self.feeder
+        for l in f:
+            feeder.send(l)
+        feeder.send(EOL)
 
     def feed_file_by_name(self, file_name):
         f = open(file_name, "r")
