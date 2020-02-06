@@ -453,6 +453,12 @@ if __name__ == "__main__":
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
     )
+    DEFAULT_LIMIT = "1000"
+    ap.add_argument("-l",
+        metavar = "N",
+        default = DEFAULT_LIMIT,
+        help = "limit number of log lines (default %s)" % DEFAULT_LIMIT
+    )
     ap.add_argument("qlog")
 
     args = ap.parse_args()
@@ -462,7 +468,9 @@ if __name__ == "__main__":
     print("Reading " + qlogFN)
 
     qlog = QEMULog()
-    qlog.feed_file_by_name(qlogFN)
+    with open(qlogFN, "r") as log_stream:
+        qlog.feed_lines(log_stream, int(args.l))
+    qlog.feeder.send(EOL)
 
     print("Building full trace")
     trace = qlog.full_trace()
