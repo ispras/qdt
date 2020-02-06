@@ -79,6 +79,10 @@ saved as constant. See `Value.to_global`. Used internally. It emulates `Datum`.
     def type(self):
         return self._backing.type
 
+    @lazy
+    def fetch_size(self):
+        return self._backing.datum.fetch_size
+
 
 class DereferencedValue(object):
     """ A wrapper for `Value` instance that has been dereferenced as a pointer
@@ -96,6 +100,10 @@ expression is extended correspondingly. See `Value.dereference` or
     @lazy
     def dic(self):
         return self._backing.dic
+
+    @lazy
+    def fetch_size(self):
+        return self._backing.datum.fetch_size
 
 
 class Returned(object):
