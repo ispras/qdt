@@ -107,22 +107,37 @@ class QTrace(object):
     def __init__(self, lines):
         l0 = iter(lines[0])
 
-        addr = []
+        # Search for "CPU_LOG_EXEC" for trace message format.
+        addrs = []
         for c in l0:
             if c == "[":
                 break
-        for c in l0:
-            if c == " ":
-                break
-        for c in l0:
-            if c in hexDigits:
-                addr.append(c)
+        while True:
+            addr = []
+            for c in l0:
+                if c in hexDigits:
+                    addr.append(c)
+                    break
             else:
                 break
+            for c in l0:
+                if c in hexDigits:
+                    addr.append(c)
+                else:
+                    break
+            else:
+                break
+            try:
+                addr_val = int("".join(addr), base = 16)
+            except ValueError:
+                continue
+            addrs.append(addr_val)
 
+        # `addrs[1]` is `pc`. Other values can represent different things
+        # depending on Qemu version. They are not interesting here.
         try:
-            self.firstAddr = int("".join(addr), base = 16)
-        except ValueError:
+            self.firstAddr = addrs[1]
+        except IndexError:
             self.bad = True
 
         if len(lines) > 1:
