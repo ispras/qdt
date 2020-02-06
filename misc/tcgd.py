@@ -32,7 +32,7 @@ class TCGWatcher(Watcher):
         "tcg/tcg.c:742 v2.12.1"
         ctx = self.rt["s"]
         res = ctx.dereference()
-        pass
+        print(res)
 
     def on_tcg_register_thread(self):
         "tcg/tcg.c:565 v2.12.1"
@@ -53,14 +53,14 @@ class TCGWatcher(Watcher):
             param2 = op["param2"]
             life = op["life"]
 
-            print(map(lambda v : v.fetch(), (opc, param1, param2, life)))
+            print(list(map(lambda v : v.fetch(), (opc, param1, param2, life))))
 
             # Field access chains memory location expressions.
             # So, convert intermediate value to a global to prevent a deep
             # expressions during handling of a long list.
             op = op["link"]["tqe_next"].to_global()
 
-        print("")
+        print("!")
 
 
 if __name__ == "__main__":
