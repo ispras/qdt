@@ -66,10 +66,10 @@ now represents a long-living value. Its memory location has been evaluated and
 saved as constant. See `Value.to_global`. Used internally. It emulates `Datum`.
     """
 
-    def __init__(self, datum, location):
+    def __init__(self, value, location):
         self.location = location
 
-        self._backing = datum
+        self._backing = value
 
     @lazy
     def dic(self):
