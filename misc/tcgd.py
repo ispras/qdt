@@ -107,7 +107,7 @@ if __name__ == "__main__":
     if not wait_for_tcp_port(port):
         raise RuntimeError("gdbserver does not listen %u" % port)
 
-    qemu_debugger = AMD64(str(port), noack = True, verbose = True)
+    qemu_debugger = AMD64(str(port), noack = True, verbose = False)
 
     try:
         rt = Runtime(qemu_debugger, dic)
