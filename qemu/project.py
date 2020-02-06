@@ -172,7 +172,7 @@ class QProject(object):
 
             if with_chunk_graph:
                 yield True
-                s.gen_chunks_gv_file(spath + ".chunks.gv")
+                f.gen_chunks_gv_file(spath + ".chunks.gv")
 
             # Only sources need to be registered in the build system
             if type(s) is not Source:
