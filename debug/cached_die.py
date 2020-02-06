@@ -42,3 +42,6 @@ class CachedDIE(object):
                 continue
 
         raise KeyError(name)
+
+    def __getitem__(self, name):
+        return self.find_DIE_attr(name)
