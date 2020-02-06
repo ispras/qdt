@@ -419,15 +419,17 @@ if __name__ == "__main__":
     tk.columnconfigure(1, weight = 0)
 
     columns = [
+        "addr",
         "size",
         "disas"
     ]
 
     tv = VarTreeview(tk, columns = columns)
-    tv.heading("#0", text = _("Address"))
+    tv.heading("addr", text = _("Address"))
     tv.heading("size", text = _("Size"))
     tv.heading("disas", text = _("Disassembly"))
-    tv.column("#0", minwidth = 120, width = 120)
+    tv.column("#0", width = 10)
+    tv.column("addr", minwidth = 120, width = 120)
     tv.column("size", minwidth = 30, width = 30)
     tv.column("disas", minwidth = 200)
     tv.grid(row = 0, column = 0, sticky = "NESW")
@@ -438,12 +440,12 @@ if __name__ == "__main__":
     tv.config(yscrollcommand = vscroll.set)
     vscroll.config(command = tv.yview)
 
-    for i in trace:
+    for idx, i in enumerate(trace):
         if DEBUG < 3:
             print("0x%08X: %s" % (i.addr, i.disas))
         tv.insert("", "end",
-            text = "0x%08X" % i.addr,
-            values = ("-", str(i.disas))
+            text = str(idx),
+            values = ("0x%08X" % i.addr, "-", str(i.disas))
         )
 
     tk.mainloop()
