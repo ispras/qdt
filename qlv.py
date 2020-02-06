@@ -364,19 +364,23 @@ class QEMULog(object):
         if DEBUG < 1:
             print("%x:%u -> %x:%u" % (start, start_tb[0], end, end_tb[0]))
 
-    def new_unrecognized(self, l):
+    def new_unrecognized(self, l, lineno):
         l = l.rstrip()
         if l:
-            print("--- new_unrecognized line")
+            print("--- new_unrecognized line %d" % lineno)
             print(l)
 
     def feed(self):
+        lineno = 0
+
         l0 = yield
         while l0 is not None:
+            lineno += 1
             if is_in_asm(l0):
                 in_asm = []
                 l1 = yield
                 while l1 is not None:
+                    lineno += 1
                     if is_in_asm_instr(l1):
                         in_asm.append(l1)
                     else:
@@ -392,6 +396,7 @@ class QEMULog(object):
 
                 l1 = yield
                 while l1 is not None:
+                    lineno += 1
                     if is_linking(l1) or is_in_asm(l1):
                         l0 = l1
                         break
@@ -406,7 +411,7 @@ class QEMULog(object):
                 l0 = yield
                 continue
 
-            self.new_unrecognized(l0)
+            self.new_unrecognized(l0, lineno)
             l0 = yield
 
     def feed_file(self, f):
