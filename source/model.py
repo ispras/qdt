@@ -2055,6 +2055,11 @@ class Variable(object):
     def __str__(self):
         return self.name
 
+    def __lt__(self, other):
+        if not isinstance(other, (Type, Variable)):
+            return NotImplemented
+        return self.name < other.name
+
     __type_references__ = ["type", "initializer"]
 
 # Type inspecting
