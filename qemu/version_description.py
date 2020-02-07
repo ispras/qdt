@@ -640,10 +640,7 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
-            for path, recursive in self.include_paths:
-                yield Header.co_build_inclusions(join(tmp_work_dir, path),
-                    recursive
-                )
+            yield Header.co_build_inclusions(tmp_work_dir, self.include_paths)
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 

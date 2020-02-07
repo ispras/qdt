@@ -791,7 +791,7 @@ class Header(Source):
                     Header.yields_per_header.append(yields_per_current_header)
 
     @staticmethod
-    def co_build_inclusions(dname, recursive):
+    def co_build_inclusions(work_dir, include_paths):
         # Default include search folders should be specified to
         # locate and parse standard headers.
         # parse `cpp -v` output to get actual list of default
@@ -807,8 +807,10 @@ class Header(Source):
         for h in Header.reg.values():
             h.parsed = False
 
-        for entry in listdir(dname):
-            yield Header._build_inclusions(dname, entry, recursive)
+        for path, recursive in include_paths:
+            dname = join(work_dir, path)
+            for entry in listdir(dname):
+                yield Header._build_inclusions(dname, entry, recursive)
 
         for h in Header.reg.values():
             del h.parsed
