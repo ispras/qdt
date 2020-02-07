@@ -823,7 +823,7 @@ class Header(Source):
     Yields total: %d
     Max yields per header: %d
     Min yields per header: %d
-    Average yields per headed: %f
+    Average yields per header: %f
 """ % (
     yields_total,
     max(Header.yields_per_header),
