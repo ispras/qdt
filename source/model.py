@@ -1039,7 +1039,7 @@ class Type(object):
             raise RuntimeError("Stringifying generic nameless type")
 
     def __lt__(self, other):
-        if not isinstance(other, Type):
+        if not isinstance(other, (Type, Variable)):
             return NotImplemented
         return self.name < other.name
 
