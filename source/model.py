@@ -819,7 +819,8 @@ class Header(Source):
 
         yields_total = sum(Header.yields_per_header)
 
-        print("""Header inclusions build statistic:
+        if yields_total:
+            print("""Header inclusions build statistic:
     Yields total: %d
     Max yields per header: %d
     Min yields per header: %d
@@ -830,7 +831,9 @@ class Header(Source):
     min(Header.yields_per_header),
     yields_total / float(len(Header.yields_per_header))
 )
-        )
+            )
+        else:
+            print("Headers not found")
 
         del Header.yields_per_header
 
