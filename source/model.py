@@ -1276,15 +1276,11 @@ class Structure(Type):
         top_chunk = struct_begin
 
         for f in self.fields.values():
-            # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = generator.provide_chunks(f, indent = field_indent)
-
-            field_declaration = decl_chunks[0]
-
-            field_refs.extend(list(field_declaration.references))
-            field_declaration.clean_references()
-            field_declaration.add_reference(top_chunk)
-            top_chunk = field_declaration
+            field_decl = generator.provide_chunks(f, indent = field_indent)[0]
+            field_refs.extend(list(field_decl.references))
+            field_decl.clean_references()
+            field_decl.add_reference(top_chunk)
+            top_chunk = field_decl
 
         struct_begin.add_references(field_refs)
         struct_end.add_reference(top_chunk)
@@ -1787,9 +1783,7 @@ class MacroUsage(Type):
 
         if initializer is not None:
             for v in initializer.used_variables:
-                # Note that 0-th chunk is variable and rest are its
-                # dependencies.
-                refs.append(generator.provide_chunks(v)[0])
+                refs.extend(generator.provide_chunks(v))
 
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
@@ -2046,9 +2040,7 @@ class Variable(object):
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
-                # Note that 0-th chunk is variable and rest are its
-                # dependencies.
-                refs.append(generator.provide_chunks(v)[0])
+                refs.extend(generator.provide_chunks(v))
 
             for t in self.initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
@@ -2723,8 +2715,7 @@ def gen_function_def_ref_chunks(f, generator):
         references.extend(generator.provide_chunks(t))
 
     for t in GlobalsCollector(f.body).visit().used_globals:
-        # Note that 0-th chunk is the global and rest are its dependencies
-        references.append(generator.provide_chunks(t)[0])
+        references.extend(generator.provide_chunks(t))
 
     return references
 
