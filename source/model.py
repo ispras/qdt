@@ -791,7 +791,7 @@ class Header(Source):
                     Header.yields_per_header.append(yields_per_current_header)
 
     @staticmethod
-    def co_build_inclusions(dname, recursive):
+    def co_build_inclusions(work_dir, include_paths):
         # Default include search folders should be specified to
         # locate and parse standard headers.
         # parse `cpp -v` output to get actual list of default
@@ -807,8 +807,10 @@ class Header(Source):
         for h in Header.reg.values():
             h.parsed = False
 
-        for entry in listdir(dname):
-            yield Header._build_inclusions(dname, entry, recursive)
+        for path, recursive in include_paths:
+            dname = join(work_dir, path)
+            for entry in listdir(dname):
+                yield Header._build_inclusions(dname, entry, recursive)
 
         for h in Header.reg.values():
             del h.parsed
@@ -817,18 +819,21 @@ class Header(Source):
 
         yields_total = sum(Header.yields_per_header)
 
-        print("""Header inclusions build statistic:
+        if yields_total:
+            print("""Header inclusions build statistic:
     Yields total: %d
     Max yields per header: %d
     Min yields per header: %d
-    Average yields per headed: %f
+    Average yields per header: %f
 """ % (
     yields_total,
     max(Header.yields_per_header),
     min(Header.yields_per_header),
     yields_total / float(len(Header.yields_per_header))
 )
-        )
+            )
+        else:
+            print("Headers not found")
 
         del Header.yields_per_header
 
@@ -1039,7 +1044,7 @@ class Type(object):
             raise RuntimeError("Stringifying generic nameless type")
 
     def __lt__(self, other):
-        if not isinstance(other, Type):
+        if not isinstance(other, (Type, Variable)):
             return NotImplemented
         return self.name < other.name
 
@@ -1869,6 +1874,8 @@ model yet. Better implement required functionality and submit patches!
 
         return [ch]
 
+    __type_references__ = ["used"]
+
 
 # Data models
 
@@ -2054,6 +2061,11 @@ class Variable(object):
 
     def __str__(self):
         return self.name
+
+    def __lt__(self, other):
+        if not isinstance(other, (Type, Variable)):
+            return NotImplemented
+        return self.name < other.name
 
     __type_references__ = ["type", "initializer"]
 
