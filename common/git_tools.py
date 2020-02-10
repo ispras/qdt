@@ -197,7 +197,7 @@ as fast as possible. A clone is neither honest nor independent, so be careful.
     if version is None:
         version = repo.head.commit.hexsha
     else:
-        version = repo.commit(version).hexsha
+        version = git_find_commit(repo, version).hexsha
 
     tmp_wc = mkdtemp(prefix = "%s-%s-" % (prefix, version))
 
