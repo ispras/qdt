@@ -32,6 +32,7 @@ from matplotlib import (
     pyplot as plt
 )
 from common import (
+    git_find_commit,
     uname,
     Measurer,
     fast_repo_clone,
@@ -345,8 +346,9 @@ class QDTMeasurer(Measurer):
 
         self.diffs = diffs
 
+        target_commit = git_find_commit(qemugit, project.target_version)
         self.qvc_pattern = (
-            "qvc*_%s.py" % qemugit.commit(project.target_version).hexsha
+            "qvc*_%s.py" % target_commit.hexsha
         )
 
     def __enter__(self):
