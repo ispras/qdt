@@ -1862,6 +1862,9 @@ model yet. Better implement required functionality and submit patches!
         if used_variables is not None:
             self.used.update(used_variables)
 
+            for i in used_variables:
+                i.used = True
+
         self.weight = weight
 
     _name_num = count()
