@@ -21,6 +21,7 @@ from source import (
     Macro
 )
 from common import (
+    git_find_commit,
     co_process,
     get_cleaner,
     lazy,
@@ -539,7 +540,7 @@ class QemuVersionDescription(object):
         if version is None:
             c = self.repo.head.commit
         else:
-            c = self.repo.commit(version)
+            c = git_find_commit(self.repo, version)
 
         self.commit_sha = c.hexsha
 

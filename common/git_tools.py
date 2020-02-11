@@ -4,6 +4,7 @@ __all__ = [
   , "iter_chunks"
   , "git_diff2delta_intervals"
   , "fast_repo_clone"
+  , "git_find_commit"
 ]
 
 from collections import (
@@ -23,6 +24,7 @@ from os.path import (
     join
 )
 from git import (
+    BadName,
     Repo
 )
 
@@ -195,7 +197,7 @@ as fast as possible. A clone is neither honest nor independent, so be careful.
     if version is None:
         version = repo.head.commit.hexsha
     else:
-        version = repo.commit(version).hexsha
+        version = git_find_commit(repo, version).hexsha
 
     tmp_wc = mkdtemp(prefix = "%s-%s-" % (prefix, version))
 
@@ -269,3 +271,19 @@ def init_submodules_from_cache(repo, cache_dir):
 
         sub_repo = Repo(join(repo.working_tree_dir, sm_path))
         init_submodules_from_cache(sub_repo, join(sub_cache, "modules"))
+
+
+def git_find_commit(repo, version):
+    """ A wrapper for Repo.commit. It also searches the version as
+a remote head.
+    """
+    try:
+        return repo.commit(version)
+    except BadName:
+        # Try to look the version (it's a branch) in remotes.
+        for rem in repo.remotes:
+            for ref in rem.refs:
+                if ref.remote_head == version:
+                    return ref.commit
+
+        raise
