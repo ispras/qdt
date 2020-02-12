@@ -71,6 +71,9 @@ class HotKey(object):
         with KeyboardSettings() as kbd:
             self.code_translation = kbd.gen_translation_to_posix()
 
+    def __call__(self, *a, **kw):
+        self.add_binding(HotKeyBinding(*a, **kw))
+
     def add_key_symbols(self, keys2sym):
         for key, sym in keys2sym.items():
             self.keys2sym[key] = sym
