@@ -1,6 +1,7 @@
 __all__ = [
     "TaskErrorWidget"
   , "TaskErrorDialog"
+  , "ErrorDialog"
 ]
 
 from .gui_frame import (
@@ -25,6 +26,40 @@ from common import (
 from .scrollframe import (
     add_scrollbars_native
 )
+from .var_widgets import (
+    VarLabel
+)
+
+
+class ErrorDialog(GUIDialog):
+
+    def __init__(self, summary, title = None, message = None):
+        GUIDialog.__init__(self)
+
+        if title is None:
+            title = _("Error")
+
+        self.title(title)
+
+        self.columnconfigure(0, weight = 1)
+
+        self.rowconfigure(0, weight = 0)
+        VarLabel(self, text = summary).grid(
+            row = 0,
+            column = 0,
+            columnspan = 1 if message is None else 2,
+            sticky = "NWS"
+        )
+
+        if message is not None:
+            t = GUIText(self, state = READONLY, wrap = NONE)
+
+            self.rowconfigure(1, weight = 1)
+            t.grid(row = 1, column = 0, sticky = "NESW")
+
+            add_scrollbars_native(self, t, row = 1, sizegrip = True)
+
+            t.insert(END, message)
 
 
 class TaskErrorWidget(GUIFrame):
