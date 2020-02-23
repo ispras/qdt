@@ -2031,6 +2031,10 @@ class Variable(object):
             array_decl = gen_array_declaration(self.array_size)
         )
 
+    def ttp(self, *args, **kw):
+        "A shortening code helper"
+        return self.type.type.use_as_prototype(*args, **kw)
+
     def gen_declaration_chunks(self, generator,
         indent = "",
         extern = False
