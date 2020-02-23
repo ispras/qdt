@@ -2011,6 +2011,10 @@ class Variable(object):
             array_decl = gen_array_declaration(self.array_size)
         )
 
+    def gen_callback(self, *args, **kw):
+        "Generate a function suitable for that function pointer"
+        return self.type.type.use_as_prototype(*args, **kw)
+
     def gen_declaration_chunks(self, generator,
         indent = "",
         extern = False
