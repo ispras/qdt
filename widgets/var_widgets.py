@@ -87,7 +87,7 @@ class VarLabel(Label):
             self.text_var = kw.pop("text")
             kw["text"] = self.text_var.get()
         else:
-            self.text_var = StringVar("")
+            self.text_var = StringVar()
         Label.__init__(self, *args, **kw)
         self.text_var.trace_variable("w", self.on_var_changed)
 
