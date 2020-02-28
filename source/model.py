@@ -2913,9 +2913,6 @@ digraph Chunks {
             self.sort_needed = True
 
     def sort_chunks(self):
-        if not self.sort_needed:
-            return
-
         new_chunks = OrderedSet()
         # topology sorting
         for chunk in self.chunks:
@@ -3096,7 +3093,8 @@ them must be replaced with reference to h. """
 
         self.check_static_function_declarations()
 
-        self.sort_chunks()
+        if self.sort_needed:
+            self.sort_chunks()
 
         if OPTIMIZE_INCLUSIONS:
             self.optimize_inclusions()
@@ -3106,7 +3104,8 @@ them must be replaced with reference to h. """
         # semantic sort
         self.chunks = OrderedSet(sorted(self.chunks))
 
-        self.sort_chunks()
+        if self.sort_needed:
+            self.sort_chunks()
 
         writer.write(
             "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
