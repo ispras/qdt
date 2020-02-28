@@ -118,6 +118,9 @@ class QBuildDir(object):
         self.path = path
         self.worktree = worktree
 
+    def __str__(self):
+        return self.path
+
 
 class QConfig(Extensible):
 
