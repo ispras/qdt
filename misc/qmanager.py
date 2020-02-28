@@ -88,6 +88,7 @@ class QMGUI(GUITk):
         hotkeys(self._on_forget_repo, 41, symbol = "F")
         hotkeys(self._on_copy_path, 54, symbol = "C")
         hotkeys(self._on_create_worktree, 25, symbol = "W")
+        hotkeys(self._on_create_build_dir, 56, symbol = "B")
 
         with MenuBuilder(self) as menubar:
             with menubar(_("Manage")) as repomenu:
@@ -113,6 +114,13 @@ class QMGUI(GUITk):
                 repomenu()
                 repomenu(_("Exit"),
                     command = self._on_exit
+                )
+            with menubar(_("Work tree")) as wtmenu:
+                wtmenu(_("Create build directory"),
+                    command = self._on_create_build_dir,
+                    accelerator = hotkeys.get_keycode_string(
+                        self._on_create_build_dir
+                    )
                 )
             with menubar(_("Help")) as helpmenu:
                 helpmenu(_("About"),
@@ -144,6 +152,43 @@ class QMGUI(GUITk):
         self.repos = []
         for r in repos:
             self._account_repo(r)
+
+    def _worktree_by_iid(self, iid):
+        try:
+            # likely
+            return self.iid2worktree[iid]
+        except KeyError:
+            qrepo = self.iid2repo[iid]
+            # one of work trees is the repo
+            return qrepo.worktrees[qrepo.path]
+
+    def _on_create_build_dir(self):
+        sel = self.tv_repos.selection()
+
+        for r in set(self._worktree_by_iid(iid) for iid in sel):
+            res = BuildDirCreationDialog(self, r).wait()
+            if not res:
+                continue
+
+            self._create_build_dir(*res)
+
+    def _create_build_dir(self, qwt, directory, options):
+        while True:
+            try:
+                makedirs(directory, exist_ok = True)
+            except:
+                ErrorDialog(
+                    summary = _("Check build directory creation options"),
+                    message = format_exc()
+                ).wait()
+                # allow user to correct settings
+                dlg = BuildDirCreationDialog(self, qwt, directory, **options)
+                res = dlg.wait()
+                if res is None:
+                    break
+                qwt, directory, options = res
+                continue
+            break
 
     def _qrepo_by_iid(self, iid):
         try:
@@ -399,6 +444,79 @@ class WorkTreeCreationDialog(GUIDialog):
 
         # Keep order in sync with __init__.
         self._result = self.qrepo, directory, options
+        self.destroy()
+
+
+class BuildDirCreationDialog(GUIDialog):
+
+    def __init__(self, master,
+        # Keep those args with sync with result (see _on_create_build_dir)
+        qworktree,
+        directory = "",
+        **kw
+    ):
+        GUIDialog.__init__(self, master, **kw)
+        self.qwt = qworktree
+
+        self.title(_("Build directory creation"))
+
+        self.columnconfigure(0, weight = 0)
+        self.columnconfigure(1, weight = 1)
+        self.columnconfigure(2, weight = 0)
+
+        row = 0
+        # Main: path to work tree
+        self.rowconfigure(row, weight = 0)
+        VarLabel(self, text = _("Work tree:")).grid(
+            row = row,
+            column = 0,
+            sticky = "E"
+        )
+        Label(self, text = qworktree.path).grid(
+            row = row,
+            column = 1,
+            sticky = "W",
+            columnspan = 2
+        )
+
+        # Build directory: path to new build directory, Browse
+        row += 1; self.rowconfigure(row, weight = 0)
+        VarLabel(self, text = _("Directory:")).grid(
+            row = row,
+            column = 0,
+            sticky = "E"
+        )
+        self.var_build_dir = StringVar(value = directory)
+        HKEntry(self, textvariable = self.var_build_dir, width = 100).grid(
+            row = row, column = 1, sticky = "NESW"
+        )
+        VarButton(self, text = _("Browse"), command = self._on_browse_bd).grid(
+            row = row, column = 2
+        )
+
+        # Buttons
+        row += 1; self.rowconfigure(row, weight = 0)
+        bt_frame = GUIFrame(self)
+        bt_frame.grid(row = row, column = 0, columnspan = 3, sticky = "NES")
+
+        VarButton(bt_frame,
+            text = _("Create"),
+            command = self._on_create_build_dir
+        ).pack()
+
+    def _on_browse_bd(self):
+        cur = self.var_build_dir.get()
+        self.var_build_dir.set(
+            askdirectory(self,
+                title = _("Select build directory"),
+                # we want to suggest a directory near working tree
+                initialdir = cur or dirname(self.qwt.path)
+            )
+            or cur
+        )
+
+    def _on_create_build_dir(self):
+        self._result = self.qwt, self.var_build_dir.get(), {}
         self.destroy()
 
 
