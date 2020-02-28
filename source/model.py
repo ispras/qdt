@@ -2810,7 +2810,7 @@ class SourceFile(object):
         self.protection = protection
         self.origin = origin
 
-    def gen_chunks_graph(self, w):
+    def gen_chunks_graph(self, w, chunks):
         w.write("""\
 digraph Chunks {
     rankdir=BT;
@@ -2846,7 +2846,7 @@ digraph Chunks {
             return name
 
         upper_cnn = None
-        for ch in self.chunks:
+        for ch in chunks:
             cnn = chunk_node_name(ch)
             label = ch.name
 
@@ -2876,7 +2876,7 @@ digraph Chunks {
 
     def gen_chunks_gv_file(self, file_name):
         f = open(file_name, "w")
-        self.gen_chunks_graph(f)
+        self.gen_chunks_graph(f, self.chunks)
         f.close()
 
     def remove_dup_chunk(self, ch, ch_remove):
