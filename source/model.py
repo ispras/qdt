@@ -2785,6 +2785,19 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.add(chunk)
 
 
+def sort_chunks(chunks):
+    new_chunks = OrderedSet()
+    # topology sorting
+    for chunk in chunks:
+        if not chunk.visited == 2:
+            depth_first_sort(chunk, new_chunks)
+
+    for chunk in new_chunks:
+        chunk.visited = 0
+
+    return new_chunks
+
+
 class SourceFile(object):
 
     def __init__(self, origin, protection = True):
@@ -2911,18 +2924,6 @@ digraph Chunks {
 
         if sort_needed:
             self.sort_needed = True
-
-    def sort_chunks(self):
-        new_chunks = OrderedSet()
-        # topology sorting
-        for chunk in self.chunks:
-            if not chunk.visited == 2:
-                depth_first_sort(chunk, new_chunks)
-
-        for chunk in new_chunks:
-            chunk.visited = 0
-
-        self.chunks = new_chunks
 
     def add_chunks(self, chunks):
         for ch in chunks:
@@ -3094,7 +3095,7 @@ them must be replaced with reference to h. """
         self.check_static_function_declarations()
 
         if self.sort_needed:
-            self.sort_chunks()
+            self.chunks = sort_chunks(self.chunks)
 
         if OPTIMIZE_INCLUSIONS:
             self.optimize_inclusions()
@@ -3105,7 +3106,7 @@ them must be replaced with reference to h. """
         self.chunks = OrderedSet(sorted(self.chunks))
 
         if self.sort_needed:
-            self.sort_chunks()
+            self.chunks = sort_chunks(self.chunks)
 
         writer.write(
             "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
