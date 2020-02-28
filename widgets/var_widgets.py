@@ -272,13 +272,10 @@ class VarTreeview(Treeview):
         to_track = []
 
         try:
-            values = kw["values"]
+	        kw["values"] = values = list(kw.pop("values"))
         except KeyError:
             pass
         else:
-            if not isinstance(values, (tuple, list)):
-                values = (values,)
-
             for col, v in enumerate(values):
                 if isinstance(v, variables):
                     to_track.append((col, v))
