@@ -96,7 +96,7 @@ class QMGUI(GUITk):
                     accelerator = hotkeys.get_keycode_string(
                         self._on_account_git_repo
                     )
-                ),
+                )
                 repomenu(_("Forget repository"),
                     command = self._on_forget_repo,
                     accelerator = hotkeys.get_keycode_string(
