@@ -109,6 +109,7 @@ class QWorkTree(Extensible):
         self.path = path
         self.qrepo = qrepo
         self.repo = Repo(path)
+        self.build_dirs = {}
 
     def __str__(self):
         return self.path
