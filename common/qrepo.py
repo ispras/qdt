@@ -116,9 +116,9 @@ class QWorkTree(Extensible):
 
 class QBuildDir(object):
 
-    def __init__(self, path, working_copy):
+    def __init__(self, path, worktree):
         self.path = path
-        self.working_copy = working_copy
+        self.worktree = worktree
 
 
 class QConfig(Extensible):
