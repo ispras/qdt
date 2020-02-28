@@ -175,7 +175,7 @@ class QMGUI(GUITk):
                     message = format_exc()
                 ).wait()
                 # allow user to correct settings
-                dlg = WorkTreeCreationDialog(self, qrepo, directory, options)
+                dlg = WorkTreeCreationDialog(self, qrepo, directory, **options)
                 res = dlg.wait()
                 if res is None:
                     break
@@ -276,7 +276,8 @@ class WorkTreeCreationDialog(GUIDialog):
         # Keep those args with sync with result (see _on_create_worktree)
         qrepo,
         init_directory = "",
-        init_options = {},
+        new_branch = "",
+        version = None,
         **kw
     ):
         GUIDialog.__init__(self, master, **kw)
@@ -326,9 +327,8 @@ class WorkTreeCreationDialog(GUIDialog):
             sticky = "E"
         )
         self.git_ver_sel_widget = w = GitVerSelWidget(self, qrepo.repo)
-        init_version = init_options.get("version", None)
-        if init_version is not None:
-            w.selected.set(init_version)
+        if version is not None:
+            w.selected.set(version)
         w.grid(row = row, column = 1, columnspan = 2, sticky = "NESW")
 
         # New branch
@@ -339,7 +339,7 @@ class WorkTreeCreationDialog(GUIDialog):
             sticky = "E"
         )
         self.var_new_branch = StringVar(
-            value = init_options.get("new_branch", "")
+            value = new_branch
         )
         HKEntry(self, textvariable = self.var_new_branch, width = 100).grid(
             row = row, column = 1, columnspan = 2, sticky = "NESW"
