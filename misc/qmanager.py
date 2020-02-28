@@ -104,6 +104,13 @@ class QMGUI(GUITk):
                     )
                 )
                 repomenu()
+                repomenu(_("Create work tree"),
+                    command = self._on_create_worktree,
+                    accelerator = hotkeys.get_keycode_string(
+                        self._on_create_worktree
+                    )
+                )
+                repomenu()
                 repomenu(_("Exit"),
                     command = self._on_exit
                 )
