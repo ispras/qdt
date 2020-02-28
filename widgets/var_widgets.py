@@ -272,17 +272,17 @@ class VarTreeview(Treeview):
         to_track = []
 
         try:
-            values = kw["values"]
+            old_values = kw.pop("values")
         except KeyError:
             pass
         else:
-            if not isinstance(values, (tuple, list)):
-                values = (values,)
+            kw["values"] = values = []
 
-            for col, v in enumerate(values):
+            for col, v in enumerate(old_values):
                 if isinstance(v, variables):
                     to_track.append((col, v))
-                    values[col] = v.get()
+                    v = v.get()
+                values.insert(col, v)
 
         item_iid = Treeview.insert(self, *a, **kw)
 
