@@ -1276,15 +1276,11 @@ class Structure(Type):
         top_chunk = struct_begin
 
         for f in self.fields.values():
-            # Note that 0-th chunk is field and rest are its dependencies
-            decl_chunks = generator.provide_chunks(f, indent = field_indent)
-
-            field_declaration = decl_chunks[0]
-
-            field_refs.extend(list(field_declaration.references))
-            field_declaration.clean_references()
-            field_declaration.add_reference(top_chunk)
-            top_chunk = field_declaration
+            field_decl = generator.provide_chunks(f, indent = field_indent)[0]
+            field_refs.extend(list(field_decl.references))
+            field_decl.clean_references()
+            field_decl.add_reference(top_chunk)
+            top_chunk = field_decl
 
         struct_begin.add_references(field_refs)
         struct_end.add_reference(top_chunk)
@@ -1787,9 +1783,7 @@ class MacroUsage(Type):
 
         if initializer is not None:
             for v in initializer.used_variables:
-                # Note that 0-th chunk is variable and rest are its
-                # dependencies.
-                refs.append(generator.provide_chunks(v)[0])
+                refs.extend(generator.provide_chunks(v))
 
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
@@ -1861,6 +1855,9 @@ model yet. Better implement required functionality and submit patches!
         self.used = set() if used_types is None else set(used_types)
         if used_variables is not None:
             self.used.update(used_variables)
+
+            for i in used_variables:
+                i.used = True
 
         self.weight = weight
 
@@ -2043,9 +2040,7 @@ class Variable(object):
 
         if self.initializer is not None:
             for v in self.initializer.used_variables:
-                # Note that 0-th chunk is variable and rest are its
-                # dependencies.
-                refs.append(generator.provide_chunks(v)[0])
+                refs.extend(generator.provide_chunks(v))
 
             for t in self.initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
@@ -2720,8 +2715,7 @@ def gen_function_def_ref_chunks(f, generator):
         references.extend(generator.provide_chunks(t))
 
     for t in GlobalsCollector(f.body).visit().used_globals:
-        # Note that 0-th chunk is the global and rest are its dependencies
-        references.append(generator.provide_chunks(t)[0])
+        references.extend(generator.provide_chunks(t))
 
     return references
 
@@ -2791,6 +2785,19 @@ def depth_first_sort(chunk, new_chunks):
     new_chunks.add(chunk)
 
 
+def sort_chunks(chunks):
+    new_chunks = OrderedSet()
+    # topology sorting
+    for chunk in chunks:
+        if not chunk.visited == 2:
+            depth_first_sort(chunk, new_chunks)
+
+    for chunk in new_chunks:
+        chunk.visited = 0
+
+    return new_chunks
+
+
 class SourceFile(object):
 
     def __init__(self, origin, protection = True):
@@ -2803,7 +2810,7 @@ class SourceFile(object):
         self.protection = protection
         self.origin = origin
 
-    def gen_chunks_graph(self, w):
+    def gen_chunks_graph(self, w, chunks):
         w.write("""\
 digraph Chunks {
     rankdir=BT;
@@ -2839,7 +2846,7 @@ digraph Chunks {
             return name
 
         upper_cnn = None
-        for ch in self.chunks:
+        for ch in chunks:
             cnn = chunk_node_name(ch)
             label = ch.name
 
@@ -2868,8 +2875,10 @@ digraph Chunks {
         w.write("}\n")
 
     def gen_chunks_gv_file(self, file_name):
+        chunks = sort_chunks(OrderedSet(sorted(self.chunks)))
+
         f = open(file_name, "w")
-        self.gen_chunks_graph(f)
+        self.gen_chunks_graph(f, chunks)
         f.close()
 
     def remove_dup_chunk(self, ch, ch_remove):
@@ -2917,21 +2926,6 @@ digraph Chunks {
 
         if sort_needed:
             self.sort_needed = True
-
-    def sort_chunks(self):
-        if not self.sort_needed:
-            return
-
-        new_chunks = OrderedSet()
-        # topology sorting
-        for chunk in self.chunks:
-            if not chunk.visited == 2:
-                depth_first_sort(chunk, new_chunks)
-
-        for chunk in new_chunks:
-            chunk.visited = 0
-
-        self.chunks = new_chunks
 
     def add_chunks(self, chunks):
         for ch in chunks:
@@ -3102,7 +3096,8 @@ them must be replaced with reference to h. """
 
         self.check_static_function_declarations()
 
-        self.sort_chunks()
+        if self.sort_needed:
+            self.chunks = sort_chunks(self.chunks)
 
         if OPTIMIZE_INCLUSIONS:
             self.optimize_inclusions()
@@ -3112,7 +3107,8 @@ them must be replaced with reference to h. """
         # semantic sort
         self.chunks = OrderedSet(sorted(self.chunks))
 
-        self.sort_chunks()
+        if self.sort_needed:
+            self.chunks = sort_chunks(self.chunks)
 
         writer.write(
             "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")

@@ -445,13 +445,18 @@ after last statement in the corresponding callable object.
 class default: pass
 
 
+class CLICoDispatcher(CoDispatcher):
+    def __root_task_failed__(self, task):
+        print("".join(task.traceback_lines))
+
+
 def callco(co, delay = default):
     """ Call `co`routine. See `CoDispatcher` for coroutine protocol.
 
 :param delay: time to wait if a coroutine `yield`ed `False`.
 
     """
-    disp = CoDispatcher()
+    disp = CLICoDispatcher()
     disp.enqueue(co)
     if delay is default:
         disp.dispatch_all()
