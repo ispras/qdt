@@ -370,25 +370,27 @@ class QEMULog(object):
         if DEBUG < 1:
             print("%x:%u -> %x:%u" % (start, start_tb[0], end, end_tb[0]))
 
-    def new_unrecognized(self, l):
+    def new_unrecognized(self, l, lineno):
         l = l.rstrip()
         if l:
-            print("--- new_unrecognized line")
+            print("--- new_unrecognized line %d" % lineno)
             print(l)
 
     def feed(self):
+        lineno = 1
         l0 = yield
+
         while l0 is not EOL:
             if is_in_asm(l0):
                 in_asm = []
-                l1 = yield
+                l1 = yield; lineno += 1 # Those operations are always together.
                 while l1 is not EOL:
                     if is_in_asm_instr(l1):
                         in_asm.append(l1)
                     else:
                         l0 = l1 # try that line in other `if`s
                         break
-                    l1 = yield
+                    l1 = yield; lineno += 1
                 else:
                     l0 = l1
 
@@ -398,7 +400,7 @@ class QEMULog(object):
             if is_trace(l0):
                 trace = [l0]
 
-                l1 = yield
+                l1 = yield; lineno += 1
                 while l1 is not EOL:
                     # Traces are following one by one.
                     # - User did not passed other flags to -d.
@@ -408,7 +410,7 @@ class QEMULog(object):
                         l0 = l1
                         break
                     trace.append(l1)
-                    l1 = yield
+                    l1 = yield; lineno += 1
                 else:
                     l0 = l1
 
@@ -417,11 +419,11 @@ class QEMULog(object):
 
             if is_linking(l0):
                 self.new_linking(l0)
-                l0 = yield
+                l0 = yield; lineno += 1
                 continue
 
-            self.new_unrecognized(l0)
-            l0 = yield
+            self.new_unrecognized(l0, lineno)
+            l0 = yield; lineno += 1
 
         # `StopIteration` should not be raised because `send` method is used
         # to input lines. Just ignore consequent input.
