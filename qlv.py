@@ -435,6 +435,13 @@ class QEMULog(object):
             feeder.send(l)
         feeder.send(EOL)
 
+    def feed_lines(self, f, limit = 1000):
+        feeder = self.feeder
+        for last, l in izip(xrange(limit), f):
+            feeder.send(l)
+        if last < limit - 1:
+            feeder.send(EOL)
+
     def feed_file_by_name(self, file_name):
         f = open(file_name, "r")
         self.feed_file(f)
