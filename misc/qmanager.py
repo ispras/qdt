@@ -111,6 +111,9 @@ class QMGUI(GUITk):
                         self._on_create_worktree
                     )
                 )
+                repomenu(_("Delete work tree"),
+                    command = self._on_delete_worktree,
+                )
                 repomenu()
                 repomenu(_("Exit"),
                     command = self._on_exit
@@ -227,6 +230,16 @@ class QMGUI(GUITk):
                 qrepo, directory, options = res
                 continue
             break
+
+    def _on_delete_worktree(self):
+        sel = self.tv_repos.selection()
+
+        for wt in set(self._worktree_by_iid(iid) for iid in sel):
+            if wt.build_dirs:
+                ErrorDialog(_("Cannot remove work tree"),
+                    summary = _("%s has build directories.") % wt.path
+                ).wait()
+                continue
 
     def _on_worktree(self, wt):
         r2i, w2i = self.repo2iid, self.worktree2iid
