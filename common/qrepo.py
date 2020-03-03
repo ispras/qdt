@@ -35,6 +35,11 @@ class QRepo(object):
             GitWorktreeListParser(self, handler)
         )
 
+    def co_prune(self):
+        return PopenWorker("git", "worktree", "prune", cwd = self.path)(
+            PopenResult()
+        )
+
     def co_create_worktree(self, directory,
         version = None,
         new_branch = None,
