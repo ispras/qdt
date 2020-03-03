@@ -251,6 +251,9 @@ class QMGUI(GUITk):
         self.clipboard_append(text)
 
     def _account_repo(self, r):
+        self.task_manager.enqueue(self._co_account_repo(r))
+
+    def _co_account_repo(self, r):
         select = not self.repos # auto select first accounted repo
 
         self.repos.append(r)
@@ -259,10 +262,12 @@ class QMGUI(GUITk):
             open = True,
             values = _repo_column_values(r.repo)
         )
-        self.task_manager.enqueue(r.co_get_worktrees(self._on_worktree))
 
         if select:
             self.tv_repos.selection_set(self.repo2iid[r])
+
+        yield r.co_prune()
+        yield r.co_get_worktrees(self._on_worktree)
 
     def _forget_repo(self, r):
         self.repos.remove(r)
