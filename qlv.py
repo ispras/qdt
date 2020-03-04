@@ -160,6 +160,9 @@ class QTrace(object):
         self.bad = False
         self.next = None
 
+    def __str__(self):
+        return self.header
+
 
 class EOL:
     "End Of Log"
