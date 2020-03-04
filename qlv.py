@@ -58,6 +58,9 @@ class InInstr(object):
         self.disas = ":".join(parts[1:])
         self.size = 1
 
+    def __str__(self):
+        return self.l
+
 
 class TBCache(object):
     def __init__(self, back):
