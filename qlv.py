@@ -115,7 +115,9 @@ hexDigits = set("0123456789abcdefABCDEF")
 class QTrace(object):
 
     def __init__(self, lines):
-        l0 = iter(lines[0])
+        self.header = header = lines[0].rstrip()
+
+        l0 = iter(header)
 
         # Search for "CPU_LOG_EXEC" for trace message format.
         addrs = []
