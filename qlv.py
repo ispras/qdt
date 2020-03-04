@@ -46,6 +46,8 @@ def is_in_asm_instr(l):
 
 class InInstr(object):
 
+    first = False # (in TB), set externally
+
     def __init__(self, l):
         self.l = l = l.rstrip()
         parts = l.split(":")
@@ -321,6 +323,7 @@ class QEMULog(object):
             if prev_instr is None:
                 self.current_cache.tbMap[instr.addr] = tb
                 self.tbIdMap[tb] = (instr.addr, len(self.in_asm))
+                instr.first = True
 
             if prev_instr:
                 prev_instr.size = instr.addr - prev_instr.addr
@@ -516,6 +519,12 @@ if __name__ == "__main__":
     tv.column("addr", minwidth = 120, width = 120)
     tv.column("size", minwidth = 30, width = 30)
     tv.column("disas", width = 600)
+
+    tv.tag_configure("first", background = "#EEEEEE")
+
+    STYLE_FIRST = ("first",)
+    STYLE_DEFAULT = tuple()
+
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
     vscroll = Scrollbar(tk)
@@ -529,6 +538,7 @@ if __name__ == "__main__":
             print("0x%08X: %s" % (i.addr, i.disas))
         tv.insert("", "end",
             text = str(idx),
+            tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
             values = ("0x%08X" % i.addr, "-", str(i.disas))
         )
 
