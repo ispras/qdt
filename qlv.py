@@ -43,7 +43,9 @@ def is_in_asm(l):
 def is_in_asm_instr(l):
     return l[:2] == "0x"
 
+
 class InInstr(object):
+
     def __init__(self, l):
         l = l.rstrip()
         parts = l.split(":")
@@ -55,6 +57,7 @@ class InInstr(object):
 
         self.disas = ":".join(parts[1:])
         self.size = 1
+
 
 class TBCache(object):
     def __init__(self, back):
@@ -105,9 +108,12 @@ class TBCache(object):
 
         return False
 
+
 hexDigits = set("0123456789abcdefABCDEF")
 
+
 class QTrace(object):
+
     def __init__(self, lines):
         l0 = iter(lines[0])
 
@@ -159,6 +165,7 @@ class EOL:
 
 
 class QEMULog(object):
+
     def __init__(self):
         self.trace = []
         self.in_asm = []
@@ -448,6 +455,7 @@ class QEMULog(object):
         f = open(file_name, "r")
         self.feed_file(f)
         f.close()
+
 
 if __name__ == "__main__":
     ap = ArgumentParser(
