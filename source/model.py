@@ -1235,14 +1235,10 @@ class Structure(Type):
 
         if self.declaration is None:
             struct_begin = StructureTypedefDeclarationBegin(self, indent)
-            struct_end = StructureTypedefDeclarationEnd(self,
-                indent, True
-            )
+            struct_end = StructureTypedefDeclarationEnd(self, indent, True)
         else:
             struct_begin = StructureDeclarationBegin(self, indent)
-            struct_end = StructureDeclarationEnd(self,
-                indent, True
-            )
+            struct_end = StructureDeclarationEnd(self, indent, True)
 
         """
         References map of structure definition chunks:
@@ -2458,7 +2454,7 @@ class FunctionPointerTypeDeclaration(SourceChunk):
 
 class MacroTypeChunk(SourceChunk):
 
-    def __init__(self, _type, indent):
+    def __init__(self, _type, indent = ""):
         super(MacroTypeChunk, self).__init__(_type,
             "Usage of type %s" % _type,
             code = indent + _type.macro.gen_usage_string(_type.initializer)
@@ -2503,11 +2499,7 @@ class VariableDeclaration(SourceChunk):
 class VariableDefinition(SourceChunk):
     weight = 5
 
-    def __init__(self, var,
-        indent = "",
-        append_nl = True,
-        separ = ";"
-    ):
+    def __init__(self, var, indent = "", append_nl = True, separ = ";"):
         super(VariableDefinition, self).__init__(var,
             "Variable %s of type %s definition" % (var, var.type),
             """\
@@ -2540,7 +2532,7 @@ class StructureForwardDeclaration(SourceChunk):
 
 class StructureTypedefDeclarationBegin(SourceChunk):
 
-    def __init__(self, struct, indent):
+    def __init__(self, struct, indent = ""):
         super(StructureTypedefDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
@@ -2555,10 +2547,7 @@ class StructureTypedefDeclarationBegin(SourceChunk):
 class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct,
-        indent = "",
-        append_nl = True
-    ):
+    def __init__(self, struct, indent = "", append_nl = True):
         super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
             """\
@@ -2573,7 +2562,7 @@ class StructureTypedefDeclarationEnd(SourceChunk):
 
 class StructureDeclarationBegin(SourceChunk):
 
-    def __init__(self, struct, indent):
+    def __init__(self, struct, indent = ""):
         super(StructureDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
@@ -2588,10 +2577,7 @@ class StructureDeclarationBegin(SourceChunk):
 class StructureDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct,
-        indent = "",
-        append_nl = True
-    ):
+    def __init__(self, struct, indent = "", append_nl = True):
         super(StructureDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
             """\
@@ -2635,10 +2621,7 @@ class EnumerationDeclarationEnd(SourceChunk):
 
 class EnumerationElementDeclaration(SourceChunk):
 
-    def __init__(self, elem,
-        indent = "",
-        separ = ","
-    ):
+    def __init__(self, elem, indent = "", separ = ","):
         super(EnumerationElementDeclaration, self).__init__(elem,
             "Enumeration element %s declaration" % elem,
             """\
