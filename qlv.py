@@ -47,7 +47,7 @@ def is_in_asm_instr(l):
 class InInstr(object):
 
     def __init__(self, l):
-        l = l.rstrip()
+        self.l = l = l.rstrip()
         parts = l.split(":")
 
         if len(parts) < 2:
