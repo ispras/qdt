@@ -84,10 +84,14 @@ class VarLabel(Label):
             kw["text"] = var
 
         if "text" in kw:
-            self.text_var = kw.pop("text")
-            kw["text"] = self.text_var.get()
+            text = kw.pop("text")
+            if isinstance(text, variables):
+                kw["text"] = text.get()
+                self.text_var = text
+            else:
+                self.text_var = StringVar(value = text)
         else:
-            self.text_var = StringVar("")
+            self.text_var = StringVar()
         Label.__init__(self, *args, **kw)
         self.text_var.trace_variable("w", self.on_var_changed)
 
@@ -272,13 +276,10 @@ class VarTreeview(Treeview):
         to_track = []
 
         try:
-            values = kw["values"]
+            kw["values"] = values = list(kw.pop("values"))
         except KeyError:
             pass
         else:
-            if not isinstance(values, (tuple, list)):
-                values = (values,)
-
             for col, v in enumerate(values):
                 if isinstance(v, variables):
                     to_track.append((col, v))

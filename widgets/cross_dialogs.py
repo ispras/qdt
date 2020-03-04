@@ -100,15 +100,17 @@ def askopen(*args, **kw):
     return CrossOpenDialog(*args, **kw).ask()
 
 class CrossDirectoryDialog(CrossDialog):
-    def __init__(self, master, title = None):
+    def __init__(self, master, title = None, **extra):
         super(CrossDirectoryDialog, self).__init__(master)
 
         self.title = _("Select directory") if title is None else title
+        self.extra = extra
 
     def __ask__(self):
-        kw = {
-            "title" : self.title.get()
-        }
+        kw = dict(
+            title = self.title.get(),
+            **self.extra
+        )
 
         return tk_askdirector(**kw)
 

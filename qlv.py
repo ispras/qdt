@@ -17,8 +17,15 @@ from widgets import (
 from six.moves.tkinter import (
     Scrollbar
 )
+from six.moves.tkinter_ttk import (
+    Style
+)
 from common import (
     mlget as _
+)
+from six.moves import (
+    zip as izip,
+    range as xrange,
 )
 
 # less value = more info
@@ -36,9 +43,13 @@ def is_in_asm(l):
 def is_in_asm_instr(l):
     return l[:2] == "0x"
 
+
 class InInstr(object):
+
+    first = False # (in TB), set externally
+
     def __init__(self, l):
-        l = l.rstrip()
+        self.l = l = l.rstrip()
         parts = l.split(":")
 
         if len(parts) < 2:
@@ -48,6 +59,10 @@ class InInstr(object):
 
         self.disas = ":".join(parts[1:])
         self.size = 1
+
+    def __str__(self):
+        return self.l
+
 
 class TBCache(object):
     def __init__(self, back):
@@ -98,28 +113,48 @@ class TBCache(object):
 
         return False
 
+
 hexDigits = set("0123456789abcdefABCDEF")
 
-class QTrace(object):
-    def __init__(self, lines):
-        l0 = iter(lines[0])
 
-        addr = []
+class QTrace(object):
+
+    def __init__(self, lines):
+        self.header = header = lines[0].rstrip()
+
+        l0 = iter(header)
+
+        # Search for "CPU_LOG_EXEC" for trace message format.
+        addrs = []
         for c in l0:
             if c == "[":
                 break
-        for c in l0:
-            if c == " ":
-                break
-        for c in l0:
-            if c in hexDigits:
-                addr.append(c)
+        while True:
+            addr = []
+            for c in l0:
+                if c in hexDigits:
+                    addr.append(c)
+                    break
             else:
                 break
+            for c in l0:
+                if c in hexDigits:
+                    addr.append(c)
+                else:
+                    break
+            else:
+                break
+            try:
+                addr_val = int("".join(addr), base = 16)
+            except ValueError:
+                continue
+            addrs.append(addr_val)
 
+        # `addrs[1]` is `pc`. Other values can represent different things
+        # depending on Qemu version. They are not interesting here.
         try:
-            self.firstAddr = int("".join(addr), base = 16)
-        except ValueError:
+            self.firstAddr = addrs[1]
+        except IndexError:
             self.bad = True
 
         if len(lines) > 1:
@@ -130,7 +165,17 @@ class QTrace(object):
         self.bad = False
         self.next = None
 
+    def __str__(self):
+        return self.header
+
+
+class EOL:
+    "End Of Log"
+    pass
+
+
 class QEMULog(object):
+
     def __init__(self):
         self.trace = []
         self.in_asm = []
@@ -142,6 +187,9 @@ class QEMULog(object):
         self.tbIdMap = {}
 
         self.prevTrace = None
+
+        self.feeder = self.feed()
+        next(self.feeder)
 
     def lookInstr(self, addr, fromCache = None):
         if fromCache is None:
@@ -275,6 +323,7 @@ class QEMULog(object):
             if prev_instr is None:
                 self.current_cache.tbMap[instr.addr] = tb
                 self.tbIdMap[tb] = (instr.addr, len(self.in_asm))
+                instr.first = True
 
             if prev_instr:
                 prev_instr.size = instr.addr - prev_instr.addr
@@ -339,62 +388,95 @@ class QEMULog(object):
         if DEBUG < 1:
             print("%x:%u -> %x:%u" % (start, start_tb[0], end, end_tb[0]))
 
-    def new_unrecognized(self, l):
+    def new_unrecognized(self, l, lineno):
         l = l.rstrip()
         if l:
-            print("--- new_unrecognized line")
+            print("--- new_unrecognized line %d" % lineno)
             print(l)
 
-    def feed(self, reader):
-        for l0 in reader:
-            while l0 is not None:
-                if is_in_asm(l0):
-                    in_asm = []
-                    for l1 in reader:
-                        if is_in_asm_instr(l1):
-                            in_asm.append(l1)
-                        else:
-                            l0 = l1
-                            break
+    def feed(self):
+        lineno = 1
+        l0 = yield
+
+        while l0 is not EOL:
+            if is_in_asm(l0):
+                in_asm = []
+                l1 = yield; lineno += 1 # Those operations are always together.
+                while l1 is not EOL:
+                    if is_in_asm_instr(l1):
+                        in_asm.append(l1)
                     else:
-                        l0 = None
+                        l0 = l1 # try that line in other `if`s
+                        break
+                    l1 = yield; lineno += 1
+                else:
+                    l0 = l1
 
-                    self.new_in_asm(in_asm)
-                    continue
+                self.new_in_asm(in_asm)
+                continue
 
-                if is_trace(l0):
-                    trace = [l0]
+            if is_trace(l0):
+                trace = [l0]
 
-                    for l1 in reader:
-                        if is_trace(l1) or is_linking(l1) or is_in_asm(l1):
-                            l0 = l1
-                            break
-                        trace.append(l1)
-                    else:
-                        l0 = None
+                l1 = yield; lineno += 1
+                while l1 is not EOL:
+                    # Traces are following one by one.
+                    # - User did not passed other flags to -d.
+                    # - Qemu can cancel TB execution because of `exit_request`
+                    # or `tcg_exit_req` after trace message has been printed.
+                    if is_trace(l1) or is_linking(l1) or is_in_asm(l1):
+                        l0 = l1
+                        break
+                    trace.append(l1)
+                    l1 = yield; lineno += 1
+                else:
+                    l0 = l1
 
-                    self.new_trace(trace)
-                    continue
+                self.new_trace(trace)
+                continue
 
-                if is_linking(l0):
-                    self.new_linking(l0)
-                    break
+            if is_linking(l0):
+                self.new_linking(l0)
+                l0 = yield; lineno += 1
+                continue
 
-                self.new_unrecognized(l0)
-                break
+            self.new_unrecognized(l0, lineno)
+            l0 = yield; lineno += 1
+
+        # `StopIteration` should not be raised because `send` method is used
+        # to input lines. Just ignore consequent input.
+        while True:
+            yield
 
     def feed_file(self, f):
         # iterate file line by line
-        self.feed(iter(f))
+        feeder = self.feeder
+        for l in f:
+            feeder.send(l)
+        feeder.send(EOL)
+
+    def feed_lines(self, f, limit = 1000):
+        feeder = self.feeder
+        for last, l in izip(xrange(limit), f):
+            feeder.send(l)
+        if last < limit - 1:
+            feeder.send(EOL)
 
     def feed_file_by_name(self, file_name):
         f = open(file_name, "r")
         self.feed_file(f)
         f.close()
 
+
 if __name__ == "__main__":
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
+    )
+    DEFAULT_LIMIT = "1000"
+    ap.add_argument("-l",
+        metavar = "N",
+        default = DEFAULT_LIMIT,
+        help = "limit number of log lines (default %s)" % DEFAULT_LIMIT
     )
     ap.add_argument("qlog")
 
@@ -405,31 +487,44 @@ if __name__ == "__main__":
     print("Reading " + qlogFN)
 
     qlog = QEMULog()
-    qlog.feed_file_by_name(qlogFN)
+    with open(qlogFN, "r") as log_stream:
+        qlog.feed_lines(log_stream, int(args.l))
+    qlog.feeder.send(EOL)
 
     print("Building full trace")
     trace = qlog.full_trace()
 
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
-    tk.geometry("600x600")
+    tk.geometry("1000x600")
     tk.grid()
     tk.rowconfigure(0, weight = 1)
     tk.columnconfigure(0, weight = 1)
     tk.columnconfigure(1, weight = 0)
 
+    tkstyle = Style()
+    tkstyle.configure("Treeview", font = ("Courier", 10))
+
     columns = [
+        "addr",
         "size",
         "disas"
     ]
 
     tv = VarTreeview(tk, columns = columns)
-    tv.heading("#0", text = _("Address"))
+    tv.heading("addr", text = _("Address"))
     tv.heading("size", text = _("Size"))
     tv.heading("disas", text = _("Disassembly"))
-    tv.column("#0", minwidth = 120, width = 120)
+    tv.column("#0", width = 10)
+    tv.column("addr", minwidth = 120, width = 120)
     tv.column("size", minwidth = 30, width = 30)
-    tv.column("disas", minwidth = 200)
+    tv.column("disas", width = 600)
+
+    tv.tag_configure("first", background = "#EEEEEE")
+
+    STYLE_FIRST = ("first",)
+    STYLE_DEFAULT = tuple()
+
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
     vscroll = Scrollbar(tk)
@@ -438,12 +533,13 @@ if __name__ == "__main__":
     tv.config(yscrollcommand = vscroll.set)
     vscroll.config(command = tv.yview)
 
-    for i in trace:
+    for idx, i in enumerate(trace):
         if DEBUG < 3:
             print("0x%08X: %s" % (i.addr, i.disas))
         tv.insert("", "end",
-            text = "0x%08X" % i.addr,
-            values = ("-", str(i.disas))
+            text = str(idx),
+            tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
+            values = ("0x%08X" % i.addr, "-", str(i.disas))
         )
 
     tk.mainloop()
