@@ -233,6 +233,9 @@ class QEMULog(object):
             else:
                 nextT = None
 
+            if DEBUG < 2:
+                print(t)
+
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
 
