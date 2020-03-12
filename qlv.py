@@ -207,9 +207,9 @@ class QEMULog(object):
         else:
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
-    def full_trace(self):
+    def iter_trace(self):
         if not self.trace:
-            return []
+            return
 
         titer = iter(self.trace)
 
@@ -217,9 +217,7 @@ class QEMULog(object):
             if not t.bad:
                 break
         else:
-            return []
-
-        ret = []
+            return
 
         while t:
             for nextT in titer:
@@ -246,7 +244,7 @@ class QEMULog(object):
                 if DEBUG < 2:
                     print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                ret.append(instr)
+                yield instr
 
                 addr += instr.size
 
@@ -295,7 +293,8 @@ class QEMULog(object):
 
             t = nextT
 
-        return ret
+    def full_trace(self):
+        return list(self.iter_trace())
 
     def cache_overwritten(self):
         cur = self.current_cache
