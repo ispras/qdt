@@ -32,7 +32,14 @@ from six.moves import (
 DEBUG = 3
 
 def is_trace(l):
-    return l[:6] == "Trace "
+    # Looks like Chain is a fast jump to already translated TB (searched in
+    # the cache) using non constant address (e.g. from a guest register),
+    # while linking is a redirection to constant address (e.g. from an
+    # instruction code immediate value) by translated code patching.
+    # Chain message is printed _each time_.
+    # Hence it's a "Trace" record analog for trace reconstruction algorithm.
+    # Grep for: lookup_tb_ptr
+    return l[:6] == "Trace " or l[:6] == "Chain "
 
 def is_linking(l):
     return l[:8] == "Linking "
