@@ -487,20 +487,25 @@ if __name__ == "__main__":
         default = DEFAULT_LIMIT,
         help = "limit number of log lines (default %s)" % DEFAULT_LIMIT
     )
-    ap.add_argument("qlog")
+    ap.add_argument("qlog", nargs = "+")
 
     args = ap.parse_args()
 
-    qlogFN = args.qlog
+    qlogs = []
+    for qlogFN in args.qlog:
+        print("Reading " + qlogFN)
 
-    print("Reading " + qlogFN)
+        qlog = QEMULog()
+        with open(qlogFN, "r") as log_stream:
+            qlog.feed_lines(log_stream, int(args.l))
+        qlog.feeder.send(EOL)
 
-    qlog = QEMULog()
-    with open(qlogFN, "r") as log_stream:
-        qlog.feed_lines(log_stream, int(args.l))
-    qlog.feeder.send(EOL)
+        qlogs.append(qlog)
 
-    print("Building full trace")
+    if len(qlogs) > 1:
+        print("Comparison mode")
+
+    print("Building full trace(s)")
 
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
@@ -529,8 +534,11 @@ if __name__ == "__main__":
     tv.column("disas", width = 600)
 
     tv.tag_configure("first", background = "#EEEEEE")
-
     STYLE_FIRST = ("first",)
+
+    tv.tag_configure("difference", background = "#FF0000")
+    STYLE_DIFFERENCE = ("difference",)
+
     STYLE_DEFAULT = tuple()
 
     tv.grid(row = 0, column = 0, sticky = "NESW")
@@ -541,14 +549,53 @@ if __name__ == "__main__":
     tv.config(yscrollcommand = vscroll.set)
     vscroll.config(command = tv.yview)
 
-    trace_iter = qlog.iter_trace()
+    trace_iters = list(qlog.iter_trace() for qlog in qlogs)
 
     def co_trace_builder():
         idx = 0
 
         while True:
+            start_idx = idx
             end_idx = idx + 100
-            for idx, i in zip(xrange(idx, end_idx), trace_iter):
+
+            # Build subtrace for first log and then try to compare it with
+            # subtraces of rest logs.
+
+            iter_of_iters = iter(trace_iters)
+
+            subtrace = list(
+                izip(xrange(start_idx, end_idx), next(iter_of_iters))
+            )
+
+            if not subtrace:
+                print("Trace has been built")
+                break
+
+            difference = None
+
+            for qlog_iter_2 in iter_of_iters:
+                i1_idx = start_idx - 1
+
+                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                    # Currently, comparison is address based only.
+                    if i1.addr != i2.addr:
+                        # Indexes are same until first difference.
+                        difference = (i1_idx, i2)
+                        break
+
+                compared = i1_idx - start_idx + 1
+                if compared < len(subtrace):
+                    # Log 2 ended earlier.
+                    subtrace = subtrace[:compared]
+
+                if difference is not None:
+                    break
+
+            if not subtrace:
+                print("Trace has been built")
+                break
+
+            for idx, i in subtrace:
                 if DEBUG < 3:
                     print("0x%08X: %s" % (i.addr, i.disas))
                 tv.insert("", "end",
@@ -556,6 +603,17 @@ if __name__ == "__main__":
                     tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
                     values = ("0x%08X" % i.addr, "-", str(i.disas))
                 )
+
+            if difference:
+                idx, i = difference
+                iid = tv.insert("", "end",
+                    text = str(idx),
+                    tags = STYLE_DIFFERENCE,
+                    values = ("0x%08X" % i.addr, "-", str(i.disas))
+                )
+                tv.see(iid)
+                print("Difference found, stopping")
+                break
 
             idx += 1
             # No more instructions in the trace
