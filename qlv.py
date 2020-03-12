@@ -491,7 +491,6 @@ if __name__ == "__main__":
     qlog.feeder.send(EOL)
 
     print("Building full trace")
-    trace = qlog.full_trace()
 
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
@@ -532,13 +531,30 @@ if __name__ == "__main__":
     tv.config(yscrollcommand = vscroll.set)
     vscroll.config(command = tv.yview)
 
-    for idx, i in enumerate(trace):
-        if DEBUG < 3:
-            print("0x%08X: %s" % (i.addr, i.disas))
-        tv.insert("", "end",
-            text = str(idx),
-            tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
-            values = ("0x%08X" % i.addr, "-", str(i.disas))
-        )
+    trace_iter = qlog.iter_trace()
+
+    def co_trace_builder():
+        idx = 0
+
+        while True:
+            end_idx = idx + 100
+            for idx, i in zip(xrange(idx, end_idx), trace_iter):
+                if DEBUG < 3:
+                    print("0x%08X: %s" % (i.addr, i.disas))
+                tv.insert("", "end",
+                    text = str(idx),
+                    tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
+                    values = ("0x%08X" % i.addr, "-", str(i.disas))
+                )
+
+            idx += 1
+            # No more instructions in the trace
+            if idx < end_idx:
+                print("Trace has been built")
+                break
+
+            yield True
+
+    tk.task_manager.enqueue(co_trace_builder())
 
     tk.mainloop()
