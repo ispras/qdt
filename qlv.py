@@ -175,6 +175,14 @@ class QTrace(object):
     def __str__(self):
         return self.header
 
+    @property
+    def as_text(self):
+        cpu = self.cpuBefore
+        if cpu is None:
+            return self.header + "\n"
+        else:
+            return self.header + "\n" + "".join(cpu)
+
 
 class EOL:
     "End Of Log"
