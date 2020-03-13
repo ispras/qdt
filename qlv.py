@@ -32,11 +32,15 @@ from six.moves.tkinter_ttk import (
     Style
 )
 from common import (
+    pipeline,
     mlget as _
 )
 from six.moves import (
     zip as izip,
     range as xrange,
+)
+from collections import (
+    deque
 )
 
 # less value = more info
@@ -257,23 +261,21 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
     def iter_trace(self):
-        if not self.trace:
-            return
+        return pipeline(iter(self.trace), self.trace_stage())
 
-        titer = iter(self.trace)
+    def trace_stage(self):
+        traces_cache = deque()
 
-        for t in titer:
-            if not t.bad:
-                break
-        else:
-            return
-
-        while t:
-            for nextT in titer:
-                if not nextT.bad:
+        while True:
+            while traces_cache:
+                t = traces_cache.popleft()
+                if not t.bad:
                     break
             else:
-                nextT = None
+                while True:
+                    t = yield
+                    if not t.bad:
+                        break
 
             if DEBUG < 2:
                 print(t)
@@ -282,7 +284,6 @@ class QEMULog(object):
             instr = self.lookInstr(addr, t.cacheVersion)
 
             if instr is None:
-                t = nextT
                 continue
 
             instr = instr[0]
@@ -298,7 +299,9 @@ class QEMULog(object):
                 if DEBUG < 2:
                     print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                yield instr
+                # Here we get next trace record from previous pipeline stage.
+                # But we will handle it lately.
+                traces_cache.append((yield instr))
 
                 addr += instr.size
 
@@ -344,8 +347,6 @@ class QEMULog(object):
                     nextInstr = nextInstr[0]
 
                 instr = nextInstr
-
-            t = nextT
 
     def full_trace(self):
         return list(self.iter_trace())
