@@ -71,6 +71,29 @@ class InInstr(object):
         return self.l
 
 
+class TraceInstr(object):
+    "Instruction with runtime (trace) information."
+
+    # This also prevents erroneous attempts to use objects of this class as
+    # objects of InInstr (i.e. foreign attribute setting).
+    __slots__ = (
+        "in_instr",
+        "trace",
+    )
+
+    def __init__(self, in_instr, trace):
+        self.in_instr = in_instr
+        self.trace = trace
+
+    # Proxify static info.
+
+    def __getattr__(self, name):
+        return getattr(self.in_instr, name)
+
+    def __str__(self):
+        return str(self.in_instr)
+
+
 class TBCache(object):
     def __init__(self, back):
         self.map = {}
@@ -252,6 +275,8 @@ class QEMULog(object):
                 continue
 
             instr = instr[0]
+
+            instr = TraceInstr(instr, t)
 
             tb = instr.tb
 
