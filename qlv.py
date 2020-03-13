@@ -11,10 +11,21 @@ from traceback import (
     print_exc
 )
 from widgets import (
+    add_scrollbars_native,
+    AutoPanedWindow,
+    GUIText,
+    READONLY,
+    BOTH,
+    GUIFrame,
     GUITk,
     VarTreeview
 )
 from six.moves.tkinter import (
+    RAISED,
+    VERTICAL,
+    HORIZONTAL,
+    NONE,
+    END,
     Scrollbar
 )
 from six.moves.tkinter_ttk import (
@@ -520,6 +531,7 @@ if __name__ == "__main__":
         default = DEFAULT_LIMIT,
         help = "limit number of log lines (default %s)" % DEFAULT_LIMIT
     )
+    # Note, code below assumes that there is at least one log.
     ap.add_argument("qlog", nargs = "+")
 
     args = ap.parse_args()
@@ -542,10 +554,17 @@ if __name__ == "__main__":
 
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
-    tk.geometry("1000x600")
-    tk.rowconfigure(0, weight = 1)
-    tk.columnconfigure(0, weight = 1)
-    tk.columnconfigure(1, weight = 0)
+    tk.geometry("1200x800")
+
+    panes = AutoPanedWindow(tk, orient = VERTICAL, sashrelief = RAISED)
+    panes.pack(fill = BOTH, expand = True)
+
+    fr_instructions = GUIFrame(panes)
+    panes.add(fr_instructions)
+
+    fr_instructions.rowconfigure(0, weight = 1)
+    fr_instructions.columnconfigure(0, weight = 1)
+    fr_instructions.columnconfigure(1, weight = 0)
 
     tkstyle = Style()
     tkstyle.configure("Treeview", font = ("Courier", 10))
@@ -556,7 +575,7 @@ if __name__ == "__main__":
         "disas"
     ]
 
-    tv = VarTreeview(tk, columns = columns)
+    tv = VarTreeview(fr_instructions, columns = columns)
     tv.heading("addr", text = _("Address"))
     tv.heading("size", text = _("Size"))
     tv.heading("disas", text = _("Disassembly"))
@@ -575,7 +594,7 @@ if __name__ == "__main__":
 
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
-    vscroll = Scrollbar(tk)
+    vscroll = Scrollbar(fr_instructions)
     vscroll.grid(row = 0, column = 1, sticky = "NS")
 
     tv.config(yscrollcommand = vscroll.set)
@@ -665,6 +684,72 @@ if __name__ == "__main__":
 
             yield True
 
+
+    # Showing trace message (CPU registers, etc.).
+
+    panes_trace_text = AutoPanedWindow(panes,
+        orient = HORIZONTAL,
+        sashrelief = RAISED
+    )
+    panes.add(panes_trace_text)
+
+    qlog_trace_texts = []
+
+    for __ in qlogs:
+        fr_trace_text = GUIFrame(panes_trace_text)
+        panes_trace_text.add(fr_trace_text)
+
+        fr_trace_text.rowconfigure(0, weight = 1)
+        fr_trace_text.columnconfigure(0, weight = 1)
+
+        trace_text = GUIText(fr_trace_text, state = READONLY, wrap = NONE)
+        qlog_trace_texts.append(trace_text)
+
+        trace_text.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(fr_trace_text, trace_text)
+
+        trace_text.tag_configure("file", foreground = "#AAAAAA")
+        trace_text.tag_configure("warning", foreground = "#FFBB66")
+
+    STYLE_FILE = ("file",)
+    STYLE_WARNING = ("warning",)
+
+    def on_instruction_selected(__):
+        for trace_text in qlog_trace_texts:
+            trace_text.delete("1.0", END)
+
+        sel = tv.selection()
+        if not sel:
+            return
+
+        row_text = tv.item(sel[0], "text")
+
+        try:
+            idx = int(row_text)
+        except ValueError:
+            return
+
+        for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
+            all_instructions, qlog_trace_texts
+        )):
+            try:
+                i = qlog_instrs[idx]
+            except IndexError:
+                continue
+
+            trace_text.insert(END, args.qlog[qlog_idx] + "\n", STYLE_FILE)
+
+            if isinstance(i, TraceInstr):
+                trace_text.insert(END, i.trace.as_text)
+            else:
+                trace_text.insert(END, _("No CPU data").get() + "\n",
+                    STYLE_WARNING
+                )
+
+    tv.bind("<<TreeviewSelect>>", on_instruction_selected, "+")
+
+    # Launch trace building (and comparison).
     tk.task_manager.enqueue(co_trace_builder())
 
     tk.mainloop()
