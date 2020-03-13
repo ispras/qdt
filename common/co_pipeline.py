@@ -1,6 +1,7 @@
 __all__ = [
     "pipeline"
   , "co_pipeline"
+  , "limit_stage"
 ]
 
 
@@ -64,3 +65,11 @@ def co_pipeline(*stages):
 
         # The pipeline always can proceed.
         yield True
+
+
+def limit_stage(limit):
+    "Interrupts pipeline after `limit` items passing."
+    res = yield
+    while limit > 0:
+        res = yield res
+        limit -= 1
