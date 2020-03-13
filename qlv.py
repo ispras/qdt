@@ -33,6 +33,7 @@ from six.moves.tkinter_ttk import (
 )
 from common import (
     pipeline,
+    limit_stage,
     mlget as _
 )
 from six.moves import (
@@ -229,7 +230,7 @@ class EOL:
 
 class QEMULog(object):
 
-    def __init__(self):
+    def __init__(self, file_name, limit = None):
         self.trace = []
         self.in_asm = []
 
@@ -241,8 +242,13 @@ class QEMULog(object):
 
         self.prevTrace = None
 
-        self.feeder = self.feed()
-        next(self.feeder)
+        stages = [qlog_reader_stage(open(file_name, "r"))]
+        if limit is not None:
+            stages.append(limit_stage(limit))
+        stages.append(self.feed())
+        stages.append(self.trace_stage())
+
+        self.pipeline = pipeline(*stages)
 
     def lookInstr(self, addr, fromCache = None):
         if fromCache is None:
@@ -259,9 +265,6 @@ class QEMULog(object):
             return self.current_cache.lookLinkDown(start_id)
         else:
             return self.in_asm[fromCache].lookLinkDown(start_id)
-
-    def iter_trace(self):
-        return pipeline(iter(self.trace), self.trace_stage())
 
     def trace_stage(self):
         traces_cache = deque()
@@ -348,9 +351,6 @@ class QEMULog(object):
 
                 instr = nextInstr
 
-    def full_trace(self):
-        return list(self.iter_trace())
-
     def cache_overwritten(self):
         cur = self.current_cache
         self.in_asm.append(cur)
@@ -405,6 +405,8 @@ class QEMULog(object):
 
         self.trace.append(t)
 
+        return t
+
     def new_linking(self, linking):
         if DEBUG < 1:
             print("--- linking")
@@ -452,6 +454,8 @@ class QEMULog(object):
         lineno = 1
         l0 = yield
 
+        prev_trace = None
+
         while l0 is not EOL:
             if is_in_asm(l0):
                 in_asm = []
@@ -472,7 +476,10 @@ class QEMULog(object):
             if is_trace(l0):
                 trace = [l0]
 
-                l1 = yield; lineno += 1
+                l1 = yield prev_trace; lineno += 1
+                # We should prev_trace = None here, but it will be
+                # overwritten below unconditionally.
+
                 while l1 is not EOL:
                     # Traces are following one by one.
                     # - User did not passed other flags to -d.
@@ -486,7 +493,7 @@ class QEMULog(object):
                 else:
                     l0 = l1
 
-                self.new_trace(trace)
+                prev_trace = self.new_trace(trace)
                 continue
 
             if is_linking(l0):
@@ -497,29 +504,18 @@ class QEMULog(object):
             self.new_unrecognized(l0, lineno)
             l0 = yield; lineno += 1
 
-        # `StopIteration` should not be raised because `send` method is used
-        # to input lines. Just ignore consequent input.
-        while True:
-            yield
+        # There is no problem to yield `None` but it's possible iff input
+        # log has no trace records.
+        yield prev_trace
 
-    def feed_file(self, f):
-        # iterate file line by line
-        feeder = self.feeder
-        for l in f:
-            feeder.send(l)
-        feeder.send(EOL)
 
-    def feed_lines(self, f, limit = 1000):
-        feeder = self.feeder
-        for last, l in izip(xrange(limit), f):
-            feeder.send(l)
-        if last < limit - 1:
-            feeder.send(EOL)
+def qlog_reader_stage(f):
+    yield
 
-    def feed_file_by_name(self, file_name):
-        f = open(file_name, "r")
-        self.feed_file(f)
-        f.close()
+    for line in f:
+        yield line
+
+    yield EOL
 
 
 if __name__ == "__main__":
@@ -539,12 +535,9 @@ if __name__ == "__main__":
 
     qlogs = []
     for qlogFN in args.qlog:
-        print("Reading " + qlogFN)
+        print("Start feeding of " + qlogFN)
 
-        qlog = QEMULog()
-        with open(qlogFN, "r") as log_stream:
-            qlog.feed_lines(log_stream, int(args.l))
-        qlog.feeder.send(EOL)
+        qlog = QEMULog(qlogFN, int(args.l))
 
         qlogs.append(qlog)
 
@@ -601,7 +594,7 @@ if __name__ == "__main__":
     tv.config(yscrollcommand = vscroll.set)
     vscroll.config(command = tv.yview)
 
-    trace_iters = list(qlog.iter_trace() for qlog in qlogs)
+    trace_iters = list(qlog.pipeline for qlog in qlogs)
 
     # Instructions are kept in lists: one per qlog.
     # This is list of those lists.
