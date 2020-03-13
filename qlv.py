@@ -71,9 +71,6 @@ class InInstr(object):
 
     first = False # (in TB), set externally
 
-    # trace record (QTrace), it likely can present in `first` instructions only
-    trace = None
-
     def __init__(self, l):
         self.l = l = l.rstrip()
         parts = l.split(":")
@@ -88,6 +85,29 @@ class InInstr(object):
 
     def __str__(self):
         return self.l
+
+
+class TraceInstr(object):
+    "Instruction with runtime (trace) information."
+
+    # This also prevents erroneous attempts to use objects of this class as
+    # objects of InInstr (i.e. foreign attribute setting).
+    __slots__ = (
+        "in_instr",
+        "trace",
+    )
+
+    def __init__(self, in_instr, trace):
+        self.in_instr = in_instr
+        self.trace = trace
+
+    # Proxify static info.
+
+    def __getattr__(self, name):
+        return getattr(self.in_instr, name)
+
+    def __str__(self):
+        return str(self.in_instr)
 
 
 class TBCache(object):
@@ -271,7 +291,7 @@ class QEMULog(object):
 
             instr = instr[0]
 
-            instr.trace = t
+            instr = TraceInstr(instr, t)
 
             tb = instr.tb
 
@@ -710,12 +730,12 @@ if __name__ == "__main__":
 
             trace_text.insert(END, args.qlog[qlog_idx] + "\n", ["file"])
 
-            if i.trace is None:
+            if isinstance(i, TraceInstr):
+                trace_text.insert(END, i.trace.as_text)
+            else:
                 trace_text.insert(END, _("No CPU data").get() + "\n",
                     ["warning"]
                 )
-            else:
-                trace_text.insert(END, i.trace.as_text)
 
     tv.bind("<<TreeviewSelect>>", on_instruction_selected, "+")
 
