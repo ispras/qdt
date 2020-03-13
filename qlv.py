@@ -510,7 +510,6 @@ if __name__ == "__main__":
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
     tk.geometry("1000x600")
-    tk.grid()
     tk.rowconfigure(0, weight = 1)
     tk.columnconfigure(0, weight = 1)
     tk.columnconfigure(1, weight = 0)
