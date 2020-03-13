@@ -55,6 +55,9 @@ class InInstr(object):
 
     first = False # (in TB), set externally
 
+    # trace record (QTrace), it likely can present in `first` instructions only
+    trace = None
+
     def __init__(self, l):
         self.l = l = l.rstrip()
         parts = l.split(":")
@@ -252,6 +255,8 @@ class QEMULog(object):
                 continue
 
             instr = instr[0]
+
+            instr.trace = t
 
             tb = instr.tb
 
