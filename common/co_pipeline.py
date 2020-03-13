@@ -2,6 +2,7 @@ __all__ = [
     "pipeline"
   , "co_pipeline"
   , "pipeline_iter"
+  , "limit_stage"
 ]
 
 
@@ -52,3 +53,11 @@ def pipeline_iter(iterable):
         yield item
         # We actually should check `yield` returned `None` like above.
         # But it's too expensive for fool protection.
+
+
+def limit_stage(limit):
+    "Interrupts pipeline after `limit` items passing."
+    res = yield
+    while limit > 0:
+        res = yield res
+        limit -= 1
