@@ -11,10 +11,21 @@ from traceback import (
     print_exc
 )
 from widgets import (
+    add_scrollbars_native,
+    AutoPanedWindow,
+    GUIText,
+    READONLY,
+    BOTH,
+    GUIFrame,
     GUITk,
     VarTreeview
 )
 from six.moves.tkinter import (
+    RAISED,
+    VERTICAL,
+    HORIZONTAL,
+    NONE,
+    END,
     Scrollbar
 )
 from six.moves.tkinter_ttk import (
@@ -32,7 +43,14 @@ from six.moves import (
 DEBUG = 3
 
 def is_trace(l):
-    return l[:6] == "Trace "
+    # Looks like Chain is a fast jump to already translated TB (searched in
+    # the cache) using non constant address (e.g. from a guest register),
+    # while linking is a redirection to constant address (e.g. from an
+    # instruction code immediate value) by translated code patching.
+    # Chain message is printed _each time_.
+    # Hence it's a "Trace" record analog for trace reconstruction algorithm.
+    # Grep for: lookup_tb_ptr
+    return l[:6] == "Trace " or l[:6] == "Chain "
 
 def is_linking(l):
     return l[:8] == "Linking "
@@ -62,6 +80,29 @@ class InInstr(object):
 
     def __str__(self):
         return self.l
+
+
+class TraceInstr(object):
+    "Instruction with runtime (trace) information."
+
+    # This also prevents erroneous attempts to use objects of this class as
+    # objects of InInstr (i.e. foreign attribute setting).
+    __slots__ = (
+        "in_instr",
+        "trace",
+    )
+
+    def __init__(self, in_instr, trace):
+        self.in_instr = in_instr
+        self.trace = trace
+
+    # Proxify static info.
+
+    def __getattr__(self, name):
+        return getattr(self.in_instr, name)
+
+    def __str__(self):
+        return str(self.in_instr)
 
 
 class TBCache(object):
@@ -168,6 +209,14 @@ class QTrace(object):
     def __str__(self):
         return self.header
 
+    @property
+    def as_text(self):
+        cpu = self.cpuBefore
+        if cpu is None:
+            return self.header + "\n"
+        else:
+            return self.header + "\n" + "".join(cpu)
+
 
 class EOL:
     "End Of Log"
@@ -207,9 +256,9 @@ class QEMULog(object):
         else:
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
-    def full_trace(self):
+    def iter_trace(self):
         if not self.trace:
-            return []
+            return
 
         titer = iter(self.trace)
 
@@ -217,9 +266,7 @@ class QEMULog(object):
             if not t.bad:
                 break
         else:
-            return []
-
-        ret = []
+            return
 
         while t:
             for nextT in titer:
@@ -227,6 +274,9 @@ class QEMULog(object):
                     break
             else:
                 nextT = None
+
+            if DEBUG < 2:
+                print(t)
 
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
@@ -237,6 +287,8 @@ class QEMULog(object):
 
             instr = instr[0]
 
+            instr = TraceInstr(instr, t)
+
             tb = instr.tb
 
             # chain loop detection
@@ -246,7 +298,7 @@ class QEMULog(object):
                 if DEBUG < 2:
                     print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                ret.append(instr)
+                yield instr
 
                 addr += instr.size
 
@@ -295,7 +347,8 @@ class QEMULog(object):
 
             t = nextT
 
-        return ret
+    def full_trace(self):
+        return list(self.iter_trace())
 
     def cache_overwritten(self):
         cur = self.current_cache
@@ -478,29 +531,40 @@ if __name__ == "__main__":
         default = DEFAULT_LIMIT,
         help = "limit number of log lines (default %s)" % DEFAULT_LIMIT
     )
-    ap.add_argument("qlog")
+    # Note, code below assumes that there is at least one log.
+    ap.add_argument("qlog", nargs = "+")
 
     args = ap.parse_args()
 
-    qlogFN = args.qlog
+    qlogs = []
+    for qlogFN in args.qlog:
+        print("Reading " + qlogFN)
 
-    print("Reading " + qlogFN)
+        qlog = QEMULog()
+        with open(qlogFN, "r") as log_stream:
+            qlog.feed_lines(log_stream, int(args.l))
+        qlog.feeder.send(EOL)
 
-    qlog = QEMULog()
-    with open(qlogFN, "r") as log_stream:
-        qlog.feed_lines(log_stream, int(args.l))
-    qlog.feeder.send(EOL)
+        qlogs.append(qlog)
 
-    print("Building full trace")
-    trace = qlog.full_trace()
+    if len(qlogs) > 1:
+        print("Comparison mode")
+
+    print("Building full trace(s)")
 
     tk = GUITk()
     tk.title(_("QEmu Log Viewer"))
-    tk.geometry("1000x600")
-    tk.grid()
-    tk.rowconfigure(0, weight = 1)
-    tk.columnconfigure(0, weight = 1)
-    tk.columnconfigure(1, weight = 0)
+    tk.geometry("1200x800")
+
+    panes = AutoPanedWindow(tk, orient = VERTICAL, sashrelief = RAISED)
+    panes.pack(fill = BOTH, expand = True)
+
+    fr_instructions = GUIFrame(panes)
+    panes.add(fr_instructions)
+
+    fr_instructions.rowconfigure(0, weight = 1)
+    fr_instructions.columnconfigure(0, weight = 1)
+    fr_instructions.columnconfigure(1, weight = 0)
 
     tkstyle = Style()
     tkstyle.configure("Treeview", font = ("Courier", 10))
@@ -511,7 +575,7 @@ if __name__ == "__main__":
         "disas"
     ]
 
-    tv = VarTreeview(tk, columns = columns)
+    tv = VarTreeview(fr_instructions, columns = columns)
     tv.heading("addr", text = _("Address"))
     tv.heading("size", text = _("Size"))
     tv.heading("disas", text = _("Disassembly"))
@@ -521,25 +585,171 @@ if __name__ == "__main__":
     tv.column("disas", width = 600)
 
     tv.tag_configure("first", background = "#EEEEEE")
-
     STYLE_FIRST = ("first",)
+
+    tv.tag_configure("difference", background = "#FF0000")
+    STYLE_DIFFERENCE = ("difference",)
+
     STYLE_DEFAULT = tuple()
 
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
-    vscroll = Scrollbar(tk)
+    vscroll = Scrollbar(fr_instructions)
     vscroll.grid(row = 0, column = 1, sticky = "NS")
 
     tv.config(yscrollcommand = vscroll.set)
     vscroll.config(command = tv.yview)
 
-    for idx, i in enumerate(trace):
-        if DEBUG < 3:
-            print("0x%08X: %s" % (i.addr, i.disas))
-        tv.insert("", "end",
-            text = str(idx),
-            tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
-            values = ("0x%08X" % i.addr, "-", str(i.disas))
-        )
+    trace_iters = list(qlog.iter_trace() for qlog in qlogs)
+
+    # Instructions are kept in lists: one per qlog.
+    # This is list of those lists.
+    all_instructions = list(list() for _ in qlogs)
+
+    def co_trace_builder():
+        idx = 0
+
+        while True:
+            start_idx = idx
+            end_idx = idx + 100
+
+            # Build subtrace for first log and then try to compare it with
+            # subtraces of rest logs.
+
+            iter_of_iters = iter(trace_iters)
+
+            subtrace = list(
+                izip(xrange(start_idx, end_idx), next(iter_of_iters))
+            )
+
+            if not subtrace:
+                print("Trace has been built")
+                break
+
+            all_instructions[0].extend(t[1] for t in subtrace)
+
+            difference = None
+
+            for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
+                i1_idx = start_idx - 1
+
+                log_instrs = all_instructions[log_idx]
+
+                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                    log_instrs.append(i2)
+
+                    # Currently, comparison is address based only.
+                    if i1.addr != i2.addr:
+                        # Indexes are same until first difference.
+                        difference = (i1_idx, i2)
+                        break
+
+                compared = i1_idx - start_idx + 1
+                if compared < len(subtrace):
+                    # Log 2 ended earlier.
+                    subtrace = subtrace[:compared]
+
+                if difference is not None:
+                    break
+
+            if not subtrace:
+                print("Trace has been built")
+                break
+
+            for idx, i in subtrace:
+                if DEBUG < 3:
+                    print("0x%08X: %s" % (i.addr, i.disas))
+                tv.insert("", "end",
+                    text = str(idx),
+                    tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
+                    values = ("0x%08X" % i.addr, "-", str(i.disas))
+                )
+
+            if difference:
+                idx, i = difference
+                iid = tv.insert("", "end",
+                    text = str(idx),
+                    tags = STYLE_DIFFERENCE,
+                    values = ("0x%08X" % i.addr, "-", str(i.disas))
+                )
+                tv.see(iid)
+                print("Difference found, stopping")
+                break
+
+            idx += 1
+            # No more instructions in the trace
+            if idx < end_idx:
+                print("Trace has been built")
+                break
+
+            yield True
+
+
+    # Showing trace message (CPU registers, etc.).
+
+    panes_trace_text = AutoPanedWindow(panes,
+        orient = HORIZONTAL,
+        sashrelief = RAISED
+    )
+    panes.add(panes_trace_text)
+
+    qlog_trace_texts = []
+
+    for __ in qlogs:
+        fr_trace_text = GUIFrame(panes_trace_text)
+        panes_trace_text.add(fr_trace_text)
+
+        fr_trace_text.rowconfigure(0, weight = 1)
+        fr_trace_text.columnconfigure(0, weight = 1)
+
+        trace_text = GUIText(fr_trace_text, state = READONLY, wrap = NONE)
+        qlog_trace_texts.append(trace_text)
+
+        trace_text.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(fr_trace_text, trace_text)
+
+        trace_text.tag_configure("file", foreground = "#AAAAAA")
+        trace_text.tag_configure("warning", foreground = "#FFBB66")
+
+    STYLE_FILE = ("file",)
+    STYLE_WARNING = ("warning",)
+
+    def on_instruction_selected(__):
+        for trace_text in qlog_trace_texts:
+            trace_text.delete("1.0", END)
+
+        sel = tv.selection()
+        if not sel:
+            return
+
+        row_text = tv.item(sel[0], "text")
+
+        try:
+            idx = int(row_text)
+        except ValueError:
+            return
+
+        for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
+            all_instructions, qlog_trace_texts
+        )):
+            try:
+                i = qlog_instrs[idx]
+            except IndexError:
+                continue
+
+            trace_text.insert(END, args.qlog[qlog_idx] + "\n", STYLE_FILE)
+
+            if isinstance(i, TraceInstr):
+                trace_text.insert(END, i.trace.as_text)
+            else:
+                trace_text.insert(END, _("No CPU data").get() + "\n",
+                    STYLE_WARNING
+                )
+
+    tv.bind("<<TreeviewSelect>>", on_instruction_selected, "+")
+
+    # Launch trace building (and comparison).
+    tk.task_manager.enqueue(co_trace_builder())
 
     tk.mainloop()
