@@ -9,7 +9,7 @@
 	url = https://github.com/ispras/pyelftools.git
 [submodule "pyrsp"]
 	path = pyrsp
-	url = http://nasredin.intra.ispras.ru:3000/qemu/pyrsp.git
+	url = git@helicopter.intra.ispras.ru:qemu/pyrsp.git
 [submodule "watchgod"]
 	path = watchgod
 	url = https://github.com/samuelcolvin/watchgod.git
