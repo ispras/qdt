@@ -5,6 +5,7 @@ from argparse import (
     ArgumentParser
 )
 from itertools import (
+    zip_longest,
     count
 )
 from traceback import (
@@ -518,6 +519,26 @@ def qlog_reader_stage(f):
     yield EOL
 
 
+STYLE_DIFFERENCE = ("difference",)
+
+def insert_diff(text_wgt, base, new):
+    a, b = base.split("\n"), new.split("\n")
+    # The naive algorithm below assumes that CPU states always have lines of
+    # same length. Differences are only possible in char values.
+
+    for la, lb in izip(a, b):
+        for ca, cb in zip_longest(la, lb):
+            if cb is None:
+                break
+
+            if ca == cb:
+                text_wgt.insert(END, cb)
+            else:
+                text_wgt.insert(END, cb, STYLE_DIFFERENCE)
+
+        text_wgt.insert(END, "\n")
+
+
 if __name__ == "__main__":
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
@@ -581,8 +602,7 @@ if __name__ == "__main__":
     tv.tag_configure("first", background = "#EEEEEE")
     STYLE_FIRST = ("first",)
 
-    tv.tag_configure("difference", background = "#FF0000")
-    STYLE_DIFFERENCE = ("difference",)
+    tv.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
 
     STYLE_DEFAULT = tuple()
 
@@ -705,6 +725,7 @@ if __name__ == "__main__":
 
         trace_text.tag_configure("file", foreground = "#AAAAAA")
         trace_text.tag_configure("warning", foreground = "#FFBB66")
+        trace_text.tag_configure(STYLE_DIFFERENCE[0], foreground = "#FF0000")
 
     STYLE_FILE = ("file",)
     STYLE_WARNING = ("warning",)
@@ -724,6 +745,8 @@ if __name__ == "__main__":
         except ValueError:
             return
 
+        left_trace = None
+
         for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
             all_instructions, qlog_trace_texts
         )):
@@ -735,7 +758,16 @@ if __name__ == "__main__":
             trace_text.insert(END, args.qlog[qlog_idx] + "\n", STYLE_FILE)
 
             if isinstance(i, TraceInstr):
-                trace_text.insert(END, i.trace.as_text)
+                if qlog_idx == 0:
+                    left_trace = i.trace.as_text
+                    trace_text.insert(END, left_trace)
+                else:
+                    cur_trace = i.trace.as_text
+                    if left_trace is None:
+                        # Nothing to diff
+                        trace_text.insert(END, cur_trace)
+                    else:
+                        insert_diff(trace_text, left_trace, cur_trace)
             else:
                 trace_text.insert(END, _("No CPU data").get() + "\n",
                     STYLE_WARNING
