@@ -583,6 +583,10 @@ if __name__ == "__main__":
 
     trace_iters = list(qlog.iter_trace() for qlog in qlogs)
 
+    # Instructions are kept in lists: one per qlog.
+    # This is list of those lists.
+    all_instructions = list(list() for _ in qlogs)
+
     def co_trace_builder():
         idx = 0
 
@@ -603,12 +607,18 @@ if __name__ == "__main__":
                 print("Trace has been built")
                 break
 
+            all_instructions[0].extend(t[1] for t in subtrace)
+
             difference = None
 
-            for qlog_iter_2 in iter_of_iters:
+            for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
                 i1_idx = start_idx - 1
 
+                log_instrs = all_instructions[log_idx]
+
                 for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                    log_instrs.append(i2)
+
                     # Currently, comparison is address based only.
                     if i1.addr != i2.addr:
                         # Indexes are same until first difference.
