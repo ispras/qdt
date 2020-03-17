@@ -56,7 +56,9 @@ class QMSettings(Persistent):
 
 
 def main():
-    with QMSettings(expanduser(join("~", ".qmanager.py"))) as settings:
+    settings_file = expanduser(join("~", ".qmanager.py"))
+    print("Reading settings from " + settings_file)
+    with QMSettings(settings_file) as settings:
         start_gui(settings)
 
 
