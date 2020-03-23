@@ -211,6 +211,7 @@ class EOL:
 class QEMULog(object):
 
     def __init__(self, file_name, limit = None):
+        self.file_name = file_name
         self.trace = []
         self.in_asm = []
 
