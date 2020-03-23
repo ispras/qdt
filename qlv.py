@@ -43,6 +43,12 @@ from qemu import (
 DEBUG = ee("QLOG_DEBUG", "3")
 
 
+# Instructions Treeview styles
+STYLE_DEFAULT = tuple()
+STYLE_DIFFERENCE = ("difference",)
+STYLE_FIRST = ("first",)
+
+
 if __name__ == "__main__":
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
@@ -103,13 +109,9 @@ if __name__ == "__main__":
     tv.column("size", minwidth = 30, width = 30)
     tv.column("disas", width = 600)
 
-    tv.tag_configure("first", background = "#EEEEEE")
-    STYLE_FIRST = ("first",)
+    tv.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
 
-    tv.tag_configure("difference", background = "#FF0000")
-    STYLE_DIFFERENCE = ("difference",)
-
-    STYLE_DEFAULT = tuple()
+    tv.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
 
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
