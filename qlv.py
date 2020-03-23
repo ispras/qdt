@@ -35,6 +35,7 @@ from six.moves.tkinter_ttk import (
 from common import (
     pipeline,
     limit_stage,
+    ee,
     mlget as _
 )
 from six.moves import (
@@ -46,7 +47,7 @@ from collections import (
 )
 
 # less value = more info
-DEBUG = 3
+DEBUG = ee("QLOG_DEBUG", "3")
 
 def is_trace(l):
     # Looks like Chain is a fast jump to already translated TB (searched in
