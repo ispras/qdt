@@ -48,6 +48,28 @@ STYLE_DEFAULT = tuple()
 STYLE_DIFFERENCE = ("difference",)
 STYLE_FIRST = ("first",)
 
+class InstructionsTreeview(VarTreeview):
+
+    def __init__(self, master, **kw):
+        kw["columns"] = [
+            "addr",
+            "size",
+            "disas"
+        ]
+
+        VarTreeview.__init__(self, master, **kw)
+
+        self.heading("addr", text = _("Address"))
+        self.heading("size", text = _("Size"))
+        self.heading("disas", text = _("Disassembly"))
+        self.column("#0", width = 10)
+        self.column("addr", minwidth = 120, width = 120)
+        self.column("size", minwidth = 30, width = 30)
+        self.column("disas", width = 600)
+
+        self.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
+        self.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
+
 
 if __name__ == "__main__":
     ap = ArgumentParser(
@@ -94,25 +116,8 @@ if __name__ == "__main__":
     tkstyle = Style()
     tkstyle.configure("Treeview", font = ("Courier", 10))
 
-    columns = [
-        "addr",
-        "size",
-        "disas"
-    ]
 
-    tv = VarTreeview(fr_instructions, columns = columns)
-    tv.heading("addr", text = _("Address"))
-    tv.heading("size", text = _("Size"))
-    tv.heading("disas", text = _("Disassembly"))
-    tv.column("#0", width = 10)
-    tv.column("addr", minwidth = 120, width = 120)
-    tv.column("size", minwidth = 30, width = 30)
-    tv.column("disas", width = 600)
-
-    tv.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
-
-    tv.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
-
+    tv = InstructionsTreeview(fr_instructions)
     tv.grid(row = 0, column = 0, sticky = "NESW")
 
     vscroll = Scrollbar(fr_instructions)
