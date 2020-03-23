@@ -111,6 +111,7 @@ class TraceInstr(object):
 
 
 class TBCache(object):
+
     def __init__(self, back):
         self.map = {}
         self.links = {}
