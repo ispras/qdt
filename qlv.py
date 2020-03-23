@@ -276,7 +276,7 @@ class QLVWindow(GUITk):
                 )
 
 
-if __name__ == "__main__":
+def main():
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
     )
@@ -313,3 +313,7 @@ if __name__ == "__main__":
     tk.show_logs(qlogs)
 
     tk.mainloop()
+
+
+if __name__ == "__main__":
+    exit(main() or 0)
