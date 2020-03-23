@@ -71,6 +71,197 @@ class InstructionsTreeview(VarTreeview):
         self.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
 
 
+# Trace text (CPU state) styles.
+STYLE_FILE = ("file",)
+STYLE_WARNING = ("warning",)
+
+class QLVWindow(GUITk):
+
+    def __init__(self):
+        GUITk.__init__(self)
+
+        self.title(_("QEmu Log Viewer"))
+
+        panes = AutoPanedWindow(self, orient = VERTICAL, sashrelief = RAISED)
+        panes.pack(fill = BOTH, expand = True)
+
+        fr_instructions = GUIFrame(panes)
+        panes.add(fr_instructions)
+
+        fr_instructions.rowconfigure(0, weight = 1)
+        fr_instructions.columnconfigure(0, weight = 1)
+        fr_instructions.columnconfigure(1, weight = 0)
+
+        tv = InstructionsTreeview(fr_instructions)
+        self.tv_instructions = tv
+        tv.grid(row = 0, column = 0, sticky = "NESW")
+        tv.bind("<<TreeviewSelect>>", self._on_instruction_selected, "+")
+
+        vscroll = Scrollbar(fr_instructions)
+        vscroll.grid(row = 0, column = 1, sticky = "NS")
+
+        tv.config(yscrollcommand = vscroll.set)
+        vscroll.config(command = tv.yview)
+
+        # Showing trace message (CPU registers, etc.).
+        self.panes_trace_text = panes_trace_text = AutoPanedWindow(panes,
+            orient = HORIZONTAL,
+            sashrelief = RAISED
+        )
+        panes.add(panes_trace_text)
+
+        self.qlog_trace_texts = []
+
+    def show_logs(self, qlogs):
+        panes_trace_text = self.panes_trace_text
+        qlog_trace_texts = self.qlog_trace_texts
+        # TODO: re-usage?
+
+        for __ in qlogs:
+            fr_trace_text = GUIFrame(panes_trace_text)
+            panes_trace_text.add(fr_trace_text)
+
+            fr_trace_text.rowconfigure(0, weight = 1)
+            fr_trace_text.columnconfigure(0, weight = 1)
+
+            trace_text = GUIText(fr_trace_text, state = READONLY, wrap = NONE)
+            qlog_trace_texts.append(trace_text)
+
+            trace_text.grid(row = 0, column = 0, sticky = "NESW")
+
+            add_scrollbars_native(fr_trace_text, trace_text)
+
+            trace_text.tag_configure(STYLE_FILE[0], foreground = "#AAAAAA")
+            trace_text.tag_configure(STYLE_WARNING[0], foreground = "#FFBB66")
+
+        self.task_manager.enqueue(self.co_trace_builder(qlogs))
+
+    def co_trace_builder(self, qlogs):
+        tv = self.tv_instructions
+
+        self.qlogs = qlogs
+
+        # Instructions are kept in lists: one per qlog.
+        # This is list of those lists.
+        self.all_instructions = all_instructions = list(list() for _ in qlogs)
+
+        trace_iters = list(qlog.pipeline for qlog in qlogs)
+        idx = 0
+
+        while True:
+            start_idx = idx
+            end_idx = idx + 100
+
+            # Build subtrace for first log and then try to compare it with
+            # subtraces of rest logs.
+
+            iter_of_iters = iter(trace_iters)
+
+            subtrace = list(
+                izip(xrange(start_idx, end_idx), next(iter_of_iters))
+            )
+
+            if not subtrace:
+                print("Trace has been built")
+                break
+
+            all_instructions[0].extend(t[1] for t in subtrace)
+
+            difference = None
+
+            for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
+                i1_idx = start_idx - 1
+
+                log_instrs = all_instructions[log_idx]
+
+                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                    log_instrs.append(i2)
+
+                    # Currently, comparison is address based only.
+                    if i1.addr != i2.addr:
+                        # Indexes are same until first difference.
+                        difference = (i1_idx, i2)
+                        break
+
+                compared = i1_idx - start_idx + 1
+                if compared < len(subtrace):
+                    # Log 2 ended earlier.
+                    subtrace = subtrace[:compared]
+
+                if difference is not None:
+                    break
+
+            if not subtrace:
+                print("Trace has been built")
+                break
+
+            for idx, i in subtrace:
+                if DEBUG < 3:
+                    print("0x%08X: %s" % (i.addr, i.disas))
+                tv.insert("", "end",
+                    text = str(idx),
+                    tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
+                    values = ("0x%08X" % i.addr, "-", str(i.disas))
+                )
+
+            if difference:
+                idx, i = difference
+                iid = tv.insert("", "end",
+                    text = str(idx),
+                    tags = STYLE_DIFFERENCE,
+                    values = ("0x%08X" % i.addr, "-", str(i.disas))
+                )
+                tv.see(iid)
+                print("Difference found, stopping")
+                break
+
+            idx += 1
+            # No more instructions in the trace
+            if idx < end_idx:
+                print("Trace has been built")
+                break
+
+            yield True
+
+    def _on_instruction_selected(self, __):
+        tv = self.tv_instructions
+        qlog_trace_texts = self.qlog_trace_texts
+        qlogs = self.qlogs
+
+        for trace_text in qlog_trace_texts:
+            trace_text.delete("1.0", END)
+
+        sel = tv.selection()
+        if not sel:
+            return
+
+        row_text = tv.item(sel[0], "text")
+
+        try:
+            idx = int(row_text)
+        except ValueError:
+            return
+
+        for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
+            self.all_instructions, qlog_trace_texts
+        )):
+            try:
+                i = qlog_instrs[idx]
+            except IndexError:
+                continue
+
+            trace_text.insert(END, qlogs[qlog_idx].file_name + "\n",
+                STYLE_FILE
+            )
+
+            if isinstance(i, TraceInstr):
+                trace_text.insert(END, i.trace.as_text)
+            else:
+                trace_text.insert(END, _("No CPU data").get() + "\n",
+                    STYLE_WARNING
+                )
+
+
 if __name__ == "__main__":
     ap = ArgumentParser(
         prog = "QEMU Log Viewer"
@@ -237,9 +428,6 @@ if __name__ == "__main__":
 
         trace_text.tag_configure("file", foreground = "#AAAAAA")
         trace_text.tag_configure("warning", foreground = "#FFBB66")
-
-    STYLE_FILE = ("file",)
-    STYLE_WARNING = ("warning",)
 
     def on_instruction_selected(__):
         for trace_text in qlog_trace_texts:
