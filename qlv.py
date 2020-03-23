@@ -5,6 +5,7 @@ from argparse import (
     ArgumentParser
 )
 from widgets import (
+    MenuBuilder,
     add_scrollbars_native,
     AutoPanedWindow,
     GUIText,
@@ -76,12 +77,21 @@ STYLE_FILE = ("file",)
 STYLE_WARNING = ("warning",)
 # STYLE_DIFFERENCE of InstructionsTreeview is also used
 
+_has_trace = lambda instruction: isinstance(instruction, TraceInstr)
+
+
 class QLVWindow(GUITk):
 
     def __init__(self):
         GUITk.__init__(self)
 
         self.title(_("QEmu Log Viewer"))
+
+        with MenuBuilder(self) as menubar:
+            with menubar(_("Analysis")) as anmenu:
+                anmenu(_("Check instruction counter"),
+                    command = self._on_check_ic
+                )
 
         panes = AutoPanedWindow(self, orient = VERTICAL, sashrelief = RAISED)
         panes.pack(fill = BOTH, expand = True)
@@ -226,6 +236,40 @@ class QLVWindow(GUITk):
                 break
 
             yield True
+
+    def _on_check_ic(self):
+        if not hasattr(self, "all_instructions"):
+            # no logs
+            return
+
+        enqueue = self.task_manager.enqueue
+        for instr_list in self.all_instructions:
+            enqueue(self.co_check_ic(instr_list))
+
+    def co_check_ic(self, instr_list):
+        iiter = iter(instr_list)
+        idx = 0
+
+        while True:
+            yield
+
+            last_idx = idx + 1000
+            for idx, i in izip(xrange(idx, last_idx + 1), iiter):
+                if _has_trace(i):
+                    ic = i.trace.instruction_counter
+                    if ic is None:
+                        continue
+                    if idx != ic:
+                        print("IC missmatch at " + str(idx))
+                        break
+            else:
+                if last_idx == idx:
+                    # Next instruction in the iterator must have next index.
+                    idx += 1
+                    continue
+                # no instructions left
+            # missmatch
+            break
 
     def _on_instruction_selected(self, __):
         tv = self.tv_instructions
