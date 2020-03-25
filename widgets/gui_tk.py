@@ -65,3 +65,9 @@ class GUITk(VarTk):
         self.task_manager.start_loop()
 
         VarTk.mainloop(self, *args, **kw)
+
+    def enqueue(self, co_task):
+        self.task_manager.enqueue(co_task)
+
+    def cancel_task(self, co_task):
+        self.task_manager.remove(co_task)
