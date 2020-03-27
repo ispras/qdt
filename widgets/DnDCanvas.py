@@ -16,6 +16,7 @@ from six.moves import (
     range as xrange
 )
 from six.moves.tkinter import (
+    ALL,
     IntVar,
     Canvas,
     RIDGE,
@@ -63,6 +64,9 @@ class CanvasDnD(Canvas):
         self.bind("<Motion>", self.motion, "+")
 
         self.id_priority_sort_function = id_priority_sort_function
+
+    def update_scroll_region(self):
+        self.config(scrollregion = self.bbox(ALL))
 
     # backward compatibility properties
     @property
