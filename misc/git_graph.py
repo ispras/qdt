@@ -41,6 +41,8 @@ class GGVWidget(GUIFrame):
 
         add_scrollbars_native(self, cnv, sizegrip = sizegrip)
 
+        cnv.bind("<<DnDMoved>>", lambda __: cnv.update_scroll_region(), "+")
+
     @property
     def repo_path(self):
         return self._repo_path
@@ -147,6 +149,7 @@ class GGVWidget(GUIFrame):
                     # already visited
                     continue
 
+                cnv.update_scroll_region()
                 yield True
 
                 nx, ny = positions[n_sha]
@@ -206,6 +209,7 @@ class GGVWidget(GUIFrame):
                     stack.append(nodes[c_sha])
 
         print("Done")
+        cnv.update_scroll_region()
 
 
 def iter_sides(bbox, spacing = 20):
