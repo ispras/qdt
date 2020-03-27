@@ -55,9 +55,17 @@ class DnDGroup(object):
         dx, dy = x - px, y - py
         self.prev = x, y
 
+        # Unbind self dragging handlers because of dragging emulation for items
+        w.unbind("<<DnDMoved>>", self.__moved)
+        w.unbind("<<DnDUp>>", self.__up)
+
         coords = w.coords
         for i in self.items:
             if isinstance(i, integer_types):
+                # Emulate dragging for the item
+                w.dnd_dragged = i
+                w.event_generate("<<DnDDown>>")
+
                 xy = coords(i)
                 if len(xy) == 2:
                     x0, y0 = xy
@@ -67,6 +75,11 @@ class DnDGroup(object):
                     coords(i, x0 + dx, y0 + dy, x1 + dx, y1 + dy)
             elif isinstance(i, tuple):
                 iid, first_coord, end = i
+
+                # Emulate dragging
+                w.dnd_dragged = iid
+                w.event_generate("<<DnDDown>>")
+
                 c = coords(iid)
                 if end is None:
                     end = len(c)
@@ -80,6 +93,15 @@ class DnDGroup(object):
                 raise ValueError(
                     "Unsupported type of item: " + type(i).__name__
                 )
+
+            # Emulate dragging
+            w.event_generate("<<DnDMoved>>")
+            w.event_generate("<<DnDUp>>")
+
+        # End of dragging emulation
+        w.dnd_dragged = a_id
+        self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
+        self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
 
     def on_dnd_up(self, event):
         w = event.widget
