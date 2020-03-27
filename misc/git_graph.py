@@ -13,6 +13,8 @@ from common import (
 )
 from widgets import (
     add_scrollbars_native,
+    DnDGroup,
+    ANCHOR_MIDDLE,
     CanvasDnD,
     GUIFrame,
     GUITk
@@ -103,6 +105,7 @@ class GGVWidget(GUIFrame):
 
         x, y = cnv.winfo_width() / 2, cnv.winfo_height() / 2
         positions = {}
+        dnd_groups = {}
         bbox = x, y, x, y
 
         while True:
@@ -118,9 +121,11 @@ class GGVWidget(GUIFrame):
 
             x, y = next(iter_sides(bbox, spacing = 50))
             positions[n_sha] = x, y
-            cnv.create_oval(x, y, x + 10, y + 10,
+            n_oval = cnv.create_oval(x, y, x + 10, y + 10,
+                tags = "DnD",
                 fill = "white"
             )
+            dnd_groups[n_sha] = DnDGroup(cnv, n_oval, [])
 
             bbox = (
                 min(x, bbox[0]), min(y, bbox[1]),
@@ -139,6 +144,7 @@ class GGVWidget(GUIFrame):
                 yield True
 
                 nx, ny = positions[n_sha]
+                n_dnd = dnd_groups[n_sha]
 
                 children = macrograph[n_sha]
                 for c_sha in children:
@@ -158,23 +164,35 @@ class GGVWidget(GUIFrame):
                         positions[c_sha] = nearest
 
                         x, y = nearest
-                        cnv.create_oval(x, y, x + 10, y + 10,
+                        c_oval = cnv.create_oval(
+                            x, y, x + 10, y + 10,
+                            tags = "DnD",
                             fill = "white"
                         )
+                        dnd_groups[c_sha] = c_dnd = DnDGroup(cnv, c_oval, [])
 
                         bbox = (
                             min(x, bbox[0]), min(y, bbox[1]),
                             max(x + 10, bbox[2]), max(y + 10, bbox[3]),
                         )
+                    else:
+                        c_dnd = dnd_groups[c_sha]
 
                     x1, y1 = nx + 5, ny + 5
                     x2, y2 = x + 5, y + 5
-                    cnv.tag_lower(cnv.create_line(x1, y1, x2, y2))
+                    line_id = cnv.create_line(x1, y1, x2, y2)
+                    cnv.tag_lower(line_id)
+                    n_dnd.add_item(line_id, 0, 2)
+                    c_dnd.add_item(line_id, 2, 4)
 
                     tx, ty = (x1 + x2) / 2, (y1 + y2) / 2
 
-                    cnv.create_text(tx + 5, ty - 5,
+                    text_iid = cnv.create_text(tx + 5, ty - 5,
                         text = str(children[c_sha])
+                    )
+
+                    DnDGroup(cnv, line_id, [text_iid],
+                        anchor_point = ANCHOR_MIDDLE
                     )
 
                     stack.append(nodes[c_sha])
