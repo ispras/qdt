@@ -37,7 +37,7 @@ class DnDGroup(object):
         self.anchor_id = anchor_id
         self.items = list(items)
         self.anchor_point = anchor_point
-        w.bind("<<DnDDown>>", self.on_dnd_down, "+")
+        w.bind("<<DnDDown%s>>" % anchor_id, self.on_dnd_down, "+")
 
     def on_dnd_down(self, event):
         w = event.widget
