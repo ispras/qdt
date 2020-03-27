@@ -27,6 +27,9 @@ from git import (
     BadName,
     Repo
 )
+from .lazy import (
+    lazy
+)
 
 
 # Iterations Between Yields of Git Graph Building task
@@ -105,6 +108,22 @@ class CommitDesc(object):
 
         # serial number according to the topological sorting
         self.num = None
+
+    @lazy
+    def is_fork(self):
+        return len(self.children) > 1
+
+    @lazy
+    def is_merge(self):
+        return len(self.parents) > 1
+
+    @lazy
+    def is_leaf(self):
+        return not self.children
+
+    @lazy
+    def is_root(self):
+        return not self.parents
 
     @classmethod
     def co_build_git_graph(klass, repo, commit_desc_nodes):
