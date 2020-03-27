@@ -2,6 +2,7 @@ __all__ = [
     "DnDGroup"
   , "bbox_center"
   , "ANCHOR_FIRST"
+  , "ANCHOR_MIDDLE"
 ]
 
 from six import (
@@ -19,6 +20,13 @@ def bbox_center(bbox):
 
 def ANCHOR_FIRST(cnv, iid):
     return cnv.coords(iid)[:2]
+
+def ANCHOR_MIDDLE(cnv, iid):
+    coords = cnv.coords(iid)
+    divisor = len(coords) / 2
+    x = sum(coords[::2]) / divisor
+    y = sum(coords[1::2]) / divisor
+    return x, y
 
 class DnDGroup(object):
     """ Helps to drag, rotate and scale a group of `DnDCanvas` items (or some
