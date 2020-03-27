@@ -89,6 +89,11 @@ class CanvasDnD(Canvas):
         self._state = dragging
         self.event_generate('<<DnDDown>>')
 
+        # Emitting of item specific event allow effective monitoring for
+        # very big amount of items independently. Note that each DnDDown
+        # handler must check `dnd_dragged` attribute.
+        self.event_generate('<<DnDDown%s>>' % self.dnd_dragged)
+
     def motion(self, event):
         x, y = event.x, event.y
 
