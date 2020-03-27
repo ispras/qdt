@@ -74,6 +74,7 @@ class InstructionsTreeview(VarTreeview):
 # Trace text (CPU state) styles.
 STYLE_FILE = ("file",)
 STYLE_WARNING = ("warning",)
+# STYLE_DIFFERENCE of InstructionsTreeview is also used
 
 class QLVWindow(GUITk):
 
@@ -133,6 +134,9 @@ class QLVWindow(GUITk):
 
             trace_text.tag_configure(STYLE_FILE[0], foreground = "#AAAAAA")
             trace_text.tag_configure(STYLE_WARNING[0], foreground = "#FFBB66")
+            trace_text.tag_configure(STYLE_DIFFERENCE[0],
+                foreground = "#FF0000"
+            )
 
         self.task_manager.enqueue(self.co_trace_builder(qlogs))
 
@@ -242,6 +246,8 @@ class QLVWindow(GUITk):
         except ValueError:
             return
 
+        left_trace = None
+
         for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
             self.all_instructions, qlog_trace_texts
         )):
@@ -255,11 +261,42 @@ class QLVWindow(GUITk):
             )
 
             if isinstance(i, TraceInstr):
-                trace_text.insert(END, i.trace.as_text)
+                if qlog_idx == 0:
+                    left_trace = i.trace.as_text
+                    trace_text.insert(END, left_trace)
+                else:
+                    cur_trace = i.trace.as_text
+                    if left_trace is None:
+                        # Left log has no trace record for this instruction.
+                        # Nothing to diff.
+                        trace_text.insert(END, cur_trace)
+                    else:
+                        insert_diff(trace_text, left_trace, cur_trace)
             else:
                 trace_text.insert(END, _("No CPU data").get() + "\n",
                     STYLE_WARNING
                 )
+
+def insert_diff(text_wgt, base, new):
+    a, b = base.split("\n"), new.split("\n")
+
+    biter = iter(b)
+
+    for la, lb in izip(a, biter):
+        cbiter = iter(lb)
+        for ca, cb in izip(la, cbiter):
+            if ca == cb:
+                text_wgt.insert(END, cb)
+            else:
+                text_wgt.insert(END, cb, STYLE_DIFFERENCE)
+
+        for cb in cbiter:
+            text_wgt.insert(END, cb)
+
+        text_wgt.insert(END, "\n")
+
+    for lb in biter:
+        text_wgt.insert(END, lb + "\n")
 
 
 def main():
