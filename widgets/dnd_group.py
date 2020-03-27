@@ -1,6 +1,7 @@
 __all__ = [
     "DnDGroup"
   , "bbox_center"
+  , "ANCHOR_FIRST"
 ]
 
 from six import (
@@ -16,14 +17,18 @@ def bbox_center(bbox):
     return (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
 
 
+def ANCHOR_FIRST(cnv, iid):
+    return cnv.coords(iid)[:2]
+
 class DnDGroup(object):
     """ Helps to drag, rotate and scale a group of `DnDCanvas` items (or some
     of theirs coordinates).
     """
 
-    def __init__(self, w, anchor_id, items):
+    def __init__(self, w, anchor_id, items, anchor_point = ANCHOR_FIRST):
         self.anchor_id = anchor_id
         self.items = list(items)
+        self.anchor_point = anchor_point
         w.bind("<<DnDDown>>", self.on_dnd_down, "+")
 
     def on_dnd_down(self, event):
@@ -31,7 +36,7 @@ class DnDGroup(object):
         a_id = self.anchor_id
         if w.dnd_dragged != a_id:
             return
-        self.prev = w.coords(a_id)[:2]
+        self.prev = self.anchor_point(w, a_id)
         self.__moved = w.bind("<<DnDMoved>>", self.on_dnd_moved, "+")
         self.__up = w.bind("<<DnDUp>>", self.on_dnd_up, "+")
 
@@ -51,7 +56,7 @@ class DnDGroup(object):
         a_id = self.anchor_id
         px, py = self.prev
 
-        x, y = w.coords(a_id)[:2]
+        x, y = self.anchor_point(w, a_id)
         dx, dy = x - px, y - py
         self.prev = x, y
 
