@@ -19,6 +19,9 @@ from widgets import (
     GUIFrame,
     GUITk
 )
+from pprint import (
+    pprint
+)
 
 
 class GGVWidget(GUIFrame):
@@ -83,7 +86,7 @@ class GGVWidget(GUIFrame):
         m_count = len(macrograph)
         print("Macronodes count : %d" % m_count)
 
-        for n in nodes.values():
+        for i, n in enumerate(nodes.values(), 1):
             yield True
             # first digit in the tuple is used to count commits between nodes
             stack = list((0, p) for p in n.parents)
@@ -95,7 +98,10 @@ class GGVWidget(GUIFrame):
                 l += 1
                 stack.extend((l, pp) for pp in p.parents)
 
+            print("%d/%d" % (i, m_count))
+
         print("Done")
+        pprint(macrograph)
 
         print("Laying out Graph")
 
@@ -178,6 +184,8 @@ class GGVWidget(GUIFrame):
                     else:
                         c_dnd = dnd_groups[c_sha]
 
+                    # print(n_sha, "->", c_sha)
+
                     x1, y1 = nx + 5, ny + 5
                     x2, y2 = x + 5, y + 5
                     line_id = cnv.create_line(x1, y1, x2, y2)
@@ -230,6 +238,7 @@ class GGVWindow(GUITk):
         w = GGVWidget(self, sizegrip = True)
         w.pack(fill = BOTH, expand = True)
 
+        # print("repo = " + repo)
         w.repo_path = repo
 
 
