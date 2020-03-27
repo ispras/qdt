@@ -4,6 +4,7 @@ from common import (
     mlget as _
 )
 from widgets import (
+    GUIDialog,
     bbox_center,
     DnDGroup,
     VarButton,
@@ -405,17 +406,9 @@ class ConstWgt(Wgt):
         return []
 
 
-class VarDialog(VarToplevel):
-    def __init__(self, *a, **kw):
-        VarToplevel.__init__(self, *a, **kw)
-
-        self.transient(self.master)
-        self.grab_set()
-
-
-class ConstEdit(VarDialog):
+class ConstEdit(GUIDialog):
     def __init__(self, const_wgt, *a, **kw):
-        VarDialog.__init__(self, *a, **kw)
+        GUIDialog.__init__(self, *a, **kw)
 
         self.title(_("Edit constant"))
 
