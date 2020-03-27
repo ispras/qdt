@@ -78,6 +78,7 @@ class DnDGroup(object):
                 # Emulate dragging for the item
                 w.dnd_dragged = i
                 w.event_generate("<<DnDDown>>")
+                w.event_generate("<<DnDDown%s>>" % i)
 
                 xy = coords(i)
                 if len(xy) == 2:
@@ -92,6 +93,7 @@ class DnDGroup(object):
                 # Emulate dragging
                 w.dnd_dragged = iid
                 w.event_generate("<<DnDDown>>")
+                w.event_generate("<<DnDDown%s>>" % iid)
 
                 c = coords(iid)
                 if end is None:
