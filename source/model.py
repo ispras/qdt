@@ -1863,8 +1863,8 @@ model yet. Better implement required functionality and submit patches!
 
     _name_num = count()
 
-    def gen_chunks(self, generator):
-        ch = OpaqueChunk(self)
+    def gen_chunks(self, generator, indent = ""):
+        ch = OpaqueChunk(self, indent)
 
         for item in self.used:
             ch.add_references(generator.provide_chunks(item))
@@ -2751,10 +2751,12 @@ class FunctionDefinition(SourceChunk):
 
 class OpaqueChunk(SourceChunk):
 
-    def __init__(self, origin):
+    def __init__(self, origin, indent = ""):
         name = "Opaque code named %s" % origin
 
-        super(OpaqueChunk, self).__init__(origin, name, str(origin.code))
+        super(OpaqueChunk, self).__init__(origin, name,
+            indent + str(origin.code)
+        )
 
         # Ordering weight can be overwritten.
         if origin.weight is not None:
