@@ -1883,7 +1883,7 @@ model yet. Better implement required functionality and submit patches!
 
     _name_num = count()
 
-    def gen_chunks(self, generator):
+    def gen_chunks(self, generator, **kw):
         ch = OpaqueChunk(self)
 
         for item in self.used:
