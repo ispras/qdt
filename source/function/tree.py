@@ -36,6 +36,7 @@ __all__ = [
                       , "OpDeref"
                       , "OpNot"
                       , "OpCast"
+                      , "OpSizeOf"
                   # BinaryOperator
                       , "OpAssign"
                       , "OpDeclareAssign"
@@ -760,6 +761,13 @@ class OpCast(UnaryOperator):
         self.type = Type[type_name]
 
 
+class OpSizeOf(UnaryOperator):
+
+    def __init__(self, arg):
+        super(OpSizeOf, self).__init__("sizeof(", arg, suffix_op = False)
+        self.suffix = ")"
+
+
 class OpAddr(UnaryOperator):
 
     def __init__(self, arg1):
@@ -955,6 +963,7 @@ op_priority = {
     OpNot:           2,
     OpLogNot:        2,
     OpCast:          2,
+    OpSizeOf:        2,
     OpMul:           3,
     OpDiv:           3,
     OpRem:           3,
