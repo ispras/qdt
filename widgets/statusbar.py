@@ -45,7 +45,7 @@ the new widget must be added before them.
 
     This method also takes into account padding label.
     """
-    def __repack(self, widget, side):
+    def repack(self, widget, side):
         slaves = list(self.pack_slaves())
 
         sides = [side]
@@ -63,10 +63,10 @@ the new widget must be added before them.
 
     def right(self, string_var, **lb_args):
         lb = self._gen_label(string_var, **lb_args)
-        self.__repack(lb, SIDE_RIGHT)
+        self.repack(lb, SIDE_RIGHT)
         return lb
 
     def left(self, string_var, **lb_args):
         lb = self._gen_label(string_var, **lb_args)
-        self.__repack(lb, SIDE_LEFT)
+        self.repack(lb, SIDE_LEFT)
         return lb
