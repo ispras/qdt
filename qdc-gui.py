@@ -5,6 +5,7 @@ from examples import (
     Q35MachineNode_2_6_0
 )
 from widgets import (
+    CoStatusView,
     GitVerSelDialog,
     QDCGUISignalHelper,
     DescNameWatcher,
@@ -64,6 +65,7 @@ from common import (
     mlget as _
 )
 from six.moves.tkinter import (
+    RIGHT,
     BooleanVar,
     StringVar
 )
@@ -408,20 +410,9 @@ show it else hide it."),
         sb.left(self.var_qemu_build_path)
 
         # Task counters in status bar
-        self.var_tasks = vt = IntVar()
-        self.var_callers = vc = IntVar()
-        self.var_active_tasks = vat = IntVar()
-        self.var_finished_tasks = vft = IntVar()
         sb.right(_("Background tasks: "))
-        sb.right(FormatVar(value = "%u") % vt, fg = "red")
-        sb.right(FormatVar(value = "%u") % vc, fg = "orange")
-        sb.right(FormatVar(value = "%u") % vat)
-        sb.right(FormatVar(value = "%u") % vft, fg = "grey")
+        sb.repack(CoStatusView(sb), RIGHT)
 
-        self.task_manager.watch_activated(self.__on_task_state_changed)
-        self.task_manager.watch_finished(self.__on_task_state_changed)
-        self.task_manager.watch_failed(self.__on_task_state_changed)
-        self.task_manager.watch_removed(self.__on_task_state_changed)
         self.signal_dispatcher.watch_failed(self.__on_listener_failed)
 
         self.protocol("WM_DELETE_WINDOW", self.on_delete)
@@ -477,13 +468,6 @@ show it else hide it."),
 
         self.var_schedule_generation.set(settings.schedule_generation)
         self.var_gen_chunk_graphs.set(settings.gen_chunk_graphs)
-
-    def __on_task_state_changed(self, task):
-        for group in [ "tasks", "callers", "active_tasks", "finished_tasks" ]:
-            var = getattr(self, "var_" + group)
-            cur_val = len(getattr(self.task_manager, group))
-            if cur_val != var.get():
-                var.set(cur_val)
 
     def __on_listener_failed(self, e, tb):
         sys.stderr.write("Listener failed - %s" %
@@ -702,10 +686,6 @@ in process. Do you want to start cache rebuilding?")
         else:
             del self._project_generation_task
 
-        self.task_manager.unwatch_activated(self.__on_task_state_changed)
-        self.task_manager.unwatch_finished(self.__on_task_state_changed)
-        self.task_manager.unwatch_failed(self.__on_task_state_changed)
-        self.task_manager.unwatch_removed(self.__on_task_state_changed)
         self.signal_dispatcher.unwatch_failed(self.__on_listener_failed)
 
         self.quit()
