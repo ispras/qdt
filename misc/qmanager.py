@@ -15,6 +15,8 @@ from os.path import (
     expanduser
 )
 from widgets import (
+    Statusbar,
+    CoStatusView,
     ErrorDialog,
     GUIFrame,
     GitVerSelWidget,
@@ -34,6 +36,7 @@ from widgets import (
     GUITk
 )
 from six.moves.tkinter import (
+    RIGHT,
     StringVar,
     Label,
     END
@@ -157,6 +160,14 @@ class QMGUI(GUITk):
 
         self.worktree2iid = worktree2iid = bidict()
         self.iid2worktree = worktree2iid.mirror
+
+        # status bar
+        row += 1; self.rowconfigure(row, weight = 0)
+        sb = Statusbar(self)
+        sb.grid(row = row, column = 0, columnspan = 2, sticky = "SEW")
+
+        sb.right(_("Background tasks: "))
+        sb.repack(CoStatusView(sb), RIGHT)
 
         self.repos = []
         for r in repos:
