@@ -28,7 +28,7 @@ class Statusbar(GUIFrame):
         self.padding = Label(self)
         self.padding.pack(fill = FILL_X, expand = 1, side = SIDE_RIGHT)
 
-    def __gen_label__(self, string_var, **lb_args):
+    def _gen_label(self, string_var, **lb_args):
         return VarLabel(self,
             bd = 1,
             relief = RELIEF_SUNKEN,
@@ -62,11 +62,11 @@ the new widget must be added before them.
         self.padding.pack(fill = FILL_X, expand = 1, side = SIDE_RIGHT)
 
     def right(self, string_var, **lb_args):
-        lb = self.__gen_label__(string_var, **lb_args)
+        lb = self._gen_label(string_var, **lb_args)
         self.__repack(lb, SIDE_RIGHT)
         return lb
 
     def left(self, string_var, **lb_args):
-        lb = self.__gen_label__(string_var, **lb_args)
+        lb = self._gen_label(string_var, **lb_args)
         self.__repack(lb, SIDE_LEFT)
         return lb
