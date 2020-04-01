@@ -9,6 +9,7 @@ __all__ = [
       , "Structure"
       , "Function"
       , "Pointer"
+      , "TypeAlias"
       , "Macro"
       , "MacroUsage"
       , "Enumeration"
@@ -21,6 +22,7 @@ __all__ = [
       , "MacroDefinition"
       , "PointerTypeDeclaration"
       , "FunctionPointerTypeDeclaration"
+      , "TypeAliasDeclaration"
       , "MacroTypeChunk"
       , "FunctionPointerDeclaration"
       , "VariableDeclaration"
@@ -1679,6 +1681,28 @@ chunk. The references is to be added to `users` of the 'typedef'.
     __type_references__ = ["type"]
 
 
+class TypeAlias(Type):
+
+    def __init__(self, _type, name):
+        super(TypeAlias, self).__init__(name = name)
+
+        self.type = _type
+
+    def gen_chunks(self, generator):
+        _type = self.type
+        ch = TypeAliasDeclaration(_type, self.c_name)
+
+        """ 'typedef' does not require referenced types to be visible.
+Hence, it is not correct to add references to the TypeAliasDeclaration
+chunk. The references is to be added to `users` of the 'typedef'.
+    """
+        ch.add_references(generator.provide_chunks(_type))
+
+        return [ch]
+
+    __type_references__ = ["type"]
+
+
 HDB_MACRO_NAME = "name"
 HDB_MACRO_TEXT = "text"
 HDB_MACRO_ARGS = "args"
@@ -2449,6 +2473,17 @@ class FunctionPointerTypeDeclaration(SourceChunk):
                 )
               + ";\n"
             )
+        )
+
+
+class TypeAliasDeclaration(SourceChunk):
+
+    def __init__(self, _type, def_name):
+        self.def_name = def_name
+
+        super(TypeAliasDeclaration, self).__init__(_type,
+            "Typedef %s to type %s" % (def_name, _type),
+            "typedef@b" + _type.declaration_string + def_name + ";\n"
         )
 
 
