@@ -20,7 +20,9 @@ from .pack_info_compat import (
     pack_info
 )
 
+
 class Statusbar(GUIFrame):
+
     def __init__(self, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
