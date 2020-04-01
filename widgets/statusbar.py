@@ -37,15 +37,16 @@ class Statusbar(GUIFrame):
             **lb_args
         )
 
-    """ Original 'pack' method adds widgets from the 'side' of the frame to
-its center. E.g. a new widget packed with flag 'RIGHT' is appended at the left
+    def repack(self, widget, side):
+        """ Original 'pack' method adds widgets from the `side` of the frame to
+its center. E.g. a new widget packed with flag `RIGHT` is appended at the left
 of any other widget added to the RIGHT side before it. I.e. to add a new widget
 at the right (left) of any other, all packed widgets must be repacked and
 the new widget must be added before them.
 
     This method also takes into account padding label.
-    """
-    def repack(self, widget, side):
+        """
+
         slaves = list(self.pack_slaves())
 
         sides = [side]
