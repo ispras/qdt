@@ -62,7 +62,11 @@ the new widget must be added before them.
         self.padding.pack(fill = FILL_X, expand = 1, side = SIDE_RIGHT)
 
     def right(self, string_var, **lb_args):
-        self.__repack(self.__gen_label__(string_var, **lb_args), SIDE_RIGHT)
+        lb = self.__gen_label__(string_var, **lb_args)
+        self.__repack(lb, SIDE_RIGHT)
+        return lb
 
     def left(self, string_var, **lb_args):
-        self.__repack(self.__gen_label__(string_var, **lb_args), SIDE_LEFT)
+        lb = self.__gen_label__(string_var, **lb_args)
+        self.__repack(lb, SIDE_LEFT)
+        return lb
