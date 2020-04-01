@@ -14,6 +14,7 @@ __all__ = [
       , "Enumeration"
       , "EnumerationElement"
       , "OpaqueCode"
+        , "TypeAlias"
   , "Initializer"
   , "Variable"
   , "SourceChunk"
@@ -1872,6 +1873,16 @@ model yet. Better implement required functionality and submit patches!
         return [ch]
 
     __type_references__ = ["used"]
+
+
+class TypeAlias(OpaqueCode):
+
+    def __init__(self, _type, name):
+        super(TypeAlias, self).__init__(
+            "typedef@b" + _type.declaration_string + name + ";\n",
+            name = name,
+            used_types = [_type]
+        )
 
 
 # Data models
