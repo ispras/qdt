@@ -139,10 +139,14 @@ class QMGUI(GUITk):
         )
 
         self.columnconfigure(0, weight = 1)
-        self.rowconfigure(0, weight = 1)
-        tv_repos.grid(row = 0, column = 0, sticky = "NESW")
 
-        add_scrollbars_native(self, tv_repos, sizegrip = True)
+        row = 0
+
+        self.rowconfigure(row, weight = 1)
+        tv_repos.grid(row = row, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, tv_repos, row = row, sizegrip = True)
+        row += 1 # horizontal scrollbar
 
         tv_repos.heading("#0", text =  _("Path"))
         tv_repos.heading("HEAD", text =  _("HEAD"))
