@@ -253,7 +253,7 @@ as fast as possible. A clone is neither honest nor independent, so be careful.
 
     return new_repo
 
-def init_submodules_from_cache(repo, cache_dir):
+def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
     git = repo.git
 
     if not exists(join(repo.working_tree_dir, ".gitmodules")):
@@ -275,12 +275,21 @@ def init_submodules_from_cache(repo, cache_dir):
                 name = full_key[:-len(prop)]
                 submodules.setdefault(name, {})[prop] = value
 
+    # Previous value of submodule URL used when `revert_urls`.
+    url_back = None
+
     for sm, props in submodules.items():
         sub_cache = join(cache_dir, sm)
         # If path is absent, it's considered equal to name.
         sm_path = props.get(".path", sm)
 
         if exists(sub_cache):
+            if revert_urls:
+                url_back = git.config(
+                    "submodule." + sm + ".url",
+                    file = ".gitmodules"
+                )
+
             # https://stackoverflow.com/a/30675130/7623015
             git.config(
                 "submodule." + sm + ".url",
@@ -298,7 +307,17 @@ def init_submodules_from_cache(repo, cache_dir):
         git.submodule("update", "--init", sm_path)
 
         sub_repo = Repo(join(repo.working_tree_dir, sm_path))
-        init_submodules_from_cache(sub_repo, join(sub_cache, "modules"))
+        init_submodules_from_cache(sub_repo, join(sub_cache, "modules"),
+            revert_urls = revert_urls
+        )
+
+        if url_back is not None:
+            git.config(
+                "submodule." + sm + ".url",
+                url_back,
+                file = ".gitmodules"
+            )
+            url_back = None
 
 
 def git_find_commit(repo, version):
