@@ -275,7 +275,8 @@ class QMGUI(GUITk):
 
         item = tv.item
 
-        text = " ".join(cli_repr(item(iid, "text")) for iid in sel)
+        # Path of only first selected item is copied to clipboard.
+        text = cli_repr(item(sel[0], "text"))
 
         self.clipboard_clear()
         self.clipboard_append(text)
