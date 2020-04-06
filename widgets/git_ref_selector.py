@@ -7,9 +7,6 @@ __all__ = [
 from six.moves.tkinter import (
     StringVar
 )
-from six.moves.tkinter_ttk import (
-    Combobox
-)
 from common import (
     mlget as _
 )
@@ -21,6 +18,9 @@ from .gui_frame import (
 )
 from .var_widgets import (
     VarButton
+)
+from .hotkey import (
+    HKCombobox
 )
 
 
@@ -42,7 +42,7 @@ class GitVerSelWidget(GUIFrame):
             refs = [r.name for r in repo.references]
 
         selected = StringVar()
-        cb = Combobox(self,
+        cb = HKCombobox(self,
             width = 41, # To fit 40 hex digits of git SHA1
             values = refs,
             textvariable = selected
