@@ -1,5 +1,6 @@
 __all__ = [
-    "HKEntry"
+    "HKGeneric"
+      , "HKEntry"
   , "HotKeyBinding"
   , "HotKey"
   , "KeyboardSettings"
@@ -23,13 +24,9 @@ from os import (
 )
 
 
-class HKEntry(Entry):
-    def __init__(self, *args, **kw):
-        Entry.__init__(self, *args, **kw)
+class HKGeneric:
 
-        self.bind("<Control-Key>", self.ignore)
-
-    def ignore(self, event):
+    def _on_ctrl_key_generic(self, event):
         if event.keycode == 29: # prevent paste on Ctrl + Y
             self.event_generate("<<Control-Y-Breaked>>")
             return "break"
@@ -44,6 +41,15 @@ class HKEntry(Entry):
                 # inserted, because the insertion cursor cannot be outside a
                 # selected text.
                 self.delete("sel.first", "sel.last")
+
+
+class HKEntry(Entry, HKGeneric):
+
+    def __init__(self, *args, **kw):
+        Entry.__init__(self, *args, **kw)
+
+        self.bind("<Control-Key>", self._on_ctrl_key_generic)
+
 
 class HotKeyBinding(object):
 
