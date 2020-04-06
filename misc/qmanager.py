@@ -3,7 +3,6 @@
 from common import (
     QRepo,
     makedirs,
-    cli_repr,
     bidict,
     mlget as _,
     Persistent
@@ -276,7 +275,7 @@ class QMGUI(GUITk):
         item = tv.item
 
         # Path of only first selected item is copied to clipboard.
-        text = cli_repr(item(sel[0], "text"))
+        text = item(sel[0], "text")
 
         self.clipboard_clear()
         self.clipboard_append(text)
