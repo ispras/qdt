@@ -688,11 +688,10 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                 raise UnknownMachineNodeType(str(type(node)))
 
         # machine initialization function
-        self.instance_init = Function(
-            name = "init_%s" % self.qtn.for_id_name,
-            static = True,
-            args = [ Pointer(Type["MachineState"])("machine") ],
+        self.instance_init = Type["MachineClass"].init.gen_callback(
+            "init_%s" % self.qtn.for_id_name,
             body = decl_code + "\n" + def_code,
+            static = True,
             used_types = self.init_used_types
         )
         self.source.add_type(self.instance_init)
