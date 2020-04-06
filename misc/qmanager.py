@@ -93,6 +93,7 @@ class QMGUI(GUITk):
         hotkeys(self._on_copy_path, 54, symbol = "C")
         hotkeys(self._on_create_worktree, 25, symbol = "W")
         hotkeys(self._on_create_build_dir, 56, symbol = "B")
+        hotkeys(self._on_init_submodules_from_cache, 39, symbol = "C")
 
         with MenuBuilder(self) as menubar:
             with menubar(_("Manage")) as repomenu:
@@ -123,6 +124,12 @@ class QMGUI(GUITk):
                     command = self._on_exit
                 )
             with menubar(_("Work tree")) as wtmenu:
+                wtmenu(_("Init submodules from cache"),
+                    command = self._on_init_submodules_from_cache,
+                    accelerator = hotkeys.get_keycode_string(
+                        self._on_init_submodules_from_cache
+                    )
+                )
                 wtmenu(_("Create build directory"),
                     command = self._on_create_build_dir,
                     accelerator = hotkeys.get_keycode_string(
@@ -180,6 +187,12 @@ class QMGUI(GUITk):
             qrepo = self.iid2repo[iid]
             # one of work trees is the repo
             return qrepo.worktrees[qrepo.path]
+
+    def _on_init_submodules_from_cache(self):
+        sel = self.tv_repos.selection()
+
+        for wt in set(self._worktree_by_iid(iid) for iid in sel):
+            self.task_manager.enqueue(wt.co_init_submodules_from_cache())
 
     def _on_create_build_dir(self):
         sel = self.tv_repos.selection()
