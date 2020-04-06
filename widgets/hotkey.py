@@ -1,6 +1,7 @@
 __all__ = [
     "HKGeneric"
       , "HKEntry"
+      , "HKCombobox"
   , "HotKeyBinding"
   , "HotKey"
   , "KeyboardSettings"
@@ -14,6 +15,9 @@ from common import (
 from six.moves.tkinter import (
     END,
     Entry
+)
+from six.moves.tkinter_ttk import (
+    Combobox
 )
 from os.path import (
     dirname,
@@ -49,6 +53,14 @@ class HKEntry(Entry, HKGeneric):
         Entry.__init__(self, *args, **kw)
 
         self.bind("<Control-Key>", self._on_ctrl_key_generic)
+
+
+class HKCombobox(Combobox, HKGeneric):
+
+    def __init__(self, *a, **kw):
+        Combobox.__init__(self, *a, **kw)
+
+        self.bind("<Control-Key>", self._on_ctrl_key_generic, "+")
 
 
 class HotKeyBinding(object):
