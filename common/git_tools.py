@@ -5,6 +5,7 @@ __all__ = [
   , "git_diff2delta_intervals"
   , "fast_repo_clone"
   , "git_find_commit"
+  , "init_submodules_from_cache"
 ]
 
 from collections import (
