@@ -5,6 +5,12 @@ __all__ = [
 from git import (
     Repo
 )
+from multiprocessing import (
+    Process
+)
+from .git_tools import (
+    init_submodules_from_cache
+)
 from .workers import (
     PopenResult,
     PopenWorker,
@@ -13,6 +19,7 @@ from .extensible import (
     Extensible,
 )
 from os.path import (
+    join,
     abspath
 )
 
@@ -118,6 +125,26 @@ class QWorkTree(Extensible):
 
     def __str__(self):
         return self.path
+
+    def co_init_submodules_from_cache(self, revert_urls = True):
+        # Backing `init_submodules_from_cache` relies on `git submodule update`
+        # command which can be time consuming. So, converting
+        # `init_submodules_from_cache` to a coroutine is not an option.
+        # Truly parallel Process is used instead.
+        p = Process(
+            target = init_submodules_from_cache,
+            args = (
+                self.repo,
+                join(self.qrepo.repo.working_tree_dir, ".git", "modules"),
+            ),
+            kwargs = dict(
+                revert_urls = revert_urls
+            )
+        )
+        p.start()
+
+        while p.is_alive():
+            yield False
 
 
 class QBuildDir(object):
