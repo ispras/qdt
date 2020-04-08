@@ -63,6 +63,17 @@ class HKCombobox(Combobox, HKGeneric):
         Combobox.__init__(self, *a, **kw)
 
         self.bind("<Control-Key>", self._on_ctrl_key_generic, "+")
+        self.bind("<Control-Key>", self._on_ctrl_key, "+")
+
+    def _on_ctrl_key(self, e):
+        if e.keycode == 54: # Ctrl-C: copy selected
+            if self.select_present():
+                f, l = self.index(SEL_FIRST), self.index(SEL_LAST)
+                text = self.get()[f:l]
+
+                self.clipboard_clear()
+                self.clipboard_append(text)
+            return "break"
 
 
 class HotKeyBinding(object):
