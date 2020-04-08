@@ -47,6 +47,8 @@ class HKGeneric:
                 # inserted, because the insertion cursor cannot be outside a
                 # selected text.
                 self.delete(SEL_FIRST, SEL_LAST)
+                # Never stop event handling by `return "break"` because
+                # original handler pasts the value from clipboard.
 
 
 class HKEntry(Entry, HKGeneric):
