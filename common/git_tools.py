@@ -6,6 +6,7 @@ __all__ = [
   , "fast_repo_clone"
   , "git_find_commit"
   , "init_submodules_from_cache"
+  , "repo_path_in_tree"
 ]
 
 from collections import (
@@ -21,6 +22,7 @@ from tempfile import (
     mkdtemp
 )
 from os.path import (
+    sep,
     exists,
     join
 )
@@ -334,3 +336,26 @@ a remote head.
                     return ref.commit
 
         raise
+
+
+# Baed on: https://stackoverflow.com/a/25961128/7623015
+def repo_path_in_tree(repo, path):
+    """
+@param repo: is a gitPython Repo object
+@param path: is the full path to a file/directory from the repository root
+
+Returns `true` if path exists in the repo in current version,
+        `false` otherwise.
+    """
+
+    # Build up reference to desired repo path
+    rsub = repo.head.commit.tree
+
+    for path_element in path.split(sep):
+        # If dir on file path is not in repo, neither is file/directory.
+        try :
+            rsub = rsub[path_element]
+        except KeyError:
+            return False
+
+    return True
