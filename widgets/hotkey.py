@@ -13,6 +13,8 @@ from common import (
     mlget as _
 )
 from six.moves.tkinter import (
+    SEL_FIRST,
+    SEL_LAST,
     END,
     Entry
 )
@@ -44,7 +46,7 @@ class HKGeneric:
                 # to replacement of a selected text with the text being
                 # inserted, because the insertion cursor cannot be outside a
                 # selected text.
-                self.delete("sel.first", "sel.last")
+                self.delete(SEL_FIRST, SEL_LAST)
 
 
 class HKEntry(Entry, HKGeneric):
