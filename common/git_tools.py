@@ -285,6 +285,10 @@ def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
         # If path is absent, it's considered equal to name.
         sm_path = props.get(".path", sm)
 
+        if not repo_path_in_tree(repo, sm_path):
+            # The submodule has likely been removed from tree.
+            continue
+
         if exists(sub_cache):
             if revert_urls:
                 url_back = git.config(
