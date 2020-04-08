@@ -131,6 +131,18 @@ class QWorkTree(Extensible):
         # command which can be time consuming. So, converting
         # `init_submodules_from_cache` to a coroutine is not an option.
         # Truly parallel Process is used instead.
+
+        # XXX, TODO: this does not work fast for worktrees because Git keeps
+        # cache of worktrees submodules in a different place:
+        # .git/worktrees/[worktree name]/modules/[path to submodule]
+        # For main work tree it is here:
+        # .git/modules/[path to submodule]
+        # And a worktree submodule cache is _empty_ at worktree after creation
+        # and must be downloaded first.
+        # Hence, `init_submodules_from_cache` does quite same as regular
+        #   git submodule update --init --recursive
+        #
+        # Could cache be copied from main work tree cache?
         p = Process(
             target = init_submodules_from_cache,
             args = (
