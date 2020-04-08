@@ -283,6 +283,16 @@ def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
                 sub_cache,
                 file = ".gitmodules"
             )
+            # When initializing submodules of a local clone setting URL in
+            # .gitmodules is sufficient to force Git use local cache during
+            # "update" command.
+            # However, initialization of a worktree (see "git worktree")
+            # submodules still uses original URLs. The "sync" command fixes it.
+            #
+            # Note that Git keeps cache of worktree submodules in a different
+            # place (i.e. caches of main work tree submodules are not re-used):
+            # .git/worktrees/[worktree name]/modules/[path to submodule]
+            git.submodule("sync", sm_path)
         else:
             print("Submodule %s has no cache at '%s'."
                   " Default URL will be used." % (
@@ -305,6 +315,8 @@ def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
                 file = ".gitmodules"
             )
             url_back = None
+            # Updates URL in cache "config" file.
+            git.submodule("sync", sm_path)
 
 
 def git_find_commit(repo, version):
