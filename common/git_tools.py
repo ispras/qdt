@@ -334,6 +334,8 @@ def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
                 file = ".gitmodules"
             )
             url_back = None
+            # Updates URL in cache "config" file.
+            git.submodule("sync", sm_path)
 
 
 def git_find_commit(repo, version):
