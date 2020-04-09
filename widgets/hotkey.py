@@ -194,6 +194,14 @@ class HotKey(object):
         else:
             self.cb2names[cb] = _(name)
 
+    @property
+    def enabled(self):
+        return not self.disabled
+
+    @enabled.setter
+    def enabled(self, b):
+        self.enable_hotkeys() if b else self.disable_hotkeys()
+
     def disable_hotkeys(self):
         self.disabled = True
 
