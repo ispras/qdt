@@ -31,7 +31,12 @@ class GUIDialog(GUIToplevel):
             except AttributeError:
                 master = top.master
             else:
-                hk.disable_hotkeys()
+                if hk.enabled:
+                    hk.disable_hotkeys()
+                else:
+                    # Do not enable hotkeys after operation if they are
+                    # disabled now.
+                    hk = None
                 self.hk = hk
                 break
         else:
