@@ -89,16 +89,26 @@ def define_only_qemu_2_6_0_types():
             )
         ])
 
-    Header["tcg.h"].add_types([
+    tcg_header = Header["tcg.h"]
+    tcg_header.add_types([
         Type("TCGv_i32"),
         Type("TCGv_i64"),
         Type("TCGv_ptr"),
-        Type("TCGv_env"),
+        Type("TCGv_env", incomplete = False),
         Type("TCGv"),
+        Structure("TCGContext"),
         Function(name = "tcg_global_mem_new_i32"),
         Function(name = "tcg_global_mem_new_i64"),
         Function(name = "tcg_op_buf_full")
     ])
+
+    if get_vp("Init cpu_env in arch"):
+        # These are required fields only
+        Type["TCGContext"].append_field(Type["TCGv_env"]("tcg_env"))
+    else:
+        tcg_header.add_global_variable(Type["TCGv_env"]("cpu_env"))
+
+    tcg_header.add_global_variable(Type["TCGContext"]("tcg_ctx"))
 
     Header["tcg-op.h"].add_types([
         Function(name = "tcg_gen_insn_start"),
