@@ -1656,10 +1656,10 @@ class Pointer(Type):
         else:
             ch = PointerTypeDeclaration(type, name)
 
-        """ 'typedef' does not require refererenced types to be visible.
+        """ 'typedef' does not require referenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
 chunk. The references is to be added to `users` of the 'typedef'.
-    """
+        """
         ch.add_references(refs)
 
         return [ch]
