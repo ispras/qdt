@@ -81,15 +81,19 @@ def define_only_qemu_2_6_0_types():
     # TODO: the tweak must be handled using version API.
     osdep_fake_type = Type("FAKE_TYPE_IN_QEMU_OSDEP")
 
+    Header["qemu/osdep.h"].add_types([
+        osdep_fake_type
+    ])
+
     if not get_vp("tcg_enabled is macro"):
         Header["qemu-common.h"].add_types([
             Function(
                 name = "tcg_enabled",
                 ret_type = Type["bool"]
             )
-        ])
+        ]).add_reference(osdep_fake_type)
 
-    tcg_header = Header["tcg.h"]
+    tcg_header = Header["tcg.h"].add_reference(osdep_fake_type)
     tcg_header.add_types([
         Type("TCGv_i32"),
         Type("TCGv_i64"),
@@ -116,20 +120,13 @@ def define_only_qemu_2_6_0_types():
     Header["tcg-op.h"].add_types([
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
-        Function(name = "tcg_gen_exit_tb")
-    ])
-
-    Header["tcg-op.h"].add_types([
+        Function(name = "tcg_gen_exit_tb"),
         # tcg is a fake type intended to mark
         # variables which are to be replaced by this tool
         # preprocessor (still in progress)
         # tcg is then converted to some existing QEMU types
         Type("tcg", incomplete = False)
-    ])
-
-    Header["qemu/osdep.h"].add_types([
-        osdep_fake_type
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["exec/hwaddr.h"].add_types([
         Type("hwaddr", False)
@@ -153,7 +150,7 @@ def define_only_qemu_2_6_0_types():
         Function(name = "cpu_lduw_code", ret_type = Type["uint16_t"]),
         Function(name = "cpu_ldl_code", ret_type = Type["uint32_t"]),
         Function(name = "cpu_ldq_code", ret_type = Type["uint64_t"]),
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["qom/object.h"].add_types([
         Type("ObjectClass", False),
@@ -444,7 +441,7 @@ def define_only_qemu_2_6_0_types():
     Header["exec/gen-icount.h"].add_types([
         Function(name = "gen_tb_start"),
         Function(name = "gen_tb_end")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["exec/address-spaces.h"].add_types([
         Function(name = "get_system_memory")
@@ -723,12 +720,13 @@ def define_only_qemu_2_6_0_types():
 
     Header["hw/isa/isa.h"].add_types([
         Type("IsaDmaTransferHandler")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     if get_vp("include/hw/isa/i8257.h have IsaDmaTransferHandler reference"):
         Header[get_vp("i8257.h path")].add_references([
             Type["IsaDmaTransferHandler"],
-            Type["MemoryRegion"]
+            Type["MemoryRegion"],
+            osdep_fake_type
         ])
 
     Header["qapi/qapi-types-net.h"].add_types([
@@ -738,7 +736,7 @@ def define_only_qemu_2_6_0_types():
             enum_name = "NetClientDriver",
             typedef_name = "NetClientDriver"
         )
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["net/net.h"].add_types([
         Type("qemu_macaddr_default_if_unset"),
@@ -786,7 +784,7 @@ def define_only_qemu_2_6_0_types():
 
     Header["disas/disas.h"].add_types([
         Function(name = "lookup_symbol")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["qemu/log.h"].add_types([
         Function(name = "qemu_loglevel_mask"),
@@ -794,11 +792,11 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qemu_log_lock"),
         Function(name = "qemu_log_unlock"),
         Function(name = "qemu_log")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["exec/log.h"].add_types([
         Function(name = "log_target_disas")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     Header["sysemu/reset.h"].add_types([
         # XXX: It's neither a function nor a function pointer. It's something
@@ -808,7 +806,7 @@ def define_only_qemu_2_6_0_types():
             args = [ Pointer(Type["void"])("opaque") ]
         ),
         Function(name = "qemu_register_reset")
-    ])
+    ]).add_reference(osdep_fake_type)
 
     if get_vp("qemu_fprintf exists"):
         Header["qemu/qemu-print.h"].add_types([
@@ -840,7 +838,7 @@ def define_qemu_2_6_5_types():
                 ret_type = Type["int"],
                 args = [ Pointer(Type["void"])("opaque") ]
             )
-        )
+        ).add_reference(Type["FAKE_TYPE_IN_QEMU_OSDEP"])
 
 def define_qemu_2_6_0_types():
     add_base_types()
