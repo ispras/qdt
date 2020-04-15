@@ -11,8 +11,6 @@ from .gui_dialog import (
     GUIDialog
 )
 from six.moves.tkinter import (
-    BOTH,
-    ON,
     END,
     NONE
 )
@@ -78,10 +76,13 @@ class TaskErrorWidget(GUIFrame):
 
         t.insert(END, "".join(task.traceback_lines))
 
-class TaskErrorDialog(GUIDialog):
-    def __init__(self, task):
-        GUIDialog.__init__(self)
 
-        self.title(_("%s - failed") % task.description)
+class TaskErrorDialog(ErrorDialog):
 
-        TaskErrorWidget(task, master = self).pack(fill = BOTH, expand = ON)
+    def __init__(self, task, summary = None, title = None):
+        if summary is None:
+            summary = _("%s - failed") % task.description
+
+        message = "".join(task.traceback_lines)
+
+        ErrorDialog.__init__(self, summary, title = title, message = message)
