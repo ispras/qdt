@@ -2387,7 +2387,7 @@ class HeaderInclusion(SourceChunk):
 
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
-            "Header %s inclusion" % header.path,
+            "Header %s inclusion" % header,
             "",
             references = []
         )
