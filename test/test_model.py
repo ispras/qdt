@@ -843,5 +843,50 @@ typedef S *ps;
         ]
 
 
+class TestNamelessStructure(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestNamelessStructure, self).setUp()
+        name = type(self).__name__
+
+        hdr = Header(name.lower() + ".h")
+        hdr.add_type(Structure()) # no any chunks
+        hdr.add_type(Structure("a"))
+        hdr.add_type(Structure("b", Type["int"]("f")))
+        hdr.add_type(
+            Structure("c",
+                Structure(None,
+                    Type["int"]("f2"),
+                    Structure()("f3")
+                )("f1")
+            )
+        )
+
+        hdr_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+typedef struct a {{}} a;
+
+typedef struct b {{
+    int f;
+}} b;
+
+typedef struct c {{
+    struct {{
+        int f2;
+        struct {{}} f3;
+    }} f1;
+}} c;
+
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = hdr.path, fname_upper = name.upper())
+
+        self.files = [
+            (hdr, hdr_content)
+        ]
+
+
 if __name__ == "__main__":
     main()
