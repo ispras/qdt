@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from common import (
+    FailedCallee,
     QRepo,
     makedirs,
     bidict,
@@ -28,6 +29,7 @@ from widgets import (
     askyesno,
     HotKey,
     ErrorDialog,
+    TaskErrorDialog,
     askdirectory,
     add_scrollbars_native,
     VarTreeview,
@@ -246,10 +248,10 @@ class QMGUI(GUITk):
                     callback = self._on_worktree,
                     **options
                 )
-            except:
-                ErrorDialog(
+            except FailedCallee as e:
+                TaskErrorDialog(e.callee,
                     summary = _("Check work tree creation options"),
-                    message = format_exc()
+                    title = _("Worktree creation failure"),
                 ).wait()
                 # allow user to correct settings
                 dlg = WorkTreeCreationDialog(self, qrepo, directory, **options)
