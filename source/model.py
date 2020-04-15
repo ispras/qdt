@@ -848,10 +848,12 @@ class Header(Source):
         return Header.reg[tpath]
 
     def __str__(self):
+        # Always use UNIX path separator
+        path = "/".join(path2tuple(self.path))
         if self.is_global:
-            return "<%s>" % self.path
+            return "<%s>" % path
         else:
-            return '"%s"' % self.path
+            return '"%s"' % path
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
