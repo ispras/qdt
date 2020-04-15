@@ -108,7 +108,10 @@ def define_only_qemu_2_6_0_types():
     else:
         tcg_header.add_global_variable(Type["TCGv_env"]("cpu_env"))
 
-    tcg_header.add_global_variable(Type["TCGContext"]("tcg_ctx"))
+    t = Type["TCGContext"]
+    if get_vp("tcg_ctx is pointer"):
+        t = Pointer(t)
+    tcg_header.add_global_variable(t("tcg_ctx"))
 
     Header["tcg-op.h"].add_types([
         Function(name = "tcg_gen_insn_start"),
@@ -135,9 +138,15 @@ def define_only_qemu_2_6_0_types():
     tcg_target_header = Header["tcg-target.h"].add_reference(osdep_fake_type)
     tcg_target_header.add_type(Macro("TCG_AREG0"))
 
-    Header["exec/cpu-defs.h"].add_types([
+    cpu_defs_header = Header["exec/cpu-defs.h"].add_reference(osdep_fake_type)
+    cpu_defs_header.add_inclusion(tcg_target_header)
+    cpu_defs_header.add_types([
         Type("target_ulong", False)
     ])
+    if get_vp("CPUNegativeOffsetState exists"):
+        cpu_defs_header.add_type(
+            Structure("CPUNegativeOffsetState")
+        )
 
     Header["exec/cpu_ldst.h"].add_types([
         Function(name = "cpu_ldub_code", ret_type = Type["uint8_t"]),
@@ -248,7 +257,7 @@ def define_only_qemu_2_6_0_types():
         Function(name = "vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
 
-    Header["qom/cpu.h"].add_types([
+    Header[get_vp("cpu header")].add_types([
         Type("vaddr", False),
         Type("MMUAccessType", False),
         Structure("CPUBreakpoint",
@@ -287,8 +296,16 @@ def define_only_qemu_2_6_0_types():
             Function(
                 args = [
                     Pointer(Type["CPUState"])("cs"),
-                    Pointer(Type["FILE"])("f"),
-                    Type["fprintf_function"]("cpu_fprintf"),
+                    Pointer(Type["FILE"])("f")
+                ] +
+                (
+                    [ Type["fprintf_function"]("cpu_fprintf") ] if get_vp(
+                        "dump_state has cpu_fprintf argument"
+                    )
+                    else
+                    []
+                ) +
+                [
                     Type["int"]("flags")
                 ]
             )("dump_state"),
@@ -343,6 +360,22 @@ def define_only_qemu_2_6_0_types():
     if get_vp("Generic call to tcg_initialize"):
         Type["CPUClass"].append_field(Function()("tcg_initialize"))
 
+    if get_vp("CPUClass has tlb_fill field"):
+        Type["CPUClass"].append_field(
+            Function(
+                ret_type = Type["bool"],
+                args = [
+                    Pointer(Type["CPUState"])("cs"),
+                    Type["vaddr"]("address"),
+                    Type["int"]("size"),
+                    Type["MMUAccessType"]("access_type"),
+                    Type["int"]("mmu_idx"),
+                    Type["bool"]("probe"),
+                    Type["uintptr_t"]("retaddr")
+                ]
+            )("tlb_fill")
+        )
+
     Header["qapi/error.h"].add_types([
         Structure("Error"),
         Function(name = "error_propagate")
@@ -358,24 +391,14 @@ def define_only_qemu_2_6_0_types():
         Structure("I2CBus") # the structure is defined in .c file
     ]).add_reference(osdep_fake_type)
 
-    Header["exec/exec-all.h"].add_types([
+    exec_all_header = Header["exec/exec-all.h"].add_reference(osdep_fake_type)
+    exec_all_header.add_types([
         Structure("TranslationBlock",
             # These are required fields only
             Type["target_ulong"]("pc"),
             Type["uint16_t"]("size"),
             Type["uint16_t"]("icount"),
             Type["uint32_t"]("cflags")
-        ),
-        Function(
-            name = "tlb_fill",
-            args = [
-                Pointer(Type["CPUState"])("cs"),
-                Type["target_ulong"]("addr"),
-                Type["MMUAccessType"]("access_type"),
-                Type["int"]("mmu_idx"),
-                Type["uintptr_t"]("retaddr")
-            ],
-            used_types = []
         ),
         Function(
             name = "cpu_exec_init",
@@ -390,7 +413,33 @@ def define_only_qemu_2_6_0_types():
         Function(name = "cpu_loop_exit_restore"),
         Function(name = "tlb_set_page"),
         Function(name = "tlb_flush"),
-    ]).add_reference(osdep_fake_type)
+    ])
+    if get_vp("tb_cflags exists"):
+        exec_all_header.add_type(
+            Function(name = "tb_cflags")
+        )
+    if get_vp("tlb_fill exists"):
+        exec_all_header.add_type(
+            Function(
+                name = "tlb_fill",
+                args = [
+                    Pointer(Type["CPUState"])("cs"),
+                    Type["target_ulong"]("addr")
+                ] +
+                (
+                    [ Type["int"]("size") ] if get_vp(
+                        "tlb_fill has SIZE argument"
+                    ) else
+                    []
+                ) +
+                [
+                    Type["MMUAccessType"]("access_type"),
+                    Type["int"]("mmu_idx"),
+                    Type["uintptr_t"]("retaddr")
+                ],
+                used_types = []
+            )
+        )
 
     Header["exec/gen-icount.h"].add_types([
         Function(name = "gen_tb_start"),
@@ -527,7 +576,8 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qemu_irq_split")
     ]).add_reference(osdep_fake_type)
 
-    Header["hw/qdev-core.h"].add_types([
+    qdev_core_header = Header["hw/qdev-core.h"].add_reference(osdep_fake_type)
+    qdev_core_header.add_types([
         Type("DeviceState", False),
         Pointer(
             Function(
@@ -560,7 +610,11 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_get_gpio_in_named"),
         Function(name = "qdev_connect_gpio_out"),
         Function(name = "qdev_connect_gpio_out_named")
-    ]).add_reference(osdep_fake_type)
+    ])
+    if get_vp("device_class_set_parent_realize exists"):
+        qdev_core_header.add_type(
+            Function(name = "device_class_set_parent_realize")
+        )
 
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
@@ -755,6 +809,25 @@ def define_only_qemu_2_6_0_types():
         ),
         Function(name = "qemu_register_reset")
     ])
+
+    if get_vp("qemu_fprintf exists"):
+        Header["qemu/qemu-print.h"].add_types([
+            Function(name = "qemu_fprintf")
+        ]).add_reference(osdep_fake_type)
+
+    cpu_all_header = Header["exec/cpu-all.h"].add_reference(osdep_fake_type)
+    if get_vp("env_cpu exists"):
+        cpu_all_header.add_type(
+            Function(name = "env_cpu")
+        )
+    if get_vp("env_archcpu exists"):
+        cpu_all_header.add_type(
+            Function(name = "env_archcpu")
+        )
+    if get_vp("cpu_set_cpustate_pointers exists"):
+        cpu_all_header.add_type(
+            Function(name = "cpu_set_cpustate_pointers")
+        )
 
 def define_qemu_2_6_5_types():
     add_base_types()
@@ -1086,7 +1159,264 @@ qemu_heuristic_db = {
             old_value = True,
             new_value = False
         )
-    ]
+    ],
+    u'9c489ea6bed134fecfd556b439c68bba48fbe102':
+    [
+        # first argument of the `gen_intermediate_code` function was became a
+        # generic `CPUState` instead of target specific `CPUArchState`
+        QEMUVersionParameterDescription(
+            "gen_intermediate_code arg1 is generic",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'0dacec874fa3b3fd34b0d0670fa257efdcbbebd0':
+    [
+        # `CPU_RESOLVING_TYPE` macro was added
+        QEMUVersionParameterDescription("CPU_RESOLVING_TYPE exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'3f71e724e283233753f1b5b3d6a30948d3084636':
+    [
+        # `cpu_init(cpu_model)` was replaced by `cpu_create(cpu_type)`, so
+        # `cpu_init` macro was removed
+        QEMUVersionParameterDescription("cpu_init exists",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'98670d47cd8d63a529ff230fd39ddaa186156f8c':
+    [
+        # `size` parameter was added to `tlb_fill` function arguments
+        QEMUVersionParameterDescription("tlb_fill has SIZE argument",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'1d48474d8e9eff9d08ad43477043d95789b96a40':
+    [
+        # `flags` parameter was removed from `log_target_disas` function
+        # arguments
+        QEMUVersionParameterDescription("log_target_disas has FLAGS argument",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'55c3ceef61fcf06fc98ddc752b7cce788ce7680b':
+    [
+        # target cpu tcg initialization was moved to a common code
+        QEMUVersionParameterDescription("Generic call to tcg_initialize",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'1f5c00cfdb8114c1e3a13426588ceb64f82c9ddb':
+    [
+        # `tlb_flush` call was moved to a common code
+        QEMUVersionParameterDescription("move tlb_flush to cpu_common_reset",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'32f0f68bb77289b75a82925f712bb52e16eac3ba':
+    [
+        # `cpu_arch_init` call was replaced by `cpu_generic_init` call, so
+        # `cpu_arch_init` function was removed
+        QEMUVersionParameterDescription("cpu_arch_init exists",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'19aaa4c3fd15eeb82f10c35ffc7d53e103d10787':
+    [
+        # `qemu_fprintf` function was added
+        QEMUVersionParameterDescription("qemu_fprintf exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'90c84c56006747537e9e4240271523c4c3b7a481':
+    [
+        # `cpu_fprintf` parameter was removed from `dump_state` function
+        # arguments
+        QEMUVersionParameterDescription("dump_state has cpu_fprintf argument",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'74433bf083b0766aba81534f92de13194f23ff3e':
+    [
+        # few target-specific macros was moved to a new `cpu-param.h` header
+        QEMUVersionParameterDescription("cpu-param header exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'52bf9771fdfce98e98cea36a17a18915be6f6b7f':
+    [
+        # the commit touched the `configure` file and deleted one new line from
+        # it
+        QEMUVersionParameterDescription("target_bigendian list offset",
+            old_value = 3,
+            new_value = 2
+        )
+    ],
+    u'4f7c64b3819d559417615ed2b1d028ebc1a49580':
+    [
+        # `CPUArchState` macro was replaced by `CPUArchState` definition 
+        QEMUVersionParameterDescription("typedef CPUArchState",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'2161a612b4e1d388046320bc464adefd6bba01a0':
+    [
+        # `ArchCPU` definition was added
+        QEMUVersionParameterDescription("typedef ArchCPU",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'29a0af618ddd21f55df5753c3e16b0625f534b3c':
+    [
+        # `ENV_GET_CPU` macro usage was replaced by `env_cpu` call, so
+        # `ENV_GET_CPU` macro was removed
+        QEMUVersionParameterDescription("env_cpu exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'083dc73d7a3cf2a75b5625fd8f0669b57a855d16':
+    [
+        # target-specific `env_get_cpu` function was replaced with a generic
+        # `env_archcpu` function
+        QEMUVersionParameterDescription("env_archcpu exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'677c4d69ac21961e76a386f9bfc892a44923acc0':
+    [
+        # `ENV_OFFSET` macro was moved to a common code
+        QEMUVersionParameterDescription("ENV_OFFSET is generic",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'5b146dc716cfd247f99556c04e6e46fbd67565a0':
+    [
+        # `CPUNegativeOffsetState` structure was added and used as a type of
+        # the `neg` field in the `ArchCPU`
+        QEMUVersionParameterDescription("CPUNegativeOffsetState exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'e8b5fae5161c48e0d0e8b35eaf9dd8f35d692088':
+    [
+        # `CPU_COMMON` macro was removed
+        QEMUVersionParameterDescription("CPU_COMMON exists",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'2e5b09fd0e766434962327db4678ce1cda0c7241':
+    [
+        # `cpu.h` header was moved from `qom/` to `hw/core/` folder
+        QEMUVersionParameterDescription("cpu header",
+            old_value = "qom/cpu.h",
+            new_value = "hw/core/cpu.h"
+        )
+    ],
+    u'8301ea444abb49f7b7fb939b09c1e23b22977f30':
+    [
+        # `cpu_model` null check was moved to a generic `cpu_class_by_name`
+        # function
+        QEMUVersionParameterDescription("cpu_model null check",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'46795cf2e2f643ace9454822022ba8b1e9c0cf61':
+    [
+        # `device_class_set_parent_realize` function was added
+        QEMUVersionParameterDescription(
+            "device_class_set_parent_realize exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'7506ed902eb97fe4e2a1dd16766c621d32ecc40d':
+    [
+        # `cpu_set_cpustate_pointers` function was added
+        QEMUVersionParameterDescription("cpu_set_cpustate_pointers exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'c5a49c63fa26e8825ad101dfe86339ae4c216539':
+    [
+        # `tb_cflags` function was added few commits earlier but this commit
+        # start use it
+        QEMUVersionParameterDescription("tb_cflags exists",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'b1311c4acf503dc9c1a310cc40b64f05b08833dc':
+    [
+        # `tcg_ctx` was defined as a pointer to `TCGContext`
+        QEMUVersionParameterDescription("tcg_ctx is pointer",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'07ea28b41830f946de3841b0ac61a3413679feb9':
+    [
+        QEMUVersionParameterDescription(
+            "pass tb and index to tcg_gen_exit_tb separately",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'8b86d6d25807e13a63ab6ea879f976b9f18cc45a':
+    [
+        # `max_insns` parameter was added to `gen_intermediate_code` function,
+        # so there is no need to calculate it inside this function
+        QEMUVersionParameterDescription(
+            "gen_intermediate_code has max_insns argument",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'da6bbf8513e621a8fc2fd315d77318f36547474d':
+    [
+        # `tlb_fill` callback was added to `CPUClass` structure
+        QEMUVersionParameterDescription("CPUClass has tlb_fill field",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u'c319dc13579a92937bffe02ad2c9f1a550e73973':
+    [
+        # `CPUClass.tlb_fill` callback was used instead of `tlb_fill` function,
+        # so this function was removed from a target code
+        QEMUVersionParameterDescription("tlb_fill exists",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u'067b913619ac36299be5ab23921fd19a0347df60':
+    [
+        # `CONFIG_ARCH_DIS` macro was poisoned to prevent usage in a common
+        # code
+        QEMUVersionParameterDescription("config_arch_dis poisoned",
+            old_value = False,
+            new_value = True
+        )
+    ],
 }
 
 version_parameters = None
@@ -1111,4 +1441,3 @@ def get_vp(heuristic_name = None):
         return version_parameters
     else:
         return version_parameters[heuristic_name]
-
