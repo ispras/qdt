@@ -271,70 +271,68 @@ class QEMULog(object):
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
 
-            if instr is None:
-                continue
+            if instr is not None:
+                instr = instr[0]
 
-            instr = instr[0]
+                instr = TraceInstr(instr, t)
 
-            instr = TraceInstr(instr, t)
+                tb = instr.tb
 
-            tb = instr.tb
+                # chain loop detection
+                visitedTb = set([tb])
 
-            # chain loop detection
-            visitedTb = set([tb])
-
-            while True:
-                if DEBUG < 2:
-                    print("0x%08X: %s" % (instr.addr, instr.disas))
-
-                # Here we get next trace record from previous pipeline stage.
-                # But we will handle it lately.
-                traces_cache.append((yield instr))
-
-                addr += instr.size
-
-                nextInstr = self.lookInstr(addr, t.cacheVersion)
-
-                nextTB = False
-
-                if nextInstr is None:
-                    nextTB = True
-                else:
-                    nextInstr = nextInstr[0]
-                    if nextInstr.tb != tb:
-                        nextTB = True
-
-                if nextTB:
-                    nextTbIdx = self.lookLink(tb, t.cacheVersion)
-                    if nextTbIdx is None:
-                        # chain is over
-                        break
-
-                    nextTbIdx = nextTbIdx[0]
-
-                    if nextTbIdx in visitedTb:
-                        if DEBUG < 2:
-                            print("link loop %u -> ... -> %u" % (
-                                nextTbIdx, tb
-                            ))
-                        break
-                    else:
-                        visitedTb.add(nextTbIdx)
-
+                while True:
                     if DEBUG < 2:
-                        print("link %u -> %u" % (tb, nextTbIdx))
+                        print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                    tb = nextTbIdx
+                    # Here we get next trace record from previous pipeline stage.
+                    # But we will handle it lately.
+                    traces_cache.append((yield instr))
 
-                    addr = self.tbIdMap[tb][0]
+                    addr += instr.size
+
                     nextInstr = self.lookInstr(addr, t.cacheVersion)
 
+                    nextTB = False
+
                     if nextInstr is None:
-                        break
+                        nextTB = True
+                    else:
+                        nextInstr = nextInstr[0]
+                        if nextInstr.tb != tb:
+                            nextTB = True
 
-                    nextInstr = nextInstr[0]
+                    if nextTB:
+                        nextTbIdx = self.lookLink(tb, t.cacheVersion)
+                        if nextTbIdx is None:
+                            # chain is over
+                            break
 
-                instr = nextInstr
+                        nextTbIdx = nextTbIdx[0]
+
+                        if nextTbIdx in visitedTb:
+                            if DEBUG < 2:
+                                print("link loop %u -> ... -> %u" % (
+                                    nextTbIdx, tb
+                                ))
+                            break
+                        else:
+                            visitedTb.add(nextTbIdx)
+
+                        if DEBUG < 2:
+                            print("link %u -> %u" % (tb, nextTbIdx))
+
+                        tb = nextTbIdx
+
+                        addr = self.tbIdMap[tb][0]
+                        nextInstr = self.lookInstr(addr, t.cacheVersion)
+
+                        if nextInstr is None:
+                            break
+
+                        nextInstr = nextInstr[0]
+
+                    instr = nextInstr
 
     def cache_overwritten(self):
         cur = self.current_cache
