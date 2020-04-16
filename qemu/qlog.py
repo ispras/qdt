@@ -207,6 +207,7 @@ class EOL:
     "End Of Log"
     pass
 
+EMPTY = tuple()
 
 class QEMULog(object):
 
@@ -232,8 +233,9 @@ class QEMULog(object):
         self.pipeline = pipeline(*stages)
 
     def iter_instructions(self):
-        for i in self.pipeline:
-            yield i
+        for chunk in self.pipeline:
+            for i in chunk:
+                yield i
 
     def lookInstr(self, addr, fromCache = None):
         if fromCache is None:
@@ -252,18 +254,12 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
     def trace_stage(self):
-        traces_cache = deque()
+        ready_instrs = []
 
+        t = yield
         while True:
-            while traces_cache:
-                t = traces_cache.popleft()
-                if not t.bad:
-                    break
-            else:
-                while True:
-                    t = yield
-                    if not t.bad:
-                        break
+            while t.bad:
+                t = (yield EMPTY)
 
             if DEBUG < 2:
                 print(t)
@@ -285,9 +281,7 @@ class QEMULog(object):
                     if DEBUG < 2:
                         print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                    # Here we get next trace record from previous pipeline stage.
-                    # But we will handle it lately.
-                    traces_cache.append((yield instr))
+                    ready_instrs.append(instr)
 
                     addr += instr.size
 
@@ -333,6 +327,12 @@ class QEMULog(object):
                         nextInstr = nextInstr[0]
 
                     instr = nextInstr
+
+            if ready_instrs:
+                t = (yield ready_instrs)
+                ready_instrs = []
+            else:
+                t = (yield EMPTY)
 
     def cache_overwritten(self):
         cur = self.current_cache
