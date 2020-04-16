@@ -31,7 +31,11 @@ class CrossDialog(object):
         except:
             hk = None
         else:
-            hk.disable_hotkeys()
+            if hk.enabled:
+                hk.disable_hotkeys()
+            else:
+                # Do not enable hotkeys after ask if they are disabled now.
+                hk = None
 
         try:
             return self.__ask__()

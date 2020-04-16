@@ -1,5 +1,7 @@
 __all__ = [
-    "HKEntry"
+    "HKGeneric"
+      , "HKEntry"
+      , "HKCombobox"
   , "HotKeyBinding"
   , "HotKey"
   , "KeyboardSettings"
@@ -11,8 +13,13 @@ from common import (
     mlget as _
 )
 from six.moves.tkinter import (
+    SEL_FIRST,
+    SEL_LAST,
     END,
     Entry
+)
+from six.moves.tkinter_ttk import (
+    Combobox
 )
 from os.path import (
     dirname,
@@ -23,13 +30,9 @@ from os import (
 )
 
 
-class HKEntry(Entry):
-    def __init__(self, *args, **kw):
-        Entry.__init__(self, *args, **kw)
+class HKGeneric:
 
-        self.bind("<Control-Key>", self.ignore)
-
-    def ignore(self, event):
+    def _on_ctrl_key_generic(self, event):
         if event.keycode == 29: # prevent paste on Ctrl + Y
             self.event_generate("<<Control-Y-Breaked>>")
             return "break"
@@ -43,7 +46,37 @@ class HKEntry(Entry):
                 # to replacement of a selected text with the text being
                 # inserted, because the insertion cursor cannot be outside a
                 # selected text.
-                self.delete("sel.first", "sel.last")
+                self.delete(SEL_FIRST, SEL_LAST)
+                # Never stop event handling by `return "break"` because
+                # original handler pasts the value from clipboard.
+
+
+class HKEntry(Entry, HKGeneric):
+
+    def __init__(self, *args, **kw):
+        Entry.__init__(self, *args, **kw)
+
+        self.bind("<Control-Key>", self._on_ctrl_key_generic)
+
+
+class HKCombobox(Combobox, HKGeneric):
+
+    def __init__(self, *a, **kw):
+        Combobox.__init__(self, *a, **kw)
+
+        self.bind("<Control-Key>", self._on_ctrl_key_generic, "+")
+        self.bind("<Control-Key>", self._on_ctrl_key, "+")
+
+    def _on_ctrl_key(self, e):
+        if e.keycode == 54: # Ctrl-C: copy selected
+            if self.select_present():
+                f, l = self.index(SEL_FIRST), self.index(SEL_LAST)
+                text = self.get()[f:l]
+
+                self.clipboard_clear()
+                self.clipboard_append(text)
+            return "break"
+
 
 class HotKeyBinding(object):
 
@@ -70,6 +103,9 @@ class HotKey(object):
 
         with KeyboardSettings() as kbd:
             self.code_translation = kbd.gen_translation_to_posix()
+
+    def __call__(self, *a, **kw):
+        self.add_binding(HotKeyBinding(*a, **kw))
 
     def add_key_symbols(self, keys2sym):
         for key, sym in keys2sym.items():
@@ -157,6 +193,14 @@ class HotKey(object):
             self.cb2names[cb].set(name)
         else:
             self.cb2names[cb] = _(name)
+
+    @property
+    def enabled(self):
+        return not self.disabled
+
+    @enabled.setter
+    def enabled(self, b):
+        self.enable_hotkeys() if b else self.disable_hotkeys()
 
     def disable_hotkeys(self):
         self.disabled = True

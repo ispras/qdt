@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from common import (
+    def_tokens,
     ee,
     pypath
 )
@@ -62,7 +63,7 @@ def t_FORBIDDEN(t):
     t.value = qtnchar('_', '_', '', '_')
     return t
 
-tokens = tuple(k[2:] for k in globals() if k[:2] == "t_")
+def_tokens(globals())
 
 def t_error(t):
     raise NotImplementedError(

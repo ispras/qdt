@@ -20,7 +20,9 @@ from .pack_info_compat import (
     pack_info
 )
 
+
 class Statusbar(GUIFrame):
+
     def __init__(self, *args, **kw):
         GUIFrame.__init__(self, *args, **kw)
 
@@ -28,7 +30,7 @@ class Statusbar(GUIFrame):
         self.padding = Label(self)
         self.padding.pack(fill = FILL_X, expand = 1, side = SIDE_RIGHT)
 
-    def __gen_label__(self, string_var, **lb_args):
+    def _gen_label(self, string_var, **lb_args):
         return VarLabel(self,
             bd = 1,
             relief = RELIEF_SUNKEN,
@@ -37,15 +39,16 @@ class Statusbar(GUIFrame):
             **lb_args
         )
 
-    """ Original 'pack' method adds widgets from the 'side' of the frame to
-its center. E.g. a new widget packed with flag 'RIGHT' is appended at the left
+    def repack(self, widget, side):
+        """ Original 'pack' method adds widgets from the `side` of the frame to
+its center. E.g. a new widget packed with flag `RIGHT` is appended at the left
 of any other widget added to the RIGHT side before it. I.e. to add a new widget
 at the right (left) of any other, all packed widgets must be repacked and
 the new widget must be added before them.
 
     This method also takes into account padding label.
-    """
-    def __repack(self, widget, side):
+        """
+
         slaves = list(self.pack_slaves())
 
         sides = [side]
@@ -62,7 +65,11 @@ the new widget must be added before them.
         self.padding.pack(fill = FILL_X, expand = 1, side = SIDE_RIGHT)
 
     def right(self, string_var, **lb_args):
-        self.__repack(self.__gen_label__(string_var, **lb_args), SIDE_RIGHT)
+        lb = self._gen_label(string_var, **lb_args)
+        self.repack(lb, SIDE_RIGHT)
+        return lb
 
     def left(self, string_var, **lb_args):
-        self.__repack(self.__gen_label__(string_var, **lb_args), SIDE_LEFT)
+        lb = self._gen_label(string_var, **lb_args)
+        self.repack(lb, SIDE_LEFT)
+        return lb

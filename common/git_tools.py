@@ -97,6 +97,7 @@ def git_diff2delta_intervals(diff):
 
 
 class CommitDesc(object):
+
     def __init__(self, sha, parents, children):
         self.sha = sha
         self.parents = parents

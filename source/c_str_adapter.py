@@ -4,7 +4,7 @@ __all__ = [
 
 from common import (
     pypath,
-    gen_tokens
+    def_tokens
 )
 with pypath("..ply"):
     from ply.lex import lex
@@ -51,8 +51,7 @@ def t_CHARACTER(t):
 def t_error(t):
     raise AssertionError("All characters are valid for this lexer!")
 
-# Define tokens
-tokens = tuple(gen_tokens(globals()))
+def_tokens(globals())
 
 # Build lexer
 lexer = lex()
