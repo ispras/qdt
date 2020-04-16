@@ -11,6 +11,11 @@ It's output is `yield` argument. If next output requires extra input
 it can just `yield` (`None`). Output of last stage is pipeline output.
     First stage is never `send`-ed input: any standard iterator can
 be used. Rest stages are never `send`-ed `None`.
+    When a stage `return`s, the whole pipeline is stopped.
+    Tip: a stage must `yield` all ready data because the `yield` statement
+potentially can never return control (pipeline stop).
+    Tip: a stage can use collections to `yield` data when it produces more
+items than consumes.
     """
 
     if not stages:

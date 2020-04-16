@@ -149,7 +149,7 @@ class QLVWindow(GUITk):
         # This is list of those lists.
         self.all_instructions = all_instructions = list(list() for _ in qlogs)
 
-        trace_iters = list(qlog.pipeline for qlog in qlogs)
+        trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
         idx = 0
 
         while True:
