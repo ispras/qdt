@@ -231,6 +231,10 @@ class QEMULog(object):
 
         self.pipeline = pipeline(*stages)
 
+    def iter_instructions(self):
+        for i in self.pipeline:
+            yield i
+
     def lookInstr(self, addr, fromCache = None):
         if fromCache is None:
             return self.current_cache.lookInstrDown(addr)
