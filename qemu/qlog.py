@@ -7,9 +7,6 @@ __all__ = [
 ]
 
 
-from collections import (
-    deque
-)
 from itertools import (
     count
 )
