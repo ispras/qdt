@@ -53,7 +53,15 @@ STYLE_DEFAULT = tuple()
 STYLE_DIFFERENCE = ("difference",)
 STYLE_FIRST = ("first",)
 
-class InstructionsTreeview(VarTreeview):
+# Instructions tree view shows only few instructions in Tk Treeview.
+# Showed instruction interval is called "window".
+# The window is automaticlay shifted on scroll.
+TV_WINDOW_SIZE = 1 << 12
+TV_WINDOW_MASK = TV_WINDOW_SIZE - 1
+TV_WINDOW_HALF = TV_WINDOW_SIZE >> 1
+TV_WINDOW_SIZE_F = float(TV_WINDOW_SIZE)
+
+class InstructionsTreeview(VarTreeview, object):
 
     def __init__(self, master, **kw):
         kw["columns"] = [
@@ -62,7 +70,14 @@ class InstructionsTreeview(VarTreeview):
             "disas"
         ]
 
-        VarTreeview.__init__(self, master, **kw)
+        # The widget adjusts view window after each scroll.
+        # Outer scroll handler, if specified, called by the widget.
+        self._outer_yscrollcommand = kw.pop("yscrollcommand", None)
+
+        VarTreeview.__init__(self, master,
+            yscrollcommand = self._yscrollcommand,
+            **kw
+        )
 
         self.heading("addr", text = _("Address"))
         self.heading("size", text = _("Size"))
@@ -74,6 +89,204 @@ class InstructionsTreeview(VarTreeview):
 
         self.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
         self.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
+
+        self._all_instructions = []
+
+        self._window_start = 0
+
+        self.bind("<Destroy>", self._on_destroy, "+")
+
+        # debug
+        self.bind("<Key-F5>", self._on_key_f5, "+")
+
+    def config(self, *a, **kw):
+        self._outer_yscrollcommand = kw.pop(
+            "yscrollcommand", self._outer_yscrollcommand
+        )
+        if a or kw:
+            VarTreeview.config(*a, **kw)
+
+    def _yscrollcommand(self, *__):
+        self.do_yscrollcommand()
+
+    def update_window_shift(self, delay = 100):
+        try:
+            self.__update_window_shift
+        except AttributeError:
+            self.__update_window_shift = self.after(delay,
+                self._update_window_shift
+            )
+        # else: # already scheduled
+
+    def do_yscrollcommand(self, delay = 10):
+        try:
+            self.__do_yscrollcommand
+        except AttributeError:
+            self.__do_yscrollcommand = self.after(delay,
+                self._do_yscrollcommand
+            )
+        # else: # already scheduled
+
+    def _on_destroy(self, _):
+        try:
+            self.after_cancel(self.__update_window_shift)
+        except AttributeError:
+            pass # it's ok, no update has been scheduled
+        else:
+            del self.__update_window_shift
+
+        try:
+            self.after_cancel(self.__do_yscrollcommand)
+        except AttributeError:
+            pass # it's ok, no yscrollcommand has been scheduled
+        else:
+            del self.__do_yscrollcommand
+
+    def yview(self, action, *values):
+        if action == "moveto":
+            f_total_insts = float(self.total_instructions)
+
+            if TV_WINDOW_SIZE_F < f_total_insts:
+                f_value = float(values[0])
+                factor = TV_WINDOW_SIZE_F / f_total_insts
+                cur_small_scroll = float(VarTreeview.yview(self)[0])
+                cur_big_scroll = float(self._window_start) / f_total_insts
+                cur_scroll = cur_big_scroll + cur_small_scroll * factor
+                f_shift = f_value - cur_scroll
+                shift = int(f_shift * f_total_insts)
+
+                # XXX: does not scroll to first/last instriction
+
+                self._yscrollcommand_waiting = True
+                self._shift_window(shift)
+            else:
+                VarTreeview.yview(self, "moveto", *values)
+        else:
+            print(action, *values)
+
+    def _on_key_f5(self, _):
+        self.update_window_shift(delay = 1)
+
+    @property
+    def total_instructions(self):
+        return len(self._all_instructions)
+
+    def append_instructions(self, insts):
+        self._all_instructions.extend(insts)
+        self._update_window()
+
+    def _update_window(self):
+        self.do_yscrollcommand(delay = 100)
+
+        # cache some values
+        current_items = self.get_children()
+
+        # Fill window
+        instrs_in_window = len(current_items)
+        if instrs_in_window >= TV_WINDOW_SIZE:
+            return
+
+        # cache some values
+        cur_start = self._window_start
+        all_insts = self._all_instructions
+        _insert = self._insert_instruction_row
+
+        new_inst_idx = cur_start + instrs_in_window
+        new_inst_limit = cur_start + TV_WINDOW_SIZE
+        new_insts = all_insts[new_inst_idx:new_inst_limit]
+
+        for idx, inst in enumerate(new_insts, new_inst_idx):
+            _insert(idx, inst)
+
+    def _update_window_shift(self):
+        # remove self `after` callback identifier
+        del self.__update_window_shift
+
+        # Is the window to be shifted?
+        scroll_start = VarTreeview.yview(self)[0]
+
+        scroll_offset = int(TV_WINDOW_SIZE * scroll_start)
+        shift = scroll_offset - TV_WINDOW_HALF
+        if shift == 0:
+            return
+
+        self._shift_window(shift)
+
+    def _shift_window(self, shift):
+        # cache some values
+        cur_start = self._window_start
+        all_insts = self._all_instructions
+
+        # start must be within interval [0, {{inst. count} - TV_WINDOW_SIZE}]
+        new_start = max(0,
+            min(len(all_insts) - TV_WINDOW_SIZE, cur_start + shift)
+        )
+        if new_start == cur_start:
+            return
+
+        actual_shift = new_start - cur_start
+
+        print("Shifthing window to %d (%d)" % (new_start , actual_shift))
+
+        self._window_start = new_start
+
+        current_items = self.get_children()
+
+        _insert = self._insert_instruction_row
+
+        if actual_shift > 0:
+            self.delete(*current_items[:actual_shift])
+
+            new_inst_limit = new_start + TV_WINDOW_SIZE
+            # actual_shift can be gigger than windows size (absolute value)
+            new_inst_idx = new_inst_limit - min(TV_WINDOW_SIZE, actual_shift)
+            new_insts = all_insts[new_inst_idx:new_inst_limit]
+
+            for idx, inst in enumerate(new_insts, new_inst_idx):
+                _insert(idx, inst)
+        else: # actual_shift < 0
+            self.delete(*current_items[actual_shift:])
+
+            new_inst_idx = new_start
+            new_inst_limit = new_inst_idx + min(TV_WINDOW_SIZE, -actual_shift)
+            new_insts = all_insts[new_inst_idx:new_inst_limit]
+
+            for insert_index, (idx, inst) in enumerate(
+                enumerate(new_insts, new_inst_idx)
+            ):
+                _insert(idx, inst, insert_index = insert_index)
+
+        VarTreeview.yview(self, TV_WINDOW_HALF)
+
+        self.do_yscrollcommand()
+
+    def _do_yscrollcommand(self):
+        del self.__do_yscrollcommand
+
+        scroll_start, scroll_end = VarTreeview.yview(self)
+
+        outer = self._outer_yscrollcommand
+        if outer is not None:
+            f_total_insts = float(self.total_instructions)
+
+            if TV_WINDOW_SIZE_F < f_total_insts:
+                factor = TV_WINDOW_SIZE_F / f_total_insts
+
+                real_scroll_start = float(self._window_start) / f_total_insts
+
+                f_scroll_start =  float(scroll_start)
+                real_scroll_start += f_scroll_start * factor
+
+                f_scroll_size = float(scroll_end) - f_scroll_start
+                real_scroll_size = f_scroll_size * factor
+
+                real_scroll_end = real_scroll_start + real_scroll_size
+
+                scroll_start = str(real_scroll_start)
+                scroll_end = str(real_scroll_end)
+
+            # print(scroll_start, scroll_end)
+            outer(scroll_start, scroll_end)
 
     def _insert_instruction_row(self, idx, inst, insert_index = "end"):
         diff = inst.difference
@@ -105,6 +318,7 @@ STYLE_WARNING = ("warning",)
 
 _has_trace = lambda instruction: instruction.trace is not None
 
+SUBTRACE_SIZE = 100
 
 class QLVWindow(GUITk):
 
@@ -201,36 +415,35 @@ class QLVWindow(GUITk):
         main_log = all_instructions[0]
 
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
-        idx = 0
 
+        subtrace = [None] * SUBTRACE_SIZE
         while True:
-            start_idx = idx
-            end_idx = idx + 100
-
             # Build subtrace for first log and then try to compare it with
             # subtraces of rest logs.
 
             iter_of_iters = iter(trace_iters)
 
-            subtrace = list(
-                izip(xrange(start_idx, end_idx), next(iter_of_iters))
-            )
+            main_trace_iter = next(iter_of_iters)
+            for i in xrange(len(subtrace)):
+                try:
+                    subtrace[i] = next(main_trace_iter)
+                except StopIteration:
+                    subtrace = subtrace[:i]
+                    break
 
             if not subtrace:
                 print("Trace has been built")
                 break
 
             main_log.extend(subtrace)
-            var_inst_n.set(len(main_log))
 
             difference = False
 
             for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
-                i1_idx = start_idx - 1
-
                 log_instrs = all_instructions[log_idx]
 
-                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                i1_idx = -1
+                for i1_idx, (i1, i2) in enumerate(izip(subtrace, qlog_iter_2)):
                     log_instrs.append(i2)
 
                     # Currently, comparison is address based only.
@@ -239,7 +452,7 @@ class QLVWindow(GUITk):
                         i1.difference = i2
                         break
 
-                compared = i1_idx - start_idx + 1
+                compared = i1_idx + 1
                 if compared < len(subtrace):
                     # Log 2 ended earlier.
                     subtrace = subtrace[:compared]
@@ -251,21 +464,20 @@ class QLVWindow(GUITk):
                 print("Trace has been built")
                 break
 
-            for idx, i in subtrace:
-                if DEBUG < 3:
+            tv.append_instructions(subtrace)
+            var_inst_n.set(tv.total_instructions)
+
+            if DEBUG < 3:
+                for i in subtrace:
                     print("0x%08X: %s" % (i.addr, i.disas))
-                iid = tv._insert_instruction_row(idx, i)
 
             if difference:
-                # This iid is always of an the instruction with difference,
-                # because it's last in `subtrace`.
-                tv.see(iid)
                 print("Difference found, stopping")
+                # TODO: tv.see(iid)
                 break
 
-            idx += 1
             # No more instructions in the trace
-            if idx < end_idx:
+            if len(subtrace) < SUBTRACE_SIZE:
                 print("Trace has been built")
                 break
 
