@@ -71,7 +71,9 @@ class InInstr(object):
 
 
 class TraceInstr(object):
-    "Instruction with runtime (trace) information."
+    """ It's a trace step, an execution of an in_asm instruction in TB
+(InInstr). It can have runtime (trace) information.
+    """
 
     # This also prevents erroneous attempts to use objects of this class as
     # objects of InInstr (i.e. foreign attribute setting).
@@ -346,7 +348,7 @@ class QEMULog(object):
 
                         nextInstr = nextInstr[0]
 
-                    instr = nextInstr
+                    instr = TraceInstr(nextInstr, None)
 
             if ready_instrs:
                 t = (yield ready_instrs)
