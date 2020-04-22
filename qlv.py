@@ -36,7 +36,6 @@ from six.moves import (
     range as xrange,
 )
 from qemu import (
-    TraceInstr,
     QEMULog
 )
 from time import (
@@ -283,22 +282,24 @@ class QLVWindow(GUITk):
                 STYLE_FILE
             )
 
-            if isinstance(i, TraceInstr):
+            trace = i.trace
+
+            if trace is None:
+                trace_text.insert(END, _("No CPU data").get() + "\n",
+                    STYLE_WARNING
+                )
+            else:
                 if qlog_idx == 0:
-                    left_trace = i.trace.as_text
+                    left_trace = trace.as_text
                     trace_text.insert(END, left_trace)
                 else:
-                    cur_trace = i.trace.as_text
+                    cur_trace = trace.as_text
                     if left_trace is None:
                         # Left log has no trace record for this instruction.
                         # Nothing to diff.
                         trace_text.insert(END, cur_trace)
                     else:
                         insert_diff(trace_text, left_trace, cur_trace)
-            else:
-                trace_text.insert(END, _("No CPU data").get() + "\n",
-                    STYLE_WARNING
-                )
 
 def insert_diff(text_wgt, base, new):
     a, b = base.split("\n"), new.split("\n")
