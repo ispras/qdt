@@ -81,7 +81,7 @@ STYLE_FILE = ("file",)
 STYLE_WARNING = ("warning",)
 # STYLE_DIFFERENCE of InstructionsTreeview is also used
 
-_has_trace = lambda instruction: isinstance(instruction, TraceInstr)
+_has_trace = lambda instruction: instruction.trace is not None
 
 
 class QLVWindow(GUITk):
