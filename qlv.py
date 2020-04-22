@@ -39,6 +39,9 @@ from qemu import (
     TraceInstr,
     QEMULog
 )
+from time import (
+    time,
+)
 
 
 # less value = more info
@@ -154,6 +157,8 @@ class QLVWindow(GUITk):
         self.task_manager.enqueue(self.co_trace_builder(qlogs))
 
     def co_trace_builder(self, qlogs):
+        t1 = time()
+
         tv = self.tv_instructions
         var_inst_n = self.var_inst_n
 
@@ -241,6 +246,9 @@ class QLVWindow(GUITk):
                 break
 
             yield True
+
+        t2 = time()
+        print("In %f second(s)" % (t2 - t1))
 
     def _on_instruction_selected(self, __):
         tv = self.tv_instructions
