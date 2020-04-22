@@ -5,6 +5,7 @@ from argparse import (
     ArgumentParser
 )
 from widgets import (
+    Statusbar,
     MenuBuilder,
     add_scrollbars_native,
     AutoPanedWindow,
@@ -16,6 +17,7 @@ from widgets import (
     VarTreeview
 )
 from six.moves.tkinter import (
+    IntVar,
     RAISED,
     VERTICAL,
     HORIZONTAL,
@@ -124,6 +126,14 @@ class QLVWindow(GUITk):
         )
         panes.add(panes_trace_text)
 
+        self.rowconfigure(1, weight = 0)
+        self.sb = sb = Statusbar(self)
+        sb.grid(row = 1, column = 0, sticky = "EWS")
+        self.var_inst_n = var = IntVar(self)
+
+        sb.right(_("Instructions"))
+        sb.right(var)
+
         self.qlog_trace_texts = []
 
     def show_logs(self, qlogs):
@@ -155,6 +165,7 @@ class QLVWindow(GUITk):
 
     def co_trace_builder(self, qlogs):
         tv = self.tv_instructions
+        var_inst_n = self.var_inst_n
 
         self.qlogs = qlogs
 
@@ -183,6 +194,7 @@ class QLVWindow(GUITk):
                 break
 
             all_instructions[0].extend(t[1] for t in subtrace)
+            var_inst_n.set(start_idx + len(subtrace))
 
             difference = None
 
