@@ -93,8 +93,11 @@ class QLVWindow(GUITk):
                     command = self._on_check_ic
                 )
 
+        self.columnconfigure(0, weight = 1)
+
+        self.rowconfigure(0, weight = 1)
         panes = AutoPanedWindow(self, orient = VERTICAL, sashrelief = RAISED)
-        panes.pack(fill = BOTH, expand = True)
+        panes.grid(row = 0, column = 0, sticky = "NESW")
 
         fr_instructions = GUIFrame(panes)
         panes.add(fr_instructions)
