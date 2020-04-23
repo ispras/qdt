@@ -105,6 +105,7 @@ STYLE_WARNING = ("warning",)
 
 _has_trace = lambda instruction: instruction.trace is not None
 
+SUBTRACE_SIZE = 100
 
 class QLVWindow(GUITk):
 
@@ -201,20 +202,22 @@ class QLVWindow(GUITk):
         main_log = all_instructions[0]
 
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
+
         idx = 0
-
+        subtrace = [None] * SUBTRACE_SIZE
         while True:
-            start_idx = idx
-            end_idx = idx + 100
-
             # Build subtrace for first log and then try to compare it with
             # subtraces of rest logs.
 
             iter_of_iters = iter(trace_iters)
 
-            subtrace = list(
-                izip(xrange(start_idx, end_idx), next(iter_of_iters))
-            )
+            main_trace_iter = next(iter_of_iters)
+            for i in xrange(SUBTRACE_SIZE):
+                try:
+                    subtrace[i] = next(main_trace_iter)
+                except StopIteration:
+                    subtrace = subtrace[:i]
+                    break
 
             if not subtrace:
                 print("Trace has been built")
@@ -226,12 +229,12 @@ class QLVWindow(GUITk):
             difference = False
 
             for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
-                i1_idx = start_idx - 1
-
                 log_instrs = all_instructions[log_idx]
 
-                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                compared = 0
+                for i1, i2 in izip(subtrace, qlog_iter_2):
                     log_instrs.append(i2)
+                    compared += 1
 
                     # Currently, comparison is address based only.
                     if i1.addr != i2.addr:
@@ -239,7 +242,6 @@ class QLVWindow(GUITk):
                         i1.difference = i2
                         break
 
-                compared = i1_idx - start_idx + 1
                 if compared < len(subtrace):
                     # Log 2 ended earlier.
                     subtrace = subtrace[:compared]
@@ -251,7 +253,7 @@ class QLVWindow(GUITk):
                 print("Trace has been built")
                 break
 
-            for idx, i in subtrace:
+            for idx, i in enumerate(subtrace, idx):
                 if DEBUG < 3:
                     print("0x%08X: %s" % (i.addr, i.disas))
                 iid = tv._insert_instruction_row(idx, i)
@@ -265,7 +267,7 @@ class QLVWindow(GUITk):
 
             idx += 1
             # No more instructions in the trace
-            if idx < end_idx:
+            if len(subtrace) < SUBTRACE_SIZE:
                 print("Trace has been built")
                 break
 
