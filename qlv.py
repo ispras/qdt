@@ -198,6 +198,7 @@ class QLVWindow(GUITk):
         # Instructions are kept in lists: one per qlog.
         # This is list of those lists.
         self.all_instructions = all_instructions = list(list() for _ in qlogs)
+        main_log = all_instructions[0]
 
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
         idx = 0
@@ -219,8 +220,8 @@ class QLVWindow(GUITk):
                 print("Trace has been built")
                 break
 
-            all_instructions[0].extend(t[1] for t in subtrace)
-            var_inst_n.set(start_idx + len(subtrace))
+            main_log.extend(subtrace)
+            var_inst_n.set(len(main_log))
 
             difference = False
 
