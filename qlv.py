@@ -75,6 +75,28 @@ class InstructionsTreeview(VarTreeview):
         self.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
         self.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
 
+    def _insert_instruction_row(self, idx, inst, insert_index = "end"):
+        diff = inst.difference
+        if diff is None:
+            tags = STYLE_FIRST if inst.first else STYLE_DEFAULT,
+        else:
+            tags = STYLE_DIFFERENCE
+
+        iid = self.insert("", insert_index,
+            text = str(idx),
+            tags = tags,
+            values = ("0x%08X" % inst.addr, "-", str(inst.disas))
+        )
+
+        if diff is not None:
+            self.insert(iid, END,
+                text = str(idx),
+                tags = STYLE_DIFFERENCE,
+                values = ("0x%08X" % diff.addr, "-", str(diff.disas))
+            )
+
+        return iid
+
 
 # Trace text (CPU state) styles.
 STYLE_FILE = ("file",)
