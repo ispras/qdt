@@ -73,11 +73,13 @@ class TraceInstr(object):
     __slots__ = (
         "in_instr",
         "trace",
+        "difference",
     )
 
     def __init__(self, in_instr, trace):
         self.in_instr = in_instr
         self.trace = trace
+        self.difference = None
 
     # Proxify static info.
 
