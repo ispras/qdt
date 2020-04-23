@@ -222,7 +222,7 @@ class QLVWindow(GUITk):
             all_instructions[0].extend(t[1] for t in subtrace)
             var_inst_n.set(start_idx + len(subtrace))
 
-            difference = None
+            difference = False
 
             for log_idx, qlog_iter_2 in enumerate(iter_of_iters, 1):
                 i1_idx = start_idx - 1
@@ -234,8 +234,8 @@ class QLVWindow(GUITk):
 
                     # Currently, comparison is address based only.
                     if i1.addr != i2.addr:
-                        # Indexes are same until first difference.
-                        difference = (i1_idx, i2)
+                        difference = True
+                        i1.difference = i2
                         break
 
                 compared = i1_idx - start_idx + 1
@@ -243,7 +243,7 @@ class QLVWindow(GUITk):
                     # Log 2 ended earlier.
                     subtrace = subtrace[:compared]
 
-                if difference is not None:
+                if difference:
                     break
 
             if not subtrace:
@@ -253,19 +253,11 @@ class QLVWindow(GUITk):
             for idx, i in subtrace:
                 if DEBUG < 3:
                     print("0x%08X: %s" % (i.addr, i.disas))
-                tv.insert("", "end",
-                    text = str(idx),
-                    tags = STYLE_FIRST if i.first else STYLE_DEFAULT,
-                    values = ("0x%08X" % i.addr, "-", str(i.disas))
-                )
+                iid = tv._insert_instruction_row(idx, i)
 
             if difference:
-                idx, i = difference
-                iid = tv.insert("", "end",
-                    text = str(idx),
-                    tags = STYLE_DIFFERENCE,
-                    values = ("0x%08X" % i.addr, "-", str(i.disas))
-                )
+                # This iid is always of an the instruction with difference,
+                # because it's last in `subtrace`.
                 tv.see(iid)
                 print("Difference found, stopping")
                 break
