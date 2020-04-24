@@ -247,6 +247,8 @@ class QEMULog(object):
         # id -> (first addr, cache version)
         self.tbIdMap = {}
 
+        self.max_linked_tb = -1
+
         self.prevTrace = None
 
         stages = [qlog_reader_stage(open(file_name, "r"))]
@@ -271,6 +273,9 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookInstrDown(addr)
 
     def lookLink(self, start_id, fromCache = None):
+        if start_id > self.max_linked_tb:
+            return None
+
         if fromCache is None:
             return self.current_cache.lookLinkDown(start_id)
         elif fromCache == len(self.in_asm):
@@ -448,7 +453,11 @@ class QEMULog(object):
             print("End " + end_tb + " TB is not found")
             return
 
-        c.links[start_tb[0]] = end_tb[0]
+        link_start = start_tb[0]
+        if link_start > self.max_linked_tb:
+            self.max_linked_tb = link_start
+
+        c.links[link_start] = end_tb[0]
         if DEBUG < 1:
             print("%x:%u -> %x:%u" % (start, start_tb[0], end, end_tb[0]))
 
