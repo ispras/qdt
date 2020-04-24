@@ -132,9 +132,9 @@ class TBCache(object):
         for addr in range(instr.addr, instr.addr + instr.size):
             m[addr] = instr
 
-    def __contains__(self, instr):
+    def overlaps(self, addr, size):
         m = self.map
-        for addr in range(instr.addr, instr.addr + instr.size):
+        for addr in range(addr, addr + size):
             if addr in m:
                 return True
 
@@ -368,7 +368,7 @@ class QEMULog(object):
 
             prev_instr = instr
 
-            if instr in self.current_cache:
+            if self.current_cache.overlaps(instr.addr, instr.size):
                 self.cache_overwritten()
 
             self.current_cache.commit(instr)
