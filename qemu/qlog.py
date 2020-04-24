@@ -90,6 +90,8 @@ class TraceInstr(object):
         return str(self.in_instr)
 
 
+class undefined: pass
+
 class TBCache(object):
 
     def __init__(self, back):
@@ -97,6 +99,9 @@ class TBCache(object):
         self.links = {}
         self.tbMap = {}
         self.back = back
+
+        # remembers resolutions by `back` reference
+        self.back_map_lookup_cache = {}
 
     def lookTBDown(self, addr):
         "Returns TB index and corresponding cache or None"
@@ -116,15 +121,34 @@ class TBCache(object):
         return None
 
     def lookInstrDown(self, addr):
+        upper_mlc = None
+        mlc = None
+
         c = self
         while c:
-            if addr in c.map:
-                i = c.map[addr]
-                if i.addr == addr:
-                    return i, c
-                # `addr` is not at the beginning of `i`. Hence, `i` probably
-                # overwrites the instruction a caller looks for.
+            i = c.map.get(addr, None)
+            # `addr` is not at the beginning of `i`. Hence, `i` probably
+            # overwrites the instruction a caller looks for.
+            if i is not None and i.addr == addr:
+                res = (i, c)
+                if upper_mlc is not None:
+                    upper_mlc[addr] = res
+                return res
+
+            upper_mlc = mlc
+
+            mlc = c.back_map_lookup_cache
+            res = mlc.get(addr, undefined)
+            if res is not undefined:
+                if upper_mlc is not None:
+                    upper_mlc[addr] = res
+                return res
+
             c = c.back
+
+        # Backing caches are considered constant.
+        # So, we can remember misses in too.
+        self.back_map_lookup_cache[addr] = None
         return None
 
     def commit(self, instr):
