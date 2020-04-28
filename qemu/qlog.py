@@ -7,9 +7,6 @@ __all__ = [
 ]
 
 
-from collections import (
-    deque
-)
 from itertools import (
     count
 )
@@ -67,18 +64,22 @@ class InInstr(object):
 
 
 class TraceInstr(object):
-    "Instruction with runtime (trace) information."
+    """ It's a trace step, an execution of an in_asm instruction in TB
+(InInstr). It can have runtime (trace) information.
+    """
 
     # This also prevents erroneous attempts to use objects of this class as
     # objects of InInstr (i.e. foreign attribute setting).
     __slots__ = (
         "in_instr",
         "trace",
+        "difference",
     )
 
     def __init__(self, in_instr, trace):
         self.in_instr = in_instr
         self.trace = trace
+        self.difference = None
 
     # Proxify static info.
 
@@ -89,6 +90,8 @@ class TraceInstr(object):
         return str(self.in_instr)
 
 
+class undefined: pass
+
 class TBCache(object):
 
     def __init__(self, back):
@@ -96,6 +99,9 @@ class TBCache(object):
         self.links = {}
         self.tbMap = {}
         self.back = back
+
+        # remembers resolutions by `back` reference
+        self.back_map_lookup_cache = {}
 
     def lookTBDown(self, addr):
         "Returns TB index and corresponding cache or None"
@@ -115,15 +121,34 @@ class TBCache(object):
         return None
 
     def lookInstrDown(self, addr):
+        upper_mlc = None
+        mlc = None
+
         c = self
         while c:
-            if addr in c.map:
-                i = c.map[addr]
-                if i.addr == addr:
-                    return i, c
-                # `addr` is not at the beginning of `i`. Hence, `i` probably
-                # overwrites the instruction a caller looks for.
+            i = c.map.get(addr, None)
+            # `addr` is not at the beginning of `i`. Hence, `i` probably
+            # overwrites the instruction a caller looks for.
+            if i is not None and i.addr == addr:
+                res = (i, c)
+                if upper_mlc is not None:
+                    upper_mlc[addr] = res
+                return res
+
+            upper_mlc = mlc
+
+            mlc = c.back_map_lookup_cache
+            res = mlc.get(addr, undefined)
+            if res is not undefined:
+                if upper_mlc is not None:
+                    upper_mlc[addr] = res
+                return res
+
             c = c.back
+
+        # Backing caches are considered constant.
+        # So, we can remember misses in too.
+        self.back_map_lookup_cache[addr] = None
         return None
 
     def commit(self, instr):
@@ -131,9 +156,9 @@ class TBCache(object):
         for addr in range(instr.addr, instr.addr + instr.size):
             m[addr] = instr
 
-    def __contains__(self, instr):
+    def overlaps(self, addr, size):
         m = self.map
-        for addr in range(instr.addr, instr.addr + instr.size):
+        for addr in range(addr, addr + size):
             if addr in m:
                 return True
 
@@ -222,6 +247,8 @@ class QEMULog(object):
         # id -> (first addr, cache version)
         self.tbIdMap = {}
 
+        self.max_linked_tb = -1
+
         self.prevTrace = None
 
         stages = [qlog_reader_stage(open(file_name, "r"))]
@@ -246,6 +273,9 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookInstrDown(addr)
 
     def lookLink(self, start_id, fromCache = None):
+        if start_id > self.max_linked_tb:
+            return None
+
         if fromCache is None:
             return self.current_cache.lookLinkDown(start_id)
         elif fromCache == len(self.in_asm):
@@ -326,7 +356,7 @@ class QEMULog(object):
 
                         nextInstr = nextInstr[0]
 
-                    instr = nextInstr
+                    instr = TraceInstr(nextInstr, None)
 
             if ready_instrs:
                 t = (yield ready_instrs)
@@ -367,7 +397,7 @@ class QEMULog(object):
 
             prev_instr = instr
 
-            if instr in self.current_cache:
+            if self.current_cache.overlaps(instr.addr, instr.size):
                 self.cache_overwritten()
 
             self.current_cache.commit(instr)
@@ -423,7 +453,11 @@ class QEMULog(object):
             print("End " + end_tb + " TB is not found")
             return
 
-        c.links[start_tb[0]] = end_tb[0]
+        link_start = start_tb[0]
+        if link_start > self.max_linked_tb:
+            self.max_linked_tb = link_start
+
+        c.links[link_start] = end_tb[0]
         if DEBUG < 1:
             print("%x:%u -> %x:%u" % (start, start_tb[0], end, end_tb[0]))
 
