@@ -15,6 +15,7 @@ __all__ = [
       , "EnumerationElement"
       , "OpaqueCode"
         , "TypeAlias"
+        , "TopComment"
   , "Initializer"
   , "Variable"
   , "SourceChunk"
@@ -1878,6 +1879,22 @@ class TypeAlias(OpaqueCode):
             "typedef@b" + _type.declaration_string + name + ";\n",
             name = name,
             used_types = [_type]
+        )
+
+
+class TopComment(OpaqueCode):
+    "Use this to insert top level and structure field comments."
+
+    def __init__(self, text,
+        used_types = None,
+        used_variables = None,
+        weight = None
+    ):
+        super(TopComment, self).__init__(
+            "/*@s" + text.replace(" ", "@s") + "@s*/\n",
+            used_types = used_types,
+            used_variables = used_variables,
+            weight = weight
         )
 
 
