@@ -1,11 +1,11 @@
 from six.moves.tkinter import (
-    Tk,
     ALL,
     Text,
     END,
     BOTH
 )
 from widgets import (
+    GUITk,
     CanvasDnD,
     CanvasFrame,
     add_scrollbars_native
@@ -159,7 +159,7 @@ def main():
         gui(settings)
 
 def gui(settings):
-    tk = Tk()
+    tk = GUITk()
 
     tk.geometry("800x800")
 
