@@ -6,6 +6,7 @@ from argparse import (
 )
 from widgets import (
     Statusbar,
+    MenuBuilder,
     add_scrollbars_native,
     AutoPanedWindow,
     GUIText,
@@ -365,6 +366,12 @@ class QLVWindow(GUITk):
 
         self.title(_("QEmu Log Viewer"))
 
+        with MenuBuilder(self) as menubar:
+            with menubar(_("Analysis")) as anmenu:
+                anmenu(_("Check instruction counter"),
+                    command = self._on_check_ic
+                )
+
         self.columnconfigure(0, weight = 1)
 
         self.rowconfigure(0, weight = 1)
@@ -522,6 +529,43 @@ class QLVWindow(GUITk):
 
         t2 = time()
         print("In %f second(s)" % (t2 - t1))
+
+    def _on_check_ic(self):
+        if not hasattr(self, "all_instructions"):
+            # no logs
+            return
+
+        enqueue = self.task_manager.enqueue
+        for instr_list in self.all_instructions:
+            enqueue(self.co_check_ic(instr_list))
+
+    def co_check_ic(self, instr_list):
+        iiter = iter(instr_list)
+        idx = 0
+
+        while True:
+            yield
+
+            last_idx = idx + 1000
+            for idx, i in izip(xrange(idx, last_idx + 1), iiter):
+                trace = i.trace
+                if trace is None:
+                    continue
+                ic = trace.instruction_counter
+                if ic is None:
+                    continue
+                if idx != ic:
+                    print("IC missmatch at " + str(idx))
+                    self.tv_instructions.see_instruction(idx)
+                    break
+            else:
+                if last_idx == idx:
+                    # Next instruction in the iterator must have next index.
+                    idx += 1
+                    continue
+                # no instructions left
+            # missmatch
+            break
 
     def _on_instruction_selected(self, __):
         tv = self.tv_instructions
