@@ -34,6 +34,37 @@ def owerlaps(bbox1, bbox2):
     return True
 
 
+class NodeFrame(CanvasFrame):
+
+    def __init__(self, master, x, y, text = None):
+        super(NodeFrame, self).__init__(master, x, y)
+
+        t = Text(self, width = 10, height = 3)
+        t.pack(fill = BOTH, expand = True)
+        self._t = t
+
+        if text is not None:
+            self.text = text
+
+    @property
+    def xy(self):
+        return self.master.coords(self.id)
+
+    @xy.setter
+    def xy(self, xy):
+        self.master.coords(self.id, *xy)
+
+    @property
+    def text(self):
+        return self._t.get("1.0", END)
+
+    @text.setter
+    def text(self, text):
+        t = self._t
+        t.delete("1.0", END)
+        t.insert(END, text)
+
+
 NODE_SPACING = 5
 TAG_OBSTACLE = "o"
 
@@ -64,13 +95,7 @@ class Diagram(CanvasDnD):
         else:
             del self._add_node_after_id
 
-        x, y, text = self._nodes2add.pop(0)
-        fr = CanvasFrame(self, x, y)
-        t = Text(fr, width = 10, height = 3)
-        t.pack(fill = BOTH, expand = True)
-        t.insert(END, text)
-
-        self.place_node(fr)
+        self.place_node(NodeFrame(self, *self._nodes2add.pop(0)))
 
     def place_node(self, node):
         self._nodes2place.append(node)
@@ -96,7 +121,7 @@ class Diagram(CanvasDnD):
             self.dtag(node.id, TAG_OBSTACLE)
 
         # Account current position and size during placement.
-        px, py = self.coords(node.id)
+        px, py = node.xy
         x, y = self.get_place(
             w = node.winfo_width(),
             h = node.winfo_height(),
@@ -105,7 +130,7 @@ class Diagram(CanvasDnD):
         # Note that, a new node should be treated as an obstacle only
         # after it's placement.
         self.addtag_withtag(TAG_OBSTACLE, node.id)
-        self.coords(node.id, x, y)
+        node.xy = x, y
 
     def _update_scroll_after(self):
         self.config(scrollregion = self.bbox(ALL))
