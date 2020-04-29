@@ -268,8 +268,34 @@ def gui(settings):
 
     tk.set_geometry(*settings.geometry)
 
-    for i in range(10):
-        tk.add_node(0, 0, str(i))
+    def test2():
+        print("test2")
+        s = tk.get_diagram_state()
+
+        def test5():
+            print("test5")
+            tk.set_diagram_state(s)
+
+        def test4():
+            print("test4")
+            tk.set_diagram_state(s)
+            tk.after(1000, test5)
+
+        def test3():
+            print("test3")
+            tk.clear_diagram()
+            tk.after(1000, test4)
+
+        tk.after(1000, test3)
+
+    def test1():
+        print("test1")
+        for i in range(10):
+            tk.add_node(0, 0, str(i))
+
+        tk.after(2000, test2)
+
+    tk.after(1000, test1)
 
     tk.mainloop()
 
