@@ -151,6 +151,8 @@ class DiagSettings(Persistent):
         super(DiagSettings, self).__init__(file_name,
             glob = globals(),
             version = 0.1,
+            # default values
+            geometry = (800, 800)
         )
 
 
@@ -161,7 +163,7 @@ def main():
 def gui(settings):
     tk = GUITk()
 
-    tk.geometry("800x800")
+    tk.set_geometry(*settings.geometry)
 
     tk.columnconfigure(0, weight = 1)
     tk.columnconfigure(1, weight = 0)
@@ -177,6 +179,9 @@ def gui(settings):
         diag.add_node(0, 0, str(i))
 
     tk.mainloop()
+
+    # window offset is not preserved
+    settings.geometry = tk.last_geometry[:2]
 
 
 if __name__ == "__main__":
