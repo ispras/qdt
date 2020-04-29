@@ -145,6 +145,27 @@ class Diagram(CanvasDnD):
         return x, y
 
 
+class DiagramWindow(GUITk):
+
+    def __init__(self, *a, **kw):
+        GUITk.__init__(self, *a, **kw)
+
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 0)
+        self.rowconfigure(0, weight = 1)
+        self.rowconfigure(1, weight = 1)
+
+        diag = Diagram(self)
+        diag.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, diag, sizegrip = True)
+
+        self._diag = diag
+
+    def add_node(self, *a, **kw):
+        self._diag.add_node(*a, **kw)
+
+
 class DiagSettings(Persistent):
 
     def __init__(self, file_name):
@@ -161,22 +182,12 @@ def main():
         gui(settings)
 
 def gui(settings):
-    tk = GUITk()
+    tk = DiagramWindow()
 
     tk.set_geometry(*settings.geometry)
 
-    tk.columnconfigure(0, weight = 1)
-    tk.columnconfigure(1, weight = 0)
-    tk.rowconfigure(0, weight = 1)
-    tk.rowconfigure(1, weight = 1)
-
-    diag = Diagram(tk)
-    diag.grid(row = 0, column = 0, sticky = "NESW")
-
-    add_scrollbars_native(tk, diag, sizegrip = True)
-
     for i in range(10):
-        diag.add_node(0, 0, str(i))
+        tk.add_node(0, 0, str(i))
 
     tk.mainloop()
 
