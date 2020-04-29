@@ -13,6 +13,13 @@ from widgets import (
 from bisect import (
     insort
 )
+from common import (
+    Persistent
+)
+from os.path import (
+    expanduser,
+    join
+)
 
 
 def owerlaps(bbox1, bbox2):
@@ -138,7 +145,20 @@ class Diagram(CanvasDnD):
         return x, y
 
 
+class DiagSettings(Persistent):
+
+    def __init__(self, file_name):
+        super(DiagSettings, self).__init__(file_name,
+            glob = globals(),
+            version = 0.1,
+        )
+
+
 def main():
+    with DiagSettings(join(expanduser("~"), ".qdt.diag.py")) as settings:
+        gui(settings)
+
+def gui(settings):
     tk = Tk()
 
     tk.geometry("800x800")
