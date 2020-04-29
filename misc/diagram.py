@@ -77,8 +77,12 @@ class Diagram(CanvasDnD):
     def __init__(self, *a, **kw):
         CanvasDnD.__init__(self, *a, **kw)
 
+        # Parameters of nodes instantiation
         self._nodes2add = []
+        # Showed (instantiated) but not placed yet
         self._nodes2place = []
+        # Placed nodes
+        self._nodes = []
 
     def add_node(self, x, y, text = ""):
         self._nodes2add.append((x, y, text))
@@ -131,6 +135,8 @@ class Diagram(CanvasDnD):
         # after it's placement.
         self.addtag_withtag(TAG_OBSTACLE, node.id)
         node.xy = x, y
+
+        self._nodes.append(node)
 
     def _update_scroll_after(self):
         self.config(scrollregion = self.bbox(ALL))
