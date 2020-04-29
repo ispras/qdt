@@ -76,3 +76,7 @@ class GUITk(VarTk, TkGeometryHelper):
 
     def cancel_task(self, co_task):
         self.task_manager.remove(co_task)
+
+    def destroy(self):
+        self.last_geometry = self.get_geometry()
+        VarTk.destroy(self)
