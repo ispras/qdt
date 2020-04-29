@@ -234,6 +234,19 @@ class DiagramWindow(GUITk):
     def add_node(self, *a, **kw):
         self._diag.add_node(*a, **kw)
 
+    def get_diagram_state(self):
+        return self._diag.get_state()
+
+    def add_diagram_state(self, state):
+        self._diag.add_state(state)
+
+    def clear_diagram(self):
+        self._diag.remove_all_nodes()
+
+    def set_diagram_state(self, state):
+        self._diag.remove_all_nodes()
+        self._diag.add_state(state)
+
 
 class DiagSettings(Persistent):
 
