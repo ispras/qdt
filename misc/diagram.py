@@ -175,6 +175,44 @@ class Diagram(CanvasDnD):
 
         return x, y
 
+    def get_state(self):
+        ret = list(self._nodes2add)
+
+        for n in self._nodes2place + self._nodes:
+            ret.append(tuple(n.xy) + (n.text,))
+
+        return ret
+
+    def add_state(self, state):
+        # Assuming that nodes from `state` has good coordinates. I.e. no
+        # placement is required.
+        self._nodes.extend(NodeFrame(self, *s) for s in state)
+
+    def remove_all_nodes(self):
+        try:
+            _id = self._add_node_after_id
+        except AttributeError:
+            # That after is not scheduled if it's queue is empty.
+            pass
+        else:
+            del self._nodes2add[:]
+            self.after_cancel(_id)
+            del self._add_node_after_id
+
+        try:
+            _id = self._place_node_after_id
+        except AttributeError:
+            pass
+        else:
+            del self._nodes2place[:]
+            self.after_cancel(_id)
+            del self._place_node_after_id
+
+        for n in self._nodes:
+            self.delete(n.id)
+
+        del self._nodes[:]
+
 
 class DiagramWindow(GUITk):
 
