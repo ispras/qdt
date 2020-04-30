@@ -2270,14 +2270,13 @@ class SourceChunk(object):
         last_line = len(lines) - 1
 
         for idx1, line in enumerate(lines):
-            if idx1 == last_line and len(line) == 0:
-                break;
-
             clear_line = re_clr.sub("\\1", re_anc.sub("\\1", re_can.sub("\\1",
                          re_nbs.sub("\\1 ", re_nss.sub("\\1 ", line)))))
 
             if len(clear_line) <= max_cols:
-                code += clear_line + '\n'
+                code += clear_line
+                if idx1 != last_line:
+                    code += '\n'
                 continue
 
             line_no_indent_len = len(line) - len(line.lstrip(' '))
@@ -2360,7 +2359,8 @@ after this word.
                 tmp_indent = " " * indents[-1] if indents else ""
                 slash = True
 
-            code += '\n'
+            if idx1 != last_line:
+                code += '\n'
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
