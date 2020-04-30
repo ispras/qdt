@@ -2450,7 +2450,7 @@ class MacroDefinition(SourceChunk):
 
         super(MacroDefinition, self).__init__(macro,
             "Definition of macro %s" % macro,
-            "%s#define %s%s%s" % (
+            "%s#define %s%s%s\n" % (
                 indent,
                 macro.c_name,
                 args_txt,
@@ -2491,7 +2491,9 @@ class MacroTypeChunk(SourceChunk):
     def __init__(self, _type, indent = ""):
         super(MacroTypeChunk, self).__init__(_type,
             "Usage of type %s" % _type,
-            code = indent + _type.macro.gen_usage_string(_type.initializer)
+            code = (indent + _type.macro.gen_usage_string(_type.initializer)
+                + "\n"
+            )
         )
 
 
@@ -2741,7 +2743,7 @@ class FunctionDeclaration(SourceChunk):
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
             "Declaration of function %s" % function,
-            "%s;" % gen_function_declaration_string(indent, function)
+            "%s;\n" % gen_function_declaration_string(indent, function)
         )
 
 
