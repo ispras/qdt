@@ -6,6 +6,7 @@ __all__ = [
   , "bsep"
   , "cli_repr"
   , "bind_all_mouse_wheel"
+  , "bind_mouse_wheel"
 ]
 
 from os import (
@@ -122,3 +123,7 @@ else:
 def bind_all_mouse_wheel(w, handler, add = None):
     for h in wrap_wheel_handler(handler):
         w.bind_all(h.__doc__, h, add = add)
+
+def bind_mouse_wheel(w, handler, add = None):
+    for h in wrap_wheel_handler(handler):
+        w.bind(h.__doc__, h, add = add)
