@@ -10,8 +10,9 @@ from os.path import (
     join
 )
 from debug import (
+    git_repo_by_dwarf,
+    GitLineVersionAdapter,
     Watcher,
-    get_glv_adapter,
     InMemoryELFFile,
     DWARFInfoCache,
     Runtime
@@ -24,6 +25,10 @@ with pypath("..pyrsp.test"):
 
 test_dir = join(dirname(__file__), "debug_tests")
 verb = ee("TEST_WATCHER_VERBOSE", "False")
+
+
+def get_glv_adapter(di):
+    return GitLineVersionAdapter(git_repo_by_dwarf(di))
 
 
 class BitFieldsWatcher(Watcher):
