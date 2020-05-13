@@ -41,8 +41,9 @@ class BitFieldsWatcher(Watcher):
         "main.c:16 bccaa903d7e8ccd4fa9faa4df004948a3e8dd912"
         # Note, this SHA1 is of one of previous commits in QDT history:
         # "test: add C program for testing of bit fields support ..."
+        rt = self.rt
 
-        s = self.s
+        s = rt["s"]
 
         values = tuple(map(
             lambda v: v.fetch(),
@@ -54,7 +55,7 @@ class BitFieldsWatcher(Watcher):
 
         self._test.assertEqual(values, (1, 2, 3, 4))
 
-        s2 = self.s2
+        s2 = rt["s2"]
 
         values = tuple(map(
             lambda v: v.fetch(),
