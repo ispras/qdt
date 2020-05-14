@@ -58,6 +58,7 @@ class TextViewerWindow(GUITk, object):
             orient = VERTICAL,
             command = self.yview,
         )
+        self._yscrollcommand = vsb.set
         vsb.grid(row = row, column = 1, sticky = "NESW")
 
         row += 1; self.rowconfigure(row, weight = 0)
@@ -363,6 +364,10 @@ class TextViewerWindow(GUITk, object):
         self._update_vsb()
 
     def _update_vsb(self):
+        cmd = self._yscrollcommand
+        if cmd is None:
+            return
+
         total_lines_f = self.total_lines_f
         try:
             lo = float(self.lineno) / total_lines_f
@@ -370,7 +375,8 @@ class TextViewerWindow(GUITk, object):
         except ZeroDivisionError:
             lo = 0.0
             hi = 1.0
-        self._vsb.set(lo, hi)
+
+        cmd(lo, hi)
 
 
 def main():
