@@ -129,20 +129,22 @@ Lines enumeration starts from 0.
 
         i = lineidx >> bits
         if i == 0:
-            stream.seek(0)
             lineidx = 0
+            offset = 0
         else:
             lineidx = i << bits
             offset = self.index[i - 1]
-            stream.seek(offset)
 
         read = stream.read
+        seek = stream.seek
         size = self.blob_size
 
         while True:
+            seek(offset)
             data = read(size)
             if data == b"":
                 break
+            offset += len(data)
             yield (data, lineidx)
             lineidx += lines_chunk
 
