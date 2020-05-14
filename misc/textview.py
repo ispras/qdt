@@ -13,6 +13,7 @@ from widgets import (
     Statusbar,
 )
 from six.moves.tkinter import (
+    ALL,
     RIGHT,
     LEFT,
     Canvas,
@@ -62,10 +63,10 @@ class TextViewerWindow(GUITk, object):
         row += 1; self.rowconfigure(row, weight = 0)
         self._hsb = hsb = Scrollbar(self,
             orient = HORIZONTAL,
-            command = text.xview
+            command = self.xview,
         )
-        text.configure(xscrollcommand = hsb.set)
         hsb.grid(row = row, column = 0, sticky = "NESW")
+        self._xscrollcommand = hsb.set
 
         row += 1; self.rowconfigure(row, weight = 0)
         sb = Statusbar(self)
@@ -93,6 +94,8 @@ class TextViewerWindow(GUITk, object):
 
         self._file_name = None
         self._page_size = 100
+        self._page_width = 0 # in pixels
+        self._x_offset = 0
 
     def _on_mouse_wheel(self, e):
         if e.delta > 0:
@@ -138,6 +141,7 @@ class TextViewerWindow(GUITk, object):
         lineidx = self.lineidx
         lineno_font = self._lineno_font
         main_font = self._main_font
+        main_font_measure = main_font.measure
         lineno_pading = self._lineno_pading
         linespace = self._linespace
 
@@ -173,14 +177,29 @@ class TextViewerWindow(GUITk, object):
         lines_offset = lineidx - start_line
 
         # space for line numbers
-        xshift = lineno_font.measure(str(start_line + len(lines)))
+        lineno_width = lineno_font.measure(str(start_line + len(lines)))
+        all_xshift = lineno_width
 
         yshift = 0
         yinc = linespace + self._ylinepadding
 
         view_height = text.winfo_height()
-        x = xshift
+        x = all_xshift
         y = self._ylinepadding + yshift
+        x_text_shift = lineno_pading - self._x_offset
+
+        max_text_width = 0
+
+        # place opaque rectangle below line numbers and above main text
+        text.create_rectangle(
+            0, 0, all_xshift + lineno_pading, view_height,
+            fill = "grey",
+            outline = "white",
+        )
+
+        # cache
+        create_text = text.create_text
+        lower = text.lower
 
         # conventionally, line enumeration starts from 1
         cur_lineno = lineidx + 1
@@ -188,21 +207,30 @@ class TextViewerWindow(GUITk, object):
             if view_height <= y:
                 break
 
-            text.create_text(x, y,
+            create_text(x, y,
                 text = cur_lineno,
                 justify = RIGHT,
                 anchor = "ne",
                 font = lineno_font,
-                fill = "#aaaaaa",
+                fill = "white",
             )
-            text.create_text(x + lineno_pading, y,
+            line_iid = create_text(x + x_text_shift, y,
                 text = line,
                 justify = LEFT,
                 anchor = "nw",
                 font = main_font,
             )
+            lower(line_iid)
 
+            max_text_width = max(max_text_width, main_font_measure(line))
             y += yinc
+
+        # update horizontal scrolling
+        self._page_width = max(0,
+            text.winfo_width() - lineno_width - lineno_pading
+        )
+        self._max_text_width = max_text_width
+        self._update_hsb()
 
         # update page size
         page_size = (cur_lineno - 1) - lineidx
@@ -213,6 +241,57 @@ class TextViewerWindow(GUITk, object):
         if self._page_size != page_size:
             self._page_size = page_size
             self._update_vsb()
+
+    def xview(self, *a):
+        getattr(self, "_xview_" + a[0])(*a[1:])
+
+    def _xview_moveto(self, offset):
+        offset_f = float(offset)
+        self.x_offset = int(offset_f * float(self._max_text_width))
+
+    def _xview_scroll(self, step, unit):
+        step_i = int(step)
+        if unit == "pages":
+            shift = step_i * self._page_width
+        elif unit == "units": # canvas coordinates
+            shift = step_i
+        else:
+            raise ValueError("Unsupported scsroll unit: " + unit)
+
+        print(shift)
+
+        self.x_offset += shift
+
+    @property
+    def x_offset(self):
+        return self._x_offset
+
+    @x_offset.setter
+    def x_offset(self, x_offset):
+        limit = self._max_text_width - self._page_width
+        x_offset = max(0, min(limit, x_offset))
+
+        if x_offset == self._x_offset:
+            return
+        self._x_offset = x_offset
+
+        self.draw()
+
+    def _update_hsb(self):
+        cmd = self._xscrollcommand
+        if cmd is None:
+            return
+
+        max_text_width = self._max_text_width
+        if max_text_width == 0:
+            lo, hi = 0., 1.
+        else:
+            max_text_width_f = float(max_text_width)
+            lo = float(self._x_offset) / max_text_width_f
+            page_width_f = float(self._page_width)
+            hi = lo + page_width_f / max_text_width_f
+
+        cmd(lo, hi)
 
     def _on_text_configure(self, __):
         self.draw()
