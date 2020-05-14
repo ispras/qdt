@@ -60,13 +60,14 @@ Lines enumeration starts from 0.
         lineidx = 0
         offset = 0
 
-        stream.seek(0)
         read = stream.read
+        seek = stream.seek
 
         while True:
             self.current_lines = lineidx
             yield True # always can continue
 
+            seek(offset)
             chunk = read(blob_size)
             if not chunk:
                 break # EOF
@@ -75,15 +76,14 @@ Lines enumeration starts from 0.
                 if lineidx & lines_chunk_mask == 0:
                     append(offset + mi.end())
 
-            # Note: `offset += len(chunk)` is only better at EOF but have
-            # no effect.
-            offset += blob_size
+            offset += len(chunk)
 
             # b"\r\n" is split in two chunks.
             if chunk[-1] == b'\r':
                 self.current_lines = lineidx
                 yield True # pause before blocking I/O
 
+                seek(offset)
                 c = read(1)
                 if len(c) == 0:
                     break # EOF
