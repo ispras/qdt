@@ -250,6 +250,8 @@ class TextViewerWindow(GUITk, object):
         finally:
             stream.close()
 
+        ubd(index.total_lines)
+
     def _update_total_lines(self, val):
         self._var_total_lines.set(val)
         self._update_vsb()
