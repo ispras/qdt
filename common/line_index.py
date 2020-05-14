@@ -57,22 +57,22 @@ Lines enumeration starts from 0.
         index = self.index = []
         append = index.append
 
-        lineno = 0
+        lineidx = 0
         offset = 0
 
         stream.seek(0)
         read = stream.read
 
         while True:
-            self.current_lines = lineno
+            self.current_lines = lineidx
             yield True # always can continue
 
             chunk = read(blob_size)
             if not chunk:
                 break # EOF
 
-            for lineno, mi in enumerate(fiter(chunk), lineno + 1):
-                if lineno & lines_chunk_mask == 0:
+            for lineidx, mi in enumerate(fiter(chunk), lineidx + 1):
+                if lineidx & lines_chunk_mask == 0:
                     append(offset + mi.end())
 
             # Note: `offset += len(chunk)` is only better at EOF but have
@@ -81,7 +81,7 @@ Lines enumeration starts from 0.
 
             # b"\r\n" is split in two chunks.
             if chunk[-1] == b'\r':
-                self.current_lines = lineno
+                self.current_lines = lineidx
                 yield True # pause before blocking I/O
 
                 c = read(1)
@@ -93,16 +93,16 @@ Lines enumeration starts from 0.
                 if c == b'\r':
                     # An empty line after the chunk.
                     # b'\r' is used as a line separator in the file.
-                    lineno += 1
-                    if lineno & lines_chunk_mask == 0:
+                    lineidx += 1
+                    if lineidx & lines_chunk_mask == 0:
                         append(offset)
                 elif c == b'\n':
-                    if lineno & lines_chunk_mask == 0:
-                        # `lineno`-th line start a bit later.
+                    if lineidx & lines_chunk_mask == 0:
+                        # `lineidx`-th line start a bit later.
                         index[-1] += 1
 
         del self.current_lines
-        self.total_lines = lineno
+        self.total_lines = lineidx + 1
 
     def save(self, file_name):
         total_lines = self.total_lines
@@ -116,23 +116,23 @@ Lines enumeration starts from 0.
 
         dump(state, file_name)
 
-    def read_chunk(self, stream, lineno):
+    def read_chunk(self, stream, lineidx):
         """ Reads the `stream` and returns `tuple`:
-[0]: b'ytes' of the chunk containing `lineno`-th line start
+[0]: b'ytes' of the chunk containing `lineidx`-th line start
 [1]: number of the line starting at the chunk 0-th offset
         """
-        return next(self.iter_chunks(stream, lineno = lineno))
+        return next(self.iter_chunks(stream, lineidx = lineidx))
 
-    def iter_chunks(self, stream, lineno = 0):
+    def iter_chunks(self, stream, lineidx = 0):
         bits = self.lines_chunk_bits
         lines_chunk = self.lines_chunk
 
-        i = lineno >> bits
+        i = lineidx >> bits
         if i == 0:
             stream.seek(0)
-            lineno = 0
+            lineidx = 0
         else:
-            lineno = i << bits
+            lineidx = i << bits
             offset = self.index[i - 1]
             stream.seek(offset)
 
@@ -143,8 +143,8 @@ Lines enumeration starts from 0.
             data = read(size)
             if data == b"":
                 break
-            yield (data, lineno)
-            lineno += lines_chunk
+            yield (data, lineidx)
+            lineidx += lines_chunk
 
 
 class LineIndexIsNotReady(RuntimeError):
