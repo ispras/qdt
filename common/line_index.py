@@ -67,6 +67,7 @@ Lines enumeration starts from 0.
             self.current_lines = lineidx
             yield True # always can continue
 
+            # support shared access to the stream between `yield`s
             seek(offset)
             chunk = read(blob_size)
             if not chunk:
@@ -140,6 +141,7 @@ Lines enumeration starts from 0.
         size = self.blob_size
 
         while True:
+            # support shared access to the stream between `yield`s
             seek(offset)
             data = read(size)
             if data == b"":
