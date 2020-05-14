@@ -36,6 +36,8 @@ class TextCanvas(Canvas, object):
         self.bind("<Configure>", self._on_configure, "+")
         bind_mouse_wheel(self, self._on_mouse_wheel)
 
+        self.bind("<Enter>", self._on_enter, "+")
+
         self._var_total_lines = total_var = IntVar(self)
         total_var.set(0)
         # Contains showed line number. It's one greater than internally used
@@ -346,3 +348,6 @@ class TextCanvas(Canvas, object):
             hi = 1.0
 
         cmd(lo, hi)
+
+    def _on_enter(self, __):
+        self.focus_set()
