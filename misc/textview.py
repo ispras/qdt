@@ -163,35 +163,56 @@ class TextViewerWindow(GUITk, object):
 
         lines = list(blob.decode("unicode_escape").splitlines())
 
+        # if last line in the stream has new line suffix, show empty new line
+        if blob.endswith(b"\r") or blob.endswith(b"\n"):
+            # Note, `splitlines` drops last empty line while `total_lines`
+            # accounts it.
+            if start_line + len(lines) + 1 == self.total_lines:
+                lines.append(u"")
+
+        lines_offset = lineidx - start_line
+
         # space for line numbers
         xshift = lineno_font.measure(str(start_line + len(lines)))
 
-        yshift = -(lineidx - start_line) * linespace
+        yshift = 0
         yinc = linespace + self._ylinepadding
 
         view_height = text.winfo_height()
         x = xshift
         y = self._ylinepadding + yshift
 
-        for cur_lineno, line in enumerate(lines,
-            start_line + 1 # conventionally, line enumeration starts from 1
-        ):
-            if -linespace < y and y < view_height:
-                text.create_text(x, y,
-                    text = cur_lineno,
-                    justify = RIGHT,
-                    anchor = "ne",
-                    font = lineno_font,
-                    fill = "#aaaaaa",
-                )
-                text.create_text(x + lineno_pading, y,
-                    text = line,
-                    justify = LEFT,
-                    anchor = "nw",
-                    font = main_font,
-                )
+        # conventionally, line enumeration starts from 1
+        cur_lineno = lineidx + 1
+        for cur_lineno, line in enumerate(lines[lines_offset:], cur_lineno):
+            if view_height <= y:
+                break
+
+            text.create_text(x, y,
+                text = cur_lineno,
+                justify = RIGHT,
+                anchor = "ne",
+                font = lineno_font,
+                fill = "#aaaaaa",
+            )
+            text.create_text(x + lineno_pading, y,
+                text = line,
+                justify = LEFT,
+                anchor = "nw",
+                font = main_font,
+            )
 
             y += yinc
+
+        # update page size
+        page_size = (cur_lineno - 1) - lineidx
+        if view_height != y:
+            # last line is not fully showed
+
+            page_size -= 1
+        if self._page_size != page_size:
+            self._page_size = page_size
+            self._update_vsb()
 
     def _on_text_configure(self, __):
         self.draw()
