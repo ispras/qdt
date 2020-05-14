@@ -31,7 +31,7 @@ from six.moves.tkinter_font import (
 )
 
 DEBUG = ee("DEBUG_TEXTVIEW", "False")
-DEBUG_STREAM_SIZE = 100000
+DEBUG_STREAM_SIZE = 100001
 
 
 class TextViewerWindow(GUITk, object):
