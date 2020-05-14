@@ -36,6 +36,9 @@ class TextCanvas(Canvas, object):
 
         self.bind("<Enter>", self._on_enter, "+")
 
+        self.bind("<Prior>", self._on_prior, "+") # Page Up
+        self.bind("<Next>", self._on_next, "+") # Page Down
+
         self._var_total_lines = total_var = IntVar(self)
         total_var.set(0)
         # Contains showed line number. It's one greater than internally used
@@ -349,3 +352,9 @@ class TextCanvas(Canvas, object):
 
     def _on_enter(self, __):
         self.focus_set()
+
+    def _on_prior(self, __):
+        self._yview_scroll(-1, "pages")
+
+    def _on_next(self, __):
+        self._yview_scroll(1, "pages")
