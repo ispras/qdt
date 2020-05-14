@@ -75,8 +75,10 @@ class TextViewerWindow(GUITk, object):
 
         self._var_total_lines = total_var = IntVar(self)
         total_var.set(0)
+        # Contains showed line number. It's one more then internally used
+        # line index.
         self._var_lineno = lineno_var = IntVar(self)
-        lineno_var.set(0)
+        lineno_var.set(1)
         sb.right(_("%s/%s") % (lineno_var, total_var))
 
         # TODO: make it configarable
@@ -115,9 +117,13 @@ class TextViewerWindow(GUITk, object):
     def lineno(self):
         return self._var_lineno.get()
 
+    @property
+    def lineidx(self):
+        return self.lineno - 1
+
     @lineno.setter
     def lineno(self, lineno_raw):
-        lineno = max(0, min(self.total_lines, lineno_raw))
+        lineno = max(1, min(self.total_lines, lineno_raw))
 
         var_lineno = self._var_lineno
         if lineno == var_lineno.get():
@@ -129,7 +135,7 @@ class TextViewerWindow(GUITk, object):
 
     def draw(self):
         # cache some values
-        lineno = self.lineno
+        lineidx = self.lineidx
         lineno_font = self._lineno_font
         main_font = self._main_font
         lineno_pading = self._lineno_pading
@@ -141,7 +147,7 @@ class TextViewerWindow(GUITk, object):
             stream = open(self._file_name, "rb")
 
         # read two chunks
-        citer = self._index.iter_chunks(stream, lineno)
+        citer = self._index.iter_chunks(stream, lineidx)
         blob, start_line = next(citer)
         try:
             blob += next(citer)[0]
@@ -160,7 +166,7 @@ class TextViewerWindow(GUITk, object):
         # space for line numbers
         xshift = lineno_font.measure(str(start_line + len(lines)))
 
-        yshift = -(lineno - start_line) * linespace
+        yshift = -(lineidx - start_line) * linespace
         yinc = linespace + self._ylinepadding
 
         view_height = text.winfo_height()
