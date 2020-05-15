@@ -82,6 +82,58 @@ class TextCanvas(Canvas, object):
         self.bind("<ButtonRelease-1>", self._on_bt1_release, "+")
         self.bind("<Motion>", self._on_motion, "+")
 
+        self.bind("<Control-Key>", self._on_ctrl_key, "+")
+
+    @property
+    def selected_blob(self):
+        start = self._sel_start
+        if start is None:
+            return None
+
+        # cache
+        index = self._index
+        stream = self._stream
+
+        ss_l, ss_c = start
+        sl_l, sl_c = self._sel_limit
+
+        lineidx_at_offset, offset = index.lookup(ss_l)
+        skip_lines = ss_l - lineidx_at_offset
+
+        oter = index.iter_line_offsets(stream, offset = offset)
+        while skip_lines:
+            try:
+                next(oter)
+            except StopIteration:
+                # EOF
+                return b""
+            skip_lines -= 1
+
+        try:
+            first_line_offset = next(oter)
+        except StopIteration:
+            # EOF
+            return b""
+
+        skip_lines = sl_l - ss_l
+
+        first_offset = first_line_offset + ss_c
+        last_offset =  first_line_offset
+
+        while skip_lines:
+            try:
+                last_offset = next(oter)
+            except StopIteration:
+                # EOF
+                stream.seek(first_offset)
+                return stream.read()
+
+            skip_lines -= 1
+
+        last_offset += sl_c
+        stream.seek(first_offset)
+        return stream.read(last_offset - first_offset)
+
     @property
     def stream(self):
         return self._stream
@@ -543,3 +595,11 @@ class TextCanvas(Canvas, object):
                 self._sel_start = first
                 self._sel_limit = (lineidx, charidx + 1)
             self.draw()
+
+    def _on_ctrl_key(self, e):
+        if e.keycode == 54: # Ctrl-C: copy selected
+            blob = self.selected_blob
+            text = blob.decode(self._encoding)
+            self.clipboard_clear()
+            self.clipboard_append(text)
+            return "break"
