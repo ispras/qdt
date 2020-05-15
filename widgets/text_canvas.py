@@ -28,6 +28,7 @@ class TextCanvas(Canvas, object):
         kw.setdefault("background", "white")
         self._xscrollcommand = kw.pop("xscrollcommand", None)
         self._yscrollcommand = kw.pop("yscrollcommand", None)
+        self._encoding = kw.pop("encoding", "unicode_escape")
         stream = kw.pop("stream", None)
 
         Canvas.__init__(self, master, **kw)
@@ -226,7 +227,7 @@ class TextCanvas(Canvas, object):
             # EOF
             pass
 
-        lines = list(blob.decode("unicode_escape").splitlines())
+        lines = list(blob.decode(self._encoding).splitlines())
 
         # if last line in the stream has new line suffix, show empty new line
         if blob.endswith(b"\r") or blob.endswith(b"\n"):
