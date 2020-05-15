@@ -126,7 +126,6 @@ Lines enumeration starts from 0.
 
     def iter_chunks(self, stream, lineidx = 0):
         bits = self.lines_chunk_bits
-        lines_chunk = self.lines_chunk
 
         i = lineidx >> bits
         if i == 0:
@@ -148,7 +147,8 @@ Lines enumeration starts from 0.
                 break
             offset += len(data)
             yield (data, lineidx)
-            lineidx += lines_chunk
+            # consequent blobs are not line-aligned, generally
+            lineidx = None
 
 
 class LineIndexIsNotReady(RuntimeError):
