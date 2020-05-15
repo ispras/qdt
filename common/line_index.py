@@ -143,9 +143,8 @@ Lines enumeration starts from 0.
         """
         return next(self.iter_chunks(stream, lineidx = lineidx))
 
-    def iter_chunks(self, stream, lineidx = 0):
+    def lookup(self, lineidx):
         bits = self.lines_chunk_bits
-
         i = lineidx >> bits
         if i == 0:
             lineidx = 0
@@ -153,6 +152,10 @@ Lines enumeration starts from 0.
         else:
             lineidx = i << bits
             offset = self.index[i - 1]
+        return (lineidx, offset)
+
+    def iter_chunks(self, stream, lineidx = 0):
+        lineidx, offset = self.lookup(lineidx)
 
         read = stream.read
         seek = stream.seek
