@@ -1232,23 +1232,10 @@ class Structure(Type):
     def append_field_t_s(self, type_name, name, pointer = False):
         self.append_field_t(Type[type_name], name, pointer)
 
-    def gen_chunks(self, generator):
-        fields_indent = "    "
+    def gen_fields_chunks(self, generator, struct_begin, struct_end,
         indent = ""
-
-        if self._definition is not None:
-            return [StructureForwardDeclaration(self, indent)]
-
-        if self.declaration is None:
-            struct_begin = StructureTypedefDeclarationBegin(self, indent)
-            struct_end = StructureTypedefDeclarationEnd(self,
-                indent, True
-            )
-        else:
-            struct_begin = StructureDeclarationBegin(self, indent)
-            struct_end = StructureDeclarationEnd(self,
-                indent, True
-            )
+    ):
+        fields_indent = "    "
 
         """
         References map of structure definition chunks:
@@ -1290,6 +1277,23 @@ class Structure(Type):
 
         struct_begin.add_references(field_refs)
         struct_end.add_reference(top_chunk)
+
+    def gen_chunks(self, generator, indent = ""):
+        if self._definition is not None:
+            return [StructureForwardDeclaration(self, indent)]
+
+        if self.declaration is None:
+            struct_begin = StructureTypedefDeclarationBegin(self, indent)
+            struct_end = StructureTypedefDeclarationEnd(self,
+                indent, True
+            )
+        else:
+            struct_begin = StructureDeclarationBegin(self, indent)
+            struct_end = StructureDeclarationEnd(self,
+                indent, True
+            )
+
+        self.gen_fields_chunks(generator, struct_begin, struct_end, indent)
 
         return [struct_end, struct_begin]
 
