@@ -32,6 +32,8 @@ __all__ = [
       , "StructureDeclarationEnd"
       , "StructureTypedefDeclarationBegin"
       , "StructureTypedefDeclarationEnd"
+      , "StructureVariableDeclarationBegin"
+      , "StructureVariableDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "EnumerationDeclarationBegin"
@@ -2634,6 +2636,29 @@ class StructureDeclarationEnd(SourceChunk):
 {indent}}};{nl}
 """.format(
     indent = indent,
+    nl = "\n" if append_nl else ""
+            )
+        )
+
+
+class StructureVariableDeclarationBegin(SourceChunk):
+
+    def __init__(self, var, indent = ""):
+        super(StructureVariableDeclarationBegin, self).__init__(var,
+            "Beginning of nameless structure variable %s declaration" % var,
+            indent + "struct"
+        )
+
+
+class StructureVariableDeclarationEnd(SourceChunk):
+    weight = 4
+
+    def __init__(self, var, append_nl = True):
+        super(StructureVariableDeclarationEnd, self).__init__(var,
+            "Ending of nameless structure variable %s declaration" % var,
+            """\
+@b{name};{nl}""".format(
+    name = var.name,
     nl = "\n" if append_nl else ""
             )
         )
