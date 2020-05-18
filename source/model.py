@@ -2576,6 +2576,24 @@ class StructureForwardDeclaration(SourceChunk):
         )
 
 
+class StructureOpeningBracket(SourceChunk):
+
+    def __init__(self, struct, append_nl = True):
+        super(StructureOpeningBracket, self).__init__(struct,
+            "Opening bracket of structure %s declaration" % struct,
+            "@b{" + ("\n" if append_nl else "")
+        )
+
+
+class StructureClosingBracket(SourceChunk):
+
+    def __init__(self, struct, indent = ""):
+        super(StructureClosingBracket, self).__init__(struct,
+            "Closing bracket of structure %s declaration" % struct,
+            indent + "}"
+        )
+
+
 class StructureTypedefDeclarationBegin(SourceChunk):
 
     def __init__(self, struct, indent = ""):
