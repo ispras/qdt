@@ -48,6 +48,8 @@ class TextViewerWindow(GUITk, object):
 
         self._file_name = None
 
+        text.focus_set()
+
     @property
     def file_name(self):
         return self._file_name
