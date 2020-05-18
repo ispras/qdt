@@ -2458,7 +2458,7 @@ class FunctionPointerTypeDeclaration(SourceChunk):
 
 class MacroTypeChunk(SourceChunk):
 
-    def __init__(self, _type, indent):
+    def __init__(self, _type, indent = ""):
         super(MacroTypeChunk, self).__init__(_type,
             "Usage of type %s" % _type,
             code = indent + _type.macro.gen_usage_string(_type.initializer)
@@ -2540,7 +2540,7 @@ class StructureForwardDeclaration(SourceChunk):
 
 class StructureTypedefDeclarationBegin(SourceChunk):
 
-    def __init__(self, struct, indent):
+    def __init__(self, struct, indent = ""):
         super(StructureTypedefDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
@@ -2573,7 +2573,7 @@ class StructureTypedefDeclarationEnd(SourceChunk):
 
 class StructureDeclarationBegin(SourceChunk):
 
-    def __init__(self, struct, indent):
+    def __init__(self, struct, indent = ""):
         super(StructureDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
