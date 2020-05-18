@@ -126,6 +126,10 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 # "qemu/osdep.h".
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
 
+# Add a new line after the opening curly bracket in the structure without
+# fields
+ADD_NL_IN_EMPTY_STRUCTURE = ee("QDT_ADD_NL_IN_EMPTY_STRUCTURE", "False")
+
 
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
@@ -1236,6 +1240,7 @@ class Structure(Type):
         indent = ""
     ):
         fields_indent = "    "
+        need_nl = ADD_NL_IN_EMPTY_STRUCTURE or bool(self.fields)
 
         """
         References map of structure definition chunks:
@@ -1273,7 +1278,7 @@ class Structure(Type):
         field_indent = indent + fields_indent
         field_refs = []
 
-        br = StructureOpeningBracket(self, True)
+        br = StructureOpeningBracket(self, need_nl)
         br.add_reference(struct_begin)
         top_chunk = br
 
@@ -1286,7 +1291,7 @@ class Structure(Type):
 
         struct_begin.add_references(field_refs)
 
-        br = StructureClosingBracket(self, indent)
+        br = StructureClosingBracket(self, indent if need_nl else "")
         br.add_reference(top_chunk)
         struct_end.add_reference(br)
 
