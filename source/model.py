@@ -1248,6 +1248,9 @@ class Structure(Type):
            struct_begin
                 ^
                 |
+          opening bracket
+                ^
+                |
              field_0
                 ^
                 |
@@ -1260,13 +1263,19 @@ class Structure(Type):
              field_N
                 ^
                 |
+          closing bracket
+                ^
+                |
             struct_end
 
         """
 
         field_indent = indent + fields_indent
         field_refs = []
-        top_chunk = struct_begin
+
+        br = StructureOpeningBracket(self, True)
+        br.add_reference(struct_begin)
+        top_chunk = br
 
         for f in self.fields.values():
             field_decl = generator.provide_chunks(f, indent = field_indent)[0]
@@ -1276,7 +1285,10 @@ class Structure(Type):
             top_chunk = field_decl
 
         struct_begin.add_references(field_refs)
-        struct_end.add_reference(top_chunk)
+
+        br = StructureClosingBracket(self, indent)
+        br.add_reference(top_chunk)
+        struct_end.add_reference(br)
 
     def gen_chunks(self, generator, indent = ""):
         if self._definition is not None:
@@ -1284,10 +1296,10 @@ class Structure(Type):
 
         if self.declaration is None:
             struct_begin = StructureTypedefDeclarationBegin(self, indent)
-            struct_end = StructureTypedefDeclarationEnd(self, indent, True)
+            struct_end = StructureTypedefDeclarationEnd(self)
         else:
             struct_begin = StructureDeclarationBegin(self, indent)
-            struct_end = StructureDeclarationEnd(self, indent, True)
+            struct_end = StructureDeclarationEnd(self)
 
         self.gen_fields_chunks(generator, struct_begin, struct_end, indent)
 
@@ -2596,8 +2608,7 @@ class StructureTypedefDeclarationBegin(SourceChunk):
         super(StructureTypedefDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
-{indent}typedef@bstruct@b{struct_name}@b{{
-""".format(
+{indent}typedef@bstruct@b{struct_name}""".format(
     indent = indent,
     struct_name = struct.c_name
             )
@@ -2607,13 +2618,12 @@ class StructureTypedefDeclarationBegin(SourceChunk):
 class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct, indent = "", append_nl = True):
+    def __init__(self, struct, append_nl = True):
         super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
             """\
-{indent}}}@b{struct_name};{nl}
+@b{struct_name};{nl}
 """.format(
-    indent = indent,
     struct_name = struct.c_name,
     nl = "\n" if append_nl else ""
             )
@@ -2626,10 +2636,9 @@ class StructureDeclarationBegin(SourceChunk):
         super(StructureDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
-{indent}struct@b{struct_name}@b{{
-""".format(
+{indent}struct{struct_name}""".format(
     indent = indent,
-    struct_name = struct.c_name
+    struct_name = ("@b" + struct.c_name) if struct.is_named else ""
             )
         )
 
@@ -2637,15 +2646,10 @@ class StructureDeclarationBegin(SourceChunk):
 class StructureDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct, indent = "", append_nl = True):
+    def __init__(self, struct, append_nl = True):
         super(StructureDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
-            """\
-{indent}}};{nl}
-""".format(
-    indent = indent,
-    nl = "\n" if append_nl else ""
-            )
+            ";" + ("\n" if append_nl else "") + "\n"
         )
 
 
