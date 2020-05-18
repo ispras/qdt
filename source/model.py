@@ -219,7 +219,7 @@ class ChunkGenerator(object):
                     else:
                         chunks = origin.get_definition_chunks(self, **kw)
                 else:
-                    if isinstance(self.stack[-2], Structure):
+                    if isinstance(self.stack[-2], (Structure, Variable)):
                         # structure fields
                         chunks = origin.gen_declaration_chunks(self, **kw)
                     elif (
@@ -1154,7 +1154,7 @@ class TypeReference(Type):
 
 class Structure(Type):
 
-    def __init__(self, name, *fields):
+    def __init__(self, name = None, *fields):
         super(Structure, self).__init__(name = name, incomplete = False)
 
         # A `struct`ure may have a forward declaration: a `typedef` construct
@@ -1177,6 +1177,11 @@ class Structure(Type):
         self.append_fields(fields)
 
     def gen_forward_declaration(self):
+        if not self.is_named:
+            raise RuntimeError("nameless structure cannot have a forward"
+                " declaration"
+            )
+
         decl = Structure(self.name + ".declaration")
         self.declaration = decl
         decl._definition = self
@@ -1194,12 +1199,14 @@ class Structure(Type):
         raise AttributeError(name)
 
     def get_definers(self):
-        if self.definer is None:
-            raise RuntimeError("Getting definers for structure %s that is not"
-                " added to a source", self
-            )
-
-        definers = [self.definer]
+        if self.is_named:
+            if self.definer is None:
+                raise RuntimeError("Getting definers for structure %s that is"
+                    " not added to a source", self
+                )
+            definers = [self.definer]
+        else:
+            definers = []
 
         for f in self.fields.values():
             definers.extend(f.get_definers())
@@ -1283,11 +1290,21 @@ class Structure(Type):
         top_chunk = br
 
         for f in self.fields.values():
-            field_decl = generator.provide_chunks(f, indent = field_indent)[0]
-            field_refs.extend(list(field_decl.references))
-            field_decl.clean_references()
-            field_decl.add_reference(top_chunk)
-            top_chunk = field_decl
+            field_chunks = generator.provide_chunks(f, indent = field_indent)
+            if len(field_chunks) > 1:
+                # believe that we got a list of chunks in the format
+                # [end, begin]
+                field_decl = field_chunks[-1]
+                field_refs.extend(list(field_decl.references))
+                field_decl.clean_references()
+                field_decl.add_reference(top_chunk)
+                top_chunk = field_chunks[0]
+            else:
+                field_decl = field_chunks[0]
+                field_refs.extend(list(field_decl.references))
+                field_decl.clean_references()
+                field_decl.add_reference(top_chunk)
+                top_chunk = field_decl
 
         struct_begin.add_references(field_refs)
 
@@ -1296,6 +1313,9 @@ class Structure(Type):
         struct_end.add_reference(br)
 
     def gen_chunks(self, generator, indent = ""):
+        if not self.is_named:
+            return []
+
         if self._definition is not None:
             return [StructureForwardDeclaration(self, indent)]
 
@@ -1352,6 +1372,12 @@ class Structure(Type):
 
     def __c__(self, writer):
         writer.write(self.c_name)
+
+    def __str__(self):
+        if self.is_named:
+            return super(Structure, self).__str__()
+        else:
+            return "nameless structure"
 
 
 class Enumeration(Type):
@@ -2069,9 +2095,16 @@ class Variable(object):
         extern = False
     ):
         type_ = self.type
-        if (    isinstance(type_, Pointer)
+        if (    isinstance(type_, Structure)
             and not type_.is_named
-            and isinstance(type_.type, Function)
+        ):
+            var_begin = StructureVariableDeclarationBegin(self, indent)
+            var_end = StructureVariableDeclarationEnd(self)
+            type_.gen_fields_chunks(generator, var_begin, var_end, indent)
+            return [var_end, var_begin]
+        elif (    isinstance(type_, Pointer)
+              and not type_.is_named
+              and isinstance(type_.type, Function)
         ):
             ch = FunctionPointerDeclaration(self, indent, extern)
             refs = gen_function_decl_ref_chunks(type_.type, generator)
