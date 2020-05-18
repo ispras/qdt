@@ -1283,11 +1283,15 @@ class Structure(Type):
         top_chunk = br
 
         for f in self.fields.values():
-            field_decl = generator.provide_chunks(f, indent = field_indent)[0]
+            field_chunks = generator.provide_chunks(f, indent = field_indent)
+            # believe that we got a list of chunks in the format
+            # [end, ..., begin] or [single_chunk] and the last (begin) chunk
+            # accumulates all outer references of the chunk subtree
+
+            field_decl = field_chunks[-1]
             field_refs.extend(list(field_decl.references))
-            field_decl.clean_references()
             field_decl.add_reference(top_chunk)
-            top_chunk = field_decl
+            top_chunk = field_chunks[0]
 
         struct_begin.add_references(field_refs)
 
