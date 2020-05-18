@@ -2499,11 +2499,7 @@ class VariableDeclaration(SourceChunk):
 class VariableDefinition(SourceChunk):
     weight = 5
 
-    def __init__(self, var,
-        indent = "",
-        append_nl = True,
-        separ = ";"
-    ):
+    def __init__(self, var, indent = "", append_nl = True, separ = ";"):
         super(VariableDefinition, self).__init__(var,
             "Variable %s of type %s definition" % (var, var.type),
             """\
@@ -2551,10 +2547,7 @@ class StructureTypedefDeclarationBegin(SourceChunk):
 class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct,
-        indent = "",
-        append_nl = True
-    ):
+    def __init__(self, struct, indent = "", append_nl = True):
         super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
             """\
@@ -2584,10 +2577,7 @@ class StructureDeclarationBegin(SourceChunk):
 class StructureDeclarationEnd(SourceChunk):
     weight = 2
 
-    def __init__(self, struct,
-        indent = "",
-        append_nl = True
-    ):
+    def __init__(self, struct, indent = "", append_nl = True):
         super(StructureDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
             """\
@@ -2631,10 +2621,7 @@ class EnumerationDeclarationEnd(SourceChunk):
 
 class EnumerationElementDeclaration(SourceChunk):
 
-    def __init__(self, elem,
-        indent = "",
-        separ = ","
-    ):
+    def __init__(self, elem, indent = "", separ = ","):
         super(EnumerationElementDeclaration, self).__init__(elem,
             "Enumeration element %s declaration" % elem,
             """\
