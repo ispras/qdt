@@ -222,10 +222,7 @@ class SettingsWindow(GUIToplevel):
             sticky = "S"
         )
 
-        # Makes settings window always on top.
-        # Is there more pythonic interface?
-        # http://effbot.org/tkinterbook/wm.htm#Tkinter.Wm.attributes-method
-        self.attributes("-topmost", 1)
+        self.topmost = True
 
         self.bind("<Escape>", self.on_escape, "+")
 
