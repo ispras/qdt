@@ -23,7 +23,7 @@ class HistoryWindow(GUIToplevel):
 
         self.guipht = gui_project_history_tracker
 
-        self.attributes("-topmost", 1)
+        self.topmost = True
 
         self.title(_("Editing History"))
 
