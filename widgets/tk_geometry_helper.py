@@ -3,6 +3,7 @@ __all__ = [
   , "tokenize_tk_geometry"
   , "parse_tk_geometry"
   , "apply_tk_geometry"
+  , "centrify_tk_window"
   , "TkGeometryHelper"
 ]
 
@@ -34,6 +35,17 @@ def apply_tk_geometry(window, width = None, height = None, x = None, y = None):
         cur_y = y
     window.geometry("%sx%s+%s+%s" % (cur_width, cur_height, cur_x, cur_y))
 
+
+def centrify_tk_window(static, moved):
+    w, h, x, y = parse_tk_geometry(static.geometry())
+    midx = x + w // 2
+    midy = y + h // 2
+
+    w, h = parse_tk_geometry(moved.geometry())[:2]
+    x = midx - w // 2
+    y = midy - h // 2
+
+    apply_tk_geometry(moved, x = x, y = y)
 
 
 class TkGeometryHelper(): # Tk classes are not `object`s: don't change it
