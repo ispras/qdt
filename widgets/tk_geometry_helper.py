@@ -23,7 +23,7 @@ def parse_tk_geometry(geom_str):
 
 # Note, the method is guaranteed to accept 1-4 positional arguments too.
 def apply_tk_geometry(window, width = None, height = None, x = None, y = None):
-    cur_width, cur_height, cur_x, cur_y = window.get_geometry()
+    cur_width, cur_height, cur_x, cur_y = parse_tk_geometry(window.geometry())
     if width is not None:
         cur_width = width
     if height is not None:
