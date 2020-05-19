@@ -12,7 +12,7 @@ from re import (
 )
 
 
-re_geometry = compile("(\d+)x(\d+)\+(\d+)\+(\d+)")
+re_geometry = compile("(\d+)x(\d+)\+(-?\d+)\+(-?\d+)")
 
 
 def tokenize_tk_geometry(geom_str):
