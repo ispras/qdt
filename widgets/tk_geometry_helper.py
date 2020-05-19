@@ -60,3 +60,12 @@ class TkGeometryHelper(): # Tk classes are not `object`s: don't change it
     # Note, the method is guaranteed to accept 1-4 positional arguments too.
     def set_geometry(self, width = None, height = None, x = None, y = None):
         apply_tk_geometry(self, width, height, x, y)
+
+    def set_geometry_delayed(self, *a, **kw):
+        """ Just after creation a window has geometry 1x1+0+0. I.e. it has not
+been configured by a system window manager yet (which normally displaces the
+window in a "smart" way). Hence, to set only width and/or height keeping
+the displacement, a delay is required.
+        """
+        delay = kw.pop("delay", 100)
+        self.after(delay, lambda: self.set_geometry(*a, **kw))
