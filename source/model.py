@@ -14,6 +14,8 @@ __all__ = [
       , "Enumeration"
       , "EnumerationElement"
       , "OpaqueCode"
+        , "TypeAlias"
+        , "TopComment"
   , "Initializer"
   , "Variable"
   , "SourceChunk"
@@ -30,6 +32,8 @@ __all__ = [
       , "StructureDeclarationEnd"
       , "StructureTypedefDeclarationBegin"
       , "StructureTypedefDeclarationEnd"
+      , "StructureVariableDeclarationBegin"
+      , "StructureVariableDeclarationEnd"
       , "FunctionDeclaration"
       , "FunctionDefinition"
       , "EnumerationDeclarationBegin"
@@ -122,6 +126,10 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 # "qemu/osdep.h".
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
 
+# Add a new line after the opening curly bracket in the structure without
+# fields
+ADD_NL_IN_EMPTY_STRUCTURE = ee("QDT_ADD_NL_IN_EMPTY_STRUCTURE", "False")
+
 
 # Used for sys.stdout recovery
 sys_stdout_recovery = sys.stdout
@@ -211,7 +219,7 @@ class ChunkGenerator(object):
                     else:
                         chunks = origin.get_definition_chunks(self, **kw)
                 else:
-                    if isinstance(self.stack[-2], Structure):
+                    if isinstance(self.stack[-2], (Structure, Variable)):
                         # structure fields
                         chunks = origin.gen_declaration_chunks(self, **kw)
                     elif (
@@ -846,10 +854,12 @@ class Header(Source):
         return Header.reg[tpath]
 
     def __str__(self):
+        # Always use UNIX path separator
+        path = "/".join(path2tuple(self.path))
         if self.is_global:
-            return "<%s>" % self.path
+            return "<%s>" % path
         else:
-            return '"%s"' % self.path
+            return '"%s"' % path
 
     def _add_type_recursive(self, type_ref):
         if type_ref.type.definer == self:
@@ -1144,7 +1154,7 @@ class TypeReference(Type):
 
 class Structure(Type):
 
-    def __init__(self, name, *fields):
+    def __init__(self, name = None, *fields):
         super(Structure, self).__init__(name = name, incomplete = False)
 
         # A `struct`ure may have a forward declaration: a `typedef` construct
@@ -1167,6 +1177,11 @@ class Structure(Type):
         self.append_fields(fields)
 
     def gen_forward_declaration(self):
+        if not self.is_named:
+            raise RuntimeError(
+                "nameless structure cannot have a forward declaration"
+            )
+
         decl = Structure(self.name + ".declaration")
         self.declaration = decl
         decl._definition = self
@@ -1184,12 +1199,14 @@ class Structure(Type):
         raise AttributeError(name)
 
     def get_definers(self):
-        if self.definer is None:
-            raise RuntimeError("Getting definers for structure %s that is not"
-                " added to a source", self
-            )
-
-        definers = [self.definer]
+        if self.is_named:
+            if self.definer is None:
+                raise RuntimeError("Getting definers for structure %s that is"
+                    " not added to a source" % self
+                )
+            definers = [self.definer]
+        else:
+            definers = []
 
         for f in self.fields.values():
             definers.extend(f.get_definers())
@@ -1226,23 +1243,11 @@ class Structure(Type):
     def append_field_t_s(self, type_name, name, pointer = False):
         self.append_field_t(Type[type_name], name, pointer)
 
-    def gen_chunks(self, generator):
-        fields_indent = "    "
+    def gen_fields_chunks(self, generator, struct_begin, struct_end,
         indent = ""
-
-        if self._definition is not None:
-            return [StructureForwardDeclaration(self, indent)]
-
-        if self.declaration is None:
-            struct_begin = StructureTypedefDeclarationBegin(self, indent)
-            struct_end = StructureTypedefDeclarationEnd(self,
-                indent, True
-            )
-        else:
-            struct_begin = StructureDeclarationBegin(self, indent)
-            struct_end = StructureDeclarationEnd(self,
-                indent, True
-            )
+    ):
+        fields_indent = "    "
+        need_nl = ADD_NL_IN_EMPTY_STRUCTURE or bool(self.fields)
 
         """
         References map of structure definition chunks:
@@ -1253,6 +1258,9 @@ class Structure(Type):
             |    |    /
             |    |   |
            struct_begin
+                ^
+                |
+          opening bracket
                 ^
                 |
              field_0
@@ -1267,23 +1275,56 @@ class Structure(Type):
              field_N
                 ^
                 |
+          closing bracket
+                ^
+                |
             struct_end
 
         """
 
         field_indent = indent + fields_indent
         field_refs = []
-        top_chunk = struct_begin
+
+        br = StructureOpeningBracket(self, need_nl)
+        br.add_reference(struct_begin)
+        top_chunk = br
 
         for f in self.fields.values():
-            field_decl = generator.provide_chunks(f, indent = field_indent)[0]
+            field_chunks = generator.provide_chunks(f, indent = field_indent)
+            # believe that we got a list of chunks in the format
+            # [end, ..., begin] or [single_chunk] and the last (begin) chunk
+            # accumulates all outer references of the chunk subtree
+
+            field_decl = field_chunks[-1]
             field_refs.extend(list(field_decl.references))
             field_decl.clean_references()
             field_decl.add_reference(top_chunk)
-            top_chunk = field_decl
+            top_chunk = field_chunks[0]
 
         struct_begin.add_references(field_refs)
-        struct_end.add_reference(top_chunk)
+
+        br = StructureClosingBracket(self, indent if need_nl else "")
+        br.add_reference(top_chunk)
+        struct_end.add_reference(br)
+
+    def gen_chunks(self, generator, indent = ""):
+        if not self.is_named:
+            raise AssertionError("chunks for a nameless structure are "
+                "generated by the variable having that structure immediately "
+                "in its declaration"
+            )
+
+        if self._definition is not None:
+            return [StructureForwardDeclaration(self, indent)]
+
+        if self.declaration is None:
+            struct_begin = StructureTypedefDeclarationBegin(self, indent)
+            struct_end = StructureTypedefDeclarationEnd(self)
+        else:
+            struct_begin = StructureDeclarationBegin(self, indent)
+            struct_end = StructureDeclarationEnd(self)
+
+        self.gen_fields_chunks(generator, struct_begin, struct_end, indent)
 
         return [struct_end, struct_begin]
 
@@ -1329,6 +1370,12 @@ class Structure(Type):
 
     def __c__(self, writer):
         writer.write(self.c_name)
+
+    def __str__(self):
+        if self.is_named:
+            return super(Structure, self).__str__()
+        else:
+            return "nameless structure"
 
 
 class Enumeration(Type):
@@ -1660,10 +1707,10 @@ class Pointer(Type):
         else:
             ch = PointerTypeDeclaration(type, name)
 
-        """ 'typedef' does not require refererenced types to be visible.
+        """ 'typedef' does not require referenced types to be visible.
 Hence, it is not correct to add references to the PointerTypeDeclaration
 chunk. The references is to be added to `users` of the 'typedef'.
-    """
+        """
         ch.add_references(refs)
 
         return [ch]
@@ -1863,8 +1910,8 @@ model yet. Better implement required functionality and submit patches!
 
     _name_num = count()
 
-    def gen_chunks(self, generator):
-        ch = OpaqueChunk(self)
+    def gen_chunks(self, generator, indent = ""):
+        ch = OpaqueChunk(self, indent)
 
         for item in self.used:
             ch.add_references(generator.provide_chunks(item))
@@ -1872,6 +1919,32 @@ model yet. Better implement required functionality and submit patches!
         return [ch]
 
     __type_references__ = ["used"]
+
+
+class TypeAlias(OpaqueCode):
+
+    def __init__(self, _type, name):
+        super(TypeAlias, self).__init__(
+            "typedef@b" + _type.declaration_string + name + ";\n",
+            name = name,
+            used_types = [_type]
+        )
+
+
+class TopComment(OpaqueCode):
+    "Use this to insert top level and structure field comments."
+
+    def __init__(self, text,
+        used_types = None,
+        used_variables = None,
+        weight = None
+    ):
+        super(TopComment, self).__init__(
+            "/*@s" + text.replace(" ", "@s") + "@s*/\n",
+            used_types = used_types,
+            used_variables = used_variables,
+            weight = weight
+        )
 
 
 # Data models
@@ -2011,14 +2084,25 @@ class Variable(object):
             array_decl = gen_array_declaration(self.array_size)
         )
 
+    def gen_callback(self, *args, **kw):
+        "Generate a function suitable for that function pointer"
+        return self.type.type.use_as_prototype(*args, **kw)
+
     def gen_declaration_chunks(self, generator,
         indent = "",
         extern = False
     ):
         type_ = self.type
-        if (    isinstance(type_, Pointer)
+        if (    isinstance(type_, Structure)
             and not type_.is_named
-            and isinstance(type_.type, Function)
+        ):
+            var_begin = StructureVariableDeclarationBegin(self, indent)
+            var_end = StructureVariableDeclarationEnd(self)
+            type_.gen_fields_chunks(generator, var_begin, var_end, indent)
+            return [var_end, var_begin]
+        elif (    isinstance(type_, Pointer)
+              and not type_.is_named
+              and isinstance(type_.type, Function)
         ):
             ch = FunctionPointerDeclaration(self, indent, extern)
             refs = gen_function_decl_ref_chunks(type_.type, generator)
@@ -2240,14 +2324,13 @@ class SourceChunk(object):
         last_line = len(lines) - 1
 
         for idx1, line in enumerate(lines):
-            if idx1 == last_line and len(line) == 0:
-                break;
-
             clear_line = re_clr.sub("\\1", re_anc.sub("\\1", re_can.sub("\\1",
                          re_nbs.sub("\\1 ", re_nss.sub("\\1 ", line)))))
 
             if len(clear_line) <= max_cols:
-                code += clear_line + '\n'
+                code += clear_line
+                if idx1 != last_line:
+                    code += '\n'
                 continue
 
             line_no_indent_len = len(line) - len(line.lstrip(' '))
@@ -2330,7 +2413,8 @@ after this word.
                 tmp_indent = " " * indents[-1] if indents else ""
                 slash = True
 
-            code += '\n'
+            if idx1 != last_line:
+                code += '\n'
 
         self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
 
@@ -2353,7 +2437,7 @@ class HeaderInclusion(SourceChunk):
 
     def __init__(self, header):
         super(HeaderInclusion, self).__init__(header,
-            "Header %s inclusion" % header.path,
+            "Header %s inclusion" % header,
             "",
             references = []
         )
@@ -2420,7 +2504,7 @@ class MacroDefinition(SourceChunk):
 
         super(MacroDefinition, self).__init__(macro,
             "Definition of macro %s" % macro,
-            "%s#define %s%s%s" % (
+            "%s#define %s%s%s\n" % (
                 indent,
                 macro.c_name,
                 args_txt,
@@ -2458,10 +2542,12 @@ class FunctionPointerTypeDeclaration(SourceChunk):
 
 class MacroTypeChunk(SourceChunk):
 
-    def __init__(self, _type, indent):
+    def __init__(self, _type, indent = ""):
         super(MacroTypeChunk, self).__init__(_type,
             "Usage of type %s" % _type,
-            code = indent + _type.macro.gen_usage_string(_type.initializer)
+            code = (indent + _type.macro.gen_usage_string(_type.initializer)
+                + "\n"
+            )
         )
 
 
@@ -2538,14 +2624,31 @@ class StructureForwardDeclaration(SourceChunk):
         )
 
 
+class StructureOpeningBracket(SourceChunk):
+
+    def __init__(self, struct, append_nl = True):
+        super(StructureOpeningBracket, self).__init__(struct,
+            "Opening bracket of structure %s declaration" % struct,
+            "@b{" + ("\n" if append_nl else "")
+        )
+
+
+class StructureClosingBracket(SourceChunk):
+
+    def __init__(self, struct, indent = ""):
+        super(StructureClosingBracket, self).__init__(struct,
+            "Closing bracket of structure %s declaration" % struct,
+            indent + "}"
+        )
+
+
 class StructureTypedefDeclarationBegin(SourceChunk):
 
-    def __init__(self, struct, indent):
+    def __init__(self, struct, indent = ""):
         super(StructureTypedefDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
-{indent}typedef@bstruct@b{struct_name}@b{{
-""".format(
+{indent}typedef@bstruct@b{struct_name}""".format(
     indent = indent,
     struct_name = struct.c_name
             )
@@ -2556,15 +2659,13 @@ class StructureTypedefDeclarationEnd(SourceChunk):
     weight = 2
 
     def __init__(self, struct,
-        indent = "",
         append_nl = True
     ):
         super(StructureTypedefDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
             """\
-{indent}}}@b{struct_name};{nl}
+@b{struct_name};{nl}
 """.format(
-    indent = indent,
     struct_name = struct.c_name,
     nl = "\n" if append_nl else ""
             )
@@ -2573,14 +2674,13 @@ class StructureTypedefDeclarationEnd(SourceChunk):
 
 class StructureDeclarationBegin(SourceChunk):
 
-    def __init__(self, struct, indent):
+    def __init__(self, struct, indent = ""):
         super(StructureDeclarationBegin, self).__init__(struct,
             "Beginning of structure %s declaration" % struct,
             """\
-{indent}struct@b{struct_name}@b{{
-""".format(
+{indent}struct{struct_name}""".format(
     indent = indent,
-    struct_name = struct.c_name
+    struct_name = ("@b" + struct.c_name) if struct.is_named else ""
             )
         )
 
@@ -2589,15 +2689,32 @@ class StructureDeclarationEnd(SourceChunk):
     weight = 2
 
     def __init__(self, struct,
-        indent = "",
         append_nl = True
     ):
         super(StructureDeclarationEnd, self).__init__(struct,
             "Ending of structure %s declaration" % struct,
+            ";" + ("\n" if append_nl else "") + "\n"
+        )
+
+
+class StructureVariableDeclarationBegin(SourceChunk):
+
+    def __init__(self, var, indent = ""):
+        super(StructureVariableDeclarationBegin, self).__init__(var,
+            "Beginning of nameless structure variable %s declaration" % var,
+            indent + "struct"
+        )
+
+
+class StructureVariableDeclarationEnd(SourceChunk):
+    weight = 4
+
+    def __init__(self, var, append_nl = True):
+        super(StructureVariableDeclarationEnd, self).__init__(var,
+            "Ending of nameless structure variable %s declaration" % var,
             """\
-{indent}}};{nl}
-""".format(
-    indent = indent,
+@b{name};{nl}""".format(
+    name = var.name,
     nl = "\n" if append_nl else ""
             )
         )
@@ -2724,7 +2841,7 @@ class FunctionDeclaration(SourceChunk):
     def __init__(self, function, indent = ""):
         super(FunctionDeclaration, self).__init__(function,
             "Declaration of function %s" % function,
-            "%s;" % gen_function_declaration_string(indent, function)
+            "%s;\n" % gen_function_declaration_string(indent, function)
         )
 
 
@@ -2747,10 +2864,12 @@ class FunctionDefinition(SourceChunk):
 
 class OpaqueChunk(SourceChunk):
 
-    def __init__(self, origin):
+    def __init__(self, origin, indent = ""):
         name = "Opaque code named %s" % origin
 
-        super(OpaqueChunk, self).__init__(origin, name, str(origin.code))
+        super(OpaqueChunk, self).__init__(origin, name,
+            indent + str(origin.code)
+        )
 
         # Ordering weight can be overwritten.
         if origin.weight is not None:

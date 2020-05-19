@@ -6,6 +6,15 @@ from hashlib import (
     md5
 )
 from source import (
+    BodyTree,
+    OpAssign,
+    OpDeclareAssign,
+    OpSDeref,
+    NewLine,
+    MCall,
+    Call,
+    OpAddr,
+    Declare,
     Initializer,
     add_base_types,
     Pointer,
@@ -291,8 +300,15 @@ def define_only_qemu_2_6_0_types():
         ])
 
     Header["hw/boards.h"].add_types([
-        Structure("MachineClass"),
-        Structure("MachineState")
+        Structure("MachineState"),
+        Structure("MachineClass",
+            # These are required fields only
+            Pointer(Type["char"])("name"),
+            Pointer(Type["const char"])("desc"),
+            Function(
+                args = [ Pointer(Type["MachineState"])("machine") ]
+            )("init")
+        )
     ]).add_reference(osdep_fake_type)
 
     pio_t = Type["pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"]
@@ -651,32 +667,42 @@ def define_msi_init_2_6_0():
 
 def machine_register_2_5(mach):
     # machine class definition function
-    mach.class_init = Function(
+    class_init = Function(
         name = "machine_%s_class_init" % mach.qtn.for_id_name,
         static = True,
         ret_type = Type["void"],
         args = [
             Pointer(Type["ObjectClass"])("oc"),
             Pointer(Type["void"])("opaque")
-        ],
-        body = """\
-    MachineClass *mc = MACHINE_CLASS(oc);
-
-    mc->name = \"{type_name}\";
-    mc->desc = \"{desc}\";
-    mc->init = {instance_init};
-""".format(
-    type_name = mach.qtn.for_id_name,
-    desc = mach.desc,
-    instance_init = mach.instance_init.name
-        ),
-        used_types = [
-            Type["MachineClass"],
-            Type["MACHINE_CLASS"],
-            mach.instance_init
         ]
     )
-    mach.source.add_type(mach.class_init)
+    mc = Pointer(Type["MachineClass"])("mc")
+    class_init.body = BodyTree()(
+        Declare(
+            OpDeclareAssign(
+                mc,
+                MCall(
+                   "MACHINE_CLASS",
+                    class_init.args[0]
+                )
+            )
+        ),
+        NewLine(),
+        OpAssign(
+            OpSDeref(mc, "name"),
+            mach.qtn.for_id_name
+        ),
+        OpAssign(
+            OpSDeref(mc, "desc"),
+            mach.desc
+        ),
+        OpAssign(
+            OpSDeref(mc, "init"),
+            mach.instance_init
+        )
+    )
+    mach.class_init = class_init
+    mach.source.add_type(class_init)
 
     # machine type definition structure
     type_machine_macro = Type["TYPE_MACHINE"]
@@ -700,12 +726,13 @@ def machine_register_2_5(mach):
     # machine type registration function
     mach.type_reg_func = Function(
         name = "machine_init_%s" % mach.qtn.for_id_name,
-        body = """\
-    type_register(&{type_info});
-""".format(type_info = mach.type_info.name),
-        static = True,
-        used_types = [Type["type_register"]],
-        used_globals = [mach.type_info]
+        body = BodyTree()(
+            Call(
+                "type_register",
+                OpAddr(mach.type_info)
+            )
+        ),
+        static = True
     )
     mach.source.add_type(mach.type_reg_func)
 
@@ -720,30 +747,38 @@ def machine_register_2_5(mach):
 
 def machine_register_2_6(mach):
     # machine class definition function
-    mach.class_init = Function(
+    class_init = Function(
         name = "machine_%s_class_init" % mach.qtn.for_id_name,
         static = True,
         ret_type = Type["void"],
         args = [
             Pointer(Type["ObjectClass"])("oc"),
             Pointer(Type["void"])("opaque")
-        ],
-        body = """\
-    MachineClass *mc = MACHINE_CLASS(oc);
-
-    mc->desc = \"{desc}\";
-    mc->init = {instance_init};
-""".format(
-    desc = mach.desc,
-    instance_init = mach.instance_init.name
-        ),
-        used_types = [
-            Type["MachineClass"],
-            Type["MACHINE_CLASS"],
-            mach.instance_init
         ]
     )
-    mach.source.add_type(mach.class_init)
+    mc = Pointer(Type["MachineClass"])("mc")
+    class_init.body = BodyTree()(
+        Declare(
+            OpDeclareAssign(
+                mc,
+                MCall(
+                   "MACHINE_CLASS",
+                    class_init.args[0]
+                )
+            )
+        ),
+        NewLine(),
+        OpAssign(
+            OpSDeref(mc, "desc"),
+            mach.desc
+        ),
+        OpAssign(
+            OpSDeref(mc, "init"),
+            mach.instance_init
+        )
+    )
+    mach.class_init = class_init
+    mach.source.add_type(class_init)
 
     # machine type definition structure
     type_machine_macro = Type["TYPE_MACHINE"]
