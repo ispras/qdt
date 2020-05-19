@@ -1,6 +1,7 @@
 __all__ = [
     "re_geometry"
   , "tokenize_tk_geometry"
+  , "apply_tk_geometry"
   , "TkGeometryHelper"
 ]
 
@@ -16,6 +17,20 @@ def tokenize_tk_geometry(geom_str):
     mi = re_geometry.match(geom_str)
     return mi.groups()
 
+# Note, the method is guaranteed to accept 1-4 positional arguments too.
+def apply_tk_geometry(window, width = None, height = None, x = None, y = None):
+    cur_width, cur_height, cur_x, cur_y = window.get_geometry()
+    if width is not None:
+        cur_width = width
+    if height is not None:
+        cur_height = height
+    if x is not None:
+        cur_x = x
+    if y is not None:
+        cur_y = y
+    window.geometry("%sx%s+%s+%s" % (cur_width, cur_height, cur_x, cur_y))
+
+
 
 class TkGeometryHelper(): # Tk classes are not `object`s: don't change it
     "Inheritance extension for a Tk subclass"
@@ -28,13 +43,4 @@ class TkGeometryHelper(): # Tk classes are not `object`s: don't change it
 
     # Note, the method is guaranteed to accept 1-4 positional arguments too.
     def set_geometry(self, width = None, height = None, x = None, y = None):
-        cur_width, cur_height, cur_x, cur_y = self.get_geometry()
-        if width is not None:
-            cur_width = width
-        if height is not None:
-            cur_height = height
-        if x is not None:
-            cur_x = x
-        if y is not None:
-            cur_y = y
-        self.geometry("%sx%s+%s+%s" % (cur_width, cur_height, cur_x, cur_y))
+        apply_tk_geometry(self, width, height, x, y)
