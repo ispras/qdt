@@ -96,7 +96,7 @@ def main():
     w.file_name = args.file_name
 
     with QDTTextViewSettings() as settings:
-        w.set_geometry(*settings.geometry)
+        w.set_geometry_delayed(*settings.geometry)
 
         w.mainloop()
 
