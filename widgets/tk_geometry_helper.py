@@ -1,5 +1,6 @@
 __all__ = [
     "re_geometry"
+  , "tokenize_tk_geometry"
   , "TkGeometryHelper"
 ]
 
@@ -11,6 +12,11 @@ from re import (
 re_geometry = compile("(\d+)x(\d+)\+(\d+)\+(\d+)")
 
 
+def tokenize_tk_geometry(geom_str):
+    mi = re_geometry.match(geom_str)
+    return mi.groups()
+
+
 class TkGeometryHelper(): # Tk classes are not `object`s: don't change it
     "Inheritance extension for a Tk subclass"
 
@@ -18,8 +24,7 @@ class TkGeometryHelper(): # Tk classes are not `object`s: don't change it
         return tuple(map(int, self.get_geometry()))
 
     def get_geometry(self):
-        mi = re_geometry.match(self.geometry())
-        return mi.groups()
+        return tokenize_tk_geometry(self.geometry())
 
     # Note, the method is guaranteed to accept 1-4 positional arguments too.
     def set_geometry(self, width = None, height = None, x = None, y = None):
