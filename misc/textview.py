@@ -2,6 +2,7 @@ from argparse import (
     ArgumentParser,
 )
 from common import (
+    UserSettings,
     ee,
     LineNoStream,
     mlget as _,
@@ -18,6 +19,19 @@ from six.moves.tkinter_ttk import (
 
 DEBUG = ee("DEBUG_TEXTVIEW", "False")
 DEBUG_STREAM_SIZE = 100001
+
+
+class QDTTextViewSettings(UserSettings):
+
+    _suffix = ".qdt_textview_settings.py"
+
+    def __init__(self):
+        super(QDTTextViewSettings, self).__init__(
+            glob = globals(),
+            version = 0.1,
+            # default values
+            geometry = (600, 800),
+        )
 
 
 class TextViewerWindow(GUITk, object):
@@ -80,7 +94,14 @@ def main():
 
     w = TextViewerWindow()
     w.file_name = args.file_name
-    w.mainloop()
+
+    with QDTTextViewSettings() as settings:
+        w.set_geometry(*settings.geometry)
+
+        w.mainloop()
+
+        # only save width and height
+        settings.geometry = w.last_geometry[:2]
 
 
 if __name__ == "__main__":
