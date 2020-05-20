@@ -324,6 +324,7 @@ class QEMULog(object):
                 instr = TraceInstr(instr, t)
 
                 tb = instr.tb
+                tb_cache_version = self.tbIdMap[tb][1]
 
                 # chain loop detection
                 visitedTb = set([tb])
@@ -336,7 +337,12 @@ class QEMULog(object):
 
                     addr += instr.size
 
-                    nextInstr = self.lookInstr(addr, t.cacheVersion)
+                    # A TB can be overlapped but still alive.
+                    # The TB cannot jump to overlapping TB until end.
+                    # So, we must use cache version of the TB to lookup next
+                    # instruction of current TB instead of instruction copy
+                    # from overlapping TB.
+                    nextInstr = self.lookInstr(addr, tb_cache_version)
 
                     nextTB = False
 
@@ -369,8 +375,8 @@ class QEMULog(object):
 
                         tb = nextTbIdx
 
-                        addr = self.tbIdMap[tb][0]
-                        nextInstr = self.lookInstr(addr, t.cacheVersion)
+                        addr, tb_cache_version = self.tbIdMap[tb]
+                        nextInstr = self.lookInstr(addr, tb_cache_version)
 
                         if nextInstr is None:
                             break
