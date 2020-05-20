@@ -596,11 +596,15 @@ class QLVWindow(GUITk):
             except IndexError:
                 continue
 
-            trace_text.insert(END, qlogs[qlog_idx].file_name + "\n",
-                STYLE_FILE
-            )
+            file_name = qlogs[qlog_idx].file_name
 
             trace = i.trace
+            if trace is None:
+                file_pos = file_name + "\n"
+            else:
+                file_pos = "%s:%d\n" % (file_name, trace.lineno)
+
+            trace_text.insert(END, file_pos, STYLE_FILE)
 
             if trace is None:
                 trace_text.insert(END, _("No CPU data").get() + "\n",
