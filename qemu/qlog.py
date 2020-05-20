@@ -403,6 +403,9 @@ class QEMULog(object):
 
         tb = next(self.tbCounter)
 
+        # cache reference
+        commit_instr = self.commit_instr
+
         prev_instr = None
         for l in in_asm:
             try:
@@ -415,19 +418,35 @@ class QEMULog(object):
             instr.tb = tb
 
             if prev_instr is None:
-                self.current_cache.tbMap[instr.addr] = tb
-                self.tbIdMap[tb] = (instr.addr, len(self.in_asm))
                 instr.first = True
-
-            if prev_instr:
+            else:
                 prev_instr.size = instr.addr - prev_instr.addr
+                commit_instr(prev_instr, tb)
 
             prev_instr = instr
 
-            if self.current_cache.overlaps(instr.addr, instr.size):
-                self.cache_overwritten()
+        if prev_instr is None:
+            # All instructions are bad or in_asm is empty?
+            return
 
-            self.current_cache.commit(instr)
+        # TODO: evaluate size of last instruction
+        prev_instr.size = 1
+        commit_instr(prev_instr, tb)
+
+    def commit_instr(self, instr, tb):
+        cache = self.current_cache
+        if cache.overlaps(instr.addr, instr.size):
+            self.cache_overwritten()
+            cache = self.current_cache
+
+        if instr.first:
+            self.tbIdMap[tb] = (instr.addr, len(self.in_asm))
+
+            # It looks like, only first byte of an instruction is
+            # really needed to be accounter in tbMap.
+            cache.tbMap[instr.addr] = tb
+
+        cache.commit(instr)
 
     def new_trace(self, trace, lineno):
         if DEBUG < 1:
