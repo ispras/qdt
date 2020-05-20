@@ -178,8 +178,9 @@ re_instruction_counter = compile(".*IC=(\d+).*")
 
 class QTrace(object):
 
-    def __init__(self, lines):
+    def __init__(self, lines, lineno):
         self.header = header = lines[0].rstrip()
+        self.lineno = lineno
 
         l0 = iter(header)
 
@@ -422,12 +423,12 @@ class QEMULog(object):
 
             self.current_cache.commit(instr)
 
-    def new_trace(self, trace):
+    def new_trace(self, trace, lineno):
         if DEBUG < 1:
             print("--- trace")
             print("".join(trace))
 
-        t = QTrace(trace)
+        t = QTrace(trace, lineno)
         t.cacheVersion = len(self.in_asm)
 
         t.prev = self.prevTrace
@@ -512,6 +513,7 @@ class QEMULog(object):
 
             if is_trace(l0):
                 trace = [l0]
+                trace_lineno = lineno
 
                 l1 = yield prev_trace; lineno += 1
                 # We should prev_trace = None here, but it will be
@@ -530,7 +532,7 @@ class QEMULog(object):
                 else:
                     l0 = l1
 
-                prev_trace = self.new_trace(trace)
+                prev_trace = self.new_trace(trace, trace_lineno)
                 continue
 
             if is_linking(l0):
