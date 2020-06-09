@@ -76,7 +76,7 @@ def start_gui(settings):
         repos.append(r)
 
     root = QMGUI(repos)
-    root.geometry(settings.geometry + "+" + root.geometry().split("+", 1)[1])
+    root.set_geometry(*settings.geometry[:2])
     root.mainloop()
     settings.geometry = root.last_geometry
 
