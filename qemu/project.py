@@ -218,6 +218,9 @@ class QProject(object):
                 obj_var_names[desc.directory], config_flags[desc.directory]
             )
 
+    # TODO: add path to `QProject`
+    # TODO: def lookup_path
+
     def replace_relpaths_to_abspaths(self, path):
         for desc in self.descriptions:
             if isinstance(desc, CPUDescription):

@@ -248,6 +248,7 @@ class CPUType(QOMCPU):
         import cpu_imports
         loaded = dict(cpu_imports.__dict__)
         try:
+            # TODO: use `QProject.lookup_path`
             execfile(join(self.info_path), loaded)
         except:
             print_exc()
@@ -823,6 +824,7 @@ class CPUType(QOMCPU):
                 reg_names_arrays.add(add_global_array(reg, reg.name, c))
 
         added = {}
+        # TODO: op_names, (fmt, adapter)
         for n, v in self.name_to_format.items():
             if v[1] is None:
                 continue
