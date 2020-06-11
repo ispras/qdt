@@ -70,17 +70,18 @@ the OS is unknown.
         return self.get_keycode(3, 1)
 
 
-class HKGeneric:
+class HKGeneric(CurrentKeyboard):
 
     def _on_ctrl_key_generic(self, event):
         if event.keycode == 29: # prevent paste on Ctrl + Y
+            # XXX: this workaround for linux only
             self.event_generate("<<Control-Y-Breaked>>")
             return "break"
-        elif event.keycode == 38: # Ctrl-A: select all
+        elif event.keycode == self.SELECT_ALL_KEYCODE:
             self.selection_range(0, END)
             # No more actions may perform
             return "break"
-        elif event.keycode == 55: # Ctrl-V: insert text from buffer
+        elif event.keycode == self.PASTE_KEYCODE: # insert text from buffer
             if self.select_present():
                 # Remove a selected text during insertion. It is equivalent
                 # to replacement of a selected text with the text being
@@ -108,7 +109,7 @@ class HKCombobox(Combobox, HKGeneric):
         self.bind("<Control-Key>", self._on_ctrl_key, "+")
 
     def _on_ctrl_key(self, e):
-        if e.keycode == 54: # Ctrl-C: copy selected
+        if e.keycode == self.COPY_KEYCODE: # copy selected
             if self.select_present():
                 f, l = self.index(SEL_FIRST), self.index(SEL_LAST)
                 text = self.get()[f:l]
