@@ -5,10 +5,12 @@ __all__ = [
   , "HotKeyBinding"
   , "HotKey"
   , "KeyboardSettings"
+  , "CurrentKeyboard"
 ]
 
 # ML should be used there (instead of mlget) because the key will be modified
 from common import (
+    lazy,
     Persistent,
     mlget as _
 )
@@ -28,6 +30,44 @@ from os.path import (
 from os import (
     name as os_name
 )
+
+
+class CurrentKeyboard:
+    "A back-end to implement OS & locale independent keyboard key bindings."
+
+    @lazy
+    def _current_os_keycodes(self):
+        with KeyboardSettings() as kbd:
+            try:
+                codes = kbd.os_codes[os_name]
+            except KeyError:
+                print("No keyboard layout for OS %s, using posix " % os_name)
+                codes = kbd.os_codes["posix"]
+        return codes
+
+    def get_keycode(self, row, column):
+        """ Given key identifier (row & column, see misc/keyboard.py) returns
+code corresponding to Tk <Key> event `keycode` for current OS or posix if
+the OS is unknown.
+        """
+        kid = (float(row), float(column))
+        return self._current_os_keycodes[kid][0]
+
+    # some semantic shortcuts
+    @lazy
+    def COPY_KEYCODE(self):
+        "Latin C"
+        return self.get_keycode(4, 4)
+
+    @lazy
+    def PASTE_KEYCODE(self):
+        "Latin V"
+        return self.get_keycode(4, 5)
+
+    @lazy
+    def SELECT_ALL_KEYCODE(self):
+        "Latin A"
+        return self.get_keycode(3, 1)
 
 
 class HKGeneric:
