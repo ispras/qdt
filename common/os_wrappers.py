@@ -106,7 +106,9 @@ elif OS == "Windows":
     def wrap_wheel_handler(handler):
         def scale(e):
             "<MouseWheel>"
-            e.delta //= -120
+            # This divisor is tested on:
+            # - Windows 7 SP 1 x64
+            e.delta //= 120
             handler(e)
         yield scale
 
