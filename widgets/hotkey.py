@@ -5,10 +5,12 @@ __all__ = [
   , "HotKeyBinding"
   , "HotKey"
   , "KeyboardSettings"
+  , "CurrentKeyboard"
 ]
 
 # ML should be used there (instead of mlget) because the key will be modified
 from common import (
+    lazy,
     Persistent,
     mlget as _
 )
@@ -30,17 +32,56 @@ from os import (
 )
 
 
-class HKGeneric:
+class CurrentKeyboard:
+    "A back-end to implement OS & locale independent keyboard key bindings."
+
+    @lazy
+    def _current_os_keycodes(self):
+        with KeyboardSettings() as kbd:
+            try:
+                codes = kbd.os_codes[os_name]
+            except KeyError:
+                print("No keyboard layout for OS %s, using posix" % os_name)
+                codes = kbd.os_codes["posix"]
+        return codes
+
+    def get_keycode(self, row, column):
+        """ Given key identifier (row & column, see misc/keyboard.py) returns
+code corresponding to Tk <Key> event `keycode` for current OS or posix if
+the OS is unknown.
+        """
+        kid = (float(row), float(column))
+        return self._current_os_keycodes[kid][0]
+
+    # some semantic shortcuts
+    @lazy
+    def COPY_KEYCODE(self):
+        "Latin C"
+        return self.get_keycode(4, 4)
+
+    @lazy
+    def PASTE_KEYCODE(self):
+        "Latin V"
+        return self.get_keycode(4, 5)
+
+    @lazy
+    def SELECT_ALL_KEYCODE(self):
+        "Latin A"
+        return self.get_keycode(3, 1)
+
+
+class HKGeneric(CurrentKeyboard):
 
     def _on_ctrl_key_generic(self, event):
         if event.keycode == 29: # prevent paste on Ctrl + Y
+            # XXX: this workaround for linux only
             self.event_generate("<<Control-Y-Breaked>>")
             return "break"
-        elif event.keycode == 38: # Ctrl-A: select all
+        elif event.keycode == self.SELECT_ALL_KEYCODE:
             self.selection_range(0, END)
             # No more actions may perform
             return "break"
-        elif event.keycode == 55: # Ctrl-V: insert text from buffer
+        elif event.keycode == self.PASTE_KEYCODE: # insert text from buffer
             if self.select_present():
                 # Remove a selected text during insertion. It is equivalent
                 # to replacement of a selected text with the text being
@@ -68,7 +109,7 @@ class HKCombobox(Combobox, HKGeneric):
         self.bind("<Control-Key>", self._on_ctrl_key, "+")
 
     def _on_ctrl_key(self, e):
-        if e.keycode == 54: # Ctrl-C: copy selected
+        if e.keycode == self.COPY_KEYCODE: # copy selected
             if self.select_present():
                 f, l = self.index(SEL_FIRST), self.index(SEL_LAST)
                 text = self.get()[f:l]

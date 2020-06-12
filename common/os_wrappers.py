@@ -6,6 +6,7 @@ __all__ = [
   , "bsep"
   , "cli_repr"
   , "bind_all_mouse_wheel"
+  , "bind_mouse_wheel"
 ]
 
 from os import (
@@ -89,30 +90,43 @@ get a `str`. Other input can be incompatible.
 # https://stackoverflow.com/questions/17355902/python-tkinter-binding-mousewheel-to-scrollbar
 OS = system()
 if OS == "Linux":
-    def bind_all_mouse_wheel(w, handler, add = None):
-
+    def wrap_wheel_handler(handler):
         def scroll_up(e):
+            "<ButtonPress-4>"
             e.delta = 1
             handler(e)
+        yield scroll_up
 
         def scroll_down(e):
+            "<ButtonPress-5>"
             e.delta = -1
             handler(e)
-
-        w.bind_all("<ButtonPress-4>", scroll_up, add = add)
-        w.bind_all("<ButtonPress-5>", scroll_down, add = add)
+        yield scroll_down
 
 elif OS == "Windows":
-    def bind_all_mouse_wheel(w, handler, add = None):
-
+    def wrap_wheel_handler(handler):
         def scale(e):
-            e.delta //= -120
+            "<MouseWheel>"
+            # This divisor is tested on:
+            # - Windows 7 SP 1 x64
+            # - Windows 10 1709 x64
+            e.delta //= 120
             handler(e)
+        yield scale
 
-        w.bind_all("<MouseWheel>", scale, add = add)
 else:
-    def bind_all_mouse_wheel(*_, **__):
-        from sys import ( # required only there
-            stderr
-        )
-        stderr.write("bind_all_mouse_wheel is not implemented for %s\n" % OS)
+    def wrap_wheel_handler(*__):
+        return tuple()
+
+    from sys import ( # required only here
+        stderr
+    )
+    stderr.write("bind_all_mouse_wheel is not implemented for %s\n" % OS)
+
+def bind_all_mouse_wheel(w, handler, add = None):
+    for h in wrap_wheel_handler(handler):
+        w.bind_all(h.__doc__, h, add = add)
+
+def bind_mouse_wheel(w, handler, add = None):
+    for h in wrap_wheel_handler(handler):
+        w.bind(h.__doc__, h, add = add)
