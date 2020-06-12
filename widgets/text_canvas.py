@@ -17,20 +17,24 @@ from common import (
     bind_mouse_wheel,
     LineIndex,
 )
+from .hotkey import (
+    CurrentKeyboard,
+)
 
 
 # TextCanvas states
 class selecting_started: pass
 class selecting: pass
 
-class TextCanvas(Canvas, object):
+class TextCanvas(Canvas, CurrentKeyboard, object):
     "Shows big raw stream with text."
 
     def __init__(self, master, **kw):
         kw.setdefault("background", "white")
         self._xscrollcommand = kw.pop("xscrollcommand", None)
         self._yscrollcommand = kw.pop("yscrollcommand", None)
-        self._encoding = kw.pop("encoding", "unicode_escape")
+        self._encoding = kw.pop("encoding", "utf-8")
+        self._encoding_errors = kw.pop("encoding_errors", "replace")
         stream = kw.pop("stream", None)
 
         Canvas.__init__(self, master, **kw)
@@ -79,6 +83,58 @@ class TextCanvas(Canvas, object):
         self.bind("<ButtonPress-1>", self._on_bt1_press, "+")
         self.bind("<ButtonRelease-1>", self._on_bt1_release, "+")
         self.bind("<Motion>", self._on_motion, "+")
+
+        self.bind("<Control-Key>", self._on_ctrl_key, "+")
+
+    @property
+    def selected_blob(self):
+        start = self._sel_start
+        if start is None:
+            return None
+
+        # cache
+        index = self._index
+        stream = self._stream
+
+        ss_l, ss_c = start
+        sl_l, sl_c = self._sel_limit
+
+        lineidx_at_offset, offset = index.lookup(ss_l)
+        skip_lines = ss_l - lineidx_at_offset
+
+        oter = index.iter_line_offsets(stream, offset = offset)
+        while skip_lines:
+            try:
+                next(oter)
+            except StopIteration:
+                # EOF
+                return b""
+            skip_lines -= 1
+
+        try:
+            first_line_offset = next(oter)
+        except StopIteration:
+            # EOF
+            return b""
+
+        skip_lines = sl_l - ss_l
+
+        first_offset = first_line_offset + ss_c
+        last_offset =  first_line_offset
+
+        while skip_lines:
+            try:
+                last_offset = next(oter)
+            except StopIteration:
+                # EOF
+                stream.seek(first_offset)
+                return stream.read()
+
+            skip_lines -= 1
+
+        last_offset += sl_c
+        stream.seek(first_offset)
+        return stream.read(last_offset - first_offset)
 
     @property
     def stream(self):
@@ -240,7 +296,8 @@ class TextCanvas(Canvas, object):
             # EOF
             pass
 
-        lines = list(blob.decode(self._encoding).splitlines())
+        decoded = blob.decode(self._encoding, errors = self._encoding_errors)
+        lines = list(decoded.splitlines())
 
         # if last line in the stream has new line suffix, show empty new line
         if blob.endswith(b"\r") or blob.endswith(b"\n"):
@@ -541,3 +598,11 @@ class TextCanvas(Canvas, object):
                 self._sel_start = first
                 self._sel_limit = (lineidx, charidx + 1)
             self.draw()
+
+    def _on_ctrl_key(self, e):
+        if e.keycode == self.COPY_KEYCODE: # copy selected
+            blob = self.selected_blob
+            text = blob.decode(self._encoding, errors = self._encoding_errors)
+            self.clipboard_clear()
+            self.clipboard_append(text)
+            return "break"
