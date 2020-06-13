@@ -220,8 +220,15 @@ as fast as possible. A clone is neither honest nor independent, so be careful.
     # However! ".gitmodules" file is considered changed by Git because of that
     # redirection.
 
+    # Note, a `repo` can be a "worktree". Worktree's `repo.working_tree_dir`
+    # contains ".git" file with path to a special directory (it's
+    # `repo.git_dir`) within the main clone repository.
+    # E.g. "/main/clone/path/.git/worktrees/worktree_name/".
+    # The special directory contains modules cache in "modules" directory.
+    # A main clone contains "modules" cache directory in ".git" (which is
+    # `repo.git_dir`).
     init_submodules_from_cache(new_repo,
-        join(repo.working_tree_dir, ".git", "modules")
+        join(repo.git_dir, "modules")
     )
 
     return new_repo
