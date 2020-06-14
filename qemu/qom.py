@@ -650,7 +650,9 @@ class QOMType(object):
             code += ",\n"
 
         # Generate VM state list terminator macro.
-        code += " " * 8 + Type["VMSTATE_END_OF_LIST"].gen_usage_string()
+        vms_macro = Type["VMSTATE_END_OF_LIST"]
+        used_macros.add(vms_macro)
+        code += " " * 8 + vms_macro.gen_usage_string()
 
         code += "\n    }\n}"
 
