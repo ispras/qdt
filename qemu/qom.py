@@ -635,7 +635,7 @@ class QOMType(object):
             except KeyError:
                 raise Exception(
                     "VMState generation for type %s is not implemented" % \
-                        f.type.name
+                        f.type
                 )
 
             if f.num is not None:
