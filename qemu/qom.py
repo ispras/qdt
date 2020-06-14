@@ -621,10 +621,14 @@ class QOMType(object):
             if not f.save:
                 continue
 
-            if f.num is not None:
-                raise Exception(
-                    "VMState field generation for arrays is not supported"
-                )
+            # code of macro initializer is dict
+            fdict = {
+                "_f": f.name,
+                "_s": state_struct.name,
+                # Macros may use different argument names
+                "_field": f.name,
+                "_state": state_struct.name
+            }
 
             try:
                 vms_macro_name = type2vmstate[f.type.c_name]
@@ -634,20 +638,16 @@ class QOMType(object):
                         f.type.name
                 )
 
+            if f.num is not None:
+                vms_macro_name += "_ARRAY"
+                fdict["_n"] = str(f.num)
+
             vms_macro = Type[vms_macro_name]
             used_macros.add(vms_macro)
 
-            init = Initializer(
-                # code of macro initializer is dict
-                {
-                    "_f": f.name,
-                    "_s": state_struct.name,
-                    # Macros may use different argument names
-                    "_field": f.name,
-                    "_state": state_struct.name
-                }
-            )
-            code += " " * 8 + vms_macro.gen_usage_string(init) + ",\n"
+            code += " " * 8 + vms_macro.gen_usage_string(Initializer(fdict))
+
+            code += ",\n"
 
         # Generate VM state list terminator macro.
         code += " " * 8 + Type["VMSTATE_END_OF_LIST"].gen_usage_string()
