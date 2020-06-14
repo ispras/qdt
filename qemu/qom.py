@@ -600,12 +600,18 @@ class QOMType(object):
             array_size = 0
         )
 
-    def gen_vmstate_initializer(self, name, state_struct):
-        code = ("""{
-    .name@b=@s%s,
-    .version_id@b=@s1,
-    .fields@b=@s(VMStateField[])@b{
-""" % name
+    def gen_vmstate_initializer(self, name, state_struct,
+        min_version_id = None
+    ):
+        code = """{{
+    .name@b=@s{name},
+    .version_id@b=@s1,{min_version_id}
+    .fields@b=@s(VMStateField[])@b{{
+""".format(
+    name = name,
+    min_version_id = ("\n    .minimum_version_id@b=@s%d," % min_version_id
+        if min_version_id else ""
+    )
         )
 
         used_macros = set()
