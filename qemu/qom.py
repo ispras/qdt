@@ -600,15 +600,12 @@ class QOMType(object):
             array_size = 0
         )
 
-    def gen_vmstate_initializer(self, state_struct):
-        # TODO: avoid using TYPE macros
-        # https://lists.gnu.org/archive/html/qemu-devel/2018-10/msg02175.html
-        type_macro = Type[self.qtn.type_macro]
+    def gen_vmstate_initializer(self, name, state_struct):
         code = ("""{
     .name@b=@s%s,
     .version_id@b=@s1,
     .fields@b=@s(VMStateField[])@b{
-""" % type_macro.name
+""" % name
         )
 
         used_macros = set()
@@ -654,7 +651,6 @@ class QOMType(object):
         init = Initializer(
             code = code,
             used_types = used_macros.union([
-                type_macro,
                 Type["VMStateField"],
                 state_struct
             ])
@@ -662,11 +658,15 @@ class QOMType(object):
         return init
 
     def gen_vmstate_var(self, state_struct):
+        # avoid using TYPE macros
+        # https://lists.gnu.org/archive/html/qemu-devel/2018-10/msg02175.html
+        # TODO: macro expansion required
+        v_name = Type[self.qtn.type_macro].text
         return Type["VMStateDescription"](
             name = "vmstate_%s" % self.qtn.for_id_name,
             static = True,
             const = True,
-            initializer = self.gen_vmstate_initializer(state_struct)
+            initializer = self.gen_vmstate_initializer(v_name, state_struct)
         )
 
     def gen_instance_init_name(self):
