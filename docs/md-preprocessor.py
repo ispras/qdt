@@ -68,6 +68,27 @@ ABOVE = u"выше".encode("utf-8")
 BELOW = u"ниже".encode("utf-8")
 DOUBLE_QUOTE_LEFT = u"«".encode("utf-8")
 DOUBLE_QUOTE_RIGHT = u"»".encode("utf-8")
+# According to GOST, " is replaced with « or ».
+# The selection is based on char value.
+# « is used between a and b char_value(a) < char_value(b)
+# if char_value(a) == char_value(b), " is not replaced.
+# char_value of start and end of a line is zero.
+def char_value(c):
+    if c == b"":
+        return 0
+    for i, chars in enumerate(CHAR_VALUE):
+        if c in chars:
+            return i
+    return i + 1
+
+CHAR_VALUE = (
+    # spaces are not words, lowest value
+    b" \r\n\t\f\v",
+    # punctuation and other special symbols has average value
+    b"`~!@#$%^&*()-_=+\\|[{]};:'\",<.>/?",
+    # absent charaters are considered alphabet characters, highest value
+)
+
 
 if __name__ == "__main__":
     ap = ArgumentParser()
@@ -474,7 +495,6 @@ if __name__ == "__main__":
         for idx, l in enumerate(list(lines)):
             code = False
             tag = False
-            new_word = True
 
             if l.startswith(b"```"):
                 code_block = not code_block
@@ -494,12 +514,17 @@ if __name__ == "__main__":
                     elif c == b">":
                         tag = False
                 if (not (code or tag)) and c == b'"':
-                    if new_word:
-                        c = DOUBLE_QUOTE_LEFT
-                    else:
-                        c = DOUBLE_QUOTE_RIGHT
+                    prev_c = l[i-1:i]
+                    next_c = l[i+1:i+2]
 
-                new_word = (c == b" ")
+                    prev_v, next_v = map(char_value, (prev_c, next_c))
+
+                    if prev_v < next_v:
+                        c = DOUBLE_QUOTE_LEFT
+                    elif prev_v > next_v:
+                        c = DOUBLE_QUOTE_RIGHT
+                    # else:
+                    #   do not replace
 
                 new_line = new_line + c
 
