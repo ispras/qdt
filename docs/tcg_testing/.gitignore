@@ -1,3 +1,5 @@
 *.docx
 !ref.docx
 *.pmd
+approach.png
+system.png
