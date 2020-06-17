@@ -651,6 +651,11 @@ def main():
         action = "store_true",
         help = "increase output verbosity"
     )
+    parser.add_argument("-q", "--qemu",
+        nargs = "?",
+        metavar = "executable",
+        help = "ignore the option in config"
+    )
 
     args = parser.parse_args()
 
@@ -696,6 +701,9 @@ def main():
             )
 
     verify_config_components(config)
+
+    if args.qemu:
+        c2t_cfg.qemu.run.executable = args.qemu
 
     incl, regexp, tests = args.regexps.find_files(C2T_TEST_DIR)
     if not tests:
