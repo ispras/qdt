@@ -24,10 +24,13 @@ C2TConfig = namedtuple(
     "C2TConfig",
     "rsp_target qemu gdbserver target_compiler oracle_compiler"
 )
-Run = namedtuple(
-    "Run",
-    "executable args"
-)
+
+
+class Run(object):
+
+    def __init__(self, executable, args):
+        self.executable = executable
+        self.args = args
 
 
 def get_new_rsp(regs, pc, regsize, little_endian = True):
@@ -69,7 +72,8 @@ class DebugServer(object):
 
     @property
     def run_script(self):
-        return ' '.join(self.run)
+        run = self.run
+        return run.executable + " " + run.args
 
 
 class TestBuilder(tuple):
@@ -81,4 +85,4 @@ class TestBuilder(tuple):
     @property
     def run_script(self):
         for run in self:
-            yield ' '.join(run)
+            yield run.executable + " " + run.args
