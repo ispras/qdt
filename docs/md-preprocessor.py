@@ -30,7 +30,7 @@ class PatchInfo(PosInfo):
 
         self.name = self.m.group("name")
         try:
-            self.type, self.tag = self.name.split(".")
+            self.type, self.tag = self.name.split(b".")
         except:
             self.tag = self.name
             self.type = None
@@ -64,11 +64,42 @@ class RefInfo(PatchInfo):
 
         self.anchors = []
 
+ABOVE = u"выше".encode("utf-8")
+BELOW = u"ниже".encode("utf-8")
+DOUBLE_QUOTE_LEFT = u"«".encode("utf-8")
+DOUBLE_QUOTE_RIGHT = u"»".encode("utf-8")
+# According to GOST, " is replaced with « or ».
+# The selection is based on char value.
+# « is used between a and b char_value(a) < char_value(b)
+# if char_value(a) == char_value(b), " is not replaced.
+# char_value of start and end of a line is zero.
+def char_value(c):
+    if c == b"":
+        return 0
+    for i, chars in enumerate(CHAR_VALUE):
+        if c in chars:
+            return i
+    return i + 1
+
+CHAR_VALUE = (
+    # spaces are not words, lowest value
+    b" \r\n\t\f\v",
+    # punctuation and other special symbols has average value
+    b"`~!@#$%^&*()-_=+\\|[{]};:'\",<.>/?",
+    # absent charaters are considered alphabet characters, highest value
+)
+
+
 if __name__ == "__main__":
     ap = ArgumentParser()
     ap.add_argument("in_file_name", nargs = "?", metavar = "in-file-name")
     ap.add_argument("--out-file-name", "-o", nargs = "?")
     ap.add_argument("--ispras", action = 'store_true')
+    ap.add_argument("--refs",
+        nargs = "?",
+        metavar = "index",
+        help = "Maintain references enumeration in the index file."
+    )
     ap.add_argument("--caption-number-prefix",
         action = "store_true",
         help = "Reset table & picture enumeration when 1st level caption"
@@ -77,6 +108,15 @@ if __name__ == "__main__":
     )
 
     args = ap.parse_args()
+
+    # load known reference numbers from the file
+    try:
+        refs_file = args.refs
+        with open(refs_file, "r") as f:
+            refs_data = f.read()
+    except:
+        refs_data = "{}"
+    refs = eval(refs_data)
 
     ispras = args.ispras
     cnp = args.caption_number_prefix
@@ -92,7 +132,17 @@ if __name__ == "__main__":
 
     out_file_name = args.out_file_name
     if out_file_name is None:
-        out_file = sys.stdout
+        sys.stderr.write("version: " + str(sys.version_info) + "\n")
+        if sys.version_info[0] == 3:
+            class RawOut(tuple):
+                def write(self, raw):
+                    self[0].write(raw.decode("utf-8"))
+                def close(self):
+                    self[0].close()
+
+            out_file = RawOut((sys.stdout,))
+        else:
+            out_file = sys.stdout
         log_file = sys.stderr
     else:
         out_file = open(out_file_name, "wb")
@@ -101,7 +151,7 @@ if __name__ == "__main__":
     def log(msg):
         log_file.write(msg + "\n")
 
-    anchor = compile("""\
+    anchor = compile(b"""\
 \[?\
 (?P<substitution2>\$?)\
 \]?\
@@ -116,7 +166,7 @@ if __name__ == "__main__":
 """
     )
 
-    reference = compile("""\
+    reference = compile(b"""\
 (?P<prefix>\[)\
 (?P<substitution1>\$?)\
 (?P<infix>]\(#)\
@@ -126,7 +176,7 @@ if __name__ == "__main__":
     )
 
     # Auto add a non-breaking space before each long dash
-    dash = compile("\s---", UNICODE)
+    dash = compile(b"\s---")
     dash_nbs = u"\u00a0---".encode("utf-8")
 
     anchors = OrderedDict()
@@ -146,16 +196,20 @@ if __name__ == "__main__":
 
     # tap_pfx : tABLE aND pICTURE pREfIx
     if cnp:
-        tap_pfx = "1."
+        tap_pfx = b"1."
     else:
-        tap_pfx = ""
+        tap_pfx = b""
 
     first_non_empty_line = True
 
-    for l in list(iter(in_file.readline, "")):
+    while True:
+        l = in_file.readline()
+        if not l: # empty string is EOF
+            break
+
         row += 1
 
-        if l.startswith("```"):
+        if l.startswith(b"```"):
             code_block = not code_block
             lines.append(l)
             continue
@@ -166,14 +220,14 @@ if __name__ == "__main__":
 
         # Avoid matching YAML header with long dash pattern
         if not first_non_empty_line:
-            if l.startswith("---"):
+            if l.startswith(b"---"):
                 # join "---" with previous non-empty line
-                while lines[-1] == "\n":
+                while lines[-1] == b"\n":
                     row -= 1
                     lines.pop()
 
                 # strip '\n' and inset ' ' match `dash` regexp.
-                l = lines.pop()[:-1] + " " + l
+                l = lines.pop()[:-1] + b" " + l
                 row -= 1
 
             l = dash.sub(dash_nbs, l)
@@ -183,22 +237,22 @@ if __name__ == "__main__":
 
         lines.append(l)
 
-        if enum_captions and l[0] == "#":
+        if enum_captions and l[0:1] == b"#":
             if ispras:
                 # Insert empty line before headers of level 1+.
                 # Note that 1st level in this preprocessor corresponds to
                 # 2nd heading level in terms of
                 # Template_for_Proceedings_of_ISP_RAS.dotm
-                lines.insert(row, "\n")
-                lines.insert(row, "<br>\n")
+                lines.insert(row, b"\n")
+                lines.insert(row, b"<br>\n")
                 row += 2
 
             # Both anchors & references can contain `$`.
             # Hecnce, `$` used for caption enumeration must be processed
             # independently.
-            macro_parts = l.split("<")
+            macro_parts = l.split(b"<")
 
-            parts = macro_parts[0].split("$")
+            parts = macro_parts[0].split(b"$")
 
             if len(parts) > 1:
                 current = len(levels)
@@ -219,17 +273,17 @@ if __name__ == "__main__":
                         picture_num_gen = count(1)
                         table_num_gen = count(1)
 
-                        tap_pfx = "%d." % levels[line_level]
+                        tap_pfx = b"%d." % levels[line_level]
 
-                l = ""
+                l = b""
                 for p, lvl in zip(parts, levels):
-                    l += p + str(lvl)
+                    l += p + b"%d" % lvl
 
                 l += parts[-1]
 
                 # do not forget the tail
                 if len(macro_parts) > 1:
-                    l += "<" + "<".join(macro_parts[1:])
+                    l += b"<" + b"<".join(macro_parts[1:])
 
                 # line was changed, overwrite
                 lines[row] = l
@@ -250,15 +304,15 @@ if __name__ == "__main__":
                         + str(m.groupdict())
                     )
 
-                if a.type == "rel":
+                if a.type == b"rel":
                     pass
-                elif a.type == "ref":
+                elif a.type == b"ref":
                     pass
                 # picture and table enumeration
-                elif a.type == "pic":
-                    a.substitution = tap_pfx + str(next(picture_num_gen))
-                elif a.type == "tbl":
-                    a.substitution = tap_pfx +  str(next(table_num_gen))
+                elif a.type == b"pic":
+                    a.substitution = tap_pfx + b"%d" % next(picture_num_gen)
+                elif a.type == b"tbl":
+                    a.substitution = tap_pfx +  b"%d" % next(table_num_gen)
                 elif a.type is not None:
                     log("unknown anchor type %s at %u.%u" % (
                         a.type, a.row, a.start
@@ -297,9 +351,9 @@ if __name__ == "__main__":
     # выше/ниже, использованные источники
     for ref in references:
         la = len(ref.anchors)
-        if ref.type == "rel":
+        if ref.type == b"rel":
             if la == 0:
-                log("no anchors found for relative reference " + ref.tag)
+                log("no anchors found for relative reference %s" % ref.tag)
                 continue
             elif la > 1:
                 log("too many (%u) anchors found for relative reference %s" % (
@@ -309,14 +363,14 @@ if __name__ == "__main__":
             a = ref.anchors[0]
             if a.row == ref.row:
                 if a.start < ref.start:
-                    ref.substitution = "выше"
+                    ref.substitution = ABOVE
             elif a.row < ref.row:
-                ref.substitution = "выше"
+                ref.substitution = ABOVE
             else:
-                ref.substitution = "ниже"
-        elif ref.type == "ref":
+                ref.substitution = BELOW
+        elif ref.type == b"ref":
             if la == 0:
-                log("no anchors found for reference " + ref.tag)
+                log("no anchors found for reference %s" % ref.tag)
                 continue
             elif la > 1:
                 log("too many (%u) anchors found for reference %s" % (
@@ -325,38 +379,45 @@ if __name__ == "__main__":
 
             a = ref.anchors[0]
             if a.substitution is None:
-                a.substitution = str(next(source_num_gen))
+                a.substitution = b"%d" % next(source_num_gen)
             ref.substitution = a.substitution
-        elif ref.type == "pic":
+        elif ref.type == b"pic":
             pass
-        elif ref.type == "tbl":
+        elif ref.type == b"tbl":
             pass
         elif ref.type is not None:
             log("unknown reference type %s at %u.%u" % (
                 ref.type, ref.row, ref.start
             ))
 
-    # propagate both picture and table numbers to its references
     for a in anchors.values():
-        if a.type == "pic":
+        # propagate both picture and table numbers to its references
+        if a.type == b"pic":
             for ref in a.references:
                 ref.substitution = a.substitution
-        elif a.type == "tbl":
+        elif a.type == b"tbl":
             for ref in a.references:
                 ref.substitution = a.substitution
+        elif a.type == b"ref":
+            if a.substitution is None:
+                # The reference is not referenced by anything in that file.
+                # Try to find its number in the index file.
+                a.substitution = refs.get(a.tag, None)
 
     # patch lines
     code_block = False
 
     for row, line in enumerate(list(lines)):
-        if line.startswith("```"):
+        if line.startswith(b"```"):
             code_block = not code_block
             continue
 
         if code_block:
             continue
 
-        pis = [ pi for pi in references + anchors.values() if pi.row == row ]
+        pis = [
+            pi for pi in references + list(anchors.values()) if pi.row == row
+        ]
 
         if not pis:
             continue
@@ -364,7 +425,7 @@ if __name__ == "__main__":
         pis = sorted(pis, key = lambda pi :-pi.start)
 
         for pi in pis:
-            if pi.type == "pic":
+            if pi.type == b"pic":
                 pass
             if pi.substitution is None:
                 continue
@@ -395,7 +456,7 @@ if __name__ == "__main__":
 
     # sort sources by reference order
     ref_anchors = [ a for a in anchors.values() if \
-        a.type == "ref" and a.substitution is not None
+        a.type == b"ref" and a.substitution is not None
     ]
 
     ref_anchors = sorted(ref_anchors, key = lambda a : int(a.substitution))
@@ -434,31 +495,36 @@ if __name__ == "__main__":
         for idx, l in enumerate(list(lines)):
             code = False
             tag = False
-            new_word = True
 
-            if l.startswith("```"):
+            if l.startswith(b"```"):
                 code_block = not code_block
                 continue
 
             if code_block:
                 continue
 
-            new_line = ""
-            for c in l:
-                if c == "`":
+            new_line = b""
+            for i in range(len(l)):
+                c = l[i:i+1]
+                if c == b"`":
                     code = not code
                 elif not code:
-                    if c == "<":
+                    if c == b"<":
                         tag = True
-                    elif c == ">":
+                    elif c == b">":
                         tag = False
-                if (not (code or tag)) and c == '"':
-                    if new_word:
-                        c = "«"
-                    else:
-                        c = "»"
+                if (not (code or tag)) and c == b'"':
+                    prev_c = l[i-1:i]
+                    next_c = l[i+1:i+2]
 
-                new_word = (c == " ")
+                    prev_v, next_v = map(char_value, (prev_c, next_c))
+
+                    if prev_v < next_v:
+                        c = DOUBLE_QUOTE_LEFT
+                    elif prev_v > next_v:
+                        c = DOUBLE_QUOTE_RIGHT
+                    # else:
+                    #   do not replace
 
                 new_line = new_line + c
 
@@ -468,6 +534,13 @@ if __name__ == "__main__":
 
 
     for l in lines:
-        out_file.write(str(l))
+        out_file.write(l)
 
     out_file.close()
+
+    # Update references index file with only references used in just
+    # preprocessed file.
+    if refs_file:
+        refs.update((a.tag, a.substitution) for a in ref_anchors)
+        with open(refs_file, "w+") as f:
+            f.write(repr(refs))

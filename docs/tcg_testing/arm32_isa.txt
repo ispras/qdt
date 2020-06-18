@@ -1,0 +1,33 @@
+add
+adc
+sub
+sbc
+rsb
+rsc
+mul
+mla
+umull
+umlal
+smull
+smlal
+mov
+mvn
+asr
+lsl
+lsr
+ror
+rrx
+cmp
+cmn
+tst
+teq
+and
+eor
+orr
+bic
+b + cc
+bl + cc
+ldr
+str
+ldm
+stm

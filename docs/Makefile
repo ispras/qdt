@@ -152,9 +152,50 @@ clean-report2:
 	rm -f $(foreach ext,pdf aux log nav out snm toc dvi vrb,report2.$(ext))
 	rm -f $(report2-PNGs)
 
+# paper about TCG front-end testing
+
+tcg-testing-files := tcg_testing/main.docx tcg_testing/main.html \
+ tcg_testing/abstract_eng.docx
+
+tcg-testing: $(tcg-testing-files)
+
+tcg_testing/abstract_eng.docx: tcg_testing/main.mdr
+tcg_testing/abstract_eng.docx: MDP_ARGS += --refs tcg_testing/main.mdr
+
+all: tcg-testing
+
+tcg-testing-PNGs := $(foreach f, \
+ empty.png \
+ approach_base.png \
+ approach.png \
+ system.png \
+, tcg_testing/$(f))
+
+tcg_testing/main.docx: \
+ tcg_testing/ref.docx \
+ $(tcg-testing-PNGs)
+
+tcg_testing/main.html: \
+ $(tcg-testing-PNGs)
+# Actually, original SVGs are enough, but main.md references PNGs.
+
+tcg_testing/abstract_eng.docx: \
+ tcg_testing/ref.docx
+
+clean: clean-tcg-testing
+clean-tcg-testing:
+	rm -f $(tcg-testing-files)
+	rm -f $(tcg-testing-PNGs)
+	rm -f tcg_testing/main.mdr
+
 ################
 # Common rules #
 ################
+
+# Use file name "empty.png" to add formatting to description of a "figure"
+# which has no a backing file.
+%empty.png:
+	convert -size 1x1 xc:white $@
 
 clean:
 	rm -f *.pmd
@@ -170,9 +211,17 @@ define do_pandoc
 endef
 
 define make_docx
-	$(call do_pandoc, \
-	--reference-doc=$(REF_DOCX) \
-	$(1), $(2))
+	$(eval DIR := $(dir $(1)))
+	if [ "$(DIR)" = "" ] ; then \
+		$(call do_pandoc, \
+		--reference-doc=$(REF_DOCX) \
+		$(1), $(2)); \
+	else \
+		cd $(DIR); \
+		$(call do_pandoc, \
+		--reference-doc=$(REF_DOCX) \
+		$(1:$(DIR)%=%), $(2:$(DIR)%=%)); \
+	fi
 endef
 
 %.docx : %.pmd
@@ -192,6 +241,10 @@ endef
 
 %.pmd : %.md
 	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
+
+# reference index
+%.mdr : %.md
+	python md-preprocessor.py $(MDP_ARGS) --refs $@ $< > /dev/null
 
 %.png : %.svg
 	if ! convert -density $(SVG2PNG_DPI) $< $@ ; then \

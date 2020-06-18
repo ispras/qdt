@@ -1,0 +1,7 @@
+*.docx
+*.html
+!ref.docx
+*.pmd
+approach.png
+system.png
+*.mdr
