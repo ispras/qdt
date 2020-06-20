@@ -6,8 +6,11 @@ __all__ = [
 from source import (
     BranchSwitch,
     CINT,
+    CSTR,
     Comment,
     Declare,
+    Node,
+    NodeVisitor,
     OpAnd,
     OpAssign,
     OpDeclareAssign,
@@ -17,6 +20,7 @@ from source import (
     SwitchCase,
     SwitchCaseDefault,
     Type,
+    Variable,
 )
 
 
@@ -211,3 +215,26 @@ class ParseTreeCodeBuilder(object):
 
             total_read = (vars_desc[-1][1] + vars_desc[-1][2]) // BYTE_SIZE
             gen_node(OpAssign(self.result, total_read))
+
+
+class VariablesLinker(NodeVisitor):
+    """ Visitor tries to replace all CSTR strings to corresponding variables.
+Limitations:
+    Able to handle only variables with unique names.
+    """
+
+    def __init__(self, root, variables):
+        super(VariablesLinker, self).__init__(root)
+
+        self.vars_dict = { v.name: v for v in variables }
+
+    def on_visit(self):
+        cur = self.cur
+
+        if isinstance(cur, Variable):
+            self.vars_dict[cur.name] = cur
+        elif isinstance(cur, (CSTR, str)):
+            try:
+                self.replace(self.vars_dict[str(cur)])
+            except:
+                pass
