@@ -92,7 +92,7 @@ class CPUInfo(object):
 
     :param reg_types:
         callable object which must register types that can be used in several
-    instruction semantics
+        instruction semantics
         """
 
         # TODO: can we use empty tuples in defaults for iterables?
