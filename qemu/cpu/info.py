@@ -33,6 +33,7 @@ class CPURegister(object):
         elif self.bitsize <= 64:
             return 8
         else:
+            # TODO: output wrong size too
             raise ValueError("Wrong register size: " + self.name)
 
     @property
@@ -49,6 +50,7 @@ def gen_reg_names_range(base_name, suffix = "", start = 0, end = 1):
         func = str
     elif isinstance(start, str) and len(start) == 1 and len(end) == 1:
         func = chr
+        # TODO: is `[0]` really needed for `str`?
         start = ord(start[0])
         end = ord(end[0])
     else:
@@ -59,6 +61,7 @@ def gen_reg_names_range(base_name, suffix = "", start = 0, end = 1):
 
 
 class CPUInfo(object):
+    # XXX: ... editing is not supported by the GUI.
     "This class store CPU info which editing does not support by the GUI."
 
     def __init__(self,
@@ -92,9 +95,13 @@ class CPUInfo(object):
     instruction semantics
         """
 
+        # TODO: can we use empty tuples in defaults for iterables?
+        # TODO: can we copy iterables (e.g.by `list(...)`) to prevent outer
+        #       modification?
         self.registers = [] if registers is None else registers
         self.pc_register = pc_register
         self.name_to_format = {} if name_to_format is None else name_to_format
         self.instructions = [] if instructions is None else instructions
         self.read_size = read_size
+        # TODO: the lambda can be default value
         self.reg_types = (lambda : None) if reg_types is None else reg_types
