@@ -819,6 +819,8 @@ later.").get()
 
         pythonize(project, file_name)
 
+        # XXX: Must we replace_relpaths_to_abspaths back after saving?
+
         self.set_current_file_name(file_name)
         self.saved_operation = self.pht.pos
         self.__check_saved_asterisk__()
