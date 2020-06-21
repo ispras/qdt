@@ -348,17 +348,24 @@ Limitations:
     def __init__(self, root, variables):
         super(VariablesLinker, self).__init__(root)
 
+        # global? variables
         self.vars_dict = { v.name: v for v in variables }
 
     def on_visit(self):
         cur = self.cur
 
         if isinstance(cur, Variable):
+            # TODO: check for double definition?
             self.vars_dict[cur.name] = cur
+        # XXX: `CSTR` is definetly a C constant. If something uses it as
+        #      a placeholder for variables, there is likely a bug.
         elif isinstance(cur, (CSTR, str)):
             try:
                 self.replace(self.vars_dict[str(cur)])
-            except:
+            except: # XXX: StopIteration or KeyError or both or/and
+                #          enything else?
+                # XXX: what if the variable is defined by `Variable` object
+                #      later? This is should use two pass algorithm likely.
                 pass
 
 
