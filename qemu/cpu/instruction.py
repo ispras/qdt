@@ -273,12 +273,15 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
     node.limit_read = min_len
 
     common_bits = common_bits_for_opcodes(instructions)
+    # TODO: unchecked_common_bits
     unchecked_bits = common_bits - checked_bits
+    # TODO: unchecked_common_intervals
     unchecked_opcs = split_intervals(
         bits_to_intervals(unchecked_bits), read_size
     )
 
     for opc in unchecked_opcs:
+        # TODO: no need to iterate all `instructions`, stop on first differing
         opcs = [i.get_opcode_part(opc) for i in instructions]
 
         if len(set(opcs)) > 1:
@@ -309,10 +312,12 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
                         bits_to_intervals(unchecked_bits), read_size
                     )
 
+                    # XXX: dead code, see `else` block of `for` below
                     if not unchecked_opcs:
                         continue
 
                     for opc in unchecked_opcs:
+                        # TODO: no need to iterate all `instructions` here too
                         opcs = [j.get_opcode_part(opc) for j in instructions]
 
                         if len(set(opcs)) > 1:
@@ -328,6 +333,7 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
                 # found `opc`
                 break
             else:
+                # XXX: indistinguishable instructions?
                 raise RuntimeError("Unresolved conflict in instructions:"
                     "\n    " + "\n    ".join(
                         "{1:<{0}} {2}".format(max_len, i.opcode_bits_string,
@@ -347,6 +353,11 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
                     break
 
             if pe_flag:
+                # XXX: There is no explicit parse tree. Better say that
+                #      instruction description order affects instruction
+                #      identification. Probably, not only description order
+                #      affects that. Also, what about description order and
+                #      priority during identification?
                 print("Potential error: bit check order affects instruction"
                     " parse tree for instructions:\n    " + "\n    ".join(
                         "{1:<{0}} {2}".format(max_len, i.opcode_bits_string,
@@ -359,6 +370,10 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
                 and show_subtree_warnings
                 and SHOW_INTERSECTION_WARNINGS
             ):
+                # XXX: The point is not intersection itself. Arguments can
+                #      got values equal to opcodes in corresponding intervals
+                #      that makes instructions indistinguishable. It probably
+                #      results in incorrect instruction identification.
                 print("Warning: arguments and opcode intersect in instructions"
                     ":\n    " + "\n    ".join(
                         "{1:<{0}} {2}".format(max_len, i.opcode_bits_string,
