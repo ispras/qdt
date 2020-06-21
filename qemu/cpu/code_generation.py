@@ -1,3 +1,4 @@
+# XXX: commit message: parse tree code -> parsing code. Parse tree is data.
 __all__ = [
     "BYTE_SIZE"
   , "SUPPORTED_READ_SIZES"
@@ -117,6 +118,7 @@ SUPPORTED_READ_SIZES = [8, 16, 32, 64]
 
 
 class ParseTreeCodeBuilder(object):
+    # XXX: байпасить можно баги в играх или законы, а графы траверсят
     "This class bypasses the instruction tree and builds the parse tree code."
 
     def __init__(self, cputype, gen_node, gen_field_read_cb, epilogue_cb,
