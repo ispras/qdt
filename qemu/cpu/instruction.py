@@ -280,6 +280,7 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
         bits_to_intervals(unchecked_bits), read_size
     )
 
+    # find out first distinguishable opcode interval
     for opc in unchecked_opcs:
         # TODO: no need to iterate all `instructions`, stop on first differing
         opcs = [i.get_opcode_part(opc) for i in instructions]
@@ -287,6 +288,7 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
         if len(set(opcs)) > 1:
             break
     else:
+        # given `instructions` have equal opcodes in intervals being checked
         if len(instructions) == 1:
             i = instructions[0]
 
@@ -301,6 +303,10 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
             node.instruction = i
             return
         else:
+            # Opcodes of some instructions may overlap non-opcode fields of
+            # other instructions. Try to find distinguishable interval by
+            # accounting bits of those overlapping non-common intervals.
+
             max_len = max(len(i) for i in instructions)
             min_len_bits = integer_set(0, min_len)
 
