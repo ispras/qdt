@@ -108,6 +108,7 @@ class Instruction(object):
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", lambda : [])
 
+    # TODO: it could be `lazy` `fields`.
     def split_operands_fill_offsets(self, read_size):
         """ Splits operands that cross read boundaries (defined by
         `read_size`). Fills offsets for all fields.
@@ -146,9 +147,11 @@ class Instruction(object):
             offset += field.length
 
     def __len__(self):
+        # TODO: defile & use `lazy` length
         return sum(len(field) for field in self.fields)
 
     def get_opcode_part(self, pos):
+        # XXX: can a `length` be encapsulated in a `pos`ition?
         offset, length = pos
         res = self.opcode_bits_string[offset:offset + length]
         if NON_OPCODE_BIT in res:
@@ -179,6 +182,7 @@ class Instruction(object):
     def operand_bits(self):
         return self.field_class_bits(Operand)
 
+    # XXX: iter_operand_parts
     def operand_parts(self):
         operands_dict = OrderedDict()
 
