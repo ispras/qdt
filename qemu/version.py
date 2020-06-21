@@ -125,6 +125,8 @@ def define_only_qemu_2_6_0_types():
         # variables which are to be replaced by this tool
         # preprocessor (still in progress)
         # tcg is then converted to some existing QEMU types
+        # XXX: A base type does not result in a header inclusion.
+        #      Is that addition to tcg-op.h useful?
         Type("tcg", incomplete = False, base = True)
     ]).add_reference(osdep_fake_type)
 
