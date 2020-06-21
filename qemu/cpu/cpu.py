@@ -245,6 +245,7 @@ class CPUType(QOMCPU):
         with_debug_comments = False,
         **_
     ):
+        # XXX: it's defined in conesequent patch
         import cpu_imports
         loaded = dict(cpu_imports.__dict__)
         try:
