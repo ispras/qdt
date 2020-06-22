@@ -98,6 +98,9 @@ class Instruction(object):
     describe the semantics of the instruction
     """
 
+# TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
+#       first byte of the instruction & other fields
+
     def __init__(self, mnemonic, *raw_fields, **kw_args):
         self.mnemonic = mnemonic
         self.fields = []
