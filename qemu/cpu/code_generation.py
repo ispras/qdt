@@ -121,6 +121,7 @@ class ParseTreeCodeBuilder(object):
     # XXX: байпасить можно баги в играх или законы, а графы траверсят
     "This class bypasses the instruction tree and builds the parse tree code."
 
+    # XXX: cputype (CPUType) is added by consequent patch
     def __init__(self, cputype, gen_node, gen_field_read_cb, epilogue_cb,
         result, default_switch_case_nodes,
         add_break = True
@@ -158,6 +159,7 @@ class ParseTreeCodeBuilder(object):
         vals = []
 
         for offset, length in reads_desc:
+            # XXX: variable name cannot start from digit; auto naming above?
             val = Type["uint64_t"]("%d_%d" % (offset // BYTE_SIZE, length))
             val_desc = (val, offset, length)
             vals.append(val_desc)
@@ -170,6 +172,7 @@ class ParseTreeCodeBuilder(object):
 
         # We must consider the endianess of CPU if the variable is larger
         # than the read size.
+        # XXX: consider -> account?
         if self.target_bigendian:
             shift_val = var_length - length - local_offset
         else:
