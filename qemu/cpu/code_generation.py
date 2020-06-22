@@ -170,6 +170,35 @@ class ParseTreeCodeBuilder(object):
     def calc_shift_val(self, var_offset, var_length, offset, length):
         local_offset = offset - var_offset
 
+        # TODO: compete/fix this
+        #  0         1         2         3  bit
+        #  01234567890123456789012345678901 indices of bytes
+        #  [--------------][--------------] words (vars, read_size == 16)
+        #  |-var_offset--->[ 16
+        #  |-----oper.offset------>[ 24
+        #                  |------>[ local offset == 8
+        #                  .       [->) oper.length == 3
+        #                  .       .  .
+        # big-endian       .       .  .
+        #                 3.3      .  2         1         0 bit indices of
+        #                 210987654321098765432109876543210 variable
+        #                  1   2         3         4         bit
+        #                  67890123456789012345678901234567  indices of bytes
+        #                 (<------------------------------] var_length == 32
+        #                 |------>[ local offset
+        #                  . oper (->]------------------->] shift_val == 21
+        #                  .           oper after shift [-]
+        # little-endian    .
+        #                  [--------------][--------------] swap/read_size
+        # bytes in mem     [   3  ][   2  ][  5   ][   4  ]          == 16
+        #                  22222233111122224444444433333333 bit indices of
+        #                  45678901678901230123456723456789          bytes
+        #                 3.3      .  2         1         0 bit indices of
+        #                 210987654321098765432109876543210 variable
+        #                                         |<------| local offset
+        #                         |<--------------|         swap_size
+        #                         |->|                      oper.length
+
         # We must consider the endianess of CPU if the variable is larger
         # than the read size.
         # XXX: consider -> account?
@@ -242,6 +271,8 @@ class ParseTreeCodeBuilder(object):
     def gen_subtree_code(self, gen_node, instr_node, vars_desc = []):
         opc = instr_node.opcode
         ins = instr_node.instruction
+        # XXX: Reads_desc filling routine is introduced in consequent patch.
+        #      It's near impossible to understand it's content earlier.
         reads_desc = instr_node.reads_desc
 
         if ins is None:
