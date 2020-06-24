@@ -117,10 +117,13 @@ def define_only_qemu_2_6_0_types():
     ])
 
     Header["tcg-op.h"].add_types([
-        # tcg is a fake type intended to mark
-        # variables which are to be replaced by this tool
-        # preprocessor (still in progress)
-        # tcg is then converted to some existing QEMU types
+        # `tcg` is a fake type intended to mark variables which are to be
+        # replaced by this tool preprocessor (still in progress).
+        # `tcg` is then converted to some existing QEMU types (`TCGv_i32`,
+        # `TCGv_i64` or `TCGv`). Therefore this type should be placed in the
+        # `tcg.h` header (where these types are declared). But this type helps
+        # to add the `tcg-op.h` header inclusion into the `translate.inc.c`
+        # header. This inclusion is necessary for future function bodies.
         Type("tcg", incomplete = False)
     ])
 
