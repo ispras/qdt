@@ -1,0 +1,11 @@
+__all__ = [
+    "BYTE_SIZE"
+  , "OPERAND_MAX_SIZE"
+  , "SUPPORTED_READ_SIZES"
+]
+
+
+# sizes in bits
+BYTE_SIZE = 8
+OPERAND_MAX_SIZE = 64
+SUPPORTED_READ_SIZES = [8, 16, 32, 64]
