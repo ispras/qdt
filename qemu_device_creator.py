@@ -5,6 +5,8 @@ from argparse import (
     ArgumentParser
 )
 from os.path import (
+    abspath,
+    dirname,
     isdir
 )
 from qemu import (
@@ -89,6 +91,8 @@ def main():
     else:
         print("Script '%s' does not define a project to generate." % script)
         return -1
+
+    project.replace_relpaths_to_abspaths(abspath(dirname(script)))
 
     if arguments.qemu_build is None:
         qemu_build_path = getattr(project, "build_path", None)
