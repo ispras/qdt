@@ -16,6 +16,9 @@ from qemu import (
 # Access to PCI identifiers database
   , PCIId
 
+# CPU template generation settings
+  , CPUDescription
+
 # Machine draft generation settings
   , MachineDescription
   , MachineNode # Alias of MachineDescription. Legacy. Do not use it.
