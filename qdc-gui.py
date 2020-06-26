@@ -83,6 +83,8 @@ import sys
 from os.path import (
     join,
     isfile,
+    abspath,
+    dirname,
     expanduser
 )
 
@@ -113,7 +115,7 @@ class ProjectGeneration(CoTask):
         cur_qvd = qvd_get(self.p.build_path, version = self.p.target_version)
         self.prev_qvd = cur_qvd.use()
 
-        yield self.p.co_gen_all(self.s,
+        yield self.p.co_gen_all(self.s, cur_qvd,
             known_targets = cur_qvd.qvc.known_targets,
             with_chunk_graph = self.gen_chunk_graphs
         )
@@ -793,6 +795,7 @@ later.").get()
                 else:
                     raise Exception("No project object was loaded")
 
+            v.replace_relpaths_to_abspaths(abspath(dirname(file_name)))
             self.set_project(v)
             self.set_current_file_name(file_name)
             self.saved_operation = self.pht.pos
@@ -812,7 +815,12 @@ later.").get()
             if isinstance(d, MachineNode):
                 d.link(handle_system_bus = False)
 
+        file_path = abspath(dirname(file_name))
+        project.replace_abspaths_to_relpaths(file_path)
+
         pythonize(project, file_name)
+
+        project.replace_relpaths_to_abspaths(file_path)
 
         self.set_current_file_name(file_name)
         self.saved_operation = self.pht.pos
