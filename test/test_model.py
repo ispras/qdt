@@ -887,5 +887,41 @@ typedef struct c {{
         ]
 
 
+class TestOptimizeInclusions(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestOptimizeInclusions, self).setUp()
+        name = type(self).__name__
+
+        src = Source(name.lower() + ".c")
+
+        ah = Header("a.h")
+        bh = Header("b.h")
+        ch = Header("c.h")
+
+        ah.add_type(Type("a"))
+        bh.add_type(Type("b")).add_reference(Type["a"])
+        ch.add_type(Type("c")).add_reference(Type["b"]).add_inclusion(ah)
+
+        src.add_type(Pointer(Type["c"], "cpointer"))
+
+        # Inclusions order problem:
+        # The `c` header should be below the `b` header because it depends on
+        # the `b` type.
+
+        src_content = """\
+/* {} */
+
+#include "c.h"
+#include "b.h"
+
+typedef c *cpointer;
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
 if __name__ == "__main__":
     main()
