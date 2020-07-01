@@ -701,6 +701,10 @@ class OpSDeref(Operator):
     def type(self):
         return self.struct.fields[self.field].type
 
+    @property
+    def container(self):
+        return self.children[0]
+
 
 class UnaryOperator(Operator):
 
