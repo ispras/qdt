@@ -567,7 +567,12 @@ class Enumeration(Type):
 
         self.elems = OrderedDict()
         t = [ Type["int"] ]
-        for key, val in elems_list:
+        for elem in elems_list:
+            if isinstance(elem, str):
+                key, val = elem, ""
+            else:
+                key, val = elem
+
             self.elems[key] = EnumerationElement(self, key,
                 Initializer(str(val), t)
             )
