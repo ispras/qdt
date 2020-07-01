@@ -66,12 +66,17 @@ class SourceModelTestHelper(object):
 
             if SAVE_CHUNK_GRAPH:
                 sf.gen_chunks_gv_file(
-                    join(verbose_dir, file_.path + ".chunks.gv")
+                    join(verbose_dir, file_.path + ".chunks.before.gv")
                 )
 
             sio = StringIO()
             sf.generate(sio)
             gen_content = sio.getvalue()
+
+            if SAVE_CHUNK_GRAPH:
+                sf.gen_chunks_gv_file(
+                    join(verbose_dir, file_.path + ".chunks.after.gv")
+                )
 
             if MODEL_VERBOSE:
                 with open(join(verbose_dir, file_.path), "w") as f:
