@@ -3069,7 +3069,7 @@ digraph Chunks {
         for h in Header.reg.values():
             h.root = None
 
-        # Dictionary is used for fast lookup HeaderInclusion by Header.
+        # Dictionary is used for fast lookup `HeaderInclusion` by `Header`.
         # Assuming only one inclusion per header.
         included_headers = {}
 
@@ -3107,16 +3107,18 @@ digraph Chunks {
             for sp in h.inclusions:
                 s = Header[sp]
                 if s in included_headers:
-                    """ If an originally included header (s) is transitively
-included from another one (h.root) then inclusion of s is redundant and must
-be deleted. All references to it must be redirected to inclusion of h (h.root).
-                    """
+                    # If an originally included header `s` is transitively
+                    # included by another one (h.root) then inclusion of `s`
+                    # is redundant and must be deleted. All references to it
+                    # must be redirected to inclusion of `h` (h.root).
+
                     redundant = included_headers[s]
                     substitution = included_headers[h.root]
 
-                    """ Because the header inclusion graph is not acyclic,
-a header can (transitively) include itself. Then nothing is to be substituted.
-                    """
+                    # Because the header inclusion graph is not acyclic,
+                    # a header can (transitively) include itself. Then nothing
+                    # is to be substituted.
+
                     if redundant is substitution:
                         log("Cycle: " + s.path)
                         continue
@@ -3135,13 +3137,17 @@ a header can (transitively) include itself. Then nothing is to be substituted.
 
                     self.remove_dup_chunk(substitution, redundant)
 
-                    """ The inclusion of s was removed but s could transitively
-include another header (s0) too. Then inclusion of any s0 must be removed and
-all references to it must be redirected to inclusion of h. Hence, reference to
-inclusion of h must be remembered. This algorithm keeps it in included_headers
-replacing reference to removed inclusion of s. If s was processed before h then
-there could be several references to inclusion of s in included_headers. All of
-them must be replaced with reference to h. """
+                    # The inclusion of `s` was removed but `s` can include
+                    # a header (`hdr`) also included by current file.
+                    # The inclusion of `hdr` will be removed (like `redundant`)
+                    # but its substitution is just removed `redundant`
+                    # inclusion. Actually, same `substitution` must be used
+                    # instead.
+                    # Effective inclusions are kept in `included_headers`.
+                    # If `s` has been processed before `h` then
+                    # there could be several references to `redundant`
+                    # inclusion of `s` in `included_headers`. All of them must
+                    # be replaced with currently actual inclusion of `h`.
                     for hdr, chunk in included_headers.items():
                         if chunk is redundant:
                             included_headers[hdr] = substitution
