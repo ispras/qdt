@@ -697,6 +697,7 @@ class OpSDeref(Operator):
 
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
+        del self.__dict__["suffix"] # it's lazy
 
         if not isinstance(field, str):
             raise ValueError(
@@ -705,33 +706,48 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        _type = value.type
+    @lazy
+    def container(self):
+        return self.children[0]
 
-        struct = _type
+    @lazy
+    def struct(self):
+        # `struct` attribute is replaced with `TypeReference`
+        return self._struct
+
+    @lazy
+    def _struct(self):
+        struct = self.container.type
         while isinstance(struct, (Pointer, TypeReference)):
             struct = struct.type
 
         if OPSDEREF_FROM_DEFINITION:
             struct = struct._definition or struct
 
-        # for type collection
-        self.struct = struct
-
         try:
-            struct.fields[field]
+            struct.fields[self.field]
         except KeyError:
             raise RuntimeError('Structure "%s" has no field "%s"' % (
-                struct, field
+                struct, self.field
             ))
 
-        if isinstance(_type, Pointer):
-            self.suffix = "->" + field
+        return struct
+
+    @lazy
+    def suffix(self):
+        type_ = self.container.type
+
+        if isinstance(type_, TypeReference):
+            type_ = type_.type
+
+        if isinstance(type_, Pointer):
+            return "->" + self.field
         else:
-            self.suffix = "." + field
+            return "." + self.field
 
     @lazy
     def type(self):
-        return self.struct.fields[self.field].type
+        return self._struct.fields[self.field].type
 
 
 class UnaryOperator(Operator):
