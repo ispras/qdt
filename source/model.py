@@ -2302,6 +2302,23 @@ class SourceChunk(object):
             for chunk in references:
                 self.add_reference(chunk)
 
+    def after(self, another):
+        "This chunk is after `another` one if a path of `references` exists."
+        stack = list(self.references)
+        visited = set()
+        while stack:
+            c = stack.pop()
+            if c is another:
+                return True
+
+            if c in visited:
+                continue
+
+            visited.add(c)
+            stack.extend(c.references)
+
+        return False
+
     def add_reference(self, chunk):
         self.references.add(chunk)
         chunk.users.add(self)
