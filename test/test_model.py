@@ -910,15 +910,17 @@ class TestOptimizeInclusions(SourceModelTestHelper, TestCase):
 
         src.add_type(Pointer(Type["c"], "cpointer"))
 
-        # Inclusions order problem:
-        # The `c` header should be below the `b` header because it depends on
-        # the `b` type.
+        # c.h includes a.h but inclusion of a.h cannot be substituted with c.h
+        # inclusion because it creating reference loop between inclusions of
+        # c.h and b.h. This test checks inclusions optimization correctness and
+        # ordering of chunks.
 
         src_content = """\
 /* {} */
 
-#include "c.h"
+#include "a.h"
 #include "b.h"
+#include "c.h"
 
 typedef c *cpointer;
 """.format(src.path)

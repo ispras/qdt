@@ -3151,6 +3151,15 @@ digraph Chunks {
                         )
                         continue
 
+                    # Because of references between headers, inclusion of `s`
+                    # can be required by another header inclusion and
+                    # (transitively) by the `substitution` itself.
+                    if substitution.after(redundant):
+                        log("%s includes %s but substitution creates loop,"
+                            " skipping" % (h_provider.path, s.path)
+                        )
+                        continue
+
                     log("%s includes %s, substitute %s with %s" % (
                         h_provider.path, s.path, redundant.origin.path,
                         substitution.origin.path
