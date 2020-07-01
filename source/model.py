@@ -570,10 +570,16 @@ class Enumeration(Type):
 
         self.elems = OrderedDict()
         t = [ Type["int"] ]
-        for key, val in elems_list:
-            self.elems[key] = EnumerationElement(self, key,
-                Initializer(str(val), t)
-            )
+        for elem in elems_list:
+            # Either ("name", value) tuple or just a "name" `str`ing.
+            if isinstance(elem, str):
+                key = elem
+                init = None
+            else:
+                key, val = elem
+                init = Initializer(str(val), t)
+
+            self.elems[key] = EnumerationElement(self, key, init)
 
     def get_field(self, name):
         return self.elems[name]
