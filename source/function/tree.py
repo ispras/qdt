@@ -671,8 +671,6 @@ class OpIndex(Operator):
 
 class OpSDeref(Operator):
 
-    __type_references__ = Operator.__type_references__ + ("struct",)
-
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
 
@@ -692,7 +690,6 @@ class OpSDeref(Operator):
         if OPSDEREF_FROM_DEFINITION:
             struct = struct._definition or struct
 
-        # for type collection
         self.struct = struct
 
         try:
