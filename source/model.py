@@ -3066,8 +3066,8 @@ digraph Chunks {
             (self.name, "h" if self.is_header else "c")
         ))
 
-        for h in Header.reg.values():
-            h.root = None
+        # `header_0` -> a header providing inclusion `header_0`
+        effective_includers = {}
 
         # Dictionary is used for fast lookup `HeaderInclusion` by `Header`.
         # Assuming only one inclusion per header.
@@ -3081,8 +3081,8 @@ digraph Chunks {
                         " before inclusion optimization."
                     )
                 included_headers[h] = ch
-                # root is originally included header.
-                h.root = h
+                # Initially, each header provides its inclusion by self.
+                effective_includers[h] = h
 
         log("Originally included:\n"
             + "\n".join(h.path for h in included_headers)
@@ -3104,16 +3104,18 @@ digraph Chunks {
         while stack:
             h = stack.pop()
 
+            h_provider = effective_includers[h]
+            substitution = included_headers[h_provider]
+
             for sp in h.inclusions:
                 s = Header[sp]
                 if s in included_headers:
                     # If an originally included header `s` is transitively
-                    # included by another one (h.root) then inclusion of `s`
-                    # is redundant and must be deleted. All references to it
-                    # must be redirected to inclusion of `h` (h.root).
+                    # included by another one (`h_provider`) then inclusion of
+                    # `s` is redundant and must be deleted. All references to
+                    # it must be redirected to inclusion of `h_provider`.
 
                     redundant = included_headers[s]
-                    substitution = included_headers[h.root]
 
                     # Because the header inclusion graph is not acyclic,
                     # a header can (transitively) include itself. Then nothing
@@ -3126,12 +3128,14 @@ digraph Chunks {
                     if redundant.origin is not s:
                         # inclusion of s was already removed as redundant
                         log("%s includes %s which already substituted by "
-                            "%s" % (h.root.path, s.path, redundant.origin.path)
+                            "%s" % (h_provider.path, s.path,
+                                redundant.origin.path
+                            )
                         )
                         continue
 
                     log("%s includes %s, substitute %s with %s" % (
-                        h.root.path, s.path, redundant.origin.path,
+                        h_provider.path, s.path, redundant.origin.path,
                         substitution.origin.path
                     ))
 
@@ -3152,14 +3156,10 @@ digraph Chunks {
                         if chunk is redundant:
                             included_headers[hdr] = substitution
 
-                if s.root is None:
+                if s not in effective_includers:
                     stack.append(s)
-                    # Keep reference to originally included header.
-                    s.root = h.root
-
-        # Clear runtime variables
-        for h in Header.reg.values():
-            del h.root
+                    # Now provider of `h` also provides `s`.
+                    effective_includers[s] = h_provider
 
         log("-= inclusion optimization ended =-")
 
