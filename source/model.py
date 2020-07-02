@@ -2302,6 +2302,23 @@ class SourceChunk(object):
             for chunk in references:
                 self.add_reference(chunk)
 
+    def after(self, another):
+        "This chunk is after `another` one if a path of `references` exists."
+        stack = list(self.references)
+        visited = set()
+        while stack:
+            c = stack.pop()
+            if c is another:
+                return True
+
+            if c in visited:
+                continue
+
+            visited.add(c)
+            stack.extend(c.references)
+
+        return False
+
     def add_reference(self, chunk):
         self.references.add(chunk)
         chunk.users.add(self)
@@ -3066,10 +3083,10 @@ digraph Chunks {
             (self.name, "h" if self.is_header else "c")
         ))
 
-        for h in Header.reg.values():
-            h.root = None
+        # `header_0` -> a header providing inclusion `header_0`
+        effective_includers = {}
 
-        # Dictionary is used for fast lookup HeaderInclusion by Header.
+        # Dictionary is used for fast lookup `HeaderInclusion` by `Header`.
         # Assuming only one inclusion per header.
         included_headers = {}
 
@@ -3081,8 +3098,8 @@ digraph Chunks {
                         " before inclusion optimization."
                     )
                 included_headers[h] = ch
-                # root is originally included header.
-                h.root = h
+                # Initially, each header provides its inclusion by self.
+                effective_includers[h] = h
 
         log("Originally included:\n"
             + "\n".join(h.path for h in included_headers)
@@ -3104,19 +3121,23 @@ digraph Chunks {
         while stack:
             h = stack.pop()
 
+            h_provider = effective_includers[h]
+            substitution = included_headers[h_provider]
+
             for sp in h.inclusions:
                 s = Header[sp]
                 if s in included_headers:
-                    """ If an originally included header (s) is transitively
-included from another one (h.root) then inclusion of s is redundant and must
-be deleted. All references to it must be redirected to inclusion of h (h.root).
-                    """
-                    redundant = included_headers[s]
-                    substitution = included_headers[h.root]
+                    # If an originally included header `s` is transitively
+                    # included by another one (`h_provider`) then inclusion of
+                    # `s` is redundant and must be deleted. All references to
+                    # it must be redirected to inclusion of `h_provider`.
 
-                    """ Because the header inclusion graph is not acyclic,
-a header can (transitively) include itself. Then nothing is to be substituted.
-                    """
+                    redundant = included_headers[s]
+
+                    # Because the header inclusion graph is not acyclic,
+                    # a header can (transitively) include itself. Then nothing
+                    # is to be substituted.
+
                     if redundant is substitution:
                         log("Cycle: " + s.path)
                         continue
@@ -3124,36 +3145,47 @@ a header can (transitively) include itself. Then nothing is to be substituted.
                     if redundant.origin is not s:
                         # inclusion of s was already removed as redundant
                         log("%s includes %s which already substituted by "
-                            "%s" % (h.root.path, s.path, redundant.origin.path)
+                            "%s" % (h_provider.path, s.path,
+                                redundant.origin.path
+                            )
+                        )
+                        continue
+
+                    # Because of references between headers, inclusion of `s`
+                    # can be required by another header inclusion and
+                    # (transitively) by the `substitution` itself.
+                    if substitution.after(redundant):
+                        log("%s includes %s but substitution creates loop,"
+                            " skipping" % (h_provider.path, s.path)
                         )
                         continue
 
                     log("%s includes %s, substitute %s with %s" % (
-                        h.root.path, s.path, redundant.origin.path,
+                        h_provider.path, s.path, redundant.origin.path,
                         substitution.origin.path
                     ))
 
                     self.remove_dup_chunk(substitution, redundant)
 
-                    """ The inclusion of s was removed but s could transitively
-include another header (s0) too. Then inclusion of any s0 must be removed and
-all references to it must be redirected to inclusion of h. Hence, reference to
-inclusion of h must be remembered. This algorithm keeps it in included_headers
-replacing reference to removed inclusion of s. If s was processed before h then
-there could be several references to inclusion of s in included_headers. All of
-them must be replaced with reference to h. """
+                    # The inclusion of `s` was removed but `s` can include
+                    # a header (`hdr`) also included by current file.
+                    # The inclusion of `hdr` will be removed (like `redundant`)
+                    # but its substitution is just removed `redundant`
+                    # inclusion. Actually, same `substitution` must be used
+                    # instead.
+                    # Effective inclusions are kept in `included_headers`.
+                    # If `s` has been processed before `h` then
+                    # there could be several references to `redundant`
+                    # inclusion of `s` in `included_headers`. All of them must
+                    # be replaced with currently actual inclusion of `h`.
                     for hdr, chunk in included_headers.items():
                         if chunk is redundant:
                             included_headers[hdr] = substitution
 
-                if s.root is None:
+                if s not in effective_includers:
                     stack.append(s)
-                    # Keep reference to originally included header.
-                    s.root = h.root
-
-        # Clear runtime variables
-        for h in Header.reg.values():
-            del h.root
+                    # Now provider of `h` also provides `s`.
+                    effective_includers[s] = h_provider
 
         log("-= inclusion optimization ended =-")
 
