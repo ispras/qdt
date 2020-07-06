@@ -26,6 +26,7 @@ class CPURegister(object):
         else:
             self._len = None
 
+    # XXX: storage_size/occupied_size?
     @property
     def size(self):
         if self.bitsize <= 32:
@@ -37,6 +38,10 @@ class CPURegister(object):
                 self.bitsize, self.name
             ))
 
+    # XXX: удаление гландов через прямую кишку
+    #      count/number/quantity/bank_size (банк регистров - есть такой
+    #      термин) И `property` не нужно. Какой смысл защищать от записи только
+    #      один атрбут?
     @property
     def len(self):
         return self._len

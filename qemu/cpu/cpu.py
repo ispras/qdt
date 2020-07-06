@@ -130,12 +130,19 @@ re_format_specifier = compile("(?<!%)(?:%%)*(%(?:"
 )
 
 
+# XXX: понять, что делает эта функция, сильно проще после чтения
+#      fill_tree_reads_desc, т.к. аргументы (особенно limit_read) очень
+#      контекстно зависимы
 def calc_node_reads_desc(need_read, already_read, limit_read):
     if need_read <= already_read:
         return []
 
     result = []
 
+    # XXX: robust: reversed(sorted(SUPPORTED_READ_SIZES))
+    #      short & fast: use required order during definition of
+    #              SUPPORTED_READ_SIZES with a guiding comment
+    #      self explanary:: SUPPORTED_READ_SIZES = reversed(sorted([...]))
     for r_size in reversed(SUPPORTED_READ_SIZES):
         while need_read > already_read and already_read + r_size <= limit_read:
             result.append((already_read, r_size))
@@ -148,12 +155,17 @@ def fill_tree_reads_desc(node, read_size, already_read = 0):
     ins = node.instruction
 
     if ins is None:
+        # XXX: так опкод или интервал?
         opc = node.opcode
 
+        # XXX: вот тут, когда две части обкода складываются друг с другом,
+        #      у меня рвётся шаблон
         desc = calc_node_reads_desc(opc[0] + opc[1], already_read,
             node.limit_read
         )
 
+        # XXX: если desc - это description, то название не удачное, как и
+        #      "описание чтений"
         if desc:
             node.reads_desc = desc
             already_read = desc[-1][0] + desc[-1][1]
@@ -168,11 +180,16 @@ def fill_tree_reads_desc(node, read_size, already_read = 0):
     del node.limit_read
 
 
+# TODO v1: convert this to a method of `Source`
+# XXX: как ты сам не догадался?
+# TODO v2: ... of `CPURegister`
+#      v2.1: or use explanary name
 def add_global_array(reg, arr_name, f):
     names_array = Pointer(Type["const char"])(arr_name,
         initializer = Initializer(
             code = '{\n    "%s"\n}' % (
                 '",\n    "'.join(reg.reg_names)
+                # XXX: ттак тут не абы какой массив добавляется, оказыватеся...
             )
         ),
         static = True,
@@ -300,6 +317,7 @@ class CPUType(QOMCPU):
 
         lens = [len(i) for i in self.instructions]
         try:
+            # XXX где `size`, где `length`; в показаниях путаетесь гражданин
             min_size = min(lens)
             max_size = max(lens)
         except ValueError:
@@ -414,6 +432,8 @@ class CPUType(QOMCPU):
         yield True
 
         self.gen_files = OrderedDict()
+        # XXX: same order as corresponding methods
+        #      generally, call order should match def order
         file_list = ["cpu.h", "translate.inc.c", "cpu.c", "helper.c",
             "machine.c", "translate.c"
         ]
@@ -535,6 +555,7 @@ class CPUType(QOMCPU):
             fn_name("class_init"),
             static = True
         )
+        # XXX: is not used in "qemu.cpu: implement cpu description class"
         num_core_regs = sum(r.len or 1 for r in self.registers)
         fill_class_init_body(self, cpu_class_init, num_core_regs,
             self.gen_files["cpu.h"].global_variables[
@@ -548,6 +569,8 @@ class CPUType(QOMCPU):
                 {
                     "name": Type[self.qtn.type_macro],
                     "parent": Type["TYPE_CPU"],
+                    # TODO: support `OpSizeOf` and other related function body
+                    #       classes in `Initializer`'s `code`
                     "instance_size": "sizeof(%s)" % self.struct_instance_name,
                     "instance_init": cpu_initfn,
                     "class_size": "sizeof(%s)" % self.struct_class_name,
@@ -809,6 +832,7 @@ class CPUType(QOMCPU):
             )
         )
 
+        # TODO: this code is generic enough to be part of `source` module.
         spec_and_len2type = {}
         for specifiers, info in spec_and_len2typename.items():
             len2type = {}
