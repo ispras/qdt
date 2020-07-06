@@ -381,7 +381,7 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
 Potential error: arguments and opcodes intersect in instructions at several
   intervals. Instruction description order and interval selection priority
   affects instruction identification:
-    %s""" % "\n    ".join(
+    %s""" % "\n    ".join( # XXX: is + enough for concatination as above?
     "{1:<{0}} {2}".format(max_len, i.opcode_bits_string,
         i.comment
     ) for i in instructions
@@ -397,7 +397,7 @@ Warning: arguments and opcodes intersect in instructions.
   Arguments cannot get values equal to opcodes in the highlighted interval.
   That are instructions with opcodes can be interpreted as a special case of
   instructions with arguments. If it's not, check instructions encoding:
-    %s""" % "\n    ".join(
+    %s""" % "\n    ".join( # XXX: is + enough for concatination as above?
     "{1:<{0}} {2}".format(max_len + 2, # 2 for highlighting
         highlight_interval(i.opcode_bits_string, interval),
         i.comment
@@ -405,6 +405,9 @@ Warning: arguments and opcodes intersect in instructions.
 )
             )
 
+        # XXX: a comment?
+        # do not show same warnings again during recursive calls
+        # TODO: what about Potential error?
         show_subtree_warnings = False
 
     node.opcode = interval
