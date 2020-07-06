@@ -1228,6 +1228,7 @@ def patch_arch_init_source(src, target_name):
     else:
         i = target_defines_end_idx
 
+    # XXX: better move to `else` block
     prefix = "el"
     if i == target_defines_start_idx:
         lines[i] = lines[i][:1] + "el" + lines[i][1:]
@@ -1273,6 +1274,7 @@ def patch_disas_header(src, print_insn_name, bfd_arch_name):
     r = compile("^int %s *\(bfd_vma, disassemble_info\*\);$" % print_insn_name)
     inserted_print_insn = any(r.match(line) for line in lines)
 
+    # XXX: place this at beginning of loop body?
     if inserted_bfd_arch and inserted_print_insn:
         return
 
