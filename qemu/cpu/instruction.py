@@ -363,17 +363,17 @@ def build_instruction_tree(node, instructions, read_size, checked_bits,
                 )
             )
 
-        pe_flag = False
+        potential_error = False
 
         for i1, i2 in combinations(instructions, 2):
             i1b = i1.opcode_bits
             i2b = i2.opcode_bits
 
             if not (i1b <= i2b or i1b >= i2b):
-                pe_flag = True
+                potential_error = True
                 break
 
-        if pe_flag:
+        if potential_error:
             # TODO: The `priority` attribute is required by the instruction in
             #       order to be able to influence the instruction
             #       identification.
@@ -388,7 +388,7 @@ Potential error: arguments and opcodes intersect in instructions at several
 )
             )
 
-        if (not pe_flag
+        if (not potential_error
             and show_subtree_warnings
             and SHOW_INTERSECTION_WARNINGS
         ):
