@@ -1329,6 +1329,8 @@ def fill_print_insn_body(cputype, function):
         format_line = ''
         call_args = []
         name_to_format = cputype.name_to_format
+        # TODO: `disas_format`'s format is not trivial, add a doc to
+        #       `Instruction` class
         # XXX: use re.compile and place it near `Instruction` as a hint to a
         #      user about `disas_format`'s format
         for m in finditer("<(.+?)>|([^<>]+)",
