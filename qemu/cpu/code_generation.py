@@ -1,3 +1,6 @@
+# XXX: code_generation.py: implement glue functions to get rid of direct body tree filling in cpu creation code
+#      -> qemu.cpu: functions filling CPU & TCG front-end implementation
+# XXX: to dedicated module
 __all__ = [
     "fill_bfd_getb64_body"
   , "fill_class_by_name_body"
@@ -416,6 +419,8 @@ class ParseTreeCodeBuilder(object):
 
 
 # glue functions to get rid of direct body tree filling in cpu creation code
+# XXX: теперь мы - липкие бандиты (давай без клея в комментах, да)
+#      functions filling/generating CPU & TCG front-end implementation
 
 def fill_bfd_getb64_body(function):
     ull = "unsigned long long"
@@ -652,6 +657,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
         length //= BYTE_SIZE
         env = OpAddr(OpSDeref(function.args[0], "env"))
 
+        # XXX: it can be cached in kwargs
         suffixes = {
             1: 'ub',
             2: 'uw',
@@ -667,6 +673,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
 
         node(Declare(OpDeclareAssign(val, cpu_ld)))
 
+    # XXX: то node, то gen_node
     def decode_opc_epilogue(gen_node, instr_node, operands, text):
         instr_args = [ Pointer(Type["DisasContext"])("ctx") ]
         existing_names = defaultdict(lambda : count(0))
@@ -674,6 +681,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
             v = copy(o)
             parts = o.name.split('_')
             if len(parts) > 1:
+                # XXX: [see chat about this]
                 # Operand names with underscores are shortened.
                 # Only the first and second part of the name are used.
                 # The first letter is taken from the first part.
@@ -1321,6 +1329,8 @@ def fill_print_insn_body(cputype, function):
         format_line = ''
         call_args = []
         name_to_format = cputype.name_to_format
+        # XXX: use re.compile and place it near `Instruction` as a hint to a
+        #      user about `disas_format`'s format
         for m in finditer("<(.+?)>|([^<>]+)",
             instr_node.instruction.disas_format
         ):
@@ -1352,6 +1362,8 @@ def fill_print_insn_body(cputype, function):
                             call_args.append(var)
                 else:
                     call_args.append(Call(adapter, *variables))
+            # XXX: too many things may raise `KeyError`. Move most of it to
+            #      `else` block
             except KeyError:
                 format_line += m.group(0)
 
