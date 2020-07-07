@@ -118,6 +118,7 @@ class ParseTreeCodeBuilder(object):
         result, default_switch_case_nodes,
         add_break = True
     ):
+        # XXX: add argument description, only `cputype` is self explanatory
         instruction_tree_root = cputype.instruction_tree_root
         if not instruction_tree_root:
             gen_node(*default_switch_case_nodes)
@@ -154,6 +155,9 @@ class ParseTreeCodeBuilder(object):
             # Note, the variable name starts with a digit but the variable will
             # be renamed by adding the purpose prefix at the end of the code
             # build.
+            # XXX: alternative
+            # A variable name can't start with a digit but a semantic prefix
+            # will be assigned at end of code generation.
             val = Type["uint64_t"]("%d_%d" % (offset // BYTE_SIZE, length))
             val_desc = (val, offset, length)
             vals.append(val_desc)
@@ -161,9 +165,16 @@ class ParseTreeCodeBuilder(object):
 
         return vals
 
+    # XXX: у этих функций понимание аргументов зависит от контекста, где
+    #      эти функции используются. Их лучше расставить в порядке углубления.
+    #      Порядок от простого к составному ту не годится.
     def calc_shift_val(self, var_offset, var_length, offset, length):
+        # XXX: нужно подумать над порядком изложения, приходится прочитать до
+        #      конца, а потом ещё пару раз, чтобы понять начало: при чём тут
+        #      вообще порядок байт.
         # Bytes in memory (address indicated):
         # [ 0 ][ 1 ][ 2 ][ 3 ]
+        # XXX: это это за байты? 4-байтовая инструкция?
         # E.g. read_size == 16, i.e. 2 byte variables are used to store the
         # result of reading.
         # Reading result is different from endianness (2 consecutive readings).
@@ -174,6 +185,11 @@ class ParseTreeCodeBuilder(object):
         # var0_16 = [[ 1 ][ 0 ]]
         # var1_16 = [[ 3 ][ 2 ]]
         # Instruction description declares the value after reading.
+        # XXX: тогда причём тут порядок байт? Если инструкция 4-х байтовая, а
+        #      размер слова 2, то я знаю, что сначала будет считано слово с
+        #      меньшим адресом. Т.к. порядок байт важен только внутри слова.
+        #      Т.е. я и буду описывать поля сначала для первого слова, потом
+        #      для второго и т.д.
         #
         # E.g. desired field has an offset == 18 and length == 5.
         # With such an offset it is in the `var1_16` variable
@@ -181,6 +197,7 @@ class ParseTreeCodeBuilder(object):
         #  var0_16           var1_16
         #  111111            111111
         #  5432109876543210  5432109876543210  bit indices in variables
+        # XXX: нужно сопоставить с битами из описания.
         # [                ][                ]
         # [---------------->[                  var_offset == 16
         # [--------------------->(             offset == 18
@@ -188,6 +205,9 @@ class ParseTreeCodeBuilder(object):
         #                        (field)       length == 5
         #                              )---->] shift_val (desired offset)
         #
+        # XXX: на рисунках (field) не попадает в нужные биты, как и многое
+        # другое.
+
         # `shift_val` calculation is performed in steps:
         #                   [<---------------] var_length == 16
         #                   [--->(             local_offset == 2
@@ -200,6 +220,10 @@ class ParseTreeCodeBuilder(object):
         # var0_32 = [[ 0 ][ 1 ][ 2 ][ 3 ]] = [[var0_16][var1_16]]
         # Little-endian (high byte on the left):
         # var0_32 = [[ 3 ][ 2 ][ 1 ][ 0 ]] = [[var1_16][var0_16]]
+        # XXX: вот тут уже можно догадаться, как порядок байт влияет на
+        #      описание инструкций. Нужно ясно объяснить, что слова описаний,
+        #      попавшие на подобные длинные чтения, нужно интерпретировать
+        #      в другом порядке.
         #
         # For big-endian calculation is performed same:
         #  var0_32
@@ -220,6 +244,12 @@ class ParseTreeCodeBuilder(object):
         #
         # But for little-endian the positions of the subvariables are reversed.
         # Therefore, the local offset must be recalculated:
+        # XXX: внизу формуля другая и не приводится к этой очевидными способами
+        # XXX: ваще не понятно, откуда взялась ни та, ни другая. Нужна схема
+        #      для тупых
+        # XXX: очень интересемслучай, когда поле пересекает границу слов
+        # XXX: кстати, схему с текстом можно нарисовать в векторной форме,
+        #      а в коммент вставить имя файла
         # new_local_offset = local_offset % read_size + read_size * (
         #     var_length // read_size - local_offset // read_size - 1
         # )
@@ -250,6 +280,7 @@ class ParseTreeCodeBuilder(object):
         return shift_val
 
     def get_operand_part(self, oper, vars_desc):
+        # XXX: what this loop looking for? (a comment)
         for var, var_off, var_len in vars_desc:
             if (    var_off <= oper.offset
                 and oper.offset + oper.length <= var_off + var_len
@@ -275,6 +306,8 @@ class ParseTreeCodeBuilder(object):
         for name, parts in instruction.iter_operand_parts():
             shift = 0
             rval = None
+            # TODO: this is a coding style feature,
+            #       generalize it inside source.function.tree
             need_parenthesis = len(parts) > 1
 
             for oper in parts:
@@ -291,6 +324,8 @@ class ParseTreeCodeBuilder(object):
                 shift += oper.length
 
             if shift > OPERAND_MAX_SIZE:
+                # XXX: NotImplementedError? Суть проблемы в том, что мы не
+                #      поддерживаем (не хотим пока) более Int128 и т.д....
                 raise RuntimeError('The operand "%s" in the instruction "%s"'
                     " longer than %d bits. Please reduce the length manually"
                     " by breaking it into several operands." % (
@@ -306,16 +341,19 @@ class ParseTreeCodeBuilder(object):
         return operands
 
     def gen_subtree_code(self, gen_node, instr_node, vars_desc = []):
+        # XXX: avoid using opc[...]
         opc = instr_node.opcode
         ins = instr_node.instruction
         reads_desc = instr_node.reads_desc
 
         if ins is None:
+            # XXX: этот код дублируется
             new_vars = self.read_fields(gen_node, reads_desc)
             if new_vars is not None:
                 vars_desc = vars_desc + new_vars
                 self.vars.update(v[0] for v in new_vars)
 
+            # XXX: клммент, что ищет этот цикл
             for var, var_off, var_len in reversed(vars_desc):
                 if (    var_off <= opc[0]
                     and opc[0] + opc[1] <= var_off + var_len
@@ -327,6 +365,7 @@ class ParseTreeCodeBuilder(object):
             cases = []
             default_sc = None
             for key, node in instr_node.subtree.items():
+                # XXX: `key` is actually `opcode`
                 if key == "default":
                     sc = default_sc = SwitchCaseDefault()
                 else:
@@ -346,8 +385,10 @@ class ParseTreeCodeBuilder(object):
                 # If subtree hasn't `default` key it means subtree hasn't
                 # instr_node with `default` opc and we must exit cpu loop in
                 # `default` branch.
+                # XXX: did we met an unknown instruction here?
                 cases.append(self.default_switch_case)
 
+            # XXX: opc_mask = ((1 << opc[1]) - 1) << shift_val  ?
             opc_mask = int('1' * opc[1], base = 2) << shift_val
 
             self.opcode_vars.add(var)
