@@ -905,6 +905,9 @@ class CPUType(QOMCPU):
                 # immediately be placed above the helper functions.
                 f.extra_references = reg_names_arrays
 
+                # XXX: you may add all this `if` in
+                #      `CPUType: add functions body filling`.
+                #      if ...: pass only confuses
                 if fmt is not None:
                     fill_disas_write_helper_body(f)
 
