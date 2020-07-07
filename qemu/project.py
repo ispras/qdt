@@ -105,6 +105,9 @@ class QProject(object):
         callco(self.co_gen_all(*args, **kw))
 
     def co_gen_all(self, qemu_src,
+        # XXX: it cannot be `None` because it's always used if a CPU
+        #      description exists.
+        #      U may get current QVD here: QemuVersionDescription.current
         qvd = None,
         **gen_cfg
     ):
@@ -117,8 +120,13 @@ class QProject(object):
 
                 # re-init cache to prevent problems with same named types
                 if qvd.qvc is not None:
+                    # XXX: I think, if qvd.qvc is None here, it's an arror
+                    #      already.
                     qvd.forget_cache()
                 yield qvd.co_init_cache()
+                # Replace forgotten dirty cache with new clean one.
+                # XXX: It this required? Cache is inited by `co_init_cache`
+                #      I think qvd.qvc.use() is enough.
                 qvd.use()
 
         # Secondly, generate all devices
