@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-07-11 18:10+0300\n"
-"PO-Revision-Date:  2019-02-20 17:57+0300\n"
+"PO-Revision-Date:  2020-11-08 23:02+0300\n"
 "Last-Translator: Efimov Vasily <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
@@ -43,6 +43,50 @@ msgstr "Повторить"
 #: qdc-gui.py:297
 msgid "Edit"
 msgstr "Правка"
+
+#: misc/msp430x_tests_coverage.py:828
+msgid "Mnemonic"
+msgstr "Мнемоника"
+
+#: misc/msp430x_tests_coverage.py:829
+msgid "Occurrences"
+msgstr "Вхождения"
+
+#: misc/msp430x_tests_coverage.py:830
+msgid "Variants met"
+msgstr "Встречено вариантов"
+
+#: misc/msp430x_tests_coverage.py:831
+msgid "Variants total"
+msgstr "Всего вариантов"
+
+#: misc/msp430x_tests_coverage.py:892
+msgid "Mode"
+msgstr "Режим"
+
+#: misc/msp430x_tests_coverage.py:893
+msgid "FI arg1"
+msgstr "FI 1 аргумент"
+
+#: misc/msp430x_tests_coverage.py:894
+msgid "FI arg2"
+msgstr "FI 2 аргумент"
+
+#: misc/msp430x_tests_coverage.py:895
+msgid "FII arg"
+msgstr "FII аргумент"
+
+#: misc/msp430x_tests_coverage.py:896
+msgid "FIII arg"
+msgstr "FIII аргумент"
+
+#: misc/msp430x_tests_coverage.py:911
+msgid "YES"
+msgstr "ДА"
+
+#: misc/msp430x_tests_coverage.py:912
+msgid "NO"
+msgstr "НЕТ"
 
 #: qdc-gui.py:98
 msgid "Generation completed"
