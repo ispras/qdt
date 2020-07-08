@@ -131,13 +131,13 @@ SrcAddrMode = [
     SymbolicMode,
     AbsoluteMode,
     IndirectRegisterMode,
-    
+
     #IndirectAutoincrementMode, # replaced by IndirectAutoincrementModeR1..IndirectAutoincrementModeRn modes
     IndirectAutoincrementModeR1,
     IndirectAutoincrementModeR2,
     IndirectAutoincrementModeR3,
     IndirectAutoincrementModeRn,
-    
+
     ImmediateMode
 ]
 
