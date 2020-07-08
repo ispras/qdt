@@ -305,6 +305,11 @@ def main():
         metavar = "/path/to/c2t/tests/ir/directory",
         help = "Path to directory with disas files"
     )
+    parser.add_argument("-o", "--output",
+        metavar = "coverage.csv",
+        default = "ir_disas_table.csv",
+        help = "Name of output verbose coverage table",
+    )
 
     arguments = parser.parse_args()
 
@@ -367,8 +372,8 @@ def main():
                 not_found_instructions_count += 1
 
     tested_instr_count = 0
-    # XXX: hard-coded output file
-    with open("ir_disas_table.csv", "w") as f:
+
+    with open(arguments.output, "w") as f:
         f.write("Instruction;%s\n" % ";".join(tests))
         for instr_desc, instr_tests in instructions.items():
             f.write("%s%s%s;%s\n" % (
