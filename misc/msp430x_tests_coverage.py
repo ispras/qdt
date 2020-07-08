@@ -323,44 +323,48 @@ def main():
         test = splitext(basename(irfile))[0]
         tests.append(test)
         with open(irfile, "r") as f:
-            for line in f:
-                mi = line_with_instr.match(line)
-                if mi:
-                    instr_line = mi.group(1).split("\t")
-                    instr_mnem = instr_line[0]
-                    instr_mnem = mnemonic_aliases.get(instr_mnem, instr_mnem)
-                    if len(instr_line) == 2:
-                        instr_args = instr_line[1].split(", ")
-                        instr_args_count = len(instr_args)
-                        if instr_args_count == 1:
-                            # use src parsing for PUSH instruction
-                            flag = instr_mnem in ["PUSH.B", "PUSH.W"]
-                            instr = (instr_mnem, parse_arg_mode(instr_args[0], flag))
-                        elif instr_args_count == 2:
-                            src_mode = parse_arg_mode(instr_args[0])
-                            dst_mode = parse_arg_mode(instr_args[1], False)
-                            if dst_mode == IndirectRegisterMode:
-                                # page 209: The substitute for the destination operand is 0(Rdst)
-                                dst_mode = IndexedMode
-                            instr = (instr_mnem, src_mode, dst_mode)
-                        else:
-                            print('"%s" from "%s" ignored (wrong count of'
-                                " arguments)" % (" ".join(instr_line), test)
-                            )
-                            continue
-                    else:
-                        instr = (instr_mnem,)
+            lines = f.readlines()
 
-                    instr = emulated_instructions.get(instr, instr)
+        for line in lines:
+            mi = line_with_instr.match(line)
+            if not mi:
+                continue
 
-                    try:
-                        instructions[instr].append(test)
-                        processed_instructions_count += 1
-                    except KeyError:
-                        print('NOT FOUND: "%s" from "%s"' % (
-                            " ".join(instr_line), test
-                        ))
-                        not_found_instructions_count += 1
+            instr_line = mi.group(1).split("\t")
+            instr_mnem = instr_line[0]
+            instr_mnem = mnemonic_aliases.get(instr_mnem, instr_mnem)
+            if len(instr_line) == 2:
+                instr_args = instr_line[1].split(", ")
+                instr_args_count = len(instr_args)
+                if instr_args_count == 1:
+                    # use src parsing for PUSH instruction
+                    flag = instr_mnem in ["PUSH.B", "PUSH.W"]
+                    instr = (instr_mnem, parse_arg_mode(instr_args[0], flag))
+                elif instr_args_count == 2:
+                    src_mode = parse_arg_mode(instr_args[0])
+                    dst_mode = parse_arg_mode(instr_args[1], False)
+                    if dst_mode == IndirectRegisterMode:
+                        # page 209: The substitute for the destination operand is 0(Rdst)
+                        dst_mode = IndexedMode
+                    instr = (instr_mnem, src_mode, dst_mode)
+                else:
+                    print('"%s" from "%s" ignored (wrong count of'
+                        " arguments)" % (" ".join(instr_line), test)
+                    )
+                    continue
+            else:
+                instr = (instr_mnem,)
+
+            instr = emulated_instructions.get(instr, instr)
+
+            try:
+                instructions[instr].append(test)
+                processed_instructions_count += 1
+            except KeyError:
+                print('NOT FOUND: "%s" from "%s"' % (
+                    " ".join(instr_line), test
+                ))
+                not_found_instructions_count += 1
 
     tested_instr_count = 0
     # XXX: hard-coded output file
