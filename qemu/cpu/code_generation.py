@@ -62,6 +62,7 @@ from source import (
     BranchSwitch,
     Break,
     CINT,
+    CSTR,
     Call,
     Comment,
     Declare,
@@ -1609,7 +1610,7 @@ def fill_tcg_init_body(cputype, function, reg_vars, cpu_env):
             parent_node = body
             v = var
             state_field = Node(r.name)
-            string_name = r.name
+            string_name = CSTR(r.name)
 
         parent_node(
             OpAssign(
