@@ -85,6 +85,12 @@ from common import (
 from six import (
     integer_types
 )
+from .argument import (
+    FunctionArgument,
+)
+from re import (
+    compile,
+)
 
 
 # OpSDeref is automatically re-directed to definition of structure if
@@ -172,11 +178,21 @@ class Ifdef(Node):
             writer.line("endif")
 
 
+re_id = compile("^[_a-zA-Z][_a-zA-Z0-9]*$")
+
 class CNode(Node):
 
     def add_child(self, child):
         if isinstance(child, str):
-            child = CConst.parse(child)
+            # `str`ing can be interpreted differently:
+            # - CINT with precise representation
+            #   E.g.: 0b00010011 (leading zeros)
+            # - variable/argument name
+            # - C-string literal
+            if re_id.match(child):
+                child = FunctionArgument(child)
+            else:
+                child = CConst.parse(child)
         elif isinstance(child, integer_types):
             child = CINT(child)
 
