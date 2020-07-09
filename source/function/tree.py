@@ -252,6 +252,10 @@ class ConditionalBlock(CNode):
 
     def __init__(self, cond, **kw):
         super(ConditionalBlock, self).__init__(**kw)
+
+        if isinstance(cond, str):
+            cond = FunctionArgument(cond)
+
         self.cond = cond
 
 
