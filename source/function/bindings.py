@@ -17,6 +17,9 @@ from six import (
 from common import (
     CodeWriter
 )
+from .argument import (
+    LateLinker,
+)
 
 
 class VarUsageAnalyzer(NodeVisitor):
@@ -58,3 +61,20 @@ class BodyTree(CNode):
 
     def __c__(self, writer):
         self.out_children(writer)
+
+    @property
+    def function(self):
+        # Note, the attribute is not always assigned. So, `AttributeError`
+        # should be expected by caller.
+        return self._function
+
+    @function.setter
+    def function(self, function):
+        LateLinker(self, function).visit()
+        if hasattr(self, "_function"):
+            raise NotImplementedError("Function changing is not implemented")
+        self._function = function
+
+    @function.deleter
+    def function(self):
+        raise NotImplementedError("Function changing is not implemented")
