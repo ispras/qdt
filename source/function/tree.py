@@ -6,12 +6,13 @@ __all__ = [
       , "Ifdef"
       , "CNode"
           , "Label"
-          , "LoopWhile"
-          , "LoopDoWhile"
-          , "LoopFor"
-          , "BranchIf"
-          , "BranchSwitch"
-          , "BranchElse"
+          , "ConditionalBlock"
+              , "LoopWhile"
+              , "LoopDoWhile"
+              , "LoopFor"
+              , "BranchIf"
+              , "BranchSwitch"
+              , "BranchElse"
           , "SwitchCase"
           , "SwitchCaseDefault"
           , "StrConcat"
@@ -227,14 +228,17 @@ class MacroBranch(Node):
         writer.write("}")
 
 
-class LoopWhile(CNode):
+class ConditionalBlock(CNode):
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
 
-    def __init__(self, cond):
-        super(LoopWhile, self).__init__()
+    def __init__(self, cond, **kw):
+        super(ConditionalBlock, self).__init__(**kw)
         self.cond = cond
+
+
+class LoopWhile(ConditionalBlock):
 
     def __c__(self, writer):
         writer.write("while (")
@@ -244,14 +248,7 @@ class LoopWhile(CNode):
         writer.write("}")
 
 
-class LoopDoWhile(CNode):
-
-    __node__ = ("children", "cond")
-    __type_references__ = __node__
-
-    def __init__(self, cond):
-        super(LoopDoWhile, self).__init__()
-        self.cond = cond
+class LoopDoWhile(ConditionalBlock):
 
     def __c__(self, writer):
         writer.line("do@b{")
@@ -261,15 +258,14 @@ class LoopDoWhile(CNode):
         writer.write(");")
 
 
-class LoopFor(CNode):
+class LoopFor(ConditionalBlock):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = __node__
 
     def __init__(self, init = None, cond = None, step = None):
-        super(LoopFor, self).__init__()
+        super(LoopFor, self).__init__(cond)
         self.init = init
-        self.cond = cond
         self.step = step
 
     def __c__(self, writer):
@@ -289,14 +285,13 @@ class LoopFor(CNode):
         writer.write("}")
 
 
-class BranchIf(CNode):
+class BranchIf(ConditionalBlock):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = __node__
 
     def __init__(self, cond):
-        super(BranchIf, self).__init__()
-        self.cond = cond
+        super(BranchIf, self).__init__(cond)
         self.else_blocks = []
 
     def add_else(self, else_bl):
@@ -323,15 +318,11 @@ class BranchIf(CNode):
         writer.write("}")
 
 
-class BranchElse(CNode):
+class BranchElse(ConditionalBlock):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
-    __node__ = ("children", "cond")
-    __type_references__ = __node__
-
     def __init__(self, cond = None):
-        super(BranchElse, self).__init__()
-        self.cond = cond
+        super(BranchElse, self).__init__(cond)
 
     def __c__(self, writer):
         if self.cond is not None:
@@ -343,10 +334,7 @@ class BranchElse(CNode):
         self.out_children(writer)
 
 
-class BranchSwitch(CNode):
-
-    __node__ = ("children", "var")
-    __type_references__ = __node__
+class BranchSwitch(ConditionalBlock):
 
     def __init__(self, var,
         add_break_in_default = True,
@@ -354,10 +342,9 @@ class BranchSwitch(CNode):
         child_indent = False,
         separate_cases = False
     ):
-        super(BranchSwitch, self).__init__(indent_children = child_indent)
+        super(BranchSwitch, self).__init__(var, indent_children = child_indent)
         self.default_case = None
         self.add_break_in_default = add_break_in_default
-        self.var = var
         self.separate_cases = separate_cases
         self.add_cases(cases)
 
@@ -384,7 +371,7 @@ class BranchSwitch(CNode):
             self._add_empty_lines(self.children)
 
         writer.write("switch@b(")
-        self.var.__c__(writer)
+        self.cond.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
         writer.write("}")
