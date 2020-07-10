@@ -684,17 +684,7 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        _type = value.type
-
-        struct = _type
-        while isinstance(struct, (Pointer, TypeReference)):
-            struct = struct.type
-
-        if OPSDEREF_FROM_DEFINITION:
-            struct = struct._definition or struct
-
-        self.struct = struct
-
+        struct = self.struct
         try:
             struct.fields[field]
         except KeyError:
@@ -702,7 +692,7 @@ class OpSDeref(Operator):
                 struct, field
             ))
 
-        if isinstance(_type, Pointer):
+        if isinstance(value.type, Pointer):
             self.suffix = "->" + field
         else:
             self.suffix = "." + field
@@ -714,6 +704,17 @@ class OpSDeref(Operator):
     @property
     def container(self):
         return self.children[0]
+
+    @property
+    def struct(self):
+        struct = self.container.type
+        while isinstance(struct, (Pointer, TypeReference)):
+            struct = struct.type
+
+        if OPSDEREF_FROM_DEFINITION:
+            struct = struct._definition or struct
+
+        return struct
 
 
 class UnaryOperator(Operator):
