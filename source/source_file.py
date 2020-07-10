@@ -44,6 +44,14 @@ from .chunks import (
     FunctionDefinition,
     HeaderInclusion,
 )
+from .function import (
+    CNode,
+    BodyTree,
+    ConditionalBlock,
+)
+from .late_link import (
+    LateLink,
+)
 from .model import (
     CPP,
     CPPMacro,
@@ -284,6 +292,9 @@ switching to that mode.
         if inherit_references:
             assert(isinstance(self, Header))
 
+        # Replace `LateLink`s
+        LateBinder(self).visit()
+
         # This header includes other headers to provide types for includers
         # of self. This is list of references to those types.
         ref_list = []
@@ -426,6 +437,105 @@ order does not meet all requirements.
         return file
 
     __type_references__ = ("types", "global_variables")
+
+
+EMPTY = tuple()
+
+class LateBinder(TypeReferencesVisitor):
+
+    def __init__(self, source):
+        super(LateBinder, self).__init__(source)
+
+        # stack of included namespaces
+        self.namespaces = [SourceTreeContainer.current]
+        # scopes where corresponding namespaces are effective
+        self.scopes = [
+            object() # a unique reference preventing STC from being popped out
+        ]
+
+    def on_visit(self):
+        cur = self.cur
+        container = self.container
+        name = self.name
+
+        if isinstance(container, Source) \
+           and name in ("types", "global_variables") \
+        or isinstance(container, Function) and name == "body" \
+        or isinstance(container, (BodyTree, ConditionalBlock)) \
+           and name == "children" \
+        :
+            self.namespaces.append(container)
+            self.scopes.append(cur)
+            return
+
+        if not isinstance(cur, LateLink):
+            return
+
+        key = cur.key
+        for namespaces in reversed(self.namespaces):
+
+            if isinstance(namespaces, SourceTreeContainer):
+                if isinstance(key, str):
+                    replacement = namespaces.reg_type.get(key)
+                    if replacement is not None:
+                            break
+
+            elif isinstance(namespaces, Source):
+                if isinstance(key, str):
+                    for subscope in [namespaces.global_variables,
+                        namespaces.types
+                    ]:
+                        replacement = subscope.get(key)
+                        if replacement is not None:
+                            break
+                    else:
+                        # No replacement found
+                        continue
+                    break
+
+            elif isinstance(namespaces, Function):
+                args = namespaces.args or EMPTY
+
+                if isinstance(key, int):
+                    try:
+                        replacement = args[key]
+                        break
+                    except IndexError:
+                        # Currently `int` is only index of a function argument.
+                        # So, we can detect error right now.
+                        raise RuntimeError("Incorrect argument index %d."
+                            " Function %s has %u arguments" % (
+                            key, namespaces, len(args)
+                        ))
+                elif isinstance(key, str):
+                    for arg in args:
+                        if arg.name == key:
+                            replacement = arg
+                            break
+                    else:
+                        # No argument with such name
+                        continue
+                    break
+
+            elif isinstance(namespaces, CNode):
+                for var in namespaces.iter_local_variables():
+                    if var.name == key:
+                        replacement = var
+                        break
+                else:
+                    # No variable with such name
+                    continue
+                break
+        else:
+            # No replacement found
+            return
+
+        self.replace(replacement, skip_trunk = False)
+
+    def on_leave(self):
+        if self.cur is self.scopes[-1]:
+            self.scopes.pop()
+            self.namespaces.pop()
 
 
 class TypeFixerVisitor(TypeReferencesVisitor):
