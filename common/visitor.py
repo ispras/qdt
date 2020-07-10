@@ -71,6 +71,16 @@ Features (+) implemented, (-) TODO:
         self.cur = root
         self.field_name = field_name
 
+    @property
+    def container(self):
+        "Container of `cur`rent object"
+        return self.path[-2][0]
+
+    @property
+    def name(self):
+        "Identifier of `cur`rent object in `container`"
+        return self.path[-1][1]
+
     def on_visit(self):
         "default method does nothing"
 
@@ -87,8 +97,8 @@ Features (+) implemented, (-) TODO:
         lead to fall into a dead loop.
         """
 
-        cur_container = self.path[-2][0]
-        cur_name = self.path[-1][1]
+        cur_container = self.container
+        cur_name = self.name
 
         if isinstance(cur_container, (list, dict)):
             cur_container[cur_name] = new_value
