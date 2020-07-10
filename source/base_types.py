@@ -4,10 +4,13 @@ __all__ = [
 
 from .model import (
     Type,
-    Header,
     Function,
     Macro
 )
+from .source_file import (
+    Header,
+)
+
 
 def add_base_types():
     Type(name = "void", incomplete = True, base = True)
