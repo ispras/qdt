@@ -44,6 +44,14 @@ from .chunks import (
     FunctionDefinition,
     HeaderInclusion,
 )
+from .function import (
+    CNode,
+    BodyTree,
+    ConditionalBlock,
+)
+from .late_link import (
+    LateLink,
+)
 from .model import (
     CPP,
     CPPMacro,
@@ -284,6 +292,9 @@ switching to that mode.
         if inherit_references:
             assert(isinstance(self, Header))
 
+        # Replace `LateLink`s
+        LateBinder(self).visit()
+
         # This header includes other headers to provide types for includers
         # of self. This is list of references to those types.
         ref_list = []
@@ -426,6 +437,78 @@ order does not meet all requirements.
         return file
 
     __type_references__ = ("types", "global_variables")
+
+
+class LateBinder(TypeReferencesVisitor):
+
+    def __init__(self, source):
+        super(LateBinder, self).__init__(source)
+        # stack of scopes (namespaces) for late link resolution
+        self.scopes = []
+
+    def on_visit(self):
+        cur = self.cur
+        if isinstance(cur, (Source, Function, BodyTree, ConditionalBlock)):
+            self.scopes.append(cur)
+            return
+
+        if not isinstance(cur, LateLink):
+            return
+
+        key = cur.key
+        for scope in reversed(self.scopes):
+            if isinstance(scope, Function):
+                args = scope.args
+                if isinstance(key, int):
+                    try:
+                        replacement = args[key]
+                        break
+                    except IndexError:
+                        # Currently `int` is only index of a function argument.
+                        # So, we can detect error right now.
+                        raise RuntimeError("Incorrect argument index %d."
+                            " Function %s has %u arguments" % (
+                            key, scope, len(args)
+                        ))
+                elif isinstance(key, str):
+                    for arg in args:
+                        if arg.name == key:
+                            replacement = arg
+                            break
+                    else:
+                        # No argument with such name
+                        continue
+                    break
+            elif isinstance(scope, Source):
+                if isinstance(key, str):
+                    for subscope in [scope.global_variables, scope.types,
+                        Type.reg
+                    ]:
+                        replacement = subscope.get(key)
+                        if replacement is not None:
+                            break
+                    else:
+                        # No replacement found
+                        continue
+                    break
+            elif isinstance(scope, CNode):
+                for var in scope.iter_local_variables():
+                    if var.name == key:
+                        replacement = var
+                        break
+                else:
+                    # No variable with such name
+                    continue
+                break
+        else:
+            # No replacement found
+            return
+
+        self.replace(replacement, skip_trunk = False)
+
+    def on_leave(self):
+        if self.cur is self.scopes[-1]:
+            self.scopes.pop()
 
 
 class TypeFixerVisitor(TypeReferencesVisitor):
