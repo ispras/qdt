@@ -636,13 +636,14 @@ class Goto(SemicolonPresence):
 
 class Operator(SemicolonPresence):
 
+    prefix = ""
+    delim = "@s"
+    suffix = ""
+
     def __init__(self, *args, **kw_args):
         self.prior = op_priority[type(self)]
         super(Operator, self).__init__(children = args)
 
-        self.prefix = ""
-        self.delim = "@s"
-        self.suffix = ""
         self.parenthesis = kw_args.get("parenthesis", False)
 
     def add_child(self, child):
