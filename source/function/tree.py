@@ -684,19 +684,6 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        struct = self.struct
-        try:
-            struct.fields[field]
-        except KeyError:
-            raise RuntimeError('Structure "%s" has no field "%s"' % (
-                struct, field
-            ))
-
-        if isinstance(value.type, Pointer):
-            self.suffix = "->" + field
-        else:
-            self.suffix = "." + field
-
     @lazy
     def type(self):
         return self.struct.fields[self.field].type
@@ -715,6 +702,28 @@ class OpSDeref(Operator):
             struct = struct._definition or struct
 
         return struct
+
+    @property
+    def suffix(self):
+        field = self.field
+
+        # Actually we should check this as early as possible but
+        # dereferenced variable can be a `LateLink` during `__init__`.
+        try:
+            self.struct.fields[field]
+        except KeyError:
+            raise RuntimeError('Structure "%s" has no field "%s"' % (
+                self.struct, field
+            ))
+
+        type_ = self.container.type
+        if isinstance(type_, TypeReference):
+            type_ = type_.type
+
+        if isinstance(type_, Pointer):
+            return "->" + field
+        else:
+            return "." + field
 
 
 class UnaryOperator(Operator):
