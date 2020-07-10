@@ -181,6 +181,14 @@ class CNode(Node):
     def out_child(child, writer):
         child.__c__(writer)
 
+    def iter_local_variables(self):
+        for child in self.children:
+            if isinstance(child, OpDeclareAssign):
+                yield child.children[0]
+            elif isinstance(child, Declare):
+                for var in child.iter_variables():
+                    yield var
+
 
 class Comment(Node):
 
@@ -501,6 +509,13 @@ class Declare(SemicolonPresence):
     def __init__(self, *variables):
 
         super(Declare, self).__init__(children = variables)
+
+    def iter_variables(self):
+        for child in self.children:
+            if isinstance(child, OpDeclareAssign):
+                yield child.children[0]
+            else:
+                yield child
 
     def add_child(self, child):
         if isinstance(child, OpDeclareAssign):
