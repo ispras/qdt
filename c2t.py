@@ -564,9 +564,8 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
         target_trp.start()
 
     dc = DebugComparator(res_queue, jobs, c2t_cfg.rsp_target.test_timeout)
-    try:
-        dc.start()
-    except RuntimeError:
+    for err in dc.start():
+        print(err)
         killpg(0, SIGKILL)
 
     oracle_tb.join()

@@ -1,5 +1,8 @@
 __all__ = [
     "DebugComparator"
+  , "TestError"
+      , "TestTimeout"
+      , "TestMismatch"
 ]
 
 from collections import (
@@ -88,14 +91,14 @@ comparison report
     def compare(self, test, sender, dump, cmp_sender, cmp_dump):
         if dump["lineno"] != cmp_dump["lineno"]:
             msg = MSG_FORMAT.format(
-                msg = "branch instruction error, test: %s" % test
+                msg = "branch instruction error"
             )
         elif (    "vars" in dump
               and "vars" in cmp_dump
               and not same(dump["vars"], cmp_dump["vars"])
         ):
             msg = MSG_FORMAT.format(
-                msg = "binary instruction error, test: %s" % test
+                msg = "binary instruction error"
             )
         else:
             return
@@ -105,8 +108,7 @@ comparison report
                 key = lambda x: x
             )
         )
-        self._print_report(msg, dump4report)
-        raise RuntimeError
+        yield TestMismatch(test, self._format_report(msg, dump4report))
 
     def start(self):
         """ Start debug comparison """
@@ -115,10 +117,10 @@ comparison report
         tests_timings = {}
 
         while self.end:
-            for test, start in tests_timings.items():
+            for test, start in tuple(tests_timings.items()):
                 if time() - start > self.timeout:
-                    print("%s: TIMEOUT" % test)
-                    raise RuntimeError
+                    tests_timings.pop(test)
+                    yield TestTimeout(test)
 
             try:
                 sender, test, dump = self.dump_queue.get(timeout = 0.1)
@@ -152,4 +154,29 @@ comparison report
                 tests_timings.pop(test)
                 print("%s: OK" % test)
             else:
-                self.compare(test, sender, dump, cmp_sender, cmp_dump)
+                for res in self.compare(test, sender, dump, cmp_sender,
+                    cmp_dump
+                ):
+                    yield res
+
+
+class TestError(object):
+
+    def __init__(self, test):
+        self.test = test
+
+
+class TestTimeout(TestError):
+
+    def __str__(self):
+        return self.test + ": TIMEOUT"
+
+
+class TestMismatch(TestError):
+
+    def __init__(self, test, report):
+        super(TestMismatch, self).__init__(test)
+        self.report = report
+
+    def __str__(self):
+        return self.test + ":\n" + self.report
