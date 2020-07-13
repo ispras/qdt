@@ -5,6 +5,7 @@ from sys import (
     stderr
 )
 from os.path import (
+    relpath,
     dirname,
     join,
     exists,
@@ -513,7 +514,7 @@ class C2TTestBuilder(Process):
         self.is_finish.value = 1
 
 
-def start_cpu_testing(tests, jobs, reuse, verbose):
+def start_cpu_testing(tests, jobs, reuse, verbose, errors2stop = 1):
     oracle_tests_queue = Queue(0)
     target_tests_queue = Queue(0)
     is_finish_oracle = Value('i', 0)
@@ -563,10 +564,22 @@ def start_cpu_testing(tests, jobs, reuse, verbose):
         oracle_trp.start()
         target_trp.start()
 
+    # Tests we are waiting for
+    tests_left = set(tests)
+
     dc = DebugComparator(res_queue, jobs, c2t_cfg.rsp_target.test_timeout)
     for err in dc.start():
+        test = relpath(err.test, C2T_TEST_DIR)
+        tests_left.discard(test)
+
         print(err)
-        killpg(0, SIGKILL)
+
+        if not tests_left:
+            break
+        if errors2stop:
+            errors2stop -= 1
+            if errors2stop == 0:
+                killpg(0, SIGKILL)
 
     oracle_tb.join()
     target_tb.join()
@@ -682,6 +695,12 @@ def main():
         action = "store_true",
         help = "increase output verbosity"
     )
+    parser.add_argument("-e", "--errors",
+        type = int,
+        default = 1,
+        metavar = "N",
+        help = "stop on N-th error, 0 - no stop mode"
+    )
 
     args = parser.parse_args()
 
@@ -745,7 +764,9 @@ def main():
         if not exists(sub_dir):
             makedirs(sub_dir)
 
-    start_cpu_testing(tests, jobs, args.reuse, args.verbose)
+    start_cpu_testing(tests, jobs, args.reuse, args.verbose,
+        errors2stop = args.errors
+    )
     killpg(0, SIGTERM)
 
 
