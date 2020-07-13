@@ -62,7 +62,7 @@ comparison report
             )
         )
 
-    def _print_report(self, msg, dump):
+    def _format_report(self, msg, dump):
         report = msg
 
         for key, val in dump.items():
@@ -80,7 +80,10 @@ comparison report
                     regs = self._prepare_regs4print(val["regs"])
                 )
             )
-        print(report)
+        return report
+
+    def _print_report(self, *a, **kw):
+        print(self._format_report(*a, **kw))
 
     def compare(self, test, sender, dump, cmp_sender, cmp_dump):
         if dump["lineno"] != cmp_dump["lineno"]:
