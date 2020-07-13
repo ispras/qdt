@@ -31,6 +31,9 @@ from multiprocessing import (
     Queue,
     Process
 )
+from threading import (
+    Thread
+)
 from six.moves.queue import (
     Empty
 )
@@ -274,10 +277,10 @@ class TargetSession(DebugSession):
         self.rt.target.run(setpc = False)
 
 
-class ProcessWithErrCatching(Process):
+class ProcessWithErrCatching(Thread):
 
     def __init__(self, command):
-        Process.__init__(self)
+        Thread.__init__(self)
         self.cmd = command
         self.prog = command.split(' ')[0]
 
@@ -311,7 +314,6 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose):
                 test_dir = C2T_TEST_DIR
             )
         )
-        gdbserver.daemon = True
         gdbserver.start()
 
         if not wait_for_tcp_port(gdbserver_port):
@@ -349,7 +351,6 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
         print(cmd)
 
     qemu = ProcessWithErrCatching(cmd)
-    qemu.daemon = True
     qemu.start()
     return qemu
 
