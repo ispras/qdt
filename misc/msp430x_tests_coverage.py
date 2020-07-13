@@ -310,6 +310,10 @@ def main():
         default = "ir_disas_table.csv",
         help = "Name of output verbose coverage table",
     )
+    parser.add_argument("-s", "--summary",
+        metavar = "summary.csv",
+        help = "Name of coverage summary table (name & size only)"
+    )
 
     arguments = parser.parse_args()
 
@@ -386,6 +390,18 @@ def main():
             ))
             if instr_tests:
                 tested_instr_count += 1
+
+    if arguments.summary:
+        summary_stat = OrderedDict()
+        for instr_desc, instr_tests in instructions.items():
+            instr = instr_desc[0]
+            summary_stat[instr] = summary_stat.get(instr, 0) + len(instr_tests)
+
+        summary_text = "\n".join(
+            ";".join(map(str, item)) for item in summary_stat.items()
+        )
+        with open(arguments.summary, "w") as f:
+            f.write(summary_text)
 
     instructions_count = len(instructions)
     if instructions_count:
