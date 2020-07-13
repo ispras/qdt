@@ -146,8 +146,14 @@ comparison report
                 self.end -= 1
             elif dump == "TEST_RUN" and cmp_dump == "TEST_RUN":
                 print("%s: RUN" % test)
-            elif dump == "TEST_END" and cmp_dump == "TEST_END":
-                print("%s: OK" % test)
+            elif dump == "TEST_END":
+                if dump == cmp_dump:
+                    print("%s: OK" % test)
+                else:
+                    yield TestMismatch(test, sender + " ended earlier")
+            elif cmp_dump == "TEST_END":
+                # dump != "TEST_END"
+                yield TestMismatch(test, cmp_sender + " ended earlier")
             else:
                 for res in self.compare(test, sender, dump, cmp_sender,
                     cmp_dump
