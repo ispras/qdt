@@ -39,6 +39,9 @@ from psutil import (
 from threading import (
     Thread
 )
+from traceback import (
+    print_exc
+)
 from six.moves.queue import (
     Empty
 )
@@ -121,6 +124,48 @@ class DebugSession(object):
         self.queue = queue
         self.reset(srcfile, elffile)
         self.session_type = None
+
+    def run(self, timeout):
+        """ Run the testing through the debug session.
+
+:returns: was timeout expired
+        """
+        # RSP.run is blocking. Running it in a dedicated thread allows to
+        # stop it after a timeout.
+
+        t = Thread(
+            name = "RSP-" + self.session_type + "-" + str(self.port),
+            target = self.thread_main
+        )
+        t.start()
+        t.join(timeout = timeout)
+
+        timeout_expired = t.is_alive()
+
+        if timeout_expired:
+            self._handling_timeout = True
+            # Closing the socket will result in `RSP.run` failure in the
+            # `t`hread soon.
+            self.port_close()
+            t.join()
+
+            self._handling_timeout = False
+
+        return timeout_expired
+
+    def thread_main(self):
+        queue = self.queue
+        queue.put((self.session_type, self.srcfile, "TEST_RUN"))
+        try:
+            self.main()
+        except:
+            if self._handling_timeout:
+                queue.put((self.session_type, self.srcfile, "TEST_TIMEOUT"))
+            else:
+                # TODO: pass session error to `queue`
+                print_exc()
+        else:
+            queue.put((self.session_type, self.srcfile, "TEST_END"))
 
     def reset(self, srcfile, elffile):
         self.srcfile = srcfile
@@ -249,7 +294,7 @@ class OracleSession(DebugSession):
         super(OracleSession, self).__init__(*args)
         self.session_type = "oracle"
 
-    def run(self):
+    def main(self):
         self._execute_debug_comment()
         self.rt.target.run(setpc = False)
 
@@ -268,7 +313,7 @@ class TargetSession(DebugSession):
         for data, addr in loading:
             self.rt.target.store(data, addr)
 
-    def run(self):
+    def main(self):
         self._execute_debug_comment()
         if not c2t_cfg.rsp_target.user:
             self.load()
@@ -327,7 +372,9 @@ class ProcessWithErrCatching(Thread):
         self.join()
 
 
-def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose):
+def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
+    timeout,
+):
     while True:
         try:
             test_src, test_elf = tests_queue.get(timeout = 0.1)
@@ -355,15 +402,12 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose):
             str(gdbserver_port), test_elf, res_queue, verbose
         )
 
-        res_queue.put((session.session_type, test_src, "TEST_RUN"))
-
-        session.run()
-
-        res_queue.put((session.session_type, test_src, "TEST_END"))
-
-        session.kill()
-        gdbserver.join()
-        session.port_close()
+        if session.run(timeout):
+            gdbserver.wipe()
+        else:
+            session.kill()
+            gdbserver.join()
+            session.port_close()
 
     res_queue.put(("oracle", None, "TEST_EXIT"))
 
@@ -388,7 +432,7 @@ def run_qemu(test_elf, qemu_port, qmp_port, verbose):
 
 
 def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
-    verbose
+    verbose, timeout
 ):
     qemu = None
     session = None
@@ -439,16 +483,17 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                 )
                 qmp("system_reset")
 
-            res_queue.put((session.session_type, test_src, "TEST_RUN"))
+            if session.run(timeout):
+                qemu.wipe()
 
-            session.run()
-
-            res_queue.put((session.session_type, test_src, "TEST_END"))
-
-            if not reuse:
-                session.kill()
-                qemu.join()
-                session.port_close()
+                # Qemu has been terminated and cannot be resued
+                session = None
+                qmp = None
+            else:
+                if not reuse:
+                    session.kill()
+                    qemu.join()
+                    session.port_close()
 
 
 class FreePortFinder(Process):
@@ -546,18 +591,20 @@ def start_cpu_testing(tests, jobs, reuse, verbose, errors2stop = 1):
     if jobs > len(tests):
         jobs = len(tests)
 
+    timeout = float(c2t_cfg.rsp_target.test_timeout)
+
     tests_run_processes = []
     for i in range(0, jobs):
         oracle_trp = Process(
             target = oracle_tests_run,
             args = [oracle_tests_queue, port_queue, res_queue,
-                is_finish_oracle, verbose
+                is_finish_oracle, verbose, timeout
             ]
         )
         target_trp = Process(
             target = target_tests_run,
             args = [target_tests_queue, port_queue, res_queue,
-                is_finish_target, reuse, verbose
+                is_finish_target, reuse, verbose, timeout
             ]
         )
         tests_run_processes.append((oracle_trp, target_trp))
@@ -567,7 +614,7 @@ def start_cpu_testing(tests, jobs, reuse, verbose, errors2stop = 1):
     # Tests we are waiting for
     tests_left = set(tests)
 
-    dc = DebugComparator(res_queue, jobs, c2t_cfg.rsp_target.test_timeout)
+    dc = DebugComparator(res_queue, jobs)
     for err in dc.start():
         test = relpath(err.test, C2T_TEST_DIR)
         tests_left.discard(test)
