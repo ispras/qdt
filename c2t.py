@@ -279,17 +279,20 @@ class TargetSession(DebugSession):
 
 class ProcessWithErrCatching(Thread):
 
-    def __init__(self, command):
+    def __init__(self, *popen_args, **popen_kw):
         Thread.__init__(self)
-        self.cmd = command
-        self.prog = command.split(' ')[0]
+
+        popen_kw.setdefault("shell", True)
+        popen_kw["stdout"] = popen_kw["stderr"] = PIPE
+
+        self.popen_args = popen_args
+        self.popen_kw = popen_kw
+
+        cmd = popen_args[0]
+        self.prog = cmd.split(' ')[0] if isinstance(cmd, str) else cmd[0]
 
     def run(self):
-        process = Popen(self.cmd,
-            shell = True,
-            stdout = PIPE,
-            stderr = PIPE
-        )
+        process = Popen(*self.popen_args, **self.popen_kw)
         _, err = process.communicate()
         if process.returncode != 0:
             c2t_exit(err, prog = self.prog)
