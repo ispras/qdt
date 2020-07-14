@@ -31,6 +31,10 @@ from multiprocessing import (
     Queue,
     Process
 )
+from psutil import (
+    Process as psutil_Process,
+    NoSuchProcess
+)
 from threading import (
     Thread
 )
@@ -292,10 +296,34 @@ class ProcessWithErrCatching(Thread):
         self.prog = cmd.split(' ')[0] if isinstance(cmd, str) else cmd[0]
 
     def run(self):
-        process = Popen(*self.popen_args, **self.popen_kw)
+        self._wiped = False
+
+        self.process = process = Popen(*self.popen_args, **self.popen_kw)
         _, err = process.communicate()
-        if process.returncode != 0:
-            c2t_exit(err, prog = self.prog)
+
+        # If the process has been explicitly wiped, do not `c2t_exit`
+        if not self._wiped:
+            if process.returncode != 0:
+                c2t_exit(err, prog = self.prog)
+
+    def wipe(self):
+        "Kills the process with its tree."
+        self._wiped = True
+
+        stack = [psutil_Process(self.process.pid)]
+
+        while stack:
+            process = stack.pop()
+
+            try:
+                stack.extend(process.children())
+                process.kill()
+            except NoSuchProcess:
+                # killing process on a previous iteration may result in
+                # self-termination of current process.
+                pass
+
+        self.join()
 
 
 def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose):
