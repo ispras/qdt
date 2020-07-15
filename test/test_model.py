@@ -6,6 +6,8 @@ from six import (
     StringIO
 )
 from source import (
+    LateLink,
+    BranchIf,
     Return,
     OpSDeref,
     disable_auto_lock_sources,
@@ -983,6 +985,90 @@ class TestOptimizeInclusions(SourceModelTestHelper, TestCase):
 
 typedef c *cpointer;
 """.format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestLateBinding(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestLateBinding, self).setUp()
+        name = type(self).__name__
+
+        # Late binding testing is based on `OpSDeref`'s checking of `struct`ure
+        # field existence. We create variables with same name but using
+        # `struct`ures with different fields. Variables are created and used
+        # in different namespaces. `OpSDeref` checks if late binding find out
+        # right `Variable`.
+
+        src = Source(name.lower() + ".c")
+        src.add_types([
+            Structure("A", Type["int"]("a")),
+            Structure("B", Type["int"]("b")),
+            Structure("C", Type["int"]("c")),
+        ])
+        src.add_global_variable(
+            Type["A"]("struct_var")
+        )
+        src.add_types([
+            Function("a_function",
+                body = BodyTree()(
+                    BranchIf(OpSDeref(LateLink("struct_var"), "b"))(
+                        Declare(Type["C"]("struct_var")),
+                        OpAssign(OpSDeref(LateLink("struct_var"), "c"), 1)
+                    )
+                ),
+                ret_type = Type["int"],
+                args = [Pointer(Type["B"])("struct_var")]
+            ),
+            Function("another_function",
+                body = BodyTree()(
+                    BranchIf(OpSDeref(LateLink("struct_var"), "a"))(
+                        Declare(Type["C"]("struct_var")),
+                        OpAssign(OpSDeref(LateLink("struct_var"), "c"), 1)
+                    ),
+                    Return(OpSDeref(LateLink("struct_var"), "a"))
+                ),
+                ret_type = Type["int"],
+            ),
+        ])
+
+        src_content = "/* " + src.path + """ */
+
+typedef struct A {
+    int a;
+} A;
+
+typedef struct B {
+    int b;
+} B;
+
+typedef struct C {
+    int c;
+} C;
+
+int a_function(B *struct_var)
+{
+    if (struct_var->b) {
+        C struct_var;
+        struct_var.c = 1;
+    }
+}
+
+A struct_var;
+
+int another_function(void)
+{
+    if (struct_var.a) {
+        C struct_var;
+        struct_var.c = 1;
+    }
+    return struct_var.a;
+}
+
+"""
 
         self.files = [
             (src, src_content)
