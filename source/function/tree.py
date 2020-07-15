@@ -677,14 +677,23 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        _type = value.type
+    @property
+    def suffix(self):
+        field = self.field
 
-        struct = _type
-        while isinstance(struct, (Pointer, TypeReference)):
-            struct = struct.type
+        type_ = self.container.type
+        if isinstance(type_, TypeReference):
+            type_ = type_.type
 
-        self.struct = struct
+        if isinstance(type_, Pointer):
+            struct = type_.type
+            op = "->"
+        else:
+            struct = type_
+            op = "."
 
+        # Actually we should check this as early as possible but
+        # dereferenced variable can be a `LateLink` during `__init__`.
         try:
             struct.fields[field]
         except KeyError:
@@ -692,10 +701,7 @@ class OpSDeref(Operator):
                 struct, field
             ))
 
-        if isinstance(_type, Pointer):
-            self.suffix = "->" + field
-        else:
-            self.suffix = "." + field
+        return op + field
 
     @lazy
     def type(self):
