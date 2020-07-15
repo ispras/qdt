@@ -6,6 +6,8 @@ from six import (
     StringIO
 )
 from source import (
+    Return,
+    OpSDeref,
     disable_auto_lock_sources,
     OpaqueCode,
     Type,
@@ -506,6 +508,64 @@ Private *handler __attribute__((unused));
 
 """ % (name.lower() + ".c")
 
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestReplacementWithDefinition(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        from source.function.tree import (
+            OPSDEREF_FROM_DEFINITION
+        )
+        if not OPSDEREF_FROM_DEFINITION:
+            self.skipTest("re-direction to structure definition is disabled")
+
+        super(TestReplacementWithDefinition, self).setUp()
+        name = type(self).__name__
+        src = Source(name.lower() + ".c")
+
+        struct = Structure("A",
+            Type["int"]("a")
+        )
+        fwd = struct.gen_forward_declaration()
+        var = fwd("a_global")
+
+        src.add_global_variable(var)
+
+        src.add_types([
+            struct,
+            fwd,
+            Function("a_function",
+                body = BodyTree()(
+                    # Using a forward structure declaration as type of the
+                    # `var`iable must not result in a field existence check
+                    # error because of auto re-direction.
+                    # But currently variable "a_global" depends on forward
+                    # structure declaration which is wrong and will be
+                    # fixed soon.
+                    Return(OpSDeref(var, "a"))
+                )
+            )
+        ])
+
+        src_content = "/* " + src.path + """ */
+
+struct A {
+    int a;
+};
+
+typedef struct A A;
+
+A a_global;
+
+void a_function(void)
+{
+    return a_global.a;
+}
+
+"""
         self.files = [
             (src, src_content)
         ]
