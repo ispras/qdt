@@ -86,11 +86,6 @@ from six import (
 )
 
 
-# OpSDeref is automatically re-directed to definition of structure if
-# available.
-OPSDEREF_FROM_DEFINITION = ee("QDT_OPSDEREF_FROM_DEFINITION", "True")
-
-
 class DeclarationSearcher(NodeVisitor):
 
     def __init__(self, root):
@@ -688,9 +683,6 @@ class OpSDeref(Operator):
         struct = _type
         while isinstance(struct, (Pointer, TypeReference)):
             struct = struct.type
-
-        if OPSDEREF_FROM_DEFINITION:
-            struct = struct._definition or struct
 
         # for type collection
         self.struct = struct

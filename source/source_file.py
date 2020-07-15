@@ -44,6 +44,9 @@ from .chunks import (
     FunctionDefinition,
     HeaderInclusion,
 )
+from .function import (
+    OpSDeref,
+)
 from .model import (
     CPP,
     CPPMacro,
@@ -98,6 +101,9 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 # Skip global headers inclusions. All needed global headers included in
 # "qemu/osdep.h".
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
+# OpSDeref is automatically re-directed to definition of structure if
+# available.
+OPSDEREF_FROM_DEFINITION = ee("QDT_OPSDEREF_FROM_DEFINITION", "True")
 
 
 class AddTypeRefToDefinerException(RuntimeError):
@@ -466,6 +472,25 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             # replaced with type reference.
             if isinstance(t, (Pointer, MacroUsage)) and not t.is_named:
                 return
+
+            if OPSDEREF_FROM_DEFINITION:
+                if isinstance(t, Structure):
+                    struct = t._definition
+                    if struct is not None:
+                        # t is a typedef struct without body and it cannot be
+                        # used with `OpSDeref`. Only full structure definition
+                        # required according to C language.
+                        if  (isinstance(self.container, Variable)
+                            and len(self.path) >= 4
+                            # Note: path[-3] is `children` list of `OpSDeref`
+                            and isinstance(self.path[-4][0], OpSDeref)
+                        ):
+                            # This replacement must be transparent for rest of
+                            # the algorithm.
+                            super(TypeFixerVisitor, self).replace(struct,
+                                skip_trunk = False
+                            )
+                            t = struct
 
             # Add definerless types to the Source automatically
             if t.definer is None:

@@ -516,7 +516,7 @@ Private *handler __attribute__((unused));
 class TestReplacementWithDefinition(SourceModelTestHelper, TestCase):
 
     def setUp(self):
-        from source.function.tree import (
+        from source.source_file import (
             OPSDEREF_FROM_DEFINITION
         )
         if not OPSDEREF_FROM_DEFINITION:
@@ -539,12 +539,11 @@ class TestReplacementWithDefinition(SourceModelTestHelper, TestCase):
             fwd,
             Function("a_function",
                 body = BodyTree()(
-                    # Using a forward structure declaration as type of the
-                    # `var`iable must not result in a field existence check
-                    # error because of auto re-direction.
-                    # But currently variable "a_global" depends on forward
-                    # structure declaration which is wrong and will be
-                    # fixed soon.
+                    # Type of `var`iable, a forward declaration, inside
+                    # `OpSDeref` must be replaced with corresponding
+                    # structure definition.
+                    # As a result, field existence check by `OpSDeref` must
+                    # not fail.
                     Return(OpSDeref(var, "a"))
                 )
             )
