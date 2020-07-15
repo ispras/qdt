@@ -555,14 +555,14 @@ struct A {
     int a;
 };
 
-typedef struct A A;
-
 A a_global;
 
 void a_function(void)
 {
     return a_global.a;
 }
+
+typedef struct A A;
 
 """
         self.files = [
