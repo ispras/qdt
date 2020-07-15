@@ -656,7 +656,10 @@ class Header(Source):
                     Header.yields_per_header.append(yields_per_current_header)
 
     @staticmethod
-    def co_build_inclusions(work_dir, include_paths):
+    def co_build_inclusions(work_dir, include_paths,
+        # the reference is saved at class creation time
+        _sys_stdout_recovery = sys.stdout
+    ):
         # Default include search folders should be specified to
         # locate and parse standard headers.
         # parse `cpp -v` output to get actual list of default
@@ -680,7 +683,7 @@ class Header(Source):
         for h in Header.reg.values():
             del h.parsed
 
-        sys.stdout = sys_stdout_recovery
+        sys.stdout = _sys_stdout_recovery
 
         yields_total = sum(Header.yields_per_header)
 
@@ -786,9 +789,6 @@ transitively includes definer of ref)"""
                         continue
                     Header._propagate_reference(u, ref)
 
-
-# Used for sys.stdout recovery
-sys_stdout_recovery = sys.stdout
 
 class ParsePrintFilter(object):
 
