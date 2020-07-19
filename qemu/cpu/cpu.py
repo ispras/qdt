@@ -14,6 +14,7 @@ from ..qom_desc import (
 from ..version import (
     get_vp,
 )
+from .code_generation import *
 from .constants import (
     BYTE_BITSIZE,
     SUPPORTED_READ_BITSIZES,
@@ -533,6 +534,7 @@ class CPUType(QOMCPU):
                 static = True,
                 inline = True
             )
+            fill_env_get_cpu_body(self, env_get_cpu)
             h.add_type(env_get_cpu)
 
         h.add_type(Enumeration([("EXCP_ILLEGAL", 1)]))
@@ -589,6 +591,7 @@ class CPUType(QOMCPU):
             static = True,
             inline = True
         )
+        fill_cpu_mmu_index_body(cpu_mmu_index)
         h.add_type(cpu_mmu_index)
 
         get_tb_cpu_state = Function(
@@ -602,6 +605,7 @@ class CPUType(QOMCPU):
             static = True,
             inline = True
         )
+        fill_cpu_get_tb_cpu_state_body(get_tb_cpu_state, self.pc_register)
         h.add_type(get_tb_cpu_state)
 
         type_arch_cpu = Macro(self.qtn.type_macro,
@@ -713,6 +717,7 @@ class CPUType(QOMCPU):
             static = True,
             inline = True
         )
+        fill_set_pc_inc_body(set_pc, h.global_variables[self.pc_register])
 
         h.add_types([
             Enumeration([
@@ -733,34 +738,42 @@ class CPUType(QOMCPU):
         fn_name = self.gen_func_name
 
         reset = cpu_class.reset.gen_callback(fn_name("reset"), static = True)
+        fill_reset_body(self, reset)
         c.add_type(reset)
 
         disas_set_info = cpu_class.disas_set_info.gen_callback(
             fn_name("disas_set_info"),
             static = True
         )
+        fill_disas_set_info_body(self, disas_set_info)
         c.add_type(disas_set_info)
 
         set_pc = cpu_class.set_pc.gen_callback(fn_name("set_pc"),
             static = True
         )
+        fill_set_pc_body(self, set_pc)
         c.add_type(set_pc)
 
         class_by_name = cpu_class.class_by_name.gen_callback(
             fn_name("class_by_name"),
             static = True
         )
+        fill_class_by_name_body(self, class_by_name)
         c.add_type(class_by_name)
 
         has_work = cpu_class.has_work.gen_callback(
             fn_name("has_work"),
             static = True
         )
+        fill_has_work_body(has_work)
         c.add_type(has_work)
 
         gdb_read_register = cpu_class.gdb_read_register.gen_callback(
             fn_name("gdb_read_register"),
             static = True
+        )
+        fill_gdb_rw_register_body(self, gdb_read_register,
+            "TODO: implement gdb_read_register"
         )
         c.add_type(gdb_read_register)
 
@@ -768,27 +781,39 @@ class CPUType(QOMCPU):
             fn_name("gdb_write_register"),
             static = True
         )
+        fill_gdb_rw_register_body(self, gdb_write_register,
+            "TODO: implement gdb_write_register"
+        )
         c.add_type(gdb_write_register)
 
         realizefn = Type["DeviceRealize"].type.use_as_prototype(
             fn_name("realizefn"),
             static = True
         )
+        fill_realizefn_body(self, realizefn)
         c.add_type(realizefn)
 
         if get_vp("cpu_arch_init exists"):
             cpu_init_def = Type[self.cpu_init_name].gen_definition()
+            fill_cpu_init_body(self, cpu_init_def)
             c.add_type(cpu_init_def)
 
         cpu_initfn = type_info_type.instance_init.gen_callback(
             fn_name("initfn"),
             static = True
         )
+        fill_initfn_body(self, cpu_initfn)
         c.add_type(cpu_initfn)
 
         cpu_class_init = type_info_type.class_init.gen_callback(
             fn_name("class_init"),
             static = True
+        )
+        num_core_regs = sum(r.bank_size or 1 for r in self.registers)
+        fill_class_init_body(self, cpu_class_init, num_core_regs,
+            self.gen_files["cpu.h"].global_variables[
+                "vmstate_" + self.qtn.for_id_name
+            ]
         )
         c.add_type(cpu_class_init)
 
@@ -828,26 +853,32 @@ class CPUType(QOMCPU):
 
         if get_vp("tlb_fill exists"):
             tlb_fill = Type["tlb_fill"].gen_definition()
+            fill_tlb_fill_body(self, tlb_fill)
             c.add_type(tlb_fill)
 
         if get_vp("CPUClass has tlb_fill field"):
             cpu_tlb_fill = Type[
                 fn_name("tlb_fill")
             ].gen_definition()
+            fill_cpuclass_tlb_fill_body(cpu_tlb_fill)
             c.add_type(cpu_tlb_fill)
         else:
             handle_mmu_fault = Type[
                 fn_name("handle_mmu_fault")
             ].gen_definition()
+            fill_handle_mmu_fault_body(handle_mmu_fault)
             c.add_type(handle_mmu_fault)
 
         raise_exception = self.gen_raise_exception()
+        fill_raise_exception_body(self, raise_exception)
         c.add_type(raise_exception)
 
         helper_debug = self.gen_helper_debug()
+        fill_helper_debug_body(helper_debug)
         c.add_type(helper_debug)
 
         helper_illegal = self.gen_helper_illegal()
+        fill_helper_illegal_body(helper_illegal)
         c.add_type(helper_illegal)
 
         Header["exec/helper-gen.h"].add_types([
@@ -858,6 +889,7 @@ class CPUType(QOMCPU):
         phys_page_debug_def = Type[
             fn_name("get_phys_page_debug")
         ].gen_definition()
+        fill_get_phys_page_debug_body(phys_page_debug_def)
         c.add_type(phys_page_debug_def)
 
         c.add_type(Type[fn_name("do_interrupt")].gen_definition())
@@ -892,9 +924,11 @@ class CPUType(QOMCPU):
         cpu_dump_state_def = Type[
             self.gen_func_name("dump_state")
         ].gen_definition()
+        fill_dump_state_body(self, cpu_dump_state_def, reg_vars)
         c.add_type(cpu_dump_state_def)
 
         tcg_init_def = Type[self.tcg_init_name].gen_definition()
+        fill_tcg_init_body(self, tcg_init_def, reg_vars, cpu_env)
         c.add_type(tcg_init_def)
 
         decode_opc = Function(
@@ -906,6 +940,7 @@ class CPUType(QOMCPU):
             ],
             static = True
         )
+        fill_decode_opc_body(self, decode_opc, cpu_env)
         c.add_type(decode_opc)
 
         cpu_arch_state_p = Pointer(Type[self.struct_name])
@@ -921,6 +956,7 @@ class CPUType(QOMCPU):
             name = "gen_intermediate_code.definition",
             args = gen_int_code_args
         )
+        fill_gen_intermediate_code_body(self, gen_int_code_def, cpu_env)
         gen_int_code_def.declaration = Type["gen_intermediate_code"]
         c.add_type(gen_int_code_def)
 
@@ -932,6 +968,7 @@ class CPUType(QOMCPU):
                 Pointer(Type["target_ulong"])("data")
             ]
         )
+        fill_restore_state_to_opc_body(self, restore_state_to_opc)
         c.add_type(restore_state_to_opc)
 
     def _gen_target_makefile(self, src):
@@ -950,6 +987,15 @@ class CPUType(QOMCPU):
             h.write("DEF_HELPER_1(illegal, void, env)\n")
 
     def _gen_disas(self, c):
+        # register own realization of "bfd_getb64"
+        fill_bfd_getb64_body(
+            Function(
+                name = "bfd_getb64",
+                ret_type = Type["bfd_vma"],
+                args = [ Pointer(Type["const bfd_byte"])("addr") ]
+            )
+        )
+
         # TODO: this code is generic enough to be part of `source` module.
         spec_and_len2type = {}
         for specifiers, info in spec_and_len2typename.items():
@@ -1026,6 +1072,9 @@ class CPUType(QOMCPU):
                 # immediately be placed above the helper functions.
                 f.extra_references = reg_names_arrays
 
+                if fmt is not None:
+                    fill_disas_write_helper_body(f)
+
                 c.add_type(f)
 
                 added[adapter] = (arg_count, fmt is None)
@@ -1036,6 +1085,7 @@ class CPUType(QOMCPU):
                 )
 
         print_insn_def = Type[self.print_insn_name].gen_definition()
+        fill_print_insn_body(self, print_insn_def)
         c.add_type(print_insn_def)
 
 
