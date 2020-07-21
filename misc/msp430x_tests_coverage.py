@@ -241,6 +241,18 @@ for i in [
 ]:
     FI(i)
 
+# MSP430X(only) Extended Double-Operand (Format I) Instructions
+
+for i in [
+    "POPM",
+    "PUSHM",
+    "RLAM",
+    "RRAM",
+    "RRCM",
+    "RRUM"
+]:
+    FI_sizes(i, [".A", ".W"])
+
 # MSP430 Single-Operand (Format II) Instructions
 for i in [
     "RRC",
