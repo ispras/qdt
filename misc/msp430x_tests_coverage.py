@@ -170,7 +170,9 @@ def parse_arg_mode(arg, is_src = True):
             return IndirectRegisterMode
 
     # TODO: no real example in IR, may parse wrong
-    if arg[-4:] == "(R0)": # TODO: maybe (PC)
+    # Disaassembler usese .L{number} format for labels
+    # TODO: maybe (PC)
+    if arg[-4:] == "(R0)" or arg[:2] == ".L":
         return SymbolicMode
     if arg[-4:] == "(R2)": # TODO: maybe (SR)
         return AbsoluteMode
