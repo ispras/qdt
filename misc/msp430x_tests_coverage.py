@@ -195,13 +195,15 @@ emulated_instructions = {}
 
 def FI(name):
     for extension in ["", "X"]:
-        for flag in ([".A"] if extension else []) + [".W", ".B"]:
-            for arg1Type in SrcAddrMode:
-                for arg2Type in DstAddrMode:
-                    instructions[
-                        (name + extension + flag, arg1Type, arg2Type)
-                    ] = []
+        sizes = ([".A"] if extension else []) + [".W", ".B"]
+        FI_sizes(name + extension, sizes)
         mnemonic_aliases[name + extension] = name + extension + ".W"
+
+def FI_sizes(name, sizes):
+    for size in sizes:
+        for arg1Type in SrcAddrMode:
+            for arg2Type in DstAddrMode:
+                instructions[(name + size, arg1Type, arg2Type)] = []
 
 def FII(name, AddrMode = DstAddrMode, flags = [".W", ".B"]):
     for flag in flags:
