@@ -154,6 +154,8 @@ DstAddrMode = [
 
 
 def parse_arg_mode(arg, is_src = True):
+    arg = arg.strip()
+
     # see page 193 (Constant Generator Registers)
     if is_src and arg == "#0":
         return RegisterModeR3
@@ -176,16 +178,17 @@ def parse_arg_mode(arg, is_src = True):
     if arg[-1] == ")":
         return IndexedMode
 
-    if arg == "R0":
-        return RegisterModeR0
-    if arg == "R1":
-        return RegisterModeR1
-    if arg == "R2":
-        return RegisterModeR2
-    if arg == "R3":
-        return RegisterModeR3
-    if arg[0] == "R":
-        return RegisterModeRn
+    if arg[0] in ["r", "R"]:
+        if arg[1:] == "0":
+            return RegisterModeR0
+        elif arg[1:] == "1":
+            return RegisterModeR1
+        elif arg[1:] == "2":
+            return RegisterModeR2
+        elif arg[1:] == "3":
+            return RegisterModeR3
+        else:
+            return RegisterModeRn
 
     raise RuntimeError("Mode not recognized: %s" % arg)
 
