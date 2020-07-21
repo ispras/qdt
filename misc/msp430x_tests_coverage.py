@@ -220,8 +220,10 @@ def FII_RETI():
     instructions[("RETI",)] = []
 
 def J(name):
-    # TODO: register jump instructions
-    pass
+    # J* instruction does not use symbolic mode actually.
+    # It uses immediate only.
+    # But the disassembler outputs offsets without # prefix.
+    instructions[(name, SymbolicMode)] = []
 
 def A(name):
     # TODO: register address instructions
@@ -289,6 +291,8 @@ for i in [
     J(i)
 mnemonic_aliases["JZ"] = "JEQ"
 mnemonic_aliases["JNZ"] = "JNE"
+mnemonic_aliases["JLO"] = "JNC"
+mnemonic_aliases["JHS"] = "JC"
 
 # MSP430 Emulated Instructions
 emulated_instructions[("NOP",)] = ("MOV.W", RegisterModeR3, RegisterModeR3)
