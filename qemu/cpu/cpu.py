@@ -167,6 +167,13 @@ def calc_node_reading_seq(need_read, already_read, limit_read):
             result.append((already_read, r_bitsize))
             already_read += r_bitsize
 
+    if already_read < need_read:
+        raise RuntimeError(
+            "Can't read tail %u bits using supported read sizes" % (
+                need_read - already_read
+            )
+        )
+
     return result
 
 
@@ -216,6 +223,7 @@ class CPUType(QOMCPU):
 
     def __init__(self, name, directory,
         target_bigendian = False,
+        # XXX: if it's log_2(sizeof(long)), I want such a default computer...
         target_long_bits = 32,
         target_page_bits = 12,
         target_phys_addr_space_bits = 32,

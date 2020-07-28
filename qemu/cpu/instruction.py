@@ -166,6 +166,9 @@ class Instruction(object):
 
             offset += field.length
 
+        # TODO: if offset & read_bitsize, the instruction is not aligned
+        #       an exception?
+
     # XXX: bitsize
     @lazy
     def length(self):
