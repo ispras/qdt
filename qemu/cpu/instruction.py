@@ -42,8 +42,10 @@ def integer_set(offset, length):
 class InstructionField(object):
 
     def __init__(self, length):
+        # XXX: bitsize?
         self.length = length
 
+    # TODO: do we really need to override standard `len` behavior?
     def __len__(self):
         return self.length
 
@@ -92,12 +94,14 @@ class Instruction(object):
 
 :param branch:
     flag marks a jump instruction
+# XXX: only jumps (unconditional)? or any control flow branching instructions?
 
 :param disas_format:
-    string that forms the disassembler output for this instruction
+    string that describes the disassembler output for this instruction
 
 :param comment:
-    string to be inserted into the leaves of the instruction tree
+    string to be inserted into the generated semantic boilerplate code (the
+    leaves of the instruction tree)
 
 :param semantics:
     callable object which must return list of function body tree elements that
@@ -119,6 +123,10 @@ class Instruction(object):
 
     # TODO: it could be `lazy` `fields`, after excluding the `read_bitsize`
     #       parameter
+    # XXX: 1. require `read_bitsize` to be assigned to `self` before
+    #         E.g. during addition to a CPU
+    #      2. define lazy `fields` as call to `split_operands_fill_offsets`
+    #         Note, use immutable `tuple`
     def split_operands_fill_offsets(self, read_bitsize):
         """ Splits operands that cross read boundaries (defined by
         `read_bitsize`). Fills offsets for all fields.
@@ -158,10 +166,12 @@ class Instruction(object):
 
             offset += field.length
 
+    # XXX: bitsize
     @lazy
     def length(self):
         return sum(len(field) for field in self.fields)
 
+    # TODO: do we really need to override standard `len` behavior?
     def __len__(self):
         return self.length
 
