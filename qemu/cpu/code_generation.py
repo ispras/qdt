@@ -46,7 +46,7 @@ from .parse_tree_code_builder import (
     ParseTreeCodeBuilder,
 )
 from collections import (
-    defaultdict,
+    defaultdict, # XXX: unused
 )
 from common import (
     ee,
@@ -55,7 +55,7 @@ from copy import (
     copy,
 )
 from itertools import (
-    count,
+    count, # XXX: unused
 )
 from source import (
     BodyTree,
@@ -78,7 +78,7 @@ from source import (
     MacroBranch,
     NewLine,
     Node,
-    NodeVisitor,
+    NodeVisitor, # XXX: unused
     OpAdd,
     OpAddr,
     OpAnd,
@@ -398,6 +398,7 @@ def fill_decode_opc_body(cputype, function, cpu_env):
                 )
             )
 
+        # XXX: why in debug mode we don't assing BS_BRANCH add a comment
         if instruction.branch and not DEBUG_DECODER:
             node(
                 OpAssign(
