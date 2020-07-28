@@ -237,7 +237,7 @@ def common_bits_for_opcodes(instructions):
 def bits_to_intervals(bits):
     """ Converts bit numbers to bit intervals.
 
-:returns: list of tuples: [(off_1, len_1), ..., (off_k, len_k), ...]
+:returns: list of tuples: [(offset_0, length_0), ...]
     """
 
     if not bits:
@@ -262,6 +262,7 @@ def bits_to_intervals(bits):
     return result
 
 
+# TODO: this is very same as `Instruction.split_operands_fill_offsets`
 def split_intervals(intervals, read_bitsize):
     "Splits intervals by read_bitsize."
 
@@ -296,8 +297,10 @@ def highlight_interval(string, interval):
 
 
 def build_instruction_tree(node, instructions, read_bitsize, checked_bits,
+    # XXX: = SHOW_INTERSECTION_WARNINGS
     show_subtree_warnings = True
 ):
+    # XXX: min_bitsize
     min_len = min(len(i) for i in instructions)
     # temporary info for reading sequence calculation
     node.limit_read = min_len
@@ -341,7 +344,10 @@ def build_instruction_tree(node, instructions, read_bitsize, checked_bits,
         # other instructions. Try to find distinguishable interval by
         # accounting bits of those overlapping non-common intervals.
 
+        # Note, this is for error formatting only.
+        # XXX: max_bitsize
         max_len = max(len(i) for i in instructions)
+
         min_len_bits = integer_set(0, min_len)
 
         for i in instructions:
@@ -436,11 +442,20 @@ Warning: arguments and opcodes intersect in instructions.
     subtree = defaultdict(list)
 
     for i in instructions:
+        # XXX: key -> infix (i.e. prefix or suffix or something within);
+        #      "key" is too generic variable name
         key = i.get_opcode_part(interval)
         if key is None:
+            # Notes:
+            # 1. `default` is a "case" of `switch` block in C (used latter)
+            # 2. it's an alphabetic and is sorted after all other infixes whose
+            #    consist of digits only
             key = "default"
         subtree[key].append(i)
 
+    # Note, only infix order is matter now. Instructions with same infix
+    # will be sorted by the corresponding next common infix during recursive
+    # `build_instruction_tree` call.
     for key, instructions in sorted(subtree.items()):
         node.subtree[key] = n = InstructionTreeNode()
         build_instruction_tree(n, instructions, read_bitsize,
@@ -448,7 +463,10 @@ Warning: arguments and opcodes intersect in instructions.
             show_subtree_warnings = show_subtree_warnings
         )
 
-
+# XXX:
+#    1. build_instruction_tree -> _build_instruction_tree(_recursive/internal?)
+#       build_instruction_tree_root -> build_instruction_tree
+#    2(better). eliminate that wrapper
 def build_instruction_tree_root(instructions, read_bitsize):
     node = InstructionTreeNode()
     build_instruction_tree(node, instructions, read_bitsize, set())
