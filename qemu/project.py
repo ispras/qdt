@@ -104,6 +104,7 @@ class QProject(object):
         "Backward compatibility wrapper for co_gen_all"
         callco(self.co_gen_all(*args, **kw))
 
+    # XXX: do not add `qvd` argument, use QemuVersionDescription.current
     def co_gen_all(self, qemu_src, qvd, **gen_cfg):
         disable_auto_lock_sources()
 
