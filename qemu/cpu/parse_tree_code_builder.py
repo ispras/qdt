@@ -43,6 +43,7 @@ class ParseTreeCodeBuilder(object):
     :param epilogue_cb:
         callback function that generates processing of one instruction
 
+    # XXX: -> unknown_instruction_case_nodes?
     :param default_switch_case_nodes:
         list of nodes to insert when there is no `default` opcode in the
         instruction subtree
@@ -84,6 +85,7 @@ class ParseTreeCodeBuilder(object):
         ins = instr_node.instruction
 
         if ins is not None:
+            # XXX: text -> comment?
             text = ins.comment
             gen_node(Comment(text))
 
@@ -96,6 +98,7 @@ class ParseTreeCodeBuilder(object):
             new_vars.append(var_desc)
             self.gen_field_read_cb(gen_node, *var_desc)
 
+        # XXX: it's true because `new_vars = []` above
         if new_vars is not None:
             vars_desc = vars_desc + new_vars
             self.vars.update(v[0] for v in new_vars)
@@ -149,6 +152,9 @@ class ParseTreeCodeBuilder(object):
                 and offset + length <= var_offset + var_length
             ):
                 break
+        # else:
+        #     Note, an interval cannot cover several variables because it's
+        #     split by read_bitsize.
 
         local_offset = offset - var_offset
 
