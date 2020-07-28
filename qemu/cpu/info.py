@@ -45,7 +45,7 @@ def gen_reg_names_range(base_name, suffix = "", start = 0, end = 1):
         raise ValueError("Register names range generating error: only integer"
             " or one char ranges are allowed"
         )
-    return [base_name + func(i) + suffix for i in range(start, end)]
+    return [(base_name + func(i) + suffix) for i in range(start, end)]
 
 
 class CPUInfo(object):
@@ -69,22 +69,27 @@ class CPUInfo(object):
         considered a program counter
 
     :param name_to_format:
-        dictionary which describes operand formatting rules for disassembler
+        dictionary which describes instructions operands formatting rules for
+        disassembler
 
     :param instructions:
-        tuple of `Instruction`s available in CPU
+        tuple of `Instruction`s
 
     :param read_size:
-        number of bytes of instruction to be read at one time
-        (support 1, 2, 4 or 8 bytes)
+        number of bytes of code to be read at one time during instruction
+        identification (support 1, 2, 4 or 8 bytes)
 
     :param reg_types:
         callable object which must register types that can be used in several
         instruction semantics
 
+    # XXX: translate.inc.c.i3s ?
+    # XXX: text ?
     :param name_shortener:
-        callable object that should rename `args` (operands) for `text`
-        function from a `translate.inc.c` file
+        callable object that is may rename `args` (corresponding to the
+        `Instruction` (`text`) operands) of semantics boilerplate `Function`
+        from generated `translate.inc.c` file
+
         """
 
         self.registers = list(registers)
