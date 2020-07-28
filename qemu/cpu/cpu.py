@@ -180,6 +180,7 @@ def calc_node_reading_seq(need_read, already_read, limit_read):
 def add_global_array_with_reg_names(reg, arr_name, f):
     names_array = Pointer(Type["const char"])(arr_name,
         initializer = Initializer(
+            # TODO: `Initializer` should support iterables as `code` for arrays
             code = '{\n    "%s"\n}' % (
                 '",\n    "'.join(reg.reg_names)
             )
@@ -1053,6 +1054,7 @@ class CPUType(QOMCPU):
                     ]
                     ret_type = Type["void"]
 
+                # TODO: can we derive argument names from `op_names`?
                 if arg_count == 1:
                     args += [ Type["uint64_t"]("arg") ]
                 else:
