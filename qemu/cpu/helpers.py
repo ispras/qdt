@@ -9,6 +9,7 @@ from itertools import (
     count,
 )
 
+# XXX: text is and only is an instruction mnemonic
 def underscored_name_shortener(arguments, text):
     existing_names = defaultdict(lambda : count(0))
     for a in arguments:
