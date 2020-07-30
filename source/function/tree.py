@@ -6,12 +6,13 @@ __all__ = [
       , "Ifdef"
       , "CNode"
           , "Label"
-          , "LoopWhile"
-          , "LoopDoWhile"
-          , "LoopFor"
-          , "BranchIf"
-          , "BranchSwitch"
-          , "BranchElse"
+          , "ConditionalBlock"
+              , "LoopWhile"
+              , "LoopDoWhile"
+              , "LoopFor"
+              , "BranchIf"
+              , "BranchSwitch"
+              , "BranchElse"
           , "SwitchCase"
           , "SwitchCaseDefault"
           , "StrConcat"
@@ -84,11 +85,6 @@ from common import (
 from six import (
     integer_types
 )
-
-
-# OpSDeref is automatically re-directed to definition of structure if
-# available.
-OPSDEREF_FROM_DEFINITION = ee("QDT_OPSDEREF_FROM_DEFINITION", "True")
 
 
 class DeclarationSearcher(NodeVisitor):
@@ -185,6 +181,14 @@ class CNode(Node):
     def out_child(child, writer):
         child.__c__(writer)
 
+    def iter_local_variables(self):
+        for child in self.children:
+            if isinstance(child, OpDeclareAssign):
+                yield child.children[0]
+            elif isinstance(child, Declare):
+                for var in child.iter_variables():
+                    yield var
+
 
 class Comment(Node):
 
@@ -228,14 +232,17 @@ class MacroBranch(Node):
         writer.write("}")
 
 
-class LoopWhile(CNode):
+class ConditionalBlock(CNode):
 
     __node__ = ("children", "cond")
     __type_references__ = __node__
 
-    def __init__(self, cond):
-        super(LoopWhile, self).__init__()
+    def __init__(self, cond, **kw):
+        super(ConditionalBlock, self).__init__(**kw)
         self.cond = cond
+
+
+class LoopWhile(ConditionalBlock):
 
     def __c__(self, writer):
         writer.write("while (")
@@ -245,14 +252,7 @@ class LoopWhile(CNode):
         writer.write("}")
 
 
-class LoopDoWhile(CNode):
-
-    __node__ = ("children", "cond")
-    __type_references__ = __node__
-
-    def __init__(self, cond):
-        super(LoopDoWhile, self).__init__()
-        self.cond = cond
+class LoopDoWhile(ConditionalBlock):
 
     def __c__(self, writer):
         writer.line("do@b{")
@@ -262,15 +262,14 @@ class LoopDoWhile(CNode):
         writer.write(");")
 
 
-class LoopFor(CNode):
+class LoopFor(ConditionalBlock):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = __node__
 
     def __init__(self, init = None, cond = None, step = None):
-        super(LoopFor, self).__init__()
+        super(LoopFor, self).__init__(cond)
         self.init = init
-        self.cond = cond
         self.step = step
 
     def __c__(self, writer):
@@ -290,14 +289,13 @@ class LoopFor(CNode):
         writer.write("}")
 
 
-class BranchIf(CNode):
+class BranchIf(ConditionalBlock):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = __node__
 
     def __init__(self, cond):
-        super(BranchIf, self).__init__()
-        self.cond = cond
+        super(BranchIf, self).__init__(cond)
         self.else_blocks = []
 
     def add_else(self, else_bl):
@@ -324,15 +322,11 @@ class BranchIf(CNode):
         writer.write("}")
 
 
-class BranchElse(CNode):
+class BranchElse(ConditionalBlock):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
-    __node__ = ("children", "cond")
-    __type_references__ = __node__
-
     def __init__(self, cond = None):
-        super(BranchElse, self).__init__()
-        self.cond = cond
+        super(BranchElse, self).__init__(cond)
 
     def __c__(self, writer):
         if self.cond is not None:
@@ -344,10 +338,7 @@ class BranchElse(CNode):
         self.out_children(writer)
 
 
-class BranchSwitch(CNode):
-
-    __node__ = ("children", "var")
-    __type_references__ = __node__
+class BranchSwitch(ConditionalBlock):
 
     def __init__(self, var,
         add_break_in_default = True,
@@ -355,10 +346,9 @@ class BranchSwitch(CNode):
         child_indent = False,
         separate_cases = False
     ):
-        super(BranchSwitch, self).__init__(indent_children = child_indent)
+        super(BranchSwitch, self).__init__(var, indent_children = child_indent)
         self.default_case = None
         self.add_break_in_default = add_break_in_default
-        self.var = var
         self.separate_cases = separate_cases
         self.add_cases(cases)
 
@@ -385,7 +375,7 @@ class BranchSwitch(CNode):
             self._add_empty_lines(self.children)
 
         writer.write("switch@b(")
-        self.var.__c__(writer)
+        self.cond.__c__(writer)
         writer.line(")@b{")
         self.out_children(writer)
         writer.write("}")
@@ -520,6 +510,13 @@ class Declare(SemicolonPresence):
 
         super(Declare, self).__init__(children = variables)
 
+    def iter_variables(self):
+        for child in self.children:
+            if isinstance(child, OpDeclareAssign):
+                yield child.children[0]
+            else:
+                yield child
+
     def add_child(self, child):
         if isinstance(child, OpDeclareAssign):
             if not isinstance(child.children[0], Variable):
@@ -634,13 +631,14 @@ class Goto(SemicolonPresence):
 
 class Operator(SemicolonPresence):
 
+    prefix = ""
+    delim = "@s"
+    suffix = ""
+
     def __init__(self, *args, **kw_args):
         self.prior = op_priority[type(self)]
         super(Operator, self).__init__(children = args)
 
-        self.prefix = ""
-        self.delim = "@s"
-        self.suffix = ""
         self.parenthesis = kw_args.get("parenthesis", False)
 
     def add_child(self, child):
@@ -671,8 +669,6 @@ class OpIndex(Operator):
 
 class OpSDeref(Operator):
 
-    __type_references__ = Operator.__type_references__ + ("struct",)
-
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
 
@@ -683,18 +679,23 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        _type = value.type
+    @property
+    def suffix(self):
+        field = self.field
 
-        struct = _type
-        while isinstance(struct, (Pointer, TypeReference)):
-            struct = struct.type
+        type_ = self.container.type
+        if isinstance(type_, TypeReference):
+            type_ = type_.type
 
-        if OPSDEREF_FROM_DEFINITION:
-            struct = struct._definition or struct
+        if isinstance(type_, Pointer):
+            struct = type_.type
+            op = "->"
+        else:
+            struct = type_
+            op = "."
 
-        # for type collection
-        self.struct = struct
-
+        # Actually we should check this as early as possible but
+        # dereferenced variable can be a `LateLink` during `__init__`.
         try:
             struct.fields[field]
         except KeyError:
@@ -702,14 +703,15 @@ class OpSDeref(Operator):
                 struct, field
             ))
 
-        if isinstance(_type, Pointer):
-            self.suffix = "->" + field
-        else:
-            self.suffix = "." + field
+        return op + field
 
     @lazy
     def type(self):
         return self.struct.fields[self.field].type
+
+    @property
+    def container(self):
+        return self.children[0]
 
 
 class UnaryOperator(Operator):
