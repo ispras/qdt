@@ -164,7 +164,7 @@ its explanation):
 
 ```bash
 sudo python -m pip install --upgrade gitpython six graphviz \
-  path.py construct serial
+  path.py construct serial psutil
 ```
 
 Use `python2` or `python3` explicitly when there are several Python
@@ -208,6 +208,8 @@ Embedded `pyrsp` and `pyelftools` require some packages.
 sudo pip install --upgrade construct serial
 sudo pip3 install --upgrade construct serial
 ```
+
+`psutil` provides cross-platform process manipulations (e.g. by c2t)
 
 Now the all environment prerequisites are satisfied.
 

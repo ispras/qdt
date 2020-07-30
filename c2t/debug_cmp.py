@@ -1,14 +1,14 @@
 __all__ = [
     "DebugComparator"
+  , "TestError"
+      , "TestTimeout"
+      , "TestMismatch"
 ]
 
 from collections import (
     OrderedDict,
     defaultdict,
     deque
-)
-from time import (
-    time
 )
 from six.moves.queue import (
     Empty
@@ -25,10 +25,9 @@ class DebugComparator(object):
 comparison report
     """
 
-    def __init__(self, dump_queue, count, timeout):
+    def __init__(self, dump_queue, count):
         self.end = count
         self.dump_queue = dump_queue
-        self.timeout = timeout
 
     @staticmethod
     def _format_variables(_vars):
@@ -62,7 +61,7 @@ comparison report
             )
         )
 
-    def _print_report(self, msg, dump):
+    def _format_report(self, msg, dump):
         report = msg
 
         for key, val in dump.items():
@@ -80,19 +79,22 @@ comparison report
                     regs = self._prepare_regs4print(val["regs"])
                 )
             )
-        print(report)
+        return report
+
+    def _print_report(self, *a, **kw):
+        print(self._format_report(*a, **kw))
 
     def compare(self, test, sender, dump, cmp_sender, cmp_dump):
         if dump["lineno"] != cmp_dump["lineno"]:
             msg = MSG_FORMAT.format(
-                msg = "branch instruction error, test: %s" % test
+                msg = "branch instruction error"
             )
         elif (    "vars" in dump
               and "vars" in cmp_dump
               and not same(dump["vars"], cmp_dump["vars"])
         ):
             msg = MSG_FORMAT.format(
-                msg = "binary instruction error, test: %s" % test
+                msg = "binary instruction error"
             )
         else:
             return
@@ -102,24 +104,21 @@ comparison report
                 key = lambda x: x
             )
         )
-        self._print_report(msg, dump4report)
-        raise RuntimeError
+        yield TestMismatch(test, self._format_report(msg, dump4report))
 
     def start(self):
         """ Start debug comparison """
         oracle_dump_cache = defaultdict(deque)
         target_dump_cache = defaultdict(deque)
-        tests_timings = {}
 
         while self.end:
-            for test, start in tests_timings.items():
-                if time() - start > self.timeout:
-                    print("%s: TIMEOUT" % test)
-                    raise RuntimeError
-
             try:
                 sender, test, dump = self.dump_queue.get(timeout = 0.1)
             except Empty:
+                continue
+
+            if dump == "TEST_TIMEOUT":
+                yield TestTimeout(test)
                 continue
 
             if sender == "oracle":
@@ -143,10 +142,39 @@ comparison report
             if dump == "TEST_EXIT" and cmp_dump == "TEST_EXIT":
                 self.end -= 1
             elif dump == "TEST_RUN" and cmp_dump == "TEST_RUN":
-                tests_timings[test] = time()
                 print("%s: RUN" % test)
-            elif dump == "TEST_END" and cmp_dump == "TEST_END":
-                tests_timings.pop(test)
-                print("%s: OK" % test)
+            elif dump == "TEST_END":
+                if dump == cmp_dump:
+                    print("%s: OK" % test)
+                else:
+                    yield TestMismatch(test, sender + " ended earlier")
+            elif cmp_dump == "TEST_END":
+                # dump != "TEST_END"
+                yield TestMismatch(test, cmp_sender + " ended earlier")
             else:
-                self.compare(test, sender, dump, cmp_sender, cmp_dump)
+                for res in self.compare(test, sender, dump, cmp_sender,
+                    cmp_dump
+                ):
+                    yield res
+
+
+class TestError(object):
+
+    def __init__(self, test):
+        self.test = test
+
+
+class TestTimeout(TestError):
+
+    def __str__(self):
+        return self.test + ": TIMEOUT"
+
+
+class TestMismatch(TestError):
+
+    def __init__(self, test, report):
+        super(TestMismatch, self).__init__(test)
+        self.report = report
+
+    def __str__(self):
+        return self.test + ":\n" + self.report
