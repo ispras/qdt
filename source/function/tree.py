@@ -696,6 +696,9 @@ class OpSDeref(Operator):
 
         # Actually we should check this as early as possible but
         # dereferenced variable can be a `LateLink` during `__init__`.
+        if isinstance(struct, TypeReference):
+            struct = struct.type
+
         try:
             struct.fields[field]
         except KeyError:
