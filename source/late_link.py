@@ -35,3 +35,6 @@ inaccessible). It will be replaced with a reference to the entity.
 
     def gen_defining_chunk_list(self, *_, **__):
         raise RuntimeError("Late link '%s' is not resolved" % self.key)
+
+    def __c__(self, *__):
+        raise RuntimeError("Late link '%s' is not resolved" % self.key)
