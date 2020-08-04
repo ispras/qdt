@@ -349,6 +349,11 @@ class Structure(Type):
         self._fields = OrderedDict()
         self.append_fields(fields)
 
+    @property
+    def definition(self):
+        # Note, be careful defining __bool__ or __len__.
+        return self._definition or self
+
     def gen_forward_declaration(self):
         if not self.is_named:
             raise RuntimeError(
