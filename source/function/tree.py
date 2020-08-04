@@ -80,7 +80,6 @@ from ..model import (
 from common import (
     ee,
     BreakVisiting,
-    lazy
 )
 from six import (
     integer_types
@@ -708,7 +707,7 @@ class OpSDeref(Operator):
 
         return op + field
 
-    @lazy
+    @property
     def type(self):
         return self.struct.fields[self.field].type
 
