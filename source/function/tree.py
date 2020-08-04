@@ -506,7 +506,6 @@ class Call(SemicolonPresence):
 class Declare(SemicolonPresence):
 
     def __init__(self, *variables):
-
         super(Declare, self).__init__(children = variables)
 
     def iter_variables(self):
