@@ -597,12 +597,16 @@ class QemuVersionDescription(object):
             self.commit_sha + u".py"
         )
 
+    @lazy
+    def qvc_path(self):
+        return join(self.build_path, self.qvc_file_name)
+
     def co_init_cache(self):
         if self.qvc is not None:
             print("Multiple QVC initialization " + self.src_path)
             self.qvc = None
 
-        qvc_path = self.qvc_path = join(self.build_path, self.qvc_file_name)
+        qvc_path = self.qvc_path
 
         qemu_heuristic_hash = calculate_qh_hash()
 
