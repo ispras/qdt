@@ -517,7 +517,6 @@ class Call(SemicolonPresence):
 class Declare(SemicolonPresence):
 
     def __init__(self, *variables):
-
         super(Declare, self).__init__(children = variables)
 
     def add_child(self, child):
