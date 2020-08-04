@@ -716,6 +716,14 @@ class OpSDeref(Operator):
     def container(self):
         return self.children[0]
 
+    @property
+    def struct_definition(self):
+        struct = self.container.type
+        while isinstance(struct, (TypeReference, Pointer)):
+            struct = struct.type
+
+        return struct.definition
+
 
 class UnaryOperator(Operator):
 
