@@ -827,6 +827,10 @@ class OpDeclareAssign(BinaryOperator):
         else:
             child.__c__(writer)
 
+    @property
+    def variable(self):
+        return self.children[0]
+
 
 class OpCombAssign(BinaryOperator):
 
