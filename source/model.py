@@ -525,11 +525,12 @@ class Structure(Type):
 
     @property
     def fields(self):
-        if self._definition is None:
+        definition = self._definition
+        if definition is None:
             return self._fields
         else:
-            print("Warning: getting fields from structure declaration")
-            return self._definition.fields
+            print("Getting fields from declaration of %s" % definition)
+            return definition.fields
 
     @property
     def __type_references__(self):
