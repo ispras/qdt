@@ -1,5 +1,6 @@
 __all__ = [
     "remove_file"
+  , "rename_replacing"
   , "fixpath"
   , "path2tuple"
   , "ee"
@@ -10,10 +11,19 @@ __all__ = [
 ]
 
 from os import (
+    rename,
     environ,
     sep,
     name as os_name,
     remove
+)
+from os.path import (
+    exists,
+    isfile,
+    isdir
+)
+from shutil import (
+    rmtree
 )
 from errno import (
     ENOENT
@@ -41,6 +51,24 @@ def remove_file(file_name):
         # errno.ENOENT = no such file or directory
         if e.errno != ENOENT:
             print("Error: %s - %s." % (e.filename, e.strerror))
+
+
+def rename_replacing(src, dst, *a, **kw):
+    """ os.rename works differently under Py2 & Py3 if destination exists.
+It's a portable wrapper.
+    """
+
+    if isdir(dst):
+        rmtree(dst)
+    elif isfile(dst):
+        remove(dst)
+    elif exists(dst):
+        raise NotImplementedError(
+            "Can't clean the destination " + dst
+        )
+
+    return rename(src, dst, *a, **kw)
+
 
 if os_name == "nt":
     drive_letter = compile("(/)([a-zA-Z])($|/.*)")
