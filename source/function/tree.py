@@ -709,7 +709,7 @@ class OpSDeref(Operator):
 
     @property
     def type(self):
-        return self.struct.fields[self.field].type
+        return self.struct_definition.fields[self.field].type
 
     @property
     def container(self):
