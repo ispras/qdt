@@ -49,6 +49,7 @@ from .function import (
     CNode,
     BodyTree,
     ConditionalBlock,
+    VarDeclarator,
 )
 from .late_link import (
     LateLink,
@@ -298,6 +299,15 @@ switching to that mode.
 
         # Replace `LateLink`s
         LateBinder(self).visit()
+
+        # Auto `Declare` variables in `Function`s with `BodyTree`.
+        for func in self.types.values():
+            if not isinstance(func, Function):
+                continue
+            body = func.body
+            if not isinstance(body, BodyTree):
+                continue
+            VarDeclarator(body, func.args).visit()
 
         # This header includes other headers to provide types for includers
         # of self. This is list of references to those types.
