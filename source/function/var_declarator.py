@@ -8,7 +8,6 @@ from ..model import (
 )
 from .tree import (
     Declare,
-    OpDeclareAssign,
 )
 from collections import (
     defaultdict,
@@ -31,8 +30,8 @@ class VarDeclarator(NodeVisitor):
             self.variables.add(cur)
         elif isinstance(cur, Declare):
             self.declared.update(cur.iter_variables())
-        elif isinstance(cur, OpDeclareAssign):
-            self.declared.add(cur.variable)
+        # Note, `OpDeclareAssign` is only correct within `Declare` and is
+        # considered by `iter_variables`.
 
     def visit(self):
         ret = super(VarDeclarator, self).visit()
