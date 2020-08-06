@@ -16,6 +16,9 @@ from common import (
     ee,
     lazy,
 )
+from copy import (
+    deepcopy,
+)
 from itertools import (
     combinations,
 )
@@ -114,7 +117,9 @@ class Instruction(object):
     def __init__(self, mnemonic, *raw_fields, **kw_args):
         self.mnemonic = mnemonic
         self.fields = []
-        self.raw_fields = raw_fields
+        # `InstructionField` objects can be reused while defining similar
+        # instructions. As we going to modify them, the fields must be copied.
+        self.raw_fields = deepcopy(raw_fields)
 
         self.branch = kw_args.get("branch", False)
         self.disas_format = kw_args.get("disas_format", mnemonic)
