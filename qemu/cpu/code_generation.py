@@ -486,6 +486,8 @@ def fill_dump_state_body(cputype, function, reg_vars):
                     )
                 )
             )
+            if r.bank_size % 4:
+                body(Call(fprintf_func, out_file, "\\n"))
         else:
             body(
                 Call(
