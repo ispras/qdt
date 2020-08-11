@@ -5,6 +5,8 @@ __all__ = [
       , "Reserved"
   , "re_disas_format"
   , "Instruction"
+  , "InstructionTreeNode"
+  , "build_instruction_tree"
 ]
 
 from .constants import (
@@ -12,12 +14,17 @@ from .constants import (
 )
 from collections import (
     OrderedDict,
+    defaultdict,
 )
 from common import (
+    ee,
     lazy,
 )
 from copy import (
     deepcopy,
+)
+from itertools import (
+    combinations,
 )
 from re import (
     compile,
@@ -25,6 +32,9 @@ from re import (
 from six import (
     integer_types,
 )
+
+
+SHOW_INTERSECTION_WARNINGS = ee("QDT_SHOW_INTERSECTION_WARNINGS")
 
 
 NON_OPCODE_BIT = "x"
@@ -229,3 +239,227 @@ class Instruction(object):
 
         for name, parts in operands_dict.items():
             yield name, sorted(parts, key = lambda x: (x.num, x.subnum))
+
+
+class InstructionTreeNode(object):
+
+    def __init__(self, interval = None):
+        self.instruction = None
+        self.interval = interval
+        self.subtree = OrderedDict()
+        self.reading_seq = []
+
+
+def common_bits_for_opcodes(instructions):
+    "Finds bit numbers occupied by opcodes in all instructions."
+
+    return instructions[0].opcode_bits.intersection(
+        *[i.opcode_bits for i in instructions[1:]]
+    )
+
+
+def bits_to_intervals(bits):
+    """ Converts bit numbers to bit intervals.
+
+:returns: list of tuples: [(bitoffset_0, bitsize_0), ...]
+    """
+
+    if not bits:
+        return []
+
+    bit_numbers = sorted(bits)
+    result = []
+    bitoffset = prev_bit = bit_numbers[0]
+    bitsize = 1
+
+    for bit in bit_numbers[1:]:
+        if bit - prev_bit == 1:
+            bitsize += 1
+        else:
+            result.append((bitoffset, bitsize))
+            bitoffset = bit
+            bitsize = 1
+
+        prev_bit = bit
+
+    result.append((bitoffset, bitsize))
+    return result
+
+
+def split_intervals(intervals, read_bitsize):
+    "Splits intervals by read_bitsize."
+
+    splitted_intervals = []
+    for i in intervals:
+        splitted_intervals.extend(iter_split_interval(i, read_bitsize))
+    return splitted_intervals
+
+
+def highlight_interval(string, interval):
+    "Marks interval in string with curly braces."
+
+    bitoffset, bitsize = interval
+    start = bitoffset
+    end = bitoffset + bitsize
+    return string[:start] + "{" + string[start:end] + "}" + string[end:]
+
+
+def build_instruction_tree(node, instructions, read_bitsize,
+    checked_bits = set(),
+    show_subtree_warnings = SHOW_INTERSECTION_WARNINGS
+):
+    min_bitsize = min(i.bitsize for i in instructions)
+    # temporary info for reading sequence calculation
+    node.limit_read = min_bitsize
+
+    common_bits = common_bits_for_opcodes(instructions)
+    unchecked_common_bits = common_bits - checked_bits
+    unchecked_common_intervals = split_intervals(
+        bits_to_intervals(unchecked_common_bits), read_bitsize
+    )
+
+    if len(instructions) == 1:
+        i = instructions[0]
+
+        for interval in unchecked_common_intervals:
+            node.interval = interval
+            infix = i.get_opcode_part(interval)
+            node.subtree[infix] = n = InstructionTreeNode()
+            node = n
+            # temporary info for reading sequence calculation
+            node.limit_read = min_bitsize
+
+        node.instruction = i
+        return
+
+    # find out first distinguishable opcode interval
+    for interval in unchecked_common_intervals:
+        instructions_iter = iter(instructions)
+        opc = next(instructions_iter).get_opcode_part(interval)
+        for i in instructions_iter:
+            if i.get_opcode_part(interval) != opc:
+                # found `interval`
+                break
+        else:
+            # not found `interval` yet
+            continue
+        # found `interval`
+        break
+    else:
+        # Given `instructions` have equal opcodes in intervals being checked.
+        # Opcodes of some instructions may overlap non-opcode fields of
+        # other instructions. Try to find distinguishable interval by
+        # accounting bits of those overlapping non-common intervals.
+
+        # Note, this is for error formatting only.
+        max_bitsize = max(i.bitsize for i in instructions)
+
+        min_bitsize_bits = integer_set(0, min_bitsize)
+
+        for i in instructions:
+            for f in i.fields:
+                field_bits = integer_set(f.bitoffset, f.bitsize)
+                unchecked_bits = (field_bits - checked_bits) & min_bitsize_bits
+                unchecked_intervals = split_intervals(
+                    bits_to_intervals(unchecked_bits), read_bitsize
+                )
+
+                for interval in unchecked_intervals:
+                    instructions_iter = iter(instructions)
+                    opc = next(instructions_iter).get_opcode_part(interval)
+                    for i in instructions_iter:
+                        if i.get_opcode_part(interval) != opc:
+                            # found `interval`
+                            break
+                    else:
+                        # not found `interval` yet
+                        continue
+                    # found `interval`
+                    break
+                else:
+                    # not found `interval` yet
+                    continue
+                # found `interval`
+                break
+            else:
+                # not found `interval` yet
+                continue
+            # found `interval`
+            break
+        else:
+            raise RuntimeError("Indistinguishable instructions "
+                "(check instructions encoding):\n    " + "\n    ".join(
+                    "{1:<{0}} {2}".format(max_bitsize, i.opcode_bits_string,
+                        i.comment
+                    ) for i in instructions
+                )
+            )
+
+        potential_error = False
+
+        for i1, i2 in combinations(instructions, 2):
+            i1b = i1.opcode_bits
+            i2b = i2.opcode_bits
+
+            if not (i1b <= i2b or i1b >= i2b):
+                potential_error = True
+                break
+
+        if potential_error:
+            # TODO: The `priority` attribute is required by the instruction in
+            #       order to be able to influence the instruction
+            #       identification.
+            print("""\
+Potential error: arguments and opcodes intersect in instructions at several
+  intervals (highlighted interval is selected to distinguish). Instruction
+  description order and interval selection priority affects instruction
+  identification:
+    """ + "\n    ".join(
+    "{1:<{0}} {2}".format(max_bitsize + 2, # 2 for highlighting
+        highlight_interval(i.opcode_bits_string, interval),
+        i.comment
+    ) for i in instructions
+)
+            )
+
+        if (not potential_error and show_subtree_warnings):
+            # Do not show same warnings again during recursive calls
+            show_subtree_warnings = False
+
+            print("""\
+Warning: arguments and opcodes intersect in instructions.
+  Arguments cannot get values equal to opcodes in the highlighted interval.
+  That are instructions with opcodes can be interpreted as a special case of
+  instructions with arguments. If it's not, check instructions encoding:
+    """ + "\n    ".join(
+    "{1:<{0}} {2}".format(max_bitsize + 2, # 2 for highlighting
+        highlight_interval(i.opcode_bits_string, interval),
+        i.comment
+    ) for i in instructions
+)
+            )
+
+    node.interval = interval
+    new_checked_bits = checked_bits | integer_set(*interval)
+
+    subtree = defaultdict(list)
+
+    for i in instructions:
+        infix = i.get_opcode_part(interval)
+        if infix is None:
+            # Notes:
+            # 1. `default` is a "case" of `switch` block in C (used latter)
+            # 2. it's an alphabetic and is sorted after all other infixes whose
+            #    consist of digits only
+            infix = "default"
+        subtree[infix].append(i)
+
+    # Note, only infix order is matter now. Instructions with same infix
+    # will be sorted by the corresponding next common infix during recursive
+    # `build_instruction_tree` call.
+    for infix, instructions in sorted(subtree.items()):
+        node.subtree[infix] = n = InstructionTreeNode()
+        build_instruction_tree(n, instructions, read_bitsize,
+            checked_bits if infix == "default" else new_checked_bits,
+            show_subtree_warnings = show_subtree_warnings
+        )
