@@ -16,6 +16,9 @@ from six.moves.queue import (
 from common import (
     same
 )
+from .test_log import (
+    TestLog,
+)
 
 MSG_FORMAT = __name__ + ":\x1b[31m error:\x1b[0m {msg}"
 
@@ -28,6 +31,7 @@ comparison report
     def __init__(self, dump_queue, count):
         self.end = count
         self.dump_queue = dump_queue
+        self.test2logs = defaultdict(TestLog)
 
     @staticmethod
     def _format_variables(_vars):
@@ -116,6 +120,12 @@ comparison report
                 sender, test, dump = self.dump_queue.get(timeout = 0.1)
             except Empty:
                 continue
+
+            # TODO: sender (debugger) should also provide a timestamp of the
+            #       moment the dump has been gotten
+            if test is not None:
+                # Do not log system events like "TEST_EXIT"
+                self.test2logs[test].log(sender, dump)
 
             if dump == "TEST_TIMEOUT":
                 yield TestTimeout(test)
