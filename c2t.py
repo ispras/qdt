@@ -578,7 +578,10 @@ class C2TTestBuilder(Process):
         self.is_finish.value = 1
 
 
-def start_cpu_testing(tests, jobs, reuse, verbose, errors2stop = 1):
+def start_cpu_testing(tests, jobs, reuse, verbose,
+    errors2stop = 1,
+    with_logs = False,
+):
     oracle_tests_queue = Queue(0)
     target_tests_queue = Queue(0)
     is_finish_oracle = Value('i', 0)
@@ -653,6 +656,12 @@ def start_cpu_testing(tests, jobs, reuse, verbose, errors2stop = 1):
     for oracle_trp, target_trp in tests_run_processes:
         oracle_trp.join()
         target_trp.join()
+
+    if with_logs:
+        for test, log in dc.test2logs.items():
+            for runner in log.iter_runners():
+                log_file_name = test + "." + runner + ".log"
+                log.to_file(runner, log_file_name)
 
 
 class testfilter(filefilter):
@@ -767,6 +776,10 @@ def main():
         metavar = "N",
         help = "stop on N-th error, 0 - no stop mode"
     )
+    parser.add_argument("-l", "--with-logs",
+        action = "store_true",
+        help = "write *.oracle/target.log files near tests"
+    )
 
     args = parser.parse_args()
 
@@ -831,6 +844,7 @@ def main():
             makedirs(sub_dir)
 
     start_cpu_testing(tests, jobs, args.reuse, args.verbose,
+        with_logs = args.with_logs,
         errors2stop = args.errors
     )
     killpg(0, SIGTERM)
