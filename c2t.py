@@ -5,6 +5,7 @@ from sys import (
     stderr
 )
 from os.path import (
+    getmtime,
     relpath,
     dirname,
     join,
@@ -550,7 +551,7 @@ class C2TTestBuilder(Process):
                 test_name + "_%s" % self.tests_tail
             )
 
-            if not exists(test_bin):
+            if not exists(test_bin) or getmtime(test_bin) < getmtime(test_src):
                 test_ir = join(C2T_TEST_IR_DIR, test_name)
 
                 self.test_build(test_src, test_ir, test_bin)
