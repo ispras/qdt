@@ -11,13 +11,22 @@ from os.path import (
     join,
     splitext,
     isdir,
+    isabs,
+    normpath,
+    relpath,
     isfile
 )
 from itertools import (
     count
 )
+from .cpu import (
+    CPUDescription
+)
 from .machine_description import (
     MachineNode
+)
+from .version_description import (
+    QemuVersionDescription
 )
 from common import (
     same_sets,
@@ -100,12 +109,27 @@ class QProject(object):
 
     def co_gen_all(self, qemu_src, **gen_cfg):
         disable_auto_lock_sources()
+        qvd = QemuVersionDescription.current
 
-        # First, generate all devices, then generate machines
+        # Firstly, generate all CPUs
         for desc in self.descriptions:
-            if not isinstance(desc, MachineNode):
+            if isinstance(desc, CPUDescription):
+                yield desc.gen_type().co_gen(qemu_src, **gen_cfg)
+
+                enable_auto_lock_sources()
+                # Re-init cache to prevent problems with same named types
+                qvd.forget_cache()
+                yield qvd.co_init_cache()
+                # Replace forgotten dirty cache with new clean one
+                qvd.qvc.use()
+                disable_auto_lock_sources()
+
+        # Secondly, generate all devices
+        for desc in self.descriptions:
+            if not isinstance(desc, (CPUDescription, MachineNode)):
                 yield self.co_gen(desc, qemu_src, **gen_cfg)
 
+        # Lastly, generate machines
         for desc in self.descriptions:
             if isinstance(desc, MachineNode):
                 desc.link()
@@ -144,7 +168,8 @@ class QProject(object):
 
     def co_gen(self, desc, src,
         with_chunk_graph = False,
-        known_targets = None
+        known_targets = None,
+        with_debug_comments = False
     ):
         qom_t = desc.gen_type()
 
@@ -174,7 +199,7 @@ class QProject(object):
             f = s.generate(inherit_references = inherit_references)
 
             with open(spath, mode = "wb", encoding = "utf-8") as stream:
-                f.generate(stream)
+                f.generate(stream, gen_debug_comments = with_debug_comments)
 
             if with_chunk_graph:
                 yield True
@@ -196,6 +221,21 @@ class QProject(object):
             patch_makefile(Makefile_objs_class_path, object_name,
                 obj_var_names[desc.directory], config_flags[desc.directory]
             )
+
+    # TODO: add path to `QProject`
+    # TODO: def lookup_path
+
+    def replace_relpaths_to_abspaths(self, path):
+        for desc in self.descriptions:
+            if isinstance(desc, CPUDescription):
+                if not isabs(desc.info_path):
+                    desc.info_path = normpath(join(path, desc.info_path))
+
+    def replace_abspaths_to_relpaths(self, path):
+        for desc in self.descriptions:
+            if isinstance(desc, CPUDescription):
+                if isabs(desc.info_path):
+                    desc.info_path = relpath(desc.info_path, start = path)
 
     def __var_base__(self):
         return "project"

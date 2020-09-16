@@ -466,6 +466,8 @@ class POp_AddDesc(ProjectOperation, QemuObjectCreationHelper):
                 if "SysBusDeviceDescription" in self.nc
             else _("PCI bus device template")
                 if "PCIExpressDeviceDescription" in self.nc
+            else _("CPU template")
+                if "CPUDescription" in self.nc
             else _("an auto generated code")
         )
 
