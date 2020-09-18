@@ -1324,15 +1324,13 @@ class Variable(object):
 # Type inspecting
 
 
+class CopyFixerVisitor(TypeReferencesVisitor):
     """
-    CopyVisitor is now used for true copying function body arguments
+    CopyFixerVisitor is now used for true copying function body arguments
     in order to prevent wrong TypeReferences among them
     because before function prototype and body had the same args
     references (in terms of python references)
     """
-
-
-class CopyFixerVisitor(TypeReferencesVisitor):
 
     def on_visit(self):
         t = self.cur
