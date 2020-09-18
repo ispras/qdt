@@ -1321,6 +1321,7 @@ class Variable(object):
 
     __type_references__ = ["type", "initializer"]
 
+
 # Type inspecting
 
 
