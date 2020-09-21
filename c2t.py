@@ -5,6 +5,7 @@ from sys import (
     stderr
 )
 from os.path import (
+    getmtime,
     relpath,
     dirname,
     join,
@@ -124,6 +125,7 @@ class DebugSession(object):
         self.queue = queue
         self.reset(srcfile, elffile)
         self.session_type = None
+        self.verbose = verbose
 
     def run(self, timeout):
         """ Run the testing through the debug session.
@@ -185,13 +187,30 @@ class DebugSession(object):
     def set_br_by_line(self, lineno, cb):
         line_map = self.rt.dic.find_line_map(bstr(basename(self.srcfile)))
         line_descs = line_map[lineno]
+
+        if len(line_descs) < 1:
+            raise RuntimeError(
+                "No breakpoint addresses for line %s:%d (%s)" % (
+                    self.srcfile, lineno, self.session_type
+                )
+            )
+
+        # A line may be associated with several addresses. Setting breakpoints
+        # on all of them may result in multiple stops on the line. It confuses
+        # `DebugComparator`. However, some statements (like `return`) can
+        # be duplicated in several addresses. So, breakpoints are set on all
+        # addresses to catch the control flow everywhere.
+        if self.verbose and 1 < len(line_descs):
+            print("Breakpoint at %s:%d has many addresses in %s session."
+                " The test may be incorrect." % (
+                    self.srcfile, lineno, self.session_type
+                )
+            )
+
         for desc in line_descs:
-            # TODO: set a breakpoint at one address by line number?
-            # if desc.state.is_stmt:
             addr = self.rt.target.reg_fmt % desc.state.address
             self.addr2line[addr] = lineno
             self.rt.add_br(addr, cb)
-                # break
 
     def _execute_debug_comment(self):
         lineno = 1
@@ -447,7 +466,6 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                     session.kill()
                     qemu.join()
                     session.port_close()
-                res_queue.put(("target", None, "TEST_EXIT"))
                 break
             continue
         else:
@@ -495,6 +513,7 @@ def target_tests_run(tests_queue, port_queue, res_queue, is_finish, reuse,
                     qemu.join()
                     session.port_close()
 
+    res_queue.put(("target", None, "TEST_EXIT"))
 
 class FreePortFinder(Process):
 
@@ -550,7 +569,7 @@ class C2TTestBuilder(Process):
                 test_name + "_%s" % self.tests_tail
             )
 
-            if not exists(test_bin):
+            if not exists(test_bin) or getmtime(test_bin) < getmtime(test_src):
                 test_ir = join(C2T_TEST_IR_DIR, test_name)
 
                 self.test_build(test_src, test_ir, test_bin)
