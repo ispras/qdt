@@ -107,6 +107,13 @@ from source import (
 
 DEBUG_DECODER = ee("QDT_DEBUG_DECODER")
 
+def get_pc_from_env(env, pc_register):
+    if isinstance(pc_register, tuple):
+        reg_name, reg_index = pc_register
+        return OpIndex(OpSDeref(env, reg_name), reg_index)
+    else:
+        return OpSDeref(env, pc_register)
+
 def fill_bfd_getb64_body(function):
     ull = "unsigned long long"
     v = Type[ull].gen_var("v")
@@ -275,7 +282,7 @@ def fill_cpu_get_tb_cpu_state_body(function, pc_register):
     function.body = BodyTree()(
         OpAssign(
             OpDeref(function.args[1]),
-            OpSDeref(function.args[0], pc_register)
+            get_pc_from_env(function.args[0], pc_register)
         ),
         OpAssign(OpDeref(function.args[2]), 0),
         OpAssign(OpDeref(function.args[3]), 0)
@@ -1173,7 +1180,7 @@ def fill_reset_body(cputype, function):
                 )
             ),
             OpAssign(
-                OpSDeref(env, cputype.pc_register),
+                get_pc_from_env(env, cputype.pc_register),
                 0
             )
         )
@@ -1188,7 +1195,7 @@ def fill_reset_body(cputype, function):
                 )
             ),
             OpAssign(
-                OpSDeref(env, cputype.pc_register),
+                get_pc_from_env(env, cputype.pc_register),
                 0
             ),
             Call(
@@ -1201,7 +1208,7 @@ def fill_reset_body(cputype, function):
 def fill_restore_state_to_opc_body(cputype, function):
     function.body = BodyTree()(
         OpAssign(
-            OpSDeref(function.args[0], cputype.pc_register),
+            get_pc_from_env(function.args[0], cputype.pc_register),
             OpIndex(function.args[2], 0)
         )
     )
@@ -1218,7 +1225,7 @@ def fill_set_pc_body(cputype, function):
         ),
         NewLine(),
         OpAssign(
-            OpSDeref(OpSDeref(cpu, "env"), cputype.pc_register),
+            get_pc_from_env(OpSDeref(cpu, "env"), cputype.pc_register),
             function.args[1]
         )
     )

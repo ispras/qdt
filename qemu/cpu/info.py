@@ -65,8 +65,8 @@ class CPUInfo(object):
         tuple of `CPURegister`s used in CPU
 
     :param pc_register:
-        the name of one of the registers specified above that will be
-        considered a program counter
+        the name (or tuple with name and index) of one of the registers
+        specified above that will be considered a program counter
 
     :param name_to_format:
         dictionary which describes instructions operands formatting rules for
