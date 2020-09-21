@@ -68,6 +68,7 @@ from source import (
     Type,
     TypeAlias,
     BodyTree,
+    OpIndex,
 )
 from traceback import (
     print_exc,
@@ -733,7 +734,12 @@ class CPUType(QOMCPU):
             static = True,
             inline = True
         )
-        fill_set_pc_inc_body(set_pc, h.global_variables[self.pc_register])
+        if isinstance(self.pc_register, tuple):
+            reg_name, reg_index = self.pc_register
+            pc_register = OpIndex(h.global_variables[reg_name], reg_index)
+        else:
+            pc_register = h.global_variables[self.pc_register]
+        fill_set_pc_inc_body(set_pc, pc_register)
 
         h.add_types([
             Enumeration([
