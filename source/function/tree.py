@@ -188,6 +188,14 @@ class CNode(Node):
     def out_child(child, writer):
         child.__c__(writer)
 
+    def iter_local_variables(self):
+        for child in self.children:
+            if isinstance(child, OpDeclareAssign):
+                yield child.variable
+            elif isinstance(child, Declare):
+                for var in child.iter_variables():
+                    yield var
+
 
 class Comment(Node):
 
