@@ -5,6 +5,7 @@ from sys import (
     stderr
 )
 from os.path import (
+    abspath,
     getmtime,
     relpath,
     dirname,
@@ -13,6 +14,8 @@ from os.path import (
     basename
 )
 from os import (
+    walk,
+    remove,
     makedirs,
     killpg,
     setpgrp
@@ -68,6 +71,7 @@ from common import (
     pypath
 )
 from debug import (
+    create_dwarf_cache,
     get_elffile_loading,
     InMemoryELFFile,
     DWARFInfoCache,
@@ -91,6 +95,10 @@ from c2t import (
     DebugClient,
     DebugServer,
     TestBuilder
+)
+from qemu import (
+    qemu_build_dir_by_dwarf,
+    qemu_target_dir_by_dwarf
 )
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
@@ -772,6 +780,18 @@ def main():
         metavar = "executable",
         help = "ignore the option in config"
     )
+    parser.add_argument("-c", "--lcov",
+        action = "store_true",
+        help = "estimate TCG frontend coverage by this test session"
+    )
+    parser.add_argument("--coverage-output",
+        default = "c2t.coverage",
+        help = "directory for genhtml (lcov) coverage report"
+    )
+    parser.add_argument("-b", "--build",
+        nargs = "?",
+        help = "explicitly set QEMU build directory"
+    )
 
     args = parser.parse_args()
 
@@ -833,6 +853,52 @@ def main():
     if jobs < 1:
         parser.error("wrong number of jobs: %s" % jobs)
 
+    lcov = args.lcov
+    if lcov:
+        # XXX: Coverage estimation is a monkey style code. But it's better
+        # than working with lcov manually.
+
+        # Here we looking for TCG frontend build directory because estimation
+        # of whole Qemu coverage is time consuming and is not a point of c2t.
+        qemu_exe = c2t_cfg.qemu.run.executable
+        dic = create_dwarf_cache(qemu_exe)
+
+        build_dir = args.build
+        if not build_dir:
+            try:
+                build_dir = qemu_build_dir_by_dwarf(dic)
+            except RuntimeError:
+                print("Use -b option to set QEMU build directory explicitly")
+                raise
+
+        arch = qemu_exe.split('-')[-1]
+        if "system" in qemu_exe:
+            build_dir_suffix = arch + "-softmmu"
+        else:
+            build_dir_suffix = arch + "-linux-user"
+
+        target_build_dir = join(build_dir, build_dir_suffix)
+
+        # find TCG frontend build directory
+        for frontend_build_dir, __, files in walk(target_build_dir):
+            # TCG frontend build directory normally contains translate.o.
+            # Name of the directory may vary between qemu version.
+            if "translate.o" in files:
+                break
+        else:
+            print("c2t cannot find TCG frontend build directory")
+            return
+
+        # reset previous coverage
+        lcov = Popen(["lcov",
+            "--zerocounters",
+            "--directory", frontend_build_dir
+        ])
+        if lcov.wait():
+            # lcov likely print an error message, so we only conclude...
+            print("c2t stopped because of lcov failure")
+            return
+
     # creates tests subdirectories if they don't exist
     for sub_dir in (C2T_TEST_IR_DIR, C2T_TEST_BIN_DIR):
         if not exists(sub_dir):
@@ -841,6 +907,34 @@ def main():
     start_cpu_testing(tests, jobs, args.reuse, args.verbose,
         errors2stop = args.errors
     )
+
+    if lcov:
+        target_dir = qemu_target_dir_by_dwarf(dic.di)
+        lcov = Popen(["lcov",
+            "--output-file", "c2t.coverage.info",
+            "--capture",
+            "--base-directory", target_dir,
+            "--no-external", # TCG frontend coverage only
+            "--directory", frontend_build_dir
+        ])
+        if lcov.wait():
+            print("Failed to build coverage report")
+            return
+
+        genhtml = Popen(["genhtml",
+            "--output-directory", args.coverage_output,
+            "c2t.coverage.info"
+        ])
+        if genhtml.wait():
+            print("HTML coverage report generation has failed")
+        else:
+            # Note, genhtml prints some coverage statistic to stdout
+            print("HTML coverage report: "
+                + abspath(join(args.coverage_output, "index.html"))
+            )
+
+        remove("c2t.coverage.info")
+
     killpg(0, SIGTERM)
 
 
