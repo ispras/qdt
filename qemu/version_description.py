@@ -21,6 +21,7 @@ from source import (
     Macro
 )
 from common import (
+    rename_replacing,
     git_find_commit,
     co_process,
     get_cleaner,
@@ -597,18 +598,20 @@ class QemuVersionDescription(object):
             self.commit_sha + u".py"
         )
 
+    @lazy
+    def qvc_path(self):
+        return join(self.build_path, self.qvc_file_name)
+
     def co_init_cache(self):
         if self.qvc is not None:
             print("Multiple QVC initialization " + self.src_path)
             self.qvc = None
 
-        qvc_path = self.qvc_path = join(self.build_path, self.qvc_file_name)
-
         qemu_heuristic_hash = calculate_qh_hash()
 
         yield True
 
-        if not isfile(qvc_path):
+        if not isfile(self.qvc_path):
             self.qvc = QemuVersionCache()
 
             # Check out Qemu source to a temporary directory and analyze it
@@ -659,9 +662,7 @@ class QemuVersionDescription(object):
             # Search for PCI Ids
             PCIClassification.build()
 
-            yield True
-
-            pythonize(self.qvc, qvc_path)
+            yield self.co_overwrite_cache()
         else:
             self.load_cache()
             # make just loaded QVC active
@@ -703,7 +704,7 @@ class QemuVersionDescription(object):
                 yield self.co_init_device_tree(new_targets)
 
             if is_outdated or has_new_target:
-                pythonize(self.qvc, qvc_path)
+                yield self.co_overwrite_cache()
 
         yield True
 
@@ -720,6 +721,40 @@ class QemuVersionDescription(object):
             prev_qvc.use()
 
         self.qvc_is_ready = True
+
+    def co_overwrite_cache(self):
+        qvc_path = self.qvc_path
+
+        if isfile(qvc_path):
+            cleaner = get_cleaner()
+
+            # save backup
+            back = qvc_path + ".back"
+
+            rename_replacing(qvc_path, back)
+            yield True
+
+            # If user stops the interpreter during `pythonize`...
+            revert_task = cleaner.schedule(rename_replacing, back, qvc_path)
+
+            yield True
+        else:
+            back = None
+
+        try:
+            pythonize(self.qvc, qvc_path)
+        except:
+            if back is not None:
+                rename_replacing(back, qvc_path)
+            raise
+        # A backup is never redundant.
+        # else:
+        #     if back is not None:
+        #         yield True
+        #         remove_file(back)
+        finally:
+            if back is not None:
+                cleaner.cancel(revert_task)
 
     def load_cache(self):
         if not isfile(self.qvc_path):

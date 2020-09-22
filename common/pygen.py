@@ -421,8 +421,12 @@ def pythonize(root, path):
     :path: of target file
     """
 
+    # Pythonization can be long enough.
+    # Do not touch target file until it ended.
+    data = pygenerate(root).w.getvalue().encode("utf-8")
+
     with open(path, "wb") as _file:
-        _file.write(pygenerate(root).w.getvalue().encode("utf-8"))
+        _file.write(data)
 
 
 EMPTY = tuple()
