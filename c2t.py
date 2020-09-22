@@ -767,6 +767,11 @@ def main():
         metavar = "N",
         help = "stop on N-th error, 0 - no stop mode"
     )
+    parser.add_argument("-q", "--qemu",
+        nargs = "?",
+        metavar = "executable",
+        help = "ignore the option in config"
+    )
 
     args = parser.parse_args()
 
@@ -812,6 +817,9 @@ def main():
             )
 
     verify_config_components(config)
+
+    if args.qemu:
+        c2t_cfg.qemu.run.executable = args.qemu
 
     incl, regexp, tests = args.regexps.find_files(C2T_TEST_DIR)
     if not tests:
