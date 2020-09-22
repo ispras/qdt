@@ -6,6 +6,7 @@ from six import (
     StringIO
 )
 from source import (
+    Return,
     disable_auto_lock_sources,
     OpaqueCode,
     Type,
@@ -923,6 +924,60 @@ class TestOptimizeInclusions(SourceModelTestHelper, TestCase):
 #include "c.h"
 
 typedef c *cpointer;
+""".format(src.path)
+
+        self.files = [
+            (src, src_content)
+        ]
+
+
+class TestAutoDeclaration(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestAutoDeclaration, self).setUp()
+        name = type(self).__name__
+
+        src = Source(name.lower() + ".c")
+
+        int_ = Type["int"]
+
+        glob_var = int_("glob_var")
+        src.add_global_variable(glob_var)
+
+        func = Function(
+            name = "func",
+            ret_type = int_,
+            args = [
+                int_("arg")
+            ]
+        )
+        src.add_type(func)
+
+        arg = func.args[0]
+
+        local_var = int_("local_var")
+
+        func.body = BodyTree()(
+            # A `Declare` for `local_var` should be here.
+            # However, `VarDeclarator` should add it automatically and should
+            # not add a `Declare` for either global variable or function
+            # argument.
+            OpAssign(local_var, OpAdd(glob_var, arg)),
+            Return(local_var)
+        )
+
+        src_content = """\
+/* {} */
+
+int glob_var;
+
+int func(int arg)
+{{
+    int local_var;
+    local_var = glob_var + arg;
+    return local_var;
+}}
+
 """.format(src.path)
 
         self.files = [
