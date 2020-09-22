@@ -44,6 +44,10 @@ from .chunks import (
     FunctionDefinition,
     HeaderInclusion,
 )
+from .function import (
+    BodyTree,
+    VarDeclarator,
+)
 from .model import (
     CPP,
     CPPMacro,
@@ -283,6 +287,15 @@ switching to that mode.
 
         if inherit_references:
             assert(isinstance(self, Header))
+
+        # Auto `Declare` variables in `Function`s with `BodyTree`.
+        for func in self.types.values():
+            if not isinstance(func, Function):
+                continue
+            body = func.body
+            if not isinstance(body, BodyTree):
+                continue
+            VarDeclarator(body, func.args).visit()
 
         # This header includes other headers to provide types for includers
         # of self. This is list of references to those types.
