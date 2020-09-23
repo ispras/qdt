@@ -519,6 +519,13 @@ class Declare(SemicolonPresence):
     def __init__(self, *variables):
         super(Declare, self).__init__(children = variables)
 
+    def iter_variables(self):
+        for child in self.children:
+            if isinstance(child, OpDeclareAssign):
+                yield child.variable
+            else:
+                yield child
+
     def add_child(self, child):
         if isinstance(child, OpDeclareAssign):
             if not isinstance(child.children[0], Variable):
@@ -826,6 +833,10 @@ class OpDeclareAssign(BinaryOperator):
                     writer.write("@b__attribute__((unused))")
         else:
             child.__c__(writer)
+
+    @property
+    def variable(self):
+        return self.children[0]
 
 
 class OpCombAssign(BinaryOperator):
