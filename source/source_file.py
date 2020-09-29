@@ -914,10 +914,43 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
-            elif (    isinstance(origin, TypeReference)
-                  and origin.type in self.references
-            ):
-                chunks = []
+            elif isinstance(origin, TypeReference):
+                foreign_type = origin.type
+                if foreign_type in self.references:
+                    chunks = []
+                else:
+                    definer_references = origin.definer_references
+
+                    if definer_references is None:
+                        raise RuntimeError("Attempt to generate chunks for"
+                            " reference to type %s without the type reference"
+                            " adjusting pass." % foreign_type
+                        )
+
+                    definer = foreign_type.definer
+
+                    refs = []
+                    for r in definer_references:
+                        ref_chunks = self.provide_chunks(r)
+
+                        if not ref_chunks:
+                            continue
+
+                        # not only `HeaderInclusion` can satisfies reference
+                        if isinstance(ref_chunks[0], HeaderInclusion):
+                            ref_chunks[0].add_reason(r,
+                                kind = "satisfies %s by" % definer
+                            )
+
+                        refs.extend(ref_chunks)
+
+                    if definer is CPP:
+                        chunks = refs
+                    else:
+                        inc = HeaderInclusion(definer)
+                        inc.add_references(refs)
+                        inc.add_reason(foreign_type)
+                        chunks = [inc]
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 

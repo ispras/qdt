@@ -271,36 +271,6 @@ class TypeReference(Type):
     def get_definers(self):
         return self.type.get_definers()
 
-    def gen_chunks(self, generator):
-        if self.definer_references is None:
-            raise RuntimeError("Attempt to generate chunks for reference to"
-                " type %s without the type reference adjusting"
-                " pass." % self
-            )
-
-        definer = self.type.definer
-
-        refs = []
-        for r in self.definer_references:
-            chunks = generator.provide_chunks(r)
-
-            if not chunks:
-                continue
-
-            # not only `HeaderInclusion` can satisfies reference
-            if isinstance(chunks[0], HeaderInclusion):
-                chunks[0].add_reason(r, kind = "satisfies %s by" % definer)
-
-            refs.extend(chunks)
-
-        if definer is CPP:
-            return refs
-        else:
-            inc = HeaderInclusion(definer)
-            inc.add_references(refs)
-            inc.add_reason(self.type)
-            return [inc]
-
     def gen_var(self, *args, **kw):
         raise ValueError("Attempt to generate variable of type %s"
             " using a reference" % self.type
