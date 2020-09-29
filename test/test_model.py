@@ -528,7 +528,8 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
             Enumeration([("ONE", 1)]),
             Enumeration([("TWO", 2)], enum_name = "A"),
             Enumeration([("THREE", 3)], typedef_name = "B"),
-            Enumeration([("FOUR", 4)], enum_name = "C", typedef_name ="D")
+            Enumeration([("FOUR", 4)], enum_name = "C", typedef_name ="D"),
+            Enumeration(["ALPHA", "BETA", "GAMMA"], enum_name = "E"),
         ])
 
         a = Type["int"]("a")
@@ -536,6 +537,7 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
         c = Type["A"]("c")
         d = Type["B"]("d")
         e = Type["D"]("e")
+        f = Type["E"]("f")
 
         src.add_types([
             Function(name = "main", body = BodyTree()(
@@ -547,7 +549,9 @@ class TestEnumerations(SourceModelTestHelper, TestCase):
                 Declare(d),
                 OpAssign(d, Type["THREE"]),
                 Declare(e),
-                OpAssign(e, Type["FOUR"])
+                OpAssign(e, Type["FOUR"]),
+                Declare(f),
+                OpAssign(f, Type["BETA"]),
             ))
         ])
 
@@ -568,6 +572,12 @@ typedef enum C {{
     FOUR = 4
 }} D;
 
+enum E {{
+    ALPHA,
+    BETA,
+    GAMMA
+}};
+
 enum {{
     ONE = 1
 }};
@@ -583,6 +593,8 @@ void main(void)
     d = THREE;
     D e;
     e = FOUR;
+    enum E f;
+    f = BETA;
 }}
 
 """.format(src.path)
