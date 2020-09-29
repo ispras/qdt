@@ -110,6 +110,9 @@ class AddTypeRefToDefinerException(RuntimeError):
 
 class Source(object):
 
+    # Only header can do it, see `Header`.
+    inherit_references = False
+
     def __init__(self, path, locked = None):
         self.path = path
         self.types = {}
@@ -278,13 +281,8 @@ class Source(object):
 
         return self
 
-    def gen_chunks(self, inherit_references = False):
-        """ In some use cases header should not satisfy references of its
-inclusions by itself. Instead, it must inherit them. A source file must
-satisfy the references in such case. Set inherit_references to True for
-switching to that mode.
-        """
-
+    def gen_chunks(self):
+        inherit_references = self.inherit_references
         if inherit_references:
             assert(isinstance(self, Header))
 
@@ -429,12 +427,12 @@ order does not meet all requirements.
 
         return chunks
 
-    def generate(self, inherit_references = False):
+    def generate(self):
         Header.propagate_references()
 
         file = SourceFile(self, protection = self.protection)
 
-        file.add_chunks(self.gen_chunks(inherit_references))
+        file.add_chunks(self.gen_chunks())
 
         return file
 
@@ -550,6 +548,14 @@ class TypeFixerVisitor(TypeReferencesVisitor):
 @add_metaclass(registry)
 class Header(Source):
     reg = {}
+
+    # In some use cases header should not satisfy references of its
+    # inclusions by itself. Instead, it must inherit them. A source file must
+    # satisfy the references in such case. Set inherit_references to True for
+    # switching to that mode.
+    # TODO: current value of inherit_references is dictated by Qemu
+    # coding policy. Hence, version API must be used there.
+    inherit_references = True
 
     def __init__(self, path,
         is_global = False,
