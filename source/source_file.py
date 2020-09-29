@@ -430,15 +430,6 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             if t.definer is self.source:
                 return
 
-            # Make TypeReference to declaration instead of definition:
-            # In a case when a declaration and a definition are in
-            # different files, it is necessary to include the file with
-            # the declaration
-            if isinstance(t, Function) and t.declaration is not None:
-                t = t.declaration
-                if type(t) is TypeReference:
-                    t = t.type
-
             # A type defined inside another type is not subject of this fixer.
             # Because internal type is always defined within its container and,
             # hence, never defined by a header inclusion or directly by a
@@ -885,6 +876,16 @@ class ChunkGenerator(object):
         current_references = current.references
 
         foreign_type = type_ref.type
+
+        # In a case when declaration and definition of a function are in
+        # different files, it is necessary to include the file with
+        # the declaration
+        if isinstance(foreign_type, Function) \
+        and foreign_type.declaration is not None:
+            foreign_type = foreign_type.declaration
+            if type(foreign_type) is TypeReference:
+                foreign_type = foreign_type.type
+
         if foreign_type in current_references:
             return []
 
