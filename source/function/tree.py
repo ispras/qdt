@@ -69,7 +69,6 @@ from ..c_const import (
 )
 from ..model import (
     Type,
-    TypeReference,
     Pointer,
     Macro,
     NodeVisitor,
@@ -693,7 +692,7 @@ class OpSDeref(Operator):
         _type = value.type
 
         struct = _type
-        while isinstance(struct, (Pointer, TypeReference)):
+        while isinstance(struct, Pointer):
             struct = struct.type
 
         if OPSDEREF_FROM_DEFINITION:
