@@ -698,7 +698,7 @@ class OpSDeref(Operator):
             struct = struct.type
 
         if OPSDEREF_FROM_DEFINITION:
-            struct = struct._definition or struct
+            struct = struct.definition
 
         try:
             struct.fields[self.field]
