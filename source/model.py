@@ -693,7 +693,6 @@ class Function(Type):
             inline = inline,
             used_types = used_types
         )
-        CopyFixerVisitor(new_f).visit()
         return new_f
 
     def gen_definition(self,
@@ -711,7 +710,6 @@ class Function(Type):
             used_types = used_types,
             used_globals = used_globals
         )
-        CopyFixerVisitor(new_f).visit()
         new_f.declaration = self
         return new_f
 
@@ -1243,27 +1241,6 @@ class Variable(object):
 
 
 # Type inspecting
-
-
-class CopyFixerVisitor(TypeReferencesVisitor):
-    """
-    CopyFixerVisitor is now used for true copying function body arguments
-    in order to prevent wrong TypeReferences among them
-    because before function prototype and body had the same args
-    references (in terms of python references)
-    """
-
-    def on_visit(self):
-        t = self.cur
-
-        if (not isinstance(t, Type)
-            or (isinstance(t, (Pointer, MacroUsage)) and not t.is_named)
-        ):
-            new_t = copy(t)
-
-            self.replace(new_t, skip_trunk = False)
-        else:
-            raise BreakVisiting()
 
 
 def gen_function_decl_ref_chunks(function, generator):
