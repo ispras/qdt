@@ -1305,6 +1305,7 @@ digraph Chunks {
             ch.path = path
 
     def generate(self, writer,
+        graphs_prefix = None,
         gen_debug_comments = False
     ):
         # check for duplicate chunks for same origin
@@ -1316,7 +1317,7 @@ digraph Chunks {
             self.chunks = sort_chunks(self.chunks)
 
         if OPTIMIZE_INCLUSIONS:
-            self.optimize_inclusions()
+            self.optimize_inclusions(graphs_prefix = graphs_prefix)
 
         self.header_paths_shortening()
 

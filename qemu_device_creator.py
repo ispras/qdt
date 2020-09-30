@@ -62,6 +62,13 @@ def main():
     )
 
     parser.add_argument(
+        "--gen-intermediate-chunk-graphs",
+        action = "store_true",
+        help = "Generate Graphviz files with intermediate graph of chunks "
+        "during header inclusion optimisation for each generated source."
+    )
+
+    parser.add_argument(
         "--gen-debug-comments",
         action = "store_true",
         help = "Generate source files with debug comments."
@@ -119,6 +126,7 @@ def main():
         qvd.qvc.stc.gen_header_inclusion_dot_file(arguments.gen_header_tree)
 
     project.gen_all(qvd.src_path,
+        intermediate_chunk_graphs = arguments.gen_intermediate_chunk_graphs,
         with_chunk_graph = arguments.gen_chunk_graphs,
         known_targets = qvd.qvc.known_targets,
         with_debug_comments = arguments.gen_debug_comments
