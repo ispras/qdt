@@ -440,6 +440,9 @@ order does not meet all requirements.
 
     __type_references__ = ("types", "global_variables")
 
+    def __repr__(self):
+        return type(self).__name__ + "(%r)" % self.path
+
 
 class TypeFixerVisitor(TypeReferencesVisitor):
 
