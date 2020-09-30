@@ -1022,16 +1022,23 @@ digraph Chunks {
             label = ch.name
 
             if isinstance(ch, HeaderInclusion):
-                style = "style=filled "
                 label += "\\n*\\n"
                 for r in ch.reasons:
                     label += "%s %s\\l" % r
-            else:
-                style = ''
 
-            label = label.replace('"', '\\"')
+            # `ch`unk can overwrite default attributes
+            appearance = dict(
+                label = label
+            )
+            appearance.update(ch.appearance)
 
-            w.write('\n    %s [%slabel="%s"]\n' % (cnn, style, label))
+            style = " ".join(
+                map('%s="%s"'.__mod__,
+                    ((n, v.replace('"', '\\"')) for n, v in appearance.items())
+                )
+            )
+
+            w.write('\n    %s [%s]\n' % (cnn, style))
 
             # invisible edges provides vertical order like in the output file
             if upper_cnn is not None:

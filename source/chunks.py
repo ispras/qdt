@@ -24,6 +24,9 @@ from .code_gen_helpers import (
     gen_init_string,
     gen_function_declaration_string,
 )
+from collections import (
+    OrderedDict,
+)
 
 
 # Coding style settings
@@ -67,6 +70,8 @@ class SourceChunk(object):
         if references is not None:
             for chunk in references:
                 self.add_reference(chunk)
+        # Attributes of node in Graphviz graph.
+        self.appearance = OrderedDict()
 
     def after(self, another):
         "This chunk is after `another` one if a path of `references` exists."
@@ -227,6 +232,7 @@ class HeaderInclusion(SourceChunk):
         self._path = None
         self.path = path2tuple(header.path)
         self.reasons = OrderedSet()
+        self.appearance["style"] = "filled"
 
     def add_reason(self, _type, kind = "defines"):
         self.reasons.add((kind, _type))
