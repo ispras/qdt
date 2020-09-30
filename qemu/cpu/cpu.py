@@ -250,6 +250,7 @@ class CPUType(QOMCPU):
 
     def co_gen(self, src,
         with_chunk_graph = False,
+        intermediate_chunk_graphs = False,
         with_debug_comments = False,
         **_
     ):
@@ -335,6 +336,12 @@ class CPUType(QOMCPU):
 
         for f in self.gen_files.values():
             path = join(src, f.path)
+
+            if intermediate_chunk_graphs:
+                graphs_prefix = path + ".chunks"
+            else:
+                graphs_prefix = None
+
             with open(path, mode = "wb", encoding = "utf-8") as f_writer:
                 sf = f.generate(inherit_references = isinstance(f, Header))
 
@@ -346,7 +353,10 @@ class CPUType(QOMCPU):
 
                 yield True
 
-                sf.generate(f_writer, gen_debug_comments = with_debug_comments)
+                sf.generate(f_writer,
+                    graphs_prefix = graphs_prefix,
+                    gen_debug_comments = with_debug_comments
+                )
 
         path = self.gen_files["translate.inc.c"].path
         old_path = join(src, path)

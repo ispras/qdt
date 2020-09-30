@@ -168,6 +168,7 @@ class QProject(object):
 
     def co_gen(self, desc, src,
         with_chunk_graph = False,
+        intermediate_chunk_graphs = False,
         known_targets = None,
         with_debug_comments = False
     ):
@@ -198,8 +199,16 @@ class QProject(object):
 
             f = s.generate(inherit_references = inherit_references)
 
+            if intermediate_chunk_graphs:
+                graphs_prefix = spath + ".chunks"
+            else:
+                graphs_prefix = None
+
             with open(spath, mode = "wb", encoding = "utf-8") as stream:
-                f.generate(stream, gen_debug_comments = with_debug_comments)
+                f.generate(stream,
+                    graphs_prefix = graphs_prefix,
+                    gen_debug_comments = with_debug_comments
+                )
 
             if with_chunk_graph:
                 yield True

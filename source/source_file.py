@@ -440,6 +440,9 @@ order does not meet all requirements.
 
     __type_references__ = ("types", "global_variables")
 
+    def __repr__(self):
+        return type(self).__name__ + "(%r)" % self.path
+
 
 class TypeFixerVisitor(TypeReferencesVisitor):
 
@@ -1019,16 +1022,23 @@ digraph Chunks {
             label = ch.name
 
             if isinstance(ch, HeaderInclusion):
-                style = "style=filled "
                 label += "\\n*\\n"
                 for r in ch.reasons:
                     label += "%s %s\\l" % r
-            else:
-                style = ''
 
-            label = label.replace('"', '\\"')
+            # `ch`unk can overwrite default attributes
+            appearance = dict(
+                label = label
+            )
+            appearance.update(ch.appearance)
 
-            w.write('\n    %s [%slabel="%s"]\n' % (cnn, style, label))
+            style = " ".join(
+                map('%s="%s"'.__mod__,
+                    ((n, v.replace('"', '\\"')) for n, v in appearance.items())
+                )
+            )
+
+            w.write('\n    %s [%s]\n' % (cnn, style))
 
             # invisible edges provides vertical order like in the output file
             if upper_cnn is not None:
@@ -1112,10 +1122,21 @@ digraph Chunks {
                 % (chunk.name, chunk.source.name)
             )
 
-    def optimize_inclusions(self, log = lambda *args, **kw : None):
+    def optimize_inclusions(self,
+        graphs_prefix = None,
+        log = lambda *args, **kw : None
+    ):
+        """
+:param graphs_prefix:
+    is a prefix of the path for dumping intermediate chunk graphs.
+    Graphs paths will be `graphs_prefix + ".N.gv"` where N is a serial number.
+        """
         log("-= inclusion optimization started for %s.%s =-" % (
             (self.name, "h" if self.is_header else "c")
         ))
+
+        if graphs_prefix is not None:
+            N = 0
 
         # `header_0` -> a header providing inclusion `header_0`
         effective_includers = {}
@@ -1199,6 +1220,23 @@ digraph Chunks {
                         substitution.origin.path
                     ))
 
+                    if graphs_prefix is not None:
+                        # Highlight chunks of interest.
+                        prev_color = substitution.appearance.get("color")
+                        substitution.appearance["color"] = "green"
+                        redundant.appearance["color"] = "red"
+
+                        graph_path = graphs_prefix + ".%d.gv" % N
+                        N += 1
+                        log("Generating " + graph_path)
+                        self.gen_chunks_gv_file(graph_path)
+
+                        # Reverting highlighting of removed chunk is useless.
+                        if prev_color:
+                            substitution.appearance["color"] = prev_color
+                        else:
+                            del substitution.appearance["color"]
+
                     self.remove_dup_chunk(substitution, redundant)
 
                     # The inclusion of `s` was removed but `s` can include
@@ -1220,6 +1258,9 @@ digraph Chunks {
                     stack.append(s)
                     # Now provider of `h` also provides `s`.
                     effective_includers[s] = h_provider
+
+        # if graphs_prefix is not None:
+        # Final graph can be printed using another way (`with_chunk_graph`).
 
         log("-= inclusion optimization ended =-")
 
@@ -1272,6 +1313,7 @@ digraph Chunks {
             ch.path = path
 
     def generate(self, writer,
+        graphs_prefix = None,
         gen_debug_comments = False
     ):
         # check for duplicate chunks for same origin
@@ -1283,7 +1325,7 @@ digraph Chunks {
             self.chunks = sort_chunks(self.chunks)
 
         if OPTIMIZE_INCLUSIONS:
-            self.optimize_inclusions()
+            self.optimize_inclusions(graphs_prefix = graphs_prefix)
 
         self.header_paths_shortening()
 
