@@ -1122,10 +1122,21 @@ digraph Chunks {
                 % (chunk.name, chunk.source.name)
             )
 
-    def optimize_inclusions(self, log = lambda *args, **kw : None):
+    def optimize_inclusions(self,
+        graphs_prefix = None,
+        log = lambda *args, **kw : None
+    ):
+        """
+:param graphs_prefix:
+    is a prefix of the path for dumping intermediate chunk graphs.
+    Graphs paths will be `graphs_prefix + ".N.gv"` where N is a serial number.
+        """
         log("-= inclusion optimization started for %s.%s =-" % (
             (self.name, "h" if self.is_header else "c")
         ))
+
+        if graphs_prefix is not None:
+            N = 0
 
         # `header_0` -> a header providing inclusion `header_0`
         effective_includers = {}
@@ -1209,6 +1220,23 @@ digraph Chunks {
                         substitution.origin.path
                     ))
 
+                    if graphs_prefix is not None:
+                        # Highlight chunks of interest.
+                        prev_color = substitution.appearance.get("color")
+                        substitution.appearance["color"] = "green"
+                        redundant.appearance["color"] = "red"
+
+                        graph_path = graphs_prefix + ".%d.gv" % N
+                        N += 1
+                        log("Generating " + graph_path)
+                        self.gen_chunks_gv_file(graph_path)
+
+                        # Reverting highlighting of removed chunk is useless.
+                        if prev_color:
+                            substitution.appearance["color"] = prev_color
+                        else:
+                            del substitution.appearance["color"]
+
                     self.remove_dup_chunk(substitution, redundant)
 
                     # The inclusion of `s` was removed but `s` can include
@@ -1230,6 +1258,9 @@ digraph Chunks {
                     stack.append(s)
                     # Now provider of `h` also provides `s`.
                     effective_includers[s] = h_provider
+
+        # if graphs_prefix is not None:
+        # Final graph can be printed using another way (`with_chunk_graph`).
 
         log("-= inclusion optimization ended =-")
 
