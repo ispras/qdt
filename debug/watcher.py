@@ -73,6 +73,12 @@ Leading spaces are ignored.
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
         for _, cb in getmembers(self, predicate = is_breakpoint_cb):
+            # The process can be slow enough, a progress indication is required.
+            if verbose:
+                print("Mapping breakpoint %s.%s" % (
+                    type(self).__name__, cb.__name__
+                ))
+
             try:
                 mi = None
                 for mi in breakpoint_matches(cb.__doc__.splitlines()):
