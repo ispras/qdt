@@ -107,3 +107,16 @@ def trie_find(trie, path):
         )
 
     raise KeyError("No path %s" % str(path))
+
+
+def iter_trie_paths(trie):
+    if isinstance(trie, dict):
+        for p, subtrie in trie.items():
+            if p is None:
+                # There is something at root of (sub)trie.
+                yield tuple()
+            else:
+                for subpath in iter_trie_paths(subtrie):
+                    yield (p,) + subpath
+    else:
+        yield trie[1]
