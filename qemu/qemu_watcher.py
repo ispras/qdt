@@ -116,7 +116,9 @@ the QOM tree by fetching relevant data.
     def on_main(self):
         # main, just after QOM module initialization
 
-        """ vl.c:3075 v2.12.0
+        """
+            softmmu/vl.c:2867 bac068e0648c1f5c37f6a0a9423b8aa55e8c09c2
+            vl.c:3075 v2.12.0
             vl.c:2980 d0dff238a87fa81393ed72754d4dc8b09e50b08b
         """
 
@@ -240,7 +242,9 @@ Notifications are issued for many machine composition events.
     def on_obj_init_start(self):
         # object_initialize_with_type, before `object_init_with_type`
 
-        """ object.c:384 v2.12.0
+        """
+            object.c:513 v5.1.0
+            object.c:384 v2.12.0
             object.c:376 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
         """
 
@@ -287,7 +291,9 @@ Notifications are issued for many machine composition events.
     def on_board_init_start(self):
         # machine_initfn
 
-        """ hw/core/machine.c:656 b2fc91db84470a78f8e93f5b5f913c17188792c8
+        """
+            hw/core/machine.c:819 11bc4a13d1f4b07dafbd1dda4d4bf0fdd7ad65f2
+            hw/core/machine.c:656 b2fc91db84470a78f8e93f5b5f913c17188792c8
             hw/core/machine.c:654 v2.12.0
         """
 
@@ -307,7 +313,9 @@ Notifications are issued for many machine composition events.
     def on_mem_init_end(self):
         # return from memory_region_init
 
-        """ memory.c:1153 v2.12.0
+        """
+            memory.c:1171 64a7b8de42aff54dce4d82585f25060a741531d1
+            memory.c:1153 v2.12.0
             memory.c:1009 0ab8ed18a6fe98bfc82705b0f041fbf2a8ca5b60
             memory.c:930 v2.5.0
         """
@@ -392,7 +400,10 @@ Notifications are issued for many machine composition events.
     def on_obj_class_prop_add(self):
         # object_class_property_add, before insertion to prop. table;
 
-        "object.c:1152 a9b305ba291fb74f7ff732b3d7b8f4c812431ddf"
+        """
+            object.c:1233 v5.1.0
+            object.c:1152 a9b305ba291fb74f7ff732b3d7b8f4c812431ddf
+        """
 
         rt = self.rt
         type_addr = rt["klass"]["type"].fetch_pointer()
@@ -410,7 +421,9 @@ Notifications are issued for many machine composition events.
     def on_obj_prop_set(self):
         # object_property_set (prop. exists and has a setter)
 
-        """ object.c:1122 v2.12.0
+        """
+            object.c:1349 v5.1.0
+            object.c:1122 v2.12.0
             object.c:1094 63f7b10bc552be8a2cd1da87e8b27f9a5a217b91
             object.c:1021 v2.5.0
         """
@@ -447,7 +460,9 @@ Notifications are issued for many machine composition events.
     def on_qbus_realize(self):
         # qbus_realize, parent may be NULL
 
-        """ hw/core/bus.c:101 v2.12.0
+        """
+            hw/core/bus.c:122 d2623129a7dec1d3041ad1221dda1ca49c667532
+            hw/core/bus.c:101 v2.12.0
             hw/core/qdev.c:716 v2.5.0
         """
 
@@ -523,9 +538,11 @@ Notifications are issued for many machine composition events.
         ))
 
     def on_bus_add_child(self):
-        # bus_add_child
+        # bus_add_child, entry point
 
-        """ hw/core/qdev.c:73 v2.12.0
+        """
+            hw/core/qdev.c:75 12b2e9f30f978f26f35f9df5c2ef96fbc019bab6
+            hw/core/qdev.c:73 v2.12.0
             hw/core/qdev.c:101 67980031d234aa90524b83bb80bb5d1601d29076
         """
 
@@ -587,7 +604,9 @@ Notifications are issued for many machine composition events.
         # qdev_connect_gpio_out_named, after IRQ was assigned and before
         # property name `propname` freed.
 
-        """ core/qdev.c:479 v2.12.0
+        """
+            core/qdev.c:535 v5.1.0
+            core/qdev.c:479 v2.12.0
             core/qdev.c:496 67980031d234aa90524b83bb80bb5d1601d29076
         """
 
@@ -623,7 +642,9 @@ Notifications are issued for many machine composition events.
     def on_qemu_irq_split(self):
         # returning from `qemu_irq_split`
 
-        """ core/irq.c:122 v2.12.0
+        """
+            core/irq.c:121 fc531e7cab1ce598a9b994155b8adb805084cb0f
+            core/irq.c:122 v2.12.0
             core/irq.c:121 67980031d234aa90524b83bb80bb5d1601d29076
         """
 
@@ -690,8 +711,11 @@ class PCMachineWatcher(MachineWatcher):
                     self.check_irq_connected(i8259_inst)
 
     def on_piix4_pm_gsi(self):
-
-        "piix4.c:578 v2.12.0"
+        # return from piix4_pm_init
+        """
+            acpi/piix4.c:539 v5.1.0
+            acpi/piix4.c:578 v2.12.0
+        """
 
         rt = self.rt
 
