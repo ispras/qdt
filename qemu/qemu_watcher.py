@@ -180,7 +180,6 @@ Notifications are issued for many machine composition events.
 
     def __init__(self, dic, qom_tree,
         interrupt = False,
-        verbose = False,
         **kw
     ):
         """
@@ -191,7 +190,6 @@ Notifications are issued for many machine composition events.
 
         """
         super(MachineWatcher, self).__init__(dic,
-            verbose = verbose,
             **kw
         )
         self.tree = qom_tree
