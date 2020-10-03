@@ -103,7 +103,7 @@ def trie_find(trie, path):
 
         raise ValueError("Given path %s is not long enough to look value"
             " up unambiguously. There are several values with such path"
-            " prefix." % str(path)
+            " prefix: %s." % (path, list(iter_trie_paths(trie)))
         )
 
     raise KeyError("No path %s" % str(path))
