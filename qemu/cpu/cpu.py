@@ -470,6 +470,13 @@ class CPUType(QOMCPU):
         self._gen_disas(disas)
 
     def _gen_cpu_param_h(self, h):
+        # XXX: lock the header to prevent adding inclusions.
+        h.locked_inclusions = True
+        # XXX: the "cpu-param.h" header is already included in the
+        # "exec/cpu-defs.h" header but on a short path.
+        # The tool cannot find such an inclusion yet.
+        Header["exec/cpu-defs.h"].add_inclusion(h)
+
         for name, value in self.attributes.items():
             m = Macro(name, text = value)
             h.add_type(m)
