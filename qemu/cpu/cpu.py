@@ -786,7 +786,8 @@ class CPUType(QOMCPU):
 
         gdb_read_register = cpu_class.gdb_read_register.gen_callback(
             fn_name("gdb_read_register"),
-            static = True
+            static = True,
+            used_types = [ Type["gdb_get_reg32"] ]
         )
         fill_gdb_rw_register_body(self, gdb_read_register,
             "TODO: implement gdb_read_register"
@@ -795,7 +796,8 @@ class CPUType(QOMCPU):
 
         gdb_write_register = cpu_class.gdb_write_register.gen_callback(
             fn_name("gdb_write_register"),
-            static = True
+            static = True,
+            used_types = [ Type["gdb_get_reg32"] ]
         )
         fill_gdb_rw_register_body(self, gdb_write_register,
             "TODO: implement gdb_write_register"
