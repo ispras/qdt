@@ -918,7 +918,7 @@ HDB_MACRO_ARGS = "args"
 class Macro(Type):
 
     # args is list of strings
-    def __init__(self, name, args = None, text = None):
+    def __init__(self, name, args = None, text = None, used_types = None):
         super(Macro, self).__init__(name = name, incomplete = False)
 
         self.args = args
@@ -938,12 +938,16 @@ class Macro(Type):
     def gen_var(self, name,
         pointer = False,
         initializer = None,
+        used_types = None,
         static = False,
         array_size = None,
         used = False,
         macro_initializer = None
     ):
-        return MacroUsage(self, initializer = macro_initializer)(name,
+        return MacroUsage(self,
+            initializer = macro_initializer,
+            used_types = used_types
+        )(name,
             pointer = pointer,
             initializer = initializer,
             static = static,
@@ -951,11 +955,20 @@ class Macro(Type):
             used = used
         )
 
-    def gen_type(self, initializer = None, name = None, counter = count(0)):
+    def gen_type(self,
+        initializer = None,
+        name = None,
+        used_types = None,
+        counter = count(0)
+    ):
         "A helper that automatically generates a name for `MacroUsage`."
         if name is None:
             name = self.name + ".auto" + str(next(counter))
-        return MacroUsage(self, initializer = initializer, name = name)
+        return MacroUsage(self,
+            initializer = initializer,
+            name = name,
+            used_types = used_types
+        )
 
     def gen_dict(self):
         res = {HDB_MACRO_NAME : self.name}
@@ -981,7 +994,12 @@ class Macro(Type):
 class MacroUsage(Type):
     "Something defined using a macro expansion."
 
-    def __init__(self, macro, initializer = None, name = None):
+    def __init__(self, macro,
+        initializer = None,
+        name = None,
+        # macro expansion depends on these types
+        used_types = None
+    ):
         if not isinstance(macro, Macro):
             raise ValueError("Attempt to create %s from "
                 " %s which is not macro." % (type(self).__name__, macro)
@@ -995,6 +1013,7 @@ class MacroUsage(Type):
 
         self.macro = macro
         self.initializer = initializer
+        self.used_types = set() if used_types is None else set(used_types)
 
     def get_definers(self):
         if self.is_named:
@@ -1005,6 +1024,7 @@ class MacroUsage(Type):
     def gen_chunks(self, generator, indent = ""):
         macro = self.macro
         initializer = self.initializer
+        used_types = self.used_types
 
         refs = list(generator.provide_chunks(macro))
 
@@ -1014,6 +1034,9 @@ class MacroUsage(Type):
 
             for t in initializer.used_types:
                 refs.extend(generator.provide_chunks(t))
+
+        for t in used_types:
+            refs.extend(generator.provide_chunks(t))
 
         if self.is_named:
             ch = MacroTypeChunk(self, indent)
@@ -1028,7 +1051,7 @@ class MacroUsage(Type):
         else:
             return "usage of macro %s" % self.macro
 
-    __type_references__ = ["macro", "initializer"]
+    __type_references__ = ["macro", "initializer", "used_types"]
 
 
 class CPPMacro(Macro):
