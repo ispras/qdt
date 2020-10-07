@@ -1329,11 +1329,10 @@ class QOMCPU(QOMType):
             ))
             s.append_field(Structure()("end_reset_fields"))
         if get_vp("CPU_COMMON exists"):
-            cpu_common_usage = Type["CPU_COMMON"].gen_type()
+            cpu_common_usage = Type["CPU_COMMON"].gen_type(
+                used_types = {Type["NB_MMU_MODES"]}
+            )
             s.append_field(cpu_common_usage)
-            # XXX: extra reference guarantiee that NB_MMU_MODES defined before
-            # CPU_COMMON usage
-            cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
         return s
 
     def gen_vmstate_initializer(self, _, state_struct):
