@@ -276,7 +276,7 @@ class Source(TypeContainer):
         # of self. This is list of references to those types.
         ref_list = []
 
-        if isinstance(self, Header):
+        if isinstance(self, Header) and not self.locked_inclusions:
             for user in self.includers:
                 for ref in user.references:
                     if ref.definer not in user.inclusions:
