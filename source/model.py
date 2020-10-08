@@ -675,23 +675,6 @@ class EnumerationElement(Type):
     __type_references__ = ["initializer"]
 
 
-class FunctionBodyString(object):
-
-    def __init__(self, body = None, used_types = None, used_globals = None):
-        self.body = body
-        self.used_types = set() if used_types is None else set(used_types)
-        self.used_globals = [] if used_globals is None else list(used_globals)
-
-        for i in self.used_globals:
-            i.used = True
-
-    def __str__(self):
-        return self.body
-
-    __type_references__ = ["used_types"]
-    __node__ = ["used_globals"]
-
-
 class Function(Type):
 
     def __init__(self,
@@ -717,24 +700,21 @@ class Function(Type):
         if not self.is_named:
             self.c_name = ""
 
+        self.body = body
+        # Note, for non-string bodies allows to specify types and variables
+        # that are not used in the generated code but will be needed in the
+        # user defined code.
+        self.used_types = set() if used_types is None else set(used_types)
+        self.used_globals = [] if used_globals is None else list(used_globals)
+
+        for v in self.used_globals:
+            v.used = True
+
         self.static = static
         self.inline = inline
         self.ret_type = Type["void"] if ret_type is None else ret_type
         self.args = args
         self.declaration = None
-
-        if isinstance(body, str):
-            self.body = FunctionBodyString(
-                body = body,
-                used_types = used_types,
-                used_globals = used_globals
-            )
-        else:
-            self.body = body
-            if (used_types or used_globals) is not None:
-                raise ValueError("Specifing of used types or globals for non-"
-                    "string body is redundant."
-                )
 
     def gen_declaration_chunks(self, generator):
         indent = ""
@@ -763,7 +743,8 @@ class Function(Type):
         body = None,
         static = None,
         inline = False,
-        used_types = []
+        used_types = None,
+        used_globals = None
     ):
         new_f = Function(
             name = name,
@@ -772,7 +753,8 @@ class Function(Type):
             args = self.args,
             static = self.static if static is None else static,
             inline = inline,
-            used_types = used_types
+            used_types = used_types,
+            used_globals = used_globals
         )
         CopyFixerVisitor(new_f).visit()
         return new_f
@@ -811,7 +793,7 @@ class Function(Type):
         else:
             return "nameless function"
 
-    __type_references__ = ["ret_type", "args", "body"]
+    __type_references__ = ["ret_type", "args", "body", "used_types"]
 
 
 class Pointer(Type):
@@ -1389,12 +1371,20 @@ def gen_function_decl_ref_chunks(function, generator):
 
 
 def gen_function_def_ref_chunks(f, generator):
+    body = f.body
     references = []
 
-    for t in TypesCollector(f.body).visit().used_types:
+    for t in f.used_types:
         references.extend(generator.provide_chunks(t))
 
-    for t in GlobalsCollector(f.body).visit().used_globals:
+    for t in f.used_globals:
         references.extend(generator.provide_chunks(t))
+
+    if not isinstance(body, str):
+        for t in TypesCollector(body).visit().used_types:
+            references.extend(generator.provide_chunks(t))
+
+        for t in GlobalsCollector(body).visit().used_globals:
+            references.extend(generator.provide_chunks(t))
 
     return references
