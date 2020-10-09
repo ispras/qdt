@@ -143,24 +143,26 @@ class QProject(object):
         if head == "hw":
             return
 
-        # Provide Makefiles in ancestors
+        # Provide Makefiles in ancestors.
         self.register_in_build_system(tail, known_targets)
 
-        # Register the folder in its parent
-        parent_Makefile_obj = join(tail, "Makefile.objs")
+        # Register the folder in its parent.
+        # Note that folders whose names match Qemu target CPU architecture
+        # are implicitly included without an entry in "hw/Makefile.objs".
         parent_dir = split(tail)[1]
 
         if parent_dir == "hw" and known_targets and head in known_targets:
             return
 
+        parent_Makefile_obj = join(tail, "Makefile.objs")
+
+        # Add empty Makefile.objs if no one exists.
+        if not isfile(parent_Makefile_obj):
+            open(parent_Makefile_obj, "w").close()
+
         patch_makefile(parent_Makefile_obj, head + "/",
             obj_var_names[parent_dir], config_flags[parent_dir]
         )
-
-        # Add empty Makefile.objs if no one exists.
-        Makefile_obj = join(folder, "Makefile.objs")
-        if not isfile(Makefile_obj):
-            open(Makefile_obj, "w").close()
 
     def gen(self, *args, **kw):
         "Backward compatibility wrapper for co_gen"
@@ -187,10 +189,6 @@ class QProject(object):
             elif not isdir(sdir):
                 yield True
                 makedirs(sdir)
-
-            if type(s) is Source: # Exactly a compile module
-                yield
-                self.register_in_build_system(sdir, known_targets)
 
             yield True
 
@@ -222,6 +220,9 @@ class QProject(object):
             if type(s) is not Source:
                 continue
 
+            yield
+            self.register_in_build_system(sdir, known_targets)
+
             yield True
 
             sbase, _ = splitext(sname)
@@ -229,7 +230,12 @@ class QProject(object):
 
             hw_path = join(src, "hw")
             class_hw_path = join(hw_path, desc.directory)
+
             Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
+
+            # If it's a new `hw` subfolder, it has no `Makefile.objs`.
+            if not isfile(Makefile_objs_class_path):
+                open(Makefile_objs_class_path, "wb").close()
 
             patch_makefile(Makefile_objs_class_path, object_name,
                 obj_var_names[desc.directory], config_flags[desc.directory]
