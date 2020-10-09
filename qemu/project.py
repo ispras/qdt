@@ -150,17 +150,17 @@ class QProject(object):
         parent_Makefile_obj = join(tail, "Makefile.objs")
         parent_dir = split(tail)[1]
 
+        # Add empty Makefile.objs if no one exists.
+        Makefile_obj = join(folder, "Makefile.objs")
+        if not isfile(Makefile_obj):
+            open(Makefile_obj, "w").close()
+
         if parent_dir == "hw" and known_targets and head in known_targets:
             return
 
         patch_makefile(parent_Makefile_obj, head + "/",
             obj_var_names[parent_dir], config_flags[parent_dir]
         )
-
-        # Add empty Makefile.objs if no one exists.
-        Makefile_obj = join(folder, "Makefile.objs")
-        if not isfile(Makefile_obj):
-            open(Makefile_obj, "w").close()
 
     def gen(self, *args, **kw):
         "Backward compatibility wrapper for co_gen"
