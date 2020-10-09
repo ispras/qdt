@@ -1329,6 +1329,10 @@ class QOMCPU(QOMType):
             ))
             s.append_field(Structure()("end_reset_fields"))
         if get_vp("CPU_COMMON exists"):
+            # XXX: either add NB_MMU_MODES to initializer (likely wrong)
+            #      or to CPU_COMMON used types (if it actually uses it)
+            #      or revert extra_references (it's a workaround for model
+            #         limitations)
             cpu_common_usage = Type["CPU_COMMON"].gen_type(
                 used_types = {Type["NB_MMU_MODES"]}
             )
