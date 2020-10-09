@@ -285,6 +285,9 @@ satisfy the references in such case. Set inherit_references to True for
 switching to that mode.
         """
 
+        if self.locked:
+            raise AssertionError("Generating locked file " + self.path)
+
         if inherit_references:
             assert(isinstance(self, Header))
 
@@ -301,7 +304,7 @@ switching to that mode.
         # of self. This is list of references to those types.
         ref_list = []
 
-        if isinstance(self, Header) and not self.locked:
+        if isinstance(self, Header):
             for user in self.includers:
                 for ref in user.references:
                     if ref.definer not in user.inclusions:
