@@ -701,6 +701,9 @@ class Function(Type):
             self.c_name = ""
 
         self.body = body
+        # XXX: No, non-string bodies should honestly define used_types &
+        #      used_globals by content. There is `extra_references` as a
+        #      workaround.
         # Note, for non-string bodies allows to specify types and variables
         # that are not used in the generated code but will be needed in the
         # user defined code.
