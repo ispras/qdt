@@ -919,6 +919,7 @@ class Macro(Type):
 
     # args is list of strings
     def __init__(self, name, args = None, text = None, used_types = None):
+        # XXX: `used_types` is not used
         super(Macro, self).__init__(name = name, incomplete = False)
 
         self.args = args
@@ -998,6 +999,7 @@ class MacroUsage(Type):
         initializer = None,
         name = None,
         # macro expansion depends on these types
+        # XXX: a macro expansion may only use types from initializer or macro
         used_types = None
     ):
         if not isinstance(macro, Macro):
