@@ -787,6 +787,10 @@ class CPUType(QOMCPU):
         gdb_read_register = cpu_class.gdb_read_register.gen_callback(
             fn_name("gdb_read_register"),
             static = True,
+            # XXX: use `extra_references` with XXX marked detailed explanation
+            #      of the workaround
+            #      (better) implement a default bodies of the register
+            #      accessors
             used_types = [ Type["gdb_get_reg32"] ]
         )
         fill_gdb_rw_register_body(self, gdb_read_register,
