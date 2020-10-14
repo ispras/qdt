@@ -352,17 +352,17 @@ class CPUType(QOMCPU):
 
                 yield True
 
-                if with_chunk_graph:
-                    yield True
-                    sf.gen_chunks_gv_file(path + ".chunks.gv")
-
-                yield True
-
                 sf.generate(f_writer,
                     graphs_prefix = graphs_prefix,
                     gen_debug_comments = with_debug_comments,
                     include_paths = include_paths
                 )
+
+                yield True
+
+                if with_chunk_graph:
+                    yield True
+                    sf.gen_chunks_gv_file(path + ".chunks.gv")
 
         yield True
 
