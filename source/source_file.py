@@ -1,7 +1,6 @@
 __all__ = [
     "disable_auto_lock_sources"
   , "enable_auto_lock_sources"
-  , "AddTypeRefToDefinerException"
   , "Source"
       , "Header"
   , "SourceFile"
@@ -53,13 +52,10 @@ from .model import (
     CPPMacro,
     Function,
     Macro,
-    MacroUsage,
-    Pointer,
     registry,
     Structure,
     Type,
     TypeNotRegistered,
-    TypeReference,
     TypeReferencesVisitor,
     Variable,
 )
@@ -104,11 +100,10 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
 
 
-class AddTypeRefToDefinerException(RuntimeError):
-    pass
-
-
 class Source(object):
+
+    # Only header can do it, see `Header`.
+    inherit_references = False
 
     def __init__(self, path, locked = None):
         self.path = path
@@ -126,10 +121,6 @@ class Source(object):
         if not isinstance(ref, Type) and not isinstance(ref, Variable):
             raise ValueError("Trying to add source reference which is not a"
                 " type"
-            )
-        if isinstance(ref, TypeReference):
-            raise ValueError("Source reference may not be TypeReference."
-                "Only original types are allowed."
             )
         self.references.add(ref)
 
@@ -201,16 +192,8 @@ class Source(object):
             self.inclusions[header.path] = header
 
             for t in header.types.values():
-                try:
-                    if not t.is_named:
-                        continue
-                    if isinstance(t, TypeReference):
-                        self._add_type_recursive(TypeReference(t.type))
-                    else:
-                        self._add_type_recursive(TypeReference(t))
-                except AddTypeRefToDefinerException:
-                    # inclusion cycles will cause this exceptions
-                    pass
+                if t.is_named:
+                    self._add_type_recursive(t)
 
             if self in header.includers:
                 raise RuntimeError("Header %s is among includers of %s but"
@@ -221,26 +204,22 @@ class Source(object):
 
         return self
 
-    def _add_type_recursive(self, type_ref):
+    def _add_type_recursive(self, type_):
         # adding a type may satisfy a dependency
-        if type_ref.type in self.references:
-            self.references.remove(type_ref.type)
+        if type_ in self.references:
+            self.references.remove(type_)
 
-        if type_ref.name in self.types:
-            t = self.types[type_ref.name]
-            if isinstance(t, TypeReference):
-                # To check incomplete type case
-                if not t.type.definer == type_ref.type.definer:
-                    raise RuntimeError("Conflict reference to type %s found in"
-                        " source %s. The type is defined both in %s and %s"
-                        % (t, self.path, type_ref.type.definer.path,
-                            t.type.definer.path
-                        )
-                    )
+        if type_.name in self.types:
+            t = self.types[type_.name]
+            if t is not type_:
+                raise RuntimeError("Type conflict (%s) found in"
+                    " source %s. The type is defined both in %s and %s"
+                    % (t, self.path, type_.definer.path, t.definer.path)
+                )
             # To make more conflicts checking
             return False
 
-        self.types[type_ref.name] = type_ref
+        self.types[type_.name] = type_
         return True
 
     def add_types(self, types):
@@ -250,11 +229,6 @@ class Source(object):
         return self
 
     def add_type(self, _type):
-        if isinstance(_type, TypeReference):
-            raise ValueError("A type reference (%s) cannot be added to a"
-                " source (%s) externally" % (_type, self.path)
-            )
-
         _type.definer = self
         if _type.is_named:
             self.types[_type.name] = _type
@@ -267,8 +241,6 @@ class Source(object):
         # may reference to other just created types.
         # They must be added right now (by `TypeFixerVisitor`) to prevent
         # capturing by other sources at generation begin.
-        # Note, replacement of foreign types with `TypeReference` is actually
-        # not required right now (see `gen_chunks`).
 
         TypeFixerVisitor(self, _type).visit()
 
@@ -278,13 +250,8 @@ class Source(object):
 
         return self
 
-    def gen_chunks(self, inherit_references = False):
-        """ In some use cases header should not satisfy references of its
-inclusions by itself. Instead, it must inherit them. A source file must
-satisfy the references in such case. Set inherit_references to True for
-switching to that mode.
-        """
-
+    def gen_chunks(self):
+        inherit_references = self.inherit_references
         if inherit_references:
             assert(isinstance(self, Header))
 
@@ -305,84 +272,17 @@ switching to that mode.
             for user in self.includers:
                 for ref in user.references:
                     if ref.definer not in user.inclusions:
-                        ref_list.append(TypeReference(ref))
+                        ref_list.append(ref)
 
         # Finally, we must fix types just before generation because user can
         # change already added types.
         TypeFixerVisitor(self, self).visit()
 
-        # fix up types for headers with references
-        # list of types must be copied because it is changed during each
-        # loop iteration. values() returns generator in Python 3.x, which
-        # must be explicitly enrolled to a list. Though is it redundant
-        # copy operation in Python 2.x.
-        l = list(self.types.values()) + ref_list
-
-        while True:
-            for t in l:
-                if not isinstance(t, TypeReference):
-                    continue
-
-                if t.definer_references is not None:
-                    # References are already specified
-                    continue
-
-                if inherit_references:
-                    t.definer_references = set()
-                    for ref in t.type.definer.references:
-                        # Definer of a foreign type (t is TypeReference to it)
-                        # may depend on an inner type (ref) from the current
-                        # file (self). In this case, inclusion of that definer
-                        # must be placed below the inner type in resulting
-                        # file. Adding ref to definer_references results in the
-                        # required order among code chunks.
-                        if ref.definer is self:
-                            # Here ref is Type (not TypeReference) because
-                            # defined in the current file.
-                            t.definer_references.add(ref)
-                        else:
-                            # Definer of a foreign type (t) may depend on a
-                            # foreign type (ref) from another file, which will
-                            # be included in the resulting file (since we use
-                            # some type from it). In this case, inclusion of
-                            # that definer must be placed below the inclusion
-                            # of another file in the resulting file.
-                            for tt in l:
-                                if not isinstance(tt, TypeReference):
-                                    continue
-                                if ref.definer is tt.type.definer:
-                                    t.definer_references.add(ref)
-                                    break
-                            else:
-                                self.references.add(ref)
-                else:
-                    t.definer_references = set(t.type.definer.references)
-
-            replaced = False
-            for t in l:
-                if not isinstance(t, TypeReference):
-                    continue
-
-                if TypeFixerVisitor(self, t).visit().replaced:
-                    replaced = True
-
-            if not replaced:
-                break
-            # Preserve current types list. See the comment above.
-            l = list(self.types.values()) + ref_list
-
         gen = ChunkGenerator(self)
 
         for t in self.types.values():
-            if isinstance(t, TypeReference):
-                continue
-
-            if t.definer is not self:
-                raise RuntimeError("Type %s is defined in %s but presented in"
-" %s not by a reference." % (t, t.definer.path, self.path)
-                )
-
-            gen.provide_chunks(t)
+            if t.definer is self:
+                gen.provide_chunks(t)
 
         for gv in self.global_variables.values():
             gen.provide_chunks(gv)
@@ -429,12 +329,12 @@ order does not meet all requirements.
 
         return chunks
 
-    def generate(self, inherit_references = False):
+    def generate(self):
         Header.propagate_references()
 
         file = SourceFile(self, protection = self.protection)
 
-        file.add_chunks(self.gen_chunks(inherit_references))
+        file.add_chunks(self.gen_chunks())
 
         return file
 
@@ -450,98 +350,73 @@ class TypeFixerVisitor(TypeReferencesVisitor):
         super(TypeFixerVisitor, self).__init__(type_object)
 
         self.source = source
-        self.replaced = False
-        self.new_type_references = deque()
-
-    def replace(self, new_value):
-        self.replaced = True
-        super(TypeFixerVisitor, self).replace(new_value)
+        self.required_types = deque()
 
     def on_visit(self):
         if isinstance(self.cur, Type):
             t = self.cur
-            if isinstance(t, TypeReference):
-                try:
-                    self_tr = self.source.types[t.name]
-                except KeyError:
-                    # The source does not have such type reference
-                    self_tr = TypeReference(t.type)
-                    self.source.types[t.name] = self_tr
-                    self.new_type_references.append(self_tr)
-
-                if self_tr is not t:
-                    self.replace(self_tr)
-
-                raise BreakVisiting()
 
             if t.base:
                 raise BreakVisiting()
 
-            # Skip pointer and macrousage types without name. Nameless
-            # pointer or macrousage does not have definer and should not be
-            # replaced with type reference.
-            if isinstance(t, (Pointer, MacroUsage)) and not t.is_named:
-                return
-
-            # Add definerless types to the Source automatically
-            if t.definer is None:
-                if t.is_named:
-                    self.source.add_type(t)
+            if not t.is_named:
                 return
 
             if t.definer is self.source:
                 return
 
-            # Make TypeReference to declaration instead of definition:
-            # In a case when a declaration and a definition are in
-            # different files, it is necessary to include the file with
-            # the declaration
-            if isinstance(t, Function) and t.declaration is not None:
-                t = t.declaration
-                if type(t) is TypeReference:
-                    t = t.type
+            # Add definerless types to the Source automatically
+            if t.definer is None:
+                self.source.add_type(t)
+                return
 
             # A type defined inside another type is not subject of this fixer.
             # Because internal type is always defined within its container and,
             # hence, never defined by a header inclusion or directly by a
             # source.
-            # Note that `definer` is not visited by this type fixer. Hence,
-            # the field is never a `TypeReference`.
-            # Note that if we are here then topmost container of the `t`ype is
-            # within `self.source`.
-            # Else, the topmost container is replaced with a `TypeReference`
-            # and a `BreakVisiting` is raised (see above).
             if isinstance(t.definer, Type):
                 return
 
-            # replace foreign type with reference to it
-            try:
-                tr = self.source.types[t.name]
-            except KeyError:
-                tr = TypeReference(t)
-                self.source.types[t.name] = tr
-                self.new_type_references.append(tr)
+            # if the `t`ype is not provided by an inclusion, it should be
+            # either referenced or provided by corresponding inclusion.
+            if t.name not in self.source.types:
+                self.required_types.append(t)
 
-            self.replace(tr)
+            # Do not enter another source (`t`ype's definer).
+            raise BreakVisiting()
 
     def visit(self):
         ret = super(TypeFixerVisitor, self).visit()
 
-        # Auto add references to types this type_object does depend on
         s = self.source
-        # The current approach does not generate header inclusion chunks for
-        # foreign types which are contained in the `references` list.
         if s.locked:
-            s.add_references(tr.type for tr in self.new_type_references)
-        elif SKIP_GLOBAL_HEADERS and isinstance(s, Header):
-            for tr in self.new_type_references:
-                t = tr.type
+            # A generated file either provides required types by inclusions or
+            # adds them to its references.
+            # A constant (`locked`) file can only update its references.
+            s.add_references(self.required_types)
+        else:
+            for t in self.required_types:
                 definer = t.definer
-                # A type declared in a global header is added to the
-                # `references` list to prevent the inclusion of the global
-                # header.
-                if isinstance(definer, Header) and definer.is_global:
-                    s.references.add(t)
+
+                # Sometimes headers do not include other headers to provide
+                # visibility of used types. A module file must provide it.
+                if (    isinstance(s, Header)
+                    and SKIP_GLOBAL_HEADERS
+                    and isinstance(definer, Header)
+                    and definer.is_global
+                ):
+                    # A type declared in a global header is added to the
+                    # `references` list to prevent the inclusion of that
+                    # global header.
+                    # Note, the current approach does not generate header
+                    # inclusion chunks for foreign types which are contained
+                    # in the `references` list.
+                    s.add_reference(t)
+                else:
+                    # The `t`ype will be provided by an inclusion after the
+                    # file generation.
+                    s._add_type_recursive(t)
+
         return ret
 
 
@@ -550,6 +425,14 @@ class TypeFixerVisitor(TypeReferencesVisitor):
 @add_metaclass(registry)
 class Header(Source):
     reg = {}
+
+    # In some use cases header should not satisfy references of its
+    # inclusions by itself. Instead, it must inherit them. A source file must
+    # satisfy the references in such case. Set inherit_references to True for
+    # switching to that mode.
+    # TODO: current value of inherit_references is dictated by Qemu
+    # coding policy. Hence, version API must be used there.
+    inherit_references = True
 
     def __init__(self, path,
         is_global = False,
@@ -737,23 +620,12 @@ class Header(Source):
         else:
             return '"%s"' % path
 
-    def _add_type_recursive(self, type_ref):
-        if type_ref.type.definer == self:
-            raise AddTypeRefToDefinerException(
-"Adding a type reference (%s) to a file (%s) defining the type" % (
-    type_ref.type, self.path
-)
-            )
-
+    def _add_type_recursive(self, type_):
         # Preventing infinite recursion by header inclusion loop
-        if super(Header, self)._add_type_recursive(type_ref):
+        if super(Header, self)._add_type_recursive(type_):
             # Type was added. Hence, It is new type for the header
             for s in self.includers:
-                try:
-                    s._add_type_recursive(TypeReference(type_ref.type))
-                except AddTypeRefToDefinerException:
-                    # inclusion cycles will cause this exception
-                    pass
+                s._add_type_recursive(type_)
 
     def add_type(self, _type):
         super(Header, self).add_type(_type)
@@ -761,7 +633,7 @@ class Header(Source):
         # Auto add type references to self includers
         if _type.is_named:
             for s in self.includers:
-                s._add_type_recursive(TypeReference(_type))
+                s._add_type_recursive(_type)
 
         return self
 
@@ -828,9 +700,9 @@ class ChunkGenerator(object):
     """ Maintains context of source code chunks generation process. """
 
     def __init__(self, definer):
+        self.definer = definer
         self.chunk_cache = { definer: [], CPP: [] }
         self.for_header = isinstance(definer, Header)
-        self.references = definer.references
         """ Tracking of recursive calls of `provide_chunks`. Currently used
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
@@ -839,10 +711,16 @@ class ChunkGenerator(object):
     def provide_chunks(self, origin, **kw):
         """ Given origin the method returns chunk list generating it on first
         access. """
-        if isinstance(origin, TypeReference):
-            key = origin.type.definer
+        current = self.definer
+        if (    origin.definer is not current
+            # Note, it can be a type inside another type.
+            and isinstance(origin.definer, Source)
+        ):
+            key = origin.definer
+            foreign = True
         else:
             key = origin
+            foreign = False
 
         try:
             chunks = self.chunk_cache[key]
@@ -863,7 +741,9 @@ class ChunkGenerator(object):
 
             self.stack.append(origin)
 
-            if isinstance(origin, Function):
+            if isinstance(origin, Type) and foreign:
+                chunks = self._gen_foreign_type_chunks(origin)
+            elif isinstance(origin, Function):
                 if (    self.for_header
                     and (not origin.static or not origin.inline)
                 ):
@@ -914,10 +794,6 @@ class ChunkGenerator(object):
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
-            elif (    isinstance(origin, TypeReference)
-                  and origin.type in self.references
-            ):
-                chunks = []
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
@@ -927,12 +803,89 @@ class ChunkGenerator(object):
             # modifications of chunk list.
             self.chunk_cache[key] = tuple(chunks)
         else:
-            if isinstance(origin, TypeReference):
+            if isinstance(origin, Type) and foreign:
                 if chunks:
                     # It's HeaderInclusion
-                    chunks[0].add_reason(origin.type)
+                    chunks[0].add_reason(origin)
                 # else:
                 #     print("reference to %s provided no inclusion" % origin)
+
+        return chunks
+
+    def _gen_foreign_type_chunks(self, foreign_type):
+        current = self.definer
+        current_references = current.references
+
+        # In a case when declaration and definition of a function are in
+        # different files, it is necessary to include the file with
+        # the declaration.
+        if (    isinstance(foreign_type, Function)
+            and foreign_type.declaration is not None
+        ):
+            foreign_type = foreign_type.declaration
+
+        if foreign_type in current_references:
+            return []
+
+        definer = foreign_type.definer
+
+        if current.inherit_references:
+            definer_references = set()
+            for ref in definer.references:
+                # Definer of a `foreign_type`
+                # may depend on an inner type (ref) from the `current`
+                # file. In this case, inclusion of that `definer`
+                # must be placed below the inner type in resulting
+                # file. Adding ref to `definer_references` results in the
+                # required order among code chunks.
+                if ref.definer is current:
+                    definer_references.add(ref)
+                else:
+                    # `definer` of a `foreign_type` may depend on a
+                    # foreign type `ref` from another file, which will
+                    # be included in the resulting `current` file (since we use
+                    # some `other_foreign_type` from it). In this case,
+                    # inclusion of that `definer` must be placed below the
+                    # inclusion of that another file in the resulting file.
+                    for other_foreign_type in current.types.values():
+                        if other_foreign_type.definer is current:
+                            # it's not foreign
+                            continue
+
+                        if other_foreign_type not in current_references:
+                            if ref.definer is other_foreign_type.definer:
+                                definer_references.add(ref)
+                                break
+                        # else:
+                        #     No file will be included for
+                        #     `other_foreign_type`
+                    else:
+                        current_references.add(ref)
+        else:
+            definer_references = set(definer.references)
+
+        refs = []
+        for r in definer_references:
+            ref_chunks = self.provide_chunks(r)
+
+            if not ref_chunks:
+                continue
+
+            # not only `HeaderInclusion` can satisfies reference
+            if isinstance(ref_chunks[0], HeaderInclusion):
+                ref_chunks[0].add_reason(r,
+                    kind = "satisfies %s by" % definer
+                )
+
+            refs.extend(ref_chunks)
+
+        if definer is CPP:
+            chunks = refs
+        else:
+            inc = HeaderInclusion(definer)
+            inc.add_references(refs)
+            inc.add_reason(foreign_type)
+            chunks = [inc]
 
         return chunks
 
@@ -952,9 +905,7 @@ class ChunkGenerator(object):
             definer = None
 
             try:
-                if isinstance(frame, TypeReference):
-                    definer = frame.type.definer.path
-                elif isinstance(frame, Type):
+                if isinstance(frame, Type):
                     definer = frame.definer.path
             except AttributeError:
                 pass

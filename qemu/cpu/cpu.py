@@ -343,7 +343,7 @@ class CPUType(QOMCPU):
                 graphs_prefix = None
 
             with open(path, mode = "wb", encoding = "utf-8") as f_writer:
-                sf = f.generate(inherit_references = isinstance(f, Header))
+                sf = f.generate()
 
                 yield True
 

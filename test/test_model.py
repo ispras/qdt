@@ -62,7 +62,7 @@ class SourceModelTestHelper(object):
         for file_, content in self.files:
             kw = {}
             if isinstance(file_, Header):
-                kw["inherit_references"] = self.inherit_references
+                file_.inherit_references = self.inherit_references
             sf = file_.generate(**kw)
 
             if SAVE_CHUNK_GRAPH:

@@ -193,11 +193,7 @@ class QProject(object):
 
             yield True
 
-            # TODO: current value of inherit_references is dictated by Qemu
-            # coding policy. Hence, version API must be used there.
-            inherit_references = type(s) is Header
-
-            f = s.generate(inherit_references = inherit_references)
+            f = s.generate()
 
             if intermediate_chunk_graphs:
                 graphs_prefix = spath + ".chunks"

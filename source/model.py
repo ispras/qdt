@@ -1,8 +1,6 @@
 __all__ = [
     "TypeNotRegistered"
   , "Type"
-      # must not be used externally
-      # "TypeReference"
       , "Structure"
       , "Function"
       , "Pointer"
@@ -208,8 +206,6 @@ class Type(object):
         return initializer.code
 
     def __eq__(self, other):
-        if isinstance(other, TypeReference):
-            return other.type == self
         # This code assumes that one type cannot be represented by several
         # objects.
         return self is other
@@ -246,83 +242,6 @@ class Type(object):
     @property
     def declaration_string(self):
         return self.full_deref.c_name + "@b" + self.asterisks
-
-
-class TypeReference(Type):
-
-    def __init__(self, _type):
-        if isinstance(_type, TypeReference):
-            raise ValueError("Attempt to create type reference to"
-                " another type reference %s." % _type
-            )
-
-        # Do not pass name to Type.__init__ to prevent TypeReference addition
-        # to the registry.
-        super(TypeReference, self).__init__(
-            incomplete = _type.incomplete,
-            base = _type.base
-        )
-
-        self.name = _type.name
-        self.c_name = _type.c_name
-        self.type = _type
-        self.definer_references = None
-
-    def get_definers(self):
-        return self.type.get_definers()
-
-    def gen_chunks(self, generator):
-        if self.definer_references is None:
-            raise RuntimeError("Attempt to generate chunks for reference to"
-                " type %s without the type reference adjusting"
-                " pass." % self
-            )
-
-        definer = self.type.definer
-
-        refs = []
-        for r in self.definer_references:
-            chunks = generator.provide_chunks(r)
-
-            if not chunks:
-                continue
-
-            # not only `HeaderInclusion` can satisfies reference
-            if isinstance(chunks[0], HeaderInclusion):
-                chunks[0].add_reason(r, kind = "satisfies %s by" % definer)
-
-            refs.extend(chunks)
-
-        if definer is CPP:
-            return refs
-        else:
-            inc = HeaderInclusion(definer)
-            inc.add_references(refs)
-            inc.add_reason(self.type)
-            return [inc]
-
-    def gen_var(self, *args, **kw):
-        raise ValueError("Attempt to generate variable of type %s"
-            " using a reference" % self.type
-        )
-
-    def gen_usage_string(self, initializer):
-        # redirect to referenced type
-        return self.type.gen_usage_string(initializer)
-
-    __type_references__ = ["definer_references"]
-
-    def __eq__(self, other):
-        return self.type == other
-
-    def __hash__(self):
-        return hash(self.type)
-
-    def __c__(self, writer):
-        self.type.__c__(writer)
-
-    def __str__(self):
-        return str(self.type)
 
 
 class Structure(Type):
@@ -774,7 +693,6 @@ class Function(Type):
             inline = inline,
             used_types = used_types
         )
-        CopyFixerVisitor(new_f).visit()
         return new_f
 
     def gen_definition(self,
@@ -792,7 +710,6 @@ class Function(Type):
             used_types = used_types,
             used_globals = used_globals
         )
-        CopyFixerVisitor(new_f).visit()
         new_f.declaration = self
         return new_f
 
@@ -860,20 +777,11 @@ class Pointer(Type):
     def gen_chunks(self, generator):
         type = self.type
 
-        # `Function` related helpers below can't get a `TypeReference`.
-        # `func` variable is added to solve it.
-        if isinstance(type, TypeReference):
-            func = type.type
-            is_function = isinstance(func, Function)
-        elif isinstance(type, Function):
-            func = type
-            is_function = True
-        else:
-            is_function = False
+        is_function = isinstance(type, Function)
 
         # strip function definition chunk, its references is only needed
         if is_function:
-            refs = gen_function_decl_ref_chunks(func, generator)
+            refs = gen_function_decl_ref_chunks(type, generator)
         else:
             refs = generator.provide_chunks(type)
 
@@ -883,7 +791,7 @@ class Pointer(Type):
         name = self.c_name
 
         if is_function:
-            ch = FunctionPointerTypeDeclaration(func, name)
+            ch = FunctionPointerTypeDeclaration(type, name)
         else:
             ch = PointerTypeDeclaration(type, name)
 
@@ -1330,27 +1238,6 @@ class Variable(object):
 
 
 # Type inspecting
-
-
-class CopyFixerVisitor(TypeReferencesVisitor):
-    """
-    CopyFixerVisitor is now used for true copying function body arguments
-    in order to prevent wrong TypeReferences among them
-    because before function prototype and body had the same args
-    references (in terms of python references)
-    """
-
-    def on_visit(self):
-        t = self.cur
-
-        if (not isinstance(t, Type)
-            or (isinstance(t, (Pointer, MacroUsage)) and not t.is_named)
-        ):
-            new_t = copy(t)
-
-            self.replace(new_t, skip_trunk = False)
-        else:
-            raise BreakVisiting()
 
 
 def gen_function_decl_ref_chunks(function, generator):
