@@ -1,7 +1,6 @@
 __all__ = [
     "disable_auto_lock_sources"
   , "enable_auto_lock_sources"
-  , "AddTypeRefToDefinerException"
   , "Source"
       , "Header"
   , "SourceFile"
@@ -99,10 +98,6 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 # Skip global headers inclusions. All needed global headers included in
 # "qemu/osdep.h".
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
-
-
-class AddTypeRefToDefinerException(RuntimeError):
-    pass
 
 
 class Source(object):
