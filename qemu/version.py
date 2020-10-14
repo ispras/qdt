@@ -733,7 +733,7 @@ def define_only_qemu_2_6_0_types():
             osdep_fake_type
         ])
 
-    Header["qapi/qapi-types-net.h"].add_types([
+    Header[get_vp("NetClientDriver definer")].add_types([
         # The value is taken from a auto generated file and may change in the
         # future.
         Enumeration([("NET_CLIENT_DRIVER_NIC", 1)],
@@ -1417,6 +1417,14 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("config_arch_dis poisoned",
             old_value = False,
             new_value = True
+        )
+    ],
+    u'252dc3105fc494182e236e97fe20f2d6b1d652cb':
+    [
+        # qapi: Generate separate .h, .c for each module
+        QEMUVersionParameterDescription("NetClientDriver definer",
+            old_value = "qapi-types.h",
+            new_value = "qapi/qapi-types-net.h"
         )
     ],
 }
