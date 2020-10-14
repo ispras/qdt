@@ -802,13 +802,15 @@ def define_only_qemu_2_6_0_types():
         Function(name = "log_target_disas")
     ]).add_reference(osdep_fake_type)
 
-    Header["sysemu/reset.h"].add_types([
+    Header[get_vp("QEMUResetHandler definer")].add_types([
         # XXX: It's neither a function nor a function pointer. It's something
         # between.
         Function(name = "QEMUResetHandler",
             ret_type = Type["void"],
             args = [ Pointer(Type["void"])("opaque") ]
         ),
+        # Note, `qemu_register_reset` is defined near `QEMUResetHandler`
+        # by all known definers.
         Function(name = "qemu_register_reset")
     ]).add_reference(osdep_fake_type)
 
@@ -1425,6 +1427,14 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("NetClientDriver definer",
             old_value = "qapi-types.h",
             new_value = "qapi/qapi-types-net.h"
+        )
+    ],
+    u'2f7b92a03f1e3813fc046d757138da519f4218d3':
+    [
+        # hw: move reset handlers from vl.c to hw/core
+        QEMUVersionParameterDescription("QEMUResetHandler definer",
+            old_value = "hw/hw.h",
+            new_value = "sysemu/reset.h"
         )
     ],
 }
