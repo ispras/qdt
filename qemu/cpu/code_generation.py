@@ -363,16 +363,17 @@ def fill_decode_opc_body(cputype, function, cpu_env):
 
         func = Function(
             name = instruction.name,
-            body = BodyTree()(
-                Comment(comment),
-                *instruction.semantics()
-            ),
             args = [ Pointer(Type["DisasContext"])("ctx") ] + operands_to_args,
             static = True,
             inline = True
         )
         func.extra_references = set_pc_ref
         h.add_type(func)
+
+        func.body = BodyTree()(
+            Comment(comment),
+            *instruction.semantics(func, h)
+        )
 
         node(Call(func, ctx, *operands))
 

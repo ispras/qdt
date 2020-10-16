@@ -124,6 +124,9 @@ class Reserved(InstructionField):
 
 re_disas_format = compile("<(.+?)>|([^<>]+)")
 
+def no_semantics(function, source):
+    return []
+
 class Instruction(object):
     """ This class store information about one instruction.
 
@@ -138,8 +141,9 @@ class Instruction(object):
     leaves of the instruction tree)
 
 :param semantics:
-    callable object which must return list of function body tree elements that
-    describe the semantics of the instruction
+    callable object which gets `Function` and source containing the
+    function, and must return list of function body tree elements that
+    describe the semantics of the instruction (see `no_semantics` example)
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -154,7 +158,7 @@ class Instruction(object):
         self.branch = kw_args.get("branch", False)
         self.disas_format = kw_args.get("disas_format", mnemonic)
         self.comment = kw_args.get("comment", self.disas_format)
-        self.semantics = kw_args.get("semantics", lambda : [])
+        self.semantics = kw_args.get("semantics", no_semantics)
 
     @lazy
     def bitsize(self):
