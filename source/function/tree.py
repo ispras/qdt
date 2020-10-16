@@ -84,6 +84,9 @@ from common import (
 from six import (
     integer_types
 )
+from ..late_link import (
+    LateLink
+)
 
 
 # OpSDeref is automatically re-directed to definition of structure if
@@ -679,10 +682,20 @@ class OpSDeref(Operator):
     # for type collection
     @property
     def struct(self):
-        struct = self.container.type
+        container = self.container
+
+        # Late links are allowed during model construction but they must
+        # be replaced before the code generation.
+        if isinstance(container, LateLink):
+            return None
+
+        struct = container.type
         # Note, pointer nesting must be at most 1.
         if isinstance(struct, Pointer):
             struct = struct.type
+
+        if isinstance(struct, LateLink):
+            return None
 
         if OPSDEREF_FROM_DEFINITION:
             struct = struct.definition
