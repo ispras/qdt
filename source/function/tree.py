@@ -689,9 +689,7 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        _type = value.type
-
-        struct = _type
+        struct = value.type
         # Note, pointer nesting must be at most 1.
         if isinstance(struct, Pointer):
             struct = struct.type
@@ -709,14 +707,16 @@ class OpSDeref(Operator):
                 struct, field
             ))
 
-        if isinstance(_type, Pointer):
-            self.suffix = "->" + field
-        else:
-            self.suffix = "." + field
-
     @lazy
     def type(self):
         return self.struct.fields[self.field].type
+
+    @property
+    def suffix(self):
+        if isinstance(self.container.type, Pointer):
+            return "->" + self.field
+        else:
+            return "." + self.field
 
     @property
     def container(self):
