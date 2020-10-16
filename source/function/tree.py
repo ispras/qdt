@@ -692,7 +692,8 @@ class OpSDeref(Operator):
         _type = value.type
 
         struct = _type
-        while isinstance(struct, Pointer):
+        # Note, pointer nesting must be at most 1.
+        if isinstance(struct, Pointer):
             struct = struct.type
 
         if OPSDEREF_FROM_DEFINITION:
