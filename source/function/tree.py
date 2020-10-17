@@ -695,7 +695,7 @@ class OpSDeref(Operator):
             struct = struct.type
 
         if OPSDEREF_FROM_DEFINITION:
-            struct = struct._definition or struct
+            struct = struct.definition
 
         # for type collection
         self.struct = struct
