@@ -343,6 +343,17 @@ order does not meet all requirements.
     def __repr__(self):
         return type(self).__name__ + "(%r)" % self.path
 
+    def __getitem__(self, name):
+        "Shortcut for types and global variables"
+        try:
+            return self.types[name]
+        except KeyError:
+            try:
+                return self.global_variables[name]
+            except KeyError:
+                pass
+        raise ValueError("Undefined name " + name)
+
 
 class TypeFixerVisitor(TypeReferencesVisitor):
 

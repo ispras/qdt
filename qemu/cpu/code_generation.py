@@ -103,6 +103,9 @@ from source import (
     Type,
     Variable,
 )
+from types import (
+    FunctionType,
+)
 
 
 DEBUG_DECODER = ee("QDT_DEBUG_DECODER")
@@ -363,16 +366,17 @@ def fill_decode_opc_body(cputype, function, cpu_env):
 
         func = Function(
             name = instruction.name,
-            body = BodyTree()(
-                Comment(comment),
-                *instruction.semantics()
-            ),
             args = [ Pointer(Type["DisasContext"])("ctx") ] + operands_to_args,
             static = True,
             inline = True
         )
         func.extra_references = set_pc_ref
         h.add_type(func)
+
+        func.body = BodyTree()(
+            Comment(comment),
+            *instruction.semantics(func, h)
+        )
 
         node(Call(func, ctx, *operands))
 
@@ -1008,6 +1012,11 @@ def fill_print_insn_body(cputype, function):
             except KeyError:
                 format_line += m.group(0)
             else:
+                if isinstance(adapter, FunctionType):
+                    adapter_name = adapter.__name__
+                else:
+                    adapter_name = adapter
+
                 variables = []
                 for i in gr.split(','):
                     name = i.strip().split('$')[0]
@@ -1020,19 +1029,19 @@ def fill_print_insn_body(cputype, function):
                         )
                         format_line = ''
                         call_args = []
-                    node(Call(adapter, fpr, stream, *variables))
+                    node(Call(adapter_name, fpr, stream, *variables))
                     continue
                 else:
                     format_line += fmt
 
-                if adapter is None:
+                if adapter_name is None:
                     for var in variables:
                         if isinstance(var, Variable):
                             call_args.append(OpCast("unsigned", var))
                         else:
                             call_args.append(var)
                 else:
-                    call_args.append(Call(adapter, *variables))
+                    call_args.append(Call(adapter_name, *variables))
 
         if format_line:
             node(Call(fpr, stream, format_line, *call_args))

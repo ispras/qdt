@@ -655,6 +655,15 @@ class Function(Type):
                     "string body is redundant."
                 )
 
+    def __getitem__(self, name_or_index):
+        "Shortcut for arguments"
+        if isinstance(name_or_index, str):
+            for a in self.args:
+                if a.name == name_or_index:
+                    return a
+        else:
+            return self.args[name_or_index]
+
     def gen_declaration_chunks(self, generator):
         indent = ""
         ch = FunctionDeclaration(self, indent)
