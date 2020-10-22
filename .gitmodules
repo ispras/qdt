@@ -7,6 +7,9 @@
 [submodule "debug/pyelftools"]
 	path = debug/pyelftools
 	url = https://github.com/ispras/pyelftools.git
+[submodule "watchgod"]
+	path = watchgod
+	url = https://github.com/samuelcolvin/watchgod.git
 [submodule "pyrsp"]
 	path = pyrsp
 	url = https://github.com/laerreal/pyrsp.git
