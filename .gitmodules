@@ -10,6 +10,9 @@
 [submodule "watchgod"]
 	path = watchgod
 	url = https://github.com/samuelcolvin/watchgod.git
+[submodule "pyinotify"]
+	path = pyinotify
+	url = https://github.com/seb-m/pyinotify.git
 [submodule "pyrsp"]
 	path = pyrsp
 	url = https://github.com/laerreal/pyrsp.git
