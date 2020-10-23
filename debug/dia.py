@@ -385,9 +385,11 @@ pyelftools's `DWARFInfo`.
         # print("Accounting %s" % str(rparts))
 
         if trie_add(self.name2cu, rparts, cu) is not cu:
-            raise RuntimeError("CU with path %s is already accounted" % (
-                cu.get_top_DIE().attributes["DW_AT_name"].value
-            ))
+            print("CU with path %s is already accounted, first one will be"
+                " used only" % (
+                    cu.get_top_DIE().attributes["DW_AT_name"].value
+                )
+            )
 
     def get_CU_by_idx(self, idx):
         idx2cu = self.idx2cu
