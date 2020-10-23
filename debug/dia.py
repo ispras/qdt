@@ -68,20 +68,9 @@ pyelftools's `DWARFInfo`.
         # Used to parse DWARF location expressions to high level symbolic model
         self.expr_builder = DWARFExprBuilder(di.structs)
 
-        # Call Frame Information
-        if di.has_CFI():
-            self.cfi = di.cfi
-        elif di.has_EH_CFI():
-            self.cfi = di.eh_cfi
-        else:
-            raise ValueError("No call frame information found")
-
         # Mapping of target addresses to Frame Description Entries of Call
         # Frame information.
         self.addr2fde = intervalmap()
-
-        # lazy `addr2fde` mapping building
-        self._cfi_parser_state = self._cfi_parser()
 
         # Mapping of target addresses to rows of Call Frame Information table.
         self.addr2cfr = intervalmap()
@@ -93,6 +82,25 @@ pyelftools's `DWARFInfo`.
         # index corresponds to 1st file number. Those lists are stored in that
         # cache keyed by CU's offset.
         self.cu_off2files = {}
+
+    @lazy
+    def cfi(self):
+        "Call Frame Information"
+        di = self.di
+
+        if di.has_CFI():
+            return di.cfi
+        elif di.has_EH_CFI():
+            return di.eh_cfi
+        else:
+            # Actually this can be needed by DWARF location expressions to
+            # get Canonical Frame Address.
+            raise ValueError("No call frame information found")
+
+    @lazy
+    def _cfi_parser_state(self):
+        "lazy `addr2fde` mapping building"
+        return self._cfi_parser()
 
     @lazy
     def aranges(self):
