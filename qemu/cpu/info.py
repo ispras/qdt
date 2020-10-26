@@ -24,6 +24,7 @@ class CPURegister(object):
             ))
 
         self.name = name
+        self.raw_bitsize = bitsize
         # Note, possible values 32 or 64 bits
         self.field_bitsize = (bitsize + 31) & ~31
         self.reg_names = reg_names

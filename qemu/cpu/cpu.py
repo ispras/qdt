@@ -798,18 +798,14 @@ class CPUType(QOMCPU):
             fn_name("gdb_read_register"),
             static = True
         )
-        fill_gdb_rw_register_body(self, gdb_read_register,
-            "TODO: implement gdb_read_register"
-        )
+        fill_gdb_rw_register_body(self, gdb_read_register)
         c.add_type(gdb_read_register)
 
         gdb_write_register = cpu_class.gdb_write_register.gen_callback(
             fn_name("gdb_write_register"),
             static = True
         )
-        fill_gdb_rw_register_body(self, gdb_write_register,
-            "TODO: implement gdb_write_register"
-        )
+        fill_gdb_rw_register_body(self, gdb_write_register, is_write = True)
         c.add_type(gdb_write_register)
 
         realizefn = Type["DeviceRealize"].type.use_as_prototype(

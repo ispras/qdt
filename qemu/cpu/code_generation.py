@@ -59,6 +59,7 @@ from source import (
     Break,
     CINT,
     Call,
+    CaseRange,
     Comment,
     Declare,
     Function,
@@ -100,6 +101,7 @@ from source import (
     Pointer,
     Return,
     SwitchCase,
+    SwitchCaseDefault,
     Type,
     Variable,
 )
@@ -528,12 +530,74 @@ def fill_env_get_cpu_body(cputype, function):
         )
     )
 
-def fill_gdb_rw_register_body(cputype, function, comment):
+# Note, currently the QDT supports registers up to 64 bits, so there is always
+# a suitable helper. `gdb_get_reg128` was added because it exists in Qemu, but
+# it's not currently used in a boilerplate.
+gdb_get_reg_bitsizes = (8, 16, 32, 64, 128)
+ld_size_infixes = {16: "uw", 32: "l", 64: "q"}
+
+def fill_gdb_rw_register_body(cputype, function, is_write = False):
     cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
     env = Pointer(Type[cputype.struct_name])("env")
 
+    buf = function.args[1]
+    n = function.args[2]
+
+    reg_number = 0
+    cases = []
+    for reg in cputype.registers:
+        bank_size = reg.bank_size
+        raw_bitsize = reg.raw_bitsize
+        env_reg = OpSDeref(env, reg.name)
+
+        if bank_size:
+            env_reg = OpIndex(
+                env_reg,
+                OpSub(n, reg_number) if reg_number else n
+            )
+            case_val = CaseRange(reg_number, reg_number + bank_size - 1)
+            reg_number += bank_size
+        else:
+            case_val = reg_number
+            reg_number += 1
+
+        if is_write:
+            ld_bitsize, ld_size_infix = min(filter(
+                lambda infix: infix[0] >= raw_bitsize,
+                ld_size_infixes.items()
+            ))
+            ld_call = Call( "ld%s_p" % (ld_size_infix), buf)
+            if raw_bitsize != ld_bitsize:
+                ld_call = OpAnd(
+                    ld_call,
+                    CINT((1 << raw_bitsize) - 1, base = 16)
+                )
+            cases.append(
+                SwitchCase(case_val, add_break = False)(
+                    OpAssign(env_reg, ld_call),
+                    Return(ld_bitsize // BYTE_BITSIZE)
+                )
+            )
+        else:
+            gdb_get_reg_bitsize = min(filter(
+                lambda bitsize: bitsize >= raw_bitsize,
+                gdb_get_reg_bitsizes
+            ))
+            cases.append(
+                SwitchCase(case_val, add_break = False)(
+                    Return(
+                        Call(
+                            "gdb_get_reg%d" % (gdb_get_reg_bitsize),
+                            buf,
+                            env_reg
+                        )
+                    )
+                )
+            )
+
+    cases.append(SwitchCaseDefault(add_break = False)(Return(0)))
+
     function.body = BodyTree()(
-        Comment(comment),
         Declare(
             OpDeclareAssign(
                 cpu,
@@ -547,7 +611,7 @@ def fill_gdb_rw_register_body(cputype, function, comment):
             )
         ),
         NewLine(),
-        Return(0)
+        BranchSwitch(n, cases = cases)
     )
 
 def fill_gen_intermediate_code_body(cputype, function, cpu_env):
