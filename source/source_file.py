@@ -1496,6 +1496,8 @@ digraph HeaderInclusion {
 
             macro_list = []
             for t in h.types.values():
+                if t.definer is not h:
+                    continue
                 if isinstance(t, Macro):
                     macro_list.append(t.gen_dict())
             dict_h[HDB_HEADER_MACROS] = macro_list
