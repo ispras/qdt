@@ -6,15 +6,9 @@ def patch_makefile(mf_full_name, obj_base_name, obj_var_name, config_flag):
     """ The function ensures that object file with name obj_base_name is
 registered in Makefile with name mf_full_name using variable with name
 obj_var_name. """
-    mf = open(mf_full_name, "r")
 
-    try:
+    with open(mf_full_name, "r") as mf:
         lines = mf.readlines()
-    except BaseException as e:
-        mf.close()
-        raise e
-
-    mf.close()
 
     obj_var_token = obj_var_name + "-" + config_flag
 
@@ -50,13 +44,7 @@ obj_var_name. """
         else:
             lines.insert(patch_line_n, patch_line + "\n")
 
-        mf = open(mf_full_name, "w")
-        try:
+        with open(mf_full_name, "w") as mf:
             mf.write("".join(lines))
-        except BaseException as e:
-            mf.close()
-            raise e
-
-        mf.close()
 
     # Object file with name obj_base_name is already registered.
