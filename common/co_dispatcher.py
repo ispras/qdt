@@ -463,6 +463,10 @@ def callco(co, delay = default):
     else:
         disp.dispatch_all(delay = delay)
 
+    for t in disp.failed_tasks:
+        if t.generator is co:
+            raise t.exception
+
 
 # TODO: There is no _known_ both Py3 & Py2 compatible way to `return` a
 # value from a coroutine without specific exception class.
