@@ -18,28 +18,41 @@ obj_var_name. """
 
     obj_var_token = obj_var_name + "-" + config_flag
 
-    for line in lines:
+    patch_line_n = None
+
+    for n, line in enumerate(lines):
         tokens = set([ s.strip() for s in line.split(" ") ])
+
+        # Patch the makefile just below last obj_base_name usage.
+        for t in tokens:
+            if t.startswith(obj_var_name):
+                patch_line_n = n + 1
+                break
+
         if not obj_var_token in tokens:
             continue
         if obj_base_name in tokens:
             break
     else:
-        if lines:
-            nl_at_eof = (lines[-1][-1] == "\n")
-        else:
-            nl_at_eof = True
+        # Register object file with name obj_base_name.
+        patch_line = (
+            obj_var_token
+            + " += "
+            + obj_base_name
+        )
 
-        mf = open(mf_full_name, "a")
+        if patch_line_n is None or patch_line == len(lines):
+            # Add NL at EOF if file is empty or current last line have NL.
+            if not lines or lines[-1][-1] == "\n":
+                patch_line += "\n"
+
+            lines.append(patch_line)
+        else:
+            lines.insert(patch_line_n, patch_line + "\n")
+
+        mf = open(mf_full_name, "w")
         try:
-            # Register object file with name obj_base_name
-            mf.write(
-                  ("" if nl_at_eof else "\n")
-                + obj_var_token
-                + " += "
-                + obj_base_name
-                + ("\n" if nl_at_eof else "")
-            )
+            mf.write("".join(lines))
         except BaseException as e:
             mf.close()
             raise e
