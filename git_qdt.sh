@@ -119,7 +119,7 @@ Automatic update will fail. Manual recovery is needed!"
                     else
                         echo "Cannot commit generated code."
                     fi
-                    # Undo adding changes to index.
+                    echo "Undo adding changes to index."
                     _git reset
                 else
                     echo "Cannot add generated code to index."
@@ -127,8 +127,8 @@ Automatic update will fail. Manual recovery is needed!"
             else
                 echo "QDT have failed."
             fi
-            # Remove changes made by QDT script (they could be made even in
-            # case of error).
+            echo "Remove changes made by QDT script."
+            # (they could be made even in case of error)
             _git checkout .
             _git clean -f
             _git checkout "$CurrentBranch"
@@ -141,6 +141,7 @@ Automatic update will fail. Manual recovery is needed!"
     fi
 
     if [ "$StartTagIsJustSet" == "yes" ] ; then
+        echo "Removing just created start tag '$StartTag'"
         _git tag -d "$StartTag"
     fi
 else
