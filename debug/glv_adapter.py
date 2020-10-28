@@ -18,6 +18,7 @@ from six.moves import (
     range
 )
 from common import (
+    execfile,
     bstr,
     bsep,
     intervalmap,
