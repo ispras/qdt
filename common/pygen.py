@@ -181,31 +181,46 @@ require reference to the current object.
                 return "0x%0x" % c
         elif isinstance(c, (binary_type, text_type)):
             normalized = ""
-            prefix = ""
+
+            # preserve c's type across different Python versions
+            prefix = "u" if isinstance(c, text_type) else "b"
+
             multiline = False
             # Double and single quote count
             dquote = 0
             squote = 0
+
             for ch in c:
                 code = ch if isinstance(ch, int) else ord(ch)
 
                 if code > 0xFFFF: # 4-byte unicode
-                    prefix = "u"
                     normalized += "\\U%08x" % code
                 elif code > 0xFF: # 2-byte unicode
-                    prefix = "u"
                     normalized += "\\u%04x" % code
-                elif code > 127: # non-ASCII code
+
+                # conditions above are not possible if `c` is of `binary_type`
+
+                elif code >= 0x7F: # non-ASCII code or non-printable 0x7F (DEL)
+                    normalized += "\\x%02x" % code
+                elif code == 0x09: # \t
+                    normalized += "\t"
+                elif code == 0x0A: # \n
+                    multiline = True
+                    normalized += "\n"
+                elif code == 0x0D: # \r
+                    multiline = True
+                    normalized += "\r"
+                elif code < 32: # non-printable code
                     normalized += "\\x%02x" % code
                 elif code == 92: # \
                     normalized += "\\\\"
+                elif code == 34: # "
+                    dquote += 1
+                    normalized += '"'
+                elif code == 38: # '
+                    squote += 1
+                    normalized += "'"
                 else:
-                    if code == 34: # "
-                        dquote += 1
-                    elif code == 38: # '
-                        squote += 1
-                    elif code == 0x0A or code == 0x0D:
-                        multiline = True
                     normalized += chr(code)
 
             if dquote > squote:
