@@ -217,7 +217,14 @@ def main():
         nargs = "+",
         help = "QEMU executable and arguments to it. Prefix them with `--`."
     )
+    ap.add_argument("-v", "--verbose",
+        action = "store_true",
+        help = "a lot output",
+    )
     args = ap.parse_args()
+
+
+    verbose = args.verbose
 
     # executable
     qemu_cmd_args = args.qarg
@@ -245,7 +252,7 @@ def main():
 
     qomtr = QOMTreeReverser(dic,
         interrupt = False,
-        verbose = True,
+        verbose = verbose,
         line_adapter = gvl_adptr
     )
 
@@ -256,6 +263,7 @@ def main():
 
     mw = MWClass(dic, qomtr.tree,
         interrupt = True,
+        verbose = verbose,
         line_adapter = gvl_adptr
     )
 
@@ -287,7 +295,10 @@ def main():
     if not wait_for_tcp_port(port):
         raise RuntimeError("gdbserver does not listen %u" % port)
 
-    qemu_debugger = AMD64(str(port), noack = True)
+    qemu_debugger = AMD64(str(port),
+        noack = True,
+        verbose = verbose,
+    )
 
     rt = Runtime(qemu_debugger, dic)
 
