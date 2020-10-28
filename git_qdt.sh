@@ -36,6 +36,10 @@ else
     QemuSrc="$QDT_QEMU_SRC"
 fi
 
+if [ "$QDT_EXTRA_ARGS" == "" ] ; then
+    echo "Note, QDT_EXTRA_ARGS is not set"
+fi
+
 QDTSuffix="qemu_device_creator.py"
 
 # Constants
