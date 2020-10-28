@@ -1447,6 +1447,14 @@ qemu_heuristic_db = {
             new_value = "tcg/"
         )
     ],
+    u"c7f419f5841a840f3b90e839ef014b94131e5df8":
+    [
+        # softmmu: move softmmu only files from root
+        QEMUVersionParameterDescription("arch_init.c path",
+            old_value = ("arch_init.c",),
+            new_value = ("softmmu", "arch_init.c")
+        )
+    ]
 }
 
 version_parameters = None

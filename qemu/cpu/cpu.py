@@ -1229,7 +1229,7 @@ def patch_arch_init_header(src, target_name):
 
 
 def patch_arch_init_source(src, target_name):
-    arch_init_source = join(src, "arch_init.c")
+    arch_init_source = join(src, *get_vp("arch_init.c path"))
     target_name_upper = target_name.upper()
     qemu_arch = "QEMU_ARCH_" + target_name_upper
 
