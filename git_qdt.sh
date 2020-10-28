@@ -30,7 +30,8 @@
 #    Ex.: QDT_EXTRA_ARGS="-b /home/user/qemu/build" git_qdt.sh [...]"
 
 if [ "$QDT_QEMU_SRC" == "" ] ; then
-    QemuSrc="$HOME/work/qemu/src"
+    echo "QDT_QEMU_SRC must be set"
+    exit 1
 else
     QemuSrc="$QDT_QEMU_SRC"
 fi
