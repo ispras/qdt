@@ -259,6 +259,10 @@ def main():
         line_adapter = gvl_adptr
     )
 
+    # Save line adapter cache just after all users (watchers) finished with it.
+    if gvl_adptr is not None:
+        gvl_adptr.cm.store_cache()
+
     proj = GUIProject()
     pht = GUIProjectHistoryTracker(proj, proj.history)
 
@@ -320,9 +324,6 @@ def main():
 
     if qemu_proc is not None:
         qemu_proc.wait()
-
-    if gvl_adptr is not None:
-        gvl_adptr.cm.store_cache()
 
 
 if __name__ == "__main__":
