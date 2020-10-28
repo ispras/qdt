@@ -90,22 +90,27 @@ QDT="$DirName/$QDTSuffix"
 CurrentBranch=`_git rev-parse --abbrev-ref HEAD`
 #echo "$CurrentBranch"
 
+StartTagExists=`_git show-ref "$StartTag"`
+
 BranchExists=`_git show-ref "$1"`
 #echo "$BranchExists"
 
-if [ "$BranchExists" == "" ] ; then
+if [ "$StartTagExists" == "" ] ; then
     echo "First generation."
 
-    if _git tag "$StartTag" ; then
-        echo "Start tag has been set ($StartTag)."
-        StartTagIsJustSet="yes"
-    else
-        echo "Cannot set start tag ($StartTag)."
-        exit 1
+    if [ "$BranchExists" == "" ] ; then
+        echo "Creating branch '$1'"
+        if ! _git branch "$1" ; then
+            echo "Failed create branch with name '$1'."
+            exit 1
+        fi
     fi
 
-    if _git branch "$1" ; then
-        if _git checkout "$1" ; then
+    if _git checkout "$1" ; then
+        echo "Setting start tag ($StartTag)."
+        if _git tag "$StartTag" ; then
+            StartTagIsJustSet="yes"
+
             if python "$QDT" "$2" $QDT_EXTRA_ARGS ; then
                 if _git add -A ; then
                     if _git commit -m "$Msg" ; then
@@ -133,11 +138,17 @@ Automatic update will fail. Manual recovery is needed!"
             _git clean -f
             _git checkout "$CurrentBranch"
         else
-            echo "Failed checkout just created branch '$1'."
+            echo "Cannot set start tag ($StartTag)."
         fi
-        _git branch -d "$1"
     else
-        echo "Failed create branch with name '$1'."
+        echo "Failed to checkout branch '$1'."
+    fi
+
+    # error path
+
+    if [ "$BranchExists" == "" ] ; then
+        echo "Removing just created branch '$1'"
+        _git branch -d "$1"
     fi
 
     if [ "$StartTagIsJustSet" == "yes" ] ; then
