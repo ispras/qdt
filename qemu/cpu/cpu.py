@@ -529,7 +529,8 @@ class CPUType(QOMCPU):
                 text = "struct " + cpu_arch_state.c_name
             )
         h.add_type(arch_state)
-        Header["tcg.h"].add_reference(arch_state)
+        tcg_h = Header[get_vp("tcg headers prefix") + "tcg.h"]
+        tcg_h.add_reference(arch_state)
         Header["exec/cpu-all.h"].add_references([
             arch_state,
             Type["TARGET_LONG_SIZE"]
@@ -920,7 +921,8 @@ class CPUType(QOMCPU):
             c.add_global_variable(cpu_env)
             Header["exec/gen-icount.h"].add_reference(cpu_env)
         else:
-            cpu_env = Header["tcg.h"].global_variables["cpu_env"]
+            tcg_h = Header[get_vp("tcg headers prefix") + "tcg.h"]
+            cpu_env = tcg_h.global_variables["cpu_env"]
 
         reg_vars = []
         for reg in self.registers:

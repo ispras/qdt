@@ -93,7 +93,8 @@ def define_only_qemu_2_6_0_types():
             )
         ]).add_reference(osdep_fake_type)
 
-    tcg_header = Header["tcg.h"].add_reference(osdep_fake_type)
+    tcg_h_path = get_vp("tcg headers prefix") + "tcg.h"
+    tcg_header = Header[tcg_h_path].add_reference(osdep_fake_type)
     tcg_header.add_types([
         Type("TCGv_i32"),
         Type("TCGv_i64"),
@@ -117,7 +118,8 @@ def define_only_qemu_2_6_0_types():
         t = Pointer(t)
     tcg_header.add_global_variable(t("tcg_ctx"))
 
-    Header["tcg-op.h"].add_types([
+    tcg_op_h_path = get_vp("tcg headers prefix") + "tcg-op.h"
+    Header[tcg_op_h_path].add_types([
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
         Function(name = "tcg_gen_exit_tb"),
@@ -1435,6 +1437,14 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("QEMUResetHandler definer",
             old_value = "hw/hw.h",
             new_value = "sysemu/reset.h"
+        )
+    ],
+    u"d3582cfd27bb7fe29e54d98ea0b25cc7a0d6d276":
+    [
+        # tcg: Move TCG headers to include/tcg/
+        QEMUVersionParameterDescription("tcg headers prefix",
+            old_value = "",
+            new_value = "tcg/"
         )
     ],
 }
