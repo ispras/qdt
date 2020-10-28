@@ -130,7 +130,7 @@ Automatic update will fail. Manual recovery is needed!"
             # Remove changes made by QDT script (they could be made even in
             # case of error).
             _git checkout .
-            git clean -f 
+            _git clean -f
             _git checkout "$CurrentBranch"
         else
             echo "Failed checkout just created branch '$1'."
@@ -201,7 +201,7 @@ fi
                     echo "QDT have failed."
                 fi
                 _git checkout .
-                git clean -f 
+                _git clean -f
                 _git checkout "$CurrentBranch"
             else
                 echo "Cannot switch to temporary branch '$NewBase'."
