@@ -225,18 +225,33 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate):
             )
         )
 
-    body(
-        OpAssign(
-            OpSDeref(mcc, "parent_reset"),
-            OpSDeref(cc, "reset")
+    if get_vp("device_class_set_parent_reset used for cpu"):
+        body(
+            Call(
+                "device_class_set_parent_reset",
+                dc,
+                Type[fn_name("reset")],
+                OpAddr(OpSDeref(mcc, "parent_reset"))
+            )
         )
-    )
+    else:
+        body(
+            OpAssign(
+                OpSDeref(mcc, "parent_reset"),
+                OpSDeref(cc, "reset")
+            ),
+            OpAssign(
+                OpSDeref(cc, "reset"),
+                Type[fn_name("reset")]
+            )
+        )
+
     body(*[
         OpAssign(
             OpSDeref(cc, name),
             Type[fn_name(name)]
-        ) for name in ["reset", "has_work", "do_interrupt", "set_pc",
-            "dump_state", "disas_set_info", "class_by_name"
+        ) for name in ["has_work", "do_interrupt", "set_pc", "dump_state",
+            "disas_set_info", "class_by_name"
         ]
     ])
     body(
@@ -1143,11 +1158,24 @@ def fill_reset_body(cputype, function):
     cc = Pointer(Type[cputype.struct_class_name])("cc")
     env = Pointer(Type[cputype.struct_name])("env")
 
+    if get_vp("device_class_set_parent_reset used for cpu"):
+        cs = Pointer(Type["CPUState"])("cs")
+        body(
+            Declare(
+                OpDeclareAssign(
+                    cs,
+                    MCall("CPU", function.args[0])
+                )
+            )
+        )
+    else:
+        cs = function.args[0]
+
     body(
         Declare(
             OpDeclareAssign(
                 cpu,
-                MCall(cputype.qtn.for_macros, function.args[0])
+                MCall(cputype.qtn.for_macros, cs)
             )
         ),
         Declare(

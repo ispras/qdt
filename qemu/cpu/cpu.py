@@ -625,13 +625,19 @@ class CPUType(QOMCPU):
         )
         h.add_type(type_arch_cpu)
 
-        cpu_class = Structure(self.struct_class_name,
+        cpu_class_fields = [
             Type["CPUClass"]("parent_class"),
-            Type["DeviceRealize"]("parent_realize"),
-            Function(
-                args = [ Pointer(Type["CPUState"])("cpu") ]
-            )("parent_reset")
-        )
+            Type["DeviceRealize"]("parent_realize")
+        ]
+        if get_vp("device_class_set_parent_reset used for cpu"):
+            cpu_class_fields.append(Type["DeviceReset"]("parent_reset"))
+        else:
+            cpu_class_fields.append(
+                Function(
+                    args = [ Pointer(Type["CPUState"])("cpu") ]
+                )("parent_reset")
+            )
+        cpu_class = Structure(self.struct_class_name, *cpu_class_fields)
         h.add_type(cpu_class)
 
         class_check = Macro(self.class_macro,
@@ -751,7 +757,11 @@ class CPUType(QOMCPU):
         type_info_type = Type["TypeInfo"]
         fn_name = self.gen_func_name
 
-        reset = cpu_class.reset.gen_callback(fn_name("reset"), static = True)
+        if get_vp("device_class_set_parent_reset used for cpu"):
+            reset_field = Type["DeviceClass"].reset
+        else:
+            reset_field = cpu_class.reset
+        reset = reset_field.gen_callback(fn_name("reset"), static = True)
         fill_reset_body(self, reset)
         c.add_type(reset)
 
