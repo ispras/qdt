@@ -615,10 +615,15 @@ def define_only_qemu_2_6_0_types():
             ),
             name = "DeviceUnrealize"
         ),
+        Pointer(
+            Function(args = [ Pointer(Type["DeviceState"])("dev") ]),
+            name = "DeviceReset"
+        ),
         Structure("DeviceClass",
             # These are required fields only
             Type["DeviceRealize"]("realize"),
             Type["DeviceUnrealize"]("unrealize"),
+            Type["DeviceReset"]("reset")
         ),
         Type("Property", False),
         Function(
@@ -637,10 +642,11 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_connect_gpio_out"),
         Function(name = "qdev_connect_gpio_out_named")
     ])
-    if get_vp("device_class_set_parent_realize exists"):
-        qdev_core_header.add_type(
+    if get_vp("device_class_set_parent_reset|realize exists"):
+        qdev_core_header.add_types([
+            Function(name = "device_class_set_parent_reset"),
             Function(name = "device_class_set_parent_realize")
-        )
+        ])
     if get_vp("use device_class_set_props"):
         qdev_core_header.add_type(
             Function(
@@ -1419,9 +1425,9 @@ qemu_heuristic_db = {
     ],
     u'46795cf2e2f643ace9454822022ba8b1e9c0cf61':
     [
-        # `device_class_set_parent_realize` function was added
+        # `device_class_set_parent_reset|realize` function was added
         QEMUVersionParameterDescription(
-            "device_class_set_parent_realize exists",
+            "device_class_set_parent_reset|realize exists",
             old_value = False,
             new_value = True
         )

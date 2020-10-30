@@ -204,7 +204,7 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate):
         NewLine()
     )
 
-    if get_vp("device_class_set_parent_realize exists"):
+    if get_vp("device_class_set_parent_reset|realize exists"):
         body(
             Call(
                 "device_class_set_parent_realize",
