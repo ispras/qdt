@@ -1580,6 +1580,15 @@ qemu_heuristic_db = {
             new_value = True,
             old_value = False
         )
+    ],
+    u"781c67ca5585b38a29076093ecdff4f273db5a35":
+    [
+        # cpu: Use DeviceClass reset
+        QEMUVersionParameterDescription(
+            "device_class_set_parent_reset used for cpu",
+            old_value = False,
+            new_value = True
+        )
     ]
 }
 
