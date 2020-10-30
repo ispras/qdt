@@ -210,7 +210,7 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate):
                 "device_class_set_parent_realize",
                 dc,
                 Type[fn_name("realizefn")],
-                OpAddr(OpSDeref(mcc, "parent_realize")),
+                OpAddr(OpSDeref(mcc, "parent_realize"))
             )
         )
     else:
