@@ -327,8 +327,12 @@ def define_only_qemu_2_6_0_types():
             Function(
                 ret_type = Type["int"],
                 args = [
-                    Pointer(Type["CPUState"])("cs"),
-                    Pointer(Type["uint8_t"])("mem_buf"),
+                    Pointer(Type["CPUState"])("cs")
+                ] + (
+                    [ Pointer(Type["GByteArray"])("buf") ] if
+                    get_vp("gdb_read_register buf type is GByteArray")
+                    else [ Pointer(Type["uint8_t"])("mem_buf") ]
+                ) + [
                     Type["int"]("n")
                 ]
             )("gdb_read_register"),
@@ -1586,6 +1590,15 @@ qemu_heuristic_db = {
         # cpu: Use DeviceClass reset
         QEMUVersionParameterDescription(
             "device_class_set_parent_reset used for cpu",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u"a010bdbe719c52c8959ca058000d7ac7d559abb8":
+    [
+        # gdbstub: extend GByteArray to read register helpers
+        QEMUVersionParameterDescription(
+            "gdb_read_register buf type is GByteArray",
             old_value = False,
             new_value = True
         )

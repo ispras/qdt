@@ -133,3 +133,12 @@ def add_base_types():
         Type(name = "wint_t", incomplete = False, base = False),
         Type(name = "wchar_t", incomplete = False, base = False)
     ])
+
+    try:
+        h = Header["glib.h"]
+    except:
+        h = Header("glib.h", is_global = True)
+
+    h.add_types([
+        Type(name = "GByteArray", incomplete = False, base = False)
+    ])
