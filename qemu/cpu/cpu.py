@@ -332,10 +332,6 @@ class CPUType(QOMCPU):
             )
         ))
 
-        self.reg_types()
-
-        yield True
-
         yield self._co_gen_target_code(src)
 
         for f in self.gen_files.values():
@@ -747,6 +743,8 @@ class CPUType(QOMCPU):
         ])
 
         Header["exec/cpu_ldst.h"].add_reference(disas_context)
+
+        self.reg_types(h)
 
     def _gen_cpu_c(self, c):
         cpu_class = Type["CPUClass"]
