@@ -340,14 +340,14 @@ class InstructionsTreeview(VarTreeview, object):
         iid = self.insert("", insert_index,
             text = str(idx),
             tags = tags,
-            values = ("0x%08X" % inst.addr, "-", str(inst.disas))
+            values = ("0x%08X" % inst.addr, "-", str(inst))
         )
 
         if diff is not None:
             self.insert(iid, END,
                 text = str(idx),
                 tags = STYLE_DIFFERENCE,
-                values = ("0x%08X" % diff.addr, "-", str(diff.disas))
+                values = ("0x%08X" % diff.addr, "-", str(diff))
             )
 
         return iid
