@@ -18,6 +18,9 @@ from common import (
 from traceback import (
     print_exc
 )
+from re import (
+    compile,
+)
 
 
 # less value = more info
@@ -43,6 +46,9 @@ def is_in_asm_instr(l):
     return l[:2] == "0x"
 
 
+re_space = compile("\\s+")
+simple_byte_hex = "%02x".__mod__
+
 class InInstr(object):
 
     first = False # (in TB), set externally
@@ -56,11 +62,54 @@ class InInstr(object):
 
         self.addr = int(parts[0], base = 16)
 
-        self.disas = ":".join(parts[1:])
-        self.size = 1
+        self.disas = disas = ":".join(parts[1:]).strip()
+        words_iter = iter(re_space.split(disas))
+
+        bytes_ = []
+
+        while True: # not a loop: a block with many exits
+            for w in words_iter:
+                # some instructions are hex-like (e.g.: x86 addb)
+                if len(w) != 2:
+                    opcode = w
+                    break
+
+                try:
+                    b = int(w, base = 16)
+                except ValueError:
+                    opcode = w
+                    break
+
+                bytes_.append(b)
+            else:
+                opcode = None
+                break
+
+            for w in words_iter:
+                opcode += " " + w
+
+            break
+
+        if bytes_:
+            self.bytes = tuple(bytes_)
+            self.size = len(bytes_)
+        else:
+            self.bytes = None
+            self.size = None
+            if not opcode:
+                raise ValueError("Neither bytes nor opcode: '%s'" % l)
+
+        self.opcode =  opcode
 
     def __str__(self):
-        return self.l
+        bytes_ = self.bytes
+        if bytes_:
+            return ("%-40s" % (self.opcode or "[no opcode]")
+                +  " ".join(map(simple_byte_hex, self.bytes))
+            )
+        else:
+            # Note, an opcode must be provided.
+            return "%-40s" % self.opcode
 
 
 class TraceInstr(object):
@@ -395,22 +444,41 @@ class QEMULog(object):
                 print_exc()
                 continue
 
-            instr.tb = tb
-
-            if prev_instr is None:
-                instr.first = True
+            if not instr.opcode:
+                if prev_instr is None:
+                    raise RuntimeError(
+                        "in_asm record starts with an instruction tail:\n" +
+                        "\n".join(in_asm) + "\n"
+                    )
+                if DEBUG < 3:
+                    print("Join multiline instruction '%s' + '%s'" % (
+                        prev_instr, instr
+                    ))
+                prev_instr.bytes = prev_instr.bytes + instr.bytes
+                prev_instr.l += "\n" + instr.l
             else:
-                prev_instr.size = instr.addr - prev_instr.addr
-                commit_instr(prev_instr, tb)
+                instr.tb = tb
 
-            prev_instr = instr
+                if prev_instr is None:
+                    instr.first = True
+                else:
+                    # Some QEMU disassembler implementations do not provide
+                    # bytes of instructions.
+                    if prev_instr.size is None:
+                        prev_instr.size = instr.addr - prev_instr.addr
+
+                    commit_instr(prev_instr, tb)
+
+                prev_instr = instr
 
         if prev_instr is None:
             # All instructions are bad or in_asm is empty?
             return
 
-        # TODO: evaluate size of last instruction
-        prev_instr.size = 1
+        if prev_instr.size is None:
+            # TODO: how to get it if disassembler did not provide bytes?
+            prev_instr.size = 1
+
         commit_instr(prev_instr, tb)
 
     def commit_instr(self, instr, tb):
