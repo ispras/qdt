@@ -48,6 +48,9 @@ def gen_reg_names_range(base_name, suffix = "", start = 0, end = 1):
     return [(base_name + func(i) + suffix) for i in range(start, end)]
 
 
+def no_reg_types(source):
+    pass
+
 class CPUInfo(object):
     "This class store CPU info which editing is not supported by the GUI."
 
@@ -57,7 +60,7 @@ class CPUInfo(object):
         name_to_format = {},
         instructions = (),
         read_size = 1,
-        reg_types = (lambda : None),
+        reg_types = no_reg_types,
         name_shortener = (lambda args, comment : None)
     ):
         """
@@ -80,8 +83,8 @@ class CPUInfo(object):
         identification (support 1, 2, 4 or 8 bytes)
 
     :param reg_types:
-        callable object which must register types that can be used in several
-        instruction semantics
+        callable object which gets source `translate.inc.c` and must register
+        types and functions that can be used in several instruction semantics
 
     :param name_shortener:
         callable object that is may rename `args` (corresponding to the
