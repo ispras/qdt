@@ -45,6 +45,9 @@ def is_in_asm(l):
 def is_in_asm_instr(l):
     return l[:2] == "0x"
 
+def is_trace_skipped(l):
+    return l.startswith("Stopped execution of TB chain before 0x")
+
 
 re_space = compile("\\s+")
 simple_byte_hex = "%02x".__mod__
@@ -507,6 +510,22 @@ class QEMULog(object):
             print("--- trace")
             print("".join(trace))
 
+        if is_trace_skipped(trace[-1]):
+            addr = trace[-1][37:].split()[0]
+            if addr in trace[0]:
+                if DEBUG < 2:
+                    print("Skipping not executed trace at line %s:\n%s" % (
+                        lineno, "".join(trace)
+                    ))
+                return None
+            elif DEBUG < 3:
+                # We don't skip the trace because at least one TB is executed.
+                # Getting really executed TB's is an interesting problem...
+                # Don't use linking (not chaining) if you want a precise log.
+                # The situation is a corner case, so print it in less verbose
+                # debug mode too.
+                print("TB chain with skipped tail at line " + str(lineno))
+
         t = QTrace(trace, lineno)
         t.cacheVersion = len(self.in_asm)
 
@@ -594,6 +613,8 @@ class QEMULog(object):
                 trace = [l0]
                 trace_lineno = lineno
 
+                # Note, there is no problem to yield `None` if a trace has been
+                # skipped (see `new_trace`).
                 l1 = yield prev_trace; lineno += 1
                 # We should prev_trace = None here, but it will be
                 # overwritten below unconditionally.
@@ -607,6 +628,10 @@ class QEMULog(object):
                         l0 = l1
                         break
                     trace.append(l1)
+                    # Ensure that skip mark is always at end of trace.
+                    if is_trace_skipped(l1):
+                        l0 = yield; lineno += 1
+                        break
                     l1 = yield; lineno += 1
                 else:
                     l0 = l1
