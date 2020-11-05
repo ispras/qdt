@@ -467,6 +467,7 @@ def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
 
 
 def build_instruction_tree(node, instructions, read_bitsize,
+    optimizations = True,
     checked_bits = set(),
     depth = 0 # for debugging purposes
 ):
@@ -636,19 +637,128 @@ def build_instruction_tree(node, instructions, read_bitsize,
         if len(iid) != 2 ** interval[1]:
             iid["default"] = non_opcode_instructions
 
-    # Note, only infix order is matter now. Instructions with same infix
-    # will be sorted by the corresponding next common infix during recursive
-    # `build_instruction_tree` call.
+    subtree = OrderedDict()
     checked_bits = checked_bits | integer_set(*interval)
     depth += 1
     for infix, infix_instructions in sorted(iid.items()):
-        n = InstructionTreeNode()
-        if infix == "default":
-            node.subtree["default"] = n
-        else:
-            node.subtree[(infix,)] = n
+        subtree[infix] = n = InstructionTreeNode()
         build_instruction_tree(n, infix_instructions,
             read_bitsize,
+            optimizations = optimizations,
             checked_bits = checked_bits,
             depth = depth
         )
+
+    if not optimizations:
+        # Note, only infix order is matter now. Instructions with same infix
+        # were sorted by the corresponding next common infix during recursive
+        # `build_instruction_tree` call.
+        default_subtree_node = subtree.pop("default", None)
+
+        for infix, subtree_node in subtree.items():
+            node.subtree[(infix,)] = subtree_node
+
+        if default_subtree_node is not None:
+            node.subtree["default"] = default_subtree_node
+
+        return
+
+    optimize_instruction_subtree(node, subtree)
+
+
+def optimize_instruction_subtree(node, subtree):
+    """ The current algorithm, which propagates non-opcode instructions to all
+    subtrees, may result in some subtrees being the same. To reduce the size of
+    the tree, same subtrees are removed by combining infixes.
+    """
+
+    merged_subtree = []
+    bitsize = node.interval[1]
+    all_infixes_count = 2 ** bitsize
+    default_subtree_node = subtree.pop("default", None)
+
+    for infix, subtree_node in subtree.items():
+        if (    default_subtree_node is not None
+            and subtree_node == default_subtree_node
+        ):
+            continue
+        for infixes, merged_subtree_node in merged_subtree:
+            if merged_subtree_node == subtree_node:
+                infixes.append(infix)
+                break
+        else:
+            merged_subtree.append(([infix], subtree_node))
+
+    # maximum count of subtree infixes
+    max_csi = 0
+    default_candidate_index = -1
+    used_infixes_count = 0
+
+    for i, (infixes, subtree_node) in enumerate(merged_subtree):
+        csi = len(infixes)
+        used_infixes_count += csi
+        if csi >= max_csi:
+            max_csi = csi
+            default_candidate_index = i
+
+    if default_subtree_node is not None:
+        # All subtrees match the default subtree.
+        if len(merged_subtree) == 0:
+            node.instruction = default_subtree_node.instruction
+            node.interval = default_subtree_node.interval
+            node.subtree = default_subtree_node.subtree
+            return
+
+        # If the "default" case is present then it will be used for the subtree
+        # with the largest count of infixes (if the count is the same then with
+        # the largest first infix) to make it easier to identify the same
+        # subtrees.
+
+        default_infixes_count = all_infixes_count - used_infixes_count
+
+        if default_infixes_count <= max_csi:
+            used_infixes = set()
+
+            for infixes, _  in merged_subtree:
+                for infix in infixes:
+                    used_infixes.add(int(infix, base = 2))
+
+            default_infixes = [
+                "{0:0{1}b}".format(infix, bitsize) for infix in
+                sorted(set(range(all_infixes_count)) - used_infixes)
+            ]
+
+            default_candidate_infixes, default_candidate = (
+                merged_subtree[default_candidate_index]
+            )
+            if (   default_infixes_count < max_csi
+                or default_candidate_infixes > default_infixes
+            ):
+                merged_subtree.pop(default_candidate_index)
+                insort(merged_subtree, (default_infixes, default_subtree_node))
+                default_subtree_node = default_candidate
+    else:
+        subtree_node_inxifes, subtree_node = merged_subtree[0]
+        if (    len(merged_subtree) == 1
+            and len(subtree_node_inxifes) == all_infixes_count
+        ):
+            node.instruction = subtree_node.instruction
+            node.interval = subtree_node.interval
+            node.subtree = subtree_node.subtree
+            return
+
+        # If the "default" case is not present but all possible infixes are
+        # used then the "default" case will be used for the subtree with the
+        # largest count of infixes (if the count is the same then with the
+        # largest first infix) to make it easier to identify the same subtrees.
+
+        if used_infixes_count == all_infixes_count:
+            default_subtree_node = (
+                merged_subtree.pop(default_candidate_index)[1]
+            )
+
+    for infixes, merged_subtree_node in merged_subtree:
+        node.subtree[tuple(infixes)] = merged_subtree_node
+
+    if default_subtree_node is not None:
+        node.subtree["default"] = default_subtree_node

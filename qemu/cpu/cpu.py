@@ -270,6 +270,7 @@ class CPUType(QOMCPU):
         with_chunk_graph = False,
         intermediate_chunk_graphs = False,
         with_debug_comments = False,
+        instruction_tree_optimizations = True,
         include_paths = tuple(),
         **_
     ):
@@ -347,7 +348,7 @@ class CPUType(QOMCPU):
             )
         ))
 
-        yield self._co_gen_target_code(src)
+        yield self._co_gen_target_code(src, instruction_tree_optimizations)
 
         translate_inc_c_file = self.gen_files["translate.inc.c"]
         for f in self.gen_files.values():
@@ -388,11 +389,13 @@ class CPUType(QOMCPU):
             f.write(CGenerator().visit(ast))
             f.write(ast.suffix + "\n")
 
-    def _co_gen_target_code(self, src):
+    def _co_gen_target_code(self, src, instruction_tree_optimizations):
         if self.instructions:
             read_bitsize = self.read_bitsize
             node = InstructionTreeNode()
-            build_instruction_tree(node, self.instructions, read_bitsize)
+            build_instruction_tree(node, self.instructions, read_bitsize,
+                optimizations = instruction_tree_optimizations
+            )
             check_unreachable_instructions(self.instructions)
             fill_tree_reading_seq(node, read_bitsize)
             self.instruction_tree_root = node
