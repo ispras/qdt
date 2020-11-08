@@ -4,12 +4,12 @@
 
 int main(void)
 {
-    volatile int8_t a = 0x2a, b = 0x5, c;
+    volatile int16_t a = 0xedcb, b = 0x1234, c;
 
 #if __MSP430__ == 1
     asm volatile (
-        "mov.b %[src_b], %[dst_c] \n\
-         bic.b %[src_a], %[dst_c]"
+        "mov %[src_b], %[dst_c] \n\
+         bic %[src_a], %[dst_c]"
         : [dst_c] "=rm" (c)
         : [src_a] "rm" (a),
           [src_b] "rm" (b)
