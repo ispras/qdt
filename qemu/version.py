@@ -594,9 +594,11 @@ def define_only_qemu_2_6_0_types():
         Pointer(
             Function(
                 args = [
-                    Pointer(Type["DeviceState"])("dev"),
-                    Pointer(Pointer(Type["Error"]))("errp")
-                ]
+                    Pointer(Type["DeviceState"])("dev")
+                ] + (
+                    [ Pointer(Pointer(Type["Error"]))("errp") ]
+                        if get_vp("*Unrealize has errp") else []
+                )
             ),
             name = "DeviceUnrealize"
         ),
@@ -1463,6 +1465,15 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("arch_init.c path",
             old_value = ("arch_init.c",),
             new_value = ("softmmu", "arch_init.c")
+        )
+    ],
+    u"b69c3c21a5d11075d42100d5cfe0a736593fae6b":
+    [
+        # between v5.0.0 and v5.1.0-rc0
+        # qdev: Unrealize must not fail
+        QEMUVersionParameterDescription("*Unrealize has errp",
+            old_value = True,
+            new_value = False
         )
     ]
 }
