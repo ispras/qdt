@@ -591,9 +591,19 @@ def define_only_qemu_2_6_0_types():
             ),
             name = "DeviceRealize"
         ),
+        Pointer(
+            Function(
+                args = [
+                    Pointer(Type["DeviceState"])("dev"),
+                    Pointer(Pointer(Type["Error"]))("errp")
+                ]
+            ),
+            name = "DeviceUnrealize"
+        ),
         Structure("DeviceClass",
             # These are required fields only
-            Type["DeviceRealize"]("realize")
+            Type["DeviceRealize"]("realize"),
+            Type["DeviceUnrealize"]("unrealize"),
         ),
         Type("Property", False),
         Function(
