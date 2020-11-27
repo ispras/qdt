@@ -681,7 +681,8 @@ class Function(Type):
         self.args = args
         self.declaration = None
 
-        if isinstance(body, str):
+        # Under Py2 body can be `unicode`.
+        if isinstance(body, (str, text_type)):
             self.body = FunctionBodyString(
                 body = body,
                 used_types = used_types,
