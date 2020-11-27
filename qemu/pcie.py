@@ -445,9 +445,7 @@ corresponding vendor is given" % attr
 
         self.vmstate.extra_references = {self.properties}
 
-        self.class_init = Function(
-            name = "%s_class_init" % self.qtn.for_id_name, 
-            body = """\
+        class_init_fmt = """\
     DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
     PCIDeviceClass@b*pc@b=@sPCI_DEVICE_CLASS(oc);
 
@@ -459,8 +457,30 @@ corresponding vendor is given" % attr
     pc->class_id@b@b{pad}=@s{pci_class_macro};{subsys_id}{subsys_vid}
     pc->revision@b@b{pad}=@s{revision};
     dc->vmsd@b@b@b@b@b@b{pad}=@s&vmstate_{dev};
-    dc->props@b@b@b@b@b{pad}=@s{dev}_properties;
-""".format(
+"""
+
+        class_init_used_types = [
+            Type["DeviceClass"],
+            Type["PCIDeviceClass"],
+            self.device_realize,
+            self.device_reset,
+            self.device_exit,
+            self.vendor_macro,
+            self.device_macro,
+            self.pci_class_macro
+        ]
+
+        if get_vp("use device_class_set_props"):
+            class_init_fmt += \
+                "    device_class_set_props(dc,@s{dev}_properties);\n"
+            class_init_used_types.append(Type["device_class_set_props"])
+        else:
+            class_init_fmt += \
+                "    dc->props@b@b@b@b@b{pad}=@s{dev}_properties;\n"
+
+        self.class_init = Function(
+            name = "%s_class_init" % self.qtn.for_id_name,
+            body = class_init_fmt.format(
     dev = self.qtn.for_id_name,
     revision = self.revision,
     vendor_macro = self.vendor_macro.name,
@@ -477,16 +497,7 @@ corresponding vendor is given" % attr
                 Pointer(Type["void"])("opaque")
             ],
             static = True,
-            used_types = [
-                Type["DeviceClass"],
-                Type["PCIDeviceClass"],
-                self.device_realize,
-                self.device_reset,
-                self.device_exit,
-                self.vendor_macro,
-                self.device_macro,
-                self.pci_class_macro
-            ],
+            used_types = class_init_used_types,
             used_globals = [
                 self.vmstate,
                 self.properties

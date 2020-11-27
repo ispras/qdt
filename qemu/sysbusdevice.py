@@ -36,6 +36,9 @@ from .machine_nodes import (
 from itertools import (
     count
 )
+from .version import (
+    get_vp,
+)
 
 
 MACROS_2_HEADER = ee("QDT_SBD_MMIO_MACROS_TO_HEADER")
@@ -577,28 +580,38 @@ class SysBusDeviceType(QOMDevice):
 
         self.vmstate.extra_references = {self.properties}
 
-        self.class_init = Function(
-            name = "%s_class_init" % self.qtn.for_id_name,
-            body = """\
+        class_init_fmt = """\
     DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
 
     dc->realize@b@b@b=@s{dev}_realize;
     dc->reset@b@b@b@b@b=@s{dev}_reset;
     dc->unrealize@b=@s{dev}_unrealize;
     dc->vmsd@b@b@b@b@b@b=@s&vmstate_{dev};
-    dc->props@b@b@b@b@b=@s{dev}_properties;
-""".format(dev = self.qtn.for_id_name),
+"""
+
+        class_init_used_types = [
+            Type["DeviceClass"],
+            self.device_realize,
+            self.device_reset,
+            self.device_unrealize
+        ]
+
+        if get_vp("use device_class_set_props"):
+            class_init_fmt += \
+                "    device_class_set_props(dc,@s{dev}_properties);\n"
+            class_init_used_types.append(Type["device_class_set_props"])
+        else:
+            class_init_fmt += "    dc->props@b@b@b@b@b=@s{dev}_properties;\n"
+
+        self.class_init = Function(
+            name = "%s_class_init" % self.qtn.for_id_name,
+            body = class_init_fmt.format(dev = self.qtn.for_id_name),
             args = [
                 Pointer(Type["ObjectClass"])("oc"),
                 Pointer(Type["void"])("opaque")
             ],
             static = True,
-            used_types = [
-                Type["DeviceClass"],
-                self.device_realize,
-                self.device_reset,
-                self.device_unrealize
-            ],
+            used_types = class_init_used_types,
             used_globals = [
                 self.vmstate,
                 self.properties
