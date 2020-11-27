@@ -692,7 +692,8 @@ class Function(Type):
         body = None,
         static = None,
         inline = False,
-        used_types = []
+        used_types = [],
+        used_globals = None
     ):
         new_f = Function(
             name = name,
@@ -701,7 +702,8 @@ class Function(Type):
             args = self.args,
             static = self.static if static is None else static,
             inline = inline,
-            used_types = used_types
+            used_types = used_types,
+            used_globals = used_globals
         )
         return new_f
 
