@@ -445,9 +445,7 @@ corresponding vendor is given" % attr
 
         self.vmstate.extra_references = {self.properties}
 
-        self.class_init = Function(
-            name = "%s_class_init" % self.qtn.for_id_name, 
-            body = """\
+        class_init_fmt = """\
     DeviceClass@b*dc@b=@sDEVICE_CLASS(oc);
     PCIDeviceClass@b*pc@b=@sPCI_DEVICE_CLASS(oc);
 
@@ -459,8 +457,18 @@ corresponding vendor is given" % attr
     pc->class_id@b@b{pad}=@s{pci_class_macro};{subsys_id}{subsys_vid}
     pc->revision@b@b{pad}=@s{revision};
     dc->vmsd@b@b@b@b@b@b{pad}=@s&vmstate_{dev};
-    dc->props@b@b@b@b@b{pad}=@s{dev}_properties;
-""".format(
+"""
+
+        if get_vp("use device_class_set_props"):
+            class_init_fmt += \
+                "    device_class_set_props(dc,@s{dev}_properties);\n"
+        else:
+            class_init_fmt += \
+                "    dc->props@b@b@b@b@b{pad}=@s{dev}_properties;\n"
+
+        self.class_init = Function(
+            name = "%s_class_init" % self.qtn.for_id_name,
+            body = class_init_fmt.format(
     dev = self.qtn.for_id_name,
     revision = self.revision,
     vendor_macro = self.vendor_macro.name,

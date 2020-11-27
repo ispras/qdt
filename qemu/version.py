@@ -630,6 +630,17 @@ def define_only_qemu_2_6_0_types():
         qdev_core_header.add_type(
             Function(name = "device_class_set_parent_realize")
         )
+    # void device_class_set_props(DeviceClass *dc, Property *pr
+    if get_vp("use device_class_set_props"):
+        qdev_core_header.add_type(
+            Function(
+                name = "device_class_set_props",
+                args = [
+                    Pointer(Type["DeviceClass"])("dc"),
+                    Pointer(Type["Property"])("pr")
+                ]
+            )
+        )
 
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
@@ -1474,6 +1485,15 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("*Unrealize has errp",
             old_value = True,
             new_value = False
+        )
+    ],
+    u"4f67d30b5e74e060b8dbe10528829b47345cd6e8":
+    [
+        # between v4.2.0 and v5.0.0-rc0
+        # qdev: set properties with device_class_set_props()
+        QEMUVersionParameterDescription("use device_class_set_props",
+            new_value = True,
+            old_value = False
         )
     ]
 }
