@@ -553,12 +553,8 @@ class SysBusDeviceType(QOMDevice):
     timer_free(s->{timerN});
 """.format(timerN = self.timer_name(timerN))
 
-        self.device_unrealize = Function(
+        self.device_unrealize = Type["DeviceClass"].unrealize.gen_callback(
             name = self.qtn.for_id_name + "_unrealize",
-            args = [
-                Pointer(Type["DeviceState"])("dev"),
-                Pointer(Pointer(Type["Error"]))("errp")
-            ],
             static = True,
             used_types = used_types,
             body = """    {unused}{Struct}@b*s@b=@s{CAST}(dev);
