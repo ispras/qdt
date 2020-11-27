@@ -17,9 +17,6 @@ __all__ = [
   , "NodeVisitor"
 ]
 
-from copy import (
-    copy
-)
 from itertools import (
     count,
 )
@@ -41,7 +38,6 @@ from .code_gen_helpers import (
     gen_array_declaration,
 )
 from .chunks import (
-    HeaderInclusion,
     MacroDefinition,
     MacroTypeChunk,
     PointerTypeDeclaration,
