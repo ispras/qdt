@@ -764,12 +764,26 @@ def define_only_qemu_2_6_0_types():
             Structure("CharDriverState")
         ]
 
+    if get_vp("use QEMUChrEvent"):
+        Header["chardev/char.h"].add_type(
+            Enumeration(
+                elems_list = [
+                    # TODO: not required now
+                ],
+                typedef_name = "QEMUChrEvent"
+            )
+        ).add_references([
+            osdep_fake_type
+        ])
+
     Header[get_vp("header with IOEventHandler")].add_types([
         Function(
             name = "IOEventHandler",
             args = [
                 Pointer(Type["void"])("opaque"),
-                Type["int"]("event")
+                Type["QEMUChrEvent" if get_vp("use QEMUChrEvent") else "int"](
+                    "event"
+                )
             ]
         )
     ] + chardev_types).add_references([
@@ -1539,6 +1553,15 @@ qemu_heuristic_db = {
         # - sysbus
         # TODO: PCI
         QEMUVersionParameterDescription("use qdev_new",
+            new_value = True,
+            old_value = False
+        )
+    ],
+    u"083b266f69f36195aef22cb224f86b99ca0d6feb":
+    [
+        # between v4.2.0 and 5.0.0-rc0
+        # chardev: Use QEMUChrEvent enum in IOEventHandler typedef
+        QEMUVersionParameterDescription("use QEMUChrEvent",
             new_value = True,
             old_value = False
         )
