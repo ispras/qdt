@@ -525,7 +525,8 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     pio_t = Type["pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"]
-    Header["hw/sysbus.h"].add_types([
+    hw_sysbus_h = Header["hw/sysbus.h"]
+    hw_sysbus_h.add_types([
         Type("SysBusDevice", False),
         Type("qemu_irq", False),
         Function(
@@ -565,6 +566,18 @@ def define_only_qemu_2_6_0_types():
         Function(name = "sysbus_mmio_map"),
         Function(name = "sysbus_connect_irq")
     ]).add_reference(osdep_fake_type)
+
+    if get_vp("use qdev_new"):
+        hw_sysbus_h.add_type(
+            Function(
+                name = "sysbus_realize_and_unref",
+                ret_type = Type["bool"],
+                args = [
+                    Pointer(Type["SysBusDevice"])("dev"),
+                    Pointer(Pointer(Type["Error"]))("errp")
+                ]
+            )
+        )
 
     Header["hw/irq.h"].add_types([
         Function(
@@ -617,8 +630,6 @@ def define_only_qemu_2_6_0_types():
                 Type["int"]("n")
             ]
         ),
-        Function(name = "qdev_create"),
-        Function(name = "qdev_init_nofail"),
         Function(name = "qdev_get_child_bus"),
         Structure("BusState"),
         Function(name = "qdev_get_gpio_in"),
@@ -641,6 +652,31 @@ def define_only_qemu_2_6_0_types():
                 ]
             )
         )
+    # qdev_new/qdev_realize_and_unref replaces qdev_create/qdev_init_nofail
+    if get_vp("use qdev_new"):
+        qdev_core_header.add_types([
+            Function(
+                name = "qdev_new",
+                ret_type = Pointer(Type["DeviceState"]),
+                args = [
+                    Pointer(Type["const char"])("name")
+                ]
+            ),
+            Function(
+                name = "qdev_realize_and_unref",
+                ret_type = Type["bool"],
+                args = [
+                    Pointer(Type["DeviceState"])("dev"),
+                    Pointer(Type["BusState"])("bus"),
+                    Pointer(Pointer(Type["Error"]))("errp")
+                ]
+            )
+        ])
+    else:
+        qdev_core_header.add_types([
+            Function(name = "qdev_create"),
+            Function(name = "qdev_init_nofail"),
+        ])
 
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
@@ -1492,6 +1528,18 @@ qemu_heuristic_db = {
         # between v4.2.0 and v5.0.0-rc0
         # qdev: set properties with device_class_set_props()
         QEMUVersionParameterDescription("use device_class_set_props",
+            new_value = True,
+            old_value = False
+        )
+    ],
+    u"9940b2cfbc05cdffdf6b42227a80cb1e6d2a85c2":
+    [
+        # between 5.0.0 and v5.1.0-rc0
+        # qdev: New qdev_new(), qdev_realize(), etc.
+        # This heuristics also touches device instantiation for specific buses:
+        # - sysbus
+        # TODO: PCI
+        QEMUVersionParameterDescription("use qdev_new",
             new_value = True,
             old_value = False
         )

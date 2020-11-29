@@ -372,7 +372,10 @@ class MachineType(QOMType):
                 skip_nl = False
 
             if isinstance(node, DeviceNode):
-                self.use_type_name("qdev_init_nofail")
+                if not get_vp("use qdev_new"):
+                    # Since v5.0.0-rc0 it has been changed.
+                    self.use_type_name("qdev_init_nofail")
+
                 self.use_type_name("BUS")
                 if Type.exists(node.qom_type):
                     self.use_type_name(node.qom_type)
@@ -398,6 +401,9 @@ class MachineType(QOMType):
                     )
 
                 if isinstance(node, PCIExpressDeviceNode):
+                    # TODO: support new approach. See:
+                    #       pci: New pci_new(), pci_realize_and_unref() etc.
+                    #       7411aa63a5f586329f87cbf318addaef427aa906
                     self.use_type_name("PCIDevice")
                     self.use_type_name("pci_create_multifunction")
                     self.use_type_name("bool")
@@ -418,23 +424,58 @@ class MachineType(QOMType):
                     )
                 else:
                     self.use_type_name("DeviceState")
-                    self.use_type_name("qdev_create")
+                    if get_vp("use qdev_new"):
+                        self.use_type_name("qdev_new")
+                    else:
+                        self.use_type_name("qdev_create")
 
                     decl_code += "    DeviceState *%s;\n" % dev_name
-
-                    if ((node.parent_bus is None)
-                        or isinstance(node.parent_bus, SystemBusNode)
-                    ):
-                        bus_name = "NULL"
-                    else:
-                        bus_name = "BUS(%s)" % self.node_map[node.parent_bus]
 
                     if Type.exists(node.qom_type):
                         qom_type = node.qom_type
                     else:
                         qom_type = "\"%s\"" % node.qom_type
 
-                    def_code += """\
+                    if get_vp("use qdev_new"):
+                        def_code += """\
+    {dev_name} = qdev_new(@a{qom_type});{props_code}
+""".format(
+    dev_name = dev_name,
+    qom_type = qom_type,
+    props_code = props_code
+                        )
+                        if ((node.parent_bus is None)
+                            or isinstance(node.parent_bus, SystemBusNode)
+                        ):
+                            self.use_type_name("sysbus_realize_and_unref")
+                            self.use_type_name("SYS_BUS_DEVICE")
+                            def_code += """\
+    sysbus_realize_and_unref(@aSYS_BUS_DEVICE({dev_name}),@sNULL);
+""".format(
+    dev_name = dev_name
+                            )
+                        else:
+                            # TODO: test this branch using some non-sysbus
+                            #       configuration
+                            self.use_type_name("qdev_realize_and_unref")
+                            bus_name = \
+                                "BUS(%s)" % self.node_map[node.parent_bus]
+                            def_code += """\
+    qdev_realize_and_unref(@aSYS_BUS_DEVICE({dev_name}),@s{bus_name},@sNULL);
+""".format(
+    dev_name = dev_name,
+    bus_name = bus_name
+                            )
+                    else:
+                        if ((node.parent_bus is None)
+                            or isinstance(node.parent_bus, SystemBusNode)
+                        ):
+                            bus_name = "NULL"
+                        else:
+                            bus_name = \
+                                "BUS(%s)" % self.node_map[node.parent_bus]
+
+                        def_code += """\
     {dev_name} = qdev_create(@a{bus_name},@s{qom_type});{props_code}
     qdev_init_nofail({dev_name});
 """.format(
@@ -442,7 +483,7 @@ class MachineType(QOMType):
     bus_name = bus_name,
     qom_type = qom_type,
     props_code = props_code
-                    )
+                        )
 
                 if isinstance(node, SystemBusDeviceNode):
                     for idx, mmio in node.mmio_mappings.items():
