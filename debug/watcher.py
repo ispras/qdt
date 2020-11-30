@@ -73,36 +73,42 @@ Leading spaces are ignored.
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
         for _, cb in getmembers(self, predicate = is_breakpoint_cb):
-            mi = None
-            for mi in breakpoint_matches(cb.__doc__.splitlines()):
-                file_name, lineno, opaque = mi.groups()
-                raw_file_name = bstr(file_name)
-                raw_file_name, line = line_adapter.adapt_lineno(
-                    raw_file_name, lineno, opaque
-                )
-                if line is not None:
-                    break
-            else:
-                if mi is None:
-                    # No position specification was found.
-                    # It's not a breakpoint handler.
-                    continue
-                try:
+            # The process can be slow enough, a progress indication is required.
+            if verbose:
+                print("Mapping breakpoint %s.%s" % (
+                    type(self).__name__, cb.__name__
+                ))
+
+            try:
+                mi = None
+                for mi in breakpoint_matches(cb.__doc__.splitlines()):
+                    file_name, lineno, opaque = mi.groups()
+                    raw_file_name = bstr(file_name)
+                    raw_file_name, line = line_adapter.adapt_lineno(
+                        raw_file_name, lineno, opaque
+                    )
+                    if line is not None:
+                        break
+                else:
+                    if mi is None:
+                        # No position specification was found.
+                        # It's not a breakpoint handler.
+                        continue
                     raw_file_name, line = line_adapter.failback()
-                except Exception as e:
-                    # This location format is compatible with PyDev (Eclipse)
-                    # and same as one used in standard exception tracebacks.
-                    loc_str = '  File "%s", line %d' % cb_loc(cb)
-                    raise RuntimeError("Failed to set breakpoint %s\n%s\n%s" % (
-                        cb.__name__, loc_str, e
-                    ))
 
-            line_map = dic.find_line_map(raw_file_name)
-            line_descs = line_map[line]
+                line_map = dic.find_line_map(raw_file_name)
+                line_descs = line_map[line]
 
-            for desc in line_descs:
-                addr = desc.state.address
-                brs.append((addr, cb, raw_file_name, line))
+                for desc in line_descs:
+                    addr = desc.state.address
+                    brs.append((addr, cb, raw_file_name, line))
+            except Exception as e:
+                # This location format is compatible with PyDev (Eclipse)
+                # and same as one used in standard exception tracebacks.
+                loc_str = '  File "%s", line %d' % cb_loc(cb)
+                raise RuntimeError("Failed to set breakpoint %s\n%s\n%s" % (
+                    cb.__name__, loc_str, e
+                ))
 
     def init_runtime(self, rt):
         """ Setup breakpoint handlers
