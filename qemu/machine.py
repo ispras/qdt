@@ -349,6 +349,13 @@ class MachineType(QOMType):
     def fill_source(self):
         glob_mem = get_vp("explicit global memory registration")
 
+        if get_vp("property name before value"):
+            prop_set_fmt = """
+    {set_func}(@aOBJECT({dev_name}),@s{prop_name},@s{value},@sNULL);"""
+        else:
+            prop_set_fmt = """
+    {set_func}(@aOBJECT({dev_name}),@s{value},@s{prop_name},@sNULL);"""
+
         all_nodes = sort_topologically(
             self.cpus +
             self.devices +
@@ -391,9 +398,7 @@ class MachineType(QOMType):
                     if isinstance(p.prop_val, str) and Type.exists(p.prop_val):
                         self.use_type_name(p.prop_val)
 
-                    props_code += """
-    {set_func}(@aOBJECT({dev_name}),@s{value},@s{prop_name},@sNULL);\
-""".format(
+                    props_code += prop_set_fmt.format(
     set_func = p.prop_type.set_f,
     dev_name = dev_name,
     prop_name = p.prop_name if Type.exists(p.prop_name) else "\"%s\"" % p.prop_name,

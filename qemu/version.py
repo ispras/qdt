@@ -1565,6 +1565,15 @@ qemu_heuristic_db = {
             new_value = True,
             old_value = False
         )
+    ],
+    u"5325cc34a2ca985283134c7e264be7851b112d4e":
+    [
+        # between 5.0.0 and v5.1.0-rc0
+        # qom: Put name parameter before value / visitor parameter
+        QEMUVersionParameterDescription("property name before value",
+            new_value = True,
+            old_value = False
+        )
     ]
 }
 
