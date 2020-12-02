@@ -450,11 +450,11 @@ pyelftools's `DWARFInfo`.
 
             raise ValueError("Given name suffix %s is not long enough to look"
                 " CU up. There are several CUs with such suffix." % join(
-                    reversed(rpath)
+                    *reversed(rpath)
                 )
             )
 
-        raise KeyError("No CU with name suffix %s" % join(reversed(rpath)))
+        raise KeyError("No CU with name suffix %s" % join(*reversed(rpath)))
 
     def iter_CUs(self):
         idx2cu = self.idx2cu

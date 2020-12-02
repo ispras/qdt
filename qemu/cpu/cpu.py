@@ -332,10 +332,6 @@ class CPUType(QOMCPU):
             )
         ))
 
-        self.reg_types()
-
-        yield True
-
         yield self._co_gen_target_code(src)
 
         for f in self.gen_files.values():
@@ -529,7 +525,8 @@ class CPUType(QOMCPU):
                 text = "struct " + cpu_arch_state.c_name
             )
         h.add_type(arch_state)
-        Header["tcg.h"].add_reference(arch_state)
+        tcg_h = Header[get_vp("tcg headers prefix") + "tcg.h"]
+        tcg_h.add_reference(arch_state)
         Header["exec/cpu-all.h"].add_references([
             arch_state,
             Type["TARGET_LONG_SIZE"]
@@ -747,6 +744,8 @@ class CPUType(QOMCPU):
 
         Header["exec/cpu_ldst.h"].add_reference(disas_context)
 
+        self.reg_types(h)
+
     def _gen_cpu_c(self, c):
         cpu_class = Type["CPUClass"]
         type_info_type = Type["TypeInfo"]
@@ -920,7 +919,8 @@ class CPUType(QOMCPU):
             c.add_global_variable(cpu_env)
             Header["exec/gen-icount.h"].add_reference(cpu_env)
         else:
-            cpu_env = Header["tcg.h"].global_variables["cpu_env"]
+            tcg_h = Header[get_vp("tcg headers prefix") + "tcg.h"]
+            cpu_env = tcg_h.global_variables["cpu_env"]
 
         reg_vars = []
         for reg in self.registers:
@@ -1227,7 +1227,7 @@ def patch_arch_init_header(src, target_name):
 
 
 def patch_arch_init_source(src, target_name):
-    arch_init_source = join(src, "arch_init.c")
+    arch_init_source = join(src, *get_vp("arch_init.c path"))
     target_name_upper = target_name.upper()
     qemu_arch = "QEMU_ARCH_" + target_name_upper
 

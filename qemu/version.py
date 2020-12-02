@@ -93,7 +93,8 @@ def define_only_qemu_2_6_0_types():
             )
         ]).add_reference(osdep_fake_type)
 
-    tcg_header = Header["tcg.h"].add_reference(osdep_fake_type)
+    tcg_h_path = get_vp("tcg headers prefix") + "tcg.h"
+    tcg_header = Header[tcg_h_path].add_reference(osdep_fake_type)
     tcg_header.add_types([
         Type("TCGv_i32"),
         Type("TCGv_i64"),
@@ -117,7 +118,8 @@ def define_only_qemu_2_6_0_types():
         t = Pointer(t)
     tcg_header.add_global_variable(t("tcg_ctx"))
 
-    Header["tcg-op.h"].add_types([
+    tcg_op_h_path = get_vp("tcg headers prefix") + "tcg-op.h"
+    Header[tcg_op_h_path].add_types([
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
         Function(name = "tcg_gen_exit_tb"),
@@ -523,7 +525,8 @@ def define_only_qemu_2_6_0_types():
     ]).add_reference(osdep_fake_type)
 
     pio_t = Type["pio_addr_t" if get_vp("pio_addr_t exists") else "uint32_t"]
-    Header["hw/sysbus.h"].add_types([
+    hw_sysbus_h = Header["hw/sysbus.h"]
+    hw_sysbus_h.add_types([
         Type("SysBusDevice", False),
         Type("qemu_irq", False),
         Function(
@@ -564,6 +567,18 @@ def define_only_qemu_2_6_0_types():
         Function(name = "sysbus_connect_irq")
     ]).add_reference(osdep_fake_type)
 
+    if get_vp("use qdev_new"):
+        hw_sysbus_h.add_type(
+            Function(
+                name = "sysbus_realize_and_unref",
+                ret_type = Type["bool"],
+                args = [
+                    Pointer(Type["SysBusDevice"])("dev"),
+                    Pointer(Pointer(Type["Error"]))("errp")
+                ]
+            )
+        )
+
     Header["hw/irq.h"].add_types([
         Function(
             name = "qemu_irq_handler",
@@ -589,9 +604,21 @@ def define_only_qemu_2_6_0_types():
             ),
             name = "DeviceRealize"
         ),
+        Pointer(
+            Function(
+                args = [
+                    Pointer(Type["DeviceState"])("dev")
+                ] + (
+                    [ Pointer(Pointer(Type["Error"]))("errp") ]
+                        if get_vp("*Unrealize has errp") else []
+                )
+            ),
+            name = "DeviceUnrealize"
+        ),
         Structure("DeviceClass",
             # These are required fields only
-            Type["DeviceRealize"]("realize")
+            Type["DeviceRealize"]("realize"),
+            Type["DeviceUnrealize"]("unrealize"),
         ),
         Type("Property", False),
         Function(
@@ -603,8 +630,6 @@ def define_only_qemu_2_6_0_types():
                 Type["int"]("n")
             ]
         ),
-        Function(name = "qdev_create"),
-        Function(name = "qdev_init_nofail"),
         Function(name = "qdev_get_child_bus"),
         Structure("BusState"),
         Function(name = "qdev_get_gpio_in"),
@@ -616,6 +641,41 @@ def define_only_qemu_2_6_0_types():
         qdev_core_header.add_type(
             Function(name = "device_class_set_parent_realize")
         )
+    if get_vp("use device_class_set_props"):
+        qdev_core_header.add_type(
+            Function(
+                name = "device_class_set_props",
+                args = [
+                    Pointer(Type["DeviceClass"])("dc"),
+                    Pointer(Type["Property"])("props")
+                ]
+            )
+        )
+    # qdev_new/qdev_realize_and_unref replaces qdev_create/qdev_init_nofail
+    if get_vp("use qdev_new"):
+        qdev_core_header.add_types([
+            Function(
+                name = "qdev_new",
+                ret_type = Pointer(Type["DeviceState"]),
+                args = [
+                    Pointer(Type["const char"])("name")
+                ]
+            ),
+            Function(
+                name = "qdev_realize_and_unref",
+                ret_type = Type["bool"],
+                args = [
+                    Pointer(Type["DeviceState"])("dev"),
+                    Pointer(Type["BusState"])("bus"),
+                    Pointer(Pointer(Type["Error"]))("errp")
+                ]
+            )
+        ])
+    else:
+        qdev_core_header.add_types([
+            Function(name = "qdev_create"),
+            Function(name = "qdev_init_nofail"),
+        ])
 
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
@@ -704,12 +764,26 @@ def define_only_qemu_2_6_0_types():
             Structure("CharDriverState")
         ]
 
+    if get_vp("use QEMUChrEvent"):
+        Header["chardev/char.h"].add_type(
+            Enumeration(
+                elems_list = [
+                    # TODO: not required now
+                ],
+                typedef_name = "QEMUChrEvent"
+            )
+        ).add_references([
+            osdep_fake_type
+        ])
+
     Header[get_vp("header with IOEventHandler")].add_types([
         Function(
             name = "IOEventHandler",
             args = [
                 Pointer(Type["void"])("opaque"),
-                Type["int"]("event")
+                Type["QEMUChrEvent" if get_vp("use QEMUChrEvent") else "int"](
+                    "event"
+                )
             ]
         )
     ] + chardev_types).add_references([
@@ -1437,6 +1511,70 @@ qemu_heuristic_db = {
             new_value = "sysemu/reset.h"
         )
     ],
+    u"d3582cfd27bb7fe29e54d98ea0b25cc7a0d6d276":
+    [
+        # tcg: Move TCG headers to include/tcg/
+        QEMUVersionParameterDescription("tcg headers prefix",
+            old_value = "",
+            new_value = "tcg/"
+        )
+    ],
+    u"c7f419f5841a840f3b90e839ef014b94131e5df8":
+    [
+        # softmmu: move softmmu only files from root
+        QEMUVersionParameterDescription("arch_init.c path",
+            old_value = ("arch_init.c",),
+            new_value = ("softmmu", "arch_init.c")
+        )
+    ],
+    u"b69c3c21a5d11075d42100d5cfe0a736593fae6b":
+    [
+        # between v5.0.0 and v5.1.0-rc0
+        # qdev: Unrealize must not fail
+        QEMUVersionParameterDescription("*Unrealize has errp",
+            old_value = True,
+            new_value = False
+        )
+    ],
+    u"4f67d30b5e74e060b8dbe10528829b47345cd6e8":
+    [
+        # between v4.2.0 and v5.0.0-rc0
+        # qdev: set properties with device_class_set_props()
+        QEMUVersionParameterDescription("use device_class_set_props",
+            new_value = True,
+            old_value = False
+        )
+    ],
+    u"9940b2cfbc05cdffdf6b42227a80cb1e6d2a85c2":
+    [
+        # between 5.0.0 and v5.1.0-rc0
+        # qdev: New qdev_new(), qdev_realize(), etc.
+        # This heuristics also touches device instantiation for specific buses:
+        # - sysbus
+        # TODO: PCI
+        QEMUVersionParameterDescription("use qdev_new",
+            new_value = True,
+            old_value = False
+        )
+    ],
+    u"083b266f69f36195aef22cb224f86b99ca0d6feb":
+    [
+        # between v4.2.0 and 5.0.0-rc0
+        # chardev: Use QEMUChrEvent enum in IOEventHandler typedef
+        QEMUVersionParameterDescription("use QEMUChrEvent",
+            new_value = True,
+            old_value = False
+        )
+    ],
+    u"5325cc34a2ca985283134c7e264be7851b112d4e":
+    [
+        # between 5.0.0 and v5.1.0-rc0
+        # qom: Put name parameter before value / visitor parameter
+        QEMUVersionParameterDescription("property name before value",
+            new_value = True,
+            old_value = False
+        )
+    ]
 }
 
 version_parameters = None

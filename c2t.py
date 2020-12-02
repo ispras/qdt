@@ -139,6 +139,9 @@ class DebugSession(object):
             name = "RSP-" + self.session_type + "-" + str(self.port),
             target = self.thread_main
         )
+
+        self._handling_timeout = False
+
         t.start()
         t.join(timeout = timeout)
 

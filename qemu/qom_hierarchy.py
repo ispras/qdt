@@ -130,6 +130,11 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
         line_adapter = gvl_adptr
     )
 
+    # Update GLV adapter cache now to use it during next device tree updating.
+    yield True
+
+    gvl_adptr.cm.store_cache()
+
     port = find_free_port(4321)
     qemu_debug_addr = "localhost:%u" % port
     Popen(["gdbserver", qemu_debug_addr, qemu_exec])

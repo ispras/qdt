@@ -21,7 +21,9 @@ def get_elffile_loading(elffile):
         segments = filter(
             lambda x: x.header.p_type == "PT_LOAD", elffile.iter_segments()
         )
-        loading = map(lambda x: (x.data(), x.header.p_vaddr), segments)
+        # Note, pyrsp.RSP.store method expects physical address, so we use
+        # p_paddr.
+        loading = map(lambda x: (x.data(), x.header.p_paddr), segments)
     else:
         rel_handler = RelocationHandler(elffile)
         loading = []

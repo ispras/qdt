@@ -18,6 +18,9 @@ from common import (
 from traceback import (
     print_exc
 )
+from re import (
+    compile,
+)
 
 
 # less value = more info
@@ -42,6 +45,12 @@ def is_in_asm(l):
 def is_in_asm_instr(l):
     return l[:2] == "0x"
 
+def is_trace_skipped(l):
+    return l.startswith("Stopped execution of TB chain before 0x")
+
+
+re_space = compile("\\s+")
+simple_byte_hex = "%02x".__mod__
 
 class InInstr(object):
 
@@ -56,11 +65,54 @@ class InInstr(object):
 
         self.addr = int(parts[0], base = 16)
 
-        self.disas = ":".join(parts[1:])
-        self.size = 1
+        self.disas = disas = ":".join(parts[1:]).strip()
+        words_iter = iter(re_space.split(disas))
+
+        bytes_ = []
+
+        while True: # not a loop: a block with many exits
+            for w in words_iter:
+                # some instructions are hex-like (e.g.: x86 addb)
+                if len(w) != 2:
+                    opcode = w
+                    break
+
+                try:
+                    b = int(w, base = 16)
+                except ValueError:
+                    opcode = w
+                    break
+
+                bytes_.append(b)
+            else:
+                opcode = None
+                break
+
+            for w in words_iter:
+                opcode += " " + w
+
+            break
+
+        if bytes_:
+            self.bytes = tuple(bytes_)
+            self.size = len(bytes_)
+        else:
+            self.bytes = None
+            self.size = None
+            if not opcode:
+                raise ValueError("Neither bytes nor opcode: '%s'" % l)
+
+        self.opcode =  opcode
 
     def __str__(self):
-        return self.l
+        bytes_ = self.bytes
+        if bytes_:
+            return ("%-40s" % (self.opcode or "[no opcode]")
+                +  " ".join(map(simple_byte_hex, self.bytes))
+            )
+        else:
+            # Note, an opcode must be provided.
+            return "%-40s" % self.opcode
 
 
 class TraceInstr(object):
@@ -170,8 +222,9 @@ hexDigits = set("0123456789abcdefABCDEF")
 
 class QTrace(object):
 
-    def __init__(self, lines):
+    def __init__(self, lines, lineno):
         self.header = header = lines[0].rstrip()
+        self.lineno = lineno
 
         l0 = iter(header)
 
@@ -303,6 +356,7 @@ class QEMULog(object):
                 instr = TraceInstr(instr, t)
 
                 tb = instr.tb
+                tb_cache_version = self.tbIdMap[tb][1]
 
                 # chain loop detection
                 visitedTb = set([tb])
@@ -315,7 +369,12 @@ class QEMULog(object):
 
                     addr += instr.size
 
-                    nextInstr = self.lookInstr(addr, t.cacheVersion)
+                    # A TB can be overlapped but still alive.
+                    # The TB cannot jump to overlapping TB until end.
+                    # So, we must use cache version of the TB to lookup next
+                    # instruction of current TB instead of instruction copy
+                    # from overlapping TB.
+                    nextInstr = self.lookInstr(addr, tb_cache_version)
 
                     nextTB = False
 
@@ -348,8 +407,8 @@ class QEMULog(object):
 
                         tb = nextTbIdx
 
-                        addr = self.tbIdMap[tb][0]
-                        nextInstr = self.lookInstr(addr, t.cacheVersion)
+                        addr, tb_cache_version = self.tbIdMap[tb]
+                        nextInstr = self.lookInstr(addr, tb_cache_version)
 
                         if nextInstr is None:
                             break
@@ -376,6 +435,9 @@ class QEMULog(object):
 
         tb = next(self.tbCounter)
 
+        # cache reference
+        commit_instr = self.commit_instr
+
         prev_instr = None
         for l in in_asm:
             try:
@@ -385,29 +447,86 @@ class QEMULog(object):
                 print_exc()
                 continue
 
-            instr.tb = tb
+            if not instr.opcode:
+                if prev_instr is None:
+                    raise RuntimeError(
+                        "in_asm record starts with an instruction tail:\n" +
+                        "\n".join(in_asm) + "\n"
+                    )
+                if DEBUG < 3:
+                    print("Join multiline instruction '%s' + '%s'" % (
+                        prev_instr, instr
+                    ))
+                prev_instr.bytes += instr.bytes
+                prev_instr.size += instr.size
+                prev_instr.l += "\n" + instr.l
+            else:
+                instr.tb = tb
 
-            if prev_instr is None:
-                self.current_cache.tbMap[instr.addr] = tb
-                self.tbIdMap[tb] = (instr.addr, len(self.in_asm))
-                instr.first = True
+                if prev_instr is None:
+                    instr.first = True
+                else:
+                    # Some QEMU disassembler implementations do not provide
+                    # bytes of instructions.
+                    if prev_instr.size is None:
+                        prev_instr.size = instr.addr - prev_instr.addr
 
-            if prev_instr:
-                prev_instr.size = instr.addr - prev_instr.addr
+                    commit_instr(prev_instr, tb)
 
-            prev_instr = instr
+                prev_instr = instr
 
-            if self.current_cache.overlaps(instr.addr, instr.size):
-                self.cache_overwritten()
+        if prev_instr is None:
+            # All instructions are bad or in_asm is empty?
+            return
 
-            self.current_cache.commit(instr)
+        if prev_instr.size is None:
+            # TODO: how to get it if disassembler did not provide bytes?
+            prev_instr.size = 1
 
-    def new_trace(self, trace):
+        commit_instr(prev_instr, tb)
+
+    def commit_instr(self, instr, tb):
+        cache = self.current_cache
+        if cache.overlaps(instr.addr, instr.size):
+            self.cache_overwritten()
+            cache = self.current_cache
+
+            # if at least one instruction of a TB overlaps another TB,
+            # the overlapping TB becomes related to new cache version.
+            if not instr.first:
+                self.tbIdMap[tb][1] = len(self.in_asm)
+
+        if instr.first:
+            self.tbIdMap[tb] = [instr.addr, len(self.in_asm)]
+
+            # It looks like, only first byte of an instruction is
+            # really needed to be accounted in tbMap.
+            cache.tbMap[instr.addr] = tb
+
+        cache.commit(instr)
+
+    def new_trace(self, trace, lineno):
         if DEBUG < 1:
             print("--- trace")
             print("".join(trace))
 
-        t = QTrace(trace)
+        if is_trace_skipped(trace[-1]):
+            addr = trace[-1][37:].split()[0]
+            if addr in trace[0]:
+                if DEBUG < 2:
+                    print("Skipping not executed trace at line %s:\n%s" % (
+                        lineno, "".join(trace)
+                    ))
+                return None
+            elif DEBUG < 3:
+                # We don't skip the trace because at least one TB is executed.
+                # Getting really executed TB's is an interesting problem...
+                # Don't use linking (not chaining) if you want a precise log.
+                # The situation is a corner case, so print it in less verbose
+                # debug mode too.
+                print("TB chain with skipped tail at line " + str(lineno))
+
+        t = QTrace(trace, lineno)
         t.cacheVersion = len(self.in_asm)
 
         t.prev = self.prevTrace
@@ -492,7 +611,10 @@ class QEMULog(object):
 
             if is_trace(l0):
                 trace = [l0]
+                trace_lineno = lineno
 
+                # Note, there is no problem to yield `None` if a trace has been
+                # skipped (see `new_trace`).
                 l1 = yield prev_trace; lineno += 1
                 # We should prev_trace = None here, but it will be
                 # overwritten below unconditionally.
@@ -506,11 +628,15 @@ class QEMULog(object):
                         l0 = l1
                         break
                     trace.append(l1)
+                    # Ensure that skip mark is always at end of trace.
+                    if is_trace_skipped(l1):
+                        l0 = yield; lineno += 1
+                        break
                     l1 = yield; lineno += 1
                 else:
                     l0 = l1
 
-                prev_trace = self.new_trace(trace)
+                prev_trace = self.new_trace(trace, trace_lineno)
                 continue
 
             if is_linking(l0):

@@ -17,9 +17,6 @@ __all__ = [
   , "NodeVisitor"
 ]
 
-from copy import (
-    copy
-)
 from itertools import (
     count,
 )
@@ -41,7 +38,6 @@ from .code_gen_helpers import (
     gen_array_declaration,
 )
 from .chunks import (
-    HeaderInclusion,
     MacroDefinition,
     MacroTypeChunk,
     PointerTypeDeclaration,
@@ -696,7 +692,8 @@ class Function(Type):
         body = None,
         static = None,
         inline = False,
-        used_types = []
+        used_types = [],
+        used_globals = None
     ):
         new_f = Function(
             name = name,
@@ -705,7 +702,8 @@ class Function(Type):
             args = self.args,
             static = self.static if static is None else static,
             inline = inline,
-            used_types = used_types
+            used_types = used_types,
+            used_globals = used_globals
         )
         return new_f
 
