@@ -192,12 +192,27 @@ def iter_modules(root, prefix = ""):
             yield full_name, prefix + node
 
 
-def Run(*a, **kw):
-    print(" ".join(a[0]))
-    kw["stdin"] = PIPE
-    kw["stdout"] = PIPE
-    kw["stderr"] = PIPE
-    return Popen(*a, **kw)
+class Run(Popen):
+
+    def __init__(self, *a, **kw):
+        kw["stdin"] = PIPE
+        kw["stdout"] = PIPE
+        kw["stderr"] = PIPE
+                # Note, `Popen.encoding` is not availble in Py2.
+        self.__encoding = kw.pop("encoding", "utf-8")
+
+        self.__verbose = kw.pop("verbose", True)
+
+        if self.__verbose:
+            print(" ".join(a[0]))
+
+        super(Run, self).__init__(*a, **kw)
+
+    def communicate(self, input = None, **kw):
+        if input is not None:
+            input = input.encode(self.__encoding)
+        out, err = super(Run, self).communicate(input = input, **kw)
+        return out.decode(self.__encoding), err.decode(self.__encoding)
 
 
 class CFunction(object):
@@ -272,7 +287,7 @@ def main():
         print(p1out)
 
     with open(ctags_target, "wb") as f:
-        f.write(p1out)
+        f.write(p1out.encode("utf-8"))
 
     p2 = Run(["ctags", "-f", "-"] + pass2_ctags_flags + [ctags_target])
 
@@ -289,7 +304,7 @@ def main():
     ctags = ino + ".ctags"
 
     with open(ctags, "wb") as f:
-        f.write(p2out)
+        f.write(p2out.encode("utf-8"))
 
     functions = {}
 
@@ -315,7 +330,7 @@ def main():
     # some ctags based preprocessing is required
 
     with open(ino, "rb") as fin:
-        ino_content = fin.read()
+        ino_content = fin.read().decode("utf-8")
 
     ino_lines = ino_content.splitlines()
 
@@ -359,7 +374,7 @@ def main():
     cpp = ino + ".cpp"
 
     with open(cpp, "wb") as fout:
-        fout.write(ino_content)
+        fout.write(ino_content.encode("utf-8"))
 
     obj = ino + ".o"
 
@@ -411,7 +426,7 @@ def main():
 
     elftxt = elf + ".txt"
     with open(elftxt, "wb") as f:
-        f.write(reout)
+        f.write(reout.encode("utf-8"))
 
     eep = ino + ".eep.hex"
 
