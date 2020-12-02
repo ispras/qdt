@@ -3,24 +3,24 @@ from os.path import (
     dirname,
     isdir,
     join,
-    splitext
+    splitext,
 )
 from os import (
     sep,
     mkdir,
-    listdir
+    listdir,
 )
 from common import (
     makedirs,
-    ee
+    ee,
 )
 from subprocess import (
     Popen,
-    PIPE
+    PIPE,
 )
 from source import (
     ctags_parser,
-    ctags_lexer
+    ctags_lexer,
 )
 from argparse import (
     ArgumentParser,
