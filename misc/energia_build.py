@@ -4,6 +4,7 @@ from os.path import (
     isdir,
     join,
     splitext,
+    basename,
 )
 from os import (
     sep,
@@ -237,13 +238,18 @@ def main():
 
     args = ap.parse_args()
 
-    if not isdir("build"):
-        mkdir("build")
+    ino = args.ino[0]
+
+    ino_dir = dirname(ino)
+    build_dir = join(ino_dir, ".build")
+
+    if not isdir(build_dir):
+        mkdir(build_dir)
 
     core_objs = []
 
     for src, sfx in sorted(iter_modules(ENERGIA_CORE)):
-        obj = join("build", splitext(sfx)[0] + ".o")
+        obj = join(build_dir, splitext(sfx)[0] + ".o")
 
         objdir = dirname(obj)
         if objdir:
@@ -265,7 +271,7 @@ def main():
 
         core_objs.append(obj)
 
-    core = join("build", "core.a")
+    core = join(build_dir, "core.a")
     if not exists(core):
         for obj in core_objs:
             ar = Run([AR, "rcs", core, obj])
@@ -283,14 +289,14 @@ def main():
             if arrc:
                 return
 
-    ino = args.ino[0]
-
     # print(" ".join(pass1_gcc_flags))
 
     p1 = Run([GPP] + pass1_gcc_flags + [ino, "-"])
     p1out, p1err = p1.communicate()
 
-    ctags_target = ino + ".4ctags"
+    ino_base = splitext(basename(ino))[0]
+
+    ctags_target = join(build_dir, ino_base + ".4ctags")
 
     if p1err:
         print(p1err)
@@ -314,7 +320,7 @@ def main():
     else:
         print(p2out)
 
-    ctags = ino + ".ctags"
+    ctags = join(build_dir, ino_base + ".ctags")
 
     with open(ctags, "wb") as f:
         f.write(p2out.encode("utf-8"))
@@ -384,12 +390,12 @@ def main():
     # add Energia header inclusion
     ino_content = "#include <Energia.h>\n\n" + ino_content
 
-    cpp = ino + ".cpp"
+    cpp = join(build_dir, ino_base + ".cpp")
 
     with open(cpp, "wb") as fout:
         fout.write(ino_content.encode("utf-8"))
 
-    obj = ino + ".o"
+    obj = join(build_dir, ino_base +  ".o")
 
     p3 = Run([GPP] + pass3_gcc_flags + [cpp, "-o", obj])
     p3out, p3err = p3.communicate()
@@ -398,7 +404,7 @@ def main():
     if p3out:
         print("\nstdout\n\n" + p3out)
     if p3err:
-        errs = ino + ".errs"
+        errs = join(ino_dir, ino_base + ".errs")
         with open(errs, "wb") as f:
             f.write(p3err)
 
@@ -408,7 +414,7 @@ def main():
         # GPP failed to compile
         return
 
-    elf = ino + ".elf"
+    elf = join(ino_dir, ino_base + ".elf")
 
     # because of multiple definition of `__isr_9' and `__isr_8'
     core_objs = [f for f in core_objs if "Tone.o" not in f]
@@ -441,7 +447,7 @@ def main():
     with open(elftxt, "wb") as f:
         f.write(reout.encode("utf-8"))
 
-    eep = ino + ".eep.hex"
+    eep = join(ino_dir, ino_base + ".eep.hex")
 
     p5 = Run([OBJCOPY] + pass5_objcopy_eeprom_flags + [elf, eep])
     p5.wait()
@@ -456,7 +462,7 @@ def main():
         # objcopy failed
         return
 
-    _hex = ino + ".hex"
+    _hex = join(ino_dir, ino_base + ".hex")
     p5_2 = Run([OBJCOPY] + pass5_objcopy_noeeprom_flags + [elf, _hex])
     p5_2.wait()
     p5_2out, p5_2err = p5_2.communicate()
