@@ -2,7 +2,6 @@ from os.path import (
     exists,
     dirname,
     isdir,
-    expanduser,
     join,
     splitext
 )
@@ -23,6 +22,10 @@ from source import (
     ctags_parser,
     ctags_lexer
 )
+from argparse import (
+    ArgumentParser,
+)
+
 
 ENERGIA_PATH = ee("ENERGIA_PATH")
 TOOLCHAIN_PATH = join(ENERGIA_PATH, "hardware", "tools", "msp430", "bin")
@@ -224,6 +227,16 @@ class CFunction(object):
 
 
 def main():
+    ap = ArgumentParser(
+        description = ".ino file compiller for MSP430"
+    )
+    ap.add_argument("ino",
+        nargs = 1,
+        help = "*.ino file to compile"
+    )
+
+    args = ap.parse_args()
+
     if not isdir("build"):
         mkdir("build")
 
@@ -270,7 +283,7 @@ def main():
             if arrc:
                 return
 
-    ino = join(expanduser("~"), "Energia", "ASCIITable", "ASCIITable.ino")
+    ino = args.ino[0]
 
     # print(" ".join(pass1_gcc_flags))
 
