@@ -18,6 +18,7 @@ from common import (
 from subprocess import (
     Popen,
     PIPE,
+    list2cmdline,
 )
 from source import (
     ctags_parser,
@@ -36,6 +37,7 @@ GCC = join(TOOLCHAIN_PATH, "msp430-gcc")
 AR = join(TOOLCHAIN_PATH, "msp430-ar")
 OBJCOPY = join(TOOLCHAIN_PATH, "msp430-objcopy")
 READELF = join(TOOLCHAIN_PATH, "msp430-readelf")
+MSPDEBUG = join(ENERGIA_PATH, "hardware", "tools", "mspdebug", "mspdebug")
 
 CORE_SFX = ["hardware", "energia", "msp430", "cores", "msp430"]
 TOOLCHAIN_INC_SFX = ["hardware", "tools", "msp430", "include"]
@@ -180,6 +182,11 @@ pass5_objcopy_noeeprom_flags = [
     "-R", ".eeprom"
 ]
 
+pass6_mspdebug_flags = [
+    "rf2500",
+    "--force-reset"
+]
+
 MODULE_EXT = set([".c", ".cpp"])
 
 
@@ -234,6 +241,10 @@ def main():
     ap.add_argument("ino",
         nargs = 1,
         help = "*.ino file to compile"
+    )
+    ap.add_argument("-p", "--program",
+        action = "store_true",
+        help = "program compiled binary to a device using `mspdebug rf2500`"
     )
 
     args = ap.parse_args()
@@ -476,6 +487,19 @@ def main():
         # objcopy failed
         return
 
+    if args.program:
+        print("programming")
+
+        mspdebug_command = list2cmdline(["prog", _hex])
+        print("mspdebug command: " + mspdebug_command)
+
+        p6 = Run([MSPDEBUG] + pass6_mspdebug_flags)
+        p6_out, p6_err = p6.communicate(mspdebug_command)
+
+        if p6_out:
+            print("\nstdout\n\n" + p6_out)
+        if p6_err:
+            print("\nstderr\n\n" + p6_err)
 
 if __name__ == "__main__":
     main()
