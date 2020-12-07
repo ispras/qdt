@@ -175,6 +175,9 @@ pass it with name "inner_kw" in "kw".
         while m is not None:
             if m is inner:
                 break
+            if isinstance(m, str): # E.g., combobox's popdown list.
+                # Can't determine.
+                return
             m = m.master
         else:
             # Outer widget
