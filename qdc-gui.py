@@ -117,7 +117,8 @@ class ProjectGeneration(CoTask):
 
         yield self.p.co_gen_all(self.s,
             known_targets = cur_qvd.qvc.known_targets,
-            with_chunk_graph = self.gen_chunk_graphs
+            with_chunk_graph = self.gen_chunk_graphs,
+            include_paths = tuple(path for path, _ in cur_qvd.include_paths)
         )
 
     def on_failed(self):

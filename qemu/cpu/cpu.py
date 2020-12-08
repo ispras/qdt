@@ -256,6 +256,7 @@ class CPUType(QOMCPU):
         with_chunk_graph = False,
         intermediate_chunk_graphs = False,
         with_debug_comments = False,
+        include_paths = tuple(),
         **_
     ):
         import cpu_imports
@@ -355,7 +356,8 @@ class CPUType(QOMCPU):
 
                 sf.generate(f_writer,
                     graphs_prefix = graphs_prefix,
-                    gen_debug_comments = with_debug_comments
+                    gen_debug_comments = with_debug_comments,
+                    include_paths = include_paths
                 )
 
         path = self.gen_files["translate.inc.c"].path
