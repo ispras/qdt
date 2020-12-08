@@ -550,18 +550,26 @@ class QemuVersionDescription(object):
 
         print("Qemu version is {}".format(self.qemu_version))
 
-        self.include_paths = (
-            # path, need recursion
-            ("include", True),
-            ("tcg", False)
-        )
-
-        self.include_abs_paths = list(
-            join(self.src_path, d) for d, _ in self.include_paths
-        )
-
         self.qvc = None
         self.qvc_is_ready = False
+
+    @lazy
+    def include_paths(self):
+        if get_vp("tcg headers prefix") == "tcg/":
+            return (
+                # path, need recursion
+                ("include", True),
+            )
+        else:
+            return (
+                # path, need recursion
+                ("include", True),
+                ("tcg", False)
+            )
+
+    @lazy
+    def include_abs_paths(self):
+        return list(join(self.src_path, d) for d, _ in self.include_paths)
 
     # The method made the description active
     def use(self):
