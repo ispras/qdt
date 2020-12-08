@@ -1602,6 +1602,15 @@ qemu_heuristic_db = {
             old_value = False,
             new_value = True
         )
+    ],
+    u"fc59d2d870caddf5cd9c85836ee4a8c59ffe7617":
+    [
+        # qemu_log_lock/unlock now preserves the qemu_logfile handle
+        QEMUVersionParameterDescription(
+            "qemu_log_lock|unlock preserves logfile handle",
+            old_value = False,
+            new_value = True
+        )
     ]
 }
 
