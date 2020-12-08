@@ -1238,7 +1238,7 @@ digraph Chunks {
                 self.remove_dup_chunk(ch, prev_ch)
                 func_dec[f] = ch
 
-    def header_paths_shortening(self):
+    def header_paths_shortening(self, include_paths):
         origin_dir = dirname(self.origin.path)
 
         for ch in self.chunks:
@@ -1250,15 +1250,14 @@ digraph Chunks {
                 path = (basename(header_path),)
             else:
                 path = path2tuple(header_path)
-                # TODO: those are domain specific values, make them global
-                # parameters
-                if path[0] in ("include", "tcg"):
+                if path[0] in include_paths:
                     path = path[1:]
             ch.path = path
 
     def generate(self, writer,
         graphs_prefix = None,
-        gen_debug_comments = False
+        gen_debug_comments = False,
+        include_paths = tuple()
     ):
         # check for duplicate chunks for same origin
         self.remove_chunks_with_same_origin()
@@ -1271,7 +1270,7 @@ digraph Chunks {
         if OPTIMIZE_INCLUSIONS:
             self.optimize_inclusions(graphs_prefix = graphs_prefix)
 
-        self.header_paths_shortening()
+        self.header_paths_shortening(include_paths)
 
         # semantic sort
         self.chunks = OrderedSet(sorted(self.chunks))
