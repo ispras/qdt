@@ -782,25 +782,42 @@ def fill_gen_intermediate_code_body(cputype, function, cpu_env):
         OpAssign(
             OpSDeref(tb, "icount"),
             num_insns
+        )
+    )
+
+    # Disas
+    disas_statements = [
+        Call(
+            "qemu_log",
+            "IN: %s\\n",
+            Call("lookup_symbol", pc_start)
         ),
-        # Disas
+        Call("log_target_disas", *log_target_disas_args),
+        Call("qemu_log", "\\n")
+    ]
+
+    if get_vp("qemu_log_lock|unlock preserves logfile handle"):
+        logfile = Pointer(Type["FILE"])("logfile")
+        disas_statements = (
+            [ Declare(OpDeclareAssign(logfile, Call("qemu_log_lock"))) ] +
+            disas_statements +
+            [ Call("qemu_log_unlock", logfile) ]
+        )
+    else:
+        disas_statements = (
+            [ Call("qemu_log_lock") ] +
+            disas_statements +
+            [ Call("qemu_log_unlock") ]
+        )
+
+    body(
         Ifdef("DEBUG_DISAS")(
             BranchIf(
                 OpLogAnd(
                     Call("qemu_loglevel_mask", MCall("CPU_LOG_TB_IN_ASM")),
                     Call("qemu_log_in_addr_range", pc_start)
                 )
-            )(
-                Call("qemu_log_lock"),
-                Call(
-                    "qemu_log",
-                    "IN: %s\\n",
-                    Call("lookup_symbol", pc_start)
-                ),
-                Call("log_target_disas", *log_target_disas_args),
-                Call("qemu_log", "\\n"),
-                Call("qemu_log_unlock")
-            )
+            )(*disas_statements)
         )
     )
 
