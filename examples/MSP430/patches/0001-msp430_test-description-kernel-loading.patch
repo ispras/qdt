@@ -1,0 +1,58 @@
+From 58b11ee8ecf756b68d9562ff8ff4842c9696d625 Mon Sep 17 00:00:00 2001
+Message-Id: <58b11ee8ecf756b68d9562ff8ff4842c9696d625.1607512476.git.real@ispras.ru>
+From: Efimov Vasily <real@ispras.ru>
+Date: Wed, 9 Dec 2020 13:56:38 +0300
+Subject: [PATCH] msp430_test: description & kernel loading
+
+Signed-off-by: Efimov Vasily <real@ispras.ru>
+---
+ hw/msp430/msp430_test.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/hw/msp430/msp430_test.c b/hw/msp430/msp430_test.c
+old mode 100644
+new mode 100755
+index 599a25f44e..5ddfa1f7b4
+--- a/hw/msp430/msp430_test.c
++++ b/hw/msp430/msp430_test.c
+@@ -7,6 +7,7 @@
+ #include "hw/boards.h"
+ #include "hw/msp430-all/msp430_hwm.h"
+ #include "sysemu/reset.h"
++#include "hw/loader.h"
+ 
+ static void msp430_test_cpu_reset(void *opaque)
+ {
+@@ -39,13 +40,28 @@ static void init_msp430_test(MachineState *machine)
+     rom = g_new(MemoryRegion, 1);
+     memory_region_init_ram(rom, NULL, "ROM", 0xFC00, NULL);
+     memory_region_add_subregion_overlap(mem, 0x400, rom, 1);
++
++    if (machine->kernel_filename) {
++        /* load guest from an ELF produced by msp430-gcc */
++        load_elf(
++            machine->kernel_filename,
++            NULL, NULL, NULL, /* no address translation */
++            NULL, /* entry point is written into interrupt vector table */
++            NULL, NULL, /* bounds of loaded data is not interesting */
++            NULL, /* no pflags required */
++            0, /* little-endian */
++            105, /* Texas Instruments embedded microcontroller msp430 */
++            0, /* clearing LSB of symbol addresses is not required */
++            0 /* data bytes swapping is not required */
++        );
++    }
+ }
+ 
+ static void machine_msp430_test_class_init(ObjectClass *oc, void *opaque)
+ {
+     MachineClass *mc = MACHINE_CLASS(oc);
+ 
+-    mc->desc = "TODO: provide description for msp430-test";
++    mc->desc = "A test purpose machine with msp430x2xx-like memory layout";
+     mc->init = init_msp430_test;
+ }
+ 
+-- 
+2.17.1
+
