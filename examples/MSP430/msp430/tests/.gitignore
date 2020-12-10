@@ -1,0 +1,9 @@
+# Python caches for test scripts.
+*.pyc
+# Those files are produced by test suite.
+*.o
+*.elf
+*.elf.txt
+*.hex
+*.disas
+*.log

@@ -1,0 +1,12 @@
+mov #4, r4
+mov #5, r5
+mov #6, r6
+mov #7, r7
+mov #8, r8
+mov #9, r9
+mov #10, r10
+mov #11, r11
+mov #12, r12
+mov #13, r13
+mov #14, r14
+mov #15, r15

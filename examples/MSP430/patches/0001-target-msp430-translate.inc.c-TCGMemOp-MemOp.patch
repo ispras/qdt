@@ -1,0 +1,774 @@
+From 442ec090fcd944880be92a56f6b96d9ca1047bf6 Mon Sep 17 00:00:00 2001
+Message-Id: <442ec090fcd944880be92a56f6b96d9ca1047bf6.1607512476.git.real@ispras.ru>
+From: Efimov Vasily <real@ispras.ru>
+Date: Wed, 9 Dec 2020 14:02:34 +0300
+Subject: [PATCH] target/msp430/translate.inc.c: TCGMemOp -> MemOp
+
+Signed-off-by: Efimov Vasily <real@ispras.ru>
+---
+ target/msp430/translate.inc.c | 168 +++++++++++++++++-----------------
+ 1 file changed, 84 insertions(+), 84 deletions(-)
+
+diff --git a/target/msp430/translate.inc.c b/target/msp430/translate.inc.c
+index 6bfbe5a786..668c6f74d1 100644
+--- a/target/msp430/translate.inc.c
++++ b/target/msp430/translate.inc.c
+@@ -62,7 +62,7 @@ static inline void add_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* add_cg2_idx: src + dst -> dst; NZCV; see INC, INCD, RLA; */
+     if (bw) {
+@@ -287,7 +287,7 @@ static inline void add_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* add_idx_idx: src + dst -> dst; NZCV; see INC, INCD, RLA; */
+     if (bw) {
+@@ -415,7 +415,7 @@ static inline void add_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* add_idx_reg: src + dst -> dst; NZCV; see INC, INCD, RLA; */
+     if (bw) {
+@@ -556,7 +556,7 @@ static inline void add_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* add_imm_idx: src + dst -> dst; NZCV; see INC, INCD, RLA; */
+     if (bw) {
+@@ -765,7 +765,7 @@ static inline void add_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* add_reg_idx: src + dst -> dst; NZCV; see INC, INCD, RLA; */
+     if (bw) {
+@@ -910,7 +910,7 @@ static inline void add_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* add_reg_reg: src + dst -> dst; NZCV; see INC, INCD, RLA; */
+     if (bw) {
+@@ -1070,7 +1070,7 @@ static inline void addc_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* addc_cg2_idx: src + dst + C -> dst; NZCV; see ADC, RLC; */
+     if (bw) {
+@@ -1313,7 +1313,7 @@ static inline void addc_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* addc_idx_idx: src + dst + C -> dst; NZCV; see ADC, RLC; */
+     if (bw) {
+@@ -1451,7 +1451,7 @@ static inline void addc_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* addc_idx_reg: src + dst + C -> dst; NZCV; see ADC, RLC; */
+     if (bw) {
+@@ -1602,7 +1602,7 @@ static inline void addc_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* addc_imm_idx: src + dst + C -> dst; NZCV; see ADC, RLC; */
+     if (bw) {
+@@ -1831,7 +1831,7 @@ static inline void addc_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* addc_reg_idx: src + dst + C -> dst; NZCV; see ADC, RLC; */
+     if (bw) {
+@@ -1986,7 +1986,7 @@ static inline void addc_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* addc_reg_reg: src + dst + C -> dst; NZCV; see ADC, RLC; */
+     if (bw) {
+@@ -2156,7 +2156,7 @@ static inline void and_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* and_cg2_idx: src & dst -> dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -2339,7 +2339,7 @@ static inline void and_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* and_idx_idx: src & dst -> dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -2447,7 +2447,7 @@ static inline void and_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* and_idx_reg: src & dst -> dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -2568,7 +2568,7 @@ static inline void and_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* and_imm_idx: src & dst -> dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -2737,7 +2737,7 @@ static inline void and_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* and_reg_idx: src & dst -> dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -2862,7 +2862,7 @@ static inline void and_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* and_reg_reg: src & dst -> dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -3001,7 +3001,7 @@ static inline void bic_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bic_cg2_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+@@ -3110,7 +3110,7 @@ static inline void bic_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bic_idx_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+@@ -3181,7 +3181,7 @@ static inline void bic_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int mask;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bic_idx_reg: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+@@ -3265,7 +3265,7 @@ static inline void bic_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bic_imm_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+@@ -3360,7 +3360,7 @@ static inline void bic_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bic_reg_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+@@ -3448,7 +3448,7 @@ static inline void bic_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int mask;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bic_reg_reg: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+@@ -3551,7 +3551,7 @@ static inline void bis_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bis_cg2_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+@@ -3654,7 +3654,7 @@ static inline void bis_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bis_idx_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+@@ -3722,7 +3722,7 @@ static inline void bis_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int mask;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bis_idx_reg: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+@@ -3803,7 +3803,7 @@ static inline void bis_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bis_imm_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+@@ -3892,7 +3892,7 @@ static inline void bis_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bis_reg_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+@@ -3977,7 +3977,7 @@ static inline void bis_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int mask;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bis_reg_reg: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+@@ -4078,7 +4078,7 @@ static inline void bit_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bit_cg2_idx: src & dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -4246,7 +4246,7 @@ static inline void bit_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bit_idx_idx: src & dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -4352,7 +4352,7 @@ static inline void bit_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bit_idx_reg: src & dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -4460,7 +4460,7 @@ static inline void bit_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bit_imm_idx: src & dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -4614,7 +4614,7 @@ static inline void bit_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bit_reg_idx: src & dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -4737,7 +4737,7 @@ static inline void bit_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* bit_reg_reg: src & dst; NZC; 0 -> V; */
+     if (bw) {
+@@ -4927,7 +4927,7 @@ static inline void call_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv dst_val = tcg_temp_local_new();
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv ret_pc = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* call_ind: dst -> tmp; SP - 2 -> SP; PC -> @SP; tmp & ~(0xF << 16) -> PC;
+         */
+     if (bw) {
+@@ -4979,7 +4979,7 @@ static inline void call_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     TCGv dst_val = tcg_temp_local_new();
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv ret_pc = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* call_reg: dst -> tmp; SP - 2 -> SP; PC -> @SP; tmp & ~(0xF << 16) -> PC;
+         */
+     if (ad) {
+@@ -5054,7 +5054,7 @@ static inline void cmp_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* cmp_cg2_idx: ~src + 1 + dst; NZCV; */
+     if (bw) {
+@@ -5266,7 +5266,7 @@ static inline void cmp_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* cmp_idx_idx: ~src + 1 + dst; NZCV; */
+     if (bw) {
+@@ -5394,7 +5394,7 @@ static inline void cmp_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* cmp_idx_reg: ~src + 1 + dst; NZCV; */
+     if (bw) {
+@@ -5524,7 +5524,7 @@ static inline void cmp_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* cmp_imm_idx: ~src + 1 + dst; NZCV; */
+     if (bw) {
+@@ -5722,7 +5722,7 @@ static inline void cmp_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* cmp_reg_idx: ~src + 1 + dst; NZCV; */
+     if (bw) {
+@@ -5867,7 +5867,7 @@ static inline void cmp_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* cmp_reg_reg: ~src + 1 + dst; NZCV; */
+     if (bw) {
+@@ -6018,7 +6018,7 @@ static inline void dadd_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* dadd_cg2_idx: src + dst + C -> dst (decimally); Z; specific NC; see DADC;
+         */
+@@ -6267,7 +6267,7 @@ static inline void dadd_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* dadd_idx_idx: src + dst + C -> dst (decimally); Z; specific NC; see DADC;
+         */
+@@ -6408,7 +6408,7 @@ static inline void dadd_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* dadd_idx_reg: src + dst + C -> dst (decimally); Z; specific NC; see DADC;
+         */
+@@ -6562,7 +6562,7 @@ static inline void dadd_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* dadd_imm_idx: src + dst + C -> dst (decimally); Z; specific NC; see DADC;
+         */
+@@ -6797,7 +6797,7 @@ static inline void dadd_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* dadd_reg_idx: src + dst + C -> dst (decimally); Z; specific NC; see DADC;
+         */
+@@ -6955,7 +6955,7 @@ static inline void dadd_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* dadd_reg_reg: src + dst + C -> dst (decimally); Z; specific NC; see DADC;
+         */
+@@ -7269,7 +7269,7 @@ static inline void mov_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* mov_cg2_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+@@ -7348,7 +7348,7 @@ static inline void mov_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* mov_idx_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+@@ -7406,7 +7406,7 @@ static inline void mov_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int mask;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* mov_idx_reg: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+@@ -7473,7 +7473,7 @@ static inline void mov_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* mov_imm_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+@@ -7538,7 +7538,7 @@ static inline void mov_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* mov_reg_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+@@ -7613,7 +7613,7 @@ static inline void mov_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int mask;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* mov_reg_reg: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+@@ -7750,7 +7750,7 @@ static inline void push_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv dst_val = tcg_temp_local_new();
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+-    TCGMemOp size;
++    MemOp size;
+     /* push_ind: SP - 2 -> SP; dst -> @SP; */
+     if (bw) {
+         msb = 0x80;
+@@ -7805,7 +7805,7 @@ static inline void push_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     TCGv dst_val = tcg_temp_local_new();
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+-    TCGMemOp size;
++    MemOp size;
+     /* push_reg: SP - 2 -> SP; dst -> @SP; */
+     if (bw) {
+         msb = 0x80;
+@@ -8024,7 +8024,7 @@ static inline void rra_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* rra_ind: dst[i] -> dst[i-1]; dst[MSB-1] -> dst[MSB]; i>MSB, 0 -> dst[i];
+         */
+     if (bw) {
+@@ -8123,7 +8123,7 @@ static inline void rra_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* rra_reg: dst[i] -> dst[i-1]; dst[MSB-1] -> dst[MSB]; i>MSB, 0 -> dst[i];
+         */
+     if (bw) {
+@@ -8395,7 +8395,7 @@ static inline void rrc_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* rrc_ind: dst[LSB] -> C; dst[i] -> dst[i-1]; C -> dst[MSB]; */
+     if (bw) {
+         msb = 0x80;
+@@ -8498,7 +8498,7 @@ static inline void rrc_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* rrc_reg: dst[LSB] -> C; dst[i] -> dst[i-1]; C -> dst[MSB]; */
+     if (bw) {
+         msb = 0x80;
+@@ -8635,7 +8635,7 @@ static inline void sub_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* sub_cg2_idx: ~src + 1 + dst -> dst; NZCV; see DEC, DECD; */
+     if (bw) {
+@@ -8862,7 +8862,7 @@ static inline void sub_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* sub_idx_idx: ~src + 1 + dst -> dst; NZCV; see DEC, DECD; */
+     if (bw) {
+@@ -8992,7 +8992,7 @@ static inline void sub_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* sub_idx_reg: ~src + 1 + dst -> dst; NZCV; see DEC, DECD; */
+     if (bw) {
+@@ -9135,7 +9135,7 @@ static inline void sub_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* sub_imm_idx: ~src + 1 + dst -> dst; NZCV; see DEC, DECD; */
+     if (bw) {
+@@ -9348,7 +9348,7 @@ static inline void sub_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* sub_reg_idx: ~src + 1 + dst -> dst; NZCV; see DEC, DECD; */
+     if (bw) {
+@@ -9495,7 +9495,7 @@ static inline void sub_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* sub_reg_reg: ~src + 1 + dst -> dst; NZCV; see DEC, DECD; */
+     if (bw) {
+@@ -9657,7 +9657,7 @@ static inline void subc_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* subc_cg2_idx: ~src + C + dst -> dst; NZCV; see SBC; */
+     if (bw) {
+@@ -9902,7 +9902,7 @@ static inline void subc_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* subc_idx_idx: ~src + C + dst -> dst; NZCV; see SBC; */
+     if (bw) {
+@@ -10041,7 +10041,7 @@ static inline void subc_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* subc_idx_reg: ~src + C + dst -> dst; NZCV; see SBC; */
+     if (bw) {
+@@ -10193,7 +10193,7 @@ static inline void subc_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* subc_imm_idx: ~src + C + dst -> dst; NZCV; see SBC; */
+     if (bw) {
+@@ -10424,7 +10424,7 @@ static inline void subc_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* subc_reg_idx: ~src + C + dst -> dst; NZCV; see SBC; */
+     if (bw) {
+@@ -10580,7 +10580,7 @@ static inline void subc_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* subc_reg_reg: ~src + C + dst -> dst; NZCV; see SBC; */
+     if (bw) {
+@@ -10823,7 +10823,7 @@ static inline void swpb_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* swpb_ind: dst[0:7]->t; dst[8:15]->dst[0:7]; t->dst[8:15]; 0->dst[19:16];
+         */
+     if (bw) {
+@@ -10893,7 +10893,7 @@ static inline void swpb_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* swpb_reg: dst[0:7]->t; dst[8:15]->dst[0:7]; t->dst[8:15]; 0->dst[19:16];
+         */
+     if (bw) {
+@@ -11130,7 +11130,7 @@ static inline void sxt_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* sxt_ind: dst[7]->dst[MSB:8] (different for mem and reg); NZCl 0 -> V; */
+     if (bw) {
+         carry = 0x100;
+@@ -11234,7 +11234,7 @@ static inline void sxt_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     int mask;
+     TCGv mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     /* sxt_reg: dst[7]->dst[MSB:8] (different for mem and reg); NZCl 0 -> V; */
+     if (bw) {
+         carry = 0x100;
+@@ -11373,7 +11373,7 @@ static inline void xor_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* xor_cg2_idx: src ^ dst -> dst; NZCV; see INV; */
+     if (bw) {
+@@ -11554,7 +11554,7 @@ static inline void xor_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* xor_idx_idx: src ^ dst -> dst; NZCV; see INV; */
+     if (bw) {
+@@ -11661,7 +11661,7 @@ static inline void xor_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* xor_idx_reg: src ^ dst -> dst; NZCV; see INV; */
+     if (bw) {
+@@ -11781,7 +11781,7 @@ static inline void xor_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     TCGv mem_addr = tcg_temp_local_new();
+     int msb;
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* xor_imm_idx: src ^ dst -> dst; NZCV; see INV; */
+     if (bw) {
+@@ -11948,7 +11948,7 @@ static inline void xor_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* xor_reg_idx: src ^ dst -> dst; NZCV; see INV; */
+     if (bw) {
+@@ -12072,7 +12072,7 @@ static inline void xor_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int msb;
+     TCGv oper_mem_addr = tcg_temp_local_new();
+     TCGv res = tcg_temp_local_new();
+-    TCGMemOp size;
++    MemOp size;
+     TCGv src_val = tcg_temp_local_new();
+     /* xor_reg_reg: src ^ dst -> dst; NZCV; see INV; */
+     if (bw) {
+-- 
+2.17.1
+
