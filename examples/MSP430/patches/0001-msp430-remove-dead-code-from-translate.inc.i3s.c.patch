@@ -1,0 +1,715 @@
+From 90c30a72461f54eec184e747c473206fa4399ffd Mon Sep 17 00:00:00 2001
+Message-Id: <90c30a72461f54eec184e747c473206fa4399ffd.1607512476.git.real@ispras.ru>
+From: Danila Bogomolov <bda@ispras.ru>
+Date: Thu, 19 Nov 2020 23:00:41 +0300
+Subject: [PATCH] msp430: remove dead code from translate.inc.i3s.c
+
+---
+ target/msp430/translate.inc.i3s.c | 155 ------------------------------
+ 1 file changed, 155 deletions(-)
+
+diff --git a/target/msp430/translate.inc.i3s.c b/target/msp430/translate.inc.i3s.c
+index 6e33379d70..45c36901ca 100644
+--- a/target/msp430/translate.inc.i3s.c
++++ b/target/msp430/translate.inc.i3s.c
+@@ -2088,16 +2088,13 @@ static inline void bic_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bic_cg2_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2134,15 +2131,12 @@ static inline void bic_cg2_reg_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     tcg src_val;
+     /* bic_cg2_reg: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2189,17 +2183,14 @@ static inline void bic_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bic_idx_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2255,17 +2246,14 @@ static inline void bic_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bic_idx_reg: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2336,16 +2324,13 @@ static inline void bic_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bic_imm_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2375,15 +2360,12 @@ static inline void bic_imm_reg_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     tcg src_val;
+     /* bic_imm_reg: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2423,17 +2405,14 @@ static inline void bic_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bic_reg_idx: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2506,17 +2485,14 @@ static inline void bic_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bic_reg_reg: (~src) & dst -> dst; see CLRC, CLRN, CLRZ, DINT; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2606,16 +2582,13 @@ static inline void bis_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bis_cg2_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2652,15 +2625,12 @@ static inline void bis_cg2_reg_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     tcg src_val;
+     /* bis_cg2_reg: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2707,17 +2677,14 @@ static inline void bis_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bis_idx_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2773,17 +2740,14 @@ static inline void bis_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bis_idx_reg: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2854,16 +2818,13 @@ static inline void bis_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bis_imm_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2893,15 +2854,12 @@ static inline void bis_imm_reg_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     tcg src_val;
+     /* bis_imm_reg: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -2941,17 +2899,14 @@ static inline void bis_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bis_reg_idx: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -3024,17 +2979,14 @@ static inline void bis_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* bis_reg_reg: src | dst -> dst; see EINT, SETC, SETN, SETZ; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -3722,15 +3674,12 @@ static inline void call_cg2_0(DisasContext *ctx, uint64_t bw, uint64_t ad)
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg ret_pc;
+     /* call_cg2: dst -> tmp; SP - 2 -> SP; PC -> @SP; tmp & ~(0xF << 16) -> PC;
+         */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -3752,21 +3701,10 @@ static inline void call_cg2_0(DisasContext *ctx, uint64_t bw, uint64_t ad)
+ 
+ static inline void call_imm_0(DisasContext *ctx, uint64_t bw, uint64_t doff)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+-    int msb;
+     tcg ret_pc;
+     /* call_imm: dst -> tmp; SP - 2 -> SP; PC -> @SP; tmp & ~(0xF << 16) -> PC;
+         */
+-    if (bw) {
+-        msb = 0x80;
+-        carry = 0x100;
+-    } else {
+-        msb = 0x8000;
+-        carry = 0x10000;
+-    }
+-    mask = carry - 1;
+     regs[0] = regs[0] - 2;
+     ret_pc = ctx->pc + 4;
+     tcg_gen_qemu_st_tl(ret_pc, regs[0], 0, MO_UW | MO_TE);
+@@ -3779,23 +3717,12 @@ static inline void call_imm_0(DisasContext *ctx, uint64_t bw, uint64_t doff)
+ static inline void call_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+                               uint64_t doff)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg ret_pc;
+     TCGMemOp size;
+     /* call_ind: dst -> tmp; SP - 2 -> SP; PC -> @SP; tmp & ~(0xF << 16) -> PC;
+         */
+-    if (bw) {
+-        msb = 0x80;
+-        carry = 0x100;
+-    } else {
+-        msb = 0x8000;
+-        carry = 0x10000;
+-    }
+-    mask = carry - 1;
+     if (bw) {
+         size = MO_UB;
+     } else {
+@@ -3839,23 +3766,12 @@ static inline void call_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+ static inline void call_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+                               uint64_t dst)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg ret_pc;
+     TCGMemOp size;
+     /* call_reg: dst -> tmp; SP - 2 -> SP; PC -> @SP; tmp & ~(0xF << 16) -> PC;
+         */
+-    if (bw) {
+-        msb = 0x80;
+-        carry = 0x100;
+-    } else {
+-        msb = 0x8000;
+-        carry = 0x10000;
+-    }
+-    mask = carry - 1;
+     if (ad) {
+         if (bw) {
+             size = MO_UB;
+@@ -5374,16 +5290,13 @@ static inline void mov_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     int carry;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* mov_cg2_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5411,15 +5324,12 @@ static inline void mov_cg2_reg_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+ {
+     int carry;
+     int mask;
+-    int msb;
+     tcg res;
+     tcg src_val;
+     /* mov_cg2_reg: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5453,17 +5363,14 @@ static inline void mov_idx_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int carry;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* mov_idx_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5510,17 +5417,14 @@ static inline void mov_idx_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+ {
+     int carry;
+     int mask;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* mov_idx_reg: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5578,16 +5482,13 @@ static inline void mov_imm_idx_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     int carry;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* mov_imm_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5608,15 +5509,12 @@ static inline void mov_imm_reg_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+ {
+     int carry;
+     int mask;
+-    int msb;
+     tcg res;
+     tcg src_val;
+     /* mov_imm_reg: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5643,17 +5541,14 @@ static inline void mov_reg_idx_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+     int carry;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* mov_reg_idx: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5717,17 +5612,14 @@ static inline void mov_reg_reg_0(DisasContext *ctx, uint64_t src, uint64_t bw,
+ {
+     int carry;
+     int mask;
+-    int msb;
+     tcg oper_mem_addr;
+     tcg res;
+     TCGMemOp size;
+     tcg src_val;
+     /* mov_reg_reg: src -> dst; see BR, CLR, NOP, POP; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -5831,19 +5723,14 @@ static inline void push_cg2_0(DisasContext *ctx, uint64_t bw, uint64_t ad)
+ 
+ static inline void push_imm_0(DisasContext *ctx, uint64_t bw, uint64_t doff)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+     int msb;
+     /* push_imm: SP - 2 -> SP; dst -> @SP; */
+     if (bw) {
+         msb = 0x80;
+-        carry = 0x100;
+     } else {
+         msb = 0x8000;
+-        carry = 0x10000;
+     }
+-    mask = carry - 1;
+     regs[0] = regs[0] - 2;
+     dst_val = doff;
+     if (msb == 0x80) {
+@@ -5856,21 +5743,16 @@ static inline void push_imm_0(DisasContext *ctx, uint64_t bw, uint64_t doff)
+ static inline void push_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+                               uint64_t doff)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+     tcg mem_addr;
+     int msb;
+     TCGMemOp size;
+     /* push_ind: SP - 2 -> SP; dst -> @SP; */
+     if (bw) {
+         msb = 0x80;
+-        carry = 0x100;
+     } else {
+         msb = 0x8000;
+-        carry = 0x10000;
+     }
+-    mask = carry - 1;
+     if (bw) {
+         size = MO_UB;
+     } else {
+@@ -5914,21 +5796,16 @@ static inline void push_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+ static inline void push_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+                               uint64_t dst)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+     tcg mem_addr;
+     int msb;
+     TCGMemOp size;
+     /* push_reg: SP - 2 -> SP; dst -> @SP; */
+     if (bw) {
+         msb = 0x80;
+-        carry = 0x100;
+     } else {
+         msb = 0x8000;
+-        carry = 0x10000;
+     }
+-    mask = carry - 1;
+     if (ad) {
+         if (bw) {
+             size = MO_UB;
+@@ -7926,15 +7803,12 @@ static inline void swpb_cg2_0(DisasContext *ctx, uint64_t bw, uint64_t ad)
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     /* swpb_cg2: dst[0:7]->t; dst[8:15]->dst[0:7]; t->dst[8:15]; 0->dst[19:16];
+         */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -7961,15 +7835,12 @@ static inline void swpb_imm_0(DisasContext *ctx, uint64_t bw, uint64_t doff)
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     /* swpb_imm: dst[0:7]->t; dst[8:15]->dst[0:7]; t->dst[8:15]; 0->dst[19:16];
+         */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -7991,16 +7862,13 @@ static inline void swpb_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     /* swpb_ind: dst[0:7]->t; dst[8:15]->dst[0:7]; t->dst[8:15]; 0->dst[19:16];
+         */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -8055,16 +7923,13 @@ static inline void swpb_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     /* swpb_reg: dst[0:7]->t; dst[8:15]->dst[0:7]; t->dst[8:15]; 0->dst[19:16];
+         */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -8151,14 +8016,11 @@ static inline void sxt_cg2_0(DisasContext *ctx, uint64_t bw, uint64_t ad)
+     int carry;
+     tcg dst_val;
+     int mask;
+-    int msb;
+     tcg res;
+     /* sxt_cg2: dst[7]->dst[MSB:8] (different for mem and reg); NZCl 0 -> V; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -8195,20 +8057,9 @@ static inline void sxt_cg2_0(DisasContext *ctx, uint64_t bw, uint64_t ad)
+ 
+ static inline void sxt_imm_0(DisasContext *ctx, uint64_t bw, uint64_t doff)
+ {
+-    int carry;
+     tcg dst_val;
+-    int mask;
+-    int msb;
+     tcg res;
+     /* sxt_imm: dst[7]->dst[MSB:8] (different for mem and reg); NZCl 0 -> V; */
+-    if (bw) {
+-        msb = 0x80;
+-        carry = 0x100;
+-    } else {
+-        msb = 0x8000;
+-        carry = 0x10000;
+-    }
+-    mask = carry - 1;
+     dst_val = doff;
+     if (dst_val & 0x80) {
+         res = dst_val | 0xFFF00;
+@@ -8240,15 +8091,12 @@ static inline void sxt_ind_0(DisasContext *ctx, uint64_t bw, uint64_t dst,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     /* sxt_ind: dst[7]->dst[MSB:8] (different for mem and reg); NZCl 0 -> V; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+@@ -8316,15 +8164,12 @@ static inline void sxt_reg_0(DisasContext *ctx, uint64_t bw, uint64_t ad,
+     tcg dst_val;
+     int mask;
+     tcg mem_addr;
+-    int msb;
+     tcg res;
+     TCGMemOp size;
+     /* sxt_reg: dst[7]->dst[MSB:8] (different for mem and reg); NZCl 0 -> V; */
+     if (bw) {
+-        msb = 0x80;
+         carry = 0x100;
+     } else {
+-        msb = 0x8000;
+         carry = 0x10000;
+     }
+     mask = carry - 1;
+-- 
+2.17.1
+

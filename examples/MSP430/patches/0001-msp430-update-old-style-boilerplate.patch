@@ -1,0 +1,130 @@
+From 8456ad3bea6722858129ed190db47e576bd32a8f Mon Sep 17 00:00:00 2001
+Message-Id: <8456ad3bea6722858129ed190db47e576bd32a8f.1607512476.git.real@ispras.ru>
+From: Efimov Vasily <real@ispras.ru>
+Date: Thu, 29 Oct 2020 19:06:47 +0300
+Subject: [PATCH] msp430: update old-style boilerplate
+
+Signed-off-by: Efimov Vasily <real@ispras.ru>
+---
+ hw/Makefile.objs                  |  3 +--
+ target/msp430/cpu.c               | 12 ++++++------
+ target/msp430/cpu.h               |  2 +-
+ target/msp430/helper.c            |  1 +
+ target/msp430/translate.c         |  4 ++--
+ target/msp430/translate.inc.i3s.c |  2 +-
+ 6 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/hw/Makefile.objs b/hw/Makefile.objs
+index c44c6660b1..690b71f156 100644
+--- a/hw/Makefile.objs
++++ b/hw/Makefile.objs
+@@ -40,8 +40,7 @@ devices-dirs-$(CONFIG_MEM_DEVICE) += mem/
+ devices-dirs-$(CONFIG_NUBUS) += nubus/
+ devices-dirs-y += semihosting/
+ devices-dirs-y += smbios/
+-devices-dirs-$(CONFIG_SOFTMMU) += msp430-all/
+-devices-dirs-$(CONFIG_SOFTMMU) += msp430/
++devices-dirs-y += msp430-all/
+ endif
+ 
+ common-obj-y += $(devices-dirs-y)
+diff --git a/target/msp430/cpu.c b/target/msp430/cpu.c
+index 6484a23f6a..f3216f9a49 100644
+--- a/target/msp430/cpu.c
++++ b/target/msp430/cpu.c
+@@ -21,7 +21,7 @@ static void msp430_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
+     info->print_insn = print_insn_msp430;
+ }
+ 
+-static int msp430_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
++static int msp430_cpu_gdb_read_register(CPUState *cs, GByteArray *buf, int n)
+ {
+     /* TODO: implement gdb_read_register */
+     MSP430CPU *cpu = MSP430_CPU(cs);
+@@ -68,13 +68,13 @@ static void msp430_cpu_realizefn(DeviceState *dev, Error **errp)
+     cc->parent_realize(dev, errp);
+ }
+ 
+-static void msp430_cpu_reset(CPUState *cs)
++static void msp430_cpu_reset(DeviceState *dev)
+ {
+-    MSP430CPU *cpu = MSP430_CPU(cs);
++    MSP430CPU *cpu = MSP430_CPU(dev);
+     MSP430CPUClass *cc = MSP430_CPU_GET_CLASS(cpu);
+     CPUMSP430State *env = &cpu->env;
+ 
+-    cc->parent_reset(cs);
++    cc->parent_reset(dev);
+     memset(env, 0, offsetof(CPUMSP430State, end_reset_fields));
+     env->pc = 0;
+ }
+@@ -94,8 +94,8 @@ static void msp430_cpu_class_init(ObjectClass *oc, void *data)
+ 
+     device_class_set_parent_realize(dc, msp430_cpu_realizefn,
+                                     &mcc->parent_realize);
+-    mcc->parent_reset = cc->reset;
+-    cc->reset = msp430_cpu_reset;
++    device_class_set_parent_reset(dc, msp430_cpu_reset, &mcc->parent_reset);
++
+     cc->has_work = msp430_cpu_has_work;
+     cc->do_interrupt = msp430_cpu_do_interrupt;
+     cc->set_pc = msp430_cpu_set_pc;
+diff --git a/target/msp430/cpu.h b/target/msp430/cpu.h
+index 6fbcfbd878..6ef5a516bb 100644
+--- a/target/msp430/cpu.h
++++ b/target/msp430/cpu.h
+@@ -34,7 +34,7 @@ typedef CPUMSP430State CPUArchState;
+ typedef struct MSP430CPUClass {
+     CPUClass parent_class;
+     DeviceRealize parent_realize;
+-    void (*parent_reset)(CPUState *cpu);
++    DeviceReset parent_reset;
+ } MSP430CPUClass;
+ 
+ enum {
+diff --git a/target/msp430/helper.c b/target/msp430/helper.c
+index 68e03e8bbf..eca28e20f2 100644
+--- a/target/msp430/helper.c
++++ b/target/msp430/helper.c
+@@ -4,6 +4,7 @@
+ #include "hw/irq.h"
+ #include "cpu.h"
+ #include "exec/exec-all.h"
++#include "exec/helper-proto.h"
+ 
+ static void raise_exception(CPUMSP430State *env, uint32_t index)
+ {
+diff --git a/target/msp430/translate.c b/target/msp430/translate.c
+index d776434e6c..a27e7341b9 100644
+--- a/target/msp430/translate.c
++++ b/target/msp430/translate.c
+@@ -2833,11 +2833,11 @@ done_generating:
+ #ifdef DEBUG_DISAS
+     if (qemu_loglevel_mask(CPU_LOG_TB_IN_ASM) &&
+         qemu_log_in_addr_range(pc_start)) {
+-        qemu_log_lock();
++        FILE *logfile = qemu_log_lock();
+         qemu_log("IN: %s\n", lookup_symbol(pc_start));
+         log_target_disas(cs, pc_start, ctx.pc - pc_start);
+         qemu_log("\n");
+-        qemu_log_unlock();
++        qemu_log_unlock(logfile);
+     }
+ #endif
+ }
+diff --git a/target/msp430/translate.inc.i3s.c b/target/msp430/translate.inc.i3s.c
+index 0e656ee5d0..6e33379d70 100644
+--- a/target/msp430/translate.inc.i3s.c
++++ b/target/msp430/translate.inc.i3s.c
+@@ -3,7 +3,7 @@
+ #define INCLUDE_TRANSLATE_INC_H
+ 
+ #include "exec/exec-all.h"
+-#include "tcg-op.h"
++#include "tcg/tcg-op.h"
+ 
+ #define SR_C (1 << 0)
+ #define SR_N (1 << 2)
+-- 
+2.17.1
+
