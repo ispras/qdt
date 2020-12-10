@@ -1,0 +1,929 @@
+From b70d38f18ab6936ee0a525e127d160751e8e0304 Mon Sep 17 00:00:00 2001
+Message-Id: <b70d38f18ab6936ee0a525e127d160751e8e0304.1607527657.git.real@ispras.ru>
+From: Efimov Vasily <real@ispras.ru>
+Date: Wed, 9 Dec 2020 18:15:30 +0300
+Subject: [PATCH] msp430x2xx: implement some devices and guest loading
+ (-kernel)
+
+Signed-off-by: Efimov Vasily <real@ispras.ru>
+---
+ hw/Makefile.objs                  |   1 -
+ hw/msp430/msp430_bcm.c            | 212 +++++++++++++++++++++++++++++-
+ hw/msp430/msp430_ic.c             |  70 +++++++---
+ hw/msp430/msp430_usci_a.c         |  99 +++++++++++++-
+ hw/msp430/msp430_wdt.c            |  79 ++++++++++-
+ hw/msp430/msp430x2xx.c            |  38 +++++-
+ include/hw/msp430/msp430_bcm.h    |   5 +
+ include/hw/msp430/msp430_ic.h     |   5 +-
+ include/hw/msp430/msp430_usci_a.h |  14 +-
+ include/hw/msp430/msp430_wdt.h    |   1 +
+ 10 files changed, 483 insertions(+), 41 deletions(-)
+
+diff --git a/hw/Makefile.objs b/hw/Makefile.objs
+index 9a149c39df..690b71f156 100644
+--- a/hw/Makefile.objs
++++ b/hw/Makefile.objs
+@@ -41,7 +41,6 @@ devices-dirs-$(CONFIG_NUBUS) += nubus/
+ devices-dirs-y += semihosting/
+ devices-dirs-y += smbios/
+ devices-dirs-y += msp430-all/
+-devices-dirs-$(CONFIG_SOFTMMU) += msp430/
+ endif
+ 
+ common-obj-y += $(devices-dirs-y)
+diff --git a/hw/msp430/msp430_bcm.c b/hw/msp430/msp430_bcm.c
+old mode 100644
+new mode 100755
+index 4c5ac36d14..1ed5e92c86
+--- a/hw/msp430/msp430_bcm.c
++++ b/hw/msp430/msp430_bcm.c
+@@ -11,6 +11,166 @@
+ #define MSP430_BCM_MMIO_1 TYPE_MSP430_BCM "_mmio_1"
+ #define MSP430_BCM_MMIO_1_SIZE 0x3
+ 
++
++/* DCO Frequency estimation.
++ *
++ * About DCO frequency:
++ * - SLAS735J p. 14, p. 29
++ * - SLAU144J p. 279
++ * */
++
++/* The array is filled according to average between MIN & MAX or TYP values
++ * from table "DCO Frequency" at SLAS735J p. 14, p. 29.
++ * Values are for DCOx = 3
++ * */
++
++static const uint64_t rselx_freq[] = { /* Unit is Hz. */
++    (170000 + 70000) >> 1,
++    150000,
++    210000,
++    300000,
++    410000,
++    580000,
++    (1060000 + 540000) >> 1,
++    (1500000 + 800000) >> 1,
++    1600000,
++    2300000,
++    3400000,
++    4250000,
++    (7300000 + 4300000) >> 1,
++    7800000,
++    (13900000 + 8600000) >> 1,
++    (18500000 + 12000000) >> 1,
++};
++
++/* Scales for values in array rselx_freq. Reminder, values are for DCOx = 3.
++ * According to docs, f DCO(RSEL,DCO+1) / f DCO(RSEL,DCO) = 1.08 */
++
++/* A fixed point integer arithmetic is used. */
++#define ONE_SHIFT 20
++#define ONE (1 << ONE_SHIFT)
++
++static const uint64_t dcox_scale[] = {
++    ONE / 1.08 / 1.08 / 1.08,
++    ONE / 1.08 / 1.08,
++    ONE / 1.08,
++    ONE,
++    ONE * 1.08,
++    ONE * 1.08 * 1.08,
++    ONE * 1.08 * 1.08 * 1.08,
++    ONE * 1.08 * 1.08 * 1.08 * 1.08,
++};
++
++static inline uint64_t f_dco(uint8_t rselx, uint8_t dcox, uint8_t modx)
++{
++    uint64_t f_dco = (rselx_freq[rselx] * dcox_scale[dcox]) >> ONE_SHIFT;
++    uint64_t f_dco_1 = (rselx_freq[rselx] * dcox_scale[dcox + 1]) >> ONE_SHIFT;
++
++    return ((f_dco * f_dco_1) << 5 /* x32 */) /
++           (modx * f_dco + (32 - modx) * f_dco_1);
++}
++
++
++static inline void update_dco_freq(MSP430BCMState *s)
++{
++    s->dco_freq = f_dco(s->bcsctl1 & 0x0F, s->dcoctl >> 5, s->dcoctl & 0x1F);
++}
++
++/* According to 5.2.2, SLAU144J p. 276 */
++#define VLOCLK_FREQ 12000 /* Hz */
++
++/* Normally software must know which crystal is connected to XT2 and set
++ * XT2Sx accordingly. The model use XT2Sx value to assume XT2 frequency.  */
++static const uint64_t xt2_freq[] = {
++    1000000,
++    3000000,
++    8000000,
++    16000000
++};
++
++/* When XTS = 1 LFXT1 is avaluated as for XT2.
++ * The array below is for XTS = 0 */
++static const uint64_t lfxt1_freq_xts0[] = {
++    32768,
++    32768, /* It's reserved actually */
++    VLOCLK_FREQ,
++    16000000
++};
++
++#define lfxt1_freq_xts1 xt2_freq
++
++
++#define XT2OFF(s) (!!((s)->bcsctl1 & (1 << 7)))
++#define XTS(s) (!!((s)->bcsctl1 & (1 << 6)))
++#define LFXT1Sx(s) (((s)->bcsctl3 >> 4) & 3)
++#define XT2Sx(s) ((s)->bcsctl3 >> 6)
++
++static inline void update_mclk_freq(MSP430BCMState *s)
++{
++    /* dco_freq must be already updated. */
++    uint8_t selm = s->bcsctl2 >> 6;
++    uint8_t divm = (s->bcsctl2 >> 4) & 0x3;
++
++    switch (selm) {
++    case 0:
++    case 1:
++        s->mclk_freq = s->dco_freq;
++        break;
++    case 2:
++        /* Assume that XT2 is present and works. */
++        if (!XT2OFF(s)) {
++            s->mclk_freq = xt2_freq[XT2Sx(s)];
++            break;
++        } /* else fall through to case 3 */
++    case 3:
++        if (XTS(s)) {
++            s->mclk_freq = lfxt1_freq_xts1[LFXT1Sx(s)];
++        } else {
++            s->mclk_freq = lfxt1_freq_xts0[LFXT1Sx(s)];
++        }
++        break;
++    }
++
++    s->mclk_freq >>= divm;
++}
++
++static inline void update_smclk_freq(MSP430BCMState *s)
++{
++    /* dco_freq must be already updated. */
++    uint8_t sels = (s->bcsctl2 >> 3) & 1;
++    uint8_t divs = (s->bcsctl2 >> 1) & 0x3;
++
++    if (sels) {
++        /* Assume that XT2 is present and works. */
++
++        if (XT2OFF(s)) {
++            if (XTS(s)) {
++                s->smclk_freq = lfxt1_freq_xts1[LFXT1Sx(s)];
++            } else {
++                s->smclk_freq = lfxt1_freq_xts0[LFXT1Sx(s)];
++            }
++        } else {
++            s->smclk_freq = xt2_freq[XT2Sx(s)];
++        }
++    } else {
++        s->smclk_freq = s->dco_freq;
++    }
++
++    s->smclk_freq >>= divs;
++}
++
++static inline void update_aclk_freq(MSP430BCMState *s)
++{
++    uint8_t diva = (s->bcsctl1 >> 4) & 3;
++    if (XTS(s)) {
++        s->aclk_freq = lfxt1_freq_xts1[LFXT1Sx(s)];
++    } else {
++        s->aclk_freq = lfxt1_freq_xts0[LFXT1Sx(s)];
++    }
++    s->aclk_freq >>= diva;
++}
++
++
+ static uint64_t msp430_bcm_mmio_0_read(void *opaque, hwaddr offset,
+                                        unsigned size)
+ {
+@@ -41,6 +201,12 @@ static void msp430_bcm_mmio_0_write(void *opaque, hwaddr offset, uint64_t value,
+     case 0x0:
+         /* BCSCTL3, Basic clock system control 3 */
+         s->bcsctl3 = (value & 0b11111100) | (s->bcsctl3 & ~0b11111100);
++
++        /* XT2Sx configures XT2. LFXT1Sx configures LFXT1. ACLK, MCLK and
++         * SMCLK all can use XT2 or LFXT1. */
++        update_mclk_freq(s);
++        update_smclk_freq(s);
++        update_aclk_freq(s);
+         break;
+ 
+     default:
+@@ -98,16 +264,34 @@ static void msp430_bcm_mmio_1_write(void *opaque, hwaddr offset, uint64_t value,
+     case 0x0:
+         /* DCOCTL, DCO control register */
+         s->dcoctl = value;
++        /* Because of DCOx and MODx: */
++        update_dco_freq(s);
++        /* ACLK never uses DCO, MCLK and SMCLK can. */
++        update_mclk_freq(s);
++        update_smclk_freq(s);
+         break;
+ 
+     case 0x1:
+         /* BCSCTL1, Basic clock system control 1 */
+         s->bcsctl1 = value;
++        /* Because of RSELx: */
++        update_dco_freq(s);
++        /* MCLK and SMCLK can use DCO. */
++        update_mclk_freq(s);
++        update_smclk_freq(s);
++
++        /* Because of XTS and DIVAx: */
++        update_aclk_freq(s);
+         break;
+ 
+     case 0x2:
+         /* BCSCTL2, Basic clock system control 2 */
+         s->bcsctl2 = value;
++
++        /* Because of SELMx and DIVMx: */
++        update_mclk_freq(s);
++        /* Because of SELS and DIVSx: */
++        update_smclk_freq(s);
+         break;
+ 
+     default:
+@@ -140,19 +324,33 @@ static void msp430_bcm_instance_init(Object *obj)
+     sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->out_irq);
+ }
+ 
++static void reset_clocks(MSP430BCMState *s)
++{
++    s->bcsctl3 = 0b00000101;
++    s->dcoctl = 0b01100000;
++    s->bcsctl1 = 0b10000111;
++    s->bcsctl2 = 0x00;
++
++    update_dco_freq(s);
++    update_mclk_freq(s);
++    update_smclk_freq(s);
++    update_aclk_freq(s);
++}
++
+ static void msp430_bcm_realize(DeviceState *dev, Error **errp)
+ {
+-    __attribute__((unused)) MSP430BCMState *s = MSP430_BCM(dev);
++    MSP430BCMState *s = MSP430_BCM(dev);
++
++    /* Reset functions of some devices relies on clock frequencies. However
++     * resets of those devices can be called before msp430_bcm_reset. */
++    reset_clocks(s);
+ }
+ 
+ static void msp430_bcm_reset(DeviceState *dev)
+ {
+     MSP430BCMState *s = MSP430_BCM(dev);
+ 
+-    s->bcsctl3 = 0b00000101;
+-    s->dcoctl = 0b01100000;
+-    s->bcsctl1 = 0b10000111;
+-    s->bcsctl2 = 0x00;
++    reset_clocks(s);
+ }
+ 
+ static void msp430_bcm_unrealize(DeviceState *dev)
+@@ -172,6 +370,10 @@ static const VMStateDescription vmstate_msp430_bcm = {
+         VMSTATE_UINT8(dcoctl, MSP430BCMState),
+         VMSTATE_UINT8(bcsctl1, MSP430BCMState),
+         VMSTATE_UINT8(bcsctl2, MSP430BCMState),
++        VMSTATE_UINT64(dco_freq, MSP430BCMState),
++        VMSTATE_UINT64(mclk_freq, MSP430BCMState),
++        VMSTATE_UINT64(aclk_freq, MSP430BCMState),
++        VMSTATE_UINT64(smclk_freq, MSP430BCMState),
+         VMSTATE_END_OF_LIST()
+     }
+ };
+diff --git a/hw/msp430/msp430_ic.c b/hw/msp430/msp430_ic.c
+old mode 100644
+new mode 100755
+index d6497c2728..ac865a6a18
+--- a/hw/msp430/msp430_ic.c
++++ b/hw/msp430/msp430_ic.c
+@@ -5,39 +5,73 @@
+ #include "hw/qdev-properties.h"
+ #include "hw/msp430/msp430_ic.h"
+ #include "migration/vmstate.h"
++#include "cpu.h"
+ 
+ #define MSP430_IC_MMIO TYPE_MSP430_IC "_mmio"
+ #define MSP430_IC_MMIO_SIZE 0x4
+ 
+ static void msp430_ic_irq_handler(void *opaque, int n, int level)
+ {
+-    __attribute__((unused)) MSP430ICState *s = MSP430_IC(opaque);
++    MSP430ICState *s = MSP430_IC(opaque);
++    MSP430CPU *cpu = MSP430_CPU(s->cpu);
++
++    if (n == 9) {
++        /* State of UCSWRST bit of UCA0CTL1 */
++        if (level) {
++            /* Note, UCA0RXIFG is reset (as general IRQ) because USCI lowers
++             * RX irq when UCSWRST is set. */
++            cpu->env.ifg2 &= ~UCA0TXIFG;
++            cpu->env.ie2 &= ~(UCA0TXIE|UCA0RXIE);
++        } else {
++            /* Always ready to transmit when it's not in software reset
++             * state. */
++            cpu->env.ifg2 |= UCA0TXIFG;
++        }
++    } else {
++        /* General code. */
++        if (level) {
++            if (n > 7) {
++                cpu->env.ifg2 |= 1 << (n - 8);
++            } else {
++                cpu->env.ifg1 |= 1 << n;
++            }
++        } else {
++            if (n > 7) {
++                cpu->env.ifg2 &= ~(1 << (n - 8));
++            } else {
++                cpu->env.ifg1 &= ~(1 << n);
++            }
++        }
++    }
++
++    msp430_cpu_update_ifg(cpu);
+ }
+ 
+ static uint64_t msp430_ic_mmio_read(void *opaque, hwaddr offset, unsigned size)
+ {
+     MSP430ICState *s = MSP430_IC(opaque);
++    MSP430CPU *cpu = MSP430_CPU(s->cpu);
+     uint64_t ret = 0;
+ 
+     switch (offset) {
+     case 0x0:
+         /* IE1 */
+-        ret = s->ie1;
++        ret = cpu->env.ie1;
+         break;
+ 
+     case 0x1:
+         /* IE2 */
+-        ret = s->ie2;
++        ret = cpu->env.ie2;
+         break;
+ 
+     case 0x2:
+         /* IFG1 */
+-        ret = s->ifg1;
++        ret = cpu->env.ifg1;
+         break;
+ 
+     case 0x3:
+         /* IFG2 */
+-        ret = s->ifg2;
++        ret = cpu->env.ifg2;
+         break;
+ 
+     default:
+@@ -53,26 +87,32 @@ static void msp430_ic_mmio_write(void *opaque, hwaddr offset, uint64_t value,
+                                  unsigned size)
+ {
+     MSP430ICState *s = MSP430_IC(opaque);
++    MSP430CPU *cpu = MSP430_CPU(s->cpu);
++
+ 
+     switch (offset) {
+     case 0x0:
+         /* IE1 */
+-        s->ie1 = value;
++        cpu->env.ie1 = value;
++        msp430_cpu_update_ie(MSP430_CPU(s->cpu));
+         break;
+ 
+     case 0x1:
+         /* IE2 */
+-        s->ie2 = value;
++        cpu->env.ie2 = value;
++        msp430_cpu_update_ie(MSP430_CPU(s->cpu));
+         break;
+ 
+     case 0x2:
+         /* IFG1 */
+-        s->ifg1 = value;
++        cpu->env.ifg1 = value;
++        msp430_cpu_update_ifg(MSP430_CPU(s->cpu));
+         break;
+ 
+     case 0x3:
+         /* IFG2 */
+-        s->ifg2 = value;
++        cpu->env.ifg2 = value;
++        msp430_cpu_update_ifg(MSP430_CPU(s->cpu));
+         break;
+ 
+     default:
+@@ -108,12 +148,7 @@ static void msp430_ic_realize(DeviceState *dev, Error **errp)
+ 
+ static void msp430_ic_reset(DeviceState *dev)
+ {
+-    MSP430ICState *s = MSP430_IC(dev);
+-
+-    s->ie1 = 0x00;
+-    s->ie2 = 0x00;
+-    s->ifg1 = 0x00;
+-    s->ifg2 = 0x00;
++    __attribute__((unused)) MSP430ICState *s = MSP430_IC(dev);
+ }
+ 
+ static void msp430_ic_unrealize(DeviceState *dev)
+@@ -122,6 +157,7 @@ static void msp430_ic_unrealize(DeviceState *dev)
+ }
+ 
+ static Property msp430_ic_properties[] = {
++    DEFINE_PROP_LINK("cpu", MSP430ICState, cpu, TYPE_MSP430_CPU, CPUState *),
+     DEFINE_PROP_END_OF_LIST()
+ };
+ 
+@@ -129,10 +165,6 @@ static const VMStateDescription vmstate_msp430_ic = {
+     .name = "msp430_ic",
+     .version_id = 1,
+     .fields = (VMStateField[]) {
+-        VMSTATE_UINT8(ie1, MSP430ICState),
+-        VMSTATE_UINT8(ie2, MSP430ICState),
+-        VMSTATE_UINT8(ifg1, MSP430ICState),
+-        VMSTATE_UINT8(ifg2, MSP430ICState),
+         VMSTATE_END_OF_LIST()
+     }
+ };
+diff --git a/hw/msp430/msp430_usci_a.c b/hw/msp430/msp430_usci_a.c
+old mode 100644
+new mode 100755
+index c78ba31aad..33fa167643
+--- a/hw/msp430/msp430_usci_a.c
++++ b/hw/msp430/msp430_usci_a.c
+@@ -9,16 +9,68 @@
+ #define MSP430_USCI_A_MMIO TYPE_MSP430_USCI_A "_mmio"
+ #define MSP430_USCI_A_MMIO_SIZE 0xB
+ 
++/* UCAxCTL0
++ * */
++#define UCMODEx_MASK        0x06
++#define UCMODEx_UART        0x00
++/* UART mode with automatic baud rate detection */
++#define UCMODEx_UART_ABR    0x06
++
++#define UCSYNC_BIT          0x01
++
++/* UCAxCTL1
++ * */
++/* Software reset enable */
++#define UCSWRST             0x01
++
++/* UCAxSTAT
++ * */
++/* Listen enable. UCAxTXD is internally fed back to the receiver. */
++#define UCLISTEN            0x80
++#define UCFE                0x40
++#define UCOE                0x20
++#define UCPE                0x10
++#define UCBRK               0x08
++#define UCRXERR             0x04
++
++/* UCAxABCTL
++ * */
++#define UCSTOE              0x08
++#define UCBTOE              0x04
++
++static inline bool msp430_usci_a_in_uart_mode(MSP430USCIAState *s)
++{
++    if (s->ucaxctl0 & UCSYNC_BIT) {
++        return false;
++    }
++    uint8_t mode = s->ucaxctl0 & UCMODEx_MASK;
++    return (mode == UCMODEx_UART) || (mode == UCMODEx_UART_ABR);
++}
++
+ static int msp430_usci_a_chr_can_read(void *opaque)
+ {
+-    __attribute__((unused)) MSP430USCIAState *s = MSP430_USCI_A(opaque);
++    MSP430USCIAState *s = MSP430_USCI_A(opaque);
+ 
+-    return 0;
++    if (!msp430_usci_a_in_uart_mode(s)) {
++        return 0;
++    }
++    if (s->ucaxctl1 & UCSWRST) {
++        return 0;
++    }
++    if (s->rx_ready) {
++        return 0;
++    }
++    return 1;
+ }
+ 
+ static void msp430_usci_a_chr_read(void *opaque, const uint8_t *buf, int size)
+ {
+-    __attribute__((unused)) MSP430USCIAState *s = MSP430_USCI_A(opaque);
++    MSP430USCIAState *s = MSP430_USCI_A(opaque);
++
++    s->rx_ready = true;
++    s->ucaxrxbuf = *buf;
++
++    qemu_irq_raise(s->out_irq_rx);
+ }
+ 
+ static void msp430_usci_a_chr_event(void *opaque, QEMUChrEvent event)
+@@ -88,6 +140,10 @@ static uint64_t msp430_usci_a_mmio_read(void *opaque, hwaddr offset,
+     case 0x9:
+         /* UCAxRXBUF, USCI_Ax receive buffer register */
+         ret = s->ucaxrxbuf;
++        if (s->rx_ready) {
++            s->rx_ready = false;
++            qemu_irq_lower(s->out_irq_rx);
++        }
+         break;
+ 
+     case 0xA:
+@@ -132,6 +188,24 @@ static void msp430_usci_a_mmio_write(void *opaque, hwaddr offset,
+ 
+     case 0x4:
+         /* UCAxCTL1, USCI_Ax control register 1 */
++
++        if ((value ^ s->ucaxctl1 ) & UCSWRST) {
++            if (value & UCSWRST) {
++                s->ucaxstat &= ~(UCRXERR | UCBRK | UCPE | UCOE | UCFE);
++                s->ucaxabctl &= ~(UCSTOE | UCBTOE);
++                qemu_irq_raise(s->out_irq_swrst);
++                qemu_irq_lower(s->out_irq_rx);
++            } else {
++                qemu_irq_lower(s->out_irq_swrst);
++                if (s->tx_ready) {
++                    s->tx_ready = false;
++                    if (msp430_usci_a_in_uart_mode(s)) {
++                        qemu_chr_fe_write(&s->chr, &s->ucaxtxbuf, 1);
++                    }
++                }
++            }
++        }
++
+         s->ucaxctl1 = value;
+         break;
+ 
+@@ -164,6 +238,14 @@ static void msp430_usci_a_mmio_write(void *opaque, hwaddr offset,
+     case 0xA:
+         /* UCAxTXBUF, USCI_Ax transmit buffer register */
+         s->ucaxtxbuf = value;
++        if (msp430_usci_a_in_uart_mode(s)) {
++            if (s->ucaxctl1 & UCSWRST) {
++                s->tx_ready = true;
++            } else {
++                s->tx_ready = false;
++                qemu_chr_fe_write(&s->chr, &s->ucaxtxbuf, 1);
++            }
++        }
+         break;
+ 
+     default:
+@@ -189,8 +271,8 @@ static void msp430_usci_a_instance_init(Object *obj)
+                           MSP430_USCI_A_MMIO, MSP430_USCI_A_MMIO_SIZE);
+     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
+ 
+-    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->out_irq_0);
+-    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->out_irq_1);
++    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->out_irq_rx);
++    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->out_irq_swrst);
+ }
+ 
+ static void msp430_usci_a_realize(DeviceState *dev, Error **errp)
+@@ -220,6 +302,11 @@ static void msp430_usci_a_reset(DeviceState *dev)
+     s->ucaxstat = 0x00;
+     s->ucaxrxbuf = 0x00;
+     s->ucaxtxbuf = 0x00;
++    s->rx_ready = false;
++    s->tx_ready = false;
++
++    qemu_irq_lower(s->out_irq_rx);
++    qemu_irq_raise(s->out_irq_swrst);
+ }
+ 
+ static void msp430_usci_a_unrealize(DeviceState *dev)
+@@ -247,6 +334,8 @@ static const VMStateDescription vmstate_msp430_usci_a = {
+         VMSTATE_UINT8(ucaxstat, MSP430USCIAState),
+         VMSTATE_UINT8(ucaxrxbuf, MSP430USCIAState),
+         VMSTATE_UINT8(ucaxtxbuf, MSP430USCIAState),
++        VMSTATE_BOOL(rx_ready, MSP430USCIAState),
++        VMSTATE_BOOL(tx_ready, MSP430USCIAState),
+         VMSTATE_END_OF_LIST()
+     }
+ };
+diff --git a/hw/msp430/msp430_wdt.c b/hw/msp430/msp430_wdt.c
+old mode 100644
+new mode 100755
+index 88b934b66f..02b44edb69
+--- a/hw/msp430/msp430_wdt.c
++++ b/hw/msp430/msp430_wdt.c
+@@ -5,13 +5,65 @@
+ #include "hw/qdev-properties.h"
+ #include "hw/msp430/msp430_wdt.h"
+ #include "migration/vmstate.h"
++#include "hw/msp430/msp430_bcm.h"
++#include "sysemu/runstate.h"
+ 
+ #define MSP430_WDT_MMIO TYPE_MSP430_WDT "_mmio"
+ #define MSP430_WDT_MMIO_SIZE 0x2
+ 
++#define RESET_SYSTEM 1
++
++/* WDTCTL, Watchdog Timer+ Register
++ * */
++#define WDTISx_MASK     3
++#define WDTSSEL         (1 << 2)
++#define WDTCNTCL        (1 << 3)
++#define WDTTMSEL        (1 << 4)
++/* ...
++ * NMI pin control is not relevant.
++ * ... */
++#define WDTHOLD         (1 << 7)
++
++static const unsigned clock_scale[] = {
++        15 /* 32768 */,
++        13 /* 8192 */,
++        9 /* 512 */,
++        6 /* 64 */
++};
++
++static void update_timer(MSP430WDTState *s)
++{
++    if (s->wdtctl & WDTHOLD) {
++        timer_del(s->timer);
++    } else {
++        uint64_t src_freq;
++        if (s->wdtctl & WDTSSEL) {
++            src_freq = MSP430_BCM(s->bcm)->aclk_freq;
++        } else {
++            src_freq = MSP430_BCM(s->bcm)->smclk_freq;
++        }
++        uint64_t period_ns =
++            (1000000000UL << clock_scale[s->wdtctl & WDTISx_MASK]) / src_freq;
++
++        timer_mod(s->timer, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + period_ns);
++    }
++}
++
+ static void msp430_wdt_timer_cb(void *opaque)
+ {
+-    __attribute__((unused)) MSP430WDTState *s = MSP430_WDT(opaque);
++    MSP430WDTState *s = MSP430_WDT(opaque);
++
++    qemu_irq_raise(s->out_irq);
++
++    if (s->wdtctl & WDTTMSEL) {
++        /* Interval timer mode. */
++        update_timer(s);
++    } else {
++        printf("%s: WDT expired in watchdog mode. Reset.\n", __func__);
++#if RESET_SYSTEM
++        qemu_system_reset_request(SHUTDOWN_CAUSE_GUEST_RESET);
++#endif
++    }
+ }
+ 
+ static uint64_t msp430_wdt_mmio_read(void *opaque, hwaddr offset, unsigned size)
+@@ -20,7 +72,7 @@ static uint64_t msp430_wdt_mmio_read(void *opaque, hwaddr offset, unsigned size)
+     uint64_t ret = 0;
+ 
+     switch (offset) {
+-    case 0x0 ... 0x1:
++    case 0x0:
+         /* WDTCTL, Watchdog timer+ control register */
+         ret = s->wdtctl;
+         break;
+@@ -38,11 +90,29 @@ static void msp430_wdt_mmio_write(void *opaque, hwaddr offset, uint64_t value,
+                                   unsigned size)
+ {
+     MSP430WDTState *s = MSP430_WDT(opaque);
++    bool to_update_timer;
+ 
+     switch (offset) {
+-    case 0x0 ... 0x1:
++    case 0x0:
+         /* WDTCTL, Watchdog timer+ control register */
++
++        /* Note, timer re-scaling (WDTSSEL, WDTISx) will take place during
++         * after current period end. */
++        to_update_timer = (value ^ s->wdtctl) & (WDTCNTCL | WDTHOLD);
++
+         s->wdtctl = (value & 0x00FF) | (s->wdtctl & ~0x00FF);
++
++        if ((value & 0xFF00) != 0x5A00) {
++            printf("%s: incorrect password in high byte (0x%04x). Reset.\n",
++                   __func__, (int)(value & 0xFFFF));
++#if RESET_SYSTEM
++            qemu_system_reset_request(SHUTDOWN_CAUSE_GUEST_RESET);
++#endif
++        }
++
++        if (to_update_timer) {
++            update_timer(s);
++        }
+         break;
+ 
+     default:
+@@ -56,6 +126,7 @@ static const MemoryRegionOps msp430_wdt_mmio_ops = {
+     .read = msp430_wdt_mmio_read,
+     .write = msp430_wdt_mmio_write,
+     .impl = {
++        .min_access_size = 2,
+         .max_access_size = 2
+     }
+ };
+@@ -83,6 +154,7 @@ static void msp430_wdt_reset(DeviceState *dev)
+     MSP430WDTState *s = MSP430_WDT(dev);
+ 
+     s->wdtctl = 0x6900;
++    update_timer(s);
+ }
+ 
+ static void msp430_wdt_unrealize(DeviceState *dev)
+@@ -94,6 +166,7 @@ static void msp430_wdt_unrealize(DeviceState *dev)
+ }
+ 
+ static Property msp430_wdt_properties[] = {
++    DEFINE_PROP_LINK("bcm", MSP430WDTState, bcm, TYPE_MSP430_BCM, Object *),
+     DEFINE_PROP_END_OF_LIST()
+ };
+ 
+diff --git a/hw/msp430/msp430x2xx.c b/hw/msp430/msp430x2xx.c
+old mode 100644
+new mode 100755
+index a725ea1bb3..91bbc3438e
+--- a/hw/msp430/msp430x2xx.c
++++ b/hw/msp430/msp430x2xx.c
+@@ -23,6 +23,8 @@
+ #include "hw/msp430/msp430_usi.h"
+ #include "hw/msp430/msp430_wdt.h"
+ #include "sysemu/reset.h"
++#include "cpu.h"
++#include "hw/loader.h"
+ 
+ static void msp430x2xx_cpu_reset(void *opaque)
+ {
+@@ -31,6 +33,12 @@ static void msp430x2xx_cpu_reset(void *opaque)
+     cpu_reset(cpu);
+ }
+ 
++#define UCA0RXIFG_IRQ           (1 << 8)
++#define UCA0TXIFG_IRQ           (1 << 9)
++/* TODO: enough for now */
++
++#define MULTI_SOURCE_INTERRUPTS (UCA0RXIFG_IRQ | UCA0TXIFG_IRQ)
++
+ static void init_msp430x2xx(MachineState *machine)
+ {
+     CPUState *cpu;
+@@ -61,7 +69,11 @@ static void init_msp430x2xx(MachineState *machine)
+     MemoryRegion *mem;
+     MemoryRegion *ram;
+ 
+-    cpu = cpu_create("msp430-cpu");
++    cpu = CPU(object_new("msp430-cpu"));
++    object_property_set_uint(OBJECT(cpu), "single-source-interrupts",
++        (uint32_t)(~MULTI_SOURCE_INTERRUPTS), NULL);
++    qdev_realize_and_unref(DEVICE(cpu), NULL, NULL);
++
+     qemu_register_reset(msp430x2xx_cpu_reset, cpu);
+ 
+     bcm = qdev_new(TYPE_MSP430_BCM);
+@@ -96,6 +108,7 @@ static void init_msp430x2xx(MachineState *machine)
+     sysbus_mmio_map(SYS_BUS_DEVICE(svs), 0, 0x55);
+ 
+     wdt = qdev_new(TYPE_MSP430_WDT);
++    object_property_set_link(OBJECT(wdt), "bcm", OBJECT(bcm), NULL);
+     sysbus_realize_and_unref(SYS_BUS_DEVICE(wdt), NULL);
+     sysbus_mmio_map(SYS_BUS_DEVICE(wdt), 0, 0x120);
+ 
+@@ -179,13 +192,34 @@ static void init_msp430x2xx(MachineState *machine)
+     ram = g_new(MemoryRegion, 1);
+     memory_region_init_ram(ram, NULL, "RAM", 0x200, NULL);
+     memory_region_add_subregion_overlap(mem, 0x200, ram, 1);
++
++    if (machine->kernel_filename) {
++        /* With kernel option FMC is overlapped with a simple ROM and FMC's
++         * content is effectively ignored. */
++        MemoryRegion *rom = g_new(MemoryRegion, 1);
++        memory_region_init_ram(rom, NULL, "ROM", 0xFC00, NULL);
++        memory_region_add_subregion_overlap(mem, 0x400, rom, 1);
++
++        /* load guest from an ELF */
++        load_elf(
++            machine->kernel_filename,
++            NULL, NULL, NULL, /* no address translation */
++            NULL, /* entry point is part of interrupt vector table */
++            NULL, NULL, /* bounds of loaded data is not interesting */
++            NULL, /* no pflags required */
++            0, /* little-endian */
++            105, /* Texas Instruments embedded microcontroller msp430 */
++            0, /* clearing LSB of symbol addresses is not required */
++            0 /* data bytes swapping is not required */
++        );
++    }
+ }
+ 
+ static void machine_msp430x2xx_class_init(ObjectClass *oc, void *opaque)
+ {
+     MachineClass *mc = MACHINE_CLASS(oc);
+ 
+-    mc->desc = "TODO: provide description for msp430x2xx";
++    mc->desc = "Generic model of series msp430x2xx (draft)";
+     mc->init = init_msp430x2xx;
+ }
+ 
+diff --git a/include/hw/msp430/msp430_bcm.h b/include/hw/msp430/msp430_bcm.h
+old mode 100644
+new mode 100755
+index 80406bfbd5..94828a0915
+--- a/include/hw/msp430/msp430_bcm.h
++++ b/include/hw/msp430/msp430_bcm.h
+@@ -16,6 +16,11 @@ typedef struct MSP430BCMState {
+     uint8_t dcoctl;
+     uint8_t bcsctl1;
+     uint8_t bcsctl2;
++
++    uint64_t dco_freq; /* Digitally-Controlled Oscillator */
++    uint64_t mclk_freq; /* Master clock. */
++    uint64_t aclk_freq; /* Auxiliary clock. */
++    uint64_t smclk_freq; /* Sub-main clock. */
+ } MSP430BCMState;
+ 
+ #endif /* INCLUDE_MSP430_BCM_H */
+diff --git a/include/hw/msp430/msp430_ic.h b/include/hw/msp430/msp430_ic.h
+old mode 100644
+new mode 100755
+index 7d1258c4de..2aa723e280
+--- a/include/hw/msp430/msp430_ic.h
++++ b/include/hw/msp430/msp430_ic.h
+@@ -11,10 +11,7 @@
+ typedef struct MSP430ICState {
+     SysBusDevice parent_obj;
+     MemoryRegion mmio;
+-    uint8_t ie1;
+-    uint8_t ie2;
+-    uint8_t ifg1;
+-    uint8_t ifg2;
++    CPUState *cpu;
+ } MSP430ICState;
+ 
+ #endif /* INCLUDE_MSP430_IC_H */
+diff --git a/include/hw/msp430/msp430_usci_a.h b/include/hw/msp430/msp430_usci_a.h
+old mode 100644
+new mode 100755
+index 926696fbd4..ca52359cdd
+--- a/include/hw/msp430/msp430_usci_a.h
++++ b/include/hw/msp430/msp430_usci_a.h
+@@ -12,8 +12,15 @@
+ 
+ typedef struct MSP430USCIAState {
+     SysBusDevice parent_obj;
+-    qemu_irq out_irq_0;
+-    qemu_irq out_irq_1;
++
++    /* RX IRQ is set on input.
++     * The USCI model is always ready to transfer bytes except software
++     * reset state (UCSWRST bit in UCAxCTL1). That bit also affects interrupt
++     * bits in the interrupt controller. So, an IRQ (out_irq_swrst) is used
++     * to transfer its state to the interrupt controller.  */
++    qemu_irq out_irq_rx;
++    qemu_irq out_irq_swrst;
++
+     MemoryRegion mmio;
+     uint8_t ucaxabctl;
+     uint8_t ucaxirtctl;
+@@ -27,6 +34,9 @@ typedef struct MSP430USCIAState {
+     uint8_t ucaxrxbuf;
+     uint8_t ucaxtxbuf;
+     CharBackend chr;
++
++    bool rx_ready;
++    bool tx_ready;
+ } MSP430USCIAState;
+ 
+ #endif /* INCLUDE_MSP430_USCI_A_H */
+diff --git a/include/hw/msp430/msp430_wdt.h b/include/hw/msp430/msp430_wdt.h
+old mode 100644
+new mode 100755
+index 1bb0d5c6fc..7fd43050aa
+--- a/include/hw/msp430/msp430_wdt.h
++++ b/include/hw/msp430/msp430_wdt.h
+@@ -14,6 +14,7 @@ typedef struct MSP430WDTState {
+     MemoryRegion mmio;
+     uint16_t wdtctl;
+     QEMUTimer *timer;
++    Object *bcm;
+ } MSP430WDTState;
+ 
+ #endif /* INCLUDE_MSP430_WDT_H */
+-- 
+2.17.1
+
