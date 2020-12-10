@@ -1,0 +1,517 @@
+From 442970d9cf5dc9cffb95610062dcfa60efab198d Mon Sep 17 00:00:00 2001
+Message-Id: <442970d9cf5dc9cffb95610062dcfa60efab198d.1607512476.git.real@ispras.ru>
+From: Efimov Vasily <real@ispras.ru>
+Date: Wed, 9 Dec 2020 14:11:09 +0300
+Subject: [PATCH] MSP430 CPU: reset, interrupts, GDB RSP access
+
+Signed-off-by: Efimov Vasily <real@ispras.ru>
+---
+ target/msp430/cpu.c           |  36 +++++--
+ target/msp430/cpu.h           | 105 +++++++++++++++++++-
+ target/msp430/helper.c        | 179 +++++++++++++++++++++++++++++++++-
+ target/msp430/helper.h        |   1 +
+ target/msp430/machine.c       |   6 ++
+ target/msp430/translate.inc.c |  10 +-
+ 6 files changed, 321 insertions(+), 16 deletions(-)
+
+diff --git a/target/msp430/cpu.c b/target/msp430/cpu.c
+old mode 100644
+new mode 100755
+index f3216f9a49..0c89652c67
+--- a/target/msp430/cpu.c
++++ b/target/msp430/cpu.c
+@@ -3,7 +3,8 @@
+ #include "qemu/osdep.h"
+ #include "hw/irq.h"
+ #include "qapi/error.h"
+-#include "cpu.h"
++#include "exec/gdbstub.h"
++#include "hw/qdev-properties.h"
+ 
+ static ObjectClass *msp430_cpu_class_by_name(const char *cpu_model)
+ {
+@@ -23,28 +24,36 @@ static void msp430_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
+ 
+ static int msp430_cpu_gdb_read_register(CPUState *cs, GByteArray *buf, int n)
+ {
+-    /* TODO: implement gdb_read_register */
+     MSP430CPU *cpu = MSP430_CPU(cs);
+     CPUClass *cc = CPU_GET_CLASS(cs);
+-    CPUMSP430State *env __attribute__((unused)) = &cpu->env;
++    CPUMSP430State *env = &cpu->env;
+ 
+     if (n > cc->gdb_num_core_regs) {
+         return 0;
++    } else if (n == 0) {
++        return gdb_get_reg16(buf, env->pc);
++    } else {
++        return gdb_get_reg16(buf, env->regs[n - 1]);
+     }
+-    return 0;
+ }
+ 
+ static int msp430_cpu_gdb_write_register(CPUState *cs, uint8_t *mem_buf, int n)
+ {
+-    /* TODO: implement gdb_write_register */
+     MSP430CPU *cpu = MSP430_CPU(cs);
+     CPUClass *cc = CPU_GET_CLASS(cs);
+-    CPUMSP430State *env __attribute__((unused)) = &cpu->env;
++    CPUMSP430State *env = &cpu->env;
+ 
++    /* PC & SP are word aligned. */
+     if (n > cc->gdb_num_core_regs) {
+         return 0;
++    } else if (n == 0) { /* PC */
++        env->pc = lduw_p(mem_buf) & 0xFFFE;
++    } else if (n == 1) { /* SP */
++        env->regs[0] = lduw_p(mem_buf) & 0xFFFE;
++    } else {
++        env->regs[n - 1] = lduw_p(mem_buf) & 0xFFFF;
+     }
+-    return 0;
++    return 2;
+ }
+ 
+ static bool msp430_cpu_has_work(CPUState *cs)
+@@ -70,13 +79,15 @@ static void msp430_cpu_realizefn(DeviceState *dev, Error **errp)
+ 
+ static void msp430_cpu_reset(DeviceState *dev)
+ {
++    CPUState *cs = CPU(dev);
+     MSP430CPU *cpu = MSP430_CPU(dev);
+     MSP430CPUClass *cc = MSP430_CPU_GET_CLASS(cpu);
+     CPUMSP430State *env = &cpu->env;
+ 
+     cc->parent_reset(dev);
+     memset(env, 0, offsetof(CPUMSP430State, end_reset_fields));
+-    env->pc = 0;
++
++    cs->exception_index = EXCP_RESET;
+ }
+ 
+ static void msp430_cpu_set_pc(CPUState *cs, vaddr value)
+@@ -86,6 +97,12 @@ static void msp430_cpu_set_pc(CPUState *cs, vaddr value)
+     cpu->env.pc = value;
+ }
+ 
++static Property msp430_cpu_properties[] = {
++    DEFINE_PROP_UINT32("single-source-interrupts", MSP430CPU,
++                       single_source_interrupts, 0xFFFFFFFF),
++    DEFINE_PROP_END_OF_LIST()
++};
++
+ static void msp430_cpu_class_init(ObjectClass *oc, void *data)
+ {
+     DeviceClass *dc = DEVICE_CLASS(oc);
+@@ -96,8 +113,11 @@ static void msp430_cpu_class_init(ObjectClass *oc, void *data)
+                                     &mcc->parent_realize);
+     device_class_set_parent_reset(dc, msp430_cpu_reset, &mcc->parent_reset);
+ 
++    device_class_set_props(dc, msp430_cpu_properties);
++
+     cc->has_work = msp430_cpu_has_work;
+     cc->do_interrupt = msp430_cpu_do_interrupt;
++    cc->cpu_exec_interrupt = msp430_cpu_exec_interrupt;
+     cc->set_pc = msp430_cpu_set_pc;
+     cc->dump_state = msp430_cpu_dump_state;
+     cc->disas_set_info = msp430_cpu_disas_set_info;
+diff --git a/target/msp430/cpu.h b/target/msp430/cpu.h
+old mode 100644
+new mode 100755
+index 6ef5a516bb..cd53c7bd1e
+--- a/target/msp430/cpu.h
++++ b/target/msp430/cpu.h
+@@ -5,17 +5,61 @@
+ #include "migration/vmstate.h"
+ #include "exec/cpu-defs.h"
+ 
++/* Status Register (SR, R2) flags */
++#define SR(env) (env->regs[1])
++#define SR_C            0x0001
++#define SR_Z            0x0002
++#define SR_N            0x0004
++#define SR_GIE          0x0008
++#define SR_CPUOFF       0x0010
++#define SR_OSCOFF       0x0020
++#define SR_SCG0         0x0040
++#define SR_SCG1         0x0080
++#define SR_V            0x0100
++
++/* ifg/ie (interrupt flag/interrupt enable) fields are an implementation
++ * tricks. ifg contains 1 for all currently active IRQs. 1 in ie enables the
++ * interrupt.
++ *
++ * Bit shift corresponds to interrupt vector/priority (less
++ * shift - greater priority). There is one-one correspondence between
++ * vector address word offset in ROM and vector priority.
++ *
++ * Some of ifg/ie bits corresponds to bits of IFG1, IFG2 and IE1, IE2
++ * registers.
++ * The IC (interrupt controller, an implementation trick too) manages the
++ * mapping between IFG(1,2)/IE(1,2) and ifg/ie.
++ * Some interrupt flags and enable bits are located in registers of
++ * corresponding devices. ifg only mirrors them, ie should not mask such
++ * interrupts because IC must not provide write access to corresponding bits.
++ * */
++
+ typedef struct CPUMSP430State {
+     uint32_t pc;
+     uint32_t regs[15];
++
++    uint32_t ie;
++
++    uint8_t ie1;
++    uint8_t ie2;
++
+     /* Fields up to this point are cleared by a CPU reset */
+     struct {} end_reset_fields;
++
++    uint32_t ifg;
++
++    uint8_t ifg1;
++    uint8_t ifg2;
+ } CPUMSP430State;
+ 
+ typedef struct MSP430CPU {
+     CPUState parent_obj;
+     CPUNegativeOffsetState neg;
+     CPUMSP430State env;
++
++    /* It's board dependent. Some devices (e.g. Timer_A) has one IRQ to CPU
++     * which is sources by multiple reasons. */
++    uint32_t single_source_interrupts;
+ } MSP430CPU;
+ 
+ typedef MSP430CPU ArchCPU;
+@@ -38,7 +82,10 @@ typedef struct MSP430CPUClass {
+ } MSP430CPUClass;
+ 
+ enum {
+-    EXCP_ILLEGAL = 1
++    /* Exceptions from 0 to 31 are interrupts. */
++    EXCP_RESET = 0,
++
++    EXCP_ILLEGAL = 32
+ };
+ 
+ extern const VMStateDescription vmstate_msp430_cpu;
+@@ -55,6 +102,7 @@ static inline int cpu_mmu_index(CPUMSP430State *env, bool ifetch)
+     return 0;
+ }
+ 
++bool msp430_cpu_exec_interrupt(CPUState *cs, int interrupt_request);
+ void msp430_cpu_do_interrupt(CPUState *cs);
+ void msp430_cpu_dump_state(CPUState *cs, FILE *f, int flags);
+ hwaddr msp430_cpu_get_phys_page_debug(CPUState *cs, vaddr addr);
+@@ -62,4 +110,59 @@ bool msp430_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
+                          MMUAccessType access_type, int mmu_idx, bool probe,
+                          uintptr_t retaddr);
+ void msp430_tcg_init(void);
++
++/* Interrupts for MSP430G2x53 and MSP430G2x13.
++ * References:
++ *  - Table 5. SLAS735J
++ *  - SLAU144J
++ *
++ *
++ * CPU's ifg/ie bits:
++ *
++ * 0: - Reset (non maskable)
++ * 1: - Non-maskable
++ * ...
++ * 8: USCI_A0/USCI_B0 receive, USCI_B0 I2C status. V: 0FFEEh. P: 23.
++ *    IE2:0 (UCA0RXIE), IFG2:0 (UCA0RXIFG)
++ * 9: USCI_A0/USCI_B0 transmit, USCI_B0 I2C receive/transmit. V: 0FFECh. P: 24
++ *    IE2:1 (UCA0TXIE), IFG2:1 (UCA0TXIFG)
++ * ...
++ *
++ * --
++ * V: - vector address
++ * P: - priority
++ */
++
++/* IE1, Interrupt Enable Register 1
++ * */
++#define WDTIE           0x01
++#define OFIE            0x02
++#define NMIIE           0x10
++#define ACCVIE          0x20
++
++/* IE2, Interrupt Enable Register 2
++ * */
++#define UCA0RXIE        0x01
++#define UCA0TXIE        0x02
++#define UCB0RXIE        0x04
++#define UCB0TXIE        0x08
++
++/* IFG1, Interrupt Flag Register 1
++ * */
++#define WDTIFG          WDTIE
++#define OFIFG           OFIE
++#define PORIFG          0x04
++#define RSTIFG          0x08
++#define NMIIFG          NMIIE
++
++/* IFG2, Interrupt Flag Register 2
++ * */
++#define UCA0RXIFG       UCA0RXIE
++#define UCA0TXIFG       UCA0TXIE
++#define UCB0RXIFG       UCB0RXIE
++#define UCB0TXIFG       UCB0TXIE
++
++void msp430_cpu_update_ie(MSP430CPU *cpu);
++void msp430_cpu_update_ifg(MSP430CPU *cpu);
++
+ #endif /* INCLUDE_CPU_H */
+diff --git a/target/msp430/helper.c b/target/msp430/helper.c
+old mode 100644
+new mode 100755
+index eca28e20f2..622f33f2ff
+--- a/target/msp430/helper.c
++++ b/target/msp430/helper.c
+@@ -24,7 +24,184 @@ void helper_illegal(CPUMSP430State *env)
+     raise_exception(env, EXCP_ILLEGAL);
+ }
+ 
+-void msp430_cpu_do_interrupt(CPUState *cs) {}
++static unsigned interrupt_ready(CPUMSP430State *env)
++{
++    uint32_t enabled_and_active = env->ie & env->ifg;
++    /* Use 0 as false because reset vector is not covered by
++     * ifg/ie pair. */
++    unsigned vector = 0;
++
++    /* SPAU144J p. 31: (Non)-maskable NMI interrupts are not masked by the
++     * general interrupt enable bit (GIE), but are enabled by individual
++     * interrupt enable bits (NMIIE, ACCVIE, OFIE). */
++    if (enabled_and_active & 2) {
++        vector = 1;
++    } else if ((SR(env) & SR_GIE)) {
++        if (enabled_and_active) {
++            /* less bit shift - greater interrupt priority */
++            vector = ctz32(enabled_and_active);
++        }
++    }
++
++    return vector;
++}
++
++/* Called when SR is used as dst register. It checks interrupt and board
++ * related flags. ALU's flags have no interest for the helper. */
++void helper_check_sr_machine_bits(CPUMSP430State *env)
++{
++    if (interrupt_ready(env)) {
++        CPUState *cpu = env_cpu(env);
++        cpu->interrupt_request |= CPU_INTERRUPT_HARD;
++        cpu_exit(env_cpu(env));
++    }
++}
++
++void msp430_cpu_update_ie(MSP430CPU *cpu)
++{
++    CPUMSP430State *env = &cpu->env;
++
++    uint32_t value = 0;
++
++    if (env->ie1 & (OFIE | NMIIE | ACCVIE)) {
++        value |= 1 << 1;
++    }
++    if (env->ie1 & WDTIE) {
++        value |= 1 << 5;
++    }
++    value |= (env->ie2 & (UCA0RXIE | UCA0TXIE | UCB0RXIE | UCB0TXIE)) << 8;
++
++    env->ie = value;
++
++    if (env->ie & env->ifg) {
++        cpu_interrupt(CPU(cpu), CPU_INTERRUPT_HARD);
++    }
++}
++
++void msp430_cpu_update_ifg(MSP430CPU *cpu)
++{
++    CPUMSP430State *env = &cpu->env;
++
++    uint32_t value = 0;
++
++    /* Note, ACCVIFG is in FCTL3. */
++    if (env->ifg1 & (OFIFG | NMIIFG)) {
++        value |= 1 << 1;
++    }
++    if (env->ifg1 & WDTIFG) {
++        value |= 1 << 5;
++    }
++    value |=
++        (env->ifg2 & (UCA0RXIFG | UCA0TXIFG | UCB0RXIFG | UCB0TXIFG)) << 8;
++
++    env->ifg = value;
++
++    if (env->ie & env->ifg) {
++        cpu_interrupt(CPU(cpu), CPU_INTERRUPT_HARD);
++    }
++}
++
++bool msp430_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
++{
++    bool ret = false;
++
++    if (interrupt_request & CPU_INTERRUPT_HARD) {
++        MSP430CPU *cpu = MSP430_CPU(cs);
++        CPUMSP430State *env = &cpu->env;
++
++        unsigned vector = interrupt_ready(env);
++
++        if (vector) {
++            cs->exception_index = vector;
++            ret = true;
++        }
++
++        /* cs->interrupt_request is reset during msp430_cpu_do_interrupt */
++    }
++
++    if (ret) {
++        msp430_cpu_do_interrupt(cs);
++        /* cs->exception_index will be reset by common cpu_handle_interrupt. */
++    }
++
++    return ret;
++}
++
++void msp430_cpu_do_interrupt(CPUState *cs)
++{
++    if (cs->exception_index < 0) {
++        /* No interrupt. */
++        return;
++    }
++    if (cs->exception_index == EXCP_ILLEGAL) {
++        /* TODO: Illegal instruction handling. Now it's just reset. */
++        cpu_interrupt(cs, CPU_INTERRUPT_RESET);
++        return;
++    }
++
++    if (31 < cs->exception_index) {
++        /* Not an interrupt. */
++        return;
++    }
++
++    MSP430CPU *cpu = MSP430_CPU(cs);
++    CPUMSP430State *env = &cpu->env;
++
++    hwaddr vector_address = 0xFFFE - (cs->exception_index << 1);
++
++    if (cs->exception_index == 0) {
++        /* reset */
++    } else {
++        /* other interrupts */
++
++        /* SLAU144J p. 31: When a NMI interrupt is accepted, all NMI interrupt
++         * enable bits are automatically reset.
++         * */
++        if (cs->exception_index == 1) {
++            env->ie &= ~2;
++            env->ie1 &= ~(OFIE | NMIIE | ACCVIE);
++        }
++
++        /* According to SLAU144J
++         *
++         * > 5. The interrupt request flag resets automatically on
++         * > single-source flags. Multiple source flags remain set
++         * > for servicing by software. */
++        switch (cs->exception_index) {
++        case 5: /* WDT */
++            env->ifg1 &= ~WDTIFG;
++            env->ifg &= ~(1 << 5);
++            break;
++        case 9: /* UCA0TXIE, USCI is always ready to transmit. */
++            break;
++        default:
++            if (cpu->single_source_interrupts & (1 << cs->exception_index)) {
++                env->ifg &= ~(1 << cs->exception_index);
++                if (cs->exception_index > 7) {
++                    env->ifg2 &= ~(1 << (cs->exception_index - 8));
++                } else {
++                    env->ifg1 &= ~(1 << cs->exception_index);
++                }
++            }
++            break;
++        }
++
++        if (interrupt_ready(env)) {
++            cs->interrupt_request |= CPU_INTERRUPT_HARD;
++        } else {
++            cs->interrupt_request &= ~CPU_INTERRUPT_HARD;
++        }
++
++        env->regs[0] -= 2;
++        cpu_stw_data(env, env->regs[0], env->pc);
++        env->regs[0] -= 2;
++        cpu_stw_data(env, env->regs[0], env->regs[1]);
++
++        env->regs[1] = 0;
++    }
++
++    env->pc = cpu_lduw_data(env, vector_address);
++}
+ 
+ hwaddr msp430_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
+ {
+diff --git a/target/msp430/helper.h b/target/msp430/helper.h
+old mode 100644
+new mode 100755
+index 0a10b1061b..caef603d08
+--- a/target/msp430/helper.h
++++ b/target/msp430/helper.h
+@@ -1,2 +1,3 @@
+ DEF_HELPER_1(debug, void, env)
+ DEF_HELPER_1(illegal, void, env)
++DEF_HELPER_1(check_sr_machine_bits, void, env)
+diff --git a/target/msp430/machine.c b/target/msp430/machine.c
+old mode 100644
+new mode 100755
+index 6b5338a824..8144d8a4fa
+--- a/target/msp430/machine.c
++++ b/target/msp430/machine.c
+@@ -11,6 +11,12 @@ const VMStateDescription vmstate_msp430_cpu = {
+     .fields = (VMStateField[]) {
+         VMSTATE_UINT32(pc, CPUMSP430State),
+         VMSTATE_UINT32_ARRAY(regs, CPUMSP430State, 15),
++        VMSTATE_UINT32(ie, CPUMSP430State),
++        VMSTATE_UINT32(ifg, CPUMSP430State),
++        VMSTATE_UINT8(ie1, CPUMSP430State),
++        VMSTATE_UINT8(ie2, CPUMSP430State),
++        VMSTATE_UINT8(ifg1, CPUMSP430State),
++        VMSTATE_UINT8(ifg2, CPUMSP430State),
+         VMSTATE_END_OF_LIST()
+     }
+ };
+diff --git a/target/msp430/translate.inc.c b/target/msp430/translate.inc.c
+index 668c6f74d1..ca25dee65e 100644
+--- a/target/msp430/translate.inc.c
++++ b/target/msp430/translate.inc.c
+@@ -5,11 +5,6 @@
+ #include "exec/exec-all.h"
+ #include "tcg/tcg-op.h"
+ 
+-#define SR_C (1 << 0)
+-#define SR_N (1 << 2)
+-#define SR_V (1 << 8)
+-#define SR_Z (1 << 1)
+-
+ typedef struct DisasContext {
+     TranslationBlock *tb;
+     uint64_t pc;
+@@ -161,7 +156,10 @@ static inline void add_cg2_idx_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+     tcg_temp_free(src_val);
+ }
+ 
+-static inline void do_gen_helper_check_sr_machine_bits(void) {}
++static inline void do_gen_helper_check_sr_machine_bits(void)
++{
++    gen_helper_check_sr_machine_bits(cpu_env);
++}
+ 
+ static inline void add_cg2_reg_0(DisasContext *ctx, uint64_t bw, uint64_t as,
+                                  uint64_t dst)
+-- 
+2.17.1
+
