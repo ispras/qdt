@@ -901,10 +901,14 @@ class CPUType(QOMCPU):
 
         helper_debug = self.gen_helper_debug()
         fill_helper_debug_body(helper_debug)
+        # avoid warning about missing prototypes
+        helper_debug.extra_references = {Type["HELPER_PROTO_H"]}
         c.add_type(helper_debug)
 
         helper_illegal = self.gen_helper_illegal()
         fill_helper_illegal_body(helper_illegal)
+        # avoid warning about missing prototypes
+        helper_debug.extra_references = {Type["HELPER_PROTO_H"]}
         c.add_type(helper_illegal)
 
         Header["exec/helper-gen.h"].add_types([
