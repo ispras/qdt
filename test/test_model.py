@@ -1071,5 +1071,92 @@ int func(int arg)
         ]
 
 
+class TestExtraReferences(SourceModelTestHelper, TestCase):
+
+    def setUp(self):
+        super(TestExtraReferences, self).setUp()
+        name = type(self).__name__
+
+        m1_type_h = Header(name.lower() + "_m1_type.h")
+        m1 = Macro("M1")
+        m1_type_h.add_type(m1)
+
+        m2_type_h = Header(name.lower() + "_m2_type.h")
+        m2 = Macro("M2")
+        m2.extra_references = {m1}
+        m2_type_h.add_type(m2)
+
+        src = Source(name.lower() + ".c")
+
+        s1m = Macro("S1M", text = "M1")
+        src.add_type(s1m)
+
+        s1 = Structure("s1")
+        s1m_t = s1m.gen_type()
+        s1m_t.extra_references = {m1}
+        s1.append_field(s1m_t)
+        src.add_type(s1)
+
+        s2m = Macro("S2M", text = "M2")
+        src.add_type(s2m)
+
+        s2 = Structure("s2")
+        s2m_t = s2m.gen_type()
+        s2m_t.extra_references = {m2}
+        s2.append_field(s2m_t)
+        src.add_type(s2)
+
+        # Note, s1 and s2 in alphabetical order without this reference
+        s1.extra_references = {s2}
+
+        src_content = """\
+/* {} */
+
+#include "{}"
+
+#define S1M M1
+#define S2M M2
+
+typedef struct s2 {{
+    S2M
+}} s2;
+
+typedef struct s1 {{
+    S1M
+}} s1;
+
+""".format(src.path, m2_type_h.path)
+
+        m1_type_h_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+#define M1
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(path = m1_type_h.path, fname_upper = name.upper() + "_M1_TYPE")
+
+        m2_type_h_content = """\
+/* {path} */
+#ifndef INCLUDE_{fname_upper}_H
+#define INCLUDE_{fname_upper}_H
+
+#include "{m1_path}"
+
+#define M2
+#endif /* INCLUDE_{fname_upper}_H */
+""".format(
+    path = m2_type_h.path,
+    fname_upper = name.upper() + "_M2_TYPE",
+    m1_path = m1_type_h.path
+        )
+
+        self.files = [
+            (m1_type_h, m1_type_h_content),
+            (m2_type_h, m2_type_h_content),
+            (src, src_content)
+        ]
+
+
 if __name__ == "__main__":
     main()
