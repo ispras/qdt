@@ -456,6 +456,30 @@ class ExtraReferencesFixerVisitor(TypeFixerVisitor):
                         self.required_types.append(r)
 
 
+class ExtraReferencesCollector(TypeReferencesVisitor):
+
+    def __init__(self, type_):
+        super(ExtraReferencesCollector, self).__init__(type_)
+        self.extra_references = set()
+        try:
+            self.extra_references |= type_.extra_references
+        except AttributeError:
+            pass
+
+    def on_visit(self):
+        cur = self.cur
+        if isinstance(cur, Type):
+            # Stop on foreign type
+            if (    cur.definer is not self
+                and isinstance(cur.definer, Source)
+            ):
+                raise BreakVisiting()
+            try:
+                self.extra_references |= cur.extra_references
+            except AttributeError:
+                pass
+
+
 # A Py version independent way to add metaclass.
 # https://stackoverflow.com/questions/39013249/metaclass-in-python3-5
 @add_metaclass(registry)
