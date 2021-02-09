@@ -1122,8 +1122,6 @@ class Initializer(object):
         self.used_types = set(used_types)
         self.used_variables = used_variables
         if isinstance(code, dict):
-            self.__type_references__ = self.__type_references__ + ["code"]
-
             # automatically get types used in the code
             self.used_types.update(TypesCollector(code).visit().used_types)
 
@@ -1142,7 +1140,8 @@ class Initializer(object):
 
         return val_str
 
-    __type_references__ = ["used_types", "used_variables"]
+    # Note, if `code` is a `str`ing, the type analysis just ignore it.
+    __type_references__ = ["used_types", "used_variables", "code"]
 
 
 class Variable(object):
