@@ -512,6 +512,12 @@ class ExtraReferencesCollector(TypeReferencesVisitor):
                 self.extra_references |= cur.extra_references
             except AttributeError:
                 pass
+        elif isinstance(cur, Variable):
+            try:
+                self.extra_references |= cur.extra_references
+            except AttributeError:
+                pass
+            raise BreakVisiting()
 
 
 # A Py version independent way to add metaclass.
