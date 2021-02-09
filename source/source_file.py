@@ -453,15 +453,33 @@ class ExtraReferencesFixerVisitor(TypeFixerVisitor):
         super(ExtraReferencesFixerVisitor, self).__init__(source, source)
 
     def on_visit(self):
-        if isinstance(self.cur, Type):
-            t = self.cur
-
+        t = self.cur
+        if isinstance(t, Type):
             # Stop on foreign type
             if (    t.definer is not self.source
                 and isinstance(t.definer, Source)
             ):
                 raise BreakVisiting()
 
+            try:
+                refs = t.extra_references
+            except AttributeError:
+                pass
+            else:
+                for r in refs:
+                    if isinstance(r, Type) and r.name not in self.source.types:
+                        self.required_types.append(r)
+        elif isinstance(t, Variable):
+            # Stop on foreign global variable
+            if (t.definer is not None or t.declarer is not None):
+                source = self.source
+                source_type = type(source)
+                if source_type is Source:
+                    if t.definer is not source:
+                        raise BreakVisiting()
+                elif source_type is Header:
+                    if t.declarer is not source:
+                        raise BreakVisiting()
             try:
                 refs = t.extra_references
             except AttributeError:
