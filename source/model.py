@@ -453,14 +453,17 @@ class Structure(Type):
             return definition.fields
 
     @property
-    def __type_references__(self):
+    def _fields_tr(self):
+        "Fields for type references analysis."
         if self._definition is None:
             # It's a definition. A forward declaration cannot have fields.
             # Hence, all fields are in _and only in_ `self._fields`.
             # And the `property`s logic is not required for this case.
-            return ["_fields"]
+            return self._fields
         else:
             return []
+
+    __type_references__ = ["_fields_tr"]
 
     def __c__(self, writer):
         writer.write(self.c_name)
