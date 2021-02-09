@@ -1020,7 +1020,9 @@ digraph Chunks {
         w.write("}\n")
 
     def gen_chunks_gv_file(self, file_name):
-        chunks = sort_chunks(OrderedSet(sorted(self.chunks)))
+        chunks = sort_chunks(OrderedSet(sorted(self.chunks)),
+            allow_loops = True
+        )
 
         f = open(file_name, "w")
         self.gen_chunks_graph(f, chunks)
@@ -1343,12 +1345,12 @@ digraph Chunks {
         return macro_forbidden.sub('_', self.name.upper())
 
 
-def sort_chunks(chunks):
+def sort_chunks(chunks, allow_loops = False):
     new_chunks = OrderedSet()
     # topology sorting
     for chunk in chunks:
         if not chunk.visited == 2:
-            depth_first_sort(chunk, new_chunks)
+            depth_first_sort(chunk, new_chunks, allow_loops = allow_loops)
 
     for chunk in new_chunks:
         chunk.visited = 0
@@ -1356,7 +1358,7 @@ def sort_chunks(chunks):
     return new_chunks
 
 
-def depth_first_sort(chunk, new_chunks):
+def depth_first_sort(chunk, new_chunks, allow_loops = False):
     # visited:
     # 0 - not visited
     # 1 - visited
@@ -1366,6 +1368,8 @@ def depth_first_sort(chunk, new_chunks):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
+            if allow_loops:
+                continue
             msg = "A loop is found in source chunk references on chunk: %s" % (
                 chunk.name
             )
@@ -1376,7 +1380,7 @@ def depth_first_sort(chunk, new_chunks):
                 continue
             else:
                 raise RuntimeError(msg)
-        depth_first_sort(ch, new_chunks)
+        depth_first_sort(ch, new_chunks, allow_loops = allow_loops)
 
     chunk.visited = 2
     new_chunks.add(chunk)
