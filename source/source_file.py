@@ -300,7 +300,7 @@ class Source(TypeContainer):
         for gv in self.global_variables.values():
             gen.provide_chunks(gv)
 
-            extra_refs |= ExtraReferencesCollector(gv).visit().extra_references
+            extra_refs |= ExtraReferencesCollector(t).visit().extra_references
 
         for r in extra_refs:
             gen.provide_chunks(r)
