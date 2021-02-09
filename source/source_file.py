@@ -1180,6 +1180,7 @@ digraph Chunks {
 
     def add_chunk(self, chunk):
         if chunk.source is None:
+            chunk.source = self
             self.sort_needed = True
             self.chunks.add(chunk)
 
