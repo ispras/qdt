@@ -886,6 +886,12 @@ class ChunkGenerator(object):
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
+            # Some `TypeContainer`'s can require extra types when the model is
+            # not suitable enough.
+            for ref in origin.extra_references:
+                # Assume that first chunk is "main".
+                chunks[0].add_references(self.provide_chunks(ref))
+
             self.stack.pop()
 
             # Note that conversion to a tuple is performed to prevent further
