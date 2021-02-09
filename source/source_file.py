@@ -279,31 +279,18 @@ class Source(TypeContainer):
                     if ref.definer not in user.inclusions:
                         ref_list.append(ref)
 
-        ExtraReferencesFixerVisitor(self).visit()
-
         # Finally, we must fix types just before generation because user can
         # change already added types.
         TypeFixerVisitor(self, self).visit()
 
         gen = ChunkGenerator(self)
 
-        extra_refs = set()
-
         for t in self.types.values():
             if t.definer is self:
                 gen.provide_chunks(t)
 
-                extra_refs |= (
-                    ExtraReferencesCollector(t).visit().extra_references
-                )
-
         for gv in self.global_variables.values():
             gen.provide_chunks(gv)
-
-            extra_refs |= ExtraReferencesCollector(t).visit().extra_references
-
-        for r in extra_refs:
-            gen.provide_chunks(r)
 
         if isinstance(self, Header):
             for r in ref_list:
@@ -331,16 +318,13 @@ from each referenced origin.
     Extra references may be used to apply extended (semantic) order when syntax
 order does not meet all requirements.
             """
-
-            refs = ExtraReferencesCollector(origin).visit().extra_references
+            try:
+                refs = origin.extra_references
+            except AttributeError:
+                continue
 
             for r in refs:
                 try:
-                    if (    r.definer is not self
-                        and isinstance(r.definer, Source)
-                    ):
-                        r = r.definer
-
                     referenced_chunks = chunk_cache[r]
                 except KeyError:
                     # no chunk was generated for that referenced origin
