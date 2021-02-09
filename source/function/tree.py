@@ -75,6 +75,9 @@ from ..model import (
     Function,
     Variable
 )
+from ..type_container import (
+    TypeContainer,
+)
 from common import (
     ee,
     BreakVisiting,
@@ -102,7 +105,7 @@ class DeclarationSearcher(NodeVisitor):
             raise BreakVisiting()
 
 
-class Node(object):
+class Node(TypeContainer):
 
     # traverse order indicator for `ObjectVisitor`
     __node__ = ("children",)
@@ -114,6 +117,8 @@ class Node(object):
         indent_children = True,
         children = []
     ):
+        super(Node, self).__init__()
+
         self.val = val
         self.new_line = new_line
         self.indent_children = indent_children
@@ -214,7 +219,7 @@ class MacroBranch(Node):
     """ MacroBranch describes construction like MACRO(x, y) { ... } """
 
     __node__ = ("children", "macro_call")
-    __type_references__ = __node__
+    __type_references__ = ("macro_call",)
 
     def __init__(self, macro_call):
         super(MacroBranch, self).__init__()
@@ -230,7 +235,7 @@ class MacroBranch(Node):
 class LoopWhile(CNode):
 
     __node__ = ("children", "cond")
-    __type_references__ = __node__
+    __type_references__ = ("cond",)
 
     def __init__(self, cond):
         super(LoopWhile, self).__init__()
@@ -247,7 +252,7 @@ class LoopWhile(CNode):
 class LoopDoWhile(CNode):
 
     __node__ = ("children", "cond")
-    __type_references__ = __node__
+    __type_references__ = ("cond",)
 
     def __init__(self, cond):
         super(LoopDoWhile, self).__init__()
@@ -264,7 +269,7 @@ class LoopDoWhile(CNode):
 class LoopFor(CNode):
 
     __node__ = ("children", "init", "cond", "step")
-    __type_references__ = __node__
+    __type_references__ = ("init", "cond", "step")
 
     def __init__(self, init = None, cond = None, step = None):
         super(LoopFor, self).__init__()
@@ -292,7 +297,7 @@ class LoopFor(CNode):
 class BranchIf(CNode):
 
     __node__ = ("children", "cond", "else_blocks")
-    __type_references__ = __node__
+    __type_references__ = ("cond", "else_blocks")
 
     def __init__(self, cond):
         super(BranchIf, self).__init__()
@@ -327,7 +332,7 @@ class BranchElse(CNode):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
-    __type_references__ = __node__
+    __type_references__ = ("cond",)
 
     def __init__(self, cond = None):
         super(BranchElse, self).__init__()
@@ -346,7 +351,7 @@ class BranchElse(CNode):
 class BranchSwitch(CNode):
 
     __node__ = ("children", "var")
-    __type_references__ = __node__
+    __type_references__ = ("var",)
 
     def __init__(self, var,
         add_break_in_default = True,
@@ -600,7 +605,7 @@ class Declare(SemicolonPresence):
 
 class MCall(SemicolonPresence):
 
-    __type_references__ = ("children", "type")
+    __type_references__ = ("type",)
 
     def __init__(self, macro, *args):
         super(MCall, self).__init__(children = args)
@@ -677,7 +682,7 @@ class OpIndex(Operator):
 
 class OpSDeref(Operator):
 
-    __type_references__ = Operator.__type_references__ + ("struct",)
+    __type_references__ = ("struct",)
 
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
@@ -765,7 +770,7 @@ class OpPreInc(UnaryOperator):
 
 class OpCast(UnaryOperator):
 
-    __type_references__ = ("children", "type")
+    __type_references__ = ("type",)
 
     def __init__(self, type_name, arg):
         super(OpCast, self).__init__("(" + type_name + ")", arg)
