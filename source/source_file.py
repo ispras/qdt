@@ -62,6 +62,9 @@ from .model import (
 from .tools import (
     get_cpp_search_paths,
 )
+from .type_container import (
+    TypeContainer,
+)
 with pypath("..ply"):
     # PLY`s C preprocessor is used for several QEMU code analysis
     from ply.lex import (
@@ -100,12 +103,14 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
 
 
-class Source(object):
+class Source(TypeContainer):
 
     # Only header can do it, see `Header`.
     inherit_references = False
 
     def __init__(self, path, locked = None):
+        super(Source, self).__init__()
+
         self.path = path
         self.types = {}
         self.inclusions = {}
