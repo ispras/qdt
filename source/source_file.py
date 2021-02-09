@@ -332,19 +332,6 @@ from each referenced origin.
 order does not meet all requirements.
             """
 
-            # Skip a type inside another type
-            if (    isinstance(origin, Type)
-                and not isinstance(origin.definer, Source)
-            ):
-                continue
-
-            # Skip a non-global variable
-            if (    isinstance(origin, Variable)
-                and origin.definer is None
-                and origin.declarer is None
-            ):
-                continue
-
             refs = ExtraReferencesCollector(origin).visit().extra_references
 
             for r in refs:
