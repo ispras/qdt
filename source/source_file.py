@@ -888,9 +888,10 @@ class ChunkGenerator(object):
 
             # Some `TypeContainer`'s can require extra types when the model is
             # not suitable enough.
-            for ref in origin.extra_references:
-                # Assume that first chunk is "main".
-                chunks[0].add_references(self.provide_chunks(ref))
+            if not foreign:
+                for ref in origin.extra_references:
+                    # Assume that first chunk is "main".
+                    chunks[0].add_references(self.provide_chunks(ref))
 
             self.stack.pop()
 
