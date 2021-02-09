@@ -1109,9 +1109,23 @@ class TestExtraReferences(SourceModelTestHelper, TestCase):
         # Note, s1 and s2 in alphabetical order without this reference
         s1.extra_references = {s2}
 
+        s3 = Structure("s3")
+        v = s1("v")
+        v.extra_references = {m2}
+        s3.append_field(v)
+        src.add_type(s3)
+
+        m3 = Macro("M3")
+        Header("m3_type.h").add_type(m3)
+
+        gl = Type["int"]("gl")
+        gl.extra_references = {m3}
+        src.add_global_variable(gl)
+
         src_content = """\
 /* {} */
 
+#include "m3_type.h"
 #include "{}"
 
 #define S1M M1
@@ -1124,6 +1138,12 @@ typedef struct s2 {{
 typedef struct s1 {{
     S1M
 }} s1;
+
+typedef struct s3 {{
+    s1 v;
+}} s3;
+
+int gl __attribute__((unused));
 
 """.format(src.path, m2_type_h.path)
 
