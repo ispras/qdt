@@ -61,6 +61,9 @@ from .chunks import (
     FunctionDefinition,
     OpaqueChunk,
 )
+from .type_container import (
+    TypeContainer,
+)
 
 
 # List of coding style specific code generation settings.
@@ -113,7 +116,7 @@ class TypeNotRegistered(RuntimeError):
 
 
 @add_metaclass(registry)
-class Type(object):
+class Type(TypeContainer):
     reg = {}
 
     @staticmethod
@@ -137,6 +140,8 @@ class Type(object):
         incomplete = True,
         base = False
     ):
+        super(Type, self).__init__()
+
         self.is_named = name is not None
 
         self.incomplete = incomplete
@@ -598,9 +603,11 @@ class EnumerationElement(Type):
     __type_references__ = ["initializer"]
 
 
-class FunctionBodyString(object):
+class FunctionBodyString(TypeContainer):
 
     def __init__(self, body = None, used_types = None, used_globals = None):
+        super(FunctionBodyString, self).__init__()
+
         self.body = body
         self.used_types = set() if used_types is None else set(used_types)
         self.used_globals = [] if used_globals is None else list(used_globals)
@@ -1057,7 +1064,7 @@ class TypeReferencesVisitor(ObjectVisitor):
 
     def __init__(self, root):
         super(TypeReferencesVisitor, self).__init__(root,
-            field_name = "__type_references__"
+            field_name = "__type_attributes__"
         )
 
 
@@ -1117,10 +1124,12 @@ class ForwardDeclarator(TypeReferencesVisitor):
             self.replace(decl)
 
 
-class Initializer(object):
+class Initializer(TypeContainer):
 
     # code is string for variables and dictionary for macros
     def __init__(self, code, used_types = [], used_variables = []):
+        super(Initializer, self).__init__()
+
         self.code = code
         self.used_types = set(used_types)
         self.used_variables = used_variables
@@ -1147,7 +1156,7 @@ class Initializer(object):
     __type_references__ = ["used_types", "used_variables", "code"]
 
 
-class Variable(object):
+class Variable(TypeContainer):
 
     def __init__(self, name, _type,
         initializer = None,
@@ -1156,6 +1165,8 @@ class Variable(object):
         array_size = None,
         used = False
     ):
+        super(Variable, self).__init__()
+
         self.name = name
         self.type = _type if isinstance(_type, Type) else Type[_type]
         self.initializer = initializer
