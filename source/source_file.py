@@ -743,10 +743,7 @@ class ChunkGenerator(object):
                     else:
                         chunks = origin.get_definition_chunks(self, **kw)
                 else:
-                    if isinstance(self.stack[-2], (Structure, Variable)):
-                        # structure fields
-                        chunks = origin.gen_declaration_chunks(self, **kw)
-                    elif (
+                    if (
                         # Generate a header inclusion for global variable
                         # from other module.
                         # This code assumes that the variable (`origin`) is
@@ -767,6 +764,9 @@ class ChunkGenerator(object):
                             chunks = [
                                 HeaderInclusion(declarer).add_reason(origin)
                             ]
+                    elif isinstance(self.stack[-2], (Structure, Variable)):
+                        # structure fields
+                        chunks = origin.gen_declaration_chunks(self, **kw)
                     else:
                         # Something like a static inline function in a header
                         # may request chunks for a global variable. This case
