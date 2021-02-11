@@ -733,33 +733,14 @@ class ChunkGenerator(object):
                 else:
                     chunks = origin.gen_definition_chunks(self, **kw)
             elif isinstance(origin, Variable):
-                # A variable in a header does always have `extern` modifier.
-                # Note that some "variables" do describe `struct` entries and
-                # must not have it.
-                if len(self.stack) == 1:
+                if origin.definer is not None or origin.declarer is not None:
+                    # It is a global variable
                     if self.for_header:
-                        kw["extern"] = True
-                        chunks = origin.gen_declaration_chunks(self, **kw)
+                        foreign = origin.declarer is not current
                     else:
-                        chunks = origin.get_definition_chunks(self, **kw)
-                else:
-                    if isinstance(self.stack[-2], (Structure, Variable)):
-                        # structure fields
-                        chunks = origin.gen_declaration_chunks(self, **kw)
-                    elif (
-                        # Generate a header inclusion for global variable
-                        # from other module.
-                        # This code assumes that the variable (`origin`) is
-                        # used by a function (`self.stack[-2]`) because there
-                        # is no other entities whose can use a variable.
-                        # XXX: One day an `Initializer` will do it.
-                        origin.declarer is not None
-                        # Check if chunks are being requested for a file which
-                        # is neither the header declares the variable nor the
-                        # module defining it.
-                    and origin.declarer not in self.stack[-2].get_definers()
-                    and origin.definer not in self.stack[-2].get_definers()
-                    ):
+                        foreign = origin.definer is not current
+
+                    if foreign:
                         declarer = origin.declarer
                         try:
                             chunks = self.chunk_cache[declarer]
@@ -768,14 +749,24 @@ class ChunkGenerator(object):
                                 HeaderInclusion(declarer).add_reason(origin)
                             ]
                     else:
-                        # Something like a static inline function in a header
-                        # may request chunks for a global variable. This case
-                        # the stack height is greater than 1.
+                        # A variable in a header does always have `extern`
+                        # modifier.
                         if self.for_header:
                             kw["extern"] = True
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
+                else:
+                    # It is a variable inside something
+                    if (    len(self.stack) > 1
+                        and isinstance(self.stack[-2], (Structure, Variable))
+                    ):
+                        # structure fields
+                        chunks = origin.gen_declaration_chunks(self, **kw)
+                    else:
+                        raise RuntimeError("Attempt to generate chunks for"
+                            " local variable '%s'" % origin
+                        )
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
