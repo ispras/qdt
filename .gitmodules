@@ -10,3 +10,7 @@
 [submodule "pyrsp"]
 	path = pyrsp
 	url = https://github.com/stef/pyrsp.git
+[submodule "unidiff"]
+	path = unidiff
+	url = https://github.com/matiasb/python-unidiff.git
+	branch = master
