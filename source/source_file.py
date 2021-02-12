@@ -752,7 +752,9 @@ class ChunkGenerator(object):
                             chunks = self.chunk_cache[declarer]
                         except KeyError:
                             chunks = [
-                                HeaderInclusion(declarer).add_reason(origin)
+                                HeaderInclusion(declarer).add_reason(origin,
+                                    kind = "declares"
+                                )
                             ]
                     else:
                         # A variable in a header does always have `extern`
