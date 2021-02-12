@@ -298,40 +298,6 @@ class Source(TypeContainer):
 
         chunks = gen.get_all_chunks()
 
-        # Account extra references
-        chunk_cache = {}
-
-        # Build mapping
-        for ch in chunks:
-            origin = ch.origin
-            chunk_cache.setdefault(origin, []).append(ch)
-
-        # link chunks
-        for ch in chunks:
-            origin = ch.origin
-
-            """ Any object that could be an origin of chunk may provide an
-iterable container of extra references. A reference must be another origin.
-Chunks originated from referencing origin are referenced to chunks originated
-from each referenced origin.
-
-    Extra references may be used to apply extended (semantic) order when syntax
-order does not meet all requirements.
-            """
-            try:
-                refs = origin.extra_references
-            except AttributeError:
-                continue
-
-            for r in refs:
-                try:
-                    referenced_chunks = chunk_cache[r]
-                except KeyError:
-                    # no chunk was generated for that referenced origin
-                    continue
-
-                ch.add_references(referenced_chunks)
-
         return chunks
 
     def generate(self):
@@ -824,8 +790,9 @@ class ChunkGenerator(object):
             # not suitable enough.
             if not foreign:
                 for ref in origin.extra_references:
-                    # Assume that first chunk is "main".
-                    chunks[0].add_references(self.provide_chunks(ref))
+                    referenced_chunks = self.provide_chunks(ref)
+                    for chunk in chunks:
+                        chunk.add_references(referenced_chunks)
         else:
             if isinstance(origin, Type) and foreign:
                 if chunks:
