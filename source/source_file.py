@@ -762,7 +762,9 @@ class ChunkGenerator(object):
                             chunks = self.chunk_cache[declarer]
                         except KeyError:
                             chunks = [
-                                HeaderInclusion(declarer).add_reason(origin)
+                                HeaderInclusion(declarer).add_reason(origin,
+                                    kind = "declares"
+                                )
                             ]
                     elif isinstance(self.stack[-2], (Structure, Variable)):
                         # structure fields
