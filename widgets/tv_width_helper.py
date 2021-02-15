@@ -40,7 +40,11 @@ class TreeviewWidthHelper(Treeview):
     def adjust_widths(self, hidden = False):
         f = Font()
 
-        for col_idx, col in enumerate(("#0",) + self.cget("columns")):
+        columns = self.cget("columns")
+        if columns == "": # This is Tk!!!
+            columns = tuple()
+
+        for col_idx, col in enumerate(("#0",) + columns):
             if not col in self.auto_columns:
                 continue
 
