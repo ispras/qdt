@@ -742,6 +742,12 @@ class ChunkGenerator(object):
 
                     if foreign:
                         declarer = origin.declarer
+                        if declarer is None:
+                            raise RuntimeError("Variable '%s' is only defined"
+                                " in '%s' but not declared in any header" % (
+                                    origin, origin.definer.path
+                                )
+                            )
                         try:
                             chunks = self.chunk_cache[declarer]
                         except KeyError:
