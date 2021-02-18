@@ -264,6 +264,8 @@ class Source(TypeContainer):
         for func in self.types.values():
             if not isinstance(func, Function):
                 continue
+            if func.definer is not self:
+                continue
             body = func.body
             if not isinstance(body, BodyTree):
                 continue
