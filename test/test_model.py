@@ -862,6 +862,8 @@ class TestOpaqueCode(SourceModelTestHelper, TestCase):
             opaque_top
         ])
 
+        hdr.add_global_variable(test_var)
+
         hdr_content = """\
 /* {path} */
 
