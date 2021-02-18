@@ -395,7 +395,7 @@ class PatchEditorFrame(
     @patch_set.setter
     def patch_set(self, patch_set):
         # patch set is set directly, current patch_file_name does not
-        # correslond to it likely.
+        # correspond to it likely.
         self.patch_file_name = None
         self.__patch_set = patch_set
 
@@ -1080,8 +1080,7 @@ class PatchSeriesEditorFrame(
             else:
                 self._cef.commit_info = ci
 
-            # one or none
-            break
+            break # one or none
         else:
             self._pef.patch_file_name = None
 
@@ -1128,7 +1127,7 @@ class PatchSeriesEditorFrame(
                 # not modified
                 tv.item(_id, values = [""])
 
-            break  # one or none
+            break # one or none
 
     def _on_reload_patch(self):
         self.notify_popup_command()
@@ -1163,7 +1162,7 @@ class PatchSeriesEditorFrame(
             # reset "changed" mark
             tv.item(_id, values = [""])
 
-            break  # one or none
+            break # one or none
 
     def _on_rename_patch(self):
         self.notify_popup_command()
