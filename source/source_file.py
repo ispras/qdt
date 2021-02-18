@@ -62,6 +62,9 @@ from .model import (
 from .tools import (
     get_cpp_search_paths,
 )
+from .type_container import (
+    TypeContainer,
+)
 with pypath("..ply"):
     # PLY`s C preprocessor is used for several QEMU code analysis
     from ply.lex import (
@@ -100,12 +103,14 @@ OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
 
 
-class Source(object):
+class Source(TypeContainer):
 
     # Only header can do it, see `Header`.
     inherit_references = False
 
     def __init__(self, path, locked = None):
+        super(Source, self).__init__()
+
         self.path = path
         self.types = {}
         self.inclusions = {}
@@ -292,40 +297,6 @@ class Source(object):
                 gen.provide_chunks(r)
 
         chunks = gen.get_all_chunks()
-
-        # Account extra references
-        chunk_cache = {}
-
-        # Build mapping
-        for ch in chunks:
-            origin = ch.origin
-            chunk_cache.setdefault(origin, []).append(ch)
-
-        # link chunks
-        for ch in chunks:
-            origin = ch.origin
-
-            """ Any object that could be an origin of chunk may provide an
-iterable container of extra references. A reference must be another origin.
-Chunks originated from referencing origin are referenced to chunks originated
-from each referenced origin.
-
-    Extra references may be used to apply extended (semantic) order when syntax
-order does not meet all requirements.
-            """
-            try:
-                refs = origin.extra_references
-            except AttributeError:
-                continue
-
-            for r in refs:
-                try:
-                    referenced_chunks = chunk_cache[r]
-                except KeyError:
-                    # no chunk was generated for that referenced origin
-                    continue
-
-                ch.add_references(referenced_chunks)
 
         return chunks
 
@@ -762,57 +733,65 @@ class ChunkGenerator(object):
                 else:
                     chunks = origin.gen_definition_chunks(self, **kw)
             elif isinstance(origin, Variable):
-                # A variable in a header does always have `extern` modifier.
-                # Note that some "variables" do describe `struct` entries and
-                # must not have it.
-                if len(self.stack) == 1:
+                if origin.definer is not None or origin.declarer is not None:
+                    # It is a global variable
                     if self.for_header:
-                        kw["extern"] = True
-                        chunks = origin.gen_declaration_chunks(self, **kw)
+                        foreign = origin.declarer is not current
                     else:
-                        chunks = origin.get_definition_chunks(self, **kw)
-                else:
-                    if isinstance(self.stack[-2], (Structure, Variable)):
-                        # structure fields
-                        chunks = origin.gen_declaration_chunks(self, **kw)
-                    elif (
-                        # Generate a header inclusion for global variable
-                        # from other module.
-                        # This code assumes that the variable (`origin`) is
-                        # used by a function (`self.stack[-2]`) because there
-                        # is no other entities whose can use a variable.
-                        # XXX: One day an `Initializer` will do it.
-                        origin.declarer is not None
-                        # Check if chunks are being requested for a file which
-                        # is neither the header declares the variable nor the
-                        # module defining it.
-                    and origin.declarer not in self.stack[-2].get_definers()
-                    and origin.definer not in self.stack[-2].get_definers()
-                    ):
+                        foreign = origin.definer is not current
+
+                    if foreign:
                         declarer = origin.declarer
+                        if declarer is None:
+                            raise RuntimeError("Variable '%s' is only defined"
+                                " in '%s' but not declared in any header" % (
+                                    origin, origin.definer.path
+                                )
+                            )
                         try:
                             chunks = self.chunk_cache[declarer]
                         except KeyError:
                             chunks = [
-                                HeaderInclusion(declarer).add_reason(origin)
+                                HeaderInclusion(declarer).add_reason(origin,
+                                    kind = "declares"
+                                )
                             ]
                     else:
-                        # Something like a static inline function in a header
-                        # may request chunks for a global variable. This case
-                        # the stack height is greater than 1.
+                        # A variable in a header does always have `extern`
+                        # modifier.
                         if self.for_header:
                             kw["extern"] = True
                             chunks = origin.gen_declaration_chunks(self, **kw)
                         else:
                             chunks = origin.get_definition_chunks(self, **kw)
+                else:
+                    # It is a variable inside something
+                    if (    len(self.stack) > 1
+                        and isinstance(self.stack[-2], (Structure, Variable))
+                    ):
+                        # structure fields
+                        chunks = origin.gen_declaration_chunks(self, **kw)
+                    else:
+                        raise RuntimeError("Attempt to generate chunks for"
+                            " local variable '%s'" % origin
+                        )
             else:
                 chunks = origin.gen_defining_chunk_list(self, **kw)
 
+            # All chunks of the `origin` has been generated at this point.
             self.stack.pop()
 
             # Note that conversion to a tuple is performed to prevent further
             # modifications of chunk list.
             self.chunk_cache[key] = tuple(chunks)
+
+            # Some `TypeContainer`'s can require extra types when the model is
+            # not suitable enough.
+            if not foreign:
+                for ref in origin.extra_references:
+                    referenced_chunks = self.provide_chunks(ref)
+                    for chunk in chunks:
+                        chunk.add_references(referenced_chunks)
         else:
             if isinstance(origin, Type) and foreign:
                 if chunks:
@@ -1015,7 +994,9 @@ digraph Chunks {
         w.write("}\n")
 
     def gen_chunks_gv_file(self, file_name):
-        chunks = sort_chunks(OrderedSet(sorted(self.chunks)))
+        chunks = sort_chunks(OrderedSet(sorted(self.chunks)),
+            allow_loops = True
+        )
 
         f = open(file_name, "w")
         self.gen_chunks_graph(f, chunks)
@@ -1073,6 +1054,7 @@ digraph Chunks {
 
     def add_chunk(self, chunk):
         if chunk.source is None:
+            chunk.source = self
             self.sort_needed = True
             self.chunks.add(chunk)
 
@@ -1337,12 +1319,12 @@ digraph Chunks {
         return macro_forbidden.sub('_', self.name.upper())
 
 
-def sort_chunks(chunks):
+def sort_chunks(chunks, allow_loops = False):
     new_chunks = OrderedSet()
     # topology sorting
     for chunk in chunks:
         if not chunk.visited == 2:
-            depth_first_sort(chunk, new_chunks)
+            depth_first_sort(chunk, new_chunks, allow_loops = allow_loops)
 
     for chunk in new_chunks:
         chunk.visited = 0
@@ -1350,7 +1332,7 @@ def sort_chunks(chunks):
     return new_chunks
 
 
-def depth_first_sort(chunk, new_chunks):
+def depth_first_sort(chunk, new_chunks, allow_loops = False):
     # visited:
     # 0 - not visited
     # 1 - visited
@@ -1360,6 +1342,8 @@ def depth_first_sort(chunk, new_chunks):
         if ch.visited == 2:
             continue
         if ch.visited == 1:
+            if allow_loops:
+                continue
             msg = "A loop is found in source chunk references on chunk: %s" % (
                 chunk.name
             )
@@ -1370,7 +1354,7 @@ def depth_first_sort(chunk, new_chunks):
                 continue
             else:
                 raise RuntimeError(msg)
-        depth_first_sort(ch, new_chunks)
+        depth_first_sort(ch, new_chunks, allow_loops = allow_loops)
 
     chunk.visited = 2
     new_chunks.add(chunk)
