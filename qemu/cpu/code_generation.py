@@ -530,10 +530,7 @@ def fill_env_get_cpu_body(cputype, function):
 
 def fill_gdb_rw_register_body(cputype, function, comment):
     cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
-    cc = Pointer(Type["CPUClass"])("cc")
     env = Pointer(Type[cputype.struct_name])("env")
-
-    ret_0 = Return(0)
 
     function.body = BodyTree()(
         Comment(comment),
@@ -545,24 +542,12 @@ def fill_gdb_rw_register_body(cputype, function, comment):
         ),
         Declare(
             OpDeclareAssign(
-                cc,
-                MCall("CPU_GET_CLASS", function.args[0])
-            )
-        ),
-        Declare(
-            OpDeclareAssign(
                 env,
                 OpAddr(OpSDeref(cpu, "env"))
             )
         ),
         NewLine(),
-        BranchIf(
-            OpGreater(
-                function.args[2],
-                OpSDeref(cc, "gdb_num_core_regs")
-            )
-        )(ret_0),
-        ret_0
+        Return(0)
     )
 
 def fill_gen_intermediate_code_body(cputype, function, cpu_env):
