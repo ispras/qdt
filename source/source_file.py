@@ -123,7 +123,7 @@ class Source(TypeContainer):
             self.locked = AUTO_LOCK_SOURCES
 
     def add_reference(self, ref):
-        if not isinstance(ref, Type) and not isinstance(ref, Variable):
+        if not isinstance(ref, (Type, Variable)):
             raise ValueError("Trying to add source reference which is not a"
                 " type"
             )
