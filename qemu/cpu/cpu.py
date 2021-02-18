@@ -1210,6 +1210,8 @@ def patch_configure(src, arch_bigendian, target_name):
         f.write("".join(lines))
 
 
+re_arch_enum_definition = compile("^    (\w+) = \(1 << (\d+)\),\n$")
+
 def patch_arch_init_header(src, target_name):
     arch_init_header = join(src, "include", "sysemu", "arch_init.h")
     target_name_upper = target_name.upper()
@@ -1219,20 +1221,44 @@ def patch_arch_init_header(src, target_name):
         lines = f.readlines()
 
     index = 0
-    str_qemu_arch = "    %s = " % qemu_arch
-    found_arch_all = False
+    first_enum_found = False
+    arch_definitions = {}
 
     for i, line in enumerate(lines):
-        if found_arch_all:
-            if str_qemu_arch in line:
-                return
-            elif line == "};\n":
-                lines.insert(i, "%s(1 << %d),\n" % (str_qemu_arch, index))
+        if first_enum_found:
+            if line == "};\n":
+                index = i
                 break
-            else:
-                index += 1
-        elif line == "    QEMU_ARCH_ALL = -1,\n":
-            found_arch_all = True
+            arch_e_d_match = re_arch_enum_definition.search(line)
+            if arch_e_d_match:
+                arch_definitions[arch_e_d_match.group(1)] = (
+                    int(arch_e_d_match.group(2))
+                )
+        if line == "enum {\n":
+            first_enum_found = True
+
+    if qemu_arch in arch_definitions:
+        return
+
+    # Note, QEMU_ARCH_NONE is appeared since Qemu v5.0.0 version. Without using
+    # the version heuristic, we just check for the presence in the file.
+    QEMU_ARCH_NONE_val = None
+    if "QEMU_ARCH_NONE" in arch_definitions:
+        # subtracts 2 because QEMU_ARCH_NONE is separated by an empty line
+        index = index - 2
+        QEMU_ARCH_NONE_val = arch_definitions.pop("QEMU_ARCH_NONE")
+
+    arch_val = max(arch_definitions.values()) + 1
+
+    # Note, each architecture uses its own bit as an enumeration constant,
+    # which is of type `int`, therefore the number of architectures is limited
+    # by `int` bitsize.
+    if arch_val == QEMU_ARCH_NONE_val or arch_val > 31:
+        raise RuntimeError("No available bits to declare architecture in " +
+            "the 'arch_init' header"
+        )
+
+    lines.insert(index, "    %s = (1 << %d),\n" % (qemu_arch, arch_val))
 
     with open(arch_init_header, "w") as f:
         f.write("".join(lines))
