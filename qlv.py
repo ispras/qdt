@@ -230,8 +230,8 @@ class InstructionsTreeview(VarTreeview, object):
         new_inst_limit = cur_start + TV_WINDOW_SIZE
         new_insts = all_insts[new_inst_idx:new_inst_limit]
 
-        for idx, inst in enumerate(new_insts, new_inst_idx):
-            _insert(idx, inst)
+        for inst in new_insts:
+            _insert(inst.icount, inst)
 
         self._update_rows_visible()
 
@@ -286,8 +286,8 @@ class InstructionsTreeview(VarTreeview, object):
             new_inst_idx = new_inst_limit - min(TV_WINDOW_SIZE, actual_shift)
             new_insts = all_insts[new_inst_idx:new_inst_limit]
 
-            for idx, inst in enumerate(new_insts, new_inst_idx):
-                _insert(idx, inst)
+            for inst in new_insts:
+                _insert(inst.icount, inst)
         else: # actual_shift < 0
             self.delete(*current_items[actual_shift:])
 
@@ -295,10 +295,8 @@ class InstructionsTreeview(VarTreeview, object):
             new_inst_limit = new_inst_idx + min(TV_WINDOW_SIZE, -actual_shift)
             new_insts = all_insts[new_inst_idx:new_inst_limit]
 
-            for insert_index, (idx, inst) in enumerate(
-                enumerate(new_insts, new_inst_idx)
-            ):
-                _insert(idx, inst, insert_index = insert_index)
+            for insert_index, inst in enumerate(new_insts):
+                _insert(inst.icount, inst, insert_index = insert_index)
 
         self._update_rows_visible()
 
@@ -330,7 +328,7 @@ class InstructionsTreeview(VarTreeview, object):
 
             outer(start, end)
 
-    def _insert_instruction_row(self, idx, inst, insert_index = "end"):
+    def _insert_instruction_row(self, icount, inst, insert_index = "end"):
         diff = inst.difference
         if diff is None:
             tags = STYLE_FIRST if inst.first else STYLE_DEFAULT,
@@ -338,14 +336,14 @@ class InstructionsTreeview(VarTreeview, object):
             tags = STYLE_DIFFERENCE
 
         iid = self.insert("", insert_index,
-            text = str(idx),
+            text = str(icount),
             tags = tags,
             values = ("0x%08X" % inst.addr, "-", str(inst))
         )
 
         if diff is not None:
             self.insert(iid, END,
-                text = str(idx),
+                text = str(icount),
                 tags = STYLE_DIFFERENCE,
                 values = ("0x%08X" % diff.addr, "-", str(diff))
             )
@@ -539,22 +537,14 @@ class QLVWindow(GUITk):
         print("In %f second(s)" % (t2 - t1))
 
     def _on_instruction_selected(self, __):
-        tv = self.tv_instructions
         qlog_trace_texts = self.qlog_trace_texts
         qlogs = self.qlogs
 
         for trace_text in qlog_trace_texts:
             trace_text.delete("1.0", END)
 
-        sel = tv.selection()
-        if not sel:
-            return
-
-        row_text = tv.item(sel[0], "text")
-
-        try:
-            idx = int(row_text)
-        except ValueError:
+        idx = self.tv_instructions.selected_step_index
+        if idx is None:
             return
 
         left_trace = None
