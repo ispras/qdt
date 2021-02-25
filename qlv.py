@@ -721,8 +721,8 @@ class QLVWindow(GUITk):
                 ic = trace.instruction_counter
                 if ic is None:
                     continue
-                if idx != ic:
-                    print("IC missmatch at " + str(idx))
+                if i.icount != ic:
+                    print("IC missmatch: " + str(i.icount) + " != " + str(ic))
                     self.tv_instructions.see_instruction(idx)
                     break
             else:
