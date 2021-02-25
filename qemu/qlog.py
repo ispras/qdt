@@ -125,12 +125,14 @@ class TraceInstr(object):
     __slots__ = (
         "in_instr",
         "trace",
+        "icount",
         "difference",
     )
 
-    def __init__(self, in_instr, trace):
+    def __init__(self, in_instr, trace, icount):
         self.in_instr = in_instr
         self.trace = trace
+        self.icount = icount
         self.difference = None
 
     # Proxify static info.
@@ -339,6 +341,8 @@ class QEMULog(object):
     def trace_stage(self):
         ready_instrs = []
 
+        next_icount = 0
+
         t = yield
         while True:
             while t.bad:
@@ -353,7 +357,8 @@ class QEMULog(object):
             if instr is not None:
                 instr = instr[0]
 
-                instr = TraceInstr(instr, t)
+                instr = TraceInstr(instr, t, next_icount)
+                next_icount += 1
 
                 tb = instr.tb
                 tb_cache_version = self.tbIdMap[tb][1]
@@ -415,7 +420,8 @@ class QEMULog(object):
 
                         nextInstr = nextInstr[0]
 
-                    instr = TraceInstr(nextInstr, None)
+                    instr = TraceInstr(nextInstr, None, next_icount)
+                    next_icount += 1
 
             if ready_instrs:
                 t = (yield ready_instrs)
