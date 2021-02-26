@@ -352,6 +352,21 @@ class InstructionsTreeview(VarTreeview, object):
 
         return iid
 
+    @property
+    def selected_step_index(self):
+        sel = self.selection()
+        if not sel:
+            return None
+
+        iid = sel[0]
+        parent = self.parent(iid)
+        while parent: # != ""
+            iid = parent
+            parent = self.parent(iid)
+
+        idx = self.index(iid)
+        return idx + self._window_start
+
 
 # Trace text (CPU state) styles.
 STYLE_FILE = ("file",)
