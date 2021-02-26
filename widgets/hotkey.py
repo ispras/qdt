@@ -182,10 +182,18 @@ class HotKey(object):
                 kb.cb()
 
     def on_ctrl_y_breaked(self, event):
-        self.process_ctrl_key(29, 'Y')
+        self.event = event
+        try:
+            self.process_ctrl_key(29, 'Y')
+        finally:
+            del self.event
 
     def on_ctrl_key(self, event):
-        self.process_ctrl_key(event.keycode, event.keysym)
+        self.event = event
+        try:
+            self.process_ctrl_key(event.keycode, event.keysym)
+        finally:
+            del self.event
 
     def add_binding(self, binding):
         kc = binding.kc
