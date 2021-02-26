@@ -37,6 +37,7 @@ from six.moves import (
 )
 from qemu import (
     TraceInstr,
+    LogInt,
     QEMULog
 )
 from time import (
@@ -53,6 +54,7 @@ DEBUG_INST_TV = ee("QLOG_DEBUG_INSTRUCTIONS_TREE_VIEW", "False")
 STYLE_DEFAULT = tuple()
 STYLE_DIFFERENCE = ("difference",)
 STYLE_FIRST = ("first",)
+STYLE_INTERRUPT = ("interrupt",)
 
 # Instructions tree view shows only few instructions in backend Tk Treeview.
 # Showed instructions interval is called "window".
@@ -95,6 +97,10 @@ class InstructionsTreeview(VarTreeview, object):
 
         self.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
         self.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
+        self.tag_configure(STYLE_INTERRUPT[0],
+            background = "#444444",
+            foreground = "#FFFFFF"
+        )
 
         self._all_instructions = []
 
@@ -345,6 +351,10 @@ class InstructionsTreeview(VarTreeview, object):
             return self._insert_instruction_row(parent, insert_index, step,
                 tags
             )
+        elif isinstance(step, LogInt):
+            return self._insert_interrupt_row(parent, insert_index, step,
+                tags
+            )
         else:
             tags = STYLE_DEFAULT if tags is None else tags
             return self.insert(parent, insert_index,
@@ -352,6 +362,16 @@ class InstructionsTreeview(VarTreeview, object):
                 tags = tags,
                 values = ("-", "-", str(step))
             )
+
+    def _insert_interrupt_row(self, parent, insert_index, interrupt, tags):
+        if tags is None:
+            tags = STYLE_INTERRUPT
+
+        return self.insert(parent, insert_index,
+            text = str(interrupt.icount),
+            tags = tags,
+            values = ("-", "-", str(interrupt))
+        )
 
     def _insert_instruction_row(self, parent, insert_index, inst, tags):
         if tags is None:
@@ -571,7 +591,7 @@ class QLVWindow(GUITk):
         if idx is None:
             return
 
-        left_trace = None
+        left_text = None
 
         for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
             self.all_instructions, qlog_trace_texts
@@ -583,36 +603,58 @@ class QLVWindow(GUITk):
 
             file_name = qlogs[qlog_idx].file_name
 
-            if not isinstance(i, TraceInstr):
+            if isinstance(i, TraceInstr):
+                trace = i.trace
+                if trace is None:
+                    file_pos = file_name + "\n"
+                else:
+                    file_pos = "%s:%d\n" % (file_name, trace.lineno)
+
+                trace_text.insert(END, file_pos, STYLE_FILE)
+
+                if trace is None:
+                    trace_text.insert(END, _("No CPU data").get() + "\n",
+                        STYLE_WARNING
+                    )
+                else:
+                    if qlog_idx == 0:
+                        left_text = trace.as_text
+                        trace_text.insert(END, left_text)
+                    else:
+                        cur_trace = trace.as_text
+                        if left_text is None:
+                            # Left log has no trace record for this
+                            # instruction. Nothing to diff.
+                            trace_text.insert(END, cur_trace)
+                        else:
+                            insert_diff(trace_text, left_text, cur_trace)
+
+            elif isinstance(i, LogInt):
+                file_pos = "%s:%d\n" % (file_name, i.lineno)
+                trace_text.insert(END, file_pos, STYLE_FILE)
+
+                cpu = i.cpu_before
+                if cpu is None:
+                    trace_text.insert(END, _("No CPU data").get() + "\n",
+                        STYLE_WARNING
+                    )
+                else:
+                    if qlog_idx == 0:
+                        left_text = "".join(cpu)
+                        trace_text.insert(END, left_text)
+                    else:
+                        cur_trace = "".join(cpu)
+                        if left_text is None:
+                            # Left log has no CPU state for this interrupt.
+                            # Nothing to diff.
+                            trace_text.insert(END, cur_trace)
+                        else:
+                            insert_diff(trace_text, left_text, cur_trace)
+            else:
                 trace_text.insert(END,
                     (_("Unsupported step type %s") % type(i).__name__).get()
                 )
-                continue
 
-            trace = i.trace
-            if trace is None:
-                file_pos = file_name + "\n"
-            else:
-                file_pos = "%s:%d\n" % (file_name, trace.lineno)
-
-            trace_text.insert(END, file_pos, STYLE_FILE)
-
-            if trace is None:
-                trace_text.insert(END, _("No CPU data").get() + "\n",
-                    STYLE_WARNING
-                )
-            else:
-                if qlog_idx == 0:
-                    left_trace = trace.as_text
-                    trace_text.insert(END, left_trace)
-                else:
-                    cur_trace = trace.as_text
-                    if left_trace is None:
-                        # Left log has no trace record for this instruction.
-                        # Nothing to diff.
-                        trace_text.insert(END, cur_trace)
-                    else:
-                        insert_diff(trace_text, left_trace, cur_trace)
 
 def insert_diff(text_wgt, base, new):
     a, b = base.split("\n"), new.split("\n")
