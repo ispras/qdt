@@ -443,7 +443,7 @@ class QLVWindow(GUITk):
 
         # Instructions are kept in lists: one per qlog.
         # This is list of those lists.
-        self.all_instructions = all_instructions = list(list() for _ in qlogs)
+        self.all_instructions = all_instructions = list(list() for __ in qlogs)
         main_log = all_instructions[0]
 
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
