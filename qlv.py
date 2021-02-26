@@ -196,10 +196,10 @@ class InstructionsTreeview(VarTreeview, object):
         # else: # already scheduled
 
     if DEBUG_INST_TV:
-        def _on_key_f5(self, _):
+        def _on_key_f5(self, __):
             self.update_window_shift(1)
 
-    def _on_destroy(self, _):
+    def _on_destroy(self, __):
         try:
             self.after_cancel(self.__update_window_shift)
         except AttributeError:
