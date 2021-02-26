@@ -36,6 +36,7 @@ from six.moves import (
     range as xrange,
 )
 from qemu import (
+    TraceInstr,
     QEMULog
 )
 from time import (
@@ -224,14 +225,14 @@ class InstructionsTreeview(VarTreeview, object):
         # cache some values
         cur_start = self._window_start
         all_insts = self._all_instructions
-        _insert = self._insert_instruction_row
+        _insert = self._insert_step
 
         new_inst_idx = cur_start + instrs_in_window
         new_inst_limit = cur_start + TV_WINDOW_SIZE
         new_insts = all_insts[new_inst_idx:new_inst_limit]
 
         for inst in new_insts:
-            _insert(inst.icount, inst)
+            _insert(inst)
 
         self._update_rows_visible()
 
@@ -276,7 +277,7 @@ class InstructionsTreeview(VarTreeview, object):
 
         current_items = self.get_children()
 
-        _insert = self._insert_instruction_row
+        _insert = self._insert_step
 
         if actual_shift > 0:
             self.delete(*current_items[:actual_shift])
@@ -287,7 +288,7 @@ class InstructionsTreeview(VarTreeview, object):
             new_insts = all_insts[new_inst_idx:new_inst_limit]
 
             for inst in new_insts:
-                _insert(inst.icount, inst)
+                _insert(inst)
         else: # actual_shift < 0
             self.delete(*current_items[actual_shift:])
 
@@ -296,7 +297,7 @@ class InstructionsTreeview(VarTreeview, object):
             new_insts = all_insts[new_inst_idx:new_inst_limit]
 
             for insert_index, inst in enumerate(new_insts):
-                _insert(inst.icount, inst, insert_index = insert_index)
+                _insert(inst, insert_index = insert_index)
 
         self._update_rows_visible()
 
@@ -328,27 +329,39 @@ class InstructionsTreeview(VarTreeview, object):
 
             outer(start, end)
 
-    def _insert_instruction_row(self, icount, inst, insert_index = "end"):
-        diff = inst.difference
-        if diff is None:
-            tags = STYLE_FIRST if inst.first else STYLE_DEFAULT,
-        else:
-            tags = STYLE_DIFFERENCE
+    def _insert_step(self, step,
+        insert_index = "end"
+    ):
+        iid = self._insert_step_ignore_diff("", insert_index, step, None)
 
-        iid = self.insert("", insert_index,
-            text = str(icount),
+        diff = step.difference
+        if diff is not None:
+            self._insert_step_ignore_diff(iid, END, diff, STYLE_DIFFERENCE)
+
+        return iid
+
+    def _insert_step_ignore_diff(self, parent, insert_index, step, tags):
+        if isinstance(step, TraceInstr):
+            return self._insert_instruction_row(parent, insert_index, step,
+                tags
+            )
+        else:
+            tags = STYLE_DEFAULT if tags is None else tags
+            return self.insert(parent, insert_index,
+                text = str(step.icount),
+                tags = tags,
+                values = ("-", "-", str(step))
+            )
+
+    def _insert_instruction_row(self, parent, insert_index, inst, tags):
+        if tags is None:
+            tags = STYLE_FIRST if inst.first else STYLE_DEFAULT
+
+        return self.insert(parent, insert_index,
+            text = str(inst.icount),
             tags = tags,
             values = ("0x%08X" % inst.addr, "-", str(inst))
         )
-
-        if diff is not None:
-            self.insert(iid, END,
-                text = str(icount),
-                tags = STYLE_DIFFERENCE,
-                values = ("0x%08X" % diff.addr, "-", str(diff))
-            )
-
-        return iid
 
     @property
     def selected_step_index(self):
@@ -492,11 +505,19 @@ class QLVWindow(GUITk):
                 for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
                     log_instrs.append(i2)
 
-                    # Currently, comparison is address based only.
-                    if i1.addr != i2.addr:
+                    type_i1 = type(i1)
+
+                    if type_i1 is not type(i2):
                         difference = True
                         i1.difference = i2
                         break
+
+                    if issubclass(type_i1, TraceInstr):
+                        # Currently, comparison is address based only.
+                        if i1.addr != i2.addr:
+                            difference = True
+                            i1.difference = i2
+                            break
 
                 compared = i1_idx - start_idx + 1
                 if compared < len(subtrace):
@@ -515,7 +536,10 @@ class QLVWindow(GUITk):
 
             if DEBUG < 3:
                 for i in iter(ii[1] for ii in subtrace):
-                    print("0x%08X: %s" % (i.addr, i.disas))
+                    if isinstance(i, TraceInstr):
+                        print("0x%08X: %s" % (i.addr, i.disas))
+                    else:
+                        print(i) # use default `__str__`
 
             idx = subtrace[-1][0] + 1
 
@@ -558,6 +582,12 @@ class QLVWindow(GUITk):
                 continue
 
             file_name = qlogs[qlog_idx].file_name
+
+            if not isinstance(i, TraceInstr):
+                trace_text.insert(END,
+                    (_("Unsupported step type %s") % type(i).__name__).get()
+                )
+                continue
 
             trace = i.trace
             if trace is None:
