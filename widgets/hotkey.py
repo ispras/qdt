@@ -132,7 +132,7 @@ class HotKeyBinding(object):
         self.symbol = symbol
 
 
-class HotKey(object):
+class HotKey(CurrentKeyboard, object):
     def __init__(self, root):
         self.keys2bindings = {}
         self.keys2sym = {}
