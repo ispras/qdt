@@ -69,6 +69,8 @@ TV_WINDOW_SIZE = 1 << 10
 
 TV_WINDOW_HALF = TV_WINDOW_SIZE >> 1
 
+INSTR_ADDR_FMT = "0x%08X"
+
 class InstructionsTreeview(VarTreeview, object):
 
     def __init__(self, master, **kw):
@@ -380,7 +382,7 @@ class InstructionsTreeview(VarTreeview, object):
         return self.insert(parent, insert_index,
             text = str(inst.icount),
             tags = tags,
-            values = ("0x%08X" % inst.addr, "-", str(inst))
+            values = (INSTR_ADDR_FMT % inst.addr, "-", str(inst))
         )
 
     @property
