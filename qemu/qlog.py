@@ -59,6 +59,9 @@ re_interrupt = compile(
 def is_interrupt(l):
     return re_interrupt.match(l)
 
+def is_cpu_restore(l):
+    return l.startswith("TB exited at ")
+
 
 re_space = compile("\\s+")
 simple_byte_hex = "%02x".__mod__
@@ -199,6 +202,17 @@ class LogInt(LogStep):
             return self.header + "\n"
         else:
             return self.header + "\n" + "".join(cpu)
+
+
+class CPURestoreFromTB(object):
+
+    # Tt's always "good" unlike `QTrace`. See `QEMULog.trace_stage`.
+    bad = False
+
+    def __init__(self, line, lineno):
+        self.line = line
+        self.lineno = lineno
+        self.i = int(line[13:].rstrip())
 
 
 class undefined: pass
@@ -412,23 +426,51 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
     def trace_stage(self):
-        ready_instrs = []
+        ready = []
+        instrs = []
+        interrupts = []
 
         next_icount = 0
 
-        t = yield
         while True:
+            if ready:
+                t = (yield ready)
+                ready = []
+            else:
+                t = (yield EMPTY)
             while t.bad:
                 t = (yield EMPTY)
 
             if DEBUG < 2:
                 print(t)
 
-            if isinstance(t, LogInt):
-                assert not ready_instrs
-                t.icount = next_icount
-                t = (yield [t])
+            if isinstance(t, CPURestoreFromTB):
+                i = t.i
+                next_icount = instrs[i].icount
+
+                # All interrupts are inserted after last executed instruction
+                # of longjump-ed out TB.
+                for interrupt in interrupts:
+                    interrupt.icount = next_icount
+
+                # If the `instr`uction caused CPU restore, it's not
+                # executed (caused an exception).
+                # So, next_icount is not incremented.
+                # But the `instr`uction is yielded as an exception cause.
+                ready.extend(instrs[:i + 1])
+                instrs = []
                 continue
+
+            if isinstance(t, LogInt):
+                t.icount = next_icount
+                interrupts.append(t)
+                continue
+
+            # isinstance(t, QTrace), i.e. next trace record
+            ready.extend(instrs)
+            instrs = []
+            ready.extend(interrupts)
+            interrupts = []
 
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
@@ -449,7 +491,7 @@ class QEMULog(object):
                     if DEBUG < 2:
                         print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                    ready_instrs.append(instr)
+                    instrs.append(instr)
 
                     addr += instr.size
 
@@ -502,12 +544,6 @@ class QEMULog(object):
                     instr = TraceInstr(nextInstr, None, next_icount)
                     next_icount += 1
 
-            if ready_instrs:
-                t = (yield ready_instrs)
-                ready_instrs = []
-            else:
-                t = (yield EMPTY)
-
     def cache_overwritten(self):
         cur = self.current_cache
         self.in_asm.append(cur)
@@ -518,6 +554,12 @@ class QEMULog(object):
             print("".join(["--- interrupt\n"] + lines))
 
         return LogInt(lines, lineno)
+
+    def new_cpu_restore(self, line, lineno):
+        if DEBUG < 1:
+            print("--- CPU restore form TB\n" + line)
+
+        return CPURestoreFromTB(line, lineno)
 
     def new_in_asm(self, in_asm):
         if DEBUG < 1:
@@ -716,7 +758,7 @@ class QEMULog(object):
                     # - Qemu can cancel TB execution because of `exit_request`
                     # or `tcg_exit_req` after trace message has been printed.
                     if is_trace(l1) or is_linking(l1) or is_in_asm(l1) \
-                    or is_interrupt(l1):
+                    or is_interrupt(l1) or is_cpu_restore(l1):
                         l0 = l1
                         break
                     trace.append(l1)
@@ -747,7 +789,7 @@ class QEMULog(object):
 
                 while l1 is not EOL:
                     if is_trace(l1) or is_linking(l1) or is_in_asm(l1) \
-                    or is_interrupt(l1):
+                    or is_interrupt(l1) or is_cpu_restore(l1):
                         l0 = l1 # try that line in other `if`s
                         break
                     else:
@@ -757,6 +799,15 @@ class QEMULog(object):
                     l0 = l1
 
                 to_yield = self.new_int(interrupt, interrupt_lineno)
+                continue
+
+            if is_cpu_restore(l0):
+                restore = self.new_cpu_restore(l0, lineno)
+
+                l0 = yield to_yield; lineno += 1
+                to_yield = None
+
+                yield restore
                 continue
 
             self.new_unrecognized(l0, lineno)
