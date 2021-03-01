@@ -162,7 +162,7 @@ class InstructionsTreeview(VarTreeview, object):
             # because root is always opened). As a result, this algorithm is
             # not so beautiful.
             if not self.item(parent, "open"):
-                break
+                continue
             children = self.get_children(parent)
             if children:
                 rows += len(children)
