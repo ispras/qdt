@@ -1,6 +1,6 @@
 __all__ = [
-    "disable_auto_lock_sources"
-  , "enable_auto_lock_sources"
+    "disable_auto_lock_inclusions"
+  , "enable_auto_lock_inclusions"
   , "Source"
       , "Header"
   , "SourceFile"
@@ -87,12 +87,12 @@ with pypath("..ply"):
 # inclusions
 AUTO_LOCK_INCLUSIONS = True
 
-def disable_auto_lock_sources():
+def disable_auto_lock_inclusions():
     global AUTO_LOCK_INCLUSIONS
     AUTO_LOCK_INCLUSIONS = False
 
 
-def enable_auto_lock_sources():
+def enable_auto_lock_inclusions():
     global AUTO_LOCK_INCLUSIONS
     AUTO_LOCK_INCLUSIONS = True
 

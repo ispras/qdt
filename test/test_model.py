@@ -8,7 +8,7 @@ from six import (
 from source import (
     Return,
     OpSDeref,
-    disable_auto_lock_sources,
+    disable_auto_lock_inclusions,
     OpaqueCode,
     Type,
     Header,
@@ -57,7 +57,7 @@ class SourceModelTestHelper(object):
         Type.reg = {}
         Header.reg = {}
         add_base_types()
-        disable_auto_lock_sources()
+        disable_auto_lock_inclusions()
 
     def test(self):
         for file_, content in self.files:
