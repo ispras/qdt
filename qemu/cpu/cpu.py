@@ -479,7 +479,7 @@ class CPUType(QOMCPU):
         # "exec.c" source file include "cpu.h" header and require type
         # "TARGET_PAGE_SIZE".
         # Only "cpu.h" header can satisfy the dependency.
-        exec_c = Source("exec.c", locked = True)
+        exec_c = Source("exec.c", locked_inclusions = True)
         exec_c.add_reference(Type["TARGET_PAGE_SIZE"])
         exec_c.add_inclusion(h)
 

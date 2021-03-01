@@ -898,7 +898,7 @@ class TestAddingTypeToLockedHeader(SourceModelTestHelper, TestCase):
 
         # Without locking "some_types.h" header will be included in
         # "lockedheader.h".
-        Header("lockedheader.h", locked = True).add_type(
+        Header("lockedheader.h", locked_inclusions = True).add_type(
             Structure("S", Pointer(Type["t"])("f"))
         )
 
