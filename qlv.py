@@ -154,6 +154,7 @@ class InstructionsTreeview(VarTreeview, object):
     def _update_rows_visible(self):
         root_children = self.get_children()
 
+        opened = 0
         rows = len(root_children)
 
         stack = list(root_children)
@@ -166,10 +167,13 @@ class InstructionsTreeview(VarTreeview, object):
                 continue
             children = self.get_children(parent)
             if children:
-                rows += len(children)
+                n_children = len(children)
+                rows += n_children
+                opened += n_children
                 stack.extend(children)
 
         self._rows_visible = rows
+        self._opened_rows = opened
 
     def _yscrollcommand(self, *__):
         self.do_yscrollcommand(10)
@@ -323,7 +327,7 @@ class InstructionsTreeview(VarTreeview, object):
                 f_back_start = float(back_start)
                 f_back_end = float(back_end)
 
-                f_total = float(total)
+                f_total = float(total + self._opened_rows)
                 window_start = self._window_start
                 f_window_start = float(window_start)
                 f_in_window = float(self._rows_visible)
