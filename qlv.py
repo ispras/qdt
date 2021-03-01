@@ -715,6 +715,8 @@ class QLVWindow(GUITk):
 
             last_idx = idx + 1000
             for idx, i in izip(xrange(idx, last_idx + 1), iiter):
+                if not isinstance(i, TraceInstr):
+                    continue
                 trace = i.trace
                 if trace is None:
                     continue
