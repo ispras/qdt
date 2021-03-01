@@ -531,6 +531,9 @@ class QLVWindow(GUITk):
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
         idx = 0
 
+        # show N different rows
+        differences_to_show = 3 # + 1 = N
+
         while True:
             start_idx = idx
             end_idx = idx + 100
@@ -559,6 +562,15 @@ class QLVWindow(GUITk):
                 log_instrs = all_instructions[log_idx]
 
                 for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                    if difference:
+                        if differences_to_show:
+                            differences_to_show -= 1
+                        else:
+                            # `i1_idx`-th instruction is not compared actually
+                            # (see `compared` evaluation bolow).
+                            i1_idx -= 1
+                            break
+
                     log_instrs.append(i2)
 
                     type_i1 = type(i1)
@@ -566,21 +578,21 @@ class QLVWindow(GUITk):
                     if type_i1 is not type(i2):
                         difference = True
                         i1.difference = i2
-                        break
+                        continue
 
                     if issubclass(type_i1, TraceInstr):
                         # Currently, comparison is address based only.
                         if i1.addr != i2.addr:
                             difference = True
                             i1.difference = i2
-                            break
+                            continue
 
                 compared = i1_idx - start_idx + 1
                 if compared < len(subtrace):
                     # Log 2 ended earlier.
                     subtrace = subtrace[:compared]
 
-                if difference:
+                if not differences_to_show:
                     break
 
             if not subtrace:
