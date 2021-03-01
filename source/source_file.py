@@ -85,16 +85,16 @@ with pypath("..ply"):
 # - explicit `locked_inclusions` setting
 # - `add_inclusion` method will add inclusion even to a file with locked
 # inclusions
-AUTO_LOCK_SOURCES = True
+AUTO_LOCK_INCLUSIONS = True
 
 def disable_auto_lock_sources():
-    global AUTO_LOCK_SOURCES
-    AUTO_LOCK_SOURCES = False
+    global AUTO_LOCK_INCLUSIONS
+    AUTO_LOCK_INCLUSIONS = False
 
 
 def enable_auto_lock_sources():
-    global AUTO_LOCK_SOURCES
-    AUTO_LOCK_SOURCES = True
+    global AUTO_LOCK_INCLUSIONS
+    AUTO_LOCK_INCLUSIONS = True
 
 
 # Reduces amount of #include directives
@@ -121,7 +121,7 @@ class Source(TypeContainer):
         if locked_inclusions is not None:
             self.locked_inclusions = locked_inclusions
         else:
-            self.locked_inclusions = AUTO_LOCK_SOURCES
+            self.locked_inclusions = AUTO_LOCK_INCLUSIONS
 
     def add_reference(self, ref):
         if not isinstance(ref, (Type, Variable)):
