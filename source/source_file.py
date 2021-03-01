@@ -81,9 +81,10 @@ with pypath("..ply"):
 # All sources which are not created at the code generation stage considered
 # immutable. We believe that these files already exist. Therefore, we cannot
 # influence the list of their inclusions. To prevent the appearance of new
-# inclusions, the flag `locked` is set. Few exceptions:
-# - explicit `locked` setting
-# - `add_inclusion` method will add inclusion even to a locked file
+# inclusions, the flag `locked_inclusions` is set. Few exceptions:
+# - explicit `locked_inclusions` setting
+# - `add_inclusion` method will add inclusion even to a file with locked
+# inclusions
 AUTO_LOCK_SOURCES = True
 
 def disable_auto_lock_sources():
@@ -108,7 +109,7 @@ class Source(TypeContainer):
     # Only header can do it, see `Header`.
     inherit_references = False
 
-    def __init__(self, path, locked = None):
+    def __init__(self, path, locked_inclusions = None):
         super(Source, self).__init__()
 
         self.path = path
@@ -117,10 +118,10 @@ class Source(TypeContainer):
         self.global_variables = {}
         self.references = set()
         self.protection = False
-        if locked is not None:
-            self.locked = locked
+        if locked_inclusions is not None:
+            self.locked_inclusions = locked_inclusions
         else:
-            self.locked = AUTO_LOCK_SOURCES
+            self.locked_inclusions = AUTO_LOCK_SOURCES
 
     def add_reference(self, ref):
         if not isinstance(ref, (Type, Variable)):
@@ -373,10 +374,11 @@ class TypeFixerVisitor(TypeReferencesVisitor):
         ret = super(TypeFixerVisitor, self).visit()
 
         s = self.source
-        if s.locked:
+        if s.locked_inclusions:
             # A generated file either provides required types by inclusions or
             # adds them to its references.
-            # A constant (`locked`) file can only update its references.
+            # A constant (`locked_inclusions`) file can only update its
+            # references.
             s.add_references(self.required_types)
         else:
             for t in self.required_types:
@@ -421,7 +423,7 @@ class Header(Source):
     def __init__(self, path,
         is_global = False,
         protection = True,
-        locked = None
+        locked_inclusions = None
     ):
         """
 :param path: it is used in #include statements, as unique identifier and
@@ -429,7 +431,7 @@ class Header(Source):
 :param is_global: inclusions will use <path> instead of "path".
 :param protection: wrap content in multiple inclusion protection macro logic.
         """
-        super(Header, self).__init__(path, locked)
+        super(Header, self).__init__(path, locked_inclusions)
         self.is_global = is_global
         self.includers = []
         self.protection = protection
