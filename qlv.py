@@ -28,6 +28,7 @@ from six.moves.tkinter_ttk import (
     Style
 )
 from common import (
+    EPS,
     ee,
     mlget as _
 )
@@ -459,6 +460,11 @@ class QLVWindow(GUITk):
         sb.right(_("Instructions"))
         sb.right(var)
 
+        self.inst_per_sec = EPS()
+        self.var_inst_per_sec = var = IntVar(self)
+        sb.right(var)
+        sb.right(_("I/sec"))
+
         self.qlog_trace_texts = []
 
     def _hk_copy(self):
@@ -518,6 +524,8 @@ class QLVWindow(GUITk):
 
         tv = self.tv_instructions
         var_inst_n = self.var_inst_n
+        var_ips_n = self.var_inst_per_sec
+        ips = self.inst_per_sec
 
         self.qlogs = qlogs
 
@@ -529,12 +537,22 @@ class QLVWindow(GUITk):
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
         idx = 0
 
+        # Instructions Per Yield.
+        # Big values results in GUI freezing. Small values result in overhead.
+        # Also note that real amount of processed instructions in all logs is
+        # in `len(qlogs)` times more than IPY.
+        IPY = 600 // len(qlogs)
+
         # show N different rows
         differences_to_show = 3 # + 1 = N
 
         while True:
             start_idx = idx
-            end_idx = idx + 100
+            end_idx = idx + IPY
+
+            # This counter should correlate with var_inst_n which shows
+            # amount of _displayed_ instructions. Not total amount in all logs.
+            var_ips_n.set(ips() * IPY)
 
             # Build subtrace for first log and then try to compare it with
             # subtraces of rest logs.
