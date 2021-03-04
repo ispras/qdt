@@ -888,10 +888,10 @@ void another_test_func(void);
         ]
 
 
-class TestAddingTypeToLockedHeader(SourceModelTestHelper, TestCase):
+class TestAddingTypeToLockedInclusionsHeader(SourceModelTestHelper, TestCase):
 
     def setUp(self):
-        super(TestAddingTypeToLockedHeader, self).setUp()
+        super(TestAddingTypeToLockedInclusionsHeader, self).setUp()
         name = type(self).__name__
 
         Header("some_types.h").add_type(Type("t"))
