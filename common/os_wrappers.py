@@ -47,7 +47,6 @@ from os import (
 if PY2:
     from os.path import (
         split,
-        exists
     )
     from os import (
         mkdir
