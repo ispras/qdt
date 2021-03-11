@@ -1,6 +1,5 @@
 from common import (
-    iter_submodules
+    update_this,
 )
-
-for mod in iter_submodules():
-    exec("from ." + mod + " import *")
+update_this()
+from .this import *

@@ -24,8 +24,9 @@ from os import (
 )
 
 
-def iter_submodules():
-    cur_dir = dirname(caller_file_name())
+def iter_submodules(cur_dir = None):
+    if cur_dir is None:
+        cur_dir = dirname(caller_file_name())
 
     for item in listdir(cur_dir):
         if item[-3:] == ".py":

@@ -1,9 +1,9 @@
 from common import (
-    iter_submodules,
-    pypath
+    pypath,
+    update_this,
 )
+update_this()
 
 # this module uses custom pyelftools
 with pypath("pyelftools"):
-    for mod in iter_submodules():
-        exec("from ." + mod + " import *")
+    from .this import *
