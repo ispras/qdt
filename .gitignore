@@ -2,3 +2,4 @@
 /locale/*/LC_MESSAGES/*.mo
 /c2t/tests/ir
 /c2t/tests/bin
+*/this.py
