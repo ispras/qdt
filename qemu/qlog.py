@@ -1,9 +1,11 @@
 __all__ = [
-    "InInstr",
-    "TraceInstr",
-    "TBCache",
-    "QTrace",
-    "QEMULog",
+    "InInstr"
+  , "LogStep"
+      , "TraceInstr"
+      , "LogInt"
+  , "TBCache"
+  , "QTrace"
+  , "QEMULog"
 ]
 
 
@@ -47,6 +49,14 @@ def is_in_asm_instr(l):
 
 def is_trace_skipped(l):
     return l.startswith("Stopped execution of TB chain before 0x")
+
+# Hint, grep Qemu sources for CPU_LOG_INT or (sometimes) CPU_LOG_TB_IN_ASM.
+re_interrupt = compile(
+    "((Servicing hardware INT)|(SMM: )|(check_exception)|( *\\d+: v=)).+"
+)
+
+def is_interrupt(l):
+    return re_interrupt.match(l)
 
 
 re_space = compile("\\s+")
@@ -115,9 +125,21 @@ class InInstr(object):
             return "%-40s" % self.opcode
 
 
-class TraceInstr(object):
-    """ It's a trace step, an execution of an in_asm instruction in TB
-(InInstr). It can have runtime (trace) information.
+class LogStep(object):
+    "It's an execution trace step"
+
+    __slots__ = (
+        "icount",
+        "difference",
+    )
+
+    def __init__(self):
+        self.difference = None
+
+
+class TraceInstr(LogStep):
+    """ It's an execution of an in_asm instruction in TB (InInstr).
+It can have runtime (trace) information.
     """
 
     # This also prevents erroneous attempts to use objects of this class as
@@ -125,13 +147,14 @@ class TraceInstr(object):
     __slots__ = (
         "in_instr",
         "trace",
-        "difference",
     )
 
-    def __init__(self, in_instr, trace):
+    def __init__(self, in_instr, trace, icount):
+        super(TraceInstr, self).__init__()
+
         self.in_instr = in_instr
         self.trace = trace
-        self.difference = None
+        self.icount = icount
 
     # Proxify static info.
 
@@ -140,6 +163,41 @@ class TraceInstr(object):
 
     def __str__(self):
         return str(self.in_instr)
+
+
+class LogInt(LogStep):
+    "It's interrupt/exception handling."
+
+    __slots__ = (
+        "header",
+        "cpu_before",
+        "lineno",
+    )
+
+    # It's always "good" unlike `QTrace`. See `QEMULog.trace_stage`.
+    bad = False
+
+    def __init__(self, lines, lineno):
+        super(LogInt, self).__init__()
+
+        self.header = lines[0].rstrip()
+        if len(lines) > 1:
+            self.cpu_before = lines[1:]
+        else:
+            self.cpu_before = None
+
+        self.lineno = lineno
+
+    def __str__(self):
+        return self.header
+
+    @property
+    def as_text(self):
+        cpu = self.cpu_before
+        if cpu is None:
+            return self.header + "\n"
+        else:
+            return self.header + "\n" + "".join(cpu)
 
 
 class undefined: pass
@@ -339,6 +397,8 @@ class QEMULog(object):
     def trace_stage(self):
         ready_instrs = []
 
+        next_icount = 0
+
         t = yield
         while True:
             while t.bad:
@@ -347,13 +407,20 @@ class QEMULog(object):
             if DEBUG < 2:
                 print(t)
 
+            if isinstance(t, LogInt):
+                assert not ready_instrs
+                t.icount = next_icount
+                t = (yield [t])
+                continue
+
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
 
             if instr is not None:
                 instr = instr[0]
 
-                instr = TraceInstr(instr, t)
+                instr = TraceInstr(instr, t, next_icount)
+                next_icount += 1
 
                 tb = instr.tb
                 tb_cache_version = self.tbIdMap[tb][1]
@@ -415,7 +482,8 @@ class QEMULog(object):
 
                         nextInstr = nextInstr[0]
 
-                    instr = TraceInstr(nextInstr, None)
+                    instr = TraceInstr(nextInstr, None, next_icount)
+                    next_icount += 1
 
             if ready_instrs:
                 t = (yield ready_instrs)
@@ -427,6 +495,12 @@ class QEMULog(object):
         cur = self.current_cache
         self.in_asm.append(cur)
         self.current_cache = TBCache(cur)
+
+    def new_int(self, lines, lineno):
+        if DEBUG < 1:
+            print("".join(["--- interrupt\n"] + lines))
+
+        return LogInt(lines, lineno)
 
     def new_in_asm(self, in_asm):
         if DEBUG < 1:
@@ -590,7 +664,7 @@ class QEMULog(object):
         lineno = 1
         l0 = yield
 
-        prev_trace = None
+        to_yield = None
 
         while l0 is not EOL:
             if is_in_asm(l0):
@@ -615,8 +689,8 @@ class QEMULog(object):
 
                 # Note, there is no problem to yield `None` if a trace has been
                 # skipped (see `new_trace`).
-                l1 = yield prev_trace; lineno += 1
-                # We should prev_trace = None here, but it will be
+                l1 = yield to_yield; lineno += 1
+                # We should to_yield = None here, but it will be
                 # overwritten below unconditionally.
 
                 while l1 is not EOL:
@@ -624,7 +698,8 @@ class QEMULog(object):
                     # - User did not passed other flags to -d.
                     # - Qemu can cancel TB execution because of `exit_request`
                     # or `tcg_exit_req` after trace message has been printed.
-                    if is_trace(l1) or is_linking(l1) or is_in_asm(l1):
+                    if is_trace(l1) or is_linking(l1) or is_in_asm(l1) \
+                    or is_interrupt(l1):
                         l0 = l1
                         break
                     trace.append(l1)
@@ -636,7 +711,7 @@ class QEMULog(object):
                 else:
                     l0 = l1
 
-                prev_trace = self.new_trace(trace, trace_lineno)
+                to_yield = self.new_trace(trace, trace_lineno)
                 continue
 
             if is_linking(l0):
@@ -644,12 +719,35 @@ class QEMULog(object):
                 l0 = yield; lineno += 1
                 continue
 
+            if is_interrupt(l0):
+                # Some interrupts have CPU state like traces.
+                interrupt = [l0]
+                interrupt_lineno = lineno
+
+                l1 = yield to_yield; lineno += 1
+                # We should to_yield = None here, but it will be
+                # overwritten below unconditionally.
+
+                while l1 is not EOL:
+                    if is_trace(l1) or is_linking(l1) or is_in_asm(l1) \
+                    or is_interrupt(l1):
+                        l0 = l1 # try that line in other `if`s
+                        break
+                    else:
+                        interrupt.append(l1)
+                    l1 = yield; lineno += 1
+                else:
+                    l0 = l1
+
+                to_yield = self.new_int(interrupt, interrupt_lineno)
+                continue
+
             self.new_unrecognized(l0, lineno)
             l0 = yield; lineno += 1
 
         # There is no problem to yield `None` but it's possible iff input
         # log has no trace records.
-        yield prev_trace
+        yield to_yield
 
 
 def qlog_reader_stage(f):

@@ -36,6 +36,8 @@ from six.moves import (
     range as xrange,
 )
 from qemu import (
+    TraceInstr,
+    LogInt,
     QEMULog
 )
 from time import (
@@ -52,6 +54,7 @@ DEBUG_INST_TV = ee("QLOG_DEBUG_INSTRUCTIONS_TREE_VIEW", "False")
 STYLE_DEFAULT = tuple()
 STYLE_DIFFERENCE = ("difference",)
 STYLE_FIRST = ("first",)
+STYLE_INTERRUPT = ("interrupt",)
 
 # Instructions tree view shows only few instructions in backend Tk Treeview.
 # Showed instructions interval is called "window".
@@ -94,6 +97,10 @@ class InstructionsTreeview(VarTreeview, object):
 
         self.tag_configure(STYLE_FIRST[0], background = "#EEEEEE")
         self.tag_configure(STYLE_DIFFERENCE[0], background = "#FF0000")
+        self.tag_configure(STYLE_INTERRUPT[0],
+            background = "#444444",
+            foreground = "#FFFFFF"
+        )
 
         self._all_instructions = []
 
@@ -196,10 +203,10 @@ class InstructionsTreeview(VarTreeview, object):
         # else: # already scheduled
 
     if DEBUG_INST_TV:
-        def _on_key_f5(self, _):
+        def _on_key_f5(self, __):
             self.update_window_shift(1)
 
-    def _on_destroy(self, _):
+    def _on_destroy(self, __):
         try:
             self.after_cancel(self.__update_window_shift)
         except AttributeError:
@@ -224,14 +231,14 @@ class InstructionsTreeview(VarTreeview, object):
         # cache some values
         cur_start = self._window_start
         all_insts = self._all_instructions
-        _insert = self._insert_instruction_row
+        _insert = self._insert_step
 
         new_inst_idx = cur_start + instrs_in_window
         new_inst_limit = cur_start + TV_WINDOW_SIZE
         new_insts = all_insts[new_inst_idx:new_inst_limit]
 
-        for idx, inst in enumerate(new_insts, new_inst_idx):
-            _insert(idx, inst)
+        for inst in new_insts:
+            _insert(inst)
 
         self._update_rows_visible()
 
@@ -276,7 +283,7 @@ class InstructionsTreeview(VarTreeview, object):
 
         current_items = self.get_children()
 
-        _insert = self._insert_instruction_row
+        _insert = self._insert_step
 
         if actual_shift > 0:
             self.delete(*current_items[:actual_shift])
@@ -286,8 +293,8 @@ class InstructionsTreeview(VarTreeview, object):
             new_inst_idx = new_inst_limit - min(TV_WINDOW_SIZE, actual_shift)
             new_insts = all_insts[new_inst_idx:new_inst_limit]
 
-            for idx, inst in enumerate(new_insts, new_inst_idx):
-                _insert(idx, inst)
+            for inst in new_insts:
+                _insert(inst)
         else: # actual_shift < 0
             self.delete(*current_items[actual_shift:])
 
@@ -295,10 +302,8 @@ class InstructionsTreeview(VarTreeview, object):
             new_inst_limit = new_inst_idx + min(TV_WINDOW_SIZE, -actual_shift)
             new_insts = all_insts[new_inst_idx:new_inst_limit]
 
-            for insert_index, (idx, inst) in enumerate(
-                enumerate(new_insts, new_inst_idx)
-            ):
-                _insert(idx, inst, insert_index = insert_index)
+            for insert_index, inst in enumerate(new_insts):
+                _insert(inst, insert_index = insert_index)
 
         self._update_rows_visible()
 
@@ -330,27 +335,68 @@ class InstructionsTreeview(VarTreeview, object):
 
             outer(start, end)
 
-    def _insert_instruction_row(self, idx, inst, insert_index = "end"):
-        diff = inst.difference
-        if diff is None:
-            tags = STYLE_FIRST if inst.first else STYLE_DEFAULT,
-        else:
-            tags = STYLE_DIFFERENCE
+    def _insert_step(self, step,
+        insert_index = "end"
+    ):
+        iid = self._insert_step_ignore_diff("", insert_index, step, None)
 
-        iid = self.insert("", insert_index,
-            text = str(idx),
+        diff = step.difference
+        if diff is not None:
+            self._insert_step_ignore_diff(iid, END, diff, STYLE_DIFFERENCE)
+
+        return iid
+
+    def _insert_step_ignore_diff(self, parent, insert_index, step, tags):
+        if isinstance(step, TraceInstr):
+            return self._insert_instruction_row(parent, insert_index, step,
+                tags
+            )
+        elif isinstance(step, LogInt):
+            return self._insert_interrupt_row(parent, insert_index, step,
+                tags
+            )
+        else:
+            tags = STYLE_DEFAULT if tags is None else tags
+            return self.insert(parent, insert_index,
+                text = str(step.icount),
+                tags = tags,
+                values = ("-", "-", str(step))
+            )
+
+    def _insert_interrupt_row(self, parent, insert_index, interrupt, tags):
+        if tags is None:
+            tags = STYLE_INTERRUPT
+
+        return self.insert(parent, insert_index,
+            text = str(interrupt.icount),
+            tags = tags,
+            values = ("-", "-", str(interrupt))
+        )
+
+    def _insert_instruction_row(self, parent, insert_index, inst, tags):
+        if tags is None:
+            tags = STYLE_FIRST if inst.first else STYLE_DEFAULT
+
+        return self.insert(parent, insert_index,
+            text = str(inst.icount),
             tags = tags,
             values = ("0x%08X" % inst.addr, "-", str(inst))
         )
 
-        if diff is not None:
-            self.insert(iid, END,
-                text = str(idx),
-                tags = STYLE_DIFFERENCE,
-                values = ("0x%08X" % diff.addr, "-", str(diff))
-            )
+    @property
+    def selected_step_index(self):
+        sel = self.selection()
+        if not sel:
+            return None
 
-        return iid
+        iid = sel[0]
+        parent = self.parent(iid)
+        while parent: # != ""
+            iid = parent
+            parent = self.parent(iid)
+
+        idx = self.index(iid)
+        return idx + self._window_start
 
 
 # Trace text (CPU state) styles.
@@ -443,7 +489,7 @@ class QLVWindow(GUITk):
 
         # Instructions are kept in lists: one per qlog.
         # This is list of those lists.
-        self.all_instructions = all_instructions = list(list() for _ in qlogs)
+        self.all_instructions = all_instructions = list(list() for __ in qlogs)
         main_log = all_instructions[0]
 
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
@@ -479,11 +525,19 @@ class QLVWindow(GUITk):
                 for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
                     log_instrs.append(i2)
 
-                    # Currently, comparison is address based only.
-                    if i1.addr != i2.addr:
+                    type_i1 = type(i1)
+
+                    if type_i1 is not type(i2):
                         difference = True
                         i1.difference = i2
                         break
+
+                    if issubclass(type_i1, TraceInstr):
+                        # Currently, comparison is address based only.
+                        if i1.addr != i2.addr:
+                            difference = True
+                            i1.difference = i2
+                            break
 
                 compared = i1_idx - start_idx + 1
                 if compared < len(subtrace):
@@ -502,7 +556,10 @@ class QLVWindow(GUITk):
 
             if DEBUG < 3:
                 for i in iter(ii[1] for ii in subtrace):
-                    print("0x%08X: %s" % (i.addr, i.disas))
+                    if isinstance(i, TraceInstr):
+                        print("0x%08X: %s" % (i.addr, i.disas))
+                    else:
+                        print(i) # use default `__str__`
 
             idx = subtrace[-1][0] + 1
 
@@ -524,25 +581,17 @@ class QLVWindow(GUITk):
         print("In %f second(s)" % (t2 - t1))
 
     def _on_instruction_selected(self, __):
-        tv = self.tv_instructions
         qlog_trace_texts = self.qlog_trace_texts
         qlogs = self.qlogs
 
         for trace_text in qlog_trace_texts:
             trace_text.delete("1.0", END)
 
-        sel = tv.selection()
-        if not sel:
+        idx = self.tv_instructions.selected_step_index
+        if idx is None:
             return
 
-        row_text = tv.item(sel[0], "text")
-
-        try:
-            idx = int(row_text)
-        except ValueError:
-            return
-
-        left_trace = None
+        left_text = None
 
         for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
             self.all_instructions, qlog_trace_texts
@@ -554,30 +603,58 @@ class QLVWindow(GUITk):
 
             file_name = qlogs[qlog_idx].file_name
 
-            trace = i.trace
-            if trace is None:
-                file_pos = file_name + "\n"
-            else:
-                file_pos = "%s:%d\n" % (file_name, trace.lineno)
-
-            trace_text.insert(END, file_pos, STYLE_FILE)
-
-            if trace is None:
-                trace_text.insert(END, _("No CPU data").get() + "\n",
-                    STYLE_WARNING
-                )
-            else:
-                if qlog_idx == 0:
-                    left_trace = trace.as_text
-                    trace_text.insert(END, left_trace)
+            if isinstance(i, TraceInstr):
+                trace = i.trace
+                if trace is None:
+                    file_pos = file_name + "\n"
                 else:
-                    cur_trace = trace.as_text
-                    if left_trace is None:
-                        # Left log has no trace record for this instruction.
-                        # Nothing to diff.
-                        trace_text.insert(END, cur_trace)
+                    file_pos = "%s:%d\n" % (file_name, trace.lineno)
+
+                trace_text.insert(END, file_pos, STYLE_FILE)
+
+                if trace is None:
+                    trace_text.insert(END, _("No CPU data").get() + "\n",
+                        STYLE_WARNING
+                    )
+                else:
+                    if qlog_idx == 0:
+                        left_text = trace.as_text
+                        trace_text.insert(END, left_text)
                     else:
-                        insert_diff(trace_text, left_trace, cur_trace)
+                        cur_trace = trace.as_text
+                        if left_text is None:
+                            # Left log has no trace record for this
+                            # instruction. Nothing to diff.
+                            trace_text.insert(END, cur_trace)
+                        else:
+                            insert_diff(trace_text, left_text, cur_trace)
+
+            elif isinstance(i, LogInt):
+                file_pos = "%s:%d\n" % (file_name, i.lineno)
+                trace_text.insert(END, file_pos, STYLE_FILE)
+
+                cpu = i.cpu_before
+                if cpu is None:
+                    trace_text.insert(END, _("No CPU data").get() + "\n",
+                        STYLE_WARNING
+                    )
+                else:
+                    if qlog_idx == 0:
+                        left_text = "".join(cpu)
+                        trace_text.insert(END, left_text)
+                    else:
+                        cur_trace = "".join(cpu)
+                        if left_text is None:
+                            # Left log has no CPU state for this interrupt.
+                            # Nothing to diff.
+                            trace_text.insert(END, cur_trace)
+                        else:
+                            insert_diff(trace_text, left_text, cur_trace)
+            else:
+                trace_text.insert(END,
+                    (_("Unsupported step type %s") % type(i).__name__).get()
+                )
+
 
 def insert_diff(text_wgt, base, new):
     a, b = base.split("\n"), new.split("\n")
