@@ -1,11 +1,11 @@
 __all__ = [
-    "InInstr",
-    "LogStep",
-        "TraceInstr",
-        "LogInt",
-    "TBCache",
-    "QTrace",
-    "QEMULog",
+    "InInstr"
+  , "LogStep"
+      , "TraceInstr"
+      , "LogInt"
+  , "TBCache"
+  , "QTrace"
+  , "QEMULog"
 ]
 
 
