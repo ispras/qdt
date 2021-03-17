@@ -398,7 +398,8 @@ class QTrace(object):
 
 class EOL:
     "End Of Log"
-    pass
+    # Tt's always "good" unlike `QTrace`. See `QEMULog.trace_stage`.
+    bad = False
 
 EMPTY = tuple()
 
@@ -497,11 +498,16 @@ class QEMULog(object):
                 interrupts.append(t)
                 continue
 
-            # isinstance(t, QTrace), i.e. next trace record
+            # isinstance(t, QTrace), i.e. next trace record or EOL
             ready.extend(instrs)
             instrs = []
             ready.extend(interrupts)
             interrupts = []
+
+            if t is EOL:
+                if ready:
+                    yield ready
+                break
 
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
@@ -882,6 +888,9 @@ class QEMULog(object):
         # log has no trace records.
         yield to_yield
 
+        # `trace_stage` need this to flush last steps.
+        yield EOL
+
 
 def qlog_reader_stage(f):
     yield
@@ -889,5 +898,7 @@ def qlog_reader_stage(f):
     for line in f:
         yield line
 
-    yield EOL
+    # Note, `QEMULog.feed` will terminate the pipeline.
+    while True:
+        yield EOL
 
