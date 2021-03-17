@@ -62,6 +62,7 @@ interrupt_re = (
 )
 
 cpu_restore_re = "(?P<r>TB exited at )"
+cpu_io_recompile_re = "(?P<R>cpu_io_recompile: rewound )"
 
 unrecognized_re = ("(?P<u>)")
 
@@ -73,6 +74,7 @@ re_line = compile("|".join([
     trace_skipped_re,
     interrupt_re,
     cpu_restore_re,
+    cpu_io_recompile_re,
     unrecognized_re, # last, order is matter
 ]))
 
@@ -227,6 +229,16 @@ class CPURestoreFromTB(object):
         self.line = line
         self.lineno = lineno
         self.i = int(line[13:].rstrip())
+
+
+class CPUIORecompile(object):
+
+    # Tt's always "good" unlike `QTrace`. See `QEMULog.trace_stage`.
+    bad = False
+
+    def __init__(self, line, lineno):
+        self.line = line
+        self.lineno = lineno
 
 
 class undefined: pass
@@ -471,8 +483,13 @@ class QEMULog(object):
                 # executed (caused an exception).
                 # So, next_icount is not incremented.
                 # But the `instr`uction is yielded as an exception cause.
-                ready.extend(instrs[:i + 1])
-                instrs = []
+                # Except for CPUIORecompile, see below.
+                del instrs[i + 1:]
+                continue
+
+            if isinstance(t, CPUIORecompile):
+                # Don't yield last instruction because there is no exception.
+                instrs.pop()
                 continue
 
             if isinstance(t, LogInt):
@@ -574,6 +591,12 @@ class QEMULog(object):
             print("--- CPU restore form TB\n" + line)
 
         return CPURestoreFromTB(line, lineno)
+
+    def new_cpu_io_recompile(self, line, lineno):
+        if DEBUG < 1:
+            print("--- CPU IO recompile\n" + line)
+
+        return CPUIORecompile(line, lineno)
 
     def new_in_asm(self, in_asm):
         if DEBUG < 1:
@@ -779,7 +802,7 @@ class QEMULog(object):
                     # - User did not passed other flags to -d.
                     # - Qemu can cancel TB execution because of `exit_request`
                     # or `tcg_exit_req` after trace message has been printed.
-                    if g1 in "tlaIr":
+                    if g1 in "tlaIrR":
                         l0 = l1
                         g0 = g1
                         break
@@ -816,7 +839,7 @@ class QEMULog(object):
 
                 while l1 is not EOL:
                     g1 = match(l1).lastgroup
-                    if g1 in "tlaIr":
+                    if g1 in "tlaIrR":
                         l0 = l1 # try that line in other `if`s
                         g0 = g1
                         break
@@ -836,6 +859,16 @@ class QEMULog(object):
                 if l0 is not EOL:
                     g0 = match(l0).lastgroup
                 to_yield = restore
+
+                continue
+
+            if g0 == "R":
+                recompile = self.new_cpu_io_recompile(l0, lineno)
+
+                l0 = yield to_yield; lineno += 1
+                if l0 is not EOL:
+                    g0 = match(l0).lastgroup
+                to_yield = recompile
 
                 continue
 
