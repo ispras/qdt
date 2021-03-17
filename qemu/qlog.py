@@ -805,9 +805,8 @@ class QEMULog(object):
                 restore = self.new_cpu_restore(l0, lineno)
 
                 l0 = yield to_yield; lineno += 1
-                to_yield = None
+                to_yield = restore
 
-                yield restore
                 continue
 
             self.new_unrecognized(l0, lineno)
