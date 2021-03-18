@@ -197,6 +197,14 @@ class TextViewerWindow(GUITk, object):
         sw.withdraw()
         sw.watch_find_next(self._find_next)
 
+    @property
+    def lineno(self):
+        return self._text.lineno
+
+    @lineno.setter
+    def lineno(self, lineno):
+        self._text.lineno = lineno
+
     def _find_next(self, pattern, as_regexp):
         print(pattern, as_regexp)
 
