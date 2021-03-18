@@ -1,6 +1,7 @@
 __all__ = [
     "SearchWindow"
-  , "TextViewerWindow"
+  , "TextViewerTk"
+  , "TextViewerToplevel"
 ]
 
 from common import (
@@ -154,11 +155,9 @@ class SearchWindow(GUIToplevel, TkGeometryHelper):
         self.__notify_find_next(self._pattern_var.get(), self._re_var.get())
 
 
-class TextViewerWindow(GUITk, object):
+class _TextViewerWindow(object):
 
     def __init__(self):
-        GUITk.__init__(self)
-
         file_name = StringVar(self)
 
         self.title(_("%s - Text Viewer") % file_name)
@@ -232,3 +231,17 @@ class TextViewerWindow(GUITk, object):
         text = self._text
         text.stream = stream
         self.enqueue(text.co_build_index())
+
+
+class TextViewerTk(GUITk, _TextViewerWindow):
+
+    def __init__(self, **kw):
+        GUITk.__init__(self, **kw)
+        _TextViewerWindow.__init__(self)
+
+
+class TextViewerToplevel(GUIToplevel, _TextViewerWindow):
+
+    def __init__(self, master, **kw):
+        GUIToplevel.__init__(self, master, **kw)
+        _TextViewerWindow.__init__(self)

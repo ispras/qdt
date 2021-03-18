@@ -5,7 +5,7 @@ from common import (
     UserSettings,
 )
 from widgets import (
-    TextViewerWindow,
+    TextViewerTk,
 )
 
 
@@ -30,7 +30,7 @@ def main():
 
     args = ap.parse_args()
 
-    w = TextViewerWindow()
+    w = TextViewerTk()
     w.file_name = args.file_name
 
     with QDTTextViewSettings() as settings:
