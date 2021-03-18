@@ -28,3 +28,15 @@ class GUIToplevel(VarToplevel, object):
     @topmost.setter
     def topmost(self, val):
         self.attributes("-topmost", val)
+
+    @property
+    def hk(self):
+        return self.master.hk
+
+    def enqueue(self, co_task):
+        "Its master must be GUITk."
+        self.master.enqueue(co_task)
+
+    def cancel_task(self, co_task):
+        "Its master must be GUITk."
+        self.master.cancel_task(co_task)
