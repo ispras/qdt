@@ -153,7 +153,10 @@ class TextViewerWindow(GUITk, object):
 
     def __init__(self):
         GUITk.__init__(self)
-        self.title(_("Text Viewer"))
+
+        file_name = StringVar(self)
+
+        self.title(_("%s - Text Viewer") % file_name)
 
         hk = self.hk
         hk(self._search, 41,
@@ -181,7 +184,7 @@ class TextViewerWindow(GUITk, object):
 
         sb.right(_("%s/%s") % (text._var_lineno, text._var_total_lines))
 
-        self._file_name = None
+        self._file_name = file_name
 
         text.focus_set()
 
@@ -200,13 +203,13 @@ class TextViewerWindow(GUITk, object):
 
     @property
     def file_name(self):
-        return self._file_name
+        return self._file_name.get()
 
     @file_name.setter
     def file_name(self, file_name):
-        if self._file_name == file_name:
+        if self._file_name.get() == file_name:
             return
-        self._file_name = file_name
+        self._file_name.set(file_name)
 
         if DEBUG:
             stream = LineNoStream(size = DEBUG_STREAM_SIZE)
