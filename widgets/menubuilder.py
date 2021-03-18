@@ -42,7 +42,10 @@ Function selection is contextual, see code below.
                 raise RuntimeError("A cascade menu must have a label")
 
             parent = stack[-1]
-            menu = self.MenuClass(parent, **prev_kw)
+            menu = prev_kw.get("menu")
+            if menu is None:
+                menu = self.MenuClass(parent, **prev_kw)
+            # else: # ignore the rest of `prev_kw`
             parent.add_cascade(label = label, menu = menu)
         else:
             menu = self.MenuClass(self.toplevel)
@@ -51,6 +54,10 @@ Function selection is contextual, see code below.
         stack.append(menu)
 
         return self
+
+    @property
+    def menu(self):
+        return self.stack[-1]
 
     def __exit__(self, *__):
         self._flush_kw()
