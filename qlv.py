@@ -410,8 +410,12 @@ class InstructionsTreeview(VarTreeview, object):
 
 
 # Trace text (CPU state) styles.
-STYLE_FILE = ("file",)
-STYLE_WARNING = ("warning",)
+TAG_FILE = "file"
+TAG_LINK = "link"
+TAG_WARNING = "warning"
+STYLE_FILE = (TAG_FILE,)
+STYLE_FILE_LINK = (TAG_FILE, TAG_LINK)
+STYLE_WARNING = (TAG_WARNING,)
 # STYLE_DIFFERENCE of InstructionsTreeview is also used
 
 class QLVWindow(GUITk):
@@ -526,10 +530,13 @@ class QLVWindow(GUITk):
 
             add_scrollbars_native(fr_trace_text, trace_text)
 
-            trace_text.tag_configure(STYLE_FILE[0], foreground = "#AAAAAA")
-            trace_text.tag_configure(STYLE_WARNING[0], foreground = "#FFBB66")
+            trace_text.tag_configure(TAG_FILE, foreground = "#AAAAAA")
+            trace_text.tag_configure(TAG_WARNING, foreground = "#FFBB66")
             trace_text.tag_configure(STYLE_DIFFERENCE[0],
                 foreground = "#FF0000"
+            )
+            trace_text.tag_bind(TAG_LINK, "<Double-ButtonPress-1>",
+                self._on_link_double_1, "+"
             )
 
             file_name = qlog.file_name
@@ -548,6 +555,16 @@ class QLVWindow(GUITk):
             text_view_windows[file_name] = w
 
         self.task_manager.enqueue(self.co_trace_builder(qlogs))
+
+    def _on_link_double_1(self, e):
+        trace_text = e.widget
+        # file and line number are always at first line
+        link_text = trace_text.get("1.0", "1.end")
+        file_name, lineno = link_text.rsplit(":", 1)
+        lineno = int(lineno)
+        w = self._text_view_windows[file_name]
+        w.deiconify()
+        w.lineno = lineno
 
     def co_trace_builder(self, qlogs):
         t1 = time()
@@ -701,10 +718,12 @@ class QLVWindow(GUITk):
                 trace = i.trace
                 if trace is None:
                     file_pos = file_name + "\n"
+                    style = STYLE_FILE
                 else:
                     file_pos = "%s:%d\n" % (file_name, trace.lineno)
+                    style = STYLE_FILE_LINK
 
-                trace_text.insert(END, file_pos, STYLE_FILE)
+                trace_text.insert(END, file_pos, style)
 
                 if trace is None:
                     trace_text.insert(END, _("No CPU data").get() + "\n",
@@ -725,7 +744,7 @@ class QLVWindow(GUITk):
 
             elif isinstance(i, LogInt):
                 file_pos = "%s:%d\n" % (file_name, i.lineno)
-                trace_text.insert(END, file_pos, STYLE_FILE)
+                trace_text.insert(END, file_pos, STYLE_FILE_LINK)
 
                 cpu = i.cpu_before
                 if cpu is None:
