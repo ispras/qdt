@@ -20,6 +20,11 @@ from six.moves.tkinter_tkfiledialog import (
 from six.moves.tkinter_messagebox import (
     askyesno as tk_askyesno
 )
+from os.path import (
+    basename,
+    dirname,
+)
+
 
 class CrossDialog(object):
     def __init__(self, master):
@@ -58,13 +63,19 @@ def askyesno(*args, **kw):
     return CrossAskYesNoDialog(*args, **kw).ask()
 
 class CrossSaveAsDialog(CrossDialog):
-    def __init__(self, master, filetypes = None, title = None):
+    def __init__(self, master,
+        filetypes = None,
+        title = None,
+        initial_file = None,
+    ):
         super(CrossSaveAsDialog, self).__init__(master)
 
         self.title = _("Save as") if title is None else title
 
         self.filetypes = [(_("All files"), '.*')] if filetypes is None \
             else filetypes
+
+        self.initial_file = initial_file
 
     def __ask__(self):
         kw = {
@@ -74,6 +85,10 @@ class CrossSaveAsDialog(CrossDialog):
                     self.filetypes
             ]
         }
+
+        if self.initial_file is not None:
+            kw["initialfile"] = basename(self.initial_file)
+            kw["initialdir"] = dirname(self.initial_file)
 
         return asksaveasfilename(**kw)
 
