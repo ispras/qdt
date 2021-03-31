@@ -13,33 +13,17 @@ class GUIDialog(GUIToplevel):
     def __init__(self, *args, **kw):
         GUIToplevel.__init__(self, *args, **kw)
 
-        master = self.master
-
-        # Before `master` is changed during the loop below
-        self.transient(master.winfo_toplevel())
+        self.transient(self.master.winfo_toplevel())
 
         self._result = None
         self._alive = True
 
-        self.hk = None
         self.bind("<Destroy>", self.__on_destroy, "+")
 
-        while master:
-            top = master.winfo_toplevel()
-            try:
-                hk = top.hk
-            except AttributeError:
-                master = top.master
-            else:
-                if hk.enabled:
-                    hk.disable_hotkeys()
-                else:
-                    # Do not enable hotkeys after operation if they are
-                    # disabled now.
-                    hk = None
-                self.hk = hk
-                break
-        else:
+        self._enable_hk = False
+        try:
+            hk = self.hk
+        except:
             # Those imports are only used there.
             from common import (
                 mlget as _
@@ -50,6 +34,14 @@ class GUIDialog(GUIToplevel):
             sys.stderr.write(_(
                 "Cannot found a top level window with hot key context\n"
             ).get())
+        else:
+            if hk.enabled:
+                hk.disable_hotkeys()
+                self._enable_hk = True
+            else:
+                # Do not enable hotkeys after operation if they are
+                # disabled now.
+                pass
 
         # window needs to be visible for the grab
         # See: https://stackoverflow.com/questions/40861638/python-tkinter-treeview-not-allowing-modal-window-with-direct-binding-like-on-ri
@@ -59,7 +51,7 @@ class GUIDialog(GUIToplevel):
     def __on_destroy(self, e, **kw):
         if e.widget is not self:
             return
-        if self.hk is not None:
+        if self._enable_hk:
             self.hk.enable_hotkeys()
         self._alive = False
 
