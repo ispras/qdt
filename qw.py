@@ -43,7 +43,6 @@ from widgets import (
     GUIProjectHistoryTracker,
     asksaveas,
     VarMenu,
-    HotKey,
     HotKeyBinding,
     MachineDescriptionSettingsWidget,
     GUITk
@@ -195,7 +194,7 @@ class QEmuWatcherGUI(GUITk):
         self._killed = False
         self.task_manager.enqueue(self.co_rsp_poller())
 
-        self.hk = hk = HotKey(self)
+        hk = self.hk
         hk.add_bindings([
             HotKeyBinding(self._on_save,
                 key_code = 39,
