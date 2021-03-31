@@ -27,7 +27,6 @@ from widgets import (
     askdirectory,
     VarNotebook,
     askyesno,
-    HotKey,
     ErrorDialog,
     TaskErrorDialog,
     askdirectory,
@@ -89,7 +88,7 @@ class QMGUI(GUITk):
         GUITk.__init__(self)
         self.title(_("QManager"))
 
-        self.hk = hotkeys = HotKey(self)
+        hotkeys = self.hk
         hotkeys(self._on_account_git_repo, 38, symbol = "A")
         hotkeys(self._on_forget_repo, 41, symbol = "F")
         hotkeys(self._on_copy_path, 54, symbol = "C")

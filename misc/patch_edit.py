@@ -31,7 +31,6 @@ from widgets import (
     ErrorDialog,
     VarButton,
     askopen,
-    HotKey,
     VarLabel,
     HKEntry,
     StringVar,
@@ -1335,7 +1334,7 @@ class PatchEditor(
 
         self.title(_("Patch Editor"))
 
-        self.hk = hotkeys = HotKey(self)
+        hotkeys = self.hk
         hotkeys(
             self._save,
             key_code = 39,
