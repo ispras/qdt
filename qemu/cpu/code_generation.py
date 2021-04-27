@@ -59,6 +59,7 @@ from source import (
     Break,
     CINT,
     Call,
+    CaseRange,
     Comment,
     Declare,
     Function,
@@ -100,6 +101,7 @@ from source import (
     Pointer,
     Return,
     SwitchCase,
+    SwitchCaseDefault,
     Type,
     Variable,
 )
@@ -204,13 +206,13 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate):
         NewLine()
     )
 
-    if get_vp("device_class_set_parent_realize exists"):
+    if get_vp("device_class_set_parent_reset|realize exists"):
         body(
             Call(
                 "device_class_set_parent_realize",
                 dc,
                 Type[fn_name("realizefn")],
-                OpAddr(OpSDeref(mcc, "parent_realize")),
+                OpAddr(OpSDeref(mcc, "parent_realize"))
             )
         )
     else:
@@ -225,18 +227,33 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate):
             )
         )
 
-    body(
-        OpAssign(
-            OpSDeref(mcc, "parent_reset"),
-            OpSDeref(cc, "reset")
+    if get_vp("device_class_set_parent_reset used for cpu"):
+        body(
+            Call(
+                "device_class_set_parent_reset",
+                dc,
+                Type[fn_name("reset")],
+                OpAddr(OpSDeref(mcc, "parent_reset"))
+            )
         )
-    )
+    else:
+        body(
+            OpAssign(
+                OpSDeref(mcc, "parent_reset"),
+                OpSDeref(cc, "reset")
+            ),
+            OpAssign(
+                OpSDeref(cc, "reset"),
+                Type[fn_name("reset")]
+            )
+        )
+
     body(*[
         OpAssign(
             OpSDeref(cc, name),
             Type[fn_name(name)]
-        ) for name in ["reset", "has_work", "do_interrupt", "set_pc",
-            "dump_state", "disas_set_info", "class_by_name"
+        ) for name in ["has_work", "do_interrupt", "set_pc", "dump_state",
+            "disas_set_info", "class_by_name"
         ]
     ])
     body(
@@ -513,25 +530,78 @@ def fill_env_get_cpu_body(cputype, function):
         )
     )
 
-def fill_gdb_rw_register_body(cputype, function, comment):
+# Note, currently the QDT supports registers up to 64 bits, so there is always
+# a suitable helper. `gdb_get_reg128` was added because it exists in Qemu, but
+# it's not currently used in a boilerplate.
+gdb_get_reg_bitsizes = (8, 16, 32, 64, 128)
+ld_size_infixes = {16: "uw", 32: "l", 64: "q"}
+
+def fill_gdb_rw_register_body(cputype, function, is_write = False):
     cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
-    cc = Pointer(Type["CPUClass"])("cc")
     env = Pointer(Type[cputype.struct_name])("env")
 
-    ret_0 = Return(0)
+    buf = function.args[1]
+    n = function.args[2]
+
+    reg_number = 0
+    cases = []
+    for reg in cputype.registers:
+        bank_size = reg.bank_size
+        raw_bitsize = reg.raw_bitsize
+        env_reg = OpSDeref(env, reg.name)
+
+        if bank_size:
+            env_reg = OpIndex(
+                env_reg,
+                OpSub(n, reg_number) if reg_number else n
+            )
+            case_val = CaseRange(reg_number, reg_number + bank_size - 1)
+            reg_number += bank_size
+        else:
+            case_val = reg_number
+            reg_number += 1
+
+        if is_write:
+            ld_bitsize, ld_size_infix = min(filter(
+                lambda infix: infix[0] >= raw_bitsize,
+                ld_size_infixes.items()
+            ))
+            ld_call = Call( "ld%s_p" % (ld_size_infix), buf)
+            if raw_bitsize != ld_bitsize:
+                ld_call = OpAnd(
+                    ld_call,
+                    CINT((1 << raw_bitsize) - 1, base = 16)
+                )
+            cases.append(
+                SwitchCase(case_val, add_break = False)(
+                    OpAssign(env_reg, ld_call),
+                    Return(ld_bitsize // BYTE_BITSIZE)
+                )
+            )
+        else:
+            gdb_get_reg_bitsize = min(filter(
+                lambda bitsize: bitsize >= raw_bitsize,
+                gdb_get_reg_bitsizes
+            ))
+            cases.append(
+                SwitchCase(case_val, add_break = False)(
+                    Return(
+                        Call(
+                            "gdb_get_reg%d" % (gdb_get_reg_bitsize),
+                            buf,
+                            env_reg
+                        )
+                    )
+                )
+            )
+
+    cases.append(SwitchCaseDefault(add_break = False)(Return(0)))
 
     function.body = BodyTree()(
-        Comment(comment),
         Declare(
             OpDeclareAssign(
                 cpu,
                 MCall(cputype.qtn.for_macros, function.args[0])
-            )
-        ),
-        Declare(
-            OpDeclareAssign(
-                cc,
-                MCall("CPU_GET_CLASS", function.args[0])
             )
         ),
         Declare(
@@ -541,13 +611,7 @@ def fill_gdb_rw_register_body(cputype, function, comment):
             )
         ),
         NewLine(),
-        BranchIf(
-            OpGreater(
-                function.args[2],
-                OpSDeref(cc, "gdb_num_core_regs")
-            )
-        )(ret_0),
-        ret_0
+        BranchSwitch(n, cases = cases)
     )
 
 def fill_gen_intermediate_code_body(cputype, function, cpu_env):
@@ -767,25 +831,42 @@ def fill_gen_intermediate_code_body(cputype, function, cpu_env):
         OpAssign(
             OpSDeref(tb, "icount"),
             num_insns
+        )
+    )
+
+    # Disas
+    disas_statements = [
+        Call(
+            "qemu_log",
+            "IN: %s\\n",
+            Call("lookup_symbol", pc_start)
         ),
-        # Disas
+        Call("log_target_disas", *log_target_disas_args),
+        Call("qemu_log", "\\n")
+    ]
+
+    if get_vp("qemu_log_lock|unlock preserves logfile handle"):
+        logfile = Pointer(Type["FILE"])("logfile")
+        disas_statements = (
+            [ Declare(OpDeclareAssign(logfile, Call("qemu_log_lock"))) ] +
+            disas_statements +
+            [ Call("qemu_log_unlock", logfile) ]
+        )
+    else:
+        disas_statements = (
+            [ Call("qemu_log_lock") ] +
+            disas_statements +
+            [ Call("qemu_log_unlock") ]
+        )
+
+    body(
         Ifdef("DEBUG_DISAS")(
             BranchIf(
                 OpLogAnd(
                     Call("qemu_loglevel_mask", MCall("CPU_LOG_TB_IN_ASM")),
                     Call("qemu_log_in_addr_range", pc_start)
                 )
-            )(
-                Call("qemu_log_lock"),
-                Call(
-                    "qemu_log",
-                    "IN: %s\\n",
-                    Call("lookup_symbol", pc_start)
-                ),
-                Call("log_target_disas", *log_target_disas_args),
-                Call("qemu_log", "\\n"),
-                Call("qemu_log_unlock")
-            )
+            )(*disas_statements)
         )
     )
 
@@ -1143,11 +1224,24 @@ def fill_reset_body(cputype, function):
     cc = Pointer(Type[cputype.struct_class_name])("cc")
     env = Pointer(Type[cputype.struct_name])("env")
 
+    if get_vp("device_class_set_parent_reset used for cpu"):
+        cs = Pointer(Type["CPUState"])("cs")
+        body(
+            Declare(
+                OpDeclareAssign(
+                    cs,
+                    MCall("CPU", function.args[0])
+                )
+            )
+        )
+    else:
+        cs = function.args[0]
+
     body(
         Declare(
             OpDeclareAssign(
                 cpu,
-                MCall(cputype.qtn.for_macros, function.args[0])
+                MCall(cputype.qtn.for_macros, cs)
             )
         ),
         Declare(

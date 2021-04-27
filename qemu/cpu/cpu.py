@@ -256,6 +256,7 @@ class CPUType(QOMCPU):
         with_chunk_graph = False,
         intermediate_chunk_graphs = False,
         with_debug_comments = False,
+        include_paths = tuple(),
         **_
     ):
         import cpu_imports
@@ -355,7 +356,8 @@ class CPUType(QOMCPU):
 
                 sf.generate(f_writer,
                     graphs_prefix = graphs_prefix,
-                    gen_debug_comments = with_debug_comments
+                    gen_debug_comments = with_debug_comments,
+                    include_paths = include_paths
                 )
 
         path = self.gen_files["translate.inc.c"].path
@@ -625,13 +627,19 @@ class CPUType(QOMCPU):
         )
         h.add_type(type_arch_cpu)
 
-        cpu_class = Structure(self.struct_class_name,
+        cpu_class_fields = [
             Type["CPUClass"]("parent_class"),
-            Type["DeviceRealize"]("parent_realize"),
-            Function(
-                args = [ Pointer(Type["CPUState"])("cpu") ]
-            )("parent_reset")
-        )
+            Type["DeviceRealize"]("parent_realize")
+        ]
+        if get_vp("device_class_set_parent_reset used for cpu"):
+            cpu_class_fields.append(Type["DeviceReset"]("parent_reset"))
+        else:
+            cpu_class_fields.append(
+                Function(
+                    args = [ Pointer(Type["CPUState"])("cpu") ]
+                )("parent_reset")
+            )
+        cpu_class = Structure(self.struct_class_name, *cpu_class_fields)
         h.add_type(cpu_class)
 
         class_check = Macro(self.class_macro,
@@ -751,7 +759,11 @@ class CPUType(QOMCPU):
         type_info_type = Type["TypeInfo"]
         fn_name = self.gen_func_name
 
-        reset = cpu_class.reset.gen_callback(fn_name("reset"), static = True)
+        if get_vp("device_class_set_parent_reset used for cpu"):
+            reset_field = Type["DeviceClass"].reset
+        else:
+            reset_field = cpu_class.reset
+        reset = reset_field.gen_callback(fn_name("reset"), static = True)
         fill_reset_body(self, reset)
         c.add_type(reset)
 
@@ -786,18 +798,14 @@ class CPUType(QOMCPU):
             fn_name("gdb_read_register"),
             static = True
         )
-        fill_gdb_rw_register_body(self, gdb_read_register,
-            "TODO: implement gdb_read_register"
-        )
+        fill_gdb_rw_register_body(self, gdb_read_register)
         c.add_type(gdb_read_register)
 
         gdb_write_register = cpu_class.gdb_write_register.gen_callback(
             fn_name("gdb_write_register"),
             static = True
         )
-        fill_gdb_rw_register_body(self, gdb_write_register,
-            "TODO: implement gdb_write_register"
-        )
+        fill_gdb_rw_register_body(self, gdb_write_register, is_write = True)
         c.add_type(gdb_write_register)
 
         realizefn = Type["DeviceRealize"].type.use_as_prototype(
@@ -889,10 +897,14 @@ class CPUType(QOMCPU):
 
         helper_debug = self.gen_helper_debug()
         fill_helper_debug_body(helper_debug)
+        # avoid warning about missing prototypes
+        helper_debug.extra_references = {Type["HELPER_PROTO_H"]}
         c.add_type(helper_debug)
 
         helper_illegal = self.gen_helper_illegal()
         fill_helper_illegal_body(helper_illegal)
+        # avoid warning about missing prototypes
+        helper_debug.extra_references = {Type["HELPER_PROTO_H"]}
         c.add_type(helper_illegal)
 
         Header["exec/helper-gen.h"].add_types([
@@ -1198,6 +1210,8 @@ def patch_configure(src, arch_bigendian, target_name):
         f.write("".join(lines))
 
 
+re_arch_enum_definition = compile("^    (\w+) = \(1 << (\d+)\),\n$")
+
 def patch_arch_init_header(src, target_name):
     arch_init_header = join(src, "include", "sysemu", "arch_init.h")
     target_name_upper = target_name.upper()
@@ -1207,20 +1221,44 @@ def patch_arch_init_header(src, target_name):
         lines = f.readlines()
 
     index = 0
-    str_qemu_arch = "    %s = " % qemu_arch
-    found_arch_all = False
+    first_enum_found = False
+    arch_definitions = {}
 
     for i, line in enumerate(lines):
-        if found_arch_all:
-            if str_qemu_arch in line:
-                return
-            elif line == "};\n":
-                lines.insert(i, "%s(1 << %d),\n" % (str_qemu_arch, index))
+        if first_enum_found:
+            if line == "};\n":
+                index = i
                 break
-            else:
-                index += 1
-        elif line == "    QEMU_ARCH_ALL = -1,\n":
-            found_arch_all = True
+            arch_e_d_match = re_arch_enum_definition.search(line)
+            if arch_e_d_match:
+                arch_definitions[arch_e_d_match.group(1)] = (
+                    int(arch_e_d_match.group(2))
+                )
+        if line == "enum {\n":
+            first_enum_found = True
+
+    if qemu_arch in arch_definitions:
+        return
+
+    # Note, QEMU_ARCH_NONE is appeared since Qemu v5.0.0 version. Without using
+    # the version heuristic, we just check for the presence in the file.
+    QEMU_ARCH_NONE_val = None
+    if "QEMU_ARCH_NONE" in arch_definitions:
+        # subtracts 2 because QEMU_ARCH_NONE is separated by an empty line
+        index = index - 2
+        QEMU_ARCH_NONE_val = arch_definitions.pop("QEMU_ARCH_NONE")
+
+    arch_val = max(arch_definitions.values()) + 1
+
+    # Note, each architecture uses its own bit as an enumeration constant,
+    # which is of type `int`, therefore the number of architectures is limited
+    # by `int` bitsize.
+    if arch_val == QEMU_ARCH_NONE_val or arch_val > 31:
+        raise RuntimeError("No available bits to declare architecture in " +
+            "the 'arch_init' header"
+        )
+
+    lines.insert(index, "    %s = (1 << %d),\n" % (qemu_arch, arch_val))
 
     with open(arch_init_header, "w") as f:
         f.write("".join(lines))

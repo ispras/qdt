@@ -170,7 +170,8 @@ class QProject(object):
         with_chunk_graph = False,
         intermediate_chunk_graphs = False,
         known_targets = None,
-        with_debug_comments = False
+        with_debug_comments = False,
+        include_paths = tuple()
     ):
         qom_t = desc.gen_type()
 
@@ -203,7 +204,8 @@ class QProject(object):
             with open(spath, mode = "wb", encoding = "utf-8") as stream:
                 f.generate(stream,
                     graphs_prefix = graphs_prefix,
-                    gen_debug_comments = with_debug_comments
+                    gen_debug_comments = with_debug_comments,
+                    include_paths = include_paths
                 )
 
             if with_chunk_graph:

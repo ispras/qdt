@@ -550,18 +550,26 @@ class QemuVersionDescription(object):
 
         print("Qemu version is {}".format(self.qemu_version))
 
-        self.include_paths = (
-            # path, need recursion
-            ("include", True),
-            ("tcg", False)
-        )
-
-        self.include_abs_paths = list(
-            join(self.src_path, d) for d, _ in self.include_paths
-        )
-
         self.qvc = None
         self.qvc_is_ready = False
+
+    @lazy
+    def include_paths(self):
+        if get_vp("tcg headers prefix") == "tcg/":
+            return (
+                # path, need recursion
+                ("include", True),
+            )
+        else:
+            return (
+                # path, need recursion
+                ("include", True),
+                ("tcg", False)
+            )
+
+    @lazy
+    def include_abs_paths(self):
+        return tuple(join(self.src_path, d) for d, _ in self.include_paths)
 
     # The method made the description active
     def use(self):
@@ -644,6 +652,16 @@ class QemuVersionDescription(object):
 
             # make new QVC active and begin construction
             prev_qvc = self.qvc.use()
+
+            # gen version description
+            yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
+            self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
+
+            yield True
+
+            # set Qemu version heuristics according to current version
+            initialize_version(self.qvc.version_desc)
+
             yield Header.co_build_inclusions(tmp_work_dir, self.include_paths)
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
@@ -654,10 +672,6 @@ class QemuVersionDescription(object):
             yield self.co_init_device_tree()
 
             yield self.co_gen_known_targets()
-
-            # gen version description
-            yield self.qvc.co_computing_parameters(self.repo, self.commit_sha)
-            self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -691,6 +705,11 @@ class QemuVersionDescription(object):
                 )
                 self.qvc.version_desc[QVD_QH_HASH] = qemu_heuristic_hash
 
+            yield True
+
+            # set Qemu version heuristics according to current version
+            initialize_version(self.qvc.version_desc)
+
             dt = self.qvc.device_tree
             if dt:
                 # Targets to be added to the cache
@@ -705,11 +724,6 @@ class QemuVersionDescription(object):
 
             if is_outdated or has_new_target:
                 yield self.co_overwrite_cache()
-
-        yield True
-
-        # set Qemu version heuristics according to current version
-        initialize_version(self.qvc.version_desc)
 
         yield True
 

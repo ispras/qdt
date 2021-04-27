@@ -327,8 +327,12 @@ def define_only_qemu_2_6_0_types():
             Function(
                 ret_type = Type["int"],
                 args = [
-                    Pointer(Type["CPUState"])("cs"),
-                    Pointer(Type["uint8_t"])("mem_buf"),
+                    Pointer(Type["CPUState"])("cs")
+                ] + (
+                    [ Pointer(Type["GByteArray"])("buf") ] if
+                    get_vp("gdb_read_register buf type is GByteArray")
+                    else [ Pointer(Type["uint8_t"])("mem_buf") ]
+                ) + [
                     Type["int"]("n")
                 ]
             )("gdb_read_register"),
@@ -615,10 +619,15 @@ def define_only_qemu_2_6_0_types():
             ),
             name = "DeviceUnrealize"
         ),
+        Pointer(
+            Function(args = [ Pointer(Type["DeviceState"])("dev") ]),
+            name = "DeviceReset"
+        ),
         Structure("DeviceClass",
             # These are required fields only
             Type["DeviceRealize"]("realize"),
             Type["DeviceUnrealize"]("unrealize"),
+            Type["DeviceReset"]("reset")
         ),
         Type("Property", False),
         Function(
@@ -637,10 +646,11 @@ def define_only_qemu_2_6_0_types():
         Function(name = "qdev_connect_gpio_out"),
         Function(name = "qdev_connect_gpio_out_named")
     ])
-    if get_vp("device_class_set_parent_realize exists"):
-        qdev_core_header.add_type(
+    if get_vp("device_class_set_parent_reset|realize exists"):
+        qdev_core_header.add_types([
+            Function(name = "device_class_set_parent_reset"),
             Function(name = "device_class_set_parent_realize")
-        )
+        ])
     if get_vp("use device_class_set_props"):
         qdev_core_header.add_type(
             Function(
@@ -1419,9 +1429,9 @@ qemu_heuristic_db = {
     ],
     u'46795cf2e2f643ace9454822022ba8b1e9c0cf61':
     [
-        # `device_class_set_parent_realize` function was added
+        # `device_class_set_parent_reset|realize` function was added
         QEMUVersionParameterDescription(
-            "device_class_set_parent_realize exists",
+            "device_class_set_parent_reset|realize exists",
             old_value = False,
             new_value = True
         )
@@ -1573,6 +1583,33 @@ qemu_heuristic_db = {
         QEMUVersionParameterDescription("property name before value",
             new_value = True,
             old_value = False
+        )
+    ],
+    u"781c67ca5585b38a29076093ecdff4f273db5a35":
+    [
+        # cpu: Use DeviceClass reset
+        QEMUVersionParameterDescription(
+            "device_class_set_parent_reset used for cpu",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u"a010bdbe719c52c8959ca058000d7ac7d559abb8":
+    [
+        # gdbstub: extend GByteArray to read register helpers
+        QEMUVersionParameterDescription(
+            "gdb_read_register buf type is GByteArray",
+            old_value = False,
+            new_value = True
+        )
+    ],
+    u"fc59d2d870caddf5cd9c85836ee4a8c59ffe7617":
+    [
+        # qemu_log_lock/unlock now preserves the qemu_logfile handle
+        QEMUVersionParameterDescription(
+            "qemu_log_lock|unlock preserves logfile handle",
+            old_value = False,
+            new_value = True
         )
     ]
 }

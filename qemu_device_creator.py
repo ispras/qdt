@@ -129,7 +129,8 @@ def main():
         intermediate_chunk_graphs = arguments.gen_intermediate_chunk_graphs,
         with_chunk_graph = arguments.gen_chunk_graphs,
         known_targets = qvd.qvc.known_targets,
-        with_debug_comments = arguments.gen_debug_comments
+        with_debug_comments = arguments.gen_debug_comments,
+        include_paths = tuple(path for path, _ in qvd.include_paths)
     )
 
     return 0
