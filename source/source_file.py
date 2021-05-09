@@ -101,7 +101,7 @@ def enable_auto_lock_inclusions():
 OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 # Skip global headers inclusions. All needed global headers included in
 # "qemu/osdep.h".
-SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
+NO_GLOBAL_HEADERS = ee("QDT_NO_GLOBAL_HEADERS", "True")
 
 
 class Source(TypeContainer):
@@ -387,7 +387,7 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 # Sometimes headers do not include other headers to provide
                 # visibility of used types. A module file must provide it.
                 if (    isinstance(s, Header)
-                    and SKIP_GLOBAL_HEADERS
+                    and NO_GLOBAL_HEADERS
                     and isinstance(definer, Header)
                     and definer.is_global
                 ):
