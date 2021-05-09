@@ -23,7 +23,7 @@ obj_var_name. """
                 patch_line_n = n + 1
                 break
 
-        if not obj_var_token in tokens:
+        if obj_var_token not in tokens:
             continue
         if obj_base_name in tokens:
             break
