@@ -387,7 +387,7 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 # Sometimes headers do not include other headers to provide
                 # visibility of used types. A module file must provide it.
                 if (    isinstance(s, Header)
-                    and NO_GLOBAL_HEADERS
+                    and s.no_global_headers
                     and isinstance(definer, Header)
                     and definer.is_global
                 ):
@@ -423,7 +423,8 @@ class Header(Source):
     def __init__(self, path,
         is_global = False,
         protection = True,
-        locked_inclusions = None
+        locked_inclusions = None,
+        no_global_headers = NO_GLOBAL_HEADERS
     ):
         """
 :param path: it is used in #include statements, as unique identifier and
@@ -435,6 +436,7 @@ class Header(Source):
         self.is_global = is_global
         self.includers = []
         self.protection = protection
+        self.no_global_headers = no_global_headers
 
         tpath = path2tuple(path)
         if tpath in Header.reg:
