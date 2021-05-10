@@ -181,7 +181,9 @@ def fill_class_by_name_body(cputype, function):
         Return(oc)
     )
 
-def fill_class_init_body(cputype, function, num_core_regs, vmstate):
+def fill_class_init_body(cputype, function, num_core_regs, vmstate,
+    properties
+):
     function.body = body = BodyTree()
 
     oc = function.args[0]
@@ -231,6 +233,22 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate):
             OpAssign(
                 OpSDeref(dc, "realize"),
                 Type[fn_name("realizefn")]
+            )
+        )
+
+    if get_vp("use device_class_set_props"):
+        body(
+            Call(
+                "device_class_set_props",
+                dc,
+                properties
+            )
+        )
+    else:
+        body(
+            OpAssign(
+                OpSDeref(dc, "props"),
+                properties
             )
         )
 

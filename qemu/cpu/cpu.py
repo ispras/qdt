@@ -827,6 +827,9 @@ class CPUType(QOMCPU):
         fill_initfn_body(self, cpu_initfn)
         c.add_type(cpu_initfn)
 
+        properties = self.gen_properties_global(Type[self.struct_name])
+        c.add_global_variable(properties)
+
         cpu_class_init = type_info_type.class_init.gen_callback(
             fn_name("class_init"),
             static = True
@@ -835,7 +838,7 @@ class CPUType(QOMCPU):
         fill_class_init_body(self, cpu_class_init, num_core_regs,
             self.gen_files["cpu.h"].global_variables[
                 "vmstate_" + self.qtn.for_id_name
-            ]
+            ], properties
         )
         c.add_type(cpu_class_init)
 
