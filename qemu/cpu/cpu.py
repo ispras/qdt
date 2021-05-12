@@ -741,6 +741,8 @@ class CPUType(QOMCPU):
             pc_register = h.global_variables[self.pc_register]
         fill_set_pc_inc_body(set_pc, pc_register)
 
+        set_pc.extra_references = {Type["tcg_op_fake_type"]}
+
         h.add_types([
             Enumeration([
                 ("BS_NONE", 0),
