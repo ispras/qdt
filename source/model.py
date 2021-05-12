@@ -135,6 +135,20 @@ class Type(TypeContainer):
         except TypeNotRegistered:
             return False
 
+    @staticmethod
+    def register_alias(alias_name, name):
+        if not Type.exists(name):
+            raise TypeNotRegistered("Type with name %s is not registered"
+                % name
+            )
+
+        if Type.exists(alias_name):
+            raise RuntimeError("Type with name %s is already registered"
+                % alias_name
+            )
+
+        Type.reg[alias_name] = Type[name]
+
     def __init__(self,
         name = None,
         incomplete = True,
