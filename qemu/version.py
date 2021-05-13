@@ -1612,6 +1612,15 @@ qemu_heuristic_db = {
             old_value = False,
             new_value = True
         )
+    ],
+    u"14776ab5a12972ea439c7fb2203a4c15a09094b4":
+    [
+        # TCGMemOp is now accelerator independent MemOp
+        QEMUVersionParameterDescription(
+            "TCGMemOp renamed to MemOp",
+            old_value = False,
+            new_value = True
+        )
     ]
 }
 
