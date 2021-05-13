@@ -118,6 +118,26 @@ def define_only_qemu_2_6_0_types():
     else:
         tcg_header.add_global_variable(Type["TCGv_env"]("cpu_env"))
 
+    # Note, `memop` is alias name of type `TCGMemOp` or `MemOp` (dependent on
+    # QEMU version) which is better to use when describing the semantics of
+    # instructions.
+    if get_vp("TCGMemOp renamed to MemOp"):
+        Header["exec/memop.h"].add_type(
+            # These are required elements only
+            Enumeration(["MO_UB", "MO_UW", "MO_UL", "MO_TE"],
+                typedef_name = "MemOp"
+            )
+        ).add_reference(osdep_fake_type)
+        Type.register_alias("memop", "MemOp")
+    else:
+        tcg_header.add_type(
+            # These are required elements only
+            Enumeration(["MO_UB", "MO_UW", "MO_UL", "MO_TE"],
+                typedef_name = "TCGMemOp"
+            )
+        )
+        Type.register_alias("memop", "TCGMemOp")
+
     t = Type["TCGContext"]
     if get_vp("tcg_ctx is pointer"):
         t = Pointer(t)
