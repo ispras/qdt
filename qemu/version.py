@@ -118,6 +118,18 @@ def define_only_qemu_2_6_0_types():
     else:
         tcg_header.add_global_variable(Type["TCGv_env"]("cpu_env"))
 
+    memop_type_name = get_vp("memop")
+    if memop_type_name == "MemOp":
+        memop_header = Header["exec/memop.h"].add_reference(osdep_fake_type)
+    else:
+        memop_header = tcg_header
+    memop_header.add_type(
+        # These are required elements only
+        Enumeration(["MO_UB", "MO_UW", "MO_UL", "MO_TE"],
+            typedef_name = memop_type_name
+        )
+    )
+
     t = Type["TCGContext"]
     if get_vp("tcg_ctx is pointer"):
         t = Pointer(t)
