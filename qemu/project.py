@@ -196,6 +196,12 @@ class QProject(object):
 
             f = s.generate()
 
+            if with_chunk_graph:
+                yield True
+                f.gen_chunks_gv_file(spath + ".chunks-before-gen.gv")
+
+            yield True
+
             if intermediate_chunk_graphs:
                 graphs_prefix = spath + ".chunks"
             else:
@@ -210,7 +216,7 @@ class QProject(object):
 
             if with_chunk_graph:
                 yield True
-                f.gen_chunks_gv_file(spath + ".chunks.gv")
+                f.gen_chunks_gv_file(spath + ".chunks-after-gen.gv")
 
             # Only sources need to be registered in the build system
             if type(s) is not Source:
