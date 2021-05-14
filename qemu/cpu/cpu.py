@@ -342,22 +342,20 @@ class CPUType(QOMCPU):
             else:
                 path = join(src, f.path)
 
+            sf = f.generate()
+
+            if with_chunk_graph:
+                yield True
+                sf.gen_chunks_gv_file(path + ".chunks.gv")
+
+            yield True
+
             if intermediate_chunk_graphs:
                 graphs_prefix = path + ".chunks"
             else:
                 graphs_prefix = None
 
             with open(path, mode = "wb", encoding = "utf-8") as f_writer:
-                sf = f.generate()
-
-                yield True
-
-                if with_chunk_graph:
-                    yield True
-                    sf.gen_chunks_gv_file(path + ".chunks.gv")
-
-                yield True
-
                 sf.generate(f_writer,
                     graphs_prefix = graphs_prefix,
                     gen_debug_comments = with_debug_comments,
