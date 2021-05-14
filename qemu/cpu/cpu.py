@@ -346,7 +346,7 @@ class CPUType(QOMCPU):
 
             if with_chunk_graph:
                 yield True
-                sf.gen_chunks_gv_file(path + ".chunks.gv")
+                sf.gen_chunks_gv_file(path + ".chunks-before-gen.gv")
 
             yield True
 
@@ -361,6 +361,10 @@ class CPUType(QOMCPU):
                     gen_debug_comments = with_debug_comments,
                     include_paths = include_paths
                 )
+
+            if with_chunk_graph:
+                yield True
+                sf.gen_chunks_gv_file(path + ".chunks-after-gen.gv")
 
         yield True
 
