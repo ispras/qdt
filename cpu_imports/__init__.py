@@ -35,4 +35,6 @@ from qemu import (
   , Reserved
 # helpers
   , underscored_name_shortener
+# heuristic
+  , get_vp
 )
