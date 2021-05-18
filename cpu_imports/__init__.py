@@ -1,3 +1,7 @@
+__all__ = [
+    "MemOp"
+]
+
 from source import (
     CINT
   , CSTR
@@ -38,3 +42,6 @@ from qemu import (
 # heuristic
   , get_vp
 )
+
+# Cache some types to shorten the semantics code of instructions.
+MemOp = Type[get_vp("memop")]
