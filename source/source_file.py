@@ -1,6 +1,6 @@
 __all__ = [
-    "disable_auto_lock_sources"
-  , "enable_auto_lock_sources"
+    "disable_auto_lock_inclusions"
+  , "enable_auto_lock_inclusions"
   , "Source"
       , "Header"
   , "SourceFile"
@@ -81,26 +81,27 @@ with pypath("..ply"):
 # All sources which are not created at the code generation stage considered
 # immutable. We believe that these files already exist. Therefore, we cannot
 # influence the list of their inclusions. To prevent the appearance of new
-# inclusions, the flag `locked` is set. Few exceptions:
-# - explicit `locked` setting
-# - `add_inclusion` method will add inclusion even to a locked file
-AUTO_LOCK_SOURCES = True
+# inclusions, the flag `locked_inclusions` is set. Few exceptions:
+# - explicit `locked_inclusions` setting
+# - `add_inclusion` method will add inclusion even to a file with locked
+# inclusions
+AUTO_LOCK_INCLUSIONS = True
 
-def disable_auto_lock_sources():
-    global AUTO_LOCK_SOURCES
-    AUTO_LOCK_SOURCES = False
+def disable_auto_lock_inclusions():
+    global AUTO_LOCK_INCLUSIONS
+    AUTO_LOCK_INCLUSIONS = False
 
 
-def enable_auto_lock_sources():
-    global AUTO_LOCK_SOURCES
-    AUTO_LOCK_SOURCES = True
+def enable_auto_lock_inclusions():
+    global AUTO_LOCK_INCLUSIONS
+    AUTO_LOCK_INCLUSIONS = True
 
 
 # Reduces amount of #include directives
 OPTIMIZE_INCLUSIONS = ee("QDT_OPTIMIZE_INCLUSIONS", "True")
 # Skip global headers inclusions. All needed global headers included in
 # "qemu/osdep.h".
-SKIP_GLOBAL_HEADERS = ee("QDT_SKIP_GLOBAL_HEADERS", "True")
+NO_GLOBAL_HEADERS = ee("QDT_NO_GLOBAL_HEADERS", "True")
 
 
 class Source(TypeContainer):
@@ -108,7 +109,7 @@ class Source(TypeContainer):
     # Only header can do it, see `Header`.
     inherit_references = False
 
-    def __init__(self, path, locked = None):
+    def __init__(self, path, locked_inclusions = None):
         super(Source, self).__init__()
 
         self.path = path
@@ -117,13 +118,13 @@ class Source(TypeContainer):
         self.global_variables = {}
         self.references = set()
         self.protection = False
-        if locked is not None:
-            self.locked = locked
+        if locked_inclusions is not None:
+            self.locked_inclusions = locked_inclusions
         else:
-            self.locked = AUTO_LOCK_SOURCES
+            self.locked_inclusions = AUTO_LOCK_INCLUSIONS
 
     def add_reference(self, ref):
-        if not isinstance(ref, Type) and not isinstance(ref, Variable):
+        if not isinstance(ref, (Type, Variable)):
             raise ValueError("Trying to add source reference which is not a"
                 " type"
             )
@@ -264,6 +265,8 @@ class Source(TypeContainer):
         for func in self.types.values():
             if not isinstance(func, Function):
                 continue
+            if func.definer is not self:
+                continue
             body = func.body
             if not isinstance(body, BodyTree):
                 continue
@@ -273,7 +276,7 @@ class Source(TypeContainer):
         # of self. This is list of references to those types.
         ref_list = []
 
-        if isinstance(self, Header):
+        if isinstance(self, Header) and not self.locked_inclusions:
             for user in self.includers:
                 for ref in user.references:
                     if ref.definer not in user.inclusions:
@@ -371,10 +374,11 @@ class TypeFixerVisitor(TypeReferencesVisitor):
         ret = super(TypeFixerVisitor, self).visit()
 
         s = self.source
-        if s.locked:
+        if s.locked_inclusions:
             # A generated file either provides required types by inclusions or
             # adds them to its references.
-            # A constant (`locked`) file can only update its references.
+            # A constant (`locked_inclusions`) file can only update its
+            # references.
             s.add_references(self.required_types)
         else:
             for t in self.required_types:
@@ -383,7 +387,7 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 # Sometimes headers do not include other headers to provide
                 # visibility of used types. A module file must provide it.
                 if (    isinstance(s, Header)
-                    and SKIP_GLOBAL_HEADERS
+                    and s.no_global_headers
                     and isinstance(definer, Header)
                     and definer.is_global
                 ):
@@ -419,7 +423,8 @@ class Header(Source):
     def __init__(self, path,
         is_global = False,
         protection = True,
-        locked = None
+        locked_inclusions = None,
+        no_global_headers = NO_GLOBAL_HEADERS
     ):
         """
 :param path: it is used in #include statements, as unique identifier and
@@ -427,10 +432,11 @@ class Header(Source):
 :param is_global: inclusions will use <path> instead of "path".
 :param protection: wrap content in multiple inclusion protection macro logic.
         """
-        super(Header, self).__init__(path, locked)
+        super(Header, self).__init__(path, locked_inclusions)
         self.is_global = is_global
         self.includers = []
         self.protection = protection
+        self.no_global_headers = no_global_headers
 
         tpath = path2tuple(path)
         if tpath in Header.reg:

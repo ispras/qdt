@@ -8,7 +8,7 @@ from six import (
 from source import (
     Return,
     OpSDeref,
-    disable_auto_lock_sources,
+    disable_auto_lock_inclusions,
     OpaqueCode,
     Type,
     Header,
@@ -57,7 +57,7 @@ class SourceModelTestHelper(object):
         Type.reg = {}
         Header.reg = {}
         add_base_types()
-        disable_auto_lock_sources()
+        disable_auto_lock_inclusions()
 
     def test(self):
         for file_, content in self.files:
@@ -888,17 +888,17 @@ void another_test_func(void);
         ]
 
 
-class TestAddingTypeToLockedHeader(SourceModelTestHelper, TestCase):
+class TestAddingTypeToLockedInclusionsHeader(SourceModelTestHelper, TestCase):
 
     def setUp(self):
-        super(TestAddingTypeToLockedHeader, self).setUp()
+        super(TestAddingTypeToLockedInclusionsHeader, self).setUp()
         name = type(self).__name__
 
         Header("some_types.h").add_type(Type("t"))
 
         # Without locking "some_types.h" header will be included in
         # "lockedheader.h".
-        Header("lockedheader.h", locked = True).add_type(
+        Header("lockedheader.h", locked_inclusions = True).add_type(
             Structure("S", Pointer(Type["t"])("f"))
         )
 

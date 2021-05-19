@@ -104,7 +104,12 @@ def define_only_qemu_2_6_0_types():
         Structure("TCGContext"),
         Function(name = "tcg_global_mem_new_i32"),
         Function(name = "tcg_global_mem_new_i64"),
-        Function(name = "tcg_op_buf_full")
+        Function(name = "tcg_op_buf_full"),
+        # `tcg` is a fake type intended to mark variables which are to be
+        # replaced by this tool preprocessor (still in progress).
+        # `tcg` is then converted to some existing QEMU types (`TCGv_i32`,
+        # `TCGv_i64` or `TCGv`).
+        Type("tcg", incomplete = False)
     ])
 
     if get_vp("Init cpu_env in arch"):
@@ -112,6 +117,18 @@ def define_only_qemu_2_6_0_types():
         Type["TCGContext"].append_field(Type["TCGv_env"]("tcg_env"))
     else:
         tcg_header.add_global_variable(Type["TCGv_env"]("cpu_env"))
+
+    memop_type_name = get_vp("memop")
+    if memop_type_name == "MemOp":
+        memop_header = Header["exec/memop.h"].add_reference(osdep_fake_type)
+    else:
+        memop_header = tcg_header
+    memop_header.add_type(
+        # These are required elements only
+        Enumeration(["MO_UB", "MO_UW", "MO_UL", "MO_TE"],
+            typedef_name = memop_type_name
+        )
+    )
 
     t = Type["TCGContext"]
     if get_vp("tcg_ctx is pointer"):
@@ -123,14 +140,10 @@ def define_only_qemu_2_6_0_types():
         Function(name = "tcg_gen_insn_start"),
         Function(name = "tcg_gen_goto_tb"),
         Function(name = "tcg_gen_exit_tb"),
-        # `tcg` is a fake type intended to mark variables which are to be
-        # replaced by this tool preprocessor (still in progress).
-        # `tcg` is then converted to some existing QEMU types (`TCGv_i32`,
-        # `TCGv_i64` or `TCGv`). Therefore this type should be placed in the
-        # `tcg.h` header (where these types are declared). But this type helps
-        # to add the `tcg-op.h` header inclusion into the `translate.inc.c`
-        # header. This inclusion is necessary for future function bodies.
-        Type("tcg", incomplete = False)
+        # `tcg_op_fake_type` is a fake type used to add the `tcg-op.h` header
+        # inclusion into the `translate.inc.c` header. This inclusion is
+        # necessary for future function bodies.
+        Type("tcg_op_fake_type", incomplete = False)
     ]).add_reference(osdep_fake_type)
 
     Header["exec/hwaddr.h"].add_types([
@@ -1610,6 +1623,15 @@ qemu_heuristic_db = {
             "qemu_log_lock|unlock preserves logfile handle",
             old_value = False,
             new_value = True
+        )
+    ],
+    u"14776ab5a12972ea439c7fb2203a4c15a09094b4":
+    [
+        # TCGMemOp is now accelerator independent MemOp
+        QEMUVersionParameterDescription(
+            "memop",
+            old_value = "TCGMemOp",
+            new_value = "MemOp"
         )
     ]
 }

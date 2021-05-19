@@ -150,11 +150,11 @@ def rmtree_existing(path):
         rmtree(path)
 
 
-def get_cleaner(*defult_args, **default_kw):
+def get_cleaner(*default_args, **default_kw):
     global _current_cleaner
 
     if _current_cleaner is None:
-        _current_cleaner = Cleaner(*defult_args, **default_kw)
+        _current_cleaner = Cleaner(*default_args, **default_kw)
         _current_cleaner.start()
 
     return _current_cleaner
