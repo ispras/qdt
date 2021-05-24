@@ -291,6 +291,8 @@ Notifications are issued for many machine composition events.
 
         """
             hw/core/machine.c:819 11bc4a13d1f4b07dafbd1dda4d4bf0fdd7ad65f2
+                First line of machine_initfn
+
             hw/core/machine.c:656 b2fc91db84470a78f8e93f5b5f913c17188792c8
             hw/core/machine.c:654 v2.12.0
         """
@@ -337,7 +339,12 @@ Notifications are issued for many machine composition events.
     def on_board_init_end(self):
         # machine_run_board_init
 
-        """ hw/core/machine.c:830 v2.12.0 1
+        """
+            hw/core/machine.c:1135 v5.2.0
+                Last line in machine_run_board_init
+                Just after machine_class->init(machine);
+
+            hw/core/machine.c:830 v2.12.0 1
             vl.c:4476 ad584d37f2a86b392c25f3f00cc1f1532676c2d1 1
             vl.c:4510 2ae45973d61070c1a1883c1f3c43f7154cc85a91
         """
@@ -570,7 +577,11 @@ Notifications are issued for many machine composition events.
         # bus_remove_child, before actual unparenting
 
         # v2.12.0
-        """ hw/core/qdev.c:57 v2.12.0
+        """
+            hw/core/qdev.c:66 v5.2.0
+                Just after the child (`kid`) is found in `children` list.
+
+            hw/core/qdev.c:57 v2.12.0
             hw/core/qdev.c:70 67980031d234aa90524b83bb80bb5d1601d29076
         """
 
