@@ -1,6 +1,7 @@
 __all__ = [
     "QOMTreeWidget"
   , "QOMTypeSelectDialog"
+  , "QOMTreeWindow"
 ]
 
 from .var_widgets import (
@@ -25,6 +26,9 @@ from common import (
 )
 from .gui_dialog import (
     GUIDialog
+)
+from .gui_toplevel import (
+    GUIToplevel,
 )
 from .scrollframe import (
     add_scrollbars_native,
@@ -122,6 +126,19 @@ class QOMTypeSelectDialog(GUIDialog):
             b.pack(anchor = "w")
 
         b.select()
+
+
+class QOMTreeWindow(GUIToplevel):
+
+    def __init__(self, master, *a, **kw):
+        qom_tree = kw.pop("qom_tree")
+
+        GUIToplevel.__init__(self, master, *a, **kw)
+
+        self.title(_("QOM Tree"))
+
+        w_qtree = QOMTreeWidget(self, qom_tree = qom_tree)
+        w_qtree.pack(fill = BOTH, expand = True)
 
 
 ItemDesc = namedtuple(
