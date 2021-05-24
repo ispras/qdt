@@ -46,7 +46,6 @@ class DeviceTreeWidget(GUIDialog):
         self.qom_tree = qom_tree = kw.pop("qom_tree")
 
         GUIDialog.__init__(self, master = root, *args, **kw)
-        self.qom_type_var = root.qom_type_var
 
         self.title(_("Device Tree"))
         self.grid()
@@ -262,10 +261,9 @@ class DeviceTreeWidget(GUIDialog):
                 dt.detach(*to_detach)
 
     def _on_bt_select(self):
-        self.qom_type_var.set(self.v_sel_type.get())
+        self._result = self.v_sel_type.get()
         self.destroy()
 
-    # write selected qom type in qom_type_var
     def _on_device_tv_select(self, __):
         dt = self.device_tree
         sel = dt.selection()
