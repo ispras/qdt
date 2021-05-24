@@ -30,6 +30,9 @@ from common import (
 from .line_adapter import (
     LineAdapter
 )
+from os.path import (
+    sep
+)
 
 # regular expression for git version of file and eps
 re_glv_expr = compile("^(?:\s+([\w\-.]+))?(?:\s+(\d+)(?:\s|$))?")
@@ -124,21 +127,27 @@ renaming for file name)
 
         version_trie = self._cache.setdefault(version, {})
 
+        # `pythonize` (used to save adaptation cache) saves `bytes` as
+        # regular `str`ings (without a prefix before "string literal").
+        # While neighbour code expects exactly `bytes` (it's actual
+        # under Py3).
+        # So, there is explicit an encoding.
+        trie_path = tuple(reversed(fname.decode("utf-8").split(sep)))
+
         try:
-            return trie_find(version_trie,
-                tuple(reversed(fname.split(bsep)))
-            )[0]
+            delta_map, rename = trie_find(version_trie, trie_path)[0]
         except KeyError:
-            pass
+            if version not in self._draft_diffs:
+                self._add_git_diff(version)
 
-        if version not in self._draft_diffs:
-            self._add_git_diff(version)
+            delta_map, rename = val = self._find_git_diff(version, fname)
 
-        val = self._find_git_diff(version, fname)
-        trie_add(version_trie,
-            tuple(reversed(fname.split(bsep))), val
-        )
-        return val
+            trie_add(version_trie, trie_path, val)
+
+        if rename is not None:
+            rename = bstr(rename)
+
+        return delta_map, rename
 
     def store_cache(self):
         pythonize(self._cache, self.cache_file)
