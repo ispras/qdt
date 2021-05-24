@@ -65,7 +65,7 @@ class DeviceTreeWidget(GUIDialog):
         dt.heading("#0", text = _("Devices"))
         dt.heading("Macros", text = _("Macros"))
 
-        dt.bind("<ButtonPress-1>", self.on_b1_press_dt)
+        dt.bind("<<TreeviewSelect>>", self._on_device_tv_select, "+")
         self.v_sel_type = StringVar(self)
 
         dt.grid(
@@ -268,17 +268,20 @@ class DeviceTreeWidget(GUIDialog):
         self.destroy()
 
     # write selected qom type in qom_type_var
-    def on_b1_press_dt(self, event):
-        item = self.device_tree.identify('item', event.x, event.y)
+    def _on_device_tv_select(self, __):
+        dt = self.device_tree
+        sel = dt.selection()
 
-        if not item:
+        if len(sel) != 1:
             return
+
+        item = sel[0]
 
         self.add_button.config(state = "normal")
         for widget in self.fr_qt.winfo_children():
             widget.destroy()
 
-        dt_type = self.device_tree.item(item, "text")
+        dt_type = dt.item(item, "text")
 
         v_sel_type = self.v_sel_type
         # Note, value of `v_sel_type` will be assigned automatically by
@@ -291,7 +294,7 @@ class DeviceTreeWidget(GUIDialog):
         )
         b.pack(anchor = "w")
 
-        macros = self.device_tree.item(item, "values")[0]
+        macros = dt.item(item, "values")[0]
         if macros != "None":
             l = macros.split(", ")
             for mstr in l:
