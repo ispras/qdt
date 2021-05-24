@@ -111,6 +111,16 @@ class QProject(object):
         disable_auto_lock_inclusions()
         qvd = QemuVersionDescription.current
 
+        new_targets = set()
+        for desc in self.descriptions:
+            if isinstance(desc, CPUDescription):
+                new_targets.add(desc.directory)
+
+        if new_targets:
+            gen_cfg["known_targets"] = (
+                gen_cfg.get("known_targets", set()) | new_targets
+            )
+
         # Firstly, generate all CPUs
         for desc in self.descriptions:
             if isinstance(desc, CPUDescription):
