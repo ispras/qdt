@@ -242,6 +242,8 @@ class QOMTreeWidget(GUIFrame):
         for c in self.arches_checkbox:
             c.select()
 
+        self._update_selection()
+
     def deselect_arches(self):
         dt = self.device_tree
 
@@ -256,6 +258,8 @@ class QOMTreeWidget(GUIFrame):
 
         for c in self.arches_checkbox:
             c.deselect()
+
+        self._update_selection()
 
     def invert_arches(self):
         for c in self.arches_checkbox:
@@ -324,7 +328,12 @@ class QOMTreeWidget(GUIFrame):
             if to_detach:
                 dt.detach(*to_detach)
 
+        self._update_selection()
+
     def _on_device_tv_select(self, __):
+        self._update_selection()
+
+    def _update_selection(self):
         dt = self.device_tree
         sel = dt.selection()
 
