@@ -90,13 +90,13 @@ class DeviceTreeWidget(GUIDialog):
         self.fr_qt = VarLabelFrame(column_fr, text = _("Select QOM type"))
         self.fr_qt.grid(row = 1, column = 0, sticky = "SEWN")
 
-        self.add_button = VarButton(
+        self.bt_select = VarButton(
             column_fr,
             text = _("Select"),
-            command = self.on_select_qom_type
+            command = self._on_bt_select
         )
-        self.add_button.grid(row = 2, column = 0, sticky = "EW")
-        self.add_button.config(state = DISABLED)
+        self.bt_select.grid(row = 2, column = 0, sticky = "EW")
+        self.bt_select.config(state = DISABLED)
         v_sel_type.trace("w", self._on_v_sel_type_w)
 
         qtype_dt = self.qtype_dt = qvd_get(
@@ -266,7 +266,7 @@ class DeviceTreeWidget(GUIDialog):
             if to_detach:
                 dt.detach(*to_detach)
 
-    def on_select_qom_type(self):
+    def _on_bt_select(self):
         self.qom_type_var.set(self.v_sel_type.get())
         self.destroy()
 
@@ -313,6 +313,6 @@ class DeviceTreeWidget(GUIDialog):
     def _on_v_sel_type_w(self, *__):
         v_sel_type = self.v_sel_type
         if v_sel_type.get():
-            self.add_button.config(state = NORMAL)
+            self.bt_select.config(state = NORMAL)
         else:
-            self.add_button.config(state = DISABLED)
+            self.bt_select.config(state = DISABLED)
