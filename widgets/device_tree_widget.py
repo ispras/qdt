@@ -11,6 +11,8 @@ from qemu import (
     qvd_get
 )
 from six.moves.tkinter import (
+    NORMAL,
+    DISABLED,
     Frame,
     Radiobutton,
     Checkbutton,
@@ -66,7 +68,7 @@ class DeviceTreeWidget(GUIDialog):
         dt.heading("Macros", text = _("Macros"))
 
         dt.bind("<<TreeviewSelect>>", self._on_device_tv_select, "+")
-        self.v_sel_type = StringVar(self)
+        self.v_sel_type = v_sel_type = StringVar(self)
 
         dt.grid(
             row = 0,
@@ -94,7 +96,8 @@ class DeviceTreeWidget(GUIDialog):
             command = self.on_select_qom_type
         )
         self.add_button.grid(row = 2, column = 0, sticky = "EW")
-        self.add_button.config(state = "disabled")
+        self.add_button.config(state = DISABLED)
+        v_sel_type.trace("w", self._on_v_sel_type_w)
 
         qtype_dt = self.qtype_dt = qvd_get(
             root.mach.project.build_path,
@@ -277,7 +280,6 @@ class DeviceTreeWidget(GUIDialog):
 
         item = sel[0]
 
-        self.add_button.config(state = "normal")
         for widget in self.fr_qt.winfo_children():
             widget.destroy()
 
@@ -307,3 +309,10 @@ class DeviceTreeWidget(GUIDialog):
                 b.pack(anchor = "w")
 
         b.select()
+
+    def _on_v_sel_type_w(self, *__):
+        v_sel_type = self.v_sel_type
+        if v_sel_type.get():
+            self.add_button.config(state = NORMAL)
+        else:
+            self.add_button.config(state = DISABLED)
