@@ -421,7 +421,12 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
 
     def on_press_select_qom_type(self):
-        DeviceTreeWidget(self)
+        device_tree = qvd_get(
+            self.mach.project.build_path,
+            version = self.mach.project.target_version
+        ).qvc.device_tree
+
+        DeviceTreeWidget(self, qom_tree = device_tree)
 
     def gen_uniq_prop_name(self):
         for x in count(0, 1):
