@@ -37,6 +37,8 @@ re_glv_expr = compile("^(?:\s+([\w\-.]+))?(?:\s+(\d+)(?:\s|$))?")
 identity_map = intervalmap()
 identity_map[1:None] = 0
 
+empty_map = intervalmap()
+
 
 class GLVCacheManager(object):
     """ This class is helper that loads and stores a git line version cache.
@@ -106,11 +108,16 @@ renaming for file name)
         except KeyError:
             return identity_map, None
         else:
-            if val[0] is not None:
-                diff, rename = val
+            diff, rename = val
+
+            if diff is None:
+                # File has been removed (see _add_git_diff)
+                # and lineno can't be adapted (delta is None for any line).
+                delta_map = empty_map
+            else:
                 # conversion of git diff information into delta intervals
-                val = (git_diff2delta_intervals(diff), rename)
-            return val
+                delta_map = git_diff2delta_intervals(diff)
+            return (delta_map, rename)
 
     def get_glv_data(self, version, fname):
         "data is delta intervals and renaming for `fname`"
@@ -194,10 +201,10 @@ class GitLineVersionAdapter(LineAdapter):
         return obstructive_commit
 
     def do_adapt(self, delta_intervals, lineno, eps):
-        if delta_intervals is not None:
-            if not self.line_block_is_changed(delta_intervals, lineno, eps):
-                return self.calc_lineno(delta_intervals, lineno)
-        return None
+        if self.line_block_is_changed(delta_intervals, lineno, eps):
+            return None
+        else:
+            return self.calc_lineno(delta_intervals, lineno)
 
     def adapt_lineno(self, fname, lineno, opaque):
         lineno = int(lineno)
