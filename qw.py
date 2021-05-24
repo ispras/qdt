@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 from qemu import (
+    QType,
+    co_fill_children,
     POp_AddDesc,
     MachineWatcher,
     PCMachineWatcher,
@@ -34,6 +36,7 @@ from os import (
     remove
 )
 from widgets import (
+    QOMTreeWindow,
     VarButton,
     GUIFrame,
     Checklist,
@@ -166,13 +169,14 @@ class QArgumentParser(ArgumentParser):
 class QEmuWatcherGUI(GUITk):
     "Showing runtime state of machine."
 
-    def __init__(self, pht, runtime, notifiers):
+    def __init__(self, pht, runtime, notifiers, qom_tree_watcher):
         GUITk.__init__(self, wait_msec = 1)
 
         self.title(_("QEmu Watcher"))
 
         self.pht = pht
         self.rt = runtime
+        self.qom_tree_watcher = qom_tree_watcher
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
@@ -214,6 +218,15 @@ class QEmuWatcherGUI(GUITk):
             command = self._on_save,
             accelerator = hk.get_keycode_string(self._on_save)
         )
+
+        toolsmenu = VarMenu(menubar, tearoff = False)
+        menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
+
+        toolsmenu.add_command(
+            label = _("Current QOM Tree"),
+            command = self._on_current_qom_tree
+        )
+
         self._exiting = False
         self.protocol("WM_DELETE_WINDOW", self._on_wm_delete_window)
 
@@ -302,6 +315,24 @@ class QEmuWatcherGUI(GUITk):
         # co_rsp_poller will destroy the window after RSP thread ended.
         self._exiting = True
         self.rt.target.exit = True
+
+    def _on_current_qom_tree(self):
+        self.enqueue(self._co_show_current_qom_tree())
+
+    def _co_show_current_qom_tree(self):
+        rqom_tree = self.qom_tree_watcher.tree
+
+        # Recovered QOM tree can be empty or not finished yet.
+        object_rqom_tree = rqom_tree.name2type.get("object", None)
+
+        arch = "[current architecture]"
+
+        qom_tree = QType("object", arches = set([arch]))
+
+        if object_rqom_tree is not None:
+            yield co_fill_children(object_rqom_tree, qom_tree, arch)
+
+        QOMTreeWindow(self, qom_tree = qom_tree)
 
 
 def main():
@@ -441,7 +472,10 @@ def main():
             else:
                 yield False
 
-    tk = QEmuWatcherGUI(slave_pht, rt, notifiers = [mw])
+    tk = QEmuWatcherGUI(slave_pht, rt,
+        [mw], # notifiers
+        qomtr
+    )
 
     tk.task_manager.enqueue(co_syncronizer())
 
