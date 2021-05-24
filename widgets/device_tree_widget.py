@@ -1,5 +1,6 @@
 __all__ = [
-    "DeviceTreeWidget"
+    "QOMTreeWidget"
+  , "QOMTypeSelectDialog"
 ]
 
 from .var_widgets import (
@@ -8,6 +9,9 @@ from .var_widgets import (
     VarLabelFrame
 )
 from six.moves.tkinter import (
+    BOTH,
+    LEFT,
+    RIGHT,
     NORMAL,
     DISABLED,
     Frame,
@@ -34,31 +38,108 @@ from collections import (
 )
 
 
+class QOMTypeSelectDialog(GUIDialog):
+
+    def __init__(self, master, *a, **kw):
+        qom_tree = kw.pop("qom_tree")
+
+        GUIDialog.__init__(self, master, *a, **kw)
+
+        self.title(_("Device Tree"))
+
+        self.w_qtree = w_qtree = QOMTreeWidget(self, qom_tree = qom_tree)
+        w_qtree.pack(fill = BOTH, expand = True, side = LEFT)
+        w_qtree.bind("<<QOMTypeSelected>>", self._on_qom_type_selected)
+
+        fr_select = Frame(self)
+        fr_select.pack(fill = BOTH, side = RIGHT)
+
+        fr_select.columnconfigure(0, minsize = 200)
+        fr_select.rowconfigure(0, weight = 1)
+        fr_select.rowconfigure(1, weight = 0)
+
+        self.fr_qt = VarLabelFrame(fr_select, text = _("Select QOM type"))
+        self.fr_qt.grid(row = 0, column = 0, sticky = "NESW")
+
+        self.bt_select = VarButton(
+            fr_select,
+            text = _("Select"),
+            command = self._on_bt_select
+        )
+        self.bt_select.grid(row = 1, column = 0, sticky = "NES")
+        self.bt_select.config(state = DISABLED)
+
+        self.v_sel_type = v_sel_type = StringVar(self)
+        v_sel_type.trace("w", self._on_v_sel_type_w)
+
+        geom = "+" + str(int(master.winfo_rootx())) \
+             + "+" + str(int(master.winfo_rooty()))
+        self.geometry(geom)
+
+        self.focus()
+
+    def _on_bt_select(self):
+        self._result = self.v_sel_type.get()
+        self.destroy()
+
+    def _on_v_sel_type_w(self, *__):
+        v_sel_type = self.v_sel_type
+        if v_sel_type.get():
+            self.bt_select.config(state = NORMAL)
+        else:
+            self.bt_select.config(state = DISABLED)
+
+    def _on_qom_type_selected(self, __):
+        qom_type = self.w_qtree.selected
+        v_sel_type = self.v_sel_type
+
+        for widget in self.fr_qt.winfo_children():
+            widget.destroy()
+
+        if qom_type is None:
+            v_sel_type.set("")
+            return
+
+        name = qom_type.name
+
+        # Note, value of `v_sel_type` will be assigned automatically by
+        # `Radiobutton`s `select` below.
+
+        b = Radiobutton(self.fr_qt,
+            text = name,
+            variable = v_sel_type,
+            value = name # for variable
+        )
+        b.pack(anchor = "w")
+
+        for m in qom_type.macros:
+            b = Radiobutton(
+                self.fr_qt,
+                text = m,
+                variable = v_sel_type,
+                value = m
+            )
+            b.pack(anchor = "w")
+
+        b.select()
+
+
 ItemDesc = namedtuple(
     "ItemDesc",
-    "parent index tags"
+    "parent index tags qt"
 )
 
 
-class DeviceTreeWidget(GUIDialog):
+class QOMTreeWidget(GUIFrame):
 
     def __init__(self, root, *args, **kw):
         self.qom_tree = qom_tree = kw.pop("qom_tree")
 
-        GUIDialog.__init__(self, master = root, *args, **kw)
-
-        self.title(_("Device Tree"))
-        self.grid()
+        GUIFrame.__init__(self, master = root, *args, **kw)
 
         self.columnconfigure(0, weight = 1, minsize = 300)
         self.columnconfigure(2, weight = 1, minsize = 100)
         self.rowconfigure(0, weight = 1)
-
-        geom = "+" + str(int(root.winfo_rootx())) \
-             + "+" + str(int(root.winfo_rooty()))
-        self.geometry(geom)
-
-        self.focus()
 
         self.device_tree = dt = VarTreeview(self, selectmode = "browse")
         dt["columns"] = "Macros"
@@ -67,7 +148,6 @@ class DeviceTreeWidget(GUIDialog):
         dt.heading("Macros", text = _("Macros"))
 
         dt.bind("<<TreeviewSelect>>", self._on_device_tv_select, "+")
-        self.v_sel_type = v_sel_type = StringVar(self)
 
         dt.grid(
             row = 0,
@@ -77,26 +157,8 @@ class DeviceTreeWidget(GUIDialog):
 
         add_scrollbars_native(self, dt)
 
-        column_fr = Frame(self, borderwidth = 0)
-        column_fr.grid(row = 0, column = 2, rowspan = 2, sticky = "SEWN")
-        column_fr.columnconfigure(0, weight = 1)
-        column_fr.rowconfigure(0, weight = 1)
-        column_fr.rowconfigure(1, weight = 1, minsize = 100)
-
-        fr_at = VarLabelFrame(column_fr, text = _("Architecture filter"))
-        fr_at.grid(row = 0, column = 0, sticky = "SEWN")
-
-        self.fr_qt = VarLabelFrame(column_fr, text = _("Select QOM type"))
-        self.fr_qt.grid(row = 1, column = 0, sticky = "SEWN")
-
-        self.bt_select = VarButton(
-            column_fr,
-            text = _("Select"),
-            command = self._on_bt_select
-        )
-        self.bt_select.grid(row = 2, column = 0, sticky = "EW")
-        self.bt_select.config(state = DISABLED)
-        v_sel_type.trace("w", self._on_v_sel_type_w)
+        fr_at = VarLabelFrame(self, text = _("Architecture filter"))
+        fr_at.grid(row = 0, rowspan = 2, column = 2, sticky = "SEWN")
 
         arch_buttons = Frame(fr_at, borderwidth = 0)
         arch_buttons.pack(fill = "x")
@@ -156,6 +218,8 @@ class DeviceTreeWidget(GUIDialog):
 
         self.disabled_arches = set()
 
+        self.selected = None
+
         self.qom_create_tree("", qom_tree.children)
 
     def select_arches(self):
@@ -214,7 +278,7 @@ class DeviceTreeWidget(GUIDialog):
                 tags = list(qt.arches)
             )
 
-            all_items[cur_id] = ItemDesc(parent_id, i, set(qt.arches))
+            all_items[cur_id] = ItemDesc(parent_id, i, set(qt.arches), qt)
 
             if qt.children:
                 self.qom_create_tree(cur_id, qt.children)
@@ -260,52 +324,17 @@ class DeviceTreeWidget(GUIDialog):
             if to_detach:
                 dt.detach(*to_detach)
 
-    def _on_bt_select(self):
-        self._result = self.v_sel_type.get()
-        self.destroy()
-
     def _on_device_tv_select(self, __):
         dt = self.device_tree
         sel = dt.selection()
 
         if len(sel) != 1:
-            return
-
-        item = sel[0]
-
-        for widget in self.fr_qt.winfo_children():
-            widget.destroy()
-
-        dt_type = dt.item(item, "text")
-
-        v_sel_type = self.v_sel_type
-        # Note, value of `v_sel_type` will be assigned automatically by
-        # `Radiobutton`s `select` below.
-
-        b = Radiobutton(self.fr_qt,
-            text = dt_type,
-            variable = v_sel_type,
-            value = dt_type
-        )
-        b.pack(anchor = "w")
-
-        macros = dt.item(item, "values")[0]
-        if macros != "None":
-            l = macros.split(", ")
-            for mstr in l:
-                b = Radiobutton(
-                    self.fr_qt,
-                    text = mstr,
-                    variable = v_sel_type,
-                    value = mstr
-                )
-                b.pack(anchor = "w")
-
-        b.select()
-
-    def _on_v_sel_type_w(self, *__):
-        v_sel_type = self.v_sel_type
-        if v_sel_type.get():
-            self.bt_select.config(state = NORMAL)
+            selected = None
         else:
-            self.bt_select.config(state = DISABLED)
+            item = sel[0]
+
+            selected = self.all_items[item].qt
+
+        if self.selected != selected:
+            self.selected = selected
+            self.event_generate("<<QOMTypeSelected>>")
