@@ -666,12 +666,12 @@ class QemuVersionDescription(object):
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
+            yield self.co_gen_known_targets(tmp_work_dir)
+
             rmtree(tmp_work_dir)
             get_cleaner().cancel(clean_work_dir_task)
 
             yield self.co_init_device_tree()
-
-            yield self.co_gen_known_targets()
 
             # Search for PCI Ids
             PCIClassification.build()
@@ -848,9 +848,9 @@ class QemuVersionDescription(object):
         option = config_host[indx_begin:indx_end]
         return option.split("=")[1]
 
-    def co_gen_known_targets(self):
+    def co_gen_known_targets(self, work_dir):
         print("Making known targets set...")
-        dconfigs = join(self.src_path, "default-configs")
+        dconfigs = join(work_dir, "default-configs")
         kts = set()
         for config in listdir(dconfigs):
             yield True
