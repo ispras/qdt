@@ -66,6 +66,7 @@ class DeviceTreeWidget(GUIDialog):
         dt.heading("Macros", text = _("Macros"))
 
         dt.bind("<ButtonPress-1>", self.on_b1_press_dt)
+        self.v_sel_type = StringVar(self)
 
         dt.grid(
             row = 0,
@@ -263,7 +264,7 @@ class DeviceTreeWidget(GUIDialog):
                 dt.detach(*to_detach)
 
     def on_select_qom_type(self):
-        self.qom_type_var.set(self.v.get())
+        self.qom_type_var.set(self.v_sel_type.get())
         self.destroy()
 
     # write selected qom type in qom_type_var
@@ -278,12 +279,14 @@ class DeviceTreeWidget(GUIDialog):
             widget.destroy()
 
         dt_type = self.device_tree.item(item, "text")
-        self.v = StringVar()
-        self.v.set(dt_type)
+
+        v_sel_type = self.v_sel_type
+        # Note, value of `v_sel_type` will be assigned automatically by
+        # `Radiobutton`s `select` below.
 
         b = Radiobutton(self.fr_qt,
             text = dt_type,
-            variable = self.v,
+            variable = v_sel_type,
             value = dt_type
         )
         b.pack(anchor = "w")
@@ -295,7 +298,7 @@ class DeviceTreeWidget(GUIDialog):
                 b = Radiobutton(
                     self.fr_qt,
                     text = mstr,
-                    variable = self.v,
+                    variable = v_sel_type,
                     value = mstr
                 )
                 b.pack(anchor = "w")
