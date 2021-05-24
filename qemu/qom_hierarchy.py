@@ -1,6 +1,7 @@
 __all__ = [
     "QType"
   , "co_update_device_tree"
+  , "co_fill_children"
 ]
 
 from .qemu_watcher import (
