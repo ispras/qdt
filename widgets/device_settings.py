@@ -426,7 +426,9 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
             version = self.mach.project.target_version
         ).qvc.device_tree
 
-        DeviceTreeWidget(self, qom_tree = device_tree)
+        device_type = DeviceTreeWidget(self, qom_tree = device_tree).wait()
+        if device_type:
+            self.qom_type_var.set(device_type)
 
     def gen_uniq_prop_name(self):
         for x in count(0, 1):
