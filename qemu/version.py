@@ -1128,6 +1128,14 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # There are many commits converting build system part by part.
+    # Let the merge commit be heuristic point.
+    u'7fd51e68c34fcefdb4d6fd646ed3346f780f89f4' : [
+        QEMUVersionParameterDescription("build system",
+            new_value = "meson",
+            old_value = "Makefile"
+        )
+    ],
     # Next two commits precede v4.1.0-rc0. They are in one branch.
     u'ede9a8a656c992deecce45f8175985dd81cc6be9' : [
         QEMUVersionParameterDescription("fprintf_function definer",
