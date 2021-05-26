@@ -29,6 +29,7 @@ from .version_description import (
     QemuVersionDescription
 )
 from common import (
+    add_line_to_file,
     same_sets,
     callco,
     co_find_eq
@@ -48,6 +49,10 @@ from source import (
     Header,
     Source
 )
+from .version import (
+    get_vp,
+)
+
 
 # TODO: Selection of configuration flag and accumulator variable
 # name is Qemu version specific. Version API must be used there.
@@ -164,15 +169,30 @@ class QProject(object):
         if parent_dir == "hw" and known_targets and head in known_targets:
             return
 
-        parent_Makefile_obj = join(tail, "Makefile.objs")
+        build_system = get_vp("build system")
 
-        # Add empty Makefile.objs if no one exists.
-        if not isfile(parent_Makefile_obj):
-            open(parent_Makefile_obj, "w").close()
+        if build_system == "Makefile":
+            parent_Makefile_obj = join(tail, "Makefile.objs")
 
-        patch_makefile(parent_Makefile_obj, head + "/",
-            obj_var_names[parent_dir], config_flags[parent_dir]
-        )
+            # Add empty Makefile.objs if no one exists.
+            if not isfile(parent_Makefile_obj):
+                open(parent_Makefile_obj, "w").close()
+
+            patch_makefile(parent_Makefile_obj, head + "/",
+                obj_var_names[parent_dir], config_flags[parent_dir]
+            )
+        elif build_system == "meson":
+            parent_meson_build = join(tail, "meson.build")
+
+            # Add empty meson.build if no one exists.
+            if not isfile(parent_meson_build):
+                open(parent_meson_build, "w").close()
+
+            add_line_to_file(parent_meson_build, "subdir('%s')" % head)
+        else:
+            print("Folder (" + folder + ") registration in build system '"
+                + build_system + "' is not implemented"
+            )
 
     def gen(self, *args, **kw):
         "Backward compatibility wrapper for co_gen"
@@ -186,6 +206,8 @@ class QProject(object):
         include_paths = tuple(),
         **_
     ):
+        build_system = get_vp("build system")
+
         qom_t = desc.gen_type()
 
         yield qom_t.co_gen_sources()
@@ -236,21 +258,44 @@ class QProject(object):
 
             yield True
 
-            sbase, _ = splitext(sname)
-            object_name = sbase + ".o"
+            if build_system == "Makefile":
+                self.register_src_in_Makefile(src, sname, desc.directory)
+            elif build_system == "meson":
+                self.register_src_in_meson(src, sname, desc.directory)
+            else:
+                print("File (" + sname + ") registration in build system '"
+                    + build_system + "' is not implemented"
+                )
 
-            hw_path = join(src, "hw")
-            class_hw_path = join(hw_path, desc.directory)
+    def register_src_in_Makefile(self, src_root, sname, directory):
+        sbase, _ = splitext(sname)
+        object_name = sbase + ".o"
 
-            Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
+        hw_path = join(src_root, "hw")
+        class_hw_path = join(hw_path, directory)
 
-            # If it's a new `hw` subfolder, it has no `Makefile.objs`.
-            if not isfile(Makefile_objs_class_path):
-                open(Makefile_objs_class_path, "wb").close()
+        Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
 
-            patch_makefile(Makefile_objs_class_path, object_name,
-                obj_var_names[desc.directory], config_flags[desc.directory]
-            )
+        # If it's a new `hw` subfolder, it has no `Makefile.objs`.
+        if not isfile(Makefile_objs_class_path):
+            open(Makefile_objs_class_path, "wb").close()
+
+        patch_makefile(Makefile_objs_class_path, object_name,
+            obj_var_names[directory], config_flags[directory]
+        )
+
+    def register_src_in_meson(self, src_root, sname, directory):
+        hw_path = join(src_root, "hw")
+        class_hw_path = join(hw_path, directory)
+        meson_build = join(class_hw_path, "meson.build")
+
+        line = "softmmu_ss.add(files('%s'))" % sname
+
+        # If it's a new `hw` subfolder, it has no `meson.build`.
+        if not isfile(meson_build):
+            open(meson_build, "wb").close()
+
+        add_line_to_file(meson_build, line)
 
     # TODO: add path to `QProject`
     # TODO: def lookup_path
