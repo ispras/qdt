@@ -1128,6 +1128,13 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # configure: move directory options from config-host.mak to meson
+    u'16bf7a3326d8e8be42b3bf844a6c539d52a997b3' : [
+        QEMUVersionParameterDescription("install prefix location",
+            new_value = "config-host.h",
+            old_value = "config-host.mak"
+        )
+    ],
     # default-configs: move files to default-configs/devices/
     u'1bb4cb1c33805c0da0db5b76852bb73759625c4e' : [
         QEMUVersionParameterDescription("default-configs suffix",
