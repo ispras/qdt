@@ -9,8 +9,12 @@ __all__ = [
   , "bind_all_mouse_wheel"
   , "bind_mouse_wheel"
   , "makedirs"
+  , "qdtdirs"
 ]
 
+from appdirs import (
+    AppDirs,
+)
 from os import (
     rename,
     environ,
@@ -199,3 +203,9 @@ def bind_all_mouse_wheel(w, handler, add = None):
 def bind_mouse_wheel(w, handler, add = None):
     for h in wrap_wheel_handler(handler):
         w.bind(h.__doc__, h, add = add)
+
+qdtdirs = AppDirs(
+    appname = "ispras-qdt",
+    appauthor = "ispras",
+    version = "1.0"
+)
