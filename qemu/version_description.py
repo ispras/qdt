@@ -21,6 +21,8 @@ from source import (
     Macro
 )
 from common import (
+    qdtdirs,
+    makedirs,
     rename_replacing,
     git_find_commit,
     co_process,
@@ -70,6 +72,7 @@ from six import (
     u
 )
 from shutil import (
+    copy2,
     rmtree
 )
 from traceback import (
@@ -77,6 +80,9 @@ from traceback import (
 )
 from sys import (
     exc_info
+)
+from appdirs import (
+    AppDirs,
 )
 
 
@@ -513,6 +519,8 @@ QVD_CUF_IBY = 100
 
 QVD_QH_HASH = "qh_hash"
 
+QVCs_DIR = join(qdtdirs.user_cache_dir, "qvcs")
+
 class QemuVersionDescription(object):
     current = None
     # Current version of the QVD. Please use notation `u"_v{number}"` for next
@@ -608,7 +616,8 @@ class QemuVersionDescription(object):
 
     @lazy
     def qvc_path(self):
-        return join(self.build_path, self.qvc_file_name)
+        makedirs(QVCs_DIR, exist_ok = True)
+        return join(QVCs_DIR, self.qvc_file_name)
 
     def co_init_cache(self):
         if self.qvc is not None:
@@ -618,6 +627,11 @@ class QemuVersionDescription(object):
         qemu_heuristic_hash = calculate_qh_hash()
 
         yield True
+
+        # Copy cache from old location.
+        old_qvc_path = join(self.build_path, self.qvc_file_name)
+        if isfile(old_qvc_path) and not isfile(self.qvc_path):
+            copy2(old_qvc_path, self.qvc_path)
 
         if not isfile(self.qvc_path):
             self.qvc = QemuVersionCache()
