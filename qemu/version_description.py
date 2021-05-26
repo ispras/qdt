@@ -725,6 +725,10 @@ class QemuVersionDescription(object):
             # set Qemu version heuristics according to current version
             initialize_version(self.qvc.version_desc)
 
+            # Save cache after long running operation because consequent
+            # initialization can be buggy.
+            yield self.co_overwrite_cache()
+
             dt = self.qvc.device_tree
             if dt:
                 # Targets to be added to the cache
