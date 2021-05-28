@@ -115,17 +115,38 @@ class TypeNotRegistered(RuntimeError):
     pass
 
 
+def pointer_name(name):
+    asterisks = 0
+    while True:
+        name = name.rstrip()
+        if name[-1] == '*':
+            asterisks += 1
+            name = name[:-1]
+        else:
+            break
+
+    return name, asterisks
+
+
 @add_metaclass(registry)
 class Type(TypeContainer):
     reg = {}
 
     @staticmethod
     def lookup(name):
+        name, asterisks = pointer_name(name)
+
         if name not in Type.reg:
             raise TypeNotRegistered("Type with name %s is not registered"
                 % name
             )
-        return Type.reg[name]
+
+        t = Type.reg[name]
+        while asterisks:
+            t = Pointer(t)
+            asterisks -= 1
+
+        return t
 
     @staticmethod
     def exists(name):
