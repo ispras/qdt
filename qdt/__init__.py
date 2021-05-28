@@ -8,6 +8,9 @@ from qemu import (
 # I/O regions register definition
   , Register
 
+# Any QOM type boilerplate
+  , QOMTypeStateField
+
 # System bus device stub generation settings
   , SysBusDeviceDescription
 

@@ -30,6 +30,7 @@ from six import (
     integer_types
 )
 from common import (
+    lazy,
     same_attrs,
     OrderedSet,
     is_pow2,
@@ -399,13 +400,35 @@ class QOMType(object):
         ("directory", { "short": _("Directory"), "input": str }),
     ])
 
-    def __init__(self, name, directory):
+    def __init__(self, name, directory,
+        extra_fields = tuple()
+    ):
         self.directory = directory
         self.qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
+        self.extra_fields = tuple(extra_fields)
+
+    @lazy
+    def _extra_fields(self):
+        res = []
+        macros_prefix = self.qtn.for_macros + "_"
+        for f in self.extra_fields:
+            f_ = QOMStateField(
+                ftype = Type[f.c_type_name],
+                name = f.name,
+                num = f.array_size,
+                save = f.save_in_vmsd,
+                prop = f.is_property,
+                default = f.property_default
+            )
+            f_.prop_macro_name = macros_prefix + f.name.upper()
+
+            res.append(f_)
+
+        return tuple(res)
 
     def co_gen_sources(self):
         self._sources = sources = []
@@ -484,7 +507,13 @@ class QOMType(object):
 
     @property
     def fields_names(self):
-        return set(f.name for f in self.state_fields)
+        return set(f.name for f in self.iter_all_state_fields())
+
+    def iter_all_state_fields(self):
+        for f in self.state_fields:
+            yield f
+        for f in self._extra_fields:
+            yield f
 
     def add_state_fields(self, fields):
         for field in fields:
@@ -533,12 +562,12 @@ class QOMType(object):
 
     def gen_state(self):
         s = Structure(self.struct_name)
-        for f in self.state_fields:
+        for f in self.iter_all_state_fields():
             s.append_field(f.type(f.name, array_size = f.num))
         return s
 
     def gen_property_macros(self, source):
-        for field in self.state_fields:
+        for field in self.iter_all_state_fields():
             if not field.prop:
                 continue
             if field.prop_macro_name is None:
@@ -554,7 +583,7 @@ class QOMType(object):
         code = "{"
 
         first = True
-        for f in self.state_fields:
+        for f in self.iter_all_state_fields():
             if not f.prop:
                 continue
 
@@ -619,7 +648,7 @@ class QOMType(object):
         used_macros = set()
         global type2vmstate
 
-        for f in self.state_fields:
+        for f in self.iter_all_state_fields():
             if not f.save:
                 continue
 
