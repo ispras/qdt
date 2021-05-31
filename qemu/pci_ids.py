@@ -270,7 +270,7 @@ class PCIClassification(object):
 
     def get_device(self, name = None, vendor_name = None, did = None, 
             vid = None):
-        if did is not None and not type(did) == str:
+        if did is not None and type(did) is not str:
             raise Exception("Device id must be a string")
 
         if vid is not None:
@@ -323,13 +323,13 @@ class PCIClassification(object):
         return d
 
     def get_vendor(self, name = None, vid = None):
-        if vid is not None and not type(vid) == str:
+        if vid is not None and type(vid) is not str:
             raise Exception("Vendor id must be a string")
 
         if name is not None:
             try:
                 v = self.vendors[name]
-                if vid is not None and not v.id == vid:
+                if vid is not None and v.id != vid:
                     raise PCIVendorIdMismatch("Vendor %s, Id: %s/%s" %
                             name, v.id, vid)
             except:
