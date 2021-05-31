@@ -42,13 +42,10 @@ from itertools import (
 )
 from os import (
     makedirs,
-    remove,
-    rename,
 )
 from os.path import (
     basename,
     isdir,
-    isfile,
     join,
     sep,
     splitext,
