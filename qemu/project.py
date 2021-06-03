@@ -183,7 +183,8 @@ class QProject(object):
         intermediate_chunk_graphs = False,
         known_targets = None,
         with_debug_comments = False,
-        include_paths = tuple()
+        include_paths = tuple(),
+        **_
     ):
         qom_t = desc.gen_type()
 

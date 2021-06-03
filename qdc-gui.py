@@ -91,7 +91,7 @@ from os.path import (
 
 class ProjectGeneration(CoTask):
     def __init__(self, project, source_path, signal, reload_build_path_task,
-        gen_chunk_graphs
+        gen_chunk_graphs, translate_cpu_semantics
     ):
         self.p = project
         self.s = source_path
@@ -99,6 +99,7 @@ class ProjectGeneration(CoTask):
         self.finished = False
         self.reload_build_path_task = reload_build_path_task
         self.gen_chunk_graphs = gen_chunk_graphs
+        self.translate_cpu_semantics = translate_cpu_semantics
         CoTask.__init__(
             self,
             self.main(),
@@ -118,6 +119,7 @@ class ProjectGeneration(CoTask):
         yield self.p.co_gen_all(self.s,
             known_targets = cur_qvd.qvc.known_targets,
             with_chunk_graph = self.gen_chunk_graphs,
+            translate_cpu_semantics = self.translate_cpu_semantics,
             include_paths = tuple(path for path, _ in cur_qvd.include_paths)
         )
 
@@ -380,6 +382,18 @@ show it else hide it."),
             variable = v
         )
 
+        v = self.var_translate_cpu_semantics = BooleanVar()
+        v.set(False)
+
+        self.__on_var_translate_cpu_semantics = v.trace_variable("w",
+            self.__on_var_translate_cpu_semantics__
+        )
+
+        optionsmenu.add_checkbutton(
+            label = _("Translate CPU semantics"),
+            variable = v
+        )
+
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
 
         self.config(menu = menubar)
@@ -471,6 +485,7 @@ show it else hide it."),
 
         self.var_schedule_generation.set(settings.schedule_generation)
         self.var_gen_chunk_graphs.set(settings.gen_chunk_graphs)
+        self.var_translate_cpu_semantics.set(settings.translate_cpu_semantics)
 
     def __on_listener_failed(self, e, tb):
         sys.stderr.write("Listener failed - %s" %
@@ -516,6 +531,14 @@ show it else hide it."),
 
         if settings is not None:
             settings.gen_chunk_graphs = self.var_gen_chunk_graphs.get()
+
+    def __on_var_translate_cpu_semantics__(self, *args):
+        settings = self._user_settings
+
+        if settings is not None:
+            settings.translate_cpu_semantics = (
+                self.var_translate_cpu_semantics.get()
+            )
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -772,7 +795,8 @@ later.").get()
             qvd.src_path,
             self.sig_qvc_dirtied,
             self.pw.reload_build_path_task,
-            self.var_gen_chunk_graphs.get()
+            self.var_gen_chunk_graphs.get(),
+            self.var_translate_cpu_semantics.get()
         )
         self.task_manager.enqueue(self._project_generation_task)
 
@@ -946,6 +970,7 @@ class Settings(Persistent):
             # default values
             schedule_generation = False,
             gen_chunk_graphs = False,
+            translate_cpu_semantics = True,
             recent_projects = OrderedSet()
         )
 
