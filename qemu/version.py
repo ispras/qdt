@@ -106,7 +106,7 @@ def define_only_qemu_2_6_0_types():
         Function(name = "tcg_global_mem_new_i64"),
         Function(name = "tcg_op_buf_full"),
         # `tcg` is a fake type intended to mark variables which are to be
-        # replaced by this tool preprocessor (still in progress).
+        # replaced by I3S translator.
         # `tcg` is then converted to some existing QEMU types (`TCGv_i32`,
         # `TCGv_i64` or `TCGv`).
         Type("tcg", incomplete = False)

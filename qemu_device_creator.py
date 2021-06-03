@@ -75,6 +75,12 @@ def main():
     )
 
     parser.add_argument(
+        "--disable-cpu-semantics-translation",
+        action = "store_true",
+        help = "Disable automatic CPU semantics translation."
+    )
+
+    parser.add_argument(
         "script",
         help = "A Python script containing definition of a project to generate."
     )
@@ -130,6 +136,9 @@ def main():
         with_chunk_graph = arguments.gen_chunk_graphs,
         known_targets = qvd.qvc.known_targets,
         with_debug_comments = arguments.gen_debug_comments,
+        translate_cpu_semantics = (
+            not arguments.disable_cpu_semantics_translation
+        ),
         include_paths = tuple(path for path, _ in qvd.include_paths)
     )
 
