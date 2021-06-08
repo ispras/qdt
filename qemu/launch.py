@@ -25,6 +25,8 @@ __all__ = [
 
   , "QemuProcess"
     , "ExampleQemuProcess"
+
+  , "QMPError"
 ]
 
 
@@ -48,6 +50,10 @@ from sys import (
 )
 from traceback import (
     format_exc,
+)
+from json import (
+    dumps as json_dumps,
+    loads as json_loads,
 )
 # use ours pyrsp
 with pypath("..pyrsp"):
@@ -293,21 +299,35 @@ class TCPChardev(Chardev):
         self.args = ["-chardev", opts]
 
 
+class QMPError(Exception):
+    pass
+
+
 class QemuProcess(ProcessCoOperator):
     "API (frontend) to launched Qemu process."
 
-# frontend
+# to be implemented by frontend
 
-    def co_qmp(self, remote):
-        """ Handles Qemu Monitor Protocol session.
+    def co_qmp(self, remote, version, capabilities):
+        """ Handles Qemu Monitor Protocol session events.
 :param remote:
     A chardevs specific address of QMP connection (e.g. host & port for
     TCP chardevs).
+:param version:
+    QMP version as reported by Server.
+:param capabilities:
+    QMP capabilities as reported by Server.
 
-Must be a coroutine.
-Never do long running operations here.
-`yield` raises exceptions from connection backend (e.g. from socket.recv).
-TODO
+According to `co_qmp_generic` implementation...
+ - `co_qmp` must be a coroutine.
+ - `yield` returns QMP event (commands responses are handled by
+   `co_qmp_generic`).
+ - First `yield` can be given an iterable of supported capabilities.
+ - Consequent `yield`s should be given nothing (`None`).
+ - Before first `yield` QMP is in negotiation state. Don't call `self.qmp`.
+   After can.
+ - Never do long running operations here.
+ - `yield` raises exceptions from connection backend (e.g. from `socket.recv`).
         """
         yield
 
@@ -321,13 +341,94 @@ TODO
 
 Must be a coroutine.
 `yield` returns data received from remote.
-`yield` immediately after the data accounting.
+Should `yield` immediately after the data accounting.
 Never do long running operations here.
 `yield` raises exceptions from connection backend (e.g. from socket.recv).
 `yield` can be given data to send (or `None` if nothing to send).
 Data must be a r'raw string'.
         """
         yield
+
+# frontend likely won't override this
+
+    def co_qmp_generic(self, remote):
+        greeting = (yield)
+
+        QMP = greeting["QMP"]
+        version = QMP["version"]
+        capabilities = QMP["capabilities"]
+
+        supported_caps = set()
+
+        gen = self.co_qmp(remote, version, capabilities)
+
+        impl_caps = next(gen)
+
+        # This implementation does actually support out-of-band execution.
+        if "oob" in capabilities:
+            supported_caps.add("oob")
+        if impl_caps is not None:
+            supported_caps |= set(impl_caps)
+
+        self.qmp("qmp_capabilities",
+            enable = list(supported_caps),
+            callback = self.qmp_negotiation,
+        )
+
+        qmp_pending = self._qmp_pending
+
+        while True:
+            try:
+                obj = (yield)
+            except:
+                gen.throw(*exc_info())
+
+            id_ = obj.pop("id", None)
+            if id_ is None: # event
+                gen.send(obj)
+            else: # command response
+                callback = qmp_pending.pop(id_, None)
+                if callback is not None:
+                    callback(obj)
+                # else:
+                    # No callback provided to `qmp`
+                    # or id is unknown (should be ignored)
+
+    def qmp_negotiation(self, response):
+        self.check_qmp_error(response,
+            message = "QMP negotiation failed"
+        )
+
+    def check_qmp_error(self, response, message = None):
+        error = response.get("error", None)
+        if error is not None:
+            if message is None:
+                raise QMPError(error)
+            else:
+                raise QMPError(error, message)
+
+# API
+
+    def qmp(self, command, callback = None, **arguments):
+        "Issue a QMP command."
+
+        id_ = self._qmp_next_id
+        self._qmp_next_id = id_ + 1
+
+        message = dict(
+            execute = str(command),
+            arguments = arguments,
+            id = id_,
+        )
+
+        if callback is not None:
+            self._qmp_pending[id_] = callback
+
+        data = json_dumps(message)
+
+        # It's blocking but hope that commands are small enough.
+        # TODO: a dedicated thread.
+        self._qmp_s.sendall(data.encode("utf-8"))
 
 # implementation
 
@@ -358,18 +459,20 @@ Data must be a r'raw string'.
 
         s, remote = (yield self._co_accept(chardev))
 
+        self._qmp_s = s
+        self._qmp_next_id = 1
+        self._qmp_pending = {}
+
         recv = s.recv
 
-        # TODO
-        # Wait for hello from QMP.
-
-        gen = self.co_qmp(remote)
+        gen = self.co_qmp_generic(remote)
 
         try:
             next(gen)
         except StopIteration:
             pass
         else:
+            buf = b""
             while True:
                 try:
                     yield (s, False)
@@ -388,10 +491,32 @@ Data must be a r'raw string'.
                 if not chunk:
                     break # EOF
 
-                try:
-                    gen.send(chunk)
-                except StopIteration:
-                    break
+                buf += chunk
+
+                parts = buf.split(b"\r\n")
+                # Data can be fragmented.
+                # Objects transmitted by Server are separated by CRLF.
+                # So, if last part != b"", it's definetly fragmented and should
+                # be preserved in `buf` until next `chunk` arrives.
+
+                piter = iter(parts)
+                prev = next(piter)
+                for part in piter:
+                    # Note, actually ASCII, according to qmp-spec.txt.
+                    obj = json_loads(prev.decode("utf-8"))
+
+                    try:
+                        gen.send(obj)
+                    except StopIteration:
+                        break
+
+                    prev = part
+
+                buf = prev # b"" or fragmented object
+
+        del self._qmp_s
+        del self._qmp_next_id
+        del self._qmp_pending
 
         s.close()
 
@@ -518,15 +643,19 @@ class ExampleQemuProcess(QemuProcess):
         print("Starting process: " + str(args))
         super(ExampleQemuProcess, self).__init__(args, *a, **kw)
 
-    def co_qmp(self, remote):
-        prefix = "QMP:"
+    def co_qmp(self, remote, version, capabilities):
+        prefix = "QMP: "
 
-        print(prefix + "DEBUG: connection from " + str(remote))
+        print(prefix + "DEBUG: remote: %s: version: %s, capabilities: %s" % (
+            remote,
+            version,
+            ", ".join(capabilities)
+        ))
 
         while True:
-            chunk = (yield)
+            event = (yield)
 
-            print(prefix + chunk.decode("utf-8").rstrip("\r\n"))
+            print(prefix + str(event))
 
     def co_serial(self, idx, remote):
         prefix = "serial%d: " % idx
