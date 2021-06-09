@@ -349,6 +349,9 @@ Data must be a r'raw string'.
         """
         yield
 
+    def qmp_ready(self):
+        "Called when negotiation response received."
+
 # frontend likely won't override this
 
     def co_qmp_generic(self, remote):
@@ -398,6 +401,8 @@ Data must be a r'raw string'.
         self.check_qmp_error(response,
             message = "QMP negotiation failed"
         )
+
+        self.qmp_ready()
 
     def check_qmp_error(self, response, message = None):
         error = response.get("error", None)
