@@ -37,9 +37,9 @@ class SignalDispatcherTask(CoTask):
         )
         self.queue = []
 
-    def new_signal(self):
+    def new_signal(self, *a, **kw):
         "Create a new signal and attach it to self."
-        s = CoSignal()
+        s = CoSignal(*a, **kw)
         return s.attach(self)
 
     def co_deliver(self):
