@@ -61,6 +61,10 @@ Entries are only appended at runtime.
         return True
 
     @property
+    def args(self):
+        return self._p.args
+
+    @property
     def returncode(self):
         return self._p.returncode
 
