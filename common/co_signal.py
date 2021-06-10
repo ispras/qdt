@@ -81,9 +81,11 @@ class SignalDispatcherTask(CoTask):
 
         self.queue.append((list(listeners), args, kw))
 
+
 class CoSignal(object):
-    def __init__(self):
-        self.listeners = set()
+
+    def __init__(self, *listeners):
+        self.listeners = set(listeners)
         self.disp = None
 
     def attach(self, dispatcher):
