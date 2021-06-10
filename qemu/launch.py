@@ -576,6 +576,7 @@ class QLaunch(Context):
         qmp = False,
         serials = 0,
         extra_args = tuple(),
+        process_kw = None,
         **kw
     ):
         super(QLaunch, self).__init__(**kw)
@@ -584,6 +585,7 @@ class QLaunch(Context):
         self.paused = paused
         self.qmp = qmp
         self.serials = serials
+        self.process_kw = dict() if process_kw is None else dict(process_kw)
 
         if isinstance(extra_args, dict):
             extra_args_ = list(iter_dict_as_args(extra_args))
@@ -592,7 +594,7 @@ class QLaunch(Context):
 
         self.extra_args = extra_args_
 
-    def launch(self, co_disp, ProcessClass = QemuProcess):
+    def launch(self, co_disp, ProcessClass = QemuProcess, **process_kw):
         args = [self.binary]
 
         if self.paused:
@@ -626,9 +628,13 @@ class QLaunch(Context):
 
         str_args = list(map(str, args))
 
+        merged_process_kw = dict(self.process_kw)
+        merged_process_kw.update(process_kw)
+
         qproc = ProcessClass(str_args,
             qmp_chardev = qmp_chardev,
             serial_chardevs = serial_chardevs,
+            **merged_process_kw
         )
 
         enqueue = co_disp.enqueue
