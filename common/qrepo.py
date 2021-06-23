@@ -3,13 +3,13 @@ __all__ = [
 ]
 
 from git import (
-    Repo
+    Repo,
 )
 from multiprocessing import (
-    Process
+    Process,
 )
 from .git_tools import (
-    init_submodules_from_cache
+    init_submodules_from_cache,
 )
 from .workers import (
     PopenResult,
@@ -20,7 +20,7 @@ from .extensible import (
 )
 from os.path import (
     join,
-    abspath
+    abspath,
 )
 
 
