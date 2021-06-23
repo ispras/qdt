@@ -11,6 +11,7 @@ from threading import (
     Thread,
     Lock,
     Event,
+    Condition,
 )
 from time import (
     time,
@@ -96,46 +97,54 @@ Entries are only appended at runtime.
 
         self._threads = threads
 
-        # communication lock
-        self._comm_lock = Lock()
-        # notification for operator
-        self._event = Event()
+        # `_stream_reader`'s threads are producers, `_operator` thread is
+        # a consumer.
+        self._h_cond = Condition()
         self.history = []
 
         for t in threads:
             t.start()
 
     def _operator(self, stdout_over, stderr_over):
-        wait = self._event.wait
-        lock = self._comm_lock
+        cond = self._h_cond
+        wait = cond.wait
+        out_is_over, err_is_over = stdout_over.is_set, stderr_over.is_set
 
-        while not (stdout_over.is_set() and stderr_over.is_set()):
+        with cond:
             wait()
 
-            with lock:
+            while not out_is_over():
                 self.operate()
+                wait()
+
+            while not err_is_over():
+                self.operate()
+                wait()
+
 
         self.finished()
 
-    def _stream_reader(self, idx, stream, over):
+    def _stream_reader(self, idx, stream, e_over):
         read = stream.read
-        lock = self._comm_lock
-        history = self.history
-        event = self._event
+        cond = self._h_cond
+        notify = cond.notify
+        append = self.history.append
+        over = e_over.set
 
         while True:
             data = read()
-            with lock:
-                history.append((idx, data))
 
-            # empty data is EOF
-            if not data:
-                over.set()
-                # exactly after `over` event
-                event.set()
-                break
+            with cond:
+                append((idx, data))
 
-            event.set()
+                try:
+                    # empty data is EOF
+                    if not data:
+                        over()
+                        # `notify` exactly after `over` event
+                        break
+                finally:
+                    notify()
 
 
 class ProcessCoOperator(ProcessOperator):
