@@ -1,7 +1,6 @@
 __all__ = [
 # Re-usable generic classes.
     "comma_escape"
-  , "iter_dict_as_args"
   , "Namespace"
   , "Portspace"
 
@@ -34,6 +33,7 @@ from common import (
     CoReturn,
     ProcessCoOperator,
     pypath,
+    arg_list,
 )
 from itertools import (
     count,
@@ -66,23 +66,6 @@ def comma_escape(s):
     ", is an opt separator in Qemu opt list. ,, is , literally."
     parts = s.split(",")
     return ",,".join(parts)
-
-
-def iter_dict_as_args(d):
-    for a, v in d.items():
-        if v is None:
-            continue
-        if v is False:
-            yield "-no-" + str(a)
-        elif v is True:
-            yield "-" + str(a)
-        elif isinstance(v, (list, tuple, set)):
-            for sub_v in v:
-                yield "-" + str(a)
-                yield str(sub_v)
-        else:
-            yield "-" + str(a)
-            yield str(v)
 
 
 class Namespace(set):
@@ -586,13 +569,7 @@ class QLaunch(Context):
         self.qmp = qmp
         self.serials = serials
         self.process_kw = dict() if process_kw is None else dict(process_kw)
-
-        if isinstance(extra_args, dict):
-            extra_args_ = list(iter_dict_as_args(extra_args))
-        else:
-            extra_args_ = list(extra_args)
-
-        self.extra_args = extra_args_
+        self.extra_args = arg_list(extra_args)
 
     def launch(self, co_disp, ProcessClass = QemuProcess, **process_kw):
         args = [self.binary]
