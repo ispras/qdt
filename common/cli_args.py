@@ -4,26 +4,33 @@ __all__ = [
 ]
 
 
-def iter_dict_as_args(d):
+def iter_dict_as_args(d, long_arg_prefix = "-"):
+    def arg(a):
+        a = str(a)
+        if len(a) > 1:
+            return long_arg_prefix + a
+        else:
+            return "-" + a
+
     for a, v in d.items():
         if v is None:
             continue
         if v is False:
-            yield "-no-" + str(a)
+            yield arg("no-" + str(a))
         elif v is True:
-            yield "-" + str(a)
+            yield arg(a)
         elif isinstance(v, (list, tuple, set)):
             for sub_v in v:
-                yield "-" + str(a)
+                yield arg(a)
                 yield str(sub_v)
         else:
-            yield "-" + str(a)
+            yield arg(a)
             yield str(v)
 
 
-def arg_list(container):
+def arg_list(container, **kw):
     if isinstance(container, dict):
-        ret = list(iter_dict_as_args(container))
+        ret = list(iter_dict_as_args(container, **kw))
     else:
         ret = list(container)
     return ret
