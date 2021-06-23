@@ -224,7 +224,7 @@ def main():
                 m = "1G",
                 hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
                 snapshot = True,
-                retrace = "count",
+                rr3 = "count",
             )
         ),
         QemuBootTimeMeasureLaunch(qemu,
@@ -235,7 +235,7 @@ def main():
                 m = "1G",
                 hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
                 snapshot = True,
-                retrace = "save",
+                rr3 = "save",
             )
         ),
         QemuBootTimeMeasureLaunch(qemu,
@@ -246,7 +246,7 @@ def main():
                 m = "1G",
                 hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
                 snapshot = True,
-                retrace = "play",
+                rr3 = "play",
             )
         ),
         QemuBootTimeMeasureLaunch(qemu,
