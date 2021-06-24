@@ -22,6 +22,9 @@ from os.path import (
     join,
     abspath,
 )
+from .lazy import (
+    lazy,
+)
 
 
 class QRepo(object):
@@ -30,6 +33,10 @@ class QRepo(object):
         self.path = abspath(path)
         self.repo = Repo(path)
         self.worktrees = {}
+
+    @lazy
+    def worktree(self):
+        return self.worktrees[self.path]
 
     def __str__(self):
         return self.path
