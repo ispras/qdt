@@ -3,6 +3,8 @@ from common import (
     notifier,
     makedirs,
     listen_all,
+    QRepo,
+    BuildDir,
 )
 from qemu import (
     QLaunch,
@@ -38,9 +40,159 @@ from os.path import (
     exists,
     join,
 )
-from itertools import (
-    count,
+from shutil import (
+    rmtree,
+    copyfile,
 )
+
+
+EMPTY_DICT = {}
+
+@notifier(
+    "build_started", # MeasureLaunch
+    "launched",
+        # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer
+    "finished",
+        # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer
+)
+class MeasureLaunch(object):
+
+    __slots__ = (
+        "name",
+        "base",
+        "__dict__"
+    )
+
+    def __init__(self, name, base = None, **changes):
+        self.name = name
+        self.base = base
+        for a, v in changes.items():
+            setattr(self, a, v)
+
+    def iter_attrs(self):
+        overwritten = set()
+        overwrite = overwritten.add
+
+        for a, v in self.__dict__.items():
+            yield a, v
+            overwrite(a)
+
+        if self.base is not None:
+            for a, v in self.base.iter_attrs():
+                if a not in overwritten:
+                    yield a, v
+
+    def __str__(self):
+        attrs = list(self.iter_attrs())
+        attrs.sort()
+
+        attrs.insert(0, ("name", self.name))
+
+        return "MeasureLaunch:\n  " + "\n  ".join(
+            "%s = %s" % av for av in attrs if not av[0].startswith('_')
+        )
+
+    def variant(self, name_suffix, updates = {}, **changes):
+        ret = type(self)(self.name + name_suffix, base = self, **changes)
+
+        for a, v in updates.items():
+            new_v = getattr(ret, a, EMPTY_DICT).copy()
+            new_v.update(v)
+            setattr(ret, a, new_v)
+
+        return ret
+
+    # inherit `base`'s value
+    def __getattr__(self, name):
+        if self.base is None:
+            raise AttributeError(name)
+        return getattr(self.base, name)
+
+    def co_launch(self):
+        qrepo = self.qrepo
+
+        try:
+            worktree = qrepo.worktree
+        except:
+            yield qrepo.co_get_worktrees()
+            worktree = qrepo.worktree
+
+        build_dir = BuildDir(worktree,
+            path = self.build,
+            prefix = self.prefix,
+            extra_configure_args = self.extra_configure_args,
+        )
+
+        self.__notify_build_started(self)
+
+        yield build_dir.co_install()
+
+        qemu = join(build_dir.prefix, "bin", "qemu-system-" + self.arch)
+
+        cwd = self.cwd
+
+        makedirs(cwd, exist_ok = True)
+
+        yield True
+        launch = QemuBootTimeMeasureLaunch(qemu,
+            process_kw = dict(
+                cwd = cwd,
+            ),
+            extra_args = self.qemu_extra_args,
+        )
+
+        p = launch.launch(self.task_manager)
+
+        self.__notify_launched(self, launch, p)
+
+        poll = p.poll
+
+        while poll() is None:
+            yield False
+
+        if p.returncode == 0:
+            resdir = self.resdir
+
+            for fn in self.resfiles:
+                src = join(cwd, fn)
+                if exists(src):
+                    dst = join(resdir, fn)
+
+                    makedirs(dirname(dst), exist_ok = True)
+                    yield True
+
+                    copyfile(src, dst)
+
+                yield True
+
+            if self.cleanup:
+                rmtree(cwd)
+                yield True
+
+        self.__notify_finished(self, launch, p)
+
+
+@notifier(
+    "build_started", # see MeasureLaunch
+    "launched",
+    "finished",
+)
+class Measurer(object):
+
+    def __init__(self, *measurements):
+        self.measurements = list(measurements)
+
+    def co_main(self):
+        notify_pfx = "_" + type(self).__name__ + "__notify_"
+
+        for m in self.measurements:
+            for e in self._events:
+                getattr(m, "watch_" + e)(getattr(self, notify_pfx + e))
+
+            yield m.co_launch()
+
+            for e in self._events:
+                getattr(m, "unwatch_" + e)(getattr(self, notify_pfx + e))
 
 
 @notifier(
@@ -145,7 +297,7 @@ class LauncherThread(Thread):
 
 class LauncherGUI(GUITk):
 
-    def __init__(self, *a, **kw):
+    def __init__(self, measurer, *a, **kw):
         GUITk.__init__(self, *a, **kw)
 
         self.title(_("Qemu Launcher"))
@@ -158,50 +310,125 @@ class LauncherGUI(GUITk):
 
         add_scrollbars_native(self, t_status, sizegrip = True)
 
-        sd = self.signal_dispatcher
-        self.sig_launched = sd.new_signal(self._on_launched)
-        self.sig_finished = sd.new_signal(self._on_finished)
-        self.sig_launcher_ended = sd.new_signal(self._on_launcher_ended)
+        self._measurer = measurer
 
-    def _on_launched(self, launch, proc):
-        self.t_status.insert(END, " \\\n".join(proc.args))
+        for e in measurer._events:
+            getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
 
-    def _on_finished(self, launch, proc):
-        self.t_status.delete("1.0", END)
+    def _on_build_started(self, ml):
+        self.t_status.insert(END, "Building...\n" + str(ml))
 
-    def _on_launcher_ended(self):
-        self.destroy()
+    def _on_launched(self, ml, ql, proc):
+        self.t_status.insert(END, "\n\nRunning...\n" +  " \\\n".join(proc.args))
+
+    def _on_finished(self, ml, ql, proc):
+        self.t_status.insert(END, "\n\nFinished (%d)\n\n" % proc.returncode)
 
 
 def main():
     ap = ArgumentParser()
-    ap.add_argument("--qemu", default = "qemu-system-i386")
-    ap.add_argument("--smbroot", default = abspath("."))
-    ap.add_argument("--workloads", default = abspath("."))
-    ap.add_argument("--records", default = abspath("."))
+    ap.add_argument("qemu",
+        help = "qemu worktree (sources)",
+    )
+    ap.add_argument("--builds",
+        default = join(".", "builds"),
+        help = "where to build qemu",
+    )
+    ap.add_argument("--workdir",
+        default = join(".", "work"),
+        help = "where to launch qemu",
+    )
+    ap.add_argument("--resdir",
+        default = join(".", "res"),
+        help = "where to copy results",
+    )
+    ap.add_argument("--workloads",
+        default = ".",
+        help = "guest images"
+    )
     ap.add_argument("--log", default = None)
     ap.add_argument("--new-log", action = "store_true")
 
     args = ap.parse_args()
 
-    qemu = args.qemu
-    smbroot = args.smbroot
-    workloads = args.workloads
-    records = args.records
-
-    makedirs(smbroot, exist_ok = True)
-
-    def record_dir_gen():
-        for i in count():
-            dirname = join(records, str(i))
-            if exists(dirname):
-                continue
-            makedirs(dirname)
-            yield dirname
-
-    rec_dir_iter = iter(record_dir_gen())
+    qemu = abspath(args.qemu)
+    builds = abspath(args.builds)
+    workdir = abspath(args.workdir)
+    resdir = abspath(args.resdir)
+    workloads = abspath(args.workloads)
 
     log = args.log
+
+    qrepo = QRepo(qemu)
+
+    base_launch = MeasureLaunch("Qemu",
+        qrepo = qrepo,
+        cleanup = False,
+        resfiles = (
+            "count.csv",
+            "save.csv",
+            "play.csv",
+            "shadows.save.txt",
+            "shadows.play.txt",
+            "statistics.txt",
+        ),
+        extra_configure_args = dict(
+            vte = True,
+            sdl = False,
+            rr3 = True,
+        )
+    )
+
+    i386 = base_launch.variant(".i386",
+        arch = "i386",
+        build = join(builds, "i386", "build"),
+        prefix = join(builds, "i386", "install"),
+        updates = dict(
+            extra_configure_args = {
+                "target-list" : "i386-softmmu",
+            }
+        )
+    )
+
+    i386XP = i386.variant(".WinXP",
+        cwd = join(workdir, "winxp"),
+        resdir = join(resdir, "winxp"),
+        updates = dict(
+            qemu_extra_args = dict(
+                m = "1G",
+                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
+                snapshot = True,
+            )
+        )
+    )
+
+    measurer = Measurer(
+        i386XP.variant(".count",
+            updates = dict(
+                qemu_extra_args = dict(
+                    rr3 = "count",
+                ),
+            )
+        ),
+        i386XP.variant(".save",
+            updates = dict(
+                qemu_extra_args = dict(
+                    rr3 = "save",
+                ),
+            )
+        ),
+        i386XP.variant(".play",
+            updates = dict(
+                qemu_extra_args = dict(
+                    rr3 = "play",
+                ),
+            )
+        ),
+    )
+
+    root = LauncherGUI(measurer)
+
+    base_launch.task_manager = root.task_manager
 
     if log is not None:
         log = abspath(log)
@@ -211,72 +438,23 @@ def main():
             if exists(log):
                 remove(log)
 
-    root = LauncherGUI()
+        log_file = open(log, "a+")
+        write = log_file.write
+        flush = log_file.flush
 
-    rec_winxp = next(rec_dir_iter)
+        def write_and_flush(*a, **kw):
+            write(*a, **kw)
+            flush()
 
-    launches = [
-        QemuBootTimeMeasureLaunch(qemu,
-            process_kw = dict(
-                cwd = rec_winxp
-            ),
-            extra_args = dict(
-                m = "1G",
-                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
-                snapshot = True,
-                rr3 = "count",
-            )
-        ),
-        QemuBootTimeMeasureLaunch(qemu,
-            process_kw = dict(
-                cwd = rec_winxp
-            ),
-            extra_args = dict(
-                m = "1G",
-                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
-                snapshot = True,
-                rr3 = "save",
-            )
-        ),
-        QemuBootTimeMeasureLaunch(qemu,
-            process_kw = dict(
-                cwd = rec_winxp
-            ),
-            extra_args = dict(
-                m = "1G",
-                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
-                snapshot = True,
-                rr3 = "play",
-            )
-        ),
-        QemuBootTimeMeasureLaunch(qemu,
-            extra_args = dict(
-                m = "1G",
-                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
-                snapshot = True,
-            )
-        ),
-        QemuBootTimeMeasureLaunch(qemu,
-            extra_args = dict(
-                accel = "kvm",
-                m = "1G",
-                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
-                snapshot = True,
-                # shutdown = False,
-                usb = True,
-                device = [
-                    "usb-ehci,id=ehci",
-                    "usb-host,vendorid=0x0b95,productid=0x7720",
-                ],
-                netdev = "user,id=n1,smb=" + smbroot,
-                net = "nic,model=rtl8139,netdev=n1",
-            )
-        ),
-    ]
+        listener = listen_all(write_and_flush, locked = True)
 
-    LauncherThread(launches, root, log = log).start()
+    root.task_manager.enqueue(measurer.co_main())
 
     root.mainloop()
+
+    if log is not None:
+        listener.revert()
+        log_file.close()
 
 
 if __name__ == "__main__":
