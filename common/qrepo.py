@@ -24,6 +24,10 @@ from os.path import (
 )
 
 
+def _nop(*_, **__):
+    pass
+
+
 class QRepo(object):
 
     def __init__(self, path):
@@ -38,7 +42,7 @@ class QRepo(object):
     def __str__(self):
         return self.path
 
-    def co_get_worktrees(self, handler):
+    def co_get_worktrees(self, handler = _nop):
         return PopenWorker(
             "git", "worktree", "list", "--porcelain",
             cwd = self.path
@@ -165,7 +169,3 @@ class QConfig(Extensible):
 
     def __init__(self, **settings):
         self.settings = settings
-
-
-def _nop(*_, **__):
-    pass
