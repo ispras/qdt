@@ -1,6 +1,8 @@
 __all__ = [
     "iter_dict_as_args"
   , "arg_list"
+  , "iter_dict_as_configure_args"
+  , "configure_arg_list"
 ]
 
 
@@ -34,3 +36,24 @@ def arg_list(container, **kw):
     else:
         ret = list(container)
     return ret
+
+
+def iter_dict_as_configure_args(d):
+    for a, v in d.items():
+        if v is None:
+            yield "--" + str(a)
+        if v is False:
+            yield "--disable-" + str(a)
+        elif v is True:
+            yield "--enable-" + str(a)
+        elif isinstance(v, (list, tuple, set)):
+            yield "--" + str(a) + "=" + ",".join(v)
+        else:
+            yield "--" + str(a) + "=" + str(v)
+
+
+def configure_arg_list(container):
+    if isinstance(container, dict):
+        return list(iter_dict_as_configure_args(container))
+    else:
+        return list(container)
