@@ -73,6 +73,10 @@ Entries are only appended at runtime.
     def wait(self):
         return self._p.wait
 
+    @property
+    def poll(self):
+        return self._p.poll
+
     def __init__(self, *popen_args, **popen_kw):
         popen_kw["stdout"] = popen_kw["stderr"] = popen_kw["stdin"] = PIPE
 
