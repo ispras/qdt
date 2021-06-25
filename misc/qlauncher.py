@@ -590,8 +590,8 @@ def main():
         *gen_tree(base_launch,
             gen_arches,
             gen_workloads,
-            gen_rr3_variants,
             gen_multiple,
+            gen_rr3_variants,
             times = 3,
             arches = ("i386", "x86_64")
         )
