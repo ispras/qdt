@@ -152,11 +152,12 @@ class MeasureLaunch(object):
 
         if p.returncode == 0:
             resdir = self.resdir
+            resprefix = self.resprefix
 
             for fn in self.resfiles:
                 src = join(cwd, fn)
                 if exists(src):
-                    dst = join(resdir, fn)
+                    dst = join(resdir, resprefix + fn)
 
                     makedirs(dirname(dst), exist_ok = True)
                     yield True
@@ -372,6 +373,7 @@ def main():
             "shadows.play.txt",
             "statistics.txt",
         ),
+        resprefix = "",
         extra_configure_args = dict(
             vte = True,
             sdl = False,
