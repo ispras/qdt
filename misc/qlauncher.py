@@ -5,6 +5,7 @@ from common import (
     listen_all,
     QRepo,
     BuildDir,
+    bidict,
 )
 from qemu import (
     QLaunch,
@@ -15,6 +16,9 @@ from widgets import (
     GUITk,
     GUIText,
     READONLY,
+    GUIFrame,
+    VarTreeview,
+    AutoPanedWindow,
 )
 from time import (
     time,
@@ -27,6 +31,8 @@ from threading import (
 )
 from six.moves.tkinter import (
     END,
+    BOTH,
+    BROWSE,
 )
 from argparse import (
     ArgumentParser,
@@ -43,6 +49,9 @@ from os.path import (
 from shutil import (
     rmtree,
     copyfile,
+)
+from collections import (
+    defaultdict,
 )
 
 
@@ -301,6 +310,94 @@ class LauncherThread(Thread):
             self._current_proc.terminate()
 
 
+class LaunchInfoWidget(GUIFrame):
+
+    def __init__(self, master, *a, **kw):
+        sizegrip = kw.pop("sizegrip", False)
+        GUIFrame.__init__(self, master, *a, **kw)
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        self.t_status = t_info = GUIText(self, state = READONLY)
+        t_info.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, t_info, sizegrip = sizegrip)
+
+    def set_info(self, info):
+        self.t_status.delete("1.0", END)
+        self.t_status.insert(END, info)
+
+
+class LaunchTree(GUIFrame):
+
+    def __init__(self, master, *a, **kw):
+        sizegrip = kw.pop("sizegrip", False)
+        GUIFrame.__init__(self, master, *a, **kw)
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        self.tv = tv = VarTreeview(self,
+            selectmode = BROWSE,
+            columns = ["status"],
+        )
+
+        tv.grid(row = 0, column = 0, sticky = "NESW")
+        add_scrollbars_native(self, tv, sizegrip = sizegrip)
+
+        tv.heading("#0", text = _("Launch"))
+        tv.column("#0", width = 350)
+
+        tv.heading("status", text = _("Status"))
+        tv.column("status", width = 80)
+
+        self.iid2launch = bidict()
+
+        tv.bind("<<TreeviewSelect>>", self._on_tv_select, "+")
+        self.selected = None
+
+    def set_status(self, launch, status):
+        self.tv.item(self.iid2launch.mirror[launch],
+            values = [status],
+        )
+
+    def set_launches(self, launches):
+        self.tv.delete(*self.tv.get_children())
+
+        for launch in launches:
+            self._insert_row_for_launch(launch)
+
+    def _insert_row_for_launch(self, launch):
+        iid2launch = self.iid2launch
+        base = launch.base
+
+        if base is None:
+            parent = ""
+        else:
+            try:
+                parent = iid2launch.mirror[base]
+            except KeyError:
+                parent = self._insert_row_for_launch(base)
+
+        iid = self.tv.insert(parent, END,
+            open = True,
+            text = launch.name,
+        )
+        iid2launch[iid] = launch
+
+        return iid
+
+    def _on_tv_select(self, *__):
+        sels = self.tv.selection()
+        if sels:
+            self.selected = self.iid2launch[sels[0]]
+        else:
+            self.selected = None
+
+        self.event_generate("<<LaunchSelect>>")
+
+
 class LauncherGUI(GUITk):
 
     def __init__(self, measurer, *a, **kw):
@@ -308,27 +405,62 @@ class LauncherGUI(GUITk):
 
         self.title(_("Qemu Launcher"))
 
-        self.rowconfigure(0, weight = 1)
-        self.columnconfigure(0, weight = 1)
-
-        self.t_status = t_status = GUIText(self, state = READONLY)
-        t_status.grid(row = 0, column = 0, sticky = "NESW")
-
-        add_scrollbars_native(self, t_status, sizegrip = True)
-
         self._measurer = measurer
+
+        apw = AutoPanedWindow(self)
+        apw.pack(fill = BOTH, expand = True)
+
+        self.w_tree = w_tree = LaunchTree(apw)
+        apw.add(w_tree, sticky = "NESW")
+
+        self.w_info = w_status = LaunchInfoWidget(apw, sizegrip = True)
+        apw.add(w_status, sticky = "NESW")
+
+        w_tree.set_launches(measurer.measurements)
+
+        self.info = defaultdict(str)
 
         for e in measurer._events:
             getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
 
+        w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
+
     def _on_build_started(self, ml):
-        self.t_status.insert(END, "Building...\n" + str(ml))
+        self.info[ml] += "Building...\n"
+        self.w_tree.set_status(ml, "building")
+        self._update_info(ml)
 
     def _on_launched(self, ml, ql, proc):
-        self.t_status.insert(END, "\n\nRunning...\n" +  " \\\n".join(proc.args))
+        self.info[ml] += "\n\nRunning...\n" +  " \\\n".join(proc.args)
+        self.w_tree.set_status(ml, "running")
+        self._update_info(ml)
 
     def _on_finished(self, ml, ql, proc):
-        self.t_status.insert(END, "\n\nFinished (%d)\n\n" % proc.returncode)
+        rc = proc.returncode
+
+        self.info[ml] += "\n\nFinished (%d)\n\n" % rc
+
+        if rc == 0:
+            self.w_tree.set_status(ml, "finished")
+        else:
+            self.w_tree.set_status(ml, "failed (%d)" % rc)
+
+        self._update_info(ml)
+
+    def _update_info(self, launch):
+        if launch is self.w_tree.selected:
+            info = str(launch) + "\n\n" + self.info[launch]
+
+            self.w_info.set_info(info)
+
+    def _on_launch_select(self, e):
+        launch = e.widget.selected
+        if launch is None:
+            info = ""
+        else:
+            info = str(launch) + "\n\n" + self.info[launch]
+
+        self.w_info.set_info(info)
 
 
 def main():
@@ -386,51 +518,82 @@ def main():
         )
     )
 
-    i386 = base_launch.variant(".i386",
-        arch = "i386",
-        build = join(builds, "i386", "build"),
-        prefix = join(builds, "i386", "install"),
-        updates = dict(
-            extra_configure_args = {
-                "target-list" : "i386-softmmu",
-            }
-        )
-    )
+    def gen_arches(base, arches, **__):
+        for arch in arches:
+            yield base.variant("." + arch,
+                arch = arch,
+                build = join(builds, arch, "build"),
+                prefix = join(builds, arch, "install"),
+                updates = dict(
+                    extra_configure_args = {
+                        "target-list" : arch + "-softmmu",
+                    }
+                )
+            )
 
-    i386XP = i386.variant(".WinXP",
-        cwd = join(workdir, "winxp"),
-        resdir = join(resdir, "winxp"),
-        updates = dict(
-            qemu_extra_args = dict(
-                m = "1G",
-                hda = join(workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"),
-                snapshot = True,
+    def gen_workloads(base, **__):
+        yield base.variant(".WinXP",
+            cwd = join(workdir, "winxp"),
+            resdir = join(resdir, "winxp"),
+            updates = dict(
+                qemu_extra_args = dict(
+                    m = "1G",
+                    hda = join(
+                        workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"
+                    ),
+                    snapshot = True,
+                )
             )
         )
-    )
 
-    measurer = Measurer(
-        i386XP.variant(".count",
+    def gen_rr3_variants(base, **__):
+        yield base.variant(".count",
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "count",
                 ),
             )
-        ),
-        i386XP.variant(".save",
+        )
+        yield base.variant(".save",
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "save",
                 ),
             )
-        ),
-        i386XP.variant(".play",
+        )
+        yield base.variant(".play",
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "play",
                 ),
             )
-        ),
+        )
+
+    def gen_multiple(base, times, **__):
+        for i in range(times):
+            yield base.variant("." + str(i),
+                resprefix = str(i) + "." + base.resprefix,
+            )
+
+    def gen_tree(base, gen0, *rest_gen, **conf):
+        if rest_gen:
+            for variant in gen0(base, **conf):
+                for res in gen_tree(variant, *rest_gen, **conf):
+                    yield res
+        else:
+            for res in gen0(base, **conf):
+                yield res
+
+
+    measurer = Measurer(
+        *gen_tree(base_launch,
+            gen_arches,
+            gen_workloads,
+            gen_rr3_variants,
+            gen_multiple,
+            times = 3,
+            arches = ("i386", "x86_64")
+        )
     )
 
     root = LauncherGUI(measurer)
