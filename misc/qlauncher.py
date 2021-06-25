@@ -180,9 +180,9 @@ class MeasureLaunch(object):
 
                 yield True
 
-            if self.cleanup:
-                rmtree(cwd)
-                yield True
+        if self.cleanup:
+            rmtree(cwd)
+            yield True
 
         self.__notify_finished(self, launch, p)
 
@@ -501,7 +501,7 @@ def main():
 
     base_launch = MeasureLaunch("Qemu",
         qrepo = qrepo,
-        cleanup = False,
+        cleanup = True,
         resfiles = (
             "count.csv",
             "save.csv",
@@ -555,6 +555,7 @@ def main():
             )
         )
         yield base.variant(".save",
+            cleanup = False,
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "save",
