@@ -60,12 +60,17 @@ class MeasureLaunch(object):
     __slots__ = (
         "name",
         "base",
+        "variants",
         "__dict__"
     )
 
     def __init__(self, name, base = None, **changes):
         self.name = name
         self.base = base
+        self.variants = []
+        if base is not None:
+            base.variants.append(self)
+
         for a, v in changes.items():
             setattr(self, a, v)
 
