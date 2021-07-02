@@ -6,6 +6,8 @@ from common import (
     QRepo,
     BuildDir,
     bidict,
+    pythonize,
+    execfile,
 )
 from qemu import (
     QLaunch,
@@ -51,6 +53,7 @@ from shutil import (
     copyfile,
 )
 from collections import (
+    OrderedDict,
     defaultdict,
 )
 
@@ -195,12 +198,22 @@ class MeasureLaunch(object):
 class Measurer(object):
 
     def __init__(self, *measurements):
-        self.measurements = list(measurements)
+        self.measurements = measurements_ = OrderedDict()
+        for m in measurements:
+            if m.name in measurements_:
+                raise ValueError("Names must be unique: %s" % m)
+            measurements_[m.name] = m
+
+        self.skip = set()
 
     def co_main(self):
         notify_pfx = "_" + type(self).__name__ + "__notify_"
+        skip = self.skip
 
-        for m in self.measurements:
+        for name, m in self.measurements.items():
+            if name in skip:
+                continue
+
             for e in self._events:
                 getattr(m, "watch_" + e)(getattr(self, notify_pfx + e))
 
@@ -398,9 +411,33 @@ class LaunchTree(GUIFrame):
         self.event_generate("<<LaunchSelect>>")
 
 
+class MeasurerResult(object):
+
+    def __init__(self, info, retcodes):
+        self.info = info
+        self.retcodes = retcodes
+
+    def save(self, file_name):
+        pythonize(self, file_name)
+
+    @staticmethod
+    def load(file_name):
+        glob = dict(globals())
+        execfile(file_name, glob)
+        for v in glob.values():
+            if isinstance(v, MeasurerResult):
+                return v
+        raise ValueError("%s file have no MeasurerResult" % file_name)
+
+    def __pygen_pass__(self, gen, __):
+        gen.gen_instantiation(self)
+
+
 class LauncherGUI(GUITk):
 
     def __init__(self, measurer, *a, **kw):
+        result = kw.pop("result", None) # previous result
+
         GUITk.__init__(self, *a, **kw)
 
         self.title(_("Qemu Launcher"))
@@ -416,40 +453,58 @@ class LauncherGUI(GUITk):
         self.w_info = w_status = LaunchInfoWidget(apw, sizegrip = True)
         apw.add(w_status, sticky = "NESW")
 
-        w_tree.set_launches(measurer.measurements)
+        w_tree.set_launches(measurer.measurements.values())
 
         self.info = defaultdict(str)
+        self.retcodes = dict()
 
         for e in measurer._events:
             getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
 
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
 
+        if result is not None:
+            self.info.update(result.info)
+            self.retcodes.update(result.retcodes)
+
+            for name, rc in self.retcodes.items():
+                launch = measurer.measurements[name]
+                self._set_rc(launch, rc)
+
+    def gen_result(self):
+        return MeasurerResult(
+            info = dict(self.info),
+            retcodes = self.retcodes.copy(),
+        )
+
     def _on_build_started(self, ml):
-        self.info[ml] += "Building...\n"
+        self.info[ml.name] += "Building...\n"
         self.w_tree.set_status(ml, "building")
         self._update_info(ml)
 
     def _on_launched(self, ml, ql, proc):
-        self.info[ml] += "\n\nRunning...\n" +  " \\\n".join(proc.args)
+        self.info[ml.name] += "\n\nRunning...\n" +  " \\\n".join(proc.args)
         self.w_tree.set_status(ml, "running")
         self._update_info(ml)
 
     def _on_finished(self, ml, ql, proc):
         rc = proc.returncode
 
-        self.info[ml] += "\n\nFinished (%d)\n\n" % rc
+        self.info[ml.name] += "\n\nFinished (%d)\n\n" % rc
+        self.retcodes[ml.name] = rc
 
-        if rc == 0:
-            self.w_tree.set_status(ml, "finished")
-        else:
-            self.w_tree.set_status(ml, "failed (%d)" % rc)
-
+        self._set_rc(ml, rc)
         self._update_info(ml)
+
+    def _set_rc(self, launch, rc):
+        if rc == 0:
+            self.w_tree.set_status(launch, "finished")
+        else:
+            self.w_tree.set_status(launch, "failed (%d)" % rc)
 
     def _update_info(self, launch):
         if launch is self.w_tree.selected:
-            info = str(launch) + "\n\n" + self.info[launch]
+            info = str(launch) + "\n\n" + self.info[launch.name]
 
             self.w_info.set_info(info)
 
@@ -458,7 +513,7 @@ class LauncherGUI(GUITk):
         if launch is None:
             info = ""
         else:
-            info = str(launch) + "\n\n" + self.info[launch]
+            info = str(launch) + "\n\n" + self.info[launch.name]
 
         self.w_info.set_info(info)
 
@@ -585,6 +640,13 @@ def main():
             for res in gen0(base, **conf):
                 yield res
 
+    prev_res_fn = join(resdir, "qlauncher.res.py")
+    try:
+        res = MeasurerResult.load(prev_res_fn)
+    except:
+        from traceback import print_exc
+        print_exc()
+        res = None
 
     measurer = Measurer(
         *gen_tree(base_launch,
@@ -597,7 +659,7 @@ def main():
         )
     )
 
-    root = LauncherGUI(measurer)
+    root = LauncherGUI(measurer, result = res)
 
     base_launch.task_manager = root.task_manager
 
@@ -626,6 +688,9 @@ def main():
     if log is not None:
         listener.revert()
         log_file.close()
+
+    makedirs(resdir, exist_ok = True)
+    root.gen_result().save(prev_res_fn)
 
 
 if __name__ == "__main__":
