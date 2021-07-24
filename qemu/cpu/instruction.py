@@ -7,6 +7,7 @@ __all__ = [
   , "Instruction"
   , "InstructionTreeNode"
   , "build_instruction_tree"
+  , "check_unreachable_instructions"
 ]
 
 from .constants import (
@@ -170,6 +171,9 @@ class Instruction(object):
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
         self.priority =  kw_args.get("priority", 0)
+
+        # mark for finding unreachable instructions
+        self.used = False
 
     @lazy
     def bitsize(self):
@@ -417,6 +421,15 @@ def print_instructions(instructions, indent = "", max_bitsize = None):
     )
 
 
+def check_unreachable_instructions(instructions):
+    unreachable_instructions = [i for i in instructions if not i.used]
+    if unreachable_instructions:
+        print("WARNING: some instructions unreachable (check instructions"
+            " encoding or priority):"
+        )
+        print_instructions(unreachable_instructions, indent = "    ")
+
+
 def common_bits_for_opcodes(instructions):
     "Finds bit numbers occupied by opcodes in all instructions."
 
@@ -547,6 +560,7 @@ def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
         node.limit_read = min_bitsize
 
     node.instruction = i
+    i.used = True
 
 
 def build_instruction_tree(node, instructions, read_bitsize,
