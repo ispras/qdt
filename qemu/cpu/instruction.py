@@ -7,6 +7,7 @@ __all__ = [
   , "Instruction"
   , "InstructionTreeNode"
   , "build_instruction_tree"
+  , "check_unreachable_instructions"
 ]
 
 from .constants import (
@@ -312,6 +313,21 @@ def print_instructions(instructions, indent = "", max_bitsize = None):
     )
 
 
+def check_unreachable_instructions(instructions):
+    unreachable_instructions = []
+    for i in instructions:
+        if hasattr(i, "used"):
+            del i.used
+        else:
+            unreachable_instructions.append(i)
+
+    if unreachable_instructions:
+        print("WARNING: some instructions unreachable (check instructions"
+            " encoding or priority):"
+        )
+        print_instructions(unreachable_instructions, indent = "    ")
+
+
 def common_bits_for_opcodes(instructions):
     "Finds bit numbers occupied by opcodes in all instructions."
 
@@ -431,6 +447,8 @@ def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
         node.limit_read = min_bitsize
 
     node.instruction = i
+    # temporary mark for finding unreachable instructions
+    i.used = True
 
 
 def build_instruction_tree(node, instructions, read_bitsize,

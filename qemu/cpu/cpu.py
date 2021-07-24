@@ -25,6 +25,7 @@ from .info import (
 from .instruction import (
     InstructionTreeNode,
     build_instruction_tree,
+    check_unreachable_instructions,
 )
 from codecs import (
     open,
@@ -392,6 +393,7 @@ class CPUType(QOMCPU):
             read_bitsize = self.read_bitsize
             node = InstructionTreeNode()
             build_instruction_tree(node, self.instructions, read_bitsize)
+            check_unreachable_instructions(self.instructions)
             fill_tree_reading_seq(node, read_bitsize)
             self.instruction_tree_root = node
         else:
