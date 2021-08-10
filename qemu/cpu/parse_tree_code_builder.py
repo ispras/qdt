@@ -112,12 +112,41 @@ class ParseTreeCodeBuilder(object):
                 if opcode == "default":
                     sc = default_sc = SwitchCaseDefault()
                 else:
-                    sc = SwitchCase(
-                        CINT(
-                            int(opcode, base = 2) << shift,
+                    opcodes_iter = iter(opcode)
+                    range_start = range_end = prev_opcode = (
+                        int(next(opcodes_iter), base = 2)
+                    )
+                    for opcode in opcodes_iter:
+                        cur_opcode = int(opcode, base = 2)
+                        if cur_opcode - prev_opcode == 1:
+                            range_end = cur_opcode
+                        else:
+                            if range_start != range_end:
+                                case_val = (
+                                    CINT(range_start << shift, base = 16),
+                                    CINT(range_end << shift, base = 16)
+                                )
+                            else:
+                                case_val = CINT(
+                                    range_start << shift,
+                                    base = 16
+                                )
+                            cases.append(
+                                SwitchCase(case_val, add_break = False)
+                            )
+                            range_start = range_end = cur_opcode
+                        prev_opcode = cur_opcode
+                    if range_start != range_end:
+                        case_val = (
+                            CINT(range_start << shift, base = 16),
+                            CINT(range_end << shift, base = 16)
+                        )
+                    else:
+                        case_val = CINT(
+                            range_start << shift,
                             base = 16
                         )
-                    )
+                    sc = SwitchCase(case_val)
                     cases.append(sc)
 
                 self.gen_subtree_code(sc, node, vars_desc = vars_desc)
