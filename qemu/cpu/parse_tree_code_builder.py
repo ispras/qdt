@@ -108,19 +108,37 @@ class ParseTreeCodeBuilder(object):
 
             cases = []
             default_sc = None
-            for opcode, node in instr_node.subtree.items():
-                if opcode == "default":
+            for opcodes, node in instr_node.subtree.items():
+                if opcodes is None:
                     sc = default_sc = SwitchCaseDefault()
                 else:
-                    sc = SwitchCase(
-                        CINT(
-                            int(opcode, base = 2) << shift,
-                            base = 16
-                        )
-                    )
-                    cases.append(sc)
+                    for opcode in opcodes:
+                        if len(opcode) == 1:
+                            case_val = CINT(opcode[0] << shift, base = 16)
+                        else:
+                            case_val = (
+                                CINT(opcode[0] << shift, base = 16),
+                                CINT(opcode[1] << shift, base = 16)
+                            )
+
+                        sc = SwitchCase(case_val, add_break = False)
+                        cases.append(sc)
+
+                    sc.add_break = True
 
                 self.gen_subtree_code(sc, node, vars_desc = vars_desc)
+
+            # Comment with a list of values that the "default" case covers.
+            cases.append(
+                Comment("cases: " + (
+                    ", ".join(
+                        " ... ".join(
+                            "0x%X" % (subopcode << shift)
+                            for subopcode in opcode
+                        ) for opcode in instr_node.default_opcodes
+                    ) if instr_node.default_opcodes else "None"
+                ))
+            )
 
             if default_sc is not None:
                 cases.append(default_sc)
