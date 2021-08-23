@@ -75,13 +75,13 @@ def main():
     )
 
     parser.add_argument(
-        "--disable-cpu-semantics-translation",
+        "--no-i3s",
         action = "store_true",
         help = "Disable automatic CPU semantics translation."
     )
 
     parser.add_argument(
-        "--disable-instruction-tree-optimizations",
+        "--no-instruction-tree-optimizations",
         action = "store_true",
         help = "Disable optimizations when building an instruction tree."
     )
@@ -142,11 +142,9 @@ def main():
         with_chunk_graph = arguments.gen_chunk_graphs,
         known_targets = qvd.qvc.known_targets,
         with_debug_comments = arguments.gen_debug_comments,
-        translate_cpu_semantics = (
-            not arguments.disable_cpu_semantics_translation
-        ),
+        translate_cpu_semantics = not arguments.no_i3s,
         instruction_tree_optimizations = (
-            not arguments.disable_instruction_tree_optimizations
+            not arguments.no_instruction_tree_optimizations
         ),
         include_paths = tuple(path for path, _ in qvd.include_paths)
     )
