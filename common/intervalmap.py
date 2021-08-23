@@ -317,20 +317,13 @@ if __name__ == "__main__":
 
     # Test 4
     try:
-        from common import PyGenerator
-        try:
-            # Py2
-            from cStringIO import BytesIO
-        except ImportError:
-            # Py3
-            from io import BytesIO
+        from common import pygenerate
     except:
         print("Skipping PyGenerator testing")
     else:
         for i in tests:
             # convert intervalmap to Python code
-            g = PyGenerator(backend = BytesIO())
-            g.serialize(i)
+            g = pygenerate(i)
 
             code = g.w.getvalue()
 
