@@ -63,6 +63,16 @@ None
 >>> i[5:6] = 4
 >>> i
 {[0, 2] => 1, [2, 4] => 2, [4, 5] => 3, [5, 6] => 4, [6, None] => 3}
+>>> i = intervalmap()
+>>> i[0:4] = True
+>>> i
+{[0, 4] => True}
+>>> i[1:2] = None
+>>> i
+{[0, 1] => True, [2, 4] => True}
+>>> i[3:4] = None
+>>> i
+{[0, 1] => True, [2, 3] => True}
     """
 
     def __init__(self, items = None):
@@ -110,6 +120,11 @@ Ex.: [((start1, end1), value1), ((start2, end2), value2), ...].
                 start_point += 1
 
             if end_point >= 0:
+                if (end_point < len(self._bounds)
+                    and self._bounds[end_point] == _slice.stop
+                ):
+                    end_point += 1
+
                 self._bounds[start_point:end_point] = [
                     _slice.start, _slice.stop
                 ]
@@ -317,20 +332,13 @@ if __name__ == "__main__":
 
     # Test 4
     try:
-        from common import PyGenerator
-        try:
-            # Py2
-            from cStringIO import BytesIO
-        except ImportError:
-            # Py3
-            from io import BytesIO
+        from common import pygenerate
     except:
         print("Skipping PyGenerator testing")
     else:
         for i in tests:
             # convert intervalmap to Python code
-            g = PyGenerator(backend = BytesIO())
-            g.serialize(i)
+            g = pygenerate(i)
 
             code = g.w.getvalue()
 

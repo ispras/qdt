@@ -103,6 +103,7 @@ from source import (
     SwitchCase,
     SwitchCaseDefault,
     Type,
+    TypeNotRegistered,
     Variable,
 )
 from types import (
@@ -406,19 +407,24 @@ def fill_decode_opc_body(cputype, function, cpu_env):
         operands_to_args = [copy(o) for o in operands]
         cputype.name_shortener(operands_to_args, comment)
 
-        func = Function(
-            name = instruction.name,
-            args = [ Pointer(Type["DisasContext"])("ctx") ] + operands_to_args,
-            static = True,
-            inline = True
-        )
-        func.extra_references = set_pc_ref
-        h.add_type(func)
+        try:
+            func = Type[instruction.name]
+        except TypeNotRegistered:
+            func = Function(
+                name = instruction.name,
+                args = (
+                    [ Pointer(Type["DisasContext"])("ctx") ] + operands_to_args
+                ),
+                static = True,
+                inline = True
+            )
+            func.extra_references = set_pc_ref
+            h.add_type(func)
 
-        func.body = BodyTree()(
-            Comment(comment),
-            *instruction.semantics(func, h)
-        )
+            func.body = BodyTree()(
+                Comment(comment),
+                *instruction.semantics(func, h)
+            )
 
         node(Call(func, ctx, *operands))
 

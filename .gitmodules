@@ -14,3 +14,6 @@
 	path = unidiff
 	url = https://github.com/matiasb/python-unidiff.git
 	branch = master
+[submodule "I3S"]
+	path = I3S
+	url = https://github.com/ispras/I3S.git

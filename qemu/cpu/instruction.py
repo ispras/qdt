@@ -7,10 +7,14 @@ __all__ = [
   , "Instruction"
   , "InstructionTreeNode"
   , "build_instruction_tree"
+  , "check_unreachable_instructions"
 ]
 
 from .constants import (
     BYTE_BITSIZE,
+)
+from bisect import (
+    insort,
 )
 from collections import (
     OrderedDict,
@@ -19,12 +23,13 @@ from collections import (
 from common import (
     ee,
     lazy,
+    intervalmap,
 )
 from copy import (
     deepcopy,
 )
-from itertools import (
-    combinations,
+from six.moves import (
+    zip_longest,
 )
 from re import (
     compile,
@@ -34,7 +39,10 @@ from six import (
 )
 
 
-SHOW_INTERSECTION_WARNINGS = ee("QDT_SHOW_INTERSECTION_WARNINGS")
+BUILD_INSTRUCTION_TREE_DEBUG = ee("QDT_BUILD_INSTRUCTION_TREE_DEBUG")
+BUILD_INSTRUCTION_TREE_WARNINGS = ee("QDT_BUILD_INSTRUCTION_TREE_WARNINGS",
+    "True"
+)
 
 
 NON_OPCODE_BIT = "x"
@@ -144,6 +152,10 @@ class Instruction(object):
     callable object which gets `Function` and source containing the
     function, and must return list of function body tree elements that
     describe the semantics of the instruction (see `no_semantics` example)
+
+:param priority:
+    number that determines which instruction will be selected if the encoding
+    matches multiple instructions
     """
 
 # TODO: an ASCII-art schematic with field layout (bit enumeration) relative to
@@ -159,6 +171,10 @@ class Instruction(object):
         self.disas_format = kw_args.get("disas_format", mnemonic)
         self.comment = kw_args.get("comment", self.disas_format)
         self.semantics = kw_args.get("semantics", no_semantics)
+        self.priority =  kw_args.get("priority", 0)
+
+        # mark for finding unreachable instructions
+        self.used = False
 
     @lazy
     def bitsize(self):
@@ -231,6 +247,21 @@ class Instruction(object):
         return self.field_class_bits(Opcode)
 
     @lazy
+    def opcode_boundaries(self):
+        "Bit numbers where opcode intervals start or end"
+
+        boundaries = set()
+        for interval in bits_to_intervals(self.opcode_bits):
+            bitoffset, bitsize = interval
+            boundaries.add(bitoffset)
+            boundaries.add(bitoffset + bitsize)
+        return boundaries
+
+    @lazy
+    def non_opcode_bits(self):
+        return integer_set(0, self.bitsize) - self.opcode_bits
+
+    @lazy
     def operand_bits(self):
         return self.field_class_bits(Operand)
 
@@ -251,7 +282,120 @@ class InstructionTreeNode(object):
         self.instruction = None
         self.interval = interval
         self.subtree = OrderedDict()
+        self.default_opcodes = None
         self.reading_seq = []
+
+    def __eq__(self, other):
+        if self.instruction:
+            return self.instruction == other.instruction
+        else:
+            if other.instruction:
+                return False
+
+        if self.interval != other.interval:
+            return False
+
+        for i, j in zip_longest(self.subtree.items(), other.subtree.items()):
+            if i != j:
+                return False
+
+        return True
+
+    def __ne__(self, other):
+        return not self == other
+
+
+class InfixSet(intervalmap):
+    """ Multiple infixes joined in intervals.
+
+Hints:
+  - Calculate used infix intervals
+    Initialize instance with one parameter and use method `add`
+  - Calculate non-used infix intervals (for "default" case)
+    Initialize instance with two parameters and use method `remove`
+
+    """
+
+    def __init__(self, interval_start, interval_end = None):
+        super(InfixSet, self).__init__()
+        if interval_end is None:
+            interval_end = interval_start
+        interval_end += 1
+        self[interval_start:interval_end] = True
+
+    def add(self, infix):
+        self[infix:(infix + 1)] = True
+
+    def remove(self, infix):
+        self[infix:(infix + 1)] = None
+
+    def iter_intervals(self):
+        for (a, b), __ in self.items():
+            b -= 1
+            if a == b:
+                yield (a,)
+            else:
+                yield (a, b)
+
+    @property
+    def intervals(self):
+        return tuple(self.iter_intervals())
+
+    def iter_lengths(self):
+        for (a, b), __ in self.items():
+            yield b - a
+
+    @property
+    def count(self):
+        return sum(self.iter_lengths())
+
+    def __lt__(self, other):
+        if not isinstance(other, InfixSet):
+            return NotImplemented
+
+        if self.count < other.count:
+            return True
+
+        if self.count > other.count:
+            return False
+
+        if self.intervals < other.intervals:
+            return True
+
+        return False
+
+
+def format_instructions(instructions, indent = "", max_bitsize = None):
+    if max_bitsize is None:
+        max_bitsize = max(i.bitsize for i in instructions)
+    return "\n".join(
+        "{0}{2:<{1}} (priority {3}) {4}".format(
+            indent,
+            max_bitsize,
+            i.opcode_bits_string,
+            i.priority,
+            i.comment
+        ) for i in instructions
+    )
+
+
+def print_instructions(instructions, indent = "", max_bitsize = None):
+    print(
+        format_instructions(
+            instructions,
+            indent = indent,
+            max_bitsize = max_bitsize
+        )
+    )
+
+
+def check_unreachable_instructions(instructions):
+    unreachable_instructions = [i for i in instructions if not i.used]
+    if unreachable_instructions:
+        print("WARNING: some instructions unreachable (check instructions"
+            " encoding or priority):"
+        )
+        print_instructions(unreachable_instructions, indent = "    ")
 
 
 def common_bits_for_opcodes(instructions):
@@ -259,6 +403,36 @@ def common_bits_for_opcodes(instructions):
 
     return instructions[0].opcode_bits.intersection(
         *[i.opcode_bits for i in instructions[1:]]
+    )
+
+
+def all_bits_for_opcodes(instructions):
+    """ Returns bit numbers occupied by any opcode of at least one of the
+    instructions.
+    """
+
+    return instructions[0].opcode_bits.union(
+        *[i.opcode_bits for i in instructions[1:]]
+    )
+
+
+def all_bits_for_non_opcodes(instructions):
+    """ Returns bit numbers occupied by any non-opcode field of at least one of
+    the instructions.
+    """
+
+    return instructions[0].non_opcode_bits.union(
+        *[i.non_opcode_bits for i in instructions[1:]]
+    )
+
+
+def all_opcode_boundaries(instructions):
+    """ Returns bit numbers where opcode intervals start or end of at least one
+    of the instructions.
+    """
+
+    return instructions[0].opcode_boundaries.union(
+        *[i.opcode_boundaries for i in instructions[1:]]
     )
 
 
@@ -299,6 +473,30 @@ def split_intervals(intervals, read_bitsize):
     return splitted_intervals
 
 
+def split_intervals_by_boundaries(intervals, boundaries):
+    """ Splits every interval by every boundary
+:param intervals:
+    list of intervals
+:param boundaries:
+    set of boundaries
+    """
+
+    boundaries = sorted(list(boundaries))
+    splitted_intervals = []
+    for i in intervals:
+        bitoffset, bitsize = i
+        interval_end = bitoffset + bitsize
+        for b in boundaries:
+            if b <= bitoffset:
+                continue
+            if b >= interval_end:
+                break
+            splitted_intervals.append((bitoffset, b - bitoffset))
+            bitoffset = b
+        splitted_intervals.append((bitoffset, interval_end - bitoffset))
+    return splitted_intervals
+
+
 def highlight_interval(string, interval):
     "Marks interval in string with curly braces."
 
@@ -308,41 +506,70 @@ def highlight_interval(string, interval):
     return string[:start] + "{" + string[start:end] + "}" + string[end:]
 
 
+def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
+    min_bitsize = i.bitsize
+    # temporary info for reading sequence calculation
+    node.limit_read = min_bitsize
+
+    unchecked_bits = i.opcode_bits - checked_bits
+    unchecked_intervals = split_intervals(
+        bits_to_intervals(unchecked_bits), read_bitsize
+    )
+
+    for interval in unchecked_intervals:
+        node.interval = interval
+        infix = int(i.get_opcode_part(interval), base = 2)
+        default_infixes = InfixSet(0, 2 ** interval[1] - 1)
+        default_infixes.remove(infix)
+        node.subtree[((infix,),)] = n = InstructionTreeNode()
+        node.default_opcodes = default_infixes.intervals
+        node = n
+        # temporary info for reading sequence calculation
+        node.limit_read = min_bitsize
+
+    node.instruction = i
+    i.used = True
+
+
 def build_instruction_tree(node, instructions, read_bitsize,
+    optimizations = True,
     checked_bits = set(),
-    show_subtree_warnings = SHOW_INTERSECTION_WARNINGS
+    depth = 0 # for debugging purposes
 ):
+    # Note, this is for formatting only.
+    max_bitsize = max(i.bitsize for i in instructions)
+
+    if BUILD_INSTRUCTION_TREE_DEBUG:
+        print("DEBUG: Instructions (depth %d):" % depth)
+        print_instructions(instructions, max_bitsize = max_bitsize)
+
+    if len(instructions) == 1:
+        build_subtree_for_instruction(
+            node, instructions[0], read_bitsize, checked_bits
+        )
+        return
+
     min_bitsize = min(i.bitsize for i in instructions)
     # temporary info for reading sequence calculation
     node.limit_read = min_bitsize
 
+    # First approach: try to find distinguishable interval among the bits that
+    # are opcodes for all instructions.
+
     common_bits = common_bits_for_opcodes(instructions)
-    unchecked_common_bits = common_bits - checked_bits
-    unchecked_common_intervals = split_intervals(
-        bits_to_intervals(unchecked_common_bits), read_bitsize
+    unchecked_bits = common_bits - checked_bits
+    unchecked_intervals = split_intervals(
+        bits_to_intervals(unchecked_bits), read_bitsize
     )
 
-    if len(instructions) == 1:
-        i = instructions[0]
-
-        for interval in unchecked_common_intervals:
-            node.interval = interval
-            infix = i.get_opcode_part(interval)
-            node.subtree[infix] = n = InstructionTreeNode()
-            node = n
-            # temporary info for reading sequence calculation
-            node.limit_read = min_bitsize
-
-        node.instruction = i
-        return
-
-    # find out first distinguishable opcode interval
-    for interval in unchecked_common_intervals:
+    for interval in unchecked_intervals:
         instructions_iter = iter(instructions)
         opc = next(instructions_iter).get_opcode_part(interval)
         for i in instructions_iter:
             if i.get_opcode_part(interval) != opc:
                 # found `interval`
+                if BUILD_INSTRUCTION_TREE_DEBUG:
+                    print("First approach applied")
                 break
         else:
             # not found `interval` yet
@@ -352,118 +579,258 @@ def build_instruction_tree(node, instructions, read_bitsize,
     else:
         # Given `instructions` have equal opcodes in intervals being checked.
         # Opcodes of some instructions may overlap non-opcode fields of
-        # other instructions. Try to find distinguishable interval by
+        # other instructions.
+
+        # Second approach: try to find distinguishable interval by
         # accounting bits of those overlapping non-common intervals.
 
-        # Note, this is for error formatting only.
-        max_bitsize = max(i.bitsize for i in instructions)
-
         min_bitsize_bits = integer_set(0, min_bitsize)
+        opcode_bits = all_bits_for_opcodes(instructions)
+        non_opcode_bits = all_bits_for_non_opcodes(instructions)
+        unchecked_bits = (
+            ((opcode_bits & non_opcode_bits) - checked_bits) & min_bitsize_bits
+        )
 
-        for i in instructions:
-            for f in i.fields:
-                field_bits = integer_set(f.bitoffset, f.bitsize)
-                unchecked_bits = (field_bits - checked_bits) & min_bitsize_bits
-                unchecked_intervals = split_intervals(
-                    bits_to_intervals(unchecked_bits), read_bitsize
-                )
+        # Splitting by the boundaries of opcodes ensures that in each interval
+        # there will be strictly either opcodes or non-opcodes.
+        boundaries = all_opcode_boundaries(instructions)
 
-                for interval in unchecked_intervals:
-                    instructions_iter = iter(instructions)
-                    opc = next(instructions_iter).get_opcode_part(interval)
-                    for i in instructions_iter:
-                        if i.get_opcode_part(interval) != opc:
-                            # found `interval`
-                            break
-                    else:
-                        # not found `interval` yet
-                        continue
+        unchecked_intervals = split_intervals_by_boundaries(
+            split_intervals(bits_to_intervals(unchecked_bits), read_bitsize),
+            boundaries
+        )
+
+        for interval in unchecked_intervals:
+            instructions_iter = iter(instructions)
+            opc = next(instructions_iter).get_opcode_part(interval)
+            for i in instructions_iter:
+                if i.get_opcode_part(interval) != opc:
                     # found `interval`
+                    if BUILD_INSTRUCTION_TREE_DEBUG:
+                        print("Second approach applied")
                     break
-                else:
-                    # not found `interval` yet
-                    continue
-                # found `interval`
-                break
             else:
                 # not found `interval` yet
                 continue
             # found `interval`
             break
         else:
-            raise RuntimeError("Indistinguishable instructions "
-                "(check instructions encoding):\n    " + "\n    ".join(
-                    "{1:<{0}} {2}".format(max_bitsize, i.opcode_bits_string,
-                        i.comment
-                    ) for i in instructions
+            # No intervals left to distinguish instructions.
+
+            # Third approach: select the instruction whose opcode is a superset
+            # for the rest.
+
+            instructions_iter = iter(instructions)
+            superset_i = next(instructions_iter)
+            superset_b = superset_i.opcode_bits
+            for i in instructions_iter:
+                i_b = i.opcode_bits
+                if superset_b <= i_b:
+                    superset_i = i
+                    superset_b = i_b
+                elif not (i_b <= superset_b):
+                    # not found instruction
+                    break
+            else:
+                if BUILD_INSTRUCTION_TREE_DEBUG:
+                    print("Third approach applied")
+                build_subtree_for_instruction(
+                    node, superset_i, read_bitsize, checked_bits
                 )
+                return
+
+            # No instruction with superset opcode.
+
+            # Fourth approach: select the instruction with the highest
+            # `priority`.
+
+            instructions = sorted(instructions,
+                key = lambda i: i.priority,
+                reverse = True
             )
+            max_priority = instructions[0].priority
 
-        potential_error = False
+            if (    BUILD_INSTRUCTION_TREE_WARNINGS
+                and sum(i.priority == max_priority for i in instructions) > 1
+            ):
+                print("WARNING: indistinguishable instructions - the first"
+                    " instruction with the highest priority is used (check"
+                    " instructions encoding or priority):"
+                )
+                print_instructions(instructions,
+                    indent = "    ",
+                    max_bitsize = max_bitsize
+                )
 
-        for i1, i2 in combinations(instructions, 2):
-            i1b = i1.opcode_bits
-            i2b = i2.opcode_bits
-
-            if not (i1b <= i2b or i1b >= i2b):
-                potential_error = True
-                break
-
-        if potential_error:
-            # TODO: The `priority` attribute is required by the instruction in
-            #       order to be able to influence the instruction
-            #       identification.
-            print("""\
-Potential error: arguments and opcodes intersect in instructions at several
-  intervals (highlighted interval is selected to distinguish). Instruction
-  description order and interval selection priority affects instruction
-  identification:
-    """ + "\n    ".join(
-    "{1:<{0}} {2}".format(max_bitsize + 2, # 2 for highlighting
-        highlight_interval(i.opcode_bits_string, interval),
-        i.comment
-    ) for i in instructions
-)
+            if BUILD_INSTRUCTION_TREE_DEBUG:
+                print("Fourth approach applied")
+            build_subtree_for_instruction(
+                node, instructions[0], read_bitsize, checked_bits
             )
+            return
 
-        if (not potential_error and show_subtree_warnings):
-            # Do not show same warnings again during recursive calls
-            show_subtree_warnings = False
-
-            print("""\
-Warning: arguments and opcodes intersect in instructions.
-  Arguments cannot get values equal to opcodes in the highlighted interval.
-  That are instructions with opcodes can be interpreted as a special case of
-  instructions with arguments. If it's not, check instructions encoding:
-    """ + "\n    ".join(
-    "{1:<{0}} {2}".format(max_bitsize + 2, # 2 for highlighting
-        highlight_interval(i.opcode_bits_string, interval),
-        i.comment
-    ) for i in instructions
-)
-            )
+    if BUILD_INSTRUCTION_TREE_DEBUG:
+        print("{1:<{0}} chosed interval ({2}, {3})".format(
+            max_bitsize,
+            "".join(
+                ["-"] * interval[0] +
+                ["C"] * interval[1] +
+                ["-"] * (min_bitsize - interval[0] - interval[1])
+            ),
+            interval[0],
+            interval[1]
+        ))
 
     node.interval = interval
-    new_checked_bits = checked_bits | integer_set(*interval)
+    all_infixes_count = 2 ** interval[1]
 
-    subtree = defaultdict(list)
-
+    # infix instruction distribution
+    iid = defaultdict(list)
     for i in instructions:
         infix = i.get_opcode_part(interval)
-        if infix is None:
-            # Notes:
-            # 1. `default` is a "case" of `switch` block in C (used latter)
-            # 2. it's an alphabetic and is sorted after all other infixes whose
-            #    consist of digits only
-            infix = "default"
-        subtree[infix].append(i)
+        iid[infix].append(i)
 
-    # Note, only infix order is matter now. Instructions with same infix
-    # will be sorted by the corresponding next common infix during recursive
-    # `build_instruction_tree` call.
-    for infix, instructions in sorted(subtree.items()):
-        node.subtree[infix] = n = InstructionTreeNode()
-        build_instruction_tree(n, instructions, read_bitsize,
-            checked_bits if infix == "default" else new_checked_bits,
-            show_subtree_warnings = show_subtree_warnings
+    non_opcode_instructions = iid.pop(None, None)
+
+    if non_opcode_instructions is not None:
+        for __, infix_instructions in iid.items():
+            infix_instructions.extend(non_opcode_instructions)
+
+        # Notes:
+        # 1. `default` is a "case" of `switch` block in C (used latter)
+        # 2. it's an alphabetic and is sorted after all other infixes whose
+        #    consist of digits only
+        # 3. add `default` subtree only if not all possible infixes are used
+        if len(iid) != all_infixes_count:
+            iid["default"] = non_opcode_instructions
+
+    # Note, subtree stores infixes:
+    # binary string -> int
+    # "default" -> None
+    subtree = OrderedDict()
+    checked_bits = checked_bits | integer_set(*interval)
+    depth += 1
+    for infix, infix_instructions in sorted(iid.items()):
+        if infix != "default":
+            infix = int(infix, base = 2)
+        else:
+            infix = None
+        subtree[infix] = n = InstructionTreeNode()
+        build_instruction_tree(n, infix_instructions,
+            read_bitsize,
+            optimizations = optimizations,
+            checked_bits = checked_bits,
+            depth = depth
         )
+
+    if not optimizations:
+        # Note, only infix order is matter now. Instructions with same infix
+        # were sorted by the corresponding next common infix during recursive
+        # `build_instruction_tree` call.
+        default_subtree_node = subtree.pop(None, None)
+        default_opcodes = InfixSet(0, all_infixes_count - 1)
+
+        for infix, subtree_node in subtree.items():
+            node.subtree[((infix,),)] = subtree_node
+            default_opcodes.remove(infix)
+
+        if default_subtree_node is not None:
+            node.subtree[None] = default_subtree_node
+
+        node.default_opcodes = default_opcodes.intervals
+
+        return
+
+    optimize_instruction_subtree(node, subtree)
+
+
+def optimize_instruction_subtree(node, subtree):
+    """ The current algorithm, which propagates non-opcode instructions to all
+    subtrees, may result in some subtrees being the same. To reduce the size of
+    the tree, same subtrees are removed by combining infixes.
+    """
+
+    merged_subtree = []
+    bitsize = node.interval[1]
+    all_infixes_count = 2 ** bitsize
+    default_subtree_node = subtree.pop(None, None)
+    default_infixes = InfixSet(0, all_infixes_count - 1)
+
+    for infix, subtree_node in subtree.items():
+        if (    default_subtree_node is not None
+            and subtree_node == default_subtree_node
+        ):
+            continue
+
+        default_infixes.remove(infix)
+
+        for infixes, merged_subtree_node in merged_subtree:
+            if merged_subtree_node == subtree_node:
+                infixes.add(infix)
+                break
+        else:
+            merged_subtree.append((InfixSet(infix), subtree_node))
+
+    # maximum count of subtree infixes
+    max_csi = 0
+    default_candidate_index = -1
+    used_infixes_count = 0
+
+    for i, (infixes, subtree_node) in enumerate(merged_subtree):
+        csi = infixes.count
+        used_infixes_count += csi
+        if csi >= max_csi:
+            max_csi = csi
+            default_candidate_index = i
+
+    if default_subtree_node is not None:
+        # All subtrees match the default subtree.
+        if len(merged_subtree) == 0:
+            node.instruction = default_subtree_node.instruction
+            node.interval = default_subtree_node.interval
+            node.subtree = default_subtree_node.subtree
+            node.default_opcodes = default_subtree_node.default_opcodes
+            return
+
+        # If the "default" case is present then it will be used for the subtree
+        # with the largest count of infixes (if the count is the same then with
+        # the largest first infix) to make it easier to identify the same
+        # subtrees.
+
+        default_candidate_infixes, default_candidate = (
+            merged_subtree[default_candidate_index]
+        )
+
+        if default_infixes < default_candidate_infixes:
+            merged_subtree.pop(default_candidate_index)
+            insort(merged_subtree, (default_infixes, default_subtree_node))
+            default_subtree_node = default_candidate
+            default_infixes = default_candidate_infixes
+    else:
+        subtree_node_infixes, subtree_node = merged_subtree[0]
+        if (    len(merged_subtree) == 1
+            and subtree_node_infixes.count == all_infixes_count
+        ):
+            node.instruction = subtree_node.instruction
+            node.interval = subtree_node.interval
+            node.subtree = subtree_node.subtree
+            node.default_opcodes = subtree_node.default_opcodes
+            return
+
+        # If the "default" case is not present but all possible infixes are
+        # used then the "default" case will be used for the subtree with the
+        # largest count of infixes (if the count is the same then with the
+        # largest first infix) to make it easier to identify the same subtrees.
+
+        if used_infixes_count == all_infixes_count:
+            default_infixes, default_subtree_node = (
+                merged_subtree.pop(default_candidate_index)
+            )
+
+    for infixes, merged_subtree_node in merged_subtree:
+        node.subtree[infixes.intervals] = merged_subtree_node
+
+    if default_subtree_node is not None:
+        node.subtree[None] = default_subtree_node
+
+    node.default_opcodes = default_infixes.intervals
