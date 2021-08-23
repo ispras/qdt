@@ -120,6 +120,11 @@ Ex.: [((start1, end1), value1), ((start2, end2), value2), ...].
                 start_point += 1
 
             if end_point >= 0:
+                if (end_point < len(self._bounds)
+                    and self._bounds[end_point] == _slice.stop
+                ):
+                    end_point += 1
+
                 self._bounds[start_point:end_point] = [
                     _slice.start, _slice.stop
                 ]
