@@ -304,7 +304,7 @@ class InstructionTreeNode(object):
         return not self == other
 
 
-class InfixIntervalsContainer(object):
+class InfixSet(object):
     """ This class calculating infix intervals based on incoming infixes.
 
     Calculate used infix intervals:
@@ -382,7 +382,7 @@ class InfixIntervalsContainer(object):
         return self._count + self._interval_end - self._interval_start + 1
 
     def __lt__(self, other):
-        if not isinstance(other, InfixIntervalsContainer):
+        if not isinstance(other, InfixSet):
             return NotImplemented
 
         if self.count < other.count:
@@ -551,7 +551,7 @@ def build_subtree_for_instruction(node, i, read_bitsize, checked_bits):
     for interval in unchecked_intervals:
         node.interval = interval
         infix = int(i.get_opcode_part(interval), base = 2)
-        default_infixes = InfixIntervalsContainer(0, 2 ** interval[1] - 1)
+        default_infixes = InfixSet(0, 2 ** interval[1] - 1)
         default_infixes.remove(infix)
         node.subtree[((infix,),)] = n = InstructionTreeNode()
         node.default_opcodes = default_infixes.intervals
@@ -760,7 +760,7 @@ def build_instruction_tree(node, instructions, read_bitsize,
         # were sorted by the corresponding next common infix during recursive
         # `build_instruction_tree` call.
         default_subtree_node = subtree.pop(None, None)
-        default_opcodes = InfixIntervalsContainer(0, all_infixes_count - 1)
+        default_opcodes = InfixSet(0, all_infixes_count - 1)
 
         for infix, subtree_node in subtree.items():
             node.subtree[((infix,),)] = subtree_node
@@ -786,7 +786,7 @@ def optimize_instruction_subtree(node, subtree):
     bitsize = node.interval[1]
     all_infixes_count = 2 ** bitsize
     default_subtree_node = subtree.pop(None, None)
-    default_infixes = InfixIntervalsContainer(0, all_infixes_count - 1)
+    default_infixes = InfixSet(0, all_infixes_count - 1)
 
     for infix, subtree_node in subtree.items():
         if (    default_subtree_node is not None
@@ -801,9 +801,7 @@ def optimize_instruction_subtree(node, subtree):
                 infixes.add(infix)
                 break
         else:
-            merged_subtree.append(
-                (InfixIntervalsContainer(infix), subtree_node)
-            )
+            merged_subtree.append((InfixSet(infix), subtree_node))
 
     # maximum count of subtree infixes
     max_csi = 0
