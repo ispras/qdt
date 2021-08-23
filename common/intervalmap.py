@@ -63,6 +63,16 @@ None
 >>> i[5:6] = 4
 >>> i
 {[0, 2] => 1, [2, 4] => 2, [4, 5] => 3, [5, 6] => 4, [6, None] => 3}
+>>> i = intervalmap()
+>>> i[0:4] = True
+>>> i
+{[0, 4] => True}
+>>> i[1:2] = None
+>>> i
+{[0, 1] => True, [2, 4] => True}
+>>> i[3:4] = None
+>>> i
+{[0, 1] => True, [2, 3] => True}
     """
 
     def __init__(self, items = None):
