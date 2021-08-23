@@ -81,6 +81,12 @@ def main():
     )
 
     parser.add_argument(
+        "--no-instruction-tree-optimizations",
+        action = "store_true",
+        help = "Disable optimizations when building an instruction tree."
+    )
+
+    parser.add_argument(
         "script",
         help = "A Python script containing definition of a project to generate."
     )
@@ -137,6 +143,9 @@ def main():
         known_targets = qvd.qvc.known_targets,
         with_debug_comments = arguments.gen_debug_comments,
         translate_cpu_semantics = not arguments.no_i3s,
+        instruction_tree_optimizations = (
+            not arguments.no_instruction_tree_optimizations
+        ),
         include_paths = tuple(path for path, _ in qvd.include_paths)
     )
 
