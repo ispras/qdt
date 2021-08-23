@@ -833,7 +833,7 @@ def optimize_instruction_subtree(node, subtree):
             merged_subtree[default_candidate_index]
         )
 
-        if (default_infixes < default_candidate_infixes):
+        if default_infixes < default_candidate_infixes:
             merged_subtree.pop(default_candidate_index)
             insort(merged_subtree, (default_infixes, default_subtree_node))
             default_subtree_node = default_candidate
