@@ -23,6 +23,7 @@ from collections import (
 from common import (
     ee,
     lazy,
+    intervalmap,
 )
 from copy import (
     deepcopy,
@@ -304,82 +305,49 @@ class InstructionTreeNode(object):
         return not self == other
 
 
-class InfixSet(object):
-    """ This class calculating infix intervals based on incoming infixes.
+class InfixSet(intervalmap):
+    """ Multiple infixes joined in intervals.
 
-    Calculate used infix intervals:
-        initialize instance with one parameter and use method `add`
-    Calculate non-used infix intervals (for "default" case):
-        initialize instance with two parameters and use method `remove`
+Hints:
+  - Calculate used infix intervals
+    Initialize instance with one parameter and use method `add`
+  - Calculate non-used infix intervals (for "default" case)
+    Initialize instance with two parameters and use method `remove`
 
-    Note, don't use `add` and `remove` methods with one instance.
     """
 
     def __init__(self, interval_start, interval_end = None):
-        self._intervals = []
-        self._count = 0
-        self._interval_start = interval_start
-        self._interval_end = interval_end or interval_start
-        self._prev_infix = None
+        super(InfixSet, self).__init__()
+        if interval_end is None:
+            interval_end = interval_start
+        interval_end += 1
+        self[interval_start:interval_end] = True
 
     def add(self, infix):
-        interval_start, interval_end = self._interval_start, self._interval_end
-
-        if infix <= interval_end:
-            raise RuntimeError(
-                "Only ascending sequence of infixes is supported"
-            )
-        elif interval_end + 1 == infix:
-            self._interval_end = infix
-        else:
-            if interval_start != interval_end:
-                self._intervals.append((interval_start, interval_end))
-            else:
-                self._intervals.append((interval_start,))
-            self._count += interval_end - interval_start + 1
-            self._interval_start = self._interval_end = infix
+        self[infix:(infix + 1)] = True
 
     def remove(self, infix):
-        if self._prev_infix is not None and infix <= self._prev_infix:
-            raise RuntimeError(
-                "Only ascending sequence of infixes is supported"
-            )
-        self._prev_infix = infix
+        self[infix:(infix + 1)] = None
 
-        interval_start, interval_end = self._interval_start, self._interval_end
-
-        if infix < interval_start:
-            raise RuntimeError(
-                "Only ascending sequence of infixes is supported"
-            )
-        elif infix > interval_end:
-            raise RuntimeError("Infix above the upper bound")
-        elif infix == interval_start:
-            self._interval_start += 1
-        elif infix == interval_end:
-            self._interval_end -= 1
-        else:
-            tmp_interval_end = infix - 1
-            if interval_start != tmp_interval_end:
-                self._intervals.append((interval_start, tmp_interval_end))
+    def iter_intervals(self):
+        for (a, b), __ in self.items():
+            b -= 1
+            if a == b:
+                yield (a,)
             else:
-                self._intervals.append((interval_start,))
-            self._count += tmp_interval_end - interval_start + 1
-            self._interval_start = infix + 1
+                yield (a, b)
 
     @property
     def intervals(self):
-        interval_start, interval_end = self._interval_start, self._interval_end
-        if interval_start < interval_end:
-            return tuple(self._intervals + [(interval_start, interval_end)])
-        elif interval_start == interval_end:
-            return tuple(self._intervals + [(interval_start,)])
-        else:
-            return tuple(self._intervals)
+        return tuple(self.iter_intervals())
+
+    def iter_lengths(self):
+        for (a, b), __ in self.items():
+            yield b - a
 
     @property
     def count(self):
-        return self._count + self._interval_end - self._interval_start + 1
+        return sum(self.iter_lengths())
 
     def __lt__(self, other):
         if not isinstance(other, InfixSet):
