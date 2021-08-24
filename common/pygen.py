@@ -199,23 +199,27 @@ require reference to the current object.
                     normalized += "\\x%02x" % code
                 elif code == 92: # \
                     normalized += "\\\\"
+                # Do not use multiline strings ("""/''') because of auto
+                # indentation.
+                elif code == 0x0A: # \n
+                    normalized += r"\n"
+                elif code == 0x0D: # \r
+                    normalized += r"\r"
                 else:
                     if code == 34: # "
                         dquote += 1
                     elif code == 38: # '
                         squote += 1
-                    elif code == 0x0A or code == 0x0D:
-                        multiline = True
                     normalized += chr(code)
 
             if dquote > squote:
                 escaped = normalized.replace("'", "\\'")
-                quotes = "'''" if multiline else "'"
-                return prefix + quotes + escaped + quotes
+                quotes = "'"
             else:
                 escaped = normalized.replace('"', '\\"')
-                quotes = '"""' if multiline else '"'
-                return prefix + quotes + escaped + quotes
+                quotes = '"'
+
+            return prefix + quotes + escaped + quotes
         else:
             return repr(c)
 
