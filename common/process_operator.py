@@ -77,10 +77,12 @@ Entries are only appended at runtime.
     def poll(self):
         return self._p.poll
 
-    def __init__(self, *popen_args, **popen_kw):
-        popen_kw["stdout"] = popen_kw["stderr"] = popen_kw["stdin"] = PIPE
+    def __init__(self, *popen_args, **kw):
+        start_threads = kw.pop("start_threads", True)
 
-        self._p = p = Popen(*popen_args, **popen_kw)
+        kw["stdout"] = kw["stderr"] = kw["stdin"] = PIPE
+
+        self._p = p = Popen(*popen_args, **kw)
 
         self.stdin = p.stdin
 
@@ -106,7 +108,11 @@ Entries are only appended at runtime.
         self._h_cond = Condition()
         self.history = []
 
-        for t in threads:
+        if start_threads:
+            self.start_threads()
+
+    def start_threads(self):
+        for t in self._threads:
             t.start()
 
     def _operator(self, stdout_over, stderr_over):
