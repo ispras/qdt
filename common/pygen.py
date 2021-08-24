@@ -302,9 +302,9 @@ require reference to the current object.
 
         self.first_field = True
 
-    def gen_code(self, obj, pa_names = False, suffix = ")"):
+    def gen_code(self, obj, pa_names = False, suffix = ")", **gen_args_kw):
         self.reset_gen(obj)
-        self.gen_args(obj, pa_names = pa_names)
+        self.gen_args(obj, pa_names = pa_names, **gen_args_kw)
         self.gen_end(suffix = suffix)
 
     def gen_instantiation(self, obj, **kw):
