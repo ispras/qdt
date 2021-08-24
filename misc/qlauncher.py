@@ -413,11 +413,13 @@ class LaunchTree(GUIFrame):
 
 class MeasurerResult(object):
 
-    def __init__(self, info, retcodes):
-        self.info = info
-        self.retcodes = retcodes
+    def __init__(self, info = None, retcodes = None, file_name = None):
+        self.info = {} if info is None else info
+        self.retcodes = {} if retcodes is None else retcodes
+        self.file_name = file_name
 
-    def save(self, file_name):
+    def save(self, file_name = None):
+        file_name = file_name or self.file_name
         pythonize(self, file_name)
 
     @staticmethod
@@ -426,18 +428,17 @@ class MeasurerResult(object):
         execfile(file_name, glob)
         for v in glob.values():
             if isinstance(v, MeasurerResult):
+                v.file_name = file_name
                 return v
         raise ValueError("%s file have no MeasurerResult" % file_name)
 
     def __pygen_pass__(self, gen, __):
-        gen.gen_instantiation(self)
+        gen.gen_instantiation(self, skip_kw = ("file_name",))
 
 
 class LauncherGUI(GUITk):
 
-    def __init__(self, measurer, *a, **kw):
-        result = kw.pop("result", None) # previous result
-
+    def __init__(self, measurer, result, *a, **kw):
         GUITk.__init__(self, *a, **kw)
 
         self.title(_("Qemu Launcher"))
@@ -463,19 +464,21 @@ class LauncherGUI(GUITk):
 
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
 
-        if result is not None:
-            self.info.update(result.info)
-            self.retcodes.update(result.retcodes)
+        self.info.update(result.info)
+        self.retcodes.update(result.retcodes)
 
-            for name, rc in self.retcodes.items():
-                launch = measurer.measurements[name]
-                self._set_rc(launch, rc)
+        for name, rc in self.retcodes.items():
+            launch = measurer.measurements[name]
+            self._set_rc(launch, rc)
+            measurer.skip.add(name)
 
-    def gen_result(self):
-        return MeasurerResult(
-            info = dict(self.info),
-            retcodes = self.retcodes.copy(),
-        )
+        self.result = result
+
+    def _update_result(self):
+        result = self.result
+        result.info.update(self.info)
+        result.retcodes.update(self.retcodes)
+        result.save()
 
     def _on_build_started(self, ml):
         self.info[ml.name] += "Building...\n"
@@ -495,6 +498,8 @@ class LauncherGUI(GUITk):
 
         self._set_rc(ml, rc)
         self._update_info(ml)
+
+        self._update_result()
 
     def _set_rc(self, launch, rc):
         if rc == 0:
@@ -549,6 +554,8 @@ def main():
     workdir = abspath(args.workdir)
     resdir = abspath(args.resdir)
     workloads = abspath(args.workloads)
+
+    makedirs(resdir, exist_ok = True)
 
     log = args.log
 
@@ -643,10 +650,8 @@ def main():
     prev_res_fn = join(resdir, "qlauncher.res.py")
     try:
         res = MeasurerResult.load(prev_res_fn)
-    except:
-        from traceback import print_exc
-        print_exc()
-        res = None
+    except FileNotFoundError:
+        res = MeasurerResult(file_name = prev_res_fn)
 
     measurer = Measurer(
         *gen_tree(base_launch,
@@ -659,7 +664,7 @@ def main():
         )
     )
 
-    root = LauncherGUI(measurer, result = res)
+    root = LauncherGUI(measurer, res)
 
     base_launch.task_manager = root.task_manager
 
@@ -688,10 +693,6 @@ def main():
     if log is not None:
         listener.revert()
         log_file.close()
-
-    makedirs(resdir, exist_ok = True)
-    root.gen_result().save(prev_res_fn)
-
 
 if __name__ == "__main__":
     exit(main() or 0)
