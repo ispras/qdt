@@ -682,10 +682,14 @@ class QemuVersionDescription(object):
             rmtree(tmp_work_dir)
             get_cleaner().cancel(clean_work_dir_task)
 
-            yield self.co_init_device_tree()
-
             # Search for PCI Ids
             PCIClassification.build()
+
+            # Save cache after long running operation because device tree
+            # initialization is frequently buggy.
+            yield self.co_overwrite_cache()
+
+            yield self.co_init_device_tree()
 
             yield self.co_overwrite_cache()
         else:
