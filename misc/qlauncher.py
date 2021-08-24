@@ -256,6 +256,10 @@ class QemuBootTimeMeasurer(QemuProcess):
 
             log("QMP: " + str(event))
 
+            if event["event"] == "STOP":
+                log("Unexpected STOP of VM. Terminating...")
+                self.qmp("quit")
+
     def qmp_ready(self):
         self.__notify_log("Resuming...")
         self.t_resumed = time()
