@@ -886,7 +886,7 @@ class QemuVersionDescription(object):
 
     def co_gen_known_targets(self, work_dir):
         print("Making known targets set...")
-        dconfigs = join(work_dir, "default-configs")
+        dconfigs = join(work_dir, *get_vp("default-configs suffix"))
         kts = set()
         for config in listdir(dconfigs):
             yield True

@@ -1128,6 +1128,13 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # default-configs: move files to default-configs/devices/
+    u'1bb4cb1c33805c0da0db5b76852bb73759625c4e' : [
+        QEMUVersionParameterDescription("default-configs suffix",
+            new_value = ("default-configs", "devices"),
+            old_value = ("default-configs",)
+        )
+    ],
     # There are many commits converting build system part by part.
     # Let the merge commit be heuristic point.
     u'7fd51e68c34fcefdb4d6fd646ed3346f780f89f4' : [
