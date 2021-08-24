@@ -9,7 +9,6 @@ from subprocess import (
 )
 from threading import (
     Thread,
-    Lock,
     Event,
     Condition,
 )
@@ -130,7 +129,6 @@ Entries are only appended at runtime.
             while not err_is_over():
                 self.operate()
                 wait()
-
 
         self.finished()
 
