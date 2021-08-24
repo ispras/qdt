@@ -193,6 +193,9 @@ class MeasureLaunch(object):
             rmtree(cwd)
             yield True
 
+        # Don't forget rest of stdout and stderr.
+        p.wait_threads()
+
         self.__notify_finished(self, launch, p)
 
     def _on_process_log(self, text):
