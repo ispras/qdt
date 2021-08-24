@@ -11,7 +11,7 @@ from common import (
 )
 from qemu import (
     QLaunch,
-    ExampleQemuProcess,
+    QemuProcess,
 )
 from widgets import (
     add_scrollbars_native,
@@ -64,6 +64,7 @@ EMPTY_DICT = {}
     "build_started", # MeasureLaunch
     "launched",
         # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer
+    "log", # see MeasureLaunch, str
     "finished",
         # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer
 )
@@ -158,9 +159,14 @@ class MeasureLaunch(object):
             extra_args = self.qemu_extra_args,
         )
 
-        p = launch.launch(self.task_manager)
+        p = launch.launch(self.task_manager, start_threads = False)
 
+        p.watch_log(self._on_process_log)
         self.__notify_launched(self, launch, p)
+
+        # Don't start threads before all watchers are registered.
+        # Else, first events can be skipped.
+        p.start_threads()
 
         poll = p.poll
 
@@ -189,10 +195,14 @@ class MeasureLaunch(object):
 
         self.__notify_finished(self, launch, p)
 
+    def _on_process_log(self, text):
+        self.__notify_log(self, text)
+
 
 @notifier(
     "build_started", # see MeasureLaunch
     "launched",
+    "log",
     "finished",
 )
 class Measurer(object):
@@ -224,36 +234,57 @@ class Measurer(object):
 
 
 @notifier(
+    "log", # `str`ing
     "finished",
 )
-class QemuBootTimeMeasurer(ExampleQemuProcess):
+class QemuBootTimeMeasurer(QemuProcess):
+
+    def co_qmp(self, remote, version, capabilities):
+        log = self.__notify_log
+
+        log("QMP: remote: %s: version: %s, capabilities: %s" % (
+            remote,
+            version,
+            ", ".join(capabilities)
+        ))
+
+        while True:
+            event = (yield)
+
+            log("QMP: " + str(event))
 
     def qmp_ready(self):
-        print("Resuming...")
+        self.__notify_log("Resuming...")
         self.t_resumed = time()
         self.qmp("cont")
 
     def co_serial(self, idx, remote):
-        sup_gen = super(QemuBootTimeMeasurer, self).co_serial(idx, remote)
+        log = self.__notify_log
 
-        chunk = None
+        prefix = "serial%d: " % idx
+        log(prefix + "connection from " + str(remote))
 
         while True:
-            chunk = (yield sup_gen.send(chunk))
+            chunk = (yield)
             text = chunk.decode("utf-8")
+
+            log(prefix + text.rstrip("\r\n"))
+
             if "QDTAgent1" in text:
                 self.t_qdt_agent_started = time()
                 self.qmp("quit")
 
     def finished(self):
-        self.__notify_finished()
         try:
             boot_duration = self.t_qdt_agent_started - self.t_resumed
         except:
-            print("Can't measure boot duration...\n" + format_exc())
+            self.__notify_log(
+                "Can't measure boot duration...\n" + format_exc()
+            )
         else:
             self.boot_duration = boot_duration
-            print("Boot duration: " + str(boot_duration))
+            self.__notify_log("Boot duration: " + str(boot_duration))
+        self.__notify_finished()
 
 
 class QemuBootTimeMeasureLaunch(QLaunch):
@@ -486,8 +517,14 @@ class LauncherGUI(GUITk):
         self._update_info(ml)
 
     def _on_launched(self, ml, ql, proc):
-        self.info[ml.name] += "\n\nRunning...\n" +  " \\\n".join(proc.args)
+        self.info[ml.name] += (
+            "\n\nRunning...\n" +  " \\\n".join(proc.args) + "\n\n"
+        )
         self.w_tree.set_status(ml, "running")
+        self._update_info(ml)
+
+    def _on_log(self, ml, text):
+        self.info[ml.name] += text + "\n"
         self._update_info(ml)
 
     def _on_finished(self, ml, ql, proc):
