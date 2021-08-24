@@ -274,6 +274,16 @@ class QemuBootTimeMeasurer(QemuProcess):
                 self.t_qdt_agent_started = time()
                 self.qmp("quit")
 
+    def co_operate(self):
+        log = self.__notify_log
+        while True:
+            stdout, stderr = (yield)
+
+            if stdout:
+                log("out: " + stdout.decode("utf-8").rstrip("\r\n"))
+            if stderr:
+                log("err: " + stderr.decode("utf-8").rstrip("\r\n"))
+
     def finished(self):
         try:
             boot_duration = self.t_qdt_agent_started - self.t_resumed
