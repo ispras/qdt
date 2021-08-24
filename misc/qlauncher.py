@@ -651,6 +651,10 @@ def main():
                         workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"
                     ),
                     snapshot = True,
+                    nodefaults = True,
+                    vga = "std",
+                    net = "none",
+                    icount = 2,
                 )
             )
         )
