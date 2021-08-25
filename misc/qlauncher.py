@@ -653,21 +653,24 @@ def main():
             )
 
     def gen_workloads(base, **__):
+        qemu_extra_args = dict(
+            m = "1G",
+            hda = join(
+                workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"
+            ),
+            snapshot = True,
+            nodefaults = True,
+            vga = "std",
+            net = "none",
+            icount = 2,
+        )
+        qemu_extra_args["global"] = "apic-common.vapic=off"
+
         yield base.variant(".WinXP",
             cwd = join(workdir, "winxp"),
             resdir = join(resdir, "winxp"),
             updates = dict(
-                qemu_extra_args = dict(
-                    m = "1G",
-                    hda = join(
-                        workloads, "WinXPSP3i386/WinXPSP3i386_agent.qcow"
-                    ),
-                    snapshot = True,
-                    nodefaults = True,
-                    vga = "std",
-                    net = "none",
-                    icount = 2,
-                )
+                qemu_extra_args = qemu_extra_args,
             )
         )
 
