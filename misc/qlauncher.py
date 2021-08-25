@@ -493,6 +493,8 @@ class LauncherGUI(GUITk):
 
         self._measurer = measurer
 
+        measurements = measurer.measurements
+
         apw = AutoPanedWindow(self)
         apw.pack(fill = BOTH, expand = True)
 
@@ -502,7 +504,7 @@ class LauncherGUI(GUITk):
         self.w_info = w_status = LaunchInfoWidget(apw, sizegrip = True)
         apw.add(w_status, sticky = "NESW")
 
-        w_tree.set_launches(measurer.measurements.values())
+        w_tree.set_launches(measurements.values())
 
         self.info = defaultdict(str)
         self.retcodes = dict()
@@ -516,7 +518,10 @@ class LauncherGUI(GUITk):
         self.retcodes.update(result.retcodes)
 
         for name, rc in self.retcodes.items():
-            launch = measurer.measurements[name]
+            try:
+                launch = measurements[name]
+            except KeyError:
+                continue
             self._set_rc(launch, rc)
             measurer.skip.add(name)
 
