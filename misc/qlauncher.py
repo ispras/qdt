@@ -151,12 +151,21 @@ class MeasureLaunch(object):
 
         makedirs(cwd, exist_ok = True)
 
+        try:
+            extra_args = self.qemu_extra_args
+        except AttributeError:
+            extra_args = {}
+        else:
+            extra_args = extra_args.copy()
+
+        extra_args.setdefault("name", self.name)
+
         yield True
         launch = QemuBootTimeMeasureLaunch(qemu,
             process_kw = dict(
                 cwd = cwd,
             ),
-            extra_args = self.qemu_extra_args,
+            extra_args = extra_args,
         )
 
         p = launch.launch(self.task_manager, start_threads = False)
