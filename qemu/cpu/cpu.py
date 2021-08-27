@@ -1186,6 +1186,8 @@ def patch_configure(src, arch_bigendian, target_name):
 
     fixed_target_bigendian = False
 
+    configure_changed = False
+
     for i, line in enumerate(lines):
         if line == 'TARGET_ABI_DIR=""\n':
             found_target_abi_dir = True
@@ -1198,9 +1200,11 @@ def patch_configure(src, arch_bigendian, target_name):
             if arch_bigendian:
                 if target_name not in bigendian_list:
                     bigendian_list.append(target_name)
+                    configure_changed = True
             else:
                 if target_name in bigendian_list:
                     bigendian_list.remove(target_name)
+                    configure_changed = True
             lines[ind] = "  " + "|".join(bigendian_list) + ")\n"
             fixed_target_bigendian = True
 
@@ -1217,6 +1221,7 @@ def patch_configure(src, arch_bigendian, target_name):
 """.format(tn = target_name)
                 )
                 inserted_target = True
+                configure_changed = True
 
         if found_disas_config and not inserted_disas_config:
             if line == target_in_config:
@@ -1230,6 +1235,7 @@ def patch_configure(src, arch_bigendian, target_name):
 """ % (target_name, target_name.upper())
                 )
                 inserted_disas_config = True
+                configure_changed = True
 
         if (    fixed_target_bigendian
             and inserted_target
@@ -1237,8 +1243,9 @@ def patch_configure(src, arch_bigendian, target_name):
         ):
             break
 
-    with open(configure_path, "w") as f:
-        f.write("".join(lines))
+    if configure_changed:
+        with open(configure_path, "w") as f:
+            f.write("".join(lines))
 
 
 re_arch_enum_definition = compile("^    (\w+) = \(1 << (\d+)\),\n$")
