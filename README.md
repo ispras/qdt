@@ -148,7 +148,13 @@ sudo apt install python-tk python3-tk
 `idlelib` is also involved.
 
 ```bash
-sudo apt install idle-python2.7 idle-python3.4
+# eg.: sudo apt install idle-python2.7
+sudo apt install idle-python$(python2 --version 2>&1 \
+    | sed -e 's/Python \([0-9]\+\.[0-9]\+\).*/\1/')
+
+# eg.: sudo apt install idle-python3.4
+sudo apt install idle-python$(python3 --version \
+    | sed -e 's/Python \([0-9]\+\.[0-9]\+\).*/\1/')
 ```
 
 Note that `idle-python` package name suffix corresponds to the Python version.
