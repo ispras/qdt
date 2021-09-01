@@ -6,6 +6,7 @@ from common import (
     QRepo,
     BuildDir,
     bidict,
+    pygenerate,
     pythonize,
     execfile,
 )
@@ -41,6 +42,7 @@ from argparse import (
 )
 from os import (
     remove,
+    stat,
 )
 from os.path import (
     abspath,
@@ -66,7 +68,7 @@ EMPTY_DICT = {}
         # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer
     "log", # see MeasureLaunch, str
     "finished",
-        # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer
+        # MeasureLaunch, QemuBootTimeMeasureLaunch, QemuBootTimeMeasurer, dict
 )
 class MeasureLaunch(object):
 
@@ -81,11 +83,21 @@ class MeasureLaunch(object):
         self.name = name
         self.base = base
         self.variants = []
-        if base is not None:
+        if base is None:
+            changes.setdefault("cleanup", True)
+            changes.setdefault("resfiles", tuple())
+            changes.setdefault("resprefix", "")
+            changes.setdefault("filesizes", tuple())
+            changes.setdefault("extra_configure_args", dict())
+        else:
             base.variants.append(self)
 
         for a, v in changes.items():
             setattr(self, a, v)
+
+        # Note, thise attributes also must be defined by leafs (of
+        # MeasureLaunch configurations tree):
+        # task_manager, qrepo, arch, build, prefix, cwd, resdir
 
     def iter_attrs(self):
         overwritten = set()
@@ -198,14 +210,31 @@ class MeasureLaunch(object):
 
                 yield True
 
+            filesizes = {}
+            for fn in self.filesizes:
+                full = join(cwd, fn)
+                if exists(full):
+                    size = stat(full).st_size
+                else:
+                    size = None
+
+                filesizes[fn] = size
+        else:
+            filesizes = None
+
         if self.cleanup:
             rmtree(cwd)
             yield True
 
+        resinfo = dict(
+            returncode = p.returncode,
+            filesizes = filesizes,
+        )
+
         # Don't forget rest of stdout and stderr.
         p.wait_threads()
 
-        self.__notify_finished(self, launch, p)
+        self.__notify_finished(self, launch, p, resinfo)
 
     def _on_process_log(self, text):
         self.__notify_log(self, text)
@@ -266,8 +295,11 @@ class QemuBootTimeMeasurer(QemuProcess):
             log("QMP: " + str(event))
 
             if event["event"] == "STOP":
-                log("Unexpected STOP of VM. Terminating...")
-                self.qmp("quit")
+                if not hasattr(self, "t_qdt_agent_started"):
+                    log("Unexpected STOP of VM. Terminating...")
+                    self.qmp("quit")
+                # else:
+                    # STOP is likely result of rr3 playing end
 
     def qmp_ready(self):
         self.__notify_log("Resuming...")
@@ -470,9 +502,9 @@ class LaunchTree(GUIFrame):
 
 class MeasurerResult(object):
 
-    def __init__(self, info = None, retcodes = None, file_name = None):
+    def __init__(self, info = None, retinfos = None, file_name = None):
         self.info = {} if info is None else info
-        self.retcodes = {} if retcodes is None else retcodes
+        self.retinfos = {} if retinfos is None else retinfos
         self.file_name = file_name
 
     def save(self, file_name = None):
@@ -516,7 +548,7 @@ class LauncherGUI(GUITk):
         w_tree.set_launches(measurements.values())
 
         self.info = defaultdict(str)
-        self.retcodes = dict()
+        self.retinfos = dict()
 
         for e in measurer._events:
             getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
@@ -524,14 +556,14 @@ class LauncherGUI(GUITk):
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
 
         self.info.update(result.info)
-        self.retcodes.update(result.retcodes)
+        self.retinfos.update(result.retinfos)
 
-        for name, rc in self.retcodes.items():
+        for name, ri in self.retinfos.items():
             try:
                 launch = measurements[name]
             except KeyError:
                 continue
-            self._set_rc(launch, rc)
+            self._set_rc(launch, ri["returncode"])
             measurer.skip.add(name)
 
         self.result = result
@@ -539,7 +571,7 @@ class LauncherGUI(GUITk):
     def _update_result(self):
         result = self.result
         result.info.update(self.info)
-        result.retcodes.update(self.retcodes)
+        result.retinfos.update(self.retinfos)
         result.save()
 
     def _on_build_started(self, ml):
@@ -558,11 +590,12 @@ class LauncherGUI(GUITk):
         self.info[ml.name] += text + "\n"
         self._update_info(ml)
 
-    def _on_finished(self, ml, ql, proc):
-        rc = proc.returncode
+    def _on_finished(self, ml, ql, proc, resinfo):
+        rc = resinfo["returncode"]
 
-        self.info[ml.name] += "\n\nFinished (%d)\n\n" % rc
-        self.retcodes[ml.name] = rc
+        self.info[ml.name] += "\n\nFinished (%d)\n" % rc
+        self.info[ml.name] += pygenerate(resinfo).w.getvalue()
+        self.retinfos[ml.name] = resinfo
 
         self._set_rc(ml, rc)
         self._update_info(ml)
@@ -631,7 +664,6 @@ def main():
 
     base_launch = MeasureLaunch("Qemu",
         qrepo = qrepo,
-        cleanup = True,
         resfiles = (
             "count.csv",
             "save.csv",
@@ -640,12 +672,19 @@ def main():
             "shadows.play.txt",
             "statistics.txt",
         ),
-        resprefix = "",
+        filesizes = (
+            "memory.stream",
+            "interrupt.stream",
+            "mmu.stream",
+            "codegen.stream",
+            "blocks.stream",
+        ),
+        resdir = resdir,
         extra_configure_args = dict(
             vte = True,
             sdl = False,
             rr3 = True,
-        )
+        ),
     )
 
     def gen_arches(base, arches, **__):
@@ -654,14 +693,16 @@ def main():
                 arch = arch,
                 build = join(builds, arch, "build"),
                 prefix = join(builds, arch, "install"),
+                resdir = join(base.resdir, arch),
                 updates = dict(
                     extra_configure_args = {
                         "target-list" : arch + "-softmmu",
                     }
-                )
+                ),
             )
 
     def gen_workloads(base, **__):
+        # Windows XP
         qemu_extra_args = dict(
             m = "1G",
             hda = join(
@@ -677,11 +718,41 @@ def main():
 
         yield base.variant(".WinXP",
             cwd = join(workdir, "winxp"),
-            resdir = join(resdir, "winxp"),
+            resdir = join(base.resdir, "winxp"),
             updates = dict(
-                qemu_extra_args = qemu_extra_args,
-            )
+                qemu_extra_args = dict(qemu_extra_args),
+            ),
         )
+
+        if base.arch == "x86_64":
+            # Windows 7
+            qemu_extra_args["hda"] = join(
+                workloads, "Win7x86_64/Win7x86_64_agent.qcow"
+            )
+            qemu_extra_args["m"] = "2G"
+            qemu_extra_args["icount"] = 2
+
+            yield base.variant(".Win7",
+                cwd = join(workdir, "win7"),
+                resdir = join(base.resdir, "win7"),
+                updates = dict(
+                    qemu_extra_args = dict(qemu_extra_args),
+                ),
+            )
+
+            # Ubuntu 20.04 Server
+            qemu_extra_args["hda"] = join(
+                workloads, "ubuntu/UbuntuServer20.04x86_64_agent.qcow2"
+            )
+            qemu_extra_args["m"] = "4G"
+
+            yield base.variant(".Ubuntu20.04",
+                cwd = join(workdir, "ubuntu20.04"),
+                resdir = join(base.resdir, "ubuntu20.04"),
+                updates = dict(
+                    qemu_extra_args = dict(qemu_extra_args),
+                ),
+            )
 
     def gen_rr3_variants(base, **__):
         yield base.variant(".count",
@@ -735,7 +806,7 @@ def main():
             gen_multiple,
             gen_rr3_variants,
             times = 3,
-            arches = ("i386", "x86_64")
+            arches = ("i386", "x86_64"),
         )
     )
 
