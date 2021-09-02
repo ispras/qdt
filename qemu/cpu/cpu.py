@@ -1058,13 +1058,9 @@ class CPUType(QOMCPU):
         # TODO: this code is generic enough to be part of `source` module.
         spec_and_len2type = {}
         for specifiers, info in spec_and_len2typename.items():
-            len2type = {}
-
-            for length, typename in info.items():
-                if typename.endswith('*'):
-                    len2type[length] = Pointer(Type[typename[:-1]])
-                else:
-                    len2type[length] = Type[typename]
+            len2type = {
+                length: Type[typename] for length, typename in info.items()
+            }
 
             for specifier in specifiers:
                 spec_and_len2type[specifier] = len2type
