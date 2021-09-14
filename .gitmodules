@@ -20,3 +20,6 @@
 [submodule "agent"]
 	path = agent
 	url = git@helicopter.intra.ispras.ru:real/qdt-agent.git
+[submodule "llv"]
+	path = llv
+	url = git@helicopter.intra.ispras.ru:real/lowlevelvirt.git
