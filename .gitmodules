@@ -19,4 +19,4 @@
 	url = https://github.com/ispras/I3S.git
 [submodule "agent"]
 	path = agent
-	url = https://helicopter.intra.ispras.ru/real/qdt-agent.git
+	url = git@helicopter.intra.ispras.ru:real/qdt-agent.git
