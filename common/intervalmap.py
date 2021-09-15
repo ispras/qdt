@@ -75,6 +75,20 @@ None
 >>> i[3:4] = None
 >>> i
 {[0, 1] => True, [2, 3] => True}
+>>> i[None:0.5] = True
+>>> i[4:None] = True
+>>> tuple(i.iter_items_from(0))
+(((None, 0.5), True), ((0.5, 1), True), ((2, 3), True), ((4, None), True))
+>>> tuple(i.iter_items_from(4))
+(((4, None), True),)
+>>> tuple(i.iter_items_from(5))
+(((4, None), True),)
+>>> tuple(i.iter_items_from(1.5))
+(((2, 3), True), ((4, None), True))
+>>> tuple(i.iter_items_from(2))
+(((2, 3), True), ((4, None), True))
+>>> tuple(i.iter_items_from(3))
+(((4, None), True),)
     """
 
     def __init__(self, items = None):
@@ -225,6 +239,35 @@ as: ((low_bound, high_bound), value).
                 yield v
         if self._upperitem is not None:
             yield self._upperitem
+
+    def iter_items_from(self, point):
+        bounds = self._bounds
+        if not bounds:
+            return
+
+        l = len(bounds)
+        items = self._items
+        i = bisect_right(bounds, point)
+
+        if i == 0:
+            v = items[0]
+            if v is not None:
+                yield ((None, bounds[0]), v)
+            i = 1
+            prev_i = 0
+        else:
+            prev_i = i - 1
+
+        while i < l:
+            v = items[i]
+            if v is not None:
+                yield ((bounds[prev_i], bounds[i]), v)
+            prev_i = i
+            i = i + 1
+
+        up = self._upperitem
+        if up is not None:
+            yield ((bounds[-1], None), up)
 
     def __repr__(self):
         s = []
