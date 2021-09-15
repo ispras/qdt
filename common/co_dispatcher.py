@@ -9,6 +9,7 @@ __all__ = [
 # object
   , "CoTask"
   , "CoDispatcher"
+      , "CLICoDispatcher"
 # function
   , "callco"
 ]
