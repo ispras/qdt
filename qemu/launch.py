@@ -271,8 +271,8 @@ class TCPChardev(Chardev):
 
         if server:
             opts += [QemuBoolAttr(self, "wait")]
-        else:
-            opts += ["host=localhost"]
+
+        opts += ["host=localhost"]
 
         self.port = port
         self.server = server
