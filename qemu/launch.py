@@ -423,11 +423,13 @@ Data must be a r'raw string'.
     def __init__(self, args,
         qmp_chardev = None,
         serial_chardevs = tuple(),
+        gdb_chardev = None,
         **kw
     ):
         super(QemuProcess, self).__init__(args, **kw)
         self.qmp_chardev = qmp_chardev
         self.serial_chardevs = serial_chardevs
+        self.gdb_chardev = gdb_chardev
 
     def _co_accept(self, chardev):
         server_socket = chardev.port.socket
@@ -558,6 +560,7 @@ class QLaunch(Context):
         paused = False,
         qmp = False,
         serials = 0,
+        gdb = False,
         extra_args = tuple(),
         process_kw = None,
         **kw
@@ -568,6 +571,7 @@ class QLaunch(Context):
         self.paused = paused
         self.qmp = qmp
         self.serials = serials
+        self.gdb = gdb
         self.process_kw = dict() if process_kw is None else dict(process_kw)
         self.extra_args = arg_list(extra_args)
 
@@ -599,6 +603,13 @@ class QLaunch(Context):
 
             args.extend(["-serial", "chardev:" + chardev])
 
+        if self.gdb:
+            gdb_chardev = TCPChardev(self, server = True)
+            args.extend(gdb_chardev.args)
+            args.extend(["-gdb", "chardev:" + gdb_chardev])
+        else:
+            gdb_chardev = None
+
         args.extend(self.extra_args)
 
         self.allocate()
@@ -610,6 +621,7 @@ class QLaunch(Context):
 
         qproc = ProcessClass(str_args,
             qmp_chardev = qmp_chardev,
+            gdb_chardev = gdb_chardev,
             serial_chardevs = serial_chardevs,
             **merged_process_kw
         )
