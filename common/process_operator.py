@@ -130,6 +130,9 @@ Entries are only appended at runtime.
                 self.operate()
                 wait()
 
+        # don't miss messages just before EOFs
+        self.operate()
+
         self.finished()
 
     def _stream_reader(self, idx, stream, e_over):
