@@ -8,6 +8,7 @@ from common import (
     offsets_stream,
     line_no_stream,
     intervalmap,
+    hex_stream,
 )
 
 
@@ -16,6 +17,7 @@ def load_tests(loader, tests, ignore):
         offsets_stream,
         line_no_stream,
         intervalmap.__module__,
+        hex_stream,
     ]))
     return tests
 
