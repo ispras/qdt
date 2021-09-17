@@ -26,8 +26,8 @@ class GUITaskManager(TkCoDispatcher):
         TkCoDispatcher.__activate__(self, task)
         self.__notify_activated(task)
 
-    def __finish__(self, task):
-        TkCoDispatcher.__finish__(self, task)
+    def __finish__(self, task, ret):
+        TkCoDispatcher.__finish__(self, task, ret)
         self.__notify_finished(task)
 
     def __failed__(self, task, exception):
