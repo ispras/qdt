@@ -7,6 +7,14 @@ from common import (
     CoReturn,
     intervalmap,
     lazy,
+    mlget as _,
+)
+from widgets import (
+    add_scrollbars_native,
+    AutoPanedWindow,
+    GUITk,
+    TextCanvas,
+    VarTreeview,
 )
 
 from argparse import (
