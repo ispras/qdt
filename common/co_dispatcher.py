@@ -150,7 +150,7 @@ after last statement in the corresponding callable object.
         self.callees = {}
         # Total caller list, I.e. callers = U (callees.values()).
         self.callers = {}
-        self.finished_tasks = set()
+        self.finished_tasks = dict()
         self.failed_tasks = set()
         self.max_tasks = max_tasks
         self.gen2task = {}
@@ -251,7 +251,7 @@ after last statement in the corresponding callable object.
             task.lineno = lineno
 
         for task, co_ret in finished:
-            self.__finish__(task)
+            self.__finish__(task, co_ret)
 
             try:
                 callers = self.callees[task]
@@ -336,7 +336,7 @@ after last statement in the corresponding callable object.
                 callers.remove(task)
 
         elif task in self.finished_tasks:
-            self.finished_tasks.remove(task)
+            self.finished_tasks.pop(task)
         elif task in self.tasks:
             self.tasks.remove(task)
         elif task in self.active_tasks:
@@ -387,10 +387,10 @@ after last statement in the corresponding callable object.
     def __root_task_failed__(self, task):
         pass
 
-    def __finish__(self, task):
+    def __finish__(self, task, ret):
         # print 'Task %s finished' % str(task)
         self.active_tasks.remove(task)
-        self.finished_tasks.add(task)
+        self.finished_tasks[task] = ret
         task.on_finished()
 
     def __activate__(self, task):
@@ -442,6 +442,11 @@ after last statement in the corresponding callable object.
                 if not iteration():
                     sleep(delay)
 
+    def get_co_ret(self, co):
+        if not isinstance(co, CoTask):
+            co = self.gen2task[co]
+        return self.finished_tasks[co]
+
 
 class default: pass
 
@@ -467,6 +472,8 @@ def callco(co, delay = default):
     for t in disp.failed_tasks:
         if t.generator is co:
             raise t.exception
+
+    return disp.get_co_ret(co)
 
 
 # TODO: There is no _known_ both Py3 & Py2 compatible way to `return` a
