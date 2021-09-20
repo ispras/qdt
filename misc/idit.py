@@ -339,6 +339,8 @@ class ValueRegion(Subregion):
 
     def co_interpret(self):
         self._bytes = self[0:len(self)]
+        return
+        yield
 
     @lazy
     def bytes(self):
@@ -782,18 +784,62 @@ def main():
 def idit(
     image,
 ):
-    disp = CLICoDispatcher()
-    image_stream = open(image, "rb")
+    root = Idit()
+    root.file_name = image
+    root.mainloop()
 
-    qcow2img = QCOW3Image(RegionCache(StreamRegion(image_stream)))
 
-    disp.enqueue(qcow2img.co_interpret())
-    disp.dispatch_all()
+class Idit(GUITk, object):
 
-    print(qcow2img.backing_file)
-    print(callco(qcow2img.co_get_refcount(0)))
-    print(callco(qcow2img.co_get_refcount(1 << 20)))
-    print(callco(qcow2img.co_get_refcount(1 << 30)))
+    def __init__(self, *a, **kw):
+        GUITk.__init__(self, *a, **kw)
+
+        self._file_name = None
+        self._stream = None
+        self._region = None
+
+    @property
+    def file_name(self):
+        return self._file_name
+
+    @file_name.setter
+    def file_name(self, file_name):
+        if self._file_name == file_name:
+            return
+        self.stream = open(file_name, "rb")
+        self._file_name = file_name
+
+    @property
+    def stream(self):
+        return self._stream
+
+    @stream.setter
+    def stream(self, stream):
+        if self._stream is stream:
+            return
+        if self._stream is not None:
+            self._stream.close()
+
+        self._file_name = None
+
+        region = QCOW3Image(RegionCache(StreamRegion(stream)))
+        self.task_manager.enqueue(self._co_change_region(region))
+
+    @property
+    def region(self):
+        return self._region
+
+    def _co_change_region(self, region):
+        # TODO: wait current region to complete
+        self._region = region
+        yield region.co_interpret()
+
+        print(region.backing_file)
+
+        print((yield region.co_get_refcount(0)))
+        print((yield region.co_get_refcount(1 << 20)))
+        print((yield region.co_get_refcount(1 << 30)))
+
 
 if __name__ == "__main__":
     exit(main() or 0)
