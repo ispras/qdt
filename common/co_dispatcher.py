@@ -305,6 +305,8 @@ after last statement in the corresponding callable object.
             except KeyError:
                 continue
 
+            ready = True
+
             del self.callees[task]
             # All callers of finished task may continue execution.
             for caller in callers:
