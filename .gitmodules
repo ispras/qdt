@@ -22,4 +22,4 @@
 	url = git@github.com:ispras/qdt-guest-agent.git
 [submodule "llv"]
 	path = llv
-	url = git@helicopter.intra.ispras.ru:real/lowlevelvirt.git
+	url = git@github.com:ispras/low-level-virt.git
