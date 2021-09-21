@@ -898,11 +898,8 @@ class QOMType(object):
                         StrConcat(
                             "%s: unimplemented write to 0x%",
                             MCall("HWADDR_PRIx"),
-                            StrConcat(
-                                ", size %d, ",
-                                "value 0x%",
-                                delim = "@s"
-                            ),
+                            ", size %d, ",
+                            "value 0x%",
                             MCall("PRIx64"),
                             "\\n",
                             delim = "@s"
