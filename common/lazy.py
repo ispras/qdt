@@ -2,7 +2,13 @@ __all__ = [
     "lazy"
       , "cached"
   , "reset_cache"
+  , "iter_lazy"
+  , "iter_lazy_items"
 ]
+
+from inspect import (
+    getmro,
+)
 
 # See: https://docs.python.org/2/howto/descriptor.html
 # In Russian: https://habr.com/post/122082/
@@ -48,3 +54,15 @@ def reset_cache(obj):
     for name in l:
         del d[name]
     del l[:]
+
+
+def iter_lazy(o):
+    for t in getmro(type(o)):
+        for n, v in t.__dict__.items():
+            if isinstance(v, lazy):
+                yield n
+
+
+def iter_lazy_items(o):
+    for n in iter_lazy(o):
+        yield (n, getattr(o, n))
