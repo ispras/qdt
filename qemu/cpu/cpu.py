@@ -39,6 +39,7 @@ from common import (
     mlget as _,
     ee,
     pypath,
+    shadow_open,
 )
 from itertools import (
     count,
@@ -371,7 +372,7 @@ class CPUType(QOMCPU):
             else:
                 graphs_prefix = None
 
-            with open(path, mode = "wb", encoding = "utf-8") as f_writer:
+            with shadow_open(path) as f_writer:
                 sf.generate(f_writer,
                     graphs_prefix = graphs_prefix,
                     gen_debug_comments = with_debug_comments,
@@ -384,7 +385,7 @@ class CPUType(QOMCPU):
 
         yield True
 
-        with open(join(src, translate_inc_c_file.path), "w") as f:
+        with shadow_open(join(src, translate_inc_c_file.path)) as f:
             if translate_cpu_semantics:
                 ast = parse_file(i3s_path)
                 convert_i3s_to_c(ast, DEBUG_I3S_TRANSLATOR)
@@ -1030,7 +1031,7 @@ class CPUType(QOMCPU):
         c.add_type(restore_state_to_opc)
 
     def _gen_target_makefile(self, src):
-        with open(src, "w") as mkf:
+        with shadow_open(src) as mkf:
             mkf.write("obj-y +=")
 
             for f in self.gen_files.values():
@@ -1040,7 +1041,7 @@ class CPUType(QOMCPU):
             mkf.write("\n")
 
     def _gen_helper_h(self, src):
-        with open(src, "w") as h:
+        with shadow_open(src) as h:
             h.write("DEF_HELPER_1(debug, void, env)\n")
             h.write("DEF_HELPER_1(illegal, void, env)\n")
 
@@ -1167,7 +1168,7 @@ class CPUType(QOMCPU):
 def create_default_config(src, target_name):
     default_config = join(src, "default-configs", target_name + "-softmmu.mak")
 
-    with open(default_config, "w") as f:
+    with shadow_open(default_config) as f:
         f.write("# Default configuration for %s-softmmu\n" % target_name)
 
 

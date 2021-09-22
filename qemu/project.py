@@ -31,7 +31,8 @@ from .version_description import (
 from common import (
     same_sets,
     callco,
-    co_find_eq
+    co_find_eq,
+    shadow_open,
 )
 from .makefile_patching import (
     patch_makefile
@@ -194,10 +195,7 @@ class QProject(object):
             spath = join(src, s.path)
             sdir, sname = split(spath)
 
-            if isfile(spath):
-                yield True
-                remove(spath)
-            elif not isdir(sdir):
+            if not isdir(sdir):
                 yield True
                 makedirs(sdir)
 
@@ -216,7 +214,7 @@ class QProject(object):
             else:
                 graphs_prefix = None
 
-            with open(spath, mode = "wb", encoding = "utf-8") as stream:
+            with shadow_open(spath) as stream:
                 f.generate(stream,
                     graphs_prefix = graphs_prefix,
                     gen_debug_comments = with_debug_comments,
