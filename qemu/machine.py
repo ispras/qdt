@@ -24,11 +24,8 @@ from source import (
     NewLine,
     Call,
     Pointer,
-    Macro,
-    Source,
     Type,
     TypeNotRegistered,
-    Function
 )
 from .machine_nodes import (
     CPUNode,
@@ -49,20 +46,13 @@ from .machine_nodes import (
 from common import (
     cached,
     reset_cache,
-    mlget as _,
     sort_topologically
-)
-from os.path import (
-    join as join_path
 )
 from .version import (
     get_vp
 )
 from six import (
     integer_types
-)
-from collections import (
-    OrderedDict
 )
 
 class UnknownMachineNodeType(ValueError):
