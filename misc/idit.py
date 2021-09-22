@@ -2,27 +2,56 @@
 """
 
 from common import (
-    callco,
-    CLICoDispatcher,
+    bidict,
     CoReturn,
     intervalmap,
     lazy,
     mlget as _,
+    notifier,
 )
 from widgets import (
     add_scrollbars_native,
-    AutoPanedWindow,
     GUITk,
-    TextCanvas,
     VarTreeview,
 )
 
 from argparse import (
     ArgumentParser,
 )
+from bisect import (
+    bisect,
+)
+from functools import (
+    partial,
+)
+from itertools import (
+    chain,
+)
+from six.moves.tkinter import (
+    StringVar,
+    TclError,
+)
 
 
-class Region(object):
+@notifier(
+    "updated", # attr: str, val
+)
+class Object(object):
+
+    def __setattr__(self, n, v):
+        try:
+            return super(Object, self).__setattr__(n, v)
+        finally:
+            if not n.startswith("_"):
+                self.__notify_updated(n, v)
+
+    def watch_updated_partial(self, on_updated3):
+        wrapper = partial(on_updated3, self)
+        self.watch_updated(wrapper)
+        return wrapper
+
+
+class Region(Object):
 
     def __getitem__(self, offset_or_slice):
         raise NotImplementedError
@@ -36,13 +65,17 @@ class Region(object):
     def co_interpret_subregions(self, **fields):
         for name, (Cls, args) in fields.items():
             field = Cls(self, *args)
-            setattr(self, name, field)
             yield field.co_interpret()
+            setattr(self, name, field)
+
+    def __str__(self):
+        return type(self).__name__
 
 
 class StreamRegion(Region):
 
-    def __init__(self, stream):
+    def __init__(self, stream, **kw):
+        super(StreamRegion, self).__init__(**kw)
         self._stream = stream
         self._size = size = stream.seek(0, 2)
         self._last = size - 1
@@ -137,7 +170,8 @@ def join_sum(first, *chunks):
 
 class RegionCache(Region):
 
-    def __init__(self, region):
+    def __init__(self, region, **kw):
+        super(RegionCache, self).__init__(**kw)
         self._backing = region
         self._size = len(region)
         self._cache = intervalmap()
@@ -226,7 +260,8 @@ class RegionCache(Region):
 
 class Subregion(Region):
 
-    def __init__(self, region, offset = 0, size = None):
+    def __init__(self, region, offset = 0, size = None, **kw):
+        super(Subregion, self).__init__(**kw)
         self._region = region
         self._offset = offset
         if size is None:
@@ -333,9 +368,9 @@ class Padding(Subregion):
 
 class ValueRegion(Subregion):
 
-    def __init__(self, region, *a, **kw):
+    def __init__(self, *a, **kw):
         kw.setdefault("size", 4)
-        super(ValueRegion, self).__init__(region, *a, **kw)
+        super(ValueRegion, self).__init__(*a, **kw)
 
     def co_interpret(self):
         self._bytes = self[0:len(self)]
@@ -345,14 +380,6 @@ class ValueRegion(Subregion):
     @lazy
     def bytes(self):
         return self._bytes
-
-    def __eq__(self, other):
-        if isinstance(other, bytes):
-            return self._bytes == other
-        elif type(self) is not type(other):
-            return False
-        else:
-            return self._bytes == other._bytes
 
     @lazy
     def value(self):
@@ -367,6 +394,8 @@ class ValueRegion(Subregion):
         except:
             return repr(self._bytes)
 
+    def __bool__(self):
+        return bool(self.value)
 
 BE = "big"
 LE = "little"
@@ -374,21 +403,15 @@ LE = "little"
 
 class IntegerRegion(ValueRegion):
 
-    def __init__(self, region, *a, **kw):
+    def __init__(self, *a, **kw):
         self._byteorder = kw.pop("byteorder", LE)
         self._signed = kw.pop("signed", True)
-        super(IntegerRegion, self).__init__(region, *a, **kw)
+        super(IntegerRegion, self).__init__(*a, **kw)
 
     def __decode__(self):
         return int.from_bytes(self._bytes, self._byteorder,
             signed = self._signed
         )
-
-    def __eq__(self, other):
-        if isinstance(other, int):
-            return self.value == other
-        else:
-            return super(IntegerRegion, self).__eq__(other)
 
 
 class Bitfield(object):
@@ -423,10 +446,10 @@ class BitfieldRegion(IntegerRegion):
 
     bitfields = dict()
 
-    def __init__(self, region, *a, **kw):
+    def __init__(self, *a, **kw):
         kw.setdefault("signed", False)
         self._test_reserved = kw.pop("test_reserved", True)
-        super(BitfieldRegion, self).__init__(region, *a, **kw)
+        super(BitfieldRegion, self).__init__(*a, **kw)
 
     def co_interpret(self):
         yield super(BitfieldRegion, self).co_interpret()
@@ -588,20 +611,23 @@ this field first.
 
 class QCOW3Header(Subregion):
 
-    def __init__(self, region, **kw):
-        super(QCOW3Header, self).__init__(region, size = 104, **kw)
+    def __init__(self, *a, **kw):
+        kw["size"] = 104
+        super(QCOW3Header, self).__init__(*a, **kw)
 
     def co_interpret(self):
-        self.magic = magic = ValueRegion(self, 0)
+        magic = ValueRegion(self, 0)
         yield magic.co_interpret()
+        self.magic = magic
 
-        if magic != b"QFI\xfb":
+        if magic.bytes != b"QFI\xfb":
             raise RegionFormatUnknown
 
-        self.version = version = QCOW3Integer(self, 4)
+        version = QCOW3Integer(self, 4)
         yield version.co_interpret()
+        self.version = version
 
-        if version != 3:
+        if version.value != 3:
             raise RegionFormatNotImplemented
 
         yield self.co_interpret_subregions(
@@ -627,11 +653,13 @@ class QCOW3Header(Subregion):
 class QCOW3HeaderExtension(Subregion):
 
     def co_interpret(self):
-        self.type = type_ = QCOW3Integer(self)
+        type_ = QCOW3Integer(self)
         yield type_.co_interpret()
+        self.type = type_
 
-        self.length = length = QCOW3Integer(self, 4)
+        length = QCOW3Integer(self, 4)
         yield length.co_interpret()
+        self.length = length
 
         ext_data_len = length.value
         self.ext_data = Subregion(self, 8, ext_data_len)
@@ -663,33 +691,36 @@ class QCOW3L2RefcntBlockOffset(QCOW3Offset):
 class QCOW3Image(Subregion):
 
     def co_interpret(self):
-        self.header = header = QCOW3Header(self)
+        header = QCOW3Header(self)
         yield header.co_interpret()
+        self.header = header
 
-        if header.crypt_method != 0:
+        if header.crypt_method:
             raise RegionFormatNotImplemented
 
-        if header.incompatible_features != 0:
+        if header.incompatible_features:
             raise RegionFormatNotImplemented
 
-        if header.compatible_features != 0:
+        if header.compatible_features:
             raise RegionFormatNotImplemented
 
-        if header.autoclear_features != 0:
+        if header.autoclear_features:
             raise RegionFormatNotImplemented
 
         offset = 104
 
-        self.extensions = exts = {}
+        exts = Object()
 
         while True:
             ext = QCOW3HeaderExtension(self, offset)
             yield ext.co_interpret()
             etype = ext.type
-            if etype == 0:
+            if not etype:
                 break
-            exts[etype.value] = ext
+            setattr(exts, str(etype.bytes), ext)
             offset += len(ext)
+
+        self.extensions = exts
 
         self.l1_refcnt_table = Subregion(self,
             header.refcount_table_offset.value,
@@ -698,7 +729,7 @@ class QCOW3Image(Subregion):
 
         self.refcnt_blocks = dict()
 
-        self.l1_cluster_table= Subregion(self,
+        self.l1_cluster_table = Subregion(self,
             header.l1_table_offset.value,
             size = header.l1_size.value << 3
         )
@@ -789,14 +820,31 @@ def idit(
     root.mainloop()
 
 
+class _Undefined:
+    pass
+
 class Idit(GUITk, object):
 
     def __init__(self, *a, **kw):
+        file_name = kw.pop("file_name", None)
         GUITk.__init__(self, *a, **kw)
+
+        self._title_suffix = StringVar(self)
+        self.title(_("Idit: %s") % self._title_suffix)
 
         self._file_name = None
         self._stream = None
         self._region = None
+
+        self._rtv = rtv = ObjectTreeview(self)
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+        rtv.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, rtv, sizegrip = True)
+
+        self.file_name = file_name
 
     @property
     def file_name(self):
@@ -806,23 +854,21 @@ class Idit(GUITk, object):
     def file_name(self, file_name):
         if self._file_name == file_name:
             return
-        self.stream = open(file_name, "rb")
         self._file_name = file_name
 
-    @property
-    def stream(self):
-        return self._stream
-
-    @stream.setter
-    def stream(self, stream):
-        if self._stream is stream:
-            return
         if self._stream is not None:
             self._stream.close()
+            self._stream = None
 
-        self._file_name = None
+        if file_name is None:
+            self._title_suffix.set(_("[no file]"))
+            return
+
+        self._title_suffix.set(file_name)
+        self._stream = stream = open(file_name, "rb")
 
         region = QCOW3Image(RegionCache(StreamRegion(stream)))
+        self._rtv.root = region
         self.task_manager.enqueue(self._co_change_region(region))
 
     @property
@@ -834,11 +880,104 @@ class Idit(GUITk, object):
         self._region = region
         yield region.co_interpret()
 
-        print(region.backing_file)
 
-        print((yield region.co_get_refcount(0)))
-        print((yield region.co_get_refcount(1 << 20)))
-        print((yield region.co_get_refcount(1 << 30)))
+class ObjectTreeview(VarTreeview):
+
+    def __init__(self, *a, **kw):
+        root = kw.pop("root", None)
+        kw["columns"] = ("v",)
+        VarTreeview.__init__(self, *a, **kw)
+
+        self.heading("v", text = _("Значение"))
+
+        self._updates = set()
+        self._watchings = []
+        self.root = root
+
+    def _invalidate(self, obj):
+        if obj in self._updates:
+            return
+        self._updates.add(obj)
+        if hasattr(self, "_do_validate_"):
+            return
+        self._do_validate_ = self.after(100, self._do_validate)
+
+    def _do_validate(self):
+        del self._do_validate_
+        self._validate()
+
+    @property
+    def root(self):
+        return self._root
+
+    @root.setter
+    def root(self, root):
+        watchings = self._watchings
+        self.delete(*self.get_children())
+
+        for obj, watcher in watchings:
+            obj.unwatch_updated(watcher)
+
+        del watchings[:]
+
+        self._o2iid = o2iid = bidict()
+        self._iid2o = o2iid.mirror
+
+        self._updates.clear()
+
+        if root is None:
+            return
+
+        o2iid[root] = ""
+        self._build_subtree(root)
+
+    def _on_updated(self, obj, attr, val):
+        iid = self._o2iid[obj]
+
+        try:
+            self.item(iid + "." + attr, values = [val])
+        except TclError:
+            # new attribute interpreted
+            self._add_new_attr(iid, attr, val)
+        else:
+            if isinstance(val, Object):
+                self._invalidate(val)
+
+    def _validate(self):
+        updates = self._updates
+        self._updates = set()
+        for reg in updates:
+            self._build_subtree(reg)
+
+    def _build_subtree(self, parent):
+        parent_iid = self._o2iid[parent]
+        self.delete(*self.get_children(parent_iid))
+
+        for attr, val in chain(
+            parent.__dict__.items(),
+            # TODO: iter_lazy_items(parent)
+        ):
+            if attr.startswith("_"):
+                continue
+            self._add_new_attr(parent_iid, attr, val)
+
+        self._watchings.append((
+            parent, parent.watch_updated_partial(self._on_updated)
+        ))
+
+    def _add_new_attr(self, parent_iid, attr, val):
+        iid = parent_iid + "." + attr
+
+        idx = bisect(self.get_children(parent_iid), attr)
+
+        assert iid == self.insert(parent_iid, idx,
+            text = attr,
+            iid = iid,
+            values = [val]
+        )
+        if isinstance(val, Object):
+            self._o2iid[val] = iid
+            self._invalidate(val)
 
 
 if __name__ == "__main__":
