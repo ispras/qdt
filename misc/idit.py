@@ -5,13 +5,17 @@ from common import (
     bidict,
     CoReturn,
     intervalmap,
+    HexStream,
     lazy,
     mlget as _,
     notifier,
 )
 from widgets import (
     add_scrollbars_native,
+    AutoPanedWindow,
+    GUIFrame,
     GUITk,
+    TextCanvas,
     VarTreeview,
 )
 
@@ -21,6 +25,9 @@ from argparse import (
 from bisect import (
     bisect,
 )
+from collections import (
+    namedtuple,
+)
 from functools import (
     partial,
 )
@@ -28,8 +35,11 @@ from itertools import (
     chain,
 )
 from six.moves.tkinter import (
+    BROWSE,
+    HORIZONTAL,
     StringVar,
     TclError,
+    RAISED,
 )
 
 
@@ -49,6 +59,36 @@ class Object(object):
         wrapper = partial(on_updated3, self)
         self.watch_updated(wrapper)
         return wrapper
+
+
+class Backtrace(namedtuple("_Backtrace", "outer inner backing")):
+    """
+outer: (start: int, stop: int)
+    subregion of `Region` being traced back
+inner: (start: int, stop: int) or None
+    subregion of backing object if available
+backing: can be `None`
+    object the `Region` being traced back is backing, if available
+
+Note, even `if backing is not None` `inner` can be `None`.
+Many formats can have subregions without real bytes for it.
+    """
+
+    def iter_backtrace(self):
+        for bt in self.backing.iter_backtrace(*self.inner):
+            yield bt
+
+    def iter_backtree_leafs(self):
+        stack = list(self.iter_backtrace())
+        pop = stack.pop
+        push = stack.extend
+
+        while stack:
+            bt = pop()
+            if isinstance(bt.backing, Region):
+                push(reversed(tuple(bt.iter_backtrace())))
+            else:
+                yield bt
 
 
 class Region(Object):
@@ -71,6 +111,21 @@ class Region(Object):
     def __str__(self):
         return type(self).__name__
 
+    def iter_backtrace(self, start = None, stop = None):
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = len(self)
+        return self.__iter_backtrace__(start, stop)
+
+    def __iter_backtrace__(self):
+        raise NotImplemented
+
+    def iter_backtree_leafs(self, *a, **kw):
+        for bt in self.iter_backtrace(*a, **kw):
+            for o in bt.iter_backtree_leafs():
+                yield o
+
 
 class StreamRegion(Region):
 
@@ -82,6 +137,11 @@ class StreamRegion(Region):
         self._seek = stream.seek
         self._read = stream.read
         self._write = stream.write
+
+    def __iter_backtrace__(self, *start_stop):
+        if start_stop[0] < 0 or self._size < start_stop[1]:
+            raise ValueError
+        yield Backtrace(start_stop, start_stop, self._stream)
 
     def __len__(self):
         return self._size
@@ -176,6 +236,11 @@ class RegionCache(Region):
         self._size = len(region)
         self._cache = intervalmap()
 
+    def __iter_backtrace__(self, *start_stop):
+        if start_stop[0] < 0 or self._size < start_stop[1]:
+            raise ValueError
+        yield Backtrace(start_stop, start_stop, self._backing)
+
     def __len__(self):
         return self._size
 
@@ -267,6 +332,13 @@ class Subregion(Region):
         if size is None:
             size = len(region) - offset
         self._size = size
+
+    def __iter_backtrace__(self, *start_stop):
+        start, stop = start_stop
+        if start < 0 or self._size < stop:
+            raise ValueError
+        o = self._offset
+        yield Backtrace(start_stop, (start + o, stop + o), self._region)
 
     def __len__(self):
         return self._size
@@ -829,21 +901,54 @@ class Idit(GUITk, object):
         file_name = kw.pop("file_name", None)
         GUITk.__init__(self, *a, **kw)
 
-        self._title_suffix = StringVar(self)
-        self.title(_("Idit: %s") % self._title_suffix)
-
+        # `property` backing
         self._file_name = None
         self._stream = None
         self._region = None
 
-        self._rtv = rtv = ObjectTreeview(self)
+        # child widgets
+        self._title_suffix = StringVar(self)
+        self.title(_("Idit: %s") % self._title_suffix)
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
+        apw = AutoPanedWindow(self,
+            orient = HORIZONTAL,
+            sashrelief = RAISED,
+        )
+        apw.grid(row = 0, column = 0, sticky = "NESW")
+
+        # tree
+        fr = GUIFrame(apw)
+        apw.add(fr)
+
+        fr.rowconfigure(0, weight = 1)
+        fr.columnconfigure(0, weight = 1)
+
+        self._rtv = rtv = ObjectTreeview(fr,
+            selectmode = BROWSE,
+        )
         rtv.grid(row = 0, column = 0, sticky = "NESW")
+        add_scrollbars_native(fr, rtv)
 
-        add_scrollbars_native(self, rtv, sizegrip = True)
+        rtv.bind("<<TreeviewSelect>>", self._on_rtv_select, "+")
 
+        # hex
+        fr = GUIFrame(apw)
+        apw.add(fr)
+
+        fr.rowconfigure(0, weight = 1)
+        fr.columnconfigure(0, weight = 1)
+
+        self._tc = tc = TextCanvas(fr,
+            encoding = "charmap", # fastest
+            lineno_offset = 0,
+            ineno_fmt = "%x",
+        )
+        tc.grid(row = 0, column = 0, sticky = "NESW")
+        add_scrollbars_native(fr, tc, sizegrip = True)
+
+        # configuration
         self.file_name = file_name
 
     @property
@@ -856,7 +961,13 @@ class Idit(GUITk, object):
             return
         self._file_name = file_name
 
+        tc = self._tc
+        rtv = self._rtv
+
         if self._stream is not None:
+            rtv.root = None
+            tc.stream = None
+
             self._stream.close()
             self._stream = None
 
@@ -868,8 +979,14 @@ class Idit(GUITk, object):
         self._stream = stream = open(file_name, "rb")
 
         region = QCOW3Image(RegionCache(StreamRegion(stream)))
-        self._rtv.root = region
+        rtv.root = region
         self.task_manager.enqueue(self._co_change_region(region))
+
+        hex_stream = HexStream(stream)
+        tc.stream = hex_stream
+        tc.fixed_line_size = hex_stream.offset_per_line
+        tc.lineno_multipler = hex_stream.bytes_per_line
+        self.task_manager.enqueue(self._tc.co_build_index())
 
     @property
     def region(self):
@@ -879,6 +996,42 @@ class Idit(GUITk, object):
         # TODO: wait current region to complete
         self._region = region
         yield region.co_interpret()
+
+    def _on_rtv_select(self, *__):
+        tc = self._tc
+
+        for o, __ in self._rtv.iter_selected_objects():
+            break
+        else:
+            tc.selected_offsets = None
+            return # nothing selected
+
+        stream = self._stream
+
+        for o in self._rtv.iter_hierarchy(o):
+            if isinstance(o, Region):
+                break
+        else:
+            tc.selected_offsets = None
+            return # can't trace to stream
+
+        for bt in o.iter_backtree_leafs():
+            if bt.backing is stream:
+                break
+        else:
+            tc.selected_offsets = None
+            return # can't trace to stream
+
+        start, stop = bt.inner
+
+        oob = tc.stream.offset_of_byte
+        start_char, stop_char = oob(start), oob(stop)
+
+        # try to see full interval, but at least the beginning
+        tc.see_offset(stop_char)
+        tc.see_offset(start_char)
+
+        tc.selected_offsets = (start_char, stop_char)
 
 
 class ObjectTreeview(VarTreeview):
@@ -893,6 +1046,30 @@ class ObjectTreeview(VarTreeview):
         self._updates = set()
         self._watchings = []
         self.root = root
+
+    def iter_selected_objects(self):
+        iid2o = self._iid2o
+        parent = self.parent
+        for iid in self.selection():
+            subpath = []
+            while True: # iid == "" (root) does always map to an obj
+                try:
+                    obj = iid2o[iid]
+                    yield obj, tuple(reversed(subpath))
+                    break
+                except KeyError:
+                    subpath.append(iid[iid.rindex(".") + 1:])
+                    iid = parent(iid)
+
+    def iter_hierarchy(self, obj):
+        iid2o = self._iid2o
+        iid = self._o2iid[obj]
+        parent = self.parent
+        while iid:
+            yield obj
+            iid = parent(iid)
+            obj = iid2o[iid]
+        yield self._root
 
     def _invalidate(self, obj):
         if obj in self._updates:
