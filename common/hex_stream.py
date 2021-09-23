@@ -143,6 +143,12 @@ After group_size is changed the hex stream appears like this:
 
     @byte_offset.setter
     def byte_offset(self, byte_offset):
+        # _read_iter state and stream state will be synchronized during
+        # next _read_iter iteration
+
+        self._offset = self.offset_of_byte(byte_offset)
+
+    def offset_of_byte(self, byte_offset):
         bpl = self.bytes_per_line
         grp_size = self._group_size
 
@@ -152,12 +158,9 @@ After group_size is changed the hex stream appears like this:
         grp_offset = line_offset % grp_size
         chr_ = (grp_offset << 1)
 
-        # _read_iter state and stream state will be synchronized during
-        # next _read_iter iteration
-
         # TODO: le
 
-        self._offset = (
+        return (
             self.offset_per_line * line
           + self.group_length * grp
           + chr_
