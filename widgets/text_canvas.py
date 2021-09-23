@@ -137,6 +137,38 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self._update_total_lines(0)
 
     @property
+    def selected_offsets(self):
+        raise NotImplementedError
+
+    @selected_offsets.setter
+    def selected_offsets(self, selected_offsets):
+        if self._state in (selecting_started, selecting):
+            self._state = None
+
+        if selected_offsets is None:
+            self._sel_start = self._sel_limit = None
+        else:
+            self._sel_start, self._sel_limit = map(
+                self._index.lookdown_precise, selected_offsets
+            )
+
+        self.draw()
+
+    def see_offset(self, target_offset):
+        self.see(self._index.lookdown_precise(target_offset)[0])
+
+    def see(self, target_lineno):
+        lineno = self.lineno
+        if target_lineno < lineno:
+            self.lineno = target_lineno
+            return
+
+        last_lineno = lineno + self._page_size - 1
+        if last_lineno < target_lineno:
+            self.lineno = target_lineno
+            return
+
+    @property
     def selected_blob(self):
         start = self._sel_start
         if start is None:
