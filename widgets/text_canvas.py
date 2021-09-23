@@ -15,6 +15,7 @@ from six.moves.tkinter_font import (
 )
 from common import (
     bind_mouse_wheel,
+    FixedLinesizeIndex,
     LineIndex,
 )
 from .hotkey import (
@@ -35,6 +36,8 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self._yscrollcommand = kw.pop("yscrollcommand", None)
         self._encoding = kw.pop("encoding", "utf-8")
         self._encoding_errors = kw.pop("encoding_errors", "replace")
+
+        self._fixed_line_size = kw.pop("fixed_line_size", None)
 
         # Line number appearance settings
         # conventionally, line enumeration starts from 1
@@ -121,6 +124,19 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self.draw()
 
     @property
+    def fixed_line_size(self):
+        return self._fixed_line_size
+
+    @fixed_line_size.setter
+    def fixed_line_size(self, fixed_line_size):
+        self._fixed_line_size = fixed_line_size
+
+        # user need call co_build_index again
+        self._index = None
+        self._var_lineno.set(1)
+        self._update_total_lines(0)
+
+    @property
     def selected_blob(self):
         start = self._sel_start
         if start is None:
@@ -187,7 +203,12 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
 
         ubd = self._update_total_lines
 
-        self._index = index = LineIndex()
+        if self._fixed_line_size is None:
+            index = LineIndex()
+        else:
+            index = FixedLinesizeIndex(linesize = self._fixed_line_size)
+
+        self._index = index
 
         co_index_builder = index.co_build(stream)
 
