@@ -1,6 +1,7 @@
 __all__ = [
     "re_newline"
-  , "LineIndex"
+  , "Index"
+      , "LineIndex"
   , "LineIndexIsNotReady"
 ]
 
@@ -13,28 +14,16 @@ from re import (
 )
 
 
-re_newline = compile(b"\n|(\r\n)|\r")
-
-
-class LineIndex(object):
-    """ Index of lines offsets in a text file.
-
-Lines enumeration starts from 0.
-    """
+class Index(object):
 
     def __init__(self,
-        # index[i] = offset of ((i + 1) * 1024)-th line
-        lines_chunk_bits = 10,
         blob_size = 64 << 10, # 64 KiB
     ):
-        self.lines_chunk_bits = lines_chunk_bits
-        self.lines_chunk = lines_chunk = 1 << lines_chunk_bits
-        self.lines_chunk_mask = lines_chunk - 1
         self.blob_size = blob_size
-
-        # self.current_lines # only available while `co_build` is in process
         self.index = None
         self.total_lines = None
+
+        # self.current_lines # only available while `co_build` is in process
 
     def load(self, file_name):
         state = load(file_name)
@@ -44,9 +33,72 @@ Lines enumeration starts from 0.
             self.index,
         ) = state
 
+    def save(self, file_name):
+        total_lines = self.total_lines
+        if total_lines is None:
+            raise LineIndexIsNotReady
+
+        state = (
+            total_lines,
+            self.index,
+        )
+
+        dump(state, file_name)
+
     def build(self, stream):
         for __ in self.co_build(stream):
             pass
+
+    def co_build(self, stream):
+        raise NotImplementedError
+
+    def lookup(self, lineidx):
+        raise NotImplementedError
+
+    def read_chunk(self, stream, lineidx):
+        """ Reads the `stream` and returns `tuple`:
+[0]: b'ytes' of the chunk containing `lineidx`-th line start
+[1]: number of the line starting at the chunk 0-th offset
+        """
+        return next(self.iter_chunks(stream, lineidx = lineidx))
+
+    def iter_chunks(self, stream, lineidx = 0):
+        lineidx, offset = self.lookup(lineidx)
+
+        read = stream.read
+        seek = stream.seek
+        size = self.blob_size
+
+        while True:
+            # support shared access to the stream between `yield`s
+            seek(offset)
+            data = read(size)
+            if data == b"":
+                break
+            offset += len(data)
+            yield (data, lineidx)
+            # consequent blobs are not line-aligned, generally
+            lineidx = None
+
+
+re_newline = compile(b"\n|(\r\n)|\r")
+
+
+class LineIndex(Index):
+    """ Index of lines offsets in a text file.
+
+Lines enumeration starts from 0.
+    """
+
+    def __init__(self,
+        # index[i] = offset of ((i + 1) * 1024)-th line
+        lines_chunk_bits = 10,
+        **kw
+    ):
+        super(LineIndex, self).__init__(**kw)
+        self.lines_chunk_bits = lines_chunk_bits
+        self.lines_chunk = lines_chunk = 1 << lines_chunk_bits
+        self.lines_chunk_mask = lines_chunk - 1
 
     def iter_line_offsets(self, stream, offset = 0):
         # local cache
@@ -124,25 +176,6 @@ Lines enumeration starts from 0.
         del self.current_lines
         self.total_lines = lineidx + 1
 
-    def save(self, file_name):
-        total_lines = self.total_lines
-        if total_lines is None:
-            raise LineIndexIsNotReady
-
-        state = (
-            total_lines,
-            self.index,
-        )
-
-        dump(state, file_name)
-
-    def read_chunk(self, stream, lineidx):
-        """ Reads the `stream` and returns `tuple`:
-[0]: b'ytes' of the chunk containing `lineidx`-th line start
-[1]: number of the line starting at the chunk 0-th offset
-        """
-        return next(self.iter_chunks(stream, lineidx = lineidx))
-
     def lookup(self, lineidx):
         bits = self.lines_chunk_bits
         i = lineidx >> bits
@@ -153,24 +186,6 @@ Lines enumeration starts from 0.
             lineidx = i << bits
             offset = self.index[i - 1]
         return (lineidx, offset)
-
-    def iter_chunks(self, stream, lineidx = 0):
-        lineidx, offset = self.lookup(lineidx)
-
-        read = stream.read
-        seek = stream.seek
-        size = self.blob_size
-
-        while True:
-            # support shared access to the stream between `yield`s
-            seek(offset)
-            data = read(size)
-            if data == b"":
-                break
-            offset += len(data)
-            yield (data, lineidx)
-            # consequent blobs are not line-aligned, generally
-            lineidx = None
 
 
 class LineIndexIsNotReady(RuntimeError):
