@@ -36,8 +36,10 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self._yscrollcommand = kw.pop("yscrollcommand", None)
         self._encoding = kw.pop("encoding", "utf-8")
         self._encoding_errors = kw.pop("encoding_errors", "replace")
+        self._min_lineno_width = kw.pop("min_lineno_width", 20)
 
         self._fixed_line_size = kw.pop("fixed_line_size", None)
+        self._blob_size = kw.pop("blob_size", None)
 
         # Line number appearance settings
         # conventionally, line enumeration starts from 1
@@ -235,10 +237,15 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
 
         ubd = self._update_total_lines
 
+        index_kw = {}
+        if self._blob_size:
+            index_kw["blob_size"] = self._blob_size
+
         if self._fixed_line_size is None:
-            index = LineIndex()
+            index = LineIndex(**index_kw)
         else:
-            index = FixedLinesizeIndex(linesize = self._fixed_line_size)
+            index_kw["linesize"] = self._fixed_line_size
+            index = FixedLinesizeIndex(**index_kw)
 
         self._index = index
 
@@ -374,37 +381,50 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         main_font_measure = main_font.measure
         ylinepadding = self._ylinepadding
 
-        # read two chunks
-        citer = index.iter_chunks(stream, lineidx)
-        blob, start_line = next(citer)
-        try:
-            blob += next(citer)[0]
-        except StopIteration:
-            # EOF
-            pass
+        picked_lines = []
 
-        decoded = blob.decode(self._encoding, errors = self._encoding_errors)
-        lines = list(decoded.splitlines())
+        def pick_lines():
+            interrupted_line = None
+            for blob, start_line in index.iter_chunks(stream, lineidx):
+                if start_line is not None:
+                    cur_line = start_line
 
-        # if last line in the stream has new line suffix, show empty new line
-        if blob.endswith(b"\r") or blob.endswith(b"\n"):
+                decoded = blob.decode(self._encoding,
+                    errors = self._encoding_errors
+                )
+                lines = list(decoded.splitlines())
+                if interrupted_line is not None:
+                    lines[0] = interrupted_line + lines[0]
+                    interrupted_line = None
+
+                if blob[-1:] not in (b"\r", b"\n"):
+                    interrupted_line = lines.pop()
+
+                # skip lines before lineidx
+                end_line = cur_line + len(lines)
+                if lineidx < end_line:
+                    if cur_line < lineidx:
+                        lines = lines[lineidx - cur_line:]
+                    yield lines
+                    picked_lines.extend(lines)
+
+                cur_line = end_line
+
             # Note, `splitlines` drops last empty line while `total_lines`
             # accounts it.
-            if start_line + len(lines) + 1 == self.total_lines:
-                lines.append(u"")
+            yield [interrupted_line] if interrupted_line else [""]
 
-        lines_offset = lineidx - start_line
-        picked_lines = lines[lines_offset:]
+        def iter_lines():
+            for lines in pick_lines():
+                for line in lines:
+                    yield line
 
         cur_lineno = lineidx + self._lineno_offset
 
         # space for line numbers
-        lineno_width = lineno_font.measure(str(cur_lineno + len(picked_lines)))
-
+        lineno_width = self._min_lineno_width
         lineno_end_x = lineno_width + self._lineno_padding
         text_start_x = lineno_end_x - self._x_offset
-
-        lines_width = []
 
         # y coordinate iteration parameters
         view_height = self.winfo_height()
@@ -412,12 +432,7 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         y = y_start
         y_inc = self._linespace + ylinepadding
 
-        # place opaque rectangle below line numbers and above main text
-        self.create_rectangle(
-            0, 0, lineno_end_x, view_height,
-            fill = "grey",
-            outline = "white",
-        )
+        lines_width = []
 
         # cache
         create_text = self.create_text
@@ -425,12 +440,16 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
 
         fmt, mult = self._lineno_fmt, self._lineno_multiplier
 
-        for cur_lineno, line in enumerate(picked_lines, cur_lineno):
+        lineno_text = "" # default value for measurement after loop
+
+        for cur_lineno, line in enumerate(iter_lines(), cur_lineno):
             if view_height <= y:
                 break
 
+            lineno_text = fmt % (cur_lineno * mult)
+
             create_text(lineno_end_x, y,
-                text = fmt % (cur_lineno * mult),
+                text = lineno_text,
                 justify = RIGHT,
                 anchor = "ne",
                 font = lineno_font,
@@ -447,6 +466,30 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
             lines_width.append(main_font_measure(line))
 
             y += y_inc
+
+        last_lineno_width = lineno_font.measure(lineno_text)
+
+        # line numbers may require more space
+        extra_x_shift = last_lineno_width - lineno_width
+        if extra_x_shift > 0:
+            lineno_width = last_lineno_width
+            lineno_end_x += extra_x_shift
+            text_start_x += extra_x_shift
+
+            coords = self.coords
+
+            for iid in self.find_all():
+                x, y = coords(iid)
+                x += extra_x_shift
+                coords(iid, x, y)
+
+        # place opaque rectangle below line numbers and above main text
+        iid = self.create_rectangle(
+            0, 0, lineno_end_x, view_height,
+            fill = "grey",
+            outline = "white",
+        )
+        self.lower(iid)
 
         sel_start = self._sel_start
 
