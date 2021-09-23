@@ -56,6 +56,16 @@ class Index(object):
     def lookup(self, lineidx):
         raise NotImplementedError
 
+    # *_precise methods should return (lineidx, offset within the line) while
+    # other look* methods returns coarse coordinates (lineidx, offset
+    # within the chunk starting with the line).
+
+    def lookup_precise(self, lineidx):
+        raise NotImplementedError
+
+    def lookdown_precise(self, offset):
+        raise NotImplementedError
+
     def read_chunk(self, stream, lineidx):
         """ Reads the `stream` and returns `tuple`:
 [0]: b'ytes' of the chunk containing `lineidx`-th line start
@@ -199,8 +209,13 @@ class FixedLinesizeIndex(Index):
         super(FixedLinesizeIndex, self).__init__(**kw)
         self.linesize = linesize
 
-    def lookup(self, lineidx):
+    def lookup_precise(self, lineidx):
         return (lineidx, self.linesize * lineidx)
+
+    lookup = lookup_precise
+
+    def lookdown_precise(self, offset):
+        return (offset // self.linesize, offset % self.linesize)
 
     def co_build(self, stream):
         linesize = self.linesize
