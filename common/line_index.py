@@ -2,6 +2,7 @@ __all__ = [
     "re_newline"
   , "Index"
       , "LineIndex"
+      , "FixedLinesizeIndex"
   , "LineIndexIsNotReady"
 ]
 
@@ -190,3 +191,20 @@ Lines enumeration starts from 0.
 
 class LineIndexIsNotReady(RuntimeError):
     pass
+
+
+class FixedLinesizeIndex(Index):
+
+    def __init__(self, linesize = 1, **kw):
+        super(FixedLinesizeIndex, self).__init__(**kw)
+        self.linesize = linesize
+
+    def lookup(self, lineidx):
+        return (lineidx, self.linesize * lineidx)
+
+    def co_build(self, stream):
+        linesize = self.linesize
+        self.current_lines = self.total_lines = \
+            (stream.seek(0, 2) + linesize - 1) // linesize
+        return
+        yield # must be a coroutine
