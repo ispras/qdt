@@ -94,6 +94,33 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self.bind("<Control-Key>", self._on_ctrl_key, "+")
 
     @property
+    def lineno_offset(self):
+        return self._lineno_offset
+
+    @lineno_offset.setter
+    def lineno_offset(self, lineno_offset):
+        self._lineno_offset = lineno_offset
+        self.draw()
+
+    @property
+    def lineno_multiplier(self):
+        return self._lineno_multiplier
+
+    @lineno_multiplier.setter
+    def lineno_multiplier(self, lineno_multiplier):
+        self._lineno_multiplier = lineno_multiplier
+        self.draw()
+
+    @property
+    def lineno_fmt(self):
+        return self._lineno_fmt
+
+    @lineno_fmt.setter
+    def lineno_fmt(self, lineno_fmt):
+        self._lineno_fmt = lineno_fmt
+        self.draw()
+
+    @property
     def selected_blob(self):
         start = self._sel_start
         if start is None:
