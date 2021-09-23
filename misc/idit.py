@@ -944,6 +944,7 @@ class Idit(GUITk, object):
             encoding = "charmap", # fastest
             lineno_offset = 0,
             ineno_fmt = "%x",
+            blob_size = 256, # HexStream is not fast enough for big blobs
         )
         tc.grid(row = 0, column = 0, sticky = "NESW")
         add_scrollbars_native(fr, tc, sizegrip = True)
