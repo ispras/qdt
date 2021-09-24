@@ -625,6 +625,8 @@ class LauncherGUI(GUITk):
 
 
 def main():
+    RESFILE = "qlauncher.res.py"
+
     ap = ArgumentParser()
     arg = ap.add_argument
     arg("qemu",
@@ -648,6 +650,10 @@ def main():
     )
     arg("--log", default = None)
     arg("--new-log", action = "store_true")
+    arg("-a", "--again",
+        help = "Ignore results of previous sessions (" + RESFILE +")",
+        action = "store_true",
+    )
 
     args = ap.parse_args()
 
@@ -794,10 +800,17 @@ def main():
             for res in gen0(base, **conf):
                 yield res
 
-    prev_res_fn = join(resdir, "qlauncher.res.py")
-    try:
-        res = MeasurerResult.load(prev_res_fn)
-    except FileNotFoundError:
+    prev_res_fn = join(resdir, RESFILE)
+
+    if args.again:
+        res = None
+    else:
+        try:
+            res = MeasurerResult.load(prev_res_fn)
+        except FileNotFoundError:
+            res = None
+
+    if res is None:
         res = MeasurerResult(file_name = prev_res_fn)
 
     measurer = Measurer(
