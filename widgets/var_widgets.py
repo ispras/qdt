@@ -273,6 +273,27 @@ class VarTreeview(Treeview):
     a tuple. """
 
     def insert(self, *a, **kw):
+        to_track = self.intercept(kw)
+
+        iid = Treeview.insert(self, *a, **kw)
+
+        for col, v in to_track:
+            TreeviewCellBinding(self, col, iid, v)
+
+        return iid
+
+    def item(self, iid, *a, **kw):
+
+        to_track = self.intercept(kw)
+
+        ret = Treeview.item(self, iid, *a, **kw)
+
+        for col, v in to_track:
+            TreeviewCellBinding(self, col, iid, v)
+
+        return ret
+
+    def intercept(self, kw):
         to_track = []
 
         try:
@@ -285,13 +306,7 @@ class VarTreeview(Treeview):
                     to_track.append((col, v))
                     values[col] = v.get()
 
-        item_iid = Treeview.insert(self, *a, **kw)
-
-        for col, v in to_track:
-            TreeviewCellBinding(self, col, item_iid, v)
-
-        return item_iid
-
+        return to_track
 
 class ComboboxEntryBinding():
 
