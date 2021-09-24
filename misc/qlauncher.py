@@ -36,9 +36,13 @@ from six.moves.tkinter import (
     END,
     BOTH,
     BROWSE,
+    NONE,
 )
 from argparse import (
     ArgumentParser,
+)
+from datetime import (
+    datetime,
 )
 from os import (
     remove,
@@ -155,7 +159,9 @@ class MeasureLaunch(object):
 
         self.__notify_build_started(self)
 
+        build_t0 = time()
         yield build_dir.co_install()
+        build_t1 = time()
 
         qemu = join(build_dir.prefix, "bin", "qemu-system-" + self.arch)
 
@@ -180,6 +186,7 @@ class MeasureLaunch(object):
             extra_args = extra_args,
         )
 
+        run_t0 = time()
         p = launch.launch(self.task_manager, start_threads = False)
 
         p.watch_log(self._on_process_log)
@@ -193,6 +200,8 @@ class MeasureLaunch(object):
 
         while poll() is None:
             yield False
+
+        run_t1 = time()
 
         if p.returncode == 0:
             resdir = self.resdir
@@ -229,6 +238,8 @@ class MeasureLaunch(object):
         resinfo = dict(
             returncode = p.returncode,
             filesizes = filesizes,
+            build_time = (build_t0, build_t1 - build_t0),
+            run_time = (run_t0, run_t1 - run_t0),
         )
 
         # Don't forget rest of stdout and stderr.
@@ -421,7 +432,7 @@ class LaunchInfoWidget(GUIFrame):
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
 
-        self.t_status = t_info = GUIText(self, state = READONLY)
+        self.t_status = t_info = GUIText(self, state = READONLY, wrap = NONE)
         t_info.grid(row = 0, column = 0, sticky = "NESW")
 
         add_scrollbars_native(self, t_info, sizegrip = sizegrip)
@@ -452,7 +463,7 @@ class LaunchTree(GUIFrame):
         tv.column("#0", width = 350)
 
         tv.heading("status", text = _("Status"))
-        tv.column("status", width = 80)
+        tv.column("status", width = 220)
 
         self.iid2launch = bidict()
 
@@ -532,6 +543,8 @@ class LauncherGUI(GUITk):
 
         self.title(_("Qemu Launcher"))
 
+        self.short_statuses = dict()
+
         self._measurer = measurer
 
         measurements = measurer.measurements
@@ -563,10 +576,38 @@ class LauncherGUI(GUITk):
                 launch = measurements[name]
             except KeyError:
                 continue
-            self._set_rc(launch, ri["returncode"])
+            self._set_res(launch, ri)
             measurer.skip.add(name)
 
         self.result = result
+
+        self.after(1, self._short_status_update)
+
+    def _short_status_update(self):
+        for ml, (status, t0) in self.short_statuses.items():
+            t = time() - t0
+            m = int(t / 60.)
+            s = t - 60 * m
+            self.w_tree.set_status(ml, "%s %u:%02.1f" % (status, m, s))
+
+        self.after(99, self._short_status_update)
+
+    def _set_short_status(self, ml, status, t = None):
+        if status is None:
+            last = self.short_statuses.pop(ml)
+            if last is None:
+                self.w_tree.set_status(ml, "")
+            else:
+                last_status, last_time = last
+                self.w_tree.set_status(ml, _("%s at %s") % (
+                    last_status,
+                    datetime.fromtimestamp(last_time).strftime(
+                        "%H:%M:%S %Y.%m.%d"
+                    )
+                ))
+        else:
+            self.short_statuses[ml] = (status, time() if t is None else t)
+            self.w_tree.set_status(ml, status)
 
     def _update_result(self):
         result = self.result
@@ -576,14 +617,14 @@ class LauncherGUI(GUITk):
 
     def _on_build_started(self, ml):
         self.info[ml.name] += "Building...\n"
-        self.w_tree.set_status(ml, "building")
+        self._set_short_status(ml, "building")
         self._update_info(ml)
 
     def _on_launched(self, ml, ql, proc):
         self.info[ml.name] += (
             "\n\nRunning...\n" +  " \\\n".join(proc.args) + "\n\n"
         )
-        self.w_tree.set_status(ml, "running")
+        self._set_short_status(ml, "running")
         self._update_info(ml)
 
     def _on_log(self, ml, text):
@@ -597,16 +638,31 @@ class LauncherGUI(GUITk):
         self.info[ml.name] += pygenerate(resinfo).w.getvalue()
         self.retinfos[ml.name] = resinfo
 
-        self._set_rc(ml, rc)
+        self._set_res(ml, resinfo)
         self._update_info(ml)
 
         self._update_result()
 
-    def _set_rc(self, launch, rc):
-        if rc == 0:
-            self.w_tree.set_status(launch, "finished")
+    def _set_res(self, launch, resinfo):
+        rc = resinfo["returncode"]
+
+        for ts in ["run", "build"]:
+            try:
+                t0, duration = resinfo[ts + "_time"]
+                t = t0 + duration
+                break
+            except KeyError:
+                pass
         else:
-            self.w_tree.set_status(launch, "failed (%d)" % rc)
+            t = None
+
+        if rc == 0:
+            self._set_short_status(launch, "finished", t = t)
+        else:
+            self._set_short_status(launch, "failed (%d)" % rc, t = t)
+
+        # stop time counting
+        self._set_short_status(launch, None)
 
     def _update_info(self, launch):
         if launch is self.w_tree.selected:
