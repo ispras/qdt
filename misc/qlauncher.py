@@ -626,27 +626,28 @@ class LauncherGUI(GUITk):
 
 def main():
     ap = ArgumentParser()
-    ap.add_argument("qemu",
+    arg = ap.add_argument
+    arg("qemu",
         help = "qemu worktree (sources)",
     )
-    ap.add_argument("--builds",
+    arg("--builds",
         default = join(".", "builds"),
         help = "where to build qemu",
     )
-    ap.add_argument("--workdir",
+    arg("--workdir",
         default = join(".", "work"),
         help = "where to launch qemu",
     )
-    ap.add_argument("--resdir",
+    arg("--resdir",
         default = join(".", "res"),
         help = "where to copy results",
     )
-    ap.add_argument("--workloads",
+    arg("--workloads",
         default = ".",
         help = "guest images"
     )
-    ap.add_argument("--log", default = None)
-    ap.add_argument("--new-log", action = "store_true")
+    arg("--log", default = None)
+    arg("--new-log", action = "store_true")
 
     args = ap.parse_args()
 
