@@ -679,6 +679,10 @@ class OpIndex(Operator):
         self.delim = "["
         self.suffix = "]"
 
+    def add_child(self, child):
+        # Note, ignore `Operator.add_child` to suppress unnecessary parentheses
+        super(Operator, self).add_child(child)
+
 
 class OpSDeref(Operator):
 
