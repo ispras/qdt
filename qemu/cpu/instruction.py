@@ -540,7 +540,9 @@ def build_instruction_tree(node, instructions, read_bitsize,
     max_bitsize = max(i.bitsize for i in instructions)
 
     if BUILD_INSTRUCTION_TREE_DEBUG:
-        print("DEBUG: Instructions (depth %d):" % depth)
+        print("DEBUG: Instructions (depth %d, count %d):" % (
+            depth, len(instructions)
+        ))
         print_instructions(instructions, max_bitsize = max_bitsize)
 
     if len(instructions) == 1:
