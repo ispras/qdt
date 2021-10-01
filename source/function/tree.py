@@ -61,6 +61,7 @@ __all__ = [
                       , "OpGreater"
                       , "OpLess"
                       , "CaseRange"
+  , "flat_list"
 ]
 
 from ..c_const import (
@@ -86,6 +87,12 @@ from common import (
 from six import (
     integer_types
 )
+from types import (
+    GeneratorType
+)
+from functools import (
+    update_wrapper,
+)
 
 
 # OpSDeref is automatically re-directed to definition of structure if
@@ -103,6 +110,28 @@ class DeclarationSearcher(NodeVisitor):
         if isinstance(self.cur, Declare):
             self.have_declaration = True
             raise BreakVisiting()
+
+
+def flat_iter(gen):
+    stack = [gen]
+    while stack:
+        cur = stack[-1]
+        for i in cur:
+            if isinstance(i, GeneratorType):
+                stack.append(i)
+                # start yielding items from `i`
+                break
+            else:
+                yield i
+        else:
+            # cur is empty
+            stack.pop()
+
+
+def flat_list(gen):
+    ret = lambda *a, **kw: list(flat_iter(gen(*a, **kw)))
+    update_wrapper(ret, gen)
+    return ret
 
 
 class Node(TypeContainer):
@@ -132,7 +161,10 @@ class Node(TypeContainer):
         return self
 
     def add_child(self, child):
-        self.children.append(child)
+        if isinstance(child, GeneratorType):
+            self.children.extend(flat_iter(child))
+        else:
+            self.children.append(child)
 
     def out_children(self, writer):
         if self.indent_children:
