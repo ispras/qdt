@@ -2128,7 +2128,7 @@ def append_common_instructions():
 
         # V: Set if both operands are negative before execution,
         #    reset otherwise
-        set_sr_flag_if(f, s, "SR_C", OpLogAnd(src & msb, src & msb))
+        yield set_sr_flag_if(f, s, "SR_V", OpLogAnd(src & msb, dst & msb))
 
 
 def gen_msp430_instructions():
