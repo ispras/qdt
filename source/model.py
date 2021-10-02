@@ -1280,6 +1280,54 @@ class Variable(TypeContainer):
             return NotImplemented
         return self.name < other.name
 
+    def __add__(self, arg):
+        from .function import (
+            OpAdd
+        )
+        return OpAdd(self, arg)
+
+    def __and__(self, arg):
+        from .function import (
+            OpAnd
+        )
+        return OpAnd(self, arg)
+
+    def __getitem__(self, arg):
+        from .function import (
+            OpIndex
+        )
+        return OpIndex(self, arg)
+
+    def __sub__(self, arg):
+        from .function import (
+            OpSub
+        )
+        return OpSub(self, arg)
+
+    def __lshift__(self, arg):
+        from .function import (
+            OpLShift
+        )
+        return OpLShift(self, arg)
+
+    def __rlshift__(self, arg):
+        from .function import (
+            OpLShift
+        )
+        return OpLShift(arg, self)
+
+    def __rshift__(self, arg):
+        from .function import (
+            OpRShift
+        )
+        return OpRShift(self, arg)
+
+    def __rrshift__(self, arg):
+        from .function import (
+            OpRShift
+        )
+        return OpRShift(arg, self)
+
     __type_references__ = ["type", "initializer"]
 
 
