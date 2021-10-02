@@ -218,6 +218,36 @@ class CNode(Node):
     def out_child(child, writer):
         child.__c__(writer)
 
+    def __add__(self, arg):
+        return OpAdd(self, arg)
+
+    def __radd__(self, arg):
+        return OpAdd(arg, self)
+
+    def __and__(self, arg):
+        return OpAnd(self, arg)
+
+    def __sub__(self, arg):
+        return OpSub(self, arg)
+
+    def __rsub__(self, arg):
+        return OpSub(arg, self)
+
+    def __or__(self, arg):
+        return OpOr(self, arg)
+
+    def __xor__(self, arg):
+        return OpXor(self, arg)
+
+    def __lshift__(self, arg):
+        return OpLShift(self, arg)
+
+    def __rshift__(self, arg):
+        return OpRShift(self, arg)
+
+    def __invert__(self):
+        return OpNot(self)
+
 
 class Comment(Node):
 
