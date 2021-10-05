@@ -13,6 +13,7 @@ from common import (
     pypath,
     ee,
     ThreadStreamCopier,
+    PortPool,
 )
 from subprocess import (
     Popen,
@@ -29,13 +30,6 @@ from threading import (
     Lock,
     Condition,
 )
-from socket import (
-    socket,
-    AF_INET,
-    SOCK_STREAM,
-    SOL_SOCKET,
-    SO_REUSEADDR,
-)
 from argparse import (
     ArgumentParser,
 )
@@ -43,9 +37,9 @@ from argparse import (
 # use ours pyrsp
 with pypath("pyrsp"):
     from pyrsp.utils import (
-        find_free_port,
         wait_for_tcp_port
     )
+
 
 ENERGIA_PATH = ee("ENERGIA_PATH", "None")
 MSP430_TOOLCHAIN = ee("MSP430_TOOLCHAIN", "None")
@@ -216,53 +210,7 @@ BOARD_LOCK = Lock()
 
 copier = ThreadStreamCopier.catch_stdout()
 
-
-class PortCache(object):
-
-    def __init__(self):
-        self.lock = Lock()
-        self.free_ports = []
-        # Free ports must remains ours.
-        # For that purposes we `bind`s `socket`s to them.
-        self.sockets = {}
-        self.next_port = 1024
-
-    def aquire_port(self):
-        with self.lock:
-            if self.free_ports:
-                port = self.free_ports.pop()
-                sock = self.sockets.pop(port)
-                sock.close()
-            else:
-                port = find_free_port(self.next_port)
-                self.next_port = port + 1
-            return port
-
-    def release_port(self, port):
-        with self.lock:
-            self.sockets[port] = s = socket(AF_INET, SOCK_STREAM)
-            s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-            s.bind(("localhost", port))
-            self.free_ports.append(port)
-
-    def __call__(self):
-        return PortLease(self)
-
-
-class PortLease(object):
-
-    def __init__(self, cache):
-        self.cache = cache
-
-    def __enter__(self):
-        self.port = port = self.cache.aquire_port()
-        return port
-
-    def __exit__(self, *exc_info):
-        self.cache.release_port(self.port)
-
-
-port_cache = PortCache()
+port_pool = PortPool()
 
 
 def main():
@@ -445,7 +393,7 @@ def qemu_handler(t, test_func):
 
     elf_file_name = join(TESTS_PATH, t + ".elf")
 
-    with port_cache() as port:
+    with port_pool() as port:
         p = Popen([QEMU_MSP430] + QEMU_MSP430_ARGS + [
                 "-gdb", "tcp:localhost:" + str(port),
                 "-S",
