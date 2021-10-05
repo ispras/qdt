@@ -11,7 +11,8 @@ from os import (
 )
 from common import (
     pypath,
-    ee
+    ee,
+    ThreadStreamCopier,
 )
 from subprocess import (
     Popen,
@@ -27,7 +28,6 @@ from threading import (
     Thread,
     Lock,
     Condition,
-    current_thread,
 )
 from socket import (
     socket,
@@ -214,37 +214,7 @@ class MSPDebugRSP(MSP430RSP):
 BOARD_LOCK = Lock()
 
 
-class ThreadStreamCopier(object):
-
-    def __init__(self, stream):
-        self.stream = stream
-        self.thread_streams = {} # Thread -> stream
-        self._lock = Lock()
-
-    def write(self, *a):
-        with self._lock:
-            self.stream.write(*a)
-            try:
-                thread_stream = self.thread_streams[current_thread()]
-            except KeyError:
-                pass
-            else:
-                thread_stream.write(*a)
-
-    def flush(self, *a):
-        with self._lock:
-            self.stream.flush(*a)
-            try:
-                thread_stream = self.thread_streams[current_thread()]
-            except KeyError:
-                pass
-            else:
-                thread_stream.flush(*a)
-
-
-import sys
-copier = ThreadStreamCopier(sys.stdout)
-sys.stdout = copier
+copier = ThreadStreamCopier.catch_stdout()
 
 
 class PortCache(object):
@@ -401,8 +371,6 @@ def main():
 
 
 def test_job(queue, cond, handler, backed_name):
-    cur_thread = current_thread()
-
     while True:
         while True:
             with cond:
@@ -417,11 +385,8 @@ def test_job(queue, cond, handler, backed_name):
 
         log_file_name = join(TESTS_PATH, t + "." + backed_name + ".log")
         with open(log_file_name, "w") as log_file:
-            copier.thread_streams[cur_thread] = log_file
-
-            do_test_job(t, handler)
-
-            del copier.thread_streams[cur_thread]
+            with copier(log_file):
+                do_test_job(t, handler)
 
 
 def do_test_job(t, handler):
