@@ -7,11 +7,11 @@ int main(void)
     volatile uint8_t a = 0x8, b = 0xaa, c;
 #if __MSP430__ == 1
     asm volatile goto (
-        "bit.b %[src], %[dst] \n\
+        "bit.b %[src_a], %[dst_b] \n\
          jc %l[label]"
         :
-        : [dst] "rm" (b),
-          [src] "rm" (a)
+        : [dst_b] "rm" (b),
+          [src_a] "rm" (a)
         : "cc"
         : label
     );
