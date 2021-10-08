@@ -1,9 +1,8 @@
-From b70d38f18ab6936ee0a525e127d160751e8e0304 Mon Sep 17 00:00:00 2001
-Message-Id: <b70d38f18ab6936ee0a525e127d160751e8e0304.1607527657.git.real@ispras.ru>
+From c3fde81241bd6c5638f554b45ad38f4a5388205a Mon Sep 17 00:00:00 2001
+Message-Id: <c3fde81241bd6c5638f554b45ad38f4a5388205a.1633706137.git.real@ispras.ru>
 From: Efimov Vasily <real@ispras.ru>
-Date: Wed, 9 Dec 2020 18:15:30 +0300
+Date: Fri, 8 Oct 2021 18:14:24 +0300
 Subject: [PATCH] msp430x2xx: implement some devices and guest loading
- (-kernel)
 
 Signed-off-by: Efimov Vasily <real@ispras.ru>
 ---
@@ -20,14 +19,14 @@ Signed-off-by: Efimov Vasily <real@ispras.ru>
  10 files changed, 483 insertions(+), 41 deletions(-)
 
 diff --git a/hw/Makefile.objs b/hw/Makefile.objs
-index 9a149c39df..690b71f156 100644
+index ba9419cd77..690b71f156 100644
 --- a/hw/Makefile.objs
 +++ b/hw/Makefile.objs
 @@ -41,7 +41,6 @@ devices-dirs-$(CONFIG_NUBUS) += nubus/
  devices-dirs-y += semihosting/
  devices-dirs-y += smbios/
  devices-dirs-y += msp430-all/
--devices-dirs-$(CONFIG_SOFTMMU) += msp430/
+-devices-dirs-y += msp430/
  endif
  
  common-obj-y += $(devices-dirs-y)

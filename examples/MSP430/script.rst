@@ -1,29 +1,40 @@
 Материалы
 =========
 
-http://energia.nu/downloads/downloadv4.php?file=energia-1.8.10E23-linux64.tar.xz
+Обязательные
+~~~~~~~~~~~~
 
-http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/9_2_0_0/export/msp430-gcc-9.2.0.50_linux64.tar.bz2
+- Среда разработки `Energia IDE <http://energia.nu/downloads/downloadv4.php?file=energia-1.8.10E23-linux64.tar.xz>`_
 
-http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/9_2_0_0/export/msp430-gcc-support-files-1.210.zip
+- `Утилиты компиляции MSP430 <http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/9_2_0_0/export/msp430-gcc-9.2.0.50_linux64.tar.bz2>`_
 
-https://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/2019-06/R/eclipse-java-2019-06-R-linux-gtk-x86_64.tar.gz
+- `Вспомогательные файлы для утилит компиляции MSP430 <http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/9_2_0_0/export/msp430-gcc-support-files-1.210.zip>`_
 
-https://www.pydev.org/download.html
+Опциональные
+~~~~~~~~~~~~
+
+- Среда разработки `Eclipse IDE <https://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/2019-06/R/eclipse-java-2019-06-R-linux-gtk-x86_64.tar.gz>`_
+
+- Расширение `PyDev <https://www.pydev.org/download.html>`_ для среды
+  разработки Eclipse IDE для программирования на языке Python.
 
 Знакомство с Qemu
 =================
 
-Некоторые зависимости для Qemu.
+Зависимости сборки
+~~~~~~~~~~~~~~~~~~
 
-::
+Для сборки потребуются дополнительные библиотеки, которые могут отсутствовать
+в системе.
+Команды установки некоторых их них::
 
 	sudo apt install ninja-build
 
 
-Скачать и собрать Qemu.
+Загрузка исходного кода
+~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+Исходный код можно загрузить с помощью Git::
 
 	mkdir -p qemu/build
 	git clone https://git.qemu.org/git/qemu.git qemu/src
@@ -31,7 +42,14 @@ https://www.pydev.org/download.html
 	git checkout v5.1.0
 	# git submodule sync --recursive
 	git submodule update --init --recursive
-	cd ../build
+	cd ../..
+
+Сборка
+~~~~~~
+
+::
+
+	cd qemu/build
 	../src/configure \
 	    --target-list=i386-softmmu \
 	    --prefix=$(cd .. && pwd)/install \
@@ -42,16 +60,27 @@ https://www.pydev.org/download.html
 	make -j8 install
 	cd ../..
 
-Проверить.
+Проверочный запуск
+~~~~~~~~~~~~~~~~~~
 
 ::
 
 	qemu/install/bin/qemu-system-i386
 
+Чистка исходного кода после сборки
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+	cd qemu/src
+	git reset --hard
+	cd ../..
+
 Автоматизированная разработка системы команд MSP430
 ===================================================
 
-Скачать QDT.
+Загрузка Qemu Development Toolkit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -60,25 +89,26 @@ https://www.pydev.org/download.html
 	git submodule update --init --recursive
 	cd ../..
 
-Скачать I3S.
+Первое открытие проекта
+~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+*Это действие можно пропустить.*
 
-	git clone https://github.com/ispras/I3S.git i3s/src
-	cd i3s/src
-	git checkout i3s
-	# git submodule update --init --recursive
-	cd ../..
+Открыть проект в графическом редакторе::
 
-Открыть проект в графическом редакторе.
+	qdt/src/qdc-gui.py \
+	    -b qemu/build \
+	    qdt/src/examples/MSP430/msp430/msp430_project.py \
+	    &
+
 Дождаться построения кэша.
+Это может занять несколько десятков минут.
 
-::
+Разработка
+~~~~~~~~~~
 
-	qdt/src/qdc-gui.py -b qemu/build msp430/msp430_project.py &
-
-
-Начать разработку.
+Создание отдельной ветки
+------------------------
 
 ::
 
@@ -89,51 +119,63 @@ https://www.pydev.org/download.html
 	# git submodule update --init --recursive
 	cd ../..
 
-Запустить генерацию через ГИП (Ctrl-G) или командой.
+Генерация заготовки
+-------------------
 
-::
+Запустить генерацию через ГИП (Ctrl-G) или командой::
 
 	qdt/src/qemu_device_creator.py \
 	    -b qemu/build \
 	    -t v5.1.0 \
-	    msp430/msp430_project.py
+	    qdt/src/examples/MSP430/msp430/msp430_project.py
 
+Посмотреть и зафиксировать текущее состояние::
 
-Посмотреть и зафиксировать текущее состояние.
+	cd qemu/src
+	git add -A
+	git commit -m "MSP430: Generate boilerplate using QDT"
+	cd ../..
 
 Транслировать семантику (если перед генерацией через ГИП в меню
 настроек была отключена автоматическая трансляция или семантика
-была вручную дописана).
+была вручную дописана)::
 
-::
-
-	python2 i3s/src/i3s_to_c.py \
+	python2 qdt/src/I3S/i3s_to_c.py \
 	    --in-file qemu/src/target/msp430/translate.inc.i3s.c \
 	    --out-file qemu/src/target/msp430/translate.inc.c
 
-Зафиксировать изменения в Git.
+Зафиксировать изменения в Git (если была дополнительно транслирована
+семантика)::
 
-Просмотреть разницу.
+	cd qemu/src
+	git add -A
+	git commit -m "MSP430: Translate I3S to TCG API"
+	cd ../..
 
-::
+Просмотреть разницу::
 
 	meld \
 	    qemu/src/target/msp430/translate.inc.i3s.c  \
-	    qemu/src/target/msp430/translate.inc.c
+	    qemu/src/target/msp430/translate.inc.c \
+	    &
 
-Доделать процессор, тестовую машину и аппаратный умножитель.
+Минимальный набор устройств
+---------------------------
 
-::
+Доделать процессор, тестовую машину и аппаратный умножитель::
 
-	git am ../../patches/0001-MSP430-CPU-reset-interrupts-GDB-RSP-access.patch
-	git am ../../patches/0001-msp430_test-description-kernel-loading.patch
-	git am ../../patches/0001-msp430-all-implement-HWM.patch
+	cd qemu/src
+	git am ../../qdt/src/examples/MSP430/patches/0001-MSP430-CPU-reset-interrupts-GDB-RSP-access.patch
+	git am ../../qdt/src/examples/MSP430/patches/0001-msp430_test-description-kernel-loading.patch
+	git am ../../qdt/src/examples/MSP430/patches/0001-msp430-all-implement-HWM.patch
+	cd ../..
 
-Переконфигурировать эмулятор на MSP430 и собрать.
+Сборка
+------
 
-::
+Переконфигурировать эмулятор на MSP430 и собрать::
 
-	cd ../build
+	cd qemu/build
 
 	../src/configure \
 	    --target-list=msp430-softmmu \
@@ -147,9 +189,10 @@ https://www.pydev.org/download.html
 	make -j8 install
 	cd ../..
 
-Протестировать процессор с помощью C2T.
+Тестирование
+------------
 
-::
+Протестировать процессор с помощью C2T::
 
 	export MSP430_SUPPORT=$(pwd)/toolchain/msp430-gcc-support-files-1.210/msp430-gcc-support-files
 	export MSP430_TOOLCHAIN=$(pwd)/toolchain/msp430-gcc-9.2.0.50_linux64
@@ -163,9 +206,7 @@ https://www.pydev.org/download.html
 	    -e 0 \
 	    $(pwd)/msp430/config_msp430g2553.py
 
-Оценка покрытия.
-
-::
+Оценка покрытия::
 
 	PYTHONPATH=$(pwd)/qdt/src \
 	qdt/src/misc/msp430x_tests_coverage.py \
@@ -173,9 +214,7 @@ https://www.pydev.org/download.html
 	    --summary msp430x.cov.summary.csv \
 	    qdt/src/c2t/tests/ir
 
-Сравнение с "камнем".
-
-::
+Сравнение с "камнем"::
 
 	export MSP430_SUPPORT=\"$(pwd)/toolchain/msp430-gcc-support-files-1.210/msp430-gcc-support-files\"
 	export MSP430_TOOLCHAIN=\"$(pwd)/toolchain/msp430-gcc-9.2.0.50_linux64\"
@@ -186,71 +225,66 @@ https://www.pydev.org/download.html
 	PYTHONPATH=$(pwd)/qdt/src \
 	qdt/src/misc/msp430_test.py
 
-Проверить разницу.
-
-::
+Вычислить разницу::
 
 	cd msp430/tests
 	./diff-all.sh
 	cd ../..
 
-Посмотреть разницу.
-
-::
+Посмотреть разницу::
 
 	export TEST=call_indexed_sp
 	meld msp430/tests/$TEST.qemu.log msp430/tests/$TEST.hw.log
 
-Перепроверить конректный тест.
-
-::
+Перепроверить конректный тест::
 
 	PYTHONPATH=$(pwd)/qdt/src \
 	qdt/src/misc/msp430_test.py call_indexed_sp
 
-Сгенерировать заготовку msp430x2xx.
+Реализация модели ВМ семецства msp430x2xx
+-----------------------------------------
 
-::
+Сгенерировать заготовку msp430x2xx::
 
 	qdt/src/qemu_device_creator.py \
 	    -b qemu/build \
 	    -t v5.1.0 \
-	    msp430/msp430x2xx.py
+	    qdt/src/examples/MSP430/msp430/msp430x2xx.py
 
-Или через GUI.
-
-::
+Или через GUI::
 
 	qdt/src/qdc-gui.py \
 	    -b qemu/build \
-	    msp430/msp430x2xx.py &
+	    qdt/src/examples/MSP430/msp430/msp430x2xx.py \
+	    &
 
-Зафиксировать изменения через Git.
-
-Реализовать машину и устройства.
-
-::
+Зафиксировать изменения через Git::
 
 	cd qemu/src
-	git am ../../patches/0001-msp430x2xx-implement-some-devices-and-guest-loading-.patch
+	git add -A
+	git commit -m "MSP430: msp430x2xx family boilerplate"
+	cd ../..
 
-Пересобрать.
+Реализовать машину и устройства::
 
-::
+	cd qemu/src
+	git am ../../qdt/src/examples/MSP430/patches/0001-msp430x2xx-implement-some-devices-and-guest-loading-.patch
+	cd ../..
 
-	cd ../build
+Пересобрать::
+
+	cd qemu/build
 	make -j8 install
 	cd ../..
 
-Проверить.
+Проверка
+--------
 
-::
+Проверить::
 
 	qemu/install/bin/qemu-system-msp430 -M msp430x2xx
 
-Выполнить в HMP.
-
-::
+Выполнить в HMP::
 
 	info mtree
 	info qtree

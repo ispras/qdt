@@ -1,28 +1,28 @@
-From 442970d9cf5dc9cffb95610062dcfa60efab198d Mon Sep 17 00:00:00 2001
-Message-Id: <442970d9cf5dc9cffb95610062dcfa60efab198d.1607512476.git.real@ispras.ru>
+From a9ea3606fa4ac237f564f1ffca1add629e645f74 Mon Sep 17 00:00:00 2001
+Message-Id: <a9ea3606fa4ac237f564f1ffca1add629e645f74.1633705825.git.real@ispras.ru>
 From: Efimov Vasily <real@ispras.ru>
-Date: Wed, 9 Dec 2020 14:11:09 +0300
+Date: Fri, 8 Oct 2021 18:06:18 +0300
 Subject: [PATCH] MSP430 CPU: reset, interrupts, GDB RSP access
 
 Signed-off-by: Efimov Vasily <real@ispras.ru>
 ---
- target/msp430/cpu.c           |  36 +++++--
+ target/msp430/cpu.c           |   7 +-
  target/msp430/cpu.h           | 105 +++++++++++++++++++-
  target/msp430/helper.c        | 179 +++++++++++++++++++++++++++++++++-
  target/msp430/helper.h        |   1 +
  target/msp430/machine.c       |   6 ++
  target/msp430/translate.inc.c |  10 +-
- 6 files changed, 321 insertions(+), 16 deletions(-)
+ 6 files changed, 299 insertions(+), 9 deletions(-)
 
 diff --git a/target/msp430/cpu.c b/target/msp430/cpu.c
 old mode 100644
 new mode 100755
-index f3216f9a49..0c89652c67
+index f7a0fbe228..7837ba4e79
 --- a/target/msp430/cpu.c
 +++ b/target/msp430/cpu.c
-@@ -3,7 +3,8 @@
- #include "qemu/osdep.h"
+@@ -5,7 +5,8 @@
  #include "hw/irq.h"
+ #include "hw/qdev-properties.h"
  #include "qapi/error.h"
 -#include "cpu.h"
 +#include "exec/gdbstub.h"
@@ -30,91 +30,24 @@ index f3216f9a49..0c89652c67
  
  static ObjectClass *msp430_cpu_class_by_name(const char *cpu_model)
  {
-@@ -23,28 +24,36 @@ static void msp430_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
- 
- static int msp430_cpu_gdb_read_register(CPUState *cs, GByteArray *buf, int n)
- {
--    /* TODO: implement gdb_read_register */
-     MSP430CPU *cpu = MSP430_CPU(cs);
-     CPUClass *cc = CPU_GET_CLASS(cs);
--    CPUMSP430State *env __attribute__((unused)) = &cpu->env;
-+    CPUMSP430State *env = &cpu->env;
- 
-     if (n > cc->gdb_num_core_regs) {
-         return 0;
-+    } else if (n == 0) {
-+        return gdb_get_reg16(buf, env->pc);
-+    } else {
-+        return gdb_get_reg16(buf, env->regs[n - 1]);
-     }
--    return 0;
- }
- 
- static int msp430_cpu_gdb_write_register(CPUState *cs, uint8_t *mem_buf, int n)
- {
--    /* TODO: implement gdb_write_register */
-     MSP430CPU *cpu = MSP430_CPU(cs);
-     CPUClass *cc = CPU_GET_CLASS(cs);
--    CPUMSP430State *env __attribute__((unused)) = &cpu->env;
-+    CPUMSP430State *env = &cpu->env;
- 
-+    /* PC & SP are word aligned. */
-     if (n > cc->gdb_num_core_regs) {
-         return 0;
-+    } else if (n == 0) { /* PC */
-+        env->pc = lduw_p(mem_buf) & 0xFFFE;
-+    } else if (n == 1) { /* SP */
-+        env->regs[0] = lduw_p(mem_buf) & 0xFFFE;
-+    } else {
-+        env->regs[n - 1] = lduw_p(mem_buf) & 0xFFFF;
-     }
--    return 0;
-+    return 2;
- }
- 
- static bool msp430_cpu_has_work(CPUState *cs)
-@@ -70,13 +79,15 @@ static void msp430_cpu_realizefn(DeviceState *dev, Error **errp)
- 
- static void msp430_cpu_reset(DeviceState *dev)
- {
-+    CPUState *cs = CPU(dev);
-     MSP430CPU *cpu = MSP430_CPU(dev);
-     MSP430CPUClass *cc = MSP430_CPU_GET_CLASS(cpu);
-     CPUMSP430State *env = &cpu->env;
- 
+@@ -86,6 +87,8 @@ static void msp430_cpu_reset(DeviceState *dev)
      cc->parent_reset(dev);
      memset(env, 0, offsetof(CPUMSP430State, end_reset_fields));
--    env->pc = 0;
+     env->pc = 0;
 +
 +    cs->exception_index = EXCP_RESET;
  }
  
  static void msp430_cpu_set_pc(CPUState *cs, vaddr value)
-@@ -86,6 +97,12 @@ static void msp430_cpu_set_pc(CPUState *cs, vaddr value)
-     cpu->env.pc = value;
+@@ -96,6 +99,8 @@ static void msp430_cpu_set_pc(CPUState *cs, vaddr value)
  }
  
-+static Property msp430_cpu_properties[] = {
+ static Property msp430_cpu_properties[] = {
 +    DEFINE_PROP_UINT32("single-source-interrupts", MSP430CPU,
 +                       single_source_interrupts, 0xFFFFFFFF),
-+    DEFINE_PROP_END_OF_LIST()
-+};
-+
- static void msp430_cpu_class_init(ObjectClass *oc, void *data)
- {
-     DeviceClass *dc = DEVICE_CLASS(oc);
-@@ -96,8 +113,11 @@ static void msp430_cpu_class_init(ObjectClass *oc, void *data)
-                                     &mcc->parent_realize);
-     device_class_set_parent_reset(dc, msp430_cpu_reset, &mcc->parent_reset);
+     DEFINE_PROP_END_OF_LIST()
+ };
  
-+    device_class_set_props(dc, msp430_cpu_properties);
-+
-     cc->has_work = msp430_cpu_has_work;
-     cc->do_interrupt = msp430_cpu_do_interrupt;
-+    cc->cpu_exec_interrupt = msp430_cpu_exec_interrupt;
-     cc->set_pc = msp430_cpu_set_pc;
-     cc->dump_state = msp430_cpu_dump_state;
-     cc->disas_set_info = msp430_cpu_disas_set_info;
 diff --git a/target/msp430/cpu.h b/target/msp430/cpu.h
 old mode 100644
 new mode 100755
@@ -485,7 +418,7 @@ index 6b5338a824..8144d8a4fa
      }
  };
 diff --git a/target/msp430/translate.inc.c b/target/msp430/translate.inc.c
-index 668c6f74d1..ca25dee65e 100644
+index 8a374ea17b..ee45ebd57f 100644
 --- a/target/msp430/translate.inc.c
 +++ b/target/msp430/translate.inc.c
 @@ -5,11 +5,6 @@
