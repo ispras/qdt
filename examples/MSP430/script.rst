@@ -165,9 +165,9 @@
 Доделать процессор, тестовую машину и аппаратный умножитель::
 
 	cd qemu/src
-	git am ../../qdt/src/examples/MSP430/patches/0001-MSP430-CPU-reset-interrupts-GDB-RSP-access.patch
-	git am ../../qdt/src/examples/MSP430/patches/0001-msp430_test-description-kernel-loading.patch
-	git am ../../qdt/src/examples/MSP430/patches/0001-msp430-all-implement-HWM.patch
+	git am ../../qdt/src/examples/MSP430/patches/MSP430-CPU-reset-interrupts-GDB-RSP-access.patch
+	git am ../../qdt/src/examples/MSP430/patches/msp430_test-description-kernel-loading.patch
+	git am ../../qdt/src/examples/MSP430/patches/msp430-all-implement-HWM.patch
 	cd ../..
 
 Сборка
@@ -192,10 +192,20 @@
 Тестирование
 ------------
 
+Закгрузка утилит компиляции и вспомогательных файлов::
+
+	wget http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/9_2_0_0/export/msp430-gcc-9.2.0.50_linux64.tar.bz2
+	wget http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/9_2_0_0/export/msp430-gcc-support-files-1.210.zip
+
+Распаковка архивов::
+
+	tar -xf msp430-gcc-9.2.0.50_linux64.tar.bz2
+	unzip msp430-gcc-support-files-1.210
+
 Протестировать процессор с помощью C2T::
 
-	export MSP430_SUPPORT=$(pwd)/toolchain/msp430-gcc-support-files-1.210/msp430-gcc-support-files
-	export MSP430_TOOLCHAIN=$(pwd)/toolchain/msp430-gcc-9.2.0.50_linux64
+	export MSP430_SUPPORT=$(pwd)/msp430-gcc-support-files
+	export MSP430_TOOLCHAIN=$(pwd)/msp430-gcc-9.2.0.50_linux64
 	export MSP430_QEMU=$(pwd)/qemu/install/bin/qemu-system-msp430
 
 	qdt/src/c2t.py \
@@ -204,7 +214,7 @@
 	    -s ^.*m_stack_u?((32)|(64)).*$ \
 	    -j 8 \
 	    -e 0 \
-	    $(pwd)/msp430/config_msp430g2553.py
+	    qdt/src/examples/MSP430/msp430/config_msp430g2553.py
 
 Оценка покрытия::
 
@@ -214,10 +224,13 @@
 	    --summary msp430x.cov.summary.csv \
 	    qdt/src/c2t/tests/ir
 
+Сценарии, неходящиеся **не** в корневом каталоге QDT, требуют для работы
+добавления корневого каталога в `PYTHONPATH`.
+
 Сравнение с "камнем"::
 
-	export MSP430_SUPPORT=\"$(pwd)/toolchain/msp430-gcc-support-files-1.210/msp430-gcc-support-files\"
-	export MSP430_TOOLCHAIN=\"$(pwd)/toolchain/msp430-gcc-9.2.0.50_linux64\"
+	export MSP430_SUPPORT=\"$(pwd)/msp430-gcc-support-files\"
+	export MSP430_TOOLCHAIN=\"$(pwd)/msp430-gcc-9.2.0.50_linux64\"
 	export MSP430_TESTS_PATH=\"$(pwd)/msp430/tests\"
 	export QEMU_MSP430=\"$(pwd)/qemu/install/bin/qemu-system-msp430\"
 	export QEMU_MSP430_ARGS='["-M", "msp430_test", "-nographic"]'
@@ -268,7 +281,7 @@
 Реализовать машину и устройства::
 
 	cd qemu/src
-	git am ../../qdt/src/examples/MSP430/patches/0001-msp430x2xx-implement-some-devices-and-guest-loading-.patch
+	git am ../../qdt/src/examples/MSP430/patches/msp430x2xx-implement-some-devices-and-guest-loading.patch
 	cd ../..
 
 Пересобрать::
