@@ -518,6 +518,11 @@ class CPUType(QOMCPU):
         exec_c.add_reference(Type["TARGET_PAGE_SIZE"])
         exec_c.add_inclusion(h)
 
+        # XXX: the "cpu.h" header is already included in the "exec/gdbstub.h"
+        # header but on a short path and in `ifdef` block.
+        # The tool cannot find such an inclusion yet.
+        Header["exec/gdbstub.h"].add_inclusion(h)
+
         if not get_vp("cpu-param header exists"):
             for name, value in self.attributes.items():
                 m = Macro(name, text = value)
