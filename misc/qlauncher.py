@@ -817,6 +817,28 @@ def main():
                 ),
             )
 
+            # Linux 5
+            qemu_extra_args.update(dict(
+                hda = join(workloads,
+                    "linux-5.14/buildroot/1/rootfs_agent.ext2"
+                ),
+                M = "q35",
+                serial = "vc",
+                kernel = join(workloads,
+                    "linux-5.14/buildroot/1/bzImage"
+                ),
+                append = "root=/dev/sda console=ttyS1",
+            ))
+            qemu_extra_args.pop("global")
+
+            yield base.variant(".linux5",
+                cwd = join(workdir, "linux5"),
+                resdir = join(base.resdir, "linux5"),
+                updates = dict(
+                    qemu_extra_args = dict(qemu_extra_args),
+                ),
+            )
+
     def gen_rr3_variants(base, **__):
         yield base.variant(".count",
             updates = dict(
