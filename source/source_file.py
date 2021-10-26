@@ -1393,5 +1393,12 @@ digraph HeaderInclusion {
         SourceTreeContainer.current = self
         return previous
 
+    def __enter__(self):
+        # previous STC will reset self during `__exit__`
+        return self.set_cur_stc()
+
+    def __exit__(self, *__):
+        self.set_cur_stc()
+
 
 SourceTreeContainer().set_cur_stc()
