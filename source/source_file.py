@@ -234,6 +234,9 @@ class Source(TypeContainer):
 
         return self
 
+    def __call__(self, *types):
+        return self.add_types(types)
+
     def add_type(self, _type):
         _type.definer = self
         if _type.is_named:
