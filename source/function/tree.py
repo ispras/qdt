@@ -838,7 +838,11 @@ class OpCast(UnaryOperator):
 
     __type_references__ = ("type",)
 
-    def __init__(self, type_name, arg):
+    def __init__(self, type_or_name, arg):
+        if isinstance(type_or_name, Type):
+            type_name = type_or_name.c_name
+        else:
+            type_name = type_or_name
         super(OpCast, self).__init__("(" + type_name + ")", arg)
         self.type = Type[type_name]
 
