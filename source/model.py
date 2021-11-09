@@ -266,6 +266,12 @@ class Type(TypeContainer):
     def declaration_string(self):
         return self.full_deref.c_name + "@b" + self.asterisks
 
+    def __c__(self, writer):
+        if self.is_named:
+            writer.write(self.c_name)
+        else:
+            raise NotImplementedError
+
 
 class Structure(Type):
 
@@ -492,9 +498,6 @@ class Structure(Type):
 
     __type_references__ = ["_fields_tr"]
 
-    def __c__(self, writer):
-        writer.write(self.c_name)
-
     def __str__(self):
         if self.is_named:
             return super(Structure, self).__str__()
@@ -623,9 +626,6 @@ class EnumerationElement(Type):
         "Predicts `int`eger equivalent of the `enum`eration element."
         # XXX: currently works for simple auto enumerated `enum`s.
         return list(self.enum_parent.elems.values()).index(self)
-
-    def __c__(self, writer):
-        writer.write(self.c_name)
 
     def __or__(self, arg):
         from .function import (
@@ -774,9 +774,6 @@ class Function(Type):
             initializer = initializer,
             static = static
         )
-
-    def __c__(self, writer):
-        writer.write(self.c_name)
 
     def __str__(self):
         if self.is_named:
@@ -937,9 +934,6 @@ class Macro(Type):
             args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
-
-    def __c__(self, writer):
-        writer.write(self.c_name)
 
 
 class MacroUsage(Type):
