@@ -30,7 +30,10 @@ from functools import (
 from source import (
     add_base_types,
     BodyTree,
+    BranchIf,
     BranchSwitch,
+    Break,
+    Call,
     Comment,
     SwitchCase,
     SwitchCaseDefault,
@@ -38,12 +41,15 @@ from source import (
     Enumeration,
     Function,
     Header,
+    OpAddr,
     OpAssign,
     OpCast,
     OpCombAssign,
     OpDeclareAssign,
     OpDeref,
-    OpSub,
+    OpNEq,
+    OpSDeref,
+    OpSizeOf,
     Pointer,
     Return,
     Source,
@@ -73,9 +79,14 @@ def get_stc():
 
 def gen_global_rpc_types():
     add_base_types()
+    uint32_t = Type["uint32_t"]
+    uint8_t = Type["uint8_t"]
 
     global void
     void = Type["void"]
+
+    global rpc_h
+    rpc_h = Header("rpc.h")
 
     # TODO: parse those from rpc.h or generate rpc.h entirely
     global RPCError
@@ -85,16 +96,47 @@ def gen_global_rpc_types():
             "RPC_ERR_WRITE",
             "RPC_ERR_ALLOC",
             "RPC_ERR_UNIMPL_CALL",
+            "RPC_ERR_BACKEND",
             "RPC_ERR_COUNT"
         ],
         typedef_name = "RPCError"
     )
+    rpc_h(RPCError)
 
     global rpc_ptr_t
     rpc_ptr_t = Pointer(void, name = "rpc_ptr_t")
+    rpc_h(rpc_ptr_t)
 
     global RPCBackEnd
     RPCBackEnd = Pointer(void, name = "RPCBackEnd")
+    rpc_h(RPCBackEnd)
+
+    global rpc_backend_handle_message
+    rpc_backend_handle_message = Function(
+        name = "rpc_backend_handle_message",
+        ret_type = RPCError,
+        args = [
+            RPCBackEnd("be"),
+            rpc_ptr_t("ctx"),
+            rpc_ptr_t("msg"),
+            uint32_t("msg_size"),
+            Pointer(Pointer(uint8_t))("response"),
+            Pointer(uint32_t)("response_size")
+        ]
+    )
+    rpc_h(rpc_backend_handle_message)
+
+    global rpc_backend_alloc_response
+    rpc_backend_alloc_response = Function(
+        name = "rpc_backend_alloc_response",
+        ret_type = RPCError,
+        args = [
+            RPCBackEnd("be"),
+            uint32_t("response_size"),
+            Pointer(rpc_ptr_t)("response")
+        ]
+    )
+    rpc_h(rpc_backend_alloc_response)
 
 
 # a method @decorator
@@ -198,7 +240,14 @@ class RPCInfo(object):
         )
 
     def gen_args_packer(self, byte_order = "@"):
-        fmt, flattener_code = gen_packer(self.args.values(), "args", count())
+        if not self.args:
+            def packer(*__):
+                return b""
+            return packer
+
+        fmt, flattener_code = gen_packer_py(self.args.values(), "args",
+            count()
+        )
 
         s = Struct(byte_order + fmt)
 
@@ -225,7 +274,7 @@ class RPCInfo(object):
         if self.return_type is None:
             return lambda __ : None
 
-        fmt, tree_code, l_vals = gen_unpacker(
+        fmt, tree_code, l_vals = gen_unpacker_py(
             (("retval", self.return_type),),
             "ret",
             count()
@@ -256,14 +305,68 @@ class RPCInfo(object):
 
         return unpacker
 
-    def iter_handler_ops(self, err, be, p, args_size, response, response_size):
-        return
-        yield
+    def iter_handler_ops(self, impl, err, be, ctx, pptr, response,
+        response_size
+    ):
+        unpackers = {}
+        packers = {}
+        impl_args = [ctx]
 
+        ret_type = self.return_type
+
+        if ret_type is not None:
+            ret_arg = ret_type("ret")
+            yield Declare(ret_arg)
+            impl_args.append(OpAddr(ret_arg))
+
+        # unpack arguments
+        args_lvals_and_types = []
+        for arg, t in self.args.items():
+            arg_var = t(arg)
+            if isinstance(t, Structure):
+                impl_args.append(OpAddr(arg_var))
+            else:
+                impl_args.append(arg_var)
+            yield Declare(arg_var)
+            args_lvals_and_types.append((arg_var, t))
+
+        for node in iter_gen_unpacker_c(args_lvals_and_types, pptr,
+            unpackers
+        ):
+            yield node
+
+        yield OpAssign(err, Call(impl, *impl_args))
+
+        if ret_type is not None:
+            yield BranchIf(OpNEq(err, Type["RPC_ERR_NO"]))(
+                Break()
+            )
+            # allocate memory for response
+            yield OpAssign(err,
+                Call(rpc_backend_alloc_response, be,
+                    OpSizeOf(ret_type),
+                    response
+                )
+            )
+            yield BranchIf(OpNEq(err, Type["RPC_ERR_NO"]))(
+                Break()
+            )
+            yield OpAssign(
+                OpDeref(response_size),
+                OpSizeOf(ret_type)
+            )
+
+            # pack returned value into response
+            r = response.type.type("r")
+            yield Declare(OpDeclareAssign(r, OpDeref(response)))
+            rptr = pptr.type("rp")
+            yield Declare(OpDeclareAssign(rptr, OpAddr(r)))
+            for n in iter_gen_packer_c([(ret_arg, ret_type)], rptr, packers):
+                yield n#ode
 
 # Standard C types (char, int, long) have host dependent sizes.
 # They are not used by base implementation.
-# By one can add them to `simple_type_fmts` mapping if needed.
+# But one can add them to `simple_type_fmts` mapping if needed.
 simple_type_fmts = {
     "int8_t" : "b",
     "uint8_t" : "B",
@@ -279,7 +382,7 @@ simple_type_fmts = {
 }
 
 
-def gen_packer(types_iter, obj_name, counter):
+def gen_packer_py(types_iter, obj_name, counter):
     fmt = ""
 
     flattener_code = []
@@ -292,7 +395,9 @@ def gen_packer(types_iter, obj_name, counter):
         if isinstance(t, Structure):
             s_name = "s" + str(next(counter))
             line(s_name + " = next(" + i_name + ")")
-            s_fmt, s_flattener_code = gen_structure_packer(t, s_name, counter)
+            s_fmt, s_flattener_code = gen_structure_packer_py(t, s_name,
+                counter
+            )
             fmt += s_fmt
 
             flattener_code.extend(s_flattener_code)
@@ -308,7 +413,64 @@ def gen_packer(types_iter, obj_name, counter):
     return fmt, flattener_code
 
 
-def gen_structure_packer(s, obj_name, counter):
+def iter_gen_unpacker_c(lvals_types_iter, pptr, unpackers):
+    for lval, t in lvals_types_iter:
+        if isinstance(t, Structure):
+            if t in unpackers:
+                t_unpacker = unpackers[t]
+            else:
+                t_unpacker = gen_struct_handler_c(t, "unpack_", unpackers,
+                    iter_gen_unpacker_c
+                )
+                unpackers[t] = t_unpacker
+
+            yield Call(t_unpacker, OpAddr(lval), pptr)
+        else:
+            yield OpAssign(lval, OpDeref(OpCast(Pointer(t), OpDeref(pptr))))
+            yield OpCombAssign(OpDeref(pptr), OpSizeOf(t), "+")
+
+
+def iter_gen_packer_c(rvals_types_iter, pptr, packers):
+    for rval, t in rvals_types_iter:
+        if isinstance(t, Structure):
+            if t in packers:
+                t_packer = packers[t]
+            else:
+                t_packer = gen_struct_handler_c(t, "pack_", packers,
+                    iter_gen_packer_c
+                )
+                packers[t] = t_packer
+            yield Call(t_packer, OpAddr(rval), pptr)
+        else:
+            yield OpAssign(OpDeref(OpCast(Pointer(t), OpDeref(pptr))), rval)
+            yield OpCombAssign(OpDeref(pptr), OpSizeOf(t), "+")
+
+
+def gen_struct_handler_c(t, name_prefix, handlers, recursion):
+    target = Pointer(t)("s")
+    pptr = Pointer(Pointer(Type["uint8_t"]))("pp")
+
+    body = BodyTree()
+
+    def iter_fields_lvals_and_types():
+        for n, f in t.fields.items():
+            yield OpSDeref(target, n), f.type
+
+    body(*recursion(iter_fields_lvals_and_types(), pptr, handlers))
+
+    func = Function(
+        name_prefix + t.name,
+        args = [
+            target,
+            pptr
+        ],
+        body = body
+    )
+
+    return func
+
+
+def gen_structure_packer_py(s, obj_name, counter):
     fmt = ""
     flattener_code = []
     line = flattener_code.append
@@ -322,7 +484,9 @@ def gen_structure_packer(s, obj_name, counter):
             s_name = "s" + str(next(counter))
             line(s_name + " = " + pfx + n)
 
-            s_fmt, s_flattener_code = gen_structure_packer(t, s_name, counter)
+            s_fmt, s_flattener_code = gen_structure_packer_py(t, s_name,
+                counter
+            )
             fmt += s_fmt
 
             flattener_code.extend(s_flattener_code)
@@ -338,7 +502,7 @@ def gen_structure_packer(s, obj_name, counter):
     return fmt, flattener_code
 
 
-def gen_unpacker(items, dict_name, counter):
+def gen_unpacker_py(items, dict_name, counter):
     fmt = ""
     l_vals = []
     l_val = l_vals.append
@@ -352,7 +516,7 @@ def gen_unpacker(items, dict_name, counter):
         if isinstance(t, Structure):
             inner_dict_name = "d" + str(next(counter))
             line(item_expr + " = " + inner_dict_name + " = {}")
-            s_fmt, s_tree_code, s_l_vals = gen_unpacker(
+            s_fmt, s_tree_code, s_l_vals = gen_unpacker_py(
                 ((f.name, f.type) for f in t.fields.values()),
                 inner_dict_name, counter
             )
@@ -436,19 +600,6 @@ def fitting_c_type(max_val):
         return None
 
 
-def fitting_c_type_size(max_val):
-    if max_val < 0x100:
-        return 1
-    elif max_val < 0x10000:
-        return  2
-    elif max_val < 0x100000000:
-        return 4
-    elif max_val < 0x10000000000000000:
-        return 8
-    else:
-        return None
-
-
 class RPCProtocol(object):
 
     def __init__(self, frontend_class, byte_order = "@"):
@@ -525,42 +676,33 @@ class RPCProtocol(object):
             yield msg
 
     def gen_be_handle_message(self,
-        name = "rpc_backend_handle_message",
+        decl_name = "rpc_backend_handle_message",
+        impl_name_prefix = "",
     ):
-        uint32_t = Type["uint32_t"]
+        fe = self.fe
+        impl_prefix = impl_name_prefix + fe.__name__ + "_"
+
         uint8_t = Type["uint8_t"]
 
-        decl = Function(
-            name = name,
-            ret_type = RPCError,
-            args = [
-                RPCBackEnd("be"),
-                rpc_ptr_t("msg"),
-                uint32_t("msg_size"),
-                Pointer(rpc_ptr_t)("response"),
-                Pointer(uint32_t)("response_size")
-            ]
-        )
-
+        decl = Type[decl_name]
         be = decl["be"]
+        ctx = decl["ctx"]
         msg = decl["msg"]
-        msg_size = decl["msg_size"]
         response = decl["response"]
         response_size = decl["response_size"]
 
         call_id_t = fitting_c_type(self.id_count)
-        call_id_size = fitting_c_type_size(self.id_count)
 
         call_id = call_id_t("call_id")
         err = RPCError("err")
-        p = uint8_t("p")
+        p = Pointer(uint8_t)("p")
+        pptr = Pointer(p.type)("pp")
 
         body = BodyTree()
-        body(Declare(call_id))
         body(Declare(OpDeclareAssign(err, Type["RPC_ERR_NO"])))
-        body(Declare(p))
 
         body(OpAssign(p, OpCast(Pointer(uint8_t), msg)))
+        body(Declare(OpDeclareAssign(pptr, OpAddr(p))))
 
         if self.byte_order != "@":
             # TODO: swap bytes of call_id if needed
@@ -568,10 +710,13 @@ class RPCProtocol(object):
 
         body(OpAssign(call_id, OpDeref(OpCast(Pointer(call_id_t), p))))
 
-        body(OpCombAssign(p, call_id_size, "+"))
+        body(OpCombAssign(p, OpSizeOf(call_id_t), "+"))
 
-        args_size = uint32_t("args_size")
-        body(OpDeclareAssign(args_size, OpSub(msg_size, call_id_size)))
+        # TODO: implement message size verification
+        # uint32_t = Type["uint32_t"]
+        # msg_size = decl["msg_size"]
+        # args_size = uint32_t("args_size")
+        # body(OpDeclareAssign(args_size, OpSub(msg_size, call_id_size)))
 
         switch = BranchSwitch(call_id)
         body(switch)
@@ -582,7 +727,8 @@ class RPCProtocol(object):
 
             case(Comment(info.name))
             case(*info.iter_handler_ops(
-                err, be, p, args_size, response, response_size
+                Type[impl_prefix + info.name],
+                err, be, ctx, pptr, response, response_size
             ))
 
         default = SwitchCaseDefault()
@@ -594,12 +740,40 @@ class RPCProtocol(object):
 
         return decl.gen_definition(body)
 
-    def gen_be_module(self, path, **src_kw):
+    def gen_handler_module(self, path, **src_kw):
         mod = Source(path, **src_kw)
 
         mod(self.gen_be_handle_message())
 
         return mod
+
+    def gen_impl_hdr(self, path, **hdr_kw):
+        return gen_rpc_impl_header(self.fe, path, **hdr_kw)
+
+    def gen_impl_mod(self, path, **src_kw):
+        impl_prefix = self.fe.__name__ + "_"
+
+        mod = Source(path, **src_kw)
+
+        body = BodyTree()
+        body(Return(Type["RPC_ERR_NO"]))
+
+        for info in self.infos:
+            mod(Type[impl_prefix + info.name].gen_definition(body = body))
+
+        return mod
+
+    def iter_gen_sources(self,
+        impl_hdr_path = "impl.h",
+        impl_mod_path = "impl.boilerplate.c",
+        be_mod_path = "handler.c",
+    ):
+        yield self.gen_impl_hdr(impl_hdr_path, protection_prefix = "")
+        yield self.gen_handler_module(be_mod_path, locked_inclusions = False)
+
+        # Some modules are generated optionally.
+        if impl_mod_path is not None:
+            yield self.gen_impl_mod(impl_mod_path, locked_inclusions = False)
 
 
 class RPCStreamConnection(object):
