@@ -1,8 +1,8 @@
 from rpc import (
-    gen_rpc_impl_header,
     get_stc,
     rpc,
     RPCFrontEnd,
+    RPCStreamConnection,
 )
 from source import (
     Type,
@@ -14,6 +14,27 @@ from inspect import (
 from six.moves import (
     StringIO,
 )
+from os.path import (
+    abspath,
+    dirname,
+    join,
+)
+from SCons.Script.Main import (
+    _build_targets,
+    _set_debug_values,
+)
+from SCons.Script.SConsOptions import (
+    Parser,
+    SConsValues,
+)
+from SCons.Script.SConscript import (
+    SConsEnvironment,
+)
+from subprocess import (
+    Popen,
+    PIPE,
+)
+
 
 
 def main():
@@ -51,20 +72,25 @@ def main():
 
         @rpc(None, "int32_t")
         def m1(self, a):
-            print(a)
+            print("TestFrontEnd.m1", a)
 
         @rpc(None, "int32_t")
         def m2(self, a = 1):
-            print(a)
+            print("TestFrontEnd.m2", a)
 
         @rpc(None, "int32_t", "int32_t", "int32_t")
         def m3(self, a, b, c = 3):
-            print(a, b, c)
+            print("TestFrontEnd.m3", a, b, c)
 
         @rpc("Point3i", Point3i, "Point3i")
-        def cross(self, a, b):
-            print(a, b)
+        def vadd(self, a, b):
+            print("TestFrontEnd.vadd", a, b)
 
+        @rpc(None)
+        def stop(self):
+            print("TestFrontEnd.stop")
+
+    # not correct, just for unpacker testing
     raw2 = b"\xef\xdb\xea\x0d\x0d\xf0\xad\x0b\x01\x02\x03\x04"
 
     fe = TestFrontEnd()
@@ -101,17 +127,9 @@ def main():
     p0 = Point3iFE(1, 2, 3)
     p1 = Point3iFE(4, 5, 6)
 
-    print(fe.cross(p0, p1))
+    print(fe.vadd(p0, p1))
 
-    hdr = gen_rpc_impl_header(TestFrontEnd, "impl.h")
-    hdr_file = hdr.generate()
-
-    string_buf = StringIO()
-    hdr_file.generate(string_buf)
-
-    print(string_buf.getvalue())
-
-    packer = fe.cross.rpc_info.gen_args_packer()
+    packer = fe.vadd.rpc_info.gen_args_packer()
 
     raw = packer(p0, p1)
     print(raw)
@@ -123,19 +141,66 @@ def main():
     d["v1"], d2["v2"] = 1, 2
     print(d)
 
-    unpacker = fe.cross.rpc_info.gen_retval_unpacker()
+    unpacker = fe.vadd.rpc_info.gen_retval_unpacker()
 
     p = unpacker(raw2)
     print(p)
 
-    mod = protocol.gen_be_module("be.c")
-    mod_file = mod.generate()
+    script_dir = dirname(abspath(__file__))
+    rpc_probe_dir = join(script_dir, "rpc_probe")
 
-    string_buf = StringIO()
-    mod_file.generate(string_buf)
+    files = [
+        join(rpc_probe_dir, "impl.c"),
+        join(rpc_probe_dir, "rpc_probe.c")
+    ]
 
-    print(string_buf.getvalue())
+    for s in protocol.iter_gen_sources():
+        f = s.generate()
 
+        string_buf = StringIO()
+        f.generate(string_buf)
+
+        code = string_buf.getvalue()
+
+        print(code)
+
+        f_name = join(rpc_probe_dir, s.path)
+
+        with open(f_name, "w") as io:
+            io.write(code)
+
+        if "boilerplate" not in f_name and not f.is_header:
+            files.append(f_name)
+
+    prog_name = join(rpc_probe_dir, "rpc_probe.exe")
+
+    rpc_include = join(dirname(script_dir), "rpc")
+
+    files.append(join(rpc_include, "be.c"))
+    files.append(join(rpc_include, "server.c"))
+
+    env = SConsEnvironment(CFLAGS = " ".join((
+        "-I" + rpc_include,
+        "-D" + "RPC_DEBUG=1",
+    )))
+    env.Default(env.Program(prog_name, files))
+
+    parser = Parser([])
+    values = SConsValues(parser.get_default_values())
+    parser.parse_args([], values)
+    options = parser.values
+    _set_debug_values(options)
+    _build_targets(None, options, [prog_name], None)
+
+    p = Popen([prog_name], stdin = PIPE, stdout = PIPE, bufsize = 0)
+    conn = RPCStreamConnection(p.stdin, p.stdout)
+    fe.connection = conn
+
+    print(fe.vadd(p0, p1))
+    print(fe.m1(2))
+    print(fe.m2())
+    print(fe.m3(4, 5))
+    print(fe.stop())
 
 if __name__ == "__main__":
     exit(main() or 0)
