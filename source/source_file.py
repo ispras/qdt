@@ -117,7 +117,7 @@ class Source(TypeContainer):
         self.inclusions = {}
         self.global_variables = {}
         self.references = set()
-        self.protection = False
+        self.protection_prefix = None
         if locked_inclusions is not None:
             self.locked_inclusions = locked_inclusions
         else:
@@ -306,7 +306,7 @@ class Source(TypeContainer):
     def generate(self):
         Header.propagate_references()
 
-        file = SourceFile(self, protection = self.protection)
+        file = SourceFile(self, protection_prefix = self.protection_prefix)
 
         file.add_chunks(self.gen_chunks())
 
@@ -422,7 +422,7 @@ class Header(Source):
 
     def __init__(self, path,
         is_global = False,
-        protection = True,
+        protection_prefix = "INCLUDE_",
         locked_inclusions = None,
         no_global_headers = NO_GLOBAL_HEADERS
     ):
@@ -430,12 +430,15 @@ class Header(Source):
 :param path: it is used in #include statements, as unique identifier and
     somehow during code generation.
 :param is_global: inclusions will use <path> instead of "path".
-:param protection: wrap content in multiple inclusion protection macro logic.
+:param protection_prefix: wrap content in multiple inclusion protection macro
+    logic. The protection macro is prefixed with `protection_prefix`.
+    `None` `protection_prefix` disables protection.
+    "" `protection_prefix` results in only header name in protection macro.
         """
         super(Header, self).__init__(path, locked_inclusions)
         self.is_global = is_global
         self.includers = []
-        self.protection = protection
+        self.protection_prefix = protection_prefix
         self.no_global_headers = no_global_headers
 
         tpath = path2tuple(path)
@@ -918,14 +921,16 @@ macro_forbidden = compile("[^0-9A-Z_]")
 
 class SourceFile(object):
 
-    def __init__(self, origin, protection = True):
+    def __init__(self, origin,
+        protection_prefix = "INCLUDE_"
+    ):
         self.name = splitext(basename(origin.path))[0]
         self.is_header = type(origin) is Header
         # Note that, chunk order is significant while one reference per chunk
         # is enough.
         self.chunks = OrderedSet()
         self.sort_needed = False
-        self.protection = protection
+        self.protection_prefix = protection_prefix
         self.origin = origin
 
     def gen_chunks_graph(self, w, chunks):
@@ -1288,11 +1293,11 @@ digraph Chunks {
             "/* %s.%s */\n" % (self.name, "h" if self.is_header else "c")
         )
 
-        if self.is_header and self.protection:
+        if self.is_header and self.protection_prefix is not None:
             writer.write("""\
-#ifndef INCLUDE_{name}_H
-#define INCLUDE_{name}_H
-""".format(name = self.name_for_macro())
+#ifndef {prefix}{name}_H
+#define {prefix}{name}_H
+""".format(name = self.name_for_macro(), prefix = self.protection_prefix)
             )
 
         prev_group = None
@@ -1315,9 +1320,11 @@ digraph Chunks {
                 writer.write("/* source chunk %s */\n" % chunk.name)
             writer.write(chunk.code)
 
-        if self.is_header and self.protection:
+        if self.is_header and self.protection_prefix is not None:
             writer.write(
-                "#endif /* INCLUDE_%s_H */\n" % self.name_for_macro()
+                "#endif /* %s%s_H */\n" % (
+                    self.protection_prefix, self.name_for_macro()
+                )
             )
 
     def name_for_macro(self):
