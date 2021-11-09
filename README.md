@@ -170,7 +170,7 @@ its explanation):
 
 ```bash
 sudo python -m pip install --upgrade gitpython six graphviz \
-  path.py construct serial psutil appdirs
+  path.py construct serial psutil appdirs scons
 ```
 
 Use `python2` or `python3` explicitly when there are several Python
@@ -238,6 +238,7 @@ sudo pip3 install --upgrade construct serial
 
 `psutil` provides cross-platform process manipulations (e.g. by c2t).
 `appdirs` used to store QDT's data in a platform specific location.
+`scons` used by some scripts to compile executables (e.g. from sources in C).
 
 Now the all environment prerequisites are satisfied.
 
