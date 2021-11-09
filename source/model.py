@@ -621,6 +621,12 @@ class EnumerationElement(Type):
     def __c__(self, writer):
         writer.write(self.c_name)
 
+    def __or__(self, arg):
+        from .function import (
+            OpOr
+        )
+        return OpOr(self, arg)
+
     __type_references__ = ["initializer"]
 
 
