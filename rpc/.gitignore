@@ -1,0 +1,3 @@
+# misc/rpc_probe.py builds an example RPC server generating *.o files.
+*.o
+

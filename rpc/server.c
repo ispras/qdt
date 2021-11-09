@@ -1,12 +1,12 @@
 #include "rpc.h"
-#include "backend.h"
+#include "debug.h"
 
 #include <malloc.h>
 
 rpc_alloc_t rpc_alloc = malloc;
 rpc_free_t rpc_free = free;
 
-typedef struct {
+typedef struct RPCServer {
     rpc_connection_t conn;
     rpc_ptr_t buf;
     size_t allocated;
@@ -57,8 +57,9 @@ RPCError rpc_server_poll(RPCServer* s)
 {
     size_t need, ret;
     uint8_t *p;
+    uint8_t err_code[1];
 
-    p = s->buf
+    p = s->buf;
     need = 4;
 
     while (need) {
@@ -93,17 +94,27 @@ RPCError rpc_server_poll(RPCServer* s)
         need -= ret;
     }
 
+    LOG("handling message");
+
     uint8_t *response;
-    uint32_t response_size;
-    RPCError be_err = rpc_backend_handle_message(s->be, s->buf, msg_len,
-            &response, &response_size);
+    /* If `void` function is called or an error occurred,
+     * response_size remains 0 */
+    uint32_t response_size = 0;
+    RPCError be_err = rpc_backend_handle_message(s->be, s->ctx, s->buf,
+            msg_len, &response, &response_size);
+
+    LOG("message handled");
 
     if (be_err != RPC_ERR_NO) {
-        return be_err;
+        err_code[0] = 1;
+    } else {
+        err_code[0] = 0;
     }
 
+    LOG("sending response size %d", (int)response_size);
+
     uint8_t size_buf[4];
-    *(uint32_t*)size_buf = response_size;
+    *(uint32_t*)size_buf = response_size + 1 /* error code */;
 
     need = 4;
     p = size_buf;
@@ -117,16 +128,26 @@ RPCError rpc_server_poll(RPCServer* s)
         need -= ret;
     }
 
-    p = response;
-    need = response_size;
+    if (1 != s->write_func(s->conn, err_code, 1)) {
+        return RPC_ERR_WRITE;
+    }
 
-    while (need) {
-        ret = s->write_func(s->conn, p, need);
-        if (!ret) {
-            return RPC_ERR_WRITE;
+    if (be_err == RPC_ERR_NO) {
+        LOG("sending response");
+
+        p = response;
+        need = response_size;
+
+        while (need) {
+            ret = s->write_func(s->conn, p, need);
+            if (!ret) {
+                return RPC_ERR_WRITE;
+            }
+            p += ret;
+            need -= ret;
         }
-        p += ret;
-        need -= ret;
+
+        LOG("response sent");
     }
 
     return RPC_ERR_NO;
