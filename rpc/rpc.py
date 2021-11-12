@@ -41,6 +41,7 @@ from source import (
     Enumeration,
     Function,
     Header,
+    OpAdd,
     OpAddr,
     OpAssign,
     OpCast,
@@ -63,6 +64,9 @@ from struct import (
 from bisect import (
     insort,
 )
+from six import (
+    text_type,
+)
 
 
 stc = None
@@ -79,8 +83,9 @@ def get_stc():
 
 def gen_global_rpc_types():
     add_base_types()
-    uint32_t = Type["uint32_t"]
     uint8_t = Type["uint8_t"]
+    uint16_t = Type["uint16_t"]
+    uint32_t = Type["uint32_t"]
 
     global void
     void = Type["void"]
@@ -137,6 +142,20 @@ def gen_global_rpc_types():
         ]
     )
     rpc_h(rpc_backend_alloc_response)
+
+    global RPCBuffer
+    RPCBuffer = Structure("RPCBuffer",
+        uint16_t("size"),
+        Pointer(uint8_t)("data"),
+    )
+    rpc_h(RPCBuffer)
+
+    global RPCString
+    RPCString = Structure("RPCString",
+        uint16_t("length"),
+        Pointer(uint8_t)("data"),
+    )
+    rpc_h(RPCString)
 
 
 # a method @decorator
@@ -254,19 +273,22 @@ class RPCInfo(object):
         args_flattener_code = []
         line = args_flattener_code.append
 
-        line("def flattener(args):")
+        line("def flattener(args, tail):")
         for l in flattener_code:
             line(" " + l)
 
         code = "\n".join(args_flattener_code)
 
-        ns = {}
+        ns = {
+            "text_type" : text_type
+        }
         exec(code, ns)
 
         flattener = ns["flattener"]
 
         def packer(*args):
-            return s.pack(*flattener(args))
+            tail = []
+            return s.pack(*flattener(args, tail)) + b"".join(tail)
 
         return packer
 
@@ -340,6 +362,32 @@ class RPCInfo(object):
             unpackers
         ):
             yield node
+
+        # handle `RSPBuffer`s & `RPCString`s
+        queue = list(args_lvals_and_types)
+        while queue:
+            lval, t = queue.pop(0)
+
+            if isinstance(t, Structure):
+                if t is RPCBuffer:
+                    yield OpAssign(OpSDeref(lval, "data"), OpDeref(pptr))
+                    yield OpCombAssign(
+                        OpDeref(pptr),
+                        OpSDeref(lval, "size"),
+                        "+"
+                    )
+                elif t is RPCString:
+                    yield OpAssign(OpSDeref(lval, "data"), OpDeref(pptr))
+                    yield OpCombAssign(
+                        OpDeref(pptr),
+                        OpAdd(OpSDeref(lval, "length"), 1),
+                        "+"
+                    )
+                else:
+                    queue.extend(
+                        (OpSDeref(lval, n), v.type)
+                            for (n, v) in t.fields.items()
+                    )
 
         yield OpAssign(err, Call(impl, *impl_args))
 
@@ -422,15 +470,24 @@ def gen_packer_py(types_iter, obj_name, counter):
 def iter_gen_unpacker_c(lvals_types_iter, pptr, unpackers):
     for lval, t in lvals_types_iter:
         if isinstance(t, Structure):
-            if t in unpackers:
-                t_unpacker = unpackers[t]
-            else:
-                t_unpacker = gen_struct_handler_c(t, "unpack_", unpackers,
-                    iter_gen_unpacker_c
+            if t is RPCBuffer or t is RPCString:
+                uint16_t = Type["uint16_t"]
+                size_var = OpSDeref(lval, next(iter(t.fields)))
+                yield OpAssign(
+                    size_var,
+                    OpDeref(OpCast(Pointer(uint16_t), OpDeref(pptr)))
                 )
-                unpackers[t] = t_unpacker
+                yield OpCombAssign(OpDeref(pptr), OpSizeOf(uint16_t), "+")
+            else: # generic structure
+                if t in unpackers:
+                    t_unpacker = unpackers[t]
+                else:
+                    t_unpacker = gen_struct_handler_c(t, "unpack_", unpackers,
+                        iter_gen_unpacker_c
+                    )
+                    unpackers[t] = t_unpacker
 
-            yield Call(t_unpacker, OpAddr(lval), pptr)
+                yield Call(t_unpacker, OpAddr(lval), pptr)
         else:
             yield OpAssign(lval, OpDeref(OpCast(Pointer(t), OpDeref(pptr))))
             yield OpCombAssign(OpDeref(pptr), OpSizeOf(t), "+")
@@ -476,7 +533,32 @@ def gen_struct_handler_c(t, name_prefix, handlers, recursion):
     return func
 
 
+def gen_buffer_packer_py(t, obj_name):
+    flattener_code = []
+    line = flattener_code.append
+
+    # auto encode utf-8 strings
+    line("if isinstance(" + obj_name + ", text_type):")
+    line(" " + obj_name + "_ = " + obj_name + ".encode('utf-8')")
+    line("else:")
+    line(" " + obj_name + "_ = bytes(" + obj_name + ")")
+
+    line("yield len(" + obj_name + "_)")
+
+    if t is RPCString:
+        line(obj_name + "_ += b'\\x00'")
+
+    line("tail.append(" + obj_name + "_)")
+
+    return "H", flattener_code
+
+
 def gen_structure_packer_py(s, obj_name, counter):
+    if s is RPCBuffer or s is RPCString:
+        return gen_buffer_packer_py(s, obj_name)
+    # else:
+    #     generic structure
+
     fmt = ""
     flattener_code = []
     line = flattener_code.append

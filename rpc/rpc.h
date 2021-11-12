@@ -14,6 +14,18 @@ typedef enum {
     RPC_ERR_COUNT
 } RPCError;
 
+typedef struct {
+    uint16_t size;
+    uint8_t *data;
+} RPCBuffer;
+
+/* In contrast to `RPCBuffer`, front-end appends zero byte to `data`.
+ * The byte is not accounted in `length`. */
+typedef struct {
+    uint16_t length;
+    uint8_t *data;
+} RPCString;
+
 typedef void * rpc_ptr_t;
 
 typedef rpc_ptr_t (*rpc_alloc_t)(size_t);
