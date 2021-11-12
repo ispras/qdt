@@ -1,6 +1,10 @@
 from source import *
 from qemu import *
 
+from functools import (
+    wraps,
+)
+
 # TODO: source.function.tree.Node:
 #     * / % > < >= <= == != : to corresponding operators
 #     += -= *= /= %= <<= >>= &= ^= |= : to corresponding CombAssign operators
@@ -58,7 +62,6 @@ class FI(object):
     def __call__(self, sem):
         append_FI(self.opcode, sem.__name__.lower(), sem, self.changes_dst,
             self.reads_dst, self.msb_used, self.mask_used, self.carry_used,
-            comment = sem.__doc__
         )
         return sem
 
@@ -88,7 +91,6 @@ class FII(object):
         append_FII(self.opcode, sem.__name__.lower(), self.has_ext, sem,
             self.changes_dst, self.sub_sp, self.save_pc, self.msb_used,
             self.mask_used, self.carry_used,
-            comment = sem.__doc__
         )
         return sem
 
@@ -99,14 +101,12 @@ class J(object):
         self.opcode = opcode
 
     def __call__(self, sem):
-
+        @wraps(sem)
         def jump_generic(f, s, *a, **kw):
             yield sem(f, s, *a, **kw)
             yield is_branch(f, s)
 
-        append_J(self.opcode, sem.__name__.lower(), jump_generic,
-            comment = sem.__doc__
-        )
+        append_J(self.opcode, sem.__name__.lower(), jump_generic)
         return sem
 
 
@@ -116,9 +116,7 @@ class R(object):
         self.opcode = opcode
 
     def __call__(self, sem):
-        append_R(self.opcode, sem.__name__.lower(), sem,
-            comment = sem.__doc__
-        )
+        append_R(self.opcode, sem.__name__.lower(), sem)
         return sem
 
 
@@ -192,6 +190,10 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                 o(16, "soff")
             ] + dst_offset
 
+            kw["priority"] = 1
+
+            @i(name + "_imm" + dst_suffix, *fields, **kw)
+            @wraps(semantics)
             @flat_list
             def src_imm_sem(f, s, ad = ad, ext = ext):
                 src_val = tcg("src_val")
@@ -236,12 +238,6 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         mem_addr
                     )
 
-            kw["semantics"] = src_imm_sem
-
-            kw["priority"] = 1
-
-            i(name + "_imm" + dst_suffix, *fields, **kw)
-
             # src: src == R3 (CG2)
             # There is no soff at end of the instruction
             kw["disas_format"] = common_format + "#<as>, " + dst_fmt
@@ -255,6 +251,10 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                 o(4, "dst")
             ] + dst_offset
 
+            kw["priority"] = 2
+
+            @i(name + "_cg2" + dst_suffix, *fields, **kw)
+            @wraps(semantics)
             @flat_list
             def src_cg2_sem(f, s, ad = ad, ext = ext):
                 src_val = tcg("src_val")
@@ -300,12 +300,6 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         mem_addr
                     )
 
-            kw["semantics"] = src_cg2_sem
-
-            kw["priority"] = 2
-
-            i(name + "_cg2" + dst_suffix, *fields, **kw)
-
             # src: indexed/symbolic/absolute
             # if ext: ext_word is same as previously
             kw["disas_format"] = common_format + "<src, soff>, " + dst_fmt
@@ -320,6 +314,10 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                 o(16, "soff")
             ] + dst_offset
 
+            kw["priority"] = 1
+
+            @i(name + "_idx" + dst_suffix, *fields, **kw)
+            @wraps(semantics)
             @flat_list
             def src_idx_sem(f, s, ad = ad, ext = ext):
                 src = f["src"]
@@ -369,12 +367,6 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         mem_addr
                     )
 
-            kw["semantics"] = src_idx_sem
-
-            kw["priority"] = 1
-
-            i(name + "_idx" + dst_suffix, *fields, **kw)
-
             # src: (indirect) register (autoincrement)
             kw["disas_format"] = common_format + "<src, as>, " + dst_fmt
 
@@ -404,6 +396,10 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                 o(4, "dst")
             ] + dst_offset
 
+            kw["priority"] = 0
+
+            @i(name + "_reg" + dst_suffix, *fields, **kw)
+            @wraps(semantics)
             @flat_list
             def src_reg_sem(f, s, ad = ad, ext = ext):
                 _as = f["as"]
@@ -458,12 +454,6 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         mem_addr
                     )
 
-            kw["semantics"] = src_reg_sem
-
-            kw["priority"] = 0
-
-            i(name + "_reg" + dst_suffix, *fields, **kw)
-
 
 def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
     save_pc, msb_used, mask_used, carry_used,
@@ -505,6 +495,12 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             o(16, "doff")
         ]
 
+        kw["disas_format"] = common_format + "#<doff>"
+
+        kw["priority"] = 0
+
+        @i(name + "_imm", *fields, **kw)
+        @wraps(semantics)
         @flat_list
         def dst_imm_sem(f, s, ext = ext):
             res = tcg("res")
@@ -526,14 +522,6 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
 
             yield semantics(f, s, dst_val, res, 6 if ext else 4, ext, *bits)
 
-        kw["semantics"] = dst_imm_sem
-
-        kw["disas_format"] = common_format + "#<doff>"
-
-        kw["priority"] = 0
-
-        i(name + "_imm", *fields, **kw)
-
         # dst: dst==3 => CG2
         # if ext: is ext_word same as previously? There is no doff
 
@@ -544,6 +532,12 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             c(4, 3) # Rdst is R3 (CG2)
         ]
 
+        kw["disas_format"] = common_format + "#<ad>"
+
+        kw["priority"] = 1
+
+        @i(name + "_cg2", *fields, **kw)
+        @wraps(semantics)
         @flat_list
         def dst_cg2_sem(f, s, ext = ext):
             dst_val = tcg("dst_val")
@@ -569,14 +563,6 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
 
             # it can't change dst
 
-        kw["semantics"] = dst_cg2_sem
-
-        kw["disas_format"] = common_format + "#<ad>"
-
-        kw["priority"] = 1
-
-        i(name + "_cg2", *fields, **kw)
-
         # dst: indexed/symbolic/absolute
         # if ext: ext_word is same as previously
 
@@ -588,6 +574,12 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             o(16, "doff")
         ]
 
+        kw["disas_format"] = common_format + "<dst, doff>"
+
+        kw["priority"] = 0
+
+        @i(name + "_ind", *fields, **kw)
+        @wraps(semantics)
         @flat_list
         def dst_idx_sem(f, s, ext = ext):
             dst = f["dst"]
@@ -623,14 +615,6 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
                 yield OpCombAssign(res, bits[1], "&") # mask
                 yield gen_set_dst_code(f, s, True, res, tcg_mem_size, mem_addr)
 
-        kw["semantics"] = dst_idx_sem
-
-        kw["disas_format"] = common_format + "<dst, doff>"
-
-        kw["priority"] = 0
-
-        i(name + "_ind", *fields, **kw)
-
         # dst: (indirect) register (autoincrement)
         disas_format = common_format + "<dst, ad>"
 
@@ -648,6 +632,16 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             ]
 
             disas_format = "<rep, reg_or_n>" + disas_format
+
+        fields = ext_word + [
+            c(9, opcode),
+            o(1, "bw"), # B/W
+            o(2, "ad"), # (Ad == 00b) or (Ad == 10b) or (Ad == 11b and dst != 0)
+            o(4, "dst") # Rdst
+        ]
+
+        kw["disas_format"] = disas_format
+        kw["priority"] = 0
 
         def dst_reg_sem_iteration(f, s, ext, bits, tcg_mem_size):
             ad = f["ad"]
@@ -696,6 +690,8 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
                     )
                 )
 
+        @i(name + "_reg", *fields, **kw)
+        @wraps(semantics)
         @flat_list
         def dst_reg_sem(f, s, ext = ext):
             ad = f["ad"]
@@ -746,31 +742,11 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             else:
                 yield dst_reg_sem_iteration(f, s, ext, bits, tcg_mem_size)
 
-        kw["semantics"] = dst_reg_sem
-
-        kw["disas_format"] = disas_format
-
-        kw["priority"] = 0
-
-        fields = ext_word + [
-            c(9, opcode),
-            o(1, "bw"), # B/W
-            o(2, "ad"), # (Ad == 00b) or (Ad == 10b) or (Ad == 11b and dst != 0)
-            o(4, "dst") # Rdst
-        ]
-
-        i(name + "_reg", *fields, **kw)
-
 
 def append_J(opcode_and_cond, name, semantics, **kw):
     "Conditional Jump"
 
-    @flat_list
-    def j_sem(f, s):
-        offset = f["offset"]
-        yield semantics(f, s, offset)
-
-    i(name,
+    @i(name,
         c(6, opcode_and_cond),
         # c(3, opcode),
         # o(3, "cond"), # Condition
@@ -778,9 +754,13 @@ def append_J(opcode_and_cond, name, semantics, **kw):
         # o(9, "offset") # 10-Bit Signed PC Offset (s is 10-th bit)
         o(10, "offset"), # 10-Bit Signed PC Offset
         disas_format = name.upper() + "\\t <offset>",
-        semantics = j_sem,
         **kw
     )
+    @wraps(semantics)
+    @flat_list
+    def j_sem(f, s):
+        offset = f["offset"]
+        yield semantics(f, s, offset)
 
 
 def append_A(opcode, name, semantics, comment,
@@ -796,6 +776,16 @@ def append_A(opcode, name, semantics, comment,
 
     name += "a"
 
+    @i(name + "_imm",
+        c(4, 0),
+        o(4, "imm", 1),
+        c(2, 0b10),
+        c(2, opcode),
+        o(4, "dst"),
+        o(16, "imm"),
+        disas_format = name.upper() + "\\t #<imm>, <dst>",
+        **kw
+    )
     @flat_list
     def imm_and_reg_sem(f, s):
         src_val = tcg("src_val")
@@ -820,19 +810,16 @@ def append_A(opcode, name, semantics, comment,
         if changes_dst:
             yield gen_set_dst_reg_code(f, s, res)
 
-    kw["semantics"] = imm_and_reg_sem
 
-    i(name + "_imm",
+    @i(name + "_reg",
         c(4, 0),
-        o(4, "imm", 1),
-        c(2, 0b10),
+        o(4, "src"),
+        c(2, 0b11),
         c(2, opcode),
         o(4, "dst"),
-        o(16, "imm"),
-        disas_format = name.upper() + "\\t #<imm>, <dst>",
+        disas_format = name.upper() + "\\t <src>, <dst>",
         **kw
     )
-
     @flat_list
     def reg_and_reg_sem(f, s):
         src = f["src"]
@@ -863,24 +850,23 @@ def append_A(opcode, name, semantics, comment,
         if changes_dst:
             yield gen_set_dst_reg_code(f, s, res)
 
-    kw["semantics"] = reg_and_reg_sem
-
-    i(name + "_reg",
-        c(4, 0),
-        o(4, "src"),
-        c(2, 0b11),
-        c(2, opcode),
-        o(4, "dst"),
-        disas_format = name.upper() + "\\t <src>, <dst>",
-        **kw
-    )
-
 
 def append_R(opcode, name, semantics, **kw):
     "Extended Rotate Instructions"
 
     kw["comment"] += " aw == 0 -> .A;"
 
+    @i(name,
+        c(4, 0),
+        o(2, "imm"),
+        c(2, opcode),
+        c(3, 0b010),
+        o(1, "aw"),
+        o(4, "dst"),
+        disas_format = name.upper() + ".<aw>\\t #<imm>, <dst>",
+        semantics = semantics_wrapper,
+        **kw
+    )
     @flat_list
     def semantics_wrapper(f, s,
         semantics = semantics
@@ -909,18 +895,6 @@ def append_R(opcode, name, semantics, **kw):
             )
         )
 
-    i(name,
-        c(4, 0),
-        o(2, "imm"),
-        c(2, opcode),
-        c(3, 0b010),
-        o(1, "aw"),
-        o(4, "dst"),
-        disas_format = name.upper() + ".<aw>\\t #<imm>, <dst>",
-        semantics = semantics_wrapper,
-        **kw
-    )
-
 
 # And some specific MOVAs
 def append_mova(opcode, *operands, **kw):
@@ -929,15 +903,7 @@ def append_mova(opcode, *operands, **kw):
     read_src = kw.pop("read_src")
     write_dst = kw.pop("write_dst")
 
-    @flat_list
-    def semantics(f, s):
-        val = tcg("val")
-        yield read_src(f, s, val)
-        yield write_dst(f, s, val)
-
-    kw["semantics"] = semantics
-
-    i("mova_%x" % opcode,
+    @i("mova_%x" % opcode,
         c(4, 0),
         operands[0],
         c(1, 0),
@@ -945,6 +911,11 @@ def append_mova(opcode, *operands, **kw):
         *operands[1:],
         **kw
     )
+    @flat_list
+    def semantics(f, s):
+        val = tcg("val")
+        yield read_src(f, s, val)
+        yield write_dst(f, s, val)
 
 
 def append_calla(opcode, *operands, **kw):
@@ -958,6 +929,7 @@ def append_calla(opcode, *operands, **kw):
 
     read_src = kw.pop("read_src")
 
+    @i("calla_%x" % opcode, *fields, **kw)
     @flat_list
     def semantics(f, s):
         target_address = tcg("target_address")
@@ -987,10 +959,6 @@ def append_calla(opcode, *operands, **kw):
         yield is_branch(f, s)
         # set PC
         yield OpAssign(s["pc"], target_address)
-
-    kw["semantics"] = semantics
-
-    i("calla_%x" % opcode, *fields, **kw)
 
 
 # semantics sub-generators used in functions above
