@@ -90,6 +90,9 @@ from six import (
 from types import (
     GeneratorType
 )
+from functools import (
+    update_wrapper,
+)
 
 
 # OpSDeref is automatically re-directed to definition of structure if
@@ -127,7 +130,7 @@ def flat_iter(gen):
 
 def flat_list(gen):
     ret = lambda *a, **kw: list(flat_iter(gen(*a, **kw)))
-    ret.__name__ = gen.__name__
+    update_wrapper(ret, gen)
     return ret
 
 
