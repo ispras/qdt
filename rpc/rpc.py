@@ -497,6 +497,8 @@ def gen_structure_packer_py(s, obj_name, counter):
 
             flattener_code.extend(s_flattener_code)
         else:
+            if not t.is_named:
+                raise ValueError("Don't know how to pack type " + str(t))
             try:
                 f = simple_type_fmts[t.name]
             except KeyError:
