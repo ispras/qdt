@@ -68,6 +68,21 @@ def main():
                 self.x, self.y, self.z
             )
 
+    RPCBuffer = Type["RPCBuffer"]
+    BufCmpTask = Structure("BufCmpTask",
+        RPCBuffer("a"),
+        RPCBuffer("b")
+    )
+
+    class RPCBufferFE(object):
+
+        def __init__(self, a, b):
+            self.a = a
+            self.b = b
+
+        def __str__(self):
+            return type(self).__name__ + "(%s, %s)" % (self.a, self.b)
+
     class TestFrontEnd(RPCFrontEnd):
 
         @rpc(None, "int32_t")
@@ -89,6 +104,18 @@ def main():
         @rpc(None)
         def stop(self):
             print("TestFrontEnd.stop")
+
+        @rpc(None, "RPCString")
+        def p(self, s):
+            print("p", s)
+
+        @rpc("int8_t", "RPCString", "RPCString")
+        def strcmp(self, a, b):
+            print("strcmp", a, b)
+
+        @rpc("int8_t", BufCmpTask)
+        def bufcmp(self, t):
+            print("bufcmp", t)
 
     # not correct, just for unpacker testing
     raw2 = b"\xef\xdb\xea\x0d\x0d\xf0\xad\x0b\x01\x02\x03\x04"
@@ -200,6 +227,12 @@ def main():
     print(fe.m1(2))
     print(fe.m2())
     print(fe.m3(4, 5))
+    print(fe.p("Test p"))
+    print(fe.strcmp("aaa", "bbb"))
+    print(fe.strcmp("bbb", "aaa"))
+    print(fe.strcmp(b"cccc", u"cccc"))
+    print(fe.bufcmp(RPCBufferFE(a = b"aaa", b = b"bbb")))
+    print(fe.bufcmp(RPCBufferFE(a = b"aaa", b = b"aaaa")))
     print(fe.stop())
 
 if __name__ == "__main__":
