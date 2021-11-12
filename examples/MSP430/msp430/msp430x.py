@@ -2624,7 +2624,7 @@ always be defined.
     return get_reg
 
 
-def format_size(func, _):
+def format_size(func, __):
     bw = func[0]
     bw.name = "bw"
 
@@ -2655,7 +2655,7 @@ def format_size_ex(func, *a):
     yield ret
 
 
-def format_size_rot(func, _):
+def format_size_rot(func, __):
     aw = func[0]
     aw.name = "aw"
 
@@ -2802,7 +2802,7 @@ def print_src(func, module):
     )
 
 
-def format_cg2(func, _):
+def format_cg2(func, __):
     mode = func[0]
     mode.name = "mode"
 
@@ -2814,7 +2814,7 @@ def format_cg2(func, _):
     )
 
 
-def format_jump_offset(func, _):
+def format_jump_offset(func, __):
     arg = func[0]
     yield Comment("sxxxxxxxxx0")
     yield BranchIf(arg & OpLShift(1, 9, parenthesis = True))(
@@ -2854,7 +2854,7 @@ def print_rep(func, module):
     )
 
 
-def inc_by_one(func, _):
+def inc_by_one(func, __):
     yield Return(func[0] + 1)
 
 
