@@ -1230,7 +1230,6 @@ def gen_get_oper_reg_code(f, s, ext, mode, operand, oper_val, tcg_mem_size,
     regs = s["regs"]
     if oper_mem_addr is None:
         oper_mem_addr = tcg("oper_mem_addr")
-    bw = f["bw"]
 
     if deferred_increment:
         autoincrement = Comment(
@@ -1349,8 +1348,6 @@ def gen_get_dst_code(f, s, ext, ad, dst_val, tcg_mem_size, mem_addr,
 
 
 def gen_set_dst_code(f, s, ad, res, tcg_mem_size, mem_addr):
-    regs = s["regs"]
-
     if ad: # indexed/symbolic/absolute mode
         yield Call("tcg_gen_qemu_st_tl", res, mem_addr, 0,
             tcg_mem_size | MO_TE
