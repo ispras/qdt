@@ -271,37 +271,43 @@ class RPCInfo(object):
         return packer
 
     def gen_retval_unpacker(self, byte_order = "@"):
-        if self.return_type is None:
+        return_type = self.return_type
+
+        if return_type is None:
             return lambda __ : None
 
+        ret_unflattener_code = []
+        line = ret_unflattener_code.append
+
         fmt, tree_code, l_vals = gen_unpacker_py(
-            (("retval", self.return_type),),
+            (("retval", return_type),),
             "ret",
             count()
         )
 
         s = Struct(byte_order + fmt)
 
-        ret_unflattener_code = []
-        line = ret_unflattener_code.append
+        if isinstance(return_type, Structure):
+            line("def unflattener(values):")
+            line(" ret = {}")
+            for l in tree_code:
+                line(" " + l)
 
-        line("def unflattener(values):")
-        line(" ret = {}")
-        for l in tree_code:
-            line(" " + l)
+            line(" (" + ", ".join(l_vals) + ") = values")
+            line(" return ret['retval']")
 
-        line(" (" + ", ".join(l_vals) + ") = values")
-        line(" return ret['retval']")
+            code = "\n".join(ret_unflattener_code)
 
-        code = "\n".join(ret_unflattener_code)
+            ns = {}
+            exec(code, ns)
 
-        ns = {}
-        exec(code, ns)
+            unflattener = ns["unflattener"]
 
-        unflattener = ns["unflattener"]
-
-        def unpacker(raw_data):
-            return unflattener(s.unpack(raw_data))
+            def unpacker(raw_data):
+                return unflattener(s.unpack(raw_data))
+        else:
+            def unpacker(raw_data):
+                return s.unpack(raw_data)[0]
 
         return unpacker
 
