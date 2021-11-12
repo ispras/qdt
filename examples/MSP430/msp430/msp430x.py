@@ -25,14 +25,6 @@ uint32_t = Type["uint32_t"]
 uint64_t = Type["uint64_t"]
 
 
-class MSP430XInstruction(Instruction):
-
-    def __call__(self, semantics):
-        # if semantics.__doc__ is not None:
-        #     self.comment = semantics.__doc__
-        self.semantics = semantics
-
-
 with_ext = True
 instructions = list()
 
@@ -41,7 +33,7 @@ def i(name, *a, **kw):
     # comment is a tip future semantics development
     kw["comment"] = name + ": " + kw.get("comment", "no comment;")
 
-    instr = MSP430XInstruction(name, *a, **kw)
+    instr = Instruction(name, *a, **kw)
     instructions.append(instr)
     return instr
 
