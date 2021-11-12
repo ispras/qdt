@@ -35,9 +35,6 @@ with_ext = True
 
 
 def i(name, *a, **kw):
-    # comment is a tip future semantics development
-    kw["comment"] = name + ": " + kw.get("comment", "no comment;")
-
     instr = Instruction(name, *a, **kw)
     instructions.append(instr)
     return instr
