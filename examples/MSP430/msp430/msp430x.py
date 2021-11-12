@@ -9,8 +9,6 @@ from functools import (
 #     * / % > < >= <= == != : to corresponding operators
 #     += -= *= /= %= <<= >>= &= ^= |= : to corresponding CombAssign operators
 
-# TODO: Instruction.__call__: apply semantics, comment, name?
-
 
 # shortcuts
 c = Opcode
@@ -29,8 +27,11 @@ uint32_t = Type["uint32_t"]
 uint64_t = Type["uint64_t"]
 
 
-with_ext = True
+# Temporal storage for instructions descriptions during generation.
 instructions = list()
+
+# Do generate MSP430X (eXtended) instructions descriptions?
+with_ext = True
 
 
 def i(name, *a, **kw):
