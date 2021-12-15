@@ -50,6 +50,7 @@ from types import (
     GeneratorType,
 )
 from traceback import (
+    format_exc,
     print_exc,
 )
 from threading import (
@@ -73,6 +74,7 @@ from widgets import (
     READONLY,
     GUIDialog,
     add_scrollbars_native,
+    ErrorDialog,
 )
 
 if PY3:
@@ -763,10 +765,21 @@ def update_initramfs():
     try:
         out, err = run("sudo", "--askpass", "update-initramfs", "-u")
     except RunError as e:
-        print_exc()
+        msg = format_exc()
         out, err = e.out, e.err
+        msg += "\nout:\n%s\nerr:\n%s\n" % (s(out), s(err))
+        ErrorDialog("initramfs update failed",
+            title = "Failure",
+            message = msg,
+        ).wait()
+    else:
+        msg = "out:\n%s\nerr:\n%s\n" % (s(out), s(err))
+        ErrorDialog("initramfs update completed",
+            title = "Success",
+            message = msg,
+        ).wait()
 
-    print("out:\n%s\nerr:\n%s\n" % (out, err))
+    print(msg)
 
 
 def disable_vga_handler(*__):
