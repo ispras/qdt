@@ -86,10 +86,10 @@ class VarLabel(Label):
         if "text" in kw:
             text = kw.pop("text")
             if isinstance(text, variables):
-                kw["text"] = text.get()
                 self.text_var = text
             else:
                 self.text_var = StringVar(value = text)
+            kw["text"] = self.text_var.get()
         else:
             self.text_var = StringVar()
         Label.__init__(self, *args, **kw)
