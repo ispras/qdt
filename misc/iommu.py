@@ -483,7 +483,7 @@ def run(*args, **kw):
     out, err = p.communicate()
     ret = p.returncode
     if ret:
-        raise RuntimeError(out, err, "Failed command: " + command)
+        raise RunError(out, err, "Failed command: " + command)
     return out, err
 
 
