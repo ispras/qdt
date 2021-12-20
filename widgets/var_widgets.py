@@ -123,14 +123,17 @@ class VarTk(Tk):
     def on_var_changed(self, *args):
         Tk.title(self, self.var.get())
 
-    def title(self, stringvar = None):
-        if not stringvar:
+    def title(self, title = None):
+        if not title:
             return self.var
 
-        if stringvar != self.var:
+        if not isinstance(title, variables):
+            title = StringVar(self, value = title)
+
+        if title is not self.var:
             if self.var:
                 self.var.trace_vdelete("w", self.observer_name)
-            self.var = stringvar
+            self.var = title
             self.observer_name = self.var.trace_variable(
                 "w",
                 self.on_var_changed
