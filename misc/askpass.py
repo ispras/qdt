@@ -44,7 +44,14 @@ def askpass(
         expand = True,
     )
 
-    root.bind_all("<Return>", lambda *__: root.destroy(), "+")
+    root._entered = False
+
+    def on_return(*__):
+        root._entered = True
+        root.destroy()
+
+    e.bind_all("<Return>", on_return, "+")
+    e.bind_all("<Escape>", lambda *__: root.destroy(), "+")
 
     showpass_var.trace("w",
         lambda *__: e.config(show = "" if showpass_var.get() else "*")
@@ -56,12 +63,15 @@ def askpass(
 
     root.mainloop()
 
-    return passvar.get()
+    if root._entered:
+        return passvar.get()
 
 
 if __name__ == "__main__":
     from sys import argv
     if len(argv) > 1:
-        print(askpass(message = argv[1]))
+        res = askpass(message = argv[1])
     else:
-        print(askpass())
+        res = askpass()
+    if res is not None:
+        print(res)
