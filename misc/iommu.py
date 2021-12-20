@@ -487,6 +487,7 @@ def run(*args, **kw):
 
 
 iid2obj = bidict()
+iid2obj_is_ready = False
 
 
 class SysObj(object):
@@ -629,6 +630,16 @@ def co_main(cfg, tk, tv):
         tk.geometry(cfg.geometry)
         yield True
 
+    yield co_read_from_system(tv)
+
+    if cfg.tv_col_width:
+        for iid, width in cfg.tv_col_width.items():
+            tv.column(iid, width = width)
+
+
+def co_read_from_system(tv):
+    global iid2obj_is_ready
+
     grps = sorted(
         IOMMUGroup(join(IOMMU_GROUPS, g)) for g in listdir(IOMMU_GROUPS)
     )
@@ -667,11 +678,20 @@ def co_main(cfg, tk, tv):
 
     reload_disable_vga()
 
-    yield True
+    iid2obj_is_ready = True
 
-    if cfg.tv_col_width:
-        for iid, width in cfg.tv_col_width.items():
-            tv.column(iid, width = width)
+
+def co_reload(tv):
+    global iid2obj_is_ready
+    while not iid2obj_is_ready:
+        yield False
+
+    iid2obj_is_ready = False
+
+    tv.delete(*tv.get_children())
+    iid2obj.clear()
+
+    yield co_read_from_system(tv)
 
 
 class IOMMUTV(Treeview, TkPopupHelper):
@@ -860,6 +880,19 @@ def main():
     Sizegrip(tk).grid(row = 2, column = 1, sticky = "ES")
 
     tv.heading("i", text = "Information")
+
+    bt_reload = Button(buttons, text = "Reload")
+    bt_reload.pack(side = RIGHT)
+
+    def co_do_reload():
+        yield co_reload(tv)
+        bt_reload.config(state = NORMAL)
+
+    def do_reload():
+        bt_reload.config(state = DISABLED)
+        tk.enqueue(co_do_reload())
+
+    bt_reload.config(command = do_reload)
 
     for c in ("#0",) + tv.cget("columns"):
         tv.column(c, stretch = False)
