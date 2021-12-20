@@ -26,7 +26,6 @@ from six.moves.tkinter import (
     Menu,
     NONE,
     END,
-    Tk,
 )
 from six.moves.tkinter_ttk import (
     Sizegrip,
@@ -43,9 +42,6 @@ from six import (
 )
 from re import (
     compile,
-)
-from types import (
-    GeneratorType,
 )
 from traceback import (
     format_exc,
@@ -70,6 +66,7 @@ from widgets import (
     GUIDialog,
     add_scrollbars_native,
     ErrorDialog,
+    GUITk,
 )
 
 if PY3:
@@ -628,7 +625,7 @@ def iid_get_sysobj(tv, iid):
 def co_main(cfg, tk, tv):
     if cfg.geometry:
         tk.geometry(cfg.geometry)
-        yield
+        yield True
 
     grps = sorted(
         IOMMUGroup(join(IOMMU_GROUPS, g)) for g in listdir(IOMMU_GROUPS)
@@ -641,34 +638,34 @@ def co_main(cfg, tk, tv):
         for dev in grp.devices:
             dev.iid = tv.insert(giid, END, text = dev, open = True)
 
-    yield
+    yield True
 
     for dev in iid2obj.values():
         if not isinstance(dev, IOMMUDevice):
             continue
-        yield
+        yield True
 
         for k, v in dev.lspci.items():
             iid = tv.insert(dev.iid, END, text = k, values = (s(v),))
             assert dev is iid_get_sysobj(tv, iid)
 
-        yield
+        yield True
         tv.insert(dev.iid, END, text = "modalias", values = (s(dev.modalias),))
         dev.vfio_modalias_iid = tv.insert(dev.iid, END,
             text = "VFIO mod-aliasing",
             values = (dev.vfio_modalias,)
         )
-        yield
+        yield True
         dev.vfio_assigned_iid = tv.insert(dev.iid, END,
             text = "VFIO assigned",
             values = (dev.vfio_assigned,)
         )
 
-    yield
+    yield  True
 
     reload_disable_vga()
 
-    yield
+    yield True
 
     if cfg.tv_col_width:
         for iid, width in cfg.tv_col_width.items():
@@ -815,7 +812,7 @@ def main():
 
     local_conf = LocalConf()
 
-    tk = Tk()
+    tk = GUITk()
     tk.title("IOMMU Info")
 
     tk.rowconfigure(0, weight = 0)
@@ -851,30 +848,7 @@ def main():
         geometry = None,
         tv_col_width = None
     ) as cfg:
-        task = co_main(cfg, tk, tv)
-
-        stack = [task]
-
-        def after_func():
-            try:
-                cur = stack[-1]
-            except IndexError:
-                print("no more tasks")
-                return
-
-            try:
-                ret = next(cur)
-            except StopIteration:
-                print("return from " + cur.__name__)
-                stack.pop()
-            else:
-                if type(ret) is GeneratorType:
-                    print("call " + ret.__name__)
-                    stack.append(ret)
-
-            tk.after(10, after_func)
-
-        tk.after(1, after_func)
+        tk.enqueue(co_main(cfg, tk, tv))
 
         def on_destroy():
             cfg.geometry = tk.geometry().split("+", 1)[0]
