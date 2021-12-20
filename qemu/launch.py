@@ -210,14 +210,18 @@ class QemuOptsList(object):
     def __add__(self, right):
         if isinstance(right, QemuOptsList):
             right = right.opts
+        else:
+            right = tuple(right)
 
-        return QemuOptsList(*self.opts, *right)
+        return QemuOptsList(*(self.opts + right))
 
     def __radd__(self, left):
         if isinstance(left, QemuOptsList):
             left = left.opts
+        else:
+            left = tuple(left)
 
-        return QemuOptsList(*left, *self.opts)
+        return QemuOptsList(*(left + self.opts))
 
 
 class TCPPort(AllocableParameter):
