@@ -26,6 +26,8 @@ from six.moves.tkinter import (
     Menu,
     NONE,
     END,
+    DISABLED,
+    NORMAL,
 )
 from six.moves.tkinter_ttk import (
     Sizegrip,
@@ -804,6 +806,14 @@ def reload_disable_vga():
     )
 
 
+def co_run_simultaneously(target, *a, **kw):
+    t = Thread(target = target, args = a, kwargs = kw)
+    t.start()
+    while t.is_alive():
+        yield False
+    t.join()
+
+
 def main():
     environ["SUDO_ASKPASS"] = join(dirname(__file__), "askpass.py")
 
@@ -819,8 +829,18 @@ def main():
     buttons = Frame(tk)
     buttons.grid(row = 0, column = 0, columnspan = 2, sticky = "EWS")
 
-    Button(buttons, text = "Update initramfs", command = update_initramfs).\
-        pack(side = RIGHT)
+    bt_update_initramfs = Button(buttons, text = "Update initramfs")
+    bt_update_initramfs.pack(side = RIGHT)
+
+    def co_do_update_initramfs():
+        yield co_run_simultaneously(update_initramfs)
+        bt_update_initramfs.config(state = NORMAL)
+
+    def do_update_initramfs():
+        bt_update_initramfs.config(state = DISABLED)
+        tk.enqueue(co_do_update_initramfs())
+
+    bt_update_initramfs.config(command = do_update_initramfs)
 
     disable_vga_var = BooleanVar(tk)
     disable_vga_var.trace_variable("w", disable_vga_handler)
