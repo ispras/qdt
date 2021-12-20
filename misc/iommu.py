@@ -5,6 +5,7 @@ from subprocess import (
     PIPE,
 )
 from os.path import (
+    dirname,
     exists,
     expanduser,
     split,
@@ -16,9 +17,6 @@ from os import (
     listdir,
 )
 from six.moves.tkinter import (
-    Entry,
-    Label,
-    StringVar,
     LEFT,
     RIGHT,
     Checkbutton,
@@ -59,9 +57,6 @@ from threading import (
 from six.moves.queue import (
     Empty,
     Queue,
-)
-from sys import (
-    argv,
 )
 from common import (
     Persistent,
@@ -475,6 +470,9 @@ class RunError(RuntimeError):
         self.out = out
         self.err = err
 
+# Note, under PyDev `run` may fail to run a Python script because PyDev
+# dirties PYTHONPATH with libs of concrete Python version.
+# Especially when default Python version (/usr/bin/python) differs).
 
 def run(*args, **kw):
     command = " ".join(args)
@@ -809,37 +807,8 @@ def reload_disable_vga():
     )
 
 
-def askpass(argv):
-    root = Tk()
-    root.title("Password required")
-
-    Label(root, text = argv[1]).pack()
-    var = StringVar(root)
-    e = Entry(root, show="*", textvariable = var, width = 30)
-    e.pack(fill = "x", expand = True)
-    e.focus_set()
-
-    root._entered = False
-
-    def on_return(*__):
-        root._entered = True
-        root.destroy()
-
-    e.bind("<Return>", on_return)
-    e.bind("<Escape>", lambda *__: root.destroy())
-
-    root.mainloop()
-
-    if root._entered:
-        print(var.get())
-
-
 def main():
-    if len(argv) > 1 and "[sudo]" in argv[1]:
-        askpass(argv)
-        return
-
-    environ["SUDO_ASKPASS"] = __file__
+    environ["SUDO_ASKPASS"] = join(dirname(__file__), "askpass.py")
 
     global local_conf
     global disable_vga_var
