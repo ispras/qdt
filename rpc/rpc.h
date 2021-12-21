@@ -14,6 +14,7 @@ typedef enum {
     RPC_ERR_COUNT
 } RPCError;
 
+/* Use RPCBuffer or RPCString to transfer variable size buffers. */
 typedef struct {
     uint16_t size;
     uint8_t *data;
@@ -31,16 +32,24 @@ typedef void * rpc_ptr_t;
 typedef rpc_ptr_t (*rpc_alloc_t)(size_t);
 typedef void (*rpc_free_t)(rpc_ptr_t);
 
-/* can assign own heap API */
+/* An implementation can force own heap API. <malloc.h> is default. */
 extern rpc_alloc_t rpc_alloc;
 extern rpc_free_t rpc_free;
 
+/* RPCServer uses rpc_read_t and rpc_write_t functions to communicate with
+ * other end through rpc_connection_t. An implementation must establish it
+ * by self providing the functions. RPCServer uses rpc_connection_t value as
+ * an opaque pointer. */
 typedef rpc_ptr_t rpc_connection_t;
 
 typedef size_t (*rpc_read_t)(rpc_connection_t, rpc_ptr_t, size_t);
 typedef size_t (*rpc_write_t)(rpc_connection_t, rpc_ptr_t, size_t);
 
 typedef struct RPCServer RPCServer;
+
+/* ctx is an opaque pointer the RPCServer passes to implementation handlers
+ * of commands. RPCServer treats it as an opaque pointer-length integer. It
+ * can be any, e.g. NULL if not required. */
 
 RPCServer* rpc_server_new(rpc_connection_t, rpc_read_t, rpc_write_t,
         rpc_ptr_t ctx, RPCError*);
