@@ -10,7 +10,8 @@
 
 #define MIN(A, B) (((B) > (A)) ? (B) : (A))
 
-RPCError TestFrontEnd_bufcmp(RPCBackEnd be, int8_t *ret, BufCmpTask *t)
+RPCError TestFrontEnd_bufcmp(RPCBackEnd be, rpc_ptr_t ctx, int8_t *ret,
+                             BufCmpTask *t)
 {
     fprintf(stderr, "bufcmp: %d, %d:", t->a.size, t->b.size);
     fflush(stderr);
@@ -42,26 +43,27 @@ RPCError TestFrontEnd_bufcmp(RPCBackEnd be, int8_t *ret, BufCmpTask *t)
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_m1(void *ctx, int32_t a)
+RPCError TestFrontEnd_m1(RPCBackEnd be, rpc_ptr_t ctx, int32_t a)
 {
     fprintf(stderr, "m1: a = %" PRId32 "\n", a);
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_m2(void *ctx, int32_t a)
+RPCError TestFrontEnd_m2(RPCBackEnd be, rpc_ptr_t ctx, int32_t a)
 {
     fprintf(stderr, "m2: a = %" PRId32 "\n", a);
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_m3(void *ctx, int32_t a, int32_t b, int32_t c)
+RPCError TestFrontEnd_m3(RPCBackEnd be, rpc_ptr_t ctx, int32_t a, int32_t b,
+                         int32_t c)
 {
     fprintf(stderr, "m3: a = %" PRId32 " b = %" PRId32 " c = %" PRId32 "\n", a,
             b, c);
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_p(RPCBackEnd be, RPCString *s)
+RPCError TestFrontEnd_p(RPCBackEnd be, rpc_ptr_t ctx, RPCString *s)
 {
     fprintf(stderr, "p:");
     fflush(stderr);
@@ -69,15 +71,15 @@ RPCError TestFrontEnd_p(RPCBackEnd be, RPCString *s)
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_stop(void *ctx)
+RPCError TestFrontEnd_stop(RPCBackEnd be, rpc_ptr_t ctx)
 {
     RPCProbeCtx *pctx = (RPCProbeCtx *)ctx;
     pctx->working = false;
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_strcmp(RPCBackEnd be, int8_t *ret, RPCString *a,
-        RPCString *b)
+RPCError TestFrontEnd_strcmp(RPCBackEnd be, rpc_ptr_t ctx, int8_t *ret,
+                             RPCString *a, RPCString *b)
 {
     fprintf(stderr, "strcmp:");
     fflush(stderr);
@@ -87,8 +89,8 @@ RPCError TestFrontEnd_strcmp(RPCBackEnd be, int8_t *ret, RPCString *a,
     return RPC_ERR_NO;
 }
 
-RPCError TestFrontEnd_vadd(void *ctx, Point3i *ret, Point3i *a,
-                           Point3i *b)
+RPCError TestFrontEnd_vadd(RPCBackEnd be, rpc_ptr_t ctx, Point3i *ret,
+                           Point3i *a, Point3i *b)
 {
     ret->x = a->x + b->x;
     ret->y = a->y + b->y;
