@@ -39,7 +39,7 @@ extern rpc_free_t rpc_free;
 /* RPCServer uses rpc_read_t and rpc_write_t functions to communicate with
  * other end through rpc_connection_t. An implementation must establish it
  * by self providing the functions. RPCServer uses rpc_connection_t value as
- * an opaque pointer. */
+ * an opaque pointer. Example: stdio-connection.h */
 typedef rpc_ptr_t rpc_connection_t;
 
 typedef size_t (*rpc_read_t)(rpc_connection_t, rpc_ptr_t, size_t);
