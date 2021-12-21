@@ -238,11 +238,13 @@ class RPCInfo(object):
 
     def gen_impl_decl(self,
         backend_name = "be",
+        context_name = "ctx",
         return_name = "ret",
         name_prefix = ""
     ):
         args = [
             RPCBackEnd(backend_name),
+            rpc_ptr_t(context_name),
         ]
         if self.return_type is not None:
             args.append(Pointer(self.return_type)(return_name))
@@ -338,7 +340,7 @@ class RPCInfo(object):
     ):
         unpackers = {}
         packers = {}
-        impl_args = [ctx]
+        impl_args = [be, ctx]
 
         ret_type = self.return_type
 
