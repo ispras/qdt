@@ -1,31 +1,9 @@
 #include "rpc.h"
 #include "impl.h"
 #include "rpc_probe.h"
+#include "stdio-connection.h"
 
 #include <stdio.h>
-
-typedef struct {
-    FILE *to_client;
-    FILE *from_client;
-} RPCStdIOConnection;
-
-static size_t rpc_read(rpc_connection_t conn, void *buf, size_t size)
-{
-    RPCStdIOConnection *stdioconn = (RPCStdIOConnection*) conn;
-
-    return fread(buf, 1, size, stdioconn->from_client);
-}
-
-static size_t rpc_write(rpc_connection_t conn, void *buf, size_t size)
-{
-    RPCStdIOConnection *stdioconn = (RPCStdIOConnection*) conn;
-
-    size_t ret = fwrite(buf, 1, size, stdioconn->to_client);
-
-    if (ret) fflush(stdioconn->to_client);
-
-    return ret;
-}
 
 int main(int argc, char **argv)
 {
@@ -33,19 +11,15 @@ int main(int argc, char **argv)
         fprintf(stderr, "argv[%d] = %s\n", i, argv[i]);
     }
 
-    RPCStdIOConnection stdioconn = {
-            .to_client = stdout,
-            .from_client = stdin
-    };
-
     RPCProbeCtx ctx = {
         .working = true
     };
 
+    RPC_STDIO_CONN_STD_IN_OUT(stdioconn);
+
     fprintf(stderr, "starting RPC server\n");
 
-    RPCServer *srv = rpc_server_new((rpc_connection_t) &stdioconn, rpc_read,
-            rpc_write, &ctx, NULL);
+    RPCServer *srv = RPC_STDIO_CONN_SERVER_NEW(stdioconn, &ctx, NULL);
 
     fprintf(stderr, "polling RPC\n");
 
