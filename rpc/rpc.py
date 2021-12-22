@@ -260,7 +260,7 @@ class RPCInfo(object):
             args = args,
         )
 
-    def gen_args_packer(self, byte_order = "@"):
+    def gen_args_packer(self, byte_order = "="):
         if not self.args:
             def packer(*__):
                 return b""
@@ -294,7 +294,7 @@ class RPCInfo(object):
 
         return packer
 
-    def gen_retval_unpacker(self, byte_order = "@"):
+    def gen_retval_unpacker(self, byte_order = "="):
         return_type = self.return_type
 
         if return_type is None:
@@ -694,7 +694,7 @@ def fitting_c_type(max_val):
 
 class RPCProtocol(object):
 
-    def __init__(self, frontend_class, byte_order = "@"):
+    def __init__(self, frontend_class, byte_order = "="):
         self.fe = frontend_class
         self.byte_order = byte_order
 
@@ -796,7 +796,7 @@ class RPCProtocol(object):
         body(OpAssign(p, OpCast(Pointer(uint8_t), msg)))
         body(Declare(OpDeclareAssign(pptr, OpAddr(p))))
 
-        if self.byte_order != "@":
+        if self.byte_order != "=":
             # TODO: swap bytes of call_id if needed
             raise NotImplementedError("Only native byte order now")
 
