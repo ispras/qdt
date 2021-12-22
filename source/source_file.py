@@ -32,7 +32,7 @@ from six import (
     add_metaclass,
 )
 from common import (
-    BreakVisiting,
+    SkipVisiting,
     ee,
     OrderedSet,
     path2tuple,
@@ -342,7 +342,7 @@ class TypeFixerVisitor(TypeReferencesVisitor):
             t = self.cur
 
             if t.base:
-                raise BreakVisiting()
+                raise SkipVisiting()
 
             if not t.is_named:
                 return
@@ -368,7 +368,7 @@ class TypeFixerVisitor(TypeReferencesVisitor):
                 self.required_types.append(t)
 
             # Do not enter another source (`t`ype's definer).
-            raise BreakVisiting()
+            raise SkipVisiting()
 
     def visit(self):
         ret = super(TypeFixerVisitor, self).visit()
