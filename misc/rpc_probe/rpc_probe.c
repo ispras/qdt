@@ -17,23 +17,23 @@ int main(int argc, char **argv)
 
     RPC_STDIO_CONN_STD_IN_OUT(stdioconn);
 
-    fprintf(stderr, "starting RPC server\n");
+    fprintf(stderr, "main: starting RPC server\n");
 
     RPCServer *srv = RPC_STDIO_CONN_SERVER_NEW(stdioconn, &ctx, NULL);
 
-    fprintf(stderr, "polling RPC\n");
+    fprintf(stderr, "main: polling RPC\n");
 
     while (ctx.working) {
         RPCError err = rpc_server_poll(srv);
         if (err == RPC_ERR_NO) {
-            fprintf(stderr, ".\n");
+            fprintf(stderr, "main: ok\n");
         } else {
-            fprintf(stderr, "E\n");
+            fprintf(stderr, "main: error %u\n", err);
             break;
         }
     }
 
-    fprintf(stderr, "deleting RPC server\n");
+    fprintf(stderr, "main:deleting RPC server\n");
 
     rpc_server_delete(srv);
 
