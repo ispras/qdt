@@ -69,10 +69,16 @@ def main():
             )
 
     RPCBuffer = Type["RPCBuffer"]
+    RPCString = Type["RPCString"]
     BufCmpTask = Structure("BufCmpTask",
         RPCBuffer("a"),
         RPCBuffer("b")
     )
+    VersionInfo = Structure("VersionInfo",
+        RPCBuffer("version_string"),
+        Type["uint32_t"]("version_code"),
+    )
+
 
     class RPCBufferFE(object):
 
@@ -116,6 +122,14 @@ def main():
         @rpc("int8_t", BufCmpTask)
         def bufcmp(self, t):
             print("bufcmp", t)
+
+        @rpc(RPCString)
+        def version_string(self):
+            print("TestFrontEnd.version_string")
+
+        @rpc(VersionInfo)
+        def version_info(self):
+            print("TestFrontEnd.version_info")
 
     # not correct, just for unpacker testing
     raw2 = b"\xef\xdb\xea\x0d\x0d\xf0\xad\x0b\x01\x02\x03\x04"
@@ -223,6 +237,8 @@ def main():
     conn = RPCStreamConnection(p.stdin, p.stdout)
     fe.connection = conn
 
+    print(fe.version_string())
+    print(fe.version_info())
     print(fe.vadd(p0, p1))
     print(fe.m1(2))
     print(fe.m2())

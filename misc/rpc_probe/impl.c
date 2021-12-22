@@ -99,3 +99,22 @@ RPCError TestFrontEnd_vadd(RPCBackEnd be, rpc_ptr_t ctx, Point3i *ret,
     return RPC_ERR_NO;
 }
 
+#define VERSION_STRING "rpc_probe v0.2"
+
+RPCError TestFrontEnd_version_info(RPCBackEnd be, rpc_ptr_t ctx,
+                                   VersionInfo *ret)
+{
+    ret->version_string.size = strlen(VERSION_STRING);
+    ret->version_string.data = VERSION_STRING;
+    ret->version_code = 0x02;
+    return RPC_ERR_NO;
+}
+
+RPCError TestFrontEnd_version_string(RPCBackEnd be, rpc_ptr_t ctx,
+                                     RPCString *ret)
+{
+    ret->length = strlen(VERSION_STRING);
+    ret->data = VERSION_STRING;
+    return RPC_ERR_NO;
+}
+
