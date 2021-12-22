@@ -13,7 +13,7 @@
 RPCError TestFrontEnd_bufcmp(RPCBackEnd be, rpc_ptr_t ctx, int8_t *ret,
                              BufCmpTask *t)
 {
-    fprintf(stderr, "bufcmp: %d, %d:", t->a.size, t->b.size);
+    fprintf(stderr, "impl: bufcmp: %d, %d:", t->a.size, t->b.size);
     fflush(stderr);
     uint16_t min_size = MIN(t->a.size, t->b.size);
 
@@ -45,27 +45,28 @@ RPCError TestFrontEnd_bufcmp(RPCBackEnd be, rpc_ptr_t ctx, int8_t *ret,
 
 RPCError TestFrontEnd_m1(RPCBackEnd be, rpc_ptr_t ctx, int32_t a)
 {
-    fprintf(stderr, "m1: a = %" PRId32 "\n", a);
+    fprintf(stderr, "impl: m1: a = %" PRId32 "\n", a);
     return RPC_ERR_NO;
 }
 
 RPCError TestFrontEnd_m2(RPCBackEnd be, rpc_ptr_t ctx, int32_t a)
 {
-    fprintf(stderr, "m2: a = %" PRId32 "\n", a);
+    fprintf(stderr, "impl: m2: a = %" PRId32 "\n", a);
     return RPC_ERR_NO;
 }
 
 RPCError TestFrontEnd_m3(RPCBackEnd be, rpc_ptr_t ctx, int32_t a, int32_t b,
                          int32_t c)
 {
-    fprintf(stderr, "m3: a = %" PRId32 " b = %" PRId32 " c = %" PRId32 "\n", a,
+    fprintf(stderr,
+            "impl: m3: a = %" PRId32 " b = %" PRId32 " c = %" PRId32 "\n", a,
             b, c);
     return RPC_ERR_NO;
 }
 
 RPCError TestFrontEnd_p(RPCBackEnd be, rpc_ptr_t ctx, RPCString *s)
 {
-    fprintf(stderr, "p:");
+    fprintf(stderr, "impl: p:");
     fflush(stderr);
     fprintf(stderr, " \"%s\"\n", s->data);
     return RPC_ERR_NO;
@@ -81,7 +82,7 @@ RPCError TestFrontEnd_stop(RPCBackEnd be, rpc_ptr_t ctx)
 RPCError TestFrontEnd_strcmp(RPCBackEnd be, rpc_ptr_t ctx, int8_t *ret,
                              RPCString *a, RPCString *b)
 {
-    fprintf(stderr, "strcmp:");
+    fprintf(stderr, "impl: strcmp:");
     fflush(stderr);
     *ret = strcmp(a->data, b->data);
     fprintf(stderr, " \"%s\" \"%s\" = %d\n", a->data, b->data,
@@ -95,7 +96,7 @@ RPCError TestFrontEnd_vadd(RPCBackEnd be, rpc_ptr_t ctx, Point3i *ret,
     ret->x = a->x + b->x;
     ret->y = a->y + b->y;
     ret->z = a->z + b->z;
-    fprintf(stderr, "vadd: res = (%d, %d, %d)\n", ret->x, ret->y, ret->z);
+    fprintf(stderr, "impl: add: res = (%d, %d, %d)\n", ret->x, ret->y, ret->z);
     return RPC_ERR_NO;
 }
 
@@ -104,6 +105,7 @@ RPCError TestFrontEnd_vadd(RPCBackEnd be, rpc_ptr_t ctx, Point3i *ret,
 RPCError TestFrontEnd_version_info(RPCBackEnd be, rpc_ptr_t ctx,
                                    VersionInfo *ret)
 {
+    fprintf(stderr, "impl: version_info\n");
     ret->version_string.size = strlen(VERSION_STRING);
     ret->version_string.data = VERSION_STRING;
     ret->version_code = 0x02;
@@ -113,6 +115,7 @@ RPCError TestFrontEnd_version_info(RPCBackEnd be, rpc_ptr_t ctx,
 RPCError TestFrontEnd_version_string(RPCBackEnd be, rpc_ptr_t ctx,
                                      RPCString *ret)
 {
+    fprintf(stderr, "impl: version_string\n");
     ret->length = strlen(VERSION_STRING);
     ret->data = VERSION_STRING;
     return RPC_ERR_NO;
