@@ -26,9 +26,9 @@ int main(int argc, char **argv)
     while (ctx.working) {
         RPCError err = rpc_server_poll(srv);
         if (err == RPC_ERR_NO) {
-            fprintf(stderr, "main: ok\n");
+            fprintf(stderr, "main: ok: %s (%d)\n", rpc_error[err], err);
         } else {
-            fprintf(stderr, "main: error %u\n", err);
+            fprintf(stderr, "main: error: %s (%d)\n", rpc_error[err], err);
             break;
         }
     }
