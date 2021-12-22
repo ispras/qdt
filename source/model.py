@@ -902,6 +902,12 @@ chunk. The references is to be added to `users` of the 'typedef'.
         else:
             return "pointer to %s" % self.type
 
+    def __c__(self, writer):
+        if self.is_named:
+            super(Pointer, self).__c__(writer)
+        else:
+            writer.write(self.declaration_string)
+
     __type_references__ = ["type"]
 
 
