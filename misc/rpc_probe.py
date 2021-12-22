@@ -38,20 +38,6 @@ from subprocess import (
 
 
 def main():
-    args = ("a", "b", "c")
-    defaults = tuple()
-
-    print(dict(zip(args[-len(defaults):], defaults)))
-
-    defaults = (2, 3)
-
-    print(dict(zip(args[-len(defaults):], defaults)))
-
-    def f(a, b, c, *args):
-        pass
-
-    print(getargspec(f))
-
     with get_stc():
         c_int = Type["int32_t"]
         Point3i = Structure("Point3i", c_int("x"), c_int("y"), c_int("z"))
@@ -175,13 +161,6 @@ def main():
     raw = packer(p0, p1)
     print(raw)
 
-    d = dict()
-    d2 = dict()
-    d["d2"] = d2
-
-    d["v1"], d2["v2"] = 1, 2
-    print(d)
-
     unpacker = fe.vadd.rpc_info.gen_retval_unpacker()
 
     p = unpacker(raw2)
@@ -202,8 +181,6 @@ def main():
         f.generate(string_buf)
 
         code = string_buf.getvalue()
-
-        print(code)
 
         f_name = join(rpc_probe_dir, s.path)
 
