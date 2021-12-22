@@ -23,7 +23,7 @@ from itertools import (
 from common import (
     ee,
     ObjectVisitor,
-    BreakVisiting
+    SkipVisiting
 )
 from six import (
     add_metaclass,
@@ -1107,7 +1107,7 @@ class TypesCollector(TypeReferencesVisitor):
         cur = self.cur
         if isinstance(cur, Type):
             self.used_types.add(cur)
-            raise BreakVisiting()
+            raise SkipVisiting()
 
 
 class GlobalsCollector(NodeVisitor):
