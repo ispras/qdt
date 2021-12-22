@@ -17,6 +17,11 @@ __all__ = [
 from collections import (
     OrderedDict,
 )
+from common import (
+    lazy,
+    SkipVisiting,
+    StopVisiting,
+)
 from inspect import (
     getargspec,
     getmro,
@@ -30,6 +35,7 @@ from functools import (
 from source import (
     add_base_types,
     BodyTree,
+    BranchElse,
     BranchIf,
     BranchSwitch,
     Break,
@@ -48,15 +54,19 @@ from source import (
     OpCombAssign,
     OpDeclareAssign,
     OpDeref,
+    OpMul,
     OpNEq,
     OpSDeref,
     OpSizeOf,
+    OpSub,
     Pointer,
     Return,
     Source,
     SourceTreeContainer,
     Structure,
     Type,
+    TypeReferencesVisitor,
+    Variable,
 )
 from struct import (
     Struct,
@@ -86,6 +96,9 @@ def gen_global_rpc_types():
     uint8_t = Type["uint8_t"]
     uint16_t = Type["uint16_t"]
     uint32_t = Type["uint32_t"]
+
+    global NULL
+    NULL = Type["NULL"]
 
     global void
     void = Type["void"]
@@ -156,6 +169,108 @@ def gen_global_rpc_types():
         Pointer(uint8_t)("data"),
     )
     rpc_h(RPCString)
+
+    global memcpy
+    memcpy = Type["memcpy"]
+
+
+class RPCOpsGenVisitor(TypeReferencesVisitor):
+
+    def __init__(self, t, *a, **kw):
+        super(RPCOpsGenVisitor, self).__init__(
+            # `root` is not visited. So, wrap `t`ype in a container because
+            # it can be a type `on_visit` is looking for.
+            [t],
+            *a, **kw
+        )
+        self._ops = []
+
+    def iter_ops(self):
+        del self._ops[:]
+        self.visit()
+        return iter(self._ops)
+
+    def __iter__(self):
+        return self.iter_ops()
+
+
+class RPCBufferCounter(RPCOpsGenVisitor):
+
+    @lazy
+    def total(self):
+        self._total = 0
+        self.visit()
+        try:
+            return self._total
+        finally:
+            del self._total
+
+    def on_visit(self):
+        if self.cur is RPCBuffer or self.cur is RPCString:
+            self._total += 1
+            raise StopVisiting
+
+
+class RPCBufferVisitor(RPCOpsGenVisitor):
+
+    def __init__(self, root_val, *a, **kw):
+        super(RPCBufferVisitor, self).__init__(*a, **kw)
+        self._root_val = root_val
+
+    @property
+    def deref_root_val(self):
+        res = self._root_val
+        for i in self.path:
+            o = i[0]
+            if isinstance(o, Variable):
+                # `o` is expected to be a field of a `struct`ure.
+                # Else, `RPCBufferVisitor` is used incorrectly.
+                res = OpSDeref(res, o.name)
+        return res
+
+
+class RPCBufferResetter(RPCBufferVisitor):
+
+    def on_visit(self):
+        cur = self.cur
+
+        if cur is RPCBuffer or cur is RPCString:
+            buf_lval = self.deref_root_val
+            fiter = iter(cur.fields)
+            self._ops.extend((
+                # Note, field names are different in RPCBuffer/RPCString.
+                OpAssign(OpSDeref(buf_lval, next(fiter)), 0),
+                OpAssign(OpSDeref(buf_lval, next(fiter)), NULL),
+            ))
+            raise SkipVisiting
+
+
+class RPCExtraRetSizeCounter(RPCBufferVisitor):
+
+    def __init__(self, size_lval, *a, **kw):
+        super(RPCExtraRetSizeCounter, self).__init__(*a, **kw)
+        self._size_lval = size_lval
+
+    def on_visit(self):
+        cur = self.cur
+
+        if cur is RPCBuffer or cur is RPCString:
+            buf = self.deref_root_val
+            fiter = iter(cur.fields)
+
+            inc_val = OpSDeref(buf, next(fiter))
+            # if cur is RPCString:
+            #     inc_val = OpAdd(inc_val, 1) # zero string terminator
+
+            data_val = OpSDeref(buf, next(fiter))
+
+            self._ops.append(
+                BranchIf(OpNEq(data_val, NULL)) (
+                    OpCombAssign(self._size_lval, inc_val, "+")
+                )
+            )
+
+            raise SkipVisiting
 
 
 # a method @decorator
@@ -303,7 +418,7 @@ class RPCInfo(object):
         ret_unflattener_code = []
         line = ret_unflattener_code.append
 
-        fmt, tree_code, l_vals = gen_unpacker_py(
+        fmt, tree_code, l_vals, post_unflatten_code = gen_unpacker_py(
             (("retval", return_type),),
             "ret",
             count()
@@ -312,12 +427,16 @@ class RPCInfo(object):
         s = Struct(byte_order + fmt)
 
         if isinstance(return_type, Structure):
-            line("def unflattener(values):")
+            line("def unflattener(values, tail):")
             line(" ret = {}")
             for l in tree_code:
                 line(" " + l)
 
             line(" (" + ", ".join(l_vals) + ",) = values")
+
+            for l in post_unflatten_code:
+                line(" " + l)
+
             line(" return ret['retval']")
 
             code = "\n".join(ret_unflattener_code)
@@ -326,9 +445,13 @@ class RPCInfo(object):
             exec(code, ns)
 
             unflattener = ns["unflattener"]
+            ssize = s.size
 
             def unpacker(raw_data):
-                return unflattener(s.unpack(raw_data))
+                return unflattener(
+                    s.unpack(raw_data[:ssize]),
+                    raw_data[ssize:]
+                )
         else:
             def unpacker(raw_data):
                 return s.unpack(raw_data)[0]
@@ -348,6 +471,9 @@ class RPCInfo(object):
             ret_arg = ret_type("ret")
             yield Declare(ret_arg)
             impl_args.append(OpAddr(ret_arg))
+
+            for n in RPCBufferResetter(ret_arg, ret_type).iter_ops():
+                yield n
 
         # unpack arguments
         args_lvals_and_types = []
@@ -397,10 +523,46 @@ class RPCInfo(object):
             yield BranchIf(OpNEq(err, Type["RPC_ERR_NO"]))(
                 Break()
             )
+
+            total_buffers = RPCBufferCounter(ret_type).total
+
+            if total_buffers:
+                # Note, OpSizeOf(ret_type) is likely greater than amount
+                # of really needed bytes because of compiller assumes that
+                # returned `struct`ure fields are aligned in memory resulting
+                # in padding between them.
+                # And `response_size` includes the padding.
+                # However, returned data is tightly packed by the generated
+                # code. As a result, there is an unused zero tail in message.
+                # TODO: evaluate response size more accurately
+
+                response_size_val = response_size.type.type("total_size")
+                yield Declare(
+                    OpDeclareAssign(response_size_val,
+                        # Each RPCBuffer/RPCString `struct`ure has a data
+                        # pointer field. That pointer (its local value) is
+                        # not transmitted and must not be accounted in
+                        # response size.
+                        OpSub(
+                            OpSizeOf(ret_type),
+                            OpMul(total_buffers,
+                                OpSizeOf(RPCBuffer.fields["data"].type)
+                            )
+                        )
+                    )
+                )
+
+                for n in RPCExtraRetSizeCounter(
+                    response_size_val, ret_arg, ret_type
+                ):
+                    yield n
+            else:
+                response_size_val = OpSizeOf(ret_type)
+
             # allocate memory for response
             yield OpAssign(err,
                 Call(rpc_backend_alloc_response, be,
-                    OpSizeOf(ret_type),
+                    response_size_val,
                     response
                 )
             )
@@ -409,7 +571,7 @@ class RPCInfo(object):
             )
             yield OpAssign(
                 OpDeref(response_size),
-                OpSizeOf(ret_type)
+                response_size_val
             )
 
             # pack returned value into response
@@ -419,6 +581,36 @@ class RPCInfo(object):
             yield Declare(OpDeclareAssign(rptr, OpAddr(r)))
             for n in iter_gen_packer_c([(ret_arg, ret_type)], rptr, packers):
                 yield n#ode
+
+            # handle `RSPBuffer`s & `RPCString`s
+            queue = [(ret_arg, ret_type)]
+            while queue:
+                rval, t = queue.pop(0)
+
+                if isinstance(t, Structure):
+                    fiter = iter(t.fields)
+                    size_name = next(fiter)
+                    data_name = next(fiter)
+
+                    if t is RPCBuffer or t is RPCString:
+                        yield BranchIf(OpNEq(OpSDeref(rval, data_name), NULL))(
+                            Call(memcpy,
+                                OpDeref(rptr),
+                                OpSDeref(rval, data_name),
+                                OpSDeref(rval, size_name)
+                            ),
+                            OpCombAssign(
+                                OpDeref(rptr),
+                                OpSDeref(rval, size_name),
+                                "+"
+                            ),
+                        )
+                    else:
+                        queue.extend(
+                            (OpSDeref(rval, n), v.type)
+                                for (n, v) in t.fields.items()
+                        )
+
 
 # Standard C types (char, int, long) have host dependent sizes.
 # They are not used by base implementation.
@@ -498,14 +690,35 @@ def iter_gen_unpacker_c(lvals_types_iter, pptr, unpackers):
 def iter_gen_packer_c(rvals_types_iter, pptr, packers):
     for rval, t in rvals_types_iter:
         if isinstance(t, Structure):
-            if t in packers:
-                t_packer = packers[t]
-            else:
-                t_packer = gen_struct_handler_c(t, "pack_", packers,
-                    iter_gen_packer_c
+            if t is RPCBuffer or t is RPCString:
+                fiter = iter(t.fields)
+                size_name = next(fiter)
+                data_name = next(fiter)
+
+                size_type = t.fields[size_name].type
+
+                yield BranchIf(OpNEq(OpSDeref(rval, data_name), NULL))(
+                    OpAssign(
+                        OpDeref(OpCast(Pointer(size_type), OpDeref(pptr))),
+                        OpSDeref(rval, size_name)
+                    ),
+                    BranchElse()(
+                        OpAssign(
+                            OpDeref(OpCast(Pointer(size_type), OpDeref(pptr))),
+                            0
+                        ),
+                    )
                 )
-                packers[t] = t_packer
-            yield Call(t_packer, OpAddr(rval), pptr)
+                yield OpCombAssign(OpDeref(pptr), OpSizeOf(size_type), "+")
+            else:
+                if t in packers:
+                    t_packer = packers[t]
+                else:
+                    t_packer = gen_struct_handler_c(t, "pack_", packers,
+                        iter_gen_packer_c
+                    )
+                    packers[t] = t_packer
+                yield Call(t_packer, OpAddr(rval), pptr)
         else:
             yield OpAssign(OpDeref(OpCast(Pointer(t), OpDeref(pptr))), rval)
             yield OpCombAssign(OpDeref(pptr), OpSizeOf(t), "+")
@@ -602,19 +815,23 @@ def gen_unpacker_py(items, dict_name, counter):
     tree_code = []
     line = tree_code.append
 
+    post_unflatten_code = []
+
     for n, t in items:
         item_expr = dict_name + "['" + n + "']"
 
         if isinstance(t, Structure):
             inner_dict_name = "d" + str(next(counter))
             line(item_expr + " = " + inner_dict_name + " = {}")
-            s_fmt, s_tree_code, s_l_vals = gen_unpacker_py(
-                ((f.name, f.type) for f in t.fields.values()),
-                inner_dict_name, counter
+            (
+                s_fmt, s_tree_code, s_l_vals, s_post_unflatten_code
+            ) = gen_structure_unpacker_py(
+                t, inner_dict_name, counter
             )
             fmt += s_fmt
             l_vals.extend(s_l_vals)
             tree_code.extend(s_tree_code)
+            post_unflatten_code.extend(s_post_unflatten_code)
         else:
             try:
                 f = simple_type_fmts[t.name]
@@ -624,7 +841,38 @@ def gen_unpacker_py(items, dict_name, counter):
             fmt += f
             l_val(item_expr)
 
-    return fmt, tree_code, l_vals
+    return fmt, tree_code, l_vals, post_unflatten_code
+
+
+def gen_structure_unpacker_py(t, inner_dict_name, counter):
+    if t is RPCBuffer:
+        size_ref = inner_dict_name + "['size']"
+        return (
+            simple_type_fmts[RPCBuffer.fields["size"].type.name],
+            [],
+            [size_ref],
+            [
+                inner_dict_name + "['data'] = tail[:" + size_ref + "]",
+                "tail = tail[" + size_ref + ":]"
+            ]
+        )
+    elif t is RPCString:
+        size_ref = inner_dict_name + "['length']"
+        return (
+            simple_type_fmts[RPCString.fields["length"].type.name],
+            [],
+            [size_ref],
+            [
+                inner_dict_name + "['data'] = tail[:" + size_ref + "]" +
+                    ".decode('utf-8')",
+                "tail = tail[" + size_ref + ":]"
+            ]
+        )
+    else: # a reguler structure
+        return gen_unpacker_py(
+            ((f.name, f.type) for f in t.fields.values()),
+            inner_dict_name, counter
+        )
 
 
 def iter_rpc(cls):
