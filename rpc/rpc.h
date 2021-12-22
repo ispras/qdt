@@ -4,15 +4,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define RPC_ERROR_FULL(NAME) RPC_ERR_##NAME
+
+#define ERR(NAME) RPC_ERROR_FULL(NAME),
+
 typedef enum {
-    RPC_ERR_NO,
-    RPC_ERR_READ,
-    RPC_ERR_WRITE,
-    RPC_ERR_ALLOC,
-    RPC_ERR_UNIMPL_CALL,
-    RPC_ERR_BACKEND,
+#include "errors.inc"
     RPC_ERR_COUNT
 } RPCError;
+
+#undef ERR
+
+extern const char* rpc_error[];
 
 /* Use RPCBuffer or RPCString to transfer variable size buffers. */
 typedef struct {
