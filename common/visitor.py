@@ -5,7 +5,8 @@ __all__ = [
 ]
 
 
-class BreakVisiting(Exception):
+# Not an `Exception`. It's (ab)using of `try` logic.
+class BreakVisiting(BaseException):
     pass
 
 
