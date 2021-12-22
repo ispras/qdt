@@ -61,6 +61,9 @@ def add_base_types():
         ])
 
     h.add_types([
+        # NULL is actually a macro, but its definition is architecture
+        # dependent. So, we just declare it as generic type.
+        Type(name = "NULL", incomplete = False, base = False),
         Type(name = "size_t", incomplete = False, base = False),
         Type(name = "ptrdiff_t", incomplete = False, base = False)
     ])
