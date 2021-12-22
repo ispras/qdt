@@ -3,6 +3,19 @@
 
 #include <malloc.h>
 
+#define ERR_STR_(X) #X
+#define ERR_STR(X) ERR_STR_(X)
+#define ERR(NAME) [RPC_ERROR_FULL(NAME)] = ERR_STR(RPC_ERROR_FULL(NAME)),
+
+const char* rpc_error[] = {
+#include "errors.inc"
+    ""
+};
+
+#undef ERR
+#undef ERR_STR
+#undef ERR_STR_
+
 rpc_alloc_t rpc_alloc = malloc;
 rpc_free_t rpc_free = free;
 
