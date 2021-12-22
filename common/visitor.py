@@ -1,12 +1,12 @@
 __all__ = [
     "ObjectVisitor"
-  , "BreakVisiting"
+  , "SkipVisiting"
   , "VisitingIsNotImplemented"
 ]
 
 
 # Not an `Exception`. It's (ab)using of `try` logic.
-class BreakVisiting(BaseException):
+class SkipVisiting(BaseException):
     pass
 
 
@@ -42,11 +42,11 @@ the current object are also stored in the last entry of `self.path`.
 Default `on_visit` (`on_leave`) does nothing.
 The user should override it to define needed behaviour.
 
-To prevent traversing of subtree the `on_visit` can raise `BreakVisiting`.
-`on_leave` is called even if `BreakVisiting` was raised.
+To prevent traversing of subtree the `on_visit` can raise `SkipVisiting`.
+`on_leave` is called even if `SkipVisiting` was raised.
 
 The `replace` could be called to replace current object in its parent.
-Note that `replace` method raises `BreakVisiting` by default.
+Note that `replace` method raises `SkipVisiting` by default.
 
 Features (+) implemented, (-) TODO:
  - detection for cycles
@@ -92,7 +92,7 @@ Features (+) implemented, (-) TODO:
         """ Replaces current (being replaced) node within its container with.
 
     :param skip_trunk:
-        Skip subtree of `new_value` by raising `BreakVisiting` (no return).
+        Skip subtree of `new_value` by raising `SkipVisiting` (no return).
         Subtree of previous value will be skipped because of replacement.
         Keep in mind that setting the argument to `False` may quite easy
         lead to fall into a dead loop.
@@ -120,7 +120,7 @@ Features (+) implemented, (-) TODO:
         # print self.path_str() + " <- " + str(new_value) 
 
         if skip_trunk:
-            raise BreakVisiting()
+            raise SkipVisiting()
 
     def path_str(self):
         return ".".join(str(n) + "{%s}" % str(o) for o, n in self.path[1:])
@@ -175,7 +175,7 @@ Features (+) implemented, (-) TODO:
     def __visit__(self, attr):
         try:
             self.on_visit()
-        except BreakVisiting:
+        except SkipVisiting:
             return
         else:
             self.__visit_items__(attr)

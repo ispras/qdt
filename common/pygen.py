@@ -22,7 +22,7 @@ from .reflection import (
     get_class_total_args
 )
 from .visitor import (
-    BreakVisiting,
+    SkipVisiting,
     ObjectVisitor
 )
 from collections import (
@@ -617,7 +617,7 @@ class PyGenDepsCatcher(PyGenDepsVisitor):
         cur = self.cur
         if hasattr(cur, "__gen_code__") or hasattr(cur, "__pygen_pass__"):
             self.deps.append(cur)
-            raise BreakVisiting()
+            raise SkipVisiting()
 
 
 def default_gen_pass(obj, gen):
