@@ -317,7 +317,7 @@ class RPCInfo(object):
             for l in tree_code:
                 line(" " + l)
 
-            line(" (" + ", ".join(l_vals) + ") = values")
+            line(" (" + ", ".join(l_vals) + ",) = values")
             line(" return ret['retval']")
 
             code = "\n".join(ret_unflattener_code)
