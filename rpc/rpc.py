@@ -810,23 +810,39 @@ def gen_structure_packer_py(s, obj_name, counter):
 def gen_unpacker_py(items, dict_name, counter):
     fmt = ""
     l_vals = []
-    l_val = l_vals.append
-
     tree_code = []
-    line = tree_code.append
-
     post_unflatten_code = []
 
     for n, t in items:
         item_expr = dict_name + "['" + n + "']"
 
-        if isinstance(t, Structure):
+        if t is RPCBuffer or t is RPCString:
+            size_field = next(iter(t.fields.values())) # it's first
+            fmt += simple_type_fmts[size_field.type.name]
+            l_vals.append(item_expr)
+
+            # `RPCBuffer` is returned as `bytes` (i.e. raw data)
+            # `RPCString` is returned as utf-8 containing type
+            #  (Eg.: Py2: `unicode`, Py3: `str`).
+            if t is RPCString:
+                decode_sfx = ".decode('utf-8')"
+            else:
+                decode_sfx = ""
+
+            post_unflatten_code.extend((
+                "_buf_size = " + item_expr,
+                item_expr + " = tail[:_buf_size]" + decode_sfx,
+                "tail = tail[_buf_size:]",
+                "del _buf_size",
+            ))
+        elif isinstance(t, Structure):
             inner_dict_name = "d" + str(next(counter))
-            line(item_expr + " = " + inner_dict_name + " = {}")
+            tree_code.append(item_expr + " = " + inner_dict_name + " = {}")
             (
                 s_fmt, s_tree_code, s_l_vals, s_post_unflatten_code
-            ) = gen_structure_unpacker_py(
-                t, inner_dict_name, counter
+            ) = gen_unpacker_py(
+                ((f.name, f.type) for f in t.fields.values()),
+                inner_dict_name, counter
             )
             fmt += s_fmt
             l_vals.extend(s_l_vals)
@@ -839,40 +855,9 @@ def gen_unpacker_py(items, dict_name, counter):
                 raise ValueError("Don't know how to pack type " + t.name)
 
             fmt += f
-            l_val(item_expr)
+            l_vals.append(item_expr)
 
     return fmt, tree_code, l_vals, post_unflatten_code
-
-
-def gen_structure_unpacker_py(t, inner_dict_name, counter):
-    if t is RPCBuffer:
-        size_ref = inner_dict_name + "['size']"
-        return (
-            simple_type_fmts[RPCBuffer.fields["size"].type.name],
-            [],
-            [size_ref],
-            [
-                inner_dict_name + "['data'] = tail[:" + size_ref + "]",
-                "tail = tail[" + size_ref + ":]"
-            ]
-        )
-    elif t is RPCString:
-        size_ref = inner_dict_name + "['length']"
-        return (
-            simple_type_fmts[RPCString.fields["length"].type.name],
-            [],
-            [size_ref],
-            [
-                inner_dict_name + "['data'] = tail[:" + size_ref + "]" +
-                    ".decode('utf-8')",
-                "tail = tail[" + size_ref + ":]"
-            ]
-        )
-    else: # a reguler structure
-        return gen_unpacker_py(
-            ((f.name, f.type) for f in t.fields.values()),
-            inner_dict_name, counter
-        )
 
 
 def iter_rpc(cls):
