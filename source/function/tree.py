@@ -81,7 +81,7 @@ from ..type_container import (
 )
 from common import (
     ee,
-    BreakVisiting,
+    SkipVisiting,
     lazy
 )
 from six import (
@@ -109,7 +109,7 @@ class DeclarationSearcher(NodeVisitor):
     def on_visit(self):
         if isinstance(self.cur, Declare):
             self.have_declaration = True
-            raise BreakVisiting()
+            raise SkipVisiting()
 
 
 def flat_iter(gen):
