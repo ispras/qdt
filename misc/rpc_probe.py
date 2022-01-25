@@ -8,9 +8,6 @@ from source import (
     Type,
     Structure,
 )
-from inspect import (
-    getargspec,
-)
 from six.moves import (
     StringIO,
 )
