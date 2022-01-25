@@ -15,6 +15,8 @@ int main(int argc, char **argv)
         .working = true
     };
 
+    ARRAY_ALLOC(ctx.processes);
+
     RPC_STDIO_CONN_STD_IN_OUT(stdioconn);
 
     fprintf(stderr, "main: starting RPC server\n");
@@ -33,7 +35,9 @@ int main(int argc, char **argv)
         }
     }
 
-    fprintf(stderr, "main:deleting RPC server\n");
+    ARRAY_FREE(ctx.processes);
+
+    fprintf(stderr, "main: deleting RPC server\n");
 
     rpc_server_delete(srv);
 
