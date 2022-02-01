@@ -22,6 +22,8 @@ from widgets import (
     GUIFrame,
     VarTreeview,
     AutoPanedWindow,
+    MenuBuilder,
+    TkPopupHelper,
 )
 from time import (
     time,
@@ -61,6 +63,9 @@ from shutil import (
 from collections import (
     OrderedDict,
     defaultdict,
+)
+from copy import (
+    deepcopy,
 )
 
 
@@ -266,23 +271,34 @@ class Measurer(object):
                 raise ValueError("Names must be unique: %s" % m)
             measurements_[m.name] = m
 
-        self.skip = set()
+        self.skipped = set()
+
+    def skip(self, name):
+        self.skipped.add(name)
+
+    def re_launch(self, name):
+        self.skipped.discard(name)
 
     def co_main(self):
         notify_pfx = "_" + type(self).__name__ + "__notify_"
-        skip = self.skip
+        skipped = self.skipped
+        skip = skipped.add
 
-        for name, m in self.measurements.items():
-            if name in skip:
-                continue
+        while True:
+            for name, m in self.measurements.items():
+                if name in skipped:
+                    continue
+                skip(name)
 
-            for e in self._events:
-                getattr(m, "watch_" + e)(getattr(self, notify_pfx + e))
+                for e in self._events:
+                    getattr(m, "watch_" + e)(getattr(self, notify_pfx + e))
 
-            yield m.co_launch()
+                yield m.co_launch()
 
-            for e in self._events:
-                getattr(m, "unwatch_" + e)(getattr(self, notify_pfx + e))
+                for e in self._events:
+                    getattr(m, "unwatch_" + e)(getattr(self, notify_pfx + e))
+            else:
+                yield False
 
 
 @notifier(
@@ -442,11 +458,12 @@ class LaunchInfoWidget(GUIFrame):
         self.t_status.insert(END, info)
 
 
-class LaunchTree(GUIFrame):
+class LaunchTree(GUIFrame, TkPopupHelper):
 
     def __init__(self, master, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
         GUIFrame.__init__(self, master, *a, **kw)
+        TkPopupHelper.__init__(self)
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
@@ -469,6 +486,31 @@ class LaunchTree(GUIFrame):
 
         tv.bind("<<TreeviewSelect>>", self._on_tv_select, "+")
         self.selected = None
+
+        with MenuBuilder(self, assign = False, tearoff = False) as m:
+            self.tv_popup = m.menu
+            m(_("Re-launch"),
+                command = self._on_re_launch,
+            )
+
+        self.tv.bind("<Button-3>", self._on_tv_b3, "+")
+
+    def _on_re_launch(self):
+        if self.selected is not None:
+            self.event_generate("<<ReLaunch>>")
+
+    def _on_tv_b3(self, e):
+        row = self.tv.identify_row(e.y)
+
+        if row != "":
+            self.tv.selection_set(row)
+
+        try:
+            launch = self.iid2launch[row]
+        except KeyError:
+            return
+
+        self.show_popup(e.x_root, e.y_root, self.tv_popup, launch)
 
     def set_status(self, launch, status):
         self.tv.item(self.iid2launch.mirror[launch],
@@ -514,13 +556,18 @@ class LaunchTree(GUIFrame):
 class MeasurerResult(object):
 
     def __init__(self, info = None, retinfos = None, file_name = None):
-        self.info = {} if info is None else info
+        self.info = defaultdict(str)
+        if info is not None:
+            self.info.update(info)
         self.retinfos = {} if retinfos is None else retinfos
         self.file_name = file_name
 
     def save(self, file_name = None):
         file_name = file_name or self.file_name
+        self.info = info = dict(self.info)
         pythonize(self, file_name)
+        self.info = defaultdict(str)
+        self.info.update(info)
 
     @staticmethod
     def load(file_name):
@@ -567,9 +614,13 @@ class LauncherGUI(GUITk):
             getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
 
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
+        w_tree.bind("<<ReLaunch>>", self._on_re_launch, "+")
 
-        self.info.update(result.info)
-        self.retinfos.update(result.retinfos)
+        result = deepcopy(result)
+
+        self.info = result.info
+        self.retinfos = result.retinfos
+        self.result = result
 
         for name, ri in self.retinfos.items():
             try:
@@ -577,9 +628,7 @@ class LauncherGUI(GUITk):
             except KeyError:
                 continue
             self._set_res(launch, ri)
-            measurer.skip.add(name)
-
-        self.result = result
+            measurer.skip(name)
 
         self.after(1, self._short_status_update)
 
@@ -609,12 +658,6 @@ class LauncherGUI(GUITk):
             self.short_statuses[ml] = (status, time() if t is None else t)
             self.w_tree.set_status(ml, status)
 
-    def _update_result(self):
-        result = self.result
-        result.info.update(self.info)
-        result.retinfos.update(self.retinfos)
-        result.save()
-
     def _on_build_started(self, ml):
         self.info[ml.name] += "Building...\n"
         self._set_short_status(ml, "building")
@@ -641,7 +684,7 @@ class LauncherGUI(GUITk):
         self._set_res(ml, resinfo)
         self._update_info(ml)
 
-        self._update_result()
+        self.result.save()
 
     def _set_res(self, launch, resinfo):
         rc = resinfo["returncode"]
@@ -678,6 +721,18 @@ class LauncherGUI(GUITk):
             info = str(launch) + "\n\n" + self.info[launch.name]
 
         self.w_info.set_info(info)
+
+    def _on_re_launch(self, e):
+        launch = e.widget.selected
+        if not self.retinfos.get(launch.name, {}):
+            return
+        del self.info[launch.name]
+        del self.retinfos[launch.name]
+        self.w_info.set_info("")
+        self._set_short_status(launch, "re-launching")
+        self._set_short_status(launch, None)
+        self.result.save()
+        self._measurer.re_launch(launch.name)
 
 
 def main():
