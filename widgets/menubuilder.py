@@ -10,6 +10,17 @@ from .var_widgets import (
 class MenuBuilder(object):
 
     def __init__(self, toplevel, MenuClass = VarMenu, assign = True, **root_kw):
+        """
+@param toplevel:
+    a first positional argument of MenuClass.
+    It must be a Toplevel/Tk if assign is True.
+@param MenuClass:
+    callable, a factory of menus
+@param assign:
+    root menu will be assigned to `toplevel`
+@param root_kw:
+    all unknown keyword args are used as kw for MenuClass
+        """
         self.MenuClass = MenuClass
         self.toplevel = toplevel
         self.assign = assign
