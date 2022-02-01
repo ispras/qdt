@@ -9,9 +9,10 @@ from .var_widgets import (
 
 class MenuBuilder(object):
 
-    def __init__(self, toplevel, MenuClass = VarMenu):
+    def __init__(self, toplevel, MenuClass = VarMenu, assign = True):
         self.MenuClass = MenuClass
         self.toplevel = toplevel
+        self.assign = assign
 
         self.stack = []
 
@@ -49,7 +50,8 @@ Function selection is contextual, see code below.
             parent.add_cascade(label = label, menu = menu)
         else:
             menu = self.MenuClass(self.toplevel)
-            self.toplevel.config(menu = menu)
+            if self.assign:
+                self.toplevel.config(menu = menu)
 
         stack.append(menu)
 
