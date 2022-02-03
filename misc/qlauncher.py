@@ -564,10 +564,10 @@ class MeasurerResult(object):
 
     def save(self, file_name = None):
         file_name = file_name or self.file_name
-        self.info = info = dict(self.info)
+        info = self.info
+        self.info = dict(self.info)
         pythonize(self, file_name)
-        self.info = defaultdict(str)
-        self.info.update(info)
+        self.info = info
 
     @staticmethod
     def load(file_name):
