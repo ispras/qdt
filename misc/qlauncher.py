@@ -762,6 +762,11 @@ def main():
         help = "Ignore results of previous sessions (" + RESFILE +")",
         action = "store_true",
     )
+    arg("-t", "--times",
+        default = 3,
+        help = "how many times do each launch",
+        type = int,
+    )
 
     args = ap.parse_args()
 
@@ -953,7 +958,7 @@ def main():
             gen_workloads,
             gen_multiple,
             gen_rr3_variants,
-            times = 3,
+            times = args.times,
             arches = ("i386", "x86_64"),
         )
     )
