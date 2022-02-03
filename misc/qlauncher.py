@@ -94,7 +94,7 @@ class MeasureLaunch(object):
         self.variants = []
         if base is None:
             changes.setdefault("cleanup", True)
-            changes.setdefault("resfiles", tuple())
+            changes.setdefault("resfiles", set())
             changes.setdefault("resprefix", "")
             changes.setdefault("filesizes", tuple())
             changes.setdefault("extra_configure_args", dict())
@@ -782,14 +782,6 @@ def main():
 
     base_launch = MeasureLaunch("Qemu",
         qrepo = qrepo,
-        resfiles = (
-            "count.csv",
-            "save.csv",
-            "play.csv",
-            "shadows.save.txt",
-            "shadows.play.txt",
-            "statistics.txt",
-        ),
         filesizes = (
             "memory.stream",
             "interrupt.stream",
@@ -900,6 +892,9 @@ def main():
                 qemu_extra_args = dict(
                     rr3 = "count",
                 ),
+                resfiles = set([
+                    "count.csv",
+                ]),
             )
         )
         yield base.variant(".save",
@@ -908,6 +903,11 @@ def main():
                 qemu_extra_args = dict(
                     rr3 = "save",
                 ),
+                resfiles = set([
+                    "save.csv",
+                    "shadows.save.txt",
+                    "statistics.txt",
+                ]),
             )
         )
         yield base.variant(".play",
@@ -915,6 +915,10 @@ def main():
                 qemu_extra_args = dict(
                     rr3 = "play",
                 ),
+                resfiles = set([
+                    "play.csv",
+                    "shadows.play.txt",
+                ]),
             )
         )
 
