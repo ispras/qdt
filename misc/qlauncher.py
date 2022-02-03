@@ -607,9 +607,6 @@ class LauncherGUI(GUITk):
 
         w_tree.set_launches(measurements.values())
 
-        self.info = defaultdict(str)
-        self.retinfos = dict()
-
         for e in measurer._events:
             getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
 
