@@ -925,7 +925,7 @@ def main():
     def gen_multiple(base, times, **__):
         for i in range(times):
             yield base.variant("." + str(i),
-                resprefix = str(i) + "." + base.resprefix,
+                resprefix = join(str(i), base.resprefix),
             )
 
     def gen_tree(base, gen0, *rest_gen, **conf):
