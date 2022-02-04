@@ -18,10 +18,11 @@ from csv import (
 )
 from matplotlib.pyplot import (
     plot,
-    rcParams,
     figure,
     xticks,
     yticks,
+    xlabel,
+    ylabel,
     grid,
     gca,
     show,
@@ -145,7 +146,10 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
                 yield (1, 0)
         dash_var_iter = dash_var_iter()
 
-    figure(figsize = (16, 10), dpi = 80)
+    figure(
+        figsize = (16, 10),
+        dpi = 80,
+    )
 
     for stat, color, dashes in zip(stats, colors, dash_var_iter):
         plot(
@@ -157,28 +161,18 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
         )
 
     # Generic parametrs
-    filterwarnings(action = 'once')
+    filterwarnings(
+        action = "once",
+    )
 
-    large = 22
     med = 16
     small = 12
-    params = {
-        'axes.titlesize': large,
-        'legend.fontsize': med,
-        'figure.figsize': (16, small),
-        'axes.labelsize': med,
-        'axes.titlesize': med,
-        'xtick.labelsize': med,
-        'ytick.labelsize': med,
-        'figure.titlesize': large,
-    }
-    rcParams.update(params)
 
     # Decoration
     xticks(
         rotation = 0,
         fontsize = small,
-        horizontalalignment = 'center',
+        horizontalalignment = "center",
         alpha = .7,
     )
     yticks(
@@ -186,24 +180,29 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
         alpha = .7,
     )
     grid(
-        axis = 'both',
+        axis = "both",
         alpha = .3,
     )
 
-    # Remove borders
-    ax = gca()
-    ax.set(
-        ylabel = _("Time [seconds]").get(),
-        xlabel = _("Total Instructions").get(),
+    xlabel(_("Total Instructions").get(),
+        fontsize = med,
     )
+    ylabel(_("Time [seconds]").get(),
+        fontsize = med,
+    )
+
+    legend(
+        fontsize = med,
+    )
+
+    ax = gca()
     ax.spines["top"].set_alpha(0.0)
     ax.spines["bottom"].set_alpha(0.3)
     ax.spines["right"].set_alpha(0.0)
     ax.spines["left"].set_alpha(0.3)
+
     ax.yaxis.set_major_formatter(StrMethodFormatter("{x:,}"))
     ax.xaxis.set_major_formatter(StrMethodFormatter("{x:,}"))
-
-    legend()
 
     show()
 
