@@ -877,9 +877,7 @@ def main():
             nodefaults = True,
             vga = "std",
             net = "none",
-            icount = 2,
         )
-        qemu_extra_args["global"] = "apic-common.vapic=off"
 
         yield base.variant(".WinXP",
             cwd = join(workdir, "winxp"),
@@ -895,7 +893,6 @@ def main():
                 workloads, "Win7x86_64/Win7x86_64_agent.qcow"
             )
             qemu_extra_args["m"] = "2G"
-            qemu_extra_args["icount"] = 2
 
             yield base.variant(".Win7",
                 cwd = join(workdir, "win7"),
@@ -931,7 +928,6 @@ def main():
                 ),
                 append = "root=/dev/sda console=ttyS1",
             ))
-            qemu_extra_args.pop("global")
 
             yield base.variant(".linux5",
                 cwd = join(workdir, "linux5"),
