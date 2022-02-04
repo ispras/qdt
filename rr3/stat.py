@@ -1,3 +1,8 @@
+__all__ = [
+    "RR3Stat"
+]
+
+
 from collections import (
     defaultdict,
 )
