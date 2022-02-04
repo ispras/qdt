@@ -73,7 +73,9 @@ for l in langs:
     messages_po = join(directory, "messages.po")
     qdc_po = join(directory, "qdc.po")
 
-    call(["xgettext", "-o", messages_po] + list(locale_files.keys()))
+    call(["xgettext", "--from-code", "utf-8", "-o", messages_po]
+         + list(locale_files.keys())
+    )
 
     if isfile(qdc_po):
         call(["msgmerge", "-U", "-N", qdc_po, messages_po])
