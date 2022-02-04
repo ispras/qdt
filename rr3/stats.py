@@ -3,6 +3,9 @@ __all__ = [
 ]
 
 
+from common import (
+    mlget as _,
+)
 from rr3.stat import (
     RR3Stat,
 )
@@ -133,7 +136,10 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF):
 
     # Remove borders
     ax = gca()
-    ax.set(ylabel = "Time [seconds]", xlabel = "Total Instructions")
+    ax.set(
+        ylabel = _("Time [seconds]").get(),
+        xlabel = _("Total Instructions").get(),
+    )
     ax.spines["top"].set_alpha(0.0)
     ax.spines["bottom"].set_alpha(0.3)
     ax.spines["right"].set_alpha(0.0)
