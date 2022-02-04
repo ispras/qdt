@@ -776,7 +776,13 @@ class LauncherGUI(GUITk):
             files.append(res_graph_file)
 
         if files:
-            Process(target = show_stats, args = (files,)).start()
+            Process(
+                target = show_stats,
+                args = (files,),
+                kwargs = dict(
+                    color = (0., 0., 0.),
+                ),
+            ).start()
 
 
 def main():
