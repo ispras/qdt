@@ -56,12 +56,17 @@ def main():
     )
 
     args = ap.parse_args()
+    show_stats(args.rtstat,
+        color_seed = args.color_seed
+    )
 
-    prefix_len = len(commonprefix(args.rtstat))
+
+def show_stats(rtstat, color_seed = 0xDEADBEEF):
+    prefix_len = len(commonprefix(rtstat))
 
     stats = []
 
-    for file_name in args.rtstat:
+    for file_name in rtstat:
         with open(file_name, "r") as f:
             r = DictReader(f,
                 delimiter = ';',
@@ -71,7 +76,7 @@ def main():
             name = splitext(file_name[prefix_len:])[0]
             stats.append(RR3Stat(list(r), name = name))
 
-    colorgen = PlotRandomColor(seed = args.color_seed)
+    colorgen = PlotRandomColor(seed = color_seed)
 
     figure(figsize = (16, 10), dpi = 80)
 
