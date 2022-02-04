@@ -70,7 +70,46 @@ def main():
     )
 
 
-def show_stats(rtstat, color_seed = 0xDEADBEEF):
+def iter_dash_variants():
+    yield (1, 0)
+    yield (1, 1)
+
+    parts = [(1, 1)]
+    parts_gen = iter_dash_parts()
+    parts.append(next(parts_gen))
+    parts.append(next(parts_gen))
+
+    parts_2_take = 1
+    while True:
+        for s in iter_N_of_K(parts_2_take, len(parts) - 1):
+            dash = parts[-1]
+            for i in s:
+                dash += parts[i]
+            yield dash
+
+        parts_2_take += 1
+        parts.append(next(parts_gen))
+
+
+def iter_N_of_K(N, K):
+    if N == 1:
+        for i in range(K):
+            yield (i,)
+    else:
+        for i in range(0, K - N):
+            for tail in iter_N_of_K(N - 1, K - 1 - i):
+                tail = tuple((t + i + 1) for t in tail)
+                yield (i,) + tail
+
+
+def iter_dash_parts():
+    i = 2
+    while True:
+        yield (i, 1)
+        i <<= 1
+
+
+def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
     if len(rtstat) > 1:
         prefix_len = len(commonprefix(rtstat))
     else:
@@ -88,16 +127,33 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF):
             name = splitext(file_name[prefix_len:])[0]
             stats.append(RR3Stat(list(r), name = name))
 
-    colorgen = PlotRandomColor(seed = color_seed)
+
+    if color is None:
+        colorgen = PlotRandomColor(seed = color_seed)
+        colors = colorgen.generate(count = len(stats))
+    else:
+        def iter_color():
+            while True:
+                yield color
+        colors = iter_color()
+
+    if dashes:
+        dash_var_iter = iter_dash_variants()
+    else:
+        def dash_var_iter():
+            while True:
+                yield (1, 0)
+        dash_var_iter = dash_var_iter()
 
     figure(figsize = (16, 10), dpi = 80)
 
-    for stat, color in zip(stats, colorgen.generate(count = len(stats))):
+    for stat, color, dashes in zip(stats, colors, dash_var_iter):
         plot(
             stat.row("total_instructions"),
             stat.row("time"),
             color = color,
             label = stat.name,
+            dashes = dashes,
         )
 
     # Generic parametrs
