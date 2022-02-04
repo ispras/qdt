@@ -37,7 +37,7 @@ from threading import (
 from six.moves.tkinter import (
     END,
     BOTH,
-    BROWSE,
+    EXTENDED,
     NONE,
 )
 from argparse import (
@@ -54,6 +54,7 @@ from os.path import (
     abspath,
     dirname,
     exists,
+    isfile,
     join,
 )
 from shutil import (
@@ -66,6 +67,12 @@ from collections import (
 )
 from copy import (
     deepcopy,
+)
+from rr3 import (
+    show_stats,
+)
+from multiprocessing import (
+    Process,
 )
 
 
@@ -469,7 +476,7 @@ class LaunchTree(GUIFrame, TkPopupHelper):
         self.columnconfigure(0, weight = 1)
 
         self.tv = tv = VarTreeview(self,
-            selectmode = BROWSE,
+            selectmode = EXTENDED,
             columns = ["status"],
         )
 
@@ -492,8 +499,15 @@ class LaunchTree(GUIFrame, TkPopupHelper):
             m(_("Re-launch"),
                 command = self._on_re_launch,
             )
+            m(_("Show graph"),
+                command = self._on_show_graph,
+            )
 
         self.tv.bind("<Button-3>", self._on_tv_b3, "+")
+
+    def _on_show_graph(self):
+        if self.selected is not None:
+            self.event_generate("<<ShowGraph>>")
 
     def _on_re_launch(self):
         if self.selected is not None:
@@ -503,14 +517,18 @@ class LaunchTree(GUIFrame, TkPopupHelper):
         row = self.tv.identify_row(e.y)
 
         if row != "":
-            self.tv.selection_set(row)
+            self.tv.selection_add(row)
 
-        try:
-            launch = self.iid2launch[row]
-        except KeyError:
+        tag = []
+        for iid in self.tv.selection():
+            if iid in self.iid2launch:
+                tag.append(iid)
+
+        if not tag:
             return
 
-        self.show_popup(e.x_root, e.y_root, self.tv_popup, launch)
+        tag = tuple(sorted(tag))
+        self.show_popup(e.x_root, e.y_root, self.tv_popup, tag)
 
     def set_status(self, launch, status):
         self.tv.item(self.iid2launch.mirror[launch],
@@ -546,7 +564,7 @@ class LaunchTree(GUIFrame, TkPopupHelper):
     def _on_tv_select(self, *__):
         sels = self.tv.selection()
         if sels:
-            self.selected = self.iid2launch[sels[0]]
+            self.selected = tuple(self.iid2launch[s] for s in sels)
         else:
             self.selected = None
 
@@ -612,6 +630,7 @@ class LauncherGUI(GUITk):
 
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
         w_tree.bind("<<ReLaunch>>", self._on_re_launch, "+")
+        w_tree.bind("<<ShowGraph>>", self._on_show_graph, "+")
 
         result = deepcopy(result)
 
@@ -705,13 +724,20 @@ class LauncherGUI(GUITk):
         self._set_short_status(launch, None)
 
     def _update_info(self, launch):
-        if launch is self.w_tree.selected:
+        selected = self.w_tree.selected
+        if selected is None:
+            return
+        if launch in selected:
             info = str(launch) + "\n\n" + self.info[launch.name]
 
             self.w_info.set_info(info)
 
     def _on_launch_select(self, e):
-        launch = e.widget.selected
+        selected = e.widget.selected
+        if selected is None or len(selected) > 1:
+            launch = None
+        else:
+            launch = selected[0]
         if launch is None:
             info = ""
         else:
@@ -720,16 +746,37 @@ class LauncherGUI(GUITk):
         self.w_info.set_info(info)
 
     def _on_re_launch(self, e):
-        launch = e.widget.selected
-        if not self.retinfos.get(launch.name, {}):
+        selected = self.w_tree.selected
+        if selected is None:
             return
-        del self.info[launch.name]
-        del self.retinfos[launch.name]
-        self.w_info.set_info("")
-        self._set_short_status(launch, "re-launching")
-        self._set_short_status(launch, None)
+        for launch in selected:
+            if not self.retinfos.get(launch.name, {}):
+                continue
+            del self.info[launch.name]
+            del self.retinfos[launch.name]
+            self.w_info.set_info("")
+            self._set_short_status(launch, "re-launching")
+            self._set_short_status(launch, None)
+            self._measurer.re_launch(launch.name)
         self.result.save()
-        self._measurer.re_launch(launch.name)
+
+    def _on_show_graph(self, e):
+        selected = self.w_tree.selected
+        if selected is None:
+            return
+        files = []
+        for launch in selected:
+            try:
+                graph_file = launch.graph_file
+            except AttributeError:
+                continue
+            res_graph_file = join(launch.resdir, launch.resprefix + graph_file)
+            if not isfile(res_graph_file):
+                continue
+            files.append(res_graph_file)
+
+        if files:
+            Process(target = show_stats, args = (files,)).start()
 
 
 def main():
@@ -890,6 +937,7 @@ def main():
 
     def gen_rr3_variants(base, **__):
         yield base.variant(".count",
+            graph_file = "count.csv",
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "count",
@@ -901,6 +949,7 @@ def main():
         )
         yield base.variant(".save",
             cleanup = False,
+            graph_file = "save.csv",
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "save",
@@ -913,6 +962,7 @@ def main():
             )
         )
         yield base.variant(".play",
+            graph_file = "play.csv",
             updates = dict(
                 qemu_extra_args = dict(
                     rr3 = "play",
