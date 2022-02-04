@@ -33,6 +33,7 @@ from randomcolor import (
 from os.path import (
     splitext,
     commonprefix,
+    dirname,
 )
 from warnings import (
     filterwarnings,
@@ -67,7 +68,10 @@ def main():
 
 
 def show_stats(rtstat, color_seed = 0xDEADBEEF):
-    prefix_len = len(commonprefix(rtstat))
+    if len(rtstat) > 1:
+        prefix_len = len(commonprefix(rtstat))
+    else:
+        prefix_len = len(dirname(rtstat[0])) + 1
 
     stats = []
 
