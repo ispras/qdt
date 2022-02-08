@@ -777,14 +777,20 @@ class LauncherGUI(GUITk):
         selected = self.w_tree.selected
         if selected is None:
             return
+        measurer = self._measurer
+        measurements = measurer.measurements
         for launch in selected:
-            if self.retinfos.get(launch.name, {}):
-                del self.info[launch.name]
-                del self.retinfos[launch.name]
+            name = launch.name
+            if name not in measurements:
+                # TODO: re-launch subtree
+                continue
+            if self.retinfos.get(name, {}):
+                del self.info[name]
+                del self.retinfos[name]
                 self.w_info.set_info("")
             self._set_short_status(launch, "re-launching")
             self._set_short_status(launch, None)
-            self._measurer.re_launch(launch.name)
+            measurer.re_launch(name)
         self.result.save()
 
     def _on_show_graph(self, e):
@@ -815,13 +821,18 @@ class LauncherGUI(GUITk):
         selected = self.w_tree.selected
         if selected is None:
             return
+        measurer = self._measurer
+        measurements = measurer.measurements
         for launch in selected:
             name = launch.name
+            if name not in measurements:
+                # TODO: skip subtree
+                continue
             if name in self.retinfos:
                 continue
             self._set_short_status(launch, "skipped")
             self._set_short_status(launch, None)
-            self._measurer.skip(name)
+            measurer.skip(name)
 
 def main():
     RESFILE = "qlauncher.res.py"
