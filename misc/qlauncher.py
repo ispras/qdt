@@ -9,6 +9,7 @@ from common import (
     pygenerate,
     pythonize,
     execfile,
+    as_variable,
 )
 from qemu import (
     QLaunch,
@@ -24,6 +25,8 @@ from widgets import (
     AutoPanedWindow,
     MenuBuilder,
     TkPopupHelper,
+    feed_var_to_attr,
+    Statusbar,
 )
 from time import (
     time,
@@ -39,6 +42,7 @@ from six.moves.tkinter import (
     BOTH,
     EXTENDED,
     NONE,
+    BooleanVar,
 )
 from argparse import (
     ArgumentParser,
@@ -279,6 +283,7 @@ class Measurer(object):
             measurements_[m.name] = m
 
         self.skipped = set()
+        self.paused = True
 
     def skip(self, name):
         self.skipped.add(name)
@@ -293,6 +298,9 @@ class Measurer(object):
 
         while True:
             for name, m in self.measurements.items():
+                while self.paused:
+                    yield False
+
                 if name in skipped:
                     continue
                 skip(name)
@@ -631,6 +639,18 @@ class LauncherGUI(GUITk):
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
         w_tree.bind("<<ReLaunch>>", self._on_re_launch, "+")
         w_tree.bind("<<ShowGraph>>", self._on_show_graph, "+")
+
+        self.sb = sb = Statusbar(self)
+        sb.pack(fill = BOTH, expand = False)
+
+        with MenuBuilder(self) as menu:
+            with menu(_("Main")) as main_menu:
+                paused = BooleanVar(self, value = measurer.paused)
+                feed_var_to_attr(paused, measurer, "paused")
+                sb.left(as_variable(paused)(lambda x : "Paused" if x else ""))
+                main_menu(_("Pause"),
+                    variable = paused,
+                )
 
         result = deepcopy(result)
 
