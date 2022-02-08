@@ -869,6 +869,10 @@ def main():
         help = "how many times do each launch",
         type = int,
     )
+    arg("-G", "--no-graphic",
+        help = "launch Qemu with -nographic option",
+        action = "store_true",
+    )
 
     args = ap.parse_args()
 
@@ -877,6 +881,7 @@ def main():
     workdir = abspath(args.workdir)
     resdir = abspath(args.resdir)
     workloads = abspath(args.workloads)
+    no_graphic = args.no_graphic
 
     makedirs(resdir, exist_ok = True)
 
@@ -899,7 +904,11 @@ def main():
             sdl = False,
             rr3 = True,
         ),
+        qemu_extra_args = dict(),
     )
+
+    if no_graphic:
+        base_launch.qemu_extra_args["nographic"] = True
 
     def gen_arches(base, arches, **__):
         for arch in arches:
