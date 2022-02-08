@@ -80,8 +80,12 @@ Function selection is contextual, see code below.
     def _flush_kw(self):
         prev_kw = self.__dict__.pop("prev_kw", None)
         if prev_kw is not None:
+            parent = self.stack[-1]
             if prev_kw["label"] is None:
-                self.stack[-1].add_separator()
+                parent.add_separator()
             else:
-                self.stack[-1].add_command(**prev_kw)
+                if "variable" in prev_kw:
+                    parent.add_checkbutton(**prev_kw)
+                else:
+                    parent.add_command(**prev_kw)
 
