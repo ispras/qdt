@@ -504,6 +504,9 @@ class LaunchTree(GUIFrame, TkPopupHelper):
 
         with MenuBuilder(self, assign = False, tearoff = False) as m:
             self.tv_popup = m.menu
+            m(_("Skip"),
+                command = self._on_skip,
+            )
             m(_("Re-launch"),
                 command = self._on_re_launch,
             )
@@ -512,6 +515,10 @@ class LaunchTree(GUIFrame, TkPopupHelper):
             )
 
         self.tv.bind("<Button-3>", self._on_tv_b3, "+")
+
+    def _on_skip(self):
+        if self.selected is not None:
+            self.event_generate("<<Skip>>")
 
     def _on_show_graph(self):
         if self.selected is not None:
@@ -637,6 +644,7 @@ class LauncherGUI(GUITk):
             getattr(measurer, "watch_" + e)(getattr(self, "_on_" + e))
 
         w_tree.bind("<<LaunchSelect>>", self._on_launch_select, "+")
+        w_tree.bind("<<Skip>>", self._on_skip, "+")
         w_tree.bind("<<ReLaunch>>", self._on_re_launch, "+")
         w_tree.bind("<<ShowGraph>>", self._on_show_graph, "+")
 
@@ -770,11 +778,10 @@ class LauncherGUI(GUITk):
         if selected is None:
             return
         for launch in selected:
-            if not self.retinfos.get(launch.name, {}):
-                continue
-            del self.info[launch.name]
-            del self.retinfos[launch.name]
-            self.w_info.set_info("")
+            if self.retinfos.get(launch.name, {}):
+                del self.info[launch.name]
+                del self.retinfos[launch.name]
+                self.w_info.set_info("")
             self._set_short_status(launch, "re-launching")
             self._set_short_status(launch, None)
             self._measurer.re_launch(launch.name)
@@ -804,6 +811,17 @@ class LauncherGUI(GUITk):
                 ),
             ).start()
 
+    def _on_skip(self, __):
+        selected = self.w_tree.selected
+        if selected is None:
+            return
+        for launch in selected:
+            name = launch.name
+            if name in self.retinfos:
+                continue
+            self._set_short_status(launch, "skipped")
+            self._set_short_status(launch, None)
+            self._measurer.skip(name)
 
 def main():
     RESFILE = "qlauncher.res.py"
