@@ -915,6 +915,26 @@ def main():
                 ),
             )
 
+    def gen_no_mtio(base, **__):
+        build_sfx = base.build[len(builds) + 1:]
+        prefix_sfx = base.prefix[len(builds) + 1:]
+
+        yield base.variant(".mtio",
+            build = join(builds, "mtio", build_sfx),
+            prefix = join(builds, "mtio", prefix_sfx),
+            resdir = join(base.resdir, "mtio"),
+        )
+        yield base.variant(".stdio",
+            build = join(builds, "stdio", build_sfx),
+            prefix = join(builds, "stdio", prefix_sfx),
+            resdir = join(base.resdir, "stdio"),
+            updates = dict(
+                extra_configure_args = {
+                    "extra-cflags" : "-DRR3_USE_MTIO=0",
+                }
+            )
+        )
+
     def gen_workloads(base, **__):
         # Windows XP
         qemu_extra_args = dict(
@@ -1056,6 +1076,7 @@ def main():
     measurer = Measurer(
         *gen_tree(base_launch,
             gen_arches,
+            gen_no_mtio,
             gen_workloads,
             gen_multiple,
             gen_rr3_variants,
