@@ -1016,6 +1016,7 @@ def main():
             )
 
     def gen_rr3_variants(base, **__):
+        yield base.variant(".no-rr3")
         yield base.variant(".count",
             graph_file = "count.csv",
             updates = dict(
