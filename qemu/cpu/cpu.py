@@ -39,6 +39,7 @@ from common import (
     mlget as _,
     ee,
     pypath,
+    shadow_open,
 )
 from itertools import (
     count,
@@ -371,7 +372,7 @@ class CPUType(QOMCPU):
             else:
                 graphs_prefix = None
 
-            with open(path, mode = "wb", encoding = "utf-8") as f_writer:
+            with shadow_open(path) as f_writer:
                 sf.generate(f_writer,
                     graphs_prefix = graphs_prefix,
                     gen_debug_comments = with_debug_comments,
@@ -384,7 +385,7 @@ class CPUType(QOMCPU):
 
         yield True
 
-        with open(join(src, translate_inc_c_file.path), "w") as f:
+        with shadow_open(join(src, translate_inc_c_file.path)) as f:
             if translate_cpu_semantics:
                 ast = parse_file(i3s_path)
                 convert_i3s_to_c(ast, DEBUG_I3S_TRANSLATOR)
@@ -516,6 +517,11 @@ class CPUType(QOMCPU):
         exec_c = Source("exec.c", locked_inclusions = True)
         exec_c.add_reference(Type["TARGET_PAGE_SIZE"])
         exec_c.add_inclusion(h)
+
+        # XXX: the "cpu.h" header is already included in the "exec/gdbstub.h"
+        # header but on a short path and in `ifdef` block.
+        # The tool cannot find such an inclusion yet.
+        Header["exec/gdbstub.h"].add_inclusion(h)
 
         if not get_vp("cpu-param header exists"):
             for name, value in self.attributes.items():
@@ -1030,7 +1036,7 @@ class CPUType(QOMCPU):
         c.add_type(restore_state_to_opc)
 
     def _gen_target_makefile(self, src):
-        with open(src, "w") as mkf:
+        with shadow_open(src) as mkf:
             mkf.write("obj-y +=")
 
             for f in self.gen_files.values():
@@ -1040,7 +1046,7 @@ class CPUType(QOMCPU):
             mkf.write("\n")
 
     def _gen_helper_h(self, src):
-        with open(src, "w") as h:
+        with shadow_open(src) as h:
             h.write("DEF_HELPER_1(debug, void, env)\n")
             h.write("DEF_HELPER_1(illegal, void, env)\n")
 
@@ -1057,13 +1063,9 @@ class CPUType(QOMCPU):
         # TODO: this code is generic enough to be part of `source` module.
         spec_and_len2type = {}
         for specifiers, info in spec_and_len2typename.items():
-            len2type = {}
-
-            for length, typename in info.items():
-                if typename.endswith('*'):
-                    len2type[length] = Pointer(Type[typename[:-1]])
-                else:
-                    len2type[length] = Type[typename]
+            len2type = {
+                length: Type[typename] for length, typename in info.items()
+            }
 
             for specifier in specifiers:
                 spec_and_len2type[specifier] = len2type
@@ -1167,7 +1169,7 @@ class CPUType(QOMCPU):
 def create_default_config(src, target_name):
     default_config = join(src, "default-configs", target_name + "-softmmu.mak")
 
-    with open(default_config, "w") as f:
+    with shadow_open(default_config) as f:
         f.write("# Default configuration for %s-softmmu\n" % target_name)
 
 
@@ -1186,6 +1188,8 @@ def patch_configure(src, arch_bigendian, target_name):
 
     fixed_target_bigendian = False
 
+    configure_changed = False
+
     for i, line in enumerate(lines):
         if line == 'TARGET_ABI_DIR=""\n':
             found_target_abi_dir = True
@@ -1198,9 +1202,11 @@ def patch_configure(src, arch_bigendian, target_name):
             if arch_bigendian:
                 if target_name not in bigendian_list:
                     bigendian_list.append(target_name)
+                    configure_changed = True
             else:
                 if target_name in bigendian_list:
                     bigendian_list.remove(target_name)
+                    configure_changed = True
             lines[ind] = "  " + "|".join(bigendian_list) + ")\n"
             fixed_target_bigendian = True
 
@@ -1217,6 +1223,7 @@ def patch_configure(src, arch_bigendian, target_name):
 """.format(tn = target_name)
                 )
                 inserted_target = True
+                configure_changed = True
 
         if found_disas_config and not inserted_disas_config:
             if line == target_in_config:
@@ -1230,6 +1237,7 @@ def patch_configure(src, arch_bigendian, target_name):
 """ % (target_name, target_name.upper())
                 )
                 inserted_disas_config = True
+                configure_changed = True
 
         if (    fixed_target_bigendian
             and inserted_target
@@ -1237,8 +1245,9 @@ def patch_configure(src, arch_bigendian, target_name):
         ):
             break
 
-    with open(configure_path, "w") as f:
-        f.write("".join(lines))
+    if configure_changed:
+        with open(configure_path, "w") as f:
+            f.write("".join(lines))
 
 
 re_arch_enum_definition = compile("^    (\w+) = \(1 << (\d+)\),\n$")

@@ -275,6 +275,13 @@ class Instruction(object):
         for name, parts in operands_dict.items():
             yield name, sorted(parts, key = lambda x: (x.num, x.subnum))
 
+    def __call__(self, semantics):
+        "Can be applied as a `@decorator` for semantics generation function"
+        self.semantics = semantics
+        if semantics.__doc__ is not None:
+            self.comment = semantics.__doc__
+        return semantics
+
 
 class InstructionTreeNode(object):
 
@@ -540,7 +547,9 @@ def build_instruction_tree(node, instructions, read_bitsize,
     max_bitsize = max(i.bitsize for i in instructions)
 
     if BUILD_INSTRUCTION_TREE_DEBUG:
-        print("DEBUG: Instructions (depth %d):" % depth)
+        print("DEBUG: Instructions (depth %d, count %d):" % (
+            depth, len(instructions)
+        ))
         print_instructions(instructions, max_bitsize = max_bitsize)
 
     if len(instructions) == 1:

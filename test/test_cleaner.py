@@ -24,77 +24,81 @@ from os import (
 )
 
 
+def regular_worker(tmpdir, stop_event):
+    cleaner = get_cleaner()
+
+    cleaner.rmtree(tmpdir)
+
+    while not stop_event.wait(1.):
+        pass
+
+
+def exception_worker(tmpdir, stop_event):
+    cleaner = get_cleaner()
+
+    cleaner.rmtree(tmpdir)
+
+    while not stop_event.wait(1.):
+        pass
+
+    # Hide consequent exception traceback from user because there is
+    # no error actually.
+    from os import (
+        devnull
+    )
+    import sys
+    sys.stderr = open(devnull, "wb")
+
+    raise Exception
+
+
+def os_exit_worker(tmpdir, stop_event):
+    cleaner = get_cleaner()
+
+    cleaner.rmtree(tmpdir)
+
+    while not stop_event.wait(1.):
+        pass
+
+    _exit(0)
+
+
+def cancel_worker(tmpdir, stop_event):
+    cleaner = get_cleaner()
+
+    task_id = cleaner.rmtree(tmpdir)
+
+    while not stop_event.wait(1.):
+        pass
+
+    from shutil import (
+        rmtree
+    )
+    rmtree(tmpdir)
+    cleaner.cancel(task_id)
+
+
 class CleanerTest(TestCase):
 
     def test_regular(self):
         "Normal program termination"
 
-        def worker(tmpdir, stop_event):
-            cleaner = get_cleaner()
-
-            cleaner.rmtree(tmpdir)
-
-            while not stop_event.wait(1.):
-                pass
-
-        self._do_test(worker)
+        self._do_test(regular_worker)
 
     def test_exception(self):
         "Program failure"
 
-        def worker(tmpdir, stop_event):
-            cleaner = get_cleaner()
-
-            cleaner.rmtree(tmpdir)
-
-            while not stop_event.wait(1.):
-                pass
-
-            # Hide consequent exception traceback from user because there is
-            # no error actually.
-            from os import (
-                devnull
-            )
-            import sys
-            sys.stderr = open(devnull, "wb")
-
-            raise Exception
-
-        self._do_test(worker)
+        self._do_test(exception_worker)
 
     def test_os_exit(self):
         "Explicit program termination"
 
-        def worker(tmpdir, stop_event):
-            cleaner = get_cleaner()
-
-            cleaner.rmtree(tmpdir)
-
-            while not stop_event.wait(1.):
-                pass
-
-            _exit(0)
-
-        self._do_test(worker)
+        self._do_test(os_exit_worker)
 
     def test_cancel(self):
         "Canceling the clean action"
 
-        def worker(tmpdir, stop_event):
-            cleaner = get_cleaner()
-
-            task_id = cleaner.rmtree(tmpdir)
-
-            while not stop_event.wait(1.):
-                pass
-
-            from shutil import (
-                rmtree
-            )
-            rmtree(tmpdir)
-            cleaner.cancel(task_id)
-
-        self._do_test(worker)
+        self._do_test(cancel_worker)
 
     def _do_test(self, worker):
         tmpdir = mkdtemp()

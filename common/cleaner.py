@@ -29,6 +29,9 @@ from six.moves.queue import (
 from os import (
     name as os_name
 )
+from six import (
+    PY2,
+)
 
 
 if os_name == "nt":
@@ -156,6 +159,20 @@ def get_cleaner(*default_args, **default_kw):
     if _current_cleaner is None:
         _current_cleaner = Cleaner(*default_args, **default_kw)
         _current_cleaner.start()
+
+        # XXX: rough hack for Windows that excludes the cleaner from the
+        # children of the current process.
+        if os_name == "nt":
+            if PY2:
+                from multiprocessing import (
+                    current_process
+                )
+                current_process()._children.discard(_current_cleaner)
+            else:
+                from multiprocessing.process import (
+                    _children
+                )
+                _children.discard(_current_cleaner)
 
     return _current_cleaner
 

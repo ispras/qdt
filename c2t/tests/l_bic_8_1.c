@@ -8,11 +8,11 @@ int main(void)
 
 #if __MSP430__ == 1
     asm volatile (
-        "mov %[srcb], %[dst] \n\
-         bic %[srca], %[dst]"
-        : [dst] "=rm" (c)
-        : [srca] "rm" (a),
-          [srcb] "rm" (b)
+        "mov.b %[src_b], %[dst_c] \n\
+         bic.b %[src_a], %[dst_c]"
+        : [dst_c] "=rm" (c)
+        : [src_a] "rm" (a),
+          [src_b] "rm" (b)
     );
 #else
     c = ~a & b;

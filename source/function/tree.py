@@ -61,6 +61,7 @@ __all__ = [
                       , "OpGreater"
                       , "OpLess"
                       , "CaseRange"
+  , "flat_list"
 ]
 
 from ..c_const import (
@@ -86,6 +87,12 @@ from common import (
 from six import (
     integer_types
 )
+from types import (
+    GeneratorType
+)
+from functools import (
+    update_wrapper,
+)
 
 
 # OpSDeref is automatically re-directed to definition of structure if
@@ -103,6 +110,28 @@ class DeclarationSearcher(NodeVisitor):
         if isinstance(self.cur, Declare):
             self.have_declaration = True
             raise BreakVisiting()
+
+
+def flat_iter(gen):
+    stack = [gen]
+    while stack:
+        cur = stack[-1]
+        for i in cur:
+            if isinstance(i, GeneratorType):
+                stack.append(i)
+                # start yielding items from `i`
+                break
+            else:
+                yield i
+        else:
+            # cur is empty
+            stack.pop()
+
+
+def flat_list(gen):
+    ret = lambda *a, **kw: list(flat_iter(gen(*a, **kw)))
+    update_wrapper(ret, gen)
+    return ret
 
 
 class Node(TypeContainer):
@@ -132,7 +161,10 @@ class Node(TypeContainer):
         return self
 
     def add_child(self, child):
-        self.children.append(child)
+        if isinstance(child, GeneratorType):
+            self.children.extend(flat_iter(child))
+        else:
+            self.children.append(child)
 
     def out_children(self, writer):
         if self.indent_children:
@@ -188,6 +220,36 @@ class CNode(Node):
     @staticmethod
     def out_child(child, writer):
         child.__c__(writer)
+
+    def __add__(self, arg):
+        return OpAdd(self, arg)
+
+    def __radd__(self, arg):
+        return OpAdd(arg, self)
+
+    def __and__(self, arg):
+        return OpAnd(self, arg)
+
+    def __sub__(self, arg):
+        return OpSub(self, arg)
+
+    def __rsub__(self, arg):
+        return OpSub(arg, self)
+
+    def __or__(self, arg):
+        return OpOr(self, arg)
+
+    def __xor__(self, arg):
+        return OpXor(self, arg)
+
+    def __lshift__(self, arg):
+        return OpLShift(self, arg)
+
+    def __rshift__(self, arg):
+        return OpRShift(self, arg)
+
+    def __invert__(self):
+        return OpNot(self)
 
 
 class Comment(Node):
@@ -678,6 +740,10 @@ class OpIndex(Operator):
         super(OpIndex, self).__init__(var, index)
         self.delim = "["
         self.suffix = "]"
+
+    def add_child(self, child):
+        # Note, ignore `Operator.add_child` to suppress unnecessary parentheses
+        super(Operator, self).add_child(child)
 
 
 class OpSDeref(Operator):

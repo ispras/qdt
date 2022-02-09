@@ -24,11 +24,8 @@ from source import (
     NewLine,
     Call,
     Pointer,
-    Macro,
-    Source,
     Type,
     TypeNotRegistered,
-    Function
 )
 from .machine_nodes import (
     CPUNode,
@@ -49,20 +46,13 @@ from .machine_nodes import (
 from common import (
     cached,
     reset_cache,
-    mlget as _,
     sort_topologically
-)
-from os.path import (
-    join as join_path
 )
 from .version import (
     get_vp
 )
 from six import (
     integer_types
-)
-from collections import (
-    OrderedDict
 )
 
 class UnknownMachineNodeType(ValueError):
@@ -152,6 +142,10 @@ class IRQHubLayout(object):
         root_name = self.gen.node_map[self.hub]
         return self._gen_irq_get(root_name, self.root, root_name)
 
+
+def is_type_in_str(val):
+    return isinstance(val, str) and Type.exists(val)
+
 class MachineType(QOMType):
 
     def __init__(self, name, directory,
@@ -222,7 +216,7 @@ class MachineType(QOMType):
                 self.provide_name_for_node(n, n.var_base)
 
     def gen_prop_val(self, prop):
-        if isinstance(prop.prop_val, str) and Type.exists(prop.prop_val):
+        if is_type_in_str(prop.prop_val):
             self.use_type_name(prop.prop_val)
             return prop.prop_val
         if prop.prop_type == QOMPropertyTypeString:
@@ -395,7 +389,7 @@ class MachineType(QOMType):
                     self.use_type_name(p.prop_type.set_f)
                     if Type.exists(p.prop_name):
                         self.use_type_name(p.prop_name)
-                    if isinstance(p.prop_val, str) and Type.exists(p.prop_val):
+                    if is_type_in_str(p.prop_val):
                         self.use_type_name(p.prop_val)
 
                     props_code += prop_set_fmt.format(
@@ -496,7 +490,7 @@ class MachineType(QOMType):
                             self.use_type_name("sysbus_mmio_map")
                             self.use_type_name("SYS_BUS_DEVICE")
 
-                            if isinstance(mmio, str) and Type.exists(mmio):
+                            if is_type_in_str(mmio):
                                 self.use_type_name(mmio)
                                 mmio_val = str(mmio)
                             else:
@@ -589,9 +583,9 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                 )
             elif isinstance(node, MemoryNode):
                 self.use_type_name("MemoryRegion")
-                if isinstance(node.size, str) and Type.exists(node.size):
+                if is_type_in_str(node.size):
                     self.use_type_name(node.size)
-                if Type.exists(node.name):
+                if is_type_in_str(node.name):
                     self.use_type_name(node.name)
 
                 mem_name = self.node_map[node]
@@ -614,7 +608,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     memory_region_init_alias(@a{mem_name},@sNULL,@s{dbg_name},@s{orig},@s{offset},@s{size});
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
+    dbg_name = node.name if is_type_in_str(node.name) else '"%s"' % node.name,
     size = node.size,
     orig = self.node_map[node.alias_to],
     offset = node.alias_offset
@@ -630,7 +624,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     memory_region_init_ram(@a{mem_name},@sNULL,@s{dbg_name},@s{size},@sNULL);{glob}
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
+    dbg_name = node.name if is_type_in_str(node.name) else '"%s"' % node.name,
     size = node.size,
     glob = (("\n    vmstate_register_ram_global(%s);" % mem_name) if glob_mem
         else ""
@@ -643,20 +637,16 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     memory_region_init(@a{mem_name},@sNULL,@s{dbg_name},@s{size});
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name if Type.exists(node.name) else "\"%s\"" % node.name,
+    dbg_name = node.name if is_type_in_str(node.name) else '"%s"' % node.name,
     size = node.size
                     )
 
                 if node.parent is not None:
-                    if (isinstance(node.offset, str)
-                    and Type.exists(node.offset)
-                    ):
+                    if is_type_in_str(node.offset):
                         self.use_type_name(node.offset)
                     if node.may_overlap:
                         self.use_type_name("memory_region_add_subregion_overlap")
-                        if (isinstance(node.priority, str)
-                        and Type.exists(node.priority)
-                        ):
+                        if is_type_in_str(node.priority):
                             self.use_type_name(node.priority)
 
                         def_code += """\
@@ -669,9 +659,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                         )
                     else:
                         self.use_type_name("memory_region_add_subregion")
-                        if (isinstance(node.priority, str)
-                        and Type.exists(node.priority)
-                        ):
+                        if is_type_in_str(node.priority):
                             self.use_type_name(node.priority)
 
                         def_code += """\

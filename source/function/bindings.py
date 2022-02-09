@@ -11,9 +11,6 @@ from ..model import (
     NodeVisitor,
     Variable
 )
-from six import (
-    StringIO
-)
 from common import (
     CodeWriter
 )
@@ -48,7 +45,7 @@ class BodyTree(CNode):
 
     def __str__(self):
         VarUsageAnalyzer(self).visit()
-        cw = CodeWriter(backend = StringIO())
+        cw = CodeWriter()
         cw.add_lang("c", "    ")
         cw.add_lang("cpp", "  ", "#")
         cw.new_line = True
