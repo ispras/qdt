@@ -204,7 +204,7 @@ Energia IDE содержит в себе утилиты компиляции, в
 настроек была отключена автоматическая трансляция или семантика
 была вручную дописана, то транслировать семантику можно так::
 
-	python2 qdt/src/I3S/i3s_to_c.py \
+	python qdt/src/I3S/i3s_to_c.py \
 	    --in-file qemu/src/target/msp430/translate.inc.i3s.c \
 	    --out-file qemu/src/target/msp430/translate.inc.c
 
