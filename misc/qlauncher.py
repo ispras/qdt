@@ -659,6 +659,13 @@ class LauncherGUI(GUITk):
                 main_menu(_("Pause"),
                     variable = paused,
                 )
+            with menu(_("Options")) as opts_menu:
+                with opts_menu(_("Plots")) as plots_menu:
+                    colored = BooleanVar(self)
+                    plots_menu(_("Colored"),
+                        variable = colored,
+                    )
+                    self.v_plots_colored = colored
 
         result = deepcopy(result)
 
@@ -809,12 +816,16 @@ class LauncherGUI(GUITk):
             files.append(res_graph_file)
 
         if files:
+            kwargs = {}
+            if self.v_plots_colored.get():
+                # PlotRandomColor will be used, see rr3.stats.show_stats
+                kwargs["color"] = None
+            else:
+                kwargs["color"] = (0., 0., 0.)
             Process(
                 target = show_stats,
                 args = (files,),
-                kwargs = dict(
-                    color = (0., 0., 0.),
-                ),
+                kwargs = kwargs,
             ).start()
 
     def _on_skip(self, __):
