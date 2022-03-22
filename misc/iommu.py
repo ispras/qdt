@@ -576,7 +576,7 @@ class IOMMUDevice(SysObj):
             try:
                 k, v = l.split(b":", 1)
             except ValueError:
-                print("badly formated line " + l)
+                print("badly formated line " + s(l))
                 continue
             info[k] = v.strip()
 
