@@ -730,7 +730,7 @@ class IOMMUTV(Treeview, TkPopupHelper):
         try:
             root_commit(self, LOCAL_CONF, local_conf.current)
         except SuDoFailed:
-            # something vent wrong on lower level
+            # something went wrong on lower level
             print_exc()
 
         local_conf.reload()
@@ -812,7 +812,7 @@ def disable_vga_handler(*__):
     try:
         root_commit(disable_vga_var._root, LOCAL_CONF, local_conf.current)
     except SuDoFailed:
-        # something vent wrong on lower level
+        # something went wrong on lower level
         print_exc()
 
     disable_vga_var._root.after(1, reload_disable_vga)
