@@ -76,8 +76,12 @@ if PY3:
     def s(r):
         return r.decode("utf-8")
 
+    def b(r):
+        return r.encode("utf-8")
+
 else:
     s = lambda x : x
+    b = lambda x : x
 
 ROOT = sep
 IOMMU_GROUPS = join(ROOT, "sys", "kernel", "iommu_groups")
@@ -301,7 +305,7 @@ class LocalConf(object):
 
         if before is None:
             self.lines = [
-                Line(b"# This file has been created by %s" % __file__),
+                Line(b"# This file has been created by %s" % b(__file__)),
                 Line(b"# Do not modify"),
                 Line(b""),
             ]
@@ -351,7 +355,7 @@ class LocalConf(object):
                 last_alias = idx
 
         if last_alias == 0:
-            self.lines.append(Line(""))
+            self.lines.append(Line(b""))
             self.lines.append(Line(content))
         else:
             self.lines.insert(last_alias, Line(content))
@@ -407,13 +411,13 @@ class LocalConf(object):
         else:
             if last_option == 0:
                 content = Line(b"options %s %s=%s" % (
-                    driver, opt_name, ",".join(values)
+                    driver, opt_name, b",".join(values)
                 ))
                 self.lines.append(Line(b""))
                 self.lines.append(content)
             else:
                 self.lines[last_option - 1].text += b" %s=%s" % (
-                    opt_name, ",".join(values)
+                    opt_name, b",".join(values)
                 )
 
     def remove_option(self, driver, opt_name, *values):
