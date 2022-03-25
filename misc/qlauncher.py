@@ -666,6 +666,11 @@ class LauncherGUI(GUITk):
                         variable = colored,
                     )
                     self.v_plots_colored = colored
+                    swap_XY = BooleanVar(self)
+                    plots_menu(_("Swap XY"),
+                        variable = swap_XY,
+                    )
+                    self.v_plots_swap_XY = swap_XY
 
         result = deepcopy(result)
 
@@ -822,6 +827,7 @@ class LauncherGUI(GUITk):
                 kwargs["color"] = None
             else:
                 kwargs["color"] = (0., 0., 0.)
+            kwargs["swap_XY"] = self.v_plots_swap_XY.get()
             Process(
                 target = show_stats,
                 args = (files,),
