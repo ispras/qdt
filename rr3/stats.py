@@ -110,7 +110,12 @@ def iter_dash_parts():
         i <<= 1
 
 
-def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
+def show_stats(rtstat,
+    color_seed = 0xDEADBEEF,
+    color = None,
+    dashes = True,
+    swap_XY = False,
+):
     if len(rtstat) > 1:
         prefix_len = len(commonprefix(rtstat))
     else:
@@ -152,9 +157,13 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
     )
 
     for stat, color, dashes in zip(stats, colors, dash_var_iter):
+        xaxis = stat.row("total_instructions")
+        yaxis = stat.row("time")
+        if swap_XY:
+            xaxis, yaxis = yaxis, xaxis
         plot(
-            stat.row("total_instructions"),
-            stat.row("time"),
+            xaxis,
+            yaxis,
             color = color,
             label = stat.name,
             dashes = dashes,
@@ -184,10 +193,16 @@ def show_stats(rtstat, color_seed = 0xDEADBEEF, color = None, dashes = True):
         alpha = .3,
     )
 
-    xlabel(_("Total Instructions").get(),
+    xlabel_str = _("Total Instructions").get()
+    ylabel_str = _("Time [seconds]").get()
+
+    if swap_XY:
+        xlabel_str, ylabel_str = ylabel_str, xlabel_str
+
+    xlabel(xlabel_str,
         fontsize = med,
     )
-    ylabel(_("Time [seconds]").get(),
+    ylabel(ylabel_str,
         fontsize = med,
     )
 
