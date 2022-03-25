@@ -10,6 +10,7 @@ from common import (
     pythonize,
     execfile,
     as_variable,
+    Persistent,
 )
 from qemu import (
     QLaunch,
@@ -60,6 +61,7 @@ from os.path import (
     exists,
     isfile,
     join,
+    expanduser,
 )
 from shutil import (
     rmtree,
@@ -618,7 +620,7 @@ class MeasurerResult(object):
 
 class LauncherGUI(GUITk):
 
-    def __init__(self, measurer, result, *a, **kw):
+    def __init__(self, measurer, result, settings, *a, **kw):
         GUITk.__init__(self, *a, **kw)
 
         self.title(_("Qemu Launcher"))
@@ -652,21 +654,29 @@ class LauncherGUI(GUITk):
         sb.pack(fill = BOTH, expand = False)
 
         with MenuBuilder(self) as menu:
+
             with menu(_("Main")) as main_menu:
+
                 paused = BooleanVar(self, value = measurer.paused)
                 feed_var_to_attr(paused, measurer, "paused")
                 sb.left(as_variable(paused)(lambda x : "Paused" if x else ""))
                 main_menu(_("Pause"),
                     variable = paused,
                 )
+
             with menu(_("Options")) as opts_menu:
+
                 with opts_menu(_("Plots")) as plots_menu:
-                    colored = BooleanVar(self)
+
+                    colored = BooleanVar(self, value = settings.plots_colored)
+                    feed_var_to_attr(colored, settings, "plots_colored")
                     plots_menu(_("Colored"),
                         variable = colored,
                     )
                     self.v_plots_colored = colored
-                    swap_XY = BooleanVar(self)
+
+                    swap_XY = BooleanVar(self, value = settings.plots_swap_XY)
+                    feed_var_to_attr(swap_XY, settings, "plots_swap_XY")
                     plots_menu(_("Swap XY"),
                         variable = swap_XY,
                     )
@@ -851,7 +861,24 @@ class LauncherGUI(GUITk):
             self._set_short_status(launch, None)
             measurer.skip(name)
 
+
+class QLauncherGUISettings(Persistent):
+
+    def __init__(self,
+        file_name = expanduser(join("~", ".qdt.qlauncher.gui.py"))
+    ):
+        super(QLauncherGUISettings, self).__init__(file_name,
+            glob = globals(),
+            version = 0.1,
+            # default values
+            plots_colored = False,
+            plots_swap_XY = False,
+        )
+
+
 def main():
+    gui_settings = QLauncherGUISettings()
+
     RESFILE = "qlauncher.res.py"
 
     ap = ArgumentParser()
@@ -1112,10 +1139,6 @@ def main():
         )
     )
 
-    root = LauncherGUI(measurer, res)
-
-    base_launch.task_manager = root.task_manager
-
     if log is not None:
         log = abspath(log)
         makedirs(dirname(log), exist_ok = True)
@@ -1134,9 +1157,14 @@ def main():
 
         listener = listen_all(write_and_flush, locked = True)
 
-    root.task_manager.enqueue(measurer.co_main())
+    with gui_settings:
+        root = LauncherGUI(measurer, res, gui_settings)
 
-    root.mainloop()
+        base_launch.task_manager = root.task_manager
+
+        root.task_manager.enqueue(measurer.co_main())
+
+        root.mainloop()
 
     if log is not None:
         listener.revert()
