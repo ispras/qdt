@@ -491,8 +491,6 @@ def run(*args, **kw):
 
 
 iid2obj = bidict()
-iid2obj_is_ready = False
-
 
 class SysObj(object):
 
@@ -621,91 +619,30 @@ class IOMMUDevice(SysObj):
         return self.addr
 
 
-def iid_get_sysobj(tv, iid):
-    while iid not in iid2obj:
-        iid = tv.parent(iid)
-        if not iid:
-            raise ValueError("Foreign item id %s" % iid)
-    return iid2obj[iid]
-
-
 def co_main(cfg, tk, tv):
     if cfg.geometry:
         tk.geometry(cfg.geometry)
         yield True
 
-    yield co_read_from_system(tv)
+    yield tv.co_read_from_system()
 
     if cfg.tv_col_width:
         for iid, width in cfg.tv_col_width.items():
             tv.column(iid, width = width)
 
 
-def co_read_from_system(tv):
-    global iid2obj_is_ready
-
-    grps = sorted(
-        IOMMUGroup(join(IOMMU_GROUPS, g)) for g in listdir(IOMMU_GROUPS)
-    )
-
-    for grp in grps:
-        giid = tv.insert("", END, text = grp, open = True)
-        grp.iid = giid
-
-        for dev in grp.devices:
-            dev.iid = tv.insert(giid, END, text = dev, open = True)
-
-    yield True
-
-    for dev in iid2obj.values():
-        if not isinstance(dev, IOMMUDevice):
-            continue
-        yield True
-
-        dev.driver_iid = None
-        for k, v in dev.lspci.items():
-            iid = tv.insert(dev.iid, END, text = k, values = (s(v),))
-            if k == b"Driver":
-                dev.driver_iid = iid
-            assert dev is iid_get_sysobj(tv, iid)
-
-        yield True
-        tv.insert(dev.iid, END, text = "modalias", values = (s(dev.modalias),))
-        dev.vfio_modalias_iid = tv.insert(dev.iid, END,
-            text = "VFIO mod-aliasing",
-            values = (dev.vfio_modalias,)
-        )
-        yield True
-        dev.vfio_assigned_iid = tv.insert(dev.iid, END,
-            text = "VFIO assigned",
-            values = (dev.vfio_assigned,)
-        )
-
-    yield  True
-
-    reload_disable_vga()
-
-    iid2obj_is_ready = True
-
-
-def co_reload(tv):
-    global iid2obj_is_ready
-    while not iid2obj_is_ready:
-        yield False
-
-    iid2obj_is_ready = False
-
-    tv.delete(*tv.get_children())
-    iid2obj.clear()
-
-    yield co_read_from_system(tv)
-
-
 class IOMMUTV(Treeview, TkPopupHelper):
 
     def __init__(self, *a, **kw):
+        kw["columns"] = ("i",)
+
         Treeview.__init__(self, *a, **kw)
         TkPopupHelper.__init__(self)
+
+        self.heading("i", text = "Information")
+
+        for c in ("#0",) + self.cget("columns"):
+            self.column(c, stretch = False)
 
         self.tv_popup_IOMMUDevice = Menu(self, tearoff = False)
         self.tv_popup_IOMMUDevice.add_command(
@@ -726,6 +663,68 @@ class IOMMUTV(Treeview, TkPopupHelper):
         )
 
         self.bind("<Button-3>", self.on_tv_b3, "+")
+
+        self._iid2obj_is_ready = False
+
+    def co_reload(self):
+        while not self._iid2obj_is_ready:
+            yield False
+
+        self._iid2obj_is_ready = False
+
+        self.delete(*self.get_children())
+        iid2obj.clear()
+
+        yield self.co_read_from_system()
+
+    def co_read_from_system(self):
+        insert = self.insert
+
+        grps = sorted(
+            IOMMUGroup(join(IOMMU_GROUPS, g)) for g in listdir(IOMMU_GROUPS)
+        )
+
+        for grp in grps:
+            giid = insert("", END, text = grp, open = True)
+            grp.iid = giid
+
+            for dev in grp.devices:
+                dev.iid = insert(giid, END, text = dev, open = True)
+
+        yield True
+
+        for dev in iid2obj.values():
+            if not isinstance(dev, IOMMUDevice):
+                continue
+            yield True
+
+            dev.driver_iid = None
+            for k, v in dev.lspci.items():
+                iid = insert(dev.iid, END, text = k, values=(s(v),))
+                if k == b"Driver":
+                    dev.driver_iid = iid
+                assert dev is self.iid_get_sysobj(iid)
+
+            yield True
+            insert(dev.iid, END,
+                text = "modalias",
+                values = (s(dev.modalias),)
+            )
+            dev.vfio_modalias_iid = insert(dev.iid, END,
+                text = "VFIO mod-aliasing",
+                values = (dev.vfio_modalias,)
+            )
+            yield True
+            dev.vfio_assigned_iid = insert(dev.iid, END,
+                text = "VFIO assigned",
+                values = (dev.vfio_assigned,)
+            )
+
+        yield  True
+
+        reload_disable_vga()
+
+        self._iid2obj_is_ready = True
 
     def add_vfio_pci_modalias(self):
         dev = self.current_popup_tag
@@ -811,7 +810,7 @@ class IOMMUTV(Treeview, TkPopupHelper):
         if row != "":
             self.selection_set(row)
 
-        obj = iid_get_sysobj(self, row)
+        obj = self.iid_get_sysobj(row)
 
         try:
             popup = getattr(self, "tv_popup_" + type(obj).__name__)
@@ -819,6 +818,15 @@ class IOMMUTV(Treeview, TkPopupHelper):
             return
 
         self.show_popup(e.x_root, e.y_root, popup, obj)
+
+    def iid_get_sysobj(self, iid):
+        parent = self.parent
+
+        while iid not in iid2obj:
+            iid = parent(iid)
+            if not iid:
+                raise ValueError("Foreign item id %s" % iid)
+        return iid2obj[iid]
 
 
 def update_initramfs():
@@ -934,20 +942,18 @@ def main():
     tk.rowconfigure(1, weight = 1)
     tk.columnconfigure(0, weight = 1)
 
-    tv = IOMMUTV(tk, columns = ("i",))
+    tv = IOMMUTV(tk)
     tv.grid(row = 1, column = 0, sticky = "NESW")
 
     add_scrollbars_native(tk, tv, row = 1)
 
     Sizegrip(tk).grid(row = 2, column = 1, sticky = "ES")
 
-    tv.heading("i", text = "Information")
-
     bt_reload = Button(buttons, text = "Reload")
     bt_reload.pack(side = RIGHT)
 
     def co_do_reload():
-        yield co_reload(tv)
+        yield tv.co_reload()
         bt_reload.config(state = NORMAL)
 
     def do_reload():
@@ -955,9 +961,6 @@ def main():
         tk.enqueue(co_do_reload())
 
     bt_reload.config(command = do_reload)
-
-    for c in ("#0",) + tv.cget("columns"):
-        tv.column(c, stretch = False)
 
     with Persistent(expanduser(join("~",".qdt.iommu.py")),
         geometry = None,
