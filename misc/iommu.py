@@ -662,8 +662,11 @@ def co_read_from_system(tv):
             continue
         yield True
 
+        dev.driver_iid = None
         for k, v in dev.lspci.items():
             iid = tv.insert(dev.iid, END, text = k, values = (s(v),))
+            if k == b"Driver":
+                dev.driver_iid = iid
             assert dev is iid_get_sysobj(tv, iid)
 
         yield True
@@ -712,6 +715,14 @@ class IOMMUTV(Treeview, TkPopupHelper):
         self.tv_popup_IOMMUDevice.add_command(
             label = "Remove vfio-pci modalias",
             command = self.remove_vfio_pci_modalias
+        )
+        self.tv_popup_IOMMUDevice.add_command(
+            label = "Unbind driver manually",
+            command = self.unbind_driver_manually
+        )
+        self.tv_popup_IOMMUDevice.add_command(
+            label = "Bind vfio-pci driver manually",
+            command = self.bind_vfio_pci_driver_manually
         )
 
         self.bind("<Button-3>", self.on_tv_b3, "+")
@@ -766,6 +777,29 @@ class IOMMUTV(Treeview, TkPopupHelper):
 
         self.modalias_commit(dev)
 
+    def unbind_driver_manually(self):
+        dev = self.current_popup_tag
+
+        if bind_unbind_driver(dev.addr,
+            join(ROOT, "sys", "bus", "pci", "devices", dev.addr, "driver", "unbind"),
+            "unbind driver manually failed"
+        ):
+            if dev.driver_iid is not None:
+                self.delete(dev.driver_iid)
+                dev.driver_iid = None
+
+    def bind_vfio_pci_driver_manually(self):
+        dev = self.current_popup_tag
+
+        if bind_unbind_driver(dev.addr,
+            join(ROOT, "sys", "bus", "pci", "drivers", "vfio-pci", "bind"),
+            "bind vfio-pci driver manually failed"
+        ):
+            if dev.driver_iid is None:
+                dev.driver_iid = self.insert(dev.iid, END, text = "Driver", values = ("vfio-pci",))
+            else:
+                self.item(dev.driver_iid, values = ("vfio-pci",))
+
     def on_tv_b3(self, e):
         row = self.identify_row(e.y)
 
@@ -801,6 +835,23 @@ def update_initramfs():
         ).wait()
 
     print(msg)
+
+
+def bind_unbind_driver(dev_addr, path, summary):
+    try:
+        out, err = run("sudo", "--askpass", "bash", "-c", "echo", "-n", dev_addr, ">", path)
+    except RunError as e:
+        msg = format_exc()
+        out, err = e.out, e.err
+        msg += "\nout:\n%s\nerr:\n%s\n" % (s(out), s(err))
+        ErrorDialog(summary,
+            title = "Failure",
+            message = msg,
+        ).wait()
+        print(msg)
+        return False
+    else:
+        return True
 
 
 def disable_vga_handler(*__):
