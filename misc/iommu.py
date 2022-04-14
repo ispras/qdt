@@ -852,8 +852,8 @@ def update_initramfs():
 
 def bind_unbind_driver(dev_addr, path, summary):
     try:
-        out, err = run("sudo", "--askpass", "bash", "-c", "echo", "-n",
-            dev_addr, ">", path
+        out, err = run("sudo", "--askpass", "bash", "-c",
+            "echo -n " + dev_addr + " > " + path
         )
     except RunError as e:
         msg = format_exc()
