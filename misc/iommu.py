@@ -717,12 +717,12 @@ class IOMMUTV(Treeview, TkPopupHelper):
             command = self.remove_vfio_pci_modalias
         )
         self.tv_popup_IOMMUDevice.add_command(
-            label = "Unbind driver manually",
-            command = self.unbind_driver_manually
+            label = "Unbind driver",
+            command = self.unbind_driver
         )
         self.tv_popup_IOMMUDevice.add_command(
-            label = "Bind vfio-pci driver manually",
-            command = self.bind_vfio_pci_driver_manually
+            label = "Bind vfio-pci driver",
+            command = self.bind_vfio_pci_driver
         )
 
         self.bind("<Button-3>", self.on_tv_b3, "+")
@@ -777,23 +777,23 @@ class IOMMUTV(Treeview, TkPopupHelper):
 
         self.modalias_commit(dev)
 
-    def unbind_driver_manually(self):
+    def unbind_driver(self):
         dev = self.current_popup_tag
 
         if bind_unbind_driver(dev.addr,
             join(ROOT, "sys", "bus", "pci", "devices", dev.addr, "driver", "unbind"),
-            "unbind driver manually failed"
+            "unbind driver failed"
         ):
             if dev.driver_iid is not None:
                 self.delete(dev.driver_iid)
                 dev.driver_iid = None
 
-    def bind_vfio_pci_driver_manually(self):
+    def bind_vfio_pci_driver(self):
         dev = self.current_popup_tag
 
         if bind_unbind_driver(dev.addr,
             join(ROOT, "sys", "bus", "pci", "drivers", "vfio-pci", "bind"),
-            "bind vfio-pci driver manually failed"
+            "bind vfio-pci driver failed"
         ):
             if dev.driver_iid is None:
                 dev.driver_iid = self.insert(dev.iid, END, text = "Driver", values = ("vfio-pci",))
