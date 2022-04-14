@@ -16,6 +16,9 @@ from os import (
     environ,
     listdir,
 )
+from six.moves import (
+    zip_longest,
+)
 from six.moves.tkinter import (
     LEFT,
     RIGHT,
@@ -59,7 +62,8 @@ from six.moves.queue import (
 from common import (
     Persistent,
     bidict,
-    lazy,
+    cached,
+    reset_cache,
 )
 from widgets import (
     TkPopupHelper,
@@ -491,10 +495,13 @@ def run(*args, **kw):
 
 
 iid2obj = bidict()
+obj2iid = iid2obj.mirror
+path2obj = {}
 
 class SysObj(object):
 
     def __init__(self, iid = None):
+        self.__lazy__ = []
         self._iid = None
         self.iid = iid
 
@@ -518,14 +525,14 @@ class IOMMUGroup(SysObj):
     def __init__(self, path, iid = None):
         super(IOMMUGroup, self).__init__(iid = iid)
 
+        path2obj[path] = self
+
         self.path = path
+        self.name = name = split(path)[-1]
+        self.number = int(name)
 
     def iter_devices(self):
         return iter(self.devices)
-
-    @lazy
-    def number(self):
-        return int(split(self.path)[-1])
 
     def __lt__(self, g):
         if not isinstance(g, IOMMUGroup):
@@ -535,13 +542,23 @@ class IOMMUGroup(SysObj):
     def __str__(self):
         return "IOMMU Group " + str(self.number)
 
-    @lazy
+    @cached
     def devices(self):
         devs_dir = join(self.path, "devices")
 
-        return tuple(sorted(
-            IOMMUDevice(join(devs_dir, d), self) for d in listdir(devs_dir)
-        ))
+        devices = []
+
+        for d in listdir(devs_dir):
+            dpath = join(devs_dir, d)
+            try:
+                dev = path2obj[dpath]
+            except KeyError:
+                dev = IOMMUDevice(dpath, self)
+            else:
+                dev.grp = self
+            devices.append(dev)
+
+        return tuple(sorted(devices))
 
 
 def pci_id(string):
@@ -554,17 +571,19 @@ class IOMMUDevice(SysObj):
     def __init__(self, path, grp, iid = None):
         super(IOMMUDevice, self).__init__(iid = iid)
 
+        path2obj[path] = self
+
         self.addr = split(path)[1]
         self.path = path
         self.grp = grp
 
-    @lazy
+    @cached
     def addr_tuple(self):
         root, bus, dev_fn = self.addr.split(':')
         dev, fn = dev_fn.split('.')
         return tuple(int(x, base = 16) for x in (root, bus, dev, fn))
 
-    @lazy
+    @cached
     def lspci(self):
         out, __ = run("lspci", "-k", "-x", "-vmm", "-nn", "-s", self.addr)
         info = OrderedDict()
@@ -580,19 +599,19 @@ class IOMMUDevice(SysObj):
 
         return info
 
-    @lazy
+    @cached
     def dev_id(self):
         device = self.lspci[b"Device"]
         ret = pci_id(device)
         return ret
 
-    @lazy
+    @cached
     def vendor_id(self):
         vendor = self.lspci[b"Vendor"]
         ret = pci_id(vendor)
         return ret
 
-    @lazy
+    @cached
     def modalias(self):
         with open(
             # https://heiko-sieger.info/blacklisting-graphics-driver/
@@ -617,6 +636,13 @@ class IOMMUDevice(SysObj):
 
     def __str__(self):
         return self.addr
+
+    def iter_fields(self):
+        for k, v in self.lspci.items():
+            yield k, (s(v),)
+        yield "modalias", (s(self.modalias),)
+        yield "VFIO mod-aliasing", (self.vfio_modalias,)
+        yield "VFIO assigned", (self.vfio_assigned,)
 
 
 def co_main(cfg, tk, tv):
@@ -672,57 +698,86 @@ class IOMMUTV(Treeview, TkPopupHelper):
 
         self._iid2obj_is_ready = False
 
-        self.delete(*self.get_children())
-        iid2obj.clear()
+        for o in obj2iid:
+            reset_cache(o)
 
         yield self.co_read_from_system()
 
     def co_read_from_system(self):
         insert = self.insert
+        index = self.index
+        move = self.move
+        get_children = self.get_children
+        item = self.item
+        delete = self.delete
 
-        grps = sorted(
-            IOMMUGroup(join(IOMMU_GROUPS, g)) for g in listdir(IOMMU_GROUPS)
-        )
+        old = set(obj2iid)
+        name2grp = {}
+        grps = []
 
-        for grp in grps:
-            giid = insert("", END, text = grp, open = True)
-            grp.iid = giid
+        for grp in obj2iid:
+            if isinstance(grp, IOMMUGroup):
+                name2grp[grp.name] = grp
 
-            for dev in grp.devices:
-                dev.iid = insert(giid, END, text = dev, open = True)
+        for name in listdir(IOMMU_GROUPS):
+            try:
+                grp = name2grp[name]
+            except KeyError:
+                grp = IOMMUGroup(join(IOMMU_GROUPS, name))
+            else:
+                old.remove(grp)
+
+            grps.append(grp)
+
+        for i, grp in enumerate(sorted(grps)):
+            yield True
+
+            try:
+                giid = obj2iid[grp]
+            except KeyError:
+                giid = insert("", END, text = grp, open = True)
+                grp.iid = giid
+            else:
+                if index(giid) != i:
+                    move(giid, "", i)
+
+            for j, dev in enumerate(grp.devices):
+                yield True
+
+                old.discard(dev)
+
+                try:
+                    diid = obj2iid[dev]
+                except KeyError:
+                    diid = insert(giid, END, text = dev, open = True)
+                    dev.iid = diid
+
+                if index(diid) != j:
+                    move(diid, giid, j)
+
+                yield True
+
+                for iid, t_and_v in zip_longest(
+                    get_children(diid), dev.iter_fields()
+                ):
+                    if t_and_v is None:
+                        delete(iid)
+                    else:
+                        t, v = t_and_v
+                        if iid is None:
+                            iid = insert(dev.iid, END, text = t, values = v)
+                        else:
+                            item(iid, text = t, values = v)
 
         yield True
 
-        for dev in iid2obj.values():
-            if not isinstance(dev, IOMMUDevice):
-                continue
-            yield True
-
-            dev.driver_iid = None
-            for k, v in dev.lspci.items():
-                iid = insert(dev.iid, END, text = k, values=(s(v),))
-                if k == b"Driver":
-                    dev.driver_iid = iid
-                assert dev is self.iid_get_sysobj(iid)
-
-            yield True
-            insert(dev.iid, END,
-                text = "modalias",
-                values = (s(dev.modalias),)
-            )
-            dev.vfio_modalias_iid = insert(dev.iid, END,
-                text = "VFIO mod-aliasing",
-                values = (dev.vfio_modalias,)
-            )
-            yield True
-            dev.vfio_assigned_iid = insert(dev.iid, END,
-                text = "VFIO assigned",
-                values = (dev.vfio_assigned,)
-            )
-
-        yield  True
-
         reload_disable_vga()
+
+        # remove old items
+        for o in old:
+            if o.iid is not None:
+                delete(o.iid)
+                o.iid = None
 
         self._iid2obj_is_ready = True
 
@@ -748,8 +803,7 @@ class IOMMUTV(Treeview, TkPopupHelper):
             print_exc()
 
         local_conf.reload()
-        self.item(dev.vfio_modalias_iid, values = (dev.vfio_modalias,))
-        self.item(dev.vfio_assigned_iid, values = (dev.vfio_assigned,))
+        do_reload()
 
     def remove_vfio_pci_modalias(self):
         dev = self.current_popup_tag
@@ -779,30 +833,22 @@ class IOMMUTV(Treeview, TkPopupHelper):
     def unbind_driver(self):
         dev = self.current_popup_tag
 
-        if bind_unbind_driver(dev.addr,
+        bind_unbind_driver(dev.addr,
             join(ROOT,
                 "sys", "bus", "pci", "devices", dev.addr, "driver", "unbind"
             ),
             "unbind driver failed"
-        ):
-            if dev.driver_iid is not None:
-                self.delete(dev.driver_iid)
-                dev.driver_iid = None
+        )
+        do_reload()
 
     def bind_vfio_pci_driver(self):
         dev = self.current_popup_tag
 
-        if bind_unbind_driver(dev.addr,
+        bind_unbind_driver(dev.addr,
             join(ROOT, "sys", "bus", "pci", "drivers", "vfio-pci", "bind"),
             "bind vfio-pci driver failed"
-        ):
-            if dev.driver_iid is None:
-                dev.driver_iid = self.insert(dev.iid, END,
-                    text = "Driver",
-                    values = ("vfio-pci",)
-                )
-            else:
-                self.item(dev.driver_iid, values = ("vfio-pci",))
+        )
+        do_reload()
 
     def on_tv_b3(self, e):
         row = self.identify_row(e.y)
@@ -956,6 +1002,7 @@ def main():
         yield tv.co_reload()
         bt_reload.config(state = NORMAL)
 
+    global do_reload
     def do_reload():
         bt_reload.config(state = DISABLED)
         tk.enqueue(co_do_reload())
