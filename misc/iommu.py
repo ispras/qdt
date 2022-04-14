@@ -781,7 +781,9 @@ class IOMMUTV(Treeview, TkPopupHelper):
         dev = self.current_popup_tag
 
         if bind_unbind_driver(dev.addr,
-            join(ROOT, "sys", "bus", "pci", "devices", dev.addr, "driver", "unbind"),
+            join(ROOT,
+                "sys", "bus", "pci", "devices", dev.addr, "driver", "unbind"
+            ),
             "unbind driver failed"
         ):
             if dev.driver_iid is not None:
@@ -796,7 +798,10 @@ class IOMMUTV(Treeview, TkPopupHelper):
             "bind vfio-pci driver failed"
         ):
             if dev.driver_iid is None:
-                dev.driver_iid = self.insert(dev.iid, END, text = "Driver", values = ("vfio-pci",))
+                dev.driver_iid = self.insert(dev.iid, END,
+                    text = "Driver",
+                    values = ("vfio-pci",)
+                )
             else:
                 self.item(dev.driver_iid, values = ("vfio-pci",))
 
@@ -839,7 +844,9 @@ def update_initramfs():
 
 def bind_unbind_driver(dev_addr, path, summary):
     try:
-        out, err = run("sudo", "--askpass", "bash", "-c", "echo", "-n", dev_addr, ">", path)
+        out, err = run("sudo", "--askpass", "bash", "-c", "echo", "-n",
+            dev_addr, ">", path
+        )
     except RunError as e:
         msg = format_exc()
         out, err = e.out, e.err
