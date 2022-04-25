@@ -1142,6 +1142,13 @@ qemu_heuristic_db = {
             old_value = ("default-configs",)
         )
     ],
+    # configs: rename default-configs to configs and reorganise
+    u'812b31d3f91507160c367440c17715b62d5e0869' : [
+        QEMUVersionParameterDescription("default-configs suffix",
+            new_value = ("configs", "devices"),
+            old_value = ("default-configs", "devices")
+        )
+    ],
     # There are many commits converting build system part by part.
     # Let the merge commit be heuristic point.
     u'7fd51e68c34fcefdb4d6fd646ed3346f780f89f4' : [
