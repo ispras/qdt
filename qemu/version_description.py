@@ -332,6 +332,8 @@ class QemuVersionCache(object):
                                     else:
                                         exc_raise = True
                                     if exc_raise:
+                                        # Hint: try to add `old_value` equal to
+                                        #       previous `new_value`.
                                         raise Exception("Contradictory definition of param " \
 "'%s' in commit %s (%s != %s)" % (p, c.sha, cur_node.param_nval[p], c.param_nval[p])
                                         )
