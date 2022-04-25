@@ -272,7 +272,8 @@ class QemuVersionCache(object):
 
     :param sorted_vd_keys:
         keys of qemu_heuristic_db sorted in ascending order by num of
-        QemuCommitDesc. It's necessary to optimize the graph traversal.
+        QemuCommitDesc (elder first). It's necessary to optimize the graph
+        traversal.
 
     :param vd:
         qemu_heuristic_db
