@@ -33,6 +33,9 @@ from git import (
 from .lazy import (
     lazy
 )
+from time import (
+    time
+)
 
 
 # Iterations Between Yields of Git Graph Building task
@@ -130,6 +133,7 @@ class CommitDesc(object):
 
     @classmethod
     def co_build_git_graph(klass, repo, commit_desc_nodes):
+        t0 = time()
         # iterations to yield
         i2y = GGB_IBY
 
@@ -211,6 +215,9 @@ class CommitDesc(object):
                         i2y = GGB_IBY
                     else:
                         i2y -= 1
+
+        t1 = time()
+        print("co_build_git_graph work time " + str(t1 - t0))
 
 
 def fast_repo_clone(repo, version = None, prefix = "repo"):
