@@ -33,6 +33,9 @@ from git import (
 from time import (
     time
 )
+from itertools import (
+    count
+)
 
 
 # Iterations Between Yields of Git Graph Building task
@@ -114,38 +117,43 @@ class CommitDesc(object):
 
     @classmethod
     def co_build_git_graph(klass, repo, commit_desc_nodes):
+        repo_commit = repo.commit
+
         t0 = time()
         # iterations to yield
         i2y = GGB_IBY
 
-        # n is serial number according to the topology sorting
-        n = 0
-        # to_enum is used during topological sorting
+        # enumeration according to the topology sorting
+        n = count(0)
+        # to_enum is used during the enumeration
         # it contains commit to enumerate
         to_enum = None
         # build_stack contains edges represented by tuples
         # (parent, child), where parent is instance of
-        # git.Commit, child is instance of QemuCommitDesc
+        # git.Commit, child is instance of `klass` (e.g., QemuCommitDesc)
         build_stack = []
         for head in repo.references:
+            head_commit = head.commit
+            head_commit_hexsha = head_commit.hexsha
             # skip processed heads
-            if head.commit.hexsha in commit_desc_nodes:
+            if head_commit_hexsha in commit_desc_nodes:
                 continue
 
-            head_desc = klass(head.commit.hexsha, [], [])
-            commit_desc_nodes[head.commit.hexsha] = head_desc
+            head_desc = klass(head_commit_hexsha, [], [])
+            commit_desc_nodes[head_commit_hexsha] = head_desc
             # add edges connected to head being processed
-            for p in head.commit.parents:
+            for p in head_commit.parents:
                 build_stack.append((p, head_desc))
 
             while build_stack:
                 parent, child_commit_desc = build_stack.pop()
+                parent_hexsha = parent.hexsha
 
-                try:
-                    parent_desc = commit_desc_nodes[parent.hexsha]
-                except KeyError:
-                    parent_desc = klass(parent.hexsha, [], [])
-                    commit_desc_nodes[parent.hexsha] = parent_desc
+                parent_desc = commit_desc_nodes.get(parent_hexsha, None)
+
+                if parent_desc is None:
+                    parent_desc = klass(parent_hexsha, [], [child_commit_desc])
+                    commit_desc_nodes[parent_hexsha] = parent_desc
 
                     if parent.parents:
                         for p in parent.parents:
@@ -159,9 +167,9 @@ class CommitDesc(object):
                     # enumerated before. Hence, we starts enumeration from
                     # it's child
                     to_enum = child_commit_desc
-                finally:
                     parent_desc.children.append(child_commit_desc)
-                    child_commit_desc.parents.append(parent_desc)
+
+                child_commit_desc.parents.append(parent_desc)
 
                 if i2y <= 0:
                     yield True
@@ -180,9 +188,8 @@ class CommitDesc(object):
                     # then all parents were numbered (added) earlier
                     # according to the graph building algorithm,
                     # else we cannot assign number to the commit yet
-                    if len(e.parents) == len(repo.commit(e.sha).parents):
-                        e.num = n
-                        n = n + 1
+                    if len(e.parents) == len(repo_commit(e.sha).parents):
+                        e.num = next(n)
                         # according to the algorithm, only one child
                         # have no number. Other children either have
                         # been enumerated already or are not added yet
