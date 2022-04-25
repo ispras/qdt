@@ -370,6 +370,8 @@ class QemuVersionCache(object):
         qemu_heuristic_db
         """
 
+        t0 = time()
+
         # message for exceptions
         msg = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
 
@@ -448,6 +450,10 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
                 if not i2y:
                     yield True
                     i2y = QVD_HP_IBY
+
+        t1 = time()
+        print("co_propagate_old_param work time " + str(t1 - t0))
+
 
     def init_commit_old_val(self, commit, vd):
         # messages for exceptions
