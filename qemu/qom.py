@@ -258,9 +258,9 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
             offset += size
             continue
 
-        if size == 1:
+        if True: # size == 1:
             case_cond = CINT(offset, base = 16, digits = digits)
-        else:
+        else: # XXX: we don't support unaligned access yet
             case_cond = (
                 CINT(offset, base = 16, digits = digits),
                 CINT(offset + size - 1, base = 16, digits = digits)
