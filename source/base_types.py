@@ -60,10 +60,12 @@ def add_base_types():
             Macro("offsetof")
         ])
 
-    h.add_types([
+    if not Type.exists("NULL"):
         # NULL is actually a macro, but its definition is architecture
         # dependent. So, we just declare it as generic type.
-        Type(name = "NULL", incomplete = False, base = False),
+        h.add_type(Type(name = "NULL", incomplete = False, base = False))
+
+    h.add_types([
         Type(name = "size_t", incomplete = False, base = False),
         Type(name = "ptrdiff_t", incomplete = False, base = False)
     ])
