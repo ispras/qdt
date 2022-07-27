@@ -16,9 +16,6 @@ from common import (
     pypath,
     co_find_eq
 )
-from os.path import (
-    join
-)
 from subprocess import (
     Popen
 )
