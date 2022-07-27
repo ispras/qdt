@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from qemu import (
+    QType,
     MachineNode,
     QProject
 )
@@ -47,6 +48,28 @@ class GUIProject(QProject):
             l_dict[l.lid] = l
 
         self.history = History()
+        self.reset_qom_tree()
+
+    def reset_qom_tree(self):
+        self.qom_tree = q_root = QType("[QOM root is not a type]")
+
+        q_object = QType("object")
+        q_root.add_child(q_object)
+
+        q_machine = QType("machine")
+        q_object.add_child(q_machine)
+
+        q_device = QType("device")
+        q_object.add_child(q_device)
+
+        q_sys_bus_device = QType("sys-bus-device")
+        q_device.add_child(q_sys_bus_device)
+
+        q_pci_device = QType("pci-device")
+        q_device.add_child(q_pci_device)
+
+        q_cpu = QType("cpu")
+        q_device.add_child(q_cpu)
 
     def add_layout_object_auto_id(self, l):
         try:
