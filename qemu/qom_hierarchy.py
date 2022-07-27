@@ -117,6 +117,9 @@ class QType(object):
 
             c.merge(other_c)
 
+    def __contains__(self, name):
+        return name in self.children
+
     # Tree will be traversed from the root to the child nodes
     # The children will be serialized first
     __pygen_deps__ = ("children",)
