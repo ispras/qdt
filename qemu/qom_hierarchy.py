@@ -91,6 +91,32 @@ class QType(object):
         for t in co_find_eq(self.root().descendants(), **request):
             yield t
 
+    def merge(self, tree):
+        # cache
+        children = self.children
+        macros = self.macros
+        add_child = self.add_child
+
+        for m in tree.macros:
+            if m not in macros:
+                macros.append(m)
+
+        self.arches.update(tree.arches)
+
+        for n, other_c in tree.children.items():
+
+            if n in children:
+                c = children[n]
+            else:
+                c = type(other_c)(
+                    name = n,
+                    macros = other_c.macros,
+                    arches = other_c.arches,
+                )
+                add_child(c)
+
+            c.merge(other_c)
+
     # Tree will be traversed from the root to the child nodes
     # The children will be serialized first
     __pygen_deps__ = ("children",)
