@@ -527,6 +527,11 @@ IRQ line creation
         )
         p.add_separator()
         p.add_command(
+            label = _("Clone"),
+            command = self.on_popup_single_device_clone,
+        )
+        p.add_separator()
+        p.add_command(
             label = _("Settings"),
             command = self.on_popup_single_device_settings
         )
@@ -1359,6 +1364,21 @@ IRQ line creation
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+
+    def on_popup_single_device_clone(self):
+        dev_id = self.current_popup_tag
+        node = self.id2node[dev_id]
+        dev_id = self.node2dev[node].id
+
+        x, y = self.find_space_near(
+            node.x, node.y, node.width, node.height, node.spacing
+        )
+
+        new_id = self.mht.clone_device(dev_id)
+        self.mht.stage(MWOp_MoveNode, x, y, self, new_id)
+        self.mht.commit()
+
+        self.notify_popup_command()
 
     def on_popup_single_device_settings(self):
         _id = self.current_popup_tag
