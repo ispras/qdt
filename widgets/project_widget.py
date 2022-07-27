@@ -25,6 +25,7 @@ from common import (
     mlget as _
 )
 from qemu import (
+    MachineDescription,
     QType,
     QemuTypeName,
     SysBusDeviceDescription,
@@ -373,8 +374,12 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                     pass
                 else:
                     qtn = QemuTypeName(desc_name)
-                    t = next(qt.find(name = qtn.for_id_name))
-                    t.unparent()
+                    try:
+                        t = next(qt.find(name = qtn.for_id_name))
+                    except StopIteration:
+                        pass
+                    else:
+                        t.unparent()
             else: # added
                 self.__add_qtype_for_description(desc)
         elif isinstance(op, DOp_SetAttr):
@@ -499,6 +504,12 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             parent = next(parent.find(name = "sys-bus-device"))
         elif isinstance(desc, PCIExpressDeviceDescription):
             parent = next(parent.find(name = "pci-device"))
+        elif isinstance(desc, MachineDescription):
+            # currently, only "device"s are in QOM Tree
+            return
+        else:
+            # Not implemented
+            return
 
         qtn = QemuTypeName(desc.name)
         QType(qtn.for_id_name,
