@@ -49,10 +49,10 @@ class QType(object):
         else:
             parent.add_child(self)
 
-        self.macros = macros if macros else []
+        self.macros = list(macros) if macros else []
 
         # set of CPU architectures found in QOM type tree
-        self.arches = arches if arches else set()
+        self.arches = set(arches) if arches else set()
 
     def __remove_child(self, child):
         child.parent = None
