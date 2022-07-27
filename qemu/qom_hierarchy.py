@@ -119,6 +119,20 @@ class QType(object):
     def __contains__(self, name):
         return name in self.children
 
+    def rename(self, name):
+        parent = self.parent  # cache
+
+        if parent:
+            if name in parent:
+                raise ValueError("The parent `%s` alreazdy has a type `%s`" % (
+                    self.parent.name, name
+                ))
+            self.unparent()
+            self.name = name
+            parent.add_child(self)
+        else:
+            self.name = name
+
     # Tree will be traversed from the root to the child nodes
     # The children will be serialized first
     __pygen_deps__ = ("children",)
