@@ -3073,6 +3073,39 @@ IRQ line creation
         else:
             obj.y = top + 2 * obj.spacing
 
+    def find_space_near(self, x, y, w, h, spacing):
+        objs = list(self.ph_iter_all_objects())
+        objs.sort(key = lambda o : (o.x - x) ** 2 + (o.y - y) ** 2)
+
+        left, top, right, bottom = find_empty_aabb(objs,
+            minw = w + 2 * spacing,
+            minh = h + 2 * spacing
+        )
+
+        if left is None:
+            if right is not None:
+                right -= w + spacing
+                if right < x:
+                    x = right
+            # else:
+            #     pass # no restriction for x, left it as it is
+        else:
+            left += spacing
+            if x < left:
+                x = left
+
+        if top is None:
+            if bottom is not None:
+                bottom -= h + spacing
+                if bottom < y:
+                    y = bottom
+        else:
+            top += spacing
+            if y < top:
+                y = top
+
+        return x, y
+
     def add_node(self, node, buses):
         node.text = self.create_text(
             node.x, node.y,
