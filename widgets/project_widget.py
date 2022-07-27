@@ -25,6 +25,7 @@ from common import (
     mlget as _
 )
 from qemu import (
+    CPUDescription,
     MachineDescription,
     QType,
     QemuTypeName,
@@ -239,6 +240,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         self.qsig_watch("qvc_available", self.on_qvc_available)
         self.qsig_watch("qvc_dirtied", self.on_qvc_dirtied)
 
+        self.reset_project_qom_tree()
+
     def __on_destroy__(self, event):
         if self.pht is not None:
             self.pht.unwatch_changed(self.on_project_changed)
@@ -368,18 +371,10 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                             l.widget = None
                             l.shown = False
 
-                try:
-                    qt = self.p.qom_tree
-                except AttributeError:
-                    pass
-                else:
-                    qtn = QemuTypeName(desc_name)
-                    try:
-                        t = next(qt.find(name = qtn.for_id_name))
-                    except StopIteration:
-                        pass
-                    else:
-                        t.unparent()
+                qt = self.p.qom_tree
+                qtn = QemuTypeName(desc_name)
+                t = next(qt.find(name = qtn.for_id_name))
+                t.unparent()
             else: # added
                 self.__add_qtype_for_description(desc)
         elif isinstance(op, DOp_SetAttr):
@@ -495,21 +490,20 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def __add_qtype_for_description(self, desc):
         proj = self.p
 
-        try:
-            parent = proj.qom_tree
-        except AttributeError: # QOM tree is not available without QEMU source
-            return
+        tree = proj.qom_tree
 
         if isinstance(desc, SysBusDeviceDescription):
-            parent = next(parent.find(name = "sys-bus-device"))
+            parent_name = "sys-bus-device"
         elif isinstance(desc, PCIExpressDeviceDescription):
-            parent = next(parent.find(name = "pci-device"))
+            parent_name = "pci-device"
         elif isinstance(desc, MachineDescription):
-            # currently, only "device"s are in QOM Tree
-            return
+            parent_name = "machine"
+        elif isinstance(desc, CPUDescription):
+            parent_name = "cpu"
         else:
-            # Not implemented
-            return
+            raise NotImplementedError
+
+        parent = next(tree.find(name = parent_name))
 
         qtn = QemuTypeName(desc.name)
         QType(qtn.for_id_name,
@@ -523,15 +517,22 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         if pht is not None:
             pht.all_pci_ids_2_objects()
 
-        # convert device tree to more convenient form
+        self.reset_project_qom_tree()
+
+        # merge actual QOM tree in
         qvc = self.qvd.qvc
         if qvc.device_tree:
-            qt = self.p.qom_tree = qvc.device_tree
+            next(self.p.qom_tree.find("device")).merge(qvc.device_tree)
 
-            # Note that system bus device have no standard name for input IRQ.
-            next(qt.find(name = "sys-bus-device")).out_gpio_names = [
-                "SYSBUS_DEVICE_GPIO_IRQ"
-            ]
+    def reset_project_qom_tree(self):
+        proj = self.p
+        proj.reset_qom_tree()
+        qom_tree = proj.qom_tree
+
+        # Note that system bus device have no standard name for input IRQ.
+        next(qom_tree.find(name = "sys-bus-device")).out_gpio_names = [
+            "SYSBUS_DEVICE_GPIO_IRQ"
+        ]
 
         # extend QOM tree with types from project
         for d in self.p.descriptions:
@@ -542,10 +543,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
     def on_qvc_dirtied(self):
         # QOM tree is not actual now
-        try:
-            del self.p.qom_tree
-        except AttributeError:
-            pass
+        self.reset_project_qom_tree()
 
         pht = self.pht
         if pht is not None:
