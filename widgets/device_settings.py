@@ -355,15 +355,6 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
             command = self.on_press_select_qom_type
         )
         b.grid(row = 0, column = 2, sticky = "EW")
-        # Check for device tree
-        bp = self.mach.project.build_path
-        if bp is None:
-            b["state"] = "disabled"
-        else:
-            qvd = qvd_get(bp, version = self.mach.project.target_version)
-            if qvd.qvc is None or qvd.qvc.device_tree is None:
-                # TODO: watch "qvc_available" signal
-                b["state"] = "disabled"
 
         # parent bus editing widgets
         l = VarLabel(common_fr, text = _("Parent bus"))
@@ -421,10 +412,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
 
     def on_press_select_qom_type(self):
-        device_tree = qvd_get(
-            self.mach.project.build_path,
-            version = self.mach.project.target_version
-        ).qvc.device_tree
+        device_tree = next(self.mach.project.qom_tree.find(name = "device"))
 
         device_type = QOMTypeSelectDialog(self, qom_tree = device_tree).wait()
         if device_type:

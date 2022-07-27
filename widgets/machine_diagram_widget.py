@@ -1226,10 +1226,7 @@ IRQ line creation
 
         # auto set GPIO names and indices at the ends of that new IRQ line
         project = self.mht.pht.p
-        try:
-            qom_tree = project.qom_tree
-        except AttributeError:
-            qom_tree = None # no QOM tree available
+        qom_tree = project.qom_tree
 
         for node_id, prefix in [
             (irq_src, "src"),
