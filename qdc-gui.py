@@ -280,12 +280,12 @@ show it else hide it."),
             label = _("New project"),
             command = self.on_new_project,
             accelerator = hotkeys.get_keycode_string(self.on_new_project)
-        ),
+        )
         filemenu.add_command(
             label = _("Save"),
             command = self.on_save,
             accelerator = hotkeys.get_keycode_string(self.on_save)
-        ),
+        )
         filemenu.add_command(
             label = _("Save project as..."),
             command = self.on_save_as
@@ -294,13 +294,13 @@ show it else hide it."),
             label = _("Load"),
             command = self.on_load,
             accelerator = hotkeys.get_keycode_string(self.on_load)
-        ),
+        )
         self.reload_idx = filemenu.count
         filemenu.add_command(
             label = _("Reload"),
             command = self.on_reload,
             accelerator = hotkeys.get_keycode_string(self.on_reload)
-        ),
+        )
         self.recentmenu = recentmenu = VarMenu(filemenu, tearoff = False)
         filemenu.add_cascade(
             label = _("Recent projects"),
