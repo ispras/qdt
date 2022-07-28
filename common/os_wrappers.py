@@ -10,6 +10,7 @@ __all__ = [
   , "bind_mouse_wheel"
   , "makedirs"
   , "qdtdirs"
+  , "open_dir"
 ]
 
 from appdirs import (
@@ -44,6 +45,9 @@ from platform import (
 )
 from six import (
     PY2
+)
+from subprocess import (
+    Popen
 )
 from os import (
     makedirs
@@ -209,3 +213,24 @@ qdtdirs = AppDirs(
     appauthor = "ispras",
     version = "1.0"
 )
+
+
+if OS == "Linux":
+
+    def open_dir(path):
+        return Popen(["xdg-open", path])
+
+elif OS == "Windows":
+
+    def open_dir(path):
+        return Popen(["start", path])
+
+else:
+
+    def open_dir(path):
+        stderr.write(
+            "Can't open directory '%s': not implemented for OS %s\n" % (
+                path, OS
+            )
+        )
+        return None
