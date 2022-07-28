@@ -53,6 +53,7 @@ from os import (
     remove
 )
 from common import (
+    open_dir,
     OrderedSet,
     Persistent,
     Variable,
@@ -300,6 +301,11 @@ show it else hide it."),
             label = _("Reload"),
             command = self.on_reload,
             accelerator = hotkeys.get_keycode_string(self.on_reload)
+        )
+        self.open_proj_dir_idx = filemenu.count
+        filemenu.add_command(
+            label = _("Open project directory"),
+            command = self.on_open_project_directory
         )
         self.recentmenu = recentmenu = VarMenu(filemenu, tearoff = False)
         filemenu.add_cascade(
@@ -581,10 +587,12 @@ show it else hide it."),
                 pass # already deleted
             else:
                 self.filemenu.entryconfig(self.reload_idx, state = DISABLED)
+                self.filemenu.entryconfig(self.open_proj_dir_idx, state = DISABLED)
         else:
             # TODO: watch the file in FS and auto ask user to reload
             self.current_file_name = file_name
             self.filemenu.entryconfig(self.reload_idx, state = NORMAL)
+            self.filemenu.entryconfig(self.open_proj_dir_idx, state = NORMAL)
 
         self.__update_title__()
 
@@ -945,6 +953,15 @@ all changes are saved. """
             return
 
         self._do_load(fname)
+
+    def on_open_project_directory(self):
+        try:
+            fname = self.current_file_name
+        except AttributeError:
+            # No file is selected for the project yet
+            return
+
+        open_dir(dirname(fname) or ".")
 
     def update_qemu_build_path(self, bp):
         if bp is None:
