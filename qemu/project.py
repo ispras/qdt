@@ -172,6 +172,9 @@ class QProject(object):
                 yield True
                 f.gen_chunks_gv_file(spath + ".chunks-after-gen.gv")
 
+            yield True
+            f.update_origin_inclusions()
+
             # Only sources need to be registered in the build system
             if type(s) is not Source:
                 continue
