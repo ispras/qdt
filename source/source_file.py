@@ -105,6 +105,40 @@ class Source(TypeContainer):
         else:
             self.locked_inclusions = AUTO_LOCK_INCLUSIONS
 
+    def iter_type_providers(self, name):
+        "Iterates inclusion paths providing type with `name` given."
+        try:
+            t = self.types[name]
+        except KeyError:
+            return
+
+        stack = [(tuple(), self)]
+        visited = set()
+        visit = visited.add
+
+        while stack:
+            path, container = stack.pop()
+
+            if container in visited:
+                continue
+            visit(container)
+
+            next_path = path + (container,)
+
+            if t.definer is container:
+                yield next_path
+
+            for i in container.inclusions.values():
+                if name in i.types:
+                    stack.append((next_path, i))
+
+    def iter_type_providers_str(self, name):
+        for chain in self.iter_type_providers(name):
+            yield " <- ".join(repr(p.path) for p in chain)
+
+    def type_providers_str(self, name):
+        return name + ":\n" + "\n  ".join(self.iter_type_providers_str(name))
+
     def add_reference(self, ref):
         if not isinstance(ref, (Type, Variable)):
             raise ValueError("Trying to add source reference which is not a"
