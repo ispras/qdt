@@ -485,7 +485,15 @@ class Header(Source):
         Header.reg[tpath] = self
 
     @staticmethod
-    def _on_include(includer, inclusion, is_global):
+    def _on_include(start_dir, includer, path_prefix, inclusion, is_global):
+        if not is_global and path_prefix:
+            inclusion = join(path_prefix, inclusion)
+            if inclusion.startswith(start_dir):
+                inclusion = inclusion[len(start_dir) + 1:]
+
+        if includer.startswith(start_dir):
+            includer = includer[len(start_dir) + 1:]
+
         if path2tuple(inclusion) not in Header.reg:
             print("Info: parsing " + inclusion + " as inclusion")
             h = Header(path = inclusion, is_global = is_global)
@@ -496,11 +504,14 @@ class Header(Source):
         Header[includer].add_inclusion(h)
 
     @staticmethod
-    def _on_define(definer, macro):
+    def _on_define(start_dir, definer, macro):
         # macro is ply.cpp.Macro
 
         if "__FILE__" == macro.name:
             return
+
+        if definer.startswith(start_dir):
+            definer = definer[len(start_dir) + 1:]
 
         h = Header[definer]
 
@@ -552,9 +563,11 @@ class Header(Source):
                     for path in cpp_search_paths:
                         p.add_path(path)
 
-                    p.on_include = Header._on_include
+                    p.on_include = lambda *a: Header._on_include(start_dir, *a)
                     p.all_inclusions = True
-                    p.on_define.append(Header._on_define)
+                    p.on_define.append(
+                        lambda *a : Header._on_define(start_dir, *a)
+                    )
 
                     if sys.version_info[0] == 3:
                         header_input = (
