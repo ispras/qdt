@@ -1196,6 +1196,17 @@ digraph Chunks {
     def name_for_macro(self):
         return macro_forbidden.sub('_', self.name.upper())
 
+    def update_origin_inclusions(self):
+        o = self.origin
+
+        if o.inclusions:
+            # TODO: clean inclusions up
+            print("%s: inclusions are updated multiple times" % o.path)
+
+        for ch in self.chunks:
+            if isinstance(ch, HeaderInclusion):
+                o.add_inclusion(ch.origin)
+
 
 def sort_chunks(chunks, allow_loops = False):
     new_chunks = OrderedSet()
