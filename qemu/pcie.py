@@ -47,6 +47,7 @@ class PCIExpressDeviceType(QOMDevice):
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
         ("device", { "short": _("Device"), "input" : PCIId }),
         ("pci_class", { "short": _("Class"), "input" : PCIId }),
+        ("class_prog", { "short": _("Programming interface"), "input" : int }),
         ("subsys_vendor", { "short": _("Subsystem vendor"), "input" : PCIId }),
         ("subsys", { "short":_("Subsystem"), "input" : PCIId }),
         ("irq_num", { "short": _("IRQ pin quantity"), "input" : int }),
@@ -64,6 +65,7 @@ class PCIExpressDeviceType(QOMDevice):
         vendor,
         device,
         pci_class,
+        class_prog = None,
         irq_num = 0,
         mem_bar_num = 0,
         msi_messages_num = 0,
@@ -88,6 +90,7 @@ class PCIExpressDeviceType(QOMDevice):
         self.vendor = vendor
         self.device = device
         self.pci_class = pci_class
+        self.class_prog = class_prog
 
         self.subsystem = subsys
         self.subsystem_vendor = subsys_vendor
@@ -373,6 +376,14 @@ corresponding vendor is given" % attr
 
             realize_used_types.update(self.msi_types)
             realize_used_types.add(msi_init_type)
+
+            if self.class_prog is not None:
+                realize_code += """
+    dev->config[PCI_CLASS_PROG] =@s%s;
+""" % (
+    self.class_prog
+                )
+                realize_used_types.add(Type["PCI_CLASS_PROG"])
 
         self.device_realize = self.gen_realize("PCIDevice",
             code = realize_code,
