@@ -130,15 +130,7 @@ class SysBusDeviceType(QOMDevice):
 
         self.header.add_type(self.type_name_macros)
 
-        self.type_cast_macro = Macro(
-            name = self.qtn.for_macros,
-            args = [ "obj" ],
-            text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
-                TYPE_MACRO = self.qtn.type_macro,
-                Struct = self.struct_name
-            )
-        )
-
+        self.type_cast_macro = self.gen_type_cast()
         self.header.add_type(self.type_cast_macro)
 
         line_origins([
