@@ -82,9 +82,6 @@ from traceback import (
 from sys import (
     exc_info
 )
-from appdirs import (
-    AppDirs,
-)
 from time import (
     time
 )
