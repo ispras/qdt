@@ -530,7 +530,8 @@ def define_only_qemu_2_6_0_types():
             Type("pio_addr_t", incomplete = False)
         ])
 
-    Header["hw/boards.h"].add_types([
+    hw_boards_h = Header["hw/boards.h"]
+    hw_boards_h.add_types([
         Structure("MachineState"),
         Structure("MachineClass",
             # These are required fields only
@@ -945,6 +946,7 @@ def define_only_qemu_2_6_0_types():
         ])
         Header["hw/pci/pci_bridge.h"].add_type(Function("PCI_BRIDGE"))
         hw_pci_pci_host_h.add_type(Function("PCI_HOST_BRIDGE"))
+        hw_boards_h.add_type(Function("MACHINE_CLASS"))
 
 def define_qemu_2_6_5_types():
     add_base_types()
@@ -1089,12 +1091,16 @@ def machine_register_2_6(mach):
         ]
     )
     mc = Pointer(Type["MachineClass"])("mc")
+
+    MACHINE_CLASS = Type["MACHINE_CLASS"]
+    call = MCall if isinstance(MACHINE_CLASS, Macro) else Call
+
     class_init.body = BodyTree()(
         Declare(
             OpDeclareAssign(
                 mc,
-                MCall(
-                   "MACHINE_CLASS",
+                call(
+                    MACHINE_CLASS,
                     class_init.args[0]
                 )
             )
