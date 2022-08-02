@@ -170,7 +170,8 @@ def define_only_qemu_2_6_0_types():
         Function(name = "cpu_ldq_code", ret_type = Type["uint64_t"]),
     ]).add_reference(osdep_fake_type)
 
-    Header["qom/object.h"].add_types([
+    qom_object_h = Header["qom/object.h"]
+    qom_object_h.add_types([
         Type("ObjectClass", False),
         Type("Object", False),
         Type("InterfaceInfo", False),
@@ -702,7 +703,8 @@ def define_only_qemu_2_6_0_types():
 
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
-    Header["hw/pci/pci.h"].add_types([
+    hw_pci_pci_h = Header["hw/pci/pci.h"]
+    hw_pci_pci_h.add_types([
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False),
         Function(name = "pci_create_multifunction"),
@@ -723,7 +725,8 @@ def define_only_qemu_2_6_0_types():
         Type["PCIIOMMUFunc"],
         osdep_fake_type
     ])
-    Header["hw/pci/pci_host.h"].add_reference(osdep_fake_type)
+    hw_pci_pci_host_h = Header["hw/pci/pci_host.h"]
+    hw_pci_pci_host_h.add_reference(osdep_fake_type)
 
     Header["qemu/bswap.h"].add_types([
         Function(name = "bswap64"),
@@ -930,6 +933,19 @@ def define_only_qemu_2_6_0_types():
             Function(name = "cpu_set_cpustate_pointers")
         )
 
+    if get_vp("QOM type checkers type") is Function:
+        qdev_core_header.add_types([
+            Function("BUS"),
+            Function("DEVICE"),
+        ])
+        hw_sysbus_h.add_type(Function("SYS_BUS_DEVICE"))
+        hw_pci_pci_h.add_types([
+            Function("PCI_DEVICE"),
+            Function("PCI_BUS"),
+        ])
+        Header["hw/pci/pci_bridge.h"].add_type(Function("PCI_BRIDGE"))
+        hw_pci_pci_host_h.add_type(Function("PCI_HOST_BRIDGE"))
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
@@ -1128,6 +1144,13 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # Use DECLARE_*CHECKER* macros
+    u'8110fa1d94f2997badc2af39231a1d279c5bb1ee' : [
+        QEMUVersionParameterDescription("QOM type checkers type",
+            new_value = Function,
+            old_value = Macro
+        )
+    ],
     # configure: move directory options from config-host.mak to meson
     u'16bf7a3326d8e8be42b3bf844a6c539d52a997b3' : [
         QEMUVersionParameterDescription("install prefix location",
