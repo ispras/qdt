@@ -13,6 +13,9 @@ from sys import (
 from .co_dispatcher import (
     CoReturn
 )
+from traceback import (
+    format_tb
+)
 
 
 class FunctionFailure(RuntimeError): pass
@@ -50,6 +53,8 @@ def caller(feedback, function, a, kw):
     try:
         ret = function(*a, **kw)
     except:
-        feedback.send((1, exc_info()))
+        # note, traceback objects cannot be pickled
+        t, v, tb = exc_info()
+        feedback.send((1, (t, v, format_tb(tb))))
     else:
         feedback.send((0, ret))
