@@ -120,12 +120,12 @@ class QType(object):
         return name in self.children
 
     def rename(self, name):
-        parent = self.parent  # cache
+        parent = self.parent # cache
 
         if parent:
             if name in parent:
-                raise ValueError("The parent `%s` alreazdy has a type `%s`" % (
-                    self.parent.name, name
+                raise ValueError("The parent `%s` already has a type `%s`" % (
+                    parent.name, name
                 ))
             self.unparent()
             self.name = name
