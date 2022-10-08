@@ -232,7 +232,7 @@ class QemuVersionCache(object):
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
     def co_computing_parameters(self, repo, version):
-        print("Build QEMU Git graph ...")
+        print("Build QEMU Git graph...")
         self.commit_desc_nodes = {}
         yield QemuCommitDesc.co_build_git_graph(repo, self.commit_desc_nodes)
         print("QEMU Git graph was built")
@@ -264,7 +264,7 @@ class QemuVersionCache(object):
         yield True
 
         # first, need to propagate the new labels
-        print("Propagation params in graph of commit's description ...")
+        print("Propagation params in graph of commit's description...")
         yield self.co_propagate_new_param(sorted_vd_keys, vd)
         yield self.co_propagate_old_param(sorted_vd_keys, unknown_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
@@ -970,7 +970,7 @@ class QemuVersionDescription(object):
         t2m = defaultdict(list)
         yield self.co_text2macros(t2m)
 
-        print("Adding macros to device tree ...")
+        print("Adding macros to device tree...")
         yield self.co_add_dt_macro(self.qvc.device_tree.children, t2m)
         print("Macros were added to device tree")
 
