@@ -15,6 +15,10 @@ from os.path import (
 from os import (
     environ,
     listdir,
+    open as os_open,
+    close as os_close,
+    O_RDWR,
+    pread,
 )
 from six.moves import (
     zip_longest,
@@ -74,6 +78,18 @@ from widgets import (
     add_scrollbars_native,
     ErrorDialog,
     GUITk,
+)
+from fcntl import (
+    ioctl,
+)
+from ctypes import (
+    Structure,
+    c_uint32,
+    c_uint64,
+    sizeof,
+)
+from struct import(
+    pack,
 )
 
 if PY3:
@@ -946,6 +962,107 @@ def co_run_simultaneously(target, *a, **kw):
     while t.is_alive():
         yield False
     t.join()
+
+
+class VFIOGroupStatus(Structure):
+    _fields_ = [("argsz", c_uint32), ("flags", c_uint32)]
+
+
+class VFIORegionInfo(Structure):
+    _fields_ = [("argsz", c_uint32), ("flags", c_uint32), ("index", c_uint32),
+        ("cap_offset", c_uint32), ("size", c_uint64), ("offset", c_uint64)
+    ]
+
+
+def read_pci_config_space_and_bars(group_number, device_addr):
+    # based on https://www.kernel.org/doc/Documentation/vfio.txt
+
+    VFIO_GET_API_VERSION = 0x3B64
+    VFIO_CHECK_EXTENSION = 0x3B65
+    VFIO_SET_IOMMU = 0x3B66
+    VFIO_GROUP_GET_STATUS = 0x3B67
+    VFIO_GROUP_SET_CONTAINER = 0x3B68
+    VFIO_GROUP_UNSET_CONTAINER = 0x3B69
+    VFIO_GROUP_GET_DEVICE_FD = 0x3B6A
+    VFIO_DEVICE_GET_REGION_INFO = 0x3B6C
+    VFIO_API_VERSION = 0
+    VFIO_TYPE1_IOMMU = 1
+    VFIO_GROUP_FLAGS_VIABLE = 1
+    VFIO_PCI_CONFIG_REGION_INDEX = 7
+    PCI_BASE_ADDRESS_0 = 0x10
+    PCI_BASE_ADDRESS_SPACE_IO = 0x1
+    PCI_BASE_ADDRESS_MEM_TYPE_64 = 0x4
+    PCI_BASE_ADDRESS_MEM_PREFETCH = 0x8
+
+    container_fd = os_open("/dev/vfio/vfio", O_RDWR)
+
+    if ioctl(container_fd, VFIO_GET_API_VERSION) != VFIO_API_VERSION:
+        os_close(container_fd)
+        raise RuntimeError("wrong vfio api version")
+
+    if not ioctl(container_fd, VFIO_CHECK_EXTENSION, VFIO_TYPE1_IOMMU):
+        os_close(container_fd)
+        raise RuntimeError("vfio type 1 iommu not supported")
+
+    group_fd = os_open("/dev/vfio/" + str(group_number), O_RDWR)
+
+    group_status = VFIOGroupStatus()
+    group_status.argsz = sizeof(group_status)
+
+    ioctl(group_fd, VFIO_GROUP_GET_STATUS, group_status)
+
+    if not (group_status.flags & VFIO_GROUP_FLAGS_VIABLE):
+        os_close(group_fd)
+        os_close(container_fd)
+        raise RuntimeError("group %d is not viable" % group_number)
+
+    ioctl(group_fd, VFIO_GROUP_SET_CONTAINER, pack("I", container_fd))
+    ioctl(container_fd, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU)
+
+    device_fd = ioctl(group_fd, VFIO_GROUP_GET_DEVICE_FD,
+        bytearray(b(device_addr))
+    )
+
+    region_info = VFIORegionInfo()
+    region_info.argsz = sizeof(region_info)
+    region_info.index = VFIO_PCI_CONFIG_REGION_INDEX
+    ioctl(device_fd, VFIO_DEVICE_GET_REGION_INFO, region_info)
+
+    # TODO: `pread` available since Py3.3
+    config = pread(device_fd, region_info.size, region_info.offset)
+
+    bar_params = []
+    skip_next = False
+    for i in range(6):
+        if skip_next:
+            skip_next = False
+            continue
+
+        region_info.index = i
+        ioctl(device_fd, VFIO_DEVICE_GET_REGION_INFO, region_info)
+
+        size_flags = region_info.size
+        if size_flags == 0:
+            continue
+
+        bar_low_byte = config[PCI_BASE_ADDRESS_0 + 4 * i]
+        if bar_low_byte & PCI_BASE_ADDRESS_SPACE_IO:
+            size_flags |= PCI_BASE_ADDRESS_SPACE_IO
+        else:
+            if bar_low_byte & PCI_BASE_ADDRESS_MEM_PREFETCH:
+                size_flags |= PCI_BASE_ADDRESS_MEM_PREFETCH
+            if bar_low_byte & PCI_BASE_ADDRESS_MEM_TYPE_64:
+                size_flags |= PCI_BASE_ADDRESS_MEM_TYPE_64
+                skip_next = True
+
+        bar_params.append(("bar-%d" % i, "0x%x" % size_flags))
+
+    os_close(device_fd)
+    ioctl(group_fd, VFIO_GROUP_UNSET_CONTAINER, pack("I", container_fd))
+    os_close(group_fd)
+    os_close(container_fd)
+
+    return config, bar_params
 
 
 def main():
