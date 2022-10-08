@@ -894,8 +894,6 @@ def update_initramfs():
             message = msg,
         ).wait()
 
-    print(msg)
-
 
 def bind_unbind_driver(dev_addr, path, summary):
     try:
@@ -910,7 +908,6 @@ def bind_unbind_driver(dev_addr, path, summary):
             title = _("Failure"),
             message = msg,
         ).wait()
-        print(msg)
         return False
     else:
         return True
