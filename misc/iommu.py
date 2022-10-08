@@ -15,6 +15,7 @@ from os.path import (
 from os import (
     environ,
     listdir,
+    remove,
     open as os_open,
     close as os_close,
     O_RDWR,
@@ -39,6 +40,9 @@ from six.moves.tkinter import (
 from six.moves.tkinter_ttk import (
     Sizegrip,
     Treeview,
+)
+from six.moves.tkinter_messagebox import (
+    showerror,
 )
 from collections import (
     OrderedDict,
@@ -78,6 +82,7 @@ from widgets import (
     add_scrollbars_native,
     ErrorDialog,
     GUITk,
+    asksaveas,
 )
 from fcntl import (
     ioctl,
@@ -705,6 +710,10 @@ class IOMMUTV(Treeview, TkPopupHelper):
             label = "Bind vfio-pci driver",
             command = self.bind_vfio_pci_driver
         )
+        self.tv_popup_IOMMUDevice.add_command(
+            label = "Save device config as...",
+            command = self.save_device_config
+        )
 
         self.bind("<Button-3>", self.on_tv_b3, "+")
 
@@ -867,6 +876,57 @@ class IOMMUTV(Treeview, TkPopupHelper):
             _("bind vfio-pci driver failed")
         )
         do_reload()
+
+    def save_device_config(self):
+        dev = self.current_popup_tag
+
+        fname = asksaveas(self,
+            [(_("Qemu device config"), ".cfg")],
+            title = _("Save device config")
+        )
+
+        if not fname:
+            return
+
+        try:
+            open(fname, "w").close()
+        except IOError as e:
+            if not e.errno == 13: # Do not remove read-only files
+                try:
+                    remove(fname)
+                except:
+                    pass
+
+            showerror(
+                title = "Cannot save device config",
+                message = str(e)
+            )
+            return
+
+        try:
+            config, bars = read_pci_config_space_and_bars(
+                dev.grp.number, dev.addr
+            )
+        except:
+            ErrorDialog(_("pci config space read failed"),
+                title = _("Failure"),
+                message = format_exc(),
+            ).wait()
+            return
+
+        params = parse_pci_config_space(config)
+
+        with open(fname, "w") as f:
+            f.write("""\
+[device]
+  driver = "pcistub"
+  addr = "XX.X" # specify by himself
+""")
+            for bar in bars:
+                f.write("  %s = \"%s\"\n" % bar)
+            for param in params:
+                f.write("  %s = \"%s\"\n" % param)
+            f.write("  debug = \"on\"")
 
     def on_tv_b3(self, e):
         row = self.identify_row(e.y)
