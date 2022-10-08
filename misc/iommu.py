@@ -64,6 +64,7 @@ from common import (
     bidict,
     cached,
     reset_cache,
+    mlget as _,
 )
 from widgets import (
     TkPopupHelper,
@@ -837,7 +838,7 @@ class IOMMUTV(Treeview, TkPopupHelper):
             join(ROOT,
                 "sys", "bus", "pci", "devices", dev.addr, "driver", "unbind"
             ),
-            "unbind driver failed"
+            _("unbind driver failed")
         )
         do_reload()
 
@@ -846,7 +847,7 @@ class IOMMUTV(Treeview, TkPopupHelper):
 
         bind_unbind_driver(dev.addr,
             join(ROOT, "sys", "bus", "pci", "drivers", "vfio-pci", "bind"),
-            "bind vfio-pci driver failed"
+            _("bind vfio-pci driver failed")
         )
         do_reload()
 
@@ -882,14 +883,14 @@ def update_initramfs():
         msg = format_exc()
         out, err = e.out, e.err
         msg += "\nout:\n%s\nerr:\n%s\n" % (s(out), s(err))
-        ErrorDialog("initramfs update failed",
-            title = "Failure",
+        ErrorDialog(_("initramfs update failed"),
+            title = _("Failure"),
             message = msg,
         ).wait()
     else:
         msg = "out:\n%s\nerr:\n%s\n" % (s(out), s(err))
-        ErrorDialog("initramfs update completed",
-            title = "Success",
+        ErrorDialog(_("initramfs update completed"),
+            title = _("Success"),
             message = msg,
         ).wait()
 
@@ -906,7 +907,7 @@ def bind_unbind_driver(dev_addr, path, summary):
         out, err = e.out, e.err
         msg += "\nout:\n%s\nerr:\n%s\n" % (s(out), s(err))
         ErrorDialog(summary,
-            title = "Failure",
+            title = _("Failure"),
             message = msg,
         ).wait()
         print(msg)
