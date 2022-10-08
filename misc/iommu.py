@@ -90,6 +90,7 @@ from ctypes import (
 )
 from struct import(
     pack,
+    unpack,
 )
 
 if PY3:
@@ -1063,6 +1064,124 @@ def read_pci_config_space_and_bars(group_number, device_addr):
     os_close(container_fd)
 
     return config, bar_params
+
+
+def parse_pci_config_space(config):
+    PCI_STATUS = 0x6
+    PCI_STATUS_CAP_LIST = 0x10
+    PCI_CAPABILITY_POINTER = 0x34
+    PCI_HEADER_TYPE = 0xE
+    PCI_HEADER_TYPE_MASK = 0x7F
+
+    if config[PCI_HEADER_TYPE] & PCI_HEADER_TYPE_MASK != 0:
+        raise RuntimeError("support only standard header")
+
+    params = []
+
+    formats = {
+        1: 'B',
+        2: 'H',
+        4: 'I',
+        8: 'Q',
+    }
+
+    common_fields = [
+        (0, 2, "vendor-id", "0x%04x"),
+        (2, 2, "device-id", "0x%04x"),
+        (8, 1, "revision", "%d"),
+        (10, 2, "pci-class", "0x%04x"), # Class code, Subclass
+        (61, 1, "interrupt-pin", "%d"),
+    ]
+
+    for offset, size, name, s_format in common_fields:
+        params.append((name, s_format % unpack(
+            "<" + formats[size], config[offset:offset + size]
+        )))
+
+    cap_descriptions = {
+        0x5: (
+            "msi",
+            (
+                (
+                    (7, "Reserved", None),
+                    (1, "maskbit", lambda x: "on" if x else "off"), # Per-vector masking
+                    (1, "64bit", lambda x: "on" if x else "off"),
+                    (3, "Multiple Message Enable", None),
+                    (3, "entries", lambda x: "%d" % (1 << x)), # Multiple Message Capable
+                    (1, "Enable", None),
+                    (8, "Next Pointer", None),
+                    (8, "Capability ID", None),
+                ),
+            ),
+        ),
+        0x11: (
+            "msix",
+            (
+                (
+                    (1, "Enable", None),
+                    (1, "Function Mask", None),
+                    (3, "Reserved", None),
+                    (11, "entries", lambda x: "%d" % (x + 1)), # Table Size
+                    (8, "Next Pointer", None),
+                    (8, "Capability ID", None),
+                ),
+                (
+                    (29, "Table Offset", lambda x: "0x%x" % (x << 3)),
+                    (3, "table-bar", lambda x: "%d" % x), # BIR
+                ),
+                (
+                    (29, "pba-offset", lambda x: "0x%x" % (x << 3)), # Pending Bit Offset
+                    (3, "pba-bar", lambda x: "%d" % x), # Pending Bit BIR
+                ),
+            ),
+        ),
+    }
+
+    if config[PCI_STATUS] & PCI_STATUS_CAP_LIST:
+        cap_pointer = config[PCI_CAPABILITY_POINTER] & 0xFC
+        while cap_pointer:
+            cap_id = config[cap_pointer]
+
+            if cap_id not in cap_descriptions:
+                print("ignore capability with id 0x%x and position 0x%x" % (
+                    cap_id, cap_pointer
+                ))
+                cap_pointer = config[cap_pointer + 1]
+                continue
+
+            cap_name, cap_fields = cap_descriptions[cap_id]
+            params.append((cap_name + "-cap-pos", "0x%x" % cap_pointer))
+
+            cap_offset = cap_pointer
+            for fields_group in cap_fields:
+                group_bitsize = sum(size for size, _, _ in fields_group)
+                group_size = group_bitsize // 8
+                group_value = unpack(
+                    "<" + formats[group_size],
+                    config[cap_offset:cap_offset + group_size]
+                )[0]
+                cap_offset += group_size
+
+                bitoffset = 0
+                for bitsize, field_name, field_format in fields_group:
+                    bitoffset += bitsize
+
+                    if not field_format:
+                        continue
+
+                    field_value = (
+                          (group_value >> (group_bitsize - bitoffset))
+                        & ((1 << bitsize) - 1)
+                    )
+
+                    params.append((
+                        cap_name + "-" + field_name.lower().replace(" ", "-"),
+                        field_format(field_value)
+                    ))
+
+            cap_pointer = config[cap_pointer + 1]
+
+    return params
 
 
 def main():
