@@ -522,7 +522,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         # merge actual QOM tree in
         qvc = self.qvd.qvc
         if qvc.device_tree:
-            next(self.p.qom_tree.find("device")).merge(qvc.device_tree)
+            next(self.p.qom_tree.find(name = "device")).merge(qvc.device_tree)
 
     def reset_project_qom_tree(self):
         proj = self.p
