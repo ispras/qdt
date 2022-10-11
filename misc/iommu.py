@@ -1214,7 +1214,7 @@ def parse_pci_config_space(config):
 
             cap_offset = cap_pointer
             for fields_group in cap_fields:
-                group_bitsize = sum(size for size, _, _ in fields_group)
+                group_bitsize = sum(size for size, __, __ in fields_group)
                 group_size = group_bitsize // 8
                 group_value = unpack(
                     "<" + formats[group_size],
