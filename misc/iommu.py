@@ -1149,7 +1149,8 @@ def parse_pci_config_space(config):
         (0, 2, "vendor-id", "0x%04x"),
         (2, 2, "device-id", "0x%04x"),
         (8, 1, "revision", "%d"),
-        (10, 2, "pci-class", "0x%04x"), # Class code, Subclass
+        # Class code, Subclass
+        (10, 2, "pci-class", "0x%04x"),
         (61, 1, "interrupt-pin", "%d"),
     ]
 
@@ -1164,10 +1165,12 @@ def parse_pci_config_space(config):
             (
                 (
                     (7, "Reserved", None),
-                    (1, "maskbit", lambda x: "on" if x else "off"), # Per-vector masking
+                    # Per-vector masking
+                    (1, "maskbit", lambda x: "on" if x else "off"),
                     (1, "64bit", lambda x: "on" if x else "off"),
                     (3, "Multiple Message Enable", None),
-                    (3, "entries", lambda x: "%d" % (1 << x)), # Multiple Message Capable
+                    # Multiple Message Capable
+                    (3, "entries", lambda x: "%d" % (1 << x)),
                     (1, "Enable", None),
                     (8, "Next Pointer", None),
                     (8, "Capability ID", None),
@@ -1181,17 +1184,21 @@ def parse_pci_config_space(config):
                     (1, "Enable", None),
                     (1, "Function Mask", None),
                     (3, "Reserved", None),
-                    (11, "entries", lambda x: "%d" % (x + 1)), # Table Size
+                    # Table Size
+                    (11, "entries", lambda x: "%d" % (x + 1)),
                     (8, "Next Pointer", None),
                     (8, "Capability ID", None),
                 ),
                 (
                     (29, "Table Offset", lambda x: "0x%x" % (x << 3)),
-                    (3, "table-bar", lambda x: "%d" % x), # BIR
+                    # BIR
+                    (3, "table-bar", lambda x: "%d" % x),
                 ),
                 (
-                    (29, "pba-offset", lambda x: "0x%x" % (x << 3)), # Pending Bit Offset
-                    (3, "pba-bar", lambda x: "%d" % x), # Pending Bit BIR
+                    # Pending Bit Offset
+                    (29, "pba-offset", lambda x: "0x%x" % (x << 3)),
+                    # Pending Bit BIR
+                    (3, "pba-bar", lambda x: "%d" % x),
                 ),
             ),
         ),
