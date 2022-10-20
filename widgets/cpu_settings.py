@@ -31,12 +31,11 @@ from .gui_frame import (
 )
 
 
-class CPUSettingsWidget(QOMInstanceSettingsWidget):
+# `object`  is for `property`
+class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
     def __init__(self, cpu, *args, **kw):
         QOMInstanceSettingsWidget.__init__(self, cpu, *args, **kw)
-
-        self.cpu = cpu
 
         self.cpu_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
@@ -53,28 +52,32 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget):
         l.grid(row = 0, column = 0, sticky = "W")
         e.grid(row = 0, column = 1, sticky = "EW")
 
+    @property
+    def cpu(self):
+        return self.node
+
     def __apply_internal__(self):
         qom = self.qom_type_var.get()
-        if self.cpu.qom_type == qom:
+        if self.node.qom_type == qom:
             return
 
-        self.mht.stage(MOp_SetCPUAttr, "qom_type", qom, self.cpu.id)
+        self.mht.stage(MOp_SetCPUAttr, "qom_type", qom, self.node.id)
 
         self.mht.set_sequence_description(
-            _("CPU %d configuration.") % self.cpu.id
+            _("CPU %d configuration.") % self.node.id
         )
 
     def refresh(self):
         QOMInstanceSettingsWidget.refresh(self)
 
-        self.qom_type_var.set(self.cpu.qom_type)
+        self.qom_type_var.set(self.node.qom_type)
 
     def on_changed(self, op, *__, **___):
         if not isinstance(op, MachineNodeOperation):
             return
 
         if op.writes_node():
-            if not self.cpu.id in self.mach.id2node:
+            if not self.node.id in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
