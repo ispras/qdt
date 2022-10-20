@@ -3,14 +3,16 @@ __all__ = [
 ]
 
 from .gui_frame import (
-    GUIFrame
+    GUIFrame,
+)
+
+from os import (
+    name as os_name,
 )
 from six.moves.tkinter import (
-    NW
+    NW,
 )
-from os import (
-    name as os_name
-)
+
 
 RESIZE_GAP = 4
 DOUBLE_GAP = RESIZE_GAP << 1
