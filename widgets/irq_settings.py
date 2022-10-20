@@ -37,11 +37,11 @@ from .hotkey import (
     HKEntry
 )
 
-class IRQSettingsWidget(SettingsWidget):
+
+# `object` is for `property`
+class IRQSettingsWidget(SettingsWidget, object):
     def __init__(self, irq, *args, **kw):
         SettingsWidget.__init__(self, irq, *args, **kw)
-
-        self.irq = irq
 
         for pfx, txt in [
             ("src_", _("Source")),
@@ -90,6 +90,10 @@ class IRQSettingsWidget(SettingsWidget):
         self.__auto_var_base_cbs = None
         self.v_var_base.trace_variable("w", self.__on_var_base)
 
+    @property
+    def irq(self):
+        return self.node
+
     def __on_var_base(self, *args):
         cbs = self.__auto_var_base_cbs
 
@@ -115,7 +119,7 @@ class IRQSettingsWidget(SettingsWidget):
                 self.dst_irq_idx_var.trace_vdelete("w", cbs[3])
 
     def on_node_text_changed(self, *args):
-        irq = self.irq
+        irq = self.node
 
         for pfx in [ "src", "dst" ]:
             node_var = getattr(self, pfx + "_node_var")
@@ -159,7 +163,7 @@ class IRQSettingsWidget(SettingsWidget):
                     getattr(self, pfx + "_irq_name_var").set("")
 
     def __apply_internal__(self):
-        irq = self.irq
+        irq = self.node
 
         for pfx in [ "src", "dst" ]:
             var = getattr(self, pfx + "_node_var")
