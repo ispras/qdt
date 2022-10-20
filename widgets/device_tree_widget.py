@@ -132,10 +132,10 @@ ItemDesc = namedtuple(
 
 class QOMTreeWidget(GUIFrame):
 
-    def __init__(self, root, *args, **kw):
+    def __init__(self, *args, **kw):
         self.qom_tree = qom_tree = kw.pop("qom_tree")
 
-        GUIFrame.__init__(self, master = root, *args, **kw)
+        GUIFrame.__init__(self, *args, **kw)
 
         self.columnconfigure(0, weight = 1, minsize = 300)
         self.columnconfigure(2, weight = 1, minsize = 100)
