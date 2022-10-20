@@ -3,30 +3,32 @@ __all__ = [
 ]
 
 from common import (
-    mlget as _
+    mlget as _,
+)
+from .gui_dialog import (
+    GUIDialog,
 )
 from .hotkey import (
-    HKEntry
-)
-from .var_widgets import (
-    VarLabel,
-    VarButton,
-    VarCombobox
-)
-from six.moves.tkinter import (
-    END,
-    StringVar
-)
-from six.moves.tkinter_messagebox import (
-    showerror
+    HKEntry,
 )
 from qemu import (
     MOp_AddBus,
-    POp_AddDesc
+    POp_AddDesc,
 )
-from .gui_dialog import (
-    GUIDialog
+from .var_widgets import (
+    VarButton,
+    VarCombobox,
+    VarLabel,
 )
+
+from six.moves.tkinter import (
+    END,
+    StringVar,
+)
+from six.moves.tkinter_messagebox import (
+    showerror,
+)
+
 
 msg_title = _("Description creation error")
 msg_name = _("Name '%s' is incorrect or already in use.")
