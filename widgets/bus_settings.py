@@ -3,42 +3,42 @@ __all__ = [
   , "BusSettingsWidget"
 ]
 
-from .settings_window import (
-    SettingsWindow,
-    SettingsWidget
-)
 from common import (
-    mlget as _
+    mlget as _,
+)
+from .device_settings import (
+    DeviceSettingsWidget,
+)
+from .gui_frame import (
+    GUIFrame,
+)
+from .hotkey import (
+    HKEntry,
 )
 from qemu import (
+    BusNode,
+    MachineNodeOperation,
+    MOp_SetBusAttr,
     MOp_SetChildBus,
-    MachineNodeOperation
+)
+from .settings_window import (
+    SettingsWidget,
+    SettingsWindow,
 )
 from .var_widgets import (
     VarCheckbutton,
-    VarLabel
+    VarLabel,
 )
+
 from six.moves.tkinter import (
-    BOTH,
     BooleanVar,
-    StringVar
+    BOTH,
+    StringVar,
 )
 from six.moves.tkinter_ttk import (
-    Combobox
+    Combobox,
 )
-from .device_settings import (
-    DeviceSettingsWidget
-)
-from qemu import (
-    MOp_SetBusAttr,
-    BusNode
-)
-from .hotkey import (
-    HKEntry
-)
-from .gui_frame import (
-    GUIFrame
-)
+
 
 # `object` is for `property`
 class BusSettingsWidget(SettingsWidget, object):
@@ -121,7 +121,7 @@ class BusSettingsWidget(SettingsWidget, object):
             else:
                 self.mht.append_child_bus(new_parent_id, bus.id)
 
-        for (text, field, _type) in self.fields:
+        for (__, field, _type) in self.fields:
             new_val = getattr(self, "var_" + field).get()
             cur_val = getattr(bus, field)
 
@@ -149,13 +149,13 @@ class BusSettingsWidget(SettingsWidget, object):
             DeviceSettingsWidget.gen_node_link_text(bus.parent_device)
         )
 
-        for (text, field, _type) in self.fields:
+        for (__, field, _type) in self.fields:
             var = getattr(self, "var_" + field)
             cur_val = getattr(bus, field)
 
             var.set(cur_val)
 
-    def on_changed(self, op, *args, **kw):
+    def on_changed(self, op, *__, **___):
         bus = self.node
         if isinstance(op, MOp_SetChildBus):
             if bus.id in [ op.prev_bus_id, op.bus_id ]:
@@ -171,7 +171,9 @@ class BusSettingsWidget(SettingsWidget, object):
             else:
                 self.refresh()
 
+
 class BusSettingsWindow(SettingsWindow):
+
     def __init__(self, bus, *args, **kw):
         SettingsWindow.__init__(self, bus, *args, **kw)
 
