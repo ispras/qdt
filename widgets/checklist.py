@@ -2,15 +2,15 @@ __all__ = [
     "Checklist"
 ]
 
+from .gui_frame import (
+    GUIFrame,
+)
+from .var_widgets import (
+    VarCheckbutton,
+)
 
 from six.moves.tkinter import (
     BooleanVar,
-)
-from .gui_frame import (
-    GUIFrame
-)
-from .var_widgets import (
-    VarCheckbutton
 )
 
 
@@ -32,7 +32,7 @@ the check box label.
             c = VarCheckbutton(self, text = text, variable = v)
             c.grid(row = row, column = 0, sticky = "W")
 
-            def trace(_, __, ___, _text = text):
+            def trace(__, ___, ____, _text = text):
                 self.current = _text
                 self.event_generate("<<Check>>")
                 del self.current
