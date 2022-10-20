@@ -5,7 +5,6 @@ __all__ = [
 
 from six.moves.tkinter import (
     BooleanVar,
-    X
 )
 from .gui_frame import (
     GUIFrame
