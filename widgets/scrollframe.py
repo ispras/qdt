@@ -175,8 +175,11 @@ pass it with name "inner_kw" in "kw".
         while m is not None:
             if m is inner:
                 break
-            if isinstance(m, str): # E.g., combobox's popdown list.
-                # Can't determine.
+            if isinstance(m, str):
+                # Combobox popdown list is given by name in some Tk
+                # implementations.
+                # The reference to Tk object also cannot be obtained using,
+                # for instance, nametowidget.
                 return
             m = m.master
         else:
