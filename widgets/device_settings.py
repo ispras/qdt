@@ -25,7 +25,6 @@ from six.moves import (
     range as xrange
 )
 from six.moves.tkinter import (
-    ALL,
     BOTH,
     StringVar,
     BooleanVar,
@@ -52,7 +51,6 @@ from qemu import (
         MOp_DelDevProp,
         MOp_AddDevProp,
         MOp_SetDevProp,
-    qvd_get
 )
 from itertools import (
     count
