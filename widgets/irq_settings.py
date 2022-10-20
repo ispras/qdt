@@ -40,8 +40,10 @@ from .hotkey import (
 
 # `object` is for `property`
 class IRQSettingsWidget(SettingsWidget, object):
-    def __init__(self, irq, *args, **kw):
-        SettingsWidget.__init__(self, irq, *args, **kw)
+
+    def __init__(self, *args, **kw):
+        kw["node"] = kw.pop("irq")
+        SettingsWidget.__init__(self, *args, **kw)
 
         for pfx, txt in [
             ("src_", _("Source")),
@@ -276,12 +278,16 @@ class IRQSettingsWidget(SettingsWidget, object):
         )
 
 class IRQSettingsWindow(SettingsWindow):
-    def __init__(self, *args, **kw):
-        irq = kw.pop("irq")
 
-        SettingsWindow.__init__(self, irq, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = irq = kw.pop("irq")
+
+        SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("IRQ line settings"))
 
-        self.set_sw(IRQSettingsWidget(irq, self.mach, self))
+        self.set_sw(IRQSettingsWidget(self,
+            irq = irq,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

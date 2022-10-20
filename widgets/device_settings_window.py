@@ -20,9 +20,9 @@ from .settings_window import (
 
 class DeviceSettingsWindow(SettingsWindow):
     def __init__(self, *args, **kw):
-        device = kw.pop("device")
+        kw["node"] = device = kw.pop("device")
 
-        SettingsWindow.__init__(self, device, *args, **kw)
+        SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("Device settings"))
 
@@ -38,5 +38,8 @@ class DeviceSettingsWindow(SettingsWindow):
         else:
             dsw_class = DeviceSettingsWidget
 
-        self.set_sw(dsw_class(device, self.mach, self))
+        self.set_sw(dsw_class(self,
+            device = device,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")
