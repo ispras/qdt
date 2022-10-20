@@ -2,17 +2,18 @@ __all__ = [
     "CoStatusView"
 ]
 
-from six.moves.tkinter import (
-    IntVar
-)
 from common import (
-    FormatVar
-)
-from .statusbar import (
-    Statusbar
+    FormatVar,
 )
 from .gui_tk import (
-    GUITk
+    GUITk,
+)
+from .statusbar import (
+    Statusbar,
+)
+
+from six.moves.tkinter import (
+    IntVar,
 )
 
 
