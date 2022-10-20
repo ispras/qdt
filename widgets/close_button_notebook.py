@@ -2,13 +2,14 @@ __all__ = [
     "CloseButtonNotebook"
 ]
 
+from six.moves.tkinter import (
+    PhotoImage,
+)
 from six.moves.tkinter_ttk import (
     Notebook,
-    Style
+    Style,
 )
-from six.moves.tkinter import (
-    PhotoImage
-)
+
 
 """
 The code is based on
