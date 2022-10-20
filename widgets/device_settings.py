@@ -95,7 +95,7 @@ class BusLineDesc(object):
 
     def update(self):
         try:
-            cur_bus = self.dsw.dev.buses[self.idx]
+            cur_bus = self.dsw.node.buses[self.idx]
         except IndexError:
             cur_bus = None
         bus_text = DeviceSettingsWidget.gen_node_link_text(cur_bus)
@@ -121,7 +121,7 @@ class BusLineDesc(object):
             DeviceSettingsWidget.gen_node_link_text(b) for b in (
                 [ b for b in self.dsw.mach.buses if (\
                         (   b.parent_device is None \
-                         or b.parent_device == self.dsw.dev) 
+                         or b.parent_device == self.dsw.node)
                     and (not b.id in sel_buses))
                 ] + [ None ]
             )
@@ -313,7 +313,9 @@ class PropLineDesc(object):
         self.v_val = var_p_val
         self.bt_del = bt_del
 
-class DeviceSettingsWidget(QOMInstanceSettingsWidget):
+
+# `object` is for `property`
+class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
     EVENT_BUS_SELECTED = "<<DSWBusSelected>>"
 
     prop_type_name_map = {
@@ -331,7 +333,6 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
 
     def __init__(self, device, *args, **kw):
         QOMInstanceSettingsWidget.__init__(self, device, *args, **kw)
-        self.dev = device
 
         common_fr = GUIFrame(self)
         common_fr.pack(fill = BOTH, expand = False)
@@ -400,6 +401,10 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
             sticky = "NEWS"
         )
 
+    @property
+    def dev(self):
+        return self.node
+
     def __on_destroy__(self, *args):
         for bld in self.child_buses_rows:
             bld.delete()
@@ -449,9 +454,9 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
             self.event_generate(DeviceSettingsWidget.EVENT_BUS_SELECTED)
 
         if isinstance(op, MachineNodeOperation):
-            if op.writes_node() and self.dev.id == -1:
+            if op.writes_node() and self.node.id == -1:
                 self.destroy()
-            elif op.node_id == self.dev.id:
+            elif op.node_id == self.node.id:
                 self.refresh()
 
     @staticmethod
@@ -498,7 +503,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
     def refresh(self):
         QOMInstanceSettingsWidget.refresh(self)
 
-        self.qom_type_var.set(self.dev.qom_type)
+        self.qom_type_var.set(self.node.qom_type)
 
         for p, desc in self.prop2field.items():
             desc.e_name.destroy()
@@ -508,10 +513,10 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
 
         self.prop2field = {}
 
-        # If self.dev.properties is empty the row variable will remain
+        # If self.node.properties is empty the row variable will remain
         # undefined.
         row = -1
-        for row, p in enumerate(self.dev.properties):
+        for row, p in enumerate(self.node.properties):
             lpd = PropLineDesc(self, p)
             lpd.gen_row(row)
             # Do not use different QOMPropertyValue as the key for the
@@ -530,11 +535,11 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
             buses.append(DeviceSettingsWidget.gen_node_link_text(n))
         self.bus_cb.config(values = buses)
         self.bus_var.set(
-            DeviceSettingsWidget.gen_node_link_text(self.dev.parent_bus)
+            DeviceSettingsWidget.gen_node_link_text(self.node.parent_bus)
         )
 
         bus_row_count = len(self.child_buses_rows)
-        bus_count = len(self.dev.buses) + 1
+        bus_count = len(self.node.buses) + 1
 
         if bus_row_count < bus_count:
             if bus_row_count:
@@ -598,30 +603,30 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         # apply parent bus
         new_bus_text = self.bus_var.get()
         new_bus = self.find_node_by_link_text(new_bus_text)
-        if not self.dev.parent_bus == new_bus:
-            self.mht.stage(MOp_SetDevParentBus, new_bus, self.dev.id)
+        if not self.node.parent_bus == new_bus:
+            self.mht.stage(MOp_SetDevParentBus, new_bus, self.node.id)
 
         qom = self.qom_type_var.get()
-        if not self.dev.qom_type == qom:
-            self.mht.stage(MOp_SetDevQOMType, qom, self.dev.id)
+        if not self.node.qom_type == qom:
+            self.mht.stage(MOp_SetDevQOMType, qom, self.node.id)
 
         # Do property removing before addition to prevent conflicts of
         # property recreation.
-        for p in self.dev.properties:
+        for p in self.node.properties:
             if not p in self.prop2field:
-                self.mht.stage(MOp_DelDevProp, p, self.dev.id)
+                self.mht.stage(MOp_DelDevProp, p, self.node.id)
 
         for p, desc in list(self.prop2field.items()):
             cur_name, cur_type, cur_val = desc.get_current_name(), \
                 desc.get_current_type(), desc.get_current_val()
 
-            if p in self.dev.properties.values():
+            if p in self.node.properties.values():
                 if cur_name != p.prop_name:
                     # Name of property was changed. Recreate it.
                     new_p = QOMPropertyValue(cur_type, cur_name, cur_val)
 
-                    self.mht.stage(MOp_DelDevProp, p, self.dev.id)
-                    self.mht.stage(MOp_AddDevProp, new_p, self.dev.id)
+                    self.mht.stage(MOp_DelDevProp, p, self.node.id)
+                    self.mht.stage(MOp_AddDevProp, new_p, self.node.id)
 
                     del self.prop2field[p]
                     self.prop2field[new_p] = desc
@@ -636,13 +641,13 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
                         cur_type,
                         cur_val,
                         p,
-                        self.dev.id
+                        self.node.id
                     )
             else:
                 # A completely new property. It was added using
                 # the 'Add' button.
                 new_p = QOMPropertyValue(cur_type, cur_name, cur_val)
-                self.mht.stage(MOp_AddDevProp, new_p, self.dev.id)
+                self.mht.stage(MOp_AddDevProp, new_p, self.node.id)
 
         new_buses = self.get_selected_child_buses()
 
@@ -653,14 +658,14 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
         # The child bus list is reversed to remove buses from the end to to the
         # begin. After removing bus from middle consequent indexes becomes
         # incorrect.
-        for i, bus in reversed([ x for x in enumerate(self.dev.buses) ]):
+        for i, bus in reversed([ x for x in enumerate(self.node.buses) ]):
             try:
                 new_bus = new_buses.pop(i)
             except IndexError:
                 # remove i-th bus
                 self.mht.stage(
                     MOp_SetChildBus,
-                    self.dev.id,
+                    self.node.id,
                     i,
                     -1
                 )
@@ -671,20 +676,20 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
                 # change i-th bus (1-st step: remove)
                 self.mht.stage(
                     MOp_SetChildBus,
-                    self.dev.id,
+                    self.node.id,
                     i,
                     -1
                 )
                 # step 2 should be done in increasing index order
                 step2.insert(0, (i, new_bus))
 
-        adding = [ x for x in zip(count(len(self.dev.buses)), new_buses) ]
+        adding = [ x for x in zip(count(len(self.node.buses)), new_buses) ]
 
         for i, new_bus in step2 + adding:
             # add i-th bus
             self.mht.stage(
                 MOp_SetChildBus,
-                self.dev.id,
+                self.node.id,
                 i,
                 new_bus
             )
