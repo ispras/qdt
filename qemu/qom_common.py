@@ -6,6 +6,7 @@ __all__ = [
       , "QOMPropertyTypeInteger"
   , "QOMPropertyValue"
   , "idon"
+  , "is_type_in_str"
 ]
 
 
@@ -15,6 +16,10 @@ from common import (
 from source import (
     Type
 )
+
+
+def is_type_in_str(val):
+    return isinstance(val, str) and Type.exists(val)
 
 
 def idon(node):
