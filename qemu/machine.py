@@ -11,7 +11,8 @@ from .qom_common import (
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
-    QOMPropertyTypeInteger
+    QOMPropertyTypeInteger,
+    is_type_in_str,
 )
 from .qom import (
     QOMType
@@ -142,9 +143,6 @@ class IRQHubLayout(object):
         root_name = self.gen.node_map[self.hub]
         return self._gen_irq_get(root_name, self.root, root_name)
 
-
-def is_type_in_str(val):
-    return isinstance(val, str) and Type.exists(val)
 
 class MachineType(QOMType):
 
