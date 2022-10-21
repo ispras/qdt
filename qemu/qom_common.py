@@ -51,7 +51,7 @@ class QOMPropertyTypeInteger(QOMPropertyType):
 
     @staticmethod
     def build_val(prop_val):
-        if isinstance(prop_val, str) and Type.exists(prop_val):
+        if is_type_in_str(prop_val):
             return str(prop_val)
         return "0x%0x" % prop_val
 
