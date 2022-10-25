@@ -28,6 +28,7 @@ from os.path import (
 )
 from git import (
     BadName,
+    GitCommandError,
     Repo
 )
 from time import (
@@ -257,6 +258,22 @@ def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
         # Has no modules
         return
 
+    # see: https://bugs.launchpad.net/ubuntu/+source/git/+bug/1993586
+    try:
+        # Note, --local is not enough.
+        prev_protocol_file_allow = git.config(
+            "--global", "protocol.file.allow"
+        )
+    except GitCommandError as e:
+        # If value is not set, git normally returns error code (1).
+        # But we use weaker condition: only check stderr/out
+        if e.stderr or e.stdout: # or e.status != 1:
+            raise
+        prev_protocol_file_allow = None
+
+    if prev_protocol_file_allow != "always":
+        git.config("--global", "protocol.file.allow", "always")
+
     submodules = {}
 
     out = git.config(l = True, file = ".gitmodules")
@@ -331,6 +348,14 @@ def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
             url_back = None
             # Updates URL in cache "config" file.
             git.submodule("sync", sm_path)
+
+    if prev_protocol_file_allow:
+        if prev_protocol_file_allow != "always":
+            git.config("--global", "protocol.file.allow",
+                prev_protocol_file_allow
+            )
+    else:
+        git.config("--global", "--unset", "protocol.file.allow")
 
 
 def git_find_commit(repo, version):
