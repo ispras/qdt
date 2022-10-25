@@ -15,6 +15,7 @@ from multiprocessing import (
 )
 from .git_tools import (
     init_submodules_from_cache,
+    iter_submodules_caches,
 )
 from .workers import (
     PopenResult,
@@ -159,7 +160,7 @@ class QWorkTree(Extensible):
             target = init_submodules_from_cache,
             args = (
                 self.repo,
-                join(self.qrepo.repo.working_tree_dir, ".git", "modules"),
+                list(iter_submodules_caches(self.qrepo.repo)),
             ),
             kwargs = dict(
                 revert_urls = revert_urls
