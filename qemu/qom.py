@@ -5,52 +5,65 @@ __all__ = [
       , "QOMCPU"
 ]
 
-from source import (
-    CINT,
-    line_origins,
-    Source,
-    Header,
-    Structure,
-    TopComment,
-    TypeNotRegistered,
-    Initializer,
-    Function,
-    Macro,
-    Pointer,
-    Variable,
-    Type
-)
-from os.path import (
-    join
-)
-from six import (
-    integer_types
-)
 from common import (
-    lazy,
-    OrderedSet,
     is_pow2,
-    mlget as _
-)
-from collections import (
-    OrderedDict
-)
-from .version import (
-    get_vp
-)
-from .qtn import (
-    QemuTypeName
-)
-from math import (
-    log
+    lazy,
+    mlget as _,
+    OrderedSet,
 )
 from .machine_nodes import (
-    MemoryLeafNode
+    MemoryLeafNode,
 )
-from source.function import *
+from .qtn import (
+    QemuTypeName,
+)
 from .register import (
     gen_reg_cases,
     get_reg_range,
+)
+from source import (
+    CINT,
+    Function,
+    Header,
+    Initializer,
+    line_origins,
+    Macro,
+    Pointer,
+    Source,
+    Structure,
+    TopComment,
+    Type,
+    TypeNotRegistered,
+    Variable,
+)
+from source.function import (
+    BodyTree,
+    BranchSwitch,
+    Call,
+    Declare,
+    OpAddr,
+    OpDeclareAssign,
+    MCall,
+    NewLine,
+    Return,
+    StrConcat,
+    SwitchCaseDefault,
+)
+from .version import (
+    get_vp,
+)
+
+from collections import (
+    OrderedDict,
+)
+from math import (
+    log,
+)
+from os.path import (
+    join,
+)
+from six import (
+    integer_types,
 )
 
 
@@ -159,6 +172,7 @@ for U in ["", "U"]:
 
 
 class QOMType(object):
+
     __attribute_info__ = OrderedDict([
         ("name", { "short": _("Name"), "input": str }),
         ("directory", { "short": _("Directory"), "input": str }),
@@ -770,9 +784,13 @@ class QOMStateField(object):
 
 
 class QOMDevice(QOMType):
+
     __attribute_info__ = OrderedDict([
         ("block_num", { "short": _("Block driver quantity"), "input": int }),
-        ("char_num", { "short": _("Character driver quantity"), "input": int }),
+        ("char_num", {
+            "short": _("Character driver quantity"),
+            "input": int
+        }),
         ("timer_num", { "short": _("Timer quantity"), "input": int })
     ])
 
@@ -1158,7 +1176,7 @@ class QOMCPU(QOMType):
             cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
         return s
 
-    def gen_vmstate_initializer(self, _, state_struct):
+    def gen_vmstate_initializer(self, __, state_struct):
         init = super(QOMCPU, self).gen_vmstate_initializer('"cpu"',
             state_struct,
             min_version_id = 1
