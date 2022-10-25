@@ -1,18 +1,19 @@
 __all__ = [
-    "QOMStateField"
-  , "QOMType"
+    "QOMType"
       , "QOMDevice"
       , "QOMCPU"
 ]
 
 from common import (
     is_pow2,
-    lazy,
     mlget as _,
     OrderedSet,
 )
 from .machine_nodes import (
     MemoryLeafNode,
+)
+from .qom_type_state_field import (
+    QOMTypeStateField,
 )
 from .qtn import (
     QemuTypeName,
@@ -94,10 +95,10 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
     init_code["_conf"] = init_code["_f"]
 
     if default_default is not None:
-        if field.default is None:
+        if field.property_default is None:
             val = default_default
         else:
-            val = field.default
+            val = field.property_default
 
         if isinstance(val, str):
             try:
@@ -112,7 +113,7 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
             else:
                 val = bool_false
         elif isinstance(val, integer_types):
-            if field.type.name[0] == "u":
+            if field.c_type_name[0] == "u":
                 val = "0x%X" % val
             else:
                 val = str(val)
@@ -182,31 +183,17 @@ class QOMType(object):
         extra_fields = tuple()
     ):
         self.directory = directory
-        self.qtn = QemuTypeName(name)
+        self.qtn = qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
         self.state_fields = []
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
-        self.extra_fields = tuple(extra_fields)
+        extra_fields = tuple(extra_fields)
+        self.extra_fields = extra_fields
 
-    @lazy
-    def _extra_fields(self):
-        res = []
-        macros_prefix = self.qtn.for_macros + "_"
-        for f in self.extra_fields:
-            f_ = QOMStateField(
-                ftype = Type[f.c_type_name],
-                name = f.name,
-                num = f.array_size,
-                save = f.save_in_vmsd,
-                prop = f.is_property,
-                default = f.property_default
-            )
-            f_.prop_macro_name = macros_prefix + f.name.upper()
-
-            res.append(f_)
-
-        return tuple(res)
+        macros_prefix = qtn.for_macros + "_"
+        for field in extra_fields:
+            field.prop_macro_name = macros_prefix + field.name.upper()
 
     def gen_type_cast(self):
         cast_type = get_vp("QOM type checkers type")
@@ -320,7 +307,7 @@ class QOMType(object):
     def iter_all_state_fields(self):
         for f in self.state_fields:
             yield f
-        for f in self._extra_fields:
+        for f in self.extra_fields:
             yield f
 
     def add_state_fields(self, fields):
@@ -337,12 +324,11 @@ class QOMType(object):
             prop = False,
             default = None
         ):
-        t = Type[type_name]
-        f = QOMStateField(t, field_name,
-            num = num,
-            save = save,
-            prop = prop,
-            default = default
+        f = QOMTypeStateField(type_name, field_name,
+            array_size = num,
+            save_in_vmsd = save,
+            is_property = prop,
+            property_default = default
         )
         self.add_state_field(f)
 
@@ -371,17 +357,21 @@ class QOMType(object):
     def gen_state(self):
         s = Structure(self.struct_name)
         for f in self.iter_all_state_fields():
-            s.append_field(f.type(f.name, array_size = f.num))
+            s.append_field(Type[f.c_type_name](f.name,
+                array_size = f.array_size
+            ))
         return s
 
     def gen_property_macros(self, source):
         for field in self.iter_all_state_fields():
-            if not field.prop:
+            if not field.is_property:
                 continue
             if field.prop_macro_name is None:
                 continue
 
-            t = Macro(field.prop_macro_name, text = field.prop_name)
+            t = Macro(field.prop_macro_name,
+                text = field.property_name,
+            )
             source.add_type(t)
 
     def gen_properties_initializer(self, state_struct):
@@ -392,15 +382,15 @@ class QOMType(object):
 
         first = True
         for f in self.iter_all_state_fields():
-            if not f.prop:
+            if not f.is_property:
                 continue
 
             try:
-                helper = type2prop[f.type.c_name]
+                helper = type2prop[f.c_type_name]
             except KeyError:
                 raise Exception(
                     "Property generation for type %s is not implemented" % \
-                        f.type.name
+                        f.c_type_name
                 )
 
             decl_code, decl_types = helper(f, state_struct)
@@ -457,7 +447,7 @@ class QOMType(object):
         global type2vmstate
 
         for f in self.iter_all_state_fields():
-            if not f.save:
+            if not f.save_in_vmsd:
                 continue
 
             # code of macro initializer is dict
@@ -470,16 +460,16 @@ class QOMType(object):
             }
 
             try:
-                vms_macro_name = type2vmstate[f.type.c_name]
+                vms_macro_name = type2vmstate[f.c_type_name]
             except KeyError:
                 raise Exception(
                     "VMState generation for type %s is not implemented" % \
-                        f.type
+                        f.c_type_name
                 )
 
-            if f.num is not None:
+            if f.array_size is not None:
                 vms_macro_name += "_ARRAY"
-                fdict["_n"] = str(f.num)
+                fdict["_n"] = str(f.array_size)
 
             vms_macro = Type[vms_macro_name]
             used_macros.add(vms_macro)
@@ -766,23 +756,6 @@ class QOMType(object):
             return CINT(reg_range, 16, digits)
 
 
-class QOMStateField(object):
-
-    def __init__(self, ftype, name,
-            num = None,
-            save = True,
-            prop = False,
-            default = None
-    ):
-        self.type = ftype
-        self.name = name
-        self.num = num
-        self.prop_name = '"' + name.replace('_', '-') + '"'
-        self.save = save
-        self.prop = prop
-        self.default = default
-
-
 class QOMDevice(QOMType):
 
     __attribute_info__ = OrderedDict([
@@ -824,10 +797,9 @@ class QOMDevice(QOMType):
 
     def block_declare_fields(self):
         for index in range(self.block_num):
-            f = QOMStateField(
-                Pointer(Type["BlockBackend"]), self.block_name(index),
-                save = False,
-                prop = True
+            f = QOMTypeStateField("BlockBackend*", self.block_name(index),
+                save_in_vmsd = False,
+                is_property = True
             )
             self.add_state_field(f)
             # override macro name assigned by `add_state_field`
@@ -855,15 +827,15 @@ class QOMDevice(QOMType):
         )
 
     def char_declare_fields(self):
-        field_type = (Type["CharBackend"] if get_vp()["v2.8 chardev"]
-            else Pointer(Type["CharDriverState"])
+        field_type = ("CharBackend" if get_vp()["v2.8 chardev"]
+            else "CharDriverState*"
         )
 
         for index in range(self.char_num):
-            self.add_state_field(QOMStateField(
+            self.add_state_field(QOMTypeStateField(
                 field_type, self.char_name(index),
-                save = False,
-                prop = True
+                save_in_vmsd = False,
+                is_property = True
             ))
 
     def char_gen_cb(self, proto_name, handler_name, index, source,
@@ -921,9 +893,9 @@ class QOMDevice(QOMType):
 
     def timer_declare_fields(self):
         for index in range(self.timer_num):
-            self.add_state_field(QOMStateField(
-                Pointer(Type["QEMUTimer"]), self.timer_name(index),
-                save = True
+            self.add_state_field(QOMTypeStateField(
+                "QEMUTimer*", self.timer_name(index),
+                save_in_vmsd = True
             ))
 
     def timer_gen_cb(self, index, source, state_struct, type_cast_macro):
@@ -1083,15 +1055,15 @@ class QOMDevice(QOMType):
 
     def nic_declare_field(self, index):
         self.add_state_field(
-            QOMStateField(
-                Pointer(Type["NICState"]), self.nic_name(index),
-                save = False
+            QOMTypeStateField(
+                "NICState*", self.nic_name(index),
+                save_in_vmsd = False
             )
         )
-        f = QOMStateField(
-            Type["NICConf"], self.nic_conf_name(index),
-            save = False,
-            prop = True
+        f = QOMTypeStateField(
+            "NICConf", self.nic_conf_name(index),
+            save_in_vmsd = False,
+            is_property = True
         )
         self.add_state_field(f)
         # NIC properties have standard names
