@@ -15,14 +15,19 @@ class QOMTypeStateField(object):
         array_size = None,
         save_in_vmsd = True,
         is_property = False,
-        property_default = None
+        property_default = None,
+        property_name = None,
     ):
+        if property_name is None:
+            property_name = '"' + name.replace('_', '-') + '"'
+
         self.c_type_name = c_type_name
         self.name = name
         self.array_size = array_size
         self.save_in_vmsd = save_in_vmsd
         self.is_property = is_property
         self.property_default = property_default
+        self.property_name = property_name
 
     def __var_base__(self):
         return "fld_"
