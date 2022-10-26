@@ -12,6 +12,9 @@ from common import (
 from .machine_nodes import (
     MemoryLeafNode,
 )
+from .model_state import (
+    StateStruct,
+)
 from .qom_type_state_field import (
     QOMTypeStateField,
 )
@@ -155,11 +158,6 @@ type2prop = {
     )
 }
 
-type2vmstate = {
-    "QEMUTimer*" : "VMSTATE_TIMER_PTR",
-    "PCIDevice" : "VMSTATE_PCI_DEVICE"
-}
-
 for U in ["", "U"]:
     for bits in ["8", "16", "32", "64"]:
         # macro suffix
@@ -168,8 +166,6 @@ for U in ["", "U"]:
         ctn = msfx.lower() + "_t"
 
         declare_int(ctn, "DEFINE_PROP_" + msfx)
-
-        type2vmstate[ctn] = "VMSTATE_" + msfx
 
 
 class QOMType(object):
@@ -185,15 +181,16 @@ class QOMType(object):
         self.directory = directory
         self.qtn = qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
-        self.state_fields = []
+        self.state = state = StateStruct(self.struct_name,
+            vmsd_state_name = qtn.for_id_name,
+        )
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
-        extra_fields = tuple(extra_fields)
-        self.extra_fields = extra_fields
 
         macros_prefix = qtn.for_macros + "_"
         for field in extra_fields:
             field.prop_macro_name = macros_prefix + field.name.upper()
+            state.add_field(field)
 
     def gen_type_cast(self):
         cast_type = get_vp("QOM type checkers type")
@@ -305,9 +302,7 @@ class QOMType(object):
         return set(f.name for f in self.iter_all_state_fields())
 
     def iter_all_state_fields(self):
-        for f in self.state_fields:
-            yield f
-        for f in self.extra_fields:
+        for f in self.state.fields:
             yield f
 
     def add_state_fields(self, fields):
@@ -316,7 +311,7 @@ class QOMType(object):
 
     def add_state_field(self, field):
         field.prop_macro_name = self.qtn.for_macros + "_" + field.name.upper()
-        self.state_fields.append(field)
+        self.state.add_field(field)
 
     def add_state_field_h(self, type_name, field_name,
             num = None,
@@ -355,12 +350,7 @@ class QOMType(object):
                     self.add_state_field_h("uint8_t", name, num = size)
 
     def gen_state(self):
-        s = Structure(self.struct_name)
-        for f in self.iter_all_state_fields():
-            s.append_field(Type[f.c_type_name](f.name,
-                array_size = f.array_size
-            ))
-        return s
+        return self.state.gen_c_type()
 
     def gen_property_macros(self, source):
         for field in self.iter_all_state_fields():
@@ -429,81 +419,13 @@ class QOMType(object):
             array_size = 0
         )
 
-    def gen_vmstate_initializer(self, name, state_struct,
-        min_version_id = None
-    ):
-        code = """{{
-    .name@b=@s{name},
-    .version_id@b=@s1,{min_version_id}
-    .fields@b=@s(VMStateField[])@b{{
-""".format(
-    name = name,
-    min_version_id = ("\n    .minimum_version_id@b=@s%d," % min_version_id
-        if min_version_id else ""
-    )
-        )
-
-        used_macros = set()
-        global type2vmstate
-
-        for f in self.iter_all_state_fields():
-            if not f.save_in_vmsd:
-                continue
-
-            # code of macro initializer is dict
-            fdict = {
-                "_f": f.name,
-                "_s": state_struct.name,
-                # Macros may use different argument names
-                "_field": f.name,
-                "_state": state_struct.name
-            }
-
-            try:
-                vms_macro_name = type2vmstate[f.c_type_name]
-            except KeyError:
-                raise Exception(
-                    "VMState generation for type %s is not implemented" % \
-                        f.c_type_name
-                )
-
-            if f.array_size is not None:
-                vms_macro_name += "_ARRAY"
-                fdict["_n"] = str(f.array_size)
-
-            vms_macro = Type[vms_macro_name]
-            used_macros.add(vms_macro)
-
-            code += " " * 8 + vms_macro.gen_usage_string(Initializer(fdict))
-
-            code += ",\n"
-
-        # Generate VM state list terminator macro.
-        vms_macro = Type["VMSTATE_END_OF_LIST"]
-        used_macros.add(vms_macro)
-        code += " " * 8 + vms_macro.gen_usage_string()
-
-        code += "\n    }\n}"
-
-        init = Initializer(
-            code = code,
-            used_types = used_macros.union([
-                Type["VMStateField"],
-                state_struct
-            ])
-        )
-        return init
-
-    def gen_vmstate_var(self, state_struct):
+    def gen_vmstate_var(self, __):
         # avoid using TYPE macros
         # https://lists.gnu.org/archive/html/qemu-devel/2018-10/msg02175.html
         # TODO: macro expansion required
-        v_name = Type[self.qtn.type_macro].text
-        return Type["VMStateDescription"](
-            name = "vmstate_%s" % self.qtn.for_id_name,
-            static = True,
-            const = True,
-            initializer = self.gen_vmstate_initializer(v_name, state_struct)
+        return self.state.gen_vmstate_var(
+            name_suffix = self.qtn.for_id_name,
+            state_name = Type[self.qtn.type_macro].text.strip('"'),
         )
 
     def gen_instance_init_name(self):
@@ -1133,6 +1055,10 @@ class QOMCPU(QOMType):
         self.target_arch = "TARGET_" + self.target_name.upper()
         self.config_arch_dis = "CONFIG_" + self.target_name.upper() + "_DIS"
 
+        self.state.vmsd_min_version_id = 1
+        self.state.vmsd_state_name = "cpu"
+        self.state.c_type_name = self.struct_name
+
     def gen_state(self):
         s = super(QOMCPU, self).gen_state()
         if get_vp("move tlb_flush to cpu_common_reset"):
@@ -1147,13 +1073,6 @@ class QOMCPU(QOMType):
             # CPU_COMMON usage
             cpu_common_usage.extra_references = {Type["NB_MMU_MODES"]}
         return s
-
-    def gen_vmstate_initializer(self, __, state_struct):
-        init = super(QOMCPU, self).gen_vmstate_initializer('"cpu"',
-            state_struct,
-            min_version_id = 1
-        )
-        return init
 
     def gen_vmstate_var(self, state_struct):
         vmstate = super(QOMCPU, self).gen_vmstate_var(state_struct)
