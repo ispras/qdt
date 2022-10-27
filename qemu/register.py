@@ -40,15 +40,19 @@ class OpaqueRegister(object):
         self.size, self.name = size, name
 
 
+class _undefined: pass
+
+
 class Register(OpaqueRegister):
 
     def __init__(self, size,
         name = None,
         access = "rw",
-        reset = 0,
+        reset = _undefined,
         full_name = None,
         wmask = None,
-        warbits = None
+        warbits = None,
+        virtual = False,
     ):
         """
 @param size: of the register in bytes.
@@ -68,27 +72,57 @@ class Register(OpaqueRegister):
     `None` corresponds to 0b00...00, all bits can be written without reading.
     Disabling of WAR bits for writing again is responsibility of semantic
     code.
+@param virtual: register has no backing state.
+    It cannot have `reset` value, `wmask` or `warbits`.
+    It only given a tiny boilerplate in the callbacks.
         """
         super(Register, self).__init__(size, name)
         self.access = access
-        if reset is None:
-            self.reset = None
-        else:
+
+        if reset is _undefined:
+            if virtual:
+                reset = None
+            else:
+                # Non-virtual register is normally always reset.
+                # But somtimes a device has a register that only resetted under
+                # specific condition (e.g. power on only). Software or watchdog
+                # reset, for instance, does not affect such a register.
+                reset = 0
+
+        if reset is not None:
             if size <= 8:
-                self.reset = CINT(reset, 16, size * 2)
+                reset = CINT(reset, 16, size * 2)
             else:
                 # TODO: support C-string as reset value (set using memcpy)
-                self.reset = CINT(reset, 16, 1)
+                reset = CINT(reset, 16, 1)
+        self.reset = reset
 
         self.full_name = full_name
 
+        full_wmask = (1 << (size * 8)) - 1
+
         if wmask is None:
-            wmask = (1 << (size * 8)) - 1
+            wmask = full_wmask
         self.wmask = CINT(wmask, 2, size * 8)
 
         if warbits is None:
             warbits = 0
         self.warbits = CINT(warbits, 2, size * 8)
+
+        if virtual:
+            problems = []
+            if reset is not None:
+                problems.append("reset value is defined")
+            if wmask != full_wmask:
+                problems.append("wmask has zero(s)")
+            if warbits:
+                problems.append("warbits has one(s)")
+            if problems:
+                raise ValueError("%s: cannot be virtual because %s." % (
+                    name, ", ".join(problems)
+                ))
+
+        self.virtual = virtual
 
     def __same__(self, o):
         if not isinstance(o, Register):
@@ -103,6 +137,8 @@ class Register(OpaqueRegister):
         ret = type(self).__name__
         size = self.size
 
+        virtual = self.virtual
+
         ret += "(" + repr(size)
 
         name = self.name
@@ -114,7 +150,7 @@ class Register(OpaqueRegister):
             ret += ", access = " + repr(access)
 
         reset = self.reset
-        if reset != CINT(0, 16, size * 2):
+        if reset != CINT(0, 16, size * 2) and not virtual:
             ret += ", reset = " + repr(reset)
 
         fn = self.full_name
@@ -134,6 +170,9 @@ class Register(OpaqueRegister):
         or  warb.d != size * 8
         ):
             ret += ", warbits = " + repr(warb)
+
+        if virtual:
+            ret += ", virtual = True"
 
         ret += ")"
         return ret
@@ -183,16 +222,18 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                 s,
                 qtn.for_id_name + "_war"
             )
-            s_deref = OpSDeref(
+            s_deref = lambda : OpSDeref(
                 s,
                 qtn.for_id_name
             )
 
-            if access == "r":
+            if reg.virtual:
+                pass
+            elif access == "r":
                 if size <= 8:
                     case(OpAssign(
                         ret,
-                        s_deref
+                        s_deref()
                     ))
 
                     warb = reg.warbits
@@ -230,7 +271,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                     case(Call(
                         "memcpy",
                         OpAddr(ret),
-                        OpAdd(s_deref, field_offset),
+                        OpAdd(s_deref(), field_offset),
                         acc_size
                     ))
 
@@ -246,7 +287,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                         # dynamic write mask
                         case(
                             OpAssign(
-                                s_deref,
+                                s_deref(),
                                 OpOr(
                                     OpAnd(
                                         val,
@@ -254,7 +295,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                                         parenthesis = True
                                     ),
                                     OpAnd(
-                                        s_deref,
+                                        s_deref(),
                                         OpNot(
                                             s_deref_war()
                                         ),
@@ -268,7 +309,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                         # write mask does not affect the value being assigned
                         case(
                             OpAssign(
-                                s_deref,
+                                s_deref(),
                                 val
                             )
                         )
@@ -278,7 +319,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                         # write mask
                         case(
                             OpAssign(
-                                s_deref,
+                                s_deref(),
                                 OpOr(
                                     OpAnd(
                                         val,
@@ -286,7 +327,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                                         parenthesis = True
                                     ),
                                     OpAnd(
-                                        s_deref,
+                                        s_deref(),
                                         OpNot(
                                             wm
                                         ),
@@ -307,7 +348,7 @@ def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
                     ))
                     case(Call(
                         "memcpy",
-                        OpAdd(s_deref, field_offset),
+                        OpAdd(s_deref(), field_offset),
                         OpAddr(val),
                         acc_size
                     ))

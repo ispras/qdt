@@ -592,7 +592,7 @@ class QOMType(object):
     def add_fields_for_regs(self, regs):
         for reg in regs:
             name = reg.name
-            if name is None or name == "gap":
+            if name is None or name == "gap" or reg.virtual:
                 continue
 
             qtn = QemuTypeName(name)
