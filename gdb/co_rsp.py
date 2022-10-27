@@ -142,7 +142,7 @@ class RSPReader(CoTask):
             else:
                 raise RuntimeError("Unexpected character '%s'" % c)
 
-    def on_failed(self):
+    def __failed__(self):
         raise RuntimeError("CoRSP reader failed")
 
 
@@ -182,7 +182,7 @@ class RSPWriter(CoTask):
                 buf = rsp.out_buf
                 rsp.out_buf = b""
 
-    def on_failed(self):
+    def __failed__(self):
         raise RuntimeError("CoRSP writer failed")
 
 
