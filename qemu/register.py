@@ -43,17 +43,32 @@ class OpaqueRegister(object):
 class Register(OpaqueRegister):
 
     def __init__(self, size,
-        # None or "gap" named registers are not backed by a state field
         name = None,
         access = "rw",
         reset = 0,
         full_name = None,
-        # write mask (None corresponds 0b11...11. I.e. all bits are writable).
         wmask = None,
-        # Write after read (WAR) bits. 1 marks the bit as WAR. None
-        # corresponds to 0b00...00, all bits can be written without reading.
         warbits = None
     ):
+        """
+@param size: of the register in bytes.
+@param name: is a base for names of generated entities.
+    `None` or "gap" named registers are not backed by a state field.
+@param access: defines how `MemoryRegionOps`'s callbacks will handle access
+    to the register.
+    Implemented chars: 'w', 'r'
+@param reset: value for the register.
+    `None` means the register is not being reset.
+@param full_name: pretty string used in generated comments.
+@param wmask: (write mask) selects bits which can be written.
+    `None` corresponds to 0b11...11. I.e. all bits are writable.
+@param warbits: (Write-After-Read (WAR) bit mask) selects which bits can only
+    be written after a read access to that register.
+    Only bits selected by `wmask` can be written anyway.
+    `None` corresponds to 0b00...00, all bits can be written without reading.
+    Disabling of WAR bits for writing again is responsibility of semantic
+    code.
+        """
         super(Register, self).__init__(size, name)
         self.access = access
         if reset is None:
