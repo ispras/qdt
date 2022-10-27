@@ -122,6 +122,11 @@ class CoTask(object):
         # do nothing by default
         pass
 
+    def on_cancelled(self):
+        # do nothing by default
+        pass
+
+
 class CoDispatcher(object):
     """
     The dispatcher for coroutine task.
@@ -336,13 +341,15 @@ after last statement in the corresponding callable object.
                     self.remove(callee)
             else:
                 callers.remove(task)
-
+            task.on_cancelled()
         elif task in self.finished_tasks:
             self.finished_tasks.pop(task)
         elif task in self.tasks:
             self.tasks.remove(task)
+            task.on_cancelled()
         elif task in self.active_tasks:
             self.active_tasks.remove(task)
+            task.on_cancelled()
         elif task in self.failed_tasks:
             self.failed_tasks.remove(task)
 
