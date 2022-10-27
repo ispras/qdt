@@ -110,19 +110,19 @@ class CoTask(object):
 
         return lines
 
-    def on_activated(self):
+    def __activated__(self):
         # do nothing by default
         pass
 
-    def on_finished(self):
+    def __finished__(self):
         # do nothing by default
         pass
 
-    def on_failed(self):
+    def __failed__(self):
         # do nothing by default
         pass
 
-    def on_cancelled(self):
+    def __cancelled__(self):
         # do nothing by default
         pass
 
@@ -341,15 +341,15 @@ after last statement in the corresponding callable object.
                     self.remove(callee)
             else:
                 callers.remove(task)
-            task.on_cancelled()
+            task.__cancelled__()
         elif task in self.finished_tasks:
             self.finished_tasks.pop(task)
         elif task in self.tasks:
             self.tasks.remove(task)
-            task.on_cancelled()
+            task.__cancelled__()
         elif task in self.active_tasks:
             self.active_tasks.remove(task)
-            task.on_cancelled()
+            task.__cancelled__()
         elif task in self.failed_tasks:
             self.failed_tasks.remove(task)
 
@@ -384,7 +384,7 @@ after last statement in the corresponding callable object.
         if task in self.active_tasks:
             self.active_tasks.remove(task)
         self.failed_tasks.add(task)
-        task.on_failed()
+        task.__failed__()
 
         try:
             callers = self.callees.pop(task)
@@ -400,12 +400,12 @@ after last statement in the corresponding callable object.
         # print 'Task %s finished' % str(task)
         self.active_tasks.remove(task)
         self.finished_tasks[task] = ret
-        task.on_finished()
+        task.__finished__()
 
     def _activate(self, task):
         # print 'Activating task %s' % str(task)
         self.active_tasks.append(task)
-        task.on_activated()
+        task.__activated__()
 
     def pull(self):
         if not self.tasks:

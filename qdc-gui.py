@@ -123,10 +123,10 @@ class ProjectGeneration(CoTask):
             include_paths = tuple(path for path, _ in cur_qvd.include_paths)
         )
 
-    def on_failed(self):
+    def __failed__(self):
         self.__finalize()
 
-    def on_finished(self):
+    def __finished__(self):
         showinfo(
             title = _("Generation completed").get(),
             message = _("No errors were reported.").get()
