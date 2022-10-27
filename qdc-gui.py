@@ -110,10 +110,10 @@ class ProjectGeneration(CoTask):
         try:
             yield self.reload_build_path_task
         except:
-            self.prev_qvd = None # for `__finalize`
             raise RuntimeError("Cannot continue without a cache")
 
         cur_qvd = qvd_get(self.p.build_path, version = self.p.target_version)
+        assert cur_qvd.qvc_is_ready
         self.prev_qvd = cur_qvd.use()
 
         yield self.p.co_gen_all(self.s,
@@ -134,7 +134,7 @@ class ProjectGeneration(CoTask):
         self.__finalize()
 
     def __finalize(self):
-        if self.prev_qvd is not None:
+        if hasattr(self, "prev_qvd"):
             self.prev_qvd.use()
         self.finished = True
         self.sig.emit()
