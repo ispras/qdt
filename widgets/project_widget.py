@@ -83,14 +83,14 @@ class ReloadBuildPathTask(CoTask):
             yield self.qvd.co_init_cache()
         self.pw.qvd = self.qvd
 
-    def on_finished(self):
+    def __finished__(self):
         self.qvd.use()
         self.pw.qsig_emit("qvc_available")
 
-    def on_failed(self):
+    def __failed__(self):
         self.pw.qsig_emit("qvd_failed")
 
-    def on_cancelled(self):
+    def __cancelled__(self):
         if self.qvd.qvc and not self.qvd.qvc_is_ready:
             self.qvd.qvc = None
 
