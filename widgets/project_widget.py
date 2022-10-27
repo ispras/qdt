@@ -90,6 +90,11 @@ class ReloadBuildPathTask(CoTask):
     def on_failed(self):
         self.pw.qsig_emit("qvd_failed")
 
+    def on_cancelled(self):
+        if self.qvd.qvc and not self.qvd.qvc_is_ready:
+            self.qvd.qvc = None
+
+
 class DescriptionsTreeview(VarTreeview):
     def __init__(self, descriptions, *args, **kw):
         kw["columns"] = [
