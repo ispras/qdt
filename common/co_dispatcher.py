@@ -226,7 +226,7 @@ after last statement in the corresponding callable object.
                 lineno = traceback.tb_next.tb_frame.f_lineno
 
                 task.traceback = traceback
-                self.__failed__(task, e)
+                self._failed(task, e)
             else:
                 t1 = time()
 
@@ -256,7 +256,7 @@ after last statement in the corresponding callable object.
             task.lineno = lineno
 
         for task, co_ret in finished:
-            self.__finish__(task, co_ret)
+            self._finish(task, co_ret)
 
             try:
                 callers = self.callees[task]
@@ -304,7 +304,7 @@ after last statement in the corresponding callable object.
                 # is already in task list (should not be scheduled twice).
                 if callee not in self.callers:
                     if callee_is_new:
-                        self.__activate__(callee)
+                        self._activate(callee)
             else:
                 # The callee is called multiple times. Hence, it is already
                 # queued. Just account its new caller.
@@ -379,7 +379,7 @@ after last statement in the corresponding callable object.
             del self.callers[c]
             self.tasks.insert(0, c)
 
-    def __failed__(self, task, exception):
+    def _failed(self, task, exception):
         task.exception = exception
         if task in self.active_tasks:
             self.active_tasks.remove(task)
@@ -396,13 +396,13 @@ after last statement in the corresponding callable object.
     def __root_task_failed__(self, task):
         pass
 
-    def __finish__(self, task, ret):
+    def _finish(self, task, ret):
         # print 'Task %s finished' % str(task)
         self.active_tasks.remove(task)
         self.finished_tasks[task] = ret
         task.on_finished()
 
-    def __activate__(self, task):
+    def _activate(self, task):
         # print 'Activating task %s' % str(task)
         self.active_tasks.append(task)
         task.on_activated()
@@ -417,13 +417,13 @@ after last statement in the corresponding callable object.
             if added:
                 while self.tasks:
                     task = self.tasks.pop(0)
-                    self.__activate__(task)
+                    self._activate(task)
         else:
             rest = self.max_tasks - len(self.active_tasks)
             while rest > 0 and self.tasks:
                 rest = rest - 1
                 task = self.tasks.pop(0)
-                self.__activate__(task)
+                self._activate(task)
                 added = True
 
         return added
