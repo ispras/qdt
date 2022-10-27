@@ -13,13 +13,16 @@ class QOMTypeStateField(object):
         c_type_name,
         name,
         array_size = None,
-        save_in_vmsd = True,
+        save_in_vmsd = None,
         is_property = False,
         property_default = None,
         property_name = None,
     ):
         if property_name is None:
             property_name = '"' + name.replace('_', '-') + '"'
+
+        if save_in_vmsd is None:
+            save_in_vmsd = not bool(is_property)
 
         self.c_type_name = c_type_name
         self.name = name
