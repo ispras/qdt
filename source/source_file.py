@@ -109,8 +109,11 @@ class Source(TypeContainer):
     # Only header can do it, see `Header`.
     inherit_references = False
 
-    def __init__(self, path, locked_inclusions = None):
-        super(Source, self).__init__()
+    def __init__(self, path,
+        locked_inclusions = None,
+        **kw
+    ):
+        super(Source, self).__init__(**kw)
 
         self.path = path
         self.types = {}
