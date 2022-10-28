@@ -193,7 +193,7 @@ class QOMType(object):
 
         macros_prefix = qtn.for_macros + "_"
         for field in extra_fields:
-            field.prop_macro_name = macros_prefix + field.name.upper()
+            field.prop_macro_name = macros_prefix + field.property_macro_suffix
             state.add_field(field)
 
     def gen_type_cast(self):
@@ -314,7 +314,9 @@ class QOMType(object):
             self.add_state_field(field)
 
     def add_state_field(self, field):
-        field.prop_macro_name = self.qtn.for_macros + "_" + field.name.upper()
+        field.prop_macro_name = (
+            self.qtn.for_macros + "_" + field.property_macro_suffix
+        )
         self.state.add_field(field)
 
     def add_state_field_h(self, type_name, field_name,
