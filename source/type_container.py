@@ -20,8 +20,11 @@ Extra references may be used to apply extended (semantic) order when syntax
 order does not meet all requirements.
     """
 
-    def __init__(self):
+    def __init__(self,
+        origin = None,
+    ):
         self.extra_references = set()
+        self.origin = origin
 
     __type_references__ = ("extra_references",)
 
