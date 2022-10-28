@@ -711,22 +711,20 @@ class QOMDevice(QOMType):
         else:
             return "blk_%u" % index
 
-    def block_prop_name(self, index):
-        pfx = self.qtn.for_macros + "_"
+    def block_prop_macro_suffix(self, index):
         if self.block_num == 1:
-            return pfx + "DRIVE"
+            return "DRIVE"
         else:
-            return pfx + "DRIVE_%u" % index
+            return "DRIVE_%u" % index
 
     def block_declare_fields(self):
         for index in range(self.block_num):
             f = QOMTypeStateField("BlockBackend*", self.block_name(index),
                 save_in_vmsd = False,
-                is_property = True
+                is_property = True,
+                property_macro_suffix = self.block_prop_macro_suffix(index),
             )
             self.add_state_field(f)
-            # override macro name assigned by `add_state_field`
-            f.prop_macro_name = self.block_prop_name(index)
 
     # Character driver
     def char_name(self, index):
