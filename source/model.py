@@ -159,9 +159,10 @@ class Type(TypeContainer):
     def __init__(self,
         name = None,
         incomplete = True,
-        base = False
+        base = False,
+        **kw
     ):
-        super(Type, self).__init__()
+        super(Type, self).__init__(**kw)
 
         self.is_named = name is not None
 
@@ -275,8 +276,16 @@ class Type(TypeContainer):
 
 class Structure(Type):
 
-    def __init__(self, name = None, *fields):
-        super(Structure, self).__init__(name = name, incomplete = False)
+    def __init__(self,
+        name = None,
+        *fields,
+        **kw
+    ):
+        super(Structure, self).__init__(
+            name = name,
+            incomplete = False,
+            **kw
+        )
 
         # A `struct`ure may have a forward declaration: a `typedef` construct
         # without fields.
@@ -507,10 +516,15 @@ class Structure(Type):
 
 class Enumeration(Type):
 
-    def __init__(self, elems_list, enum_name = None, typedef_name = None):
+    def __init__(self, elems_list,
+        enum_name = None,
+        typedef_name = None,
+        **kw
+    ):
         super(Enumeration, self).__init__(
             name = typedef_name or enum_name,
-            incomplete = False
+            incomplete = False,
+            **kw
         )
 
         self.enum_name = enum_name
@@ -599,8 +613,13 @@ class Enumeration(Type):
 
 class EnumerationElement(Type):
 
-    def __init__(self, enum_parent, name, initializer):
-        super(EnumerationElement, self).__init__(name = name)
+    def __init__(self, enum_parent, name, initializer,
+        **kw
+    ):
+        super(EnumerationElement, self).__init__(
+            name = name,
+            **kw
+        )
 
         self.enum_parent = enum_parent
         self.initializer = initializer
@@ -638,8 +657,13 @@ class EnumerationElement(Type):
 
 class FunctionBodyString(TypeContainer):
 
-    def __init__(self, body = None, used_types = None, used_globals = None):
-        super(FunctionBodyString, self).__init__()
+    def __init__(self,
+        body = None,
+        used_types = None,
+        used_globals = None,
+        **kw
+    ):
+        super(FunctionBodyString, self).__init__(**kw)
 
         self.body = body
         self.used_types = set() if used_types is None else set(used_types)
@@ -665,7 +689,8 @@ class Function(Type):
         static = False,
         inline = False,
         used_types = None,
-        used_globals = None
+        used_globals = None,
+        **kw
     ):
         # args is list of Variables
 
@@ -673,7 +698,8 @@ class Function(Type):
             name = name,
             # function cannot be a 'type' of variable. Only function
             # pointer type is permitted.
-            incomplete = True
+            incomplete = True,
+            **kw
         )
 
         # XXX: eliminate all usages of empty c_name
@@ -786,7 +812,11 @@ class Function(Type):
 
 class Pointer(Type):
 
-    def __init__(self, _type, name = None, const = False):
+    def __init__(self, _type,
+        name = None,
+        const = False,
+        **kw
+    ):
         """
         const: a constant pointer
         """
@@ -795,7 +825,11 @@ class Pointer(Type):
                 "A constant pointer is not fully implemented"
             )
 
-        super(Pointer, self).__init__(name = name, incomplete = False)
+        super(Pointer, self).__init__(
+            name = name,
+            incomplete = False,
+            **kw
+        )
 
         # define c_name for nameless pointers
         if not self.is_named:
@@ -885,8 +919,16 @@ HDB_MACRO_ARGS = "args"
 class Macro(Type):
 
     # args is list of strings
-    def __init__(self, name, args = None, text = None):
-        super(Macro, self).__init__(name = name, incomplete = False)
+    def __init__(self, name,
+        args = None,
+        text = None,
+        **kw
+    ):
+        super(Macro, self).__init__(
+            name = name,
+            incomplete = False,
+            **kw
+        )
 
         self.args = args
         self.text = text
@@ -945,13 +987,21 @@ class Macro(Type):
 class MacroUsage(Type):
     "Something defined using a macro expansion."
 
-    def __init__(self, macro, initializer = None, name = None):
+    def __init__(self, macro,
+        initializer = None,
+        name = None,
+        **kw
+    ):
         if not isinstance(macro, Macro):
             raise ValueError("Attempt to create %s from "
                 " %s which is not macro." % (type(self).__name__, macro)
             )
 
-        super(MacroUsage, self).__init__(name = name, incomplete = False)
+        super(MacroUsage, self).__init__(
+            name = name,
+            incomplete = False,
+            **kw
+        )
 
         # define c_name for nameless macrousages
         if not self.is_named:
@@ -1021,7 +1071,8 @@ model yet. Better implement required functionality and submit patches!
         name = None,
         used_types = None,
         used_variables = None,
-        weight = None
+        weight = None,
+        **kw
     ):
         """
 :param code: the code (implementing `__str__`) to be inserted in file as is.
@@ -1038,7 +1089,11 @@ model yet. Better implement required functionality and submit patches!
             # reproducible across launches.
             name = "opaque.#%u" % next(type(self)._name_num)
 
-        super(OpaqueCode, self).__init__(name = name, incomplete = False)
+        super(OpaqueCode, self).__init__(
+            name = name,
+            incomplete = False,
+            **kw
+        )
 
         self.code = code
 
@@ -1067,11 +1122,14 @@ model yet. Better implement required functionality and submit patches!
 
 class TypeAlias(OpaqueCode):
 
-    def __init__(self, _type, name):
+    def __init__(self, _type, name,
+        **kw
+    ):
         super(TypeAlias, self).__init__(
             "typedef@b" + _type.declaration_string + name + ";\n",
             name = name,
-            used_types = [_type]
+            used_types = [_type],
+            **kw
         )
 
 
@@ -1081,13 +1139,15 @@ class TopComment(OpaqueCode):
     def __init__(self, text,
         used_types = None,
         used_variables = None,
-        weight = None
+        weight = None,
+        **kw
     ):
         super(TopComment, self).__init__(
             "/*@s" + text.replace(" ", "@s") + "@s*/\n",
             used_types = used_types,
             used_variables = used_variables,
-            weight = weight
+            weight = weight,
+            **kw
         )
 
 
@@ -1161,8 +1221,12 @@ class ForwardDeclarator(TypeReferencesVisitor):
 class Initializer(TypeContainer):
 
     # code is string for variables and dictionary for macros
-    def __init__(self, code, used_types = [], used_variables = []):
-        super(Initializer, self).__init__()
+    def __init__(self, code,
+        used_types = [],
+        used_variables = [],
+        **kw
+    ):
+        super(Initializer, self).__init__(**kw)
 
         self.code = code
         self.used_types = set(used_types)
@@ -1197,9 +1261,10 @@ class Variable(TypeContainer):
         static = False,
         const = False,
         array_size = None,
-        used = False
+        used = False,
+        **kw
     ):
-        super(Variable, self).__init__()
+        super(Variable, self).__init__(**kw)
 
         self.name = name
         self.type = _type if isinstance(_type, Type) else Type[_type]
