@@ -74,28 +74,27 @@ from six import (
 # Property declaration generation helpers
 
 def gen_prop_declaration(field, decl_macro_name, state_struct,
-    default_default = None
+    default_default = None,
+    **init_code
 ):
     decl_macro = Type[decl_macro_name]
     used_types = set([decl_macro])
     bool_true = Type["true"]
     bool_false = Type["false"]
 
-    init_code = {
-        "_f" : field.name,
-        "_s" : state_struct,
-    }
+    init_code.setdefault("_f", field.name)
+    init_code.setdefault("_s", state_struct)
 
     if field.prop_macro_name is not None:
-        init_code["_n"] = Type[field.prop_macro_name]
-        init_code["_name"] = init_code["_n"]
+        init_code.setdefault("_n", Type[field.prop_macro_name])
+        init_code.setdefault("_name", init_code["_n"])
 
-    init_code["_state"] = init_code["_s"]
-    init_code["_field"] = init_code["_f"]
+    init_code.setdefault("_state", init_code["_s"])
+    init_code.setdefault("_field", init_code["_f"])
 
     # _conf is name of argument of macro DEFINE_NIC_PROPERTIES that
     # corresponds to structure field name
-    init_code["_conf"] = init_code["_f"]
+    init_code.setdefault("_conf", init_code["_f"])
 
     if default_default is not None:
         if field.property_default is None:
@@ -123,8 +122,8 @@ def gen_prop_declaration(field, decl_macro_name, state_struct,
         else:
             val = str(val)
 
-        init_code["_d"] = val
-        init_code["_defval"] = val
+        init_code.setdefault("_d", val)
+        init_code.setdefault("_defval", val)
 
     initializer = Initializer(code = init_code)
     usage_str = decl_macro.gen_usage_string(initializer)
@@ -155,7 +154,12 @@ type2prop = {
     ),
     "size_t" : lambda field, state_struct: gen_prop_declaration(field,
         "DEFINE_PROP_SIZE", state_struct, default_default = 0
-    )
+    ),
+    "MemoryRegion*" : lambda field, state_struct: gen_prop_declaration(
+        field, "DEFINE_PROP_LINK", state_struct,
+        _type = Type["TYPE_MEMORY_REGION"],
+        _ptr_type = Type["MemoryRegion*"]
+    ),
 }
 
 for U in ["", "U"]:
