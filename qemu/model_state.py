@@ -26,7 +26,9 @@ class StateStruct(object):
         self.fields.append(field)
 
     def gen_c_type(self):
-        s = Structure(self.c_type_name)
+        s = Structure(self.c_type_name,
+            origin = self,
+        )
         for f in self.fields:
             s.append_field(Type[f.c_type_name](
                 f.name,
