@@ -103,19 +103,19 @@ class Register(OpaqueRegister):
 
         if wmask is None:
             wmask = full_wmask
-        self.wmask = CINT(wmask, 2, size * 8)
+        self.wmask = wmask = CINT(wmask, 2, size * 8)
 
         if warbits is None:
             warbits = 0
-        self.warbits = CINT(warbits, 2, size * 8)
+        self.warbits = warbits = CINT(warbits, 2, size * 8)
 
         if virtual:
             problems = []
             if reset is not None:
                 problems.append("reset value is defined")
-            if wmask != full_wmask:
+            if wmask.v != full_wmask:
                 problems.append("wmask has zero(s)")
-            if warbits:
+            if warbits.v:
                 problems.append("warbits has one(s)")
             if problems:
                 raise ValueError("%s: cannot be virtual because %s." % (
