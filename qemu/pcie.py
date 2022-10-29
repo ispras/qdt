@@ -157,12 +157,10 @@ corresponding vendor is given" % attr
             )
 
         self.timer_declare_fields()
-
         self.char_declare_fields()
-
         self.block_declare_fields()
-
         self.nic_declare_fields()
+        self.declare_extra_fields()
 
     def fill_header(self):
         self.state_struct = self.gen_state()
