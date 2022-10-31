@@ -154,9 +154,11 @@ class MemorySettingsWidget(SettingsWidget, object):
         return self.node
 
     def __apply_internal__(self):
-        if not isinstance(self.node, MemorySASNode):
+        mem = self.node
+
+        if not isinstance(mem, MemorySASNode):
             new_parent = self.find_node_by_link_text(self.var_parent.get())
-            cur_parent = self.node.parent
+            cur_parent = mem.parent
 
             if new_parent is None:
                 new_parent_id = -1
@@ -172,11 +174,11 @@ class MemorySettingsWidget(SettingsWidget, object):
                 if not cur_parent_id == -1:
                     self.mht.stage(
                         MOp_RemoveMemChild,
-                        self.node.id,
+                        mem.id,
                         cur_parent_id
                     )
                 if not new_parent_id == -1:
-                    self.mht.stage(MOp_AddMemChild, self.node.id,
+                    self.mht.stage(MOp_AddMemChild, mem.id,
                         new_parent_id
                     )
 
@@ -188,39 +190,41 @@ class MemorySettingsWidget(SettingsWidget, object):
                 except:
                     continue
 
-            cur_val = getattr(self.node, field)
+            cur_val = getattr(mem, field)
 
             if new_val == cur_val:
                 continue
 
-            self.mht.stage(MOp_SetMemNodeAttr, field, new_val, self.node.id)
+            self.mht.stage(MOp_SetMemNodeAttr, field, new_val, mem.id)
 
-        if type(self.node) is MemoryAliasNode:
+        if type(mem) is MemoryAliasNode:
             new_alias_to = self.find_node_by_link_text(self.var_alias_to.get())
-            cur_alias_to = self.node.alias_to
+            cur_alias_to = mem.alias_to
 
             if not new_alias_to == cur_alias_to:
                 self.mht.stage(
                     MOp_SetMemNodeAlias,
                     "alias_to",
                     new_alias_to,
-                    self.node.id)
+                    mem.id)
 
         self.mht.set_sequence_description(
             _("Memory '%s' (%d) configuration.") % (
-                self.node.name, self.node.id
+                mem.name, mem.id
             )
         )
 
     def refresh(self):
         SettingsWidget.refresh(self)
 
-        if not isinstance(self.node, MemorySASNode):
+        smem = self.node
+
+        if not isinstance(smem, MemorySASNode):
             values = [
                 DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
                     [ mem for mem in self.mach.mems if (
                         not isinstance(mem, MemoryLeafNode)
-                        and mem != self.node )
+                        and mem != smem )
                     ] + [ None ]
                 )
             ]
@@ -228,29 +232,29 @@ class MemorySettingsWidget(SettingsWidget, object):
             self.cb_parent.config(values = values)
 
             self.var_parent.set(
-                DeviceSettingsWidget.gen_node_link_text(self.node.parent)
+                DeviceSettingsWidget.gen_node_link_text(smem.parent)
             )
 
         for text, field, _type in self.fields:
             var = getattr(self, "var_" + field)
-            cur_val = getattr(self.node, field)
+            cur_val = getattr(smem, field)
             var.set(cur_val)
 
-        if type(self.node) is MemoryAliasNode:
+        if type(smem) is MemoryAliasNode:
             values = [
                 DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
-                    [ mem for mem in self.mach.mems if (mem != self.node ) ]
+                    [ mem for mem in self.mach.mems if (mem != smem ) ]
                 )
             ]
 
             self.cb_alias_to.config(values = values)
 
             self.var_alias_to.set(
-                DeviceSettingsWidget.gen_node_link_text(self.node.alias_to)
+                DeviceSettingsWidget.gen_node_link_text(smem.alias_to)
             )
 
-        if not isinstance(self.node, MemorySASNode):
-            if self.node.parent is None:
+        if not isinstance(smem, MemorySASNode):
+            if smem.parent is None:
                 self.l_offset.grid_forget()
                 self.w_offset.grid_forget()
             else:
