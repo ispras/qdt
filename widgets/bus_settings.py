@@ -44,7 +44,7 @@ from six.moves.tkinter_ttk import (
 class BusSettingsWidget(SettingsWidget, object):
 
     def __init__(self, *args, **kw):
-        kw["node"] = kw.pop("bus")
+        kw["node"] = bus = kw.pop("bus")
         SettingsWidget.__init__(self, *args, **kw)
 
         self.bus_fr = fr = GUIFrame(self)
@@ -65,7 +65,7 @@ class BusSettingsWidget(SettingsWidget, object):
         self.cb_parent.grid(row = 0, column = 1, sticky = "NEWS")
 
         self.fields = []
-        if type(self.node) is BusNode:
+        if type(bus) is BusNode:
             self.fields.extend([
                 (_("C type"), "c_type", str),
                 (_("Casting macro"), "cast", str),
