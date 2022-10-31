@@ -57,14 +57,16 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
         return self.node
 
     def __apply_internal__(self):
+        cpu = self.node
+
         qom = self.qom_type_var.get()
-        if self.node.qom_type == qom:
+        if cpu.qom_type == qom:
             return
 
-        self.mht.stage(MOp_SetCPUAttr, "qom_type", qom, self.node.id)
+        self.mht.stage(MOp_SetCPUAttr, "qom_type", qom, cpu.id)
 
         self.mht.set_sequence_description(
-            _("CPU %d configuration.") % self.node.id
+            _("CPU %d configuration.") % cpu.id
         )
 
     def refresh(self):
