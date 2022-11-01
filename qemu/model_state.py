@@ -6,6 +6,7 @@ from source import (
     Initializer,
     Structure,
     Type,
+    TypeNotRegistered,
 )
 
 
@@ -58,52 +59,92 @@ class StateStruct(object):
             l("    .minimum_version_id@b=@s%d," % self.vmsd_min_version_id)
         l("    .fields@b=@s(VMStateField[])@b{")
 
-        used_macros = set()
+        used_types = set()
+        used_vars = set()
         global type2vmstate
 
         for f in self.fields:
             if not f.save_in_vmsd:
                 continue
 
-            # code of macro initializer is dict
-            fdict = {
-                "_f": f.name,
-                "_s": self.c_type_name,
-                # Macros may use different argument names
-                "_field": f.name,
-                "_state": self.c_type_name
-            }
+            f_c_type_name = f.c_type_name
 
-            try:
-                vms_macro_name = type2vmstate[f.c_type_name]
-            except KeyError:
+            vms_macro_name = type2vmstate.get(f_c_type_name, None)
+
+            if vms_macro_name is None:
+                try:
+                    c_type = Type[f_c_type_name]
+                except TypeNotRegistered:
+                    pass
+
+                if isinstance(c_type, Structure):
+                    type_desc = c_type.origin
+                    if type_desc is not None:
+                        if isinstance(type_desc, StateStruct):
+                            field_vmsd = type_desc.gen_vmstate_var(f.name)
+
+                            # XXX: discard __attribute__((unused))
+                            #      this shell be automatically
+                            field_vmsd.used = True
+
+                            used_types.add(c_type)
+                            used_vars.add(field_vmsd)
+
+                            fdict = {
+                                "_field": f.name,
+                                "_state": self.c_type_name,
+                                "_version": str(type_desc.vmsd_version_id),
+                                "_vmsd": field_vmsd.name,
+                                "_type": f_c_type_name,
+                            }
+
+                            if f.array_size is None:
+                                vms_macro_name = "VMSTATE_STRUCT"
+                            else:
+                                vms_macro_name = "VMSTATE_STRUCT_ARRAY"
+                                fdict["_num"] = f.array_size
+            else:
+                # code of macro initializer is dict
+                fdict = {
+                    "_f": f.name,
+                    "_s": self.c_type_name,
+                    # Macros may use different argument names
+                    "_field": f.name,
+                    "_state": self.c_type_name
+                }
+
+                if f.array_size is not None:
+                    vms_macro_name += "_ARRAY"
+                    fdict["_n"] = str(f.array_size)
+
+            if vms_macro_name is None:
                 raise Exception(
-                    "VMState generation for type %s is not implemented" % \
-                        f.c_type_name
+                    "VMState generation for type %s is not implemented" % (
+                        f_c_type_name,
+                    )
+
                 )
 
-            if f.array_size is not None:
-                vms_macro_name += "_ARRAY"
-                fdict["_n"] = str(f.array_size)
 
             vms_macro = Type[vms_macro_name]
-            used_macros.add(vms_macro)
+            used_types.add(vms_macro)
 
             l(" " * 8 + vms_macro.gen_usage_string(Initializer(fdict)) + ",")
 
         # Generate VM state list terminator macro.
         vms_macro = Type["VMSTATE_END_OF_LIST"]
-        used_macros.add(vms_macro)
+        used_types.add(vms_macro)
         l(" " * 8 + vms_macro.gen_usage_string())
         l("    }")
         l("}")
 
         init = Initializer(
             code = "\n".join(lines),
-            used_types = used_macros.union([
+            used_types = used_types.union([
                 Type["VMStateField"],
                 Type[self.c_type_name],
-            ])
+            ]),
+            used_variables = used_vars,
         )
         return init
 
