@@ -10,6 +10,7 @@ from qemu import (
 
 # Any QOM type boilerplate
   , QOMTypeStateField
+  , StateStruct
 
 # System bus device stub generation settings
   , SysBusDeviceDescription
