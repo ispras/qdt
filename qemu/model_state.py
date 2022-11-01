@@ -140,3 +140,5 @@ for U in ["", "U"]:
         ctn = msfx.lower() + "_t"
 
         type2vmstate[ctn] = "VMSTATE_" + msfx
+
+type2vmstate["bool"] = "VMSTATE_BOOL"
