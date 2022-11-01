@@ -171,6 +171,8 @@ class MachineType(QOMType):
         self.mems = mems
         self.irq_hubs = irq_hubs
 
+    __pygen_deps__ = ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
+
     def reset_generator(self):
         self.node_map = {}
         self.init_used_types = []
