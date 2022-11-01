@@ -44,7 +44,8 @@ Helper to compare `git log` (commit summary) of different revisions as text.
     )
     arg = ap.add_argument
 
-    arg("rev_ids",
+    arg("rev_id",
+        nargs = "+",
         action = "append",
     )
     arg("--worktree", "-w",
@@ -72,12 +73,13 @@ Helper to compare `git log` (commit summary) of different revisions as text.
 
     args = ap.parse_args()
 
-    rev_ids = list(args.rev_ids)
+    rev_ids = list(args.rev_id[0])
     if len(rev_ids) == 1:
         rev_ids.append("HEAD")
 
     if len(rev_ids) != 2:
-        raise ValueError("1 or 2 `rev_id` are required")
+        ap.error("1 or 2 `rev_id` are required")
+        assert 0, "this line must not be reached"
 
     cmptool = args.cmptool
     if not cmptool:
