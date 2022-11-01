@@ -578,7 +578,9 @@ class SysBusDeviceType(QOMDevice):
 
         self.vmstate = self.gen_vmstate_var(self.state_struct)
 
-        self.source.add_global_variable(self.vmstate)
+        self.source.add_global_variable(self.vmstate,
+            grab_used_vars = True,
+        )
 
         self.properties = self.gen_properties_global(self.state_struct)
 
