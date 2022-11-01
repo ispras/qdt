@@ -81,18 +81,26 @@ def descriptionOf(QOMTemplate):
     """ Given QOM template class, collect attribute information provided by it
     and its ancestors. Order is significant. Child attributes must be below."""
     attribute_info = OrderedDict()
+    pygen_deps = list()
     Class = QOMTemplate
     for Class in getmro(Class):
         try:
+            deps = Class.__pygen_deps__
+        except AttributeError:
+            pass
+        else:
+            pygen_deps.extend(deps)
+
+        try:
             ai = Class.__attribute_info__
         except AttributeError:
-            continue
-
-        """ Reverse order of Class attributes to preserve it with respect to
-        final reversion. """
-        for attr, info in reversed(list(ai.items())):
-            if attr not in attribute_info:
-                attribute_info[attr] = info
+            pass
+        else:
+            # Reverse order of Class attributes to preserve it with respect to
+            # final revirsion.
+            for attr, info in reversed(list(ai.items())):
+                if attr not in attribute_info:
+                    attribute_info[attr] = info
 
     # Because a child is processed before its parent, the attributes are
     # collected in reverse order.
@@ -186,6 +194,9 @@ def __init__(self, {pa}, {kwa}, **compat):
             klass.gen_type = gen_type
         if "__gen_code__" not in klass.__dict__:
             klass.__gen_code__ = __gen_code__
+
+        if pygen_deps:
+            klass.__pygen_deps__ = tuple(pygen_deps)
 
         klass.__attribute_info__ = ai
         klass.__qom_template__ = template
