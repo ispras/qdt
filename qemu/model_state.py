@@ -21,6 +21,17 @@ class StateStruct(object):
         for field in fields:
             self.add_field(field)
 
+    def __var_base__(self):
+        return "ss_" + self.c_type_name.lower()
+
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_args(self, pa_names = False)
+        for f in self.fields:
+            gen.gen_field("")
+            gen.pprint(f)
+        gen.gen_end()
+
     def add_field(self, field):
         "`field` is of `QOMTypeStateField`"
         self.fields.append(field)
