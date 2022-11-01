@@ -6,6 +6,9 @@ __all__ = [
   , "NodeIdIsAlreadyInUse"
 ]
 
+from common import (
+    default_gen_pass,
+)
 from .qom_desc import (
     descriptionOf,
     QOMDescription
@@ -61,12 +64,10 @@ class MachineDescription(QOMDescription):
         for n in self.iter_nodes():
             self.assign_id(n)
 
-    @property
-    def __pygen_deps__(self):
-        self.link()
+    __pygen_deps__ = ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
 
-        return ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
-
+    # Override super's __gen_code__ (see descriptionOf).
+    # It must not gen code for all attributes.
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
@@ -76,6 +77,12 @@ class MachineDescription(QOMDescription):
                 gen.gen_field(attr + " = ")
                 gen.pprint(val)
         gen.gen_end()
+
+    def __pygen_pass__(self, gen):
+        self.link()
+
+        for opaque in default_gen_pass(self, gen):
+            yield opaque
 
         if not self.id2node:
             return
