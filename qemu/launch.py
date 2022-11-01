@@ -490,8 +490,8 @@ Data must be a r'raw string'.
                 parts = buf.split(b"\r\n")
                 # Data can be fragmented.
                 # Objects transmitted by Server are separated by CRLF.
-                # So, if last part != b"", it's definetly fragmented and should
-                # be preserved in `buf` until next `chunk` arrives.
+                # So, if last part != b"", it's definitely fragmented and
+                # should be preserved in `buf` until next `chunk` arrives.
 
                 piter = iter(parts)
                 prev = next(piter)
