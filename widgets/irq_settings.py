@@ -218,7 +218,7 @@ class IRQSettingsWidget(SettingsWidget, object):
             cb.config(values = nodes)
 
             # IRQ line end (source or destination)
-            end_node = getattr(self.irq, pfx + "_dev")
+            end_node = getattr(self.node, pfx + "_dev")
             node_text = DeviceSettingsWidget.gen_node_link_text(end_node)
             node_var = getattr(self, pfx + "_node_var")
 
@@ -239,12 +239,12 @@ class IRQSettingsWidget(SettingsWidget, object):
             return
 
         if op.writes_node():
-            if not self.irq.id in self.mach.id2node:
+            if not self.node.id in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
         elif isinstance(op, MOp_SetIRQAttr):
-            if op.node_id == self.irq.id:
+            if op.node_id == self.node.id:
                 self.refresh()
 
     def __auto_var_base(self, *args):
