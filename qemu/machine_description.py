@@ -64,8 +64,6 @@ class MachineDescription(QOMDescription):
         for n in self.iter_nodes():
             self.assign_id(n)
 
-    __pygen_deps__ = ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
-
     # Override super's __gen_code__ (see descriptionOf).
     # It must not gen code for all attributes.
     def __gen_code__(self, gen):
