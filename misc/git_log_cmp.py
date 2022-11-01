@@ -119,7 +119,7 @@ class GitLog(object):
         lines = []
 
         for l in self.data.splitlines(True):
-            # Commit ids are definetly differ.
+            # Commit ids are definitely differ.
             # Drop them to don't junk diff.
             if is_commit_line(l):
                 continue
