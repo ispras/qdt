@@ -5,6 +5,7 @@ __all__ = [
       , "PyGenDepsCatcher"
   , "pythonizable"
   , "pygenerate"
+  , "default_gen_pass"
 ]
 
 from six import (
