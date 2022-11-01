@@ -57,7 +57,7 @@ Helper to compare `git log` (commit summary) of different revisions as text.
     )
     arg("--no-cleanup", "-C",
         action = "store_true",
-        help = "don't remove generated log files"
+        help = "don't remove generated log files",
     )
 
     args = ap.parse_args()
