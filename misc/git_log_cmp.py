@@ -31,6 +31,10 @@ re_commit = compile(r"^commit [0-9a-f]{40}$")
 re_commit_match = re_commit.match
 is_commit_line = lambda l: bool(re_commit_match(l))
 
+re_index = compile(r"^index [0-9a-f]{9}..[0-9a-f]{9} \d{6}$")
+re_index_match = re_index.match
+is_index_line = lambda l: bool(re_index_match(l))
+
 
 def main():
     ap = ArgumentParser(
@@ -61,6 +65,10 @@ Helper to compare `git log` (commit summary) of different revisions as text.
         action = "store_true",
         help = "don't remove generated log files",
     )
+    arg("--showpatch", "-s",
+        action = "store_true",
+        help = "show patch for every commit",
+    )
 
     args = ap.parse_args()
 
@@ -85,11 +93,17 @@ Helper to compare `git log` (commit summary) of different revisions as text.
     prefix_dir = dirname(prefix)
     makedirs(prefix_dir, exist_ok = True)
 
+    showpatch = args.showpatch
+
     glogs = []
     for rev_id in rev_ids:
         rev_range = base + ".." + rev_id
+        if showpatch:
+            log_args = (rev_range, "-p")
+        else:
+            log_args = (rev_range,)
         glog = GitLog(
-            data = git.log(rev_range),
+            data = git.log(*log_args),
             file_name = prefix + rev_range + ".log",
         )
         glogs.append(glog)
@@ -124,6 +138,8 @@ class GitLog(object):
             # Commit ids are definitely differ.
             # Drop them to don't junk diff.
             if is_commit_line(l):
+                continue
+            if is_index_line(l):
                 continue
             lines.append(l)
 
