@@ -82,8 +82,8 @@ class MachineDescription(QOMDescription):
 
         # add nodes preserving id order to same identification
         pfx = gen.nameof(self) + ".add_node("
-        for id, node in self.id2node.items():
-            gen.line(pfx + gen.nameof(node) + ", with_id = " + str(id) + ")")
+        for nid, node in self.id2node.items():
+            gen.line(pfx + gen.nameof(node) + ", with_id = " + str(nid) + ")")
 
     def link(self, handle_system_bus = True):
         self.added = True
