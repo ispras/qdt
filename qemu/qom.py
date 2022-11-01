@@ -179,8 +179,13 @@ class QOMType(object):
         ("directory", { "short": _("Directory"), "input": str }),
     ])
 
+    __pygen_deps__ = (
+        "extra_types",
+    )
+
     def __init__(self, name, directory,
-        extra_fields = tuple()
+        extra_fields = tuple(),
+        extra_types = tuple(),
     ):
         self.directory = directory
         self.qtn = qtn = QemuTypeName(name)
@@ -191,6 +196,14 @@ class QOMType(object):
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
         self.extra_fields = tuple(extra_fields)
+        self.extra_types = tuple(extra_types)
+
+    def iter_gen_extra_types(self):
+        for type_desc in self.extra_types:
+            yield type_desc.gen_c_type()
+
+    def gen_extra_types(self):
+        return list(self.iter_gen_extra_types())
 
     def declare_extra_fields(self):
         self.add_state_fields(self.extra_fields)
@@ -240,6 +253,9 @@ class QOMType(object):
         else:
             self.header = header = self.provide_header()
             sources.append(header)
+
+        yield
+        self.gen_extra_types()
 
         yield
         self.source = source = self.gen_source()
