@@ -3,16 +3,16 @@ __all__ = [
 ]
 
 from codecs import (
-    open
+    open,
 )
 from contextlib import (
-    contextmanager
+    contextmanager,
 )
 from os.path import (
-    isfile
+    isfile,
 )
 from six import (
-    StringIO
+    StringIO,
 )
 
 
