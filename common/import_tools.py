@@ -8,10 +8,12 @@ from .pypath import (
     caller_file_name,
     iter_submodules,
 )
+from .shadow_open import (
+    shadow_open,
+)
 
 from os.path import (
     dirname,
-    exists,
     join,
     splitext,
 )
@@ -46,12 +48,5 @@ from .this import *
 
     code = gen_import_code(cur_dir)
 
-    if exists(importer_name):
-        with open(importer_name, "r") as f:
-            generate = (f.read() != code)
-    else:
-        generate = True
-
-    if generate:
-        with open(importer_name, "w") as f:
-            f.write(code)
+    with shadow_open(importer_name) as f:
+        f.write(code)
