@@ -4,15 +4,16 @@ __all__ = [
   , "update_this"
 ]
 
-from os.path import (
-    splitext,
-    dirname,
-    join,
-    exists,
-)
 from .pypath import (
     caller_file_name,
     iter_submodules,
+)
+
+from os.path import (
+    dirname,
+    exists,
+    join,
+    splitext,
 )
 
 
