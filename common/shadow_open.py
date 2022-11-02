@@ -35,6 +35,5 @@ same content.
             with open(filename, mode = "wb") as f:
                 f.write(new_data)
     else:
-        f = open(filename, mode = "wb", encoding = "utf-8")
-        yield f
-        f.close()
+        with open(filename, mode = "wb", encoding = "utf-8") as f:
+            yield f
