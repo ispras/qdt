@@ -3,13 +3,16 @@ __all__ = [
 ]
 
 from common import (
+    CoDispatcher,
     ee,
-    CoDispatcher
+)
+
+from sys import (
+    stderr,
 )
 from time import (
-    time
+    time,
 )
-import sys
 
 
 PROFILE_COTASK = ee("QDT_PROFILE_COTASK")
@@ -38,7 +41,7 @@ peaces among Tkinter event driven GUI model.
         ti = time() - t0
         if PROFILE_COTASK and ti > 0.1:
 
-            sys.stderr.write(("Iteration consumed %f sec\n" % ti)
+            stderr.write(("Iteration consumed %f sec\n" % ti)
                 + "Active tasks:\n  "
                 + "\n  ".join(
                     t.generator.__name__ for t in self.active_tasks
