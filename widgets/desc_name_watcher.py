@@ -2,19 +2,20 @@ __all__ = [
     "DescNameWatcher"
 ]
 
-from qemu import (
-    DOp_SetAttr,
-    QOMDevice,
-    MachineNode,
-    DeviceNode,
-    MOp_SetDevQOMType,
-    QemuTypeName
-)
-from inspect import (
-    getmro
-)
 from common import (
-    mlget as _
+    mlget as _,
+)
+from qemu import (
+    DeviceNode,
+    DOp_SetAttr,
+    MachineNode,
+    MOp_SetDevQOMType,
+    QemuTypeName,
+    QOMDevice,
+)
+
+from inspect import (
+    getmro,
 )
 
 
