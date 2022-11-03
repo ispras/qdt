@@ -3,9 +3,10 @@ __all__ = [
 ]
 
 from six.moves.tkinter import (
+    Misc,
     TclError,
-    Misc
 )
+
 
 class DoShow(BaseException):
     def __init__(self, show):
