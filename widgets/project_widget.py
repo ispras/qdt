@@ -2,70 +2,70 @@ __all__ = [
     "ProjectWidget"
 ]
 
-from .var_widgets import (
-    VarMenu,
-    VarTreeview
+from .add_desc_dialog import (
+    AddDescriptionDialog,
 )
 from .close_button_notebook import (
-    CloseButtonNotebook
-)
-from .machine_widget import (
-    MachineDescriptionSettingsWidget
-)
-from qemu import (
-    MachineNode
-)
-from six.moves.tkinter import (
-    RAISED,
-    NO,
-    PanedWindow
+    CloseButtonNotebook,
 )
 from common import (
     CoTask,
-    mlget as _
-)
-from qemu import (
-    CPUDescription,
-    MachineDescription,
-    QType,
-    QemuTypeName,
-    SysBusDeviceDescription,
-    PCIExpressDeviceDescription,
-    BadBuildPath,
-    qvd_get,
-    qvd_load_with_cache,
-    DOp_SetAttr,
-    POp_AddDesc
-)
-from .qom_settings import (
-    QOMDescriptionSettingsWidget
-)
-from six.moves.tkinter_font import (
-    Font
-)
-from .gui_frame import (
-    GUIFrame
-)
-from .scrollframe import (
-    add_scrollbars_native
-)
-from .add_desc_dialog import (
-    AddDescriptionDialog
+    mlget as _,
 )
 from .gui_editing import (
-    GUIPOp_SetTarget,
     GUIPOp_SetBuildPath,
-    POp_SetDescLayout
+    GUIPOp_SetTarget,
+    POp_SetDescLayout,
+)
+from .gui_frame import (
+    GUIFrame,
+)
+from .machine_widget import (
+    MachineDescriptionSettingsWidget,
 )
 from .popup_helper import (
-    TkPopupHelper
-)
-from six.moves.tkinter_messagebox import (
-    showerror
+    TkPopupHelper,
 )
 from .qdc_gui_signal_helper import (
-    QDCGUISignalHelper
+    QDCGUISignalHelper,
 )
+from qemu import (
+    BadBuildPath,
+    CPUDescription,
+    DOp_SetAttr,
+    MachineDescription,
+    MachineNode,
+    PCIExpressDeviceDescription,
+    POp_AddDesc,
+    QemuTypeName,
+    QType,
+    qvd_get,
+    qvd_load_with_cache,
+    SysBusDeviceDescription,
+)
+from .qom_settings import (
+    QOMDescriptionSettingsWidget,
+)
+from .scrollframe import (
+    add_scrollbars_native,
+)
+from .var_widgets import (
+    VarMenu,
+    VarTreeview,
+)
+
+from six.moves.tkinter import (
+    NO,
+    PanedWindow,
+    RAISED,
+)
+from six.moves.tkinter_font import (
+    Font,
+)
+from six.moves.tkinter_messagebox import (
+    showerror,
+)
+
 
 class ReloadBuildPathTask(CoTask):
     def __init__(self, project_widget):
