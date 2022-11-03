@@ -3,31 +3,30 @@ __all__ = [
   , "CPUSettingsWidget"
 ]
 
-from .settings_window import (
-    SettingsWindow,
-    QOMInstanceSettingsWidget
-)
 from common import (
-    mlget as _
-)
-from qemu import (
-    MachineNodeOperation
-)
-from .var_widgets import (
-    VarLabel
-)
-from six.moves.tkinter import (
-    BOTH,
-    StringVar
-)
-from qemu import (
-    MOp_SetCPUAttr
-)
-from .hotkey import (
-    HKEntry
+    mlget as _,
 )
 from .gui_frame import (
-    GUIFrame
+    GUIFrame,
+)
+from .hotkey import (
+    HKEntry,
+)
+from qemu import (
+    MachineNodeOperation,
+    MOp_SetCPUAttr,
+)
+from .settings_window import (
+    QOMInstanceSettingsWidget,
+    SettingsWindow,
+)
+from .var_widgets import (
+    VarLabel,
+)
+
+from six.moves.tkinter import (
+    BOTH,
+    StringVar,
 )
 
 
