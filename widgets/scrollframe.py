@@ -7,28 +7,28 @@ __all__ = [
   , "add_scrollbars_with_tags"
 ]
 
-
-from six.moves.tkinter import (
-    VERTICAL,
-    HORIZONTAL,
-    ALL,
-    Scrollbar,
-    Canvas
-)
-from six.moves.tkinter_ttk import (
-    Sizegrip
-)
 from common import (
-    bind_all_mouse_wheel
+    bind_all_mouse_wheel,
 )
+
 from itertools import (
-    count
-)
-from sys import (
-    stderr
+    count,
 )
 from platform import (
-    system
+    system,
+)
+from six.moves.tkinter import (
+    ALL,
+    Canvas,
+    HORIZONTAL,
+    Scrollbar,
+    VERTICAL,
+)
+from six.moves.tkinter_ttk import (
+    Sizegrip,
+)
+from sys import (
+    stderr,
 )
 
 
