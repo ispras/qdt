@@ -2,14 +2,15 @@ __all__ = [
     "GUILayout"
 ]
 
-from copy import (
-    deepcopy
+from common import (
+    same_attrs,
 )
 from qemu import (
-    QemuTypeName
+    QemuTypeName,
 )
-from common import (
-    same_attrs
+
+from copy import (
+    deepcopy,
 )
 
 
