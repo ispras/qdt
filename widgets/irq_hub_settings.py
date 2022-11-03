@@ -3,13 +3,14 @@ __all__ = [
   , "IRQHubSettingsWindow"
 ]
 
+from common import (
+    mlget as _,
+)
 from .settings_window import (
     SettingsWidget,
-    SettingsWindow
+    SettingsWindow,
 )
-from common import (
-    mlget as _
-)
+
 
 class IRQHubSettingsWidget(SettingsWidget):
     # only common node parameters, no special widgets
