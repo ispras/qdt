@@ -3,16 +3,16 @@ __all__ = [
 ]
 
 from .branch_tree_view import (
-    BranchTreeview
-)
-from .gui_toplevel import (
-    GUIToplevel
-)
-from .scrollframe import (
-    add_scrollbars_native
+    BranchTreeview,
 )
 from common import (
-    mlget as _
+    mlget as _,
+)
+from .gui_toplevel import (
+    GUIToplevel,
+)
+from .scrollframe import (
+    add_scrollbars_native,
 )
 
 
