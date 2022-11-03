@@ -3,21 +3,22 @@ __all__ = [
 ]
 
 from .gui_frame import (
-    GUIFrame
+    GUIFrame,
+)
+from .pack_info_compat import (
+    pack_info,
 )
 from .var_widgets import (
-    VarLabel
+    VarLabel,
 )
+
 from six.moves.tkinter import (
     Label,
+    LEFT as SIDE_LEFT,
+    RIGHT as SIDE_RIGHT,
     SUNKEN as RELIEF_SUNKEN,
     W as ANCHOR_W,
     X as FILL_X,
-    RIGHT as SIDE_RIGHT,
-    LEFT as SIDE_LEFT
-)
-from .pack_info_compat import (
-    pack_info
 )
 
 
