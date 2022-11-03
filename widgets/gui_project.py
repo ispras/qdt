@@ -2,20 +2,22 @@ __all__ = [
     "GUIProject"
 ]
 
-from qemu import (
-    QType,
-    MachineNode,
-    QProject
-)
 from common import (
-    History
+    History,
 )
 from .gui_layout import (
-    GUILayout
+    GUILayout,
 )
+from qemu import (
+    MachineNode,
+    QProject,
+    QType,
+)
+
 from itertools import (
-    count
+    count,
 )
+
 
 class GUIProject(QProject):
 
