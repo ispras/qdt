@@ -2,12 +2,13 @@ __all__ = [
     "TreeviewWidthHelper"
 ]
 
-from six.moves.tkinter_ttk import (
-    Treeview
-)
 from six.moves.tkinter_font import (
-    Font
+    Font,
 )
+from six.moves.tkinter_ttk import (
+    Treeview,
+)
+
 
 class TreeviewWidthHelper(Treeview):
     def __init__(self, auto_columns = [], zero_column_extra_width = 40):
