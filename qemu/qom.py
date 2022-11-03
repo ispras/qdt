@@ -15,6 +15,9 @@ from .machine_nodes import (
 from .model_state import (
     StateStruct,
 )
+from .preprocess import (
+    preprocess as pp,
+)
 from .qom_type_state_field import (
     QOMTypeStateField,
 )
@@ -196,7 +199,7 @@ class QOMType(object):
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
         self.extra_fields = tuple(extra_fields)
-        self.extra_types = tuple(extra_types)
+        self.extra_types = tuple(map(pp, extra_types))
 
     def iter_gen_extra_types(self):
         for type_desc in self.extra_types:
@@ -329,6 +332,7 @@ class QOMType(object):
             self.add_state_field(field)
 
     def add_state_field(self, field):
+        field = pp(field)
         field.prop_macro_name = (
             self.qtn.for_macros + "_" + field.property_macro_suffix
         )
