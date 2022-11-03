@@ -5,21 +5,23 @@ __all__ = [
 ]
 
 from common import (
+    get_class_total_args,
     same_attrs,
-    get_class_total_args
-)
-from inspect import (
-    getmro
-)
-from collections import (
-    OrderedDict
-)
-from sys import (
-    modules
 )
 from .qom import (
-    QemuTypeName
+    QemuTypeName,
 )
+
+from collections import (
+    OrderedDict,
+)
+from inspect import (
+    getmro,
+)
+from sys import (
+    modules,
+)
+
 
 class QOMDescription(object):
     def __init__(self):
