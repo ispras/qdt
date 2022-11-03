@@ -2,12 +2,14 @@ __all__ = [
     "GUIFrame"
 ]
 
-from six.moves.tkinter import (
-    Frame
-)
 from .tk_unbind import (
-    unbind
+    unbind,
 )
+
+from six.moves.tkinter import (
+    Frame,
+)
+
 
 class GUIFrame(Frame):
     unbind = unbind
