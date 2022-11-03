@@ -3,38 +3,39 @@ __all__ = [
   , "IRQSettingsWidget"
 ]
 
-from .settings_window import (
-    SettingsWidget,
-    SettingsWindow
-)
 from common import (
-    mlget as _
+    mlget as _,
 )
-from .var_widgets import (
-    VarLabelFrame,
-    VarLabel
+from .device_settings import (
+    DeviceSettingsWidget,
+)
+from .hotkey import (
+    HKEntry,
 )
 from qemu import (
+    DeviceNode,
+    MachineNodeOperation,
     MOp_SetIRQAttr,
     MOp_SetIRQEndPoint,
-    MachineNodeOperation,
-    DeviceNode
 )
+from .settings_window import (
+    SettingsWidget,
+    SettingsWindow,
+)
+from .var_widgets import (
+    VarLabel,
+    VarLabelFrame,
+)
+
 from six.moves import (
-    range as xrange
+    range as xrange,
 )
 from six.moves.tkinter import (
     BOTH,
-    StringVar
+    StringVar,
 )
 from six.moves.tkinter_ttk import (
-    Combobox
-)
-from .device_settings import (
-    DeviceSettingsWidget
-)
-from .hotkey import (
-    HKEntry
+    Combobox,
 )
 
 
