@@ -3,24 +3,24 @@ __all__ = [
   , "GitVerSelDialog"
 ]
 
-
-from six.moves.tkinter import (
-    StringVar
-)
 from common import (
-    mlget as _
+    mlget as _,
 )
 from .gui_dialog import (
-    GUIDialog
+    GUIDialog,
 )
 from .gui_frame import (
-    GUIFrame
-)
-from .var_widgets import (
-    VarButton
+    GUIFrame,
 )
 from .hotkey import (
-    HKCombobox
+    HKCombobox,
+)
+from .var_widgets import (
+    VarButton,
+)
+
+from six.moves.tkinter import (
+    StringVar,
 )
 
 
