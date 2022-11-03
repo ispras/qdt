@@ -2,20 +2,21 @@ __all__ = [
     "GUIProjectHistoryTracker"
 ]
 
-from qemu import (
-    PCIExpressDeviceDescription,
-    PCIId,
-    DOp_SetAttr,
-    DOp_SetPCIIdAttr,
-    ProjectHistoryTracker
-)
 from common import (
-    mlget as _
+    mlget as _,
 )
 from .gui_editing import (
+    GUIPOp_SetBuildPath,
     GUIPOp_SetTarget,
-    GUIPOp_SetBuildPath
 )
+from qemu import (
+    DOp_SetAttr,
+    DOp_SetPCIIdAttr,
+    PCIExpressDeviceDescription,
+    PCIId,
+    ProjectHistoryTracker,
+)
+
 
 class GUIProjectHistoryTracker(ProjectHistoryTracker):
     def __init__(self, *args, **kw):
