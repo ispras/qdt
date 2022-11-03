@@ -19,20 +19,6 @@ class QOMTypeStateField(object):
         property_name = None,
         property_macro_suffix = None,
     ):
-        if property_name is None:
-            property_name = '"' + name.replace('_', '-') + '"'
-
-        if property_macro_suffix is None:
-            property_macro_suffix = (
-                property_name
-                .strip('"')
-                .replace('-', '_')
-                .upper()
-            )
-
-        if save_in_vmsd is None:
-            save_in_vmsd = not bool(is_property)
-
         self.c_type_name = c_type_name
         self.name = name
         self.array_size = array_size
@@ -41,6 +27,35 @@ class QOMTypeStateField(object):
         self.property_default = property_default
         self.property_name = property_name
         self.property_macro_suffix = property_macro_suffix
+
+    def provide_property_name(self):
+        property_name = self.property_name
+
+        if property_name is None:
+            property_name = '"' + self.name.replace('_', '-') + '"'
+
+        return property_name
+
+    def provide_property_macro_suffix(self):
+        property_macro_suffix = self.property_macro_suffix
+
+        if property_macro_suffix is None:
+            property_macro_suffix = (
+                self.provide_property_name()
+                    .strip('"')
+                    .replace('-', '_')
+                    .upper()
+            )
+
+        return property_macro_suffix
+
+    @property
+    def need_save_in_vmsd(self):
+        save_in_vmsd = self.save_in_vmsd
+        if save_in_vmsd is None:
+            return not bool(self.is_property)
+        else:
+            return save_in_vmsd
 
     def __var_base__(self):
         return "fld_"

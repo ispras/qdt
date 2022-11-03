@@ -64,7 +64,7 @@ class StateStruct(object):
         global type2vmstate
 
         for f in self.fields:
-            if not f.save_in_vmsd:
+            if not f.need_save_in_vmsd:
                 continue
 
             f_c_type_name = f.c_type_name

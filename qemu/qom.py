@@ -310,7 +310,7 @@ class QOMType(object):
 
     def add_state_field(self, field):
         field.prop_macro_name = (
-            self.qtn.for_macros + "_" + field.property_macro_suffix
+            self.qtn.for_macros + "_" + field.provide_property_macro_suffix()
         )
         self.state.add_field(field)
 
@@ -361,7 +361,7 @@ class QOMType(object):
                 continue
 
             t = Macro(field.prop_macro_name,
-                text = field.property_name,
+                text = field.provide_property_name(),
             )
             source.add_type(t)
 
