@@ -2,39 +2,40 @@ __all__ = [
     "QOMDescriptionSettingsWidget"
 ]
 
-from .gui_frame import (
-    GUIFrame
-)
-from six.moves.tkinter import (
-    Checkbutton,
-    BooleanVar,
-    BOTH,
-    StringVar
-)
-from .var_widgets import (
-    VarLabel,
-    VarButton
-)
 from common import (
-    mlget as _
+    mlget as _,
+)
+from .gui_frame import (
+    GUIFrame,
 )
 from .hotkey import (
-    HKEntry
-)
-from qemu import (
-    PCIId,
-    POp_AddDesc,
-    DOp_SetPCIIdAttr,
-    DOp_SetAttr
-)
-from .qdc_gui_signal_helper import (
-    QDCGUISignalHelper
+    HKEntry,
 )
 from .obj_ref_var import (
-    ObjRefVar
+    ObjRefVar,
 )
 from .pci_id_widget import (
-    PCIIdWidget
+    PCIIdWidget,
+)
+from .qdc_gui_signal_helper import (
+    QDCGUISignalHelper,
+)
+from qemu import (
+    DOp_SetAttr,
+    DOp_SetPCIIdAttr,
+    PCIId,
+    POp_AddDesc,
+)
+from .var_widgets import (
+    VarButton,
+    VarLabel,
+)
+
+from six.moves.tkinter import (
+    BooleanVar,
+    BOTH,
+    Checkbutton,
+    StringVar,
 )
 
 
