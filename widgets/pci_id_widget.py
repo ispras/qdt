@@ -2,27 +2,29 @@ __all__ = [
     "PCIIdWidget"
 ]
 
-from .gui_frame import (
-    GUIFrame
-)
-from .var_widgets import (
-    VarCombobox
-)
-from six.moves.tkinter_ttk import (
-    Combobox
-)
 from common import (
-    mlget as _
+    mlget as _,
+)
+from .gui_frame import (
+    GUIFrame,
 )
 from qemu import (
-    PCIId,
     PCIClassId,
+    PCIDeviceId,
+    PCIId,
     PCIVendorId,
-    PCIDeviceId
 )
+from .var_widgets import (
+    VarCombobox,
+)
+
 from six import (
-    iteritems
+    iteritems,
 )
+from six.moves.tkinter_ttk import (
+    Combobox,
+)
+
 
 kind2idx = {
     PCIClassId  : 0,
