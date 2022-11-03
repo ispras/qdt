@@ -4,120 +4,122 @@ __all__ = [
   , "MachineDiagramWidget"
 ]
 
-from .var_widgets import (
-    VarMenu
-)
-from .DnDCanvas import (
-    dragging_all,
-    DRAG_GAP,
-    CanvasDnD
-)
-from six import (
-    text_type,
-    binary_type
-)
-from six.moves import (
-    reduce,
-    range as xrange
-)
-from six.moves.tkinter import (
-    StringVar,
-    BooleanVar,
-    DISABLED,
-    ALL
-)
-from math import (
-    sqrt,
-    hypot
-)
-from random import (
-    random
-)
-from time import (
-    time
-)
-from sys import (
-    float_info
-)
-from os import (
-    remove
-)
-from os.path import (
-    splitext
+from .bus_settings import (
+    BusSettingsWindow,
 )
 from common import (
     bidict,
     find_empty_aabb,
+    mlget as _,
     PhBox,
     PhCircle,
-    Vector,
-    Segment,
     Polygon,
-    mlget as _,
-    sign
-)
-from qemu import (
-    MOp_AddCPU,
-    MOp_DelCPU,
-    MOp_SetCPUAttr,
-    CPUNode,
-    MOp_SetBusAttr,
-    MOp_AddDevice,
-    MOp_DelDevice,
-    MOp_AddBus,
-    MOp_AddMemoryNode,
-    MOp_DelBus,
-    MOp_SetChildBus,
-    BusNode,
-    IRQLine as QIRQLine,
-    MOp_SetNodeVarNameBase,
-    MachineNodeSetLinkAttributeOperation,
-    MOp_AddIRQLine,
-    MOp_DelIRQLine,
-    MOp_SetIRQAttr,
-    MachineNodeOperation,
-    MOp_AddIRQHub,
-    MOp_SetDevParentBus,
-    MOp_SetDevQOMType,
-    Node,
-    DeviceNode,
-    IRQHub
-)
-from .device_settings_window import (
-    DeviceSettingsWindow
-)
-from .irq_settings import (
-    IRQSettingsWindow
-)
-from .bus_settings import (
-    BusSettingsWindow
+    Segment,
+    sign,
+    Vector,
 )
 from .cpu_settings import (
-    CPUSettingsWindow
-)
-from .popup_helper import (
-    TkPopupHelper
+    CPUSettingsWindow,
 )
 from .cross_dialogs import (
-    asksaveas
+    asksaveas,
 )
-from six.moves.tkinter_messagebox import (
-    showerror
+from .device_settings_window import (
+    DeviceSettingsWindow,
+)
+from .DnDCanvas import (
+    CanvasDnD,
+    DRAG_GAP,
+    dragging_all,
 )
 from .hotkey import (
-    HotKeyBinding
-)
-from canvas2svg import (
-    configure as svg_configure,
-    SEGMENT_TO_PATH,
-    saveall as saveall2svg
+    HotKeyBinding,
 )
 from .irq_hub_settings import (
-    IRQHubSettingsWindow
+    IRQHubSettingsWindow,
+)
+from .irq_settings import (
+    IRQSettingsWindow,
+)
+from .popup_helper import (
+    TkPopupHelper,
+)
+from qemu import (
+    BusNode,
+    CPUNode,
+    DeviceNode,
+    IRQHub,
+    IRQLine as QIRQLine,
+    MachineNodeOperation,
+    MachineNodeSetLinkAttributeOperation,
+    MOp_AddBus,
+    MOp_AddCPU,
+    MOp_AddDevice,
+    MOp_AddIRQHub,
+    MOp_AddIRQLine,
+    MOp_AddMemoryNode,
+    MOp_DelBus,
+    MOp_DelCPU,
+    MOp_DelDevice,
+    MOp_DelIRQLine,
+    MOp_SetBusAttr,
+    MOp_SetChildBus,
+    MOp_SetCPUAttr,
+    MOp_SetDevParentBus,
+    MOp_SetDevQOMType,
+    MOp_SetIRQAttr,
+    MOp_SetNodeVarNameBase,
+    Node,
+)
+from .var_widgets import (
+    VarMenu,
+)
+
+from canvas2svg import (
+    configure as svg_configure,
+    saveall as saveall2svg,
+    SEGMENT_TO_PATH,
 )
 from itertools import (
-    count
+    count,
 )
+from math import (
+    hypot,
+    sqrt,
+)
+from os import (
+    remove,
+)
+from os.path import (
+    splitext,
+)
+from random import (
+    random,
+)
+from six import (
+    binary_type,
+    text_type,
+)
+from six.moves import (
+    range as xrange,
+    reduce,
+)
+from six.moves.tkinter import (
+    ALL,
+    BooleanVar,
+    DISABLED,
+    StringVar,
+)
+from six.moves.tkinter_messagebox import (
+    showerror,
+)
+from sys import (
+    float_info,
+)
+from time import (
+    time,
+)
+
 
 class MachineWidgetNodeOperation(MachineNodeOperation):
 
