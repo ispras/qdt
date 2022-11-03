@@ -10,19 +10,20 @@ __all__ = [
 ]
 
 from common import (
-    mlget as _
+    mlget as _,
+)
+
+from os.path import (
+    basename,
+    dirname,
+)
+from six.moves.tkinter_messagebox import (
+    askyesno as tk_askyesno,
 )
 from six.moves.tkinter_tkfiledialog import (
     askdirectory as tk_askdirector,
     askopenfilename,
-    asksaveasfilename
-)
-from six.moves.tkinter_messagebox import (
-    askyesno as tk_askyesno
-)
-from os.path import (
-    basename,
-    dirname,
+    asksaveasfilename,
 )
 
 
