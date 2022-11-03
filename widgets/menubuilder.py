@@ -3,7 +3,7 @@ __all__ = [
 ]
 
 from .var_widgets import (
-    VarMenu
+    VarMenu,
 )
 
 
