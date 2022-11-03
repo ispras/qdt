@@ -42,8 +42,8 @@ from .var_widgets import (
 )
 
 from six.moves.tkinter import (
-    BOTH,
     BooleanVar,
+    BOTH,
     StringVar,
 )
 from six.moves.tkinter_ttk import (
