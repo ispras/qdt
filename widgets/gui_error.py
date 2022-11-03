@@ -3,32 +3,33 @@ __all__ = [
   , "ErrorDialog"
 ]
 
+from common import (
+    mlget as _,
+)
 from .gui_dialog import (
-    GUIDialog
-)
-from six.moves.tkinter import (
-    END,
-    NONE
-)
-from six.moves.tkinter_ttk import (
-    Sizegrip
+    GUIDialog,
 )
 from .gui_text import (
     GUIText,
-    READONLY
-)
-from common import (
-    mlget as _
+    READONLY,
 )
 from .scrollframe import (
-    add_scrollbars_native
+    add_scrollbars_native,
 )
 from .var_widgets import (
     VarButton,
-    VarLabel
+    VarLabel,
+)
+
+from six.moves.tkinter import (
+    END,
+    NONE,
+)
+from six.moves.tkinter_ttk import (
+    Sizegrip,
 )
 from sys import (
-    stderr
+    stderr,
 )
 
 
