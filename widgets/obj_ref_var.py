@@ -3,8 +3,9 @@ __all__ = [
 ]
 
 from six.moves.tkinter import (
-    IntVar
+    IntVar,
 )
+
 
 ref_objects = {
     hash(None) : None
