@@ -3,18 +3,20 @@ __all__ = [
 ]
 
 from common import (
-    mlget as _
+    mlget as _,
+)
+
+from os.path import (
+    join,
+    split,
 )
 from six.moves.tkinter import (
-    PhotoImage
-)
-from os.path import (
-    split,
-    join
+    PhotoImage,
 )
 from traceback import (
-    print_exc
+    print_exc,
 )
+
 
 reported = False
 
