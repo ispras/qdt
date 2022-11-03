@@ -3,28 +3,28 @@ __all__ = [
   , "GUITk"
 ]
 
-from .var_widgets import (
-    VarTk
-)
-from .tk_co_dispatcher import (
-    TkCoDispatcher
-)
 from common import (
     lazy,
     notifier,
-    SignalDispatcherTask
-)
-from .logo import (
-    set_logo
+    SignalDispatcherTask,
 )
 from .gui_error import (
-    TaskErrorDialog
+    TaskErrorDialog,
 )
 from .hotkey import (
     HotKey,
 )
+from .logo import (
+    set_logo,
+)
+from .tk_co_dispatcher import (
+    TkCoDispatcher,
+)
 from .tk_geometry_helper import (
-    TkGeometryHelper
+    TkGeometryHelper,
+)
+from .var_widgets import (
+    VarTk,
 )
 
 
