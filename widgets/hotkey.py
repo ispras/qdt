@@ -11,24 +11,25 @@ __all__ = [
 # ML should be used there (instead of mlget) because the key will be modified
 from common import (
     lazy,
+    mlget as _,
     Persistent,
-    mlget as _
 )
-from six.moves.tkinter import (
-    SEL_FIRST,
-    SEL_LAST,
-    END,
-    Entry
-)
-from six.moves.tkinter_ttk import (
-    Combobox
+
+from os import (
+    name as os_name,
 )
 from os.path import (
     dirname,
-    join
+    join,
 )
-from os import (
-    name as os_name
+from six.moves.tkinter import (
+    END,
+    Entry,
+    SEL_FIRST,
+    SEL_LAST,
+)
+from six.moves.tkinter_ttk import (
+    Combobox,
 )
 
 
