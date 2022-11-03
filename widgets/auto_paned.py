@@ -2,12 +2,12 @@ __all__ = [
     "AutoPanedWindow"
 ]
 
+from six.moves import (
+    range,
+)
 from six.moves.tkinter import (
     HORIZONTAL,
-    PanedWindow
-)
-from six.moves import (
-    range
+    PanedWindow,
 )
 
 
