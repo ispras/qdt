@@ -6,9 +6,9 @@ __all__ = [
 
 from common import (
     ee,
-    notifier,
     LineNoStream,
     mlget as _,
+    notifier,
 )
 from .gui_frame import (
     GUIFrame,
@@ -40,9 +40,10 @@ from .var_widgets import (
     VarCheckbutton,
     VarLabel,
 )
+
 from six.moves.tkinter import (
-    StringVar,
     BooleanVar,
+    StringVar,
 )
 from six.moves.tkinter_ttk import (
     Sizegrip,
