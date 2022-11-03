@@ -8,7 +8,7 @@ __all__ = [
 ]
 
 from re import (
-    compile
+    compile,
 )
 
 
