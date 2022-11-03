@@ -3,8 +3,9 @@ __all__ = [
 ]
 
 from six.moves.tkinter import (
-    Misc
+    Misc,
 )
+
 
 class QDCGUISignalHelper(Misc):
 
