@@ -22,6 +22,15 @@ class StateStruct(object):
         for field in fields:
             self.add_field(field)
 
+    def __preprocess__(self):
+        return type(self)(
+            self.c_type_name,
+            *(f.__preprocess__() for f in self.fields),
+            vmsd_min_version_id = self.vmsd_min_version_id,
+            vmsd_version_id = self.vmsd_version_id,
+            vmsd_state_name = self.vmsd_state_name,
+        )
+
     def __var_base__(self):
         return "ss_" + self.c_type_name.lower()
 
