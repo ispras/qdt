@@ -3,38 +3,39 @@ __all__ = [
   , "QOMTypeSelectDialog"
 ]
 
-from .var_widgets import (
-    VarTreeview,
-    VarButton,
-    VarLabelFrame
-)
-from six.moves.tkinter import (
-    BOTH,
-    LEFT,
-    RIGHT,
-    NORMAL,
-    DISABLED,
-    Frame,
-    Radiobutton,
-    Checkbutton,
-    StringVar,
-    IntVar
-)
 from common import (
-    mlget as _
+    mlget as _,
 )
 from .gui_dialog import (
-    GUIDialog
+    GUIDialog,
+)
+from .gui_frame import (
+    GUIFrame,
 )
 from .scrollframe import (
     add_scrollbars_native,
-    add_scrollbars_with_tags
+    add_scrollbars_with_tags,
 )
-from .gui_frame import (
-    GUIFrame
+from .var_widgets import (
+    VarButton,
+    VarLabelFrame,
+    VarTreeview,
 )
+
 from collections import (
-    namedtuple
+    namedtuple,
+)
+from six.moves.tkinter import (
+    BOTH,
+    Checkbutton,
+    DISABLED,
+    Frame,
+    IntVar,
+    LEFT,
+    NORMAL,
+    Radiobutton,
+    RIGHT,
+    StringVar,
 )
 
 
