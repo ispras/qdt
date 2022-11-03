@@ -5,12 +5,12 @@ __all__ = [
   , "ANCHOR_MIDDLE"
 ]
 
-from six import (
-    integer_types
-)
 from math import (
+    cos,
     sin,
-    cos
+)
+from six import (
+    integer_types,
 )
 
 
