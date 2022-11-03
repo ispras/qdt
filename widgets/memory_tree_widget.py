@@ -3,43 +3,45 @@ __all__ = [
   , "MultipleSASInMachine"
 ]
 
-from .var_widgets import (
-    VarMenu, 
-    VarTreeview
-)
-from qemu import (
-    MemoryNode,
-    MemorySASNode,
-    MemoryLeafNode,
-    MemoryAliasNode,
-    MemoryRAMNode,
-    MemoryROMNode,
-    MachineNodeOperation,
-    MOp_AddMemoryNode,
-    MOp_DelMemoryNode,
-    MOp_AddMemChild,
-    MOp_RemoveMemChild,
-    MOp_SetMemNodeAlias,
-    MOp_SetMemNodeAttr
+from common import (
+    mlget as _,
 )
 from .memory_settings import (
-    MemorySettingsWindow
-)
-from common import (
-    mlget as _
+    MemorySettingsWindow,
 )
 from .popup_helper import (
-    TkPopupHelper
+    TkPopupHelper,
 )
-from six import (
-    integer_types
-)
-from six.moves.tkinter import (
-    TclError
+from qemu import (
+    MachineNodeOperation,
+    MemoryAliasNode,
+    MemoryLeafNode,
+    MemoryNode,
+    MemoryRAMNode,
+    MemoryROMNode,
+    MemorySASNode,
+    MOp_AddMemChild,
+    MOp_AddMemoryNode,
+    MOp_DelMemoryNode,
+    MOp_RemoveMemChild,
+    MOp_SetMemNodeAlias,
+    MOp_SetMemNodeAttr,
 )
 from .tk_unbind import (
-    unbind
+    unbind,
 )
+from .var_widgets import (
+    VarMenu,
+    VarTreeview,
+)
+
+from six import (
+    integer_types,
+)
+from six.moves.tkinter import (
+    TclError,
+)
+
 
 LAYOUT_COLUMNS_WIDTH = "columns width"
 
