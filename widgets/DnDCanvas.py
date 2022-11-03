@@ -10,17 +10,18 @@ __all__ = [
 ]
 
 from .tk_unbind import (
-    unbind
+    unbind,
 )
+
 from six.moves import (
-    range as xrange
+    range as xrange,
 )
 from six.moves.tkinter import (
     ALL,
-    IntVar,
+    BOTH,
     Canvas,
+    IntVar,
     RIDGE,
-    BOTH
 )
 
 
