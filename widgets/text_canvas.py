@@ -2,23 +2,24 @@ __all__ = [
     "TextCanvas"
 ]
 
-from six.moves.tkinter import (
-    IntVar,
-    Canvas,
-    RIGHT,
-    LEFT,
-)
-from six.moves.tkinter_font import (
-    Font,
-    NORMAL,
-    BOLD,
-)
 from common import (
     bind_mouse_wheel,
     LineIndex,
 )
 from .hotkey import (
     CurrentKeyboard,
+)
+
+from six.moves.tkinter import (
+    Canvas,
+    IntVar,
+    LEFT,
+    RIGHT,
+)
+from six.moves.tkinter_font import (
+    BOLD,
+    Font,
+    NORMAL,
 )
 
 
