@@ -6,18 +6,19 @@ __all__ = [
           , "POp_SetDescLayout"
 ]
 
-from qemu import (
-    ProjectOperation
-)
-from copy import (
-    deepcopy
-)
 from common import (
     changes_attr,
-    mlget as _
+    mlget as _,
 )
 from .gui_project import (
-    GUIProject
+    GUIProject,
+)
+from qemu import (
+    ProjectOperation,
+)
+
+from copy import (
+    deepcopy,
 )
 
 
