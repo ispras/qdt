@@ -10,25 +10,28 @@ __all__ = [
   , "VarMenu"
   , "VarTreeview"
 ]
+
+from common import (
+    Variable,
+)
+
 from six.moves.tkinter import (
-    Tk,
-    Menu,
-    Label,
-    Toplevel,
     Button,
-    LabelFrame,
     Checkbutton,
+    Label,
+    LabelFrame,
+    Menu,
+    StringVar,
+    Tk,
+    Toplevel,
     Variable as TkVariable,
-    StringVar
 )
 from six.moves.tkinter_ttk import (
-    Notebook,
     Combobox,
-    Treeview
+    Notebook,
+    Treeview,
 )
-from common import (
-    Variable
-)
+
 
 variables = (Variable, TkVariable)
 
