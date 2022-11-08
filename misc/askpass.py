@@ -1,4 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+# If interpreter is absent `sudo` prints "no such file" on `askpass.py`
+# while "no such file" should be printed on `python`.
+# Using `/usr/bin/env` makes error message accurate because `env`
+# correctly prints "no such file" on `python`.
 
 # WARNING! Keep it lightweight. Don't use QDT's `widgets` and so on.
 
