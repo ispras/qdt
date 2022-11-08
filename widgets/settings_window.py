@@ -171,7 +171,7 @@ class SettingsWindow(GUIToplevel):
         to be initialized already. """
         self.node = kw.pop("node")
         self.mach = kw.pop("machine")
-        self.machine_history_tracker = kw.pop("machine_history_tracker", None)
+        self.mht = kw.pop("machine_history_tracker", None)
 
         GUIToplevel.__init__(self, *args, **kw)
 
