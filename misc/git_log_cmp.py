@@ -50,11 +50,9 @@ Helper to compare `git log` (commit summary) of different revisions as text.
     )
     arg("--worktree", "-w",
         default = getcwd(),
-        nargs = 1,
     )
     arg("--prefix", "-p",
         default = getcwd() + sep + ".",
-        nargs = 1,
         help = "prefix (!= directory) for working files names",
     )
     arg("--cmptool", "-t",
