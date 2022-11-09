@@ -2,33 +2,36 @@ __all__ = [
     "PCIDeviceSettingsWidget"
 ]
 
-from .device_settings import (
-    DeviceSettingsWidget
-)
 from common import (
-    mlget as _
+    mlget as _,
 )
-from six.moves import (
-    range as xrange
+from .device_settings import (
+    DeviceSettingsWidget,
 )
-from six.moves.tkinter import (
-    BOTH,
-    StringVar,
-    BooleanVar
-)
-from six import (
-    integer_types
+from .hotkey import (
+    HKEntry,
 )
 from .var_widgets import (
-    VarLabelFrame,
+    VarCheckbutton,
     VarLabel,
-    VarCheckbutton
+    VarLabelFrame,
 )
-import sys
 
-from .hotkey import (
-    HKEntry
+from six import (
+    integer_types,
 )
+from six.moves import (
+    range as xrange,
+)
+from six.moves.tkinter import (
+    BooleanVar,
+    BOTH,
+    StringVar,
+)
+from sys import (
+    modules,
+)
+
 
 class PCIDeviceSettingsWidget(DeviceSettingsWidget):
     def __init__(self, *args, **kw):
@@ -89,7 +92,7 @@ class PCIDeviceSettingsWidget(DeviceSettingsWidget):
                 continue
 
             self.mht.stage(
-                getattr(sys.modules["qemu"], "MOp_PCIDevSet" + attr.title()),
+                getattr(modules["qemu"], "MOp_PCIDevSet" + attr.title()),
                 new_val,
                 self.dev.id
             )
