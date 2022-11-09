@@ -2,46 +2,36 @@ __all__ = [
     "ThreadControl"
 ]
 
-from .gui_frame import (
-    GUIFrame
+from common import (
+    mlget as _,
+    pypath,
 )
-from six.moves.tkinter import (
-    Label,
-    DISABLED,
-    NORMAL,
-    StringVar
+from .gui_frame import (
+    GUIFrame,
 )
 from .var_widgets import (
     VarButton,
-    VarLabel
+    VarLabel,
 )
-from common import (
-    mlget as _
-)
+with pypath("..pyrsp"):
+    from pyrsp.utils import (
+        rsp_decode,
+    )
 
-from os.path import (
-    split,
-    join
-)
-from sys import (
-    path as python_path
-)
-from time import (
-    time
+from six.moves.tkinter import (
+    DISABLED,
+    Label,
+    NORMAL,
+    StringVar,
 )
 from threading import (
+    Event,
     Thread,
-    Event
+)
+from time import (
+    time,
 )
 
-for mod in ("pyrsp",):
-    path = join(split(split(__file__)[0])[0], mod)
-    if path not in python_path:
-        python_path.insert(0, path)
-
-from pyrsp.utils import (
-    rsp_decode
-)
 
 # prevents blokning thread state during fast stop-resume
 BLINK_THRESHOLD = 0.100 # sec
