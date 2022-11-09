@@ -1,102 +1,104 @@
 #!/usr/bin/env python
 
-from subprocess import (
-    Popen,
-    PIPE,
+from common import (
+    bidict,
+    cached,
+    mlget as _,
+    Persistent,
+    reset_cache,
+)
+
+from collections import (
+    OrderedDict,
+)
+from ctypes import (
+    c_uint32,
+    c_uint64,
+    sizeof,
+    Structure,
+)
+from difflib import (
+    unified_diff,
+)
+from fcntl import (
+    ioctl,
+)
+from os import (
+    close as os_close,
+    environ,
+    listdir,
+    O_RDWR,
+    open as os_open,
+    pread,
+    remove,
 )
 from os.path import (
     dirname,
     exists,
     expanduser,
-    split,
     join,
     sep,
-)
-from os import (
-    environ,
-    listdir,
-    remove,
-    open as os_open,
-    close as os_close,
-    O_RDWR,
-    pread,
-)
-from six.moves import (
-    zip_longest,
-)
-from six.moves.tkinter import (
-    LEFT,
-    RIGHT,
-    Checkbutton,
-    BooleanVar,
-    Button,
-    Frame,
-    Menu,
-    NONE,
-    END,
-    DISABLED,
-    NORMAL,
-)
-from six.moves.tkinter_ttk import (
-    Sizegrip,
-    Treeview,
-)
-from six.moves.tkinter_messagebox import (
-    showerror,
-)
-from collections import (
-    OrderedDict,
-)
-from difflib import (
-    unified_diff,
-)
-from six import (
-    PY3,
+    split,
 )
 from re import (
     compile,
 )
-from traceback import (
-    format_exc,
-    print_exc,
+from six import (
+    PY3,
 )
-from threading import (
-    Thread,
+from six.moves import (
+    zip_longest,
 )
 from six.moves.queue import (
     Empty,
     Queue,
 )
-from common import (
-    Persistent,
-    bidict,
-    cached,
-    reset_cache,
-    mlget as _,
+from six.moves.tkinter import (
+    BooleanVar,
+    Button,
+    Checkbutton,
+    DISABLED,
+    END,
+    Frame,
+    LEFT,
+    Menu,
+    NONE,
+    NORMAL,
+    RIGHT,
 )
-from widgets import (
-    TkPopupHelper,
-    GUIText,
-    READONLY,
-    GUIDialog,
-    add_scrollbars_native,
-    ErrorDialog,
-    GUITk,
-    asksaveas,
+from six.moves.tkinter_messagebox import (
+    showerror,
 )
-from fcntl import (
-    ioctl,
+from six.moves.tkinter_ttk import (
+    Sizegrip,
+    Treeview,
 )
-from ctypes import (
-    Structure,
-    c_uint32,
-    c_uint64,
-    sizeof,
-)
-from struct import(
+from struct import (
     pack,
     unpack,
 )
+from subprocess import (
+    PIPE,
+    Popen,
+)
+from threading import (
+    Thread,
+)
+from traceback import (
+    format_exc,
+    print_exc,
+)
+from widgets import (
+    add_scrollbars_native,
+    asksaveas,
+    ErrorDialog,
+    GUIDialog,
+    GUIText,
+    GUITk,
+    READONLY,
+    TkPopupHelper,
+)
+
 
 if PY3:
 
