@@ -1,6 +1,7 @@
-#!/usr/bin/env /usr/bin/python3
+#!/usr/bin/env python
 
 from common import (
+    bstr,
     makedirs,
 )
 
@@ -22,9 +23,17 @@ from os.path import (
 from re import (
     compile,
 )
-from subprocess import (
-    run,
+from sys import (
+    version_info as v,
 )
+if v[0] == 3 and v[1] >= 5:
+    from subprocess import (
+        run,
+    )
+else:
+    from subprocess import (
+        call as run,
+    )
 
 
 re_commit = compile(r"^commit [0-9a-f]{40}$")
@@ -146,8 +155,8 @@ class GitLog(object):
         self.data = "".join(lines)
 
     def flush(self):
-        with open(self.file_name, "w") as f:
-            f.write(self.data)
+        with open(self.file_name, "wb") as f:
+            f.write(bstr(self.data))
 
     def cleanup(self):
         if isfile(self.file_name):
