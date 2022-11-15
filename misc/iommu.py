@@ -681,6 +681,18 @@ def co_main(cfg, tk, tv):
         for iid, width in cfg.tv_col_width.items():
             tv.column(iid, width = width)
 
+    if cfg.collapsed_groups:
+        for grp, giid in obj2iid.items():
+            if isinstance(grp, IOMMUGroup):
+                if grp.number in cfg.collapsed_groups:
+                    tv.item(giid, open = False)
+
+    if cfg.collapsed_devices:
+        for dev, diid in obj2iid.items():
+            if isinstance(dev, IOMMUDevice):
+                if dev.addr in cfg.collapsed_devices:
+                    tv.item(diid, open = False)
+
 
 class IOMMUTV(Treeview, TkPopupHelper):
 
@@ -1314,7 +1326,9 @@ def main():
 
     with Persistent(expanduser(join("~",".qdt.iommu.py")),
         geometry = None,
-        tv_col_width = None
+        tv_col_width = None,
+        collapsed_groups = None,
+        collapsed_devices = None,
     ) as cfg:
         tk.enqueue(co_main(cfg, tk, tv))
 
@@ -1324,6 +1338,19 @@ def main():
             cfg.tv_col_width = dict(
                 (col, tv.column(col, "width")) for col in cols
             )
+
+            if tv._iid2obj_is_ready:
+                collapsed_groups = []
+                collapsed_devices = []
+                for iid, obj in iid2obj.items():
+                    if not tv.item(iid, "open"):
+                        if isinstance(obj, IOMMUDevice):
+                            collapsed_devices.append(obj.addr)
+                        else:
+                            collapsed_groups.append(obj.number)
+                cfg.collapsed_groups = collapsed_groups or None
+                cfg.collapsed_devices = collapsed_devices or None
+
             tk.destroy()
 
         tk.protocol("WM_DELETE_WINDOW", on_destroy)
