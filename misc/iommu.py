@@ -677,6 +677,9 @@ def co_main(cfg, tk, tv):
 
     yield tv.co_read_from_system()
 
+    bt_collapse.config(state = NORMAL)
+    bt_expand.config(state = NORMAL)
+
     if cfg.tv_col_width:
         for iid, width in cfg.tv_col_width.items():
             tv.column(iid, width = width)
@@ -1317,12 +1320,38 @@ def main():
         yield tv.co_reload()
         bt_reload.config(state = NORMAL)
 
+        bt_collapse.config(state = NORMAL)
+        bt_expand.config(state = NORMAL)
+
     global do_reload
     def do_reload():
+        bt_collapse.config(state = DISABLED)
+        bt_expand.config(state = DISABLED)
+
         bt_reload.config(state = DISABLED)
         tk.enqueue(co_do_reload())
 
     bt_reload.config(command = do_reload)
+
+    def do_collapse_expand_treeview(flag):
+        for iid, __ in iid2obj.items():
+            tv.item(iid, open = flag)
+
+    global bt_collapse
+    bt_collapse = Button(buttons,
+        text = "Collapse",
+        state = DISABLED,
+        command = lambda: do_collapse_expand_treeview(False),
+    )
+    bt_collapse.pack(side = RIGHT)
+
+    global bt_expand
+    bt_expand = Button(buttons,
+        text = "Expand",
+        state = DISABLED,
+        command = lambda: do_collapse_expand_treeview(True),
+    )
+    bt_expand.pack(side = RIGHT)
 
     with Persistent(expanduser(join("~",".qdt.iommu.py")),
         geometry = None,
