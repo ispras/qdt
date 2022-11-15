@@ -7,6 +7,9 @@ from common import (
     Persistent,
     reset_cache,
 )
+from widgets import (
+    HKEntry,
+)
 
 from collections import (
     OrderedDict,
@@ -60,11 +63,13 @@ from six.moves.tkinter import (
     DISABLED,
     END,
     Frame,
+    Label,
     LEFT,
     Menu,
     NONE,
     NORMAL,
     RIGHT,
+    StringVar,
 )
 from six.moves.tkinter_messagebox import (
     showerror,
@@ -679,6 +684,7 @@ def co_main(cfg, tk, tv):
 
     bt_collapse.config(state = NORMAL)
     bt_expand.config(state = NORMAL)
+    entry_search_text.config(state = NORMAL)
 
     if cfg.tv_col_width:
         for iid, width in cfg.tv_col_width.items():
@@ -735,6 +741,8 @@ class IOMMUTV(Treeview, TkPopupHelper):
         self.bind("<Button-3>", self.on_tv_b3, "+")
 
         self._iid2obj_is_ready = False
+        self._selected_iids = []
+        self._selected_iid_ind = None
 
     def co_reload(self):
         while not self._iid2obj_is_ready:
@@ -1322,11 +1330,17 @@ def main():
 
         bt_collapse.config(state = NORMAL)
         bt_expand.config(state = NORMAL)
+        entry_search_text.config(state = NORMAL)
+        do_search_text()
 
     global do_reload
     def do_reload():
         bt_collapse.config(state = DISABLED)
         bt_expand.config(state = DISABLED)
+        entry_search_text.config(state = DISABLED)
+        lbl_search_result.config(state = DISABLED)
+        bt_view_prev.config(state = DISABLED)
+        bt_view_next.config(state = DISABLED)
 
         bt_reload.config(state = DISABLED)
         tk.enqueue(co_do_reload())
@@ -1352,6 +1366,75 @@ def main():
         command = lambda: do_collapse_expand_treeview(True),
     )
     bt_expand.pack(side = RIGHT)
+
+    def do_view_prev_next(step):
+        sel_iids = tv._selected_iids
+        len_iids = len(sel_iids)
+        sel_iid_ind = (tv._selected_iid_ind + step + len_iids) % len_iids
+        tv._selected_iid_ind = sel_iid_ind
+        lbl_search_result.config(text = "%d/%d" % (sel_iid_ind + 1, len_iids))
+
+        sel_iid = sel_iids[sel_iid_ind]
+        tv.selection_set(sel_iid)
+        tv.focus(sel_iid)
+        tv.see(sel_iid)
+
+    bt_view_next = Button(buttons,
+        text = "Next",
+        state = DISABLED,
+        command = lambda: do_view_prev_next(1),
+    )
+    bt_view_next.pack(side = RIGHT)
+
+    lbl_search_result = Label(buttons, text = "-/-", state = DISABLED)
+    lbl_search_result.pack(side = RIGHT)
+
+    bt_view_prev = Button(buttons,
+        text = "Prev",
+        state = DISABLED,
+        command = lambda: do_view_prev_next(-1),
+    )
+    bt_view_prev.pack(side = RIGHT)
+
+    global entry_search_text
+    search_text = StringVar()
+    entry_search_text = HKEntry(buttons,
+        textvariable = search_text,
+        state = DISABLED,
+    )
+    entry_search_text.pack(side = RIGHT)
+
+    def do_search_text(*args):
+        st = search_text.get().lower()
+        found_iids = []
+        if st:
+            for obj, iid in obj2iid.items():
+                if isinstance(obj, IOMMUDevice):
+                    for __, v in obj.lspci.items():
+                        if st in s(v).lower():
+                            found_iids.append(iid)
+                            break
+
+        tv._selected_iids = found_iids
+        if found_iids:
+            tv._selected_iid_ind = min(
+                tv._selected_iid_ind or 0,
+                len(found_iids),
+            )
+            do_view_prev_next(0)
+            lbl_search_result.config(state = NORMAL)
+            bt_view_next.config(state = NORMAL)
+            bt_view_prev.config(state = NORMAL)
+        else:
+            tv._selected_iid_ind = None
+            lbl_search_result.config(
+                text = "0/0" if st else "-/-",
+                state = DISABLED,
+            )
+            bt_view_next.config(state = DISABLED)
+            bt_view_prev.config(state = DISABLED)
+
+    search_text.trace_variable("w", do_search_text)
 
     with Persistent(expanduser(join("~",".qdt.iommu.py")),
         geometry = None,
