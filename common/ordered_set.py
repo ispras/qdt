@@ -4,9 +4,10 @@ __all__ = [
 
 # Source: http://code.activestate.com/recipes/576694/
 
-from collections import (
-    MutableSet
+from .compat import (
+    MutableSet,
 )
+
 
 class OrderedSet(MutableSet):
 
