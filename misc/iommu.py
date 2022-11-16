@@ -730,8 +730,12 @@ class IOMMUTV(Treeview, TkPopupHelper):
             command = self.unbind_driver
         )
         self.tv_popup_IOMMUDevice.add_command(
-            label = "Bind vfio-pci driver",
+            label = "Bind vfio-pci driver (bind)",
             command = self.bind_vfio_pci_driver
+        )
+        self.tv_popup_IOMMUDevice.add_command(
+            label = "Bind vfio-pci driver (new_id)",
+            command = self.new_id_vfio_pci_driver
         )
         self.tv_popup_IOMMUDevice.add_command(
             label = "Save device config as...",
@@ -898,6 +902,15 @@ class IOMMUTV(Treeview, TkPopupHelper):
 
         bind_unbind_driver(dev.addr,
             join(ROOT, "sys", "bus", "pci", "drivers", "vfio-pci", "bind"),
+            _("bind vfio-pci driver failed")
+        )
+        do_reload()
+
+    def new_id_vfio_pci_driver(self):
+        dev = self.current_popup_tag
+
+        bind_unbind_driver(s(dev.vendor_id) + ' ' + s(dev.dev_id),
+            join(ROOT, "sys", "bus", "pci", "drivers", "vfio-pci", "new_id"),
             _("bind vfio-pci driver failed")
         )
         do_reload()
