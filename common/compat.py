@@ -17,14 +17,6 @@ from argparse import (
     _CountAction,
     _StoreConstAction,
 )
-try:
-    from collections import (
-        MutableSet,
-    )
-except ImportError:
-    from collections.abc import (
-        MutableSet,
-    )
 from os.path import (
     abspath,
     dirname,
