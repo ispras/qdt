@@ -8,10 +8,9 @@ __all__ = [
   , "same_mappings"
 ]
 
-from .compat import (
+from collections import (
     Mapping,
 )
-
 from six.moves import (
     zip_longest,
 )
