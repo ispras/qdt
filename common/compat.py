@@ -25,6 +25,9 @@ except ImportError:
     from collections.abc import (
         Mapping,
     )
+    # XXX: some foreign submodules (e.g. debug/elftools) require this too
+    import collections
+    collections.Mapping = Mapping
 try:
     from collections import (
         MutableSet,
