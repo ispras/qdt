@@ -1,31 +1,31 @@
 [submodule "ply"]
 	path = ply
-	url = https://github.com/laerreal/ply.git
+	url = git@github.com:laerreal/ply.git
 [submodule "canvas2svg"]
 	path = canvas2svg
-	url = https://github.com/WojciechMula/canvas2svg.git
+	url = git@github.com:WojciechMula/canvas2svg.git
 [submodule "debug/pyelftools"]
 	path = debug/pyelftools
-	url = https://github.com/ispras/pyelftools.git
+	url = git@github.com:ispras/pyelftools.git
 [submodule "watchgod"]
 	path = watchgod
-	url = https://github.com/samuelcolvin/watchgod.git
+	url = git@github.com:samuelcolvin/watchgod.git
 [submodule "pyinotify"]
 	path = pyinotify
-	url = https://github.com/seb-m/pyinotify.git
+	url = git@github.com:seb-m/pyinotify.git
 [submodule "inotify-tools"]
 	path = inotify-tools
-	url = https://github.com/rvoicilas/inotify-tools.git
+	url = git@github.com:rvoicilas/inotify-tools.git
 [submodule "pyrsp"]
 	path = pyrsp
-	url = https://github.com/stef/pyrsp.git
+	url = git@github.com:stef/pyrsp.git
 [submodule "unidiff"]
 	path = unidiff
-	url = https://github.com/matiasb/python-unidiff.git
+	url = git@github.com:matiasb/python-unidiff.git
 	branch = master
 [submodule "I3S"]
 	path = I3S
-	url = https://github.com/ispras/I3S.git
+	url = git@github.com:ispras/I3S.git
 [submodule "agent"]
 	path = agent
 	url = git@github.com:ispras/qdt-guest-agent.git
