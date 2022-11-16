@@ -19,6 +19,14 @@ from argparse import (
 )
 try:
     from collections import (
+        Mapping,
+    )
+except ImportError:
+    from collections.abc import (
+        Mapping,
+    )
+try:
+    from collections import (
         MutableSet,
     )
 except ImportError:
