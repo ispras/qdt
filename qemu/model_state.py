@@ -26,9 +26,11 @@ class StateStruct(object):
         return type(self)(
             self.c_type_name,
             *(f.__preprocess__() for f in self.fields),
-            vmsd_min_version_id = self.vmsd_min_version_id,
-            vmsd_version_id = self.vmsd_version_id,
-            vmsd_state_name = self.vmsd_state_name,
+            **dict(
+                vmsd_min_version_id = self.vmsd_min_version_id,
+                vmsd_version_id = self.vmsd_version_id,
+                vmsd_state_name = self.vmsd_state_name,
+            )
         )
 
     def __var_base__(self):
