@@ -8,11 +8,11 @@ __all__ = [
   , "same_mappings"
 ]
 
-from collections import (
-    Mapping,
-)
 from six.moves import (
     zip_longest,
+)
+from six.moves.collections_abc import (
+    Mapping,
 )
 from types import (
     GeneratorType,
