@@ -86,6 +86,9 @@ from subprocess import (
     PIPE,
     Popen,
 )
+from sys import (
+    version_info as v,
+)
 from threading import (
     Thread,
 )
@@ -116,6 +119,35 @@ if PY3:
 else:
     s = lambda x : x
     b = lambda x : x
+
+
+if v[0] == 3:
+    if v[1] >= 8:
+        from shlex import (
+            join as sh_join,
+        )
+    else:
+        from shlex import (
+            quote,
+        )
+        sh_join = lambda args: ' '.join(map(quote, args))
+else:
+    # backported from Py3 `shlex`
+    _find_unsafe = compile(r"[^a-zA-Z0-9_@%+=:,./-]").search
+
+    def quote(s):
+        "Return a shell-escaped version of the string *s*."
+        if not s:
+            return "''"
+        if _find_unsafe(s) is None:
+            return s
+
+        # use single quotes, and put single quotes into double quotes
+        # the string $'b is then quoted as '$'"'"'b'
+        return "'" + s.replace("'", "'\"'\"'") + "'"
+
+    sh_join = lambda args: ' '.join(map(quote, args))
+
 
 ROOT = sep
 IOMMU_GROUPS = join(ROOT, "sys", "kernel", "iommu_groups")
@@ -512,7 +544,7 @@ class RunError(RuntimeError):
 # Especially when default Python version (/usr/bin/python) differs).
 
 def run(*args, **kw):
-    command = " ".join(args)
+    command = sh_join(args)
     print(command)
     kw["stderr"] = PIPE
     kw["stdout"] = PIPE
