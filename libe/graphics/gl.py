@@ -1,6 +1,7 @@
 __all__ = [
     "create_shader",
     "create_gls_program",
+    "GLArrays",
     "GLSLProgram",
 ]
 
