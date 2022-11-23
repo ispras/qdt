@@ -7,8 +7,7 @@ from common import (
     flatten,
 )
 from libe.graphics.gl import (
-    create_shader,
-    create_gls_program,
+    GLSLProgram,
 )
 
 from ctypes import (
@@ -32,16 +31,13 @@ from OpenGL.GL import (
     GL_ELEMENT_ARRAY_BUFFER,
     glEnableClientState,
     GL_FLOAT,
-    GL_FRAGMENT_SHADER,
     glGenBuffers,
     # GL_NORMAL_ARRAY,
     GL_TRIANGLES,
     # GL_TEXTURE_COORD_ARRAY,
     GL_UNSIGNED_SHORT,
-    glUseProgram,
     GL_VERTEX_ARRAY,
     glVertexPointer,
-    GL_VERTEX_SHADER,
 )
 from six.moves.tkinter import (
     Frame,
@@ -75,26 +71,21 @@ f = Frame(root, width = 100, bg = "orange")
 f.pack(side = "left", fill = "y")
 b.pack(side = "right", expand = 1, fill = "both")
 
-v_shader_code = """
+GLSLProgram(
+"""
 varying vec4 color;
 void main() {
     gl_Position = gl_Vertex;
     color = gl_Color;
 }
+""",
 """
-f_shader = """
 varying vec4 color;
 void main() {
     gl_FragColor = color;
 }
-"""
-
-
-v_shader = create_shader(v_shader_code, GL_VERTEX_SHADER)
-f_shader = create_shader(f_shader, GL_FRAGMENT_SHADER)
-glsp_0 = create_gls_program(v_shader, f_shader)
-
-glUseProgram(glsp_0)
+""",
+).use()
 
 vertices = [
     (0., 1.),
