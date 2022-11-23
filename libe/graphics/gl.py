@@ -1,6 +1,7 @@
 __all__ = [
     "create_shader",
     "create_gls_program",
+    "GLSLProgram",
 ]
 
 
@@ -10,6 +11,7 @@ from OpenGL.GL import (
     GL_COMPILE_STATUS,
     glCreateProgram,
     glCreateShader,
+    GL_FRAGMENT_SHADER,
     glGetProgramInfoLog,
     glGetProgramiv,
     glGetShaderInfoLog,
@@ -18,6 +20,8 @@ from OpenGL.GL import (
     glLinkProgram,
     GL_LINK_STATUS,
     glShaderSource,
+    glUseProgram,
+    GL_VERTEX_SHADER,
 )
 
 
@@ -51,3 +55,17 @@ def create_gls_program(v, f):
         raise ValueError
 
     return p
+
+
+class GLSLProgram(object):
+
+    def __init__(self, vertex_code, fragment_code):
+        self._vertex_code = vertex_code
+        self._fragment_code = fragment_code
+
+        self._vertex = v =create_shader(vertex_code, GL_VERTEX_SHADER)
+        self._fragment = f = create_shader(fragment_code, GL_FRAGMENT_SHADER)
+        self._p = create_gls_program(v, f)
+
+    def use(self):
+        glUseProgram(self._p)
