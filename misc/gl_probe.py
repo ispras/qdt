@@ -5,6 +5,7 @@ sudo apt install python3-opengl togl-demos
 
 from libe.graphics.gl import (
     GLArrays,
+    gl_ready,
     GLSLProgram,
 )
 
@@ -13,6 +14,20 @@ from OpenGL.Tk import (
 )
 from six.moves.tkinter import (
     Frame,
+)
+
+
+a = GLArrays(
+    vertices = [
+        (0., 1.),
+        (1., -.5),
+        (-1., -.5),
+    ],
+    colors = [
+        (1., 0., 0., 1.),
+        (0., 1., 0., 1.),
+        (0., 0., 1., 1.),
+    ],
 )
 
 
@@ -25,6 +40,7 @@ class OpenGLProbe(Opengl):
 
         bg = kw.pop("bg", (1., 1., 1.))
         Opengl.__init__(self, **kw)
+        gl_ready()
 
         self.set_background(*bg)
 
@@ -33,7 +49,6 @@ class OpenGLProbe(Opengl):
         pass
 
     def redraw(self, *__, **___):
-        global a
         a()
 
 
@@ -58,18 +73,5 @@ void main() {
 }
 """,
 ).use()
-
-a = GLArrays(
-    vertices = [
-        (0., 1.),
-        (1., -.5),
-        (-1., -.5),
-    ],
-    colors = [
-        (1., 0., 0., 1.),
-        (0., 1., 0., 1.),
-        (0., 0., 1., 1.),
-    ],
-)
 
 root.mainloop()
