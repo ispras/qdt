@@ -2,12 +2,14 @@ __all__ = [
     "create_shader",
     "create_gls_program",
     "GLArrays",
+    "gl_ready",
     "GLSLProgram",
 ]
 
 
 from common import (
     flatten,
+    notifier,
 )
 
 from ctypes import (
@@ -56,6 +58,44 @@ from OpenGL.GL import (
 )
 
 
+@notifier(
+    "ready",
+)
+class OpenGLContext(object):
+
+    def __init__(self):
+        self._ready = False
+
+    @property
+    def ready(self):
+        return self._ready
+
+    @ready.setter
+    def ready(self, ready):
+        ready = bool(ready)
+        if self._ready is ready:
+            return
+
+        if not ready:
+            raise NotImplementedError
+
+        self._ready = ready
+
+        self.__notify_ready()
+
+    def watch_all(self, obj):
+        super(OpenGLContext, self).watch_all(obj)
+
+_ctx = OpenGLContext()
+
+
+def gl_ready():
+    """ May instantiate those classes any time, but call this when OpenGL is
+actually ready.
+    """
+    _ctx.ready = True
+
+
 def create_shader(code, kind):
     s = glCreateShader(kind)
     glShaderSource(s, code)
@@ -94,12 +134,18 @@ class GLSLProgram(object):
         self._vertex_code = vertex_code
         self._fragment_code = fragment_code
 
-        self._vertex = v =create_shader(vertex_code, GL_VERTEX_SHADER)
-        self._fragment = f = create_shader(fragment_code, GL_FRAGMENT_SHADER)
-        self._p = create_gls_program(v, f)
+        _ctx.watch_all(self)
+        if _ctx.ready:
+            self._on_ready()
 
     def use(self):
         glUseProgram(self._p)
+
+    def _on_ready(self):
+        self._vertex = v = create_shader(self._vertex_code, GL_VERTEX_SHADER)
+        f = create_shader(self._fragment_code, GL_FRAGMENT_SHADER)
+        self._fragment = f
+        self._p = create_gls_program(v, f)
 
 
 client_states = (
@@ -164,26 +210,45 @@ class GLArrays(object):
         array = (c_float * len(mixed))(*mixed)
         element_array = (c_uint16 * len(indices))(*indices)
 
+        self._array = array
+        self._element_array = element_array
+        self._pointer_setters = pointer_setters
+        self._pointers = pointers
+        self._lengths = lengths
+        self._stride = stride
+        self._what = what
+        self._enables = enables
+        self._disables = set(client_states) - enables
+        self._n = n
+
+        _ctx.watch_all(self)
+        if _ctx.ready:
+            self._on_ready()
+
+    def _on_ready(self):
         vao, eao = glGenBuffers(2)
 
         glBindBuffer(GL_ARRAY_BUFFER, vao)
-        glBufferData(GL_ARRAY_BUFFER, array, GL_DYNAMIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, self._array, GL_DYNAMIC_DRAW)
 
-        for setter, ptr, source_len in zip(pointer_setters, pointers, lengths):
+        stride =  self._stride
+        for setter, ptr, source_len in zip(
+            self._pointer_setters,
+            self._pointers,
+            self._lengths,
+        ):
             setter(source_len, GL_FLOAT, stride, ptr)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eao)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_array, GL_DYNAMIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, self._element_array,
+            GL_DYNAMIC_DRAW
+        )
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
         self._vao = vao
         self._eao = eao
-        self._what = what
-        self._enables = enables
-        self._disables = set(client_states) - enables
-        self._n = n
 
     def draw(self):
         glDrawElements(self._what, self._n, GL_UNSIGNED_SHORT, None)
