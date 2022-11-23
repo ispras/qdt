@@ -128,6 +128,14 @@ def notifier(*events):
         else:
             klass._events += tuple(events)
 
+        def watch_all(self, obj):
+            for e in klass._events:
+                cb = getattr(obj, "_on_" + e, None)
+                if cb is not None:
+                    self.watch(e, cb)
+
+        klass.watch_all = watch_all
+
         return klass
 
     return add_events
