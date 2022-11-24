@@ -4,6 +4,7 @@ __all__ = [
     "GLArrays",
     "gl_ready",
     "GLSLProgram",
+    "identity4x4",
 ]
 
 
@@ -55,6 +56,15 @@ from OpenGL.GL import (
     GL_VERTEX_ARRAY,
     glVertexPointer,
     GL_VERTEX_SHADER,
+)
+
+
+
+identity4x4 = (c_float * 16)(
+    1., 0., 0., 0.,
+    0., 1., 0., 0.,
+    0., 0., 1., 0.,
+    0., 0., 0., 1. # no more items!
 )
 
 
