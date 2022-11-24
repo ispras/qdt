@@ -20,6 +20,7 @@ from OpenGL.GL import (
 
 from six.moves.tkinter import (
     Frame,
+    Tk,
 )
 
 
@@ -39,9 +40,9 @@ a = GLArrays(
 
 class OpenGLProbe(OpenGLWidget):
 
-    def __init__(self, **kw):
+    def __init__(self, *a, **kw):
         bg = kw.pop("bg", (1., 1., 1., 1.))
-        OpenGLWidget.__init__(self, **kw)
+        OpenGLWidget.__init__(self, *a, **kw)
 
         glClearColor(*bg)
 
@@ -52,8 +53,11 @@ class OpenGLProbe(OpenGLWidget):
         self.swapbuffers()
 
 
-b = OpenGLProbe()
-root = b.master
+root = Tk()
+root.title("OpenGL Probe")
+
+b = OpenGLProbe(root)
+
 f = Frame(root, width = 100, bg = "orange")
 f.pack(side = "left", fill = "y")
 b.pack(side = "right", expand = 1, fill = "both")
