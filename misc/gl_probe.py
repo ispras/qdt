@@ -7,6 +7,7 @@ from libe.graphics.gl import (
     GLArrays,
     gl_ready,
     GLSLProgram,
+    identity4x4,
 )
 
 from OpenGL.Tk import (
@@ -60,9 +61,10 @@ b.pack(side = "right", expand = 1, fill = "both")
 
 GLSLProgram(
 """
+uniform mat4 proj;
 varying vec4 color;
 void main() {
-    gl_Position = gl_Vertex;
+    gl_Position = proj * gl_Vertex;
     color = gl_Color;
 }
 """,
@@ -72,6 +74,8 @@ void main() {
     gl_FragColor = color;
 }
 """,
-).use()
+).use(
+    proj = identity4x4,
+)
 
 root.mainloop()
