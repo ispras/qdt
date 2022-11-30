@@ -598,7 +598,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
 
                 if isinstance(node, MemoryAliasNode):
                     self.use_type_name("memory_region_init_alias")
-                    if Type.exists(node.alias_offset):
+                    if is_type_in_str(node.alias_offset):
                         self.use_type_name(node.alias_offset)
 
                     def_code += """\
