@@ -1,3 +1,6 @@
+from libe.grammars.antlr.to_lark import (
+    ANTLR2Lark,
+)
 from libe.grammars.antlr.v4 import (
     parser,
 )
@@ -12,8 +15,15 @@ from argparse import (
 from lark.tree import (
     Tree,
 )
+from multiprocessing import (
+    Process,
+    Queue,
+)
 from os.path import (
     split,
+)
+from queue import (
+    Empty,
 )
 from six.moves.tkinter import (
     BOTH,
@@ -24,12 +34,8 @@ from six.moves.tkinter_ttk import (
     Notebook,
     Treeview,
 )
-from multiprocessing import (
-    Process,
-    Queue,
-)
-from queue import (
-    Empty,
+from traceback import (
+    print_exc,
 )
 
 
@@ -140,6 +146,17 @@ def co_parse(root, files):
         add_scrollbars_native(fr, tv, sizegrip = True)
 
         root.enqueue(co_fill_tree(tv, ast))
+
+        yield
+
+        t = ANTLR2Lark()
+        try:
+            res = t.transform(ast)
+        except:
+            print_exc()
+        else:
+            print(res)
+
 
     q.close()
     q.join_thread()
