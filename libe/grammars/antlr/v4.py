@@ -109,7 +109,8 @@ ID: NAME_START_CHAR NAME_CHAR*
 
 %ignore WS
 
-grammar_spec: grammar_decl prequel_construct* rules mode_spec*
+grammar_spec: grammar_header rules mode_spec*
+grammar_header: grammar_decl prequel_construct*
 grammar_decl: grammar_type identifier SEMI
 grammar_type: (LEXER GRAMMAR | PARSER GRAMMAR | GRAMMAR)
 
@@ -231,7 +232,10 @@ lexer_element \
    : labeled_lexer_element ebnf_suffix?
    | lexer_atom ebnf_suffix?
    | lexer_block ebnf_suffix?
-   | action_block QUESTION?
+   | opt_action_block
+   | action_block
+
+opt_action_block: action_block QUESTION
 
 labeled_lexer_element \
    : identifier (ASSIGN | PLUS_ASSIGN) (lexer_atom | lexer_block)
@@ -258,7 +262,8 @@ element \
    : labeled_element ebnf_suffix?
    | atom ebnf_suffix?
    | ebnf
-   | action_block QUESTION?
+   | action_block
+   | opt_action_block
 
 labeled_element: identifier (ASSIGN | PLUS_ASSIGN) (atom | block)
 
@@ -271,12 +276,16 @@ ebnf_suffix \
    | STAR QUESTION?
    | PLUS QUESTION?
 
+lexer_char_set: LEXER_CHAR_SET
+
 lexer_atom \
    : character_range
    | terminal
    | not_set
-   | LEXER_CHAR_SET
-   | DOT element_options?
+   | lexer_char_set
+   | any_char element_options?
+
+any_char: DOT
 
 LEXER_CHAR_SET: LBRACK ( /[^\]\\]/ | ESCANY )+ RBRACK
 
@@ -284,7 +293,7 @@ atom \
    : terminal
    | ruleref
    | not_set
-   | DOT element_options?
+   | any_char element_options?
 
 not_set \
    : NOT set_element
@@ -296,7 +305,7 @@ set_element \
    : TOKEN_REF element_options?
    | STRING_LITERAL element_options?
    | character_range
-   | LEXER_CHAR_SET
+   | lexer_char_set
 
 block: LPAREN (options_spec? rule_action* COLON)? alt_list RPAREN
 
