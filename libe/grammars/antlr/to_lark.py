@@ -144,7 +144,8 @@ class ANTLR2Lark(Transformer):
         return s[0].value
 
     def block(self, s):
-        return " | ".join(s[-2])  # alt_list
+        alt_list = s[-2]
+        return "( " +  " | ".join(alt_list) + " )"
 
     def alt_list(self, s):
         alts = []
