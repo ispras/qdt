@@ -124,9 +124,6 @@ class ANTLR2Lark(Transformer):
             s = s[1:]
         return " ".join(s)
 
-    def ebnf(self, s):
-        return "".join(s)
-
     def element(self, s):
         return " ".join(e for e in s if e is not None)
 
