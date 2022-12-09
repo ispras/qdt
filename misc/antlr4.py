@@ -93,6 +93,9 @@ def co_parse(root, files, output):
         of = stdout
     else:
         of = open(output, "w")
+        of.write("// This file was translated from ANTLR4 by %s\n" % (
+            split(__file__)[1],
+        ))
 
     tabs = Notebook(root)
     tabs.pack(fill = BOTH, expand = True)
@@ -163,7 +166,7 @@ def co_parse(root, files, output):
         except:
             print_exc()
         else:
-            of.write("// %s \n\n" % file)
+            of.write("\n// ANTLR4 source: %s \n\n" % name)
             of.write(res + "\n")
 
     if of is not stdout:
