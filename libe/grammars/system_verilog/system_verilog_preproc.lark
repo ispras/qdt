@@ -1,0 +1,563 @@
+// This file was translated from ANTLR4 by antlr4.py
+// and slightly modified manually
+
+// ANTLR4 source: SystemVerilogLexer.g4
+
+ACCEPT_ON: "accept_on"
+ALIAS: "alias"
+ALWAYS: "always"
+ALWAYS_COMB: "always_comb"
+ALWAYS_FF: "always_ff"
+ALWAYS_LATCH: "always_latch"
+AM: "&"
+AMAM: "&&"
+AMAMAM: "&&&"
+AMEQ: "&="
+AND: "and"
+AP: "'"
+AS: "*"
+ASAS: "**"
+ASEQ: "*="
+ASGT: "*>"
+ASSERT: "assert"
+ASSIGN: "assign"
+ASSUME: "assume"
+AT: "@"
+ATAT: "@@"
+AUTOMATIC: "automatic"
+BEFORE: "before"
+BEGIN: "begin"
+BIND: "bind"
+BINS: "bins"
+BINSOF: "binsof"
+BIT: "bit"
+BREAK: "break"
+BUF: "buf"
+BUFIFONE: "bufif1"
+BUFIFZERO: "bufif0"
+BYTE: "byte"
+CA: "^"
+CAEQ: "^="
+CASE: "case"
+CASEX: "casex"
+CASEZ: "casez"
+CATI: "^~"
+CELL: "cell"
+CHANDLE: "chandle"
+CHECKER: "checker"
+CL: ":"
+CLASS: "class"
+CLCL: "::"
+CLEQ: ":="
+CLOCKING: "clocking"
+CLSL: ":/"
+CMOS: "cmos"
+CO: ","
+CONFIG: "config"
+CONST: "const"
+CONSTRAINT: "constraint"
+CONTEXT: "context"
+CONTINUE: "continue"
+COVER: "cover"
+COVERGROUP: "covergroup"
+COVERPOINT: "coverpoint"
+CROSS: "cross"
+DEASSIGN: "deassign"
+DEFAULT: "default"
+DEFPARAM: "defparam"
+DESIGN: "design"
+DISABLE: "disable"
+DIST: "dist"
+DL: "$"
+DLERROR: "$error"
+DLFATAL: "$fatal"
+DLFULLSKEW: "$fullskew"
+DLHOLD: "$hold"
+DLINFO: "$info"
+DLNOCHANGE: "$nochange"
+DLPERIOD: "$period"
+DLRECOVERY: "$recovery"
+DLRECREM: "$recrem"
+DLREMOVAL: "$removal"
+DLROOT: "$root"
+DLSETUP: "$setup"
+DLSETUPHOLD: "$setuphold"
+DLSKEW: "$skew"
+DLTIMESKEW: "$timeskew"
+DLUNIT: "$unit"
+DLWARNING: "$warning"
+DLWIDTH: "$width"
+DO: "do"
+DQ: "\""
+DQDPIDQ: "\"DPI\""
+DQDPIMICDQ: "\"DPI-C\""
+DT: "."
+DTAS: ".*"
+EDGE: "edge"
+ELSE: "else"
+EM: "!"
+EMEQ: "!="
+EMEQEQ: "!=="
+EMEQQM: "!=?"
+END: "end"
+ENDCASE: "endcase"
+ENDCHECKER: "endchecker"
+ENDCLASS: "endclass"
+ENDCLOCKING: "endclocking"
+ENDCONFIG: "endconfig"
+ENDFUNCTION: "endfunction"
+ENDGENERATE: "endgenerate"
+ENDGROUP: "endgroup"
+ENDINTERFACE: "endinterface"
+ENDMODULE: "endmodule"
+ENDPACKAGE: "endpackage"
+ENDPRIMITIVE: "endprimitive"
+ENDPROGRAM: "endprogram"
+ENDPROPERTY: "endproperty"
+ENDSEQUENCE: "endsequence"
+ENDSPECIFY: "endspecify"
+ENDTABLE: "endtable"
+ENDTASK: "endtask"
+ENUM: "enum"
+EQ: "="
+EQEQ: "=="
+EQEQEQ: "==="
+EQEQQM: "==?"
+EQGT: "=>"
+EVENT: "event"
+EVENTUALLY: "eventually"
+EXPECT: "expect"
+EXPORT: "export"
+EXTENDS: "extends"
+EXTERN: "extern"
+FINAL: "final"
+FIRST_MATCH: "first_match"
+FOR: "for"
+FORCE: "force"
+FOREACH: "foreach"
+FOREVER: "forever"
+FORK: "fork"
+FORKJOIN: "forkjoin"
+FUNCTION: "function"
+GA: "`"
+GENERATE: "generate"
+GENVAR: "genvar"
+GLOBAL: "global"
+GT: ">"
+GTEQ: ">="
+GTGT: ">>"
+GTGTEQ: ">>="
+GTGTGT: ">>>"
+GTGTGTEQ: ">>>="
+HA: "#"
+HAEQHA: "#=#"
+HAHA: "##"
+HAMIHA: "#-#"
+HIGHZONE: "highz1"
+HIGHZZERO: "highz0"
+IF: "if"
+IFF: "iff"
+IFNONE: "ifnone"
+IGNORE_BINS: "ignore_bins"
+ILLEGAL_BINS: "illegal_bins"
+IMPLEMENTS: "implements"
+IMPLIES: "implies"
+IMPORT: "import"
+INCLUDE: "include"
+INITIAL: "initial"
+INOUT: "inout"
+INPUT: "input"
+INSIDE: "inside"
+INSTANCE: "instance"
+INT: "int"
+INTEGER: "integer"
+INTERCONNECT: "interconnect"
+INTERFACE: "interface"
+INTERSECT: "intersect"
+JOIN: "join"
+JOIN_ANY: "join_any"
+JOIN_NONE: "join_none"
+LARGE: "large"
+LB: "["
+LC: "{"
+LET: "let"
+LIBLIST: "liblist"
+LIBRARY: "library"
+LOCAL: "local"
+LOCALPARAM: "localparam"
+LOGIC: "logic"
+LONGINT: "longint"
+LP: "("
+LT: "<"
+LTEQ: "<="
+LTLT: "<<"
+LTLTEQ: "<<="
+LTLTLT: "<<<"
+LTLTLTEQ: "<<<="
+LTMIGT: "<->"
+MACROMODULE: "macromodule"
+MATCHES: "matches"
+MEDIUM: "medium"
+MI: "-"
+MICL: "-:"
+MIEQ: "-="
+MIGT: "->"
+MIGTGT: "->>"
+MIINCDIR: "-incdir"
+MIMI: "--"
+MO: "%"
+MODPORT: "modport"
+MODULE: "module"
+MOEQ: "%="
+NAND: "nand"
+NEGEDGE: "negedge"
+NETTYPE: "nettype"
+NEW: "new"
+NEXTTIME: "nexttime"
+NMOS: "nmos"
+NOR: "nor"
+NOSHOWCANCELLED: "noshowcancelled"
+NOT: "not"
+NOTIFONE: "notif1"
+NOTIFZERO: "notif0"
+NULL: "null"
+ONESTEP: "1step"
+OPTION: "option"
+OR: "or"
+OUTPUT: "output"
+PACKAGE: "package"
+PACKED: "packed"
+PARAMETER: "parameter"
+PATHPULSEDL: "PATHPULSE$"
+PL: "+"
+PLCL: "+:"
+PLEQ: "+="
+PLPL: "++"
+PMOS: "pmos"
+POSEDGE: "posedge"
+PRIMITIVE: "primitive"
+PRIORITY: "priority"
+PROGRAM: "program"
+PROPERTY: "property"
+PROTECTED: "protected"
+PULLDOWN: "pulldown"
+PULLONE: "pull1"
+PULLUP: "pullup"
+PULLZERO: "pull0"
+PULSESTYLE_ONDETECT: "pulsestyle_ondetect"
+PULSESTYLE_ONEVENT: "pulsestyle_onevent"
+PURE: "pure"
+QM: "?"
+RAND: "rand"
+RANDC: "randc"
+RANDCASE: "randcase"
+RANDOMIZE: "randomize"
+RANDSEQUENCE: "randsequence"
+RB: "]"
+RC: "}"
+RCMOS: "rcmos"
+REAL: "real"
+REALTIME: "realtime"
+REF: "ref"
+REG: "reg"
+REJECT_ON: "reject_on"
+RELEASE: "release"
+REPEAT: "repeat"
+RESTRICT: "restrict"
+RETURN: "return"
+RNMOS: "rnmos"
+RP: ")"
+RPMOS: "rpmos"
+RTRAN: "rtran"
+RTRANIFONE: "rtranif1"
+RTRANIFZERO: "rtranif0"
+S_ALWAYS: "s_always"
+S_EVENTUALLY: "s_eventually"
+S_NEXTTIME: "s_nexttime"
+S_UNTIL: "s_until"
+S_UNTIL_WITH: "s_until_with"
+SAMPLE: "sample"
+SC: ";"
+SCALARED: "scalared"
+SEQUENCE: "sequence"
+SHORTINT: "shortint"
+SHORTREAL: "shortreal"
+SHOWCANCELLED: "showcancelled"
+SIGNED: "signed"
+SL: "/"
+SLEQ: "/="
+SMALL: "small"
+SOFT: "soft"
+SOLVE: "solve"
+SPECIFY: "specify"
+SPECPARAM: "specparam"
+STATIC: "static"
+STD: "std"
+STRING: "string"
+STRONG: "strong"
+STRONGONE: "strong1"
+STRONGZERO: "strong0"
+STRUCT: "struct"
+SUPER: "super"
+SUPPLYONE: "supply1"
+SUPPLYZERO: "supply0"
+SYNC_ACCEPT_ON: "sync_accept_on"
+SYNC_REJECT_ON: "sync_reject_on"
+TABLE: "table"
+TAGGED: "tagged"
+TASK: "task"
+THIS: "this"
+THROUGHOUT: "throughout"
+TI: "~"
+TIAM: "~&"
+TICA: "~^"
+TIME: "time"
+TIMEPRECISION: "timeprecision"
+TIMEUNIT: "timeunit"
+TIVL: "~|"
+TRAN: "tran"
+TRANIFONE: "tranif1"
+TRANIFZERO: "tranif0"
+TRI: "tri"
+TRIAND: "triand"
+TRIONE: "tri1"
+TRIOR: "trior"
+TRIREG: "trireg"
+TRIZERO: "tri0"
+TYPE: "type"
+TYPE_OPTION: "type_option"
+TYPEDEF: "typedef"
+UNION: "union"
+UNIQUE: "unique"
+UNIQUEZERO: "unique0"
+UNSIGNED: "unsigned"
+UNTIL: "until"
+UNTIL_WITH: "until_with"
+UNTYPED: "untyped"
+USE: "use"
+UWIRE: "uwire"
+VAR: "var"
+VECTORED: "vectored"
+VIRTUAL: "virtual"
+VL: "|"
+VLEQ: "|="
+VLEQGT: "|=>"
+VLMIGT: "|->"
+VLVL: "||"
+VOID: "void"
+WAIT: "wait"
+WAIT_ORDER: "wait_order"
+WAND: "wand"
+WEAK: "weak"
+WEAKONE: "weak1"
+WEAKZERO: "weak0"
+WHILE: "while"
+WILDCARD: "wildcard"
+WIRE: "wire"
+WITH: "with"
+WITHIN: "within"
+WOR: "wor"
+XNOR: "xnor"
+XOR: "xor"
+BINARY_BASE: "'" /[sS]/ ? /[bB]/
+COMMENT: (ONE_LINE_COMMENT | BLOCK_COMMENT)
+DECIMAL_BASE: "'" /[sS]/ ? /[dD]/
+ESCAPED_IDENTIFIER: "\\" ASCII_PRINTABLE_NO_SPACE * WHITE_SPACE
+EXPONENTIAL_NUMBER: UNSIGNED_NUMBER ("." UNSIGNED_NUMBER) ? /[eE]/ /[+\-]/ ? UNSIGNED_NUMBER
+FIXED_POINT_NUMBER: UNSIGNED_NUMBER "." UNSIGNED_NUMBER
+HEX_BASE: "'" /[sS]/ ? /[hH]/
+OCTAL_BASE: "'" /[sS]/ ? /[oO]/
+SIMPLE_IDENTIFIER: /[a-zA-Z_]/ /[a-zA-Z0-9_$]/ *
+STRING_LITERAL: "\"" (ASCII_NO_NEWLINE_QUOTE_BACKSLASH | ESC_NEWLINE | ESC_SPECIAL_CHAR) * "\""
+SYSTEM_TF_IDENTIFIER: "$" /[a-zA-Z0-9_$]/ /[a-zA-Z0-9_$]/ *
+TIME_LITERAL: UNSIGNED_NUMBER ("." UNSIGNED_NUMBER) ? TIME_UNIT
+UNBASED_UNSIZED_LITERAL: "'0" | "'1" | "'" /[xXzZ]/
+UNSIGNED_NUMBER: /[0-9]/ /[0-9_]/ *
+WHITE_SPACE: /[ \t\r\n]/ +
+ZERO_OR_ONE_X_OR_Z: /[01]/ /[xXzZ]/
+BINARY_VALUE: /[01xXzZ?]/ /[01xXzZ?_]/ *
+WHITE_SPACE_0: /[ \t\r\n]/ +
+UNSIGNED_NUMBER_0: UNSIGNED_NUMBER
+WHITE_SPACE_1: /[ \t\r\n]/ +
+X_OR_Z_UNDERSCORE: /[xXzZ?]/ "_" *
+HEX_VALUE: /[0-9a-fA-FxXzZ?]/ /[0-9a-fA-FxXzZ?_]/ *
+WHITE_SPACE_2: /[ \t\r\n]/ +
+CO_0: CO
+COMMENT_0: COMMENT
+ESCAPED_IDENTIFIER_0: ESCAPED_IDENTIFIER
+GA_0: GA
+MIINCDIR_0: MIINCDIR
+SC_0: SC
+SIMPLE_IDENTIFIER_0: SIMPLE_IDENTIFIER
+WHITE_SPACE_3: WHITE_SPACE
+FILE_PATH_SPEC: (/[a-zA-Z0-9_.\/]/ | ESC_ASCII_PRINTABLE) + | STRING_LITERAL
+OCTAL_VALUE: /[0-7xXzZ?]/ /[0-7xXzZ?_]/ *
+WHITE_SPACE_4: /[ \t\r\n]/ +
+CL_0: CL
+COMMENT_1: COMMENT
+EDGE_SYMBOL: /[rRfFpPnN*]/
+ENDTABLE_0: ENDTABLE
+GA_1: GA
+LEVEL_ONLY_SYMBOL: /[?bB]/
+LP_0: LP
+MI_0: MI
+OUTPUT_OR_LEVEL_SYMBOL: /[01xX]/
+RP_0: RP
+SC_1: SC
+WHITE_SPACE_5: WHITE_SPACE
+BEGIN_KEYWORDS_DIRECTIVE: "begin_keywords"
+CELLDEFINE_DIRECTIVE: "celldefine"
+DEFAULT_NETTYPE_DIRECTIVE: "default_nettype"
+DEFINE_DIRECTIVE: "define"
+ELSE_DIRECTIVE: "else"
+ELSIF_DIRECTIVE: "elsif"
+END_KEYWORDS_DIRECTIVE: "end_keywords"
+ENDCELLDEFINE_DIRECTIVE: "endcelldefine"
+ENDIF_DIRECTIVE: "endif"
+FILE_DIRECTIVE: "__FILE__"
+IFDEF_DIRECTIVE: "ifdef"
+IFNDEF_DIRECTIVE: "ifndef"
+INCLUDE_DIRECTIVE: "include"
+LINE_DIRECTIVE: "line"
+LINE_DIRECTIVE_: "__LINE__"
+NOUNCONNECTED_DRIVE_DIRECTIVE: "nounconnected_drive"
+PRAGMA_DIRECTIVE: "pragma"
+RESETALL_DIRECTIVE: "resetall"
+TIMESCALE_DIRECTIVE: "timescale"
+UNCONNECTED_DRIVE_DIRECTIVE: "unconnected_drive"
+UNDEF_DIRECTIVE: "undef"
+UNDEFINEALL_DIRECTIVE: "undefineall"
+macro_usage: IDENTIFIER (/[ \t\r\n]/ * macro_args) ?
+COMMENT_2: COMMENT
+DQ_0: DQ
+NEWLINE_0: NEWLINE
+SPACE_TAB_0: SPACE_TAB
+VERSION_SPECIFIER: ("1800-2017" | "1800-2012" | "1800-2009" | "1800-2005" | "1364-2005" | "1364-2001" | "1364-2001-noconfig" | "1364-1995")
+COMMENT_3: COMMENT
+DEFAULT_NETTYPE_VALUE: ("wire" | "tri" | "tri0" | "tri1" | "wand" | "triand" | "wor" | "trior" | "trireg" | "uwire" | "none")
+NEWLINE_1: NEWLINE
+SPACE_TAB_1: SPACE_TAB
+COMMENT_4: COMMENT
+macro_name: IDENTIFIER (/[ \t\r\n]/ * macro_args) ?
+WHITE_SPACE_6: WHITE_SPACE
+COMMENT_5: COMMENT
+IDENTIFIER_0: IDENTIFIER
+WHITE_SPACE_7: WHITE_SPACE
+DQ_1: DQ
+FILENAME: (ASCII_PRINTABLE_NO_QUOTE_ANGLE_BRACKETS_BACKSLASH | ESC_ASCII_PRINTABLE) +
+GT_0: GT
+COMMENT_6: COMMENT
+IDENTIFIER_1: IDENTIFIER
+WHITE_SPACE_8: WHITE_SPACE
+COMMENT_7: COMMENT
+DQ_2: DQ
+LT_0: LT
+GA_2: GA
+NEWLINE_2: NEWLINE
+SPACE_TAB_2: SPACE_TAB
+DQ_3: DQ
+NEWLINE_3: NEWLINE
+SPACE_TAB_3: SPACE_TAB
+UNSIGNED_NUMBER_1: UNSIGNED_NUMBER
+GA_3: GA
+MACRO_DELIMITER: "``"
+MACRO_ESC_NEWLINE: ESC_NEWLINE
+MACRO_ESC_QUOTE: "`\\`\""
+MACRO_ESC_SEQ: ESC_ASCII_NO_NEWLINE
+MACRO_QUOTE: "`\""
+MACRO_TEXT: ASCII_NO_NEWLINE_QUOTE_BACKSLASH_GRAVE_ACCENT +
+NEWLINE_4: NEWLINE
+STRING_LITERAL_0: STRING_LITERAL
+CO_1: CO
+COMMENT_8: COMMENT
+EQ_0: EQ
+LP_1: LP
+NEWLINE_5: NEWLINE
+RP_1: RP
+SIMPLE_IDENTIFIER_1: SIMPLE_IDENTIFIER
+SPACE_TAB_4: SPACE_TAB
+STRING_LITERAL_1: STRING_LITERAL
+UNSIGNED_NUMBER_2: UNSIGNED_NUMBER
+COMMENT_9: COMMENT
+GA_4: GA
+SL_0: SL
+SOURCE_TEXT: ASCII_NO_SLASH_GRAVE_ACCENT +
+COMMENT_10: COMMENT
+NEWLINE_6: NEWLINE
+SL_1: SL
+SPACE_TAB_5: SPACE_TAB
+TIME_UNIT: /[munpf]/ ? "s"
+TIME_VALUE: ("1" | "10" | "100")
+COMMENT_11: COMMENT
+NEWLINE_7: NEWLINE
+SPACE_TAB_6: SPACE_TAB
+UNCONNECTED_DRIVE_VALUE: ("pull0" | "pull1")
+COMMENT_12: COMMENT
+DIRECTIVE_IDENTIFIER: IDENTIFIER
+WHITE_SPACE_9: WHITE_SPACE
+ASCII_ANY: /[\u0000-\u007f]/
+ASCII_NO_NEWLINE: /[\u0000-\u0009\u000b-\u000c\u000e-\u007f]/
+ASCII_NO_NEWLINE_QUOTE_BACKSLASH: /[\u0000-\u0009\u000b-\u000c\u000e-\u0021\u0023-\u005b\u005d-\u007f]/
+ASCII_NO_NEWLINE_QUOTE_BACKSLASH_GRAVE_ACCENT: /[\u0000-\u0009\u000b-\u000c\u000e-\u0021\u0023-\u005b\u005d-\u005f\u0061-\u007f]/
+ASCII_NO_PARENTHESES: /[\u0000-\u0027\u002a-\u007f]/
+ASCII_NO_SLASH_GRAVE_ACCENT: /[\u0000-\u002e\u0030-\u005f\u0061-\u007f]/
+ASCII_PRINTABLE: /[\u0020-\u007e]/
+ASCII_PRINTABLE_NO_QUOTE_ANGLE_BRACKETS_BACKSLASH: /[\u0020-\u0021\u0023-\u003b\u003d\u003f-\u005b\u005d-\u007e]/
+ASCII_PRINTABLE_NO_SPACE: /[\u0021-\u007e]/
+BLOCK_COMMENT: "/*" [ ASCII_ANY * ] "*/"
+CHAR_OCTAL: /[0-7]/ /[0-7]/ ? /[0-7]/ ?
+ESC_ASCII_NO_NEWLINE: "\\" ASCII_NO_NEWLINE
+ESC_ASCII_PRINTABLE: "\\" ASCII_PRINTABLE
+ESC_NEWLINE: "\\" NEWLINE
+ESC_SPECIAL_CHAR: "\\" (/[nt\\"]/ | CHAR_OCTAL)
+IDENTIFIER: ESCAPED_IDENTIFIER | SIMPLE_IDENTIFIER
+macro_args: "(" (macro_args | ASCII_NO_PARENTHESES) * ")"
+NEWLINE: "\r" ? "\n"
+ONE_LINE_COMMENT: "//" ASCII_NO_NEWLINE *
+SPACE_TAB: /[ \t]/
+
+// ANTLR4 source: SystemVerilogPreParser.g4 
+
+source_text: compiler_directive *
+compiler_directive: begin_keywords_directive | celldefine_directive | default_nettype_directive | end_keywords_directive | endcelldefine_directive | file_directive | ifdef_directive | ifndef_directive | include_directive | line_directive | line_directive_ | nounconnected_drive_directive | pragma_directive | resetall_directive | text_macro_definition | text_macro_usage | timescale_directive | unconnected_drive_directive | undef_directive | undefineall_directive
+begin_keywords_directive: GA BEGIN_KEYWORDS_DIRECTIVE DQ version_specifier DQ
+celldefine_directive: GA CELLDEFINE_DIRECTIVE
+default_nettype_directive: GA DEFAULT_NETTYPE_DIRECTIVE default_nettype_value
+default_nettype_value: DEFAULT_NETTYPE_VALUE
+else_directive: GA ELSE_DIRECTIVE group_of_lines
+elsif_directive: GA ELSIF_DIRECTIVE macro_identifier group_of_lines
+end_keywords_directive: GA END_KEYWORDS_DIRECTIVE
+endcelldefine_directive: GA ENDCELLDEFINE_DIRECTIVE
+endif_directive: GA ENDIF_DIRECTIVE
+file_directive: GA FILE_DIRECTIVE
+filename: FILENAME
+group_of_lines: ( source_text_ | compiler_directive ) *
+identifier: SIMPLE_IDENTIFIER
+ifdef_directive: GA IFDEF_DIRECTIVE macro_identifier group_of_lines elsif_directive * else_directive ? endif_directive
+ifndef_directive: GA IFNDEF_DIRECTIVE macro_identifier group_of_lines elsif_directive * else_directive ? endif_directive
+include_directive: GA INCLUDE_DIRECTIVE ( DQ filename DQ | LT filename GT | text_macro_usage )
+level: UNSIGNED_NUMBER
+line_directive: GA LINE_DIRECTIVE number DQ filename DQ level
+line_directive_: GA LINE_DIRECTIVE_
+macro_identifier: DIRECTIVE_IDENTIFIER
+macro_text: ( MACRO_DELIMITER | MACRO_ESC_NEWLINE | MACRO_ESC_QUOTE | MACRO_QUOTE | MACRO_TEXT | STRING_LITERAL ) *
+nounconnected_drive_directive: GA NOUNCONNECTED_DRIVE_DIRECTIVE
+number: UNSIGNED_NUMBER
+pragma_directive: GA PRAGMA_DIRECTIVE pragma_name ( pragma_expression ( CO pragma_expression ) * ) ?
+pragma_expression: pragma_keyword EQ pragma_value | pragma_value
+pragma_keyword: SIMPLE_IDENTIFIER
+pragma_name: SIMPLE_IDENTIFIER
+pragma_value: LP pragma_expression ( CO pragma_expression ) * RP | number | string_literal | identifier
+resetall_directive: GA RESETALL_DIRECTIVE
+source_text_: SOURCE_TEXT
+string_literal: STRING_LITERAL
+text_macro_definition: GA DEFINE_DIRECTIVE macro_name macro_text
+text_macro_usage: GA macro_usage
+time_precision: TIME_VALUE TIME_UNIT
+time_unit: TIME_VALUE TIME_UNIT
+timescale_directive: GA TIMESCALE_DIRECTIVE time_unit SL time_precision
+unconnected_drive_directive: GA UNCONNECTED_DRIVE_DIRECTIVE unconnected_drive_value
+unconnected_drive_value: UNCONNECTED_DRIVE_VALUE
+undef_directive: GA UNDEF_DIRECTIVE macro_identifier
+undefineall_directive: GA UNDEFINEALL_DIRECTIVE
+version_specifier: VERSION_SPECIFIER
