@@ -39,9 +39,6 @@ class ANTLR2Lark(Transformer):
     def ebnf_suffix(self, s):
         return "".join(e.value for e in s)
 
-    def block_suffix(self, s):
-        return s[0]
-
     def opt_action_block(self, s):
         return None
 
