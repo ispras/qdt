@@ -34,6 +34,9 @@ from six.moves.tkinter_ttk import (
     Notebook,
     Treeview,
 )
+from sys import (
+    stdout,
+)
 from traceback import (
     print_exc,
 )
@@ -85,7 +88,12 @@ def parse(file, q):
     print("terminating")
 
 
-def co_parse(root, files):
+def co_parse(root, files, output):
+    if output is None:
+        of = stdout
+    else:
+        of = open(output, "w")
+
     tabs = Notebook(root)
     tabs.pack(fill = BOTH, expand = True)
 
@@ -155,8 +163,11 @@ def co_parse(root, files):
         except:
             print_exc()
         else:
-            print(res)
+            of.write("// %s \n\n" % file)
+            of.write(res + "\n")
 
+    if of is not stdout:
+        of.close()
 
     q.close()
     q.join_thread()
@@ -169,6 +180,10 @@ def main():
     arg("antlr_file",
         nargs = "+",
     )
+    arg("-o", "--output",
+        nargs = "?",
+        default = None,
+    )
 
     args = ap.parse_args()
 
@@ -176,7 +191,7 @@ def main():
     root.title("ANTLR4 View")
     root.geometry("600x600")
 
-    root.enqueue(co_parse(root, args.antlr_file))
+    root.enqueue(co_parse(root, args.antlr_file, args.output))
     root.mainloop()
 
 
