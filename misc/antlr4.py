@@ -166,7 +166,7 @@ def co_parse(root, files, output):
         except:
             print_exc()
         else:
-            of.write("\n// ANTLR4 source: %s \n\n" % name)
+            of.write("\n// ANTLR4 source: %s\n\n" % name)
             of.write(res + "\n")
 
     if of is not stdout:
