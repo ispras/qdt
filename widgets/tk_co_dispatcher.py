@@ -42,6 +42,8 @@ peaces among Tkinter event driven GUI model.
         self.work_time = work_time
         self.tk = tk
 
+        tk.bind("<Destroy>", self._on_destroy, "+")
+
     def iteration(self):
         t0 = time()
         wt = self.work_time
@@ -66,6 +68,14 @@ peaces among Tkinter event driven GUI model.
             # finish. It will not be presented in the list.
 
         self.tk.after(1 if ready else self.wait_msec, self.iteration)
+
+    def _on_destroy(self, e):
+        if e.widget is not self.tk:
+            return
+        if self.active_tasks or self.tasks or self.io2read or self.io2write:
+            # Note, `self.callers` may also contain tasks. But corresponding
+            # callees are in the one of container above.
+            stderr.write("There are not finalized tasks\n")
 
     def start_loop(self):
         self.tk.after(0, self.iteration)
