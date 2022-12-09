@@ -31,7 +31,20 @@ class ANTLR2Lark(Transformer):
         return "/./"
 
     def lexer_element(self, s):
-        return " ".join(e for e in s if e is not None)
+        if s[0] is None:
+            return ""
+
+        if len(s) == 1:
+            return s[0]
+        ebnf_suffix = s[1]
+
+        if len(ebnf_suffix) == 2:
+            assert ebnf_suffix[1] == "?"
+            return "[ " + s[0] + " " + ebnf_suffix[0] + " ]"
+        else:
+            return s[0] + " " + ebnf_suffix[0]
+
+    element = lexer_element
 
     def action_block(self, s):
         return None
@@ -120,9 +133,6 @@ class ANTLR2Lark(Transformer):
             # element_options
             s = s[1:]
         return " ".join(s)
-
-    def element(self, s):
-        return " ".join(e for e in s if e is not None)
 
     def labeled_element(self, s):
         raise NotImplementedError("labeled_element")
