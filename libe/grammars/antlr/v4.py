@@ -261,13 +261,11 @@ alternative \
 element \
    : labeled_element ebnf_suffix?
    | atom ebnf_suffix?
-   | ebnf
+   | block block_suffix?
    | action_block
    | opt_action_block
 
 labeled_element: identifier (ASSIGN | PLUS_ASSIGN) (atom | block)
-
-ebnf: block block_suffix?
 
 block_suffix: ebnf_suffix
 
