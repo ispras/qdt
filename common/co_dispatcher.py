@@ -409,6 +409,18 @@ after last statement in the corresponding callable object.
             task.__cancelled__()
         elif task in self.failed_tasks:
             self.failed_tasks.remove(task)
+        else:
+            for io, t in self.io2read.items():
+                if t is task:
+                    self.io2read.pop(io)
+                    task.__cancelled__()
+                    break
+            else:
+                for io, t in self.io2write.items():
+                    if t is task:
+                        self.io2read.pop(io)
+                        task.__cancelled__()
+                        break
 
         del self.gen2task[task.generator]
         # print 'Task %s was removed' % str(task)
