@@ -114,9 +114,11 @@ the QOM tree by fetching relevant data.
                 t.realize = rt.dic.subprogram(realize_addr)
 
     def on_main(self):
-        # main, just after QOM module initialization
+        # just after QOM module initialization
+        # previously in main, since v6 in qemu_init_subsystems
 
         """
+            softmmu/runstate.c:745 ba87e43481f2c9a7780f21aa22682573169f041d
             softmmu/vl.c:2867 bac068e0648c1f5c37f6a0a9423b8aa55e8c09c2
             vl.c:3075 v2.12.0
             vl.c:2980 d0dff238a87fa81393ed72754d4dc8b09e50b08b
