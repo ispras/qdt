@@ -115,10 +115,11 @@ the QOM tree by fetching relevant data.
 
     def on_main(self):
         # just after QOM module initialization
-        # previously in main, since v6 in qemu_init_subsystems
+        # previously in main, since v5.2.50 in qemu_init_subsystems
 
         """
             runstate.c:745 ba87e43481f2c9a7780f21aa22682573169f041d
+            vl.c:2987 efd7ab22fbc9e58c0aaa0fbc0a723e95972a626f
             vl.c:2867 bac068e0648c1f5c37f6a0a9423b8aa55e8c09c2
             vl.c:3075 v2.12.0
             vl.c:2980 d0dff238a87fa81393ed72754d4dc8b09e50b08b
