@@ -4,7 +4,6 @@ __all__ = [
 
 from os import (
     makedirs,
-    remove
 )
 from os.path import (
     split,
@@ -46,7 +45,6 @@ from collections import (
 from source import (
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
-    Header,
     Source
 )
 
