@@ -50,7 +50,12 @@ from os.path import (
     split,
     splitext,
 )
+from re import (
+    compile,
+)
 
+re_meson_ss_add = compile(b"(\w+)\s*[.]\s*add\s*[(]")
+re_meson_ss_new = compile(b"(\w+)\s*=\s*\w+\s*[.]\s*source_set\s*[(]")
 
 # TODO: Selection of configuration flag and accumulator variable
 # name is Qemu version specific. Version API must be used there.
@@ -284,11 +289,28 @@ class QProject(object):
         class_hw_path = join(hw_path, directory)
         meson_build = join(class_hw_path, "meson.build")
 
-        line = "softmmu_ss.add(files('%s'))" % sname
+        source_set = "softmmu_ss"
 
-        # If it's a new `hw` subfolder, it has no `meson.build`.
-        if not isfile(meson_build):
+        if isfile(meson_build):
+            # Figure out which source set is most "popular" in this file.
+            with open(meson_build, "rb") as f:
+                meson_build_data = f.read()
+            meson_build_lines = meson_build_data.splitlines()
+            used_source_sets = defaultdict(int)
+            for l in meson_build_lines:
+                mi = re_meson_ss_new.search(l) or re_meson_ss_add.search(l)
+                if mi:
+                    used_source_sets[mi.group(1)] += 1
+
+            if used_source_sets:
+                source_set = sorted(
+                    tuple((-c, s) for (s, c) in used_source_sets.items())
+                )[0][1].decode()
+        else:
+            # If it's a new `hw` subfolder, it has no `meson.build`.
             open(meson_build, "wb").close()
+
+        line = "%s.add(files('%s'))" % (source_set, sname)
 
         add_line_to_file(meson_build, line)
 
