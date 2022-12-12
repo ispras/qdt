@@ -2,54 +2,55 @@ __all__ = [
     "QProject"
 ]
 
-from os import (
-    makedirs,
-)
-from os.path import (
-    split,
-    join,
-    splitext,
-    isdir,
-    isabs,
-    normpath,
-    relpath,
-    isfile
-)
-from itertools import (
-    count
-)
-from .cpu import (
-    CPUDescription
-)
-from .machine_description import (
-    MachineNode
-)
-from .version_description import (
-    QemuVersionDescription
-)
 from common import (
     add_line_to_file,
-    same_sets,
     callco,
     co_find_eq,
+    same_sets,
     shadow_open,
 )
+from .cpu import (
+    CPUDescription,
+)
+from .machine_description import (
+    MachineNode,
+)
 from .makefile_patching import (
-    patch_makefile
-)
-from codecs import (
-    open
-)
-from collections import (
-    defaultdict
+    patch_makefile,
 )
 from source import (
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
-    Source
+    Source,
 )
 from .version import (
     get_vp,
+)
+from .version_description import (
+    QemuVersionDescription,
+)
+
+from codecs import (
+    open,
+)
+from collections import (
+    defaultdict,
+)
+from itertools import (
+    count,
+)
+from os import (
+    makedirs,
+)
+from os.path import (
+    isabs,
+    isdir,
+    isfile,
+    join,
+    normpath,
+    relpath,
+    split,
+    splitext,
 )
 
 
