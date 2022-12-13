@@ -40,14 +40,14 @@ Entries are only appended at runtime.
         if timeout is None:
             for t in self._threads:
                 t.join(timeout)
-                assert not t.isAlive()
+                assert not t.is_alive()
             return True
 
         t0 = time()
         for t in self._threads:
             t.join(timeout)
 
-            if t.isAlive():
+            if t.is_alive():
                 return False
 
             t1 = time()
