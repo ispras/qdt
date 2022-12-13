@@ -14,7 +14,7 @@ with pypath("pyrsp"): # use ours pyrsp & pyelftools
             i386,
         )
 from debug import (
-    create_dwarf_cache,
+    InMemoryELFFile,
     Runtime,
     Watcher,
 )
@@ -229,7 +229,8 @@ class RRTestProcess(QemuProcess):
         print("Initializing GDB Session...")
 
         try:
-            dic = create_dwarf_cache(self.elf_path)
+            elf = InMemoryELFFile(self.elf_path)
+            dic = elf.create_dwarf_cache()
 
             # Else, dic can't find some breakpoints
             for cu in dic.iter_CUs():
