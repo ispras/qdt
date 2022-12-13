@@ -54,7 +54,7 @@ class Breakpoints(object):
 class Runtime(object):
     "A context of debug session with access to DWARF debug information."
 
-    def __init__(self, target, dic, return_reg_name = None):
+    def __init__(self, target, dic, return_reg_name = None, base_address = 0):
         """
     :type target:
         pyrsp.rsp.RemoteTarget
@@ -71,6 +71,7 @@ class Runtime(object):
         self.dic = dic
 
         self.pc = target.registers.index(target.pc_reg)
+        self.base_address = base_address
 
         # cache of register values converted to integer
         self.regs = [None] * len(target.registers)
@@ -161,14 +162,14 @@ not actual now.
         """ Value being returned by current subprogram. Note that it is
 normally correct only when the target is stopped at the subprogram epilogue.
         """
-        pc = self.get_reg(self.pc)
+        pc = self.get_reg(self.pc) - self.base_address
         val_desc = Returned(self.dic, self.return_reg, pc)
         return Value(val_desc, runtime = self, version = self.version)
 
     @cached
     def subprogram(self):
         "Subprogram corresponding to current program counter."
-        pc = self.get_reg(self.pc)
+        pc = self.get_reg(self.pc) - self.base_address
         return self.dic.subprogram(pc)
 
     @cached
@@ -180,7 +181,7 @@ normally correct only when the target is stopped at the subprogram epilogue.
 
     @cached
     def cfa(self):
-        pc = self.get_reg(self.pc)
+        pc = self.get_reg(self.pc) - self.base_address
         cfa_expr = self.dic.cfa(pc)
         cfa = cfa_expr.eval(self)
         return cfa
