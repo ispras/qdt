@@ -15,7 +15,7 @@ from collections import (
 )
 from debug import (
     git_repo_by_dwarf,
-    create_dwarf_cache,
+    InMemoryELFFile,
     Runtime,
     GitLineVersionAdapter
 )
@@ -383,7 +383,8 @@ def main():
     # debug info
     qemu_debug = qemu_cmd_args[0]
 
-    dic = create_dwarf_cache(qemu_debug)
+    elf = InMemoryELFFile(qemu_debug)
+    dic = elf.create_dwarf_cache()
 
     if qemu_src_dir:
         gvl_adptr = GitLineVersionAdapter(qemu_src_dir)
