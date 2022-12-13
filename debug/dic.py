@@ -1,6 +1,5 @@
 __all__ = [
     "DWARFInfoCache"
-  , "create_dwarf_cache"
 ]
 
 from .dia import (
@@ -21,9 +20,6 @@ from .type import (
 from .glob import (
     Datum,
     Subprogram
-)
-from .elf import (
-    InMemoryELFFile
 )
 
 
@@ -249,21 +245,3 @@ unit (`cu`). Adds address intervals of subprograms to `addr2subprog` mapping.
     @lazy
     def pubtypes(self):
         return self.di.get_pubtypes()
-
-def create_dwarf_cache(exec_file):
-    elf = InMemoryELFFile(exec_file)
-    if not elf.has_dwarf_info():
-        raise ValueError(
-"%s does not have DWARF info. Provide a debug build\n" % (exec_file)
-        )
-
-    di = elf.get_dwarf_info()
-
-    if not di.debug_pubnames_sec:
-        print("%s does not contain .debug_pubtypes section. Provide"
-            " -gpubnames flag to the compiler" % exec_file
-        )
-
-    return DWARFInfoCache(di,
-        symtab = elf.get_section_by_name(".symtab")
-    )
