@@ -8,7 +8,6 @@ from .qemu_watcher import (
     QOMTreeReverser
 )
 from debug import (
-    create_dwarf_cache,
     InMemoryELFFile,
     Runtime,
     GitLineVersionAdapter
@@ -161,7 +160,8 @@ def co_fill_children(qomtr_node, qtype_node, arch):
 
 
 def co_update_device_tree(qemu_exec, src_path, arch_name, root):
-    dic = create_dwarf_cache(qemu_exec)
+    elf = InMemoryELFFile(qemu_exec)
+    dic = elf.create_dwarf_cache()
 
     gvl_adptr = GitLineVersionAdapter(src_path)
 
@@ -185,7 +185,7 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     yield True
 
-    if InMemoryELFFile(qemu_exec)["e_type"] != "ET_EXEC":
+    if elf["e_type"] != "ET_EXEC":
         base_address = 0x0000555555554000
     else:
         base_address = 0
