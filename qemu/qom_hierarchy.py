@@ -9,6 +9,7 @@ from .qemu_watcher import (
 )
 from debug import (
     create_dwarf_cache,
+    InMemoryELFFile,
     Runtime,
     GitLineVersionAdapter
 )
@@ -184,8 +185,15 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     yield True
 
+    if InMemoryELFFile(qemu_exec)["e_type"] != "ET_EXEC":
+        base_address = 0x0000555555554000
+    else:
+        base_address = 0
+
+    yield True
+
     qemu_debugger = AMD64(str(port), noack = True)
-    rt = Runtime(qemu_debugger, dic)
+    rt = Runtime(qemu_debugger, dic, base_address = base_address)
 
     qomtr.init_runtime(rt)
 
