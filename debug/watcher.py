@@ -120,9 +120,10 @@ Leading spaces are ignored.
 
         self.rt = rt
         target = rt.target
+        base_address = rt.base_address
 
         for addr, cb, raw_file_name, line in self.breakpoints:
-            addr_str = target.reg_fmt % addr
+            addr_str = target.reg_fmt % (addr + base_address)
 
             if v:
                 print("br 0x%s (%s:%d), handler = %s" % (
