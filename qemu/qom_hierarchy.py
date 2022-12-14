@@ -185,7 +185,12 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     yield True
 
+    # XXX: simplified PIE and non-PIE executables distinction
+    # more detailed information: https://stackoverflow.com/a/55704865
     if elf["e_type"] != "ET_EXEC":
+        # GDB turns off address randomization by default and loads program at
+        # the default address ELF_ET_DYN_BASE.
+        # TODO: determine address dynamically
         base_address = 0x0000555555554000
     else:
         base_address = 0
