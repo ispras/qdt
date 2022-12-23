@@ -677,6 +677,8 @@ def define_only_qemu_2_6_0_types():
                 ]
             )
         )
+    else:
+        Type["DeviceClass"].append_field(Pointer(Type["Property"])("props"))
     # qdev_new/qdev_realize_and_unref replaces qdev_create/qdev_init_nofail
     if get_vp("use qdev_new"):
         qdev_core_header.add_types([
