@@ -1256,6 +1256,9 @@ digraph Chunks {
             if not isinstance(ch, HeaderInclusion):
                 continue
 
+            if ch.origin.locked_inclusions:
+                continue
+
             header_path = ch.origin.path
             if origin_dir == dirname(header_path):
                 path = (basename(header_path),)
