@@ -475,15 +475,14 @@ class CPUType(QOMCPU):
 
         yield True
 
-        abs_disas_folder = join(src, "disas")
         disas_name = self.target_name + ".c"
-        disas = Source(join(abs_disas_folder, disas_name))
+        disas = Source(join("disas", disas_name))
         self.gen_files[disas_name] = disas
 
         yield True
 
         patch_makefile(
-            join(abs_disas_folder, "Makefile.objs"),
+            join(src, "disas", "Makefile.objs"),
             self.target_name + ".o",
             "common-obj",
             "$(" + self.config_arch_dis + ")"
