@@ -151,7 +151,7 @@ else:
 
 ROOT = sep
 IOMMU_GROUPS = join(ROOT, "sys", "kernel", "iommu_groups")
-LOCAL_CONF = join(ROOT, "etc", "modprobe.d", "local.conf")
+VFIO_CONF = join(ROOT, "etc", "modprobe.d", "qdt_vfio.conf")
 
 
 class CLICommand(GUIDialog):
@@ -355,14 +355,14 @@ class NoOptionForDriver(ValueError): pass
 class NoValueForDriverOption(ValueError): pass
 
 
-class LocalConf(object):
+class VFIOConf(object):
 
     def __init__(self):
         self.reload()
 
     def reload(self):
-        if exists(LOCAL_CONF):
-            with open(LOCAL_CONF, "rb") as f:
+        if exists(VFIO_CONF):
+            with open(VFIO_CONF, "rb") as f:
                 before = f.read()
         else:
             before = None
@@ -529,7 +529,7 @@ class LocalConf(object):
             ))
 
 
-local_conf = None
+vfio_conf = None
 
 
 class RunError(RuntimeError):
@@ -684,12 +684,12 @@ class IOMMUDevice(SysObj):
 
     @property
     def vfio_modalias(self):
-        return local_conf.has_alias(self.modalias, b"vfio-pci")
+        return vfio_conf.has_alias(self.modalias, b"vfio-pci")
 
     @property
     def vfio_assigned(self):
         vid_did = b"%s:%s" % (self.vendor_id, self.dev_id)
-        return local_conf.has_option_value(b"vfio-pci", b"ids", vid_did)
+        return vfio_conf.has_option_value(b"vfio-pci", b"ids", vid_did)
 
     def __lt__(self, dev):
         if not isinstance(dev, IOMMUDevice):
@@ -873,11 +873,11 @@ class IOMMUTV(Treeview, TkPopupHelper):
         dev = self.current_popup_tag
 
         try:
-            local_conf.add_alias(dev.modalias, b"vfio-pci")
+            vfio_conf.add_alias(dev.modalias, b"vfio-pci")
         except AliasAlreadyExists:
             return
 
-        local_conf.append_option(
+        vfio_conf.append_option(
             b"vfio-pci", b"ids", dev.vendor_id + b":" + dev.dev_id
         )
 
@@ -885,34 +885,34 @@ class IOMMUTV(Treeview, TkPopupHelper):
 
     def modalias_commit(self, dev):
         try:
-            root_commit(self, LOCAL_CONF, local_conf.current)
+            root_commit(self, VFIO_CONF, vfio_conf.current)
         except SuDoFailed:
             # something went wrong on lower level
             print_exc()
 
-        local_conf.reload()
+        vfio_conf.reload()
         do_reload()
 
     def remove_vfio_pci_modalias(self):
         dev = self.current_popup_tag
 
         try:
-            local_conf.remove_alias(dev.modalias, b"vfio-pci")
+            vfio_conf.remove_alias(dev.modalias, b"vfio-pci")
         except AliasDoesNotExist:
             return
 
         try:
             try:
-                local_conf.remove_option(
+                vfio_conf.remove_option(
                      b"vfio-pci", b"ids", dev.vendor_id + b":" + dev.dev_id
                 )
             except:
-                local_conf.reload()
+                vfio_conf.reload()
                 raise
         except NoOptionForDriver:
             return
         except NoValueForDriverOption:
-            # Somebody hacked local.conf?
+            # Somebody hacked qdt_vfio.conf?
             print_exc()
             return
 
@@ -1062,16 +1062,16 @@ def bind_unbind_driver(dev_addr, path, summary):
 
 def disable_vga_handler(*__):
     if disable_vga_var.get():
-        if local_conf.has_option_value(b"vfio-pci", b"disable_vga", b"1"):
+        if vfio_conf.has_option_value(b"vfio-pci", b"disable_vga", b"1"):
             return
-        local_conf.append_option(b"vfio-pci", b"disable_vga", b"1")
+        vfio_conf.append_option(b"vfio-pci", b"disable_vga", b"1")
     else:
-        if not local_conf.has_option_value(b"vfio-pci", b"disable_vga", b"1"):
+        if not vfio_conf.has_option_value(b"vfio-pci", b"disable_vga", b"1"):
             return
-        local_conf.remove_option(b"vfio-pci", b"disable_vga", b"1")
+        vfio_conf.remove_option(b"vfio-pci", b"disable_vga", b"1")
 
     try:
-        root_commit(disable_vga_var._root, LOCAL_CONF, local_conf.current)
+        root_commit(disable_vga_var._root, VFIO_CONF, vfio_conf.current)
     except SuDoFailed:
         # something went wrong on lower level
         print_exc()
@@ -1080,10 +1080,10 @@ def disable_vga_handler(*__):
 
 
 def reload_disable_vga():
-    local_conf.reload()
+    vfio_conf.reload()
 
     disable_vga_var.set(
-        local_conf.has_option_value(b"vfio-pci", b"disable_vga", b"1")
+        vfio_conf.has_option_value(b"vfio-pci", b"disable_vga", b"1")
     )
 
 
@@ -1324,10 +1324,10 @@ def parse_pci_config_space(config):
 def main():
     environ["SUDO_ASKPASS"] = join(dirname(__file__), "askpass.py")
 
-    global local_conf
+    global vfio_conf
     global disable_vga_var
 
-    local_conf = LocalConf()
+    vfio_conf = VFIOConf()
 
     tk = GUITk()
     tk.title("IOMMU Info")
