@@ -994,6 +994,10 @@ class IOMMUTV(Treeview, TkPopupHelper):
 """)
             for bar in bars:
                 f.write("  %s = \"%s\"\n" % bar)
+            if bars:
+                f.write("""\
+# ram-bars-mask = \"0\" # uncomment if device is used with `x-no-mmap`
+""")
             for param in params:
                 f.write("  %s = \"%s\"\n" % param)
             f.write("  debug = \"on\"")
