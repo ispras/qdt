@@ -85,6 +85,18 @@ identity4x4 = (c_float * 16)(
 )
 
 
+def ortho4x4(l, t, r, b, f = -1., n = 1.):
+    w = r - l
+    h = t - b
+    d = f - n
+    return (c_float * 16)(
+              2. / w,           0.,           0., 0.,
+                  0.,       2. / h,           0., 0.,
+                  0.,           0.,      -2. / d, 0.,
+        -(r + l) / w, -(t + b) / h, -(f + n) / d, 1. # no more items!
+    )
+
+
 @notifier(
     "ready",
 )
