@@ -86,6 +86,50 @@ class Block:
         if self._parent:
             self._parent._update_children_aabb()
 
+    def iter_containing(self, x, y):
+        if self.not_contains(x, y):
+            return
+
+        yield self
+
+        children = self._children
+        if not children:
+            return
+
+        l, t, r, b = self._aabb
+        w = r - l
+        h = t - b
+        w2 = w / 2
+        h2 = h / 2
+
+        cl, ct, cr, cb = self._children_aabb
+        cw = cr - cl
+        ch = ct - cb
+        cw2 = cw / 2
+        ch2 = ch / 2
+
+        # Note, children are centred.
+
+        # a = w // h
+        # ca = cw // ch
+
+        # avoidung zero devision when [c]w < [c]h
+        wch = w * ch
+        hcw = h * cw
+
+        if hcw < wch:
+            cx = (x - l - w2) * wch * cw / hcw / w + cw2
+
+            cy = (y - b - h2) * ch / h + ch2
+        else:
+            cx = (x - l - w2) * cw / w + cw2
+
+            cy = (y - b - h2) * hcw * ch / wch / h + ch2
+
+        for c in children:
+            for cc in c.iter_containing(cx, cy):
+                yield cc
+
 
 class GLContext:
 
