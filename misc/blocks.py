@@ -368,9 +368,9 @@ def main():
     root = Tk()
     root.title("Blocks")
 
-    b = Block(aabb = (0, 2, 1, 0))
-    b_0 = Block(aabb = (0, 4, 2, 2))
-    b_1 = Block(aabb = (2, 3, 4, 0))
+    b = Block(aabb = (0, 20, 10, 0))
+    b_0 = Block(aabb = (0, 50, 20, 20))
+    b_1 = Block(aabb = (20, 30, 40, 0))
     b.add_child(b_0)
     b.add_child(b_1)
     b_0_0 = Block(aabb = (0, 100, 50, 0))
