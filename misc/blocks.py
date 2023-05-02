@@ -155,8 +155,8 @@ class Block:
         else:  # a <= ca
             s = cw / w
 
-        cx = (x) * s
-        cy = (y) * s
+        cx = x * s
+        cy = y * s
 
         return (cx, cy)
 
