@@ -289,6 +289,7 @@ class TkEventBindHelper:
 class ST_NORMAL: pass
 class ST_CHANGE_OFFSET: pass
 class ST_TOUCH_BLOCKS: pass
+class ST_DRAGGING: pass
 
 class WBlocks(OpenGLWidget, TkEventBindHelper):
 
@@ -296,10 +297,12 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             block = Block(),
             bg = (0., 0., 0., 1.),
             scale_step = 1.1,
+            drag_gap = 3,
             **kw
         ):
         OpenGLWidget.__init__(self, master, **kw)
 
+        self.drag_gap = drag_gap
         self.scale_step = scale_step
 
         self._state = ST_NORMAL
@@ -406,15 +409,24 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             bx, by = self.screen_to_block2(x, y)
             touched = tuple(self._bv._block.iter_containing(bx, by))
             if touched:
-                self._state = ST_TOUCH_BLOCKS
+                self._x0 = x
+                self._y0 = y
                 self._touched = touched
+                self._state = ST_TOUCH_BLOCKS
 
     def _on_tk_ButtonRelease_1(self, e):
         if self._state is ST_TOUCH_BLOCKS:
             self._state = ST_NORMAL
             touched = self._touched
             del self._touched
+            del self._x0
+            del self._y0
             self._set_selection(touched)
+        elif self._state is ST_DRAGGING:
+            self._state = ST_NORMAL
+            del self._touched
+            del self._x0
+            del self._y0
 
     def _on_tk_Motion(self, e):
         if self._state is ST_CHANGE_OFFSET:
@@ -424,6 +436,32 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             dx = 2 * (e.x - self._x0) / d
             dy = 2 * (self._y0 - e.y) / d
             self.set_offset(offset = (self._ox0 + dx, self._oy0 + dy))
+        elif self._state is ST_TOUCH_BLOCKS:
+            dx = e.x - self._x0
+            dy = e.y - self._y0
+            gap = self.drag_gap
+            if abs(dx) > gap or abs(dy) > gap:
+                self._state = ST_DRAGGING
+                self._drag(dx, dy)
+        elif self._state is ST_DRAGGING:
+            dx = e.x - self._x0
+            dy = e.y - self._y0
+            self._drag(dx, dy)
+
+    def _drag(self, dx, dy):
+        self._x0 += dx
+        self._y0 += dy
+
+        dx, dy = self.vector_to_block2(dx, dy)
+
+        current = self._current
+        for blk in self._touched:
+            dx, dy = blk.translate_vector(dx, dy)
+            if blk._parent is current:
+                l, t, r, b = blk._aabb
+                blk.resize((l + dx, t + dy, r + dx, b + dy))
+                self.invalidate()
+                break
 
     def _on_tk_Configure(self, e):
         w = e.width
