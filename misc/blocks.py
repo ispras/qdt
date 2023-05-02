@@ -365,7 +365,7 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             scale = self._scale,
             P = self._P,
         )
-        for a in self._bv._iter_gl_arrays(0., 0., 1.):
+        for a in self._bv.iter_gl_arrays():
             a()
         self.swapbuffers()
 
