@@ -257,6 +257,7 @@ class TkEventBindHelper:
 
 class ST_NORMAL: pass
 class ST_CHANGE_OFFSET: pass
+class ST_TOUCH_BLOCKS: pass
 
 class WBlocks(OpenGLWidget, TkEventBindHelper):
 
@@ -272,6 +273,8 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
 
         self._state = ST_NORMAL
         self._P = identity4x4
+
+        self._selection = tuple()
 
         self.bind_all_handlers()
         bind_all_mouse_wheel(self, self._on_whell, "+")
@@ -364,6 +367,23 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             del self._ox0
             del self._oy0
 
+    def _on_tk_1(self, e):
+        if self._state is ST_NORMAL:
+            x = e.x
+            y = e.y
+            bx, by = self.screen_to_block2(x, y)
+            touched = tuple(self._bv._block.iter_containing(bx, by))
+            if touched:
+                self._state = ST_TOUCH_BLOCKS
+                self._touched = touched
+
+    def _on_tk_ButtonRelease_1(self, e):
+        if self._state is ST_TOUCH_BLOCKS:
+            self._state = ST_NORMAL
+            touched = self._touched
+            del self._touched
+            self._set_selection(touched)
+
     def _on_tk_Motion(self, e):
         if self._state is ST_CHANGE_OFFSET:
             d = min(self.winfo_width(), self.winfo_height())
@@ -397,6 +417,15 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             self.set_scale(s)
             self.set_offset((-0.75 + (h - w) * s * 0.5, -0.75))
         self._bv = BlockView(block)
+
+    def _set_selection(self, selection):
+        self._selection = selection
+        self.event_generate("<<Select>>")
+        self.invalidate()
+
+    @property
+    def selection(self):
+        return self._selection
 
     def set_scale(self, scale):
         self._scale = scale
@@ -438,13 +467,16 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
 
     def __draw__(self):
         glClear(GL_COLOR_BUFFER_BIT)
-        glColor3f(1., 1., 1.)
         p.use(
             offset = self._offset,
             scale = self._scale,
             P = self._P,
         )
         for a in self._bv.iter_gl_arrays():
+            if a._block_view._block in self._selection:
+                glColor3f(0., 1., 0.)
+            else:
+                glColor3f(1., 1., 1.)
             a()
         self.swapbuffers()
 
