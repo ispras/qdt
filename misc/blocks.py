@@ -126,7 +126,7 @@ class BlockView:
         x += l * s
         y += b * s
 
-        yield GLArrays(
+        a = GLArrays(
             vertices = (
                 # CCW
                 (x        , y + h * s),
@@ -136,6 +136,8 @@ class BlockView:
             ),
             what = GL_LINE_LOOP,
         )
+        a._block_view = self
+        yield a
 
         cl, ct, cr, cb = block._children_aabb
 
