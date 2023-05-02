@@ -12,6 +12,9 @@ from libe.graphics.gltk import (
     OpenGLWidget,
 )
 
+from copy import (
+    deepcopy,
+)
 from OpenGL.GL import (
     GL_COLOR_BUFFER_BIT,
     GL_LINE_LOOP,
@@ -375,6 +378,9 @@ def main():
     b.add_child(b_1)
     b_0_0 = Block(aabb = (0, 100, 50, 0))
     b_0.add_child(b_0_0)
+    b_1_0 = Block(aabb = (0, 15, 20, 0))
+    b_1_0.add_child(deepcopy(b))
+    b_1.add_child(b_1_0)
 
     wb = WBlocks(root, block = b)
     wb.pack(expand = True, fill = BOTH)
