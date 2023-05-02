@@ -72,6 +72,10 @@ class Block:
                 b = bb
         self._children_aabb = l, t, r, b
 
+    def contains(self, x, y):
+        l, t, r, b = self._aabb
+        return x > l and r > x and t >= y and y > b
+
     def not_contains(self, x, y):
         l, t, r, b = self._aabb
         return x <= l or r <= x or t < y or y < b
