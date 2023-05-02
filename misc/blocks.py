@@ -306,6 +306,7 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
         self._P = identity4x4
 
         self._selection = tuple()
+        self._current = None
 
         self.bind_all_handlers()
         bind_all_mouse_wheel(self, self._on_whell, "+")
@@ -448,10 +449,16 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             self.set_scale(s)
             self.set_offset((-0.75 + (h - w) * s * 0.5, -0.75))
         self._bv = BlockView(block)
+        self._set_current(block)
 
     def _set_selection(self, selection):
         self._selection = selection
         self.event_generate("<<Select>>")
+        self.invalidate()
+
+    def _set_current(self, current):
+        self._current = current
+        self.event_generate("<<Current>>")
         self.invalidate()
 
     @property
@@ -497,6 +504,9 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
         return (x, y)
 
     def __draw__(self):
+        selection = self._selection
+        current = self._current
+
         glClear(GL_COLOR_BUFFER_BIT)
         p.use(
             offset = self._offset,
@@ -504,10 +514,17 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             P = self._P,
         )
         for a in self._bv.iter_gl_arrays():
-            if a._block_view._block in self._selection:
-                glColor3f(0., 1., 0.)
+            b = a._block_view._block
+            if b in selection:
+                if b._parent is current:
+                    glColor3f(0., 1., 0.)
+                else:
+                    glColor3f(0., 0.3, 0.)
             else:
-                glColor3f(1., 1., 1.)
+                if b._parent is current:
+                    glColor3f(1., 1., 1.)
+                else:
+                    glColor3f(0.3, 0.3, 0.3)
             a()
         self.swapbuffers()
 
