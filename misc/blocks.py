@@ -105,7 +105,6 @@ class BlockView:
     def __init__(self, block):
         self._block = block
         self._children = list(map(BlockView, block._children))
-        self._padding = 1.05
 
     def iter_gl_arrays(self):
         return self._iter_gl_arrays(0., 0., 1.)
@@ -146,23 +145,16 @@ class BlockView:
         if not (cw and ch):
             return
 
-        p = self._padding
-        pcw = cw * p
-        pch = ch * p
-
         # scale children to fit aabb
-        ws = w / pcw
-        hs = h / pch
+        ws = w / cw
+        hs = h / ch
 
         if ws < hs:
             cs = s * ws
-            y += abs(pch * cs - h * s) * 0.5
+            y += abs(ch * cs - h * s) * 0.5
         else:
             cs = s * hs
-            x += abs(pcw * cs - w * s) * 0.5
-
-        x += (pcw - cw) * 0.5 * cs
-        y += (pch - ch) * 0.5 * cs
+            x += abs(cw * cs - w * s) * 0.5
 
         for cv in self._children:
             for b in cv._iter_gl_arrays(x, y, cs):
