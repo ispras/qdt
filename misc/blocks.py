@@ -197,16 +197,13 @@ class BlockView:
         if not (w and h):
             return
 
-        x += l * s
-        y += b * s
-
         a = GLArrays(
             vertices = (
                 # CCW
-                (x        , y + h * s),
-                (x        , y        ),
-                (x + w * s, y        ),
-                (x + w * s, y + h * s),
+                (x + l * s, y + t * s),
+                (x + l * s, y + b * s),
+                (x + r * s, y + b * s),
+                (x + r * s, y + t * s),
             ),
             what = GL_LINE_LOOP,
         )
@@ -225,15 +222,23 @@ class BlockView:
         ws = w / cw
         hs = h / ch
 
+        mx = (r + l) / 2
+        my = (t + b) / 2
+
+        cmx = (cr + cl) / 2
+        cmy = (ct + cb) / 2
+
         if ws < hs:
             cs = s * ws
-            y += abs(ch * cs - h * s) * 0.5
+            cx = x + s * mx - cs * cmx
+            cy = y + s * my - cs * cmy
         else:
             cs = s * hs
-            x += abs(cw * cs - w * s) * 0.5
+            cx = x + s * mx - cs * cmx
+            cy = y + s * my - cs * cmy
 
         for cv in self._children:
-            for b in cv._iter_gl_arrays(x, y, cs):
+            for b in cv._iter_gl_arrays(cx, cy, cs):
                 yield b
 
 
@@ -504,7 +509,7 @@ def main():
     root = Tk()
     root.title("Blocks")
 
-    b = Block(aabb = (0, 20, 10, 0))
+    b = Block(aabb = (-10, 20, 0, 0))
     b_0 = Block(aabb = (0, 50, 20, 20))
     b_1 = Block(aabb = (20, 30, 40, 0))
     b.add_child(b_0)
