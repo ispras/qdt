@@ -406,6 +406,36 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
         self._offset = offset
         self.invalidate()
 
+    def screen_to_block2(self, *xy):
+        return self.screen_to_block(xy)
+
+    def screen_to_block(self, xy):
+        w = self.winfo_width()
+        h = self.winfo_height()
+
+        # see _on_tk_Configure
+        two = min(w, h)
+        if two:
+            one = two * 0.5
+        else:
+            one = 1.
+
+        x, y = xy
+
+        x -= one
+        x /= one
+
+        y = one - y
+        y /= one
+
+        ox, oy = self._offset  # screen -> geometric
+        x -= ox
+        y -= oy
+        s = self._scale
+        x /= s
+        y /= s
+        return (x, y)
+
     def __draw__(self):
         glClear(GL_COLOR_BUFFER_BIT)
         glColor3f(1., 1., 1.)
