@@ -347,12 +347,10 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
         self._bv = BlockView(block)
 
     def set_scale(self, scale):
-        print("scale", scale)
         self._scale = scale
         self.invalidate()
 
     def set_offset(self, offset):
-        print("offset", offset)
         self._offset = offset
         self.invalidate()
 
