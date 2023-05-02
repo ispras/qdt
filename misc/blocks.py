@@ -503,6 +503,26 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
         y /= s
         return (x, y)
 
+    def vector_to_block2(self, x, y):
+        w = self.winfo_width()
+        h = self.winfo_height()
+
+        # see _on_tk_Configure
+        two = min(w, h)
+        if two:
+            one = two * 0.5
+        else:
+            one = 1.
+
+        x /= one
+        y /= one
+
+        s = self._scale
+        x /= s
+        y /= s
+
+        return (x, -y)
+
     def __draw__(self):
         selection = self._selection
         current = self._current
