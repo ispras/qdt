@@ -106,34 +106,34 @@ class Block:
         "to children coordinates space"
 
         l, t, r, b = self._aabb
+
+        # Note, children are centred.
+        mx = (l + r) / 2
+        my = (t + b) / 2
+
         w = r - l
 
-        if not w:  # it's a point
-            return (x - l, y - b)
+        if not w:  # it's a point/segment
+            return (x - mx, y - my)
 
         h = t - b
 
-        if not h:  # it's a point
-            return (x - l, y - b)
+        if not h:  # it's a point/segment
+            return (x - mx, y - my)
 
         cl, ct, cr, cb = self._children_aabb
         cw = cr - cl
 
         if not cw:  # no children or they don't consume space
-            return (x - l, y - b)
+            return (x - mx, y - my)
 
         ch = ct - cb
 
         if not ch:  # no children or they don't consume space
-            return (x - l, y - b)
+            return (x - mx, y - my)
 
-        w2 = w / 2
-        h2 = h / 2
-
-        cw2 = cw / 2
-        ch2 = ch / 2
-
-        # Note, children are centred.
+        cmx = (cl + cr) / 2
+        cmy = (ct + cb) / 2
 
         # a = w // h
         # ca = cw // ch
@@ -142,14 +142,14 @@ class Block:
         wch = w * ch
         hcw = h * cw
 
-        if hcw < wch:
-            cx = (x - l - w2) * wch * cw / hcw / w + cw2
+        if hcw < wch:  # ca < a
+            cx = (x - mx) * wch * cw / hcw / w + cmx
 
-            cy = (y - b - h2) * ch / h + ch2
-        else:
-            cx = (x - l - w2) * cw / w + cw2
+            cy = (y - my) * ch / h + cmy
+        else:  # a <= ca
+            cx = (x - mx) * cw / w + cmx
 
-            cy = (y - b - h2) * hcw * ch / wch / h + ch2
+            cy = (y - my) * hcw * ch / wch / h + cmy
 
         return (cx, cy)
 
