@@ -107,6 +107,9 @@ class BlockView:
         self._children = list(map(BlockView, block._children))
         self._padding = 1.05
 
+    def iter_gl_arrays(self):
+        return self._iter_gl_arrays(0., 0., 1.)
+
     def _iter_gl_arrays(self,
         x, y,  # offset
         s,  # scale
