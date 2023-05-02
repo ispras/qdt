@@ -45,7 +45,7 @@ def init_togl(master):
 
     # don't need second Tk instance
     assert tk is not OpenGL_Tk__default_root.tk
-    OpenGL_Tk__default_root.withdraw()
+    OpenGL_Tk__default_root.destroy()
 
     # This code is based on `OpenGL.Tk` implementation.
     # This implementation allow `Togl` to work with any `Tk` instance, not only
