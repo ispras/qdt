@@ -143,13 +143,12 @@ class Block:
         hcw = h * cw
 
         if hcw < wch:  # ca < a
-            cx = (x - mx) * wch * cw / hcw / w + cmx
-
-            cy = (y - my) * ch / h + cmy
+            s = ch / h
         else:  # a <= ca
-            cx = (x - mx) * cw / w + cmx
+            s = cw / w
 
-            cy = (y - my) * hcw * ch / wch / h + cmy
+        cx = (x - mx) * s + cmx
+        cy = (y - my) * s + cmy
 
         return (cx, cy)
 
