@@ -135,14 +135,10 @@ class Block:
         cmx = (cl + cr) / 2
         cmy = (ct + cb) / 2
 
-        # a = w // h
-        # ca = cw // ch
+        a = w / h
+        ca = cw / ch
 
-        # avoidung zero devision when [c]w < [c]h
-        wch = w * ch
-        hcw = h * cw
-
-        if hcw < wch:  # ca < a
+        if ca < a:
             s = ch / h
         else:  # a <= ca
             s = cw / w
