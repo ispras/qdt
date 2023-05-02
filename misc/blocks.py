@@ -111,29 +111,41 @@ class Block:
         mx = (l + r) / 2
         my = (t + b) / 2
 
+        cl, ct, cr, cb = self._children_aabb
+
+        cmx = (cl + cr) / 2
+        cmy = (ct + cb) / 2
+
+        tx, ty = self.translate_vector(x - mx, y - my)
+
+        return (tx + cmx, ty + cmy)
+
+    def translate_vector(self, x, y):
+        "to children coordinates space"
+
+        l, t, r, b = self._aabb
+
+        # Note, children are centred.
         w = r - l
 
         if not w:  # it's a point/segment
-            return (x - mx, y - my)
+            return x, y
 
         h = t - b
 
         if not h:  # it's a point/segment
-            return (x - mx, y - my)
+            return x, y
 
         cl, ct, cr, cb = self._children_aabb
         cw = cr - cl
 
         if not cw:  # no children or they don't consume space
-            return (x - mx, y - my)
+            return x, y
 
         ch = ct - cb
 
         if not ch:  # no children or they don't consume space
-            return (x - mx, y - my)
-
-        cmx = (cl + cr) / 2
-        cmy = (ct + cb) / 2
+            return x, y
 
         a = w / h
         ca = cw / ch
@@ -143,8 +155,8 @@ class Block:
         else:  # a <= ca
             s = cw / w
 
-        cx = (x - mx) * s + cmx
-        cy = (y - my) * s + cmy
+        cx = (x) * s
+        cy = (y) * s
 
         return (cx, cy)
 
