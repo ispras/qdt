@@ -517,6 +517,8 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
     def screen_to_block(self, xy):
         w = self.winfo_width()
         h = self.winfo_height()
+        w2 = w / 2
+        h2 = h / 2
 
         # see _on_tk_Configure
         two = min(w, h)
@@ -527,13 +529,13 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
 
         x, y = xy
 
-        x -= one
+        x -= w2
         x /= one
 
-        y = one - y
+        y = h2 - y
         y /= one
 
-        ox, oy = self._offset  # screen -> geometric
+        ox, oy = self._offset
         x -= ox
         y -= oy
         s = self._scale
