@@ -456,12 +456,12 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
 
         current = self._current
         for blk in self._touched:
-            dx, dy = blk.translate_vector(dx, dy)
             if blk._parent is current:
                 l, t, r, b = blk._aabb
                 blk.resize((l + dx, t + dy, r + dx, b + dy))
                 self.invalidate()
                 break
+            dx, dy = blk.translate_vector(dx, dy)
 
     def _on_tk_Configure(self, e):
         w = e.width
