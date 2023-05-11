@@ -10,7 +10,7 @@ from libe.common.caller_file_name import (
 from libe.common.iter_submodules import (
     iter_submodules,
 )
-from .shadow_open import (
+from libe.common.shadow_open import (
     shadow_open,
 )
 
