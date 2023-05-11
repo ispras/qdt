@@ -3,13 +3,15 @@ __all__ = [
 ]
 
 from common import (
-    add_line_to_file,
     callco,
     co_find_eq,
     same_sets,
 )
 from .cpu import (
     CPUDescription,
+)
+from libe.common.add_line import (
+    add_line_to_file,
 )
 from libe.common.shadow_open import (
     shadow_open,
