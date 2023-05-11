@@ -7,7 +7,7 @@ __all__ = [
 from libe.common.caller_file_name import (
     caller_file_name,
 )
-from .pypath import (
+from libe.common.iter_submodules import (
     iter_submodules,
 )
 from .shadow_open import (
