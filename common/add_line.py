@@ -24,7 +24,6 @@ def add_line_to_file(file_name, line):
     with open(file_name, "r") as f:
         lines = f.readlines()
 
-    add_line(lines, line)
-
-    with open(file_name, "w") as f:
-        f.write("".join(lines))
+    if add_line(lines, line):
+        with open(file_name, "w") as f:
+            f.write("".join(lines))
