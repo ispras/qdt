@@ -487,7 +487,6 @@ class WBlocks(OpenGLWidget, TkEventBindHelper):
             self.set_scale(s)
             self.set_offset((-0.75 + (h - w) * s * 0.5, -0.75))
         self._bv = BlockView(block)
-        self._set_current(block)
 
     def _set_selection(self, selection):
         self._selection = selection
