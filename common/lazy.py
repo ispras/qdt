@@ -1,3 +1,14 @@
+"""
+Notes.
+
+* `reset_cache` vs `reset_lazy`
+    `reset_cache` may be faster if there are many NON-evaluated `@cached`
+    attributes.
+    `reset_lazy` does not require extra attribute (`__lazy__`).
+
+
+"""
+
 __all__ = [
     "lazy"
       , "cached"
@@ -74,3 +85,10 @@ def iter_lazy(o):
 def iter_lazy_items(o):
     for n in iter_lazy(o):
         yield (n, getattr(o, n))
+
+
+def reset_lazy(o):
+    "Resets lazily evaluated `lazy` attributes of `obj`."
+    pop = o.__dict__.pop
+    for n in iter_lazy(o):
+        pop(n, None)
