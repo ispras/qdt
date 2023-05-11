@@ -5,6 +5,7 @@ __all__ = [
     "gl_ready",
     "GLSLProgram",
     "identity4x4",
+    "ortho4x4",
 ]
 
 
