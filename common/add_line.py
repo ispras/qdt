@@ -5,11 +5,14 @@ __all__ = [
 
 
 def add_line(lines, line):
-    "Appends `line` to `lines` if such a line is absent."
+    """ Appends `line` to `lines` if such a line is absent.
+`return`s `bool` indicating `line` addition.
+    """
 
     if line in lines:
-        return
+        return False
     lines.append(line)
+    return True
 
 
 def add_line_to_file(file_name, line):
