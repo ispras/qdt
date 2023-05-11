@@ -57,8 +57,16 @@ def reset_cache(obj):
 
 
 def iter_lazy(o):
+    overriden = set()
+    override = overriden.add
+
     for t in getmro(type(o)):
         for n, v in t.__dict__.items():
+
+            if n in overriden:
+                continue
+            override(n)
+
             if isinstance(v, lazy):
                 yield n
 
