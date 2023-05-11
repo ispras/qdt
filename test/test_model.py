@@ -825,7 +825,7 @@ class TestOpaqueCode(SourceModelTestHelper, TestCase):
 
         name = type(self).__name__
 
-        hdr = Header(name.lower() + ".h", protection = False)
+        hdr = Header(name.lower() + ".h", protection_prefix = None)
 
         test_var = Type["int"]("test_var")
         test_func = Function(name = "test_func")
