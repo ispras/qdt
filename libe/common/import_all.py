@@ -4,13 +4,13 @@ __all__ = [
   , "update_this"
 ]
 
-from libe.common.caller_file_name import (
+from .caller_file_name import (
     caller_file_name,
 )
-from libe.common.iter_submodules import (
+from .iter_submodules import (
     iter_submodules,
 )
-from libe.common.shadow_open import (
+from .shadow_open import (
     shadow_open,
 )
 
