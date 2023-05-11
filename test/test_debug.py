@@ -38,7 +38,7 @@ class BitFieldsWatcher(Watcher):
         self._test = test
 
     def on_main(self):
-        "main.c:16 bccaa903d7e8ccd4fa9faa4df004948a3e8dd912"
+        "main.c:16 1541f2ea603ffbc451abae771ceb02cf034f2923"
         # Note, this SHA1 is of one of previous commits in QDT history:
         # "test: add C program for testing of bit fields support ..."
         rt = self.rt
