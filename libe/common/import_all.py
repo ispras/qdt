@@ -16,23 +16,30 @@ from .shadow_open import (
 
 from os.path import (
     dirname,
+    isdir,
     join,
     splitext,
 )
 
 
-def iter_import_lines(module_dir):
+def iter_import_lines(module_dir, all_submodule = None):
     for n in sorted(iter_submodules(cur_dir = module_dir)):
         if n == "this":
             continue
-        yield "from ." + splitext(n)[0] + " import *"
+        modname = splitext(n)[0]
+        if all_submodule:
+            if all_submodule == n:
+                continue
+            if isdir(join(module_dir, n)):
+                modname += "." + all_submodule
+        yield "from ." + modname + " import *"
 
 
-def gen_import_code(module_dir):
-    return "\n".join(iter_import_lines(module_dir))
+def gen_import_code(module_dir, **kw):
+    return "\n".join(iter_import_lines(module_dir, **kw))
 
 
-def update_this():
+def update_this(**kw):
     """ It creates/updates this.py file that imports all submodules and can
 be parsed by IDEs.
 
@@ -43,12 +50,16 @@ from common import (
 )
 update_this()
 from .this import *
+
+@param all_submodule
+    Name of submodule that should do `update_this(); from .this import *`
+    (`__init__.py` by default).
     """
 
     cur_dir = dirname(caller_file_name())
     importer_name = join(cur_dir, "this.py")
 
-    code = gen_import_code(cur_dir)
+    code = gen_import_code(cur_dir, **kw)
 
     with shadow_open(importer_name) as f:
         f.write(code)
