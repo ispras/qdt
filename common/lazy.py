@@ -6,6 +6,8 @@ Notes.
     attributes.
     `reset_lazy` does not require extra attribute (`__lazy__`).
 
+* `lazy` is analogue to `functools.cached_property`.
+    But, it's available on any Python.
 
 """
 
