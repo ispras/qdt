@@ -51,28 +51,23 @@ def gen_macrograph_gv(macrograph):
     node = graph.node
     edge = graph.edge
 
-    sha2node = {}
+    # macrograph nodes to Graphviz nodes
+    mg2gv = {}
 
-    for sha in macrograph:
-        n = "n%d" % len(sha2node)
-        sha2node[sha] = n
-        node(n, label = sha)
-
-    # intermediate nodes contain amount of commits between macronodes
-    intermediate = 0
+    for mgn in macrograph:
+        if isinstance(mgn, CommitsSequence):
+            gvn = "s%d" % len(mg2gv)
+            # intermediate nodes contain amount of commits between macronodes
+            label = str(len(mgn))
+        else:  # SHA
+            gvn = "n%d" % len(mg2gv)
+            label = mgn
+        mg2gv[mgn] = gvn
+        node(gvn, label = label)
 
     for p, descendants in macrograph.items():
-        for d, tracks in descendants.items():
-            for t in tracks:
-                tlen = len(t)
-                if tlen:
-                    n = "e%d" % intermediate
-                    intermediate += 1
-                    node(n, label = str(tlen))
-                    edge(sha2node[p], n)
-                    edge(n, sha2node[d])
-                else:
-                    edge(sha2node[p], sha2node[d])
+        for d in descendants:
+            edge(mg2gv[p], mg2gv[d])
 
     return graph
 
@@ -85,6 +80,10 @@ def gen_macrograph_gv_file(macrograph, file_name):
     source = gen_macrograph_gv_source(macrograph)
     with open(file_name, "w") as f:
         f.write(source)
+
+
+class CommitsSequence(list):
+    __hash__ = lambda self: id(self)
 
 
 class GGVWidget(GUIFrame):
@@ -146,23 +145,31 @@ class GGVWidget(GUIFrame):
         yield True
         print("Building macro graph")
         # Edges between nodes
-        macrograph = dict((sha, defaultdict(list)) for sha in nodes)
+        macrograph = defaultdict(set)
 
-        m_count = len(macrograph)
+        m_count = len(nodes)
         print("Macronodes count : %d" % m_count)
 
         for i, n in enumerate(nodes.values(), 1):
             yield True
             stack = list(
                 (
-                    [p],  # track from n
+                    CommitsSequence(),  # track from n
                     p,
                 ) for p in n.parents
             )
+
+            # trigger entry creation
+            macrograph[n.sha]
+
             while stack:
-                t, p = stack.pop()
+                seq, p = stack.pop()
                 if p.sha in nodes:
-                    macrograph[p.sha][n.sha].append(t)
+                    if len(seq):
+                        macrograph[p.sha].add(seq)
+                        macrograph[seq].add(n.sha)
+                    else:
+                        macrograph[p.sha].add(n.sha)
                     continue
 
                 pparents = p.parents
@@ -170,8 +177,8 @@ class GGVWidget(GUIFrame):
                 assert len(pparents) == 1, "%s: `.sha` must be in `nodes`" % p
 
                 pp = pparents[0]
-                t.append(pp)
-                stack.append((t, pp))
+                seq.append(pp)
+                stack.append((seq, pp))
 
             print("%d/%d" % (i, m_count))
 
@@ -183,6 +190,9 @@ class GGVWidget(GUIFrame):
             print("Done")
 
         print("Laying out Graph")
+
+        return
+        # TODO: current macrograph format is not yet supported
 
         cnv = self._cnv
 
