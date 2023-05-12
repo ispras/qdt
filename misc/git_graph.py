@@ -59,9 +59,9 @@ def gen_macrograph_gv(macrograph):
             gvn = "s%d" % len(mg2gv)
             # intermediate nodes contain amount of commits between macronodes
             label = str(len(mgn))
-        else:  # SHA
+        else:  # CommitDesc
             gvn = "n%d" % len(mg2gv)
-            label = mgn
+            label = mgn.sha
         mg2gv[mgn] = gvn
         node(gvn, label = label)
 
@@ -138,7 +138,7 @@ class GGVWidget(GUIFrame):
 
         for c in commits.values():
             if c.is_merge or c.is_fork or c.is_leaf or c.is_root:
-                nodes.add(c.sha)
+                nodes.add(c)
 
         print("Done")
 
@@ -150,31 +150,31 @@ class GGVWidget(GUIFrame):
         m_count = len(nodes)
         print("Macronodes count : %d" % m_count)
 
-        for i, n_sha in enumerate(nodes, 1):
+        for i, n in enumerate(nodes, 1):
             yield True
             stack = list(
                 (
                     CommitsSequence(),  # track from n
                     p,
-                ) for p in commits[n_sha].parents
+                ) for p in n.parents
             )
 
             # trigger entry creation
-            macrograph[n_sha]
+            macrograph[n]
 
             while stack:
                 seq, p = stack.pop()
-                if p.sha in nodes:
+                if p in nodes:
                     if len(seq):
-                        macrograph[p.sha].add(seq)
-                        macrograph[seq].add(n_sha)
+                        macrograph[p].add(seq)
+                        macrograph[seq].add(n)
                     else:
-                        macrograph[p.sha].add(n_sha)
+                        macrograph[p].add(n)
                     continue
 
                 pparents = p.parents
 
-                assert len(pparents) == 1, "%s: `.sha` must be in `nodes`" % p
+                assert len(pparents) == 1, "%s: must be in `nodes`" % p.sha
 
                 pp = pparents[0]
                 seq.append(pp)
