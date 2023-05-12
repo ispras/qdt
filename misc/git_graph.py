@@ -22,6 +22,9 @@ from widgets import (
 from pprint import (
     pprint
 )
+from collections import (
+    defaultdict,
+)
 
 
 class GGVWidget(GUIFrame):
@@ -83,27 +86,40 @@ class GGVWidget(GUIFrame):
         yield True
         print("Building macro graph")
         # Edges between nodes
-        macrograph = dict((sha, {}) for sha in nodes)
+        macrograph = dict((sha, defaultdict(list)) for sha in nodes)
 
         m_count = len(macrograph)
         print("Macronodes count : %d" % m_count)
 
         for i, n in enumerate(nodes.values(), 1):
             yield True
-            # first digit in the tuple is used to count commits between nodes
-            stack = list((0, p) for p in n.parents)
+            stack = list(
+                (
+                    [p],  # track from n
+                    p,
+                ) for p in n.parents
+            )
             while stack:
-                l, p = stack.pop()
+                t, p = stack.pop()
                 if p.sha in nodes:
-                    macrograph[p.sha][n.sha] = l
-                    break
-                l += 1
-                stack.extend((l, pp) for pp in p.parents)
+                    macrograph[p.sha][n.sha].append(t)
+                    continue
+
+                pparents = p.parents
+
+                assert len(pparents) == 1, "%s: `.sha` must be in `nodes`" % p
+
+                pp = pparents[0]
+                t.append(pp)
+                stack.append((t, pp))
 
             print("%d/%d" % (i, m_count))
 
         print("Done")
         pprint(macrograph)
+
+        return
+        # TODO: the code below is not actual
 
         print("Laying out Graph")
 
