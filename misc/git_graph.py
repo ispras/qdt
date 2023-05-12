@@ -9,6 +9,7 @@ from git import (
 )
 from common import (
     CommitDesc,
+    ee,
     mlget as _
 )
 from widgets import (
@@ -19,12 +20,71 @@ from widgets import (
     GUIFrame,
     GUITk
 )
-from pprint import (
-    pprint
-)
 from collections import (
     defaultdict,
 )
+from graphviz import (
+    Digraph
+)
+
+
+# Set this env. var. to output macrograph to file in Graphviz format.
+DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", None)
+
+
+def gen_macrograph_gv(macrograph):
+    graph = Digraph(
+        name = "Git Macrograph",
+        graph_attr = dict(
+            rankdir = "BT",
+        ),
+        node_attr = dict(
+            shape = "polygon",
+            fontname = "Momospace",
+        ),
+        edge_attr = dict(
+            style = "filled"
+        ),
+    )
+
+    # cache
+    node = graph.node
+    edge = graph.edge
+
+    sha2node = {}
+
+    for sha in macrograph:
+        n = "n%d" % len(sha2node)
+        sha2node[sha] = n
+        node(n, label = sha)
+
+    # intermediate nodes contain amount of commits between macronodes
+    intermediate = 0
+
+    for p, descendants in macrograph.items():
+        for d, tracks in descendants.items():
+            for t in tracks:
+                tlen = len(t)
+                if tlen:
+                    n = "e%d" % intermediate
+                    intermediate += 1
+                    node(n, label = str(tlen))
+                    edge(sha2node[p], n)
+                    edge(n, sha2node[d])
+                else:
+                    edge(sha2node[p], sha2node[d])
+
+    return graph
+
+
+def gen_macrograph_gv_source(macrograph):
+    return gen_macrograph_gv(macrograph).source
+
+
+def gen_macrograph_gv_file(macrograph, file_name):
+    source = gen_macrograph_gv_source(macrograph)
+    with open(file_name, "w") as f:
+        f.write(source)
 
 
 class GGVWidget(GUIFrame):
@@ -116,7 +176,11 @@ class GGVWidget(GUIFrame):
             print("%d/%d" % (i, m_count))
 
         print("Done")
-        pprint(macrograph)
+
+        if DOT_FILE_NAME is not None:
+            print("Writing Graphviz file: " + DOT_FILE_NAME)
+            gen_macrograph_gv_file(macrograph, DOT_FILE_NAME)
+            print("Done")
 
         return
         # TODO: the code below is not actual
