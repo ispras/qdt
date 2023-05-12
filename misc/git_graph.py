@@ -182,9 +182,6 @@ class GGVWidget(GUIFrame):
             gen_macrograph_gv_file(macrograph, DOT_FILE_NAME)
             print("Done")
 
-        return
-        # TODO: the code below is not actual
-
         print("Laying out Graph")
 
         rest = set(macrograph)
@@ -236,7 +233,7 @@ class GGVWidget(GUIFrame):
                 n_dnd = dnd_groups[n_sha]
 
                 children = macrograph[n_sha]
-                for c_sha in children:
+                for c_sha, tracks in children.items():
                     try:
                         x, y = positions[c_sha]
                     except KeyError:
@@ -279,7 +276,7 @@ class GGVWidget(GUIFrame):
                     tx, ty = (x1 + x2) / 2, (y1 + y2) / 2
 
                     text_iid = cnv.create_text(tx + 5, ty - 5,
-                        text = str(children[c_sha])
+                        text = ", ".join(map(str, map(len, tracks)))
                     )
 
                     DnDGroup(cnv, line_id, [text_iid],
