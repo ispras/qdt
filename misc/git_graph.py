@@ -184,8 +184,6 @@ class GGVWidget(GUIFrame):
 
         print("Laying out Graph")
 
-        rest = set(macrograph)
-
         cnv = self._cnv
 
         x, y = cnv.winfo_width() / 2, cnv.winfo_height() / 2
@@ -193,9 +191,22 @@ class GGVWidget(GUIFrame):
         dnd_groups = {}
         bbox = x, y, x, y
 
+        visited = set()
+        visit = visited.add  # cache
+
+        yield True
+        sorted_macrograph_nodes = sorted(
+            macrograph,
+            key = lambda sha: nodes[sha].num
+        )
+        niter = iter(sorted_macrograph_nodes)
+
         while True:
-            # get any node as starting
-            for n_sha in rest:
+            yield True
+
+            for n_sha in niter:
+                if n_sha in visited:
+                    continue
                 break
             else:
                 # Nothing left
@@ -220,11 +231,9 @@ class GGVWidget(GUIFrame):
             while stack:
                 n = stack.pop()
                 n_sha = n.sha
-                try:
-                    rest.remove(n_sha)
-                except KeyError:
-                    # already visited
+                if n_sha in visited:
                     continue
+                visit(n_sha)
 
                 cnv.update_scroll_region()
                 yield True
