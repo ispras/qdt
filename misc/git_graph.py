@@ -134,11 +134,11 @@ class GGVWidget(GUIFrame):
 
         yield True
         print("Searching for macronodes")
-        nodes = {}
+        nodes = set()
 
         for c in commits.values():
             if c.is_merge or c.is_fork or c.is_leaf or c.is_root:
-                nodes[c.sha] = c
+                nodes.add(c.sha)
 
         print("Done")
 
@@ -150,26 +150,26 @@ class GGVWidget(GUIFrame):
         m_count = len(nodes)
         print("Macronodes count : %d" % m_count)
 
-        for i, n in enumerate(nodes.values(), 1):
+        for i, n_sha in enumerate(nodes, 1):
             yield True
             stack = list(
                 (
                     CommitsSequence(),  # track from n
                     p,
-                ) for p in n.parents
+                ) for p in commits[n_sha].parents
             )
 
             # trigger entry creation
-            macrograph[n.sha]
+            macrograph[n_sha]
 
             while stack:
                 seq, p = stack.pop()
                 if p.sha in nodes:
                     if len(seq):
                         macrograph[p.sha].add(seq)
-                        macrograph[seq].add(n.sha)
+                        macrograph[seq].add(n_sha)
                     else:
-                        macrograph[p.sha].add(n.sha)
+                        macrograph[p.sha].add(n_sha)
                     continue
 
                 pparents = p.parents
@@ -181,6 +181,8 @@ class GGVWidget(GUIFrame):
                 stack.append((seq, pp))
 
             print("%d/%d" % (i, m_count))
+
+        del nodes
 
         print("Done")
 
@@ -207,7 +209,7 @@ class GGVWidget(GUIFrame):
         yield True
         sorted_macrograph_nodes = sorted(
             macrograph,
-            key = lambda sha: nodes[sha].num
+            key = lambda sha: commits[sha].num
         )
         niter = iter(sorted_macrograph_nodes)
 
@@ -222,7 +224,7 @@ class GGVWidget(GUIFrame):
                 # Nothing left
                 break
 
-            n = nodes[n_sha]
+            n = commits[n_sha]
             stack = [n]
 
             x, y = next(iter_sides(bbox, spacing = 50))
@@ -302,7 +304,7 @@ class GGVWidget(GUIFrame):
                         anchor_point = ANCHOR_MIDDLE
                     )
 
-                    stack.append(nodes[c_sha])
+                    stack.append(commits[c_sha])
 
         print("Done")
         cnv.update_scroll_region()
