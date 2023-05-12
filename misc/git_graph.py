@@ -82,8 +82,13 @@ def gen_macrograph_gv_file(macrograph, file_name):
         f.write(source)
 
 
+_get_commit_num = lambda c: c.num
+
 class CommitsSequence(list):
     __hash__ = lambda self: id(self)
+
+    def compute_num(self):
+        self.num = sum(map(_get_commit_num, self)) // len(self)
 
 
 class GGVWidget(GUIFrame):
@@ -168,6 +173,7 @@ class GGVWidget(GUIFrame):
                     if len(seq):
                         macrograph[p].add(seq)
                         macrograph[seq].add(n)
+                        seq.compute_num()
                     else:
                         macrograph[p].add(n)
                     continue
@@ -193,15 +199,14 @@ class GGVWidget(GUIFrame):
 
         print("Laying out Graph")
 
-        return
-        # TODO: current macrograph format is not yet supported
-
         cnv = self._cnv
+        oval = cnv.create_oval
+        rectangle = cnv.create_rectangle
 
         x, y = cnv.winfo_width() / 2, cnv.winfo_height() / 2
         positions = {}
         dnd_groups = {}
-        bbox = x, y, x, y
+        bbox = [x, y, x, y]
 
         visited = set()
         visit = visited.add  # cache
@@ -209,54 +214,72 @@ class GGVWidget(GUIFrame):
         yield True
         sorted_macrograph_nodes = sorted(
             macrograph,
-            key = lambda sha: commits[sha].num
+            key = lambda n: n.num
         )
         niter = iter(sorted_macrograph_nodes)
+
+        def place_node(n, x, y):
+            positions[n] = x, y
+            iid = (
+                rectangle if isinstance(n, CommitsSequence)
+                          else oval
+            )(
+                x, y, x + 10, y + 10,
+                tags = "DnD",
+                fill = "white"
+            )
+            dnd_groups[n] = dnd = DnDGroup(cnv, iid, [])
+
+            bbox[:] = (
+                min(x, bbox[0]), min(y, bbox[1]),
+                max(x + 10, bbox[2]), max(y + 10, bbox[3]),
+            )
+            return dnd
+
+            # TODO: labels
+            text_iid = cnv.create_text(x + 15, y - 5,
+                text = "?"
+            )
+
+            DnDGroup(cnv, iid, [text_iid],
+                anchor_point = ANCHOR_MIDDLE
+            )
+
 
         while True:
             yield True
 
-            for n_sha in niter:
-                if n_sha in visited:
+            for n in niter:
+                if n in visited:
                     continue
                 break
             else:
                 # Nothing left
                 break
 
-            n = commits[n_sha]
             stack = [n]
-
-            x, y = next(iter_sides(bbox, spacing = 50))
-            positions[n_sha] = x, y
-            n_oval = cnv.create_oval(x, y, x + 10, y + 10,
-                tags = "DnD",
-                fill = "white"
-            )
-            dnd_groups[n_sha] = DnDGroup(cnv, n_oval, [])
-
-            bbox = (
-                min(x, bbox[0]), min(y, bbox[1]),
-                max(x + 10, bbox[2]), max(y + 10, bbox[3]),
-            )
 
             while stack:
                 n = stack.pop()
-                n_sha = n.sha
-                if n_sha in visited:
+                if n in visited:
                     continue
-                visit(n_sha)
+                visit(n)
 
                 cnv.update_scroll_region()
                 yield True
 
-                nx, ny = positions[n_sha]
-                n_dnd = dnd_groups[n_sha]
+                try:
+                    nx, ny = positions[n]
+                except KeyError:
+                    nx, ny = next(iter_sides(bbox, spacing = 50))
+                    n_dnd = place_node(n, nx, ny)
+                else:
+                    n_dnd = dnd_groups[n]
 
-                children = macrograph[n_sha]
-                for c_sha, tracks in children.items():
+                children = macrograph[n]
+                for c in children:
                     try:
-                        x, y = positions[c_sha]
+                        x, y = positions[c]
                     except KeyError:
                         sides = iter(iter_sides(bbox))
                         nearest = x, y = next(sides)
@@ -268,24 +291,10 @@ class GGVWidget(GUIFrame):
                                 nearest_dst = cnv_dst
                                 nearest = x, y
 
-                        positions[c_sha] = nearest
-
                         x, y = nearest
-                        c_oval = cnv.create_oval(
-                            x, y, x + 10, y + 10,
-                            tags = "DnD",
-                            fill = "white"
-                        )
-                        dnd_groups[c_sha] = c_dnd = DnDGroup(cnv, c_oval, [])
-
-                        bbox = (
-                            min(x, bbox[0]), min(y, bbox[1]),
-                            max(x + 10, bbox[2]), max(y + 10, bbox[3]),
-                        )
+                        c_dnd = place_node(c, *nearest)
                     else:
-                        c_dnd = dnd_groups[c_sha]
-
-                    # print(n_sha, "->", c_sha)
+                        c_dnd = dnd_groups[c]
 
                     x1, y1 = nx + 5, ny + 5
                     x2, y2 = x + 5, y + 5
@@ -294,17 +303,7 @@ class GGVWidget(GUIFrame):
                     n_dnd.add_item(line_id, 0, 2)
                     c_dnd.add_item(line_id, 2, 4)
 
-                    tx, ty = (x1 + x2) / 2, (y1 + y2) / 2
-
-                    text_iid = cnv.create_text(tx + 5, ty - 5,
-                        text = ", ".join(map(str, map(len, tracks)))
-                    )
-
-                    DnDGroup(cnv, line_id, [text_iid],
-                        anchor_point = ANCHOR_MIDDLE
-                    )
-
-                    stack.append(commits[c_sha])
+                    stack.append(c)
 
         print("Done")
         cnv.update_scroll_region()
