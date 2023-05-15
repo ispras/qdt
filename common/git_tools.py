@@ -109,10 +109,10 @@ def git_diff2delta_intervals(diff):
 
 class CommitDesc(object):
 
-    def __init__(self, sha, parents, children):
+    def __init__(self, sha, parents = None, children = None):
         self.sha = sha
-        self.parents = parents
-        self.children = children
+        self.parents = [] if parents is None else parents
+        self.children = [] if children is None else children
 
         # serial number according to the topological sorting
         self.num = None
