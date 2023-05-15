@@ -120,6 +120,13 @@ class CommitDesc(object):
         # serial number according to the topological sorting
         self.num = None
 
+    def add_child(self, cd):
+        self.children.append(cd)
+        cd.parents.append(self)
+
+    def add_parent(self, cd):
+        cd.add_child(self)
+
     @lazy
     def is_fork(self):
         return len(self.children) > 1
