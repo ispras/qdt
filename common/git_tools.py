@@ -121,6 +121,12 @@ Attributes: sha, num
 
 
 class CommitDesc(CoBuildGitGraphNodeInterface):
+    """
+Notes:
+
+- Do `del` `@lazy` attributes when modifying corresponding source
+    attributes directly.
+    """
 
     def __init__(self, sha, parents = None, children = None):
         self.sha = sha
@@ -133,6 +139,12 @@ class CommitDesc(CoBuildGitGraphNodeInterface):
     def add_child(self, cd):
         self.children.append(cd)
         cd.parents.append(self)
+
+        # invalidate `@lazy` attributes
+        del self.is_fork
+        del self.is_leaf
+        del cd.is_merge
+        del cd.is_root
 
     def add_parent(self, cd):
         cd.add_child(self)
