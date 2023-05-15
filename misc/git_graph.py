@@ -29,7 +29,7 @@ from graphviz import (
 
 
 # Set this env. var. to output macrograph to file in Graphviz format.
-DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", None)
+DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
 
 
 def gen_macrograph_gv(macrograph):
