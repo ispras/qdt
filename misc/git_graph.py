@@ -26,6 +26,9 @@ from collections import (
 from graphviz import (
     Digraph
 )
+from libe.git.macrograph import (
+    GitMacrograph,
+)
 
 
 # Set this env. var. to output macrograph to file in Graphviz format.
@@ -132,6 +135,22 @@ class GGVWidget(GUIFrame):
 
     def co_visualize(self):
         self._commits = commits = {}
+
+        print("Building GitMacrograph")
+        mg = GitMacrograph(self._repo)
+        yield mg.co_build()
+        print("Done")
+
+        tags_n = len(mg._edges)
+        for c in mg._edges:
+            if c.is_merge or c.is_fork or c.is_leaf or c.is_root:
+                tags_n -= 1
+
+        print(
+            "total: ", len(mg._edges),
+            " tags: ",  tags_n,
+            " other: ", len(mg._edges) - tags_n,
+        )
 
         print("Building Git Graph")
         yield CommitDesc.co_build_git_graph(self._repo, commits)
