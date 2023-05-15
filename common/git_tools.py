@@ -110,6 +110,16 @@ def git_diff2delta_intervals(diff):
     return intervals
 
 
+class CoBuildGitGraphNodeInterface(object):
+    """ See `co_build_git_graph`.
+
+Attributes: sha, num
+    """
+
+    def add_parent(self, node):
+        raise NotImplementedError
+
+
 class CommitDesc(object):
 
     def __init__(self, sha, parents = None, children = None):
@@ -240,6 +250,124 @@ class CommitDesc(object):
 
         t1 = time()
         print("co_build_git_graph work time " + str(t1 - t0))
+
+
+def co_build_git_graph(
+    repo,
+    graph,
+    node_factory = CommitDesc,
+    iby = GGB_IBY,
+):
+    """
+Builds `graph` of Git `repo`sitory (`git.Repo`).
+`graph` is a mapping (e.g. `dict`).
+Its keys are SHA1 IDs of commits.
+Values of the mappung are instances returned by `node_factory`.
+They are nodes of the `graph`
+Node does represent commits (`git.Commit`).
+So, (key, value) pair in the mapping (`graph`) is edge.
+
+`node_factory` is given SHA1 ID of Git commit and must return
+implementation of `CoBuildGitGraphNodeInterface`.
+
+`iby` (iterations by `yield`) manages time intervals between the algorithm
+pauses (by `yields`).
+    """
+
+    repo_commit = repo.commit
+
+    t0 = time()
+    i2y = iby
+
+    # enumeration according to the topology sorting
+    n = count(0)
+
+    # `to_enum` is used during the enumeration
+    # it contains commit to enumerate
+    to_enum = None
+
+    # `stack` contains edges represented by tuples
+    # (parent, child), where parent is instance of
+    # `git.Commit`, child is instance returned by `node_factory`
+    stack = []
+    # shortcuts
+    push = stack.append
+    pop = stack.pop
+
+    for head in repo.references:
+        head_commit = head.commit
+        head_hexsha = head_commit.hexsha
+        # skip processed heads
+        if head_hexsha in graph:
+            continue
+
+        node = node_factory(head_hexsha)
+        graph[head_hexsha] = node
+
+        # add edges connected to head being processed
+        for p in head_commit.parents:
+            push((p, node))
+
+        while stack:
+            parent_commit, child_node = pop()
+            parent_hexsha = parent_commit.hexsha
+
+            parent_node = graph.get(parent_hexsha, None)
+
+            if parent_node is None:
+                parent_node = node_factory(parent_hexsha)
+                graph[parent_hexsha] = parent_node
+
+                if parent_commit.parents:
+                    for pp in parent_commit.parents:
+                        push((pp, parent_node))
+                else:
+                    # current edge parent is an elder commit in the tree,
+                    # that is why we should enumerate starting from it
+                    to_enum = parent_node
+            else:
+                # the existence of parent_node means that parent has been
+                # enumerated before. Hence, we starts enumeration from
+                # it's child
+                to_enum = child_node
+
+            child_node.add_parent(parent_node)
+
+            if i2y <= 0:
+                yield True
+                i2y = iby
+            else:
+                i2y -= 1
+
+            # numbering is performed from the `to_enum` to either a leaf
+            # commit or a commit just before a merge which have at least
+            # one parent without number (except the commit)
+            while to_enum is not None:
+                node = to_enum
+                to_enum = None
+                # if the number of parents in the commit_desc_nodes
+                # is equal to the number of parents in the repo,
+                # then all parents were numbered (added) earlier
+                # according to the graph building algorithm,
+                # else we cannot assign number to the commit yet
+                if len(node.parents) == len(repo_commit(node.sha).parents):
+                    node.num = next(n)
+                    # according to the algorithm, only one child
+                    # have no number. Other children either have
+                    # been enumerated already or are not added yet
+                    for c in node.children:
+                        if c.num is None:
+                            to_enum = c
+                            break
+
+                if i2y <= 0:
+                    yield True
+                    i2y = iby
+                else:
+                    i2y -= 1
+
+    t1 = time()
+    print("co_build_git_graph work time " + str(t1 - t0))
 
 
 def fast_repo_clone(repo, version = None, prefix = "repo"):
