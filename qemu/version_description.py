@@ -204,8 +204,8 @@ def qvds_load_with_cache():
     qvds_init_cache()
 
 class QemuCommitDesc(CommitDesc):
-    def __init__(self, sha, parents, children):
-        super(QemuCommitDesc, self).__init__(sha, parents, children)
+    def __init__(self, *a, **kw):
+        super(QemuCommitDesc, self).__init__(*a, **kw)
 
         # dict of QEMUVersionParameterDescription new_value parameters
         self.param_nval = {}
