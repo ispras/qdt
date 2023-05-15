@@ -30,8 +30,10 @@ class lazy(object):
 
     def __init__(self, getter):
         self.getter = getter
-        doc = getter.__doc__ or ""
 
+        self.name = getter.__name__
+
+        doc = getter.__doc__ or ""
         self.__doc__ = doc + "\nlazy: evaluated on demand."
 
     def __get__(self, obj, cls):
@@ -41,8 +43,14 @@ class lazy(object):
         # to `__get__` of this non-data descriptor. Note that direct access to
         # the `__dict__` instead of `getattr` prevents possible conflict with
         # custom `__getattr__` / `__getattribute__` implementation.
-        obj.__dict__[getter.__name__] = val
+        obj.__dict__[self.name] = val
         return val
+
+    # Using `del` is faster than `reset_lazy`.
+    # Especially when there are only few invalidated `@lazy` attributes.
+    # That's not an error to reset (`del`) not yet evaluated attribute.
+    def __delete__(self, obj):
+        obj.__dict__.pop(self.name, None)
 
 
 class cached(lazy):
