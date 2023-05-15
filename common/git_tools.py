@@ -174,7 +174,7 @@ class CommitDesc(object):
             if head_commit_hexsha in commit_desc_nodes:
                 continue
 
-            head_desc = klass(head_commit_hexsha, [], [])
+            head_desc = klass(head_commit_hexsha)
             commit_desc_nodes[head_commit_hexsha] = head_desc
             # add edges connected to head being processed
             for p in head_commit.parents:
@@ -187,7 +187,7 @@ class CommitDesc(object):
                 parent_desc = commit_desc_nodes.get(parent_hexsha, None)
 
                 if parent_desc is None:
-                    parent_desc = klass(parent_hexsha, [], [child_commit_desc])
+                    parent_desc = klass(parent_hexsha)
                     commit_desc_nodes[parent_hexsha] = parent_desc
 
                     if parent.parents:
@@ -202,9 +202,8 @@ class CommitDesc(object):
                     # enumerated before. Hence, we starts enumeration from
                     # it's child
                     to_enum = child_commit_desc
-                    parent_desc.children.append(child_commit_desc)
 
-                child_commit_desc.parents.append(parent_desc)
+                child_commit_desc.add_parent(parent_desc)
 
                 if i2y <= 0:
                     yield True
