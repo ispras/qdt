@@ -117,6 +117,13 @@ class CommitDesc(object):
         # serial number according to the topological sorting
         self.num = None
 
+    def add_child(self, cd):
+        self.children.append(cd)
+        cd.parents.append(self)
+
+    def add_parent(self, cd):
+        cd.add_child(self)
+
     @classmethod
     def co_build_git_graph(klass, repo, commit_desc_nodes):
         repo_commit = repo.commit
