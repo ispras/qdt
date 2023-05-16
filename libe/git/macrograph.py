@@ -6,6 +6,69 @@ from common.git_tools import (
 from collections import (
     defaultdict,
 )
+from graphviz import (
+    Digraph,
+)
+
+
+def gen_gv(g, init_gv = None):
+    """ Given GitMacro`g`raph, generates `graphviz.Digraph`.
+Returned graph can be configured by passing configured `init_gv`,
+ it's used inplace and returned.
+    """
+    if not g.built:
+        raise RuntimeError("first finish co_built")
+
+    if init_gv is None:
+        gv = Digraph(
+            name = "Git Macrograph",
+            graph_attr = dict(
+                rankdir = "BT",
+            ),
+            node_attr = dict(
+                shape = "polygon",
+                fontname = "Momospace",
+            ),
+            edge_attr = dict(
+                style = "filled"
+            ),
+        )
+    else:
+        gv = init_gv
+
+    # cache
+    node = gv.node
+    edge = gv.edge
+    edges = g._edges
+    sha2ref = g._sha2ref
+
+    # macrograph nodes to Graphviz nodes
+    mg2gv = {}
+
+    for mn in edges:
+        gvn = "n%d" % len(mg2gv)
+        mg2gv[mn] = gvn
+        ref = sha2ref.get(mn.sha)
+        if ref is None:
+            label = mn.sha
+        else:
+            label = ref.name
+        node(gvn, label = label)
+
+    # mn2dmns: MacroNode to Descendant MacroNodeS (edges from a `mn`. key)
+    for mn2dmns in edges.values():
+        for e in mn2dmns:
+            if e:
+                # commit sequence between macro nodes
+                gve = "s%d" % len(mg2gv)
+                mg2gv[e] = gve
+                node(gve, label = str(len(e)))
+                edge(mg2gv[e._ancestor], gve)
+                edge(gve, mg2gv[e._descendant])
+            else:
+                edge(mg2gv[e._ancestor], mg2gv[e._descendant])
+
+    return gv
 
 
 class GitMgNode(CommitDesc):
@@ -183,3 +246,5 @@ class GitMacrograph(object):
                         e.append(c)
                         self._edges2build.append(e)
                     mn2dmns.add(e)
+
+    gen_gv = gen_gv
