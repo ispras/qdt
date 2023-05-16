@@ -73,11 +73,11 @@ class GitMacrograph(object):
 
         # Keys are macronodes (`GitMgNode`).
         # Values are `set`s of `GitMgEdge`
-        self._edges = edges = defaultdict(set)
+        self._edges = defaultdict(set)
 
         self._all_nodes = all_nodes = {}
 
-        self._edges2build = edges2build = []
+        self._edges2build = []
 
         yield True
 
@@ -85,23 +85,32 @@ class GitMacrograph(object):
             node_factory = self._node_factory,
             **kw
         ):
-            while edges2build:
-                yield True
-                e = edges2build.pop()
-
-                while True:
-                    children = e[-1].children
-                    assert len(children) == 1
-                    c = children[0]
-                    if c in edges:
-                        # macronode
-                        e._descendant = c
-                        break
-                    else:
-                        c._edge = e
-                        e.append(c)
-
+            yield self._co_build_edges()
             yield co_bgg_ready
+
+        # process edges added during last iteration
+        yield self._co_build_edges()
+
+    def _co_build_edges(self):
+        # cache
+        edges2build = self._edges2build
+        edges = self._edges
+
+        while edges2build:
+            yield True
+            e = edges2build.pop()
+
+            while True:
+                children = e[-1].children
+                assert len(children) == 1
+                c = children[0]
+                if c in edges:
+                    # macronode
+                    e._descendant = c
+                    break
+                else:
+                    c._edge = e
+                    e.append(c)
 
     # Note: This method must return as fast as possible!
     #     ` All intensive work must be delegated to `co_build`.
