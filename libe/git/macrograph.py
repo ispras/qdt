@@ -114,19 +114,38 @@ class GitMacrograph(object):
         print("macronode: ", mn.sha, " total: ", len(edges))
 
         if mn._edge is not None:
-            e = mn._edge
-            assert mn.is_fork
             # print("a macronode is detected on edge")
+            assert mn.is_fork
+
+            e = mn._edge
+
             try:
                 self._edges2build.remove(e)
             except ValueError:
-                print("that edge is already built")
-                # TODO: split
-                pass
+                # print("that edge is already built")
+                # split in 2 edges
+                # TODO: Edge splittimg may take a while on long edges.
+                #       Consider moving this action to `co_build`, like edge
+                #       construction.
+                i = e.index(mn)
+                e2 = GitMgEdge(e[i+1:])
+                del e[i:]
+                for n in e2:
+                    n._edge = e2
+                e2._ancestor = mn
+                e2._descendant = e._descendant
+                e._descendant = mn
+                mn2dmns.add(e2)
             else:
                 # print("that edge is not yet built")
+                # Because `mn` is a node the edge entering. the edge is
+                # considered built.
+                # Note. there are no intermediate commits.
+                assert len(e) == 1
                 e.remove(mn)
                 e._descendant = mn
+
+            del mn._edge
 
         while len(mn2dmns) < len(mn.children):
             # begin edge construction for new children
