@@ -67,6 +67,8 @@ class GitMacrograph(object):
             #   at runtime of `co_build`.
         return node
 
+    built = False
+
     def co_build(self, **kw):
         repo = self._repo
         self._sha2ref = dict((r.commit.hexsha, r) for r in repo.references)
@@ -90,6 +92,8 @@ class GitMacrograph(object):
 
         # process edges added during last iteration
         yield self._co_build_edges()
+
+        self.built = True
 
     def _co_build_edges(self):
         # cache
