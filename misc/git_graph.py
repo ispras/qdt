@@ -152,6 +152,15 @@ class GGVWidget(GUIFrame):
             " other: ", len(mg._edges) - tags_n,
         )
 
+        if DOT_FILE_NAME is not None:
+            yield True
+            print("Writing Graphviz file: " + DOT_FILE_NAME)
+            src = mg.gen_gv().source
+            yield True
+            with open(DOT_FILE_NAME, "w") as f:
+                f.write(src)
+            print("Done")
+
         print("Building Git Graph")
         yield CommitDesc.co_build_git_graph(self._repo, commits)
         print("Done")
@@ -210,11 +219,6 @@ class GGVWidget(GUIFrame):
         del nodes
 
         print("Done")
-
-        if DOT_FILE_NAME is not None:
-            print("Writing Graphviz file: " + DOT_FILE_NAME)
-            gen_macrograph_gv_file(macrograph, DOT_FILE_NAME)
-            print("Done")
 
         print("Laying out Graph")
 
