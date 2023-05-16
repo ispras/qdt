@@ -92,6 +92,12 @@ Notes:
         super(GitMgNode, self).add_child(*a, **kw)
         if self.is_fork:
             self._mg._account_macronode(self)
+        else:
+            # Some macronodes may have no known children yet at moment of
+            # first accounting.
+            # E.g. root, head/tag at straight commit sequence.
+            # The child added (just found) must start new edge construction.
+            self._mg._account_if_macronode(self)
 
     _edge = None
 
@@ -247,5 +253,9 @@ class GitMacrograph(object):
                         e.append(c)
                         self._edges2build.append(e)
                     mn2dmns.add(e)
+
+    def _account_if_macronode(self, n):
+        if n in self._edges:
+            self._account_macronode(n)
 
     gen_gv = gen_gv
