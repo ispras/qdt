@@ -230,11 +230,12 @@ class GitMacrograph(object):
                 # A `c`hild can be another macronode so edge between
                 # is empty but have `_descendant is c`.
                 for e in mn2dmns:
-                    if (
-                           (e and e[0] is c)
-                        or getattr(e, "_descendant", None) is c
-                    ):
-                        break
+                    if e:
+                        if e[0] is c:
+                            break
+                    else:
+                        if e._descendant is c:
+                            break
                 else:
                     e = GitMgEdge()
                     e._ancestor = mn
