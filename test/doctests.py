@@ -1,14 +1,15 @@
-from unittest import (
-    main,
+from common import (
+    hex_stream,
+    intervalmap,
+    line_no_stream,
+    offsets_stream,
 )
+
 from doctest import (
     DocTestSuite,
 )
-from common import (
-    offsets_stream,
-    line_no_stream,
-    intervalmap,
-    hex_stream,
+from unittest import (
+    main,
 )
 
 
