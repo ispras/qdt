@@ -1,4 +1,5 @@
 from common import (
+    attr_change_notifier,
     hex_stream,
     intervalmap,
     line_no_stream,
@@ -15,6 +16,7 @@ from unittest import (
 
 def load_tests(loader, tests, ignore):
     tests.addTests(map(DocTestSuite, [
+        attr_change_notifier,
         offsets_stream,
         line_no_stream,
         intervalmap.__module__,
