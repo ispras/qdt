@@ -4,6 +4,9 @@ from common import (
     line_no_stream,
     offsets_stream,
 )
+from libe.common import (
+    attr_change_notifier,
+)
 
 from doctest import (
     DocTestSuite,
@@ -19,6 +22,7 @@ def load_tests(loader, tests, ignore):
         line_no_stream,
         intervalmap.__module__,
         hex_stream,
+        attr_change_notifier,
     ]))
     return tests
 
