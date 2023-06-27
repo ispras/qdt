@@ -6,6 +6,7 @@ from common import (
 )
 from libe.common import (
     attr_change_notifier,
+    diag_xy,
 )
 
 from doctest import (
@@ -23,6 +24,7 @@ def load_tests(loader, tests, ignore):
         intervalmap.__module__,
         hex_stream,
         attr_change_notifier,
+        diag_xy,
     ]))
     return tests
 
