@@ -31,6 +31,7 @@ from itertools import (
 )
 
 
+# Private, never use externally.
 _EMPTY_TUPLE = tuple()
 
 
@@ -100,6 +101,88 @@ class _Component(AttributeChangeNotifier):
 
     def add_edge(self, e):
         self._equeue.append(e)
+
+    def _remove_edge(self, e):
+        l, t, r, b = self.aabb
+        r -= 1
+        b -= 1
+        aabb_definetly_valid = True
+
+        self._edges.remove(e)
+        g = self._grid
+        for coords in e:
+            items = g[coords]
+            items.remove(e)
+
+            if not items:
+                del g[coords]
+
+            if aabb_definetly_valid:
+                x, y = coords
+                if x == l or x == r or y == t or y == b:
+                    aabb_definetly_valid = False
+
+        return aabb_definetly_valid
+
+    def remove_node(self, n):
+        coords = self._nodes.pop(n, None)
+        if coords is None:
+            # in _free_components/_mqueue
+            for c in self._mqueue:
+                if n in c:
+                    c.remove_node(n)
+                    if not c:
+                        self._mqueue.remove(c)
+                    break
+            else:
+                # in _free_components
+                for c in self._free_components:
+                    if n in c:
+                        c.remove_node(n)
+                        if not c:
+                            self._free_components.remove(c)
+                        break
+        else:
+            # placed already
+            update_aabb = False
+
+            cell = self._grid[coords]
+            for i in tuple(cell):
+                if isinstance(i, _Edge):
+                    if not self._remove_edge(i):
+                        update_aabb = True
+
+            # Do this after last `remove_edge`.
+            self._grid.pop(coords)
+
+            if update_aabb:
+                self._update_aabb()
+
+        self._equeue = deque(e for e in self._equeue if n not in e)
+
+    def _update_aabb(self):
+        gter = iter(self._grid)
+
+        try:
+            l, t = next(gter)
+        except StopIteration:
+            self.aabb = (0, 0, 0, 0)
+            return
+
+        r = l
+        b = t
+
+        for x, y in gter:
+            if x < l:
+                l = x
+            elif r < x:
+                r = x
+            if y < t:
+                t = y
+            elif b < y:
+                b =  y
+
+        self.aabb = (l, t, r + 1, b + 1)
 
     def merge(self, c):
         self._mqueue.append(c)
@@ -641,8 +724,18 @@ class DynamicGraphPlacer2D(object):
         self._nqueue.append(n)
 
     def remove_node(self, n):
-        # The node must be placed only.
-        self._nqueue.remove(n)
+        # Note, `None` is valid `n`ode.
+        # Use another (private) absence indicator.
+        c = self._n2c.pop(n, _EMPTY_TUPLE)
+        if c is _EMPTY_TUPLE:
+            self._nqueue.remove(n)
+        else:
+            c.remove_node(n)
+            if not c:
+                del self._components[c._ij]
+                self._g.remove(c)
+                self._cqueue = deque(c0 for c0 in self._cqueue if c0 is not c)
+        self._equeue = deque(e for e in self._equeue if n not in e)
 
     def add_edge(self, *ab):
         self._equeue.append(ab)
