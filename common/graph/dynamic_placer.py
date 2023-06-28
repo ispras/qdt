@@ -95,6 +95,9 @@ class _Component(AttributeChangeNotifier):
             chain(*self._mqueue),
         )
 
+    def __bool__(self):
+        return bool(self._nodes or self._free_components or self._mqueue)
+
     def add_edge(self, e):
         self._equeue.append(e)
 
