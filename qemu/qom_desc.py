@@ -23,6 +23,9 @@ from sys import (
 )
 
 
+_EMPTY = tuple()
+
+
 class QOMDescription(object):
     def __init__(self):
         self.project = None
@@ -86,12 +89,7 @@ def descriptionOf(QOMTemplate):
     pygen_deps = list()
     Class = QOMTemplate
     for Class in getmro(Class):
-        try:
-            deps = Class.__pygen_deps__
-        except AttributeError:
-            pass
-        else:
-            pygen_deps.extend(deps)
+        pygen_deps.extend(Class.__dict__.get("__pygen_deps__", _EMPTY))
 
         try:
             ai = Class.__attribute_info__
@@ -198,6 +196,7 @@ def __init__(self, {pa}, {kwa}, **compat):
             klass.__gen_code__ = __gen_code__
 
         if pygen_deps:
+            # print(klass.__name__ + ".__pygen_deps__:", " ".join(pygen_deps))
             klass.__pygen_deps__ = tuple(pygen_deps)
 
         klass.__attribute_info__ = ai
