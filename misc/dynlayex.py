@@ -3,10 +3,12 @@
 from libe.graph.dynamic_placer import (
     DynamicGraphPlacer2D,
 )
+from widgets.DnDCanvas import (
+    CanvasDnD,
+)
 
 from six.moves.tkinter import (
     BOTH,
-    Canvas,
     CENTER,
     Tk,
 )
@@ -192,7 +194,11 @@ def main():
     dgp = TestDynamicGraphPlacer2D()
 
     root = Tk()
-    cnv = Canvas(root, background = "white")
+    cnv = CanvasDnD(root,
+        width = 800,
+        height = 800,
+        background = "white",
+    )
     cnv.pack(fill = BOTH, expand = True)
 
     script_iter = iter(co_script(dgp, cnv))
