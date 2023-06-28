@@ -11,6 +11,10 @@ from ..common.astar import (
 from ..common.attr_change_notifier import (
     AttributeChangeNotifier,
 )
+from ..common.events import (
+    listen,
+    notify,
+)
 from common.co_dispatcher import (
     callco,
     CoReturn,
@@ -144,6 +148,11 @@ class _Component(AttributeChangeNotifier):
                         break
         else:
             # placed already
+
+            # cache
+            p = self._placer
+            node_at = self._node_at
+
             update_aabb = False
 
             cell = self._grid[coords]
@@ -152,11 +161,16 @@ class _Component(AttributeChangeNotifier):
                     if not self._remove_edge(e):
                         update_aabb = True
 
+                    # `n`ode can be at both `e`dge ends
+                    notify(p, "edge", node_at(e[0]), node_at(e[-1]))
+
             # Do this after last `remove_edge`.
             self._grid.pop(coords)
 
             if update_aabb:
                 self._update_aabb()
+
+            notify(p, "node", n)
 
         self._equeue = deque(e for e in self._equeue if n not in e)
 
@@ -269,6 +283,7 @@ class _Component(AttributeChangeNotifier):
     def _co_place_component(self, c, x, y):
         l, t, r, b = self.aabb
         cl, ct, cr, cb = c.aabb
+        p = self._placer
 
         if x is None:
             x = l
@@ -292,6 +307,9 @@ class _Component(AttributeChangeNotifier):
             nodes[cn] = nxy
             grid[nxy].add(cn)
 
+            # as soon as `node_coords` is ready to lookup node
+            notify(p, "node", cn)
+
         edges = self._edges
         for ce in c._edges:
             yield True
@@ -300,12 +318,21 @@ class _Component(AttributeChangeNotifier):
             for exy in e:
                 grid[exy].add(e)
 
+            # as soon as `iter_edge_coords` is ready to track the edge
+            notify(p, "edge", self._node_at(e[0]), self._node_at(e[-1]))
+
         self.aabb = (
             min(l, cl + x),
             min(t, ct + y),
             max(r, cr + x),
             max(b, cb + y)
         )
+
+    def _node_at(self, xy):
+        for n in self._grid[xy]:
+            if not isinstance(n, _Edge):
+                return n
+        raise KeyError(xy)
 
 
 class _Edge(tuple):
@@ -546,7 +573,11 @@ class _NodeJoiningContext(_PlacingContext):
         if s.xy != txy:
             return
 
-        yield self._co_place_edge(s)
+        e = (yield self._co_place_edge(s))
+
+        # as soon as `iter_edge_coords` is ready to track the edge
+        node_at = self.component._node_at
+        notify(self.placer, "edge", node_at(e[0]), node_at(e[-1]))
 
         # Finish A*
         raise CoReturn(True)
@@ -615,8 +646,12 @@ class _ComponentPlacingContext(_PlacingContext):
 
         to._free_components.remove(what)
 
-        yield self._co_place_edge(s)
+        e = (yield self._co_place_edge(s))
         yield to._co_embed_component(what, (x - box, y - boy))
+
+        # as soon as `iter_edge_coords` is ready to track the edge
+        node_at = to._node_at
+        notify(self.placer, "edge", node_at(e[0]), node_at(e[-1]))
 
         # Finish A*
         raise CoReturn(True)
@@ -711,10 +746,84 @@ class DynamicGraphPlacer2D(object):
         self._components = {}
         self._c_coord_gen = iter_diag_xy()
 
-        self._g = Grid()
+        self._g = g = Grid()
+
+        # resize notification queue
+        self._rnqueue = deque()
+
+        listen(g, "resized", self._on_g_resized)
+
+    def _on_g_resized(self, *axis_coord):
+        # per-node/edge notification can take a while on big graph
+        self._rnqueue.append(axis_coord)
 
     def add_node(self, n):
         self._nqueue.append(n)
+
+    def node_coords(self, n):
+        try:
+            c = self._n2c[n]
+        except KeyError:
+            # not yet placed to a component
+            return None
+
+        ij = c._ij
+        if ij is None:
+            # component is being merged
+            return None
+
+        try:
+            nx, ny = c._nodes[n]
+        except KeyError:
+            # likely during _co_place_component
+            return None
+
+        cx, cy = self._g(ij)
+
+        return (cx + nx, cy + ny)
+
+    def iter_edge_coords(self, a, b):
+        try:
+            c = self._n2c[a]
+            bc = self._n2c[b]
+        except KeyError:
+            # not yet placed to a component
+            return
+
+        if c is not bc:
+            # no such edge, or not yet handled
+            return
+
+        ij = c._ij
+        if ij is None:
+            # component is being merged
+            return
+
+        try:
+            axy = c._nodes[a]
+            bxy = c._nodes[b]
+        except KeyError:
+            # likely during _co_place_component
+            return
+
+        for e in c._grid[axy]:
+            if not isinstance(e, _Edge):
+                continue
+
+            if e[0] != axy:
+                # `a` is not start of `e`dge
+                continue
+
+            if e[-1] != bxy:
+                # `b` is not start of `e`dge
+                continue
+
+            cx, cy = self._g(ij)
+
+            for x, y in e:
+                yield (x + cx, y + cy)
+
+            break
 
     def remove_node(self, n):
         # Note, `None` is valid `n`ode.
@@ -762,6 +871,8 @@ class DynamicGraphPlacer2D(object):
             components[ij] = c
             g.add(ij, c)
 
+            notify(self, "node", n)
+
             enqueue(c)
 
         # cache
@@ -806,6 +917,7 @@ class DynamicGraphPlacer2D(object):
                     for n in ac:
                         n2c[n] = bc
                     bc.add_edge(e)
+                    ac._ij = None
                 else:
                     g.remove(bc)
                     del components[bc._ij]
@@ -814,6 +926,7 @@ class DynamicGraphPlacer2D(object):
                     for n in bc:
                         n2c[n] = ac
                     ac.add_edge(e)
+                    bc._ij = None
 
         eq.extend(next_try)
 
@@ -827,9 +940,29 @@ class DynamicGraphPlacer2D(object):
             if c.has_work:
                 enqueue(c)
 
+        rnq = self._rnqueue
+        next_rn = rnq.popleft
+
+        while rnq:
+            axis, coord = next_rn()
+
+            for ij, c in components.items():
+                if coord < ij[axis]:
+                    node_at = c._node_at
+
+                    for n in c._nodes:
+                        yield True
+                        notify(self, "node", n)
+
+                    for e in c._edges:
+                        yield True
+                        notify(self, "edge", node_at(e[0]), node_at(e[-1]))
+
     @property
     def has_work(self):
-        return bool(self._cqueue or self._nqueue or self._equeue)
+        return bool(
+            self._cqueue or self._nqueue or self._equeue or self._rnqueue
+        )
 
     _bg_working = False
 
