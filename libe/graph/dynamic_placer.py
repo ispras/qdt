@@ -95,8 +95,8 @@ class _Component(AttributeChangeNotifier):
             chain(*self._mqueue),
         )
 
-    def add_edge(self, n):
-        self._equeue.append(n)
+    def add_edge(self, e):
+        self._equeue.append(e)
 
     def merge(self, c):
         self._mqueue.append(c)
