@@ -23,9 +23,6 @@ from widgets import (
 from collections import (
     defaultdict,
 )
-from graphviz import (
-    Digraph
-)
 from libe.git.macrograph import (
     GitMacrograph,
 )
@@ -33,56 +30,6 @@ from libe.git.macrograph import (
 
 # Set this env. var. to output macrograph to file in Graphviz format.
 DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
-
-
-def gen_macrograph_gv(macrograph):
-    graph = Digraph(
-        name = "Git Macrograph",
-        graph_attr = dict(
-            rankdir = "BT",
-        ),
-        node_attr = dict(
-            shape = "polygon",
-            fontname = "Momospace",
-        ),
-        edge_attr = dict(
-            style = "filled"
-        ),
-    )
-
-    # cache
-    node = graph.node
-    edge = graph.edge
-
-    # macrograph nodes to Graphviz nodes
-    mg2gv = {}
-
-    for mgn in macrograph:
-        if isinstance(mgn, CommitsSequence):
-            gvn = "s%d" % len(mg2gv)
-            # intermediate nodes contain amount of commits between macronodes
-            label = str(len(mgn))
-        else:  # CommitDesc
-            gvn = "n%d" % len(mg2gv)
-            label = mgn.sha
-        mg2gv[mgn] = gvn
-        node(gvn, label = label)
-
-    for p, descendants in macrograph.items():
-        for d in descendants:
-            edge(mg2gv[p], mg2gv[d])
-
-    return graph
-
-
-def gen_macrograph_gv_source(macrograph):
-    return gen_macrograph_gv(macrograph).source
-
-
-def gen_macrograph_gv_file(macrograph, file_name):
-    source = gen_macrograph_gv_source(macrograph)
-    with open(file_name, "w") as f:
-        f.write(source)
 
 
 _get_commit_num = lambda c: c.num
