@@ -331,7 +331,7 @@ snapshot mode or the command should be disabled too.
                     values = ("", hwaddr_val(mem.alias_offset),)
                 )
 
-            if op.attr is "name":
+            if op.attr == "name":
                 for n in self.mach.id2node.values():
                     if isinstance(n, MemoryAliasNode):
                         if n.alias_to is mem:

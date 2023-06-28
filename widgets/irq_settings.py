@@ -179,14 +179,14 @@ class IRQSettingsWidget(SettingsWidget):
                 var = getattr(self, pfx + "_" + attr + "_var")
                 new_val = var.get()
                 if not new_val:
-                    if attr is "irq_idx":
+                    if attr == "irq_idx":
                         new_val = 0
                     else:
                         new_val = None
 
                 cur_val = getattr(irq, pfx + "_" +attr)
 
-                if attr is "irq_idx":
+                if attr == "irq_idx":
                     cur_type = type(cur_val)
                     try: # to preserve current value type
                         new_val = cur_type(new_val)
