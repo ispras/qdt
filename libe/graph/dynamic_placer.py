@@ -275,15 +275,15 @@ class _PlacingContext(object):
             if x < l:
                 l = x
                 upd = True
-            elif r < x:
-                r = x
+            elif r <= x:
+                r = x + 1
                 upd = True
 
             if y < t:
                 t = y
                 upd = True
-            elif b < y:
-                b = y
+            elif b <= y:
+                b = y + 1
                 upd = True
 
         if upd:
