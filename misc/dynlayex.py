@@ -79,6 +79,7 @@ def co_main_script(dgp):
     # shortcuts
     e = dgp.add_edge
     n = dgp.add_node
+    r = dgp.remove_node
 
     n("A")
     n("B")
@@ -137,6 +138,9 @@ def co_main_script(dgp):
     e(1, "!")
     yield
 
+    r("!")
+    yield
+
     e(4, "?")
     yield
 
@@ -149,6 +153,24 @@ def co_main_script(dgp):
     e("x", "y")
     e("y", "z")
     e("z", "x")
+    yield
+
+    r(4)
+    yield
+
+    r("x")
+    yield
+
+    r("y")
+    yield
+
+    r("z")
+    yield
+
+    n("x")
+    yield
+
+    e(5, "x")
     yield
 
 
