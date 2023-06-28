@@ -259,13 +259,6 @@ class _Component(AttributeChangeNotifier):
         )
         yield start.co_a_star()
 
-    def _place_node(self, n):
-        x, t, r, y = self.aabb
-        self.aabb = (x, t, r, y + 1)
-        xy = x, y
-        self._grid[xy].add(n)
-        self._nodes[n] = xy
-
     def _co_embed_component(self, c, xy):
         self._free_components.update(c._free_components)
         self._equeue.extend(c._equeue)
