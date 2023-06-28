@@ -1,5 +1,8 @@
 "Dynamic graph layout example"
 
+from libe.common.events import (
+    listen,
+)
 from libe.graph.dynamic_placer import (
     DynamicGraphPlacer2D,
 )
@@ -9,72 +12,12 @@ from widgets.DnDCanvas import (
 
 from six.moves.tkinter import (
     BOTH,
-    CENTER,
     Tk,
 )
 
-def draw_graph(dgp, cnv, step_sz = 30, rect_sz = 15, offset = None):
-    prev = cnv.find_all()
-
-    rect_sz_2 = rect_sz / 2
-
-    if offset is None:
-        ox = rect_sz_2 + 1
-        oy = rect_sz_2 + 1
-    else:
-        ox, oy = offset
-
-    rect = cnv.create_rectangle
-    text = cnv.create_text
-    line = cnv.create_line
-
-    grid = dgp._g
-    for ij, cmp in dgp._components.items():
-        # cell grid x/y
-        cgx, cgy = grid(ij)
-        l, t = cmp.aabb[:2]
-        cgx -= l
-        cgy -= t
-
-        for e in cmp._edges:
-            coords = []
-            coord = coords.append
-
-            for egx, egy in e:
-                # global edge grid x/y
-                gegx = egx + cgx
-                gegy = egy + cgy
-
-                x = gegx * step_sz + ox
-                y = gegy * step_sz + oy
-
-                coord(x)
-                coord(y)
-
-            line(*coords)
-
-        for n, (ngx, ngy) in cmp._nodes.items():
-            # global node grid x/y
-            gngx = ngx + cgx
-            gngy = ngy + cgy
-
-            x = gngx * step_sz + ox
-            y = gngy * step_sz + oy
-
-            rect(
-                x - rect_sz_2,
-                y - rect_sz_2,
-                x + rect_sz_2,
-                y + rect_sz_2,
-                fill = "white",
-            )
-            text(x, y,
-                text = n,
-                anchor = CENTER,
-            )
-
-    if prev:
-        cnv.delete(*prev)
+STEP_SZ = 30
+RECT_SZ = 15
+GRAPH_OFFSET = None
 
 
 def co_main_script(dgp):
@@ -179,7 +122,6 @@ def co_main_script(dgp):
 def co_script(dgp, cnv):
     for __ in co_main_script(dgp):
         dgp.place()
-        draw_graph(dgp, cnv)
         yield
 
     while True:
@@ -205,6 +147,74 @@ def main():
 
     root.bind("<Return>", lambda _: next(script_iter))
     root.bind("<KP_Enter>", lambda _: next(script_iter))
+
+    o2iid = {}
+
+    rect_sz_2 = RECT_SZ / 2
+    offset = GRAPH_OFFSET
+
+    if offset is None:
+        ox = rect_sz_2 + 1
+        oy = rect_sz_2 + 1
+    else:
+        ox, oy = offset
+
+    def _on_node(n):
+        try:
+            (riid, tiid) = o2iid[n]
+        except KeyError:
+            riid = cnv.create_rectangle(0, 0, 0, 0, fill = "white")
+            tiid = cnv.create_text(0, 0, text = str(n))
+            o2iid[n] = (riid, tiid)
+
+        # logical coordinates
+        lxy = dgp.node_coords(n)
+
+        if lxy is None:
+            # removed
+            cnv.delete(riid, tiid)
+            del o2iid[n]
+            return
+
+        lx, ly = lxy
+
+        # pixel coordinates
+        px = ox + STEP_SZ * lx
+        py = oy + STEP_SZ * ly
+
+        cnv.coords(riid,
+            px - rect_sz_2,
+            py - rect_sz_2,
+            px + rect_sz_2,
+            py + rect_sz_2,
+        )
+        cnv.coords(tiid, px, py)
+
+    def _on_edge(*ab):
+        try:
+            iid = o2iid[ab]
+        except KeyError:
+            iid = cnv.create_line(0, 0, 0, 0)
+            o2iid[ab] = iid
+            cnv.lower(iid)
+
+        coords = []
+        coord = coords.append
+
+        for lx, ly in dgp.iter_edge_coords(*ab):
+            px = ox + STEP_SZ * lx
+            py = oy + STEP_SZ * ly
+            coord(px)
+            coord(py)
+
+        if coords:
+            cnv.coords(iid, coords)
+        else:
+            del o2iid[ab]
+            cnv.delete(iid)
+
+    listen(dgp, "node", _on_node)
+    listen(dgp, "edge", _on_edge)
 
     root.mainloop()
 
