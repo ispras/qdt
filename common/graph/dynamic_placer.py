@@ -777,10 +777,26 @@ class DynamicGraphPlacer2D(object):
             next_e = eq.popleft
             yield True
 
+        next_try = []
+
         while eq:
             a, b = e = next_e()
-            ac = n2c[a]
-            bc = n2c[b]
+
+            # nodes and edges can be added between `yield`s
+            try:
+                try:
+                    ac = n2c[a]
+                except KeyError:
+                    assert a in nq
+                    raise
+                try:
+                    bc = n2c[b]
+                except KeyError:
+                    assert b in nq
+                    raise
+            except KeyError:
+                next_try.append(e)
+                continue
 
             if ac is bc:
                 # already in same components
@@ -805,6 +821,8 @@ class DynamicGraphPlacer2D(object):
                     for n in bc:
                         n2c[n] = ac
                     ac.add_edge(e)
+
+        eq.extend(next_try)
 
         if cq:
             yield True
