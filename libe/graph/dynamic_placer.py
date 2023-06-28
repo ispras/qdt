@@ -147,9 +147,9 @@ class _Component(AttributeChangeNotifier):
             update_aabb = False
 
             cell = self._grid[coords]
-            for i in tuple(cell):
-                if isinstance(i, _Edge):
-                    if not self._remove_edge(i):
+            for e in tuple(cell):
+                if isinstance(e, _Edge):
+                    if not self._remove_edge(e):
                         update_aabb = True
 
             # Do this after last `remove_edge`.
