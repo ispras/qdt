@@ -97,7 +97,7 @@ def descriptionOf(QOMTemplate):
             pass
         else:
             # Reverse order of Class attributes to preserve it with respect to
-            # final revirsion.
+            # final reversion.
             for attr, info in reversed(list(ai.items())):
                 if attr not in attribute_info:
                     attribute_info[attr] = info
