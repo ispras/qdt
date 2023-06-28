@@ -37,10 +37,17 @@ class lazy(object):
         self.__doc__ = doc + "\nlazy: evaluated on demand."
 
     def __get__(self, obj, cls):
+        # Note, because of `__delete__`, `lazy` is a data descriptor.
+        try:
+            # As fast as possible.
+            # Assume that the value is evaluated rarely and used frequently.
+            return obj.__dict__[self.name]
+        except KeyError:
+            pass
+
         getter = self.getter
         val = getter(obj)
-        # Add evaluated value to `__dict__` of `obj` to prevent consequent call
-        # to `__get__` of this non-data descriptor. Note that direct access to
+        # Note that direct access to
         # the `__dict__` instead of `getattr` prevents possible conflict with
         # custom `__getattr__` / `__getattribute__` implementation.
         obj.__dict__[self.name] = val
