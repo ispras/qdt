@@ -63,9 +63,9 @@ def reset_cache(obj):
     "Resets lazily evaluated `cached` attributes of `obj`."
 
     l = obj.__lazy__
-    d = obj.__dict__
+    pop = obj.__dict__.pop
     for name in l:
-        del d[name]
+        pop(name, None)
     del l[:]
 
 
