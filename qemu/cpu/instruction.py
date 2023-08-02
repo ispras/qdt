@@ -130,7 +130,7 @@ class Reserved(InstructionField):
     pass
 
 
-re_disas_format = compile("<(.+?)>|([^<>]+)")
+re_disas_format = compile("<((?:[a-zA-Z_]).*?)>|(.+?)")
 
 def no_semantics(function, source):
     return []
