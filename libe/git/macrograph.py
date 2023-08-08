@@ -187,36 +187,42 @@ class GitMacrograph(object):
             yield True
             e = edges2build.pop()
 
+            last_c = e[-1]
             while True:
-                children = e[-1].children
+                children = last_c.children
+
                 assert len(children) == 1
-                c = children[0]
-                if c in edges:
-                    # macronode
-                    e._descendant = c
+
+                last_c = children[0]
+                if last_c in edges:
+                    # new last_c is a macronode, the `e`dge ends here
+                    e._descendant = last_c
                     break
                 else:
-                    c._edge = e
-                    e.append(c)
+                    # continue `e`dge construction
+                    last_c._edge = e
+                    e.append(last_c)
 
     # Note: This method must return as fast as possible!
     #     ` All intensive work must be delegated to `co_build`.
     def _account_macronode(self, mn):
         edges = self._edges
+        e2b = self._edges2build
+
+        if mn not in edges:
+            print("macronode: ", mn.sha, " total: ", len(edges) + 1)
 
         # edges from macronode `mn` to its descendant macronodes
         mn2dmns = edges[mn]
 
-        print("macronode: ", mn.sha, " total: ", len(edges))
+        e = mn._edge
 
-        if mn._edge is not None:
+        if e is not None:
             # print("a macronode is detected on edge")
             assert mn.is_fork
 
-            e = mn._edge
-
             try:
-                self._edges2build.remove(e)
+                e2b.remove(e)
             except ValueError:
                 # print("that edge is already built")
                 # split in 2 edges
@@ -231,6 +237,8 @@ class GitMacrograph(object):
                 e2._ancestor = mn
                 e2._descendant = e._descendant
                 e._descendant = mn
+
+                assert not mn2dmns
                 mn2dmns.add(e2)
             else:
                 # print("that edge is not yet built")
@@ -238,7 +246,7 @@ class GitMacrograph(object):
                 # considered built.
                 # Note. there are no intermediate commits.
                 assert len(e) == 1
-                e.remove(mn)
+                e.pop()
                 e._descendant = mn
 
             del mn._edge
@@ -247,14 +255,16 @@ class GitMacrograph(object):
             # begin edge construction for new children
             for c in mn.children:
                 # try to find an edge containing this `c`hild
-                # A `c`hild can be another macronode so edge between
-                # is empty but have `_descendant is c`.
                 for e in mn2dmns:
+                    # A `c`hild can be another macronode so edge between
+                    # is empty but have `_descendant is c`.
                     if e:
                         if e[0] is c:
+                            assert c not in edges
                             break
                     else:
                         if e._descendant is c:
+                            assert c in edges
                             break
                 else:
                     e = GitMgEdge()
@@ -265,7 +275,7 @@ class GitMacrograph(object):
                     else:
                         c._edge = e
                         e.append(c)
-                        self._edges2build.append(e)
+                        e2b.append(e)
                     mn2dmns.add(e)
 
     def _account_if_macronode(self, n):
