@@ -12,6 +12,9 @@ from common.git_tools import (
 from common.lazy import (
     lazy
 )
+from common.notifier import (
+    notifier,
+)
 
 from collections import (
     defaultdict,
@@ -129,6 +132,10 @@ Notes:
     __hash__ = lambda self: id(self)
 
 
+@notifier(
+    "node",  # GitMacrograph, GitMgNode
+    "edge",  # GitMacrograph, GitMgEdge, NoneType/GitMgEdge (split)
+)
 class GitMacrograph(object):
 
     def __init__(self, repo):
@@ -197,6 +204,7 @@ class GitMacrograph(object):
                 if last_c in edges:
                     # new last_c is a macronode, the `e`dge ends here
                     e._descendant = last_c
+                    self.__notify_edge(self, e, None)
                     break
                 else:
                     # continue `e`dge construction
@@ -211,6 +219,7 @@ class GitMacrograph(object):
 
         if mn not in edges:
             print("macronode: ", mn.sha, " total: ", len(edges) + 1)
+            self.__notify_node(self, mn)
 
         # edges from macronode `mn` to its descendant macronodes
         mn2dmns = edges[mn]
@@ -240,6 +249,8 @@ class GitMacrograph(object):
 
                 assert not mn2dmns
                 mn2dmns.add(e2)
+
+                self.__notify_edge(self, e2, e)
             else:
                 # print("that edge is not yet built")
                 # Because `mn` is a node the edge entering. the edge is
@@ -248,6 +259,7 @@ class GitMacrograph(object):
                 assert len(e) == 1
                 e.pop()
                 e._descendant = mn
+                self.__notify_edge(self, e, None)
 
             del mn._edge
 
@@ -272,6 +284,7 @@ class GitMacrograph(object):
                     if c in edges:
                         # Child is a macronode too.
                         e._descendant = c
+                        self.__notify_edge(self, e, None)
                     else:
                         c._edge = e
                         e.append(c)
