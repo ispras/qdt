@@ -63,13 +63,22 @@ class GGVWidget(GUIFrame):
     def repo_path(self, p):
         if p == self._repo_path:
             return
+        self._repo_path = p
 
         co = self._co_visualize
         if co is not None:
-            # TODO: full cleanup
+            self._co_visualize = None
             self.cancel_task(co)
+            self._cnv.delete(ALL)
+            self._cnv.update_scroll_region()
+            del self._o2iid
+            del self._dgp
+            dismiss(self._on_node_placed)
+            dismiss(self._on_edge_placed)
 
-        self._repo_path = p
+        if p is None:
+            return
+
         self._repo = Repo(p)
 
         self._co_visualize = co = self.co_visualize()
