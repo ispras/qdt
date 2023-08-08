@@ -7,6 +7,7 @@ from libe.graph.dynamic_placer import (
     DynamicGraphPlacer2D,
 )
 from widgets.DnDCanvas import (
+    bbox2screen,
     CanvasDnD,
 )
 
@@ -189,6 +190,7 @@ def main():
             py + rect_sz_2,
         )
         cnv.coords(tiid, px, py)
+        bbox2screen(cnv)
 
     def _on_edge(*ab):
         try:
@@ -212,6 +214,7 @@ def main():
         else:
             del o2iid[ab]
             cnv.delete(iid)
+        bbox2screen(cnv)
 
     listen(dgp, "node", _on_node)
     listen(dgp, "edge", _on_edge)
