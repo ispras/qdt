@@ -4,6 +4,7 @@
 __all__ = [
     "CanvasDnD"
   , "dragging"
+  , "bbox2screen"
   , "begin_drag_all"
   , "dragging_all"
   , "DRAG_GAP"
@@ -22,6 +23,19 @@ from six.moves.tkinter import (
     IntVar,
     RIDGE,
 )
+
+
+def bbox2screen(cnv, items = ALL, x = 20, y = 20):
+    """Drags canvas (`cnv`) so that (left, top) corner of AABB of `items`
+become at point (`x`, `y`) on screen relative to the widget's left top corner.
+Only works if the corner is to the left/top of the `point`.
+    """
+    l, t = cnv.bbox(items)[:2]
+    ox = int(cnv.canvasx(x))
+    oy = int(cnv.canvasy(y))
+    if ox > l or oy > t:
+        cnv.scan_mark(l, t)
+        cnv.scan_dragto(ox, oy, gain = 1)
 
 
 DRAG_GAP = 5
