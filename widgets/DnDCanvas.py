@@ -66,7 +66,8 @@ class CanvasDnD(Canvas):
         self.id_priority_sort_function = id_priority_sort_function
 
     def update_scroll_region(self):
-        self.config(scrollregion = self.bbox(ALL))
+        # Note, bbox(ALL) returns `None` if canvas is empty.
+        self.config(scrollregion = self.bbox(ALL) or (0, 0, 0, 0))
 
     # backward compatibility properties
     @property
