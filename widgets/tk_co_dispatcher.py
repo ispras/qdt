@@ -23,7 +23,13 @@ class TkCoDispatcher(CoDispatcher):
     The coroutine task dispatcher uses Tk.after method to spread task work
 peaces among Tkinter event driven GUI model.
     """
-    def __init__(self, tk, wait_msec = 500, **kw):
+    def __init__(self, tk,
+        wait_msec = 500,
+        # Few "frames" per second during intensive background work
+        # should be enough for a technical GUI.
+        work_time = 1. / 10.,
+        **kw
+    ):
         disp_tk = {}
         for disp_arg in ("max_tasks"):
             try:
@@ -33,15 +39,23 @@ peaces among Tkinter event driven GUI model.
         CoDispatcher.__init__(self, **disp_tk)
 
         self.wait_msec = wait_msec
+        self.work_time = work_time
         self.tk = tk
 
         tk.bind("<Destroy>", self._on_destroy, "+")
 
     def iteration(self):
         t0 = time()
-        ready = CoDispatcher.iteration(self)
-        ti = time() - t0
-        if PROFILE_COTASK and ti > 0.1:
+        wt = self.work_time
+
+        ready = True
+        while ready:
+            ready = CoDispatcher.iteration(self)
+            ti = time() - t0
+            if ti > wt:
+                break
+
+        if PROFILE_COTASK and ti > wt * 2.0:
 
             stderr.write(("Iteration consumed %f sec\n" % ti)
                 + "Active tasks:\n  "
