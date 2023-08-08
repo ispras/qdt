@@ -2,43 +2,38 @@ from argparse import (
     ArgumentParser
 )
 from six.moves.tkinter import (
+    ALL,
     BOTH
 )
 from git import (
     Repo
 )
 from common import (
-    CommitDesc,
     ee,
     mlget as _
 )
 from widgets import (
     add_scrollbars_native,
-    DnDGroup,
-    ANCHOR_MIDDLE,
     CanvasDnD,
     GUIFrame,
     GUITk
 )
-from collections import (
-    defaultdict,
+from libe.common.events import (
+    dismiss,
+    listen,
 )
 from libe.git.macrograph import (
     GitMacrograph,
+    GitMgEdge,
+    GitMgNode,
+)
+from libe.graph.dynamic_placer import (
+    DynamicGraphPlacer2D,
 )
 
 
 # Set this env. var. to output macrograph to file in Graphviz format.
 DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
-
-
-_get_commit_num = lambda c: c.num
-
-class CommitsSequence(list):
-    __hash__ = lambda self: id(self)
-
-    def compute_num(self):
-        self.num = sum(map(_get_commit_num, self)) // len(self)
 
 
 class GGVWidget(GUIFrame):
@@ -81,10 +76,25 @@ class GGVWidget(GUIFrame):
         self.enqueue(co)
 
     def co_visualize(self):
+        self._o2iid = {}
+
+        self._dgp = dgp = DynamicGraphPlacer2D()
+
+        listen(dgp, "node", self._on_node_placed)
+        listen(dgp, "edge", self._on_edge_placed)
+
+        mg = GitMacrograph(self._repo)
+
+        mg.watch_node(self._on_mg_node)
+        mg.watch_edge(self._on_mg_edge)
 
         print("Building GitMacrograph")
-        mg = GitMacrograph(self._repo)
-        yield mg.co_build()
+
+        for i in mg.co_build():
+            while dgp.has_work:
+                yield dgp.co_place()
+            yield i
+
         print("Done")
 
         tags_n = len(mg._edges)
@@ -107,198 +117,114 @@ class GGVWidget(GUIFrame):
                 f.write(src)
             print("Done")
 
-        self._commits = commits = {}
+    def _on_mg_node(self, mg, mn):
+        self._dgp.add_node(mn)
 
-        print("Building Git Graph")
-        yield CommitDesc.co_build_git_graph(self._repo, commits)
-        print("Done")
+    def _on_mg_edge(self, mg, e, split):
+        p = self._dgp
 
-        yield True
-        print("Searching for macronodes")
-        nodes = set()
+        if split is not None:
+            # re-create with new edges
+            p.remove_node(split)
+            p.add_node(split)
 
-        for c in commits.values():
-            if c.is_merge or c.is_fork or c.is_leaf or c.is_root:
-                nodes.add(c)
+        p.add_node(e)
+        p.add_edge(e._descendant, e)
+        p.add_edge(e, e._ancestor)
 
-        print("Done")
+        if split is not None:
+            p.add_edge(split._descendant, split)
+            p.add_edge(split, split._ancestor)
 
-        yield True
-        print("Building macro graph")
-        # Edges between nodes
-        macrograph = defaultdict(set)
-
-        m_count = len(nodes)
-        print("Macronodes count : %d" % m_count)
-
-        for i, n in enumerate(nodes, 1):
-            yield True
-            stack = list(
-                (
-                    CommitsSequence(),  # track from n
-                    p,
-                ) for p in n.parents
-            )
-
-            # trigger entry creation
-            macrograph[n]
-
-            while stack:
-                seq, p = stack.pop()
-                if p in nodes:
-                    if len(seq):
-                        macrograph[p].add(seq)
-                        macrograph[seq].add(n)
-                        seq.compute_num()
-                    else:
-                        macrograph[p].add(n)
-                    continue
-
-                pparents = p.parents
-
-                assert len(pparents) == 1, "%s: must be in `nodes`" % p.sha
-
-                pp = pparents[0]
-                seq.append(pp)
-                stack.append((seq, pp))
-
-            print("%d/%d" % (i, m_count))
-
-        del nodes
-
-        print("Done")
-
-        print("Laying out Graph")
-
+    def _on_node_placed(self, n):
         cnv = self._cnv
-        oval = cnv.create_oval
-        rectangle = cnv.create_rectangle
+        dgp = self._dgp
+        o2iid = self._o2iid
 
-        x, y = cnv.winfo_width() / 2, cnv.winfo_height() / 2
-        positions = {}
-        dnd_groups = {}
-        bbox = [x, y, x, y]
+        try:
+            (riid, tiid) = o2iid[n]
+        except KeyError:
+            riid = cnv.create_rectangle(0, 0, 0, 0, fill = "white")
+            tiid = cnv.create_text(0, 0, text = "")
+            o2iid[n] = (riid, tiid)
 
-        visited = set()
-        visit = visited.add  # cache
-
-        yield True
-        sorted_macrograph_nodes = sorted(
-            macrograph,
-            key = lambda n: n.num
-        )
-        niter = iter(sorted_macrograph_nodes)
-
-        def place_node(n, x, y):
-            positions[n] = x, y
-            iid = (
-                rectangle if isinstance(n, CommitsSequence)
-                          else oval
-            )(
-                x, y, x + 10, y + 10,
-                tags = "DnD",
-                fill = "white"
-            )
-            dnd_groups[n] = dnd = DnDGroup(cnv, iid, [])
-
-            bbox[:] = (
-                min(x, bbox[0]), min(y, bbox[1]),
-                max(x + 10, bbox[2]), max(y + 10, bbox[3]),
-            )
-            return dnd
-
-            # TODO: labels
-            text_iid = cnv.create_text(x + 15, y - 5,
-                text = "?"
-            )
-
-            DnDGroup(cnv, iid, [text_iid],
-                anchor_point = ANCHOR_MIDDLE
-            )
-
-
-        while True:
-            yield True
-
-            for n in niter:
-                if n in visited:
-                    continue
-                break
+        if isinstance(n, GitMgNode):
+            cnv.itemconfig(tiid, text = str(n.ref or n.sha[:10]))
+        elif isinstance(n, GitMgEdge):
+            l = len(n)
+            if l:
+                cnv.itemconfig(tiid, text = str(l))
             else:
-                # Nothing left
-                break
-
-            stack = [n]
-
-            while stack:
-                n = stack.pop()
-                if n in visited:
-                    continue
-                visit(n)
+                # nothing to show
+                cnv.delete(riid, tiid)
+                del o2iid[n]
 
                 cnv.update_scroll_region()
-                yield True
+                return
+        else:
+            raise RuntimeError(type(n))
 
-                try:
-                    nx, ny = positions[n]
-                except KeyError:
-                    nx, ny = next(iter_sides(bbox, spacing = 50))
-                    n_dnd = place_node(n, nx, ny)
-                else:
-                    n_dnd = dnd_groups[n]
+        # logical coordinates
+        lxy = dgp.node_coords(n)
 
-                children = macrograph[n]
-                for c in children:
-                    try:
-                        x, y = positions[c]
-                    except KeyError:
-                        sides = iter(iter_sides(bbox))
-                        nearest = x, y = next(sides)
-                        nearest_dst = (nx - x) ** 2, (ny - y) ** 2
+        if lxy is None:
+            # removed
+            cnv.delete(riid, tiid)
+            del o2iid[n]
 
-                        for x, y in sides:
-                            cnv_dst = (nx - x) ** 2, (ny - y) ** 2
-                            if cnv_dst < nearest_dst:
-                                nearest_dst = cnv_dst
-                                nearest = x, y
+            cnv.update_scroll_region()
+            return
 
-                        x, y = nearest
-                        c_dnd = place_node(c, *nearest)
-                    else:
-                        c_dnd = dnd_groups[c]
+        lx, ly = lxy
 
-                    x1, y1 = nx + 5, ny + 5
-                    x2, y2 = x + 5, y + 5
-                    line_id = cnv.create_line(x1, y1, x2, y2)
-                    cnv.tag_lower(line_id)
-                    n_dnd.add_item(line_id, 0, 2)
-                    c_dnd.add_item(line_id, 2, 4)
+        # pixel coordinates
+        px = 100 * lx
+        py = 40 * ly
 
-                    stack.append(c)
+        cnv.coords(tiid, px, py)
 
-        print("Done")
+        l, t, r, b = cnv.bbox(tiid)
+        w_2 = ((r - l) / 2 + 3)
+        h_2 = ((b - t) / 2 + 3)
+
+        cnv.coords(riid,
+            px - w_2,
+            py - h_2,
+            px + w_2,
+            py + h_2,
+        )
+
         cnv.update_scroll_region()
 
+    def _on_edge_placed(self, *ab):
+        cnv = self._cnv
+        dgp = self._dgp
+        o2iid = self._o2iid
 
-def iter_sides(bbox, spacing = 20):
-    x, y, X, Y = bbox
-    x -= spacing
-    y -= spacing
-    X += spacing
-    Y += spacing
-    xm = (x + X) / 2
-    ym = (y + Y) / 2
+        try:
+            iid = o2iid[ab]
+        except KeyError:
+            iid = cnv.create_line(0, 0, 0, 0)
+            o2iid[ab] = iid
+            cnv.lower(iid)
 
-    if X - x > Y - y:
-        yield xm, y
-        yield xm, Y
-        yield X, ym
-        yield x, ym
-    else:
-        yield X, ym
-        yield x, ym
-        yield xm, y
-        yield xm, Y
+        coords = []
+        coord = coords.append
+
+        for lx, ly in dgp.iter_edge_coords(*ab):
+            px = 100 * lx
+            py = 40 * ly
+            coord(px)
+            coord(py)
+
+        if coords:
+            cnv.coords(iid, coords)
+        else:
+            # removed
+            del o2iid[ab]
+            cnv.delete(iid)
+
+        cnv.update_scroll_region()
 
 
 class GGVWindow(GUITk):
