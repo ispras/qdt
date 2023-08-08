@@ -9,6 +9,9 @@ from common.git_tools import (
     co_build_git_graph,
     CommitDesc,
 )
+from common.lazy import (
+    lazy
+)
 
 from collections import (
     defaultdict,
@@ -105,6 +108,10 @@ Notes:
             # E.g. root, head/tag at straight commit sequence.
             # The child added (just found) must start new edge construction.
             self._mg._account_if_macronode(self)
+
+    @lazy
+    def ref(self):
+        return self._mg._sha2ref.get(self.sha)
 
     _edge = None
 
