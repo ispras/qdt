@@ -81,7 +81,6 @@ class GGVWidget(GUIFrame):
         self.enqueue(co)
 
     def co_visualize(self):
-        self._commits = commits = {}
 
         print("Building GitMacrograph")
         mg = GitMacrograph(self._repo)
@@ -107,6 +106,8 @@ class GGVWidget(GUIFrame):
             with open(DOT_FILE_NAME, "w") as f:
                 f.write(src)
             print("Done")
+
+        self._commits = commits = {}
 
         print("Building Git Graph")
         yield CommitDesc.co_build_git_graph(self._repo, commits)
