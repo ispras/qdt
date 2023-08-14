@@ -213,7 +213,9 @@ class GGVWidget(GUIFrame):
         try:
             iid = o2iid[ab]
         except KeyError:
-            iid = cnv.create_line(0, 0, 0, 0)
+            iid = cnv.create_line(0, 0, 0, 0,
+                smooth = True,
+            )
             o2iid[ab] = iid
             cnv.lower(iid)
 
