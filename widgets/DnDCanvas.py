@@ -19,7 +19,6 @@ from six.moves import (
 )
 from six.moves.tkinter import (
     ALL,
-    BOTH,
     Canvas,
     IntVar,
     RIDGE,
