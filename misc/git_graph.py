@@ -3,7 +3,9 @@ from argparse import (
 )
 from six.moves.tkinter import (
     ALL,
-    BOTH
+    BOTH,
+    HORIZONTAL,
+    RAISED,
 )
 from git import (
     Repo
@@ -14,9 +16,11 @@ from common import (
 )
 from widgets import (
     add_scrollbars_native,
+    AutoPanedWindow,
     CanvasDnD,
     GUIFrame,
-    GUITk
+    GUITk,
+    VarTreeview,
 )
 from libe.common.events import (
     dismiss,
@@ -56,6 +60,8 @@ class GGVWidget(GUIFrame):
         add_scrollbars_native(self, cnv, sizegrip = sizegrip)
 
         cnv.bind("<<DnDMoved>>", lambda __: cnv.update_scroll_region(), "+")
+        cnv.tag_bind("e", "<Button-1>", self._on_edge_b1, "+")
+
 
     @property
     def repo_path(self):
@@ -74,6 +80,7 @@ class GGVWidget(GUIFrame):
             self._cnv.delete(ALL)
             self._cnv.update_scroll_region()
             del self._o2iid
+            del self._iid2o
             del self._dgp
             dismiss(self._on_node_placed)
             dismiss(self._on_edge_placed)
@@ -88,6 +95,7 @@ class GGVWidget(GUIFrame):
 
     def co_visualize(self):
         self._o2iid = {}
+        self._iid2o = {}
 
         self._dgp = dgp = DynamicGraphPlacer2D()
 
@@ -159,6 +167,7 @@ class GGVWidget(GUIFrame):
         cnv = self._cnv
         dgp = self._dgp
         o2iid = self._o2iid
+        iid2o = self._iid2o
 
         # logical coordinates
         lxy = dgp.node_coords(n)
@@ -172,23 +181,35 @@ class GGVWidget(GUIFrame):
             riid = cnv.create_rectangle(0, 0, 0, 0, fill = "white")
             tiid = cnv.create_text(0, 0, text = "")
             o2iid[n] = (riid, tiid)
+            iid2o[riid] = n
+            iid2o[tiid] = n
         else:
             if lxy is None:
                 # removed
                 cnv.delete(riid, tiid)
                 del o2iid[n]
+                del iid2o[riid]
+                del iid2o[tiid]
 
                 cnv.update_scroll_region()
                 return
 
         if isinstance(n, GitMgNode):
-            cnv.itemconfig(tiid, text = n.pretty)
+            cnv.itemconfig(tiid,
+                text = n.pretty,
+                tags = "n",
+            )
+            cnv.itemconfig(riid, tags = "n")
         elif isinstance(n, GitMgEdge):
             l = len(n)
             # assert l  # just print a warning instead
             if not l:
                 print("Error: len(GitMgEdge) == 0 should not be placed")
-            cnv.itemconfig(tiid, text = str(l))
+            cnv.itemconfig(tiid,
+                text = str(l),
+                tags = "e",
+            )
+            cnv.itemconfig(riid, tags = "e")
         else:
             raise RuntimeError(type(n))
 
@@ -245,6 +266,77 @@ class GGVWidget(GUIFrame):
 
         cnv.update_scroll_region()
 
+    def _on_edge_b1(self, e):
+        iid2o = self._iid2o
+        cnv = self._cnv
+        for iid in cnv.find_closest(cnv.canvasx(e.x), cnv.canvasy(e.y)):
+            o = iid2o.get(iid)
+            if isinstance(o, GitMgEdge):
+                break
+        else:
+            return
+
+        self.edge = o
+        self.event_generate("<<Edge>>")
+        del self.edge
+
+
+class GEVWidget(GUIFrame):
+    """ Git Edge View Widget
+    """
+
+    def __init__(self, *a, **kw):
+        sizegrip = kw.pop("sizegrip", False)
+
+        GUIFrame.__init__(self, *a, **kw)
+
+        self._repo_path = None
+        self._co_visualize = None
+
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+
+        self._tv = tv = VarTreeview(self,
+            columns = ("message", "committer", "email", "datetime"),
+        )
+        tv.column("#0", minwidth = 10, width = 85, stretch = False)
+        tv.column("message", minwidth = 10, width = 600)
+        tv.column("committer", minwidth = 10)
+        tv.column("email", minwidth = 10)
+        tv.column("datetime", minwidth = 10)
+
+        tv.grid(row = 0, column = 0, sticky = "NESW")
+
+        add_scrollbars_native(self, tv, sizegrip = sizegrip)
+
+        self._edge = None
+
+    @property
+    def edge(self):
+        return self._edge
+
+    @edge.setter
+    def edge(self, edge):
+        self._edge = edge
+
+        tv = self._tv
+        tv.delete(*tv.get_children())
+
+        for c in edge:
+            commit = c._mg._repo.commit(c.sha)
+            committer = commit.committer
+
+            tv.insert("",
+                index = 0,
+                text = str(c.sha[:8]),
+                values = [
+                    commit.message.splitlines()[0],
+                    committer.name,
+                    committer.email,
+                    str(commit.committed_datetime),
+                ]
+            )
+
 
 class GGVWindow(GUITk):
 
@@ -252,11 +344,28 @@ class GGVWindow(GUITk):
         GUITk.__init__(self)
         self.title(_("Git Graph Viewer"))
 
-        w = GGVWidget(self, sizegrip = True)
-        w.pack(fill = BOTH, expand = True)
+        ap = AutoPanedWindow(self,
+            sashrelief = RAISED,
+            orient = HORIZONTAL,
+        )
+        ap.pack(fill = BOTH, expand = True)
+
+        ggvw = GGVWidget(ap, sizegrip = False)
+
+        ap.add(ggvw, sticky = "NESW")
+
+        self._gevw = gevw = GEVWidget(ap, sizegrip = True)
+
+        ap.add(gevw, sticky = "NESW")
+
+        ggvw.bind("<<Edge>>", self._on_edge, "+")
 
         # print("repo = " + repo)
-        w.repo_path = repo
+        ggvw.repo_path = repo
+
+    def _on_edge(self, e):
+        edge = e.widget.edge
+        self._gevw.edge = [edge._ancestor] + edge + [edge._descendant]
 
 
 def main():
