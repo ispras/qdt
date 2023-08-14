@@ -114,6 +114,10 @@ class GGVWidget(GUIFrame):
                 yield dgp.co_place()
             yield i
 
+        # place last added items
+        while dgp.has_work:
+            yield dgp.co_place()
+
         print("Done")
 
         tags_n = len(mg._edges)
