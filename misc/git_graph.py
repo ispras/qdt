@@ -37,6 +37,8 @@ DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
 
 
 class GGVWidget(GUIFrame):
+    """Git Graph View Widget
+    """
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
