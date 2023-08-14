@@ -53,7 +53,6 @@ Returned graph can be configured by passing configured `init_gv`,
     node = gv.node
     edge = gv.edge
     edges = g._edges
-    sha2ref = g._sha2ref
 
     # macrograph nodes to Graphviz nodes
     mg2gv = {}
@@ -61,11 +60,7 @@ Returned graph can be configured by passing configured `init_gv`,
     for mn in edges:
         gvn = "n%d" % len(mg2gv)
         mg2gv[mn] = gvn
-        ref = sha2ref.get(mn.sha)
-        if ref is None:
-            label = mn.sha
-        else:
-            label = ref.name
+        label = mn.pretty
         node(gvn, label = label)
 
     # mn2dmns: MacroNode to Descendant MacroNodeS (edges from a `mn`. key)
@@ -83,6 +78,8 @@ Returned graph can be configured by passing configured `init_gv`,
 
     return gv
 
+
+_empty_tuple = tuple()
 
 class GitMgNode(CommitDesc):
     """
@@ -113,8 +110,50 @@ Notes:
             self._mg._account_if_macronode(self)
 
     @lazy
-    def ref(self):
-        return self._mg._sha2ref.get(self.sha)
+    def refs(self):
+        refs = self._mg._sha2ref.get(self.sha)
+        if refs:
+            return tuple(refs)
+        else:
+            return _empty_tuple
+
+    def iter_pretty_lines(self, indent = "\t", sha_part = 8):
+        tags = []
+        remotes = defaultdict(list)
+        local_heads = []
+
+        for r in self.refs:
+            piter = iter(r.path.split("/"))
+            assert next(piter) == "refs"  # drop
+            t = next(piter)
+            if t == "tags":
+                tags.append(next(piter))
+            elif t == "remotes":
+                remotes[next(piter)].append(next(piter))
+            else:
+                if t != "heads":
+                    print("Unexpected head type: " + t)
+                local_heads.append(next(piter))
+
+        yield str(self.sha[:sha_part])
+
+        for h in sorted(local_heads):
+            yield h
+
+        for t in sorted(tags):
+            yield t
+
+        for r, r_heads in sorted(tuple(remotes.items())):
+            yield r + "/"
+            for rh in sorted(r_heads):
+                yield indent + rh
+
+    def gen_pretty(self, **kw):
+        return "\n".join(self.iter_pretty_lines(**kw))
+
+    @lazy
+    def pretty(self):
+        return self.gen_pretty()
 
     _edge = None
 
@@ -161,7 +200,10 @@ class GitMacrograph(object):
 
     def co_build(self, **kw):
         repo = self._repo
-        self._sha2ref = dict((r.commit.hexsha, r) for r in repo.references)
+        s2r = defaultdict(list)
+        for r in repo.references:
+            s2r[r.commit.hexsha].append(r)
+        self._sha2ref = dict(s2r)
 
         # Keys are macronodes (`GitMgNode`).
         # Values are `set`s of `GitMgEdge`
