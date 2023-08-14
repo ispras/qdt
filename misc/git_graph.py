@@ -135,54 +135,60 @@ class GGVWidget(GUIFrame):
         if split is not None:
             # re-create with new edges
             p.remove_node(split)
-            p.add_node(split)
+            if split:
+                p.add_node(split)
 
-        p.add_node(e)
-        p.add_edge(e._descendant, e)
-        p.add_edge(e, e._ancestor)
+        if e:
+            p.add_node(e)
+            p.add_edge(e._descendant, e)
+            p.add_edge(e, e._ancestor)
+        else:
+            # no commits between macronodes
+            p.add_edge(e._descendant, e._ancestor)
 
         if split is not None:
-            p.add_edge(split._descendant, split)
-            p.add_edge(split, split._ancestor)
+            if split:
+                p.add_edge(split._descendant, split)
+                p.add_edge(split, split._ancestor)
+            else:
+                p.add_edge(split._descendant, split._ancestor)
 
     def _on_node_placed(self, n):
         cnv = self._cnv
         dgp = self._dgp
         o2iid = self._o2iid
 
+        # logical coordinates
+        lxy = dgp.node_coords(n)
+
         try:
             (riid, tiid) = o2iid[n]
         except KeyError:
+            if lxy is None:
+                # removed
+                return
             riid = cnv.create_rectangle(0, 0, 0, 0, fill = "white")
             tiid = cnv.create_text(0, 0, text = "")
             o2iid[n] = (riid, tiid)
-
-        if isinstance(n, GitMgNode):
-            cnv.itemconfig(tiid, text = str(n.ref or n.sha[:10]))
-        elif isinstance(n, GitMgEdge):
-            l = len(n)
-            if l:
-                cnv.itemconfig(tiid, text = str(l))
-            else:
-                # nothing to show
+        else:
+            if lxy is None:
+                # removed
                 cnv.delete(riid, tiid)
                 del o2iid[n]
 
                 cnv.update_scroll_region()
                 return
+
+        if isinstance(n, GitMgNode):
+            cnv.itemconfig(tiid, text = str(n.ref or n.sha[:10]))
+        elif isinstance(n, GitMgEdge):
+            l = len(n)
+            # assert l  # just print a warning instead
+            if not l:
+                print("Error: len(GitMgEdge) == 0 should not be placed")
+            cnv.itemconfig(tiid, text = str(l))
         else:
             raise RuntimeError(type(n))
-
-        # logical coordinates
-        lxy = dgp.node_coords(n)
-
-        if lxy is None:
-            # removed
-            cnv.delete(riid, tiid)
-            del o2iid[n]
-
-            cnv.update_scroll_region()
-            return
 
         lx, ly = lxy
 
