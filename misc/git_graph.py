@@ -180,12 +180,7 @@ class GGVWidget(GUIFrame):
                 return
 
         if isinstance(n, GitMgNode):
-            ref = n.ref
-            if ref:
-                text = "/\n".join(str(ref).split("/"))
-            else:
-                text = str(n.sha[:10])
-            cnv.itemconfig(tiid, text = text)
+            cnv.itemconfig(tiid, text = n.pretty)
         elif isinstance(n, GitMgEdge):
             l = len(n)
             # assert l  # just print a warning instead
