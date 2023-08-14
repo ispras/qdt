@@ -476,11 +476,7 @@ class _PlacingStep(CoAStep):
 @raise _StepForbidden:
     The step is inacceptible.
         """
-        return (
-            self._step_position_penalty(s)
-          + self._step_rotation_penalty(*sd)
-          + self._step_direction_penalty(*sd)
-        )
+        raise NotImplementedError
 
     def _step_position_penalty(self, s):
         # cache
@@ -584,7 +580,12 @@ class _NodeJoiningContext(_PlacingContext):
 
 
 class _NodeJoiningStep(_PlacingStep):
-    pass
+
+    def __step_penalty__(self, s, sd):
+        return (
+            self._step_position_penalty(s)
+          + self._step_rotation_penalty(*sd)
+        )
 
 
 class _ComponentPlacingContext(_PlacingContext):
@@ -661,7 +662,9 @@ class _ComponentPlacingStep(_PlacingStep):
 
     def __step_penalty__(self, s, sd):
         return (
-            super(_ComponentPlacingStep, self).__step_penalty__(s, sd)
+            self._step_position_penalty(s)
+          + self._step_rotation_penalty(*sd)
+          + self._step_direction_penalty(*sd)
           + self._bound_grid_overlapping_penalty(*s)
         )
 
