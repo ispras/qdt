@@ -4,6 +4,7 @@ from argparse import (
 from six.moves.tkinter import (
     ALL,
     BOTH,
+    BROWSE,
     HORIZONTAL,
     RAISED,
 )
@@ -11,6 +12,7 @@ from git import (
     Repo
 )
 from common import (
+    bidict,
     ee,
     mlget as _
 )
@@ -394,6 +396,7 @@ class GEVWidget(GUIFrame):
 
         self._tv = tv = VarTreeview(self,
             columns = ("message", "committer", "email", "datetime"),
+            selectmode = BROWSE,
         )
         tv.column("#0", minwidth = 10, width = 85, stretch = False)
         tv.column("message", minwidth = 10, width = 600)
@@ -406,6 +409,43 @@ class GEVWidget(GUIFrame):
         add_scrollbars_native(self, tv, sizegrip = sizegrip)
 
         self._edge = None
+        self._c2iid = c2iid = bidict()
+        self._iid2c = c2iid.mirror
+        self._commit = None
+
+        tv.bind("<<TreeviewSelect>>", self._on_tv_select, "+")
+
+    def _on_tv_select(self, e):
+        tv = self._tv
+        iid2c = self._iid2c
+
+        for iid in tv.selection():
+            try:
+                c = iid2c[iid]
+            except KeyError:
+                continue
+
+            self.commit = c
+            break
+
+    @property
+    def commit(self):
+        return self._commit
+
+    @commit.setter
+    def commit(self, commit):
+        if self._commit is commit:
+            return
+        self._commit = commit
+
+        iid = self._c2iid.get(commit)
+
+        if iid is None:
+            self._tv.selection_set()
+        else:
+            self._tv.selection_set(iid)
+
+        self.event_generate("<<Commit>>")
 
     @property
     def edge(self):
@@ -413,16 +453,27 @@ class GEVWidget(GUIFrame):
 
     @edge.setter
     def edge(self, edge):
+        if self._edge is edge:
+            return
         self._edge = edge
+
+        cur_commit = self._commit
+        reset_commit = True
 
         tv = self._tv
         tv.delete(*tv.get_children())
 
+        c2iid = self._c2iid
+        c2iid.clear()
+
         for c in edge:
+            if c is cur_commit:
+                reset_commit = False
+
             commit = c._mg._repo.commit(c.sha)
             committer = commit.committer
 
-            tv.insert("",
+            c2iid[c] = tv.insert("",
                 index = 0,
                 text = str(c.sha[:8]),
                 values = [
@@ -432,6 +483,11 @@ class GEVWidget(GUIFrame):
                     str(commit.committed_datetime),
                 ]
             )
+
+        if reset_commit:
+            self.commit = None
+        elif cur_commit is not None:
+            tv.selection_set(c2iid[cur_commit])
 
 
 class GGVWindow(GUITk):
