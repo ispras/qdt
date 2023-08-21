@@ -490,6 +490,8 @@ class GEVWidget(GUIFrame):
             tv.selection_set(c2iid[cur_commit])
 
 
+_recursion = object()
+
 class GGVWindow(GUITk):
 
     def __init__(self, repo):
@@ -502,7 +504,7 @@ class GGVWindow(GUITk):
         )
         ap.pack(fill = BOTH, expand = True)
 
-        ggvw = GGVWidget(ap, sizegrip = False)
+        self._ggvw = ggvw = GGVWidget(ap, sizegrip = False)
 
         ap.add(ggvw, sticky = "NESW")
 
@@ -511,13 +513,60 @@ class GGVWindow(GUITk):
         ap.add(gevw, sticky = "NESW")
 
         ggvw.bind("<<Edge>>", self._on_edge, "+")
+        ggvw.bind("<<Node>>", self._on_node, "+")
+        gevw.bind("<<Commit>>", self._on_commit, "+")
 
         # print("repo = " + repo)
         ggvw.repo_path = repo
 
+        self._commit = None
+
+    @property
+    def commit(self):
+        return self._commit
+
+    @commit.setter
+    def commit(self, commit):
+        if self._commit in (commit, _recursion):
+            return
+        self._commit = _recursion
+
+        ggvw = self._ggvw
+        gevw = self._gevw
+
+        # Note, assigments below may trigger _on_node/_on_commit while
+        # this setter is already called by _on_commit/_on_node.
+        # It overrides the assignment.
+        # `_recursion` check prevents this.
+
+        if commit is None:
+            self._gevw.commit = None
+            ggvw.node = None
+
+        else:
+            if commit.is_macronode:
+                ggvw.node = commit
+            else:
+                ggvw.node = None
+
+            if commit in gevw.edge:
+                gevw.commit = commit
+            else:
+                gevw.commit = None
+
+        self._commit = commit
+
+        self.event_generate("<<Commit>>")
+
     def _on_edge(self, e):
         edge = e.widget.edge
         self._gevw.edge = [edge._ancestor] + edge + [edge._descendant]
+
+    def _on_node(self, e):
+        self.commit = self._ggvw.node
+
+    def _on_commit(self, e):
+        self.commit = self._gevw.commit
 
 
 def main():
