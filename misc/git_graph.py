@@ -44,6 +44,19 @@ class GGVWidget(GUIFrame):
     """Git Graph View Widget
     """
 
+    EDGE_RECT_NORMAL = dict(
+        fill = "white",
+    )
+    EDGE_TEXT_NORMAL = dict(
+        fill = "black",
+    )
+    EDGE_RECT_SELECTED = dict(
+        fill = "black",
+    )
+    EDGE_TEXT_SELECTED = dict(
+        fill = "white"
+    )
+
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
 
@@ -62,6 +75,33 @@ class GGVWidget(GUIFrame):
         cnv.bind("<<DnDMoved>>", lambda __: cnv.update_scroll_region(), "+")
         cnv.tag_bind("e", "<Button-1>", self._on_edge_b1, "+")
 
+        self._edge = None
+
+    @property
+    def edge(self):
+        return self._edge
+
+    @edge.setter
+    def edge(self, edge):
+        cur_edge = self._edge
+        if edge is cur_edge:
+            return
+
+        conf = self._cnv.itemconfig
+
+        if cur_edge is not None:
+            cur_riid, cur_tiid = self._o2iid[cur_edge]
+            conf(cur_riid, **self.EDGE_RECT_NORMAL)
+            conf(cur_tiid, **self.EDGE_TEXT_NORMAL)
+
+        if edge is not None:
+            new_riid, new_tiid = self._o2iid[edge]
+            conf(new_riid, **self.EDGE_RECT_SELECTED)
+            conf(new_tiid, **self.EDGE_TEXT_SELECTED)
+
+        self._edge = edge
+
+        self.event_generate("<<Edge>>")
 
     @property
     def repo_path(self):
@@ -75,6 +115,7 @@ class GGVWidget(GUIFrame):
 
         co = self._co_visualize
         if co is not None:
+            self.edge = None
             self._co_visualize = None
             self.cancel_task(co)
             self._cnv.delete(ALL)
@@ -212,8 +253,18 @@ class GGVWidget(GUIFrame):
             cnv.itemconfig(tiid,
                 text = str(l),
                 tags = "e",
+                **(
+                    self.EDGE_TEXT_SELECTED if self._edge is n
+                        else self.EDGE_TEXT_NORMAL
+                )
             )
-            cnv.itemconfig(riid, tags = "e")
+            cnv.itemconfig(riid,
+                tags = "e",
+                **(
+                    self.EDGE_RECT_SELECTED if self._edge is n
+                        else self.EDGE_RECT_NORMAL
+                )
+            )
         else:
             raise RuntimeError(type(n))
 
@@ -276,13 +327,8 @@ class GGVWidget(GUIFrame):
         for iid in cnv.find_closest(cnv.canvasx(e.x), cnv.canvasy(e.y)):
             o = iid2o.get(iid)
             if isinstance(o, GitMgEdge):
+                self.edge = o
                 break
-        else:
-            return
-
-        self.edge = o
-        self.event_generate("<<Edge>>")
-        del self.edge
 
 
 class GEVWidget(GUIFrame):
