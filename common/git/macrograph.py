@@ -155,6 +155,10 @@ Notes:
     def pretty(self):
         return self.gen_pretty()
 
+    @property
+    def is_macronode(self):
+        return self in self._mg._edges
+
     _edge = None
 
 
