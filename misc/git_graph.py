@@ -57,6 +57,11 @@ class GGVWidget(GUIFrame):
         fill = "white"
     )
 
+    NODE_RECT_NORMAL = EDGE_RECT_NORMAL
+    NODE_TEXT_NORMAL = EDGE_TEXT_NORMAL
+    NODE_RECT_SELECTED = EDGE_RECT_SELECTED
+    NODE_TEXT_SELECTED = EDGE_TEXT_SELECTED
+
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
 
@@ -73,9 +78,11 @@ class GGVWidget(GUIFrame):
         add_scrollbars_native(self, cnv, sizegrip = sizegrip)
 
         cnv.bind("<<DnDMoved>>", lambda __: cnv.update_scroll_region(), "+")
-        cnv.tag_bind("e", "<Button-1>", self._on_edge_b1, "+")
+        cnv.tag_bind("e", "<Button-1>", self._on_item_b1, "+")
+        cnv.tag_bind("n", "<Button-1>", self._on_item_b1, "+")
 
         self._edge = None
+        self._node = None
 
     @property
     def edge(self):
@@ -102,6 +109,32 @@ class GGVWidget(GUIFrame):
         self._edge = edge
 
         self.event_generate("<<Edge>>")
+
+    @property
+    def node(self):
+        return self._node
+
+    @node.setter
+    def node(self, node):
+        cur_node = self._node
+        if node is cur_node:
+            return
+
+        conf = self._cnv.itemconfig
+
+        if cur_node is not None:
+            cur_riid, cur_tiid = self._o2iid[cur_node]
+            conf(cur_riid, **self.NODE_RECT_NORMAL)
+            conf(cur_tiid, **self.NODE_TEXT_NORMAL)
+
+        if node is not None:
+            new_riid, new_tiid = self._o2iid[node]
+            conf(new_riid, **self.NODE_RECT_SELECTED)
+            conf(new_tiid, **self.NODE_TEXT_SELECTED)
+
+        self._node = node
+
+        self.event_generate("<<Node>>")
 
     @property
     def repo_path(self):
@@ -223,7 +256,7 @@ class GGVWidget(GUIFrame):
             if lxy is None:
                 # removed
                 return
-            riid = cnv.create_rectangle(0, 0, 0, 0, fill = "white")
+            riid = cnv.create_rectangle(0, 0, 0, 0)
             tiid = cnv.create_text(0, 0, text = "")
             o2iid[n] = (riid, tiid)
             iid2o[riid] = n
@@ -243,8 +276,18 @@ class GGVWidget(GUIFrame):
             cnv.itemconfig(tiid,
                 text = n.pretty,
                 tags = "n",
+                **(
+                    self.NODE_TEXT_SELECTED if self._node is n
+                        else self.NODE_TEXT_NORMAL
+                )
             )
-            cnv.itemconfig(riid, tags = "n")
+            cnv.itemconfig(riid,
+                tags = "n",
+                **(
+                    self.NODE_RECT_SELECTED if self._node is n
+                        else self.NODE_RECT_NORMAL
+                )
+            )
         elif isinstance(n, GitMgEdge):
             l = len(n)
             # assert l  # just print a warning instead
@@ -321,13 +364,16 @@ class GGVWidget(GUIFrame):
 
         cnv.update_scroll_region()
 
-    def _on_edge_b1(self, e):
+    def _on_item_b1(self, e):
         iid2o = self._iid2o
         cnv = self._cnv
         for iid in cnv.find_closest(cnv.canvasx(e.x), cnv.canvasy(e.y)):
             o = iid2o.get(iid)
             if isinstance(o, GitMgEdge):
                 self.edge = o
+                break
+            elif isinstance(o, GitMgNode):
+                self.node = o
                 break
 
 
