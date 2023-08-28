@@ -457,37 +457,31 @@ class GEVWidget(GUIFrame):
             return
         self._edge = edge
 
-        cur_commit = self._commit
-        reset_commit = True
-
         tv = self._tv
         tv.delete(*tv.get_children())
 
         c2iid = self._c2iid
         c2iid.clear()
 
-        for c in edge:
-            if c is cur_commit:
-                reset_commit = False
+        if edge is not None:
+            for c in edge:
+                commit = c._mg._repo.commit(c.sha)
+                committer = commit.committer
 
-            commit = c._mg._repo.commit(c.sha)
-            committer = commit.committer
+                c2iid[c] = tv.insert("",
+                    index = 0,
+                    text = str(c.sha[:8]),
+                    values = [
+                        commit.message.splitlines()[0],
+                        committer.name,
+                        committer.email,
+                        str(commit.committed_datetime),
+                    ]
+                )
 
-            c2iid[c] = tv.insert("",
-                index = 0,
-                text = str(c.sha[:8]),
-                values = [
-                    commit.message.splitlines()[0],
-                    committer.name,
-                    committer.email,
-                    str(commit.committed_datetime),
-                ]
-            )
-
-        if reset_commit:
-            self.commit = None
-        elif cur_commit is not None:
-            tv.selection_set(c2iid[cur_commit])
+        iid = c2iid.get(self._commit)
+        if iid is not None:
+            tv.selection_set(iid)
 
 
 _recursion = object()
@@ -539,20 +533,15 @@ class GGVWindow(GUITk):
         # It overrides the assignment.
         # `_recursion` check prevents this.
 
-        if commit is None:
-            self._gevw.commit = None
-            ggvw.node = None
+        gevw.commit = commit
 
+        if commit is None:
+            ggvw.node = None
         else:
             if commit.is_macronode:
                 ggvw.node = commit
             else:
                 ggvw.node = None
-
-            if commit in gevw.edge:
-                gevw.commit = commit
-            else:
-                gevw.commit = None
 
         self._commit = commit
 
