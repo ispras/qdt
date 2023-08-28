@@ -83,6 +83,19 @@ class CanvasDnD(Canvas):
         # Note, bbox(ALL) returns `None` if canvas is empty.
         self.config(scrollregion = self.bbox(ALL) or (0, 0, 0, 0))
 
+    def extend_scroll_region(self):
+        try:
+            cl, ct, cr, cb = self.cget("scrollregion")
+        except ValueError:
+            cl, ct, cr, cb = 0, 0, 0, 0
+        l, t, r, b = self.bbox(ALL) or (0, 0, 0, 0)
+        self.config(scrollregion = (
+            min(cl, l),
+            min(ct, t),
+            max(cr, r),
+            max(cb, b)
+        ))
+
     # backward compatibility properties
     @property
     def dragging(self):
