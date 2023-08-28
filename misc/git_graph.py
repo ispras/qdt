@@ -79,7 +79,7 @@ class GGVWidget(GUIFrame):
 
         add_scrollbars_native(self, cnv, sizegrip = sizegrip)
 
-        cnv.bind("<<DnDMoved>>", lambda __: cnv.update_scroll_region(), "+")
+        cnv.bind("<<DnDMoved>>", lambda __: cnv.extend_scroll_region(), "+")
         cnv.tag_bind("e", "<Button-1>", self._on_item_b1, "+")
         cnv.tag_bind("n", "<Button-1>", self._on_item_b1, "+")
 
@@ -271,7 +271,6 @@ class GGVWidget(GUIFrame):
                 del iid2o[riid]
                 del iid2o[tiid]
 
-                cnv.update_scroll_region()
                 return
 
         if isinstance(n, GitMgNode):
@@ -332,7 +331,7 @@ class GGVWidget(GUIFrame):
             py + h_2,
         )
 
-        cnv.update_scroll_region()
+        cnv.extend_scroll_region()
 
     def _on_edge_placed(self, *ab):
         cnv = self._cnv
@@ -364,7 +363,7 @@ class GGVWidget(GUIFrame):
             del o2iid[ab]
             cnv.delete(iid)
 
-        cnv.update_scroll_region()
+        cnv.extend_scroll_region()
 
     def _on_item_b1(self, e):
         iid2o = self._iid2o
