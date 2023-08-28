@@ -47,22 +47,30 @@ class GGVWidget(GUIFrame):
     """
 
     EDGE_RECT_NORMAL = dict(
+        tags = "e",
         fill = "white",
     )
     EDGE_TEXT_NORMAL = dict(
+        tags = "e",
         fill = "black",
     )
     EDGE_RECT_SELECTED = dict(
+        tags = "e",
         fill = "black",
     )
     EDGE_TEXT_SELECTED = dict(
+        tags = "e",
         fill = "white"
     )
 
-    NODE_RECT_NORMAL = EDGE_RECT_NORMAL
-    NODE_TEXT_NORMAL = EDGE_TEXT_NORMAL
-    NODE_RECT_SELECTED = EDGE_RECT_SELECTED
-    NODE_TEXT_SELECTED = EDGE_TEXT_SELECTED
+    NODE_RECT_NORMAL = dict(EDGE_RECT_NORMAL)
+    NODE_RECT_NORMAL["tags"] = "n"
+    NODE_TEXT_NORMAL = dict(EDGE_TEXT_NORMAL)
+    NODE_TEXT_NORMAL["tags"] = "n"
+    NODE_RECT_SELECTED = dict(EDGE_RECT_SELECTED)
+    NODE_RECT_SELECTED["tags"] = "n"
+    NODE_TEXT_SELECTED = dict(EDGE_TEXT_SELECTED)
+    NODE_TEXT_SELECTED["tags"] = "n"
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
@@ -276,14 +284,12 @@ class GGVWidget(GUIFrame):
         if isinstance(n, GitMgNode):
             cnv.itemconfig(tiid,
                 text = n.pretty,
-                tags = "n",
                 **(
                     self.NODE_TEXT_SELECTED if self._node is n
                         else self.NODE_TEXT_NORMAL
                 )
             )
             cnv.itemconfig(riid,
-                tags = "n",
                 **(
                     self.NODE_RECT_SELECTED if self._node is n
                         else self.NODE_RECT_NORMAL
@@ -296,14 +302,12 @@ class GGVWidget(GUIFrame):
                 print("Error: len(GitMgEdge) == 0 should not be placed")
             cnv.itemconfig(tiid,
                 text = str(l),
-                tags = "e",
                 **(
                     self.EDGE_TEXT_SELECTED if self._edge is n
                         else self.EDGE_TEXT_NORMAL
                 )
             )
             cnv.itemconfig(riid,
-                tags = "e",
                 **(
                     self.EDGE_RECT_SELECTED if self._edge is n
                         else self.EDGE_RECT_NORMAL
