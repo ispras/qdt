@@ -1,12 +1,11 @@
-from libe.common.attr_change_notifier import (
-    AttributeChangeNotifier,
-)
 from libe.common.events import (
-    dismiss,
     listen,
 )
 from libe.common.grid import (
     Grid,
+)
+from libe.common.gridrect import (
+    GridRect,
 )
 
 from six.moves.tkinter import (
@@ -16,13 +15,14 @@ from six.moves.tkinter import (
 )
 
 
-class Box(AttributeChangeNotifier):
+class Box(GridRect):
     _valid = True
 
     def __init__(self, cnv, size):
+        super(Box, self).__init__(size)
         self.cnv = cnv
-        self.size = size
-        listen(self, "setattr", self._on_setattr)
+        listen(self, "setattr", self._on_changeattr)
+        listen(self, "delattr", self._on_changeattr)
 
     def invalidate(self):
         if self._valid:
@@ -31,78 +31,28 @@ class Box(AttributeChangeNotifier):
 
     def _update(self):
         del self._valid
-        if not hasattr(self, "iid"):
-            return
-        self.cnv.coords(self.iid, *self._coords)
 
-    @property
-    def _coords(self):
-        x, y = self.xy
-        w, h = self.size
-        return x + 1, y + 1, x + w + 1, y + h + 1
+        cnv = self.cnv
 
-    def _on_setattr(self, attr, v):
-        if attr in ("size", "xy",):
+        try:
+            x, y = self.coords
+        except AttributeError:
+            try:
+                cnv.delete(self._iid)
+                del self._iid
+            except AttributeError:
+                pass
+        else:
+            w, h = self.size
+            ccoords = x + 1, y + 1, x + w + 1, y + h + 1
+            try:
+                cnv.coords(self._iid, *ccoords)
+            except AttributeError:  # _iid
+                self._iid = cnv.create_rectangle(*ccoords)
+
+    def _on_changeattr(self, attr, *__):
+        if attr in ("size", "coords",):
             self.invalidate()
-
-    def hide(self):
-        if hasattr(self, "iid"):
-            self.cnv.delete(self.iid)
-            del self.iid
-
-    def show(self):
-        if hasattr(self, "iid"):
-            return
-        self.iid = self.cnv.create_rectangle(*self._coords)
-
-    _ij = None
-    @property
-    def ij(self):
-        return self._ij
-
-    @ij.setter
-    def ij(self, ij):
-        if ij == self._ij:
-            return
-        self._ij = ij
-        if self._g is not None:
-            if ij is None:
-                self._remove_from_g()
-            else:
-                self._add_to_g()
-
-    _g = None
-    @property
-    def g(self):
-        return self._g
-
-    @g.setter
-    def g(self, g):
-        if g is self._g:
-            return
-        if self._g is not None and self._ij is not None:
-            self._remove_from_g()
-        self._g = g
-        if g is not None and self._ij is not None:
-            self._add_to_g()
-
-    def _add_to_g(self):
-        self._g.add(self._ij, self)
-        listen(self._g, "resized", self._on_grid_resized)
-        self.xy = self._g(self._ij)
-        self.show()
-
-    def _remove_from_g(self):
-        self._g.remove(self)
-        dismiss(self._on_grid_resized)
-        self.hide()
-
-    def _on_grid_resized(self, axis, coord):
-        ij = self._ij
-        if ij is None:
-            return
-        if coord < ij[axis]:
-            self.xy = self._g(ij)
 
 
 def main():
@@ -128,7 +78,7 @@ def main():
         (10, 10, 5, 5),
     ]:
         box = Box(c, (w, h))
-        box.ij = (gx, gy)
+        box.gcoords = (gx, gy)
         box.g = g
         boxes.append(box)
 
@@ -156,9 +106,9 @@ def main():
             yield
             boxes[4].g = g
             yield
-            boxes[4].ij = (2, 0)
+            boxes[4].gcoords = (2, 0)
             yield
-            boxes[4].ij = (2, 2)
+            boxes[4].gcoords = (2, 2)
             yield
 
     script = co_script()
