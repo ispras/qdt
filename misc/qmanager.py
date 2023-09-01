@@ -1,5 +1,15 @@
 #!/usr/bin/python
 
+from os.path import (
+    abspath,
+    dirname,
+)
+from sys import (
+    path,
+)
+# before importing QDT's packages
+path.insert(0, dirname(dirname(abspath(__file__))))
+
 from common import (
     FailedCallee,
     QRepo,
@@ -10,7 +20,6 @@ from common import (
 )
 from os.path import (
     exists,
-    dirname,
     join,
     expanduser
 )
