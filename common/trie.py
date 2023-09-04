@@ -1,9 +1,19 @@
 __all__ = [
-    "trie_add"
+    "iter_trie_items"
+  , "iter_trie_paths"
+  , "trie_add"
+  , "trie_build"
   , "trie_find"
 ]
 
 # Helpers to build trie of `dict`s
+
+
+def trie_build(iterable):
+    res = {}
+    for path, value in iterable:
+        trie_add(res, path, value, replace = True)
+    return res
 
 
 def trie_add(trie, path, value, replace = False):
@@ -120,3 +130,16 @@ def iter_trie_paths(trie):
                     yield (p,) + subpath
     else:
         yield trie[1]
+
+
+def iter_trie_items(trie):
+    if isinstance(trie, dict):
+        for p, subtrie in trie.items():
+            if p is None:
+                # There is something at root of (sub)trie.
+                yield tuple()
+            else:
+                for subpath, value in iter_trie_items(subtrie):
+                    yield (p,) + subpath, value
+    else:
+        yield trie[1], trie[0]
