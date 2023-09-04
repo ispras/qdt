@@ -44,6 +44,9 @@ class BisectMap(object):
     def min(self):
         return self._keys[0]
 
+    def __bool__(self):
+        return bool(self._keys)
+
     def __setitem__(self, k, v):
         _keys = self._keys
         i = bisect_left(_keys, k)
