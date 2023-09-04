@@ -100,9 +100,10 @@ class _GridAxis(AttributeChangeNotifier):
         return _GridSlice(self, coord)
 
     def iter_offs(self):
-        ni = -1
+        slices = self.slices
+        ni = slices.min() - 1
         off = 0
-        for i, s in self.slices.items():
+        for i, s in slices.items():
             while ni < i:
                 yield off
                 ni += 1
@@ -157,7 +158,7 @@ class Grid(object):
 
     def iter_cell_offs(self, coords):
         for i, a in zip(coords, self._axises):
-            yield a.offs[i]
+            yield a.offs[i - a.slices.min()]
 
     def __call__(self, coords):
         return tuple(self.iter_cell_offs(coords))
