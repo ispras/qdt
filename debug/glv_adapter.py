@@ -22,16 +22,15 @@ from common import (
     bstr,
     bsep,
     intervalmap,
+    iter_trie_items,
     trie_add,
+    trie_build,
     trie_find,
     git_diff2delta_intervals,
     pythonize
 )
 from .line_adapter import (
     LineAdapter
-)
-from os.path import (
-    sep
 )
 
 # regular expression for git version of file and eps
@@ -72,8 +71,22 @@ renaming for file name)
             execfile(self.cache_file, glob)
         except Exception:
             self._cache = self.GLVCache()
+
+        # `pythonize` (used to save adaptation cache) saves
+        # `bytes` as regular `str`ings (without a `b` prefix before
+        #  "string literal").
+        # While the code expects exactly `bytes` (it's actual under Py3).
+        self._bytify_tries()
+
         # trie that contains unhandled git diff information
         self._draft_diffs = {}
+
+    def _bytify_tries(self):
+        cache = self._cache
+        for ver, trie in tuple(cache.items()):
+            cache[ver] = trie_build(
+                (tuple(map(bstr, p)), v) for (p, v) in iter_trie_items(trie)
+            )
 
     def _add_git_diff(self, version):
         diff = self.curr_commit.diff(version, "*.c", True, unified = 0)
@@ -127,12 +140,7 @@ renaming for file name)
 
         version_trie = self._cache.setdefault(version, {})
 
-        # `pythonize` (used to save adaptation cache) saves `bytes` as
-        # regular `str`ings (without a prefix before "string literal").
-        # While neighbour code expects exactly `bytes` (it's actual
-        # under Py3).
-        # So, there is explicit an encoding.
-        trie_path = tuple(reversed(fname.decode("utf-8").split(sep)))
+        trie_path = tuple(reversed(fname.split(bsep)))
 
         try:
             delta_map, rename = trie_find(version_trie, trie_path)[0]
