@@ -1025,6 +1025,7 @@ class Settings(Persistent):
 
 
 def main():
+    print("QDT GUI on Python %s" % (sys.version,))
     parser = ArgumentParser()
 
     parser.add_argument(
