@@ -50,7 +50,7 @@ the `g`rid.
         if gcoords == self._gcoords:
             return
 
-        if self._g is not None:
+        if self._g is not None and self._gcoords is not None:
             self._remove_from_g()
 
         if gcoords is None:
