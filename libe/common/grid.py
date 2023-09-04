@@ -106,7 +106,8 @@ class _GridAxis(AttributeChangeNotifier):
             while ni < i:
                 yield off
                 ni += 1
-            off += s.max()
+            if s:
+                off += s.max()
         yield off
 
     def _invalidate(self, coord):
