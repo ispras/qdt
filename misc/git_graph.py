@@ -2,6 +2,7 @@ from common import (
     bidict,
     ee,
     mlget as _,
+    REFS_ORDER_RECENT_FIRST,
 )
 from widgets import (
     add_scrollbars_native,
@@ -194,7 +195,9 @@ class GGVWidget(GUIFrame):
 
         print("Building GitMacrograph")
 
-        for i in mg.co_build():
+        for i in mg.co_build(
+            refs_iter_func = REFS_ORDER_RECENT_FIRST,
+        ):
             while dgp.has_work:
                 yield dgp.co_place()
             yield i
