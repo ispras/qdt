@@ -1,20 +1,7 @@
-from argparse import (
-    ArgumentParser
-)
-from six.moves.tkinter import (
-    ALL,
-    BOTH,
-    BROWSE,
-    HORIZONTAL,
-    RAISED,
-)
-from git import (
-    Repo
-)
 from common import (
     bidict,
     ee,
-    mlget as _
+    mlget as _,
 )
 from widgets import (
     add_scrollbars_native,
@@ -35,6 +22,20 @@ from libe.git.macrograph import (
 )
 from libe.graph.dynamic_placer import (
     DynamicGraphPlacer2D,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from git import (
+    Repo,
+)
+from six.moves.tkinter import (
+    ALL,
+    BOTH,
+    BROWSE,
+    HORIZONTAL,
+    RAISED,
 )
 
 
