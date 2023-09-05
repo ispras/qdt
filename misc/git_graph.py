@@ -17,6 +17,12 @@ from libe.common.events import (
     dismiss,
     listen,
 )
+from libe.common.grid import (
+    Grid,
+)
+from libe.common.gridrect import (
+    GridRect,
+)
 from libe.git.macrograph import (
     GitMacrograph,
     GitMgEdge,
@@ -32,8 +38,14 @@ from libe.widgets.tk.hide_show_binding import (
 from argparse import (
     ArgumentParser,
 )
+from collections import (
+    deque,
+)
 from git import (
     Repo,
+)
+from itertools import (
+    count,
 )
 from six.moves.tkinter import (
     ALL,
@@ -45,6 +57,188 @@ from six.moves.tkinter import (
 
 # Set this env. var. to output macrograph to file in Graphviz format.
 DOT_FILE_NAME = ee("GIT_GRAPH_DOT_FILE_NAME", "None")
+
+
+class _CanvasItem:
+
+    _size = None
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, size):
+        if self._size == size:
+            return
+        self._size = size
+        self._invalidate()
+
+    _coords = None
+    @property
+    def coords(self):
+        return self._coords
+
+    @coords.setter
+    def coords(self, coords):
+        if self._coords == coords:
+            return
+        self._coords = coords
+        self._invalidate()
+
+    _valid = True
+    def _invalidate(self):
+        if self._valid:
+            self._valid = False
+            self._update_canvas_coords()
+            return
+            # Note, thi's GGVWidget specific.
+            self._c.master._jobs.append(self._update_canvas_coords)
+
+    def _update_canvas_coords(self):
+        del self._valid
+        self.__update_canvas_coords__()
+
+
+class TextGridBox(GridRect, _CanvasItem):
+
+    def __init__(self, canvas):
+        self._c = canvas
+        self._riid = canvas.create_rectangle(0, 0, 0, 0)
+        self._tiid = canvas.create_text(0, 0, text = "")
+
+        super(TextGridBox, self).__init__((0, 0))
+
+
+    def iter_iids(self):
+        yield self._riid
+        yield self._tiid
+
+    def delete(self):
+        self._c.delete(*self.iter_iids())
+
+    def set_text(self, text):
+        c = self._c
+        tiid = self._tiid
+        c.itemconfig(tiid, text = text)
+        l, t, r, b = c.bbox(tiid)
+        self.size = (r - l + 12, b - t + 12)
+
+    def set_styles(self, text_style, rect_style):
+        icfg = self._c.itemconfig
+        icfg(self._tiid, **text_style)
+        icfg(self._riid, **rect_style)
+
+    def __update_canvas_coords__(self):
+        gcoords = self._gcoords
+        if gcoords is None:
+            return
+
+        c = self._c
+        riid = self._riid
+        tiid = self._tiid
+        g = self._g
+
+        x, y = self._coords
+
+        i, j = gcoords
+        x1, y1 = g((i + 1, j + 1))
+
+        x = (x + x1) / 2
+        y = (y + y1) / 2
+
+        w, h = self._size
+        w_2 = w / 2
+        h_2 = h / 2
+
+        c.coords(tiid, x, y)
+
+        c.coords(riid,
+            x - w_2 + 3,
+            y - h_2 + 3,
+            x + w_2 - 3,
+            y + h_2 - 3,
+        )
+
+        c.extend_scroll_region()
+
+
+class _GridLinePoint(GridRect, _CanvasItem):
+
+    def __init__(self, line, coordi, size = 10, **kw):
+        self._l = line
+        self._ci = coordi
+
+        super(_GridLinePoint, self).__init__((size, size), **kw)
+
+    @property
+    def _c(self):
+        return self._l._c
+
+    def __update_canvas_coords__(self):
+        gcoords = self._gcoords
+        if gcoords is None:
+            return
+
+        x, y = self._coords
+        i, j = gcoords
+        x1, y1 = self._g((i + 1, j + 1))
+
+        x = (x + x1) / 2
+        y = (y + y1) / 2
+
+        c = self._c
+        iid = self._l._liid
+
+        ci = self._ci
+        lcoords = c.coords(iid)
+        lcoords[ci : ci + 2] = (x, y)
+        c.coords(iid, *lcoords)
+
+        c.extend_scroll_region()
+
+
+class GridLine(object):
+
+    def __init__(self, canvas, gcoords):
+        self._c = canvas
+        gcoords_len = len(gcoords)
+        self._liid = liid = canvas.create_line(
+            *list(range(gcoords_len)),
+            **dict(smooth = True)
+        )
+        canvas.lower(liid)
+        points = []
+        point = points.append
+        gciter = iter(gcoords)
+        for coordi, i in zip(count(0, 2), gciter):
+            j = next(gciter)
+            point(_GridLinePoint(self, coordi, gcoords = (i, j)))
+        self._points = points
+
+    def set_gcoords(self, gcoords):
+        gciter = iter(gcoords)
+        for p in self._points:
+            p.gcoords = (next(gciter), next(gciter))
+
+    _g = None
+    @property
+    def g(self):
+        return self._g
+
+    @g.setter
+    def g(self, g):
+        if g is self._g:
+            return
+        if g is None:
+            del self._g
+        else:
+            self._g = g
+        for p in self._points:
+            p.g = g
+
+    def remove(self):
+        self.g = None
+        self._c.delete(self._liid)
 
 
 class GGVWidget(GUIFrame):
@@ -109,17 +303,13 @@ class GGVWidget(GUIFrame):
         if edge is cur_edge:
             return
 
-        conf = self._cnv.itemconfig
-
         if cur_edge is not None:
-            cur_riid, cur_tiid = self._o2iid[cur_edge]
-            conf(cur_riid, **self.EDGE_RECT_NORMAL)
-            conf(cur_tiid, **self.EDGE_TEXT_NORMAL)
+            b = self._o2b[cur_edge]
+            b.set_styles(self.EDGE_TEXT_NORMAL, self.EDGE_RECT_NORMAL)
 
         if edge is not None:
-            new_riid, new_tiid = self._o2iid[edge]
-            conf(new_riid, **self.EDGE_RECT_SELECTED)
-            conf(new_tiid, **self.EDGE_TEXT_SELECTED)
+            b = self._o2b[edge]
+            b.set_styles(self.EDGE_TEXT_SELECTED, self.EDGE_RECT_SELECTED)
 
         self._edge = edge
 
@@ -135,17 +325,13 @@ class GGVWidget(GUIFrame):
         if node is cur_node:
             return
 
-        conf = self._cnv.itemconfig
-
         if cur_node is not None:
-            cur_riid, cur_tiid = self._o2iid[cur_node]
-            conf(cur_riid, **self.NODE_RECT_NORMAL)
-            conf(cur_tiid, **self.NODE_TEXT_NORMAL)
+            b = self._o2b[cur_node]
+            b.set_styles(self.NODE_TEXT_NORMAL, self.NODE_RECT_NORMAL)
 
         if node is not None:
-            new_riid, new_tiid = self._o2iid[node]
-            conf(new_riid, **self.NODE_RECT_SELECTED)
-            conf(new_tiid, **self.NODE_TEXT_SELECTED)
+            b = self._o2b[node]
+            b.set_styles(self.NODE_TEXT_SELECTED, self.NODE_RECT_SELECTED)
 
         self._node = node
 
@@ -169,10 +355,12 @@ class GGVWidget(GUIFrame):
             self._cnv.delete(ALL)
             self._cnv.update_scroll_region()
             del self._o2iid
+            del self._o2b
             del self._iid2o
             del self._dgp
             dismiss(self._on_node_placed)
             dismiss(self._on_edge_placed)
+            del self._jobs
 
         if p is None:
             return
@@ -182,9 +370,19 @@ class GGVWidget(GUIFrame):
         self._co_visualize = co = self.co_visualize()
         self.enqueue(co)
 
+    def _co_worker(self):
+        jobs = self._jobs
+        pop = jobs.popleft
+        while jobs:
+            yield True
+            pop()()
+
     def co_visualize(self):
         self._o2iid = {}
+        self._o2b = {}
         self._iid2o = {}
+        self._g = Grid()
+        self._jobs = deque()
 
         self._dgp = dgp = DynamicGraphPlacer2D()
 
@@ -202,12 +400,18 @@ class GGVWidget(GUIFrame):
             refs_iter_func = REFS_ORDER_RECENT_FIRST,
         ):
             while dgp.has_work:
+                # do layout updates
+                yield self._co_worker()
                 yield dgp.co_place()
+            yield self._co_worker()
             yield i
 
         # place last added items
         while dgp.has_work:
+            yield self._co_worker()
             yield dgp.co_place()
+
+        yield self._co_worker()
 
         print("Done")
 
@@ -265,120 +469,81 @@ class GGVWidget(GUIFrame):
     def _on_node_placed(self, n):
         cnv = self._cnv
         dgp = self._dgp
-        o2iid = self._o2iid
+        o2b = self._o2b
         iid2o = self._iid2o
 
         # logical coordinates
         lxy = dgp.node_coords(n)
 
         try:
-            (riid, tiid) = o2iid[n]
+            b = o2b[n]
         except KeyError:
             if lxy is None:
                 # removed
                 return
-            riid = cnv.create_rectangle(0, 0, 0, 0)
-            tiid = cnv.create_text(0, 0, text = "")
-            o2iid[n] = (riid, tiid)
-            iid2o[riid] = n
-            iid2o[tiid] = n
+            b = TextGridBox(cnv)
+            o2b[n] = b
+            for iid in b.iter_iids():
+                iid2o[iid] = n
         else:
             if lxy is None:
                 # removed
-                cnv.delete(riid, tiid)
-                del o2iid[n]
-                del iid2o[riid]
-                del iid2o[tiid]
+                b.delete()
+                del o2b[n]
+                for iid in b.iter_iids():
+                    del iid2o[iid]
 
                 return
 
         if isinstance(n, GitMgNode):
-            cnv.itemconfig(tiid,
-                text = n.pretty,
-                **(
-                    self.NODE_TEXT_SELECTED if self._node is n
-                        else self.NODE_TEXT_NORMAL
-                )
-            )
-            cnv.itemconfig(riid,
-                **(
-                    self.NODE_RECT_SELECTED if self._node is n
-                        else self.NODE_RECT_NORMAL
-                )
+            b.set_text(n.pretty)
+            b.set_styles(
+                self.NODE_TEXT_SELECTED if self._node is n
+                    else self.NODE_TEXT_NORMAL,
+                self.NODE_RECT_SELECTED if self._node is n
+                    else self.NODE_RECT_NORMAL
             )
         elif isinstance(n, GitMgEdge):
             l = len(n)
             # assert l  # just print a warning instead
             if not l:
                 print("Error: len(GitMgEdge) == 0 should not be placed")
-            cnv.itemconfig(tiid,
-                text = str(l),
-                **(
-                    self.EDGE_TEXT_SELECTED if self._edge is n
-                        else self.EDGE_TEXT_NORMAL
-                )
-            )
-            cnv.itemconfig(riid,
-                **(
-                    self.EDGE_RECT_SELECTED if self._edge is n
-                        else self.EDGE_RECT_NORMAL
-                )
+            b.set_text(str(l))
+            b.set_styles(
+                self.EDGE_TEXT_SELECTED if self._edge is n
+                    else self.EDGE_TEXT_NORMAL,
+                self.EDGE_RECT_SELECTED if self._edge is n
+                    else self.EDGE_RECT_NORMAL
             )
         else:
             raise RuntimeError(type(n))
 
-        lx, ly = lxy
-
-        # pixel coordinates
-        px = 100 * lx
-        py = 40 * ly
-
-        cnv.coords(tiid, px, py)
-
-        l, t, r, b = cnv.bbox(tiid)
-        w_2 = ((r - l) / 2 + 3)
-        h_2 = ((b - t) / 2 + 3)
-
-        cnv.coords(riid,
-            px - w_2,
-            py - h_2,
-            px + w_2,
-            py + h_2,
-        )
-
-        cnv.extend_scroll_region()
+        b.g = self._g
+        b.gcoords = lxy
 
     def _on_edge_placed(self, *ab):
-        cnv = self._cnv
-        dgp = self._dgp
-        o2iid = self._o2iid
+        o2b = self._o2b
 
-        try:
-            iid = o2iid[ab]
-        except KeyError:
-            iid = cnv.create_line(0, 0, 0, 0,
-                smooth = True,
-            )
-            o2iid[ab] = iid
-            cnv.lower(iid)
+        gcoords = []
+        gcoord = gcoords.append
 
-        coords = []
-        coord = coords.append
+        for lx, ly in self._dgp.iter_edge_coords(*ab):
+            gcoord(lx)
+            gcoord(ly)
 
-        for lx, ly in dgp.iter_edge_coords(*ab):
-            px = 100 * lx
-            py = 40 * ly
-            coord(px)
-            coord(py)
-
-        if coords:
-            cnv.coords(iid, coords)
+        if gcoords:
+            try:
+                l = o2b[ab]
+            except KeyError:
+                l = GridLine(self._cnv, gcoords)
+            else:
+                l.set_gcoords = gcoords
+            l.g = self._g
         else:
             # removed
-            del o2iid[ab]
-            cnv.delete(iid)
-
-        cnv.extend_scroll_region()
+            l = o2b.pop(ab, None)
+            if l is not None:
+                l.remove()
 
     def _on_item_b1(self, e):
         iid2o = self._iid2o
