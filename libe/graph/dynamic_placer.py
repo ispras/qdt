@@ -174,6 +174,62 @@ class _Component(AttributeChangeNotifier):
 
         self._equeue = deque(e for e in self._equeue if n not in e)
 
+    def _check_if_split(self, coords0, coords1):
+        node_at = self._node_at
+        nodes = self._nodes
+        g = self._grid
+
+        stack0 = [node_at(coords0)]
+        stack1 = [node_at(coords1)]
+        visited0 = set()
+        visit0 = visited0.add
+        visited1 = set()
+        visit1 = visited1.add
+
+        while True:
+            try:
+                n0 = stack0.pop()
+            except IndexError:
+                # visited0 has isolated subgraph.
+                # It's less or equal to another subgraph
+                return visited0
+
+            try:
+                n1 = stack1.pop()
+            except IndexError:
+                return visited1
+
+            visit0(n0)
+            visit1(n1)
+
+            if n0 in visited1 or n1 in visited0:
+                # there is a path from one subgraph to another
+                return False
+
+            n0coords = nodes[n0]
+
+            for e in g[n0coords]:
+                if isinstance(e, _Edge):
+                    if n0coords == e[0]:
+                        n = node_at(e[-1])
+                    else:
+                        n = node_at(e[0])
+
+                    if n not in visited0:
+                        stack0.append(n)
+
+            n1coords = nodes[n1]
+
+            for e in g[n1coords]:
+                if isinstance(e, _Edge):
+                    if n1coords == e[0]:
+                        n = node_at(e[-1])
+                    else:
+                        n = node_at(e[0])
+
+                    if n not in visited1:
+                        stack1.append(n)
+
     def _update_aabb(self):
         gter = iter(self._grid)
 
