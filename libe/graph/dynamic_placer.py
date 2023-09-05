@@ -63,8 +63,8 @@ class _Component(AttributeChangeNotifier):
             1   # hust after bottom
         )
 
-        # A point in grid may have noting, one node only, one node and one
-        # edge starting/ending at that node, one edge or several
+        # A point in grid may have noting, one node only, one node and
+        # edges starting/ending at that node, one edge or several
         # crossing/collinear edges.
         # Other variants are the algorithm errors.
         self._grid = g = defaultdict(set)
