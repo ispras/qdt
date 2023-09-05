@@ -31,13 +31,14 @@ the `g`rid.
     def g(self, g):
         if g is self._g:
             return
-        if self._g is not None and self._gcoords is not None:
+        gcoords = self._gcoords is not None
+        if self._g is not None and gcoords:
             self._remove_from_g()
         if g is None:
             del self._g
         else:
             self._g = g
-            if self._gcoords is not None:
+            if gcoords:
                 self._add_to_g()
 
     _gcoords = None
@@ -50,31 +51,31 @@ the `g`rid.
         if gcoords == self._gcoords:
             return
 
-        if self._g is not None and self._gcoords is not None:
-            self._remove_from_g()
-
         if gcoords is None:
+            self._remove_from_g()
             del self._gcoords
         else:
             self._gcoords = gcoords
             if self._g is not None:
-                self._add_to_g()
+                self._update_coords()
 
     def _add_to_g(self):
+        self._update_coords()
+        listen(self._g, "resized", self._on_grid_resized)
+
+    def _update_coords(self):
         g = self._g
         gcoords = self._gcoords
         g.add(gcoords, self)
-        listen(g, "resized", self._on_grid_resized)
         self.coords = g(gcoords)
 
     def _on_grid_resized(self, axis, coord):
         gcoords = self._gcoords
-        if gcoords is None:
-            return
+        assert gcoords is not None
         if coord < gcoords[axis]:
             self.coords = self._g(gcoords)
 
     def _remove_from_g(self):
-        self._g.remove(self)
         dismiss(self._on_grid_resized)
+        self._g.remove(self)
         del self.coords
