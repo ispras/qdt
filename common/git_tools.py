@@ -8,6 +8,8 @@ __all__ = [
   , "init_submodules_from_cache"
   , "repo_path_in_tree"
   , "iter_submodules_caches"
+  , "REFS_ORDER_AS_IS"
+  , "REFS_ORDER_RECENT_FIRST"
 ]
 
 from collections import (
@@ -180,11 +182,25 @@ Notes:
         )
 
 
+def REFS_ORDER_AS_IS(repo):
+    return repo.references
+
+
+def REFS_ORDER_RECENT_FIRST(repo):
+    references = repo.references
+    for __, i in reversed(sorted(
+        (head.commit.committed_datetime, i)
+            for (i, head) in enumerate(references)
+    )):
+        yield references[i]
+
+
 def co_build_git_graph(
     repo,
     graph,
     node_factory = CommitDesc,
     iby = GGB_IBY,
+    refs_iter_func = REFS_ORDER_AS_IS,
 ):
     """
 Builds `graph` of Git `repo`sitory (`git.Repo`).
@@ -222,7 +238,7 @@ pauses (by `yields`).
     push = stack.append
     pop = stack.pop
 
-    for head in repo.references:
+    for head in refs_iter_func(repo):
         head_commit = head.commit
         head_hexsha = head_commit.hexsha
         # skip processed heads
