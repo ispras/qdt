@@ -130,6 +130,8 @@ Notes:
                 tags.append(next(piter))
             elif t == "remotes":
                 remotes[next(piter)].append(next(piter))
+            elif t == "stash":
+                local_heads.append("stash@{0}")
             else:
                 if t != "heads":
                     print("Unexpected head type: " + t)
