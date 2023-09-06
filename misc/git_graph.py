@@ -409,14 +409,25 @@ class GEVWidget(GUIFrame):
         self.columnconfigure(0, weight = 1)
 
         self._tv = tv = VarTreeview(self,
-            columns = ("message", "committer", "email", "datetime"),
+            columns = (
+                "message",
+                "author",
+                "author_email",
+                "author_datetime",
+                "committer",
+                "committer_email",
+                "committer_datetime",
+            ),
             selectmode = BROWSE,
         )
         tv.column("#0", minwidth = 10, width = 85, stretch = False)
         tv.column("message", minwidth = 10, width = 600)
+        tv.column("author", minwidth = 10)
+        tv.column("author_email", minwidth = 10)
+        tv.column("author_datetime", minwidth = 10)
         tv.column("committer", minwidth = 10)
-        tv.column("email", minwidth = 10)
-        tv.column("datetime", minwidth = 10)
+        tv.column("committer_email", minwidth = 10)
+        tv.column("committer_datetime", minwidth = 10)
 
         tv.grid(row = 0, column = 0, sticky = "NESW")
 
@@ -481,12 +492,16 @@ class GEVWidget(GUIFrame):
             for c in edge:
                 commit = c._mg._repo.commit(c.sha)
                 committer = commit.committer
+                author = commit.author
 
                 c2iid[c] = tv.insert("",
                     index = 0,
                     text = str(c.sha[:8]),
                     values = [
                         commit.message.splitlines()[0],
+                        author.name,
+                        author.email,
+                        str(commit.authored_datetime),
                         committer.name,
                         committer.email,
                         str(commit.committed_datetime),
