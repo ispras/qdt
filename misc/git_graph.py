@@ -10,6 +10,7 @@ from widgets import (
     CanvasDnD,
     GUIFrame,
     GUITk,
+    VarToplevel,
     VarTreeview,
 )
 from libe.common.events import (
@@ -489,6 +490,38 @@ class GEVWidget(GUIFrame):
         iid = c2iid.get(self._commit)
         if iid is not None:
             tv.selection_set(iid)
+
+
+class GEVWindow(VarToplevel):
+
+    def __init__(self, *a, **kw):
+        VarToplevel.__init__(self, *a, **kw)
+
+        self.title("Git Edge Viewer")
+
+        self._gevw = gevw = GEVWidget(self,
+            sizegrip = True,
+        )
+        gevw.pack(
+            fill = BOTH,
+            expand = True,
+        )
+
+    @property
+    def edge(self):
+        return self._gevw.edge
+
+    @edge.setter
+    def edge(self, edge):
+        self._gevw.edge = edge
+
+    @property
+    def commit(self):
+        return self._gevw.commit
+
+    @commit.setter
+    def commit(self, commit):
+        self._gevw.commit = commit
 
 
 _recursion = object()
