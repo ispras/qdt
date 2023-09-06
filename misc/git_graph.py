@@ -429,6 +429,15 @@ class GEVWidget(GUIFrame):
         tv.column("committer_email", minwidth = 10)
         tv.column("committer_datetime", minwidth = 10)
 
+        tv.heading("#0", text = "ID")
+        tv.heading("message", text = "Commit Message")
+        tv.heading("author", text = "Author")
+        tv.heading("author_email", text = "Author E-mail")
+        tv.heading("author_datetime", text = "Authored Timestamp")
+        tv.heading("committer", text = "Committer")
+        tv.heading("committer_email", text = "Committer E-mail")
+        tv.heading("committer_datetime", text = "Committed Timestamp")
+
         tv.grid(row = 0, column = 0, sticky = "NESW")
 
         add_scrollbars_native(self, tv, sizegrip = sizegrip)
