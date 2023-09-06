@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from common import (
+    mlget,
     mlget as _,
     Variable,
 )
@@ -37,21 +38,23 @@ from six.moves.tkinter_ttk import (
 variables = (Variable, TkVariable)
 
 
+def _wrap_text(text):
+    if isinstance(text, variables):
+        return text
+    if not text:
+        # e.g., an empty string
+        return StringVar()
+    # try to find translation
+    return mlget(text)
+
+
 class VarCheckbutton(Checkbutton):
 
     def __init__(self, *args, **kw):
-        text = kw.get("text", "")
-        if isinstance(text, variables):
-            kw["text"] = text.get()
-
+        self.text_var = text_var = _wrap_text(kw.get("text", ""))
+        kw["text"] = text_var.get()
         Checkbutton.__init__(self, *args, **kw)
-
-        # `StringVar` requires its master to be initialized.
-        if not isinstance(text, variables):
-            text = StringVar(self, text)
-
-        self.text_var = text
-        text.trace_variable("w", self.on_var_changed)
+        text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
         Checkbutton.config(self, text = self.text_var.get())
@@ -60,13 +63,10 @@ class VarCheckbutton(Checkbutton):
 class VarLabelFrame(LabelFrame):
 
     def __init__(self, *args, **kw):
-        if "text" in kw:
-            self.text_var = kw.pop("text")
-            kw["text"] = self.text_var.get()
-        else:
-            self.text_var = StringVar()
+        self.text_var = text_var =_wrap_text(kw.get("text", ""))
+        kw["text"] = text_var.get()
         LabelFrame.__init__(self, *args, **kw)
-        self.text_var.trace_variable("w", self.on_var_changed)
+        text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
         Label.config(self, text = self.text_var.get())
@@ -87,17 +87,11 @@ class VarLabel(Label):
                 )
             kw["text"] = var
 
-        if "text" in kw:
-            text = kw.pop("text")
-            if isinstance(text, variables):
-                self.text_var = text
-            else:
-                self.text_var = StringVar(value = text)
-            kw["text"] = self.text_var.get()
-        else:
-            self.text_var = StringVar()
+        self.text_var = text_var = _wrap_text(kw.pop("text", ""))
+        kw["text"] = text_var.get()
+
         Label.__init__(self, *args, **kw)
-        self.text_var.trace_variable("w", self.on_var_changed)
+        text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
         Label.config(self, text = self.text_var.get())
@@ -106,13 +100,10 @@ class VarLabel(Label):
 class VarButton(Button):
 
     def __init__(self, *args, **kw):
-        if "text" in kw:
-            self.text_var = kw.pop("text")
-            kw["text"] = self.text_var.get()
-        else:
-            self.text_var = StringVar()
+        self.text_var = text_var = _wrap_text(kw.get("text", ""))
+        kw["text"] = text_var.get()
         Button.__init__(self, *args, **kw)
-        self.text_var.trace_variable("w", self.on_var_changed)
+        text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
         Button.config(self, text = self.text_var.get())
@@ -132,8 +123,7 @@ class VarTk(Tk):
         if title is None:
             return self.var
 
-        if not isinstance(title, variables):
-            title = StringVar(self, value = title)
+        title = _wrap_text(title)
 
         if title is not self.var:
             if self.var:
@@ -222,8 +212,7 @@ class VarMenu(Menu):
                 else:
                     var = ""
 
-                if not isinstance(var, variables):
-                    var = StringVar(self, var)
+                var = _wrap_text(var)
 
                 binding = MenuVarBinding(self, var, self.count, param)
                 var.trace_variable("w", binding.on_var_changed)
@@ -270,7 +259,7 @@ class VarTreeview(Treeview):
 
     def heading(self, column, **kw):
         if "text" in kw:
-            text_var = kw.pop("text")
+            text_var = _wrap_text(kw.pop("text"))
             kw["text"] = text_var.get()
             binding = TreeviewHeaderBinding(self, column, text_var)
             text_var.trace_variable("w", binding.on_var_changed)
