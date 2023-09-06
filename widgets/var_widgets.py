@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from common import (
+    mlget as _,
     Variable,
 )
 
@@ -381,7 +382,7 @@ class VarNotebook(Notebook):
 
 if __name__ == "__main__":
     root = VarTk()
-    root.title(StringVar(value = "Variable widgets test"))
+    root.title(_("Variable widgets test"))
     root.grid()
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)
