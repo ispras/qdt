@@ -238,6 +238,10 @@ class GGVWidget(GUIFrame):
         p = self._dgp
 
         if split is not None:
+            if split is self._edge:
+                # discard selection
+                self.edge = None
+
             # re-create with new edges
             p.remove_node(split)
             if split:
