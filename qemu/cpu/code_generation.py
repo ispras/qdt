@@ -82,7 +82,6 @@ from source import (
     OpDeclareAssign,
     OpDeref,
     OpEq,
-    OpGE,
     OpGreater,
     OpIndex,
     OpLShift,
