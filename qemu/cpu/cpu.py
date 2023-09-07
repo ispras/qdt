@@ -245,7 +245,8 @@ class CPUType(QOMCPU):
         target_phys_addr_space_bits = 32,
         target_virt_addr_space_bits = 32,
         nb_mmu_modes = 1,
-        info_path = None
+        info_path = None,
+        **qom_kw
     ):
         """ CPU description.
 
@@ -256,7 +257,7 @@ class CPUType(QOMCPU):
         name of Target architecture
         """
 
-        super(CPUType, self).__init__(name, directory)
+        super(CPUType, self).__init__(name, directory, **qom_kw)
 
         self.target_bigendian = target_bigendian
 
