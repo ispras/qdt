@@ -528,6 +528,7 @@ class SwitchCaseDefault(CNode):
             self.new_line = None
 
 
+# TODO: joining "a""b" to "ab". Optionally? By a helper function?
 class StrConcat(CNode):
 
     def __init__(self, *args, **kw_args):
