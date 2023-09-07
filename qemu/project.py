@@ -254,14 +254,20 @@ class QProject(object):
     def replace_relpaths_to_abspaths(self, path):
         for desc in self.descriptions:
             if isinstance(desc, CPUDescription):
-                if not isabs(desc.info_path):
-                    desc.info_path = normpath(join(path, desc.info_path))
+                info_path = desc.info_path
+                if not info_path:
+                    continue
+                if not isabs(info_path):
+                    desc.info_path = normpath(join(path, info_path))
 
     def replace_abspaths_to_relpaths(self, path):
         for desc in self.descriptions:
             if isinstance(desc, CPUDescription):
-                if isabs(desc.info_path):
-                    desc.info_path = relpath(desc.info_path, start = path)
+                info_path = desc.info_path
+                if not info_path:
+                    continue
+                if isabs(info_path):
+                    desc.info_path = relpath(info_path, start = path)
 
     def __var_base__(self):
         return "project"
