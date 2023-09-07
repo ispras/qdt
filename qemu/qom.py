@@ -1052,8 +1052,8 @@ class QOMDevice(QOMType):
 
 class QOMCPU(QOMType):
 
-    def __init__(self, name, directory):
-        super(QOMCPU, self).__init__(name + "-cpu", directory)
+    def __init__(self, name, directory, **qom_kw):
+        super(QOMCPU, self).__init__(name + "-cpu", directory, **qom_kw)
         self.cpu_name = name.lower()
         self.target_name = directory
 
