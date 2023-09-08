@@ -694,7 +694,14 @@ class PCMachineWatcher(MachineWatcher):
         rt = self.rt
         instances = self.instances
 
-        gsi = rt["pcms"]["gsi"]
+        # since f0bb276bf8d5b3df57697357b802ca76e4cdf05f
+        #        hw/i386: split PCMachineState deriving X86MachineState from it
+        #        pcmc -> x86ms
+        try:
+            gsi = rt["pcmc"]["gsi"]
+        except:
+            # TODO: use heuristics
+            gsi = rt["x86ms"]["gsi"]
         # gsi is array of qemu_irq
         gsi_state = rt["gsi_state"]
         i8259_irq = gsi_state["i8259_irq"]
