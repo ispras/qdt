@@ -227,16 +227,16 @@ Notifications are issued for many machine composition events.
         i = RQInstance(obj, rqom_type)
         self.instances[obj.address] = i
 
-        # propagate class properties to the instance
-        for t in rqom_type.iter_inheritance():
+        return i
+
+    def _propagate_class_properties(self, i):
+        for t in i.type.iter_inheritance():
             for prop in t.properties:
                 i.properties[prop.name] = RQObjectProperty(i, prop.prop,
                     name = prop.name,
                     _type = prop.type
                 )
                 self.__notify_property_added(i, prop)
-
-        return i
 
     # Breakpoint handlers
 
@@ -270,6 +270,8 @@ Notifications are issued for many machine composition events.
             if self.verbose:
                 print("Creating memory")
             self.current_memory = inst
+
+        self._propagate_class_properties(inst)
 
     def on_obj_init_end(self):
         # object_initialize_with_type, return
@@ -306,12 +308,12 @@ Notifications are issued for many machine composition events.
 
         self.__notify_machine_created(inst)
 
-        if not self.verbose:
-            return
+        if self.verbose:
+            print("Machine creation started\nDescription: " +
+                desc.fetch_c_string()
+            )
 
-        print("Machine creation started\nDescription: " +
-            desc.fetch_c_string()
-        )
+        self._propagate_class_properties(inst)
 
     def on_mem_init_end(self):
         # return from memory_region_init
