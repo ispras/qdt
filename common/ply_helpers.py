@@ -5,7 +5,7 @@ __all__ = [
 from .pypath import (
     pypath,
 )
-with pypath("...ply"):
+with pypath("..ply"):
     from ply.lex import (
         LexToken,
     )
