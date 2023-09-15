@@ -8,21 +8,19 @@ __all__ = [
   , "autoname_rule"
 ]
 
+
+from libe.parsers.ply_helpers import (
+    iter_tokens,
+)
+
 from types import (
     FunctionType,
     MethodType
-)
-from .pypath import (
-    pypath
 )
 from inspect import (
     currentframe,
     getframeinfo
 )
-with pypath("..ply"):
-    from ply.helpers import (
-        iter_tokens
-    )
 from re import (
     compile
 )
