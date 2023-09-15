@@ -3,13 +3,6 @@ __all__ = [
       , "SyntaxView"
 ]
 
-from common import (
-    pypath,
-)
-with pypath("..ply"):
-    from ply.helpers import (
-        iter_tokens,
-    )
 from .gui_frame import (
     GUIFrame,
 )
@@ -17,6 +10,9 @@ from .gui_text import (
     GUIText,
     GUITextM,
     READONLY,
+)
+from libe.parsers.ply_helpers import (
+    iter_tokens,
 )
 
 from six.moves import (
