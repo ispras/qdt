@@ -4,30 +4,31 @@ __all__ = [
 ]
 
 from common import (
-    pypath
+    pypath,
 )
 with pypath("..ply"):
     from ply.helpers import (
-        iter_tokens
+        iter_tokens,
     )
 from .gui_frame import (
-    GUIFrame
-)
-from six.moves import (
-    range
-)
-from six.moves.tkinter import (
-    HORIZONTAL,
-    END,
-    Scrollbar
-)
-from six.moves.tkinter_font import (
-    NORMAL
+    GUIFrame,
 )
 from .gui_text import (
     GUIText,
     GUITextM,
-    READONLY
+    READONLY,
+)
+
+from six.moves import (
+    range,
+)
+from six.moves.tkinter import (
+    END,
+    HORIZONTAL,
+    Scrollbar,
+)
+from six.moves.tkinter_font import (
+    NORMAL,
 )
 
 
