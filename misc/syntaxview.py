@@ -1,41 +1,40 @@
-from six.moves.tkinter import (
-    END,
-    LEFT,
-    RIGHT,
-    BOTH,
-    Tk
-)
-from widgets import (
-    SyntaxView
-)
 from common import (
     bidict,
-    pypath,
-    join_tokens,
     bind,
-    Persistent
-)
-from argparse import (
-    ArgumentParser
-)
-from source import (
-    cpp_lexer,
-    cpp_parser,
-    backslash_lexer,
-    backslash_parser,
-    ctags_lexer,
-    ctags_parser
-)
-from traceback import (
-    print_exc
-)
-from common import (
-    intervalmap
+    intervalmap,
+    join_tokens,
+    Persistent,
+    pypath,
 )
 with pypath("..ply"):
     from ply.helpers import (
         iter_tokens
     )
+from source import (
+    backslash_lexer,
+    backslash_parser,
+    ctags_lexer,
+    ctags_parser,
+    cpp_lexer,
+    cpp_parser,
+)
+from widgets import (
+    SyntaxView,
+)
+
+from argparse import (
+    ArgumentParser
+)
+from six.moves.tkinter import (
+    BOTH,
+    END,
+    LEFT,
+    RIGHT,
+    Tk,
+)
+from traceback import (
+    print_exc,
+)
 
 
 class Stage(object):
