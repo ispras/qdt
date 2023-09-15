@@ -4,12 +4,10 @@ from common import (
     intervalmap,
     join_tokens,
     Persistent,
-    pypath,
 )
-with pypath("..ply"):
-    from ply.helpers import (
-        iter_tokens
-    )
+from libe.parsers.ply_helpers import (
+    iter_tokens,
+)
 from source import (
     backslash_lexer,
     backslash_parser,
