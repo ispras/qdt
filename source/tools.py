@@ -3,6 +3,10 @@ __all__ = [
  ,  "get_cpp_search_paths"
 ]
 
+from common import (
+    OrderedSet,
+)
+
 from subprocess import (
     Popen,
     PIPE
@@ -43,7 +47,9 @@ def get_cpp_search_paths():
         if l.startswith(b"#include <...>"):
             break
 
-    paths = set()
+    # Order of -I may alter preprocessing result.
+    # At least, any randomization must be avoided.
+    paths = OrderedSet()
     for l in liter:
         # All include paths are indented but list terminator is not:
         # ^End of search list.
