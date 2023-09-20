@@ -71,6 +71,7 @@ def main():
     )
     arg("-I",
         action = "append",
+        default = [],
         help = "extra CPP search path for #include",
         metavar = "include_dir",
     )
