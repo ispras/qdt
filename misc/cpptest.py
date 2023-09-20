@@ -133,12 +133,11 @@ def main():
 
             makedirs(curOutDir, exist_ok = True)
 
-            with open(fullInPath, "r") as inFile:
-                inData = inFile.read()
+            p = Preprocessor(CPPLexer)
+
+            inData = p.read_include_file(fullInPath)
 
             outFile = open(fullOutPath, "w")
-
-            p = Preprocessor(CPPLexer)
 
             if inc_cache is None:
                 if hasattr(p, "inc_cache"):
