@@ -177,6 +177,27 @@ Use `python2` or `python3` explicitly when there are several Python
 versions.
 _Or when `pip3` command (below) does not work._
 
+Because of Py2 EOL installation of some packages may fail.
+There is a known working package set...
+
+```
+sudo python2 -m pip install --upgrade \
+	gitpython==2.1.15 \
+	six==1.14.0 \
+	graphviz==0.13.2 \
+	path.py==11.5.2 \
+	construct==2.10.54 \
+	serial==0.0.97 \
+	psutil==5.4.2 \
+	appdirs==1.4.4 \
+	iso8601==0.1.12 \
+	PyYAML==5.3 \
+	smmap==3.0.1 \
+	importlib-metadata==1.6.0 \
+	zipp==1.2.0 \
+	configparser==4.0.2 \
+```
+
 QDT adapts to changes in QEMU infrastructure.
 It has a set of heuristics referring to specific commits in QEMU Git history.
 `gitpython` package is used to analyze Git graph and get effective heuristics
