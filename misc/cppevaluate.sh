@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export PYTHONPATH="..:$PYTHONPATH"
-
+FILE_DIR=$(dirname $0)
+QDT_ROOT=$(cd "$FILE_DIR/.." && pwd)
+export PYTHONPATH="$QDT_ROOT:$PYTHONPATH"
 QEMU_SRC="$HOME/work/qemu/src"
 QEMU_BUILD="$HOME/work/qemu/debug/build"
 
@@ -42,18 +43,18 @@ CPPTEST_ARGS=" \
 	-I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
 "
 
-$(cd ../ply && git checkout base)
+$(cd "$QDT_ROOT/ply" && git checkout base)
 
-if ! python cpptest.py $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
 
-$(cd ../ply && git checkout refactor)
+$(cd "$QDT_ROOT/ply" && git checkout refactor)
 
-if ! python cpptest.py $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
 
-$(cd ../ply && git checkout inc_cache)
+$(cd "$QDT_ROOT/ply" && git checkout inc_cache)
 
-if ! python cpptest.py $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
 
-$(cd ../ply && git checkout incd_cache)
+$(cd "$QDT_ROOT/ply" && git checkout incd_cache)
 
-if ! python cpptest.py $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
