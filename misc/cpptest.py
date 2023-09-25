@@ -80,6 +80,11 @@ def main():
         help = "time limit",
         metavar = "seconds",
     )
+    arg("--tag",
+        default = "",
+        help = "a tag for log file",
+        metavar = "tag",
+    )
 
     args = ap.parse_args()
 
@@ -96,6 +101,7 @@ def main():
     logWrite = logFile.write
 
     log("logFileName   : " + logFileName)
+    log("tag           : " + args.tag)
     log("inDir         : " + inDir)
     log("pattern       : " + pattern)
     log("outDir        : " + outDir)
