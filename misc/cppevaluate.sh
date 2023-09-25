@@ -45,16 +45,28 @@ CPPTEST_ARGS=" \
 
 $(cd "$QDT_ROOT/ply" && git checkout base)
 
-if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" --tag base $CPPTEST_ARGS
+then
+	exit 1
+fi
 
 $(cd "$QDT_ROOT/ply" && git checkout refactor)
 
-if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" --tag refactor $CPPTEST_ARGS
+then
+	exit 1
+fi
 
 $(cd "$QDT_ROOT/ply" && git checkout inc_cache)
 
-if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" --tag inc_cache $CPPTEST_ARGS
+then
+	exit 1
+fi
 
 $(cd "$QDT_ROOT/ply" && git checkout incd_cache)
 
-if ! python "$QDT_ROOT/misc/cpptest.py" $CPPTEST_ARGS ; then exit 1 ; fi
+if ! python "$QDT_ROOT/misc/cpptest.py" --tag incd_cache $CPPTEST_ARGS
+then
+	exit 1
+fi
