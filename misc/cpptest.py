@@ -23,6 +23,9 @@ from os.path import (
     join,
     sep,
 )
+from psutil import (
+    Process,
+)
 with pypath("..ply"):
     import ply.cpp
     from ply.cpp import (
@@ -48,6 +51,32 @@ def log(msg):
 
 systemCPPPaths = get_cpp_search_paths()
 CPPLexer = lex(ply.cpp)
+proc = Process()
+
+
+def by3(iterable):
+    i = iter(iterable)
+    for n0 in i:
+        try:
+            n1 = next(i)
+        except StopIteration:
+            n1 = ""
+            n2 = ""
+        else:
+            try:
+                n2 = next(i)
+            except StopIteration:
+                n2 = ""
+        yield (n0, n1, n2)
+
+
+def log_mem_usage():
+    mu = str(proc.memory_info().rss)
+    mu = "_".join(reversed(tuple(
+        "".join(reversed(t)) for t in by3(reversed(mu))
+    )))
+    log("memory: " + mu)
+
 
 def main():
     global logWrite
@@ -127,6 +156,8 @@ def main():
             if not matches(fullInPath):
                 continue
 
+            log_mem_usage()
+
             pathSfx = fullInPath[pathSlice]
             fullOutPath = join(outDir, pathSfx) + ".pp"
             curOutDir = dirname(fullOutPath)
@@ -174,6 +205,8 @@ def main():
         else:
             continue
         break
+
+    log_mem_usage()
 
     log("total    : " + str(total))
     log("tTime    : " + str(tTime))
