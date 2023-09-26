@@ -75,7 +75,7 @@ def log_mem_usage():
     mu = "_".join(reversed(tuple(
         "".join(reversed(t)) for t in by3(reversed(mu))
     )))
-    log("memory: " + mu)
+    log("memory:\n\t" + mu)
 
 
 def main():
@@ -129,14 +129,14 @@ def main():
     logFile = open(logFileName, "w")
     logWrite = logFile.write
 
-    log("logFileName   : " + logFileName)
-    log("tag           : " + args.tag)
-    log("inDir         : " + inDir)
-    log("pattern       : " + pattern)
-    log("outDir        : " + outDir)
-    log("systemCPPPaths:" + "\n\t-I".join(("",) + systemCPPPaths))
-    log("CPPPaths      :" + "\n\t-I".join([""] + CPPPaths))
-    log("tLimit        : " + str(tLimit))
+    log("logFileName:\n\t" + logFileName)
+    log("tag:\n\t" + args.tag)
+    log("inDir:\n\t" + inDir)
+    log("pattern:\n\t" + pattern)
+    log("outDir:\n\t" + outDir)
+    log("systemCPPPaths:\n\t" + "\n\t-I".join(systemCPPPaths))
+    log("CPPPaths:\n\t" + "\n\t-I".join(CPPPaths))
+    log("tLimit:\n\t" + str(tLimit))
 
     rePattern = compile(pattern)
 
@@ -164,7 +164,7 @@ def main():
 
             log(
                 str(total) + ": "
-                + pathSfx + " -> " + fullOutPath
+                + pathSfx + "\n\t" + fullOutPath
                 + " at " + str(time() - tStart)
             )
 
@@ -208,10 +208,10 @@ def main():
 
     log_mem_usage()
 
-    log("total    : " + str(total))
-    log("tTime    : " + str(tTime))
-    log("speed f/s: " + str(total / tTime) if tTime else "-")
-    log("speed s/f: " + str(tTime / total) if total else "-")
+    log("total:\n\t" + str(total))
+    log("tTime:\n\t" + str(tTime))
+    log("speed f/s:\n\t" + str(total / tTime) if tTime else "-")
+    log("speed s/f:\n\t" + str(tTime / total) if total else "-")
 
     logWrite = logDrop
     logFile.close()
