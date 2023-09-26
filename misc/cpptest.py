@@ -151,7 +151,7 @@ def main():
     inc_cache = None
 
     for dirPath, __, fileNames in walk(inDir):
-        for fileName in fileNames:
+        for fileName in sorted(fileNames):
             fullInPath = join(dirPath, fileName)
             if not matches(fullInPath):
                 continue
