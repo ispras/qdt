@@ -37,6 +37,10 @@ with pypath("..ply"):
 from re import (
     compile,
 )
+from subprocess import (
+    PIPE,
+    Popen,
+)
 from time import (
     time,
 )
@@ -52,6 +56,29 @@ def log(msg):
 systemCPPPaths = get_cpp_search_paths()
 CPPLexer = lex(ply.cpp)
 proc = Process()
+
+
+def system_cpp(
+    inFilePath,
+    outFilePath,
+    CPPPaths = tuple(),
+):
+    paths_args = []
+    for CPPPath in CPPPaths:
+        paths_args.append("-I")
+        paths_args.append(CPPPath)
+
+    p = Popen(
+        ["cpp"]
+      + paths_args
+      + ["-E"]
+      # + ["-traditional-cpp"]
+      + ["-o", outFilePath, inFilePath],
+        stdin = PIPE,
+    )
+
+    if p.wait():
+        raise RuntimeError("cpp failed")
 
 
 def by3(iterable):
@@ -104,6 +131,10 @@ def main():
         help = "extra CPP search path for #include",
         metavar = "include_dir",
     )
+    arg("--cpp",
+        action = "store_true",
+        help = "use system cpp",
+    )
     arg("-t",
         default = "60.",
         help = "time limit",
@@ -123,6 +154,7 @@ def main():
     outDir = args.o
     CPPPaths = sorted(set(args.I))
     tLimit = float(args.t)
+    cpp = args.cpp
 
     logFileName = join(outDir, "log.txt")
     makedirs(outDir, exist_ok = True)
@@ -136,6 +168,7 @@ def main():
     log("outDir:\n\t" + outDir)
     log("systemCPPPaths:" + "\n\t-I".join(("",) + systemCPPPaths))
     log("CPPPaths:" + "\n\t-I".join([""] + CPPPaths))
+    log("using system cpp:\n\t" + str(cpp))
     log("tLimit:\n\t" + str(tLimit))
 
     rePattern = compile(pattern)
@@ -170,31 +203,36 @@ def main():
 
             makedirs(curOutDir, exist_ok = True)
 
-            p = Preprocessor(CPPLexer)
-
-            inData = p.read_include_file(fullInPath)
-
-            outFile = open(fullOutPath, "w")
-
-            if inc_cache is None:
-                if hasattr(p, "inc_cache"):
-                    inc_cache = p.inc_cache
+            if cpp:
+                system_cpp(fullInPath, fullOutPath,
+                    CPPPaths = CPPPaths,
+                )
             else:
-                p.inc_cache = inc_cache
+                p = Preprocessor(CPPLexer)
 
-            for __ in map(p.add_path, chain(CPPPaths, systemCPPPaths)): pass
-            p.parse(inData, fullInPath)
+                inData = p.read_include_file(fullInPath)
 
-            # cache
-            write = outFile.write
-            token = p.token
+                outFile = open(fullOutPath, "w")
 
-            tok = token()
-            while tok:
-                write(tok.value)
+                if inc_cache is None:
+                    if hasattr(p, "inc_cache"):
+                        inc_cache = p.inc_cache
+                else:
+                    p.inc_cache = inc_cache
+
+                for __ in map(p.add_path, chain(CPPPaths, systemCPPPaths)): pass
+                p.parse(inData, fullInPath)
+
+                # cache
+                write = outFile.write
+                token = p.token
+
                 tok = token()
+                while tok:
+                    write(tok.value)
+                    tok = token()
 
-            outFile.close()
+                outFile.close()
 
             total += 1
             tEnd = time()
