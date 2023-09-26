@@ -134,8 +134,8 @@ def main():
     log("inDir:\n\t" + inDir)
     log("pattern:\n\t" + pattern)
     log("outDir:\n\t" + outDir)
-    log("systemCPPPaths:\n\t" + "\n\t-I".join(systemCPPPaths))
-    log("CPPPaths:\n\t" + "\n\t-I".join(CPPPaths))
+    log("systemCPPPaths:" + "\n\t-I".join(("",) + systemCPPPaths))
+    log("CPPPaths:" + "\n\t-I".join([""] + CPPPaths))
     log("tLimit:\n\t" + str(tLimit))
 
     rePattern = compile(pattern)
