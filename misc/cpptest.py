@@ -71,8 +71,13 @@ def system_cpp(
     p = Popen(
         ["cpp"]
       + paths_args
-      + ["-E"]
-      # + ["-traditional-cpp"]
+      + [
+          # preprocess only, as desired
+          "-E",
+          # no standard includes (all must be in CPPPaths)
+          "-nostdinc",
+          "-nostdinc++",
+        ]
       + ["-o", outFilePath, inFilePath],
         stdin = PIPE,
     )
@@ -207,7 +212,7 @@ def main():
 
             if cpp:
                 system_cpp(fullInPath, fullOutPath,
-                    CPPPaths = CPPPaths,
+                    CPPPaths = allIncPaths,
                 )
             else:
                 p = Preprocessor(CPPLexer)
