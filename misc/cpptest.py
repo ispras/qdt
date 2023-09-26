@@ -183,6 +183,8 @@ def main():
 
     inc_cache = None
 
+    allIncPaths = tuple(chain(CPPPaths, systemCPPPaths))
+
     for dirPath, __, fileNames in walk(inDir):
         for fileName in sorted(fileNames):
             fullInPath = join(dirPath, fileName)
@@ -220,7 +222,7 @@ def main():
                 else:
                     p.inc_cache = inc_cache
 
-                for __ in map(p.add_path, chain(CPPPaths, systemCPPPaths)): pass
+                for __ in map(p.add_path, allIncPaths): pass
                 p.parse(inData, fullInPath)
 
                 # cache
