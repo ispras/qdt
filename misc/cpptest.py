@@ -74,6 +74,8 @@ def system_cpp(
       + [
           # preprocess only, as desired
           "-E",
+          # no line markers
+          "-P",
           # no standard includes (all must be in CPPPaths)
           "-nostdinc",
           "-nostdinc++",
