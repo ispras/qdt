@@ -77,7 +77,6 @@ def system_cpp(
           "-P",
           # no standard includes (all must be in CPPPaths)
           "-nostdinc",
-          "-nostdinc++",
         ]
       + [fullInPath],
         stdout = PIPE,
