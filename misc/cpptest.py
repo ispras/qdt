@@ -214,7 +214,7 @@ def main():
 
             if cpp:
                 system_cpp(fullInPath, fullOutPath,
-                    CPPPaths = allIncPaths,
+                    CPPPaths = (dirPath,) + allIncPaths,
                 )
             else:
                 p = Preprocessor(CPPLexer)
@@ -229,6 +229,7 @@ def main():
                 else:
                     p.inc_cache = inc_cache
 
+                p.add_path(dirPath)
                 for __ in map(p.add_path, allIncPaths): pass
                 p.parse(inData, fullInPath)
 
