@@ -155,6 +155,10 @@ def main():
         help = "a tag for log file",
         metavar = "tag",
     )
+    arg("-n", "--normalize",
+        help = "make output more comparable",
+        action = "store_true",
+    )
 
     args = ap.parse_args()
 
@@ -165,6 +169,7 @@ def main():
     CPPPaths = sorted(set(args.I))
     tLimit = float(args.t)
     cpp = args.cpp
+    normalize = args.normalize
 
     logFileName = join(outDir, "log.txt")
     makedirs(outDir, exist_ok = True)
@@ -179,6 +184,7 @@ def main():
     log("systemCPPPaths:" + "\n\t-I".join(("",) + systemCPPPaths))
     log("CPPPaths:" + "\n\t-I".join([""] + CPPPaths))
     log("using system cpp:\n\t" + str(cpp))
+    log("normalize:\n\t" + str(normalize))
     log("tLimit:\n\t" + str(tLimit))
 
     rePattern = compile(pattern)
@@ -213,6 +219,9 @@ def main():
                 + " at " + str(time() - tStart)
             )
 
+            p = Preprocessor(CPPLexer)
+            WS = p.t_WS
+
             makedirs(curOutDir, exist_ok = True)
 
             outFile = open(fullOutPath, "w")
@@ -224,10 +233,32 @@ def main():
                     CPPPaths = (dirPath,) + allIncPaths,
                 )
 
-                write(outData)
-            else:
-                p = Preprocessor(CPPLexer)
+                if normalize:
+                    lex = CPPLexer.clone()
+                    lex.input(outData)
 
+                    prev_spaces = set()
+
+                    # cache
+                    account_spaces = prev_spaces.update
+                    token = lex.token
+
+                    tok = token()
+                    while tok:
+                        if tok.type in WS:
+                            account_spaces(tok.value)
+                        else:
+                            if prev_spaces:
+                                if '\n' in prev_spaces:
+                                    write('\n')
+                                else:
+                                    write(next(iter(prev_spaces)))
+                            write(tok.value)
+
+                        tok = token()
+                else:
+                    write(outData)
+            else:
                 inData = p.read_include_file(fullInPath)
 
                 if inc_cache is None:
@@ -240,12 +271,32 @@ def main():
                 for __ in map(p.add_path, allIncPaths): pass
                 p.parse(inData, fullInPath)
 
+                # cache
                 token = p.token
 
                 tok = token()
-                while tok:
-                    write(tok.value)
-                    tok = token()
+                if normalize:
+                    prev_spaces = set()
+
+                    # cache
+                    account_spaces = prev_spaces.update
+
+                    while tok:
+                        if tok.type in WS:
+                            account_spaces(tok.value)
+                        else:
+                            if prev_spaces:
+                                if '\n' in prev_spaces:
+                                    write('\n')
+                                else:
+                                    write(next(iter(prev_spaces)))
+                            write(tok.value)
+
+                        tok = token()
+                else:
+                    while tok:
+                        write(tok.value)
+                        tok = token()
 
             outFile.close()
 
