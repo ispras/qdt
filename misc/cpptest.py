@@ -59,8 +59,7 @@ proc = Process()
 
 
 def system_cpp(
-    inFilePath,
-    outFilePath,
+    fullInPath,
     CPPPaths = tuple(),
 ):
     paths_args = []
@@ -80,12 +79,17 @@ def system_cpp(
           "-nostdinc",
           "-nostdinc++",
         ]
-      + ["-o", outFilePath, inFilePath],
-        stdin = PIPE,
+      + [fullInPath],
+        stdout = PIPE,
+        stderr = PIPE,
     )
 
+    stdo, stde = p.communicate()
+
     if p.wait():
-        raise RuntimeError("cpp failed")
+        raise RuntimeError("cpp failed\n" + stde)
+
+    return stdo
 
 
 def by3(iterable):
@@ -212,16 +216,20 @@ def main():
 
             makedirs(curOutDir, exist_ok = True)
 
+            outFile = open(fullOutPath, "w")
+            # cache
+            write = outFile.write
+
             if cpp:
-                system_cpp(fullInPath, fullOutPath,
+                outData = system_cpp(fullInPath,
                     CPPPaths = (dirPath,) + allIncPaths,
                 )
+
+                write(outData)
             else:
                 p = Preprocessor(CPPLexer)
 
                 inData = p.read_include_file(fullInPath)
-
-                outFile = open(fullOutPath, "w")
 
                 if inc_cache is None:
                     if hasattr(p, "inc_cache"):
@@ -233,8 +241,6 @@ def main():
                 for __ in map(p.add_path, allIncPaths): pass
                 p.parse(inData, fullInPath)
 
-                # cache
-                write = outFile.write
                 token = p.token
 
                 tok = token()
@@ -242,7 +248,7 @@ def main():
                     write(tok.value)
                     tok = token()
 
-                outFile.close()
+            outFile.close()
 
             total += 1
             tEnd = time()
