@@ -124,7 +124,7 @@ def main():
         metavar = "output_dir",
     )
     arg("-p",
-        default = ".*[.](h|c|(cpp)|(hpp))$",
+        default = ".*[.](c|(cpp))$",
         help = "inclusion pattern",
         metavar = "pattern",
     )
