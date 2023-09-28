@@ -265,7 +265,7 @@ def main():
                                 if '\n' in prev_spaces:
                                     write('\n')
                                 else:
-                                    write(next(iter(prev_spaces)))
+                                    write(' ')
                                 clear_spaces()
 
                             write(tok.value)
@@ -302,7 +302,7 @@ def main():
                                 if '\n' in prev_spaces:
                                     write('\n')
                                 else:
-                                    write(next(iter(prev_spaces)))
+                                    write(' ')
                                 clear_spaces()
 
                             write(tok.value)
