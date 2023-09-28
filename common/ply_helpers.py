@@ -28,3 +28,10 @@ def iter_tokens(root):
         for child in children:
             for tok in iter_tokens(child):
                 yield tok
+
+
+def iter_grammar_tokens(ns):
+    for t in dir(ns):
+        if t.startswith("t_"):
+            if t != "t_error":
+                yield t[2:]
