@@ -7,6 +7,7 @@ from libe.common.pypath import (
 )
 from source import (
     get_cpp_search_paths,
+    iter_gcc_defines,
 )
 
 from argparse import (
@@ -53,6 +54,7 @@ def log(msg):
     print(msg)
 
 
+gccDefines = tuple(iter_gcc_defines())
 systemCPPPaths = get_cpp_search_paths()
 CPPLexer = lex(ply.cpp)
 proc = Process()
@@ -206,6 +208,15 @@ def main():
 
     allIncPaths = tuple(chain(CPPPaths, systemCPPPaths))
 
+    # Defining gcc's macros for each file confuses Preprocessor caching.
+    # Instead, they are defined once and reused.
+    # Note, ply.cpp.Macro objects are constants actually.
+    # This also ensures __DATE__ & __TIME__ macros are same for all files.
+    p = Preprocessor(CPPLexer)
+    for __ in map(p.define, gccDefines): pass
+    gccMacros = p.macros
+    del p
+
     for dirPath, __, fileNames in walk(inDir):
         for fileName in sorted(fileNames):
             fullInPath = join(dirPath, fileName)
@@ -273,6 +284,8 @@ def main():
 
                 p.add_path(dirPath)
                 for __ in map(p.add_path, allIncPaths): pass
+                p.macros.update(gccMacros)
+
                 p.parse(inData, fullInPath)
 
                 # cache
