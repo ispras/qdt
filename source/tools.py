@@ -2,12 +2,16 @@ __all__ = [
     "line_origins"
   , "get_cpp_search_paths"
   , "get_gcc_defines_raw"
+  , "iter_gcc_defines"
 ]
 
 from common import (
     OrderedSet,
 )
 
+from re import (
+    compile,
+)
 from subprocess import (
     Popen,
     PIPE
@@ -15,6 +19,9 @@ from subprocess import (
 from sys import (
     version_info as py_version
 )
+
+re_define = compile(br"#\s*define\s+")
+
 
 def line_origins(origins):
     """ Adds extra references to origins so the chunks of first one will be to
@@ -76,3 +83,7 @@ def get_gcc_defines_raw():
         raise RuntimeError("Cannot get default gcc defines\n" + err)
 
     return out
+
+
+def iter_gcc_defines():
+    return (re_define.sub(b"", l) for l in get_gcc_defines_raw().splitlines())
