@@ -199,6 +199,11 @@ def main():
 
     inc_cache = None
 
+    prev_spaces = set()
+    # cache
+    account_spaces = prev_spaces.update
+    clear_spaces = prev_spaces.clear
+
     allIncPaths = tuple(chain(CPPPaths, systemCPPPaths))
 
     for dirPath, __, fileNames in walk(inDir):
@@ -237,12 +242,9 @@ def main():
                     lex = CPPLexer.clone()
                     lex.input(outData)
 
-                    prev_spaces = set()
-
-                    # cache
-                    account_spaces = prev_spaces.update
                     token = lex.token
 
+                    clear_spaces()
                     tok = token()
                     while tok:
                         if tok.type in WS:
@@ -253,6 +255,8 @@ def main():
                                     write('\n')
                                 else:
                                     write(next(iter(prev_spaces)))
+                                clear_spaces()
+
                             write(tok.value)
 
                         tok = token()
@@ -274,13 +278,9 @@ def main():
                 # cache
                 token = p.token
 
+                clear_spaces()
                 tok = token()
                 if normalize:
-                    prev_spaces = set()
-
-                    # cache
-                    account_spaces = prev_spaces.update
-
                     while tok:
                         if tok.type in WS:
                             account_spaces(tok.value)
@@ -290,6 +290,8 @@ def main():
                                     write('\n')
                                 else:
                                     write(next(iter(prev_spaces)))
+                                clear_spaces()
+
                             write(tok.value)
 
                         tok = token()
