@@ -1,6 +1,7 @@
 __all__ = [
     "line_origins"
- ,  "get_cpp_search_paths"
+  , "get_cpp_search_paths"
+  , "get_gcc_defines_raw"
 ]
 
 from common import (
@@ -60,3 +61,18 @@ def get_cpp_search_paths():
         paths.add(p)
 
     return tuple(paths)
+
+
+def get_gcc_defines_raw():
+    gcc = Popen(["gcc", "-dM", "-E", "-"],
+        stdout = PIPE,
+        stderr = PIPE,
+        stdin = PIPE,
+    )
+
+    out, err = gcc.communicate(input = None)
+
+    if gcc.returncode:
+        raise RuntimeError("Cannot get default gcc defines\n" + err)
+
+    return out
