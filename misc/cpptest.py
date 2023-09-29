@@ -245,9 +245,12 @@ def main():
             write = outFile.write
 
             if cpp:
-                outData = system_cpp(fullInPath,
-                    CPPPaths = (dirPath,) + allIncPaths,
-                )
+                try:
+                    outData = system_cpp(fullInPath,
+                        CPPPaths = (dirPath,) + allIncPaths,
+                    )
+                except:
+                    outData = ""
 
                 if normalize:
                     lex = CPPLexer.clone()
