@@ -63,6 +63,7 @@ proc = Process()
 def system_cpp(
     fullInPath,
     CPPPaths = tuple(),
+    P = True,
 ):
     paths_args = []
     for CPPPath in CPPPaths:
@@ -75,11 +76,13 @@ def system_cpp(
       + [
           # preprocess only, as desired
           "-E",
-          # no line markers
-          "-P",
           # no standard includes (all must be in CPPPaths)
           "-nostdinc",
         ]
+      + (
+            # no line markers
+            ["-P"] if P else []
+        )
       + [fullInPath],
         stdout = PIPE,
         stderr = PIPE,
@@ -147,6 +150,10 @@ def main():
         action = "store_true",
         help = "use system cpp",
     )
+    arg("-P",
+        action = "store_true",
+        help = "do not pass -P to system cpp",
+    )
     arg("-t",
         default = "60.",
         help = "time limit",
@@ -171,6 +178,7 @@ def main():
     CPPPaths = sorted(set(args.I))
     tLimit = float(args.t)
     cpp = args.cpp
+    P = args.P
     normalize = args.normalize
 
     logFileName = join(outDir, "log.txt")
@@ -186,6 +194,7 @@ def main():
     log("systemCPPPaths:" + "\n\t-I".join(("",) + systemCPPPaths))
     log("CPPPaths:" + "\n\t-I".join([""] + CPPPaths))
     log("using system cpp:\n\t" + str(cpp))
+    log("no -P to system cpp:\n\t" + str(P))
     log("normalize:\n\t" + str(normalize))
     log("tLimit:\n\t" + str(tLimit))
 
@@ -248,6 +257,7 @@ def main():
                 try:
                     outData = system_cpp(fullInPath,
                         CPPPaths = (dirPath,) + allIncPaths,
+                        P = not P,
                     )
                 except:
                     outData = ""
