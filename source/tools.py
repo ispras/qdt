@@ -86,4 +86,7 @@ def get_gcc_defines_raw():
 
 
 def iter_gcc_defines():
-    return (re_define.sub(b"", l) for l in get_gcc_defines_raw().splitlines())
+    return (
+        re_define.sub(b"", l).decode("utf8")
+            for l in get_gcc_defines_raw().splitlines()
+    )
