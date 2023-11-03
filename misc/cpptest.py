@@ -120,6 +120,65 @@ def log_mem_usage():
     log("memory:\n\t" + mu)
 
 
+class CacheStats:
+
+    __slots__ = (
+        "t_sources",
+        "t_variants",
+        "t_base_tokens",
+        "t_ready_tokens",
+    )
+
+    def __init__(self, **kw):
+        for a in self.__slots__:
+            setattr(self, a, kw.get(a, 0))
+
+    @classmethod
+    def compute(cls, inc_cache):
+        t_sources = 0
+        t_variants = 0
+        t_base_tokens = 0
+        t_ready_tokens = 0
+
+        if inc_cache:
+            for i in inc_cache.values():
+                t_sources += 1
+
+                try:
+                    lines = i.lines
+                except AttributeError:
+                    pass
+                else:
+                    for l in lines:
+                        t_base_tokens += len(l)
+
+                try:
+                    variants = i.variants
+                except AttributeError:
+                    pass
+                else:
+                    t_variants += len(variants)
+                    for v in variants:
+                        t_ready_tokens += len(v.tokens)
+
+        l = locals()
+        return cls(**dict((a, l.get(a, 0)) for a in cls.__slots__))
+
+    def __sub__(self, c):
+        return CacheStats(**dict(
+            (a, getattr(self, a) - getattr(c, a)) for a in self.__slots__
+        ))
+
+    def iter_lines(self):
+        return ("%s = %s" % (a, getattr(self, a)) for a in self.__slots__)
+
+    def lines(self, indent = "\t"):
+        return ("\n" + indent).join(self.iter_lines())
+
+    def __str__(self):
+        return "CacheStats: " + ", ".join(self.iter_lines())
+
+
 def main():
     global logWrite
 
@@ -209,6 +268,7 @@ def main():
     total = 0
 
     inc_cache = None
+    prev_stats = CacheStats()
 
     prev_spaces = set()
     # cache
@@ -325,6 +385,11 @@ def main():
                     while tok:
                         write(tok.value)
                         tok = token()
+
+                stats = CacheStats.compute(inc_cache)
+                log("stat:\n\t%s" % stats.lines(indent = "\t"))
+                log("diff:\n\t%s" % (stats - prev_stats).lines(indent = "\t"))
+                prev_stats = stats
 
             outFile.close()
 
