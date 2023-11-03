@@ -179,6 +179,43 @@ class CacheStats:
         return "CacheStats: " + ", ".join(self.iter_lines())
 
 
+def limit_cache(inc_cache, t_ready_tokens_limit):
+    ranks = []
+    rank2inc = dict()
+    t_ready_tokens = 0
+
+    for i in inc_cache.values():
+        try:
+            variants = i.variants
+        except AttributeError:
+            continue
+
+        for v in variants:
+            lvtokens = len(v.tokens)
+            t_ready_tokens += lvtokens
+            rank = (
+                -getattr(v, "usages", 0)
+                -len(variants),
+                lvtokens,
+                id(v),  # except same keys in `rank2inc`
+            )
+            rank2inc[rank] = (v, i)
+            ranks.append(rank)
+
+    if t_ready_tokens <= t_ready_tokens_limit:
+        return
+
+    ranks.sort()
+
+    while (t_ready_tokens_limit < t_ready_tokens) and ranks:
+        rank = ranks.pop()
+        v, i = rank2inc.pop(rank)
+        t_ready_tokens -= len(v.tokens)
+        i.variants.remove(v)
+        if not i.variants:
+            del inc_cache[i.text]
+
+
 def main():
     global logWrite
 
@@ -227,6 +264,10 @@ def main():
         help = "make output more comparable",
         action = "store_true",
     )
+    arg("--total-ready-tokens-limit",
+        help = "limit ready cached tokens of preprocessed files",
+        default = "25000000",
+    )
 
     args = ap.parse_args()
 
@@ -239,6 +280,7 @@ def main():
     cpp = args.cpp
     P = args.P
     normalize = args.normalize
+    tReadyTokensLimit = int(args.total_ready_tokens_limit)
 
     logFileName = join(outDir, "log.txt")
     makedirs(outDir, exist_ok = True)
@@ -256,6 +298,7 @@ def main():
     log("no -P to system cpp:\n\t" + str(P))
     log("normalize:\n\t" + str(normalize))
     log("tLimit:\n\t" + str(tLimit))
+    log("tReadyTokensLimit:\n\t" + str(tReadyTokensLimit))
 
     rePattern = compile(pattern)
 
@@ -390,6 +433,14 @@ def main():
                 log("stat:\n\t%s" % statsNow.lines(indent = "\t"))
                 log(
                     "diff:\n\t%s" % (statsNow - statsPrev).lines(indent = "\t")
+                )
+                limit_cache(inc_cache, tReadyTokensLimit)
+                statsNow = CacheStats.compute(inc_cache)
+                log(
+            "after_limit statsNow:\n\t%s" % statsNow.lines(indent = "\t")
+                )
+                log(
+            "diff with prev:\n\t%s" % (statsNow - statsPrev).lines(indent = "\t")
                 )
                 statsPrev = statsNow
 
