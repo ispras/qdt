@@ -268,7 +268,7 @@ def main():
     total = 0
 
     inc_cache = None
-    prev_stats = CacheStats()
+    statsPrev = CacheStats()
 
     prev_spaces = set()
     # cache
@@ -386,10 +386,11 @@ def main():
                         write(tok.value)
                         tok = token()
 
-                stats = CacheStats.compute(inc_cache)
-                log("stat:\n\t%s" % stats.lines(indent = "\t"))
-                log("diff:\n\t%s" % (stats - prev_stats).lines(indent = "\t"))
-                prev_stats = stats
+                statsNow = CacheStats.compute(inc_cache)
+                log("stat:\n\t%s" % statsNow.lines(indent = "\t"))
+                log(
+                    "diff:\n\t%s" % (statsNow - statsPrev).lines(indent = "\t")
+                )
 
             outFile.close()
 
