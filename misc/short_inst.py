@@ -8,6 +8,9 @@ from qemu.cpu.short import (
 from argparse import (
     ArgumentParser,
 )
+from traceback import (
+    format_exc,
+)
 
 
 def main():
@@ -27,11 +30,16 @@ def main():
     try:
         res = Short.parse(l)
     except:
+        # before debug call stack another exception
+        msg = format_exc()
         res = None
         try:
             Short.parse(l, debug = True)
         except:
             pass
+        # after parser log printed
+        print(msg)
+        return 1
 
     print(res)
     res.read_bitsize = 32
