@@ -417,6 +417,10 @@ require reference to the current object.
             self.write(s)
 
 
+def dumps(root):
+    return pygenerate(root).w.getvalue()
+
+
 def pythonize(root, path):
     """ Serializes graph of objects presented by its :root: object to Python
     script and writes it to file. See `PyGenerator`.
@@ -427,7 +431,7 @@ def pythonize(root, path):
 
     # Pythonization can be long enough.
     # Do not touch target file until it ended.
-    data = pygenerate(root).w.getvalue().encode("utf-8")
+    data = dumps(root).encode("utf-8")
 
     with open(path, "wb") as _file:
         _file.write(data)
