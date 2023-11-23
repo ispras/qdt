@@ -8,32 +8,33 @@ __all__ = [
   , "default_gen_pass"
 ]
 
-from six import (
-    text_type,
-    binary_type,
-    integer_types
-)
-from itertools import (
-    count
-)
 from .code_writer import (
-    CodeWriter
+    CodeWriter,
+)
+from .ordered_set import (
+    OrderedSet,
 )
 from .reflection import (
-    get_class_total_args
+    get_class_total_args,
 )
 from .visitor import (
     SkipVisiting,
-    ObjectVisitor
+    ObjectVisitor,
 )
+
 from collections import (
-    deque
+    deque,
 )
 from inspect import (
-    isgeneratorfunction
+    isgeneratorfunction,
 )
-from .ordered_set import (
-    OrderedSet
+from itertools import (
+    count,
+)
+from six import (
+    binary_type,
+    integer_types,
+    text_type,
 )
 
 
