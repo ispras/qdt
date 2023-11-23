@@ -1,4 +1,9 @@
+from common.pygen import (
+    dumps,
+)
 from qemu.cpu.instruction import (
+    Instruction,  # for exec
+    Opcode,  # for exec
     Operand,
 )
 from qemu.cpu.short import (
@@ -52,6 +57,12 @@ def main():
             f.name if isinstance(f, Operand) else f.val,
         ))
         offset += f.bitsize
+
+    print(dumps(res))
+    locals_ = {}
+    exec(dumps(res), globals(), locals_)
+    print(dumps(locals_["obj"]))
+
 
 if __name__ == "__main__":
     exit(main() or 0)
