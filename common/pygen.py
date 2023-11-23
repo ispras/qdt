@@ -33,15 +33,20 @@ from itertools import (
 )
 from six import (
     binary_type,
+    class_types,
     integer_types,
     text_type,
+)
+from types import (
+    FunctionType,
 )
 
 
 const_types = (float, text_type, binary_type, bool) + integer_types
+imported_types = class_types + (FunctionType,)
 
 # Those standard types are supported by `PyGenerator` without specific code.
-pythonizable = const_types + (list, set, dict, tuple)
+pythonizable = const_types + (list, set, dict, tuple) + imported_types
 
 
 class PyGenDepsVisitor(ObjectVisitor):
@@ -406,6 +411,17 @@ require reference to the current object.
             self.write(")")
         elif isinstance(val, const_types):
             self.write(self.gen_const(val))
+        elif isinstance(val, imported_types):
+            mod = val.__module__
+            if mod == "__main__":
+                self.write(val.__name__)
+            else:
+                # Without `fromlist` `__import__` returns toplevel package.
+                self.write('__import__("%s", fromlist = ["%s"]).%s' % (
+                    mod,
+                    val.__name__,
+                    val.__name__,
+                ))
         elif val is None:
             self.write("None")
         else:
