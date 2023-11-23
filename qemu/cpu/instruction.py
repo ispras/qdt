@@ -85,6 +85,9 @@ class InstructionField(object):
     def __init__(self, bitsize):
         self.bitsize = bitsize
 
+    def __repr__(self):
+        return type(self).__name__ + "(%u)" % self.bitsize
+
 
 class Operand(InstructionField):
 
@@ -107,6 +110,12 @@ class Operand(InstructionField):
         # bitoffset in instruction
         self.bitoffset = bitoffset
 
+    def __repr__(self):
+        return (
+            type(self).__name__
+          + '(%u, "%s", num = %u)' % (self.bitsize, self.name, self.num)
+        )
+
 
 class Opcode(InstructionField):
 
@@ -124,6 +133,12 @@ class Opcode(InstructionField):
             )
 
         self.val = val
+
+    def __repr__(self):
+        return (
+            type(self).__name__
+          + '(%u, val = "%s")' % (self.bitsize, self.val)
+        )
 
 
 class Reserved(InstructionField):
@@ -175,6 +190,21 @@ class Instruction(object):
 
         # mark for finding unreachable instructions
         self.used = False
+
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.gen_field(""); gen.pprint(self.mnemonic)
+        for f in self.raw_fields:
+            gen.gen_field(""); gen.pprint(f)
+        for a in (
+            "branch",
+            "disas_format",
+            "comment",
+            "semantics",
+            "priority",
+        ):
+            gen.gen_field(a + " = "); gen.pprint(getattr(self, a))
+        gen.gen_end()
 
     @lazy
     def bitsize(self):
