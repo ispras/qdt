@@ -9,8 +9,8 @@ from widgets import (
     CanvasDnD,
     GUIFrame,
     GUITk,
+    GUIToplevel,
     MenuBuilder,
-    VarToplevel,
     VarTreeview,
 )
 from libe.common.events import (
@@ -715,10 +715,12 @@ class GEVWidget(GUIFrame):
             tv.selection_set(iid)
 
 
-class GEVWindow(VarToplevel):
+class GEVWindow(GUIToplevel):
 
     def __init__(self, *a, **kw):
-        VarToplevel.__init__(self, *a, **kw)
+        topmost = kw.pop("topmost", True)
+
+        GUIToplevel.__init__(self, *a, **kw)
 
         self.title("Git Edge Viewer")
 
@@ -729,6 +731,9 @@ class GEVWindow(VarToplevel):
             fill = BOTH,
             expand = True,
         )
+
+        if topmost is not None:
+            self.topmost = topmost
 
     @property
     def edge(self):
