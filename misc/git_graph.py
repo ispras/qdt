@@ -89,8 +89,7 @@ class _CanvasItem:
     def _invalidate(self):
         if self._valid:
             self._valid = False
-            self._update_canvas_coords()
-            return
+
             # Note, thi's GGVWidget specific.
             self._c.master._jobs.append(self._update_canvas_coords)
 
@@ -399,19 +398,24 @@ class GGVWidget(GUIFrame):
         for i in mg.co_build(
             refs_iter_func = REFS_ORDER_RECENT_FIRST,
         ):
-            while dgp.has_work:
-                # do layout updates
-                yield self._co_worker()
-                yield dgp.co_place()
-            yield self._co_worker()
             yield i
+            while dgp.has_work:
+                yield dgp.co_place()
+                # do layout updates
+                while self._jobs:
+                    yield self._co_worker()
+            while self._jobs:
+                yield self._co_worker()
 
         # place last added items
         while dgp.has_work:
             yield self._co_worker()
             yield dgp.co_place()
 
-        yield self._co_worker()
+        print("Doing rest jobs...")
+
+        while self._jobs:
+            yield self._co_worker()
 
         print("Done")
 
