@@ -562,15 +562,60 @@ class GGVWidget(GUIFrame):
                 break
 
 
+
+def gev_col_message(commit):
+    "Commit Message"
+    return commit.message.splitlines()[0]
+
+gev_col_message.__width__ = 600
+
+def gev_col_author_name(commit):
+    "Author"
+    return commit.author.name
+
+def gev_col_author_email(commit):
+    "Author E-mail"
+    return commit.author.email
+
+def gev_col_authored_timestamp(commit):
+    "Authored Timestamp"
+    return str(commit.authored_datetime)
+
+def gev_col_committer_name(commit):
+    "Committer"
+    return commit.committer.name
+
+def gev_col_committer_email(commit):
+    "Committer E-mail"
+    return commit.committer.email
+
+def gev_col_committed_timestamp(commit):
+    "Committed Timestamp"
+    return str(commit.committed_datetime)
+
+
+GEV_ALL_COLUMNS = (
+    gev_col_message,
+    gev_col_author_name,
+    gev_col_author_email,
+    gev_col_authored_timestamp,
+    gev_col_committer_name,
+    gev_col_committer_email,
+    gev_col_committed_timestamp,
+)
+
+
 class GEVWidget(GUIFrame):
     """ Git Edge View Widget
     """
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
+        columns = kw.pop("columns", GEV_ALL_COLUMNS)
 
         GUIFrame.__init__(self, *a, **kw)
 
+        self._columns = columns
         self._repo_path = None
         self._co_visualize = None
 
@@ -578,34 +623,22 @@ class GEVWidget(GUIFrame):
         self.columnconfigure(0, weight = 1)
 
         self._tv = tv = VarTreeview(self,
-            columns = (
-                "message",
-                "author",
-                "author_email",
-                "author_datetime",
-                "committer",
-                "committer_email",
-                "committer_datetime",
-            ),
+            columns = tuple(c.__name__ for c in columns),
             selectmode = BROWSE,
         )
-        tv.column("#0", minwidth = 10, width = 85, stretch = False)
-        tv.column("message", minwidth = 10, width = 600)
-        tv.column("author", minwidth = 10)
-        tv.column("author_email", minwidth = 10)
-        tv.column("author_datetime", minwidth = 10)
-        tv.column("committer", minwidth = 10)
-        tv.column("committer_email", minwidth = 10)
-        tv.column("committer_datetime", minwidth = 10)
 
+        tv.column("#0", minwidth = 10, width = 85, stretch = False)
         tv.heading("#0", text = "ID")
-        tv.heading("message", text = "Commit Message")
-        tv.heading("author", text = "Author")
-        tv.heading("author_email", text = "Author E-mail")
-        tv.heading("author_datetime", text = "Authored Timestamp")
-        tv.heading("committer", text = "Committer")
-        tv.heading("committer_email", text = "Committer E-mail")
-        tv.heading("committer_datetime", text = "Committed Timestamp")
+
+        for col in columns:
+            colkw = dict(
+                minwidth = getattr(col, "__minwidth__", 10),
+                # TODO: more settings?
+            )
+            if hasattr(col, "__width__"):
+                colkw["width"] = col.__width__
+            tv.column(col.__name__, **colkw)
+            tv.heading(col.__name__, text = col.__doc__)
 
         tv.grid(row = 0, column = 0, sticky = "NESW")
 
@@ -660,6 +693,8 @@ class GEVWidget(GUIFrame):
             return
         self._edge = edge
 
+        columns = self._columns
+
         tv = self._tv
         tv.delete(*tv.get_children())
 
@@ -669,21 +704,10 @@ class GEVWidget(GUIFrame):
         if edge is not None:
             for c in edge:
                 commit = c._mg._repo.commit(c.sha)
-                committer = commit.committer
-                author = commit.author
-
                 c2iid[c] = tv.insert("",
                     index = 0,
                     text = str(c.sha[:8]),
-                    values = [
-                        commit.message.splitlines()[0],
-                        author.name,
-                        author.email,
-                        str(commit.authored_datetime),
-                        committer.name,
-                        committer.email,
-                        str(commit.committed_datetime),
-                    ]
+                    values = list(column(commit) for column in columns),
                 )
 
         iid = c2iid.get(self._commit)
