@@ -597,8 +597,8 @@ def gev_col_committed_timestamp(commit):
 GEV_ALL_COLUMNS = (
     gev_col_message,
     gev_col_author_name,
-    gev_col_author_email,
     gev_col_authored_timestamp,
+    gev_col_author_email,
     gev_col_committer_name,
     gev_col_committer_email,
     gev_col_committed_timestamp,
@@ -611,7 +611,7 @@ class GEVWidget(GUIFrame):
 
     def __init__(self, *a, **kw):
         sizegrip = kw.pop("sizegrip", False)
-        columns = kw.pop("columns", GEV_ALL_COLUMNS)
+        columns = kw.pop("columns", GEV_ALL_COLUMNS[:3])
 
         GUIFrame.__init__(self, *a, **kw)
 
