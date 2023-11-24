@@ -288,6 +288,10 @@ class GitMacrograph(object):
                 #       construction.
                 i = e.index(mn)
                 e2 = GitMgEdge(e[i+1:])
+
+                # before: ed <- e <- ea
+                # after:  ed <- e2 <- mn <- e <- ea
+
                 del e[i:]
                 for n in e2:
                     n._edge = e2
