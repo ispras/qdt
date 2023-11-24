@@ -354,6 +354,7 @@ class _Component(AttributeChangeNotifier):
 
         grid = self._grid
         nodes = self._nodes
+        self_placed = self._ij is not None
 
         for cn, (cnx, cny) in c._nodes.items():
             yield True
@@ -363,19 +364,29 @@ class _Component(AttributeChangeNotifier):
             nodes[cn] = nxy
             grid[nxy].add(cn)
 
-            # as soon as `node_coords` is ready to lookup node
-            notify(p, "node", cn)
+        if self_placed:
+            for cn in c._nodes:
+                yield True
+                # as soon as `node_coords` is ready to lookup node
+                notify(p, "node", cn)
 
         edges = self._edges
+        new_edges = []
+        nedge = new_edges.append
         for ce in c._edges:
             yield True
             e = _Edge((cex + x, cey + y) for (cex, cey) in ce)
             edges.add(e)
+            nedge(e)
             for exy in e:
                 grid[exy].add(e)
 
-            # as soon as `iter_edge_coords` is ready to track the edge
-            notify(p, "edge", self._node_at(e[0]), self._node_at(e[-1]))
+        if self_placed:
+            node_at = self._node_at
+            for e in new_edges:
+                yield True
+                # as soon as `iter_edge_coords` is ready to track the edge
+                notify(p, "edge", node_at(e[0]), node_at(e[-1]))
 
         self.aabb = (
             min(l, cl + x),
@@ -627,9 +638,11 @@ class _NodeJoiningContext(_PlacingContext):
 
         e = (yield self._co_place_edge(s))
 
-        # as soon as `iter_edge_coords` is ready to track the edge
-        node_at = self.component._node_at
-        notify(self.placer, "edge", node_at(e[0]), node_at(e[-1]))
+        c = self.component
+        if c._ij is not None:  # c is placed itself
+            # as soon as `iter_edge_coords` is ready to track the edge
+            node_at = c._node_at
+            notify(self.placer, "edge", node_at(e[0]), node_at(e[-1]))
 
         # Finish A*
         raise CoReturn(True)
@@ -706,9 +719,10 @@ class _ComponentPlacingContext(_PlacingContext):
         e = (yield self._co_place_edge(s))
         yield to._co_embed_component(what, (x - box, y - boy))
 
-        # as soon as `iter_edge_coords` is ready to track the edge
-        node_at = to._node_at
-        notify(self.placer, "edge", node_at(e[0]), node_at(e[-1]))
+        if to._ij is not None:  # to is placed itself
+            # as soon as `iter_edge_coords` is ready to track the edge
+            node_at = to._node_at
+            notify(self.placer, "edge", node_at(e[0]), node_at(e[-1]))
 
         # Finish A*
         raise CoReturn(True)
