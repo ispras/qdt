@@ -26,6 +26,11 @@ class BisectMap(object):
     def __iter__(self):
         return iter(self._keys)
 
+    def iter_ge_items(self, key):
+        keys = self._keys
+        i = bisect_left(keys, key)
+        return izip(keys[i:], self._values[i:])
+
     def __reversed__(self):
         return reversed(self._keys)
 
