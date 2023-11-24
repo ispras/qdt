@@ -18,6 +18,7 @@ from .events import (
 )
 
 from itertools import (
+    chain,
     count,
 )
 from six.moves import (
@@ -33,6 +34,10 @@ class _GridAxisSliceSlot(object):
         self.o = o
         self.size = (0,) * dim
         self.slices = [None] * dim
+
+    def iter_coords(self):
+        for slc in self.slices:
+            yield slc.coord
 
     def __call__(self, n, v):
         if n != "size":
@@ -151,6 +156,18 @@ class Grid(object):
 
         slt._set_size(o.size)
 
+    def iter_coords(self, o):
+        return self._o2s[o].iter_coords()
+
+    def coords(self, o):
+        return tuple(self.iter_coords(o))
+
+    def iter_offsets(self, o):
+        return self.iter_cell_offs(self.iter_coords(o))
+
+    def offsets(self, o):
+        return tuple(self.iter_offsets(o))
+
     def remove(self, o):
         slt = self._o2s.pop(o)
         dismiss(slt)
@@ -162,3 +179,41 @@ class Grid(object):
 
     def __call__(self, coords):
         return tuple(self.iter_cell_offs(coords))
+
+    def iter_min_coords(self):
+        for a in self._axises:
+            yield a.slices.min()
+
+    def iter_max_coords(self):
+        for a in self._axises:
+            yield a.slices.max()
+
+    def gen_aabb(self):
+        return tuple(chain(self.iter_min_coords(), self.iter_max_coords()))
+
+    def iter_objects_in_aabb(self, aabb):
+        dims = len(self._zeros)
+
+        # Any axis has references to all slots.
+        # The choise of axis only determines amount of processed slots
+        # thise are outside of aabb.
+        c0m = aabb[0]
+        c0M = aabb[dims]
+
+        mcoords = aabb[1:dims]
+        Mcoords = aabb[(dims + 1):]
+
+        a0 = self._axises[0]
+        for c0, slt in a0.slices.iter_ge_items(c0m):
+            if c0M < c0:
+                break
+            # check if slot is within aabb in all coords
+            for slc, cm, cM in zip(slt.slices[1:], mcoords, Mcoords):
+                cslc = slc.coord
+                if cslc < cm:
+                    break
+                if cM < cslc:
+                    break
+            else:
+                yield slt.o
+
