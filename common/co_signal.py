@@ -37,9 +37,9 @@ class SignalDispatcherTask(CoTask):
         )
         self.queue = []
 
-    def new_signal(self):
+    def new_signal(self, *a, **kw):
         "Create a new signal and attach it to self."
-        s = CoSignal()
+        s = CoSignal(*a, **kw)
         return s.attach(self)
 
     def co_deliver(self):
@@ -81,9 +81,11 @@ class SignalDispatcherTask(CoTask):
 
         self.queue.append((list(listeners), args, kw))
 
+
 class CoSignal(object):
-    def __init__(self):
-        self.listeners = set()
+
+    def __init__(self, *listeners):
+        self.listeners = set(listeners)
         self.disp = None
 
     def attach(self, dispatcher):
@@ -110,6 +112,8 @@ class CoSignal(object):
 
     def emit(self, *a, **kw):
         return self.emit_args(a if a else None, kw if kw else None)
+
+    __call__ = emit
 
     def watch(self, callback):
         self.listeners.add(callback)

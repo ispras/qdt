@@ -934,7 +934,7 @@ class QOMStateField(object):
             save = True,
             prop = False,
             default = None
-        ):
+    ):
         self.type = ftype
         self.name = name
         self.num = num

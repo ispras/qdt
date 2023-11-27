@@ -8,8 +8,14 @@ __all__ = [
   , "cli_repr"
   , "bind_all_mouse_wheel"
   , "bind_mouse_wheel"
+  , "makedirs"
+  , "qdtdirs"
+  , "open_dir"
 ]
 
+from appdirs import (
+    AppDirs,
+)
 from os import (
     rename,
     environ,
@@ -37,6 +43,49 @@ from .compat import (
 from platform import (
     system
 )
+from six import (
+    PY2
+)
+from subprocess import (
+    Popen
+)
+from os import (
+    makedirs
+)
+if PY2:
+    from os.path import (
+        split,
+    )
+    from os import (
+        mkdir
+    )
+    from errno import (
+        EEXIST
+    )
+
+    py2_makedirs = makedirs
+
+    def makedirs(name, mode = 0o777, exist_ok = False):
+        "Py3 makedirs emulation for Py2"
+        if not exist_ok:
+            return py2_makedirs(name, mode)
+
+        head, tail = split(name)
+        if not tail:
+            head, tail = split(head)
+        if head and tail and not exists(head):
+            try:
+                makedirs(head, mode, exist_ok = True)
+            except OSError as e:
+                # be happy if someone already created the path
+                if e.errno != EEXIST:
+                    raise
+            if tail == ".": # xxx/newdir/. exists if xxx/newdir exists
+                return
+        if not exists(name):
+            # If name exists and it is not "ok", then call `mkdir` because it
+            # raises the appropriate exception.
+            mkdir(name, mode)
 
 
 # OS file path separator in binary type
@@ -158,3 +207,30 @@ def bind_all_mouse_wheel(w, handler, add = None):
 def bind_mouse_wheel(w, handler, add = None):
     for h in wrap_wheel_handler(handler):
         w.bind(h.__doc__, h, add = add)
+
+qdtdirs = AppDirs(
+    appname = "ispras-qdt",
+    appauthor = "ispras",
+    version = "1.0"
+)
+
+
+if OS == "Linux":
+
+    def open_dir(path):
+        return Popen(["xdg-open", path])
+
+elif OS == "Windows":
+
+    def open_dir(path):
+        return Popen(["start", path])
+
+else:
+
+    def open_dir(path):
+        stderr.write(
+            "Can't open directory '%s': not implemented for OS %s\n" % (
+                path, OS
+            )
+        )
+        return None

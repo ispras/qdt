@@ -148,7 +148,13 @@ sudo apt install python-tk python3-tk
 `idlelib` is also involved.
 
 ```bash
-sudo apt install idle-python2.7 idle-python3.4
+# eg.: sudo apt install idle-python2.7
+sudo apt install idle-python$(python2 --version 2>&1 \
+    | sed -e 's/Python \([0-9]\+\.[0-9]\+\).*/\1/')
+
+# eg.: sudo apt install idle-python3.4
+sudo apt install idle-python$(python3 --version \
+    | sed -e 's/Python \([0-9]\+\.[0-9]\+\).*/\1/')
 ```
 
 Note that `idle-python` package name suffix corresponds to the Python version.
@@ -164,7 +170,7 @@ its explanation):
 
 ```bash
 sudo python -m pip install --upgrade gitpython six graphviz \
-  path.py construct serial psutil
+  path.py construct serial psutil appdirs
 ```
 
 Use `python2` or `python3` explicitly when there are several Python
@@ -209,7 +215,8 @@ sudo pip install --upgrade construct serial
 sudo pip3 install --upgrade construct serial
 ```
 
-`psutil` provides cross-platform process manipulations (e.g. by c2t)
+`psutil` provides cross-platform process manipulations (e.g. by c2t).
+`appdirs` used to store QDT's data in a platform specific location.
 
 Now the all environment prerequisites are satisfied.
 

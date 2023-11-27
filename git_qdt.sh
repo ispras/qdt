@@ -30,9 +30,14 @@
 #    Ex.: QDT_EXTRA_ARGS="-b /home/user/qemu/build" git_qdt.sh [...]"
 
 if [ "$QDT_QEMU_SRC" == "" ] ; then
-    QemuSrc="$HOME/work/qemu/src"
+    echo "QDT_QEMU_SRC must be set"
+    exit 1
 else
     QemuSrc="$QDT_QEMU_SRC"
+fi
+
+if [ "$QDT_EXTRA_ARGS" == "" ] ; then
+    echo "Note, QDT_EXTRA_ARGS is not set"
 fi
 
 QDTSuffix="qemu_device_creator.py"
@@ -114,7 +119,7 @@ Automatic update will fail. Manual recovery is needed!"
                     else
                         echo "Cannot commit generated code."
                     fi
-                    # Undo adding changes to index.
+                    echo "Undo adding changes to index."
                     _git reset
                 else
                     echo "Cannot add generated code to index."
@@ -122,10 +127,10 @@ Automatic update will fail. Manual recovery is needed!"
             else
                 echo "QDT have failed."
             fi
-            # Remove changes made by QDT script (they could be made even in
-            # case of error).
+            echo "Remove changes made by QDT script."
+            # (they could be made even in case of error)
             _git checkout .
-            git clean -f 
+            _git clean -f
             _git checkout "$CurrentBranch"
         else
             echo "Failed checkout just created branch '$1'."
@@ -136,6 +141,7 @@ Automatic update will fail. Manual recovery is needed!"
     fi
 
     if [ "$StartTagIsJustSet" == "yes" ] ; then
+        echo "Removing just created start tag '$StartTag'"
         _git tag -d "$StartTag"
     fi
 else
@@ -196,7 +202,7 @@ fi
                     echo "QDT have failed."
                 fi
                 _git checkout .
-                git clean -f 
+                _git clean -f
                 _git checkout "$CurrentBranch"
             else
                 echo "Cannot switch to temporary branch '$NewBase'."

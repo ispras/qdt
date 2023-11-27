@@ -28,21 +28,25 @@ re_pci_vendor = compile("PCI_VENDOR_ID_([A-Z0-9_]+)")
 re_pci_device = compile("PCI_DEVICE_ID_([A-Z0-9_]+)")
 re_pci_class = compile("PCI_CLASS_([A-Z0-9_]+)")
 
+
 class PCIVendorIdAlreadyExists(RuntimeError):
     pass
+
 
 class PCIDeviceIdAlreadyExists(RuntimeError):
     pass
 
+
 class PCIVendorIdNetherExistsNorCreated(RuntimeError):
     pass
+
 
 class PCIVendorIdMismatch(ValueError):
     pass
 
-"""
-TODO: create named exception instead of any Exception
-"""
+
+# TODO: create named exception instead of any Exception
+
 
 class PCIId(object):
     db = None # at the end of module the value will be defined
@@ -59,7 +63,9 @@ class PCIId(object):
 
     __repr__ = __str__
 
-class PCIVendorId (PCIId):
+
+class PCIVendorId(PCIId):
+
     def __init__(self, vendor_name, vendor_id):
         if vendor_name in PCIId.db.vendors.keys():
             raise PCIVendorIdAlreadyExists(vendor_name)
@@ -80,7 +86,9 @@ class PCIVendorId (PCIId):
         gen.gen_field("vendor_id = " + gen.gen_const(self.id))
         gen.gen_end()
 
-class PCIDeviceId (PCIId):
+
+class PCIDeviceId(PCIId):
+
     def __init__(self, vendor_name, device_name, device_id):
         dev_key = PCIClassification.gen_device_key(vendor_name, device_name)
         if dev_key in PCIId.db.devices.keys():
@@ -106,7 +114,9 @@ class PCIDeviceId (PCIId):
         gen.gen_field("device_id = " + gen.gen_const(self.id))
         gen.gen_end()
 
-class PCIClassId (PCIId):
+
+class PCIClassId(PCIId):
+
     def __init__(self, class_name, class_id):
         if class_name in PCIId.db.classes.keys():
             raise Exception("PCI class %s already exists" % class_name)
@@ -124,7 +134,9 @@ class PCIClassId (PCIId):
         gen.gen_field("class_id = " + gen.gen_const(self.id))
         gen.gen_end()
 
+
 class PCIClassification(object):
+
     def __init__(self, built = False):
         self.vendors = {}
         self.devices = {}
@@ -169,21 +181,23 @@ class PCIClassification(object):
 
     def gen_uniq_vid(self):
         for i in xrange(0, 0xFFFF):
+            uid = "0x%X" % i
             for v in self.vendors.values():
-                if v.id.upper() == "0x%X" % i:
-                    break;
+                if v.id.upper() == uid:
+                    break
             else:
-                return "0x%X" % i
+                return uid
         # no uniq ID
         return "0xDEAD"
 
     def gen_uniq_did(self):
         for i in xrange(0, 0xFFFF):
+            uid = "0x%X" % i
             for d in self.devices.values():
-                if d.id.upper() == "0x%X" % i:
-                    break;
+                if d.id.upper() == uid:
+                    break
             else:
-                return "0x%X" % i
+                return uid
         # no uniq ID
         return "0xBEAF"
 
@@ -216,7 +230,7 @@ class PCIClassification(object):
                         mi = v.device_pattern.match(t.name)
                         if mi:
                             PCIDeviceId(v.name, mi.group(1), t.text)
-                            break;
+                            break
                     continue
 
         db.built = True
@@ -258,7 +272,7 @@ class PCIClassification(object):
 
     def get_device(self, name = None, vendor_name = None, did = None, 
             vid = None):
-        if did is not None and not type(did) == str:
+        if did is not None and type(did) is not str:
             raise Exception("Device id must be a string")
 
         if vid is not None:
@@ -311,13 +325,13 @@ class PCIClassification(object):
         return d
 
     def get_vendor(self, name = None, vid = None):
-        if vid is not None and not type(vid) == str:
+        if vid is not None and type(vid) is not str:
             raise Exception("Vendor id must be a string")
 
         if name is not None:
             try:
                 v = self.vendors[name]
-                if vid is not None and not v.id == vid:
+                if vid is not None and v.id != vid:
                     raise PCIVendorIdMismatch("Vendor %s, Id: %s/%s" %
                             name, v.id, vid)
             except:
@@ -339,6 +353,8 @@ class PCIClassification(object):
  specified" % id)
 
             return v
+
         raise Exception("At least one vendor name or id must be specified")
+
 
 PCIId.db = PCIClassification()
