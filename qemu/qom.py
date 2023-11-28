@@ -179,7 +179,15 @@ class Register(OpaqueRegister):
     ):
         super(Register, self).__init__(size, name)
         self.access = access
-        self.reset = None if reset is None else CINT(reset, 16, size * 2)
+        if reset is None:
+            self.reset = None
+        else:
+            if size <= 8:
+                self.reset = CINT(reset, 16, size * 2)
+            else:
+                # TODO: support C-string as reset value (set using memcpy)
+                self.reset = CINT(reset, 16, 1)
+
         self.full_name = full_name
 
         if wmask is None:
@@ -242,7 +250,7 @@ class Register(OpaqueRegister):
 def get_reg_range(regs):
     return sum(reg.size for reg in regs)
 
-def gen_reg_cases(regs, access, offset_name, val, ret, s):
+def gen_reg_cases(regs, access, offset_name, val, ret, acc_size, s):
     reg_range = get_reg_range(regs)
     cases = []
     digits = int(log(reg_range, 16)) + 1
@@ -257,11 +265,13 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
             offset += size
             continue
 
+        offset_literal = CINT(offset, base = 16, digits = digits)
+
         if size == 1:
-            case_cond = CINT(offset, base = 16, digits = digits)
+            case_cond = offset_literal
         else:
             case_cond = (
-                CINT(offset, base = 16, digits = digits),
+                offset_literal,
                 CINT(offset + size - 1, base = 16, digits = digits)
             )
         offset += size
@@ -286,90 +296,130 @@ def gen_reg_cases(regs, access, offset_name, val, ret, s):
             )
 
             if access == "r":
-                case(
-                    OpAssign(
+                if size <= 8:
+                    case(OpAssign(
                         ret,
                         s_deref
+                    ))
+
+                    warb = reg.warbits
+                    if warb.v: # neither None nor zero
+                        # There is at least one write-after-read
+                        # bit in the reg.
+                        wm = reg.wmask
+                        if wm.v == (1 << (size * 8)) - 1:
+                            # no read only bits: set WAR mask to 0xF...F
+                            case(
+                                OpAssign(
+                                    s_deref_war(),
+                                    OpNot(0)
+                                )
+                            )
+                        else:
+                            # writable bits, read only bits: init WAR mask with
+                            # write mask
+                            case(
+                                OpAssign(
+                                    s_deref_war(),
+                                    wm
+                                )
+                            )
+                else:
+                    field_offset = OpSub(
+                        offset_name,
+                        offset_literal,
+                        parenthesis = True
                     )
-                )
-                warb = reg.warbits
-                if warb.v: # neither None nor zero
-                    # There is at least one write-after-read bit in the reg.
+                    case(OpAssign(
+                        acc_size,
+                        MCall("MIN", acc_size, OpSub(size, field_offset))
+                    ))
+                    case(Call(
+                        "memcpy",
+                        OpAddr(ret),
+                        OpAdd(s_deref, field_offset),
+                        acc_size
+                    ))
+
+                    # TODO: support write-after-read bits for long buffers
+
+            elif access == "w":
+                if size <= 8:
                     wm = reg.wmask
-                    if wm.v == (1 << (size * 8)) - 1:
-                        # no read only bits: set WAR mask to 0xF...F
+                    warb = reg.warbits
+
+                    if warb.v and wm.v:
+                        # WAR bits, writable, read only bits: use WAR mask as
+                        # dynamic write mask
                         case(
                             OpAssign(
-                                s_deref_war(),
-                                OpNot(0)
+                                s_deref,
+                                OpOr(
+                                    OpAnd(
+                                        val,
+                                        s_deref_war(),
+                                        parenthesis = True
+                                    ),
+                                    OpAnd(
+                                        s_deref,
+                                        OpNot(
+                                            s_deref_war()
+                                        ),
+                                        parenthesis = True
+                                    )
+                                )
                             )
                         )
-                    else:
-                        # writable bits, read only bits: init WAR mask with
+                    elif wm.v == (1 << (size * 8)) - 1:
+                        # no WAR bits, no read only bits
+                        # write mask does not affect the value being assigned
+                        case(
+                            OpAssign(
+                                s_deref,
+                                val
+                            )
+                        )
+                    elif wm.v:
+                        # no WAR bits, writable bits,
+                        # read only bits: use static
                         # write mask
                         case(
                             OpAssign(
-                                s_deref_war(),
-                                wm
+                                s_deref,
+                                OpOr(
+                                    OpAnd(
+                                        val,
+                                        wm,
+                                        parenthesis = True
+                                    ),
+                                    OpAnd(
+                                        s_deref,
+                                        OpNot(
+                                            wm
+                                        ),
+                                        parenthesis = True
+                                    )
+                                )
                             )
                         )
-            elif access == "w":
-                wm = reg.wmask
-                warb = reg.warbits
+                else:
+                    field_offset = OpSub(
+                        offset_name,
+                        offset_literal,
+                        parenthesis = True
+                    )
+                    case(OpAssign(
+                        acc_size,
+                        MCall("MIN", acc_size, OpSub(size, field_offset))
+                    ))
+                    case(Call(
+                        "memcpy",
+                        OpAdd(s_deref, field_offset),
+                        OpAddr(val),
+                        acc_size
+                    ))
 
-                if warb.v and wm.v:
-                    # WAR bits, writable, read only bits: use WAR mask as
-                    # dynamic write mask
-                    case(
-                        OpAssign(
-                            s_deref,
-                            OpOr(
-                                OpAnd(
-                                    val,
-                                    s_deref_war(),
-                                    parenthesis = True
-                                ),
-                                OpAnd(
-                                    s_deref,
-                                    OpNot(
-                                        s_deref_war()
-                                    ),
-                                    parenthesis = True
-                                )
-                            )
-                        )
-                    )
-                elif wm.v == (1 << (size * 8)) - 1:
-                    # no WAR bits, no read only bits
-                    # write mask does not affect the value being assigned
-                    case(
-                        OpAssign(
-                            s_deref,
-                            val
-                        )
-                    )
-                elif wm.v:
-                    # no WAR bits, writable bits, read only bits: use static
-                    # write mask
-                    case(
-                        OpAssign(
-                            s_deref,
-                            OpOr(
-                                OpAnd(
-                                    val,
-                                    wm,
-                                    parenthesis = True
-                                ),
-                                OpAnd(
-                                    s_deref,
-                                    OpNot(
-                                        wm
-                                    ),
-                                    parenthesis = True
-                                )
-                            )
-                        )
-                    )
+                    # TODO: support write-after-read bits for long buffers
         else:
             case(
                 Call(
@@ -859,7 +909,9 @@ class QOMType(object):
         s = Pointer(Type[struct_name])("s")
         ret = Variable("ret", Type["uint64_t"])
         if regs:
-            cases = gen_reg_cases(regs, "r", func.args[1], None, ret, s)
+            cases = gen_reg_cases(
+                regs, "r", func.args[1], None, ret, func.args[2], s
+            )
         else:
             cases = []
 
@@ -907,7 +959,7 @@ class QOMType(object):
         s = Pointer(Type[struct_name])("s")
         if regs:
             cases = gen_reg_cases(
-                regs, "w", func.args[1], func.args[2], None, s
+                regs, "w", func.args[1], func.args[2], None, func.args[3], s
             )
         else:
             cases = []

@@ -214,12 +214,26 @@ class SysBusDeviceType(QOMDevice):
                 continue
             qtn = QemuTypeName(name)
 
-            if reg.reset is not None:
-                reg_resets.append("s->%s@b=@s%s;" % (
-                    qtn.for_id_name,
-                    reg.reset.gen_c_code()
-                ))
-                s_is_used = True
+            if reg.size > 8:
+                if reg.reset is not None:
+                    reg_resets.append("memset(s->%s,@s%s,@s0x%x);\n" % (
+                        qtn.for_id_name,
+                        reg.reset.gen_c_code(),
+                        reg.size
+                    ))
+                    s_is_used = True
+                    used_types.add(Type["memset"])
+
+                # TODO: support read-only bits for long buffers
+                # TODO: support write-after-read bits for long buffers
+                continue
+            else:
+                if reg.reset is not None:
+                    reg_resets.append("s->%s@b=@s%s;" % (
+                        qtn.for_id_name,
+                        reg.reset.gen_c_code()
+                    ))
+                    s_is_used = True
 
             warb = reg.warbits
             if warb.v:
