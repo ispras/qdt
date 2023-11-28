@@ -81,6 +81,9 @@ from traceback import (
 from sys import (
     exc_info
 )
+from time import (
+    time
+)
 
 
 bp_file_name = "build_path_list"
@@ -279,6 +282,8 @@ class QemuVersionCache(object):
         qemu_heuristic_db
         """
 
+        t0 = time()
+
         # iterations to yield
         i2y = QVD_HP_IBY
 
@@ -346,6 +351,9 @@ class QemuVersionCache(object):
                     i2y = QVD_HP_IBY
                 else:
                     i2y -= 1
+
+        t1 = time()
+        print("co_propagate_new_param work time " + str(t1 - t0))
 
     def co_propagate_old_param(self, sorted_vd_keys, unknown_vd_keys, vd):
         """ This method propagate QEMUVersionParameterDescription.old_value
