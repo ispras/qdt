@@ -20,7 +20,6 @@ from widgets import (
     AddDescriptionDialog,
     GUIProject,
     HotKeyBinding,
-    HotKey,
     ProjectWidget,
     VarMenu,
     GUITk
@@ -166,7 +165,7 @@ class QDCGUIWindow(GUITk, QDCGUISignalHelper):
         self.title(self.var_title)
 
         # Hot keys, accelerators
-        self.hk = hotkeys = HotKey(self)
+        hotkeys = self.hk
         hotkeys.add_bindings([
             HotKeyBinding(
                 self.invert_history_window,
