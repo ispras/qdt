@@ -124,7 +124,8 @@ class VarTk(Tk):
         Tk.title(self, self.var.get())
 
     def title(self, title = None):
-        if not title:
+        # Note, `title` can be empty string.
+        if title is None:
             return self.var
 
         if not isinstance(title, variables):
