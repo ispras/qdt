@@ -19,7 +19,6 @@ from widgets import (
     VarCheckbutton,
     GUIFrame,
     VarButton,
-    HotKey,
     TkGeometryHelper,
     centrify_tk_window,
 )
@@ -156,7 +155,7 @@ class TextViewerWindow(GUITk, object):
         GUITk.__init__(self)
         self.title(_("Text Viewer"))
 
-        self.hk = hk = HotKey(self)
+        hk = self.hk
         hk(self._search, 41,
            description = "Show search window",
            symbol = "F",
