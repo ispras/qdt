@@ -5,6 +5,7 @@ __all__ = [
 from common import (
     callco,
     co_find_eq,
+    makedirs,
     same_sets,
     shadow_open,
 )
@@ -34,9 +35,6 @@ from collections import (
 )
 from itertools import (
     count,
-)
-from os import (
-    makedirs,
 )
 from os.path import (
     isabs,
@@ -195,9 +193,9 @@ class QProject(object):
             spath = join(src, s.path)
             sdir, sname = split(spath)
 
-            if not isdir(sdir):
-                yield True
-                makedirs(sdir)
+            yield True
+
+            makedirs(sdir, exist_ok = True)
 
             yield True
 
