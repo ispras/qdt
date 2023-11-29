@@ -13,7 +13,6 @@ from os.path import (
     basename
 )
 from os import (
-    makedirs,
     killpg,
     setpgrp
 )
@@ -65,7 +64,8 @@ from common import (
     filefilter,
     cli_repr,
     HelpFormatter,
-    pypath
+    pypath,
+    makedirs,
 )
 from debug import (
     get_elffile_loading,
@@ -843,8 +843,7 @@ def main():
 
     # creates tests subdirectories if they don't exist
     for sub_dir in (C2T_TEST_IR_DIR, C2T_TEST_BIN_DIR):
-        if not exists(sub_dir):
-            makedirs(sub_dir)
+        makedirs(sub_dir, exist_ok = True)
 
     start_cpu_testing(tests, jobs, args.reuse, args.verbose,
         with_logs = args.with_logs,
