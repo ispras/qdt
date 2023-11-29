@@ -1,11 +1,13 @@
 #!/usr/bin/python
 
+from common import (
+    makedirs,
+)
 from subprocess import (
     call
 )
 from os import (
     walk,
-    makedirs
 )
 from os.path import (
     dirname,
@@ -67,8 +69,7 @@ print("...")
 
 for l in langs:
     directory = join(root_dir, "locale", l, "LC_MESSAGES")
-    if not isdir(directory):
-        makedirs(directory)
+    makedirs(directory, exist_ok = True)
 
     messages_po = join(directory, "messages.po")
     qdc_po = join(directory, "qdc.po")
