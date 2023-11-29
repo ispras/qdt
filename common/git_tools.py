@@ -327,14 +327,14 @@ def init_submodules_from_cache(repo, cache_dirs, revert_urls = False):
                 if revert_urls:
                     url_back = git.config(
                         "submodule." + sm + ".url",
-                        file=".gitmodules"
+                        file = ".gitmodules",
                     )
 
                 # https://stackoverflow.com/a/30675130/7623015
                 git.config(
                     "submodule." + sm + ".url",
                     sub_cache,
-                    file=".gitmodules"
+                    file = ".gitmodules",
                 )
                 # When initializing submodules of a local clone setting URL in
                 # .gitmodules is sufficient to force Git use local cache during
