@@ -206,7 +206,7 @@ def co_build_git_graph(
 Builds `graph` of Git `repo`sitory (`git.Repo`).
 `graph` is a mapping (e.g. `dict`).
 Its keys are SHA1 IDs of commits.
-Values of the mappung are instances returned by `node_factory`.
+Values of the mapping are instances returned by `node_factory`.
 They are nodes of the `graph`
 Node does represent commits (`git.Commit`).
 So, (key, value) pair in the mapping (`graph`) is edge.
