@@ -94,9 +94,12 @@ resizing capabilities.
         self.x, self.y = RESIZE_GAP * 2, RESIZE_GAP * 2
         self.__cursor = self.cget("cursor")
 
-        canvas_kw = dict(canvas_kw) # preserve user's `dict`
+        # preserve user's `dict`
+        canvas_kw = dict(canvas_kw)
+        assert "window" not in canvas_kw, "%s IS the the window" % self
         canvas_kw["window"] = self
-        canvas_kw["anchor"] = NW
+        assert "anchor" not in canvas_kw, "implementation relies on NW anchor"
+        canvas_kw.setdefault("anchor", NW)
 
         self.id = canvas.create_window(x, y, **canvas_kw)
 
