@@ -555,6 +555,7 @@ class GGVWidget(GUIFrame):
                 l = oid2b[eids]
             except KeyError:
                 l = GridLine(self._cnv, gcoords)
+                oid2b[eids] = l
                 l.g = self._g
             else:
                 l.set_gcoords(gcoords)
