@@ -85,6 +85,11 @@ class _CanvasItem:
         self._coords = coords
         self._invalidate()
 
+    @coords.deleter
+    def coords(self):
+        del self._coords
+        self._invalidate()
+
     _valid = True
     def _invalidate(self):
         if self._valid:
