@@ -486,6 +486,7 @@ class GGVWidget(GUIFrame):
                 return
             b = TextGridBox(cnv)
             o2b[n] = b
+            b.g = self._g
             for iid in b.iter_iids():
                 iid2o[iid] = n
         else:
@@ -521,7 +522,6 @@ class GGVWidget(GUIFrame):
         else:
             raise RuntimeError(type(n))
 
-        b.g = self._g
         b.gcoords = lxy
 
     def _on_edge_placed(self, *ab):
