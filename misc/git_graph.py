@@ -549,9 +549,9 @@ class GGVWidget(GUIFrame):
                 l = o2b[ab]
             except KeyError:
                 l = GridLine(self._cnv, gcoords)
+                l.g = self._g
             else:
                 l.set_gcoords(gcoords)
-            l.g = self._g
         else:
             # removed
             l = o2b.pop(ab, None)
