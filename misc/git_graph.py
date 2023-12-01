@@ -343,7 +343,6 @@ class GGVWidget(GUIFrame):
             self.cancel_task(co)
             self._cnv.delete(ALL)
             self._cnv.update_scroll_region()
-            del self._o2iid
             del self._o2b
             del self._iid2o
             del self._dgp
@@ -367,7 +366,6 @@ class GGVWidget(GUIFrame):
             pop()()
 
     def co_visualize(self):
-        self._o2iid = {}
         self._o2b = {}
         self._iid2o = {}
         self._g = Grid()
