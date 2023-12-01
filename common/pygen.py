@@ -209,7 +209,7 @@ require reference to the current object.
                 else:
                     if code == 34: # "
                         dquote += 1
-                    elif code == 38: # '
+                    elif code == 39: # '
                         squote += 1
                     normalized += chr(code)
 
