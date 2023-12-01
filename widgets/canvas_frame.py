@@ -101,7 +101,7 @@ resizing capabilities.
         assert "window" not in canvas_kw, "%s IS the the window" % self
         canvas_kw["window"] = self
         assert "anchor" not in canvas_kw, "implementation relies on NW anchor"
-        canvas_kw.setdefault("anchor", NW)
+        canvas_kw["anchor"] = NW
 
         self.id = canvas.create_window(x, y, **canvas_kw)
 
