@@ -184,7 +184,6 @@ require reference to the current object.
         elif isinstance(c, (binary_type, text_type)):
             normalized = ""
             prefix = ""
-            multiline = False
             # Double and single quote count
             dquote = 0
             squote = 0
