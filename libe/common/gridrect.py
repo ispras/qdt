@@ -35,7 +35,7 @@ the `g`rid.
         if self._g is not None:
             dismiss(self._on_grid_resized)
             if gcoords is not None:
-                g.remove(self)
+                self._g.remove(self)
                 del self.coords
         if g is None:
             del self._g
