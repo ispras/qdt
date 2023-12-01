@@ -136,13 +136,16 @@ class TextGridBox(GridRect, _CanvasItem):
         gcoords = self._gcoords
         if gcoords is None:
             return
+        coords = self._coords
+        if coords is None:
+            return
 
         c = self._c
         riid = self._riid
         tiid = self._tiid
         g = self._g
 
-        x, y = self._coords
+        x, y = coords
 
         i, j = gcoords
         x1, y1 = g((i + 1, j + 1))
