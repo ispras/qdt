@@ -313,12 +313,15 @@ class GGVWidget(GUIFrame):
         if edge is cur_edge:
             return
 
+        # `edge` is a `GitMgEdge`, it corresponds to a box (node) on canvas.
+        # I.e. it is not a line (edge) on canvas identified by two `id`s.
+
         if cur_edge is not None:
-            b = self._o2b[cur_edge]
+            b = self._oid2b[id(cur_edge)]
             b.set_styles(self.EDGE_TEXT_NORMAL, self.EDGE_RECT_NORMAL)
 
         if edge is not None:
-            b = self._o2b[edge]
+            b = self._oid2b[id(edge)]
             b.set_styles(self.EDGE_TEXT_SELECTED, self.EDGE_RECT_SELECTED)
 
         self._edge = edge
@@ -336,11 +339,11 @@ class GGVWidget(GUIFrame):
             return
 
         if cur_node is not None:
-            b = self._o2b[cur_node]
+            b = self._oid2b[id(cur_node)]
             b.set_styles(self.NODE_TEXT_NORMAL, self.NODE_RECT_NORMAL)
 
         if node is not None:
-            b = self._o2b[node]
+            b = self._oid2b[id(node)]
             b.set_styles(self.NODE_TEXT_SELECTED, self.NODE_RECT_SELECTED)
 
         self._node = node
@@ -364,7 +367,7 @@ class GGVWidget(GUIFrame):
             self.cancel_task(co)
             self._cnv.delete(ALL)
             self._cnv.update_scroll_region()
-            del self._o2b
+            del self._oid2b
             del self._iid2o
             del self._dgp
             dismiss(self._on_node_placed)
@@ -387,7 +390,7 @@ class GGVWidget(GUIFrame):
             pop()()
 
     def co_visualize(self):
-        self._o2b = {}
+        self._oid2b = {}
         self._iid2o = {}
         self._g = Grid()
         self._jobs = deque()
@@ -482,20 +485,22 @@ class GGVWidget(GUIFrame):
     def _on_node_placed(self, n):
         cnv = self._cnv
         dgp = self._dgp
-        o2b = self._o2b
+        oid2b = self._oid2b
         iid2o = self._iid2o
 
         # logical coordinates
         lxy = dgp.node_coords(n)
 
+        nid = id(n)
+
         try:
-            b = o2b[n]
+            b = oid2b[nid]
         except KeyError:
             if lxy is None:
                 # removed
                 return
             b = TextGridBox(cnv)
-            o2b[n] = b
+            oid2b[nid] = b
             b.g = self._g
             for iid in b.iter_iids():
                 iid2o[iid] = n
@@ -503,7 +508,7 @@ class GGVWidget(GUIFrame):
             if lxy is None:
                 # removed
                 b.delete()
-                del o2b[n]
+                del oid2b[nid]
                 for iid in b.iter_iids():
                     del iid2o[iid]
 
@@ -535,7 +540,8 @@ class GGVWidget(GUIFrame):
         b.gcoords = lxy
 
     def _on_edge_placed(self, *ab):
-        o2b = self._o2b
+        oid2b = self._oid2b
+        eids = tuple(map(id, ab))
 
         gcoords = []
         gcoord = gcoords.append
@@ -546,7 +552,7 @@ class GGVWidget(GUIFrame):
 
         if gcoords:
             try:
-                l = o2b[ab]
+                l = oid2b[eids]
             except KeyError:
                 l = GridLine(self._cnv, gcoords)
                 l.g = self._g
@@ -554,7 +560,7 @@ class GGVWidget(GUIFrame):
                 l.set_gcoords(gcoords)
         else:
             # removed
-            l = o2b.pop(ab, None)
+            l = oid2b.pop(eids, None)
             if l is not None:
                 l.remove()
 
