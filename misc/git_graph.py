@@ -182,8 +182,11 @@ class _GridLinePoint(GridRect, _CanvasItem):
         gcoords = self._gcoords
         if gcoords is None:
             return
+        coords = self._coords
+        if coords is None:
+            return
 
-        x, y = self._coords
+        x, y = coords
         i, j = gcoords
         x1, y1 = self._g((i + 1, j + 1))
 
