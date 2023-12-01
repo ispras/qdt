@@ -986,21 +986,43 @@ class DynamicGraphPlacer2D(object):
                 if ac < bc:
                     g.remove(ac)
                     del components[ac._ij]
-                    bc.merge(ac)
-                    enqueue(bc)
+                    ac._ij = None
+
+                    # notify on invalidation
+                    for n in ac._nodes:
+                        yield True
+                        notify(self, "node", n)
+                    node_at = ac._node_at
+                    for _e in ac._edges:
+                        yield True
+                        notify(self, "edge", node_at(_e[0]), node_at(_e[-1]))
+
                     for n in ac:
                         n2c[n] = bc
+
+                    bc.merge(ac)
+                    enqueue(bc)
                     bc.add_edge(e)
-                    ac._ij = None
                 else:
                     g.remove(bc)
                     del components[bc._ij]
-                    ac.merge(bc)
-                    enqueue(ac)
+                    bc._ij = None
+
+                    # notify on invalidation
+                    for n in bc._nodes:
+                        yield True
+                        notify(self, "node", n)
+                    node_at = bc._node_at
+                    for _e in bc._edges:
+                        yield True
+                        notify(self, "edge", node_at(_e[0]), node_at(_e[-1]))
+
                     for n in bc:
                         n2c[n] = ac
+
+                    ac.merge(bc)
+                    enqueue(ac)
                     ac.add_edge(e)
-                    bc._ij = None
 
         eq.extend(next_try)
 
