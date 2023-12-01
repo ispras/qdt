@@ -196,9 +196,9 @@ require reference to the current object.
                 elif code > 0xFF: # 2-byte unicode
                     prefix = "u"
                     normalized += "\\u%04x" % code
-                elif code > 127: # non-ASCII code
+                elif code > 0x7F: # non-ASCII code
                     normalized += "\\x%02x" % code
-                elif code == 92: # \
+                elif code == 0x5C: # \
                     normalized += "\\\\"
                 # Do not use multiline strings ("""/''') because of auto
                 # indentation.
@@ -207,9 +207,9 @@ require reference to the current object.
                 elif code == 0x0D: # \r
                     normalized += r"\r"
                 else:
-                    if code == 34: # "
+                    if code == 0x22: # "
                         dquote += 1
-                    elif code == 39: # '
+                    elif code == 0x27: # '
                         squote += 1
                     normalized += chr(code)
 
