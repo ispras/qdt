@@ -908,6 +908,7 @@ class DynamicGraphPlacer2D(object):
             c.remove_node(n)
             if not c:
                 del self._components[c._ij]
+                c._ij = None
                 self._g.remove(c)
                 self._cqueue = deque(c0 for c0 in self._cqueue if c0 is not c)
         self._equeue = deque(e for e in self._equeue if n not in e)
