@@ -6,6 +6,7 @@ __all__ = [
   , "fast_repo_clone"
   , "git_find_commit"
   , "init_submodules_from_cache"
+  , "repo_path_in_tree"
 ]
 
 from collections import (
@@ -21,6 +22,7 @@ from tempfile import (
     mkdtemp
 )
 from os.path import (
+    sep,
     exists,
     join
 )
@@ -234,7 +236,7 @@ as fast as possible. A clone is neither honest nor independent, so be careful.
 
     return new_repo
 
-def init_submodules_from_cache(repo, cache_dir):
+def init_submodules_from_cache(repo, cache_dir, revert_urls = False):
     git = repo.git
 
     if not exists(join(repo.working_tree_dir, ".gitmodules")):
@@ -256,18 +258,41 @@ def init_submodules_from_cache(repo, cache_dir):
                 name = full_key[:-len(prop)]
                 submodules.setdefault(name, {})[prop] = value
 
+    # Previous value of submodule URL used when `revert_urls`.
+    url_back = None
+
     for sm, props in submodules.items():
         sub_cache = join(cache_dir, sm)
         # If path is absent, it's considered equal to name.
         sm_path = props.get(".path", sm)
 
+        if not repo_path_in_tree(repo, sm_path):
+            # The submodule has likely been removed from tree.
+            continue
+
         if exists(sub_cache):
+            if revert_urls:
+                url_back = git.config(
+                    "submodule." + sm + ".url",
+                    file = ".gitmodules"
+                )
+
             # https://stackoverflow.com/a/30675130/7623015
             git.config(
                 "submodule." + sm + ".url",
                 sub_cache,
                 file = ".gitmodules"
             )
+            # When initializing submodules of a local clone setting URL in
+            # .gitmodules is sufficient to force Git use local cache during
+            # "update" command.
+            # However, initialization of a worktree (see "git worktree")
+            # submodules still uses original URLs. The "sync" command fixes it.
+            #
+            # Note that Git keeps cache of worktree submodules in a different
+            # place (i.e. caches of main work tree submodules are not re-used):
+            # .git/worktrees/[worktree name]/modules/[path to submodule]
+            git.submodule("sync", sm_path)
         else:
             print("Submodule %s has no cache at '%s'."
                   " Default URL will be used." % (
@@ -279,7 +304,19 @@ def init_submodules_from_cache(repo, cache_dir):
         git.submodule("update", "--init", sm_path)
 
         sub_repo = Repo(join(repo.working_tree_dir, sm_path))
-        init_submodules_from_cache(sub_repo, join(sub_cache, "modules"))
+        init_submodules_from_cache(sub_repo, join(sub_cache, "modules"),
+            revert_urls = revert_urls
+        )
+
+        if url_back is not None:
+            git.config(
+                "submodule." + sm + ".url",
+                url_back,
+                file = ".gitmodules"
+            )
+            url_back = None
+            # Updates URL in cache "config" file.
+            git.submodule("sync", sm_path)
 
 
 def git_find_commit(repo, version):
@@ -296,3 +333,26 @@ a remote head.
                     return ref.commit
 
         raise
+
+
+# Based on: https://stackoverflow.com/a/25961128/7623015
+def repo_path_in_tree(repo, path):
+    """
+@param repo: is a gitPython Repo object
+@param path: is the full path to a file/directory from the repository root
+
+Returns `true` if path exists in the repo in current version,
+        `false` otherwise.
+    """
+
+    # Build up reference to desired repo path
+    rsub = repo.head.commit.tree
+
+    for path_element in path.split(sep):
+        # If dir on file path is not in repo, neither is file/directory.
+        try :
+            rsub = rsub[path_element]
+        except KeyError:
+            return False
+
+    return True

@@ -22,7 +22,9 @@ from common import (
     bstr,
     bsep,
     intervalmap,
+    iter_trie_items,
     trie_add,
+    trie_build,
     trie_find,
     git_diff2delta_intervals,
     pythonize
@@ -36,6 +38,8 @@ re_glv_expr = compile("^(?:\s+([\w\-.]+))?(?:\s+(\d+)(?:\s|$))?")
 
 identity_map = intervalmap()
 identity_map[1:None] = 0
+
+empty_map = intervalmap()
 
 
 class GLVCacheManager(object):
@@ -67,8 +71,22 @@ renaming for file name)
             execfile(self.cache_file, glob)
         except Exception:
             self._cache = self.GLVCache()
+
+        # `pythonize` (used to save adaptation cache) saves
+        # `bytes` as regular `str`ings (without a `b` prefix before
+        #  "string literal").
+        # While the code expects exactly `bytes` (it's actual under Py3).
+        self._bytify_tries()
+
         # trie that contains unhandled git diff information
         self._draft_diffs = {}
+
+    def _bytify_tries(self):
+        cache = self._cache
+        for ver, trie in tuple(cache.items()):
+            cache[ver] = trie_build(
+                (tuple(map(bstr, p)), v) for (p, v) in iter_trie_items(trie)
+            )
 
     def _add_git_diff(self, version):
         diff = self.curr_commit.diff(version, "*.c", True, unified = 0)
@@ -106,32 +124,38 @@ renaming for file name)
         except KeyError:
             return identity_map, None
         else:
-            if val[0] is not None:
-                diff, rename = val
+            diff, rename = val
+
+            if diff is None:
+                # File has been removed (see _add_git_diff)
+                # and lineno can't be adapted (delta is None for any line).
+                delta_map = empty_map
+            else:
                 # conversion of git diff information into delta intervals
-                val = (git_diff2delta_intervals(diff), rename)
-            return val
+                delta_map = git_diff2delta_intervals(diff)
+            return (delta_map, rename)
 
     def get_glv_data(self, version, fname):
         "data is delta intervals and renaming for `fname`"
 
         version_trie = self._cache.setdefault(version, {})
 
+        trie_path = tuple(reversed(fname.split(bsep)))
+
         try:
-            return trie_find(version_trie,
-                tuple(reversed(fname.split(bsep)))
-            )[0]
+            delta_map, rename = trie_find(version_trie, trie_path)[0]
         except KeyError:
-            pass
+            if version not in self._draft_diffs:
+                self._add_git_diff(version)
 
-        if version not in self._draft_diffs:
-            self._add_git_diff(version)
+            delta_map, rename = val = self._find_git_diff(version, fname)
 
-        val = self._find_git_diff(version, fname)
-        trie_add(version_trie,
-            tuple(reversed(fname.split(bsep))), val
-        )
-        return val
+            trie_add(version_trie, trie_path, val)
+
+        if rename is not None:
+            rename = bstr(rename)
+
+        return delta_map, rename
 
     def store_cache(self):
         pythonize(self._cache, self.cache_file)
@@ -194,10 +218,10 @@ class GitLineVersionAdapter(LineAdapter):
         return obstructive_commit
 
     def do_adapt(self, delta_intervals, lineno, eps):
-        if delta_intervals is not None:
-            if not self.line_block_is_changed(delta_intervals, lineno, eps):
-                return self.calc_lineno(delta_intervals, lineno)
-        return None
+        if self.line_block_is_changed(delta_intervals, lineno, eps):
+            return None
+        else:
+            return self.calc_lineno(delta_intervals, lineno)
 
     def adapt_lineno(self, fname, lineno, opaque):
         lineno = int(lineno)

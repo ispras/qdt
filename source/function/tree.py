@@ -81,7 +81,7 @@ from ..type_container import (
 )
 from common import (
     ee,
-    BreakVisiting,
+    SkipVisiting,
     lazy
 )
 from six import (
@@ -109,7 +109,7 @@ class DeclarationSearcher(NodeVisitor):
     def on_visit(self):
         if isinstance(self.cur, Declare):
             self.have_declaration = True
-            raise BreakVisiting()
+            raise SkipVisiting()
 
 
 def flat_iter(gen):
@@ -838,7 +838,11 @@ class OpCast(UnaryOperator):
 
     __type_references__ = ("type",)
 
-    def __init__(self, type_name, arg):
+    def __init__(self, type_or_name, arg):
+        if isinstance(type_or_name, Type):
+            type_name = type_or_name.c_name
+        else:
+            type_name = type_or_name
         super(OpCast, self).__init__("(" + type_name + ")", arg)
         self.type = Type[type_name]
 

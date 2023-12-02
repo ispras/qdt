@@ -7,10 +7,9 @@ from .var_widgets import (
     VarButton,
     VarLabelFrame
 )
-from qemu import (
-    qvd_get
-)
 from six.moves.tkinter import (
+    NORMAL,
+    DISABLED,
     Frame,
     Radiobutton,
     Checkbutton,
@@ -42,7 +41,10 @@ ItemDesc = namedtuple(
 
 
 class DeviceTreeWidget(GUIDialog):
+
     def __init__(self, root, *args, **kw):
+        self.qom_tree = qom_tree = kw.pop("qom_tree")
+
         GUIDialog.__init__(self, master = root, *args, **kw)
         self.qom_type_var = root.qom_type_var
 
@@ -65,7 +67,8 @@ class DeviceTreeWidget(GUIDialog):
         dt.heading("#0", text = _("Devices"))
         dt.heading("Macros", text = _("Macros"))
 
-        dt.bind("<ButtonPress-1>", self.on_b1_press_dt)
+        dt.bind("<<TreeviewSelect>>", self._on_device_tv_select, "+")
+        self.v_sel_type = v_sel_type = StringVar(self)
 
         dt.grid(
             row = 0,
@@ -87,18 +90,14 @@ class DeviceTreeWidget(GUIDialog):
         self.fr_qt = VarLabelFrame(column_fr, text = _("Select QOM type"))
         self.fr_qt.grid(row = 1, column = 0, sticky = "SEWN")
 
-        self.add_button = VarButton(
+        self.bt_select = VarButton(
             column_fr,
             text = _("Select"),
-            command = self.on_select_qom_type
+            command = self._on_bt_select
         )
-        self.add_button.grid(row = 2, column = 0, sticky = "EW")
-        self.add_button.config(state = "disabled")
-
-        qtype_dt = self.qtype_dt = qvd_get(
-            root.mach.project.build_path,
-            version = root.mach.project.target_version
-        ).qvc.device_tree
+        self.bt_select.grid(row = 2, column = 0, sticky = "EW")
+        self.bt_select.config(state = DISABLED)
+        v_sel_type.trace("w", self._on_v_sel_type_w)
 
         arch_buttons = Frame(fr_at, borderwidth = 0)
         arch_buttons.pack(fill = "x")
@@ -125,7 +124,7 @@ class DeviceTreeWidget(GUIDialog):
         )
         bt_invert_arches.grid(row = 0, column = 2, sticky = "EW")
 
-        if not qtype_dt.arches:
+        if not qom_tree.arches:
             bt_all_arches.config(state = "disabled")
             bt_none_arches.config(state = "disabled")
             bt_invert_arches.config(state = "disabled")
@@ -137,7 +136,7 @@ class DeviceTreeWidget(GUIDialog):
         )
 
         ac = self.arches_checkbox = []
-        for a in sorted(list(qtype_dt.arches)):
+        for a in sorted(list(qom_tree.arches)):
             v = IntVar()
             c = Checkbutton(arch_selector,
                 text = a,
@@ -158,7 +157,7 @@ class DeviceTreeWidget(GUIDialog):
 
         self.disabled_arches = set()
 
-        self.qom_create_tree("", qtype_dt.children)
+        self.qom_create_tree("", qom_tree.children)
 
     def select_arches(self):
         all_items = self.all_items
@@ -190,7 +189,7 @@ class DeviceTreeWidget(GUIDialog):
                 self.detached_items[i] = self.all_items[i]
 
         dt.detach(*to_detach)
-        self.disabled_arches = set(self.qtype_dt.arches)
+        self.disabled_arches = set(self.qom_tree.arches)
 
         for c in self.arches_checkbox:
             c.deselect()
@@ -262,42 +261,53 @@ class DeviceTreeWidget(GUIDialog):
             if to_detach:
                 dt.detach(*to_detach)
 
-    def on_select_qom_type(self):
-        self.qom_type_var.set(self.v.get())
+    def _on_bt_select(self):
+        self.qom_type_var.set(self.v_sel_type.get())
         self.destroy()
 
     # write selected qom type in qom_type_var
-    def on_b1_press_dt(self, event):
-        item = self.device_tree.identify('item', event.x, event.y)
+    def _on_device_tv_select(self, __):
+        dt = self.device_tree
+        sel = dt.selection()
 
-        if not item:
+        if len(sel) != 1:
             return
 
-        self.add_button.config(state = "normal")
+        item = sel[0]
+
         for widget in self.fr_qt.winfo_children():
             widget.destroy()
 
-        dt_type = self.device_tree.item(item, "text")
-        self.v = StringVar()
-        self.v.set(dt_type)
+        dt_type = dt.item(item, "text")
+
+        v_sel_type = self.v_sel_type
+        # Note, value of `v_sel_type` will be assigned automatically by
+        # `Radiobutton`s `select` below.
 
         b = Radiobutton(self.fr_qt,
             text = dt_type,
-            variable = self.v,
+            variable = v_sel_type,
             value = dt_type
         )
         b.pack(anchor = "w")
 
-        macros = self.device_tree.item(item, "values")[0]
+        macros = dt.item(item, "values")[0]
         if macros != "None":
             l = macros.split(", ")
             for mstr in l:
                 b = Radiobutton(
                     self.fr_qt,
                     text = mstr,
-                    variable = self.v,
+                    variable = v_sel_type,
                     value = mstr
                 )
                 b.pack(anchor = "w")
 
         b.select()
+
+    def _on_v_sel_type_w(self, *__):
+        v_sel_type = self.v_sel_type
+        if v_sel_type.get():
+            self.bt_select.config(state = NORMAL)
+        else:
+            self.bt_select.config(state = DISABLED)

@@ -23,7 +23,7 @@ from itertools import (
 from common import (
     ee,
     ObjectVisitor,
-    BreakVisiting
+    SkipVisiting
 )
 from six import (
     add_metaclass,
@@ -173,10 +173,11 @@ class Type(TypeContainer):
             self.name = name
             self.c_name = name.split('.', 1)[0]
 
-            if name in Type.reg:
-                raise RuntimeError("Type %s is already registered" % name)
-
-            Type.reg[name] = self
+            t = Type.reg.setdefault(name, self)
+            if t is not self:
+                raise RuntimeError("Type %s is already registered (%s)" % (
+                    name, t.definer
+                ))
 
     def gen_var(self, name,
         pointer = False,
@@ -1113,7 +1114,7 @@ class TypesCollector(TypeReferencesVisitor):
         cur = self.cur
         if isinstance(cur, Type):
             self.used_types.add(cur)
-            raise BreakVisiting()
+            raise SkipVisiting()
 
 
 class GlobalsCollector(NodeVisitor):

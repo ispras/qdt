@@ -272,7 +272,8 @@ class QemuVersionCache(object):
 
     :param sorted_vd_keys:
         keys of qemu_heuristic_db sorted in ascending order by num of
-        QemuCommitDesc. It's necessary to optimize the graph traversal.
+        QemuCommitDesc (elder first). It's necessary to optimize the graph
+        traversal.
 
     :param vd:
         qemu_heuristic_db
@@ -331,6 +332,8 @@ class QemuVersionCache(object):
                                     else:
                                         exc_raise = True
                                     if exc_raise:
+                                        # Hint: try to add `old_value` equal to
+                                        #       previous `new_value`.
                                         raise Exception("Contradictory definition of param " \
 "'%s' in commit %s (%s != %s)" % (p, c.sha, cur_node.param_nval[p], c.param_nval[p])
                                         )
@@ -682,10 +685,14 @@ class QemuVersionDescription(object):
             rmtree(tmp_work_dir)
             get_cleaner().cancel(clean_work_dir_task)
 
-            yield self.co_init_device_tree()
-
             # Search for PCI Ids
             PCIClassification.build()
+
+            # Save cache after long running operation because device tree
+            # initialization is frequently buggy.
+            yield self.co_overwrite_cache()
+
+            yield self.co_init_device_tree()
 
             yield self.co_overwrite_cache()
         else:
@@ -720,6 +727,10 @@ class QemuVersionDescription(object):
 
             # set Qemu version heuristics according to current version
             initialize_version(self.qvc.version_desc)
+
+            # Save cache after long running operation because consequent
+            # initialization can be buggy.
+            yield self.co_overwrite_cache()
 
             dt = self.qvc.device_tree
             if dt:

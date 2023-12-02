@@ -16,9 +16,6 @@ from common import (
     pypath,
     co_find_eq
 )
-from os.path import (
-    join
-)
 from subprocess import (
     Popen
 )
@@ -52,10 +49,10 @@ class QType(object):
         else:
             parent.add_child(self)
 
-        self.macros = macros if macros else []
+        self.macros = list(macros) if macros else []
 
         # set of CPU architectures found in QOM type tree
-        self.arches = arches if arches else set()
+        self.arches = set(arches) if arches else set()
 
     def __remove_child(self, child):
         child.parent = None
@@ -93,6 +90,35 @@ class QType(object):
         """ searches for the request across entire tree starting from root """
         for t in co_find_eq(self.root().descendants(), **request):
             yield t
+
+    def merge(self, tree):
+        # cache
+        children = self.children
+        macros = self.macros
+        add_child = self.add_child
+
+        for m in tree.macros:
+            if m not in macros:
+                macros.append(m)
+
+        self.arches.update(tree.arches)
+
+        for n, other_c in tree.children.items():
+
+            if n in children:
+                c = children[n]
+            else:
+                c = type(other_c)(
+                    name = n,
+                    macros = other_c.macros,
+                    arches = other_c.arches,
+                )
+                add_child(c)
+
+            c.merge(other_c)
+
+    def __contains__(self, name):
+        return name in self.children
 
     # Tree will be traversed from the root to the child nodes
     # The children will be serialized first
