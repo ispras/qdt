@@ -95,7 +95,6 @@ class QType(object):
         # cache
         children = self.children
         macros = self.macros
-        add_child = self.add_child
 
         for m in tree.macros:
             if m not in macros:
@@ -110,10 +109,10 @@ class QType(object):
             else:
                 c = type(other_c)(
                     name = n,
+                    parent = self,
                     macros = other_c.macros,
                     arches = other_c.arches,
                 )
-                add_child(c)
 
             c.merge(other_c)
 
