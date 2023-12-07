@@ -27,15 +27,9 @@ def parse_tk_geometry(geom_str):
 # Note, the method is guaranteed to accept 1-4 positional arguments too.
 def apply_tk_geometry(window, width = None, height = None, x = None, y = None):
     cur_width, cur_height, cur_x, cur_y = parse_tk_geometry(window.geometry())
-    if width is not None:
-        cur_width = width
-    if height is not None:
-        cur_height = height
-    if x is not None:
-        cur_x = x
-    if y is not None:
-        cur_y = y
-    window.geometry("%sx%s+%s+%s" % (cur_width, cur_height, cur_x, cur_y))
+    window.geometry("%sx%s+%s+%s" % (
+        width or cur_width, height or cur_height, x or cur_x, y or cur_y
+    ))
 
 
 def centrify_tk_window(static, moved):
