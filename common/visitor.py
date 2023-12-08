@@ -159,6 +159,7 @@ Features (+) implemented, (-) TODO:
                 try:
                     self.__visit__(attr)
                 except StopVisiting:
+                    # TODO: try to move `__pop__` to `finally` block, below too
                     self.__pop__()
                     raise
                 self.__pop__()
