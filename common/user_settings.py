@@ -2,10 +2,10 @@ __all__ = [
     "UserSettings"
 ]
 
-
 from .persistent import (
     Persistent,
 )
+
 from os.path import (
     expanduser,
     join,
