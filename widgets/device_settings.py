@@ -384,7 +384,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget):
             text = _("Child buses")
         )
         lf.grid(row = 2, column = 0, columns = 3, sticky = "NEWS")
-        self.rowconfigure(2, weight = 1)
+        common_fr.rowconfigure(2, weight = 1)
 
         lf.columnconfigure(0, weight = 1)
 

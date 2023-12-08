@@ -1,12 +1,17 @@
 __all__ = [
     "ObjectVisitor"
   , "SkipVisiting"
+  , "StopVisiting"
   , "VisitingIsNotImplemented"
 ]
 
 
 # Not an `Exception`. It's (ab)using of `try` logic.
 class SkipVisiting(BaseException):
+    pass
+
+# Not an `Exception` too...
+class StopVisiting(BaseException):
     pass
 
 
@@ -44,6 +49,8 @@ The user should override it to define needed behaviour.
 
 To prevent traversing of subtree the `on_visit` can raise `SkipVisiting`.
 `on_leave` is called even if `SkipVisiting` was raised.
+To stop traversing at all `on_visit` can raise `StopVisiting`.
+`on_leave` is called foreach node `on_visit` was called for.
 
 The `replace` could be called to replace current object in its parent.
 Note that `replace` method raises `SkipVisiting` by default.
@@ -149,11 +156,19 @@ Features (+) implemented, (-) TODO:
             for attribute_name in visitable_list:
                 attr = getattr(obj, attribute_name)
                 self.__push__(attr, attribute_name)
-                self.__visit__(attr)
+                try:
+                    self.__visit__(attr)
+                except StopVisiting:
+                    # TODO: try to move `__pop__` to `finally` block, below too
+                    self.__pop__()
+                    raise
                 self.__pop__()
 
     def visit(self):
-        self.__visit_items__(self.cur)
+        try:
+            self.__visit_items__(self.cur)
+        except StopVisiting:
+            pass
         return self # for call chaining
 
     def __visit_items__(self, attr):
@@ -177,6 +192,8 @@ Features (+) implemented, (-) TODO:
             self.on_visit()
         except SkipVisiting:
             return
+        except StopVisiting:
+            raise
         else:
             self.__visit_items__(attr)
         finally:
@@ -185,17 +202,29 @@ Features (+) implemented, (-) TODO:
     def __visit_set__(self, attr):
         for e in sorted(attr):
             self.__push__(e, None) # objects in a set are not named.
-            self.__visit__(e)
+            try:
+                self.__visit__(e)
+            except StopVisiting:
+                self.__pop__()
+                raise
             self.__pop__()
 
     def __visit_list__(self, attr):
         for i, e in enumerate(attr):
             self.__push__(e, i)
-            self.__visit__(e)
+            try:
+                self.__visit__(e)
+            except StopVisiting:
+                self.__pop__()
+                raise
             self.__pop__()
 
     def __visit_dictionary__(self, attr):
         for k, e in sorted(attr.items()):
             self.__push__(e, k)
-            self.__visit__(e)
+            try:
+                self.__visit__(e)
+            except StopVisiting:
+                self.__pop__()
+                raise
             self.__pop__()

@@ -528,6 +528,7 @@ class SwitchCaseDefault(CNode):
             self.new_line = None
 
 
+# TODO: joining "a""b" to "ab". Optionally? By a helper function?
 class StrConcat(CNode):
 
     def __init__(self, *args, **kw_args):
@@ -671,7 +672,10 @@ class MCall(SemicolonPresence):
 
     def __init__(self, macro, *args):
         super(MCall, self).__init__(children = args)
-        self.type = Type[macro]
+        if isinstance(macro, Macro):
+            self.type = macro
+        else:
+            self.type = Type[macro]
 
     def __c__(self, writer):
         writer.write(self.type.c_name)

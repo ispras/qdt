@@ -53,6 +53,7 @@ from os import (
     remove
 )
 from common import (
+    open_dir,
     OrderedSet,
     Persistent,
     Variable,
@@ -280,12 +281,12 @@ show it else hide it."),
             label = _("New project"),
             command = self.on_new_project,
             accelerator = hotkeys.get_keycode_string(self.on_new_project)
-        ),
+        )
         filemenu.add_command(
             label = _("Save"),
             command = self.on_save,
             accelerator = hotkeys.get_keycode_string(self.on_save)
-        ),
+        )
         filemenu.add_command(
             label = _("Save project as..."),
             command = self.on_save_as
@@ -294,13 +295,18 @@ show it else hide it."),
             label = _("Load"),
             command = self.on_load,
             accelerator = hotkeys.get_keycode_string(self.on_load)
-        ),
+        )
         self.reload_idx = filemenu.count
         filemenu.add_command(
             label = _("Reload"),
             command = self.on_reload,
             accelerator = hotkeys.get_keycode_string(self.on_reload)
-        ),
+        )
+        self.open_proj_dir_idx = filemenu.count
+        filemenu.add_command(
+            label = _("Open project directory"),
+            command = self.on_open_project_directory
+        )
         self.recentmenu = recentmenu = VarMenu(filemenu, tearoff = False)
         filemenu.add_cascade(
             label = _("Recent projects"),
@@ -581,10 +587,12 @@ show it else hide it."),
                 pass # already deleted
             else:
                 self.filemenu.entryconfig(self.reload_idx, state = DISABLED)
+                self.filemenu.entryconfig(self.open_proj_dir_idx, state = DISABLED)
         else:
             # TODO: watch the file in FS and auto ask user to reload
             self.current_file_name = file_name
             self.filemenu.entryconfig(self.reload_idx, state = NORMAL)
+            self.filemenu.entryconfig(self.open_proj_dir_idx, state = NORMAL)
 
         self.__update_title__()
 
@@ -946,6 +954,15 @@ all changes are saved. """
 
         self._do_load(fname)
 
+    def on_open_project_directory(self):
+        try:
+            fname = self.current_file_name
+        except AttributeError:
+            # No file is selected for the project yet
+            return
+
+        open_dir(dirname(fname) or ".")
+
     def update_qemu_build_path(self, bp):
         if bp is None:
             self.var_qemu_build_path.set(_("No QEMU build path selected").get())
@@ -982,6 +999,7 @@ class Settings(Persistent):
 
 
 def main():
+    print("QDT GUI on Python %s" % (sys.version,))
     parser = ArgumentParser()
 
     parser.add_argument(

@@ -19,6 +19,10 @@ from .logo import (
 from .gui_error import (
     TaskErrorDialog
 )
+from .tk_geometry_helper import (
+    TkGeometryHelper
+)
+
 
 @notifier("activated", "finished", "failed", "removed")
 class GUITaskManager(TkCoDispatcher):
@@ -41,7 +45,8 @@ class GUITaskManager(TkCoDispatcher):
         TkCoDispatcher.remove(self, task)
         self.__notify_removed(task)
 
-class GUITk(VarTk):
+
+class GUITk(VarTk, TkGeometryHelper):
 
     def __init__(self, **kw):
         # Cut arguments for dispatcher
@@ -71,3 +76,7 @@ class GUITk(VarTk):
 
     def cancel_task(self, co_task):
         self.task_manager.remove(co_task)
+
+    def destroy(self):
+        self.last_geometry = self.get_geometry()
+        VarTk.destroy(self)

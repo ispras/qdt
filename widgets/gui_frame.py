@@ -2,18 +2,17 @@ __all__ = [
     "GUIFrame"
 ]
 
-from six.moves.tkinter import (
-    Frame
-)
 from .tk_unbind import (
-    unbind
+    unbind,
 )
+
+from six.moves.tkinter import (
+    Frame,
+)
+
 
 class GUIFrame(Frame):
     unbind = unbind
-
-    def __init__(self, *args, **kwargs):
-        Frame.__init__(self, *args, **kwargs)
 
     def enqueue(self, co_task):
         "Its toplevel must be GUITk."

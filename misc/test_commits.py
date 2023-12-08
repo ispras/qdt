@@ -34,6 +34,7 @@ from matplotlib import (
 from common import (
     git_find_commit,
     uname,
+    makedirs,
     Measurer,
     fast_repo_clone,
     ee,
@@ -55,7 +56,6 @@ from qemu import (
     qvd_get
 )
 from os import (
-    makedirs,
     environ
 )
 from datetime import (
@@ -341,8 +341,7 @@ class QDTMeasurer(Measurer):
 
         # generated code will be saved as a patch
         diffs = join(abspath(diffs), datetime.now().strftime("%Y%m%d-%H%M%S"))
-        if not isdir(diffs):
-            makedirs(diffs)
+        makedirs(diffs, exist_ok = True)
 
         self.diffs = diffs
 

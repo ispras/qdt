@@ -10,25 +10,29 @@ __all__ = [
   , "VarMenu"
   , "VarTreeview"
 ]
+
+from common import (
+    mlget as _,
+    Variable,
+)
+
 from six.moves.tkinter import (
-    Tk,
-    Menu,
-    Label,
-    Toplevel,
     Button,
-    LabelFrame,
     Checkbutton,
+    Label,
+    LabelFrame,
+    Menu,
+    StringVar,
+    Tk,
+    Toplevel,
     Variable as TkVariable,
-    StringVar
 )
 from six.moves.tkinter_ttk import (
-    Notebook,
     Combobox,
-    Treeview
+    Notebook,
+    Treeview,
 )
-from common import (
-    Variable
-)
+
 
 variables = (Variable, TkVariable)
 
@@ -60,7 +64,7 @@ class VarLabelFrame(LabelFrame):
             self.text_var = kw.pop("text")
             kw["text"] = self.text_var.get()
         else:
-            self.text_var = StringVar("")
+            self.text_var = StringVar()
         LabelFrame.__init__(self, *args, **kw)
         self.text_var.trace_variable("w", self.on_var_changed)
 
@@ -106,7 +110,7 @@ class VarButton(Button):
             self.text_var = kw.pop("text")
             kw["text"] = self.text_var.get()
         else:
-            self.text_var = StringVar("")
+            self.text_var = StringVar()
         Button.__init__(self, *args, **kw)
         self.text_var.trace_variable("w", self.on_var_changed)
 
@@ -123,14 +127,18 @@ class VarTk(Tk):
     def on_var_changed(self, *args):
         Tk.title(self, self.var.get())
 
-    def title(self, stringvar = None):
-        if not stringvar:
+    def title(self, title = None):
+        # Note, `title` can be empty string.
+        if title is None:
             return self.var
 
-        if stringvar != self.var:
+        if not isinstance(title, variables):
+            title = StringVar(self, value = title)
+
+        if title is not self.var:
             if self.var:
                 self.var.trace_vdelete("w", self.observer_name)
-            self.var = stringvar
+            self.var = title
             self.observer_name = self.var.trace_variable(
                 "w",
                 self.on_var_changed
@@ -273,6 +281,26 @@ class VarTreeview(Treeview):
     a tuple. """
 
     def insert(self, *a, **kw):
+        to_track = self.intercept(kw)
+
+        iid = Treeview.insert(self, *a, **kw)
+
+        for col, v in to_track:
+            TreeviewCellBinding(self, col, iid, v)
+
+        return iid
+
+    def item(self, iid, *a, **kw):
+        to_track = self.intercept(kw)
+
+        ret = Treeview.item(self, iid, *a, **kw)
+
+        for col, v in to_track:
+            TreeviewCellBinding(self, col, iid, v)
+
+        return ret
+
+    def intercept(self, kw):
         to_track = []
 
         try:
@@ -285,13 +313,7 @@ class VarTreeview(Treeview):
                     to_track.append((col, v))
                     values[col] = v.get()
 
-        item_iid = Treeview.insert(self, *a, **kw)
-
-        for col, v in to_track:
-            TreeviewCellBinding(self, col, item_iid, v)
-
-        return item_iid
-
+        return to_track
 
 class ComboboxEntryBinding():
 
@@ -359,7 +381,7 @@ class VarNotebook(Notebook):
 
 if __name__ == "__main__":
     root = VarTk()
-    root.title(StringVar(value = "Variable widgets test"))
+    root.title(_("Variable widgets test"))
     root.grid()
     root.rowconfigure(0, weight = 1)
     root.columnconfigure(0, weight = 1)

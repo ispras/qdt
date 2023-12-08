@@ -5,34 +5,36 @@ __all__ = [
       , "PyGenDepsCatcher"
   , "pythonizable"
   , "pygenerate"
+  , "default_gen_pass"
 ]
 
-from six import (
-    text_type,
-    binary_type,
-    integer_types
-)
-from itertools import (
-    count
-)
 from .code_writer import (
-    CodeWriter
-)
-from .reflection import (
-    get_class_total_args
-)
-from .visitor import (
-    SkipVisiting,
-    ObjectVisitor
-)
-from collections import (
-    deque
-)
-from inspect import (
-    isgeneratorfunction
+    CodeWriter,
 )
 from .ordered_set import (
-    OrderedSet
+    OrderedSet,
+)
+from .reflection import (
+    get_class_total_args,
+)
+from .visitor import (
+    ObjectVisitor,
+    SkipVisiting,
+)
+
+from collections import (
+    deque,
+)
+from inspect import (
+    isgeneratorfunction,
+)
+from itertools import (
+    count,
+)
+from six import (
+    binary_type,
+    integer_types,
+    text_type,
 )
 
 
@@ -182,7 +184,6 @@ require reference to the current object.
         elif isinstance(c, (binary_type, text_type)):
             normalized = ""
             prefix = ""
-            multiline = False
             # Double and single quote count
             dquote = 0
             squote = 0
@@ -195,9 +196,9 @@ require reference to the current object.
                 elif code > 0xFF: # 2-byte unicode
                     prefix = "u"
                     normalized += "\\u%04x" % code
-                elif code > 127: # non-ASCII code
+                elif code > 0x7F: # non-ASCII code
                     normalized += "\\x%02x" % code
-                elif code == 92: # \
+                elif code == 0x5C: # \
                     normalized += "\\\\"
                 # Do not use multiline strings ("""/''') because of auto
                 # indentation.
@@ -206,9 +207,9 @@ require reference to the current object.
                 elif code == 0x0D: # \r
                     normalized += r"\r"
                 else:
-                    if code == 34: # "
+                    if code == 0x22: # "
                         dquote += 1
-                    elif code == 38: # '
+                    elif code == 0x27: # '
                         squote += 1
                     normalized += chr(code)
 
@@ -417,6 +418,10 @@ require reference to the current object.
             self.write(s)
 
 
+def dumps(root):
+    return pygenerate(root).w.getvalue()
+
+
 def pythonize(root, path):
     """ Serializes graph of objects presented by its :root: object to Python
     script and writes it to file. See `PyGenerator`.
@@ -427,7 +432,7 @@ def pythonize(root, path):
 
     # Pythonization can be long enough.
     # Do not touch target file until it ended.
-    data = pygenerate(root).w.getvalue().encode("utf-8")
+    data = dumps(root).encode("utf-8")
 
     with open(path, "wb") as _file:
         _file.write(data)

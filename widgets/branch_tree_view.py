@@ -2,20 +2,22 @@ __all__ = [
     "BranchTreeview"
 ]
 
+from common import (
+    mlget as _,
+)
 from .tv_width_helper import (
-    TreeviewWidthHelper
+    TreeviewWidthHelper,
 )
 from .var_widgets import (
-    VarTreeview
-)
-from common import (
-    mlget as _
+    VarTreeview,
 )
 
+
 class BranchTreeview(VarTreeview, TreeviewWidthHelper):
+
     def __init__(self, gui_project_history_tracker, *args, **kw):
         kw["columns"] = [
-            "description"
+            "description",
         ]
 
         VarTreeview.__init__(self, *args, **kw)
@@ -50,7 +52,7 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
 
         self.__invalidate__()
 
-    def __on_open_or_close__(self, *args):
+    def __on_open_or_close__(self, *__):
         """ The rows are not already opened or closed. So, give them time to
         do it. Then recompute widths. """
         self.__after_open_or_close = self.after_idle(
@@ -61,10 +63,10 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
         del self.__after_open_or_close
         self.adjust_widths()
 
-    def __on_heading_changed__(self, *args):
+    def __on_heading_changed__(self, *__):
         self.__invalidate__()
 
-    def __on_destroy__(self, *args):
+    def __on_destroy__(self, *__):
         self.sequence_ml.trace_vdelete("w", self.__sequence_ml)
         self.description_ml.trace_vdelete("w", self.__description_ml)
         self.guipht.unwatch_changed(self.__on_operation__)
@@ -83,7 +85,7 @@ class BranchTreeview(VarTreeview, TreeviewWidthHelper):
         else:
             del self.__after_open_or_close
 
-    def __on_operation__(self, op):
+    def __on_operation__(self, __):
         self.__invalidate__()
 
     def __invalidate__(self):

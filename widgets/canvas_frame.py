@@ -3,14 +3,16 @@ __all__ = [
 ]
 
 from .gui_frame import (
-    GUIFrame
+    GUIFrame,
+)
+
+from os import (
+    name as os_name,
 )
 from six.moves.tkinter import (
-    NW
+    NW,
 )
-from os import (
-    name as os_name
-)
+
 
 RESIZE_GAP = 4
 DOUBLE_GAP = RESIZE_GAP << 1
@@ -99,7 +101,7 @@ resizing capabilities.
         assert "window" not in canvas_kw, "%s IS the the window" % self
         canvas_kw["window"] = self
         assert "anchor" not in canvas_kw, "implementation relies on NW anchor"
-        canvas_kw.setdefault("anchor", NW)
+        canvas_kw["anchor"] = NW
 
         self.id = canvas.create_window(x, y, **canvas_kw)
 
