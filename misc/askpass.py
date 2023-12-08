@@ -8,13 +8,13 @@
 # WARNING! Keep it lightweight. Don't use QDT's `widgets` and so on.
 
 from six.moves.tkinter import (
-    Tk,
-    Label,
-    Entry,
-    BOTH,
-    StringVar,
-    Checkbutton,
     BooleanVar,
+    BOTH,
+    Checkbutton,
+    Entry,
+    Label,
+    StringVar,
+    Tk,
 )
 
 
