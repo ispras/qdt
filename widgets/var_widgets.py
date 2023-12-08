@@ -283,7 +283,6 @@ class VarTreeview(Treeview):
         return iid
 
     def item(self, iid, *a, **kw):
-
         to_track = self.intercept(kw)
 
         ret = Treeview.item(self, iid, *a, **kw)
