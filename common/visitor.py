@@ -223,7 +223,7 @@ Features (+) implemented, (-) TODO:
             self.__push__(e, k)
             try:
                 self.__visit__(e)
-            except:
+            except StopVisiting:
                 self.__pop__()
                 raise
             self.__pop__()
