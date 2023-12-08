@@ -18,8 +18,8 @@ from .reflection import (
     get_class_total_args,
 )
 from .visitor import (
-    SkipVisiting,
     ObjectVisitor,
+    SkipVisiting,
 )
 
 from collections import (
