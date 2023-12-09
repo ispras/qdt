@@ -1001,7 +1001,8 @@ class Settings(UserSettings):
             schedule_generation = False,
             gen_chunk_graphs = False,
             translate_cpu_semantics = True,
-            recent_projects = OrderedSet()
+            recent_projects = OrderedSet(),
+            geometry = (1000, 750),
         )
 
     def account_project(self, file_name):
@@ -1080,9 +1081,12 @@ def main():
     with Settings() as settings:
         root.set_user_settings(settings)
 
-        root.geometry("1000x750")
+        root.set_geometry_delayed(*settings.geometry)
 
         root.mainloop()
+
+        # only save width and height
+        settings.geometry = root.last_geometry[:2]
 
 if __name__ == '__main__':
     main()
