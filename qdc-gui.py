@@ -658,6 +658,8 @@ show it else hide it."),
                 # will be ready.
 
     def on_quit(self):
+        self.save_project_to_file("project.py")
+
         self.quit()
 
     def undo(self):
@@ -1078,8 +1080,6 @@ def main():
         root.geometry("1000x750")
 
         root.mainloop()
-
-    root.save_project_to_file("project.py")
 
 if __name__ == '__main__':
     main()
