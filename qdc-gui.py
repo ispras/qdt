@@ -318,7 +318,7 @@ show it else hide it."),
         filemenu.add_separator()
         filemenu.add_command(
             label = _("Quit"),
-            command = self.quit,
+            command = self.on_quit,
             accelerator = hotkeys.get_keycode_string(self.on_delete)
         )
         menubar.add_cascade(label = _("File"), menu = filemenu)
@@ -657,6 +657,9 @@ show it else hide it."),
                 # Note that target Qemu version info will be update when QVC
                 # will be ready.
 
+    def on_quit(self):
+        self.quit()
+
     def undo(self):
         self.pht.undo_sequence()
 
@@ -725,7 +728,7 @@ in process. Do you want to start cache rebuilding?")
 
         self.signal_dispatcher.unwatch_failed(self.__on_listener_failed)
 
-        self.quit()
+        self.on_quit()
 
     def on_add_description(self):
         d = AddDescriptionDialog(self.pht, self)
