@@ -662,6 +662,10 @@ show it else hide it."),
 
         self.quit()
 
+        # This is necessary on Windows Py2 to prevent error:
+        # "Fatal Python error: PyEval_RestoreThread: NULL tstate".
+        self.destroy()
+
     def undo(self):
         self.pht.undo_sequence()
 
