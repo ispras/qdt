@@ -79,7 +79,10 @@ import qdt
 from traceback import (
     format_exception
 )
-import sys
+from sys import (
+    stderr,
+    version as py_version,
+)
 from os.path import (
     join,
     isfile,
@@ -493,7 +496,7 @@ show it else hide it."),
         self.var_translate_cpu_semantics.set(settings.translate_cpu_semantics)
 
     def __on_listener_failed(self, e, tb):
-        sys.stderr.write("Listener failed - %s" %
+        stderr.write("Listener failed - %s" %
             "".join(format_exception(type(e), e, tb))
         )
 
@@ -1000,7 +1003,7 @@ class Settings(Persistent):
 
 
 def main():
-    print("QDT GUI on Python %s" % (sys.version,))
+    print("QDT GUI on Python %s" % (py_version,))
     parser = ArgumentParser()
 
     parser.add_argument(
