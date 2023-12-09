@@ -46,7 +46,6 @@ from itertools import (
 )
 from os.path import (
     isabs,
-    isdir,
     isfile,
     join,
     normpath,
