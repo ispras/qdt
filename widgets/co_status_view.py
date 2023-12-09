@@ -51,6 +51,8 @@ finished coroutines.
         if isinstance(guitk, GUITk):
             self.task_manager = guitk.task_manager
 
+        self.bind("<Destroy>", self._on_destroy, "+")
+
     @property
     def task_manager(self):
         return self._tm
@@ -74,5 +76,12 @@ finished coroutines.
             cur_val = len(getattr(self.task_manager, group))
             if cur_val != var.get():
                 var.set(cur_val)
+
+    def _on_destroy(self, __):
+        tm = self._tm
+        if tm is not None:
+            handler = self._task_state_changed
+            for e in tm._events:
+                tm.unwatch(e, handler)
 
 TASK_GROUPS = ("tasks", "callers", "active_tasks", "finished_tasks")
