@@ -11,6 +11,7 @@ from common import (
     OrderedSet,
     Persistent,
     pythonize,
+    UserSettings,
     Variable,
 )
 from examples import (
@@ -979,11 +980,13 @@ all changes are saved. """
         self.update_target_qemu()
 
 
-class Settings(Persistent):
+class Settings(UserSettings):
     "Keeps user settings in a file."
 
-    def __init__(self, file_name):
-        super(Settings, self).__init__(file_name,
+    _suffix = ".qdt.py"
+
+    def __init__(self):
+        super(Settings, self).__init__(
             glob = globals(),
             version = 1.0,
             # default values
@@ -1066,7 +1069,7 @@ def main():
         account_build_path(arguments.qemu_build)
         root.pht.set_build_path(arguments.qemu_build)
 
-    with Settings(expanduser(join("~", ".qdt.py"))) as settings:
+    with Settings() as settings:
         root.set_user_settings(settings)
 
         root.geometry("1000x750")
