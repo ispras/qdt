@@ -1,94 +1,92 @@
 #!/usr/bin/env python
 
-from examples import (
-    Q35Project_2_6_0,
-    Q35MachineNode_2_6_0
-)
-from widgets import (
-    CoStatusView,
-    GitVerSelDialog,
-    QDCGUISignalHelper,
-    DescNameWatcher,
-    GUIPOp_SetBuildPath,
-    Statusbar,
-    GUIProjectHistoryTracker,
-    HistoryWindow,
-    askyesno,
-    askopen,
-    asksaveas,
-    askdirectory,
-    AddDescriptionDialog,
-    GUIProject,
-    HotKeyBinding,
-    ProjectWidget,
-    VarMenu,
-    GUITk
-)
-from argparse import (
-    ArgumentParser
-)
-from qemu_device_creator import (
-    arg_type_directory
-)
-from qemu import (
-    QProject,
-    qvd_get,
-    BadBuildPath,
-    MachineNode,
-    load_build_path_list,
-    account_build_path,
-    QemuVersionDescription
-)
-from six.moves.tkinter import (
-    NORMAL,
-    DISABLED,
-    END,
-    IntVar
-)
-from six.moves.cPickle import (
-    load as load_cPickled
-)
-from os import (
-    remove
-)
 from common import (
+    as_variable,
+    CoSignal,
+    CoTask,
+    execfile,
+    FormatVar,
+    mlget as _,
     open_dir,
     OrderedSet,
     Persistent,
-    Variable,
-    as_variable,
-    FormatVar,
-    execfile,
-    CoSignal,
-    CoTask,
     pythonize,
-    mlget as _
+    Variable,
+)
+from examples import (
+    Q35MachineNode_2_6_0,
+    Q35Project_2_6_0,
+)
+import qdt
+from qemu import (
+    account_build_path,
+    BadBuildPath,
+    load_build_path_list,
+    MachineNode,
+    QemuVersionDescription,
+    QProject,
+    qvd_get,
+)
+from qemu_device_creator import (
+    arg_type_directory,
+)
+from widgets import (
+    AddDescriptionDialog,
+    askdirectory,
+    askopen,
+    asksaveas,
+    askyesno,
+    CoStatusView,
+    DescNameWatcher,
+    GitVerSelDialog,
+    GUIPOp_SetBuildPath,
+    GUIProject,
+    GUIProjectHistoryTracker,
+    GUITk,
+    HistoryWindow,
+    HotKeyBinding,
+    ProjectWidget,
+    QDCGUISignalHelper,
+    Statusbar,
+    VarMenu,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from os import (
+    remove,
+)
+from os.path import (
+    abspath,
+    dirname,
+    expanduser,
+    isfile,
+    join,
+)
+from six.moves.cPickle import (
+    load as load_cPickled,
 )
 from six.moves.tkinter import (
-    RIGHT,
     BooleanVar,
-    StringVar
+    DISABLED,
+    END,
+    IntVar,
+    NORMAL,
+    RIGHT,
+    StringVar,
 )
 from six.moves.tkinter_messagebox import (
     askyesnocancel,
+    showerror,
     showinfo,
-    showerror
-)
-import qdt
-
-from traceback import (
-    format_exception
 )
 from sys import (
     stderr,
     version as py_version,
 )
-from os.path import (
-    join,
-    isfile,
-    abspath,
-    dirname,
-    expanduser
+from traceback import (
+    format_exception,
 )
 
 
