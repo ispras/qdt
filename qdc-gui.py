@@ -9,7 +9,6 @@ from common import (
     mlget as _,
     open_dir,
     OrderedSet,
-    Persistent,
     pythonize,
     UserSettings,
     Variable,
