@@ -193,12 +193,12 @@ after last statement in the corresponding callable object.
         if i2r:
             read_exceptions = select([], [], i2r.keys(), 0)[2]
             for io in read_exceptions:
-                self.__failed__(i2r.pop(io), IOException())
+                self._failed(i2r.pop(io), IOException())
 
         if i2w:
             write_exceptions = select([], [], i2w.keys(), 0)[2]
             for io in write_exceptions:
-                self.__failed__(i2w.pop(io), IOException())
+                self._failed(i2w.pop(io), IOException())
 
     # poll returns True if at least one task is ready to proceed immediately.
     def poll(self):
