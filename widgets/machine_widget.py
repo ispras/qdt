@@ -6,43 +6,44 @@ __all__ = [
   , "MemoryTreeFrame"
 ]
 
-from six.moves.tkinter import (
-    RAISED,
-    VERTICAL,
-    StringVar,
-    Spinbox,
-    BooleanVar
-)
 from .auto_paned import (
-    AutoPanedWindow
-)
-from six.moves.tkinter_ttk import (
-    Separator
-)
-from .machine_diagram_widget import (
-    MIN_MESH_STEP,
-    MAX_MESH_STEP,
-    MachineDiagramWidget
-)
-from .qom_settings import (
-    QOMDescriptionSettingsWidget
-)
-from .memory_tree_widget import (
-    MemoryTreeWidget
-)
-from .var_widgets import (
-    VarLabel,
-    VarCheckbutton,
-    VarNotebook
+    AutoPanedWindow,
 )
 from common import (
-    mlget as _
+    mlget as _,
 )
 from .gui_frame import (
-    GUIFrame
+    GUIFrame,
+)
+from .machine_diagram_widget import (
+    MachineDiagramWidget,
+    MAX_MESH_STEP,
+    MIN_MESH_STEP,
+)
+from .memory_tree_widget import (
+    MemoryTreeWidget,
+)
+from .qom_settings import (
+    QOMDescriptionSettingsWidget,
 )
 from .scrollframe import (
-    add_scrollbars_native
+    add_scrollbars_native,
+)
+from .var_widgets import (
+    VarCheckbutton,
+    VarLabel,
+    VarNotebook,
+)
+
+from six.moves.tkinter import (
+    BooleanVar,
+    RAISED,
+    Spinbox,
+    StringVar,
+    VERTICAL,
+)
+from six.moves.tkinter_ttk import (
+    Separator,
 )
 
 

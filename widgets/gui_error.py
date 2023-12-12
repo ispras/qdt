@@ -3,25 +3,33 @@ __all__ = [
   , "ErrorDialog"
 ]
 
-from .gui_dialog import (
-    GUIDialog
+from common import (
+    mlget as _,
 )
-from six.moves.tkinter import (
-    END,
-    NONE
+from .gui_dialog import (
+    GUIDialog,
 )
 from .gui_text import (
     GUIText,
-    READONLY
-)
-from common import (
-    mlget as _
+    READONLY,
 )
 from .scrollframe import (
-    add_scrollbars_native
+    add_scrollbars_native,
 )
 from .var_widgets import (
-    VarLabel
+    VarButton,
+    VarLabel,
+)
+
+from six.moves.tkinter import (
+    END,
+    NONE,
+)
+from six.moves.tkinter_ttk import (
+    Sizegrip,
+)
+from sys import (
+    stderr,
 )
 
 
@@ -33,27 +41,61 @@ class ErrorDialog(GUIDialog):
         if title is None:
             title = _("Error")
 
+        self._title = title
+        self._summary = summary
+        self._message = message
+
         self.title(title)
 
         self.columnconfigure(0, weight = 1)
 
-        self.rowconfigure(0, weight = 0)
+        row = 0
+
+        self.rowconfigure(row, weight = 0)
         VarLabel(self, text = summary).grid(
-            row = 0,
+            row = row,
             column = 0,
             columnspan = 1 if message is None else 2,
             sticky = "NWS"
         )
+        row += 1
 
         if message is not None:
             t = GUIText(self, state = READONLY, wrap = NONE)
 
-            self.rowconfigure(1, weight = 1)
-            t.grid(row = 1, column = 0, sticky = "NESW")
+            self.rowconfigure(row, weight = 1)
+            t.grid(row = row, column = 0, sticky = "NESW")
 
-            add_scrollbars_native(self, t, row = 1, sizegrip = True)
+            add_scrollbars_native(self, t, row = row, sizegrip = False)
+
+            row += 2
 
             t.insert(END, message)
+
+        self.rowconfigure(row, weight = 0)
+        VarButton(self,
+            text = _("Print to stderr"),
+            command = self._on_print_to_stderr
+        ).grid(
+            row = row,
+            column = 0,
+            sticky = "NWS"
+        )
+
+        Sizegrip(self).grid(
+            row = row,
+            column = 1,
+            sticky = "SE"
+        )
+
+        row += 1
+
+    def _on_print_to_stderr(self):
+        stderr.write("%s\n%s\n%s\n" % (
+            self._title.get(),
+            self._summary.get(),
+            self._message
+        ))
 
 
 class TaskErrorDialog(ErrorDialog):

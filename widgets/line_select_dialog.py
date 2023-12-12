@@ -5,6 +5,9 @@ __all__ = [
 from .auto_var_treeview import (
     AutoVarTreeview,
 )
+from common import (
+    mlget as _,
+)
 from .gui_dialog import (
     GUIDialog,
 )
@@ -16,10 +19,6 @@ from .scrollframe import (
 )
 from .var_widgets import (
     VarButton,
-)
-
-from common import (
-    mlget as _,
 )
 
 from six.moves.tkinter import (

@@ -1,59 +1,67 @@
+__all__ = [
+    "MemorySettingsWidget"
+  , "MemorySettingsWindow"
+]
+
+from common import (
+    mlget as _,
+)
+from .device_settings import (
+    DeviceSettingsWidget,
+)
+from .gui_frame import (
+    GUIFrame,
+)
+from .hotkey import (
+    HKEntry,
+)
+from qemu import (
+    MachineNodeOperation,
+    MemoryAliasNode,
+    MemoryLeafNode,
+    MemoryNode,
+    MemoryRAMNode,
+    MemoryROMNode,
+    MemorySASNode,
+    MOp_AddMemChild,
+    MOp_RemoveMemChild,
+    MOp_SetMemNodeAlias,
+    MOp_SetMemNodeAttr,
+    QemuTypeName,
+)
 from .settings_window import (
     SettingsWidget,
-    SettingsWindow
+    SettingsWindow,
 )
-from common import (
-    mlget as _
+from source import (
+    CConst,
 )
 from .var_widgets import (
     VarCheckbutton,
-    VarLabel
+    VarLabel,
 )
-from qemu import (
-    QemuTypeName,
-    MachineNodeOperation,
-    MemoryNode,
-    MemorySASNode,
-    MemoryLeafNode,
-    MemoryAliasNode,
-    MemoryRAMNode,
-    MemoryROMNode,
-    MOp_AddMemChild,
-    MOp_RemoveMemChild,
-    MOp_SetMemNodeAttr,
-    MOp_SetMemNodeAlias
-)
+
 from six.moves.tkinter import (
+    BooleanVar,
     BOTH,
     StringVar,
-    BooleanVar
 )
 from six.moves.tkinter_ttk import (
-    Combobox
+    Combobox,
 )
-from .device_settings import (
-    DeviceSettingsWidget
-)
-from .hotkey import (
-    HKEntry
-)
-from .gui_frame import (
-    GUIFrame
-)
-from source import (
-    CConst
-)
+
 
 def name_to_var_base(name):
     type_base = "sas" if "System address space" in name else name
     qtn = QemuTypeName(type_base)
     return qtn.for_id_name
 
-class MemorySettingsWidget(SettingsWidget):
+
+# `object` is for `property`
+class MemorySettingsWidget(SettingsWidget, object):
+
     def __init__(self, mem, *args, **kw):
         SettingsWidget.__init__(self, mem, *args, **kw)
-
-        self.mem = mem
 
         self.mem_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
@@ -149,10 +157,16 @@ class MemorySettingsWidget(SettingsWidget):
                 self.l_offset.grid_forget()
                 self.w_offset.grid_forget()
 
+    @property
+    def mem(self):
+        return self.node
+
     def __apply_internal__(self):
-        if not isinstance(self.mem, MemorySASNode):
+        mem = self.node
+
+        if not isinstance(mem, MemorySASNode):
             new_parent = self.find_node_by_link_text(self.var_parent.get())
-            cur_parent = self.mem.parent
+            cur_parent = mem.parent
 
             if new_parent is None:
                 new_parent_id = -1
@@ -168,13 +182,13 @@ class MemorySettingsWidget(SettingsWidget):
                 if not cur_parent_id == -1:
                     self.mht.stage(
                         MOp_RemoveMemChild,
-                        self.mem.id,
+                        mem.id,
                         cur_parent_id
                     )
                 if not new_parent_id == -1:
-                    self.mht.stage(MOp_AddMemChild, self.mem.id, new_parent_id)
+                    self.mht.stage(MOp_AddMemChild, mem.id, new_parent_id)
 
-        for text, field, _type in self.fields:
+        for __, field, _type in self.fields:
             new_val = getattr(self, "var_" + field).get()
             if _type is CConst:
                 try:
@@ -182,39 +196,44 @@ class MemorySettingsWidget(SettingsWidget):
                 except:
                     continue
 
-            cur_val = getattr(self.mem, field)
+            cur_val = getattr(mem, field)
 
             if new_val == cur_val:
                 continue
 
-            self.mht.stage(MOp_SetMemNodeAttr, field, new_val, self.mem.id)
+            self.mht.stage(MOp_SetMemNodeAttr, field, new_val, mem.id)
 
-        if type(self.mem) is MemoryAliasNode:
+        if type(mem) is MemoryAliasNode:
             new_alias_to = self.find_node_by_link_text(self.var_alias_to.get())
-            cur_alias_to = self.mem.alias_to
+            cur_alias_to = mem.alias_to
 
             if not new_alias_to == cur_alias_to:
                 self.mht.stage(
                     MOp_SetMemNodeAlias,
                     "alias_to",
                     new_alias_to,
-                    self.mem.id)
+                    mem.id
+                )
 
         self.mht.set_sequence_description(
             _("Memory '%s' (%d) configuration.") % (
-                self.mem.name, self.mem.id
+                mem.name, mem.id
             )
         )
 
     def refresh(self):
         SettingsWidget.refresh(self)
 
-        if not isinstance(self.mem, MemorySASNode):
+        smem = self.node
+
+        if not isinstance(smem, MemorySASNode):
             values = [
                 DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
-                    [ mem for mem in self.mach.mems if (
-                        not isinstance(mem, MemoryLeafNode)
-                        and mem != self.mem )
+                    [
+                        mem for mem in self.mach.mems if (
+                            not isinstance(mem, MemoryLeafNode)
+                            and mem != smem
+                        )
                     ] + [ None ]
                 )
             ]
@@ -222,45 +241,45 @@ class MemorySettingsWidget(SettingsWidget):
             self.cb_parent.config(values = values)
 
             self.var_parent.set(
-                DeviceSettingsWidget.gen_node_link_text(self.mem.parent)
+                DeviceSettingsWidget.gen_node_link_text(smem.parent)
             )
 
-        for text, field, _type in self.fields:
+        for __, field, _type in self.fields:
             var = getattr(self, "var_" + field)
-            cur_val = getattr(self.mem, field)
+            cur_val = getattr(smem, field)
             var.set(cur_val)
 
-        if type(self.mem) is MemoryAliasNode:
+        if type(smem) is MemoryAliasNode:
             values = [
                 DeviceSettingsWidget.gen_node_link_text(mem) for mem in (
-                    [ mem for mem in self.mach.mems if (mem != self.mem ) ]
+                    [ mem for mem in self.mach.mems if (mem != smem) ]
                 )
             ]
 
             self.cb_alias_to.config(values = values)
 
             self.var_alias_to.set(
-                DeviceSettingsWidget.gen_node_link_text(self.mem.alias_to)
+                DeviceSettingsWidget.gen_node_link_text(smem.alias_to)
             )
 
-        if not isinstance(self.mem, MemorySASNode):
-            if self.mem.parent is None:
+        if not isinstance(smem, MemorySASNode):
+            if smem.parent is None:
                 self.l_offset.grid_forget()
                 self.w_offset.grid_forget()
             else:
                 self.l_offset.grid(self.l_offset.gi)
                 self.w_offset.grid(self.w_offset.gi)
 
-    def on_changed(self, op, *args, **kw):
+    def on_changed(self, op, *__, **___):
         if not isinstance(op, MachineNodeOperation):
             return
 
-        if op.writes_node() and self.mem.id == -1:
+        if op.writes_node() and self.node.id == -1:
             self.destroy()
         else:
             self.refresh()
 
-    def __on_name_var_changed(self, *args):
+    def __on_name_var_changed(self, *__):
         vvb = self.v_var_base
         vb = vvb.get()
 
@@ -268,7 +287,7 @@ class MemorySettingsWidget(SettingsWidget):
             prev_n = self.__prev_name
         except AttributeError:
             # name was not edited yet
-            prev_n = self.mem.name.v
+            prev_n = self.node.name.v
 
         if vb == "mem" or vb == name_to_var_base(prev_n):
             """ If current variable name base is default or corresponds to
@@ -278,7 +297,9 @@ class MemorySettingsWidget(SettingsWidget):
             vvb.set(name_to_var_base(n))
             self.__prev_name = n
 
+
 class MemorySettingsWindow(SettingsWindow):
+
     def __init__(self, mem, *args, **kw):
         SettingsWindow.__init__(self, mem, *args, **kw)
 

@@ -2,9 +2,8 @@ __all__ = [
     "GUIDialog"
 ]
 
-
 from .gui_toplevel import (
-    GUIToplevel
+    GUIToplevel,
 )
 
 

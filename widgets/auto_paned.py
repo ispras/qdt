@@ -2,20 +2,20 @@ __all__ = [
     "AutoPanedWindow"
 ]
 
+from six.moves import (
+    range,
+)
 from six.moves.tkinter import (
     HORIZONTAL,
-    PanedWindow
-)
-from six.moves import (
-    range
+    PanedWindow,
 )
 
 
 class AutoPanedWindow(PanedWindow):
     "Automatically resizes panes keeping size ratio."
 
-    def __init__(self, master, *a, **kw):
-        PanedWindow.__init__(self, master, *a, **kw)
+    def __init__(self, *a, **kw):
+        PanedWindow.__init__(self, *a, **kw)
 
         # Previous size is updated iff it has been actually accounted.
         # This prevents incorrect pane size aspect keeping during small

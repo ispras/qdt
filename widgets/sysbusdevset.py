@@ -2,38 +2,40 @@ __all__ = [
     "SystemBusDeviceSettingsWidget"
 ]
 
+from common import (
+    mlget as _,
+)
 from .device_settings import (
-    DeviceSettingsWidget
+    DeviceSettingsWidget,
+)
+from .gui_frame import (
+    GUIFrame,
+)
+from .hotkey import (
+    HKEntry,
+)
+from qemu import (
+    MOp_AddIOMapping,
+    MOp_DelIOMapping,
+    MOp_SetIOMapping,
 )
 from .var_widgets import (
+    VarButton,
     VarLabelFrame,
-    VarButton
 )
-from common import (
-    mlget as _
-)
+
 from six import (
-    integer_types
+    integer_types,
 )
 from six.moves import (
-    range as xrange
+    range as xrange,
 )
 from six.moves.tkinter import (
     BOTH,
     Label,
-    StringVar
+    StringVar,
 )
-from qemu import (
-    MOp_DelIOMapping,
-    MOp_AddIOMapping,
-    MOp_SetIOMapping
-)
-from .hotkey import (
-    HKEntry
-)
-from .gui_frame import (
-    GUIFrame
-)
+
 
 def gen_mapping_string(mapping):
     if mapping is None:

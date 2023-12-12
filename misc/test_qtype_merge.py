@@ -1,36 +1,15 @@
+#!/usr/bin/env python3
+
+from qemu import (
+    QType,
+)
+
 from timeit import (
     timeit,
 )
 
 
-class QType(object):
-    """ Node in QOM type tree """
-    def __init__(self, name,
-            parent = None,
-            children = None,
-            macros = None,
-            arches = None
-        ):
-        self.name = name
-
-        # name: reference
-        self.children = children if children else {}
-        for c in self.children.values():
-            c.parent = self
-
-        if parent is None:
-            self.parent = None
-        else:
-            parent.add_child(self)
-
-        self.macros = list(macros) if macros else []
-
-        # set of CPU architectures found in QOM type tree
-        self.arches = set(arches) if arches else set()
-
-    def add_child(self, child):
-        self.children[child.name] = child
-        child.parent = self
+class QType(QType):
 
     def merge(self, tree):
         # cache
