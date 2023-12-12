@@ -1302,7 +1302,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_irq_hub_settings(self, hub, x, y):
-        wnd = IRQHubSettingsWindow(hub, self.mach, self.mht, self)
+        wnd = IRQHubSettingsWindow(self,
+            node = hub,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1358,7 +1362,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_device_settings(self, device, x, y):
-        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = device)
+        wnd = DeviceSettingsWindow(self,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+            device = device,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1401,7 +1409,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_irq_line_settings(self, irq, x, y):
-        wnd = IRQSettingsWindow(self.mach, self.mht, self, irq = irq)
+        wnd = IRQSettingsWindow(self,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+            irq = irq,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1435,7 +1447,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_bus_settings(self, bus, x, y):
-        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
+        wnd = BusSettingsWindow(self,
+            bus = bus,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))

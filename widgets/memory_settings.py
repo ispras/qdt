@@ -60,8 +60,9 @@ def name_to_var_base(name):
 # `object` is for `property`
 class MemorySettingsWidget(SettingsWidget, object):
 
-    def __init__(self, mem, *args, **kw):
-        SettingsWidget.__init__(self, mem, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = mem = kw.pop("mem")
+        SettingsWidget.__init__(self, *args, **kw)
 
         self.mem_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
@@ -300,10 +301,14 @@ class MemorySettingsWidget(SettingsWidget, object):
 
 class MemorySettingsWindow(SettingsWindow):
 
-    def __init__(self, mem, *args, **kw):
-        SettingsWindow.__init__(self, mem, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = mem = kw.pop("mem")
+        SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("Memory settings"))
 
-        self.set_sw(MemorySettingsWidget(mem, self.mach, self))
+        self.set_sw(MemorySettingsWidget(self,
+            mem = mem,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

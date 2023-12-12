@@ -40,10 +40,11 @@ from six.moves.tkinter import (
 
 
 class QOMDescriptionSettingsWidget(GUIFrame, QDCGUISignalHelper):
-    def __init__(self, qom_desc, *args, **kw):
+
+    def __init__(self, *args, **kw):
+        self.desc = qom_desc = kw.pop("qom_desc")
         GUIFrame.__init__(self, *args, **kw)
 
-        self.desc = qom_desc
         try:
             self.pht = self.winfo_toplevel().pht
         except AttributeError:

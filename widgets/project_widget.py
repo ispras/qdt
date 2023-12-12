@@ -143,12 +143,11 @@ class DescriptionsTreeview(VarTreeview):
         self.adjust_widths()
 
 class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
-    def __init__(self, project, *args, **kw):
+    def __init__(self, *args, **kw):
+        self.p = kw.pop("project")
         kw["sashrelief"] = RAISED
         PanedWindow.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
-
-        self.p = project
 
         try:
             self.pht = self.winfo_toplevel().pht
@@ -479,9 +478,9 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
     def gen_widget(self, desc):
         if isinstance(desc, MachineNode):
-            w = MachineDescriptionSettingsWidget(desc, self)
+            w = MachineDescriptionSettingsWidget(self, qom_desc = desc)
         else:
-            w = QOMDescriptionSettingsWidget(desc, self)
+            w = QOMDescriptionSettingsWidget(self, qom_desc = desc)
         return w
 
     def add_description(self):

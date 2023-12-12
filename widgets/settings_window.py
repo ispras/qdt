@@ -27,7 +27,9 @@ from six.moves.tkinter import (
 
 
 class SettingsWidget(GUIFrame):
-    def __init__(self, node, machine, *args, **kw):
+    def __init__(self, *args, **kw):
+        node = kw.pop("node")
+        machine = kw.pop("machine")
         GUIFrame.__init__(self, *args, **kw)
 
         try:
@@ -163,18 +165,15 @@ customization.
 window_sizes = dict()
 
 class SettingsWindow(GUIToplevel):
-    def __init__(self, node, machine,
-            machine_history_tracker = None,
-            *args, **kw
-        ):
+
+    def __init__(self, *args, **kw):
         """ Toplevel.__init__ calls `title` which requires the attribute `node`
         to be initialized already. """
-        self.node = node
+        self.node = kw.pop("node")
+        self.mach = kw.pop("machine")
+        self.machine_history_tracker = kw.pop("machine_history_tracker", None)
 
         GUIToplevel.__init__(self, *args, **kw)
-
-        self.mach = machine
-        self.mht = machine_history_tracker
 
         self.grid()
 

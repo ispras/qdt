@@ -43,8 +43,9 @@ from six.moves.tkinter_ttk import (
 # `object` is for `property`
 class BusSettingsWidget(SettingsWidget, object):
 
-    def __init__(self, bus, *args, **kw):
-        SettingsWidget.__init__(self, bus, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = kw.pop("bus")
+        SettingsWidget.__init__(self, *args, **kw)
 
         self.bus_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
@@ -174,10 +175,14 @@ class BusSettingsWidget(SettingsWidget, object):
 
 class BusSettingsWindow(SettingsWindow):
 
-    def __init__(self, bus, *args, **kw):
-        SettingsWindow.__init__(self, bus, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = bus = kw.pop("bus")
+        SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("Bus settings"))
 
-        self.set_sw(BusSettingsWidget(bus, self.mach, self))
+        self.set_sw(BusSettingsWidget(self,
+            bus = bus,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")
