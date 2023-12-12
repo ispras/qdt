@@ -331,8 +331,9 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
         "Boolean": QOMPropertyTypeBoolean
     }
 
-    def __init__(self, device, *args, **kw):
-        QOMInstanceSettingsWidget.__init__(self, device, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = kw.pop("device")
+        QOMInstanceSettingsWidget.__init__(self, *args, **kw)
 
         common_fr = GUIFrame(self)
         common_fr.pack(fill = BOTH, expand = False)

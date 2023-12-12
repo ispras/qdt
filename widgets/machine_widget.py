@@ -89,11 +89,10 @@ class MemoryTreeFrame(GUIFrame):
 
 
 class MachinePanedWidget(AutoPanedWindow):
-    def __init__(self, machine_description, *args, **kw):
+    def __init__(self, *args, **kw):
+        self.mach = kw.pop("machine")
         kw["sashrelief"] = RAISED
         AutoPanedWindow.__init__(self, *args, **kw)
-
-        self.mach = machine_description
 
         self.pack(fill = "both", expand = "yes")
 
@@ -104,10 +103,9 @@ class MachinePanedWidget(AutoPanedWindow):
         self.add(self.mdw)
 
 class MachineTabsWidget(VarNotebook):
-    def __init__(self, machine_description, *args, **kw):
+    def __init__(self, *args, **kw):
+        self.mach = kw.pop("machine")
         VarNotebook.__init__(self, *args, **kw)
-
-        self.mach = machine_description
 
         self.pack(fill = "both", expand = "yes")
 
@@ -193,7 +191,7 @@ class MachineDescriptionSettingsWidget(QOMDescriptionSettingsWidget):
             # because buttons is only affects inherited fields. Changes to
             # the machine and its memory diagrams is handled by diagrams itself
             self.mw = (MachineTabsWidget if use_tabs else MachinePanedWidget) \
-                (self.desc, self)
+                (self, machine = self.desc)
 
             self.mw.pack()
 

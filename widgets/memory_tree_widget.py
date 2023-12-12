@@ -364,7 +364,11 @@ snapshot mode or the command should be disabled too.
                 self.on_select_origin()
 
     def show_memory_settings(self, mem, x, y):
-        wnd = MemorySettingsWindow(mem, self.mach, self.mht, self)
+        wnd = MemorySettingsWindow(self,
+            mem = mem,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))

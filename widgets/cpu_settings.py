@@ -33,8 +33,9 @@ from six.moves.tkinter import (
 # `object` is for `property`
 class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
-    def __init__(self, cpu, *args, **kw):
-        QOMInstanceSettingsWidget.__init__(self, cpu, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = kw.pop("cpu")
+        QOMInstanceSettingsWidget.__init__(self, *args, **kw)
 
         self.cpu_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
@@ -84,10 +85,14 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
 class CPUSettingsWindow(SettingsWindow):
 
-    def __init__(self, cpu, *args, **kw):
-        SettingsWindow.__init__(self, cpu, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = cpu = kw.pop("cpu")
+        SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("CPU settings"))
 
-        self.set_sw(CPUSettingsWidget(cpu, self.mach, self))
+        self.set_sw(CPUSettingsWidget(self,
+            cpu = cpu,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

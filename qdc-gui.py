@@ -619,7 +619,9 @@ show it else hide it."),
 
         DescNameWatcher(self.pht)
 
-        self.pw = ProjectWidget(self.proj, self)
+        self.pw = ProjectWidget(self,
+            project = self.proj,
+        )
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
         self.update_qemu_build_path(project.build_path)
