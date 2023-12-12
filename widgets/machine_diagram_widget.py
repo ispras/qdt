@@ -1487,7 +1487,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_cpu_settings(self, cpu, x, y):
-        wnd = CPUSettingsWindow(cpu, self.mach, self.mht, self)
+        wnd = CPUSettingsWindow(self,
+            cpu = cpu,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
