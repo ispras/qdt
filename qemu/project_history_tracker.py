@@ -284,10 +284,10 @@ class MachineProxyTracker(object):
         }
 
         if "name" not in memory_arguments:
-            memory_arguments["name"] = class2str[class_name];
+            memory_arguments["name"] = class2str[class_name]
 
         if "MemorySASNode" not in class_name and "size" not in memory_arguments:
-            memory_arguments["size"] = 0xFEED;
+            memory_arguments["size"] = 0xFEED
 
         self.stage(MOp_AddMemoryNode, class_name, new_id, **memory_arguments)
 
