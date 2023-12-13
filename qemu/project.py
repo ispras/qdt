@@ -71,7 +71,7 @@ class QProject(object):
     ):
         self.descriptions = []
 
-        if not descriptions is None:
+        if descriptions is not None:
             for d in descriptions:
                 if d.project is not None:
                     raise ValueError("The description '" + d.name
