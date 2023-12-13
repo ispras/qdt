@@ -143,7 +143,7 @@ def account_build_path(path):
 def forget_build_path(path):
     load_build_path_list()
 
-    if not path in qvd_reg.keys():
+    if path not in qvd_reg.keys():
         raise RuntimeError("%s is not registered." % path)
 
     del qvd_reg[path]
