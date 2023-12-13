@@ -254,9 +254,9 @@ class SettingsWindow(GUIToplevel):
     # Attempt to use @property + @sw.setter or __setattr__ has failed.
     # Maybe, because of Tkinter...
     def set_sw(self, value):
-        if not self.sw is None:
+        if self.sw is not None:
             self.sw.unbind("<Destroy>", self.__on_sw_destroy__)
-        if not value is None:
+        if value is not None:
             value.bind("<Destroy>", self.__on_sw_destroy__, "+")
         self.sw = value
 
