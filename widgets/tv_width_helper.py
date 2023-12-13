@@ -46,7 +46,7 @@ class TreeviewWidthHelper(Treeview):
             columns = tuple()
 
         for col_idx, col in enumerate(("#0",) + columns):
-            if not col in self.auto_columns:
+            if col not in self.auto_columns:
                 continue
 
             col_max_len = f.measure(self.heading(col)["text"])
