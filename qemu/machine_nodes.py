@@ -569,7 +569,7 @@ class SystemBusDeviceNode(DeviceNode):
     def add_memory_mapping(self, address, index = 0):
         """ Adds MMIO at first empty slot starting from index """
         for idx in count(index):
-            if not idx in self.mmio_mappings:
+            if idx not in self.mmio_mappings:
                 break
 
         self.mmio_mappings[idx] = address
@@ -580,7 +580,7 @@ class SystemBusDeviceNode(DeviceNode):
     def add_port_mapping(self, port, index = 0):
         """ Adds PMIO at first empty slot starting from index """
         for idx in count(index):
-            if not idx in self.pmio_mappings:
+            if idx not in self.pmio_mappings:
                 break
 
         self.pmio_mappings[idx] = port
