@@ -694,7 +694,7 @@ class MemoryNode(Node):
         self.children.append(child)
 
     def remove_child(self, child):
-        if not child.parent is self:
+        if child.parent is not self:
             raise MemoryNodeHasNoSuchParent()
 
         child.parent = None
