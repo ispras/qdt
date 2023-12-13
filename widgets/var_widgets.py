@@ -184,7 +184,7 @@ class VarMenu(Menu):
 
     def __init__(self, *args, **kw):
         Menu.__init__(self, *args, **kw)
-        if (not "tearoff" in kw) or kw["tearoff"]:
+        if ("tearoff" not in kw) or kw["tearoff"]:
             self.count = 1
         else:
             self.count = 0
