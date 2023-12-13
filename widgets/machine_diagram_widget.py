@@ -105,7 +105,6 @@ from six.moves import (
     reduce,
 )
 from six.moves.tkinter import (
-    ALL,
     BooleanVar,
     DISABLED,
     StringVar,
