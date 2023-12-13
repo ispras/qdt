@@ -167,7 +167,7 @@ class BusSettingsWidget(SettingsWidget, object):
             return
 
         if op.writes_node():
-            if not bus.id in self.mach.id2node:
+            if bus.id not in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
