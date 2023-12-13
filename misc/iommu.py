@@ -544,7 +544,7 @@ def run(*args, **kw):
     # E.g. misc/askpass.py
     # They may use different Python version.
     # The PYTHONPATH inherited may result in a failure.
-    # So, it must be viped out.
+    # So, it must be wiped out.
     env = dict(environ)
     env.pop("PYTHONPATH", None)
     assert "env" not in kw
