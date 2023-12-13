@@ -173,7 +173,7 @@ class HotKey(object):
                 for kb in self.keys2bindings[kc]:
                     self.update_name(kb)
 
-        if not kc in self.keys2bindings:
+        if kc not in self.keys2bindings:
             return
 
         kbs = self.keys2bindings[kc]
