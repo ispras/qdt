@@ -302,7 +302,7 @@ class HistoryTracker(object):
 
     def do_sequence(self):
         for n in self.pos.next:
-            if not n.seq is None:
+            if n.seq is not None:
                 seq = n.seq
                 op = n
                 break
