@@ -142,6 +142,12 @@ Returns internal id that can be used to `cancel` the call.
     # Some helpers
 
     def rmtree(self, path, absent_ok = False):
+        # XXX: hack for Windows Py2 to support extended-length paths and prevent
+        # "WindowsError: [Error 3]".
+        # See: https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+        if os_name == "nt" and PY2:
+            path = "\\\\?\\" + path
+
         if absent_ok:
             return self.schedule(rmtree_existing, path)
         else:
