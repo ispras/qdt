@@ -122,7 +122,7 @@ class BusLineDesc(object):
                 [ b for b in self.dsw.mach.buses if (\
                         (   b.parent_device is None \
                          or b.parent_device == self.dsw.node)
-                    and (not b.id in sel_buses))
+                    and (b.id not in sel_buses))
                 ] + [ None ]
             )
         ]
@@ -597,7 +597,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
         parent_bus = self.find_node_by_link_text(self.bus_var.get())
         if not parent_bus is None:
             parent_bus = parent_bus.id
-            if not parent_bus in ret:
+            if parent_bus not in ret:
                 ret.append(parent_bus)
 
         return ret
@@ -618,7 +618,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
         # Do property removing before addition to prevent conflicts of
         # property recreation.
         for p in dev.properties:
-            if not p in self.prop2field:
+            if p not in self.prop2field:
                 self.mht.stage(MOp_DelDevProp, p, dev.id)
 
         for p, desc in list(self.prop2field.items()):
