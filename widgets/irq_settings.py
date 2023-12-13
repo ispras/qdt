@@ -242,7 +242,7 @@ class IRQSettingsWidget(SettingsWidget, object):
             return
 
         if op.writes_node():
-            if not self.node.id in self.mach.id2node:
+            if self.node.id not in self.mach.id2node:
                 self.destroy()
             else:
                 self.refresh()
