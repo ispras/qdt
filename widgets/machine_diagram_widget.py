@@ -1013,7 +1013,7 @@ IRQ line creation
                     if not (isinstance(line, IRQLine)
                             and isinstance(irq, Node)):
                         continue
-                    if not irq in self.mach.irqs:
+                    if irq not in self.mach.irqs:
                         break
 
                 if line == self.highlighted_irq_line:
@@ -1977,20 +1977,20 @@ IRQ line creation
                 popup = None
 
                 for tid in touched_ids:
-                    if not "DnD" in self.gettags(tid):
+                    if "DnD" not in self.gettags(tid):
                         continue
-                    if not tid in self.id2node:
+                    if tid not in self.id2node:
                         continue
 
                     shift = self.__shift_is_held()
                     if shift:
-                        if not tid in self.selected:
+                        if tid not in self.selected:
                             self.selected.append(tid)
                             self.event_generate(
                                 MachineDiagramWidget.EVENT_SELECT
                             )
                     else:
-                        if not tid in self.selected:
+                        if tid not in self.selected:
                             self.selected = [tid]
                             self.event_generate(
                                 MachineDiagramWidget.EVENT_SELECT
@@ -1999,7 +1999,7 @@ IRQ line creation
                     # touched node
                     tnode = self.id2node[tid]
 
-                    if not tnode in self.node2dev:
+                    if tnode not in self.node2dev:
                         continue
 
                     # touched device, etc..
@@ -2085,7 +2085,7 @@ IRQ line creation
             return
 
         if self.shown_irq_circle:
-            if not self.shown_irq_circle in self.find_overlapping(
+            if self.shown_irq_circle not in self.find_overlapping(
                 x - 3, y - 3, x + 3, y + 3
             ):
                 self.hide_irq_line_circle()
@@ -2123,7 +2123,7 @@ IRQ line creation
 
         # moving of non-selected item while other are selected
         if self.selected:
-            if not _id in self.selected:
+            if _id not in self.selected:
                 if self.__shift_is_held():
                     self.selected.append(_id)
                 else:
@@ -2259,7 +2259,7 @@ IRQ line creation
             self.add_buslabel(node)
 
         for dev in self.mach.devices:
-            if not dev in self.dev2node:
+            if dev not in self.dev2node:
                 node = TextBox(dev)
 
                 self.dev2node[dev] = node
@@ -2276,7 +2276,7 @@ IRQ line creation
                 continue
 
             pb = dev.parent_bus
-            if not pb in self.dev2node:
+            if pb not in self.dev2node:
                 continue
             pbn = self.dev2node[pb].busline
 
@@ -2300,7 +2300,7 @@ IRQ line creation
         if self.current_ph_iteration:
             self.current_ph_iteration = None
 
-        if not "_ph_sync_single" in self.__dict__:
+        if "_ph_sync_single" not in self.__dict__:
             self._ph_sync_single = self.after(0, self.ph_sync_single)
 
     def ph_iterate(self, t_limit_sec):
