@@ -136,7 +136,7 @@ class MachineProxyTracker(object):
     def delete_base_device(self, dev_id):
         dev = self.mach.id2node[dev_id]
 
-        if not dev.parent_bus is None:
+        if dev.parent_bus is not None:
             self.stage(MOp_SetDevParentBus, None, dev_id)
 
         for idx in reversed(range(len(dev.buses))):
@@ -316,8 +316,8 @@ class MachineProxyTracker(object):
                 continue
 
             for p in n.properties:
-                if  not p.prop_type is QOMPropertyTypeLink \
-                or  not p.prop_val is mem :
+                if  p.prop_type is not QOMPropertyTypeLink \
+                or  p.prop_val is not mem :
                     continue
 
                 self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None, p, n.id)
