@@ -573,7 +573,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
         bld = self.child_buses_rows[-1]
         bus = self.find_node_by_link_text(bld.v.get())
 
-        if not bus is None:
+        if bus is not None:
             # Selecting not NULL child bus means that a child bus was added.
             # Add new NULL bus string for consequent bus addition.
             bld.v.trace_vdelete("w", bld.obs)
@@ -589,13 +589,13 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
     def get_selected_child_buses(self):
         child_buses = [ bld.v.get() for bld in self.child_buses_rows ]
         ret = [ self.find_node_by_link_text(t) for t in child_buses if t ]
-        return [ b.id for b in ret if not b is None ]
+        return [ b.id for b in ret if b is not None ]
 
     def get_selected_buses(self):
         ret = self.get_selected_child_buses()
 
         parent_bus = self.find_node_by_link_text(self.bus_var.get())
-        if not parent_bus is None:
+        if parent_bus is not None:
             parent_bus = parent_bus.id
             if parent_bus not in ret:
                 ret.append(parent_bus)
