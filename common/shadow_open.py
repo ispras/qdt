@@ -3,16 +3,16 @@ __all__ = [
 ]
 
 from codecs import (
-    open
+    open,
 )
 from contextlib import (
-    contextmanager
+    contextmanager,
 )
 from os.path import (
-    isfile
+    isfile,
 )
 from six import (
-    StringIO
+    StringIO,
 )
 
 
@@ -35,6 +35,5 @@ same content.
             with open(filename, mode = "wb") as f:
                 f.write(new_data)
     else:
-        f = open(filename, mode = "wb", encoding = "utf-8")
-        yield f
-        f.close()
+        with open(filename, mode = "wb", encoding = "utf-8") as f:
+            yield f

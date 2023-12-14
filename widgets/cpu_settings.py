@@ -33,8 +33,9 @@ from six.moves.tkinter import (
 # `object` is for `property`
 class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
-    def __init__(self, cpu, *args, **kw):
-        QOMInstanceSettingsWidget.__init__(self, cpu, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = kw.pop("cpu")
+        QOMInstanceSettingsWidget.__init__(self, *args, **kw)
 
         self.cpu_fr = fr = GUIFrame(self)
         fr.pack(fill = BOTH, expand = False)
@@ -56,14 +57,16 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
         return self.node
 
     def __apply_internal__(self):
+        cpu = self.node
+
         qom = self.qom_type_var.get()
-        if self.node.qom_type == qom:
+        if cpu.qom_type == qom:
             return
 
-        self.mht.stage(MOp_SetCPUAttr, "qom_type", qom, self.node.id)
+        self.mht.stage(MOp_SetCPUAttr, "qom_type", qom, cpu.id)
 
         self.mht.set_sequence_description(
-            _("CPU %d configuration.") % self.node.id
+            _("CPU %d configuration.") % cpu.id
         )
 
     def refresh(self):
@@ -84,10 +87,14 @@ class CPUSettingsWidget(QOMInstanceSettingsWidget, object):
 
 class CPUSettingsWindow(SettingsWindow):
 
-    def __init__(self, cpu, *args, **kw):
-        SettingsWindow.__init__(self, cpu, *args, **kw)
+    def __init__(self, *args, **kw):
+        kw["node"] = cpu = kw.pop("cpu")
+        SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("CPU settings"))
 
-        self.set_sw(CPUSettingsWidget(cpu, self.mach, self))
+        self.set_sw(CPUSettingsWidget(self,
+            cpu = cpu,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

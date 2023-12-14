@@ -11,6 +11,7 @@ from .qom_desc import (
     QOMDescription
 )
 from itertools import (
+    chain,
     count
 )
 from .qom_common import (
@@ -42,18 +43,22 @@ class NodeIdIsAlreadyInUse(RuntimeError):
 
 @descriptionOf(MachineType)
 class MachineDescription(QOMDescription):
+
+    def iter_nodes(self):
+        return chain(
+            self.cpus,
+            self.devices,
+            self.buses,
+            self.irqs,
+            self.mems,
+            self.irq_hubs,
+        )
+
     def __description_init__(self):
         self.max_id = 0
         self.id2node = {}
 
-        for n in (
-            self.cpus +
-            self.devices +
-            self.buses +
-            self.irqs +
-            self.mems +
-            self.irq_hubs
-        ):
+        for n in self.iter_nodes():
             self.assign_id(n)
 
     @property
@@ -77,8 +82,8 @@ class MachineDescription(QOMDescription):
 
         # add nodes preserving id order to same identification
         pfx = gen.nameof(self) + ".add_node("
-        for id, node in self.id2node.items():
-            gen.line(pfx + gen.nameof(node) + ", with_id = " + str(id) + ")")
+        for nid, node in self.id2node.items():
+            gen.line(pfx + gen.nameof(node) + ", with_id = " + str(nid) + ")")
 
     def link(self, handle_system_bus = True):
         self.added = True

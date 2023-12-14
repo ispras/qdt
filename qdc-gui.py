@@ -1,92 +1,92 @@
 #!/usr/bin/env python
 
-from examples import (
-    Q35Project_2_6_0,
-    Q35MachineNode_2_6_0
-)
-from widgets import (
-    CoStatusView,
-    GitVerSelDialog,
-    QDCGUISignalHelper,
-    DescNameWatcher,
-    GUIPOp_SetBuildPath,
-    Statusbar,
-    GUIProjectHistoryTracker,
-    HistoryWindow,
-    askyesno,
-    askopen,
-    asksaveas,
-    askdirectory,
-    AddDescriptionDialog,
-    GUIProject,
-    HotKeyBinding,
-    HotKey,
-    ProjectWidget,
-    VarMenu,
-    GUITk
-)
-from argparse import (
-    ArgumentParser
-)
-from qemu_device_creator import (
-    arg_type_directory
-)
-from qemu import (
-    QProject,
-    qvd_get,
-    BadBuildPath,
-    MachineNode,
-    load_build_path_list,
-    account_build_path,
-    QemuVersionDescription
-)
-from six.moves.tkinter import (
-    NORMAL,
-    DISABLED,
-    END,
-    IntVar
-)
-from six.moves.cPickle import (
-    load as load_cPickled
-)
-from os import (
-    remove
-)
 from common import (
-    open_dir,
-    OrderedSet,
-    Persistent,
-    Variable,
     as_variable,
-    FormatVar,
-    execfile,
     CoSignal,
     CoTask,
+    execfile,
+    FormatVar,
+    mlget as _,
+    open_dir,
+    OrderedSet,
     pythonize,
-    mlget as _
+    UserSettings,
+    Variable,
+)
+from examples import (
+    Q35MachineNode_2_6_0,
+    Q35Project_2_6_0,
+)
+import qdt
+from qemu import (
+    account_build_path,
+    BadBuildPath,
+    load_build_path_list,
+    MachineNode,
+    QemuVersionDescription,
+    QProject,
+    qvd_get,
+)
+from qemu_device_creator import (
+    arg_type_directory,
+)
+from widgets import (
+    AddDescriptionDialog,
+    askdirectory,
+    askopen,
+    asksaveas,
+    askyesno,
+    CoStatusView,
+    DescNameWatcher,
+    GitVerSelDialog,
+    GUIPOp_SetBuildPath,
+    GUIProject,
+    GUIProjectHistoryTracker,
+    GUITk,
+    HistoryWindow,
+    HotKeyBinding,
+    ProjectWidget,
+    QDCGUISignalHelper,
+    Statusbar,
+    VarMenu,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from os import (
+    remove,
+)
+from os.path import (
+    abspath,
+    dirname,
+    expanduser,
+    isfile,
+    join,
+)
+from six.moves.cPickle import (
+    load as load_cPickled,
 )
 from six.moves.tkinter import (
-    RIGHT,
     BooleanVar,
-    StringVar
+    DISABLED,
+    END,
+    IntVar,
+    NORMAL,
+    RIGHT,
+    StringVar,
 )
 from six.moves.tkinter_messagebox import (
     askyesnocancel,
+    showerror,
     showinfo,
-    showerror
 )
-import qdt
-
+from sys import (
+    stderr,
+    version as py_version,
+)
 from traceback import (
-    format_exception
-)
-import sys
-from os.path import (
-    join,
-    isfile,
-    abspath,
-    dirname,
-    expanduser
+    format_exception,
 )
 
 
@@ -124,10 +124,10 @@ class ProjectGeneration(CoTask):
             include_paths = tuple(path for path, _ in cur_qvd.include_paths)
         )
 
-    def on_failed(self):
+    def __failed__(self):
         self.__finalize()
 
-    def on_finished(self):
+    def __finished__(self):
         showinfo(
             title = _("Generation completed").get(),
             message = _("No errors were reported.").get()
@@ -166,7 +166,7 @@ class QDCGUIWindow(GUITk, QDCGUISignalHelper):
         self.title(self.var_title)
 
         # Hot keys, accelerators
-        self.hk = hotkeys = HotKey(self)
+        hotkeys = self.hk
         hotkeys.add_bindings([
             HotKeyBinding(
                 self.invert_history_window,
@@ -317,7 +317,7 @@ show it else hide it."),
         filemenu.add_separator()
         filemenu.add_command(
             label = _("Quit"),
-            command = self.quit,
+            command = self.on_quit,
             accelerator = hotkeys.get_keycode_string(self.on_delete)
         )
         menubar.add_cascade(label = _("File"), menu = filemenu)
@@ -494,7 +494,7 @@ show it else hide it."),
         self.var_translate_cpu_semantics.set(settings.translate_cpu_semantics)
 
     def __on_listener_failed(self, e, tb):
-        sys.stderr.write("Listener failed - %s" %
+        stderr.write("Listener failed - %s" %
             "".join(format_exception(type(e), e, tb))
         )
 
@@ -620,7 +620,9 @@ show it else hide it."),
 
         DescNameWatcher(self.pht)
 
-        self.pw = ProjectWidget(self.proj, self)
+        self.pw = ProjectWidget(self,
+            project = self.proj,
+        )
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
         self.update_qemu_build_path(project.build_path)
@@ -653,6 +655,15 @@ show it else hide it."),
                 self.update_qemu_build_path(proj.build_path)
                 # Note that target Qemu version info will be update when QVC
                 # will be ready.
+
+    def on_quit(self):
+        self.save_project_to_file("project.py")
+
+        self.quit()
+
+        # This is necessary on Windows Py2 to prevent error:
+        # "Fatal Python error: PyEval_RestoreThread: NULL tstate".
+        self.destroy()
 
     def undo(self):
         self.pht.undo_sequence()
@@ -722,7 +733,7 @@ in process. Do you want to start cache rebuilding?")
 
         self.signal_dispatcher.unwatch_failed(self.__on_listener_failed)
 
-        self.quit()
+        self.on_quit()
 
     def on_add_description(self):
         d = AddDescriptionDialog(self.pht, self)
@@ -977,11 +988,13 @@ all changes are saved. """
         self.update_target_qemu()
 
 
-class Settings(Persistent):
+class Settings(UserSettings):
     "Keeps user settings in a file."
 
-    def __init__(self, file_name):
-        super(Settings, self).__init__(file_name,
+    _suffix = ".qdt.py"
+
+    def __init__(self):
+        super(Settings, self).__init__(
             glob = globals(),
             version = 1.0,
             # default values
@@ -999,7 +1012,7 @@ class Settings(Persistent):
 
 
 def main():
-    print("QDT GUI on Python %s" % (sys.version,))
+    print("QDT GUI on Python %s" % (py_version,))
     parser = ArgumentParser()
 
     parser.add_argument(
@@ -1064,14 +1077,12 @@ def main():
         account_build_path(arguments.qemu_build)
         root.pht.set_build_path(arguments.qemu_build)
 
-    with Settings(expanduser(join("~", ".qdt.py"))) as settings:
+    with Settings() as settings:
         root.set_user_settings(settings)
 
         root.geometry("1000x750")
 
         root.mainloop()
-
-    root.save_project_to_file("project.py")
 
 if __name__ == '__main__':
     main()

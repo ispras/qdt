@@ -10,6 +10,7 @@ from .tk_co_dispatcher import (
     TkCoDispatcher
 )
 from common import (
+    lazy,
     notifier,
     SignalDispatcherTask
 )
@@ -19,6 +20,9 @@ from .logo import (
 from .gui_error import (
     TaskErrorDialog
 )
+from .hotkey import (
+    HotKey,
+)
 from .tk_geometry_helper import (
     TkGeometryHelper
 )
@@ -26,16 +30,17 @@ from .tk_geometry_helper import (
 
 @notifier("activated", "finished", "failed", "removed")
 class GUITaskManager(TkCoDispatcher):
-    def __activate__(self, task):
-        TkCoDispatcher.__activate__(self, task)
+
+    def _activate(self, task):
+        TkCoDispatcher._activate(self, task)
         self.__notify_activated(task)
 
-    def __finish__(self, task, ret):
-        TkCoDispatcher.__finish__(self, task, ret)
+    def _finish(self, task, ret):
+        TkCoDispatcher._finish(self, task, ret)
         self.__notify_finished(task)
 
-    def __failed__(self, task, exception):
-        TkCoDispatcher.__failed__(self, task, exception)
+    def _failed_(self, task, exception):
+        TkCoDispatcher._failed(self, task, exception)
         self.__notify_failed(task)
 
     def __root_task_failed__(self, task):
@@ -65,6 +70,10 @@ class GUITk(VarTk, TkGeometryHelper):
 
         self.signal_dispatcher = SignalDispatcherTask()
         self.task_manager.enqueue(self.signal_dispatcher)
+
+    @lazy
+    def hk(self):
+        return HotKey(self)
 
     def mainloop(self, *args, **kw):
         self.task_manager.start_loop()

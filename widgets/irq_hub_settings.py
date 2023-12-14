@@ -22,11 +22,16 @@ class IRQHubSettingsWidget(SettingsWidget):
     def on_changed(self, op):
         pass
 
+
 class IRQHubSettingsWindow(SettingsWindow):
+
     def __init__(self, *args, **kw):
         SettingsWindow.__init__(self, *args, **kw)
 
         self.title(_("IRQ hub settings"))
 
-        self.set_sw(IRQHubSettingsWidget(self.node, self.mach, self))
+        self.set_sw(IRQHubSettingsWidget(self,
+            node = self.node,
+            machine = self.mach,
+        ))
         self.sw.grid(row = 0, column = 0, sticky = "NEWS")

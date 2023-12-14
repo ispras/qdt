@@ -13,8 +13,10 @@ from .machine_editing import (
     MOp_RemoveMemChild,
     MOp_AddMemoryNode,
     MOp_DelMemoryNode,
+    MOp_AddDevProp,
     MOp_SetDevProp,
     MOp_DelDevProp,
+    MOp_AddIOMapping,
     MOp_DelIOMapping,
     MOp_AddDevice,
     MOp_DelDevice,
@@ -41,6 +43,9 @@ from .machine_description import (
 )
 from .project_editing import (
     POp_DelDesc
+)
+from .qom_common import (
+    QOMPropertyValue,
 )
 from common import (
     mlget as _
@@ -159,6 +164,36 @@ class MachineProxyTracker(object):
 
         self.stage(MOp_DelDevice, dev_id)
 
+    def clone_device(self, dev_id, new_id = None):
+        mach = self.mach
+
+        dev = mach.id2node[dev_id]
+
+        new_id = self.add_device(type(dev).__name__,
+            new_id = new_id,
+            qom_type = dev.qom_type,
+        )
+
+        if dev.parent_bus is not None:
+            self.stage(MOp_SetDevParentBus, dev.parent_bus, new_id)
+
+        for prop in dev.properties:
+            new_p = QOMPropertyValue(
+                prop.prop_type, prop.prop_name, prop.prop_val
+            )
+            self.stage(MOp_AddDevProp, new_p, new_id)
+
+        if isinstance(dev, SystemBusDeviceNode):
+            for mio in [ "pmio", "mmio" ]:
+                for idx, m in getattr(dev, mio + "_mappings").items():
+                    self.stage(MOp_AddIOMapping,
+                        m, mio, idx, new_id
+                    )
+
+        self.set_sequence_description(_("Clone device."))
+
+        return new_id
+
     def delete_system_bus_device(self, dev_id):
         dev = self.mach.id2node[dev_id]
 
@@ -195,7 +230,10 @@ class MachineProxyTracker(object):
 
         self.set_sequence_description(_("Add CPU."))
 
-    def add_device(self, class_name, new_id, **device_arguments):
+    def add_device(self, class_name, new_id = None, **device_arguments):
+        if new_id is None:
+            new_id = self.mach.get_free_id()
+
         default_qom_type = "TYPE_DEVICE"
         if class_name == "SystemBusDeviceNode":
             default_qom_type = "TYPE_SYS_BUS_DEVICE"
@@ -214,6 +252,8 @@ class MachineProxyTracker(object):
         self.stage(MOp_AddDevice, class_name, new_id, **device_arguments)
 
         self.set_sequence_description(_("Add device."))
+
+        return new_id
 
     def remove_memory_child(self, parent_id, child_id):
         parent = self.mach.id2node[parent_id]

@@ -35,6 +35,13 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self._yscrollcommand = kw.pop("yscrollcommand", None)
         self._encoding = kw.pop("encoding", "utf-8")
         self._encoding_errors = kw.pop("encoding_errors", "replace")
+
+        # Line number appearance settings
+        # conventionally, line enumeration starts from 1
+        self._lineno_offset = kw.pop("lineno_offset", 1)
+        self._lineno_multiplier = kw.pop("lineno_multiplier", 1)
+        self._lineno_fmt = kw.pop("lineno_fmt", "%u")
+
         stream = kw.pop("stream", None)
 
         Canvas.__init__(self, master, **kw)
@@ -85,6 +92,33 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         self.bind("<Motion>", self._on_motion, "+")
 
         self.bind("<Control-Key>", self._on_ctrl_key, "+")
+
+    @property
+    def lineno_offset(self):
+        return self._lineno_offset
+
+    @lineno_offset.setter
+    def lineno_offset(self, lineno_offset):
+        self._lineno_offset = lineno_offset
+        self.draw()
+
+    @property
+    def lineno_multiplier(self):
+        return self._lineno_multiplier
+
+    @lineno_multiplier.setter
+    def lineno_multiplier(self, lineno_multiplier):
+        self._lineno_multiplier = lineno_multiplier
+        self.draw()
+
+    @property
+    def lineno_fmt(self):
+        return self._lineno_fmt
+
+    @lineno_fmt.setter
+    def lineno_fmt(self, lineno_fmt):
+        self._lineno_fmt = lineno_fmt
+        self.draw()
 
     @property
     def selected_blob(self):
@@ -309,8 +343,7 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         lines_offset = lineidx - start_line
         picked_lines = lines[lines_offset:]
 
-        # conventionally, line enumeration starts from 1
-        cur_lineno = lineidx + 1
+        cur_lineno = lineidx + self._lineno_offset
 
         # space for line numbers
         lineno_width = lineno_font.measure(str(cur_lineno + len(picked_lines)))
@@ -337,12 +370,14 @@ class TextCanvas(Canvas, CurrentKeyboard, object):
         create_text = self.create_text
         lower = self.lower
 
+        fmt, mult = self._lineno_fmt, self._lineno_multiplier
+
         for cur_lineno, line in enumerate(picked_lines, cur_lineno):
             if view_height <= y:
                 break
 
             create_text(lineno_end_x, y,
-                text = cur_lineno,
+                text = fmt % (cur_lineno * mult),
                 justify = RIGHT,
                 anchor = "ne",
                 font = lineno_font,

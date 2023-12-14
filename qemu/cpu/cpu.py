@@ -36,6 +36,7 @@ from collections import (
 )
 from common import (
     execfile,
+    makedirs,
     mlget as _,
     ee,
     pypath,
@@ -44,12 +45,8 @@ from common import (
 from itertools import (
     count,
 )
-from os import (
-    makedirs,
-)
 from os.path import (
     basename,
-    isdir,
     join,
     sep,
     splitext,
@@ -421,8 +418,9 @@ class CPUType(QOMCPU):
         target_folder = get_vp("target folder") + self.target_name + sep
         abs_target_folder = join(src, target_folder)
 
-        if not isdir(abs_target_folder):
-            makedirs(abs_target_folder)
+        yield True
+
+        makedirs(abs_target_folder, exist_ok = True)
 
         yield True
 

@@ -110,19 +110,19 @@ class CoTask(object):
 
         return lines
 
-    def on_activated(self):
+    def __activated__(self):
         # do nothing by default
         pass
 
-    def on_finished(self):
+    def __finished__(self):
         # do nothing by default
         pass
 
-    def on_failed(self):
+    def __failed__(self):
         # do nothing by default
         pass
 
-    def on_cancelled(self):
+    def __cancelled__(self):
         # do nothing by default
         pass
 
@@ -226,7 +226,7 @@ after last statement in the corresponding callable object.
                 lineno = traceback.tb_next.tb_frame.f_lineno
 
                 task.traceback = traceback
-                self.__failed__(task, e)
+                self._failed(task, e)
             else:
                 t1 = time()
 
@@ -256,7 +256,7 @@ after last statement in the corresponding callable object.
             task.lineno = lineno
 
         for task, co_ret in finished:
-            self.__finish__(task, co_ret)
+            self._finish(task, co_ret)
 
             try:
                 callers = self.callees[task]
@@ -304,7 +304,7 @@ after last statement in the corresponding callable object.
                 # is already in task list (should not be scheduled twice).
                 if callee not in self.callers:
                     if callee_is_new:
-                        self.__activate__(callee)
+                        self._activate(callee)
             else:
                 # The callee is called multiple times. Hence, it is already
                 # queued. Just account its new caller.
@@ -341,15 +341,15 @@ after last statement in the corresponding callable object.
                     self.remove(callee)
             else:
                 callers.remove(task)
-            task.on_cancelled()
+            task.__cancelled__()
         elif task in self.finished_tasks:
             self.finished_tasks.pop(task)
         elif task in self.tasks:
             self.tasks.remove(task)
-            task.on_cancelled()
+            task.__cancelled__()
         elif task in self.active_tasks:
             self.active_tasks.remove(task)
-            task.on_cancelled()
+            task.__cancelled__()
         elif task in self.failed_tasks:
             self.failed_tasks.remove(task)
 
@@ -379,12 +379,12 @@ after last statement in the corresponding callable object.
             del self.callers[c]
             self.tasks.insert(0, c)
 
-    def __failed__(self, task, exception):
+    def _failed(self, task, exception):
         task.exception = exception
         if task in self.active_tasks:
             self.active_tasks.remove(task)
         self.failed_tasks.add(task)
-        task.on_failed()
+        task.__failed__()
 
         try:
             callers = self.callees.pop(task)
@@ -396,16 +396,16 @@ after last statement in the corresponding callable object.
     def __root_task_failed__(self, task):
         pass
 
-    def __finish__(self, task, ret):
+    def _finish(self, task, ret):
         # print 'Task %s finished' % str(task)
         self.active_tasks.remove(task)
         self.finished_tasks[task] = ret
-        task.on_finished()
+        task.__finished__()
 
-    def __activate__(self, task):
+    def _activate(self, task):
         # print 'Activating task %s' % str(task)
         self.active_tasks.append(task)
-        task.on_activated()
+        task.__activated__()
 
     def pull(self):
         if not self.tasks:
@@ -417,13 +417,13 @@ after last statement in the corresponding callable object.
             if added:
                 while self.tasks:
                     task = self.tasks.pop(0)
-                    self.__activate__(task)
+                    self._activate(task)
         else:
             rest = self.max_tasks - len(self.active_tasks)
             while rest > 0 and self.tasks:
                 rest = rest - 1
                 task = self.tasks.pop(0)
-                self.__activate__(task)
+                self._activate(task)
                 added = True
 
         return added

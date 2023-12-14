@@ -527,6 +527,11 @@ IRQ line creation
         )
         p.add_separator()
         p.add_command(
+            label = _("Clone"),
+            command = self.on_popup_single_device_clone,
+        )
+        p.add_separator()
+        p.add_command(
             label = _("Settings"),
             command = self.on_popup_single_device_settings
         )
@@ -1226,10 +1231,7 @@ IRQ line creation
 
         # auto set GPIO names and indices at the ends of that new IRQ line
         project = self.mht.pht.p
-        try:
-            qom_tree = project.qom_tree
-        except AttributeError:
-            qom_tree = None # no QOM tree available
+        qom_tree = project.qom_tree
 
         for node_id, prefix in [
             (irq_src, "src"),
@@ -1300,7 +1302,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_irq_hub_settings(self, hub, x, y):
-        wnd = IRQHubSettingsWindow(hub, self.mach, self.mht, self)
+        wnd = IRQHubSettingsWindow(self,
+            node = hub,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1356,12 +1362,31 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_device_settings(self, device, x, y):
-        wnd = DeviceSettingsWindow(self.mach, self.mht, self, device = device)
+        wnd = DeviceSettingsWindow(self,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+            device = device,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
 
         wnd.geometry(geom)
+
+    def on_popup_single_device_clone(self):
+        dev_id = self.current_popup_tag
+        node = self.id2node[dev_id]
+        dev_id = self.node2dev[node].id
+
+        x, y = self.find_space_near(
+            node.x, node.y, node.width, node.height, node.spacing
+        )
+
+        new_id = self.mht.clone_device(dev_id)
+        self.mht.stage(MWOp_MoveNode, x, y, self, new_id)
+        self.mht.commit()
+
+        self.notify_popup_command()
 
     def on_popup_single_device_settings(self):
         _id = self.current_popup_tag
@@ -1384,7 +1409,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_irq_line_settings(self, irq, x, y):
-        wnd = IRQSettingsWindow(self.mach, self.mht, self, irq = irq)
+        wnd = IRQSettingsWindow(self,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+            irq = irq,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1418,7 +1447,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_bus_settings(self, bus, x, y):
-        wnd = BusSettingsWindow(bus, self.mach, self.mht, self)
+        wnd = BusSettingsWindow(self,
+            bus = bus,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -1454,7 +1487,11 @@ IRQ line creation
         self.notify_popup_command()
 
     def show_cpu_settings(self, cpu, x, y):
-        wnd = CPUSettingsWindow(cpu, self.mach, self.mht, self)
+        wnd = CPUSettingsWindow(self,
+            cpu = cpu,
+            machine = self.mach,
+            machine_history_tracker = self.mht,
+        )
 
         geom = "+" + str(int(self.winfo_rootx() + x)) \
              + "+" + str(int(self.winfo_rooty() + y))
@@ -3075,6 +3112,39 @@ IRQ line creation
                 obj.y = bottom - obj.height - 2 * obj.spacing
         else:
             obj.y = top + 2 * obj.spacing
+
+    def find_space_near(self, x, y, w, h, spacing):
+        objs = list(self.ph_iter_all_objects())
+        objs.sort(key = lambda o : (o.x - x) ** 2 + (o.y - y) ** 2)
+
+        left, top, right, bottom = find_empty_aabb(objs,
+            minw = w + 2 * spacing,
+            minh = h + 2 * spacing
+        )
+
+        if left is None:
+            if right is not None:
+                right -= w + spacing
+                if right < x:
+                    x = right
+            # else:
+            #     pass # no restriction for x, left it as it is
+        else:
+            left += spacing
+            if x < left:
+                x = left
+
+        if top is None:
+            if bottom is not None:
+                bottom -= h + spacing
+                if bottom < y:
+                    y = bottom
+        else:
+            top += spacing
+            if y < top:
+                y = top
+
+        return x, y
 
     def add_node(self, node, buses):
         node.text = self.create_text(

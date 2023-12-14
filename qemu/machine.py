@@ -154,9 +154,10 @@ class MachineType(QOMType):
             buses = [],
             irqs = [],
             mems = [],
-            irq_hubs = []
+            irq_hubs = [],
+            **kw
         ):
-        super(MachineType, self).__init__(name, directory)
+        super(MachineType, self).__init__(name, directory, **kw)
 
         self.__lazy__ = []
 
