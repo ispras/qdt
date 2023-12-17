@@ -9,15 +9,9 @@ from bisect import (
     bisect_left,
     bisect_right
 )
-from sys import (
-    version_info
+from six.moves import (
+    zip as izip,
 )
-if version_info[0] < 3:
-    from itertools import (
-        izip
-    )
-else:
-    izip = zip
 
 
 class intervalmap(object):
