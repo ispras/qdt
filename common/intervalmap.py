@@ -7,7 +7,7 @@ __all__ = [
 
 from bisect import (
     bisect_left,
-    bisect_right
+    bisect_right,
 )
 from six.moves import (
     zip as izip,
