@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Refs:
 # https://docs.sympy.org/latest/python-comparisons.html
