@@ -25,36 +25,36 @@ class A(object):
         self._hash = _hash
 
     def __lt__(self, o):
-        print "%s.__lt__(%s)" % (self.a, o.a)
+        print("%s.__lt__(%s)" % (self.a, o.a))
         return NotImplemented
 
     def __le__(self, o):
-        print "%s.__le__(%s)" % (self.a, o.a)
+        print("%s.__le__(%s)" % (self.a, o.a))
         return NotImplemented
 
     def __gt__(self, o):
-        print "%s.__gt__(%s)" % (self.a, o.a)
+        print("%s.__gt__(%s)" % (self.a, o.a))
         return NotImplemented
 
     def __ge__(self, o):
-        print "%s.__ge__(%s)" % (self.a, o.a)
+        print("%s.__ge__(%s)" % (self.a, o.a))
         return NotImplemented
 
     def __cmp__(self, o):
-        print "%s.__cmp__(%s)" % (self.a, o.a)
+        print("%s.__cmp__(%s)" % (self.a, o.a))
         # return cmp(self._hash, o._hash)
         return NotImplemented
 
     def __eq__(self, o):
-        print "%s.__eq__(%s)" % (self.a, o.a)
+        print("%s.__eq__(%s)" % (self.a, o.a))
         return NotImplemented
 
     def __ne__(self, o):
-        print "%s.__ne__(%s)" % (self.a, o.a)
+        print("%s.__ne__(%s)" % (self.a, o.a))
         return NotImplemented
 
     def __hash__(self):
-        print "%s.__hash__()" % (self.a)
+        print("%s.__hash__()" % (self.a))
         return self._hash
 
 
