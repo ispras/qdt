@@ -88,29 +88,29 @@ class CrossTest(CanvasDnD):
     def create_drags(self):
         for p in self.polygons:
             for i, v in enumerate(p.points):
-                id = self.canvas.create_rectangle(
+                _id = self.canvas.create_rectangle(
                     v.x - self.dp_w2, v.y - self.dp_w2,
                     v.x + self.dp_w2, v.y + self.dp_w2,
                     fill = "white",
                     tags = "DnD"
                 )
-                self.drag_points[id] = p, i
+                self.drag_points[_id] = p, i
 
         for s in self.segments:
-            id = self.canvas.create_rectangle(
+            _id = self.canvas.create_rectangle(
                 s.x - self.dp_w2, s.y - self.dp_w2,
                 s.x + self.dp_w2, s.y + self.dp_w2,
                 fill = "white",
                 tags = "DnD"
             )
-            self.drag_points[id] = s, 0
-            id = self.canvas.create_rectangle(
+            self.drag_points[_id] = s, 0
+            _id = self.canvas.create_rectangle(
                 s.x + s.d.x - self.dp_w2, s.y + s.d.y - self.dp_w2,
                 s.x + s.d.x + self.dp_w2, s.y + s.d.y + self.dp_w2,
                 fill = "white",
                 tags = "DnD"
             )
-            self.drag_points[id] = s, 1
+            self.drag_points[_id] = s, 1
 
     def update(self):
         for i in self.segments + self.polygons:
@@ -131,11 +131,11 @@ class CrossTest(CanvasDnD):
                     crosses.append(c)
 
         for c in crosses:
-            id = self.canvas.create_oval(
+            _id = self.canvas.create_oval(
                 c.x - 10, c.y - 10,
                 c.x + 10, c.y + 10
             )
-            self.crosses.append(id)
+            self.crosses.append(_id)
 
     def dnd_moved(self, event):
         for dp, do in self.drag_points.items():
