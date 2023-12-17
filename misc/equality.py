@@ -20,9 +20,9 @@ def prex(expr):
 
 class A(object):
 
-    def __init__(self, a, hash):
+    def __init__(self, a, _hash):
         self.a = a
-        self._hash = hash
+        self._hash = _hash
 
     def __lt__(self, o):
         print "%s.__lt__(%s)" % (self.a, o.a)
