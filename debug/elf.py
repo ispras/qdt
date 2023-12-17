@@ -12,18 +12,9 @@ from .dic import (
 from elftools.elf.elffile import (
     ELFFile
 )
-
-from sys import (
-    version_info
+from six import (
+    BytesIO,
 )
-if version_info[0] == 3:
-    from io import (
-        BytesIO
-    )
-else:
-    from cStringIO import (
-        StringIO as BytesIO
-    )
 
 
 class InMemoryELFFile(ELFFile):
