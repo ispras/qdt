@@ -4,7 +4,7 @@
 # https://docs.sympy.org/latest/python-comparisons.html
 
 from traceback import (
-    format_exc
+    format_exc,
 )
 
 
@@ -135,7 +135,7 @@ ws1, ws2 = WithSet(1, 2, 3), WithSet(3, 2, 1)
 prex("ws1 == ws2")
 
 from collections import (
-    Counter
+    Counter,
 )
 
 
