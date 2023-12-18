@@ -154,7 +154,7 @@ not actual now.
         t.name = "RSP client"
         t.start()
 
-        while t.isAlive():
+        while t.is_alive():
             yield False
 
     @cached
