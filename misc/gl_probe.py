@@ -6,6 +6,10 @@ sudo apt install python3-opengl togl-demos
 from common import (
     flatten,
 )
+from libe.graphics.gl import (
+    create_shader,
+    create_gls_program,
+)
 
 from ctypes import (
     c_float,
@@ -18,15 +22,10 @@ from OpenGL.Tk import (
 )
 from OpenGL.GL import (
     GL_ARRAY_BUFFER,
-    glAttachShader,
     glBindBuffer,
     glBufferData,
     GL_COLOR_ARRAY,
     glColorPointer,
-    glCompileShader,
-    GL_COMPILE_STATUS,
-    glCreateProgram,
-    glCreateShader,
     # glDisableClientState,
     glDrawElements,
     GL_DYNAMIC_DRAW,
@@ -35,15 +34,7 @@ from OpenGL.GL import (
     GL_FLOAT,
     GL_FRAGMENT_SHADER,
     glGenBuffers,
-    glGetProgramInfoLog,
-    glGetProgramiv,
-    glGetShaderInfoLog,
-    glGetShaderiv,
-    GL_INFO_LOG_LENGTH,
-    glLinkProgram,
-    GL_LINK_STATUS,
     # GL_NORMAL_ARRAY,
-    glShaderSource,
     GL_TRIANGLES,
     # GL_TEXTURE_COORD_ARRAY,
     GL_UNSIGNED_SHORT,
@@ -98,41 +89,9 @@ void main() {
 }
 """
 
-def create_shader(code, kind):
-    s = glCreateShader(kind)
-    glShaderSource(s, code)
-    glCompileShader(s)
-
-    if not glGetShaderiv(s, GL_COMPILE_STATUS):
-        info_log_length = glGetShaderiv(s, GL_INFO_LOG_LENGTH)
-        if info_log_length > 0:
-            raw_log = glGetShaderInfoLog(s)
-            raise ValueError(raw_log.decode("unicode_escape"))
-        raise ValueError
-
-    return s
-
 
 v_shader = create_shader(v_shader_code, GL_VERTEX_SHADER)
 f_shader = create_shader(f_shader, GL_FRAGMENT_SHADER)
-
-
-def create_gls_program(v, f):
-    p = glCreateProgram()
-
-    glAttachShader(p, v)
-    glAttachShader(p, f)
-    glLinkProgram(p)
-
-    if not glGetProgramiv(p, GL_LINK_STATUS):
-        info_log_length = glGetProgramiv(p, GL_INFO_LOG_LENGTH)
-        if info_log_length > 0:
-            raw_log = glGetProgramInfoLog(p)
-            raise ValueError(raw_log.decode("unicode_escape"))
-        raise ValueError
-
-    return p
-
 glsp_0 = create_gls_program(v_shader, f_shader)
 
 glUseProgram(glsp_0)
