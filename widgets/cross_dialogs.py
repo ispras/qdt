@@ -82,7 +82,7 @@ class CrossSaveAsDialog(CrossDialog):
         kw = {
             "title" : self.title.get(),
             "filetypes": [
-                (filter_name.get(), filter) for (filter_name, filter) in \
+                (filter_name.get(), _filter) for (filter_name, _filter) in \
                     self.filetypes
             ]
         }
@@ -109,7 +109,7 @@ class CrossOpenDialog(CrossDialog):
         kw = {
             "title" : self.title.get(),
             "filetypes": [
-                (filter_name.get(), filter) for (filter_name, filter) in \
+                (filter_name.get(), _filter) for (filter_name, _filter) in \
                     self.filetypes
             ]
         }
