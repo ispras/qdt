@@ -28,7 +28,6 @@ from itertools import (
     count
 )
 from six.moves import (
-    zip_longest,
     range as xrange
 )
 from .qom_common import (
