@@ -2308,7 +2308,7 @@ IRQ line creation
             self.current_ph_iteration = self.ph_iterate_co()
 
         t0 = time()
-        for x in self.current_ph_iteration:
+        for __ in self.current_ph_iteration:
             t1 = time()
             dt = t1 - t0
             t_limit_sec = t_limit_sec - dt
@@ -2539,7 +2539,7 @@ IRQ line creation
         selects = len(self.selected)
 
         if marks < selects:
-            for i in xrange(0, selects - marks):
+            for __ in xrange(0, selects - marks):
                 self.selection_marks.append(self.create_rectangle(
                     0,0,0,0,
                     outline = self.selection_mark_color,
