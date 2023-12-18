@@ -678,9 +678,9 @@ class ParsePrintFilter(object):
         self.out = out
         self.written = False
 
-    def write(self, str):
-        if str.startswith("Info:"):
-            self.out.write(str + "\n")
+    def write(self, _str):
+        if _str.startswith("Info:"):
+            self.out.write(_str + "\n")
             self.written = True
 
     def flush(self):
