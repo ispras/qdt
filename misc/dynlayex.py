@@ -137,6 +137,20 @@ def co_main_script(dgp):
     e(1, "!")
     yield
 
+    e(4, "?")
+    yield
+
+    e("?", 4)
+    yield
+
+    n("x")
+    n("y")
+    n("z")
+    e("x", "y")
+    e("y", "z")
+    e("z", "x")
+    yield
+
 
 def co_script(dgp, cnv):
     for __ in co_main_script(dgp):
