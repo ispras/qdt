@@ -3328,8 +3328,8 @@ IRQ line creation
     def set_layout(self, l):
         layout_bak = self.gen_layout()
         try:
-            for id, desc in l.items():
-                if id == -1:
+            for _id, desc in l.items():
+                if _id == -1:
                     try:
                         self.var_show_mesh.set(desc[LAYOUT_SHOW_MESH])
                     except KeyError:
@@ -3365,7 +3365,7 @@ IRQ line creation
                             self.irq_line_add_circle(l, i, x, y)
 
                     continue
-                dev = self.mach.id2node[id]
+                dev = self.mach.id2node[_id]
                 if not dev:
                     continue
                 n = self.dev2node[dev]
