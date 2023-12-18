@@ -2,3 +2,4 @@ rpc.touch
 git_worktrees_root/
 build/
 rpc.touch
+git_worktrees_root/
