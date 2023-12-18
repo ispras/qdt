@@ -35,7 +35,7 @@ from copy import (
 from source import (
     CConst
 )
-from .qom import (
+from .register import (
     Register
 )
 
