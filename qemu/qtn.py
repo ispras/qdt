@@ -17,6 +17,9 @@ with pypath("..ply"):
 from collections import (
     namedtuple as nt
 )
+from six.moves import (
+    zip,
+)
 
 
 QTN_DEBUG = ee("QTN_DEBUG")
