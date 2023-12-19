@@ -16,6 +16,9 @@ from widgets import (
 from common import (
     bidict
 )
+from six.moves import (
+    zip,
+)
 
 
 inner_pad = 4
