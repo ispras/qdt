@@ -137,7 +137,7 @@ class CoRSPProxy(CoRSP):
         else:
             self._write("%" + data + "#" + checksum)
 
-    def _on_command(self, _, data, checksum):
+    def _on_command(self, __, data, checksum):
         if data.startswith("qSupported:"):
             self.client_features = Features.parse(data[11:])
             self.packet(self.features.response())
