@@ -1023,7 +1023,7 @@ digraph Chunks {
             if user is not ch:
                 user.add_reference(ch)
 
-        for _, _type in ch_remove.reasons:
+        for __, _type in ch_remove.reasons:
             ch.add_reason(_type, kind = "provides")
 
         self.chunks.remove(ch_remove)
