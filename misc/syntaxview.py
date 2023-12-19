@@ -207,7 +207,7 @@ def main():
             tok = st.resmap[off]
             origin_off = tok.lexpos
             origin_line_n = st.orgmap[origin_off] + 1
-            ol, _ = st.orgmap.interval(origin_off)
+            ol, __ = st.orgmap.interval(origin_off)
 
             oi1_col = origin_off - ol
             oi2_col = oi1_col + (r - l) # length of token value
