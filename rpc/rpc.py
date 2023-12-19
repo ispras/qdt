@@ -77,6 +77,9 @@ from bisect import (
 from six import (
     text_type,
 )
+from six.moves import (
+    zip,
+)
 
 
 stc = None
