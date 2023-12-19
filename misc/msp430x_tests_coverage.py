@@ -31,6 +31,9 @@ from operator import (
 from codecs import (
     open
 )
+from six.moves import (
+    zip,
+)
 
 
 PRINT_IGNORED_LINES = ee("TESTS_COVERAGE_PRINT_IGNORED_LINES", "False")
