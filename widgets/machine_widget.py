@@ -35,6 +35,9 @@ from .var_widgets import (
     VarNotebook,
 )
 
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     BooleanVar,
     RAISED,
