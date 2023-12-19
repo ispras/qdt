@@ -25,6 +25,9 @@ from os.path import (
 from queue import (
     Empty,
 )
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     BOTH,
     END,
