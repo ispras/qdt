@@ -10,6 +10,9 @@ from inspect import (
 from collections import (
     OrderedDict
 )
+from six.moves import (
+    zip,
+)
 
 # http://stackoverflow.com/questions/12627118/get-a-function-arguments-default-value
 def get_default_args(func):
