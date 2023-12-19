@@ -72,7 +72,7 @@ Leading spaces are ignored.
 
         # inspect methods getting those who is a breakpoint handler
         self.breakpoints = brs = []
-        for _, cb in getmembers(self, predicate = is_breakpoint_cb):
+        for __, cb in getmembers(self, predicate = is_breakpoint_cb):
             # The process can be slow enough, a progress indication is required.
             if verbose:
                 print("Mapping breakpoint %s.%s" % (
@@ -144,6 +144,6 @@ Leading spaces are ignored.
         target = rt.target
         quiet = not self.verbose
 
-        for addr, cb, _, _ in self.breakpoints:
+        for addr, cb, __, __ in self.breakpoints:
             addr_str = target.reg_fmt % addr
             rt.remove_br(addr_str, cb, quiet = quiet)
