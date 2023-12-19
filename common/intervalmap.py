@@ -10,7 +10,7 @@ from bisect import (
     bisect_right,
 )
 from six.moves import (
-    zip as izip,
+    zip,
 )
 
 
@@ -275,7 +275,7 @@ as: ((low_bound, high_bound), value).
         return '{' + ", ".join(s) + '}'
 
     def __eq__(self, obj):
-        for si, oi in izip(self.items(), obj.items()):
+        for si, oi in zip(self.items(), obj.items()):
             if si != oi:
                 return False
         return True
