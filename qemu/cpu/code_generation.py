@@ -512,7 +512,7 @@ def fill_dump_state_body(cputype, function, reg_vars):
         NewLine()
     )
 
-    for r, _, names_array in reg_vars:
+    for r, __, names_array in reg_vars:
         if r.bank_size:
             # Print a new line after the last register in the bank even if the
             # bank_size is not a multiple of 4.
