@@ -55,6 +55,9 @@ from .version import (
 from six import (
     integer_types
 )
+from six.moves import (
+    zip,
+)
 
 class UnknownMachineNodeType(ValueError):
     pass
