@@ -19,6 +19,9 @@ from itertools import \
 
 from collections import \
     OrderedDict
+from six.moves import (
+    zip,
+)
 
 class PosInfo(object):
     def __init__(self, row, start, end, m):
