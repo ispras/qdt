@@ -12,6 +12,9 @@ from .statusbar import (
     Statusbar,
 )
 
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     IntVar,
 )
