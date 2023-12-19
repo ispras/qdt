@@ -350,7 +350,7 @@ class CoRSP(object):
 
     def __ack_error__(self):
         current = self.waiting[0]
-        packet, retries, _ = current
+        packet, retries, __ = current
 
         if retries == 0:
             raise RuntimeError("Packet sending retries exceeded")
@@ -391,7 +391,7 @@ expect. """
             waiting.popleft()
             if not waiting:
                 break
-            packet, _, callback = waiting[0]
+            packet, __, callback = waiting[0]
             self._write(packet)
 
     def packet(self, data, *a, **kw):
