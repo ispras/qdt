@@ -91,7 +91,7 @@ class PCIIdWidget(GUIFrame):
         self.after_idle(self.__refresh__)
 
     def find_idx(self, **kw):
-        for idx, (name, desc) in enumerate(self.kind_db):
+        for idx, (__, desc) in enumerate(self.kind_db):
             for key, value in kw.items():
                 if getattr(desc, key) == value:
                     return idx
