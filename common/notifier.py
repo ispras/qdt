@@ -14,6 +14,9 @@ from six.moves import (
 from time import (
     time
 )
+from six.moves import (
+    zip,
+)
 
 
 PROFILING = ee("QDT_NOTIFIER_PROFILING")
