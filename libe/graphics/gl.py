@@ -75,7 +75,9 @@ from OpenGL.GL import (
     glVertexPointer,
     GL_VERTEX_SHADER,
 )
-
+from six.moves import (
+    zip,
+)
 
 
 identity4x4 = (c_float * 16)(
