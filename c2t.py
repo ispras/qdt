@@ -367,7 +367,7 @@ class ProcessWithErrCatching(Thread):
         self._wiped = False
 
         self.process = process = Popen(*self.popen_args, **self.popen_kw)
-        _, err = process.communicate()
+        __, err = process.communicate()
 
         # If the process has been explicitly wiped, do not `c2t_exit`
         if not self._wiped:
