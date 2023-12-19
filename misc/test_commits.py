@@ -210,7 +210,7 @@ def plot_measurements(repo, ctx, commit_seq):
     mes = ctx.mes
 
     for x, sha1 in enumerate(commit_seq):
-        for _, t, res, env, machine, _, _, _ in mes.get(sha1, []):
+        for __, t, res, env, machine, __, __, __ in mes.get(sha1, []):
             if machine != cur_machine:
                 # TODO: different plot (graph)
                 continue
@@ -220,7 +220,7 @@ def plot_measurements(repo, ctx, commit_seq):
             plots[env].mes.append(t)
 
         # Graph for tests
-        for _, _, _, env, machine, _, t, res in mes.get(sha1, []):
+        for __, __, __, env, machine, __, t, res in mes.get(sha1, []):
             if machine != cur_machine:
                 # TODO: different plot (graph)
                 continue
