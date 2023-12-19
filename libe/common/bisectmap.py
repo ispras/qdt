@@ -6,7 +6,7 @@ from bisect import (
     bisect_left,
 )
 from six.moves import (
-    zip as izip,
+    zip,
 )
 
 
@@ -29,7 +29,7 @@ class BisectMap(object):
     def iter_ge_items(self, key):
         keys = self._keys
         i = bisect_left(keys, key)
-        return izip(keys[i:], self._values[i:])
+        return zip(keys[i:], self._values[i:])
 
     def __reversed__(self):
         return reversed(self._keys)
@@ -41,7 +41,7 @@ class BisectMap(object):
         return iter(self._values)
 
     def items(self):
-        return izip(self._keys, self._values)
+        return zip(self._keys, self._values)
 
     def max(self):
         return self._keys[-1]
