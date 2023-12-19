@@ -8,6 +8,9 @@ from inspect import (
 from .os_wrappers import (
     ee
 )
+from six.moves import (
+    zip,
+)
 
 
 def gen_init_wrapper(wrapped_init, cb_list_name):
