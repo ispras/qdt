@@ -39,6 +39,9 @@ from os.path import (
     commonprefix,
     dirname,
 )
+from six.moves import (
+    zip,
+)
 from warnings import (
     filterwarnings,
 )
