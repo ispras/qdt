@@ -267,7 +267,7 @@ class QProject(object):
                 )
 
     def register_src_in_Makefile(self, src_root, sname, directory):
-        sbase, _ = splitext(sname)
+        sbase, __ = splitext(sname)
         object_name = sbase + ".o"
 
         hw_path = join(src_root, "hw")
