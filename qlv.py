@@ -12,7 +12,6 @@ from widgets import (
     AutoPanedWindow,
     GUIText,
     READONLY,
-    BOTH,
     GUIFrame,
     GUITk,
     VarTreeview
