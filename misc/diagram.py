@@ -154,7 +154,7 @@ class Diagram(CanvasDnD):
             # first return preferred place
             yield px, py
             # iterate places around obstacles in clockwise order
-            for _, _, bbox in obstacles:
+            for __, __, bbox in obstacles:
                 yield bbox[0], bbox[1] - h - NODE_SPACING
                 yield bbox[2] + NODE_SPACING, bbox[1] - h - NODE_SPACING
                 yield bbox[2] + NODE_SPACING, bbox[1]
@@ -167,7 +167,7 @@ class Diagram(CanvasDnD):
         # find a place without overlapping with obstacles
         for x, y in iter_places():
             bbox0 = x, y, (x + w), (y + h)
-            for _, _, bbox in obstacles:
+            for __, __, bbox in obstacles:
                 if owerlaps(bbox, bbox0):
                     break # bad position
             else:
