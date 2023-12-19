@@ -12,6 +12,9 @@ from .var_widgets import (
     VarLabel,
 )
 
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     Label,
     LEFT as SIDE_LEFT,
