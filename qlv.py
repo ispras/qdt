@@ -36,7 +36,7 @@ from common import (
     mlget as _
 )
 from six.moves import (
-    zip as izip,
+    zip,
     range as xrange,
 )
 from qemu import (
@@ -611,7 +611,7 @@ class QLVWindow(GUITk):
             iter_of_iters = iter(trace_iters)
 
             subtrace = list(
-                izip(xrange(start_idx, end_idx), next(iter_of_iters))
+                zip(xrange(start_idx, end_idx), next(iter_of_iters))
             )
 
             if not subtrace:
@@ -628,7 +628,7 @@ class QLVWindow(GUITk):
 
                 log_instrs = all_instructions[log_idx]
 
-                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                for (i1_idx, i1), i2 in zip(subtrace, qlog_iter_2):
                     if difference:
                         if differences_to_show:
                             differences_to_show -= 1
@@ -712,7 +712,7 @@ class QLVWindow(GUITk):
             yield
 
             last_idx = idx + 1000
-            for idx, i in izip(xrange(idx, last_idx + 1), iiter):
+            for idx, i in zip(xrange(idx, last_idx + 1), iiter):
                 if not isinstance(i, TraceInstr):
                     continue
                 trace = i.trace
@@ -747,7 +747,7 @@ class QLVWindow(GUITk):
 
         left_text = None
 
-        for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
+        for qlog_idx, (qlog_instrs, trace_text) in enumerate(zip(
             self.all_instructions, qlog_trace_texts
         )):
             try:
@@ -817,9 +817,9 @@ def insert_diff(text_wgt, base, new):
 
     biter = iter(b)
 
-    for la, lb in izip(a, biter):
+    for la, lb in zip(a, biter):
         cbiter = iter(lb)
-        for ca, cb in izip(la, cbiter):
+        for ca, cb in zip(la, cbiter):
             if ca == cb:
                 text_wgt.insert(END, cb)
             else:
