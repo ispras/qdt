@@ -37,6 +37,9 @@ from os.path import (
     dirname as p, # parent
     abspath,
 )
+from six.moves import (
+    zip,
+)
 
 
 class Example(QMainWindow):
