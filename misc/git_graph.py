@@ -47,6 +47,9 @@ from git import (
 from itertools import (
     count,
 )
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     ALL,
     BOTH,
