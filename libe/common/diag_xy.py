@@ -3,6 +3,10 @@ __all__ = [
   , "StringMesh"
 ]
 
+from six.moves import (
+    zip,
+)
+
 
 def iter_diag_xy():
     x = 0
