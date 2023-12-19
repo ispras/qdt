@@ -192,7 +192,7 @@ def prepare_group(group, global_offset_w):
     return max_w
 
 def rB(count):
-    return [B() for _ in range(count)]
+    return [B() for __ in range(count)]
 
 def generate_buttons():
     # See:
