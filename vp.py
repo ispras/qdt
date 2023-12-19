@@ -9,7 +9,6 @@ from widgets import (
     DnDGroup,
     VarButton,
     HKEntry,
-    VarToplevel,
     CanvasDnD,
     VarTk
 )
