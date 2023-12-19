@@ -38,6 +38,9 @@ from .var_widgets import (
 from six import (
     integer_types,
 )
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     TclError,
 )
