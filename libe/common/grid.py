@@ -22,7 +22,7 @@ from itertools import (
     count,
 )
 from six.moves import (
-    zip as izip,
+    zip,
 )
 
 
@@ -45,7 +45,7 @@ class _GridAxisSliceSlot(object):
         self._set_size(v)
 
     def _set_size(self, v):
-        for slc, sc, vc in izip(self.slices, self.size, v):
+        for slc, sc, vc in zip(self.slices, self.size, v):
             if sc == vc:
                 # size along the axis is not changed
                 continue
