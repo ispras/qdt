@@ -98,7 +98,7 @@ it cannot do it by self.
 
         self._read_tasks(False)
 
-        for t, a, kw, _ in self._clean_tasks:
+        for t, a, kw, __ in self._clean_tasks:
             try:
                 t(*a, **kw)
             except:
