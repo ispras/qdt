@@ -13,8 +13,11 @@ a_SHA1 \\\\\n\
 2>>/dev/null)\n\
 "
 
-Usage="usage: $0 [-h] [--help] rev-id string [string [...]]"
+Usage="\
+usage: $0 [-h] [--help] [-[-]arg-to-git-log [..]] rev-id string [string [..]]"
 
+
+ArgsToGitLog=( )
 
 IFSBack=$IFS
 IFS=$'\n'
@@ -32,9 +35,8 @@ do
 		exit 0
 		;;
 	* )
-		echo "unknown argument $1" 1>&2
-		echo "$Usage" 1>&2
-		exit 1
+		echo "argument to git log: $1" 1>&2
+		ArgsToGitLog+=( "$1" )
 		;;
 	esac
 	shift
@@ -55,7 +57,7 @@ shift
 
 IFSBack=$IFS
 IFS=$'\n'
-LogLines=( $(git log -q "$LogRevId") )
+LogLines=( $(git log "${ArgsToGitLog[@]}" "$LogRevId") )
 IFS=$IFSBack
 
 if [[ 0 == ${#LogLines[@]} ]]
