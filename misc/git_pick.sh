@@ -77,30 +77,25 @@ do
 	if [[ "$Line" =~ ^commit\ ([a-f0-9]+)$ ]]
 	then
 		RevId="${BASH_REMATCH[1]}"
+		# Assume that `commit` is always first line of log record.
+		AlreadySelected=0
+	elif [[ 1 == $AlreadySelected ]]
+	then
+		# Skip rest lines of the log record. It's already selected.
+		continue
 	fi
+
 	for Re in ${MessagesRe[*]}
 	do
 		if [[ "$Line" =~ "$Re" ]]
 		then
 			echo "$Re -> $RevId $Line" 1>&2
 
-			AlreadySelected=0
-			for SelectedRevId in ${ToCherryPick[*]}
-			do
-				if [ $SelectedRevId == $RevId ]
-				then
-					AlreadySelected=1
-					break
-				fi
-			done
+			# reverse order
+			ToCherryPick=($RevId "${ToCherryPick[@]}")
 
-			if [[ 1 == $AlreadySelected ]]
-			then
-				echo "$RevId: multiple match, take once" 1>&2
-			else
-				# reverse order
-				ToCherryPick=($RevId "${ToCherryPick[@]}")
-			fi
+			AlreadySelected=1
+			break
 		fi
 	done
 done
