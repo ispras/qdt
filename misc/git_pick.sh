@@ -66,9 +66,9 @@ then
 fi
 
 
-SearchedSrings=( "$@" )
+SearchedStrings=( "$@" )
 
-if [[ 0 == ${#SearchedSrings[@]} ]]
+if [[ 0 == ${#SearchedStrings[@]} ]]
 then
 	echo "no strings for commit selection from $LogRevId" 1>&2
 	echo "$Usage" 1>&2
@@ -92,7 +92,7 @@ do
 		continue
 	fi
 
-	for SS in ${SearchedSrings[*]}
+	for SS in ${SearchedStrings[*]}
 	do
 		if [[ "$Line" == *"$SS"* ]]
 		then
