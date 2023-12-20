@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-Help="Given a Git rev-id and list of regular expressions $0 searches \
-branch starting from rev-id for commits whose 'git log' lines matches at \
-least one regular expression given. \
+Help="Given a Git rev-id and list of strings $0 searches \
+branch starting from rev-id for commits whose 'git log' lines contain at \
+least one string given. \
 Selected commit hashes are printed to stdout, other messages to stderr.\n\
 \n\
 Example:\n\n\
 git cherry-pick \$($0 branch_name \\\\\n\
-'feature regular expression' \\\\\n\
+a_SHA1 \\\\\n\
 'author name' \\\\\n\
-'commit message prefix' \\\\\n\
+'commit: message prefix' \\\\\n\
 2>>/dev/null)\n\
 "
 
-Usage="usage: $0 [-h] [--help] rev-id regex [regex [...]]"
+Usage="usage: $0 [-h] [--help] rev-id string [string [...]]"
 
 
 IFSBack=$IFS
@@ -59,11 +59,11 @@ then
 fi
 
 
-MessagesRe=( "$@" )
+SearchedSrings=( "$@" )
 
-if [[ 0 == ${#MessagesRe[@]} ]]
+if [[ 0 == ${#SearchedSrings[@]} ]]
 then
-	echo "no regular expressions for commit selection from $LogRevId" 1>&2
+	echo "no strings for commit selection from $LogRevId" 1>&2
 	echo "$Usage" 1>&2
 	exit 1
 fi
@@ -85,11 +85,11 @@ do
 		continue
 	fi
 
-	for Re in ${MessagesRe[*]}
+	for SS in ${SearchedSrings[*]}
 	do
-		if [[ "$Line" =~ "$Re" ]]
+		if [[ "$Line" == *"$SS"* ]]
 		then
-			echo "$Re -> $RevId $Line" 1>&2
+			echo "$SS -> $RevId $Line" 1>&2
 
 			# reverse order
 			ToCherryPick=($RevId "${ToCherryPick[@]}")
