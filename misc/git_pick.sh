@@ -42,6 +42,13 @@ done
 IFS=$IFSBack
 
 
+if [[ 0 == $# ]]
+then
+	echo "no rev-id" 1>&2
+	echo "$Usage" 1>&2
+	exit 1
+fi
+
 LogRevId=$1
 shift
 
