@@ -12,36 +12,37 @@ __all__ = [
   , "REFS_ORDER_RECENT_FIRST"
 ]
 
-from collections import (
-    namedtuple
-)
-from re import (
-    compile
-)
 from .intervalmap import (
-    intervalmap
+    intervalmap,
 )
-from tempfile import (
-    mkdtemp
+from .lazy import (
+    lazy,
 )
-from os.path import (
-    sep,
-    exists,
-    join
+
+from collections import (
+    namedtuple,
 )
 from git import (
     BadName,
     GitCommandError,
-    Repo
-)
-from .lazy import (
-    lazy
-)
-from time import (
-    time
+    Repo,
 )
 from itertools import (
-    count
+    count,
+)
+from os.path import (
+    exists,
+    join,
+    sep,
+)
+from re import (
+    compile,
+)
+from tempfile import (
+    mkdtemp,
+)
+from time import (
+    time,
 )
 
 
