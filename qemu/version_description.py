@@ -15,76 +15,77 @@ __all__ = [
   , "account_build_path"
 ]
 
-from source import (
-    Type,
-    SourceTreeContainer,
-    Header,
-    Macro
-)
 from common import (
-    ee,
-    qdtdirs,
-    makedirs,
-    rename_replacing,
-    git_find_commit,
-    co_process,
-    get_cleaner,
-    lazy,
+    callco,
     CancelledCallee,
+    co_process,
+    CommitDesc,
+    ee,
+    execfile,
     FailedCallee,
     fast_repo_clone,
     fixpath,
-    CommitDesc,
+    get_cleaner,
+    git_find_commit,
+    lazy,
+    makedirs,
     mlget as _,
-    callco,
+    pythonize,
+    qdtdirs,
     remove_file,
-    execfile,
-    pythonize
-)
-from collections import (
-    defaultdict
-)
-from .version import (
-    QVHDict,
-    initialize_version,
-    qemu_heuristic_db,
-    calculate_qh_hash,
-    get_vp
-)
-from .qom_hierarchy import (
-    QType,
-    co_update_device_tree
-)
-from os import (
-    listdir
-)
-from os.path import (
-    sep,
-    join,
-    isfile
+    rename_replacing,
 )
 from .pci_ids import (
+    PCIClassification,
     PCIId,
-    PCIClassification
+)
+from .qom_hierarchy import (
+    co_update_device_tree,
+    QType,
+)
+from source import (
+    Header,
+    Macro,
+    SourceTreeContainer,
+    Type,
+)
+from .version import (
+    calculate_qh_hash,
+    get_vp,
+    initialize_version,
+    qemu_heuristic_db,
+    QVHDict,
+)
+
+from collections import (
+    defaultdict,
 )
 from git import (
-    Repo
+    Repo,
 )
-from six import (
-    u
+from os import (
+    listdir,
+)
+from os.path import (
+    isfile,
+    join,
+    sep,
 )
 from shutil import (
     copy2,
-    rmtree
+    rmtree,
 )
-from traceback import (
-    format_exception
+from six import (
+    u,
 )
 from sys import (
-    exc_info
+    exc_info,
 )
 from time import (
-    time
+    time,
+)
+from traceback import (
+    format_exception,
 )
 
 
