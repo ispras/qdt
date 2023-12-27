@@ -2,20 +2,22 @@ __all__ = [
     "GUIProject"
 ]
 
-from qemu import (
-    QType,
-    MachineNode,
-    QProject
-)
 from common import (
-    History
+    History,
 )
 from .gui_layout import (
-    GUILayout
+    GUILayout,
 )
+from qemu import (
+    MachineNode,
+    QProject,
+    QType,
+)
+
 from itertools import (
-    count
+    count,
 )
+
 
 class GUIProject(QProject):
 
@@ -52,24 +54,12 @@ class GUIProject(QProject):
 
     def reset_qom_tree(self):
         self.qom_tree = q_root = QType("[QOM root is not a type]")
-
-        q_object = QType("object")
-        q_root.add_child(q_object)
-
-        q_machine = QType("machine")
-        q_object.add_child(q_machine)
-
-        q_device = QType("device")
-        q_object.add_child(q_device)
-
-        q_sys_bus_device = QType("sys-bus-device")
-        q_device.add_child(q_sys_bus_device)
-
-        q_pci_device = QType("pci-device")
-        q_device.add_child(q_pci_device)
-
-        q_cpu = QType("cpu")
-        q_device.add_child(q_cpu)
+        q_object = QType("object", parent = q_root)
+        QType("machine", parent = q_object)
+        q_device = QType("device", parent = q_object)
+        QType("sys-bus-device", parent = q_device)
+        QType("pci-device", parent = q_device)
+        QType("cpu", parent = q_device)
 
     def add_layout_object_auto_id(self, l):
         try:

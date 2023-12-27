@@ -9,27 +9,27 @@ __all__ = [
 ]
 
 from .pypath import (
-    abspath,
-    pythonpath
-)
-from os.path import (
-    dirname
-)
-from platform import (
-    uname as platform_uname
+    pythonpath,
 )
 
-from six import (
-    PY2,
-    PY3
-)
-from six.moves import (
-    map
-)
 from argparse import (
     ArgumentDefaultsHelpFormatter,
     _CountAction,
-    _StoreConstAction
+    _StoreConstAction,
+)
+from os.path import (
+    abspath,
+    dirname,
+)
+from platform import (
+    uname as platform_uname,
+)
+from six import (
+    PY2,
+    PY3,
+)
+from six.moves import (
+    map,
 )
 
 

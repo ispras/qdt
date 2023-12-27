@@ -313,7 +313,7 @@ def fill_class_init_body(cputype, function, num_core_regs, vmstate,
         body(
             OpAssign(
                 OpSDeref(cc, "tlb_fill"),
-                Type[cputype.gen_func_name("tlb_fill")]
+                Type[fn_name("tlb_fill")]
             )
         )
 

@@ -266,6 +266,12 @@ class Type(TypeContainer):
     def declaration_string(self):
         return self.full_deref.c_name + "@b" + self.asterisks
 
+    def __c__(self, writer):
+        if self.is_named:
+            writer.write(self.c_name)
+        else:
+            raise NotImplementedError
+
 
 class Structure(Type):
 
@@ -492,9 +498,6 @@ class Structure(Type):
 
     __type_references__ = ["_fields_tr"]
 
-    def __c__(self, writer):
-        writer.write(self.c_name)
-
     def __str__(self):
         if self.is_named:
             return super(Structure, self).__str__()
@@ -619,9 +622,6 @@ class EnumerationElement(Type):
 
         return definers
 
-    def __c__(self, writer):
-        writer.write(self.c_name)
-
     def __or__(self, arg):
         from .function import (
             OpOr
@@ -681,7 +681,8 @@ class Function(Type):
         self.args = args
         self.declaration = None
 
-        if isinstance(body, str):
+        # Under Py2 body can be `unicode`.
+        if isinstance(body, (str, text_type)):
             self.body = FunctionBodyString(
                 body = body,
                 used_types = used_types,
@@ -768,9 +769,6 @@ class Function(Type):
             initializer = initializer,
             static = static
         )
-
-    def __c__(self, writer):
-        writer.write(self.c_name)
 
     def __str__(self):
         if self.is_named:
@@ -931,9 +929,6 @@ class Macro(Type):
             args = _dict[HDB_MACRO_ARGS] if HDB_MACRO_ARGS in _dict else None,
             text = _dict[HDB_MACRO_TEXT] if HDB_MACRO_TEXT in _dict else None
         )
-
-    def __c__(self, writer):
-        writer.write(self.c_name)
 
 
 class MacroUsage(Type):

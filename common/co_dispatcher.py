@@ -28,6 +28,7 @@ import sys
 from traceback import (
     format_exception,
     format_stack,
+    print_exception,
 )
 from .os_wrappers import (
     ee
@@ -119,8 +120,7 @@ class CoTask(object):
         pass
 
     def __failed__(self):
-        # do nothing by default
-        pass
+        print_exception(type(self.exception), self.exception, self.traceback)
 
     def __cancelled__(self):
         # do nothing by default

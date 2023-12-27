@@ -81,6 +81,9 @@ from traceback import (
 from sys import (
     exc_info
 )
+from time import (
+    time
+)
 
 
 bp_file_name = "build_path_list"
@@ -201,8 +204,8 @@ def qvds_load_with_cache():
     qvds_init_cache()
 
 class QemuCommitDesc(CommitDesc):
-    def __init__(self, sha, parents, children):
-        super(QemuCommitDesc, self).__init__(sha, parents, children)
+    def __init__(self, *a, **kw):
+        super(QemuCommitDesc, self).__init__(*a, **kw)
 
         # dict of QEMUVersionParameterDescription new_value parameters
         self.param_nval = {}
@@ -229,7 +232,7 @@ class QemuVersionCache(object):
         self.pci_c = PCIClassification() if pci_classes is None else pci_classes
 
     def co_computing_parameters(self, repo, version):
-        print("Build QEMU Git graph ...")
+        print("Build QEMU Git graph...")
         self.commit_desc_nodes = {}
         yield QemuCommitDesc.co_build_git_graph(repo, self.commit_desc_nodes)
         print("QEMU Git graph was built")
@@ -261,7 +264,7 @@ class QemuVersionCache(object):
         yield True
 
         # first, need to propagate the new labels
-        print("Propagation params in graph of commit's description ...")
+        print("Propagation params in graph of commit's description...")
         yield self.co_propagate_new_param(sorted_vd_keys, vd)
         yield self.co_propagate_old_param(sorted_vd_keys, unknown_vd_keys, vd)
         print("Params in graph of commit's description were propagated")
@@ -278,6 +281,8 @@ class QemuVersionCache(object):
     :param vd:
         qemu_heuristic_db
         """
+
+        t0 = time()
 
         # iterations to yield
         i2y = QVD_HP_IBY
@@ -347,6 +352,9 @@ class QemuVersionCache(object):
                 else:
                     i2y -= 1
 
+        t1 = time()
+        print("co_propagate_new_param work time " + str(t1 - t0))
+
     def co_propagate_old_param(self, sorted_vd_keys, unknown_vd_keys, vd):
         """ This method propagate QEMUVersionParameterDescription.old_value
         in graph of commits. It must be called after new_value propagation.
@@ -361,6 +369,8 @@ class QemuVersionCache(object):
     :param vd:
         qemu_heuristic_db
         """
+
+        t0 = time()
 
         # message for exceptions
         msg = "Conflict with param '%s' in commit %s (old_val (%s) != old_val (%s))"
@@ -440,6 +450,10 @@ param_name, commit.sha, commit.param_oval[param_name], cur_node.param_oval[param
                 if not i2y:
                     yield True
                     i2y = QVD_HP_IBY
+
+        t1 = time()
+        print("co_propagate_old_param work time " + str(t1 - t0))
+
 
     def init_commit_old_val(self, commit, vd):
         # messages for exceptions
@@ -956,7 +970,7 @@ class QemuVersionDescription(object):
         t2m = defaultdict(list)
         yield self.co_text2macros(t2m)
 
-        print("Adding macros to device tree ...")
+        print("Adding macros to device tree...")
         yield self.co_add_dt_macro(self.qvc.device_tree.children, t2m)
         print("Macros were added to device tree")
 

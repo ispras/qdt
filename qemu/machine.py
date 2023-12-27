@@ -11,7 +11,8 @@ from .qom_common import (
     QOMPropertyTypeLink,
     QOMPropertyTypeString,
     QOMPropertyTypeBoolean,
-    QOMPropertyTypeInteger
+    QOMPropertyTypeInteger,
+    is_type_in_str,
 )
 from .qom import (
     QOMType
@@ -142,9 +143,6 @@ class IRQHubLayout(object):
         root_name = self.gen.node_map[self.hub]
         return self._gen_irq_get(root_name, self.root, root_name)
 
-
-def is_type_in_str(val):
-    return isinstance(val, str) and Type.exists(val)
 
 class MachineType(QOMType):
 
@@ -586,8 +584,6 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
                 self.use_type_name("MemoryRegion")
                 if is_type_in_str(node.size):
                     self.use_type_name(node.size)
-                if is_type_in_str(node.name):
-                    self.use_type_name(node.name)
 
                 mem_name = self.node_map[node]
 
@@ -602,14 +598,14 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
 
                 if isinstance(node, MemoryAliasNode):
                     self.use_type_name("memory_region_init_alias")
-                    if Type.exists(node.alias_offset):
+                    if is_type_in_str(node.alias_offset):
                         self.use_type_name(node.alias_offset)
 
                     def_code += """\
     memory_region_init_alias(@a{mem_name},@sNULL,@s{dbg_name},@s{orig},@s{offset},@s{size});
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name if is_type_in_str(node.name) else '"%s"' % node.name,
+    dbg_name = node.name.gen_c_code(),
     size = node.size,
     orig = self.node_map[node.alias_to],
     offset = node.alias_offset
@@ -625,7 +621,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     memory_region_init_ram(@a{mem_name},@sNULL,@s{dbg_name},@s{size},@sNULL);{glob}
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name if is_type_in_str(node.name) else '"%s"' % node.name,
+    dbg_name = node.name.gen_c_code(),
     size = node.size,
     glob = (("\n    vmstate_register_ram_global(%s);" % mem_name) if glob_mem
         else ""
@@ -638,7 +634,7 @@ qdev_get_child_bus(@aDEVICE({bridge_name}),@s"{bus_child_name}")\
     memory_region_init(@a{mem_name},@sNULL,@s{dbg_name},@s{size});
 """.format(
     mem_name = mem_name,
-    dbg_name = node.name if is_type_in_str(node.name) else '"%s"' % node.name,
+    dbg_name = node.name.gen_c_code(),
     size = node.size
                     )
 
