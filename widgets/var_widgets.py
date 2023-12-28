@@ -363,9 +363,7 @@ class VarCombobox(Combobox):
 
 
 class VarNotebook(Notebook):
-
-    def __init__(self, *args, **kw):
-        Notebook.__init__(self, *args, **kw)
+    pass
 
 
 if __name__ == "__main__":
