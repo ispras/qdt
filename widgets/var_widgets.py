@@ -251,9 +251,6 @@ class TreeviewCellBinding():
 
 class VarTreeview(Treeview):
 
-    def __init__(self, *args, **kw):
-        Treeview.__init__(self, *args, **kw)
-
     def on_var_changed(self, column, var_str):
         Treeview.heading(self, column, text = var_str)
 
