@@ -304,6 +304,7 @@ class VarTreeview(Treeview):
 
         return to_track
 
+
 class ComboboxEntryBinding():
 
     def __init__(self, varcombobox, idx, variable):
@@ -374,7 +375,7 @@ if __name__ == "__main__":
     root.columnconfigure(0, weight = 1)
 
     from .tv_width_helper import (
-        TreeviewWidthHelper
+        TreeviewWidthHelper,
     )
 
     class TestTV(VarTreeview, TreeviewWidthHelper):
@@ -395,8 +396,8 @@ if __name__ == "__main__":
 
     from six.moves.tkinter import (
         BooleanVar,
+        DoubleVar,
         IntVar,
-        DoubleVar
     )
 
     sv = StringVar(value = "xxx...")
