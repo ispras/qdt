@@ -69,7 +69,7 @@ class VarLabelFrame(LabelFrame):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Label.config(self, text = self.text_var.get())
+        LabelFrame.config(self, text = self.text_var.get())
 
 
 class VarLabel(Label):
