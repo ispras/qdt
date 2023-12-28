@@ -57,7 +57,7 @@ class VarCheckbutton(Checkbutton):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Checkbutton.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarLabelFrame(LabelFrame):
@@ -69,7 +69,7 @@ class VarLabelFrame(LabelFrame):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        LabelFrame.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarLabel(Label):
@@ -94,7 +94,7 @@ class VarLabel(Label):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Label.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarButton(Button):
@@ -106,7 +106,7 @@ class VarButton(Button):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Button.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarTk(Tk):
