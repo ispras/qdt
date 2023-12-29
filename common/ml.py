@@ -26,7 +26,7 @@ ML = Multi language
 """
 
 class ML(FormatVar):
-    multi_language_strings = []
+    multi_language_strings = {}
     current_translation = None
 
     @staticmethod
@@ -55,7 +55,7 @@ class ML(FormatVar):
             # If translation was found then the keys is used for strings
             ML.current_translation = NullTranslations()
 
-        for s in ML.multi_language_strings:
+        for s in ML.multi_language_strings.values():
             s.update()
 
     def __init__(self, value, **kwargs):
@@ -63,7 +63,7 @@ class ML(FormatVar):
         self.key_value = value
 
         self.update()
-        ML.multi_language_strings.append(self)
+        ML.multi_language_strings[value] = self
 
     if py_version[0] == 3:
         # lgettext returns RAW bytes and Python 3(.5) is known to have troubles
@@ -84,11 +84,10 @@ class ML(FormatVar):
             self.set(trans)
 
 def mlget(key_value):
-    for mls in ML.multi_language_strings:
-        if mls.key_value == key_value:
-            return mls
-
-    return ML(key_value)
+    if key_value in ML.multi_language_strings:
+        return ML.multi_language_strings[key_value]
+    else:
+        return ML(key_value)
 
 current_locale, encoding = getdefaultlocale()
 ML.set_language(current_locale)
