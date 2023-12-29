@@ -99,6 +99,9 @@ Helper to compare `git log` (commit summary) of different revisions as text.
 
     prefix = args.prefix
 
+    prefix_dir = dirname(prefix)
+    makedirs(prefix_dir, exist_ok = True)
+
     showpatch = args.showpatch
 
     glogs = []
@@ -108,15 +111,9 @@ Helper to compare `git log` (commit summary) of different revisions as text.
             log_args = (rev_range, "-p")
         else:
             log_args = (rev_range,)
-
-        # Note, `rev_id` (in `rev_range`) may be in form `remote/head_name`
-        file_name = prefix + rev_range + ".log"
-        file_dir = dirname(file_name)
-        makedirs(file_dir, exist_ok = True)
-
         glog = GitLog(
             data = git.log(*log_args),
-            file_name = file_name,
+            file_name = prefix + rev_range + ".log",
         )
         glogs.append(glog)
 
