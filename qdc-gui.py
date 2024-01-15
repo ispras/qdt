@@ -400,6 +400,19 @@ show it else hide it."),
             variable = v
         )
 
+        v = self.var_require_device_tree = BooleanVar()
+
+        self.__on_var_require_device_tree = v.trace_variable("w",
+            self.__on_var_require_device_tree__
+        )
+
+        v.set(True)
+
+        optionsmenu.add_checkbutton(
+            label = _("Require device tree"),
+            variable = v
+        )
+
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
 
         self.config(menu = menubar)
@@ -492,6 +505,7 @@ show it else hide it."),
         self.var_schedule_generation.set(settings.schedule_generation)
         self.var_gen_chunk_graphs.set(settings.gen_chunk_graphs)
         self.var_translate_cpu_semantics.set(settings.translate_cpu_semantics)
+        self.var_require_device_tree.set(settings.require_device_tree)
 
     def __on_listener_failed(self, e, tb):
         stderr.write("Listener failed - %s" %
@@ -545,6 +559,16 @@ show it else hide it."),
             settings.translate_cpu_semantics = (
                 self.var_translate_cpu_semantics.get()
             )
+
+    def __on_var_require_device_tree__(self, *args):
+        settings = self._user_settings
+
+        require_device_tree = self.var_require_device_tree.get()
+
+        if settings is not None:
+            settings.require_device_tree = require_device_tree
+
+        QemuVersionDescription.REQUIRE_DEVICE_TREE = require_device_tree
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -1001,6 +1025,7 @@ class Settings(UserSettings):
             schedule_generation = False,
             gen_chunk_graphs = False,
             translate_cpu_semantics = True,
+            require_device_tree = True,
             recent_projects = OrderedSet(),
             geometry = (1000, 750),
         )
