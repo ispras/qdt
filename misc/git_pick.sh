@@ -11,10 +11,22 @@ a_SHA1 \\\\\n\
 'author name' \\\\\n\
 'commit: message prefix' \\\\\n\
 2>>/dev/null)\n\
+\n\
+Dash (-) before strings results in reading of extra strings from stdin.\n\
+\n\
+Example:\n\n\
+cat <<\"EOF\" | $0 branch_name - | git cherry-pick --stdin\n\
+a_SHA1\n\
+'author name'\n\
+'commit: message prefix'\n\
+EOF\n\
+\n\
+Note that quoting \"EOF\" disables lines expansion.\n\
 "
 
 Usage="\
-usage: $0 [-h] [--help] [-[-]arg-to-git-log [..]] rev-id string [string [..]]"
+usage: $0 \
+[-h] [--help] [-[-]arg-to-git-log [..]] rev-id [-] string [string [..]]"
 
 
 ArgsToGitLog=( )
@@ -68,7 +80,19 @@ then
 fi
 
 
-SearchedStrings=( "$@" )
+SearchedStrings=( )
+
+if [[ "-" == $1 ]]
+then
+	shift
+	echo "reading extra strings from stdin" 1>&2
+	IFSBack=$IFS
+	IFS=$'\n'
+	SearchedStrings+=( $(cat) )
+	IFS=$IFSBack
+fi
+
+SearchedStrings+=( "$@" )
 
 if [[ 0 == ${#SearchedStrings[@]} ]]
 then
