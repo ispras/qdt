@@ -22,6 +22,7 @@ from source import (
     Macro
 )
 from common import (
+    ee,
     qdtdirs,
     makedirs,
     rename_replacing,
@@ -537,6 +538,8 @@ QVD_QH_HASH = "qh_hash"
 QVCs_DIR = join(qdtdirs.user_cache_dir, "qvcs")
 
 class QemuVersionDescription(object):
+    REQUIRE_DEVICE_TREE = ee("QDT_REQUIRE_DEVICE_TREE", "True")
+
     current = None
     # Current version of the QVD. Please use notation `u"_v{number}"` for next
     # versions. Increase number manually if current changes affect the QVD.
@@ -899,20 +902,25 @@ class QemuVersionDescription(object):
         self.qvc.known_targets = kts
 
     def co_init_device_tree(self, targets = None):
-        if not targets:
-            targets = self.softmmu_targets
+        if self.REQUIRE_DEVICE_TREE:
+            if not targets:
+                targets = self.softmmu_targets
+        else:
+            targets = []
 
         yield True
 
-        print("Creating Device Tree for " +
-              ", ".join(t for t in targets) + "..."
-        )
+        if targets:
+            print("Creating Device Tree for " +
+                  ", ".join(t for t in targets) + "..."
+            )
 
         root = self.qvc.device_tree
         if root is None:
             root = QType("device")
 
-        yield self.co_get_install_prefix()
+        if targets:
+            yield self.co_get_install_prefix()
 
         arches_count = len(root.arches)
         for arch in targets:
@@ -966,9 +974,9 @@ class QemuVersionDescription(object):
         if arches_count == len(root.arches):
             # No new architecture has been added
             return
-
-        self.qvc.device_tree = root
-        print("Device Tree was created")
+        else:
+            print("Device Tree was created")
+            self.qvc.device_tree = root
 
         t2m = defaultdict(list)
         yield self.co_text2macros(t2m)
