@@ -641,6 +641,11 @@ class EnumerationElement(Type):
 
         return definers
 
+    def __int__(self):
+        "Predicts `int`eger equivalent of the `enum`eration element."
+        # XXX: currently works for simple auto enumerated `enum`s.
+        return list(self.enum_parent.elems.values()).index(self)
+
     def __or__(self, arg):
         from .function import (
             OpOr
