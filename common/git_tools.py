@@ -32,6 +32,9 @@ from git import (
     GitCommandError,
     Repo
 )
+from .lazy import (
+    lazy
+)
 from time import (
     time
 )
@@ -116,6 +119,22 @@ class CommitDesc(object):
 
         # serial number according to the topological sorting
         self.num = None
+
+    @lazy
+    def is_fork(self):
+        return len(self.children) > 1
+
+    @lazy
+    def is_merge(self):
+        return len(self.parents) > 1
+
+    @lazy
+    def is_leaf(self):
+        return not self.children
+
+    @lazy
+    def is_root(self):
+        return not self.parents
 
     def add_child(self, cd):
         self.children.append(cd)
