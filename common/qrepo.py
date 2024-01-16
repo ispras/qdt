@@ -20,7 +20,6 @@ from .extensible import (
     Extensible,
 )
 from os.path import (
-    join,
     abspath,
 )
 from .lazy import (
