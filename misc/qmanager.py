@@ -92,6 +92,7 @@ class QMGUI(GUITk):
         hotkeys(self._on_forget_repo, 41, symbol = "F")
         hotkeys(self._on_copy_path, 54, symbol = "C")
         hotkeys(self._on_create_worktree, 25, symbol = "W")
+        hotkeys(self._on_init_submodules_from_cache, 39, symbol = "C")
 
         with MenuBuilder(self) as menubar:
             with menubar(_("Manage")) as repomenu:
@@ -117,6 +118,13 @@ class QMGUI(GUITk):
                 repomenu()
                 repomenu(_("Exit"),
                     command = self._on_exit
+                )
+            with menubar(_("Work tree")) as wtmenu:
+                wtmenu(_("Init submodules from cache"),
+                    command = self._on_init_submodules_from_cache,
+                    accelerator = hotkeys.get_keycode_string(
+                        self._on_init_submodules_from_cache
+                    )
                 )
             with menubar(_("Help")) as helpmenu:
                 helpmenu(_("About"),
@@ -160,6 +168,21 @@ class QMGUI(GUITk):
         self.repos = []
         for r in repos:
             self._account_repo(r)
+
+    def _worktree_by_iid(self, iid):
+        try:
+            # likely
+            return self.iid2worktree[iid]
+        except KeyError:
+            qrepo = self.iid2repo[iid]
+            # one of work trees is the repo
+            return qrepo.worktrees[qrepo.path]
+
+    def _on_init_submodules_from_cache(self):
+        sel = self.tv_repos.selection()
+
+        for wt in set(self._worktree_by_iid(iid) for iid in sel):
+            self.task_manager.enqueue(wt.co_init_submodules_from_cache())
 
     def _qrepo_by_iid(self, iid):
         try:
