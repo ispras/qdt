@@ -177,15 +177,6 @@ class QMGUI(GUITk):
         for r in repos:
             self._account_repo(r)
 
-    def _worktree_by_iid(self, iid):
-        try:
-            # likely
-            return self.iid2worktree[iid]
-        except KeyError:
-            qrepo = self.iid2repo[iid]
-            # one of work trees is the repo
-            return qrepo.worktrees[qrepo.path]
-
     def iter_selected_worktrees(self):
         sel = self.tv_repos.selection()
         i2w = self.iid2worktree
