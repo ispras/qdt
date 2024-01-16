@@ -15,20 +15,20 @@ from collections import (
     defaultdict,
 )
 from ctypes import (
-    Array,
     addressof,
+    Array,
     byref,
     cast,
     cdll,
     c_int,
     c_long,
+    create_string_buffer,
+    c_size_t,
     c_uint16,
     c_uint32,
     c_uint64,
     c_uint8,
     c_void_p,
-    c_size_t,
-    create_string_buffer,
     POINTER,
     sizeof,
     Structure,
@@ -551,7 +551,7 @@ def main():
         finally:
             print("closing grp_fd")
             rc = libc_close(grp_fd)
-    
+
             if rc:
                 print("failed to close grp_fd: " + str(rc))
                 return rc
