@@ -186,6 +186,16 @@ class QMGUI(GUITk):
             # one of work trees is the repo
             return qrepo.worktrees[qrepo.path]
 
+    def iter_selected_worktrees(self):
+        sel = self.tv_repos.selection()
+        i2w = self.iid2worktree
+        for iid in sel:
+            try:
+                yield i2w[iid]
+            except KeyError:
+                # iid corresponds to a main repo
+                continue
+
     def _on_init_submodules_from_cache(self):
         sel = self.tv_repos.selection()
 
