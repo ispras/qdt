@@ -197,9 +197,7 @@ class QMGUI(GUITk):
                 continue
 
     def _on_init_submodules_from_cache(self):
-        sel = self.tv_repos.selection()
-
-        for wt in set(self._worktree_by_iid(iid) for iid in sel):
+        for wt in self.iter_selected_worktrees():
             self.task_manager.enqueue(wt.co_init_submodules_from_cache())
 
     def _qrepo_by_iid(self, iid):
