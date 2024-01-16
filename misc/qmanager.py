@@ -266,9 +266,7 @@ class QMGUI(GUITk):
             break
 
     def _on_delete_worktree(self):
-        sel = self.tv_repos.selection()
-
-        for wt in set(self._worktree_by_iid(iid) for iid in sel):
+        for wt in self.iter_selected_worktrees():
             if wt.build_dirs:
                 ErrorDialog(_("Cannot remove work tree"),
                     summary = _("%s has build directories.") % wt.path
