@@ -100,7 +100,7 @@ class QMGUI(GUITk):
         hotkeys(self._on_forget_repo, 41, symbol = "F")
         hotkeys(self._on_copy_path, 54, symbol = "C")
         hotkeys(self._on_create_worktree, 25, symbol = "W")
-        hotkeys(self._on_init_submodules_from_cache, 39, symbol = "C")
+        hotkeys(self._on_init_submodules_from_cache, 39, symbol = "S")
 
         with MenuBuilder(self) as menubar:
             with menubar(_("Manage")) as repomenu:
