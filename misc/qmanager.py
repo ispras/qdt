@@ -273,6 +273,8 @@ class QMGUI(GUITk):
                 ).wait()
                 continue
 
+        # TODO: implement
+
     def _on_worktree(self, wt):
         r2i, w2i = self.repo2iid, self.worktree2iid
 
