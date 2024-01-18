@@ -153,9 +153,9 @@ class QMGUI(GUITk):
         add_scrollbars_native(self, tv_repos, row = row, sizegrip = True)
         row += 1 # horizontal scrollbar
 
-        tv_repos.heading("#0", text =  _("Path"))
-        tv_repos.heading("HEAD", text =  _("HEAD"))
-        tv_repos.heading("SHA1", text =  _("SHA1"))
+        tv_repos.heading("#0", text = _("Path"))
+        tv_repos.heading("HEAD", text = _("HEAD"))
+        tv_repos.heading("SHA1", text = _("SHA1"))
 
         self.repo2iid = repo2iid = bidict()
         self.iid2repo = repo2iid.mirror
@@ -424,7 +424,7 @@ class WorkTreeCreationDialog(GUIDialog):
 
         if exists(directory):
             if not askyesno(self, _("Warning"),
-                _("Directory exists:\n%s\nContinute?") % directory
+                _("Directory exists:\n%s\nContinue?") % directory
             ):
                 return
         else:
