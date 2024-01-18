@@ -16,12 +16,10 @@ from common import (
     makedirs,
     bidict,
     mlget as _,
-    Persistent
+    UserSettings,
 )
 from os.path import (
     exists,
-    join,
-    expanduser
 )
 from widgets import (
     Statusbar,
@@ -53,10 +51,11 @@ from traceback import (
 )
 
 
-class QMSettings(Persistent):
+class QMSettings(UserSettings):
+    _suffix = ".qmanager.py"
 
-    def __init__(self, file_name):
-        super(QMSettings, self).__init__(file_name,
+    def __init__(self):
+        super(QMSettings, self).__init__(
             glob = globals(),
             version = 0.1,
             # default values
@@ -66,9 +65,8 @@ class QMSettings(Persistent):
 
 
 def main():
-    settings_file = expanduser(join("~", ".qmanager.py"))
-    print("Reading settings from " + settings_file)
-    with QMSettings(settings_file) as settings:
+    with QMSettings() as settings:
+        print("Reading settings from " + settings._file_name)
         start_gui(settings)
 
 
