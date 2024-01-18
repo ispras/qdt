@@ -60,7 +60,7 @@ class QMSettings(UserSettings):
             version = 0.1,
             # default values
             repo_paths = [],
-            geometry = "800x600"
+            geometry = (800, 600),
         )
 
 
@@ -80,7 +80,7 @@ def start_gui(settings):
         repos.append(r)
 
     root = QMGUI(repos)
-    root.set_geometry(*settings.geometry[:2])
+    root.set_geometry(*settings.geometry)
     root.mainloop()
     settings.geometry = root.last_geometry
 
@@ -308,7 +308,6 @@ class QMGUI(GUITk):
         print("About")
 
     def _on_exit(self):
-        self.last_geometry = self.geometry().split("+", 1)[0]
         self.destroy()
 
 
