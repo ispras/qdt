@@ -2,28 +2,29 @@ __all__ = [
     "QRepo"
 ]
 
+from .extensible import (
+    Extensible,
+)
+from .git_tools import (
+    init_submodules_from_cache,
+    iter_submodules_caches,
+)
+from .lazy import (
+    lazy,
+)
+from .workers import (
+    PopenResult,
+    PopenWorker,
+)
+
 from git import (
     Repo,
 )
 from multiprocessing import (
     Process,
 )
-from .git_tools import (
-    init_submodules_from_cache,
-    iter_submodules_caches,
-)
-from .workers import (
-    PopenResult,
-    PopenWorker,
-)
-from .extensible import (
-    Extensible,
-)
 from os.path import (
     abspath,
-)
-from .lazy import (
-    lazy,
 )
 
 
