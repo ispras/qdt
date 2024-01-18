@@ -11,43 +11,44 @@ from sys import (
 path.insert(0, dirname(dirname(abspath(__file__))))
 
 from common import (
-    FailedCallee,
-    QRepo,
-    makedirs,
     bidict,
+    FailedCallee,
+    makedirs,
     mlget as _,
+    QRepo,
     UserSettings,
 )
+from widgets import (
+    add_scrollbars_native,
+    askdirectory,
+    askyesno,
+    CoStatusView,
+    ErrorDialog,
+    GitVerSelWidget,
+    GUIDialog,
+    GUIFrame,
+    GUITk,
+    HKEntry,
+    HotKey,
+    MenuBuilder,
+    Statusbar,
+    TaskErrorDialog,
+    VarButton,
+    VarLabel,
+    VarTreeview,
+)
+
 from os.path import (
     exists,
 )
-from widgets import (
-    Statusbar,
-    CoStatusView,
-    ErrorDialog,
-    GUIFrame,
-    GitVerSelWidget,
-    VarButton,
-    HKEntry,
-    VarLabel,
-    GUIDialog,
-    askdirectory,
-    askyesno,
-    HotKey,
-    TaskErrorDialog,
-    add_scrollbars_native,
-    VarTreeview,
-    MenuBuilder,
-    GUITk
-)
 from six.moves.tkinter import (
+    END,
+    Label,
     RIGHT,
     StringVar,
-    Label,
-    END
 )
 from traceback import (
-    format_exc
+    format_exc,
 )
 
 
