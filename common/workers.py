@@ -5,17 +5,17 @@ __all__ = [
 ]
 
 from os.path import (
-    split
+    split,
 )
 from subprocess import (
+    PIPE,
     Popen,
-    PIPE
-)
-from traceback import (
-    print_exc
 )
 from threading import (
-    Thread
+    Thread,
+)
+from traceback import (
+    print_exc,
 )
 
 
