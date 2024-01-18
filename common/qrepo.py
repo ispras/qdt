@@ -28,7 +28,7 @@ from os.path import (
 )
 
 
-def _nop(*_, **__):
+def _nop(*__, **___):
     pass
 
 
