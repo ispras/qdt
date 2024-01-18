@@ -102,7 +102,7 @@ class GitWorktreeListParser(PopenResult):
 
         stripped = line.rstrip()
         if stripped:
-            # see `man git worktree`,  Porcelain Format
+            # see `man git worktree`, Porcelain Format
             attr_val = stripped.split(b" ", 1)
             attr = attr_val[0].decode("utf-8")
             try:
