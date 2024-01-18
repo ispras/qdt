@@ -113,7 +113,8 @@ class GitWorktreeListParser(PopenResult):
         else: # end of worktree definition
             self.attrs = {}
             wts = self.qrepo.worktrees
-            path = attrs.pop(u"worktree").decode("utf-8")
+            # Note, fixes UNIX-like path under Windows
+            path = abspath(attrs.pop(u"worktree").decode("utf-8"))
             try:
                 wt = wts[path]
             except KeyError:
