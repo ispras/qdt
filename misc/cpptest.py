@@ -13,6 +13,7 @@ from argparse import (
 )
 from itertools import (
     chain,
+    zip_longest,
 )
 from os import (
     walk,
@@ -94,26 +95,12 @@ def system_cpp(
     return stdo
 
 
-def by3(iterable):
-    i = iter(iterable)
-    for n0 in i:
-        try:
-            n1 = next(i)
-        except StopIteration:
-            n1 = ""
-            n2 = ""
-        else:
-            try:
-                n2 = next(i)
-            except StopIteration:
-                n2 = ""
-        yield (n0, n1, n2)
-
-
 def log_mem_usage():
     mu = str(proc.memory_info().rss)
     mu = "_".join(reversed(tuple(
-        "".join(reversed(t)) for t in by3(reversed(mu))
+        "".join(reversed(t)) for t in zip_longest(*[iter(reversed(mu))] * 3,
+            fillvalue = "",
+        )
     )))
     log("memory:\n\t" + mu)
 
