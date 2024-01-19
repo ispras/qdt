@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """ VFIO API usage example with pure standard Python API.
 """
