@@ -432,7 +432,8 @@ def main():
                 log(
                     "diff:\n\t%s" % (statsNow - statsPrev).lines(indent = "\t")
                 )
-                limit_cache(inc_cache, tReadyTokensLimit)
+                if inc_cache is not None:
+                    limit_cache(inc_cache, tReadyTokensLimit)
                 statsNow = CacheStats.compute(inc_cache)
                 log(
             "after_limit statsNow:\n\t%s" % statsNow.lines(indent = "\t")
