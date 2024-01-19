@@ -1,7 +1,7 @@
 from common import (
-    qdtdirs,
     makedirs,
     pypath,
+    qdtdirs,
 )
 from source import (
     get_cpp_search_paths,
