@@ -98,8 +98,8 @@ def _IOC(dir_, type_, nr, size):
     return (
         (dir_  << _IOC_DIRSHIFT)
       | (type_ << _IOC_TYPESHIFT)
-      | (nr   << _IOC_NRSHIFT)
-      | (size << _IOC_SIZESHIFT)
+      | (nr    << _IOC_NRSHIFT)
+      | (size  << _IOC_SIZESHIFT)
     )
 
 _IOC_NRBITS = 8
@@ -305,11 +305,11 @@ class vfio_iommu_type1_dma_map(Structure):
         ("argsz", c_uint32),
         ("flags", c_uint32),
         ("vaddr", c_uint64),  # Process virtual address
-        ("iova", c_uint64),  # IO virtual address
-        ("size", c_uint64),  # Size of mapping (bytes)
+        ("iova", c_uint64),   # IO virtual address
+        ("size", c_uint64),   # Size of mapping (bytes)
     )
 
-VFIO_DMA_MAP_FLAG_READ = 1 << 0   # readable from device
+VFIO_DMA_MAP_FLAG_READ  = 1 << 0  # readable from device
 VFIO_DMA_MAP_FLAG_WRITE = 1 << 1  # writable from device
 
 # end of vfio.h
