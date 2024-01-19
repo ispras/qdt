@@ -7,6 +7,10 @@ __all__ = [
       , "InstallFailure"
 ]
 
+from .cli_args import (
+    arg_list,
+    configure_arg_list,
+)
 from .extensible import (
     Extensible,
 )
@@ -16,6 +20,9 @@ from .git_tools import (
 )
 from .lazy import (
     lazy,
+)
+from .os_wrappers import (
+    makedirs,
 )
 from .workers import (
     PopenResult,
@@ -31,13 +38,7 @@ from multiprocessing import (
 from os.path import (
     abspath,
     exists,
-)
-from .cli_args import (
-    arg_list,
-    configure_arg_list,
-)
-from .os_wrappers import (
-    makedirs,
+    join,
 )
 
 
