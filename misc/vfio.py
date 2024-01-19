@@ -3,7 +3,7 @@
 """ VFIO API usage example with pure standard Python API.
 """
 
-# Some of this code is based on folowing...
+# Some of this code is based on following...
 # - https://www.kernel.org/doc/Documentation/vfio.txt
 # - qemu: hw/vfio/*
 # - qemu: include/hw/vfio/*
@@ -324,7 +324,7 @@ def main():
     for dev_dir in listdir(pci_devs_pfx):
         iommu_grp_path = join(pci_devs_pfx, dev_dir, "iommu_group")
         if not exists(iommu_grp_path):
-            print("%s is not in a IOMMU group" % dev_dir)
+            print("%s is not in an IOMMU group" % dev_dir)
             continue
 
         grp_link_path = readlink(iommu_grp_path)
@@ -361,7 +361,7 @@ def main():
         print("VFIO does not support IOMMU driver")
         return 3
 
-    # virtual phisical memory for devices
+    # virtual physical memory for devices
     vmem = create_string_buffer(1 << 20)
 
     print("handling IOMMU groups")
@@ -460,7 +460,7 @@ def main():
                     # I hope that, alignment must be at least as minimum
                     # mapping page size.
                     # TODO: find a reference in the kernel docs
-                    #       and provide a the link
+                    #       and provide the link
 
                     min_pg_size = (iova_pgsizes & -iova_pgsizes)
 
@@ -586,9 +586,9 @@ def _handle_device(dev_fd, **ctx):
 
     if flags & VFIO_DEVICE_FLAGS_RESET:
         print(" | RESET")
-        support_resert = True
+        support_reset = True
     else:
-        support_resert = False
+        support_reset = False
 
     if flags & VFIO_DEVICE_FLAGS_PLATFORM:
         print(" | PLATFORM")
@@ -706,7 +706,7 @@ def _handle_device(dev_fd, **ctx):
     )
 
     if rc != sizeof(c_did_vid):
-        print("filed to pread Device/Vendor IDs: " + str(rc))
+        print("failed to pread Device/Vendor IDs: " + str(rc))
         return rc
 
     did_vid = c_did_vid.value
@@ -724,7 +724,7 @@ def _handle_device(dev_fd, **ctx):
     )
 
     if rc != sizeof(c_cls_rev):
-        print("filed to pread class & revision: " + str(rc))
+        print("failed to pread class & revision: " + str(rc))
         return rc
 
     cls_rev = c_cls_rev.value
@@ -794,7 +794,7 @@ def _handle_device(dev_fd, **ctx):
     else:
         print("no mmap-able BARs found")
 
-    if support_resert:
+    if support_reset:
         print("resetting device")
         rc = libc_ioctl(dev_fd, VFIO_DEVICE_RESET)
 
