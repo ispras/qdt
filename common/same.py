@@ -67,7 +67,7 @@ def _is_b_iterable(checker):
     def wrapper(a, b):
         # Iterables or not? See: https://stackoverflow.com/a/1952481/7623015
         try:
-            _ = (e for e in b)
+            __ = (e for e in b)
         except TypeError:
             # This duck does not quack.
             return False

@@ -118,7 +118,7 @@ renaming for file name)
 
     def _find_git_diff(self, version, fname):
         try:
-            val, _ = trie_find(self._draft_diffs[version],
+            val, __ = trie_find(self._draft_diffs[version],
                 tuple(reversed(fname.split(bsep)))
             )
         except KeyError:

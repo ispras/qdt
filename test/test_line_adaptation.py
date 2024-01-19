@@ -49,7 +49,7 @@ class LineAdaptationTestHelper(object):
 
     def test(self):
         tests_dir = join(test_dir, "line_adaptation_tests")
-        diff, _ = Popen(["git", "diff", "--no-index", "-U0",
+        diff, __ = Popen(["git", "diff", "--no-index", "-U0",
                 join(tests_dir, self._old), join(tests_dir, self._new)
             ],
             stdout = PIPE

@@ -259,7 +259,7 @@ class KeyboardSettings(Persistent):
     def __init__(self, file_name = KBD_STATE, **kw):
         super(KeyboardSettings, self).__init__(file_name, **kw)
 
-    __var_base__ = lambda _ : "keyboard_settings"
+    __var_base__ = lambda __ : "keyboard_settings"
 
     def gen_translation_to_posix(self, os = os_name):
         """ Accelerators (hotkeys) across entire GUI are given by posix/Tk key

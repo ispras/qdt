@@ -146,7 +146,7 @@ def main():
         instruction_tree_optimizations = (
             not arguments.no_instruction_tree_optimizations
         ),
-        include_paths = tuple(path for path, _ in qvd.include_paths)
+        include_paths = tuple(path for path, __ in qvd.include_paths)
     )
 
     return 0

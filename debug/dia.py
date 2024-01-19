@@ -231,7 +231,7 @@ pyelftools's `DWARFInfo`.
     def find_line_map(self, file_name):
         rpath = tuple(reversed(file_name.split(bsep)))
         try:
-            lm, _ = trie_find(self.srcmap, rpath)
+            lm, __ = trie_find(self.srcmap, rpath)
         except KeyError:
             try:
                 cu = self.get_CU_by_reversed_path(rpath)
@@ -242,7 +242,7 @@ pyelftools's `DWARFInfo`.
                 ))
 
             self.account_line_program_CU(cu)
-            lm, _ = trie_find(self.srcmap, rpath)
+            lm, __ = trie_find(self.srcmap, rpath)
         except ValueError:
             raise ValueError("File name suffix '%s' is not long enough to"
                 " unambiguously identify line map" % file_name)
@@ -410,7 +410,7 @@ pyelftools's `DWARFInfo`.
         for i, p in enumerate(rparts, 1):
             if p not in d:
                 # No such suffix yet. Continue DWARF info parsing.
-                for _ in self._cu_parser_state:
+                for __ in self._cu_parser_state:
                     if p in d:
                         break
                 else:
@@ -433,7 +433,7 @@ pyelftools's `DWARFInfo`.
             else:
                 # Some parts differs. Continue DWARF info parsing. It is
                 # possible that the CU being looked for is not yet parsed.
-                for _ in self._cu_parser_state:
+                for __ in self._cu_parser_state:
                     v = d[p]
                     if not isinstance(v, tuple):
                         # New subtree appeared. Continue suffix matching.
@@ -471,7 +471,7 @@ pyelftools's `DWARFInfo`.
             # Parser can be adjusted between yields. Hence, take one CU per
             # time to avoid skips.
             try:
-                cu, _ = next(ps)
+                cu, __ = next(ps)
             except StopIteration:
                 # Explicitly catch StopIteration and return, see PEP 479
                 return
@@ -492,7 +492,7 @@ pyelftools's `DWARFInfo`.
 
         if cu is None:
             # not parsed yet
-            for cu, _ in self._cu_parser_state:
+            for cu, __ in self._cu_parser_state:
                 # cu_boundary points to the byte just after last byte of the CU
                 if cu.cu_boundary <= offset:
                     continue

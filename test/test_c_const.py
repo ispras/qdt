@@ -23,7 +23,7 @@ def t_ANY(t):
     ".+"
     return t
 
-t_error = lambda _ : None
+t_error = lambda __ : None
 
 def_tokens(globals())
 lex()

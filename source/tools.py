@@ -13,12 +13,13 @@ from re import (
     compile,
 )
 from subprocess import (
+    PIPE,
     Popen,
-    PIPE
 )
 from sys import (
-    version_info as py_version
+    version_info as py_version,
 )
+
 
 re_define = compile(br"#\s*define\s+")
 
@@ -37,6 +38,7 @@ def line_origins(origins):
         else:
             refs.add(prev)
         prev = cur
+
 
 def get_cpp_search_paths():
     cpp = Popen(["cpp", "-v", "-"], stdout = PIPE, stderr = PIPE, stdin = PIPE)

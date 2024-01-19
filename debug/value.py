@@ -192,7 +192,7 @@ Related: `dereference`
 
         t = dic[type_name.strip()]
 
-        for _ in range(pointer_depth):
+        for __ in range(pointer_depth):
             t = ArtificialPointer(t)
 
         return Value(

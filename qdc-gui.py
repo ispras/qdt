@@ -121,7 +121,7 @@ class ProjectGeneration(CoTask):
             known_targets = cur_qvd.qvc.known_targets,
             with_chunk_graph = self.gen_chunk_graphs,
             translate_cpu_semantics = self.translate_cpu_semantics,
-            include_paths = tuple(path for path, _ in cur_qvd.include_paths)
+            include_paths = tuple(path for path, __ in cur_qvd.include_paths)
         )
 
     def __failed__(self):

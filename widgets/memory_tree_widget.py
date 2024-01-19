@@ -38,6 +38,9 @@ from .var_widgets import (
 from six import (
     integer_types,
 )
+from six.moves import (
+    zip,
+)
 from six.moves.tkinter import (
     TclError,
 )
@@ -759,8 +762,8 @@ snapshot mode or the command should be disabled too.
     def set_layout(self, l):
         layout_bak = self.gen_layout()
         try:
-            for id, desc in l.items():
-                if id == -1:
+            for _id, desc in l.items():
+                if _id == -1:
                     try:
                         cols_width = desc[LAYOUT_COLUMNS_WIDTH]
                     except KeyError:
@@ -769,8 +772,8 @@ snapshot mode or the command should be disabled too.
                     for col, col_width in cols_width.items():
                         self.column(col, width = col_width)
 
-                elif id in self.mach.id2node:
-                    self.item(str(id), open = desc)
+                elif _id in self.mach.id2node:
+                    self.item(str(_id), open = desc)
         except:
             # if new layout is incorrect then restore previous one
             self.set_layout(layout_bak)

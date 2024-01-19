@@ -111,9 +111,17 @@ Helper to compare `git log` (commit summary) of different revisions as text.
             log_args = (rev_range, "-p")
         else:
             log_args = (rev_range,)
+
+        # Note, `rev_id` (in `rev_range`) may be in form `remote/head_name`.
+        # Slashes are replaced with spaces to ensure that the file name does not
+        # contain subfolders.
+        # The space is chosen because the reference name cannot contain spaces.
+        # See: https://git-scm.com/docs/git-check-ref-format
+        file_name = prefix + rev_range.replace('/', ' ') + ".log"
+
         glog = GitLog(
             data = git.log(*log_args),
-            file_name = prefix + rev_range + ".log",
+            file_name = file_name,
         )
         glogs.append(glog)
 

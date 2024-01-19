@@ -74,7 +74,7 @@ class DWARFExprBuilder(GenericExprVisitor):
         ops = DW_OP_name2opcode
 
         # known opcodes will be overwritten below
-        op = [ lambda _, opcode = i : unknown(opcode) for i in range (256) ]
+        op = [ lambda __, opcode = i : unknown(opcode) for i in range (256) ]
 
         # constants in operand
         def push_arg(args):
@@ -87,7 +87,7 @@ class DWARFExprBuilder(GenericExprVisitor):
             op[ops[op_name]] = push_arg
 
         # runtime data, part #1
-        op[ops["DW_OP_deref"]] = lambda _ : append(
+        op[ops["DW_OP_deref"]] = lambda __ : append(
             Deref(pop(), AddressSize())
         )
 
@@ -98,9 +98,9 @@ class DWARFExprBuilder(GenericExprVisitor):
             else: # int or long (under Py2)
                 append(e)
 
-        op[ops["DW_OP_dup"]] = lambda _ : push(stack[-1])
-        op[ops["DW_OP_drop"]] = lambda _ : pop()
-        op[ops["DW_OP_over"]] = lambda _ : push(stack[-2])
+        op[ops["DW_OP_dup"]] = lambda __ : push(stack[-1])
+        op[ops["DW_OP_drop"]] = lambda __ : pop()
+        op[ops["DW_OP_over"]] = lambda __ : push(stack[-2])
         op[ops["DW_OP_pick"]] = lambda args : push(stack[-(args[0] + 1)])
 
         def swap(_):
@@ -116,7 +116,7 @@ class DWARFExprBuilder(GenericExprVisitor):
         op[ops["DW_OP_rot"]] = rot
 
         # runtime data, part #2
-        op[ops["DW_OP_xderef"]] = lambda _ : append(
+        op[ops["DW_OP_xderef"]] = lambda __ : append(
             Deref(pop(), AddressSize(), address_space = pop())
         )
 
@@ -125,17 +125,17 @@ class DWARFExprBuilder(GenericExprVisitor):
             Plus(pop(), args[0])
         )
 
-        for opcode_name, _ in DWARF_BINATY_OPS:
+        for opcode_name, __ in DWARF_BINATY_OPS:
             cls = eval(opcode_name.title())
 
-            op[ops["DW_OP_" + opcode_name]] = lambda _, c = cls : append(
+            op[ops["DW_OP_" + opcode_name]] = lambda __, c = cls : append(
                 c(pop(), pop())
             )
 
         for opcode_name in ("abs", "neg", "not"):
             cls = eval(opcode_name.title())
 
-            op[ops["DW_OP_" + opcode_name]] = lambda _, c = cls : append(
+            op[ops["DW_OP_" + opcode_name]] = lambda __, c = cls : append(
                 c(pop())
             )
 
@@ -205,17 +205,17 @@ class DWARFExprBuilder(GenericExprVisitor):
         op[ops["DW_OP_xderef_size"]] = lambda args : append(
             Deref(pop(), args[0], address_space = pop())
         )
-        op[ops["DW_OP_nop"]] = lambda _ : None
-        op[ops["DW_OP_push_object_address"]] = lambda _ : append(
+        op[ops["DW_OP_nop"]] = lambda __ : None
+        op[ops["DW_OP_push_object_address"]] = lambda __ : append(
             ObjectAddress()
         )
-        op[ops["DW_OP_form_tls_address"]] = lambda _ : append(
+        op[ops["DW_OP_form_tls_address"]] = lambda __ : append(
             ToTLS(pop())
         )
-        op[ops["DW_OP_call_frame_cfa"]] = lambda _ : append(CFA())
+        op[ops["DW_OP_call_frame_cfa"]] = lambda __ : append(CFA())
 
         while True:
-            opcode, _, args = yield
+            opcode, __, args = yield
             op[opcode](args)
 
     def _after_visit(self, opcode, opcode_name, args):

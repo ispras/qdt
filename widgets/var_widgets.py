@@ -57,7 +57,7 @@ class VarCheckbutton(Checkbutton):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Checkbutton.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarLabelFrame(LabelFrame):
@@ -69,7 +69,7 @@ class VarLabelFrame(LabelFrame):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Label.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarLabel(Label):
@@ -94,7 +94,7 @@ class VarLabel(Label):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Label.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarButton(Button):
@@ -106,7 +106,7 @@ class VarButton(Button):
         text_var.trace_variable("w", self.on_var_changed)
 
     def on_var_changed(self, *args):
-        Button.config(self, text = self.text_var.get())
+        self.config(text = self.text_var.get())
 
 
 class VarTk(Tk):
@@ -251,9 +251,6 @@ class TreeviewCellBinding():
 
 class VarTreeview(Treeview):
 
-    def __init__(self, *args, **kw):
-        Treeview.__init__(self, *args, **kw)
-
     def on_var_changed(self, column, var_str):
         Treeview.heading(self, column, text = var_str)
 
@@ -303,6 +300,7 @@ class VarTreeview(Treeview):
                     values[col] = v.get()
 
         return to_track
+
 
 class ComboboxEntryBinding():
 
@@ -363,9 +361,7 @@ class VarCombobox(Combobox):
 
 
 class VarNotebook(Notebook):
-
-    def __init__(self, *args, **kw):
-        Notebook.__init__(self, *args, **kw)
+    pass
 
 
 if __name__ == "__main__":
@@ -376,7 +372,7 @@ if __name__ == "__main__":
     root.columnconfigure(0, weight = 1)
 
     from .tv_width_helper import (
-        TreeviewWidthHelper
+        TreeviewWidthHelper,
     )
 
     class TestTV(VarTreeview, TreeviewWidthHelper):
@@ -397,8 +393,8 @@ if __name__ == "__main__":
 
     from six.moves.tkinter import (
         BooleanVar,
+        DoubleVar,
         IntVar,
-        DoubleVar
     )
 
     sv = StringVar(value = "xxx...")

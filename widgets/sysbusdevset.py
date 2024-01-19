@@ -58,7 +58,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
     def __init__(self, *args, **kw):
         DeviceSettingsWidget.__init__(self, *args, **kw)
 
-        for row, mio in enumerate([
+        for __, mio in enumerate([
                 ("mmio", _("MMIO Mappings")), 
                 ("pmio", _("PMIO Mappings")) ], 2):
             lf = VarLabelFrame(
@@ -136,7 +136,7 @@ class SystemBusDeviceSettingsWidget(DeviceSettingsWidget):
             row_count = len(rows)
             mapping_count = len(mappings)
             if row_count > mapping_count:
-                for i in xrange(row_count - 1, mapping_count - 1, -1):
+                for __ in xrange(row_count - 1, mapping_count - 1, -1):
                     self.remove_row_from_grid(fr, rows, mio)
             elif row_count < mapping_count:
                 for row in xrange(row_count, mapping_count):

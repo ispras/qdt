@@ -64,7 +64,7 @@ items than consumes.
 
 def co_pipeline(*stages):
     "A pipeline for `CoDispatcher`."
-    for _ in pipeline(*stages):
+    for __ in pipeline(*stages):
         # Output of last stage is always ignored in CoDispatcher task mode.
         # I.e. last stage must be an actual output consumer.
 

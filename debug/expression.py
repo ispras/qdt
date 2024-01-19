@@ -112,7 +112,7 @@ for op_name, oper in DWARF_BINATY_OPS:
     exec("""
 class {name}(Expression):
 
-    def __eval__(self, _, ref0, ref1):
+    def __eval__(self, __, ref0, ref1):
         return ref1 {oper} ref0
 
     def __str__(self):
@@ -124,7 +124,7 @@ class {name}(Expression):
 
 class Shr(Expression):
 
-    def __eval__(self, _, ref0, ref1):
+    def __eval__(self, __, ref0, ref1):
         # https://stackoverflow.com/questions/5832982/how-to-get-the-logical-right-binary-shift-in-python
         return (ref1 % 0x100000000) >> ref0
 
@@ -134,7 +134,7 @@ class Shr(Expression):
 
 class Abs(Expression):
 
-    def __eval__(self, _, op):
+    def __eval__(self, __, op):
         if op >= 0:
             return op
         else:
@@ -146,7 +146,7 @@ class Abs(Expression):
 
 class Neg(Expression):
 
-    def __eval__(self, _, ref0):
+    def __eval__(self, __, ref0):
         return -ref0
 
     def __str__(self):
@@ -155,7 +155,7 @@ class Neg(Expression):
 
 class Not(Expression):
 
-    def __eval__(self, _, ref0):
+    def __eval__(self, __, ref0):
         return ~ref0
 
     def __str__(self):
@@ -271,6 +271,6 @@ expressions as-is without this wrapper.
     def __str__(self):
         return str(self.refs[0])
 
-    def __eval__(self, _, value):
+    def __eval__(self, __, value):
         return value
 

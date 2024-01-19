@@ -234,6 +234,9 @@ class Source(TypeContainer):
 
         return self
 
+    def __call__(self, *types):
+        return self.add_types(types)
+
     def add_type(self, _type):
         _type.definer = self
         if _type.is_named:
@@ -675,9 +678,9 @@ class ParsePrintFilter(object):
         self.out = out
         self.written = False
 
-    def write(self, str):
-        if str.startswith("Info:"):
-            self.out.write(str + "\n")
+    def write(self, _str):
+        if _str.startswith("Info:"):
+            self.out.write(_str + "\n")
             self.written = True
 
     def flush(self):
@@ -1020,7 +1023,7 @@ digraph Chunks {
             if user is not ch:
                 user.add_reference(ch)
 
-        for _, _type in ch_remove.reasons:
+        for __, _type in ch_remove.reasons:
             ch.add_reason(_type, kind = "provides")
 
         self.chunks.remove(ch_remove)

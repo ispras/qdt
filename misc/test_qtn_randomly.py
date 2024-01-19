@@ -102,7 +102,7 @@ def main():
     # automatic search
     while QTN_AUTO_SEARCH:
         test_len = randrange(3, 10)
-        test = "".join(chr(randrange(32, 126)) for _ in range(test_len))
+        test = "".join(chr(randrange(32, 126)) for __ in range(test_len))
 
         # print the test to prevent loss when crashing
         print("Current test: %s" % test)
