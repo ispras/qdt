@@ -1,8 +1,6 @@
 from common import (
     qdtdirs,
     makedirs,
-)
-from libe.common.pypath import (
     pypath,
 )
 from source import (
