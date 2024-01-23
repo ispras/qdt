@@ -12,9 +12,6 @@ from signal import (
     signal,
     SIGINT
 )
-from time import (
-    sleep
-)
 from argparse import (
     ArgumentParser,
     ArgumentDefaultsHelpFormatter
@@ -25,7 +22,6 @@ from common import (
 )
 from gdb import (
     rsp_unescape,
-    rsp_decode,
     assert_ok,
     Features,
     rsp_notification,
