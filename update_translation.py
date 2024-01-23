@@ -3,22 +3,23 @@
 from common import (
     makedirs,
 )
-from subprocess import (
-    call
+
+from collections import (
+    OrderedDict,
 )
 from os import (
     walk,
 )
 from os.path import (
     dirname,
-    join,
     isfile,
+    join,
 )
 from re import (
-    compile
+    compile,
 )
-from collections import (
-    OrderedDict
+from subprocess import (
+    call,
 )
 
 
