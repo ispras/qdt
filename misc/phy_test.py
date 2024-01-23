@@ -58,19 +58,19 @@ class CrossTest(CanvasDnD):
         self.dp_w2 = 10
 
         self.segments.extend([
-            CanvasSegment(self.canvas,
+            CanvasSegment(self,
                 Vector(100, 100),
                 Vector(0, 100),
                 fill = "red"
             ),
-            CanvasSegment(self.canvas,
+            CanvasSegment(self,
                 Vector(200, 100),
                 Vector(0, 100),
                 fill = "green"
             ),
         ])
         self.polygons.extend([
-            CanvasPolygon(self.canvas,
+            CanvasPolygon(self,
                 300, 300,
                 400, 300,
                 400, 400,
@@ -83,41 +83,41 @@ class CrossTest(CanvasDnD):
         self.bind('<<DnDMoved>>', self.dnd_moved)
 
         self.create_drags()
-        self.update()
+        self.refresh()
 
     def create_drags(self):
         for p in self.polygons:
             for i, v in enumerate(p.points):
-                id = self.canvas.create_rectangle(
+                _id = self.create_rectangle(
                     v.x - self.dp_w2, v.y - self.dp_w2,
                     v.x + self.dp_w2, v.y + self.dp_w2,
                     fill = "white",
                     tags = "DnD"
                 )
-                self.drag_points[id] = p, i
+                self.drag_points[_id] = p, i
 
         for s in self.segments:
-            id = self.canvas.create_rectangle(
+            _id = self.create_rectangle(
                 s.x - self.dp_w2, s.y - self.dp_w2,
                 s.x + self.dp_w2, s.y + self.dp_w2,
                 fill = "white",
                 tags = "DnD"
             )
-            self.drag_points[id] = s, 0
-            id = self.canvas.create_rectangle(
+            self.drag_points[_id] = s, 0
+            _id = self.create_rectangle(
                 s.x + s.d.x - self.dp_w2, s.y + s.d.y - self.dp_w2,
                 s.x + s.d.x + self.dp_w2, s.y + s.d.y + self.dp_w2,
                 fill = "white",
                 tags = "DnD"
             )
-            self.drag_points[id] = s, 1
+            self.drag_points[_id] = s, 1
 
-    def update(self):
+    def refresh(self):
         for i in self.segments + self.polygons:
             i.update()
 
         for c in self.crosses:
-            self.canvas.delete(c)
+            self.delete(c)
 
         crosses = []
         for p in self.polygons:
@@ -131,21 +131,21 @@ class CrossTest(CanvasDnD):
                     crosses.append(c)
 
         for c in crosses:
-            id = self.canvas.create_oval(
+            _id = self.create_oval(
                 c.x - 10, c.y - 10,
                 c.x + 10, c.y + 10
             )
-            self.crosses.append(id)
+            self.crosses.append(_id)
 
     def dnd_moved(self, event):
         for dp, do in self.drag_points.items():
-            coords = self.canvas.coords(dp)[:2]
+            coords = self.coords(dp)[:2]
             do[0].SetPoint(
                 Vector(coords[0] + self.dp_w2, coords[1] + self.dp_w2),
                 do[1]
             )
 
-        self.update()
+        self.refresh()
 
 def main():
     root = Tk()

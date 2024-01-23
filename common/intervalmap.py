@@ -7,17 +7,11 @@ __all__ = [
 
 from bisect import (
     bisect_left,
-    bisect_right
+    bisect_right,
 )
-from sys import (
-    version_info
+from six.moves import (
+    zip,
 )
-if version_info[0] < 3:
-    from itertools import (
-        izip
-    )
-else:
-    izip = zip
 
 
 class intervalmap(object):
@@ -281,7 +275,7 @@ as: ((low_bound, high_bound), value).
         return '{' + ", ".join(s) + '}'
 
     def __eq__(self, obj):
-        for si, oi in izip(self.items(), obj.items()):
+        for si, oi in zip(self.items(), obj.items()):
             if si != oi:
                 return False
         return True

@@ -51,9 +51,9 @@ class PCIVendorIdMismatch(ValueError):
 class PCIId(object):
     db = None # at the end of module the value will be defined
 
-    def __init__(self, name, id):
+    def __init__(self, name, _id):
         self.name = name
-        self.id = id
+        self.id = _id
 
     def find_macro(self):
         raise Exception("The virtual method is not implemented.")
@@ -97,7 +97,7 @@ class PCIDeviceId(PCIId):
 
         PCIId.__init__(self, device_name, device_id)
 
-        if not vendor_name in PCIId.db.vendors.keys():
+        if vendor_name not in PCIId.db.vendors.keys():
             self.vendor = PCIVendorId(vendor_name, 0xFFFF)
         else:
             self.vendor = PCIId.db.vendors[vendor_name]

@@ -346,7 +346,7 @@ class MOp_AddDevice(MachineNodeAdding):
     def _undo(self):
         dev = self.mach.id2node[self.node_id]
 
-        if not dev.parent_bus is None:
+        if dev.parent_bus is not None:
             raise Exception("Device %i should not be connected to a bus" %
                 self.node_id)
 

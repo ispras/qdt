@@ -28,7 +28,6 @@ from itertools import (
     count
 )
 from six.moves import (
-    zip_longest,
     range as xrange
 )
 from .qom_common import (
@@ -569,7 +568,7 @@ class SystemBusDeviceNode(DeviceNode):
     def add_memory_mapping(self, address, index = 0):
         """ Adds MMIO at first empty slot starting from index """
         for idx in count(index):
-            if not idx in self.mmio_mappings:
+            if idx not in self.mmio_mappings:
                 break
 
         self.mmio_mappings[idx] = address
@@ -580,7 +579,7 @@ class SystemBusDeviceNode(DeviceNode):
     def add_port_mapping(self, port, index = 0):
         """ Adds PMIO at first empty slot starting from index """
         for idx in count(index):
-            if not idx in self.pmio_mappings:
+            if idx not in self.pmio_mappings:
                 break
 
         self.pmio_mappings[idx] = port
@@ -694,7 +693,7 @@ class MemoryNode(Node):
         self.children.append(child)
 
     def remove_child(self, child):
-        if not child.parent is self:
+        if child.parent is not self:
             raise MemoryNodeHasNoSuchParent()
 
         child.parent = None

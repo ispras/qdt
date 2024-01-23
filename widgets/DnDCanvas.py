@@ -4,23 +4,38 @@
 __all__ = [
     "CanvasDnD"
   , "dragging"
+  , "bbox2screen"
   , "begin_drag_all"
   , "dragging_all"
   , "DRAG_GAP"
 ]
 
 from .tk_unbind import (
-    unbind
+    unbind,
 )
+
 from six.moves import (
-    range as xrange
+    range as xrange,
 )
 from six.moves.tkinter import (
-    IntVar,
+    ALL,
     Canvas,
+    IntVar,
     RIDGE,
-    BOTH
 )
+
+
+def bbox2screen(cnv, items = ALL, x = 20, y = 20):
+    """Drags canvas (`cnv`) so that (left, top) corner of AABB of `items`
+become at point (`x`, `y`) on screen relative to the widget's left top corner.
+Only works if the corner is to the left/top of the `point`.
+    """
+    l, t = cnv.bbox(items)[:2]
+    ox = int(cnv.canvasx(x))
+    oy = int(cnv.canvasy(y))
+    if ox > l or oy > t:
+        cnv.scan_mark(l, t)
+        cnv.scan_dragto(ox, oy, gain = 1)
 
 
 DRAG_GAP = 5
@@ -64,6 +79,23 @@ class CanvasDnD(Canvas):
 
         self.id_priority_sort_function = id_priority_sort_function
 
+    def update_scroll_region(self):
+        # Note, bbox(ALL) returns `None` if canvas is empty.
+        self.config(scrollregion = self.bbox(ALL) or (0, 0, 0, 0))
+
+    def extend_scroll_region(self):
+        try:
+            cl, ct, cr, cb = self.cget("scrollregion")
+        except ValueError:
+            cl, ct, cr, cb = 0, 0, 0, 0
+        l, t, r, b = self.bbox(ALL) or (0, 0, 0, 0)
+        self.config(scrollregion = (
+            min(cl, l),
+            min(ct, t),
+            max(cr, r),
+            max(cb, b)
+        ))
+
     # backward compatibility properties
     @property
     def dragging(self):
@@ -88,6 +120,11 @@ class CanvasDnD(Canvas):
 
         self._state = dragging
         self.event_generate('<<DnDDown>>')
+
+        # Emitting of item specific event allow effective monitoring for
+        # very big amount of items independently. Note that each DnDDown
+        # handler must check `dnd_dragged` attribute.
+        self.event_generate('<<DnDDown%s>>' % self.dnd_dragged)
 
     def motion(self, event):
         x, y = event.x, event.y
