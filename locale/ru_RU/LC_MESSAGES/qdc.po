@@ -33,21 +33,21 @@ msgstr "Обратимая операция без описания (класс 
 msgid "The beginning of known history."
 msgstr "Начало известной истории."
 
-#: misc/history-test.py:94
+#: misc/history_test.py:94
 msgid "Edit history test"
 msgstr "Тест истории редактирования"
 
-#: misc/history-test.py:104
+#: misc/history_test.py:104
 #: qdc_gui.py:320
 msgid "Undo"
 msgstr "Отменить"
 
-#: misc/history-test.py:109
+#: misc/history_test.py:109
 #: qdc_gui.py:327
 msgid "Redo"
 msgstr "Повторить"
 
-#: misc/history-test.py:113
+#: misc/history_test.py:113
 #: qdc_gui.py:356
 msgid "Edit"
 msgstr "Правка"
