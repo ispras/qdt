@@ -7,9 +7,12 @@ DEBUG = 1
 
 from argparse import \
     ArgumentParser
-
-import sys
-
+from sys import (
+    stderr,
+    stdin,
+    stdout,
+    version_info,
+)
 from re import \
     UNICODE, \
     compile
@@ -129,27 +132,27 @@ if __name__ == "__main__":
     try:
         in_file_name = args.in_file_name
     except:
-        in_file = sys.stdin
+        in_file = stdin
     else:
         in_file = open(in_file_name, "rb")
 
     out_file_name = args.out_file_name
     if out_file_name is None:
-        sys.stderr.write("version: " + str(sys.version_info) + "\n")
-        if sys.version_info[0] == 3:
+        stderr.write("version: " + str(version_info) + "\n")
+        if version_info[0] == 3:
             class RawOut(tuple):
                 def write(self, raw):
                     self[0].write(raw.decode("utf-8"))
                 def close(self):
                     self[0].close()
 
-            out_file = RawOut((sys.stdout,))
+            out_file = RawOut((stdout,))
         else:
-            out_file = sys.stdout
-        log_file = sys.stderr
+            out_file = stdout
+        log_file = stderr
     else:
         out_file = open(out_file_name, "wb")
-        log_file = sys.stdout
+        log_file = stdout
 
     def log(msg):
         log_file.write(msg + "\n")
