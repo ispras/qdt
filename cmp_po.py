@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     for key in both:
         msgstr0 = get_msgstr(po0_content[key])
-        msgstr1 = get_msgstr(po0_content[key])
+        msgstr1 = get_msgstr(po1_content[key])
 
         if msgstr0 != msgstr1:
             print("changed: '%s'" % key)
