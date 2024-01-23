@@ -761,11 +761,11 @@ in process. Do you want to start cache rebuilding?")
         d = AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
-        dir = askdirectory(self, title = _("Select Qemu build path"))
-        if not dir:
+        _dir = askdirectory(self, title = _("Select Qemu build path"))
+        if not _dir:
             return
 
-        self.pht.set_build_path(dir)
+        self.pht.set_build_path(_dir)
 
     def on_sel_tgt_qemu_version(self):
         try:
