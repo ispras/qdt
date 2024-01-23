@@ -1,4 +1,5 @@
 from common import (
+    byN,
     makedirs,
     pypath,
     qdtdirs,
@@ -13,7 +14,6 @@ from argparse import (
 )
 from itertools import (
     chain,
-    zip_longest,
 )
 from os import (
     walk,
@@ -98,9 +98,7 @@ def system_cpp(
 def log_mem_usage():
     mu = str(proc.memory_info().rss)
     mu = "_".join(reversed(tuple(
-        "".join(reversed(t)) for t in zip_longest(*[iter(reversed(mu))] * 3,
-            fillvalue = "",
-        )
+        "".join(reversed(t)) for t in byN(3, reversed(mu), fillvalue = "")
     )))
     log("memory:\n\t" + mu)
 
