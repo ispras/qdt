@@ -1,5 +1,10 @@
-from sys import exc_info
-from time import time
+from sys import (
+    exc_info,
+)
+from time import (
+    time,
+)
+
 
 def gen1():
     print("1.1")
