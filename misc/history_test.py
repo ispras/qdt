@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 
 from common import (
-    HistoryTracker,
-    InverseOperation,
     History,
     HistoryTracker,
-    mlget as _
+    InverseOperation,
+    mlget as _,
 )
 from widgets import (
     CanvasDnD,
-    VarTk,
-    VarMenu,
     HotKey,
-    HotKeyBinding
-)
-from six.moves.tkinter import (
-    CURRENT
+    HotKeyBinding,
+    VarMenu,
+    VarTk,
 )
 
+from six.moves.tkinter import (
+    CURRENT,
+)
+
+
 class DnDOperation(InverseOperation):
+
     def __init__(self, id, pos, *args, **kwargs):
         InverseOperation.__init__(self, *args, **kwargs)
         self.id = id
@@ -51,7 +53,9 @@ class DnDOperation(InverseOperation):
     def __undo__(self, cnv):
         self.apply(cnv, self.orig_pos)
 
+
 class HistCanvasDnD(CanvasDnD):
+
     def __init__(self, *args, **kwargs):
         self.ht = kwargs.pop("history_tracker")
         CanvasDnD.__init__(self, *args, **kwargs)
@@ -67,13 +71,16 @@ class HistCanvasDnD(CanvasDnD):
     def dnd_up(self, event):
         self.ht.commit()
 
+
 def undo():
     if tracker.can_undo():
         tracker.undo()
 
+
 def redo():
     if tracker.can_do():
         tracker.do()
+
 
 def reg_hotkeys():
     hotkeys.add_bindings([
@@ -88,6 +95,7 @@ def reg_hotkeys():
             symbol = "Y"
         )
     ])
+
 
 def main():
     root = VarTk()
@@ -138,6 +146,7 @@ def main():
     )
 
     root.mainloop()
+
 
 if __name__ == '__main__':
     main()
