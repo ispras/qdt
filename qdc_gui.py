@@ -758,7 +758,7 @@ in process. Do you want to start cache rebuilding?")
         self.on_quit()
 
     def on_add_description(self):
-        d = AddDescriptionDialog(self.pht, self)
+        AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
         _dir = askdirectory(self, title = _("Select Qemu build path"))
