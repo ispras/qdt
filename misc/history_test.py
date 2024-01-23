@@ -21,9 +21,9 @@ from six.moves.tkinter import (
 
 class DnDOperation(InverseOperation):
 
-    def __init__(self, id, pos, *args, **kwargs):
+    def __init__(self, _id, pos, *args, **kwargs):
         InverseOperation.__init__(self, *args, **kwargs)
-        self.id = id
+        self.id = _id
 
         self.orig_pos = pos
         self.target_pos = None
