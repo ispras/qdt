@@ -15,6 +15,9 @@ from common import (
     Persistent,
 )
 
+from copy import (
+    copy,
+)
 from os import (
     name as os_name,
 )
@@ -221,7 +224,8 @@ class HotKey(object):
         if callback in self.cb2names:
             return self.cb2names[callback]
         else:
-            string = _("Unassigned")
+            # Note, unique string for every callback
+            string = copy(_("Unassigned"))
             self.cb2names[callback] = string
             return string
 
