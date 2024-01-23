@@ -5,7 +5,6 @@ from common import (
     CoSignal,
     CoTask,
     execfile,
-    FormatVar,
     mlget as _,
     open_dir,
     OrderedSet,
@@ -60,9 +59,7 @@ from os import (
 from os.path import (
     abspath,
     dirname,
-    expanduser,
     isfile,
-    join,
 )
 from six.moves.cPickle import (
     load as load_cPickled,
@@ -71,7 +68,6 @@ from six.moves.tkinter import (
     BooleanVar,
     DISABLED,
     END,
-    IntVar,
     NORMAL,
     RIGHT,
     StringVar,
