@@ -5,31 +5,37 @@
 
 DEBUG = 1
 
-from argparse import \
-    ArgumentParser
+from argparse import (
+    ArgumentParser,
+)
+from collections import (
+    OrderedDict,
+)
+from itertools import (
+    count,
+)
+from re import (
+    compile,
+)
+from six.moves import (
+    zip,
+)
 from sys import (
     stderr,
     stdin,
     stdout,
     version_info,
 )
-from re import \
-    compile
 
-from itertools import \
-    count
-
-from collections import \
-    OrderedDict
-from six.moves import (
-    zip,
-)
 
 class PosInfo(object):
+
     def __init__(self, row, start, end, m):
         self.row, self.start, self.end, self.m = row, start, end, m
 
+
 class PatchInfo(PosInfo):
+
     def __init__(self, *args):
         super(PatchInfo, self).__init__(*args)
 
@@ -57,17 +63,22 @@ class PatchInfo(PosInfo):
 
         l.patch(m.start("substitution"), m.end("substitution"), s)
 
+
 class AnchorInfo(PatchInfo):
+
     def __init__(self, *args):
         super(AnchorInfo, self).__init__(*args)
 
         self.references = []
 
+
 class RefInfo(PatchInfo):
+
     def __init__(self, *args):
         super(RefInfo, self).__init__(*args)
 
         self.anchors = []
+
 
 ABOVE = u"выше".encode("utf-8")
 BELOW = u"ниже".encode("utf-8")
