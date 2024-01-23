@@ -1,35 +1,36 @@
 #!/usr/bin/python
 
-from os import (
-    getpid
-)
-from socket import (
-    socket,
-    AF_INET,
-    SOCK_STREAM
-)
-from signal import (
-    signal,
-    SIGINT
-)
-from argparse import (
-    ArgumentParser,
-    ArgumentDefaultsHelpFormatter
-)
 from common import (
     CoDispatcher,
-    free_tcp_port
+    free_tcp_port,
 )
 from gdb import (
-    rsp_unescape,
     assert_ok,
+    CoRSP,
     Features,
     rsp_notification,
     rsp_packet,
-    CoRSP
+    rsp_unescape,
+)
+
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+)
+from os import (
+    getpid,
+)
+from signal import (
+    SIGINT,
+    signal,
+)
+from socket import (
+    AF_INET,
+    socket,
+    SOCK_STREAM,
 )
 from traceback import (
-    print_exc
+    print_exc,
 )
 
 
@@ -124,7 +125,7 @@ class CoRSPProxy(CoRSP):
         server.watch_event(self._on_event)
         self.watch_command(self._on_command)
 
-         # Waiting for hello "+" from client
+        # Waiting for hello "+" from client
         self.waiting.appendleft(("", 50, None))
 
     def _on_event(self, server, data, checksum):
