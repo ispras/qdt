@@ -14,7 +14,6 @@ from sys import (
     version_info,
 )
 from re import \
-    UNICODE, \
     compile
 
 from itertools import \
