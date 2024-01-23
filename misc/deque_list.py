@@ -1,6 +1,9 @@
-from timeit import timeit
-from collections import deque
-
+from collections import (
+    deque,
+)
+from timeit import (
+    timeit,
+)
 
 
 def t1():
