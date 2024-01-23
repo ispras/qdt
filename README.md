@@ -366,7 +366,7 @@ before the GUI launch:
 ```bash
 ~/qemu/qdt$
 
-./update-translation.py
+./update_translation.py
 ```
 
 ### Basic device boilerplate generation
