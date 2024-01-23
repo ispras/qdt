@@ -240,11 +240,11 @@ endef
 	) || true
 
 %.pmd : %.md
-	python md-preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
+	python md_preprocessor.py $(MDP_ARGS) -o $@ $< > /dev/null
 
 # reference index
 %.mdr : %.md
-	python md-preprocessor.py $(MDP_ARGS) --refs $@ $< > /dev/null
+	python md_preprocessor.py $(MDP_ARGS) --refs $@ $< > /dev/null
 
 %.png : %.svg
 	if ! convert -density $(SVG2PNG_DPI) $< $@ ; then \
