@@ -152,7 +152,7 @@ Energia IDE содержит в себе утилиты компиляции, в
 
 Открыть проект в графическом интерфейсе пользователя (ГИП)::
 
-	qdt/src/qdc-gui.py \
+	qdt/src/qdc_gui.py \
 	    -b qemu/build \
 	    qdt/src/examples/MSP430/msp430/msp430_project.py \
 	    &
@@ -390,7 +390,7 @@ AMD64) и проверяемую, а затем запустить под отл
 
 Или через ГИП::
 
-	qdt/src/qdc-gui.py \
+	qdt/src/qdc_gui.py \
 	    -b qemu/build \
 	    qdt/src/examples/MSP430/msp430/msp430x2xx.py \
 	    &
