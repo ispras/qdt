@@ -27,7 +27,7 @@ class DnDOperation(InverseOperation):
         self.target_pos = None
 
     def __backup__(self, cnv):
-        self.target_pos = cnv.canvas.coords(self.id)[:2]
+        self.target_pos = cnv.coords(self.id)[:2]
 
     def __write_set__(self):
         return [self.id]
@@ -36,14 +36,14 @@ class DnDOperation(InverseOperation):
         return []
 
     def apply(self, cnv, pos):
-        points = cnv.canvas.coords(self.id)
+        points = cnv.coords(self.id)
         anchor = points[:2]
 
         for idx, p in enumerate(points):
             offset = p - anchor[idx % 2]
             points[idx] = offset + pos[idx % 2]
 
-        cnv.canvas.coords(*([self.id] + points))
+        cnv.coords(*([self.id] + points))
 
     def __do__(self, cnv):
         self.apply(cnv, self.target_pos)
@@ -60,9 +60,9 @@ class HistCanvasDnD(CanvasDnD):
         self.bind('<<DnDUp>>', self.dnd_up)
 
     def dnd_down(self, event):
-        dragged = self.canvas.find_withtag(CURRENT)[0]
+        dragged = self.find_withtag(CURRENT)[0]
 
-        self.ht.stage(DnDOperation, dragged, self.canvas.coords(dragged)[:2])
+        self.ht.stage(DnDOperation, dragged, self.coords(dragged)[:2])
 
     def dnd_up(self, event):
         self.ht.commit()
@@ -131,7 +131,7 @@ def main():
 
     cnv.grid(row = 0, column = 0, sticky = "NEWS")
 
-    cnv.canvas.create_rectangle(
+    cnv.create_rectangle(
         10, 10, 100, 100,
         tags = "DnD",
         fill = "red"
