@@ -87,6 +87,7 @@ from traceback import (
 
 
 class ProjectGeneration(CoTask):
+
     def __init__(self, project, source_path, signal, reload_build_path_task,
         gen_chunk_graphs, translate_cpu_semantics
     ):
@@ -135,6 +136,7 @@ class ProjectGeneration(CoTask):
             self.prev_qvd.use()
         self.finished = True
         self.sig.emit()
+
 
 class QDCGUIWindow(GUITk, QDCGUISignalHelper):
 
