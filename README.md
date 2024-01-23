@@ -351,7 +351,7 @@ Now you can launch the GUI.
 ```bash
 ~/qemu/qdt$
 
-./qdc-gui.py
+./qdc_gui.py
 ```
 
 An example project of Intel Q35 machine will be automatically loaded.
@@ -688,7 +688,7 @@ It is time to look at the one UART machine using the GUI.
 ~/qemu/build$
 
 cd ..
-qdt/qdc-gui.py one-uart-machine.py -b ./build
+qdt/qdc_gui.py one-uart-machine.py -b ./build
 ```
 
 Note that QEMU build directory path can be specified with GUI.
@@ -720,7 +720,7 @@ The project is based on `q35` machine implementation in QEMU.
 ```bash
 ~/qemu$
 
-qdt/qdc-gui.py qdt/examples/q35-for-q2.6.py
+qdt/qdc_gui.py qdt/examples/q35-for-q2.6.py
 ```
 
 ### TCG front-end testing
