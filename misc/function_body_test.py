@@ -1,8 +1,9 @@
 from source import *
 
 from six.moves import (
-    zip_longest
+    zip_longest,
 )
+
 
 def fix_indents(code, width = 38):
     chunk = SourceChunk(None, None, code)
