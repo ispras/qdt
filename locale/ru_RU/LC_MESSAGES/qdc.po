@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-02-04 19:22+0300\n"
-"PO-Revision-Date:  2022-02-04 19:22+0300\n"
+"PO-Revision-Date:  2024-01-24 05:25+0300\n"
 "Last-Translator: Efimov Vasily <real@ispras.ru>\n"
 "Language-Team: Russian <real@ispras.ru>\n"
 "Language: Russian\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
-#: common/co_dispatcher.py:69
+#: common/co_dispatcher.py:70
 msgid "Coroutine based task without description"
 msgstr "Задача-сопрограмма без описания"
 
@@ -33,78 +33,99 @@ msgstr "Обратимая операция без описания (класс 
 msgid "The beginning of known history."
 msgstr "Начало известной истории."
 
-#: misc/history_test.py:94
+#: misc/history_test.py:102
 msgid "Edit history test"
 msgstr "Тест истории редактирования"
 
-#: misc/history_test.py:104
-#: qdc_gui.py:320
+#: misc/history_test.py:112
+#: qdc_gui.py:325
 msgid "Undo"
 msgstr "Отменить"
 
-#: misc/history_test.py:109
-#: qdc_gui.py:327
+#: misc/history_test.py:117
+#: qdc_gui.py:332
 msgid "Redo"
 msgstr "Повторить"
 
-#: misc/history_test.py:113
-#: qdc_gui.py:356
+#: misc/history_test.py:121
+#: qdc_gui.py:361
 msgid "Edit"
 msgstr "Правка"
 
-#: misc/msp430x_tests_coverage.py:828
+#: misc/msp430x_tests_coverage.py:831
 msgid "Mnemonic"
 msgstr "Мнемоника"
 
-#: misc/msp430x_tests_coverage.py:829
+#: misc/msp430x_tests_coverage.py:832
 msgid "Occurrences"
 msgstr "Вхождения"
 
-#: misc/msp430x_tests_coverage.py:830
+#: misc/msp430x_tests_coverage.py:833
 msgid "Variants met"
 msgstr "Встречено вариантов"
 
-#: misc/msp430x_tests_coverage.py:831
+#: misc/msp430x_tests_coverage.py:834
 msgid "Variants total"
 msgstr "Всего вариантов"
 
-#: misc/msp430x_tests_coverage.py:892
+#: misc/msp430x_tests_coverage.py:895
 msgid "Mode"
 msgstr "Режим"
 
-#: misc/msp430x_tests_coverage.py:893
+#: misc/msp430x_tests_coverage.py:896
 msgid "FI arg1"
 msgstr "FI 1 аргумент"
 
-#: misc/msp430x_tests_coverage.py:894
+#: misc/msp430x_tests_coverage.py:897
 msgid "FI arg2"
 msgstr "FI 2 аргумент"
 
-#: misc/msp430x_tests_coverage.py:895
+#: misc/msp430x_tests_coverage.py:898
 msgid "FII arg"
 msgstr "FII аргумент"
 
-#: misc/msp430x_tests_coverage.py:896
+#: misc/msp430x_tests_coverage.py:899
 msgid "FIII arg"
 msgstr "FIII аргумент"
 
-#: misc/msp430x_tests_coverage.py:911
+#: misc/msp430x_tests_coverage.py:914
 msgid "YES"
 msgstr "ДА"
 
-#: misc/msp430x_tests_coverage.py:912
+#: misc/msp430x_tests_coverage.py:915
 msgid "NO"
 msgstr "НЕТ"
 
-#: qdc_gui.py:105
+#: misc/patch_edit.py:669
+#: widgets/qom_settings.py:111
+#: widgets/settings_window.py:209
+msgid "Apply"
+msgstr "Применить"
+
+#: misc/patch_edit.py:766
+#: qdc_gui.py:284
+msgid "Save"
+msgstr "Сохранить"
+
+#: misc/patch_edit.py:801
+#: qdc_gui.py:293
+msgid "Load"
+msgstr "Загрузить"
+
+#: misc/qmanager.py:181
+#: qdc_gui.py:447
+msgid "Background tasks: "
+msgstr "Фоновые задачи:"
+
+#: qdc_gui.py:104
 msgid "Generation"
 msgstr "Генерация"
 
-#: qdc_gui.py:130
+#: qdc_gui.py:129
 msgid "Generation completed"
 msgstr "Генерация завершена"
 
-#: qdc_gui.py:131
+#: qdc_gui.py:130
 msgid "No errors were reported."
 msgstr "Сообщений об ошибках не было."
 
@@ -158,7 +179,7 @@ msgid "Rebuild Cache."
 msgstr "Перестроить кэш."
 
 #: qdc_gui.py:252
-#: widgets/project_widget.py:182
+#: widgets/project_widget.py:188
 msgid "Add description"
 msgstr "Добавить описание"
 
@@ -174,60 +195,48 @@ msgstr "Сгенерировать"
 msgid "New project"
 msgstr "Новый проект"
 
-#: qdc_gui.py:238
-msgid "Save"
-msgstr "Сохранить"
-
 #: qdc_gui.py:289
 msgid "Save project as..."
 msgstr "Сохранить проект как..."
 
-#: qdc_gui.py:247
-msgid "Load"
-msgstr "Загрузить"
-
-#: qdc_gui.py:312
+#: qdc_gui.py:317
 msgid "Quit"
 msgstr "Выход"
 
-#: qdc_gui.py:316
+#: qdc_gui.py:321
 #: qw.py:214
 msgid "File"
 msgstr "Файл"
 
-#: qdc_gui.py:336
+#: qdc_gui.py:341
 msgid "Rebuild Cache"
 msgstr "Перестроить кэш"
 
-#: qdc_gui.py:351
+#: qdc_gui.py:356
 msgid "Editing history window"
 msgstr "Окно истории редактирования"
 
-#: qdc_gui.py:320
-msgid "Background tasks: "
-msgstr "Фоновые задачи:"
-
-#: qdc_gui.py:661
+#: qdc_gui.py:703
 msgid "Cache rebuilding is impossible"
 msgstr "Перестроение кэша невозможно"
 
-#: qdc_gui.py:662
-#: qdc_gui.py:771
+#: qdc_gui.py:704
+#: qdc_gui.py:813
 #, python-format
 msgid "Selected Qemu build path is bad. Reason: %s"
 msgstr "Выбран плохой путь сборки QEMU. Подробности: %s"
 
-#: qdc_gui.py:674
+#: qdc_gui.py:716
 msgid "Cache rebuilding"
 msgstr "Перестроение кэша"
 
-#: qdc_gui.py:675
+#: qdc_gui.py:717
 msgid ""
 "Cache building is already in process. Do you want to start cache rebuilding?"
 msgstr ""
 "Построение кэша уже выполняется. Вы точно хотите начать перестроение кэша?"
 
-#: qdc_gui.py:689
+#: qdc_gui.py:731
 msgid ""
 "Current project has unsaved changes. Would you like to save it?\n"
 "\n"
@@ -239,71 +248,65 @@ msgstr ""
 "Замечание: резервная копия проекта в любом случае будет сохранена в текущей "
 "папке под именем project.py."
 
-#: qdc_gui.py:722
+#: qdc_gui.py:764
 msgid "Select Qemu build path"
 msgstr "Выбрать путь сборки QEMU"
 
-#: qdc_gui.py:751
-#: qdc_gui.py:786
+#: qdc_gui.py:793
+#: qdc_gui.py:828
 msgid "Generation is cancelled"
 msgstr "Генерация отменена"
 
-#: qdc_gui.py:752
+#: qdc_gui.py:794
 msgid "At least one generation task is already in process."
 msgstr "Как минимум одна генерация уже выполняется."
 
-#: qdc_gui.py:759
-#: qdc_gui.py:770
-#: qdc_gui.py:779
+#: qdc_gui.py:801
+#: qdc_gui.py:812
+#: qdc_gui.py:821
 msgid "Generation is impossible"
 msgstr "Генерация невозможна"
 
-#: qdc_gui.py:760
+#: qdc_gui.py:802
 msgid "No Qemu build path is set for the project."
 msgstr "Для проекта не задан путь сборки QEMU."
 
-#: qdc_gui.py:787
+#: qdc_gui.py:829
 msgid "Qemu version cache is not ready yet. Try later."
 msgstr "Кэш версии QEMU ещё не готов. Попробуйте позже."
 
-#: qdc_gui.py:864
+#: qdc_gui.py:906
 #: qw.py:283
 msgid "Cannot save project"
 msgstr "Невозможно сохранить проект"
 
-#: qdc_gui.py:877
-#: qdc_gui.py:920
+#: qdc_gui.py:919
+#: qdc_gui.py:962
 #: qw.py:263
 msgid "QDC GUI Project defining script"
 msgstr "скрипт-проект для ГИП QDT"
 
-#: qdc_gui.py:878
+#: qdc_gui.py:920
 msgid "Save project"
 msgstr "Сохранить проект"
 
-#: qdc_gui.py:899
+#: qdc_gui.py:941
 msgid "Current project has unsaved changes. They will be lost. Continue?"
 msgstr ""
 "В текущем проекте есть не сохранённые изменения. Они будут потеряны. "
 "Продолжить?"
 
-#: qdc_gui.py:921
+#: qdc_gui.py:963
 msgid "Load project"
 msgstr "Загрузить проект"
 
-#: qdc_gui.py:932
+#: qdc_gui.py:974
 msgid "Project loading failed"
 msgstr "Не удалось загрузить проект"
 
-#: qdc_gui.py:950
+#: qdc_gui.py:1001
 msgid "No QEMU build path selected"
 msgstr "Путь сборки QEMU не выбран"
-
-#: qemu/machine.py:144
-#: qemu/qom.py:1016
-#: widgets/project_widget.py:105
-msgid "Directory"
-msgstr "Папка"
 
 #: qemu/machine_editing.py:133
 #, python-format
@@ -454,9 +457,14 @@ msgstr "Создать концентратор IRQ (%d)."
 msgid "Delete IRQ hub (%d)."
 msgstr "Удалить концентратор IRQ (%d)."
 
-#: qlv.py:97
-#: widgets/memory_settings.py:95
-#: widgets/memory_tree_widget.py:145
+#: qemu/qom.py:182
+#: widgets/project_widget.py:112
+msgid "Directory"
+msgstr "Папка"
+
+#: qlv.py:96
+#: widgets/memory_settings.py:104
+#: widgets/memory_tree_widget.py:150
 msgid "Size"
 msgstr "Размер"
 
@@ -472,300 +480,297 @@ msgstr "Ни одного"
 msgid "Invert selection"
 msgstr "Инвертировать"
 
-#: rr3/stats.py:140
-msgid "Time [seconds]"
-msgstr "Время [секунды]"
-
-#: rr3/stats.py:141
+#: rr3/stats.py:199
 msgid "Total Instructions"
 msgstr "Всего инструкций"
 
-#: widgets/add_desc_dialog.py:88
-#: widgets/device_settings.py:406
-#: widgets/sysbusdevset.py:79
+#: rr3/stats.py:200
+msgid "Time [seconds]"
+msgstr "Время [секунды]"
+
+#: widgets/add_desc_dialog.py:90
+#: widgets/device_settings.py:397
+#: widgets/sysbusdevset.py:81
 msgid "Add"
 msgstr "Добавить"
 
-#: widgets/bus_settings.py:56
+#: widgets/bus_settings.py:57
 msgid "Parent device"
 msgstr "Устройство-родитель"
 
-#: widgets/bus_settings.py:72
+#: widgets/bus_settings.py:73
 msgid "Always show index"
 msgstr "Всегда показывать индекс"
 
-#: widgets/bus_settings.py:129
+#: widgets/bus_settings.py:135
 #, python-format
 msgid "Bus %d configuration."
 msgstr "Настройка шины %d."
 
-#: widgets/bus_settings.py:170
+#: widgets/bus_settings.py:182
 msgid "Bus settings"
 msgstr "Установки шины"
 
-#: widgets/device_settings.py:299
-#: widgets/machine_diagram_widget.py:535
-#: widgets/machine_diagram_widget.py:653
-#: widgets/machine_diagram_widget.py:679
-#: widgets/machine_diagram_widget.py:693
-#: widgets/machine_diagram_widget.py:707
-#: widgets/machine_diagram_widget.py:716
-#: widgets/memory_tree_widget.py:175
-#: widgets/sysbusdevset.py:85
-msgid "Delete"
-msgstr "Удалить"
-
-#: widgets/device_settings.py:351
+#: widgets/cpu_settings.py:47
+#: widgets/device_settings.py:345
 msgid "QOM type"
 msgstr "Тип QOM"
 
+#: widgets/device_settings.py:297
+#: widgets/machine_diagram_widget.py:541
+#: widgets/machine_diagram_widget.py:659
+#: widgets/machine_diagram_widget.py:685
+#: widgets/machine_diagram_widget.py:699
+#: widgets/machine_diagram_widget.py:713
+#: widgets/machine_diagram_widget.py:722
+#: widgets/memory_tree_widget.py:180
+#: widgets/sysbusdevset.py:87
+msgid "Delete"
+msgstr "Удалить"
+
 #: widgets/device_settings.py:354
-#: widgets/device_tree_widget.py:70
+#: widgets/device_tree_widget.py:71
 #: widgets/git_ref_selector.py:68
 msgid "Select"
 msgstr "Выбрать"
 
-#: widgets/device_settings.py:369
+#: widgets/device_settings.py:360
 msgid "Parent bus"
 msgstr "Родительская шина"
 
-#: widgets/device_settings.py:384
+#: widgets/device_settings.py:375
 msgid "Child buses"
 msgstr "Дочерние шины"
 
-#: widgets/device_settings.py:394
+#: widgets/device_settings.py:385
 msgid "Properties"
 msgstr "Свойства"
 
-#: widgets/device_settings_window.py:27
+#: widgets/device_settings_window.py:30
 msgid "Device settings"
 msgstr "Установки устройства"
 
-#: widgets/device_tree_widget.py:52
+#: widgets/device_tree_widget.py:53
 msgid "Device Tree"
 msgstr "Дерево устройств"
 
-#: widgets/device_tree_widget.py:164
-msgid "Devices"
-msgstr "Устройства"
-
-#: widgets/device_tree_widget.py:165
-msgid "Macros"
-msgstr "Макросы"
-
-#: widgets/device_tree_widget.py:83
+#: widgets/device_tree_widget.py:66
 msgid "Select QOM type"
 msgstr "Выбор типа QOM"
 
-#: widgets/hotkey.py:223
+#: widgets/device_tree_widget.py:165
+msgid "Devices"
+msgstr "Устройства"
+
+#: widgets/device_tree_widget.py:166
+msgid "Macros"
+msgstr "Макросы"
+
+#: widgets/hotkey.py:228
 msgid "Unassigned"
 msgstr "Не назначено"
 
-#: widgets/irq_settings.py:47
+#: widgets/irq_settings.py:50
 msgid "Source"
 msgstr "Передатчик"
 
-#: widgets/irq_settings.py:48
+#: widgets/irq_settings.py:51
 msgid "Destination"
 msgstr "Приёмник"
 
-#: widgets/irq_settings.py:59
+#: widgets/irq_settings.py:62
 msgid "Node"
 msgstr "Узел"
 
-#: widgets/irq_settings.py:71
+#: widgets/irq_settings.py:74
 msgid "GPIO index"
 msgstr "Индекс GPIO"
 
-#: widgets/irq_settings.py:78
+#: widgets/irq_settings.py:81
 msgid "GPIO name"
 msgstr "Имя GPIO"
 
-#: widgets/irq_settings.py:280
+#: widgets/irq_settings.py:288
 msgid "IRQ line settings"
 msgstr "Установки линии IRQ"
 
-#: widgets/machine_diagram_widget.py:519
-#: widgets/machine_diagram_widget.py:662
+#: widgets/line_select_dialog.py:61
+#: widgets/settings_window.py:218
+msgid "OK"
+msgstr "ОК"
+
+#: widgets/machine_diagram_widget.py:520
+#: widgets/machine_diagram_widget.py:668
 msgid "IRQ source"
 msgstr "Передатчик IRQ"
 
-#: widgets/machine_diagram_widget.py:524
-#: widgets/machine_diagram_widget.py:667
+#: widgets/machine_diagram_widget.py:525
+#: widgets/machine_diagram_widget.py:673
 msgid "IRQ destination"
 msgstr "Приёмник IRQ"
 
-#: widgets/machine_diagram_widget.py:530
-#: widgets/machine_diagram_widget.py:648
-#: widgets/machine_diagram_widget.py:674
-#: widgets/machine_diagram_widget.py:688
-#: widgets/machine_diagram_widget.py:702
-#: widgets/memory_tree_widget.py:164
+#: widgets/machine_diagram_widget.py:536
+#: widgets/machine_diagram_widget.py:654
+#: widgets/machine_diagram_widget.py:680
+#: widgets/machine_diagram_widget.py:694
+#: widgets/machine_diagram_widget.py:708
+#: widgets/memory_tree_widget.py:169
 msgid "Settings"
 msgstr "Установки"
 
-#: widgets/machine_diagram_widget.py:543
+#: widgets/machine_diagram_widget.py:549
 msgid "Add IRQ hub"
 msgstr "Добавить узел IRQ"
 
-#: widgets/machine_diagram_widget.py:595
+#: widgets/machine_diagram_widget.py:601
 msgid "Dynamic layout"
 msgstr "Динамическое размещение"
 
-#: widgets/machine_diagram_widget.py:629
+#: widgets/machine_diagram_widget.py:635
 msgid "Show mesh"
 msgstr "Показать сетку"
 
-#: widgets/machine_diagram_widget.py:642
+#: widgets/machine_diagram_widget.py:648
 msgid "Delete point"
 msgstr "Удалить точку"
 
-#: widgets/machine_diagram_widget.py:854
+#: widgets/machine_diagram_widget.py:860
 msgid "Export error"
 msgstr "Ошибка экспорта"
 
-#: widgets/machine_diagram_widget.py:855
+#: widgets/machine_diagram_widget.py:861
 #, python-format
 msgid "Unexpected file extension %s"
 msgstr "Неожиданное расширение файла %s"
 
-#: widgets/machine_diagram_widget.py:1298
+#: widgets/machine_diagram_widget.py:1301
 msgid "Add IRQ line."
 msgstr "Добавить линию IRQ."
 
-#: widgets/machine_diagram_widget.py:1539
+#: widgets/machine_diagram_widget.py:1577
 msgid "IRQ hub creation."
 msgstr "Cоздание концентратора IRQ."
 
-#: widgets/machine_widget.py:129
+#: widgets/machine_widget.py:131
 msgid "Use tabs"
 msgstr "Вкладки"
 
-#: widgets/machine_widget.py:146
+#: widgets/machine_widget.py:148
 msgid "Mesh step:"
 msgstr "Шаг сетки"
 
-#: widgets/memory_settings.py:66
+#: widgets/memory_settings.py:75
 msgid "Region type"
 msgstr "Тип участка"
 
-#: widgets/memory_settings.py:82
+#: widgets/memory_settings.py:91
 msgid "Parent region"
 msgstr "Участок-родитель"
 
-#: widgets/memory_settings.py:96
-#: widgets/memory_tree_widget.py:144
+#: widgets/memory_settings.py:105
+#: widgets/memory_tree_widget.py:149
 msgid "Offset"
 msgstr "Смещение"
 
-#: widgets/memory_settings.py:97
+#: widgets/memory_settings.py:106
 msgid "May overlap"
 msgstr "Может перекрываться"
 
-#: widgets/memory_settings.py:98
+#: widgets/memory_settings.py:107
 msgid "Priority"
 msgstr "Приоритет"
 
-#: widgets/memory_settings.py:285
+#: widgets/memory_settings.py:308
 msgid "Memory settings"
 msgstr "Настройки памяти"
 
-#: widgets/memory_tree_widget.py:146
+#: widgets/memory_tree_widget.py:151
 msgid "Type"
 msgstr "Тип"
 
-#: widgets/memory_tree_widget.py:235
 #: widgets/memory_tree_widget.py:240
+#: widgets/memory_tree_widget.py:245
 msgid "Add node"
 msgstr "Добавить узел"
 
-#: widgets/memory_tree_widget.py:414
+#: widgets/memory_tree_widget.py:423
 msgid "Deletion of selected memory nodes"
 msgstr "Удаление выбранных узлов памяти"
 
-#: widgets/memory_tree_widget.py:462
+#: widgets/memory_tree_widget.py:471
 msgid "LOOP"
 msgstr "ЦИКЛ"
 
-#: widgets/pci_device_settings.py:37
+#: widgets/pci_device_settings.py:40
 msgid "PCI"
 msgstr ""
 
-#: widgets/pci_device_settings.py:45
+#: widgets/pci_device_settings.py:48
 msgid "Slot (Device number)"
 msgstr "Слот (номер устройства)"
 
-#: widgets/pci_device_settings.py:52
+#: widgets/pci_device_settings.py:55
 msgid "Function number"
 msgstr "Номер функции"
 
-#: widgets/pci_device_settings.py:62
+#: widgets/pci_device_settings.py:65
 msgid "multifunction"
 msgstr "многофункциональное"
 
-#: widgets/pci_device_settings.py:97
+#: widgets/pci_device_settings.py:100
 msgid "PCI device configuration."
 msgstr "Настройка PCI-устройства."
 
-#: widgets/pci_id_widget.py:71
+#: widgets/pci_id_widget.py:73
 msgid "PCI class code"
 msgstr "код PCI-класса"
 
-#: widgets/pci_id_widget.py:72
+#: widgets/pci_id_widget.py:74
 msgid "Vendor ID"
 msgstr "ID производителя"
 
-#: widgets/pci_id_widget.py:73
+#: widgets/pci_id_widget.py:75
 msgid "Device ID"
 msgstr "ID устройства"
 
-#: widgets/pci_id_widget.py:74
+#: widgets/pci_id_widget.py:76
 msgid "Not specified"
 msgstr "Не указано"
 
-#: widgets/project_widget.py:190
+#: widgets/project_widget.py:196
 msgid "Delete description"
 msgstr "Удалить описание"
 
-#: widgets/project_widget.py:314
+#: widgets/project_widget.py:322
 msgid "Selected descriptions deletion"
 msgstr "Удаление выбранных описаний"
 
-#: widgets/project_widget.py:346
+#: widgets/project_widget.py:354
 msgid "Bad build path"
 msgstr "Плохой путь сборки"
 
-#: widgets/qom_settings.py:127
-#: widgets/settings_window.py:182
-msgid "Apply"
-msgstr "Применить"
-
-#: widgets/qom_settings.py:115
-#: widgets/settings_window.py:199
+#: widgets/qom_settings.py:117
+#: widgets/settings_window.py:200
 msgid "Refresh"
 msgstr "Освежить"
 
-#: widgets/qom_settings.py:308
+#: widgets/qom_settings.py:310
 msgid "QOM object configuration."
 msgstr "настройка объекта QOM."
 
-#: widgets/settings_window.py:51
+#: widgets/settings_window.py:55
 msgid "Variable name base"
 msgstr "Основа имени переменной"
 
-#: widgets/settings_window.py:69
+#: widgets/settings_window.py:73
 msgid "Name of variable"
 msgstr "Имя переменной"
 
-#: widgets/settings_window.py:191
-msgid "OK"
-msgstr "ОК"
-
-#: widgets/sysbusdevset.py:60
+#: widgets/sysbusdevset.py:62
 msgid "MMIO Mappings"
 msgstr "Отображения MMIO"
 
-#: widgets/sysbusdevset.py:61
+#: widgets/sysbusdevset.py:63
 msgid "PMIO Mappings"
 msgstr "Отображения PMIO"
 
