@@ -472,6 +472,14 @@ msgstr "Ни одного"
 msgid "Invert selection"
 msgstr "Инвертировать"
 
+#: rr3/stats.py:140
+msgid "Time [seconds]"
+msgstr "Время [секунды]"
+
+#: rr3/stats.py:141
+msgid "Total Instructions"
+msgstr "Всего инструкций"
+
 #: widgets/add_desc_dialog.py:88
 #: widgets/device_settings.py:406
 #: widgets/sysbusdevset.py:79
