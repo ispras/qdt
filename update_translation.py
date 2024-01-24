@@ -2,6 +2,7 @@
 
 from common import (
     makedirs,
+    path2tuple,
 )
 
 from collections import (
@@ -49,7 +50,8 @@ for root, dirs, files in walk(root_dir):
         else:
             continue
 
-        locale_files[file_name] = file_name[root_prefix_len:]
+        # Always use UNIX path separator
+        locale_files[file_name] = "/".join(path2tuple(file_name[root_prefix_len:]))
 
 
 locale_files = OrderedDict(
