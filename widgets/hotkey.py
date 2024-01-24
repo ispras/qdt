@@ -224,7 +224,9 @@ class HotKey(object):
         if callback in self.cb2names:
             return self.cb2names[callback]
         else:
-            # Note, unique string for every callback
+            # Note, unique string for every callback.
+            # Because a hotkey (binding) can be assigned after
+            # `get_keycode_string` was called first time.
             string = copy(_("Unassigned"))
             self.cb2names[callback] = string
             return string
