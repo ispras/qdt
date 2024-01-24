@@ -190,6 +190,7 @@ sudo python2 -m pip install --upgrade \
 	serial==0.0.97 \
 	psutil==5.4.2 \
 	appdirs==1.4.4 \
+	scons==4.5.2 \
 	iso8601==0.1.12 \
 	PyYAML==5.3 \
 	smmap==3.0.1 \
