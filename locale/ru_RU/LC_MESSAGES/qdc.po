@@ -174,10 +174,6 @@ msgstr "Повторить отменённые изменения."
 msgid "Save project."
 msgstr "Сохранить проект."
 
-#: qdc_gui.py:190
-msgid "Rebuild Cache."
-msgstr "Перестроить кэш."
-
 #: qdc_gui.py:252
 #: widgets/project_widget.py:188
 msgid "Add description"
@@ -773,6 +769,9 @@ msgstr "Отображения MMIO"
 #: widgets/sysbusdevset.py:63
 msgid "PMIO Mappings"
 msgstr "Отображения PMIO"
+
+#~ msgid "Rebuild Cache."
+#~ msgstr "Перестроить кэш."
 
 #~ msgid "Generation failed"
 #~ msgstr "Генерация не удалась"
