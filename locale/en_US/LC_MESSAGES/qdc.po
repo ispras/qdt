@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: qdc 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-02-20 18:20+0300\n"
-"PO-Revision-Date:  2019-02-20 17:57+0300\n"
+"PO-Revision-Date:  2024-01-24 05:25+0300\n"
 "Last-Translator: Efimov Vasily <real@ispras.ru>\n"
 "Language-Team: English <real@ispras.ru>\n"
 "Language: English\n"
@@ -22,14 +22,14 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: utf-8\n"
 
-#: qw.py:1238
+#: qw.py:91
 msgid "All events"
 msgstr "All"
 
-#: qw.py:1244
+#: qw.py:97
 msgid "None events"
 msgstr "None"
 
-#: qw.py:1250
+#: qw.py:103
 msgid "Invert selection"
 msgstr "Invert"
