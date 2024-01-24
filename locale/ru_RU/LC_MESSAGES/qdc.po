@@ -38,17 +38,17 @@ msgid "Edit history test"
 msgstr "Тест истории редактирования"
 
 #: misc/history-test.py:104
-#: qdc-gui.py:320
+#: qdc_gui.py:320
 msgid "Undo"
 msgstr "Отменить"
 
 #: misc/history-test.py:109
-#: qdc-gui.py:327
+#: qdc_gui.py:327
 msgid "Redo"
 msgstr "Повторить"
 
 #: misc/history-test.py:113
-#: qdc-gui.py:356
+#: qdc_gui.py:356
 msgid "Edit"
 msgstr "Правка"
 
@@ -96,138 +96,138 @@ msgstr "ДА"
 msgid "NO"
 msgstr "НЕТ"
 
-#: qdc-gui.py:105
+#: qdc_gui.py:105
 msgid "Generation"
 msgstr "Генерация"
 
-#: qdc-gui.py:130
+#: qdc_gui.py:130
 msgid "Generation completed"
 msgstr "Генерация завершена"
 
-#: qdc-gui.py:131
+#: qdc_gui.py:131
 msgid "No errors were reported."
 msgstr "Сообщений об ошибках не было."
 
-#: qdc-gui.py:155
+#: qdc_gui.py:155
 msgid "Qemu device creator GUI"
 msgstr "ГИ генератора устройств Qemu"
 
-#: qdc-gui.py:172
+#: qdc_gui.py:172
 msgid "If editing history window is hidden then show it else hide it."
 msgstr ""
 "Если окно истории редактирования скрыто, то показать его, а иначе - скрыть."
 
-#: qdc-gui.py:179
+#: qdc_gui.py:179
 msgid "Load project from file."
 msgstr "Загрузить проект из файла."
 
-#: qdc-gui.py:185
+#: qdc_gui.py:185
 msgid "Create new project."
 msgstr "Создать новый проект."
 
-#: qdc-gui.py:191
+#: qdc_gui.py:191
 msgid "Add description to the project"
 msgstr "Добавить описание в проект"
 
-#: qdc-gui.py:197
+#: qdc_gui.py:197
 msgid "Set Qemu build path for the project"
 msgstr "Задать путь сборки QEMU для проекта"
 
-#: qdc-gui.py:209
+#: qdc_gui.py:209
 msgid "Launch code generation"
 msgstr "Запустить генерацию кода"
 
-#: qdc-gui.py:215
+#: qdc_gui.py:215
 msgid "Shutdown the application."
 msgstr "Завершить приложение."
 
-#: qdc-gui.py:221
+#: qdc_gui.py:221
 msgid "Revert previous editing."
 msgstr "Отменить изменения."
 
-#: qdc-gui.py:227
+#: qdc_gui.py:227
 msgid "Make reverted editing again."
 msgstr "Повторить отменённые изменения."
 
-#: qdc-gui.py:233
+#: qdc_gui.py:233
 msgid "Save project."
 msgstr "Сохранить проект."
 
-#: qdc-gui.py:190
+#: qdc_gui.py:190
 msgid "Rebuild Cache."
 msgstr "Перестроить кэш."
 
-#: qdc-gui.py:252
+#: qdc_gui.py:252
 #: widgets/project_widget.py:182
 msgid "Add description"
 msgstr "Добавить описание"
 
-#: qdc-gui.py:257
+#: qdc_gui.py:257
 msgid "Set Qemu build path"
 msgstr "Задать путь сборки QEMU"
 
-#: qdc-gui.py:271
+#: qdc_gui.py:271
 msgid "Generate"
 msgstr "Сгенерировать"
 
-#: qdc-gui.py:279
+#: qdc_gui.py:279
 msgid "New project"
 msgstr "Новый проект"
 
-#: qdc-gui.py:238
+#: qdc_gui.py:238
 msgid "Save"
 msgstr "Сохранить"
 
-#: qdc-gui.py:289
+#: qdc_gui.py:289
 msgid "Save project as..."
 msgstr "Сохранить проект как..."
 
-#: qdc-gui.py:247
+#: qdc_gui.py:247
 msgid "Load"
 msgstr "Загрузить"
 
-#: qdc-gui.py:312
+#: qdc_gui.py:312
 msgid "Quit"
 msgstr "Выход"
 
-#: qdc-gui.py:316
+#: qdc_gui.py:316
 #: qw.py:214
 msgid "File"
 msgstr "Файл"
 
-#: qdc-gui.py:336
+#: qdc_gui.py:336
 msgid "Rebuild Cache"
 msgstr "Перестроить кэш"
 
-#: qdc-gui.py:351
+#: qdc_gui.py:351
 msgid "Editing history window"
 msgstr "Окно истории редактирования"
 
-#: qdc-gui.py:320
+#: qdc_gui.py:320
 msgid "Background tasks: "
 msgstr "Фоновые задачи:"
 
-#: qdc-gui.py:661
+#: qdc_gui.py:661
 msgid "Cache rebuilding is impossible"
 msgstr "Перестроение кэша невозможно"
 
-#: qdc-gui.py:662
-#: qdc-gui.py:771
+#: qdc_gui.py:662
+#: qdc_gui.py:771
 #, python-format
 msgid "Selected Qemu build path is bad. Reason: %s"
 msgstr "Выбран плохой путь сборки QEMU. Подробности: %s"
 
-#: qdc-gui.py:674
+#: qdc_gui.py:674
 msgid "Cache rebuilding"
 msgstr "Перестроение кэша"
 
-#: qdc-gui.py:675
+#: qdc_gui.py:675
 msgid ""
 "Cache building is already in process. Do you want to start cache rebuilding?"
 msgstr ""
 "Построение кэша уже выполняется. Вы точно хотите начать перестроение кэша?"
 
-#: qdc-gui.py:689
+#: qdc_gui.py:689
 msgid ""
 "Current project has unsaved changes. Would you like to save it?\n"
 "\n"
@@ -239,63 +239,63 @@ msgstr ""
 "Замечание: резервная копия проекта в любом случае будет сохранена в текущей "
 "папке под именем project.py."
 
-#: qdc-gui.py:722
+#: qdc_gui.py:722
 msgid "Select Qemu build path"
 msgstr "Выбрать путь сборки QEMU"
 
-#: qdc-gui.py:751
-#: qdc-gui.py:786
+#: qdc_gui.py:751
+#: qdc_gui.py:786
 msgid "Generation is cancelled"
 msgstr "Генерация отменена"
 
-#: qdc-gui.py:752
+#: qdc_gui.py:752
 msgid "At least one generation task is already in process."
 msgstr "Как минимум одна генерация уже выполняется."
 
-#: qdc-gui.py:759
-#: qdc-gui.py:770
-#: qdc-gui.py:779
+#: qdc_gui.py:759
+#: qdc_gui.py:770
+#: qdc_gui.py:779
 msgid "Generation is impossible"
 msgstr "Генерация невозможна"
 
-#: qdc-gui.py:760
+#: qdc_gui.py:760
 msgid "No Qemu build path is set for the project."
 msgstr "Для проекта не задан путь сборки QEMU."
 
-#: qdc-gui.py:787
+#: qdc_gui.py:787
 msgid "Qemu version cache is not ready yet. Try later."
 msgstr "Кэш версии QEMU ещё не готов. Попробуйте позже."
 
-#: qdc-gui.py:864
+#: qdc_gui.py:864
 #: qw.py:283
 msgid "Cannot save project"
 msgstr "Невозможно сохранить проект"
 
-#: qdc-gui.py:877
-#: qdc-gui.py:920
+#: qdc_gui.py:877
+#: qdc_gui.py:920
 #: qw.py:263
 msgid "QDC GUI Project defining script"
 msgstr "скрипт-проект для ГИП QDT"
 
-#: qdc-gui.py:878
+#: qdc_gui.py:878
 msgid "Save project"
 msgstr "Сохранить проект"
 
-#: qdc-gui.py:899
+#: qdc_gui.py:899
 msgid "Current project has unsaved changes. They will be lost. Continue?"
 msgstr ""
 "В текущем проекте есть не сохранённые изменения. Они будут потеряны. "
 "Продолжить?"
 
-#: qdc-gui.py:921
+#: qdc_gui.py:921
 msgid "Load project"
 msgstr "Загрузить проект"
 
-#: qdc-gui.py:932
+#: qdc_gui.py:932
 msgid "Project loading failed"
 msgstr "Не удалось загрузить проект"
 
-#: qdc-gui.py:950
+#: qdc_gui.py:950
 msgid "No QEMU build path selected"
 msgstr "Путь сборки QEMU не выбран"
 
