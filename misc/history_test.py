@@ -1,33 +1,35 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
 from common import (
-    HistoryTracker,
-    InverseOperation,
     History,
     HistoryTracker,
-    mlget as _
+    InverseOperation,
+    mlget as _,
 )
 from widgets import (
     CanvasDnD,
-    VarTk,
-    VarMenu,
     HotKey,
-    HotKeyBinding
-)
-from six.moves.tkinter import (
-    CURRENT
+    HotKeyBinding,
+    VarMenu,
+    VarTk,
 )
 
+from six.moves.tkinter import (
+    CURRENT,
+)
+
+
 class DnDOperation(InverseOperation):
-    def __init__(self, id, pos, *args, **kwargs):
+
+    def __init__(self, _id, pos, *args, **kwargs):
         InverseOperation.__init__(self, *args, **kwargs)
-        self.id = id
+        self.id = _id
 
         self.orig_pos = pos
         self.target_pos = None
 
     def __backup__(self, cnv):
-        self.target_pos = cnv.canvas.coords(self.id)[:2]
+        self.target_pos = cnv.coords(self.id)[:2]
 
     def __write_set__(self):
         return [self.id]
@@ -36,14 +38,14 @@ class DnDOperation(InverseOperation):
         return []
 
     def apply(self, cnv, pos):
-        points = cnv.canvas.coords(self.id)
+        points = cnv.coords(self.id)
         anchor = points[:2]
 
         for idx, p in enumerate(points):
             offset = p - anchor[idx % 2]
             points[idx] = offset + pos[idx % 2]
 
-        cnv.canvas.coords(*([self.id] + points))
+        cnv.coords(*([self.id] + points))
 
     def __do__(self, cnv):
         self.apply(cnv, self.target_pos)
@@ -51,7 +53,9 @@ class DnDOperation(InverseOperation):
     def __undo__(self, cnv):
         self.apply(cnv, self.orig_pos)
 
+
 class HistCanvasDnD(CanvasDnD):
+
     def __init__(self, *args, **kwargs):
         self.ht = kwargs.pop("history_tracker")
         CanvasDnD.__init__(self, *args, **kwargs)
@@ -60,20 +64,23 @@ class HistCanvasDnD(CanvasDnD):
         self.bind('<<DnDUp>>', self.dnd_up)
 
     def dnd_down(self, event):
-        dragged = self.canvas.find_withtag(CURRENT)[0]
+        dragged = self.find_withtag(CURRENT)[0]
 
-        self.ht.stage(DnDOperation, dragged, self.canvas.coords(dragged)[:2])
+        self.ht.stage(DnDOperation, dragged, self.coords(dragged)[:2])
 
     def dnd_up(self, event):
         self.ht.commit()
+
 
 def undo():
     if tracker.can_undo():
         tracker.undo()
 
+
 def redo():
     if tracker.can_do():
         tracker.do()
+
 
 def reg_hotkeys():
     hotkeys.add_bindings([
@@ -88,6 +95,7 @@ def reg_hotkeys():
             symbol = "Y"
         )
     ])
+
 
 def main():
     root = VarTk()
@@ -131,13 +139,14 @@ def main():
 
     cnv.grid(row = 0, column = 0, sticky = "NEWS")
 
-    cnv.canvas.create_rectangle(
+    cnv.create_rectangle(
         10, 10, 100, 100,
         tags = "DnD",
         fill = "red"
     )
 
     root.mainloop()
+
 
 if __name__ == '__main__':
     main()

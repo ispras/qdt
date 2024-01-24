@@ -1,18 +1,21 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
-from six.moves.tkinter import (
-    Tk
-)
 from common import (
     Polygon,
     Segment,
-    Vector
+    Vector,
 )
 from widgets import (
-    CanvasDnD
+    CanvasDnD,
 )
 
+from six.moves.tkinter import (
+    Tk,
+)
+
+
 class CanvasPolygon(Polygon):
+
     def __init__(self, canvas, *points, **kwargs):
         pts = []
         i = iter(points)
@@ -33,7 +36,9 @@ class CanvasPolygon(Polygon):
     def update(self):
         self.c.coords(*([self.p] + self.GenCoords()))
 
+
 class CanvasSegment(Segment):
+
     def __init__(self, canvas, begin = None, direction = None, **kwargs):
         Segment.__init__(self, begin, direction)
         self.c = canvas
@@ -47,7 +52,9 @@ class CanvasSegment(Segment):
             [self.x, self.y, self.x + self.d.x, self.y + self.d.y])
         )
 
+
 class CrossTest(CanvasDnD):
+
     def __init__(self, master):
         CanvasDnD.__init__(self, master)
 
@@ -146,6 +153,7 @@ class CrossTest(CanvasDnD):
             )
 
         self.refresh()
+
 
 def main():
     root = Tk()

@@ -15,6 +15,9 @@ from common import (
     Persistent,
 )
 
+from copy import (
+    copy,
+)
 from os import (
     name as os_name,
 )
@@ -173,7 +176,7 @@ class HotKey(object):
                 for kb in self.keys2bindings[kc]:
                     self.update_name(kb)
 
-        if not kc in self.keys2bindings:
+        if kc not in self.keys2bindings:
             return
 
         kbs = self.keys2bindings[kc]
@@ -182,10 +185,18 @@ class HotKey(object):
                 kb.cb()
 
     def on_ctrl_y_breaked(self, event):
-        self.process_ctrl_key(29, 'Y')
+        self.event = event
+        try:
+            self.process_ctrl_key(29, 'Y')
+        finally:
+            del self.event
 
     def on_ctrl_key(self, event):
-        self.process_ctrl_key(event.keycode, event.keysym)
+        self.event = event
+        try:
+            self.process_ctrl_key(event.keycode, event.keysym)
+        finally:
+            del self.event
 
     def add_binding(self, binding):
         kc = binding.kc
@@ -213,7 +224,10 @@ class HotKey(object):
         if callback in self.cb2names:
             return self.cb2names[callback]
         else:
-            string = _("Unassigned")
+            # Note, unique string for every callback.
+            # Because a hotkey (binding) can be assigned after
+            # `get_keycode_string` was called first time.
+            string = copy(_("Unassigned"))
             self.cb2names[callback] = string
             return string
 

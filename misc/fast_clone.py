@@ -3,16 +3,17 @@ A script for testing of `init_submodules_from_cache` operation.
 """
 
 from common import (
-    init_submodules_from_cache
+    init_submodules_from_cache,
 )
+
 from git import (
-    Repo
-)
-from sys import (
-    argv
+    Repo,
 )
 from os.path import (
-    join
+    join,
+)
+from sys import (
+    argv,
 )
 
 

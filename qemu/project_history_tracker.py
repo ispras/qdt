@@ -51,7 +51,9 @@ from common import (
     mlget as _
 )
 
+
 class MachineProxyTracker(object):
+
     def __init__(self, project_history_tracker, machine_description):
         self.pht = project_history_tracker
         self.mach = machine_description
@@ -136,7 +138,7 @@ class MachineProxyTracker(object):
     def delete_base_device(self, dev_id):
         dev = self.mach.id2node[dev_id]
 
-        if not dev.parent_bus is None:
+        if dev.parent_bus is not None:
             self.stage(MOp_SetDevParentBus, None, dev_id)
 
         for idx in reversed(range(len(dev.buses))):
@@ -282,10 +284,10 @@ class MachineProxyTracker(object):
         }
 
         if "name" not in memory_arguments:
-            memory_arguments["name"] = class2str[class_name];
+            memory_arguments["name"] = class2str[class_name]
 
         if "MemorySASNode" not in class_name and "size" not in memory_arguments:
-            memory_arguments["size"] = 0xFEED;
+            memory_arguments["size"] = 0xFEED
 
         self.stage(MOp_AddMemoryNode, class_name, new_id, **memory_arguments)
 
@@ -316,8 +318,9 @@ class MachineProxyTracker(object):
                 continue
 
             for p in n.properties:
-                if  not p.prop_type is QOMPropertyTypeLink \
-                or  not p.prop_val is mem :
+                if (p.prop_type is not QOMPropertyTypeLink
+                    or p.prop_val is not mem
+                ):
                     continue
 
                 self.stage(MOp_SetDevProp, QOMPropertyTypeLink, None, p, n.id)
@@ -358,7 +361,9 @@ class MachineProxyTracker(object):
     def __getattr__(self, name):
         return getattr(self.pht, name)
 
+
 class ProjectHistoryTracker(HistoryTracker):
+
     def __init__(self, *args, **kw):
         super(ProjectHistoryTracker, self).__init__(*args, **kw)
 

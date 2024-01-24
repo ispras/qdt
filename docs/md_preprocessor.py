@@ -1,33 +1,41 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding=utf-8
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 :
 
 DEBUG = 1
 
-from argparse import \
-    ArgumentParser
-
-import sys
-
-from re import \
-    UNICODE, \
-    compile
-
-from itertools import \
-    count
-
-from collections import \
-    OrderedDict
+from argparse import (
+    ArgumentParser,
+)
+from collections import (
+    OrderedDict,
+)
+from itertools import (
+    count,
+)
+from re import (
+    compile,
+)
 from six.moves import (
     zip,
 )
+from sys import (
+    stderr,
+    stdin,
+    stdout,
+    version_info,
+)
+
 
 class PosInfo(object):
+
     def __init__(self, row, start, end, m):
         self.row, self.start, self.end, self.m = row, start, end, m
 
+
 class PatchInfo(PosInfo):
+
     def __init__(self, *args):
         super(PatchInfo, self).__init__(*args)
 
@@ -55,17 +63,22 @@ class PatchInfo(PosInfo):
 
         l.patch(m.start("substitution"), m.end("substitution"), s)
 
+
 class AnchorInfo(PatchInfo):
+
     def __init__(self, *args):
         super(AnchorInfo, self).__init__(*args)
 
         self.references = []
 
+
 class RefInfo(PatchInfo):
+
     def __init__(self, *args):
         super(RefInfo, self).__init__(*args)
 
         self.anchors = []
+
 
 ABOVE = u"выше".encode("utf-8")
 BELOW = u"ниже".encode("utf-8")
@@ -129,27 +142,27 @@ if __name__ == "__main__":
     try:
         in_file_name = args.in_file_name
     except:
-        in_file = sys.stdin
+        in_file = stdin
     else:
         in_file = open(in_file_name, "rb")
 
     out_file_name = args.out_file_name
     if out_file_name is None:
-        sys.stderr.write("version: " + str(sys.version_info) + "\n")
-        if sys.version_info[0] == 3:
+        stderr.write("version: " + str(version_info) + "\n")
+        if version_info[0] == 3:
             class RawOut(tuple):
                 def write(self, raw):
                     self[0].write(raw.decode("utf-8"))
                 def close(self):
                     self[0].close()
 
-            out_file = RawOut((sys.stdout,))
+            out_file = RawOut((stdout,))
         else:
-            out_file = sys.stdout
-        log_file = sys.stderr
+            out_file = stdout
+        log_file = stderr
     else:
         out_file = open(out_file_name, "wb")
-        log_file = sys.stdout
+        log_file = stdout
 
     def log(msg):
         log_file.write(msg + "\n")

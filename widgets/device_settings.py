@@ -122,7 +122,7 @@ class BusLineDesc(object):
                 [ b for b in self.dsw.mach.buses if (\
                         (   b.parent_device is None \
                          or b.parent_device == self.dsw.node)
-                    and (not b.id in sel_buses))
+                    and (b.id not in sel_buses))
                 ] + [ None ]
             )
         ]
@@ -573,7 +573,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
         bld = self.child_buses_rows[-1]
         bus = self.find_node_by_link_text(bld.v.get())
 
-        if not bus is None:
+        if bus is not None:
             # Selecting not NULL child bus means that a child bus was added.
             # Add new NULL bus string for consequent bus addition.
             bld.v.trace_vdelete("w", bld.obs)
@@ -589,15 +589,15 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
     def get_selected_child_buses(self):
         child_buses = [ bld.v.get() for bld in self.child_buses_rows ]
         ret = [ self.find_node_by_link_text(t) for t in child_buses if t ]
-        return [ b.id for b in ret if not b is None ]
+        return [ b.id for b in ret if b is not None ]
 
     def get_selected_buses(self):
         ret = self.get_selected_child_buses()
 
         parent_bus = self.find_node_by_link_text(self.bus_var.get())
-        if not parent_bus is None:
+        if parent_bus is not None:
             parent_bus = parent_bus.id
-            if not parent_bus in ret:
+            if parent_bus not in ret:
                 ret.append(parent_bus)
 
         return ret
@@ -618,7 +618,7 @@ class DeviceSettingsWidget(QOMInstanceSettingsWidget, object):
         # Do property removing before addition to prevent conflicts of
         # property recreation.
         for p in dev.properties:
-            if not p in self.prop2field:
+            if p not in self.prop2field:
                 self.mht.stage(MOp_DelDevProp, p, dev.id)
 
         for p, desc in list(self.prop2field.items()):
