@@ -114,6 +114,20 @@ def main():
         def version_info(self):
             print("TestFrontEnd.version_info")
 
+        @rpc("int32_t", RPCString, RPCBuffer, RPCBuffer)
+        def execve(self, filename, argv, envp):
+            """ argv, envp: arrays of 0-separated strings
+            """
+            print("TestFrontEnd.execve")
+
+        @rpc(RPCBuffer, "int32_t")
+        def read_out(self, pid):
+            print("TestFrontEnd.read_out")
+
+        @rpc(RPCBuffer, "int32_t")
+        def read_err(self, pid):
+            print("TestFrontEnd.read_err")
+
     # not correct, just for unpacker testing
     raw2 = b"\xef\xdb\xea\x0d\x0d\xf0\xad\x0b\x01\x02\x03\x04"
 
@@ -223,6 +237,23 @@ def main():
     print(fe.strcmp(b"cccc", u"cccc"))
     print(fe.bufcmp(RPCBufferFE(a = b"aaa", b = b"bbb")))
     print(fe.bufcmp(RPCBufferFE(a = b"aaa", b = b"aaaa")))
+    print(fe.execve(
+        "/usr/bin/touch",
+        join(dirname(__file__), "rpc.touch") + "\x00",
+        "")
+    )
+    desc = fe.execve(
+        "/bin/echo",
+        "-n\x00Hello, World!\n\x00",
+        ""
+    )
+    print(desc)
+    print(fe.read_out(desc))
+    print(fe.read_out(fe.execve(
+        "/bin/ls",
+        "/\x00",
+        ""
+    )).decode("utf-8"))
     print(fe.stop())
 
 if __name__ == "__main__":
