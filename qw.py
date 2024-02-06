@@ -117,7 +117,7 @@ class QEmuWatcherGUI(GUITk):
         else:
             return
 
-        mdsw = MachineDescriptionSettingsWidget(d, self)
+        mdsw = MachineDescriptionSettingsWidget(self, qom_desc = d)
         mdsw.grid(row = 0, column = 0, sticky = "NESW")
         mdsw.mw.mdw.var_physical_layout.set(False)
         self.mdsw = mdsw
