@@ -696,9 +696,9 @@ class PCMachineWatcher(MachineWatcher):
 
         # since f0bb276bf8d5b3df57697357b802ca76e4cdf05f
         #        hw/i386: split PCMachineState deriving X86MachineState from it
-        #        pcmc -> x86ms
+        #        pcms -> x86ms
         try:
-            gsi = rt["pcmc"]["gsi"]
+            gsi = rt["pcms"]["gsi"]
         except:
             # TODO: use heuristics
             gsi = rt["x86ms"]["gsi"]
