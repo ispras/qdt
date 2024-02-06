@@ -43,22 +43,25 @@ class InMemoryELFFile(ELFFile):
                     break
 
         super(InMemoryELFFile, self).__init__(stream)
+        self._file_name = file_name
+
+    def create_dwarf_cache(self):
+        if not self.has_dwarf_info():
+            raise ValueError(
+    "%s does not have DWARF info. Provide a debug build\n" % (self._file_name)
+            )
+
+        di = self.get_dwarf_info()
+
+        if not di.debug_pubnames_sec:
+            print("%s does not contain .debug_pubtypes section. Provide"
+                " -gpubnames flag to the compiler" % self._file_name
+            )
+
+        return DWARFInfoCache(di,
+            symtab = self.get_section_by_name(".symtab")
+        )
 
 
 def create_dwarf_cache(exec_file):
-    elf = InMemoryELFFile(exec_file)
-    if not elf.has_dwarf_info():
-        raise ValueError(
-"%s does not have DWARF info. Provide a debug build\n" % (exec_file)
-        )
-
-    di = elf.get_dwarf_info()
-
-    if not di.debug_pubnames_sec:
-        print("%s does not contain .debug_pubtypes section. Provide"
-            " -gpubnames flag to the compiler" % exec_file
-        )
-
-    return DWARFInfoCache(di,
-        symtab = elf.get_section_by_name(".symtab")
-    )
+    return InMemoryELFFile(exec_file).create_dwarf_cache()
