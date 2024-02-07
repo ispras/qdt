@@ -249,9 +249,9 @@ Related: `dereference`
             boff, bsize = datum.bit_offset, datum.bit_size
 
             if boff is not None and bsize is not None:
-                # XXX: According to DWARF v4 2010.06.10 (p. 90, PDF p.104),
+                # XXX: According to DWARF v4 2010.06.10 (p.90, PDF p.104),
                 # both LE and BE bit offsets must have less values for top bit
-                # fields in `strict`.
+                # fields in `struct`.
                 # But, experiments shown that for a binary by GCC 5.4.0 for LE
                 # architecture (AMD 64) bit offset points to MSB of bit field
                 # where 0 offset corresponds to MSB of fetched value. Moreover,
