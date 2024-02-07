@@ -1,63 +1,65 @@
 #!/usr/bin/env python
 
-from qemu import (
-    QType,
-    co_fill_children,
-    POp_AddDesc,
-    MachineWatcher,
-    PCMachineWatcher,
-    QOMTreeReverser,
-    MachineReverser,
-    MachineNode
+from common import (
+    mlget as _,
+    pypath,
+    pythonize,
 )
 from debug import (
-    git_repo_by_dwarf,
     create_dwarf_cache,
+    GitLineVersionAdapter,
+    git_repo_by_dwarf,
     Runtime,
-    GitLineVersionAdapter
-)
-from common import (
-    pypath,
-    mlget as _,
-    pythonize
-)
-from argparse import (
-    SUPPRESS,
-    ArgumentDefaultsHelpFormatter,
-    ArgumentParser
-)
-from sys import (
-    stderr
-)
-from os import (
-    remove
-)
-from widgets import (
-    QOMTreeWindow,
-    GUIProject,
-    GUIProjectHistoryTracker,
-    asksaveas,
-    VarMenu,
-    HotKey,
-    HotKeyBinding,
-    MachineDescriptionSettingsWidget,
-    GUITk
-)
-from six.moves.tkinter_messagebox import (
-    showerror
-)
-from subprocess import (
-    Popen
 )
 # use ours pyrsp
 with pypath("pyrsp"):
     from pyrsp.rsp import (
-        AMD64
+        AMD64,
     )
     from pyrsp.utils import (
         find_free_port,
-        wait_for_tcp_port
+        wait_for_tcp_port,
     )
+from qemu import (
+    co_fill_children,
+    MachineNode,
+    MachineReverser,
+    MachineWatcher,
+    PCMachineWatcher,
+    POp_AddDesc,
+    QOMTreeReverser,
+    QType,
+)
+from widgets import (
+    asksaveas,
+    GUIProject,
+    GUIProjectHistoryTracker,
+    GUITk,
+    HotKey,
+    HotKeyBinding,
+    MachineDescriptionSettingsWidget,
+    QOMTreeWindow,
+    VarMenu,
+)
+
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    SUPPRESS,
+)
+from os import (
+    remove,
+)
+from six.moves.tkinter_messagebox import (
+    showerror,
+)
+from subprocess import (
+    Popen,
+)
+from sys import (
+    stderr,
+)
+
 
 class QArgumentParser(ArgumentParser):
 
