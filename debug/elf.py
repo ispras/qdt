@@ -2,23 +2,19 @@
 
 __all__ = [
     "InMemoryELFFile"
+  , "create_dwarf_cache"
 ]
+
+from .dic import (
+    DWARFInfoCache,
+)
 
 from elftools.elf.elffile import (
     ELFFile
 )
-
-from sys import (
-    version_info
+from six import (
+    BytesIO,
 )
-if version_info[0] == 3:
-    from io import (
-        BytesIO
-    )
-else:
-    from cStringIO import (
-        StringIO as BytesIO
-    )
 
 
 class InMemoryELFFile(ELFFile):
@@ -38,3 +34,25 @@ class InMemoryELFFile(ELFFile):
                     break
 
         super(InMemoryELFFile, self).__init__(stream)
+        self._file_name = file_name
+
+    def create_dwarf_cache(self):
+        if not self.has_dwarf_info():
+            raise ValueError(
+    "%s does not have DWARF info. Provide a debug build\n" % (self._file_name)
+            )
+
+        di = self.get_dwarf_info()
+
+        if not di.debug_pubnames_sec:
+            print("%s does not contain .debug_pubtypes section. Provide"
+                " -gpubnames flag to the compiler" % self._file_name
+            )
+
+        return DWARFInfoCache(di,
+            symtab = self.get_section_by_name(".symtab")
+        )
+
+
+def create_dwarf_cache(exec_file):
+    return InMemoryELFFile(exec_file).create_dwarf_cache()

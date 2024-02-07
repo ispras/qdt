@@ -66,10 +66,10 @@ now represents a long-living value. Its memory location has been evaluated and
 saved as constant. See `Value.to_global`. Used internally. It emulates `Datum`.
     """
 
-    def __init__(self, datum, location):
+    def __init__(self, value, location):
         self.location = location
 
-        self._backing = datum
+        self._backing = value
 
     @lazy
     def dic(self):
@@ -78,6 +78,10 @@ saved as constant. See `Value.to_global`. Used internally. It emulates `Datum`.
     @lazy
     def type(self):
         return self._backing.type
+
+    @lazy
+    def fetch_size(self):
+        return self._backing.datum.fetch_size
 
 
 class DereferencedValue(object):
@@ -96,6 +100,10 @@ expression is extended correspondingly. See `Value.dereference` or
     @lazy
     def dic(self):
         return self._backing.dic
+
+    @lazy
+    def fetch_size(self):
+        return self._backing.datum.fetch_size
 
 
 class Returned(object):
@@ -233,14 +241,48 @@ Related: `dereference`
             expr = datum.expression
         else:
             if size is None:
-                size = self.type.size_expr
+                size = datum.fetch_size
             expr = Deref(loc_expr, size)
 
         fetched = self.eval(expr)
 
+        if isinstance(datum, Field):
+            # Support for bit fields
+            dboff = datum.data_bit_offset
+
+            if dboff is not None:
+                fetched >>= dboff & 0x7
+                # Full offset bytes are accounted in location
+
+            boff, bsize = datum.bit_offset, datum.bit_size
+
+            if boff is not None and bsize is not None:
+                # XXX: According to DWARF v4 2010.06.10 (p.90, PDF p.104),
+                # both LE and BE bit offsets must have less values for top bit
+                # fields in `struct`.
+                # But, experiments shown that for a binary by GCC 5.4.0 for LE
+                # architecture (AMD 64) bit offset points to MSB of bit field
+                # where 0 offset corresponds to MSB of fetched value. Moreover,
+                # offset is NOT given relative to the container (struct) start.
+                # Instead, a byte aligned field is implicitly allocated in the
+                # container. Location expression from DIE points to that
+                # implicit field relative to the container. And bit offset is
+                # given relative to MSB of the implicit field.
+                # So, implicit field is fetched first and then the bit field is
+                # evaluated from the fetched value.
+                shift = (size << 3) - boff - bsize
+                fetched >>= shift
+
+            if bsize is not None:
+                fetched &= (1 << bsize) - 1
+
         return fetched
 
     def fetch_pointer(self):
+        """ If a user is completely sure that the value is a pointer then this
+way to fetch it is faster than common `fetch()` because automatic size
+evaluation is time consuming.
+        """
         return self.fetch(self.runtime.address_size)
 
     def fetch_c_string(self, limit = 10, encoding = "utf-8"):

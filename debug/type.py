@@ -75,6 +75,37 @@ class Field(object):
     # assembly level terms
 
     @lazy
+    def fetch_size(self):
+        "Minimum bytes count that must be fetched to get entire field."
+        try:
+            return self.die.attributes["DW_AT_byte_size"].value
+        except KeyError:
+            return self.type.size_expr
+
+    @lazy
+    def bit_offset(self):
+        try:
+            # DWARF v3
+            return self.die.attributes["DW_AT_bit_offset"].value
+        except KeyError:
+            return None
+
+    @lazy
+    def data_bit_offset(self):
+        try:
+            # DWARF v4
+            return self.die.attributes["DW_AT_data_bit_offset"].value
+        except KeyError:
+            return None
+
+    @lazy
+    def bit_size(self):
+        try:
+            return self.die.attributes["DW_AT_bit_size"].value
+        except KeyError:
+            return None
+
+    @lazy
     def location(self):
         """ Location is a symbolic expression that can be used to get the value
 of this field at runtime.
@@ -84,14 +115,18 @@ of this field at runtime.
             loc_attr = attrs["DW_AT_data_member_location"]
             # location list is not expected there
             if loc_attr.form == "DW_FORM_exprloc":
-                return self.container.dic.expr_parser.build(loc_attr.value)
+                loc = self.container.dic.expr_parser.build(loc_attr.value)
             else: # integer constant
-                return Plus(ObjectAddress(), loc_attr.value)
-        elif "DW_AT_data_bit_offset" in attrs:
-            # See DWARF3, p.88 (PDF p. 102)
-            raise NotImplementedError("Bit offset of fields")
+                loc = Plus(ObjectAddress(), loc_attr.value)
         else:
-            return ObjectAddress()
+            loc = ObjectAddress()
+
+        off = self.data_bit_offset
+
+        if off is not None:
+            loc = Plus(loc, off >> 3)
+
+        return loc
 
     # DWARF specific
 
@@ -131,9 +166,13 @@ TYPE_CODE_NAMESPACE = next(c)
 TYPE_CODE_DECFLOAT = next(c)
 TYPE_CODE_INTERNAL_FUNCTION = next(c)
 
+# Codes below are internal to this API
+_TYPE_CODE_BASE = next(c)
+
 del c
 
 tag2code = {
+    "DW_TAG_base_type" : _TYPE_CODE_BASE,
     "DW_TAG_pointer_type" : TYPE_CODE_PTR,
     "DW_TAG_array_type" : TYPE_CODE_ARRAY,
     "DW_TAG_structure_type": TYPE_CODE_STRUCT,
@@ -197,6 +236,7 @@ class Type(object):
 
         if tag in tag2code:
             self.code = tag2code[tag]
+            # TODO: convert TYPE_CODE_BASE code to INT, FLOAT, etc...
         else:
             # is not implemented yet
             self.code = None
@@ -287,6 +327,8 @@ attribute.
             return AddressSize()
         elif code == TYPE_CODE_TYPEDEF:
             return self.target_type.size_expr
+        elif code == _TYPE_CODE_BASE:
+            return self.die.attributes["DW_AT_byte_size"].value
         else:
             raise NotImplementedError(
                 "Unknown size of type with code %u" % code

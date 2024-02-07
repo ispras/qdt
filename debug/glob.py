@@ -18,9 +18,12 @@ from common import (
 from collections import (
     OrderedDict
 )
+from .cached_die import (
+    CachedDIE
+)
 
 
-class Datum(object):
+class Datum(CachedDIE):
 
     def __init__(self, dic, die):
         """
@@ -33,10 +36,9 @@ class Datum(object):
         the root of debug information entry tree describing that datum
 
         """
-        self.dic = dic
-        self.die = die
+        super(Datum, self).__init__(dic, die)
 
-        self.name = die.attributes["DW_AT_name"].value
+        self.name = self["DW_AT_name"].value
 
     # source code level terms
 
@@ -55,12 +57,17 @@ class Datum(object):
     # assembly level terms
 
     @lazy
+    def fetch_size(self):
+        "Minimum bytes count that must be fetched to get entire datum."
+        return self.type.size_expr
+
+    @lazy
     def location(self):
         """ Location is a symbolic expression that can be used to get the value
 of this datum at runtime.
         """
         try:
-            loc = self.die.attributes["DW_AT_location"]
+            loc = self["DW_AT_location"]
         except KeyError:
             return None
 
@@ -73,7 +80,7 @@ of this datum at runtime.
 
     @lazy
     def type_DIE(self):
-        type_attr = self.die.attributes["DW_AT_type"]
+        type_attr = self["DW_AT_type"]
         return self.dic.get_DIE_by_attr(type_attr, self.die.cu)
 
 

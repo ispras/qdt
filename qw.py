@@ -1,60 +1,65 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-from qemu import (
-    POp_AddDesc,
-    MachineWatcher,
-    PCMachineWatcher,
-    QOMTreeReverser,
-    MachineReverser,
-    MachineNode
+from common import (
+    mlget as _,
+    pypath,
+    pythonize,
 )
 from debug import (
-    git_repo_by_dwarf,
     create_dwarf_cache,
+    GitLineVersionAdapter,
+    git_repo_by_dwarf,
     Runtime,
-    GitLineVersionAdapter
-)
-from common import (
-    pypath,
-    mlget as _,
-    pythonize
-)
-from argparse import (
-    SUPPRESS,
-    ArgumentDefaultsHelpFormatter,
-    ArgumentParser
-)
-from sys import (
-    stderr
-)
-from os import (
-    remove
-)
-from widgets import (
-    GUIProject,
-    GUIProjectHistoryTracker,
-    asksaveas,
-    VarMenu,
-    HotKey,
-    HotKeyBinding,
-    MachineDescriptionSettingsWidget,
-    GUITk
-)
-from six.moves.tkinter_messagebox import (
-    showerror
-)
-from subprocess import (
-    Popen
 )
 # use ours pyrsp
 with pypath("pyrsp"):
     from pyrsp.rsp import (
-        AMD64
+        AMD64,
     )
     from pyrsp.utils import (
         find_free_port,
-        wait_for_tcp_port
+        wait_for_tcp_port,
     )
+from qemu import (
+    co_fill_children,
+    MachineNode,
+    MachineReverser,
+    MachineWatcher,
+    PCMachineWatcher,
+    POp_AddDesc,
+    QOMTreeReverser,
+    QType,
+)
+from widgets import (
+    asksaveas,
+    GUIProject,
+    GUIProjectHistoryTracker,
+    GUITk,
+    HotKey,
+    HotKeyBinding,
+    MachineDescriptionSettingsWidget,
+    QOMTreeWindow,
+    VarMenu,
+)
+
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    SUPPRESS,
+)
+from os import (
+    remove,
+)
+from six.moves.tkinter_messagebox import (
+    showerror,
+)
+from subprocess import (
+    Popen,
+)
+from sys import (
+    stderr,
+)
+
 
 class QArgumentParser(ArgumentParser):
 
@@ -68,13 +73,14 @@ class QArgumentParser(ArgumentParser):
 class QEmuWatcherGUI(GUITk):
     "Showing runtime state of machine."
 
-    def __init__(self, pht, runtime):
+    def __init__(self, pht, runtime, qom_tree_watcher):
         GUITk.__init__(self, wait_msec = 1)
 
         self.title(_("QEmu Watcher"))
 
         self.pht = pht
         self.rt = runtime
+        self.qom_tree_watcher = qom_tree_watcher
 
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
@@ -102,6 +108,15 @@ class QEmuWatcherGUI(GUITk):
             command = self._on_save,
             accelerator = hk.get_keycode_string(self._on_save)
         )
+
+        toolsmenu = VarMenu(menubar, tearoff = False)
+        menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
+
+        toolsmenu.add_command(
+            label = _("Current QOM Tree"),
+            command = self._on_current_qom_tree
+        )
+
         self._exiting = False
         self.protocol("WM_DELETE_WINDOW", self._on_wm_delete_window)
 
@@ -117,7 +132,7 @@ class QEmuWatcherGUI(GUITk):
         else:
             return
 
-        mdsw = MachineDescriptionSettingsWidget(d, self)
+        mdsw = MachineDescriptionSettingsWidget(self, qom_desc = d)
         mdsw.grid(row = 0, column = 0, sticky = "NESW")
         mdsw.mw.mdw.var_physical_layout.set(False)
         self.mdsw = mdsw
@@ -185,6 +200,24 @@ class QEmuWatcherGUI(GUITk):
         # co_rsp_poller will destroy the window after RSP thread ended.
         self._exiting = True
         self.rt.target.exit = True
+
+    def _on_current_qom_tree(self):
+        self.enqueue(self._co_show_current_qom_tree())
+
+    def _co_show_current_qom_tree(self):
+        rqom_tree = self.qom_tree_watcher.tree
+
+        # Recovered QOM tree can be empty or not finished yet.
+        object_rqom_tree = rqom_tree.name2type.get("object", None)
+
+        arch = "[current architecture]"
+
+        qom_tree = QType("object", arches = set([arch]))
+
+        if object_rqom_tree is not None:
+            yield co_fill_children(object_rqom_tree, qom_tree, arch)
+
+        QOMTreeWindow(self, qom_tree = qom_tree)
 
 
 def main():
@@ -324,7 +357,7 @@ def main():
             else:
                 yield False
 
-    tk = QEmuWatcherGUI(slave_pht, rt)
+    tk = QEmuWatcherGUI(slave_pht, rt, qomtr)
 
     tk.task_manager.enqueue(co_syncronizer())
 

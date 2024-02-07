@@ -3,7 +3,7 @@ __all__ = [
 ]
 
 
-from itertools import (
+from six.moves import (
     zip_longest,
 )
 

@@ -114,10 +114,13 @@ the QOM tree by fetching relevant data.
                 t.realize = rt.dic.subprogram(realize_addr)
 
     def on_main(self):
-        # main, just after QOM module initialization
+        # just after QOM module initialization
+        # previously in main, since v5.2.50 in qemu_init_subsystems
 
         """
-            softmmu/vl.c:2867 bac068e0648c1f5c37f6a0a9423b8aa55e8c09c2
+            runstate.c:745 ba87e43481f2c9a7780f21aa22682573169f041d
+            vl.c:2987 efd7ab22fbc9e58c0aaa0fbc0a723e95972a626f
+            vl.c:2867 bac068e0648c1f5c37f6a0a9423b8aa55e8c09c2
             vl.c:3075 v2.12.0
             vl.c:2980 d0dff238a87fa81393ed72754d4dc8b09e50b08b
         """
@@ -224,16 +227,16 @@ Notifications are issued for many machine composition events.
         i = RQInstance(obj, rqom_type)
         self.instances[obj.address] = i
 
-        # propagate class properties to the instance
-        for t in rqom_type.iter_inheritance():
+        return i
+
+    def _propagate_class_properties(self, i):
+        for t in i.type.iter_inheritance():
             for prop in t.properties:
                 i.properties[prop.name] = RQObjectProperty(i, prop.prop,
                     name = prop.name,
                     _type = prop.type
                 )
                 self.__notify_property_added(i, prop)
-
-        return i
 
     # Breakpoint handlers
 
@@ -268,6 +271,8 @@ Notifications are issued for many machine composition events.
                 print("Creating memory")
             self.current_memory = inst
 
+        self._propagate_class_properties(inst)
+
     def on_obj_init_end(self):
         # object_initialize_with_type, return
 
@@ -291,6 +296,8 @@ Notifications are issued for many machine composition events.
 
         """
             hw/core/machine.c:819 11bc4a13d1f4b07dafbd1dda4d4bf0fdd7ad65f2
+                First line of machine_initfn
+
             hw/core/machine.c:656 b2fc91db84470a78f8e93f5b5f913c17188792c8
             hw/core/machine.c:654 v2.12.0
         """
@@ -301,12 +308,12 @@ Notifications are issued for many machine composition events.
 
         self.__notify_machine_created(inst)
 
-        if not self.verbose:
-            return
+        if self.verbose:
+            print("Machine creation started\nDescription: " +
+                desc.fetch_c_string()
+            )
 
-        print("Machine creation started\nDescription: " +
-            desc.fetch_c_string()
-        )
+        self._propagate_class_properties(inst)
 
     def on_mem_init_end(self):
         # return from memory_region_init
@@ -337,7 +344,12 @@ Notifications are issued for many machine composition events.
     def on_board_init_end(self):
         # machine_run_board_init
 
-        """ hw/core/machine.c:830 v2.12.0 1
+        """
+            hw/core/machine.c:1135 v5.2.0
+                Last line in machine_run_board_init
+                Just after machine_class->init(machine);
+
+            hw/core/machine.c:830 v2.12.0 1
             vl.c:4476 ad584d37f2a86b392c25f3f00cc1f1532676c2d1 1
             vl.c:4510 2ae45973d61070c1a1883c1f3c43f7154cc85a91
         """
@@ -570,7 +582,11 @@ Notifications are issued for many machine composition events.
         # bus_remove_child, before actual unparenting
 
         # v2.12.0
-        """ hw/core/qdev.c:57 v2.12.0
+        """
+            hw/core/qdev.c:66 v5.2.0
+                Just after the child (`kid`) is found in `children` list.
+
+            hw/core/qdev.c:57 v2.12.0
             hw/core/qdev.c:70 67980031d234aa90524b83bb80bb5d1601d29076
         """
 
@@ -678,7 +694,14 @@ class PCMachineWatcher(MachineWatcher):
         rt = self.rt
         instances = self.instances
 
-        gsi = rt["pcms"]["gsi"]
+        # since f0bb276bf8d5b3df57697357b802ca76e4cdf05f
+        #        hw/i386: split PCMachineState deriving X86MachineState from it
+        #        pcms -> x86ms
+        try:
+            gsi = rt["pcms"]["gsi"]
+        except:
+            # TODO: use heuristics
+            gsi = rt["x86ms"]["gsi"]
         # gsi is array of qemu_irq
         gsi_state = rt["gsi_state"]
         i8259_irq = gsi_state["i8259_irq"]
