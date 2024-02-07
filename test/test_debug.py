@@ -1,26 +1,27 @@
-from unittest import (
-    main
-)
 from common import (
     ee,
-    pypath
-)
-from os.path import (
-    dirname,
-    join
+    pypath,
 )
 from debug import (
-    git_repo_by_dwarf,
-    GitLineVersionAdapter,
-    Watcher,
-    InMemoryELFFile,
     DWARFInfoCache,
-    Runtime
+    GitLineVersionAdapter,
+    git_repo_by_dwarf,
+    InMemoryELFFile,
+    Runtime,
+    Watcher,
 )
 with pypath("..pyrsp.test"):
     from tests import (
-        TestUser
+        TestUser,
     )
+
+from os.path import (
+    dirname,
+    join,
+)
+from unittest import (
+    main,
+)
 
 
 test_dir = join(dirname(__file__), "debug_tests")
@@ -67,6 +68,7 @@ class BitFieldsWatcher(Watcher):
 
         self._test.assertEqual(values, (5, 6, 7))
 
+
 class TestBitFields(TestUser):
     SRC = join(test_dir, "bitfields", "main.c")
     EXE = SRC[:-1] + "exe"
@@ -89,6 +91,7 @@ class TestBitFields(TestUser):
 
     def test_bitfields(self):
         self._target.run(setpc = False)
+
 
 if __name__ == "__main__":
     main()
