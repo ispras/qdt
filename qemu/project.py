@@ -11,10 +11,12 @@ from common import (
     co_find_eq,
     makedirs,
     same_sets,
-    shadow_open,
 )
 from .cpu import (
     CPUDescription,
+)
+from libe.common.shadow_open import (
+    shadow_open,
 )
 from .machine_description import (
     MachineNode,
