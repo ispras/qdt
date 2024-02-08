@@ -45,6 +45,8 @@ from common import (
     mlget as _,
     ee,
     pypath,
+)
+from libe.common.shadow_open import (
     shadow_open,
 )
 from itertools import (
