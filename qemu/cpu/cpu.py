@@ -485,7 +485,7 @@ class CPUType(QOMCPU):
             join(src, "disas", "Makefile.objs"),
             self.target_name + ".o",
             "common-obj",
-            "$(" + self.config_arch_dis + ")"
+            self.config_arch_dis
         )
 
         yield True
