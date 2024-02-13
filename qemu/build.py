@@ -37,6 +37,7 @@ re_meson_ss_new = compile(b"(\w+)\s*=\s*\w+\s*[.]\s*source_set\s*[(]")
 # name is Qemu version specific. Version API must be used there.
 
 obj_var_names = defaultdict(lambda : "obj")
+obj_var_names["disas"] = "common-obj"
 obj_var_names["pci"] = "common-obj"
 obj_var_names["hw"] = "devices-dirs"
 
