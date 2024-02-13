@@ -1164,7 +1164,8 @@ class CPUType(QOMCPU):
 
 
 def create_default_config(src, target_name):
-    default_config = join(src, "default-configs", target_name + "-softmmu.mak")
+    default_config = join(src, *get_vp("default-configs suffix"))
+    default_config = join(default_config, target_name + "-softmmu.mak")
 
     with shadow_open(default_config) as f:
         f.write("# Default configuration for %s-softmmu\n" % target_name)
