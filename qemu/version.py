@@ -273,7 +273,8 @@ def define_only_qemu_2_6_0_types():
         Function(name = "vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
 
-    Header[get_vp("cpu header")].add_types([
+    cpu_h = Header[get_vp("cpu header")]
+    cpu_h.add_types([
         Type("vaddr", False),
         Type("MMUAccessType", False),
         Structure("CPUBreakpoint",
@@ -938,6 +939,7 @@ def define_only_qemu_2_6_0_types():
         qdev_core_header.add_types([
             Function("BUS"),
             Function("DEVICE"),
+            Function("DEVICE_CLASS"),
         ])
         hw_sysbus_h.add_type(Function("SYS_BUS_DEVICE"))
         hw_pci_pci_h.add_types([
@@ -947,6 +949,7 @@ def define_only_qemu_2_6_0_types():
         Header["hw/pci/pci_bridge.h"].add_type(Function("PCI_BRIDGE"))
         hw_pci_pci_host_h.add_type(Function("PCI_HOST_BRIDGE"))
         hw_boards_h.add_type(Function("MACHINE_CLASS"))
+        cpu_h.add_type(Function("CPU_CLASS"))
 
 def define_qemu_2_6_5_types():
     add_base_types()
