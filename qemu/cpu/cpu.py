@@ -49,7 +49,6 @@ from os.path import (
     basename,
     dirname,
     join,
-    sep,
     split,
     splitext,
 )
@@ -417,7 +416,7 @@ class CPUType(QOMCPU):
 
         yield True
 
-        target_folder = get_vp("target folder") + self.target_name + sep
+        target_folder = get_vp("target folder") + self.target_name
         abs_target_folder = join(src, target_folder)
 
         yield True
