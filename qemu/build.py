@@ -145,6 +145,12 @@ def register_src_in_meson(src_root, sname, directory):
         # If it's a new `hw` subfolder, it has no `meson.build`.
         open(meson_build, "wb").close()
 
-    line = "%s.add(files('%s'))" % (source_set, sname)
+    flag = config_flags[directory]
+    if flag:
+        line = "%s.add(when: '%s', if_true: files('%s'))" % (
+            source_set, flag, sname
+        )
+    else:
+        line = "%s.add(files('%s'))" % (source_set, sname)
 
     add_line_to_file(meson_build, line)
