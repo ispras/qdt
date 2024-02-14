@@ -503,15 +503,15 @@ class CPUType(QOMCPU):
 
         yield True
 
-        if build_system == "meson":
-            assert "disas" not in config_flags
-            config_flags["disas"] = self.config_arch_dis
+        assert "disas" not in config_flags
+        # Note, this is for both Makefile and meson build systems.
+        config_flags["disas"] = self.config_arch_dis
 
         register_src_in_build_system(src, disas_name, "disas")
 
-        if build_system == "meson":
-            del config_flags["disas"]
+        del config_flags["disas"]
 
+        if build_system == "meson":
             patch_meson_build__add_disassembler(
                 src, self.target_name, self.config_arch_dis
             )
