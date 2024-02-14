@@ -50,14 +50,12 @@ config_flags["hw"] = "CONFIG_SOFTMMU"
 # settings is chosen this way.
 
 
-def register_in_build_system(folder, known_targets):
+def register_in_build_system(src_root, folder, known_targets):
     tail, head = split(folder)
 
-    if head == "hw":
-        return
-
-    # Provide Makefiles in ancestors.
-    register_in_build_system(tail, known_targets)
+    if tail:
+        # Provide Makefiles in ancestors.
+        register_in_build_system(src_root, tail, known_targets)
 
     # Register the folder in its parent.
     # Note that folders whose names match Qemu target CPU architecture
@@ -70,7 +68,7 @@ def register_in_build_system(folder, known_targets):
     build_system = get_vp("build system")
 
     if build_system == "Makefile":
-        parent_Makefile_obj = join(tail, "Makefile.objs")
+        parent_Makefile_obj = join(src_root, tail, "Makefile.objs")
 
         # Add empty Makefile.objs if no one exists.
         if not isfile(parent_Makefile_obj):
@@ -80,7 +78,7 @@ def register_in_build_system(folder, known_targets):
             obj_var_names[parent_dir], config_flags[parent_dir]
         )
     elif build_system == "meson":
-        parent_meson_build = join(tail, "meson.build")
+        parent_meson_build = join(src_root, tail, "meson.build")
 
         # Add empty meson.build if no one exists.
         if not isfile(parent_meson_build):

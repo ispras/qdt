@@ -176,11 +176,12 @@ class QProject(object):
             if type(s) is not Source:
                 continue
 
+            directory = join("hw", desc.directory)
+
             yield
-            register_in_build_system(sdir, known_targets)
+            register_in_build_system(src, directory, known_targets)
 
             yield True
-            directory = join("hw", desc.directory)
             register_src_in_build_system(src, sname, directory)
 
     # TODO: add path to `QProject`
