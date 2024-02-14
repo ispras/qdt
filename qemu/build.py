@@ -65,6 +65,11 @@ def register_in_build_system(src_root, folder, known_targets):
     if parent_dir == "hw" and known_targets and head in known_targets:
         return
 
+    # Generally, should not register any directory in root directory
+    # because it's likely already registered.
+    if not parent_dir:
+        return
+
     build_system = get_vp("build system")
 
     if build_system == "Makefile":
