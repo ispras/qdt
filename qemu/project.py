@@ -180,7 +180,8 @@ class QProject(object):
             register_in_build_system(sdir, known_targets)
 
             yield True
-            register_src_in_build_system(src, sname, desc.directory)
+            directory = join("hw", desc.directory)
+            register_src_in_build_system(src, sname, directory)
 
     # TODO: add path to `QProject`
     # TODO: def lookup_path

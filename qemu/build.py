@@ -38,11 +38,11 @@ re_meson_ss_new = compile(b"(\w+)\s*=\s*\w+\s*[.]\s*source_set\s*[(]")
 
 obj_var_names = defaultdict(lambda : "obj")
 obj_var_names["disas"] = "common-obj"
-obj_var_names["pci"] = "common-obj"
+obj_var_names[join("hw", "pci")] = "common-obj"
 obj_var_names["hw"] = "devices-dirs"
 
 config_flags = defaultdict(lambda: "")
-config_flags["pci"] = "CONFIG_PCI"
+config_flags[join("hw", "pci")] = "CONFIG_PCI"
 config_flags["hw"] = "CONFIG_SOFTMMU"
 
 # Note that different subdirectories and modules could be registered in "hw"
@@ -110,10 +110,7 @@ def register_src_in_Makefile(src_root, sname, directory):
     sbase, __ = splitext(sname)
     object_name = sbase + ".o"
 
-    hw_path = join(src_root, "hw")
-    class_hw_path = join(hw_path, directory)
-
-    Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
+    Makefile_objs_class_path = join(src_root, directory, "Makefile.objs")
 
     # If it's a new `hw` subfolder, it has no `Makefile.objs`.
     if not isfile(Makefile_objs_class_path):
@@ -125,9 +122,7 @@ def register_src_in_Makefile(src_root, sname, directory):
 
 
 def register_src_in_meson(src_root, sname, directory):
-    hw_path = join(src_root, "hw")
-    class_hw_path = join(hw_path, directory)
-    meson_build = join(class_hw_path, "meson.build")
+    meson_build = join(src_root, directory, "meson.build")
 
     source_set = "softmmu_ss"
 
