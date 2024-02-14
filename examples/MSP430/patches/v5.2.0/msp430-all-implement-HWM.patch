@@ -1,0 +1,754 @@
+From 58b80a9731a400796b347800359df4c66090143c Mon Sep 17 00:00:00 2001
+Message-Id: <58b80a9731a400796b347800359df4c66090143c.1707897727.git.real@ispras.ru>
+From: Efimov Vasily <real@ispras.ru>
+Date: Tue, 13 Feb 2024 20:13:40 +0300
+Subject: [PATCH] msp430-all: implement HWM
+
+Signed-off-by: Efimov Vasily <real@ispras.ru>
+---
+ hw/msp430-all/msp430_hwm.c         | 451 ++++++++++++++++++++++++-----
+ include/hw/msp430-all/msp430_hwm.h |  43 +--
+ 2 files changed, 405 insertions(+), 89 deletions(-)
+
+diff --git a/hw/msp430-all/msp430_hwm.c b/hw/msp430-all/msp430_hwm.c
+index 6bf903999a7..ee764db07b1 100644
+--- a/hw/msp430-all/msp430_hwm.c
++++ b/hw/msp430-all/msp430_hwm.c
+@@ -8,31 +8,300 @@
+ 
+ #define MSP430_HWM_MMIO TYPE_MSP430_HWM "_mmio"
+ #define MSP430_HWM_MMIO_SIZE 0x2E
++#define MSP430_HWM_MMIO_SIZE_16_BIT_OPER 0x10
++
++/* Multiplier mode */
++#define MPYMx_SHIFT 4
++#define MPYMx_MASK (3 << MPYMx_SHIFT)
++
++#define MPYM_SIGNED         (1 << MPYMx_SHIFT)
++#define MPYM_ACCUMULATE     (1 << (MPYMx_SHIFT + 1))
++
++#define MPYM_MPY  0 /* Multiply (unsigned) */
++#define MPYM_MPYS MPYM_SIGNED
++#define MPYM_MAC  MPYM_ACCUMULATE
++#define MPYM_MACS (MPYM_SIGNED | MPYM_ACCUMULATE)
++
++static inline void set_mode(MSP430HWMState *s, uint16_t mode)
++{
++    s->mpy32ctl0 &= ~MPYMx_MASK;
++    s->mpy32ctl0 |= mode;
++}
++
++static inline bool mode_is_signed(MSP430HWMState *s)
++{
++    return s->mpy32ctl0 & MPYM_SIGNED;
++}
++
++static inline bool mode_is_accumulate(MSP430HWMState *s)
++{
++    return s->mpy32ctl0 & MPYM_ACCUMULATE;
++}
++
++/* Carry of the multiplier. */
++#define MPYC 1
++
++static inline void set_mpyc(MSP430HWMState *s)
++{
++    s->mpy32ctl0 |= MPYC;
++}
++
++static inline void reset_mpyc(MSP430HWMState *s)
++{
++    s->mpy32ctl0 &= ~MPYC;
++}
++
++static inline void assign_mpyc(MSP430HWMState *s, bool set)
++{
++    if (set) {
++        set_mpyc(s);
++    } else {
++        reset_mpyc(s);
++    }
++}
++
++#define MPYOP1_32 (1 << 6)
++
++/* b32 == false -> 16 bit */
++static inline void set_op1_width(MSP430HWMState *s, bool b32)
++{
++    if (b32) {
++        s->mpy32ctl0 |= MPYOP1_32;
++    } else {
++        s->mpy32ctl0 &= ~MPYOP1_32;
++    }
++}
++
++static inline bool get_op1_width(MSP430HWMState *s)
++{
++    return s->mpy32ctl0 & MPYOP1_32;
++}
++
++#define MPYOP2_32 (1 << 7)
++
++/* b32 == false -> 16 bit */
++static inline void set_op2_width(MSP430HWMState *s, bool b32)
++{
++    if (b32) {
++        s->mpy32ctl0 |= MPYOP2_32;
++    } else {
++        s->mpy32ctl0 &= ~MPYOP2_32;
++    }
++}
++
++static inline bool get_op2_width(MSP430HWMState *s)
++{
++    return s->mpy32ctl0 & MPYOP2_32;
++}
++
++static inline void set_op1_lo(MSP430HWMState *s, uint16_t val)
++{
++    s->op1 = (s->op1 & 0xFFFF0000) | val;
++}
++
++static inline uint16_t get_op1_lo(MSP430HWMState *s)
++{
++    /* cast uint32_t to uint16_t truncates the value */
++    return s->op1;
++}
++
++static inline void set_op1_hi(MSP430HWMState *s, uint16_t val)
++{
++    s->op1 = (s->op1 & 0x0000FFFF) | (((uint32_t) val) << 16);
++}
++
++static inline uint16_t get_op1_hi(MSP430HWMState *s)
++{
++    return s->op1 >> 16;
++}
++
++static inline void set_op2_lo(MSP430HWMState *s, uint16_t val)
++{
++    s->op2 = (s->op2 & 0xFFFF0000) | val;
++}
++
++static inline void set_op2_hi(MSP430HWMState *s, uint16_t val)
++{
++    s->op2 = (s->op2 & 0x0000FFFF) | (((uint32_t) val) << 16);
++}
++
++static inline uint16_t get_op2_lo(MSP430HWMState *s)
++{
++    /* cast uint32_t to uint16_t truncates the value */
++    return s->op2;
++}
++
++static inline uint16_t get_op2_hi(MSP430HWMState *s)
++{
++    return s->op2 >> 16;
++}
++
++static inline void set_res_w0(MSP430HWMState *s, uint16_t val)
++{
++    s->res = (s->res & 0xFFFFFFFFFFFF0000) | val;
++}
++
++static inline void set_res_w1(MSP430HWMState *s, uint16_t val)
++{
++    s->res = (s->res & 0xFFFFFFFF0000FFFF) | (((uint64_t) val) << 16);
++}
++
++static inline void set_res_w2(MSP430HWMState *s, uint16_t val)
++{
++    s->res = (s->res & 0xFFFF0000FFFFFFFF) | (((uint64_t) val) << 32);
++}
++
++static inline void set_res_w3(MSP430HWMState *s, uint16_t val)
++{
++    s->res = (s->res & 0x0000FFFFFFFFFFFF) | (((uint64_t) val) << 48);
++}
++
++static inline uint16_t get_res_w0(MSP430HWMState *s)
++{
++    /* Cast uint64_t to uint16_t truncates bits [63:16] */
++    return s->res;
++}
++
++static inline uint16_t get_res_w1(MSP430HWMState *s)
++{
++    return s->res >> 16;
++}
++
++static inline uint16_t get_res_w2(MSP430HWMState *s)
++{
++    return s->res >> 32;
++}
++
++static inline uint16_t get_res_w3(MSP430HWMState *s)
++{
++    return s->res >> 48;
++}
++
++static void multiply_internal(MSP430HWMState *s)
++{
++    bool _signed = mode_is_signed(s);
++    bool accumulate = mode_is_accumulate(s);
++    bool op1_32 = get_op1_width(s);
++    bool op2_32 = get_op2_width(s);
++
++    uint64_t op1 = s->op1;
++    /* During the execution of the 16-bit operation, the content of the
++       high-word is ignored.*/
++    if (!op1_32) {
++        op1 &= 0x0000FFFF;
++    }
++
++    uint64_t op2 = s->op2;
++    if (!op2_32) {
++        op2 &= 0x0000FFFF;
++    }
++
++    /* for negative result identification in signed mode */
++    uint64_t msb;
++    if (op1_32 || op2_32) {
++        msb = 1ul << 63;
++    } else {
++        msb = 1ul << 31;
++    }
++
++    /* TODO: fractional mode */
++    /* TODO: saturation mode */
++
++    uint64_t res = op1 * op2;
++
++    bool carry;
++    if (accumulate) {
++        if (msb == 1 << 31) { /* 32-bit result */
++            res += s->res;
++            carry = res & (1ul << 32);
++        } else { /* 64-bit result */
++            carry = (s->res > UINT64_MAX - res);
++            res += s->res;
++        }
++    } else {
++        carry = false;
++    }
++    s->res = res;
++
++    if (_signed) {
++        bool neg = res & msb;
++        if (neg) {
++            s->sumext = 0xFFFF;
++        } else {
++            s->sumext = 0;
++        }
++        if (accumulate) {
++            assign_mpyc(s, carry);
++        } else {
++            assign_mpyc(s, neg);
++        }
++    } else {
++        if (accumulate) {
++            if (carry) {
++                s->sumext = 0;
++            } else {
++                s->sumext = 1;
++            }
++            assign_mpyc(s, carry);
++        } else {
++            s->sumext = 0;
++            reset_mpyc(s);
++        }
++    }
++}
++
++static void multiply(MSP430HWMState *s)
++{
++    switch ((MSP430HWMMultiplicationState)s->state) {
++    case MSP430HWM_IDLE:
++        break;
++    case MSP430HWM_OP2:
++        /* 16 bit OP1 */
++        multiply_internal(s);
++        break;
++    case MSP430HWM_OP2L:
++        /* high word of OP was not provided, last value will be used.
++           According to docs, it's undefined. */
++    case MSP430HWM_OP2H:
++        /* 32-bit OP2 */
++        multiply_internal(s);
++        break;
++    default:
++        assert(0 && "Unreachable state");
++    }
++
++    s->state = MSP430HWM_IDLE;
++}
+ 
+ static uint64_t msp430_hwm_mmio_read(void *opaque, hwaddr offset, unsigned size)
+ {
+     MSP430HWMState *s = MSP430_HWM(opaque);
+     uint64_t ret = 0;
+ 
++    /* There is no precise clock simulation in Qemu. So, behave as any
++       started multiplication is always finished before consequent read
++       access. I.e. guest is not have to use NOPs. */
++    multiply(s);
++
+     switch (offset) {
+     case 0x00 ... 0x01:
+         /* MPY, 16-bit operand one - multiply */
+-        ret = s->mpy;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x02 ... 0x03:
+         /* MPYS, 16-bit operand one - signed multiply */
+-        ret = s->mpys;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x04 ... 0x05:
+         /* MAC, 16-bit operand one - multiply accumulate */
+-        ret = s->mac;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x06 ... 0x07:
+         /* MACS, 16-bit operand one - signed multiply accumulate */
+-        ret = s->macs;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x08 ... 0x09:
+@@ -42,12 +311,12 @@ static uint64_t msp430_hwm_mmio_read(void *opaque, hwaddr offset, unsigned size)
+ 
+     case 0x0A ... 0x0B:
+         /* RESLO, 16x16-bit result low word */
+-        ret = s->reslo;
++        ret = get_res_w0(s);
+         break;
+ 
+     case 0x0C ... 0x0D:
+         /* RESHI, 16x16-bit result high word */
+-        ret = s->reshi;
++        ret = get_res_w1(s);
+         break;
+ 
+     case 0x0E ... 0x0F:
+@@ -57,72 +326,72 @@ static uint64_t msp430_hwm_mmio_read(void *opaque, hwaddr offset, unsigned size)
+ 
+     case 0x10 ... 0x11:
+         /* MPY32L, 32-bit operand 1 - multiply - low word */
+-        ret = s->mpy32l;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x12 ... 0x13:
+         /* MPY32H, 32-bit operand 1 - multiply - high word */
+-        ret = s->mpy32h;
++        ret = get_op1_hi(s);
+         break;
+ 
+     case 0x14 ... 0x15:
+         /* MPYS32L, 32-bit operand 1 - signed multiply - low word */
+-        ret = s->mpys32l;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x16 ... 0x17:
+         /* MPYS32H, 32-bit operand 1 - signed multiply - high word */
+-        ret = s->mpys32h;
++        ret = get_op1_hi(s);
+         break;
+ 
+     case 0x18 ... 0x19:
+         /* MAC32L, 32-bit operand 1 - multiply accumulate - low word */
+-        ret = s->mac32l;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x1A ... 0x1B:
+         /* MAC32H, 32-bit operand 1 - multiply accumulate - high word */
+-        ret = s->mac32h;
++        ret = get_op1_hi(s);
+         break;
+ 
+     case 0x1C ... 0x1D:
+         /* MACS32L, 32-bit operand 1 - signed multiply accumulate - low word */
+-        ret = s->macs32l;
++        ret = get_op1_lo(s);
+         break;
+ 
+     case 0x1E ... 0x1F:
+         /* MACS32H, 32-bit operand 1 - signed multiply accumulate - high word */
+-        ret = s->macs32h;
++        ret = get_op1_hi(s);
+         break;
+ 
+     case 0x20 ... 0x21:
+         /* OP2L, 32-bit operand 2 - low word */
+-        ret = s->op2l;
++        ret = get_op2_lo(s);
+         break;
+ 
+     case 0x22 ... 0x23:
+         /* OP2H, 32-bit operand 2 - high word */
+-        ret = s->op2h;
++        ret = get_op2_hi(s);
+         break;
+ 
+     case 0x24 ... 0x25:
+         /* RES0, 32x32-bit result 0 - least significant word */
+-        ret = s->res0;
++        ret = get_res_w0(s);
+         break;
+ 
+     case 0x26 ... 0x27:
+         /* RES1, 32x32-bit result 1 */
+-        ret = s->res1;
++        ret = get_res_w1(s);
+         break;
+ 
+     case 0x28 ... 0x29:
+         /* RES2, 32x32-bit result 2 */
+-        ret = s->res2;
++        ret = get_res_w2(s);
+         break;
+ 
+     case 0x2A ... 0x2B:
+         /* RES3, 32x32-bit result 3 - most significant word */
+-        ret = s->res3;
++        ret = get_res_w3(s);
+         break;
+ 
+     case 0x2C ... 0x2D:
+@@ -144,40 +413,70 @@ static void msp430_hwm_mmio_write(void *opaque, hwaddr offset, uint64_t value,
+ {
+     MSP430HWMState *s = MSP430_HWM(opaque);
+ 
++    /* Behave as MPYDLYWRTEN is set because there is no precise clock
++       simulation in Qemu. I.e. a started multiplication is always
++       finished before changing operands. */
++    /* OP2H is expected to be set after multiplication has been started. */
++    if (offset != 0x22 /* OP2H */ ) {
++        multiply(s);
++    }
++
+     switch (offset) {
+     case 0x00 ... 0x01:
+         /* MPY, 16-bit operand one - multiply */
+-        s->mpy = value;
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MPY);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x02 ... 0x03:
+         /* MPYS, 16-bit operand one - signed multiply */
+-        s->mpys = value;
++        if ((size == 1) && (value & 0x80)) {
++            /* auto sign extension */
++            value |= 0xFF00;
++        }
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MPYS);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x04 ... 0x05:
+         /* MAC, 16-bit operand one - multiply accumulate */
+-        s->mac = value;
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MAC);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x06 ... 0x07:
+         /* MACS, 16-bit operand one - signed multiply accumulate */
+-        s->macs = value;
++        if ((size == 1) && (value & 0x80)) {
++            /* auto sign extension */
++            value |= 0xFF00;
++        }
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MACS);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x08 ... 0x09:
+         /* OP2, 16-bit operand two */
+-        s->op2 = value;
++        if ((size == 1) && mode_is_signed(s) && (value & 0x80)) {
++            /* auto sign extension */
++            value |= 0xFF00;
++        }
++        set_op2_lo(s, value);
++        set_op2_width(s, false);
++        s->state = MSP430HWM_OP2;
+         break;
+ 
+     case 0x0A ... 0x0B:
+         /* RESLO, 16x16-bit result low word */
+-        s->reslo = value;
++        set_res_w0(s, value);
+         break;
+ 
+     case 0x0C ... 0x0D:
+         /* RESHI, 16x16-bit result high word */
+-        s->reshi = value;
++        set_res_w1(s, value);
+         break;
+ 
+     case 0x0E ... 0x0F:
+@@ -188,72 +487,102 @@ static void msp430_hwm_mmio_write(void *opaque, hwaddr offset, uint64_t value,
+ 
+     case 0x10 ... 0x11:
+         /* MPY32L, 32-bit operand 1 - multiply - low word */
+-        s->mpy32l = value;
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MPY);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x12 ... 0x13:
+         /* MPY32H, 32-bit operand 1 - multiply - high word */
+-        s->mpy32h = value;
++        set_op1_hi(s, value);
++        set_op1_width(s, true);
+         break;
+ 
+     case 0x14 ... 0x15:
+         /* MPYS32L, 32-bit operand 1 - signed multiply - low word */
+-        s->mpys32l = value;
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MPYS);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x16 ... 0x17:
+         /* MPYS32H, 32-bit operand 1 - signed multiply - high word */
+-        s->mpys32h = value;
++        if ((size == 1) && (value & 0x80)) {
++            /* auto sign extension */
++            value |= 0xFF00;
++        }
++        set_op1_hi(s, value);
++        set_op1_width(s, true);
+         break;
+ 
+     case 0x18 ... 0x19:
+         /* MAC32L, 32-bit operand 1 - multiply accumulate - low word */
+-        s->mac32l = value;
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MAC);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x1A ... 0x1B:
+         /* MAC32H, 32-bit operand 1 - multiply accumulate - high word */
+-        s->mac32h = value;
++        set_op1_hi(s, value);
++        set_op1_width(s, true);
+         break;
+ 
+     case 0x1C ... 0x1D:
+         /* MACS32L, 32-bit operand 1 - signed multiply accumulate - low word */
+-        s->macs32l = value;
++        set_op1_lo(s, value);
++        set_mode(s, MPYM_MACS);
++        set_op1_width(s, false);
+         break;
+ 
+     case 0x1E ... 0x1F:
+         /* MACS32H, 32-bit operand 1 - signed multiply accumulate - high word */
+-        s->macs32h = value;
++        if ((size == 1) && (value & 0x80)) {
++            /* auto sign extension */
++            value |= 0xFF00;
++        }
++        set_op1_hi(s, value);
++        set_op1_width(s, true);
+         break;
+ 
+     case 0x20 ... 0x21:
+         /* OP2L, 32-bit operand 2 - low word */
+-        s->op2l = value;
++        set_op2_lo(s, value);
++        set_op2_width(s, true);
++        s->state = MSP430HWM_OP2L;
+         break;
+ 
+     case 0x22 ... 0x23:
+         /* OP2H, 32-bit operand 2 - high word */
+-        s->op2h = value;
++        if ((size == 1) && mode_is_signed(s) && (value & 0x80)) {
++            /* auto sign extension */
++            value |= 0xFF00;
++        }
++        set_op2_hi(s, value);
++        if (s->state == MSP430HWM_OP2L) {
++            s->state = MSP430HWM_OP2H;
++        }
++        multiply(s);
+         break;
+ 
+     case 0x24 ... 0x25:
+         /* RES0, 32x32-bit result 0 - least significant word */
+-        s->res0 = value;
++        set_res_w0(s, value);
+         break;
+ 
+     case 0x26 ... 0x27:
+         /* RES1, 32x32-bit result 1 */
+-        s->res1 = value;
++        set_res_w1(s, value);
+         break;
+ 
+     case 0x28 ... 0x29:
+         /* RES2, 32x32-bit result 2 */
+-        s->res2 = value;
++        set_res_w2(s, value);
+         break;
+ 
+     case 0x2A ... 0x2B:
+         /* RES3, 32x32-bit result 3 - most significant word */
+-        s->res3 = value;
++        set_res_w3(s, value);
+         break;
+ 
+     case 0x2C ... 0x2D:
+@@ -278,16 +607,17 @@ static const MemoryRegionOps msp430_hwm_mmio_ops = {
+ 
+ static void msp430_hwm_instance_init(Object *obj)
+ {
+-    MSP430HWMState *s = MSP430_HWM(obj);
+-
+-    memory_region_init_io(&s->mmio, obj, &msp430_hwm_mmio_ops, s,
+-                          MSP430_HWM_MMIO, MSP430_HWM_MMIO_SIZE);
+-    sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
+ }
+ 
+ static void msp430_hwm_realize(DeviceState *dev, Error **errp)
+ {
+-    __attribute__((unused)) MSP430HWMState *s = MSP430_HWM(dev);
++    MSP430HWMState *s = MSP430_HWM(dev);
++
++    memory_region_init_io(&s->mmio, OBJECT(dev), &msp430_hwm_mmio_ops, s,
++                          MSP430_HWM_MMIO,
++                          s->op_32_bit ? MSP430_HWM_MMIO_SIZE
++                                       : MSP430_HWM_MMIO_SIZE_16_BIT_OPER);
++    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->mmio);
+ }
+ 
+ static void msp430_hwm_reset(DeviceState *dev)
+@@ -295,6 +625,7 @@ static void msp430_hwm_reset(DeviceState *dev)
+     MSP430HWMState *s = MSP430_HWM(dev);
+ 
+     s->mpy32ctl0 = 0x0000;
++    s->state = MSP430HWM_IDLE;
+ }
+ 
+ static void msp430_hwm_unrealize(DeviceState *dev)
+@@ -303,6 +634,7 @@ static void msp430_hwm_unrealize(DeviceState *dev)
+ }
+ 
+ static Property msp430_hwm_properties[] = {
++    DEFINE_PROP_BOOL("op-32-bit", MSP430HWMState, op_32_bit, true),
+     DEFINE_PROP_END_OF_LIST()
+ };
+ 
+@@ -310,29 +642,12 @@ static const VMStateDescription vmstate_msp430_hwm = {
+     .name = "msp430_hwm",
+     .version_id = 1,
+     .fields = (VMStateField[]) {
+-        VMSTATE_UINT16(mpy, MSP430HWMState),
+-        VMSTATE_UINT16(mpys, MSP430HWMState),
+-        VMSTATE_UINT16(mac, MSP430HWMState),
+-        VMSTATE_UINT16(macs, MSP430HWMState),
+-        VMSTATE_UINT16(op2, MSP430HWMState),
+-        VMSTATE_UINT16(reslo, MSP430HWMState),
+-        VMSTATE_UINT16(reshi, MSP430HWMState),
++        VMSTATE_UINT32(op1, MSP430HWMState),
++        VMSTATE_UINT32(op2, MSP430HWMState),
++        VMSTATE_UINT64(res, MSP430HWMState),
+         VMSTATE_UINT16(sumext, MSP430HWMState),
+-        VMSTATE_UINT16(mpy32l, MSP430HWMState),
+-        VMSTATE_UINT16(mpy32h, MSP430HWMState),
+-        VMSTATE_UINT16(mpys32l, MSP430HWMState),
+-        VMSTATE_UINT16(mpys32h, MSP430HWMState),
+-        VMSTATE_UINT16(mac32l, MSP430HWMState),
+-        VMSTATE_UINT16(mac32h, MSP430HWMState),
+-        VMSTATE_UINT16(macs32l, MSP430HWMState),
+-        VMSTATE_UINT16(macs32h, MSP430HWMState),
+-        VMSTATE_UINT16(op2l, MSP430HWMState),
+-        VMSTATE_UINT16(op2h, MSP430HWMState),
+-        VMSTATE_UINT16(res0, MSP430HWMState),
+-        VMSTATE_UINT16(res1, MSP430HWMState),
+-        VMSTATE_UINT16(res2, MSP430HWMState),
+-        VMSTATE_UINT16(res3, MSP430HWMState),
+         VMSTATE_UINT16(mpy32ctl0, MSP430HWMState),
++        VMSTATE_UINT8(state, MSP430HWMState),
+         VMSTATE_END_OF_LIST()
+     }
+ };
+diff --git a/include/hw/msp430-all/msp430_hwm.h b/include/hw/msp430-all/msp430_hwm.h
+index a146fc1355a..d7b5401257e 100644
+--- a/include/hw/msp430-all/msp430_hwm.h
++++ b/include/hw/msp430-all/msp430_hwm.h
+@@ -7,32 +7,33 @@
+ #define TYPE_MSP430_HWM "msp430_hwm"
+ 
+ OBJECT_DECLARE_SIMPLE_TYPE(MSP430HWMState, MSP430_HWM)
++
++/* Multiplication process state. */
++typedef enum {
++    /* No multiplication was made or last one was finished. */
++    MSP430HWM_IDLE = 0,
++
++    /* Started with 16-bit OP2. */
++    MSP430HWM_OP2,
++
++    /* Started with 32-bit OP2 but high OP2 word has not been written to OP2H
++       yet. */
++    MSP430HWM_OP2L,
++
++    /* Started with 32-bit OP2 and both OP2 words have been written. */
++    MSP430HWM_OP2H
++} MSP430HWMMultiplicationState;
++
+ typedef struct MSP430HWMState {
+     SysBusDevice parent_obj;
+     MemoryRegion mmio;
+-    uint16_t mpy;
+-    uint16_t mpys;
+-    uint16_t mac;
+-    uint16_t macs;
+-    uint16_t op2;
+-    uint16_t reslo;
+-    uint16_t reshi;
++    uint32_t op1;
++    uint32_t op2;
++    uint64_t res;
+     uint16_t sumext;
+-    uint16_t mpy32l;
+-    uint16_t mpy32h;
+-    uint16_t mpys32l;
+-    uint16_t mpys32h;
+-    uint16_t mac32l;
+-    uint16_t mac32h;
+-    uint16_t macs32l;
+-    uint16_t macs32h;
+-    uint16_t op2l;
+-    uint16_t op2h;
+-    uint16_t res0;
+-    uint16_t res1;
+-    uint16_t res2;
+-    uint16_t res3;
+     uint16_t mpy32ctl0;
++    uint8_t state;
++    bool op_32_bit;
+ } MSP430HWMState;
+ 
+ #endif /* INCLUDE_MSP430_HWM_H */
+-- 
+2.25.1
+
