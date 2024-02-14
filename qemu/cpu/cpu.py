@@ -2,8 +2,10 @@ __all__ = [
     "CPUType"
 ]
 
-from ..makefile_patching import (
-    patch_makefile,
+from ..build import (
+    config_flags,
+    register_in_build_system,
+    register_src_in_build_system,
 )
 from ..qom import (
     QOMCPU,
@@ -26,6 +28,9 @@ from .instruction import (
     InstructionTreeNode,
     build_instruction_tree,
     check_unreachable_instructions,
+)
+from bisect import (
+    insort,
 )
 from codecs import (
     open,
@@ -468,7 +473,23 @@ class CPUType(QOMCPU):
 
             yield True
 
-        self._gen_target_makefile(join(abs_target_folder, "Makefile.objs"))
+        build_system = get_vp("build system")
+        if build_system == "Makefile":
+            self._gen_target_makefile(join(abs_target_folder, "Makefile.objs"))
+        else:
+            if build_system != "meson":
+                print("%s: build system %s is not implemented,"
+                      " assuming meson, result is likely incorrect" % (
+                    self.target_name, build_system
+                ))
+            register_in_build_system(src, target_folder, [])
+            self._gen_target_meson(join(abs_target_folder, "meson.build"))
+
+            hw_target_folder = join("hw", self.target_name)
+            register_in_build_system(src, hw_target_folder, [])
+            self._gen_hw_target_meson(
+                join(src, hw_target_folder, "meson.build")
+            )
 
         yield True
 
@@ -482,12 +503,18 @@ class CPUType(QOMCPU):
 
         yield True
 
-        patch_makefile(
-            join(src, "disas", "Makefile.objs"),
-            self.target_name + ".o",
-            "common-obj",
-            self.config_arch_dis
-        )
+        if build_system == "meson":
+            assert "disas" not in config_flags
+            config_flags["disas"] = self.config_arch_dis
+
+        register_src_in_build_system(src, disas_name, "disas")
+
+        if build_system == "meson":
+            del config_flags["disas"]
+
+            patch_meson_build__add_disassembler(
+                src, self.target_name, self.config_arch_dis
+            )
 
         yield True
 
@@ -1043,6 +1070,61 @@ class CPUType(QOMCPU):
 
             mkf.write("\n")
 
+    def _gen_target_meson(self, src):
+        ss_name = self.target_name + "_ss"
+        softmmu_ss_name = self.target_name + "_softmmu_ss"
+
+        lines = list()
+        line = lines.append
+
+        line(ss_name + " = ss.source_set()")
+        line(ss_name + ".add(files(")
+
+        was_machine_c = False
+
+        for f in self.gen_files.values():
+            if type(f) is Source:
+                n = basename(f.path)
+                if n == "machine.c":
+                    was_machine_c = True
+                    continue
+                line("  '%s'," % n)
+
+        line("))")
+        line("")
+        line(softmmu_ss_name + " = ss.source_set()")
+
+        if was_machine_c:
+            line(softmmu_ss_name + ".add(files('machine.c'))")
+
+        line("")
+        line("target_arch += {'%s': %s}" % (self.target_name, ss_name))
+        line("target_softmmu_arch += {'%s': %s}" % (
+            self.target_name, softmmu_ss_name
+        ))
+
+        # NL at EOF
+        line("")
+
+        with shadow_open(src) as mb:
+            mb.write("\n".join(lines))
+
+    def _gen_hw_target_meson(self, src):
+        ss_name = self.target_name + "_ss"
+
+        lines = list()
+        line = lines.append
+
+        line(ss_name + " = ss.source_set()")
+        line("")
+        line("hw_arch += {'%s': %s}" % (self.target_name, ss_name))
+
+        # NL at EOF
+        line("")
+
+        with shadow_open(src) as mb:
+            mb.write("\n".join(lines))
+
     def _gen_helper_h(self, src):
         with shadow_open(src) as h:
             h.write("DEF_HELPER_1(debug, void, env)\n")
@@ -1449,4 +1531,45 @@ def patch_poison_header(src, target_arch, config_arch_dis):
             break
 
     with open(poison_header, "w") as f:
+        f.write("".join(lines))
+
+
+def patch_meson_build__add_disassembler(src, target_name, config_arch_dis):
+    meson_build = join(src, "meson.build")
+
+    with open(meson_build, "r") as f:
+        lines = f.readlines()
+
+    disassemblers = []
+
+    liter = enumerate(lines)
+
+    for start_idx, line in liter:
+        if line.startswith("disassemblers = {"):
+            start_idx += 1
+            break
+    else:
+        raise NotImplementedError(
+            "%s: can't find `disassemblers`" % meson_build
+        )
+
+    new_disas = "  '%s' : ['%s'],\n" % (target_name, config_arch_dis)
+
+    for end_idx, line in liter:
+        if line.startswith("}"):
+            break
+        if line == new_disas:
+            # already added
+            return
+        disassemblers.append(line)
+    else:
+        raise NotImplementedError(
+            "%s: can't find `disassemblers`'s end" % meson_build
+        )
+
+    insort(disassemblers, new_disas)
+
+    lines[start_idx:end_idx] = disassemblers
+
+    with open(meson_build, "w") as f:
         f.write("".join(lines))
