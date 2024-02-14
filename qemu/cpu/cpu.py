@@ -47,8 +47,10 @@ from itertools import (
 )
 from os.path import (
     basename,
+    dirname,
     join,
     sep,
+    split,
     splitext,
 )
 from re import (
@@ -1169,6 +1171,18 @@ def create_default_config(src, target_name):
 
     with shadow_open(default_config) as f:
         f.write("# Default configuration for %s-softmmu\n" % target_name)
+
+    if not get_vp("target configs"):
+        return
+
+    # Qemu versions after since ~5.2.0 require configs in 2 places.
+
+    default_config_dir, default_config_name = split(default_config)
+    default_config2_dir = join(dirname(default_config_dir), "targets")
+    default_config2 = join(default_config2_dir, default_config_name)
+
+    with shadow_open(default_config2) as f:
+        f.write("TARGET_ARCH=%s\n" % target_name)
 
 
 def patch_configure(src, arch_bigendian, target_name):

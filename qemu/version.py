@@ -1174,6 +1174,14 @@ qemu_heuristic_db = {
             old_value = ("default-configs",)
         )
     ],
+    # configure: remove target configuration
+    # New targets must be added to default-configs/targets too.
+    u'fdb75aeff7c212e1afaaa3a43c36a0985fdc1e44' : [
+        QEMUVersionParameterDescription("target configs",
+            new_value = True,
+            old_value = False,
+        )
+    ],
     # configs: rename default-configs to configs and reorganise
     u'812b31d3f91507160c367440c17715b62d5e0869' : [
         QEMUVersionParameterDescription("default-configs suffix",
