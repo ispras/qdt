@@ -407,6 +407,36 @@ class QOMType(object):
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
 
+    def gen_type_cast(self):
+        cast_type = get_vp("QOM type checkers type")
+        if cast_type is Macro:
+            cast = Macro(
+                name = self.qtn.for_macros,
+                args = [ "obj" ],
+                text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
+                    TYPE_MACRO = self.qtn.type_macro,
+                    Struct = self.struct_name
+                )
+            )
+        elif cast_type is Function:
+            cast = Type["OBJECT_DECLARE_SIMPLE_TYPE"].gen_type(
+                name = self.qtn.for_macros,
+                initializer = Initializer(
+                    dict(
+                        # actually Type[self.struct_name], but this conflicts
+                        # with line_origins
+                        InstanceType = self.struct_name,
+
+                        MODULE_OBJ_NAME = self.qtn.for_macros,
+                    ),
+                    used_types = [Type[self.qtn.type_macro]],
+                )
+            )
+        else:
+            raise NotImplementedError(cast_type)
+
+        return cast
+
     def co_gen_sources(self):
         self._sources = sources = []
 

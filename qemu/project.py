@@ -2,6 +2,10 @@ __all__ = [
     "QProject"
 ]
 
+from .build import (
+    register_in_build_system,
+    register_src_in_build_system,
+)
 from common import (
     callco,
     co_find_eq,
@@ -15,9 +19,6 @@ from .cpu import (
 from .machine_description import (
     MachineNode,
 )
-from .makefile_patching import (
-    patch_makefile,
-)
 from source import (
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
@@ -27,41 +28,16 @@ from .version_description import (
     QemuVersionDescription,
 )
 
-from codecs import (
-    open,
-)
-from collections import (
-    defaultdict,
-)
 from itertools import (
     count,
 )
 from os.path import (
     isabs,
-    isdir,
-    isfile,
     join,
     normpath,
     relpath,
     split,
-    splitext,
 )
-
-
-# TODO: Selection of configuration flag and accumulator variable
-# name is Qemu version specific. Version API must be used there.
-
-obj_var_names = defaultdict(lambda : "obj")
-obj_var_names["pci"] = "common-obj"
-obj_var_names["hw"] = "devices-dirs"
-
-config_flags = defaultdict(lambda: "y")
-config_flags["pci"] = "$(CONFIG_PCI)"
-config_flags["hw"] = "$(CONFIG_SOFTMMU)"
-
-# Note that different subdirectories and modules could be registered in "hw"
-# using other settings. But as this tool generates devices only. So, the
-# settings is chosen this way.
 
 
 class QProject(object):
@@ -146,33 +122,6 @@ class QProject(object):
 
         enable_auto_lock_inclusions()
 
-    def register_in_build_system(self, folder, known_targets):
-        tail, head = split(folder)
-
-        if head == "hw":
-            return
-
-        # Provide Makefiles in ancestors.
-        self.register_in_build_system(tail, known_targets)
-
-        # Register the folder in its parent.
-        # Note that folders whose names match Qemu target CPU architecture
-        # are implicitly included without an entry in "hw/Makefile.objs".
-        parent_dir = split(tail)[1]
-
-        if parent_dir == "hw" and known_targets and head in known_targets:
-            return
-
-        parent_Makefile_obj = join(tail, "Makefile.objs")
-
-        # Add empty Makefile.objs if no one exists.
-        if not isfile(parent_Makefile_obj):
-            open(parent_Makefile_obj, "w").close()
-
-        patch_makefile(parent_Makefile_obj, head + "/",
-            obj_var_names[parent_dir], config_flags[parent_dir]
-        )
-
     def gen(self, *args, **kw):
         "Backward compatibility wrapper for co_gen"
         callco(self.co_gen(*args, **kw))
@@ -227,26 +176,13 @@ class QProject(object):
             if type(s) is not Source:
                 continue
 
+            directory = join("hw", desc.directory)
+
             yield
-            self.register_in_build_system(sdir, known_targets)
+            register_in_build_system(src, directory, known_targets)
 
             yield True
-
-            sbase, _ = splitext(sname)
-            object_name = sbase + ".o"
-
-            hw_path = join(src, "hw")
-            class_hw_path = join(hw_path, desc.directory)
-
-            Makefile_objs_class_path = join(class_hw_path, "Makefile.objs")
-
-            # If it's a new `hw` subfolder, it has no `Makefile.objs`.
-            if not isfile(Makefile_objs_class_path):
-                open(Makefile_objs_class_path, "wb").close()
-
-            patch_makefile(Makefile_objs_class_path, object_name,
-                obj_var_names[desc.directory], config_flags[desc.directory]
-            )
+            register_src_in_build_system(src, sname, directory)
 
     # TODO: add path to `QProject`
     # TODO: def lookup_path

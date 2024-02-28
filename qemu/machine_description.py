@@ -6,6 +6,9 @@ __all__ = [
   , "NodeIdIsAlreadyInUse"
 ]
 
+from common import (
+    default_gen_pass,
+)
 from .qom_desc import (
     descriptionOf,
     QOMDescription
@@ -61,12 +64,8 @@ class MachineDescription(QOMDescription):
         for n in self.iter_nodes():
             self.assign_id(n)
 
-    @property
-    def __pygen_deps__(self):
-        self.link()
-
-        return ("cpus", "devices", "buses", "irqs", "mems", "irq_hubs")
-
+    # Override super's __gen_code__ (see descriptionOf).
+    # It must not gen code for all attributes.
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_field('name = "' + self.name + '"')
@@ -76,6 +75,12 @@ class MachineDescription(QOMDescription):
                 gen.gen_field(attr + " = ")
                 gen.pprint(val)
         gen.gen_end()
+
+    def __pygen_pass__(self, gen):
+        self.link()
+
+        for opaque in default_gen_pass(self, gen):
+            yield opaque
 
         if not self.id2node:
             return
@@ -95,10 +100,10 @@ class MachineDescription(QOMDescription):
                 if not (dev.parent_bus is None or dev.parent_bus in self.buses):
                         self.add_node(dev.parent_bus)
                 for bus in dev.buses:
-                    if not bus in self.buses:
+                    if bus not in self.buses:
                         self.add_node(bus)
                 for irq in dev.irqs:
-                    if not irq in self.irqs:
+                    if irq not in self.irqs:
                         self.add_node(irq)
                 for prop in dev.properties:
                     if prop.prop_type == QOMPropertyTypeLink:
@@ -110,25 +115,25 @@ class MachineDescription(QOMDescription):
                         or bus.parent_device in self.devices):
                     self.add_node(bus.parent_device)
                 for dev in bus.devices:
-                    if not dev in self.devices:
+                    if dev not in self.devices:
                         self.add_node(dev)
 
             for irq in self.irqs:
-                if not irq.src_dev in self.devices + self.irq_hubs:
+                if irq.src_dev not in self.devices + self.irq_hubs:
                     self.add_node(irq.src[0])
-                if not irq.dst_dev in self.devices + self.irq_hubs:
+                if irq.dst_dev not in self.devices + self.irq_hubs:
                     self.add_node(irq.dst[0])
 
             for mem in self.mems:
                 if not (mem.parent is None or mem.parent in self.mems):
                     self.add_node(mem.parent)
                 for child in mem.children:
-                    if not child in self.mems:
+                    if child not in self.mems:
                         self.add_node(child)
 
             for hub in self.irq_hubs:
                 for irq in hub.irqs:
-                    if not irq in self.irqs:
+                    if irq not in self.irqs:
                         self.add_node(irq)
 
         if handle_system_bus:
@@ -214,7 +219,7 @@ class MachineDescription(QOMDescription):
 
     def get_free_id(self):
         for i in count(0):
-            if not i in self.id2node:
+            if i not in self.id2node:
                 return i
 
     def __same__(self, o):

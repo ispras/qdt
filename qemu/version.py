@@ -170,7 +170,8 @@ def define_only_qemu_2_6_0_types():
         Function(name = "cpu_ldq_code", ret_type = Type["uint64_t"]),
     ]).add_reference(osdep_fake_type)
 
-    Header["qom/object.h"].add_types([
+    qom_object_h = Header["qom/object.h"]
+    qom_object_h.add_types([
         Type("ObjectClass", False),
         Type("Object", False),
         Type("InterfaceInfo", False),
@@ -272,7 +273,8 @@ def define_only_qemu_2_6_0_types():
         Function(name = "vmstate_register_ram_global")
     ]).add_reference(osdep_fake_type)
 
-    Header[get_vp("cpu header")].add_types([
+    cpu_h = Header[get_vp("cpu header")]
+    cpu_h.add_types([
         Type("vaddr", False),
         Type("MMUAccessType", False),
         Structure("CPUBreakpoint",
@@ -529,7 +531,8 @@ def define_only_qemu_2_6_0_types():
             Type("pio_addr_t", incomplete = False)
         ])
 
-    Header["hw/boards.h"].add_types([
+    hw_boards_h = Header["hw/boards.h"]
+    hw_boards_h.add_types([
         Structure("MachineState"),
         Structure("MachineClass",
             # These are required fields only
@@ -702,7 +705,8 @@ def define_only_qemu_2_6_0_types():
 
     Header["qemu/module.h"].add_reference(osdep_fake_type)
 
-    Header["hw/pci/pci.h"].add_types([
+    hw_pci_pci_h = Header["hw/pci/pci.h"]
+    hw_pci_pci_h.add_types([
         Type("PCIDevice", False),
         Type("PCIDeviceClass", False),
         Function(name = "pci_create_multifunction"),
@@ -723,7 +727,8 @@ def define_only_qemu_2_6_0_types():
         Type["PCIIOMMUFunc"],
         osdep_fake_type
     ])
-    Header["hw/pci/pci_host.h"].add_reference(osdep_fake_type)
+    hw_pci_pci_host_h = Header["hw/pci/pci_host.h"]
+    hw_pci_pci_host_h.add_reference(osdep_fake_type)
 
     Header["qemu/bswap.h"].add_types([
         Function(name = "bswap64"),
@@ -930,6 +935,22 @@ def define_only_qemu_2_6_0_types():
             Function(name = "cpu_set_cpustate_pointers")
         )
 
+    if get_vp("QOM type checkers type") is Function:
+        qdev_core_header.add_types([
+            Function("BUS"),
+            Function("DEVICE"),
+            Function("DEVICE_CLASS"),
+        ])
+        hw_sysbus_h.add_type(Function("SYS_BUS_DEVICE"))
+        hw_pci_pci_h.add_types([
+            Function("PCI_DEVICE"),
+            Function("PCI_BUS"),
+        ])
+        Header["hw/pci/pci_bridge.h"].add_type(Function("PCI_BRIDGE"))
+        hw_pci_pci_host_h.add_type(Function("PCI_HOST_BRIDGE"))
+        hw_boards_h.add_type(Function("MACHINE_CLASS"))
+        cpu_h.add_type(Function("CPU_CLASS"))
+
 def define_qemu_2_6_5_types():
     add_base_types()
     define_only_qemu_2_6_0_types()
@@ -1073,12 +1094,16 @@ def machine_register_2_6(mach):
         ]
     )
     mc = Pointer(Type["MachineClass"])("mc")
+
+    MACHINE_CLASS = Type["MACHINE_CLASS"]
+    call = MCall if isinstance(MACHINE_CLASS, Macro) else Call
+
     class_init.body = BodyTree()(
         Declare(
             OpDeclareAssign(
                 mc,
-                MCall(
-                   "MACHINE_CLASS",
+                call(
+                    MACHINE_CLASS,
                     class_init.args[0]
                 )
             )
@@ -1128,6 +1153,50 @@ def machine_register_2_6(mach):
     )
 
 qemu_heuristic_db = {
+    # Use DECLARE_*CHECKER* macros
+    u'8110fa1d94f2997badc2af39231a1d279c5bb1ee' : [
+        QEMUVersionParameterDescription("QOM type checkers type",
+            new_value = Function,
+            old_value = Macro
+        )
+    ],
+    # configure: move directory options from config-host.mak to meson
+    u'16bf7a3326d8e8be42b3bf844a6c539d52a997b3' : [
+        QEMUVersionParameterDescription("install prefix location",
+            new_value = "config-host.h",
+            old_value = "config-host.mak"
+        )
+    ],
+    # default-configs: move files to default-configs/devices/
+    u'1bb4cb1c33805c0da0db5b76852bb73759625c4e' : [
+        QEMUVersionParameterDescription("default-configs suffix",
+            new_value = ("default-configs", "devices"),
+            old_value = ("default-configs",)
+        )
+    ],
+    # configure: remove target configuration
+    # New targets must be added to default-configs/targets too.
+    u'fdb75aeff7c212e1afaaa3a43c36a0985fdc1e44' : [
+        QEMUVersionParameterDescription("target configs",
+            new_value = True,
+            old_value = False,
+        )
+    ],
+    # configs: rename default-configs to configs and reorganise
+    u'812b31d3f91507160c367440c17715b62d5e0869' : [
+        QEMUVersionParameterDescription("default-configs suffix",
+            new_value = ("configs", "devices"),
+            old_value = ("default-configs", "devices")
+        )
+    ],
+    # There are many commits converting build system part by part.
+    # Let the merge commit be heuristic point.
+    u'7fd51e68c34fcefdb4d6fd646ed3346f780f89f4' : [
+        QEMUVersionParameterDescription("build system",
+            new_value = "meson",
+            old_value = "Makefile"
+        )
+    ],
     # Next two commits precede v4.1.0-rc0. They are in one branch.
     u'ede9a8a656c992deecce45f8175985dd81cc6be9' : [
         QEMUVersionParameterDescription("fprintf_function definer",

@@ -63,6 +63,7 @@ from source import (
     Comment,
     Declare,
     Function,
+    gen_printf_format,
     Goto,
     Header,
     Ifdef,
@@ -82,7 +83,6 @@ from source import (
     OpDeclareAssign,
     OpDeref,
     OpEq,
-    OpGE,
     OpGreater,
     OpIndex,
     OpLShift,
@@ -100,6 +100,7 @@ from source import (
     OpSub,
     Pointer,
     Return,
+    StrConcat,
     SwitchCase,
     SwitchCaseDefault,
     Type,
@@ -482,11 +483,19 @@ def fill_disas_set_info_body(cputype, function):
 def fill_disas_write_helper_body(function):
     function.body = BodyTree()(Return(0))
 
+def _gen_reg_printf_format(type_):
+    return gen_printf_format(type_,
+        base = 16,
+        width = True,
+        leading = "0",
+    )
+
 def fill_dump_state_body(cputype, function, reg_vars):
     function.body = body = BodyTree()
 
     cpu = Pointer(Type[cputype.struct_instance_name])("cpu")
-    env = Pointer(Type[cputype.struct_name])("env")
+    env_struct = Type[cputype.struct_name]
+    env = Pointer(env_struct)("env")
 
     out_file = function.args[1]
     if get_vp("dump_state has cpu_fprintf argument"):
@@ -529,7 +538,12 @@ def fill_dump_state_body(cputype, function, reg_vars):
                     Call(
                         fprintf_func,
                         out_file,
-                        "%s=0x%08x",
+                        StrConcat(
+                            "%s=",
+                            _gen_reg_printf_format(
+                                getattr(env_struct, r.name).type
+                            ),
+                        ),
                         OpIndex(names_array, i),
                         OpIndex(OpSDeref(env, r.name), i)
                     ),
@@ -544,7 +558,13 @@ def fill_dump_state_body(cputype, function, reg_vars):
                 Call(
                     fprintf_func,
                     out_file,
-                    r.name + "=0x%08x\\n",
+                    StrConcat(
+                        r.name + "=",
+                        _gen_reg_printf_format(
+                            getattr(env_struct, r.name).type
+                        ),
+                        "\\n"
+                    ),
                     OpSDeref(env, r.name)
                 )
             )

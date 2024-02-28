@@ -234,6 +234,9 @@ Energia IDE содержит в себе утилиты компиляции, в
 	git am ../../qdt/src/examples/MSP430/patches/msp430-all-implement-HWM.patch
 	cd ../..
 
+В каталогах вида `examples/MSP430/patches/vX.Y.Z` есть версии этих патчей для
+других версий Qemu.
+
 Сборка
 ------
 

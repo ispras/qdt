@@ -16,6 +16,7 @@ __all__ = [
 ]
 
 from source import (
+    Type,
     SourceTreeContainer,
     Header,
     Macro
@@ -886,7 +887,7 @@ class QemuVersionDescription(object):
 
     def co_gen_known_targets(self, work_dir):
         print("Making known targets set...")
-        dconfigs = join(work_dir, "default-configs")
+        dconfigs = join(work_dir, *get_vp("default-configs suffix"))
         kts = set()
         for config in listdir(dconfigs):
             yield True
@@ -911,6 +912,8 @@ class QemuVersionDescription(object):
         if root is None:
             root = QType("device")
 
+        yield self.co_get_install_prefix()
+
         arches_count = len(root.arches)
         for arch in targets:
             # Try to get QOM tree using binaries from different places.
@@ -918,7 +921,7 @@ class QemuVersionDescription(object):
             # launched as during normal operation.
             # However, if user did not install Qemu, we should try to use
             # binary from build directory.
-            install_dir = join(fixpath(self.config_host.prefix), "bin")
+            install_dir = join(self.install_prefix, "bin")
             build_dir = join(self.build_path, arch + "-softmmu")
 
             binaries = [
@@ -973,6 +976,24 @@ class QemuVersionDescription(object):
         print("Adding macros to device tree...")
         yield self.co_add_dt_macro(self.qvc.device_tree.children, t2m)
         print("Macros were added to device tree")
+
+    def co_get_install_prefix(self):
+        prefix_loc = get_vp("install prefix location")
+        if prefix_loc == "config-host.mak":
+            self.install_prefix = fixpath(self.config_host.prefix)
+        elif prefix_loc == "config-host.h":
+            # parse config-host.h into dummy source tree container
+            tmp_stc = SourceTreeContainer()
+            prev_stc = tmp_stc.set_cur_stc()
+
+            # Parse config-host.h to get `CONFIG_PREFIX` macro.
+            yield Header.co_build_inclusions(self.build_path, [(".", False)])
+
+            prefix = Type["CONFIG_PREFIX"].text.strip('"')
+
+            prev_stc.set_cur_stc()
+
+            self.install_prefix = fixpath(prefix)
 
     def co_text2macros(self, text2macros):
         """

@@ -5,21 +5,26 @@ __all__ = [
 ]
 
 from common import (
+    get_class_total_args,
     same_attrs,
-    get_class_total_args
-)
-from inspect import (
-    getmro
-)
-from collections import (
-    OrderedDict
-)
-from sys import (
-    modules
 )
 from .qom import (
-    QemuTypeName
+    QemuTypeName,
 )
+
+from collections import (
+    OrderedDict,
+)
+from inspect import (
+    getmro,
+)
+from sys import (
+    modules,
+)
+
+
+_EMPTY = tuple()
+
 
 class QOMDescription(object):
     def __init__(self):
@@ -81,18 +86,21 @@ def descriptionOf(QOMTemplate):
     """ Given QOM template class, collect attribute information provided by it
     and its ancestors. Order is significant. Child attributes must be below."""
     attribute_info = OrderedDict()
+    pygen_deps = list()
     Class = QOMTemplate
     for Class in getmro(Class):
+        pygen_deps.extend(Class.__dict__.get("__pygen_deps__", _EMPTY))
+
         try:
             ai = Class.__attribute_info__
         except AttributeError:
-            continue
-
-        """ Reverse order of Class attributes to preserve it with respect to
-        final reversion. """
-        for attr, info in reversed(list(ai.items())):
-            if attr not in attribute_info:
-                attribute_info[attr] = info
+            pass
+        else:
+            # Reverse order of Class attributes to preserve it with respect to
+            # final reversion.
+            for attr, info in reversed(list(ai.items())):
+                if attr not in attribute_info:
+                    attribute_info[attr] = info
 
     # Because a child is processed before its parent, the attributes are
     # collected in reverse order.
@@ -186,6 +194,10 @@ def __init__(self, {pa}, {kwa}, **compat):
             klass.gen_type = gen_type
         if "__gen_code__" not in klass.__dict__:
             klass.__gen_code__ = __gen_code__
+
+        if pygen_deps:
+            # print(klass.__name__ + ".__pygen_deps__:", " ".join(pygen_deps))
+            klass.__pygen_deps__ = tuple(pygen_deps)
 
         klass.__attribute_info__ = ai
         klass.__qom_template__ = template

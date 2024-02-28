@@ -3,6 +3,7 @@ __all__ = [
 ]
 
 from source import (
+    CINT,
     line_origins,
     Pointer,
     Type,
@@ -47,6 +48,7 @@ class PCIExpressDeviceType(QOMDevice):
         ("vendor", { "short": _("Vendor"), "input" : PCIId }),
         ("device", { "short": _("Device"), "input" : PCIId }),
         ("pci_class", { "short": _("Class"), "input" : PCIId }),
+        ("class_prog", { "short": _("Programming interface"), "input" : int }),
         ("subsys_vendor", { "short": _("Subsystem vendor"), "input" : PCIId }),
         ("subsys", { "short":_("Subsystem"), "input" : PCIId }),
         ("irq_num", { "short": _("IRQ pin quantity"), "input" : int }),
@@ -64,6 +66,7 @@ class PCIExpressDeviceType(QOMDevice):
         vendor,
         device,
         pci_class,
+        class_prog = None,
         irq_num = 0,
         mem_bar_num = 0,
         msi_messages_num = 0,
@@ -88,6 +91,7 @@ class PCIExpressDeviceType(QOMDevice):
         self.vendor = vendor
         self.device = device
         self.pci_class = pci_class
+        self.class_prog = class_prog
 
         self.subsystem = subsys
         self.subsystem_vendor = subsys_vendor
@@ -129,12 +133,12 @@ corresponding vendor is given" % attr
             setattr(self, attr, val)
 
         val = getattr(self, "pci_class")
-        # None is not allowed there
-        if not isinstance(val, PCIId):
+        if val is not None and not isinstance(val, PCIId):
             try:
                 val = PCIId.db.get_class(name = val)
             except:
                 val = PCIId.db.get_class(cid = val)
+
         self.pci_class = val
 
         self.mem_bar_size_macros = []
@@ -170,14 +174,7 @@ corresponding vendor is given" % attr
         )
         self.header.add_type(self.type_name_macros)
 
-        self.type_cast_macro = Macro(
-            name = self.qtn.for_macros,
-            args = [ "obj" ],
-            text = "OBJECT_CHECK({Struct}, (obj), {TYPE_MACRO})".format(
-                TYPE_MACRO = self.qtn.type_macro,
-                Struct = self.struct_name
-            )
-        )
+        self.type_cast_macro = self.gen_type_cast()
         self.header.add_type(self.type_cast_macro)
 
         line_origins([
@@ -186,27 +183,28 @@ corresponding vendor is given" % attr
             self.state_struct
         ])
 
-        self.vendor_macro = self.vendor.find_macro()
-
         if self.subsystem_vendor and self.subsystem:
             self.subsystem_vendor_macro = self.subsystem_vendor.find_macro()
         else:
             self.subsystem_vendor_macro = None
 
-        try:
-            self.device_macro = self.device.find_macro()
-        except TypeNotRegistered:
-            # TODO: add device id macro to pci_ids.h
-            self.header.add_type(
-                Macro(
-                    name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
-                        self.device.name
-                    ),
-                    text = self.device.id
+        if self.device is None:
+            self.device_macro = None
+        else:
+            try:
+                self.device_macro = self.device.find_macro()
+            except TypeNotRegistered:
+                # TODO: add device id macro to pci_ids.h
+                self.header.add_type(
+                    Macro(
+                        name = "PCI_DEVICE_ID_%s_%s" % (self.vendor.name,
+                            self.device.name
+                        ),
+                        text = self.device.id
+                    )
                 )
-            )
 
-            self.device_macro = self.device.find_macro()
+                self.device_macro = self.device.find_macro()
 
         if self.subsystem_vendor and self.subsystem:
             try:
@@ -227,7 +225,10 @@ corresponding vendor is given" % attr
         else:
             self.subsystem_macro = None
 
-        self.pci_class_macro = self.pci_class.find_macro()
+        if self.pci_class is None:
+            self.pci_class_macro = None
+        else:
+            self.pci_class_macro = self.pci_class.find_macro()
 
         mem_bar_def_size = 0x100
 
@@ -374,6 +375,14 @@ corresponding vendor is given" % attr
             realize_used_types.update(self.msi_types)
             realize_used_types.add(msi_init_type)
 
+            if self.class_prog is not None:
+                realize_code += """
+    dev->config[PCI_CLASS_PROG] =@s%s;
+""" % (
+    self.class_prog
+                )
+                realize_used_types.add(Type["PCI_CLASS_PROG"])
+
         self.device_realize = self.gen_realize("PCIDevice",
             code = realize_code,
             s_is_used = s_is_used,
@@ -452,9 +461,9 @@ corresponding vendor is given" % attr
     pc->realize@b@b@b{pad}=@s{dev}_realize;
     dc->reset@b@b@b@b@b{pad}=@s{dev}_reset;
     pc->exit@b@b@b@b@b@b{pad}=@s{dev}_exit;
-    pc->vendor_id@b{pad}=@s{vendor_macro};
-    pc->device_id@b{pad}=@s{device_macro};
-    pc->class_id@b@b{pad}=@s{pci_class_macro};{subsys_id}{subsys_vid}
+    pc->vendor_id@b{pad}=@s{vendor_id};
+    pc->device_id@b{pad}=@s{device_id};
+    pc->class_id@b@b{pad}=@s{pci_class_id};{subsys_id}{subsys_vid}
     pc->revision@b@b{pad}=@s{revision};
     dc->vmsd@b@b@b@b@b@b{pad}=@s&vmstate_{dev};
 """
@@ -465,10 +474,28 @@ corresponding vendor is given" % attr
             self.device_realize,
             self.device_reset,
             self.device_exit,
-            self.vendor_macro,
-            self.device_macro,
-            self.pci_class_macro
         ]
+
+        vendor_id = CINT("0x0000")
+        if self.vendor:
+            vendor_macro = self.vendor.find_macro()
+            if vendor_macro is not None:
+                class_init_used_types.append(vendor_macro)
+                vendor_id = vendor_macro.name
+
+        if self.device_macro is None:
+            device_id = CINT("0x0000")
+        else:
+            device_id = self.device_macro.name
+            class_init_used_types.append(self.device_macro)
+
+        if self.pci_class_macro is None:
+            # According to PCI rev. 3.0, 0xFF base class means that "Device
+            # does not fit in any defined classes". Use it as a default value.
+            pci_class_id = CINT("0xFF00")
+        else:
+            pci_class_id = self.pci_class_macro.name
+            class_init_used_types.append(self.pci_class_macro)
 
         if get_vp("use device_class_set_props"):
             class_init_fmt += \
@@ -483,9 +510,9 @@ corresponding vendor is given" % attr
             body = class_init_fmt.format(
     dev = self.qtn.for_id_name,
     revision = self.revision,
-    vendor_macro = self.vendor_macro.name,
-    device_macro = self.device_macro.name,
-    pci_class_macro = self.pci_class_macro.name,
+    vendor_id = vendor_id,
+    device_id = device_id,
+    pci_class_id = pci_class_id,
     subsys_id = '' if self.subsystem_macro is None else ("""
     pc->subsystem_id@b@b@b@b@b@b@b@b=@s%s;""" % self.subsystem_macro.name),
     subsys_vid = '' if self.subsystem_vendor_macro is None else ("""

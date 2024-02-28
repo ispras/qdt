@@ -10,11 +10,15 @@ obj_var_name. """
     with open(mf_full_name, "r") as mf:
         lines = mf.readlines()
 
-    normal_obj_var_token = obj_var_name + "-" + config_flag
+    if config_flag:
+        normal_obj_var_token = obj_var_name + "-$(" + config_flag + ")"
+        ifeq_cond_directive = "ifeq ($(" + config_flag + "), y)\n"
+    else:
+        normal_obj_var_token = obj_var_name + "-y"
+        ifeq_cond_directive = None
+
     ifeq_obj_var_token = obj_var_name + "-y"
     obj_var_token = normal_obj_var_token
-
-    ifeq_cond_directive = "ifeq (" + config_flag + ", y)\n"
 
     patch_line_n = None
     ifeq_patch_line_n = None

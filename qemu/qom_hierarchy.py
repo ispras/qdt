@@ -8,7 +8,7 @@ from .qemu_watcher import (
     QOMTreeReverser
 )
 from debug import (
-    create_dwarf_cache,
+    InMemoryELFFile,
     Runtime,
     GitLineVersionAdapter
 )
@@ -119,6 +119,20 @@ class QType(object):
     def __contains__(self, name):
         return name in self.children
 
+    def rename(self, name):
+        parent = self.parent # cache
+
+        if parent:
+            if name in parent:
+                raise ValueError("The parent `%s` already has a type `%s`" % (
+                    parent.name, name
+                ))
+            self.unparent()
+            self.name = name
+            parent.add_child(self)
+        else:
+            self.name = name
+
     # Tree will be traversed from the root to the child nodes
     # The children will be serialized first
     __pygen_deps__ = ("children",)
@@ -146,7 +160,8 @@ def co_fill_children(qomtr_node, qtype_node, arch):
 
 
 def co_update_device_tree(qemu_exec, src_path, arch_name, root):
-    dic = create_dwarf_cache(qemu_exec)
+    elf = InMemoryELFFile(qemu_exec)
+    dic = elf.create_dwarf_cache()
 
     gvl_adptr = GitLineVersionAdapter(src_path)
 
@@ -170,8 +185,20 @@ def co_update_device_tree(qemu_exec, src_path, arch_name, root):
 
     yield True
 
+    # XXX: simplified PIE and non-PIE executables distinction
+    # more detailed information: https://stackoverflow.com/a/55704865
+    if elf["e_type"] != "ET_EXEC":
+        # GDB turns off address randomization by default and loads program at
+        # the default address ELF_ET_DYN_BASE.
+        # TODO: determine address dynamically
+        base_address = 0x0000555555554000
+    else:
+        base_address = 0
+
+    yield True
+
     qemu_debugger = AMD64(str(port), noack = True)
-    rt = Runtime(qemu_debugger, dic)
+    rt = Runtime(qemu_debugger, dic, base_address = base_address)
 
     qomtr.init_runtime(rt)
 
