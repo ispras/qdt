@@ -568,6 +568,17 @@ show it else hide it."),
 
         QemuVersionDescription.REQUIRE_DEVICE_TREE = require_device_tree
 
+        # `if require_device_tree`, this triggers QVD reloading to build
+        # device tree.
+        # `if not require_device_tree`, this restarts current QVD loading to
+        # interrupt device tree building as soon as possible.
+        # In both caches QVC building, version parameters evaluation or
+        # any other useful long running job progress can be discarded because
+        # of the restarting.
+        # It's up to user now to choose a moment to toggle the flag.
+        # TODO: do it conditionally
+        self.sig_qvc_dirtied.emit()
+
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
 
