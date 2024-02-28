@@ -13,6 +13,7 @@ __all__ = [
   , "forget_build_path"
   , "load_build_path_list"
   , "account_build_path"
+  , "load_qvc"
 ]
 
 from common import (
@@ -507,6 +508,33 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         QemuVersionCache.current = self
         return previous
 
+def load_qvc(path):
+    if not isfile(path):
+        raise Exception("%s does not exists." % path)
+
+    print("Loading QVC from " + path)
+    variables = {}
+    context = {
+        "QemuVersionCache": QemuVersionCache,
+        "QVHDict": QVHDict
+    }
+
+    import qemu
+    context.update(qemu.__dict__)
+
+    execfile(path, context, variables)
+
+    for v in variables.values():
+        if isinstance(v, QemuVersionCache):
+            qvc = v
+            break
+    else:
+        raise Exception(
+            "No QemuVersionCache was loaded from %s." % path
+        )
+    qvc.version_desc = QVHDict(qvc.version_desc)
+    return qvc
+
 class ConfigHost(object):
 
     def __init__(self, config_host_path):
@@ -812,30 +840,7 @@ class QemuVersionDescription(object):
                 cleaner.cancel(revert_task)
 
     def load_cache(self):
-        if not isfile(self.qvc_path):
-            raise Exception("%s does not exists." % self.qvc_path)
-
-        print("Loading QVC from " + self.qvc_path)
-        variables = {}
-        context = {
-            "QemuVersionCache": QemuVersionCache,
-            "QVHDict": QVHDict
-        }
-
-        import qemu
-        context.update(qemu.__dict__)
-
-        execfile(self.qvc_path, context, variables)
-
-        for v in variables.values():
-            if isinstance(v, QemuVersionCache):
-                self.qvc = v
-                break
-        else:
-            raise Exception(
-"No QemuVersionCache was loaded from %s." % self.qvc_path
-            )
-        self.qvc.version_desc = QVHDict(self.qvc.version_desc)
+        self.qvc = load_qvc(self.qvc_path)
 
     def co_check_modified_files(self):
         # A diff between the index and the working tree
