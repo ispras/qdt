@@ -814,28 +814,28 @@ class QemuVersionDescription(object):
     def load_cache(self):
         if not isfile(self.qvc_path):
             raise Exception("%s does not exists." % self.qvc_path)
+
+        print("Loading QVC from " + self.qvc_path)
+        variables = {}
+        context = {
+            "QemuVersionCache": QemuVersionCache,
+            "QVHDict": QVHDict
+        }
+
+        import qemu
+        context.update(qemu.__dict__)
+
+        execfile(self.qvc_path, context, variables)
+
+        for v in variables.values():
+            if isinstance(v, QemuVersionCache):
+                self.qvc = v
+                break
         else:
-            print("Loading QVC from " + self.qvc_path)
-            variables = {}
-            context = {
-                "QemuVersionCache": QemuVersionCache,
-                "QVHDict": QVHDict
-            }
-
-            import qemu
-            context.update(qemu.__dict__)
-
-            execfile(self.qvc_path, context, variables)
-
-            for v in variables.values():
-                if isinstance(v, QemuVersionCache):
-                    self.qvc = v
-                    break
-            else:
-                raise Exception(
+            raise Exception(
 "No QemuVersionCache was loaded from %s." % self.qvc_path
-                )
-            self.qvc.version_desc = QVHDict(self.qvc.version_desc)
+            )
+        self.qvc.version_desc = QVHDict(self.qvc.version_desc)
 
     def co_check_modified_files(self):
         # A diff between the index and the working tree
