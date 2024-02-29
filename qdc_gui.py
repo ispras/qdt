@@ -572,7 +572,7 @@ show it else hide it."),
         # device tree.
         # `if not require_device_tree`, this restarts current QVD loading to
         # interrupt device tree building as soon as possible.
-        # In both caches QVC building, version parameters evaluation or
+        # In both cases QVC building, version parameters evaluation or
         # any other useful long running job progress can be discarded because
         # of the restarting.
         # It's up to user now to choose a moment to toggle the flag.
