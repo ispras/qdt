@@ -5,7 +5,6 @@ from common import (
     CoSignal,
     CoTask,
     execfile,
-    FormatVar,
     mlget as _,
     open_dir,
     OrderedSet,
@@ -60,9 +59,7 @@ from os import (
 from os.path import (
     abspath,
     dirname,
-    expanduser,
     isfile,
-    join,
 )
 from six.moves.cPickle import (
     load as load_cPickled,
@@ -71,7 +68,6 @@ from six.moves.tkinter import (
     BooleanVar,
     DISABLED,
     END,
-    IntVar,
     NORMAL,
     RIGHT,
     StringVar,
@@ -91,6 +87,7 @@ from traceback import (
 
 
 class ProjectGeneration(CoTask):
+
     def __init__(self, project, source_path, signal, reload_build_path_task,
         gen_chunk_graphs, translate_cpu_semantics
     ):
@@ -139,6 +136,7 @@ class ProjectGeneration(CoTask):
             self.prev_qvd.use()
         self.finished = True
         self.sig.emit()
+
 
 class QDCGUIWindow(GUITk, QDCGUISignalHelper):
 
@@ -400,6 +398,19 @@ show it else hide it."),
             variable = v
         )
 
+        v = self.var_require_device_tree = BooleanVar()
+
+        self.__on_var_require_device_tree = v.trace_variable("w",
+            self.__on_var_require_device_tree__
+        )
+
+        v.set(True)
+
+        optionsmenu.add_checkbutton(
+            label = _("Require device tree"),
+            variable = v
+        )
+
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
 
         self.config(menu = menubar)
@@ -492,6 +503,7 @@ show it else hide it."),
         self.var_schedule_generation.set(settings.schedule_generation)
         self.var_gen_chunk_graphs.set(settings.gen_chunk_graphs)
         self.var_translate_cpu_semantics.set(settings.translate_cpu_semantics)
+        self.var_require_device_tree.set(settings.require_device_tree)
 
     def __on_listener_failed(self, e, tb):
         stderr.write("Listener failed - %s" %
@@ -545,6 +557,27 @@ show it else hide it."),
             settings.translate_cpu_semantics = (
                 self.var_translate_cpu_semantics.get()
             )
+
+    def __on_var_require_device_tree__(self, *args):
+        settings = self._user_settings
+
+        require_device_tree = self.var_require_device_tree.get()
+
+        if settings is not None:
+            settings.require_device_tree = require_device_tree
+
+        QemuVersionDescription.REQUIRE_DEVICE_TREE = require_device_tree
+
+        # `if require_device_tree`, this triggers QVD reloading to build
+        # device tree.
+        # `if not require_device_tree`, this restarts current QVD loading to
+        # interrupt device tree building as soon as possible.
+        # In both cases QVC building, version parameters evaluation or
+        # any other useful long running job progress can be discarded because
+        # of the restarting.
+        # It's up to user now to choose a moment to toggle the flag.
+        # TODO: do it conditionally
+        self.sig_qvc_dirtied.emit()
 
     def __on_title_suffix_write__(self, *args, **kw):
         self.__update_title__()
@@ -736,14 +769,14 @@ in process. Do you want to start cache rebuilding?")
         self.on_quit()
 
     def on_add_description(self):
-        d = AddDescriptionDialog(self.pht, self)
+        AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
-        dir = askdirectory(self, title = _("Select Qemu build path"))
-        if not dir:
+        _dir = askdirectory(self, title = _("Select Qemu build path"))
+        if not _dir:
             return
 
-        self.pht.set_build_path(dir)
+        self.pht.set_build_path(_dir)
 
     def on_sel_tgt_qemu_version(self):
         try:
@@ -1001,6 +1034,7 @@ class Settings(UserSettings):
             schedule_generation = False,
             gen_chunk_graphs = False,
             translate_cpu_semantics = True,
+            require_device_tree = True,
             recent_projects = OrderedSet(),
             geometry = (1000, 750),
         )

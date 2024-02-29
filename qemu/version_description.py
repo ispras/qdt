@@ -13,77 +13,80 @@ __all__ = [
   , "forget_build_path"
   , "load_build_path_list"
   , "account_build_path"
+  , "load_qvc"
 ]
 
-from source import (
-    Type,
-    SourceTreeContainer,
-    Header,
-    Macro
-)
 from common import (
-    qdtdirs,
-    makedirs,
-    rename_replacing,
-    git_find_commit,
-    co_process,
-    get_cleaner,
-    lazy,
+    callco,
     CancelledCallee,
+    co_process,
+    CommitDesc,
+    ee,
+    execfile,
     FailedCallee,
     fast_repo_clone,
     fixpath,
-    CommitDesc,
+    get_cleaner,
+    git_find_commit,
+    lazy,
+    makedirs,
     mlget as _,
-    callco,
+    pythonize,
+    qdtdirs,
     remove_file,
-    execfile,
-    pythonize
-)
-from collections import (
-    defaultdict
-)
-from .version import (
-    QVHDict,
-    initialize_version,
-    qemu_heuristic_db,
-    calculate_qh_hash,
-    get_vp
-)
-from .qom_hierarchy import (
-    QType,
-    co_update_device_tree
-)
-from os import (
-    listdir
-)
-from os.path import (
-    sep,
-    join,
-    isfile
+    rename_replacing,
 )
 from .pci_ids import (
+    PCIClassification,
     PCIId,
-    PCIClassification
+)
+from .qom_hierarchy import (
+    co_update_device_tree,
+    QType,
+)
+from source import (
+    Header,
+    Macro,
+    SourceTreeContainer,
+    Type,
+)
+from .version import (
+    calculate_qh_hash,
+    get_vp,
+    initialize_version,
+    qemu_heuristic_db,
+    QVHDict,
+)
+
+from collections import (
+    defaultdict,
 )
 from git import (
-    Repo
+    Repo,
 )
-from six import (
-    u
+from os import (
+    listdir,
+)
+from os.path import (
+    isfile,
+    join,
+    sep,
 )
 from shutil import (
     copy2,
-    rmtree
+    rmtree,
 )
-from traceback import (
-    format_exception
+from six import (
+    u,
 )
 from sys import (
-    exc_info
+    exc_info,
 )
 from time import (
-    time
+    time,
+)
+from traceback import (
+    format_exception,
 )
 
 
@@ -505,6 +508,33 @@ param.name, commit.sha, param.old_value, commit.param_oval[param.name]
         QemuVersionCache.current = self
         return previous
 
+def load_qvc(path):
+    if not isfile(path):
+        raise Exception("%s does not exists." % path)
+
+    print("Loading QVC from " + path)
+    variables = {}
+    context = {
+        "QemuVersionCache": QemuVersionCache,
+        "QVHDict": QVHDict
+    }
+
+    import qemu
+    context.update(qemu.__dict__)
+
+    execfile(path, context, variables)
+
+    for v in variables.values():
+        if isinstance(v, QemuVersionCache):
+            qvc = v
+            break
+    else:
+        raise Exception(
+            "No QemuVersionCache was loaded from %s." % path
+        )
+    qvc.version_desc = QVHDict(qvc.version_desc)
+    return qvc
+
 class ConfigHost(object):
 
     def __init__(self, config_host_path):
@@ -537,6 +567,8 @@ QVD_QH_HASH = "qh_hash"
 QVCs_DIR = join(qdtdirs.user_cache_dir, "qvcs")
 
 class QemuVersionDescription(object):
+    REQUIRE_DEVICE_TREE = ee("QDT_REQUIRE_DEVICE_TREE", "True")
+
     current = None
     # Current version of the QVD. Please use notation `u"_v{number}"` for next
     # versions. Increase number manually if current changes affect the QVD.
@@ -808,30 +840,7 @@ class QemuVersionDescription(object):
                 cleaner.cancel(revert_task)
 
     def load_cache(self):
-        if not isfile(self.qvc_path):
-            raise Exception("%s does not exists." % self.qvc_path)
-        else:
-            print("Loading QVC from " + self.qvc_path)
-            variables = {}
-            context = {
-                "QemuVersionCache": QemuVersionCache,
-                "QVHDict": QVHDict
-            }
-
-            import qemu
-            context.update(qemu.__dict__)
-
-            execfile(self.qvc_path, context, variables)
-
-            for v in variables.values():
-                if isinstance(v, QemuVersionCache):
-                    self.qvc = v
-                    break
-            else:
-                raise Exception(
-"No QemuVersionCache was loaded from %s." % self.qvc_path
-                )
-            self.qvc.version_desc = QVHDict(self.qvc.version_desc)
+        self.qvc = load_qvc(self.qvc_path)
 
     def co_check_modified_files(self):
         # A diff between the index and the working tree
@@ -899,20 +908,25 @@ class QemuVersionDescription(object):
         self.qvc.known_targets = kts
 
     def co_init_device_tree(self, targets = None):
-        if not targets:
-            targets = self.softmmu_targets
+        if self.REQUIRE_DEVICE_TREE:
+            if not targets:
+                targets = self.softmmu_targets
+        else:
+            targets = []
 
         yield True
 
-        print("Creating Device Tree for " +
-              ", ".join(t for t in targets) + "..."
-        )
+        if targets:
+            print("Creating Device Tree for " +
+                  ", ".join(t for t in targets) + "..."
+            )
 
         root = self.qvc.device_tree
         if root is None:
             root = QType("device")
 
-        yield self.co_get_install_prefix()
+        if targets:
+            yield self.co_get_install_prefix()
 
         arches_count = len(root.arches)
         for arch in targets:
@@ -966,9 +980,9 @@ class QemuVersionDescription(object):
         if arches_count == len(root.arches):
             # No new architecture has been added
             return
-
-        self.qvc.device_tree = root
-        print("Device Tree was created")
+        else:
+            print("Device Tree was created")
+            self.qvc.device_tree = root
 
         t2m = defaultdict(list)
         yield self.co_text2macros(t2m)
