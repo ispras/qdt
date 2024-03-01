@@ -181,16 +181,15 @@ class QOMType(object):
         self.directory = directory
         self.qtn = qtn = QemuTypeName(name)
         self.struct_name = "{}State".format(self.qtn.for_struct_name)
-        self.state = state = StateStruct(self.struct_name,
+        self.state = StateStruct(self.struct_name,
             vmsd_state_name = qtn.for_id_name,
         )
         # an interface is either `Macro` or C string literal
         self.interfaces = OrderedSet()
+        self.extra_fields = tuple(extra_fields)
 
-        macros_prefix = qtn.for_macros + "_"
-        for field in extra_fields:
-            field.prop_macro_name = macros_prefix + field.name.upper()
-            state.add_field(field)
+    def declare_extra_fields(self):
+        self.add_state_fields(self.extra_fields)
 
     def gen_type_cast(self):
         cast_type = get_vp("QOM type checkers type")

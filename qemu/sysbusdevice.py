@@ -109,6 +109,7 @@ class SysBusDeviceType(QOMDevice):
         self.timer_declare_fields()
         self.char_declare_fields()
         self.block_declare_fields()
+        self.declare_extra_fields()
 
     def add_fields_for_mmio(self, desc):
         if isinstance(desc, list):
