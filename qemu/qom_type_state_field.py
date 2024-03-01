@@ -17,9 +17,18 @@ class QOMTypeStateField(object):
         is_property = False,
         property_default = None,
         property_name = None,
+        property_macro_suffix = None,
     ):
         if property_name is None:
             property_name = '"' + name.replace('_', '-') + '"'
+
+        if property_macro_suffix is None:
+            property_macro_suffix = (
+                property_name
+                .strip('"')
+                .replace('-', '_')
+                .upper()
+            )
 
         if save_in_vmsd is None:
             save_in_vmsd = not bool(is_property)
@@ -31,6 +40,7 @@ class QOMTypeStateField(object):
         self.is_property = is_property
         self.property_default = property_default
         self.property_name = property_name
+        self.property_macro_suffix = property_macro_suffix
 
     def __var_base__(self):
         return "fld_"
