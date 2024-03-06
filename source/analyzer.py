@@ -34,6 +34,7 @@ from os import (
     listdir,
 )
 from os.path import (
+    dirname,
     isdir,
     join,
     splitext,
@@ -69,6 +70,57 @@ else:
             errors='surrogateescape'
         ) as file:
             return file.read()
+
+
+def _include(cpp, tokens):
+    "Customized copy of ply.cpp.Preprocessor.include"
+    # Try to extract the filename and then process an include file
+    if not tokens:
+        return
+    if tokens:
+        if tokens[0].value != '<' and tokens[0].type != cpp.t_STRING:
+            tokens = cpp.expand_macros(tokens)
+
+        if tokens[0].value == '<':
+            # Include <...>
+            i = 1
+            while i < len(tokens):
+                if tokens[i].value == '>':
+                    break
+                i += 1
+            else:
+                print("Malformed #include <...>")
+                return
+            filename = "".join([x.value for x in tokens[1:i]])
+            path = cpp.path + [""] + cpp.temp_path
+            is_global = True
+        elif tokens[0].type == cpp.t_STRING:
+            filename = tokens[0].value[1:-1]
+            path = cpp.temp_path + [""] + cpp.path
+            is_global = False
+        else:
+            print("Malformed #include statement")
+            return
+    for p in path:
+        iname = join(p,filename)
+        try:
+            data = read_include_file(iname)
+
+            _on_include(cpp.source, filename, is_global)
+
+            dname = dirname(iname)
+            if dname:
+                cpp.temp_path.insert(0,dname)
+            for tok in cpp.parsegen(data,filename):
+                yield tok
+            if dname:
+                del cpp.temp_path[0]
+            break
+        except IOError:
+            pass
+    else:
+        print("Couldn't find '%s'" % filename)
+        _on_include(cpp.source, filename, is_global)
 
 
 def _on_include(includer, inclusion, is_global):
@@ -155,9 +207,8 @@ def _build_inclusions(start_dir, prefix, recursive):
                 for path in cpp_search_paths:
                     p.add_path(path)
 
-                p.on_include = _on_include
-                p.all_inclusions = True
                 # Avoid `ply.cpp.Preprocessor` modification.
+                p.include = lambda *a: _include(p, *a)
                 _MacrosCatcher(p)
 
                 if sys.version_info[0] == 3:
