@@ -543,7 +543,8 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             self.__add_qtype_for_description(d)
 
     def __on_qvd_failed(self, task):
-        del self.reload_build_path_task
+        if task is self.reload_build_path_task:
+            del self.reload_build_path_task
 
     def on_qvc_dirtied(self):
         # QOM tree is not actual now
