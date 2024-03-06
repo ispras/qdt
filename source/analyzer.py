@@ -58,6 +58,19 @@ class ParsePrintFilter(object):
             self.written = False
 
 
+if sys.version_info.major < 3:
+    def read_include_file(filepath):
+        with open(filepath) as file:
+            return file.read()
+else:
+    def read_include_file(filepath):
+        with open(filepath, 'r',
+            encoding='utf-8',
+            errors='surrogateescape'
+        ) as file:
+            return file.read()
+
+
 def _on_include(includer, inclusion, is_global):
     if path2tuple(inclusion) not in Header.reg:
         print("Info: parsing " + inclusion + " as inclusion")
