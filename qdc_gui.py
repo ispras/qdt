@@ -9,6 +9,7 @@ from common import (
     open_dir,
     OrderedSet,
     pythonize,
+    qdtdirs,
     UserSettings,
     Variable,
 )
@@ -411,6 +412,14 @@ show it else hide it."),
             label = _("Rebuild Cache"),
             command = self.rebuild_cache,
             accelerator = hotkeys.get_keycode_string(self.rebuild_cache),
+        )
+
+        toolsmenu.add_command(
+            label = _("Open user cache directory"),
+            command = self.on_open_user_cache_dir,
+            accelerator = hotkeys.get_keycode_string(
+                self.on_open_user_cache_dir
+            ),
         )
 
         menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
@@ -1008,6 +1017,9 @@ all changes are saved. """
             return
 
         open_dir(dirname(fname) or ".")
+
+    def on_open_user_cache_dir(self):
+        open_dir(qdtdirs.user_cache_dir)
 
     def update_qemu_build_path(self, bp):
         if bp is None:
