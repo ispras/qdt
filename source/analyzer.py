@@ -187,55 +187,60 @@ def _build_inclusions(start_dir, prefix, recursive):
                 join(prefix, entry),
                 True
             )
+        return
+
+    ext = splitext(prefix)[1]
+    if ext != ".h":
+        return
+
+    if path2tuple(prefix) not in Header.reg:
+        h = Header(path = prefix, is_global = False)
+        h.parsed = False
     else:
-        (name, ext) = splitext(prefix)
-        if ext == ".h":
-            if path2tuple(prefix) not in Header.reg:
-                h = Header(path = prefix, is_global = False)
-                h.parsed = False
-            else:
-                h = Header[prefix]
+        h = Header[prefix]
 
-            if not h.parsed:
-                h.parsed = True
-                print("Info: parsing " + prefix)
+    if h.parsed:
+        return
 
-                p = Preprocessor(lex())
-                p.add_path(start_dir)
+    h.parsed = True
+    print("Info: parsing " + prefix)
 
-                global cpp_search_paths
-                for path in cpp_search_paths:
-                    p.add_path(path)
+    p = Preprocessor(lex())
+    p.add_path(start_dir)
 
-                # Avoid `ply.cpp.Preprocessor` modification.
-                p.include = lambda *a: _include(p, *a)
-                _MacrosCatcher(p)
+    global cpp_search_paths
+    for path in cpp_search_paths:
+        p.add_path(path)
 
-                if sys.version_info[0] == 3:
-                    header_input = (
-                        open(full_name, "r", encoding = "UTF-8").read()
-                    )
-                else:
-                    header_input = (
-                        open(full_name, "rb").read().decode("UTF-8")
-                    )
+    # Avoid `ply.cpp.Preprocessor` modification.
+    p.include = lambda *a: _include(p, *a)
+    _MacrosCatcher(p)
 
-                p.parse(input = header_input, source = prefix)
+    if sys.version_info[0] == 3:
+        header_input = (
+            open(full_name, "r", encoding = "UTF-8").read()
+        )
+    else:
+        header_input = (
+            open(full_name, "rb").read().decode("UTF-8")
+        )
 
-                yields_per_current_header = 0
+    p.parse(input = header_input, source = prefix)
 
-                tokens_before_yield = 0
-                while p.token():
-                    if not tokens_before_yield:
+    yields_per_current_header = 0
 
-                        yields_per_current_header += 1
+    tokens_before_yield = 0
+    while p.token():
+        if not tokens_before_yield:
 
-                        yield True
-                        tokens_before_yield = 1000 # an adjusted value
-                    else:
-                        tokens_before_yield -= 1
+            yields_per_current_header += 1
 
-                yields_per_header.append(yields_per_current_header)
+            yield True
+            tokens_before_yield = 1000 # an adjusted value
+        else:
+            tokens_before_yield -= 1
+
+    yields_per_header.append(yields_per_current_header)
 
 
 def co_build_inclusions(work_dir, include_paths,
