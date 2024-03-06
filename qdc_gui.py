@@ -1011,7 +1011,7 @@ all changes are saved. """
         if bp is None:
             self.var_qemu_build_path.set(_("No QEMU build path selected").get())
         else:
-            self.var_qemu_build_path.set("QEMU: " + bp)
+            self.var_qemu_build_path.set("Build path: " + bp)
 
     def update_target_qemu(self):
         p, qvd = self.proj, QemuVersionDescription.current
