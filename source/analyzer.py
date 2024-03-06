@@ -69,6 +69,23 @@ def _on_include(includer, inclusion, is_global):
     Header[includer].add_inclusion(h)
 
 
+class _MacrosCatcher(dict):
+
+    def __init__(self, cpp):
+        dict.__init__(self)
+        self._cpp = cpp
+        self.update(cpp.macros)
+        cpp.macros = self
+
+    def __setitem__(self, name, macro):
+        dict.__setitem__(self, name, macro)
+        try:
+            definer = self._cpp.source
+        except AttributeError:
+            return
+        _on_define(definer, macro)
+
+
 def _on_define(definer, macro):
     # macro is ply.cpp.Macro
 
@@ -127,7 +144,8 @@ def _build_inclusions(start_dir, prefix, recursive):
 
                 p.on_include = _on_include
                 p.all_inclusions = True
-                p.on_define.append(_on_define)
+                # Avoid `ply.cpp.Preprocessor` modification.
+                _MacrosCatcher(p)
 
                 if sys.version_info[0] == 3:
                     header_input = (
