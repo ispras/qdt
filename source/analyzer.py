@@ -216,14 +216,7 @@ def _build_inclusions(start_dir, prefix, recursive):
     p.include = lambda *a: _include(p, *a)
     _MacrosCatcher(p)
 
-    if sys.version_info[0] == 3:
-        header_input = (
-            open(full_name, "r", encoding = "UTF-8").read()
-        )
-    else:
-        header_input = (
-            open(full_name, "rb").read().decode("UTF-8")
-        )
+    header_input = read_include_file(full_name)
 
     p.parse(input = header_input, source = prefix)
 
