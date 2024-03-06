@@ -4,7 +4,7 @@ from common import (
 )
 from source import (
     add_base_types,
-    Header,
+    co_build_inclusions,
     Type,
     gen_printf_format,
 )
@@ -33,7 +33,7 @@ def main():
             h.write("#include<inttypes.h>\n")
 
         try:
-            callco(Header.co_build_inclusions(
+            callco(co_build_inclusions(
                 tmpdir,
                 [
                     (".", False),
