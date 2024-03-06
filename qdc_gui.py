@@ -337,14 +337,6 @@ show it else hide it."),
 
         editmenu.add_separator()
 
-        editmenu.add_command(
-            label = _("Rebuild Cache"),
-            command = self.rebuild_cache,
-            accelerator = hotkeys.get_keycode_string(self.rebuild_cache)
-        )
-
-        editmenu.add_separator()
-
         v = self.var_history_window = BooleanVar()
         v.set(False)
 
@@ -414,6 +406,12 @@ show it else hide it."),
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
 
         toolsmenu = VarMenu(menubar, tearoff = False)
+
+        toolsmenu.add_command(
+            label = _("Rebuild Cache"),
+            command = self.rebuild_cache,
+            accelerator = hotkeys.get_keycode_string(self.rebuild_cache)
+        )
 
         menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
 
