@@ -410,7 +410,7 @@ show it else hide it."),
         toolsmenu.add_command(
             label = _("Rebuild Cache"),
             command = self.rebuild_cache,
-            accelerator = hotkeys.get_keycode_string(self.rebuild_cache)
+            accelerator = hotkeys.get_keycode_string(self.rebuild_cache),
         )
 
         menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
