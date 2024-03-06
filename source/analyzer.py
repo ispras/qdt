@@ -72,7 +72,7 @@ else:
             return file.read()
 
 
-def _include(cpp, tokens):
+def _include(cpp, start_dir, tokens):
     "Customized copy of ply.cpp.Preprocessor.include"
     # Try to extract the filename and then process an include file
     if not tokens:
@@ -116,13 +116,19 @@ def _include(cpp, tokens):
         try:
             data = read_include_file(iname)
 
-            _on_include(cpp.source, filename, is_global)
+            if p.startswith(start_dir):
+                # Start directory relative header paths are required.
+                inclusion = join(p[len(start_dir) + 1:], filename)
+            else:
+                inclusion = filename
+
+            _on_include(cpp.source, inclusion, is_global)
 
             prev_temp_path = cpp.temp_path
             dname = dirname(iname)
             cpp.temp_path = [dname]
 
-            for tok in cpp.parsegen(data,filename):
+            for tok in cpp.parsegen(data, inclusion):
                 yield tok
 
             cpp.temp_path = prev_temp_path
@@ -225,7 +231,7 @@ def _build_inclusions(start_dir, prefix, recursive):
         p.add_path(path)
 
     # Avoid `ply.cpp.Preprocessor` modification.
-    p.include = lambda *a: _include(p, *a)
+    p.include = lambda *a: _include(p, start_dir, *a)
     _MacrosCatcher(p)
 
     header_input = read_include_file(full_name)
