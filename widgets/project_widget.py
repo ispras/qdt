@@ -88,7 +88,7 @@ class ReloadBuildPathTask(CoTask):
         self.pw.qsig_emit("qvc_available")
 
     def __failed__(self):
-        self.pw.qsig_emit("qvd_failed")
+        self.pw.qsig_emit("qvd_failed", self)
 
     def __cancelled__(self):
         if self.qvd.qvc and not self.qvd.qvc_is_ready:
@@ -542,7 +542,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
         for d in self.p.descriptions:
             self.__add_qtype_for_description(d)
 
-    def __on_qvd_failed(self):
+    def __on_qvd_failed(self, task):
         del self.reload_build_path_task
 
     def on_qvc_dirtied(self):
