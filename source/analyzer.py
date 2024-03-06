@@ -92,15 +92,25 @@ def _include(cpp, tokens):
                 print("Malformed #include <...>")
                 return
             filename = "".join([x.value for x in tokens[1:i]])
-            path = cpp.path + [""] + cpp.temp_path
             is_global = True
         elif tokens[0].type == cpp.t_STRING:
             filename = tokens[0].value[1:-1]
-            path = cpp.temp_path + [""] + cpp.path
             is_global = False
         else:
             print("Malformed #include statement")
             return
+
+    # Use GCC-style inclusion search because Qemu uses GCC.
+    # GCC ignores inclusion chain.
+    # Includer's directory is searched only for "quote" inclusions.
+    # Only directory of includer is searched for file being included.
+    # https://gcc.gnu.org/onlinedocs/cpp/Search-Path.html
+
+    if is_global:
+        path = cpp.path
+    else:
+        path = cpp.temp_path + cpp.path
+
     for p in path:
         iname = join(p,filename)
         try:
@@ -108,13 +118,15 @@ def _include(cpp, tokens):
 
             _on_include(cpp.source, filename, is_global)
 
+            prev_temp_path = cpp.temp_path
             dname = dirname(iname)
-            if dname:
-                cpp.temp_path.insert(0,dname)
+            cpp.temp_path = [dname]
+
             for tok in cpp.parsegen(data,filename):
                 yield tok
-            if dname:
-                del cpp.temp_path[0]
+
+            cpp.temp_path = prev_temp_path
+
             break
         except IOError:
             pass
