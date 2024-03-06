@@ -572,7 +572,7 @@ class QemuVersionDescription(object):
     current = None
     # Current version of the QVD. Please use notation `u"_v{number}"` for next
     # versions. Increase number manually if current changes affect the QVD.
-    version = u"_v2"
+    version = u"_v3"
 
     def __init__(self, build_path, version = None):
         config_host_path = join(build_path, "config-host.mak")
