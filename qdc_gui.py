@@ -413,6 +413,10 @@ show it else hide it."),
 
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
 
+        toolsmenu = VarMenu(menubar, tearoff = False)
+
+        menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
+
         self.config(menu = menubar)
 
         # Widget layout
