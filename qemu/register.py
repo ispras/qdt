@@ -30,7 +30,7 @@ from source.function import (
 )
 
 from math import (
-    log
+    log,
 )
 
 
