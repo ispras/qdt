@@ -84,9 +84,10 @@ class Register(OpaqueRegister):
                 reset = None
             else:
                 # Non-virtual register is normally always reset.
-                # But somtimes a device has a register that only resetted under
-                # specific condition (e.g. power on only). Software or watchdog
-                # reset, for instance, does not affect such a register.
+                # But sometimes a device has a register that only resetted
+                # under specific condition (e.g. power on only).
+                # Software or watchdog reset, for instance, does not affect
+                # such a register.
                 reset = 0
 
         if reset is not None:
