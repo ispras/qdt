@@ -217,7 +217,7 @@ class SysBusDeviceType(QOMDevice):
 
             if reg.size > 8:
                 if reg.reset is not None:
-                    reg_resets.append("memset(s->%s,@s%s,@s0x%x);\n" % (
+                    reg_resets.append("memset(s->%s,@s%s,@s0x%x);" % (
                         qtn.for_id_name,
                         reg.reset.gen_c_code(),
                         reg.size
