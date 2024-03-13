@@ -125,7 +125,6 @@ class StateStruct(object):
 
                 )
 
-
             vms_macro = Type[vms_macro_name]
             used_types.add(vms_macro)
 
