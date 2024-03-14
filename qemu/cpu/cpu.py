@@ -985,7 +985,9 @@ class CPUType(QOMCPU):
     def _gen_machine_c(self, c):
         cpu_arch_state = Type[self.struct_name]
         vmstate = self.gen_vmstate_var(cpu_arch_state)
-        c.add_global_variable(vmstate)
+        c.add_global_variable(vmstate,
+            grab_used_vars = True,
+        )
 
     def _gen_translate_c(self, c):
         if get_vp("Init cpu_env in arch"):

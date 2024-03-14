@@ -109,6 +109,7 @@ class SysBusDeviceType(QOMDevice):
         self.timer_declare_fields()
         self.char_declare_fields()
         self.block_declare_fields()
+        self.declare_extra_fields()
 
     def add_fields_for_mmio(self, desc):
         if isinstance(desc, list):
@@ -214,12 +215,26 @@ class SysBusDeviceType(QOMDevice):
                 continue
             qtn = QemuTypeName(name)
 
-            if reg.reset is not None:
-                reg_resets.append("s->%s@b=@s%s;" % (
-                    qtn.for_id_name,
-                    reg.reset.gen_c_code()
-                ))
-                s_is_used = True
+            if reg.size > 8:
+                if reg.reset is not None:
+                    reg_resets.append("memset(s->%s,@s%s,@s0x%x);" % (
+                        qtn.for_id_name,
+                        reg.reset.gen_c_code(),
+                        reg.size
+                    ))
+                    s_is_used = True
+                    used_types.add(Type["memset"])
+
+                # TODO: support read-only bits for long buffers
+                # TODO: support write-after-read bits for long buffers
+                continue
+            else:
+                if reg.reset is not None:
+                    reg_resets.append("s->%s@b=@s%s;" % (
+                        qtn.for_id_name,
+                        reg.reset.gen_c_code()
+                    ))
+                    s_is_used = True
 
             warb = reg.warbits
             if warb.v:
@@ -564,7 +579,9 @@ class SysBusDeviceType(QOMDevice):
 
         self.vmstate = self.gen_vmstate_var(self.state_struct)
 
-        self.source.add_global_variable(self.vmstate)
+        self.source.add_global_variable(self.vmstate,
+            grab_used_vars = True,
+        )
 
         self.properties = self.gen_properties_global(self.state_struct)
 

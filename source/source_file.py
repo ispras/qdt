@@ -109,8 +109,11 @@ class Source(TypeContainer):
     # Only header can do it, see `Header`.
     inherit_references = False
 
-    def __init__(self, path, locked_inclusions = None):
-        super(Source, self).__init__()
+    def __init__(self, path,
+        locked_inclusions = None,
+        **kw
+    ):
+        super(Source, self).__init__(**kw)
 
         self.path = path
         self.types = {}
@@ -138,7 +141,9 @@ class Source(TypeContainer):
 
         return self
 
-    def add_global_variable(self, var):
+    def add_global_variable(self, var,
+        grab_used_vars = False
+    ):
         if var.name in self.global_variables:
             raise RuntimeError("Variable with name %s is already in file %s"
                 % (var, self.name)
@@ -153,8 +158,9 @@ class Source(TypeContainer):
                         var, self.path
                     )
                 )
-            if var.initializer is not None:
-                for t in var.initializer.used_types:
+            initializer = var.initializer
+            if initializer is not None:
+                for t in initializer.used_types:
                     for s in t.get_definers():
                         if s == self:
                             continue
@@ -173,6 +179,12 @@ class Source(TypeContainer):
                                 t = t,
                                 file = s.path
                             ))
+                if grab_used_vars:
+                    for used_var in initializer.used_variables:
+                        if used_var.definer is None:
+                            self.add_global_variable(used_var,
+                                grab_used_vars = True,
+                            )
 
             var.definer = self
         elif type(self) is Header: # exactly a header
