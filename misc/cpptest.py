@@ -90,9 +90,9 @@ def system_cpp(
     stdo, stde = p.communicate()
 
     if p.wait():
-        raise RuntimeError("cpp failed\n" + stde)
+        raise RuntimeError("cpp failed\n" + stde.decode("utf-8"))
 
-    return stdo
+    return stdo.decode("utf-8")
 
 
 def log_mem_usage():
