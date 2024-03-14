@@ -44,6 +44,9 @@ from subprocess import (
 from time import (
     time,
 )
+from traceback import (
+    format_exc,
+)
 
 logDrop = lambda __: None
 logWrite = logDrop
@@ -347,6 +350,7 @@ def main():
                         P = not P,
                     )
                 except:
+                    log("cpp failed:\n" + format_exc())
                     outData = ""
 
                 if normalize:
