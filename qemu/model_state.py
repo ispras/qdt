@@ -122,7 +122,6 @@ class StateStruct(object):
                     "VMState generation for type %s is not implemented" % (
                         f_c_type_name,
                     )
-
                 )
 
             vms_macro = Type[vms_macro_name]
