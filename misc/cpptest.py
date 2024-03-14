@@ -291,6 +291,7 @@ def main():
     pathSlice = slice(inDirSfxLen, None)
 
     tStart = time()
+    tTime = 0
     total = 0
 
     inc_cache = None
