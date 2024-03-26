@@ -45,7 +45,7 @@ from .qom_hierarchy import (
     QType,
 )
 from source import (
-    Header,
+    co_build_inclusions,
     Macro,
     SourceTreeContainer,
     Type,
@@ -572,7 +572,7 @@ class QemuVersionDescription(object):
     current = None
     # Current version of the QVD. Please use notation `u"_v{number}"` for next
     # versions. Increase number manually if current changes affect the QVD.
-    version = u"_v2"
+    version = u"_v3"
 
     def __init__(self, build_path, version = None):
         config_host_path = join(build_path, "config-host.mak")
@@ -723,7 +723,7 @@ class QemuVersionDescription(object):
             # set Qemu version heuristics according to current version
             initialize_version(self.qvc.version_desc)
 
-            yield Header.co_build_inclusions(tmp_work_dir, self.include_paths)
+            yield co_build_inclusions(tmp_work_dir, self.include_paths)
 
             self.qvc.list_headers = self.qvc.stc.create_header_db()
 
@@ -1001,7 +1001,7 @@ class QemuVersionDescription(object):
             prev_stc = tmp_stc.set_cur_stc()
 
             # Parse config-host.h to get `CONFIG_PREFIX` macro.
-            yield Header.co_build_inclusions(self.build_path, [(".", False)])
+            yield co_build_inclusions(self.build_path, [(".", False)])
 
             prefix = Type["CONFIG_PREFIX"].text.strip('"')
 

@@ -9,6 +9,7 @@ from common import (
     open_dir,
     OrderedSet,
     pythonize,
+    qdtdirs,
     UserSettings,
     Variable,
 )
@@ -337,14 +338,6 @@ show it else hide it."),
 
         editmenu.add_separator()
 
-        editmenu.add_command(
-            label = _("Rebuild Cache"),
-            command = self.rebuild_cache,
-            accelerator = hotkeys.get_keycode_string(self.rebuild_cache)
-        )
-
-        editmenu.add_separator()
-
         v = self.var_history_window = BooleanVar()
         v.set(False)
 
@@ -412,6 +405,24 @@ show it else hide it."),
         )
 
         menubar.add_cascade(label = _("Options"), menu = optionsmenu)
+
+        toolsmenu = VarMenu(menubar, tearoff = False)
+
+        toolsmenu.add_command(
+            label = _("Rebuild Cache"),
+            command = self.rebuild_cache,
+            accelerator = hotkeys.get_keycode_string(self.rebuild_cache),
+        )
+
+        toolsmenu.add_command(
+            label = _("Open user cache directory"),
+            command = self.on_open_user_cache_dir,
+            accelerator = hotkeys.get_keycode_string(
+                self.on_open_user_cache_dir
+            ),
+        )
+
+        menubar.add_cascade(label = _("Tools"), menu = toolsmenu)
 
         self.config(menu = menubar)
 
@@ -1007,11 +1018,14 @@ all changes are saved. """
 
         open_dir(dirname(fname) or ".")
 
+    def on_open_user_cache_dir(self):
+        open_dir(qdtdirs.user_cache_dir)
+
     def update_qemu_build_path(self, bp):
         if bp is None:
             self.var_qemu_build_path.set(_("No QEMU build path selected").get())
         else:
-            self.var_qemu_build_path.set("QEMU: " + bp)
+            self.var_qemu_build_path.set("Build path: " + bp)
 
     def update_target_qemu(self):
         p, qvd = self.proj, QemuVersionDescription.current

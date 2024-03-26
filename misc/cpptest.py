@@ -44,6 +44,9 @@ from subprocess import (
 from time import (
     time,
 )
+from traceback import (
+    format_exc,
+)
 
 logDrop = lambda __: None
 logWrite = logDrop
@@ -90,9 +93,9 @@ def system_cpp(
     stdo, stde = p.communicate()
 
     if p.wait():
-        raise RuntimeError("cpp failed\n" + stde)
+        raise RuntimeError("cpp failed\n" + stde.decode("utf-8"))
 
-    return stdo
+    return stdo.decode("utf-8")
 
 
 def log_mem_usage():
@@ -291,6 +294,7 @@ def main():
     pathSlice = slice(inDirSfxLen, None)
 
     tStart = time()
+    tTime = 0
     total = 0
 
     inc_cache = None
@@ -346,6 +350,7 @@ def main():
                         P = not P,
                     )
                 except:
+                    log("cpp failed:\n" + format_exc())
                     outData = ""
 
                 if normalize:
