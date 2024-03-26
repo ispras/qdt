@@ -14,13 +14,13 @@ from .model import (
 with pypath("..ply"):
     # PLY`s C preprocessor is used for several QEMU code analysis
     from ply.lex import (
-        lex
+        lex,
     )
     from ply.cpp import (
         Preprocessor,
         literals,
         tokens,
-        t_error
+        t_error,
     )
     exec("from ply.cpp import t_" + ", t_".join(tokens))
 from .source_file import (
@@ -66,8 +66,8 @@ if sys.version_info.major < 3:
 else:
     def read_include_file(filepath):
         with open(filepath, 'r',
-            encoding='utf-8',
-            errors='surrogateescape'
+            encoding = "utf-8",
+            errors = "surrogateescape",
         ) as file:
             return file.read()
 
@@ -112,7 +112,7 @@ def _include(cpp, start_dir, tokens):
         path = cpp.temp_path + cpp.path
 
     for p in path:
-        iname = join(p,filename)
+        iname = join(p, filename)
         try:
             data = read_include_file(iname)
 
