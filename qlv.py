@@ -714,7 +714,7 @@ class QLVWindow(GUITk):
             yield
 
             last_idx = idx + 1000
-            for idx, i in izip(xrange(idx, last_idx + 1), iiter):
+            for idx, i in zip(xrange(idx, last_idx + 1), iiter):
                 if not isinstance(i, TraceInstr):
                     continue
                 trace = i.trace
