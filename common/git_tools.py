@@ -15,9 +15,6 @@ __all__ = [
 from .intervalmap import (
     intervalmap,
 )
-from .lazy import (
-    lazy,
-)
 
 from collections import (
     namedtuple,
@@ -143,28 +140,22 @@ Notes:
         self.children.append(cd)
         cd.parents.append(self)
 
-        # invalidate `@lazy` attributes
-        del self.is_fork
-        del self.is_leaf
-        del cd.is_merge
-        del cd.is_root
-
     def add_parent(self, cd):
         cd.add_child(self)
 
-    @lazy
+    @property
     def is_fork(self):
         return len(self.children) > 1
 
-    @lazy
+    @property
     def is_merge(self):
         return len(self.parents) > 1
 
-    @lazy
+    @property
     def is_leaf(self):
         return not self.children
 
-    @lazy
+    @property
     def is_root(self):
         return not self.parents
 
