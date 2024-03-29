@@ -413,6 +413,11 @@ class QLVWindow(GUITk):
 
         self.title(_("QEmu Log Viewer"))
 
+        hk = self.hk
+        hk(self._hk_copy, hk.COPY_KEYCODE,
+            symbol = "c",
+        )
+
         self.columnconfigure(0, weight = 1)
 
         self.rowconfigure(0, weight = 1)
@@ -453,6 +458,31 @@ class QLVWindow(GUITk):
         sb.right(var)
 
         self.qlog_trace_texts = []
+
+    def _hk_copy(self):
+        w = self.hk.event.widget
+        if w is self.tv_instructions:
+            idx = self.tv_instructions.selected_step_index
+            if idx is None:
+                return
+            for log in self.all_instructions:
+                try:
+                    step = log[idx]
+                except IndexError:
+                    continue
+                break
+            else:
+                return
+
+            text = str(step.icount) + " "
+
+            if isinstance(step, TraceInstr):
+                text += INSTR_ADDR_FMT % step.addr + " " + str(step)
+            else: # LogInt or unsupported type
+                text += str(step)
+
+            self.clipboard_clear()
+            self.clipboard_append(text)
 
     def show_logs(self, qlogs):
         panes_trace_text = self.panes_trace_text
