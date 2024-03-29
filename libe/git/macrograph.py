@@ -243,6 +243,14 @@ class GitMacrograph(object):
             e = edges2build.pop()
 
             last_c = e[-1]
+
+            if last_c in edges:
+                # `e`dge have no commits, it joints two macronodes
+                e.pop()
+                e._descendant = last_c
+                self.__notify_edge(self, e, None)
+                continue
+
             while True:
                 children = last_c.children
 
