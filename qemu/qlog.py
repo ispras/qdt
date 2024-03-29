@@ -9,19 +9,20 @@ __all__ = [
 ]
 
 
-from itertools import (
-    count
-)
 from common import (
-    pipeline,
+    ee,
     limit_stage,
-    ee
+    pipeline,
 )
-from traceback import (
-    print_exc
+
+from itertools import (
+    count,
 )
 from re import (
     compile,
+)
+from traceback import (
+    print_exc,
 )
 
 
