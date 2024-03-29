@@ -424,12 +424,18 @@ class QEMULog(object):
             return self.in_asm[fromCache].lookLinkDown(start_id)
 
     def trace_stage(self):
-        ready_instrs = []
+        ready = []
+        instrs = []
+        interrupts = []
 
         next_icount = 0
 
-        t = yield
         while True:
+            if ready:
+                t = (yield ready)
+                ready = []
+            else:
+                t = (yield EMPTY)
             while t.bad:
                 t = (yield EMPTY)
 
@@ -438,18 +444,23 @@ class QEMULog(object):
 
             if isinstance(t, CPUIORecompile):
                 # Don't yield last instruction because there is no exception.
-                ready_instrs.pop()
+                instrs.pop()
                 continue
 
             if isinstance(t, LogInt):
-                assert not ready_instrs
                 t.icount = next_icount
-                t = (yield [t])
+                interrupts.append(t)
                 continue
 
+            # isinstance(t, QTrace), i.e. next trace record or EOL
+            ready.extend(instrs)
+            instrs = []
+            ready.extend(interrupts)
+            interrupts = []
+
             if t is EOL:
-                if ready_instrs:
-                    yield ready_instrs
+                if ready:
+                    yield ready
                 break
 
             addr = t.firstAddr
@@ -471,7 +482,7 @@ class QEMULog(object):
                     if DEBUG < 2:
                         print("0x%08X: %s" % (instr.addr, instr.disas))
 
-                    ready_instrs.append(instr)
+                    instrs.append(instr)
 
                     addr += instr.size
 
@@ -523,12 +534,6 @@ class QEMULog(object):
 
                     instr = TraceInstr(nextInstr, None, next_icount)
                     next_icount += 1
-
-            if ready_instrs:
-                t = (yield ready_instrs)
-                ready_instrs = []
-            else:
-                t = (yield EMPTY)
 
     def cache_overwritten(self):
         cur = self.current_cache
