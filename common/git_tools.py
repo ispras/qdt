@@ -159,13 +159,6 @@ Notes:
     def is_root(self):
         return not self.parents
 
-    def add_child(self, cd):
-        self.children.append(cd)
-        cd.parents.append(self)
-
-    def add_parent(self, cd):
-        cd.add_child(self)
-
     @classmethod
     def co_build_git_graph(klass, repo, commit_desc_nodes, **kw):
         return co_build_git_graph(repo, commit_desc_nodes,
