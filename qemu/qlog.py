@@ -11,6 +11,7 @@ __all__ = [
 
 from common import (
     ee,
+    lazy,
     limit_stage,
     pipeline,
 )
@@ -305,6 +306,10 @@ class TBCache(object):
 
 hexDigits = set("0123456789abcdefABCDEF")
 
+# Record/Replay #2 adds line IC=[instructions_executed] to CPU state for
+# debug.
+re_instruction_counter = compile(".*IC=(\d+).*")
+
 
 class QTrace(object):
 
@@ -365,6 +370,18 @@ class QTrace(object):
             return self.header + "\n"
         else:
             return self.header + "\n" + "".join(cpu)
+
+    @lazy
+    def instruction_counter(self):
+        cpu = self.cpuBefore
+
+        if cpu is None:
+            return None
+
+        for l in cpu:
+            match = re_instruction_counter.match(l)
+            if match:
+                return int(match.group(1))
 
 
 class EOL:
