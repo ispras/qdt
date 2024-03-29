@@ -5,6 +5,8 @@ from argparse import (
     ArgumentParser
 )
 from widgets import (
+    MenuBuilder,
+    TextViewerToplevel,
     Statusbar,
     add_scrollbars_native,
     AutoPanedWindow,
@@ -16,6 +18,7 @@ from widgets import (
     VarTreeview
 )
 from six.moves.tkinter import (
+    Menu,
     IntVar,
     RAISED,
     VERTICAL,
@@ -418,6 +421,14 @@ class QLVWindow(GUITk):
 
         self.title(_("QEmu Log Viewer"))
 
+        with MenuBuilder(self) as menubar:
+            windows_menu = Menu(menubar.menu)
+            with menubar(_("Windows"), menu = windows_menu):
+                pass
+
+        self._windows_menu = windows_menu
+        self._text_view_windows = {}
+
         hk = self.hk
         hk(self._hk_copy, 54, symbol = "C")
 
@@ -495,9 +506,11 @@ class QLVWindow(GUITk):
     def show_logs(self, qlogs):
         panes_trace_text = self.panes_trace_text
         qlog_trace_texts = self.qlog_trace_texts
+        windows_menu = self._windows_menu
+        text_view_windows = self._text_view_windows
         # TODO: re-usage?
 
-        for __ in qlogs:
+        for qlog in qlogs:
             fr_trace_text = GUIFrame(panes_trace_text)
             panes_trace_text.add(fr_trace_text)
 
@@ -516,6 +529,21 @@ class QLVWindow(GUITk):
             trace_text.tag_configure(STYLE_DIFFERENCE[0],
                 foreground = "#FF0000"
             )
+
+            file_name = qlog.file_name
+
+            w = TextViewerToplevel(self)
+            w.file_name = file_name
+            w.withdraw() # hide initially
+
+            w.protocol("WM_DELETE_WINDOW", w.withdraw)
+
+            windows_menu.add_command(
+                label = file_name,
+                command = w.deiconify
+            )
+
+            text_view_windows[file_name] = w
 
         self.task_manager.enqueue(self.co_trace_builder(qlogs))
 
