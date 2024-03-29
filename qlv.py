@@ -1,47 +1,48 @@
 #!/usr/bin/python
 
 # QEMU log viewer
-from argparse import (
-    ArgumentParser
-)
-from widgets import (
-    MenuBuilder,
-    TextViewerToplevel,
-    Statusbar,
-    add_scrollbars_native,
-    AutoPanedWindow,
-    GUIText,
-    READONLY,
-    GUIFrame,
-    GUITk,
-    VarTreeview
-)
-from six.moves.tkinter import (
-    Menu,
-    IntVar,
-    RAISED,
-    VERTICAL,
-    HORIZONTAL,
-    NONE,
-    END,
-    Scrollbar
-)
-from six.moves.tkinter_ttk import (
-    Style
-)
 from common import (
-    EPS,
     ee,
-    mlget as _
-)
-from six.moves import (
-    zip,
-    range as xrange,
+    EPS,
+    mlget as _,
 )
 from qemu import (
-    TraceInstr,
     LogInt,
-    QEMULog
+    QEMULog,
+    TraceInstr,
+)
+from widgets import (
+    add_scrollbars_native,
+    AutoPanedWindow,
+    GUIFrame,
+    GUIText,
+    GUITk,
+    MenuBuilder,
+    READONLY,
+    Statusbar,
+    TextViewerToplevel,
+    VarTreeview,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from six.moves import (
+    range as xrange,
+    zip,
+)
+from six.moves.tkinter import (
+    END,
+    HORIZONTAL,
+    IntVar,
+    Menu,
+    NONE,
+    RAISED,
+    Scrollbar,
+    VERTICAL,
+)
+from six.moves.tkinter_ttk import (
+    Style,
 )
 from time import (
     time,
