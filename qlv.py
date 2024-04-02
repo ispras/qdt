@@ -552,7 +552,7 @@ class QLVWindow(GUITk):
 
             # This counter should correlate with var_inst_n which shows
             # amount of _displayed_ instructions. Not total amount in all logs.
-            var_ips_n.set(ips() * IPY)
+            var_ips_n.set(int(ips() * IPY))
 
             # Build subtrace for first log and then try to compare it with
             # subtraces of rest logs.
