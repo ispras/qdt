@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 # QEMU log viewer
+from __future__ import (
+    print_function,
+)
+
 from common import (
     ee,
     EPS,
