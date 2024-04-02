@@ -172,9 +172,7 @@ class _TextViewerWindow(object):
         self.columnconfigure(0, weight = 1)
         self.columnconfigure(1, weight = 0)
 
-        row = 0
-        self.rowconfigure(row, weight = 1)
-
+        row = 0; self.rowconfigure(row, weight = 1)
         self._text = text = TextCanvas(self)
         text.grid(row = row, column = 0, sticky = "NESW")
 
