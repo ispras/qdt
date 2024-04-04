@@ -41,7 +41,7 @@ linking_re = "(?P<l>Linking )"
 
 in_asm_re = "(?P<a>IN:)"
 
-in_asm_instr = "(?P<i>0x)"
+in_asm_instr_re = "(?P<i>0x)"
 
 trace_skipped_re = "(?P<s>Stopped execution of TB chain before 0x)"
 
@@ -66,7 +66,7 @@ re_line = compile("|".join([
     trace_re,
     linking_re,
     in_asm_re,
-    in_asm_instr,
+    in_asm_instr_re,
     trace_skipped_re,
     interrupt_re,
     unrecognized_re, # last, order is matter
