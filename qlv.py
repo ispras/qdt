@@ -1,44 +1,52 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # QEMU log viewer
-from argparse import (
-    ArgumentParser
+from __future__ import (
+    print_function,
 )
-from widgets import (
-    Statusbar,
-    add_scrollbars_native,
-    AutoPanedWindow,
-    GUIText,
-    READONLY,
-    BOTH,
-    GUIFrame,
-    GUITk,
-    VarTreeview
-)
-from six.moves.tkinter import (
-    IntVar,
-    RAISED,
-    VERTICAL,
-    HORIZONTAL,
-    NONE,
-    END,
-    Scrollbar
-)
-from six.moves.tkinter_ttk import (
-    Style
-)
+
 from common import (
     ee,
-    mlget as _
-)
-from six.moves import (
-    zip as izip,
-    range as xrange,
+    EPS,
+    mlget as _,
 )
 from qemu import (
-    TraceInstr,
     LogInt,
-    QEMULog
+    QEMULog,
+    TraceInstr,
+)
+from widgets import (
+    add_scrollbars_native,
+    AutoPanedWindow,
+    GUIFrame,
+    GUIText,
+    GUITk,
+    MenuBuilder,
+    READONLY,
+    Statusbar,
+    TextViewerToplevel,
+    VarTreeview,
+)
+
+from argparse import (
+    ArgumentParser,
+)
+from six.moves import (
+    range as xrange,
+    zip,
+)
+from six.moves.tkinter import (
+    END,
+    HORIZONTAL,
+    IntVar,
+    Menu,
+    NONE,
+    RAISED,
+    Scrollbar,
+    VERTICAL,
+)
+from six.moves.tkinter_ttk import (
+    Style,
 )
 from time import (
     time,
@@ -68,6 +76,8 @@ TV_WINDOW_SIZE = 1 << 10
 # other scrolling commands, or automatically adapt window size.
 
 TV_WINDOW_HALF = TV_WINDOW_SIZE >> 1
+
+INSTR_ADDR_FMT = "0x%08X"
 
 class InstructionsTreeview(VarTreeview, object):
 
@@ -151,6 +161,7 @@ class InstructionsTreeview(VarTreeview, object):
     def _update_rows_visible(self):
         root_children = self.get_children()
 
+        opened = 0
         rows = len(root_children)
 
         stack = list(root_children)
@@ -160,13 +171,16 @@ class InstructionsTreeview(VarTreeview, object):
             # because root is always opened). As a result, this algorithm is
             # not so beautiful.
             if not self.item(parent, "open"):
-                break
+                continue
             children = self.get_children(parent)
             if children:
-                rows += len(children)
+                n_children = len(children)
+                rows += n_children
+                opened += n_children
                 stack.extend(children)
 
         self._rows_visible = rows
+        self._opened_rows = opened
 
     def _yscrollcommand(self, *__):
         self.do_yscrollcommand(10)
@@ -320,7 +334,7 @@ class InstructionsTreeview(VarTreeview, object):
                 f_back_start = float(back_start)
                 f_back_end = float(back_end)
 
-                f_total = float(total)
+                f_total = float(total + self._opened_rows)
                 window_start = self._window_start
                 f_window_start = float(window_start)
                 f_in_window = float(self._rows_visible)
@@ -380,7 +394,7 @@ class InstructionsTreeview(VarTreeview, object):
         return self.insert(parent, insert_index,
             text = str(inst.icount),
             tags = tags,
-            values = ("0x%08X" % inst.addr, "-", str(inst))
+            values = (INSTR_ADDR_FMT % inst.addr, "-", str(inst))
         )
 
     @property
@@ -400,8 +414,12 @@ class InstructionsTreeview(VarTreeview, object):
 
 
 # Trace text (CPU state) styles.
-STYLE_FILE = ("file",)
-STYLE_WARNING = ("warning",)
+TAG_FILE = "file"
+TAG_LINK = "link"
+TAG_WARNING = "warning"
+STYLE_FILE = (TAG_FILE,)
+STYLE_FILE_LINK = (TAG_FILE, TAG_LINK)
+STYLE_WARNING = (TAG_WARNING,)
 # STYLE_DIFFERENCE of InstructionsTreeview is also used
 
 class QLVWindow(GUITk):
@@ -410,6 +428,17 @@ class QLVWindow(GUITk):
         GUITk.__init__(self)
 
         self.title(_("QEmu Log Viewer"))
+
+        with MenuBuilder(self) as menubar:
+            windows_menu = Menu(menubar.menu)
+            with menubar(_("Windows"), menu = windows_menu):
+                pass
+
+        self._windows_menu = windows_menu
+        self._text_view_windows = {}
+
+        hk = self.hk
+        hk(self._hk_copy, 54, symbol = "C")
 
         self.columnconfigure(0, weight = 1)
 
@@ -450,14 +479,46 @@ class QLVWindow(GUITk):
         sb.right(_("Instructions"))
         sb.right(var)
 
+        self.inst_per_sec = EPS()
+        self.var_inst_per_sec = var = IntVar(self)
+        sb.right(var)
+        sb.right(_("I/sec"))
+
         self.qlog_trace_texts = []
+
+    def _hk_copy(self):
+        w = self.hk.event.widget
+        if w is self.tv_instructions:
+            idx = self.tv_instructions.selected_step_index
+            if idx is None:
+                return
+            for log in self.all_instructions:
+                try:
+                    step = log[idx]
+                except IndexError:
+                    continue
+                break
+            else:
+                return
+
+            text = str(step.icount) + " "
+
+            if isinstance(step, TraceInstr):
+                text += INSTR_ADDR_FMT % step.addr + " " + str(step)
+            else: # LogInt or unsupported type
+                text += str(step)
+
+            self.clipboard_clear()
+            self.clipboard_append(text)
 
     def show_logs(self, qlogs):
         panes_trace_text = self.panes_trace_text
         qlog_trace_texts = self.qlog_trace_texts
+        windows_menu = self._windows_menu
+        text_view_windows = self._text_view_windows
         # TODO: re-usage?
 
-        for __ in qlogs:
+        for qlog in qlogs:
             fr_trace_text = GUIFrame(panes_trace_text)
             panes_trace_text.add(fr_trace_text)
 
@@ -471,19 +532,49 @@ class QLVWindow(GUITk):
 
             add_scrollbars_native(fr_trace_text, trace_text)
 
-            trace_text.tag_configure(STYLE_FILE[0], foreground = "#AAAAAA")
-            trace_text.tag_configure(STYLE_WARNING[0], foreground = "#FFBB66")
+            trace_text.tag_configure(TAG_FILE, foreground = "#AAAAAA")
+            trace_text.tag_configure(TAG_WARNING, foreground = "#FFBB66")
             trace_text.tag_configure(STYLE_DIFFERENCE[0],
                 foreground = "#FF0000"
             )
+            trace_text.tag_bind(TAG_LINK, "<Double-ButtonPress-1>",
+                self._on_link_double_1, "+"
+            )
+
+            file_name = qlog.file_name
+
+            w = TextViewerToplevel(self)
+            w.file_name = file_name
+            w.withdraw() # hide initially
+
+            w.protocol("WM_DELETE_WINDOW", w.withdraw)
+
+            windows_menu.add_command(
+                label = file_name,
+                command = w.deiconify
+            )
+
+            text_view_windows[file_name] = w
 
         self.task_manager.enqueue(self.co_trace_builder(qlogs))
+
+    def _on_link_double_1(self, e):
+        trace_text = e.widget
+        # file and line number are always at first line
+        link_text = trace_text.get("1.0", "1.end")
+        file_name, lineno = link_text.rsplit(":", 1)
+        lineno = int(lineno)
+        w = self._text_view_windows[file_name]
+        w.deiconify()
+        w.lineno = lineno
 
     def co_trace_builder(self, qlogs):
         t1 = time()
 
         tv = self.tv_instructions
         var_inst_n = self.var_inst_n
+        var_ips_n = self.var_inst_per_sec
+        ips = self.inst_per_sec
 
         self.qlogs = qlogs
 
@@ -495,9 +586,22 @@ class QLVWindow(GUITk):
         trace_iters = list(qlog.iter_instructions() for qlog in qlogs)
         idx = 0
 
+        # Instructions Per Yield.
+        # Big values results in GUI freezing. Small values result in overhead.
+        # Also note that real amount of processed instructions in all logs is
+        # in `len(qlogs)` times more than IPY.
+        IPY = 600 // len(qlogs)
+
+        # show N different rows
+        differences_to_show = 3 # + 1 = N
+
         while True:
             start_idx = idx
-            end_idx = idx + 100
+            end_idx = idx + IPY
+
+            # This counter should correlate with var_inst_n which shows
+            # amount of _displayed_ instructions. Not total amount in all logs.
+            var_ips_n.set(int(ips() * IPY))
 
             # Build subtrace for first log and then try to compare it with
             # subtraces of rest logs.
@@ -505,7 +609,7 @@ class QLVWindow(GUITk):
             iter_of_iters = iter(trace_iters)
 
             subtrace = list(
-                izip(xrange(start_idx, end_idx), next(iter_of_iters))
+                zip(xrange(start_idx, end_idx), next(iter_of_iters))
             )
 
             if not subtrace:
@@ -522,7 +626,16 @@ class QLVWindow(GUITk):
 
                 log_instrs = all_instructions[log_idx]
 
-                for (i1_idx, i1), i2 in izip(subtrace, qlog_iter_2):
+                for (i1_idx, i1), i2 in zip(subtrace, qlog_iter_2):
+                    if difference:
+                        if differences_to_show:
+                            differences_to_show -= 1
+                        else:
+                            # `i1_idx`-th instruction is not compared actually
+                            # (see `compared` evaluation below).
+                            i1_idx -= 1
+                            break
+
                     log_instrs.append(i2)
 
                     type_i1 = type(i1)
@@ -530,21 +643,21 @@ class QLVWindow(GUITk):
                     if type_i1 is not type(i2):
                         difference = True
                         i1.difference = i2
-                        break
+                        continue
 
                     if issubclass(type_i1, TraceInstr):
                         # Currently, comparison is address based only.
                         if i1.addr != i2.addr:
                             difference = True
                             i1.difference = i2
-                            break
+                            continue
 
                 compared = i1_idx - start_idx + 1
                 if compared < len(subtrace):
                     # Log 2 ended earlier.
                     subtrace = subtrace[:compared]
 
-                if difference:
+                if not differences_to_show:
                     break
 
             if not subtrace:
@@ -593,7 +706,7 @@ class QLVWindow(GUITk):
 
         left_text = None
 
-        for qlog_idx, (qlog_instrs, trace_text) in enumerate(izip(
+        for qlog_idx, (qlog_instrs, trace_text) in enumerate(zip(
             self.all_instructions, qlog_trace_texts
         )):
             try:
@@ -607,10 +720,12 @@ class QLVWindow(GUITk):
                 trace = i.trace
                 if trace is None:
                     file_pos = file_name + "\n"
+                    style = STYLE_FILE
                 else:
                     file_pos = "%s:%d\n" % (file_name, trace.lineno)
+                    style = STYLE_FILE_LINK
 
-                trace_text.insert(END, file_pos, STYLE_FILE)
+                trace_text.insert(END, file_pos, style)
 
                 if trace is None:
                     trace_text.insert(END, _("No CPU data").get() + "\n",
@@ -631,7 +746,7 @@ class QLVWindow(GUITk):
 
             elif isinstance(i, LogInt):
                 file_pos = "%s:%d\n" % (file_name, i.lineno)
-                trace_text.insert(END, file_pos, STYLE_FILE)
+                trace_text.insert(END, file_pos, STYLE_FILE_LINK)
 
                 cpu = i.cpu_before
                 if cpu is None:
@@ -661,9 +776,9 @@ def insert_diff(text_wgt, base, new):
 
     biter = iter(b)
 
-    for la, lb in izip(a, biter):
+    for la, lb in zip(a, biter):
         cbiter = iter(lb)
-        for ca, cb in izip(la, cbiter):
+        for ca, cb in zip(la, cbiter):
             if ca == cb:
                 text_wgt.insert(END, cb)
             else:

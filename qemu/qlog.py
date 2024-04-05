@@ -9,54 +9,72 @@ __all__ = [
 ]
 
 
-from itertools import (
-    count
-)
 from common import (
-    pipeline,
+    ee,
     limit_stage,
-    ee
+    pipeline,
 )
-from traceback import (
-    print_exc
+
+from itertools import (
+    count,
 )
 from re import (
     compile,
+)
+from traceback import (
+    print_exc,
 )
 
 
 # less value = more info
 DEBUG = ee("QLOG_DEBUG", "3")
 
-def is_trace(l):
-    # Looks like Chain is a fast jump to already translated TB (searched in
-    # the cache) using non constant address (e.g. from a guest register),
-    # while linking is a redirection to constant address (e.g. from an
-    # instruction code immediate value) by translated code patching.
-    # Chain message is printed _each time_.
-    # Hence it's a "Trace" record analog for trace reconstruction algorithm.
-    # Grep for: lookup_tb_ptr
-    return l[:6] == "Trace " or l[:6] == "Chain "
+# Looks like Chain is a fast jump to already translated TB (searched in
+# the cache) using non constant address (e.g. from a guest register),
+# while linking is a redirection to constant address (e.g. from an
+# instruction code immediate value) by translated code patching.
+# Chain message is printed _each time_.
+# Hence it's a "Trace" record analog for trace reconstruction algorithm.
+# Grep for: lookup_tb_ptr
+trace_re = "(?P<t>((Trace)|(Chain)) )"
 
-def is_linking(l):
-    return l[:8] == "Linking "
+linking_re = "(?P<l>Linking )"
 
-def is_in_asm(l):
-    return l[:3] == "IN:"
+in_asm_re = "(?P<a>IN:)"
 
-def is_in_asm_instr(l):
-    return l[:2] == "0x"
+in_asm_instr_re = "(?P<i>0x)"
 
-def is_trace_skipped(l):
-    return l.startswith("Stopped execution of TB chain before 0x")
+trace_skipped_re = "(?P<s>Stopped execution of TB chain before 0x)"
 
 # Hint, grep Qemu sources for CPU_LOG_INT or (sometimes) CPU_LOG_TB_IN_ASM.
-re_interrupt = compile(
-    "((Servicing hardware INT)|(SMM: )|(check_exception)|( *\\d+: v=)).+"
+
+interrupt_prefixes = (
+    "Servicing hardware INT",
+    "SMM: ",
+    "check_exception",
+    " *\\d+: v="
 )
 
-def is_interrupt(l):
-    return re_interrupt.match(l)
+interrupt_re = (
+    "(?P<I>"
+    + "|".join("(%s)" % p for p in interrupt_prefixes)
+    + ")"
+)
+
+cpu_io_recompile_re = "(?P<R>cpu_io_recompile: rewound )"
+
+unrecognized_re = ("(?P<u>)")
+
+re_line = compile("|".join([
+    trace_re,
+    linking_re,
+    in_asm_re,
+    in_asm_instr_re,
+    trace_skipped_re,
+    interrupt_re,
+    cpu_io_recompile_re,
+    unrecognized_re, # last, order is matter
+]))
 
 
 re_space = compile("\\s+")
@@ -200,6 +218,16 @@ class LogInt(LogStep):
             return self.header + "\n" + "".join(cpu)
 
 
+class CPUIORecompile(object):
+
+    # It's always "good" unlike `QTrace`. See `QEMULog.trace_stage`.
+    bad = False
+
+    def __init__(self, line, lineno):
+        self.line = line
+        self.lineno = lineno
+
+
 class undefined: pass
 
 class TBCache(object):
@@ -341,7 +369,8 @@ class QTrace(object):
 
 class EOL:
     "End Of Log"
-    pass
+    # It's always "good" unlike `QTrace`. See `QEMULog.trace_stage`.
+    bad = False
 
 EMPTY = tuple()
 
@@ -407,11 +436,21 @@ class QEMULog(object):
             if DEBUG < 2:
                 print(t)
 
+            if isinstance(t, CPUIORecompile):
+                # Don't yield last instruction because there is no exception.
+                ready_instrs.pop()
+                continue
+
             if isinstance(t, LogInt):
                 assert not ready_instrs
                 t.icount = next_icount
                 t = (yield [t])
                 continue
+
+            if t is EOL:
+                if ready_instrs:
+                    yield ready_instrs
+                break
 
             addr = t.firstAddr
             instr = self.lookInstr(addr, t.cacheVersion)
@@ -502,6 +541,12 @@ class QEMULog(object):
 
         return LogInt(lines, lineno)
 
+    def new_cpu_io_recompile(self, line, lineno):
+        if DEBUG < 1:
+            print("--- CPU IO recompile\n" + line)
+
+        return CPUIORecompile(line, lineno)
+
     def new_in_asm(self, in_asm):
         if DEBUG < 1:
             print("--- in_asm")
@@ -579,12 +624,12 @@ class QEMULog(object):
 
         cache.commit(instr)
 
-    def new_trace(self, trace, lineno):
+    def new_trace(self, trace, skipped, lineno):
         if DEBUG < 1:
             print("--- trace")
             print("".join(trace))
 
-        if is_trace_skipped(trace[-1]):
+        if skipped:
             addr = trace[-1][37:].split()[0]
             if addr in trace[0]:
                 if DEBUG < 2:
@@ -661,20 +706,26 @@ class QEMULog(object):
             print(l)
 
     def feed(self):
+        match = re_line.match
         lineno = 1
         l0 = yield
+
+        if l0 is not EOL:
+            g0 = match(l0).lastgroup
 
         to_yield = None
 
         while l0 is not EOL:
-            if is_in_asm(l0):
+            if g0 == "a":
                 in_asm = []
                 l1 = yield; lineno += 1 # Those operations are always together.
                 while l1 is not EOL:
-                    if is_in_asm_instr(l1):
+                    g1 = match(l1).lastgroup
+                    if g1 == "i":
                         in_asm.append(l1)
                     else:
                         l0 = l1 # try that line in other `if`s
+                        g0 = g1
                         break
                     l1 = yield; lineno += 1
                 else:
@@ -683,7 +734,7 @@ class QEMULog(object):
                 self.new_in_asm(in_asm)
                 continue
 
-            if is_trace(l0):
+            if g0 == "t":
                 trace = [l0]
                 trace_lineno = lineno
 
@@ -692,34 +743,41 @@ class QEMULog(object):
                 l1 = yield to_yield; lineno += 1
                 # We should to_yield = None here, but it will be
                 # overwritten below unconditionally.
+                skipped = False
 
                 while l1 is not EOL:
+                    g1 = match(l1).lastgroup
                     # Traces are following one by one.
                     # - User did not passed other flags to -d.
                     # - Qemu can cancel TB execution because of `exit_request`
                     # or `tcg_exit_req` after trace message has been printed.
-                    if is_trace(l1) or is_linking(l1) or is_in_asm(l1) \
-                    or is_interrupt(l1):
+                    if g1 in "tlaIR":
                         l0 = l1
+                        g0 = g1
                         break
                     trace.append(l1)
                     # Ensure that skip mark is always at end of trace.
-                    if is_trace_skipped(l1):
+                    if g1 == "s":
+                        skipped = True
                         l0 = yield; lineno += 1
+                        if l0 is not EOL:
+                            g0 = match(l0).lastgroup
                         break
                     l1 = yield; lineno += 1
                 else:
                     l0 = l1
 
-                to_yield = self.new_trace(trace, trace_lineno)
+                to_yield = self.new_trace(trace, skipped, trace_lineno)
                 continue
 
-            if is_linking(l0):
+            if g0 == "l":
                 self.new_linking(l0)
                 l0 = yield; lineno += 1
+                if l0 is not EOL:
+                    g0 = match(l0).lastgroup
                 continue
 
-            if is_interrupt(l0):
+            if g0 == "I":
                 # Some interrupts have CPU state like traces.
                 interrupt = [l0]
                 interrupt_lineno = lineno
@@ -729,9 +787,10 @@ class QEMULog(object):
                 # overwritten below unconditionally.
 
                 while l1 is not EOL:
-                    if is_trace(l1) or is_linking(l1) or is_in_asm(l1) \
-                    or is_interrupt(l1):
+                    g1 = match(l1).lastgroup
+                    if g1 in "tlaIR":
                         l0 = l1 # try that line in other `if`s
+                        g0 = g1
                         break
                     else:
                         interrupt.append(l1)
@@ -742,12 +801,28 @@ class QEMULog(object):
                 to_yield = self.new_int(interrupt, interrupt_lineno)
                 continue
 
+            if g0 == "R":
+                recompile = self.new_cpu_io_recompile(l0, lineno)
+
+                l0 = yield to_yield; lineno += 1
+                if l0 is not EOL:
+                    g0 = match(l0).lastgroup
+                to_yield = recompile
+
+                continue
+
+            assert g0 == "u"
             self.new_unrecognized(l0, lineno)
             l0 = yield; lineno += 1
+            if l0 is not EOL:
+                g0 = match(l0).lastgroup
 
         # There is no problem to yield `None` but it's possible iff input
         # log has no trace records.
         yield to_yield
+
+        # `trace_stage` need this to flush last steps.
+        yield EOL
 
 
 def qlog_reader_stage(f):
@@ -756,5 +831,7 @@ def qlog_reader_stage(f):
     for line in f:
         yield line
 
-    yield EOL
+    # Note, `QEMULog.feed` will terminate the pipeline.
+    while True:
+        yield EOL
 
