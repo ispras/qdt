@@ -35,19 +35,17 @@ May print `hint` and/or provide `default` value if it's not set.
         val = environ[name]
     except:
         print("%s: environment variable is not defined" % name)
-        try:
-            if default is None:
-                raise
+        if hint is not None:
+            print(hint)
+        if default is None:
+            raise
+        else:
+            if issubclass(type(default), type(evar)):
+                # is callable
+                val = default()
             else:
-                if issubclass(type(default), type(evar)):
-                    # is callable
-                    val = default()
-                else:
-                    val = default
-                print("%s = %r (default)" % (name, val))
-        finally:
-            if hint is not None:
-                print(hint)
+                val = default
+            print("%s = %r (default)" % (name, val))
     return val
 
 
