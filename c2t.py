@@ -1,62 +1,15 @@
 #!/usr/bin/env python
 """ QEMU CPU Testing Tool """
 
-from sys import (
-    stderr,
-)
-from os.path import (
-    basename,
-    dirname,
-    exists,
-    getmtime,
-    join,
-    relpath,
-)
-from os import (
-    killpg,
-    setpgrp,
-)
-from signal import (
-    SIGKILL,
-    SIGTERM,
-)
-from argparse import (
-    Action,
-    ArgumentParser,
-)
-from re import (
-    compile,
-)
-from multiprocessing import (
-    Process,
-    Queue,
-    Value,
-)
-from psutil import (
-    NoSuchProcess,
-    Process as psutil_Process,
-)
-from threading import (
-    Thread,
-)
-from traceback import (
-    print_exc,
-)
-from six.moves.queue import (
-    Empty,
-)
-from subprocess import (
-    PIPE,
-    Popen,
-)
-from platform import (
-    machine,
-)
-from collections import (
-    defaultdict,
-)
-from struct import (
-    pack,
+from c2t import (
+    C2TConfig,
+    DebugClient,
+    DebugCommandExecutor,
+    DebugComparator,
+    DebugServer,
+    get_new_rsp,
+    Run,
+    TestBuilder,
 )
 from common import (
     bstr,
@@ -82,16 +35,65 @@ with pypath("pyrsp"):
         QMP,
         wait_for_tcp_port,
     )
-from c2t import (
-    C2TConfig,
-    DebugClient,
-    DebugCommandExecutor,
-    DebugComparator,
-    DebugServer,
-    get_new_rsp,
-    Run,
-    TestBuilder,
+
+from argparse import (
+    Action,
+    ArgumentParser,
 )
+from collections import (
+    defaultdict,
+)
+from multiprocessing import (
+    Process,
+    Queue,
+    Value,
+)
+from os import (
+    killpg,
+    setpgrp,
+)
+from os.path import (
+    basename,
+    dirname,
+    exists,
+    getmtime,
+    join,
+    relpath,
+)
+from platform import (
+    machine,
+)
+from psutil import (
+    NoSuchProcess,
+    Process as psutil_Process,
+)
+from re import (
+    compile,
+)
+from signal import (
+    SIGKILL,
+    SIGTERM,
+)
+from six.moves.queue import (
+    Empty,
+)
+from struct import (
+    pack,
+)
+from subprocess import (
+    PIPE,
+    Popen,
+)
+from sys import (
+    stderr,
+)
+from threading import (
+    Thread,
+)
+from traceback import (
+    print_exc,
+)
+
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
 
