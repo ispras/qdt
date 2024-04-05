@@ -1,5 +1,7 @@
 __all__ = [
     "C2TConfig"
+  , "edef"
+  , "evar"
   , "Run"
   , "get_new_rsp"
   , "DebugClient"
@@ -18,6 +20,44 @@ with pypath("..pyrsp"):
         RSP,
         archmap
     )
+
+from os import (
+    environ,
+)
+
+
+def evar(name, default = None, hint = None):
+    """Tries to get environment variable `name` value.
+May print `hint` and/or provide `default` value if it's not set.
+`default` can be a value factory (callable).
+    """
+    try:
+        val = environ[name]
+    except:
+        print("%s: environment variable is not defined" % name)
+        try:
+            if default is None:
+                raise
+            else:
+                if issubclass(type(default), type(evar)):
+                    # is callable
+                    val = default()
+                else:
+                    val = default
+                print("%s = %r (default)" % (name, val))
+        finally:
+            if hint is not None:
+                print(hint)
+    return val
+
+
+def edef(factory):
+    "To be used as @decorator for default environment variable value factory."
+    return evar(factory.__name__,
+        default = factory,
+        hint = factory.__doc__,
+    )
+
 
 # CPU Testing Tool configuration components
 C2TConfig = namedtuple(
