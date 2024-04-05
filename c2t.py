@@ -729,7 +729,8 @@ def main():
         )),
         formatter_class = HelpFormatter
     )
-    parser.add_argument("config",
+    arg = parser.add_argument
+    arg("config",
         type = str,
         help = ("configuration file for {prog} (see sample and examples in "
             "{dir})".format(
@@ -739,7 +740,7 @@ def main():
         )
     )
     DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*\.c"),])
-    parser.add_argument("-t", "--include",
+    arg("-t", "--include",
         type = str,
         metavar = "RE_INCLD",
         action = TestfilterCLI,
@@ -749,7 +750,7 @@ def main():
             "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
-    parser.add_argument("-s", "--exclude",
+    arg("-s", "--exclude",
         type = str,
         metavar = "RE_EXCLD",
         action = TestfilterCLI,
@@ -759,27 +760,27 @@ def main():
             "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
-    parser.add_argument("-j", "--jobs",
+    arg("-j", "--jobs",
         type = int,
         dest = "jobs",
         default = 1,
         help = "allow N debugging jobs at once"
     )
-    parser.add_argument("-r", "--reuse",
+    arg("-r", "--reuse",
         action = "store_true",
         help = "reuse debug servers after each test (now only QEMU)"
     )
-    parser.add_argument("-v", "--verbose",
+    arg("-v", "--verbose",
         action = "store_true",
         help = "increase output verbosity"
     )
-    parser.add_argument("-e", "--errors",
+    arg("-e", "--errors",
         type = int,
         default = 1,
         metavar = "N",
         help = "stop on N-th error, 0 - no stop mode"
     )
-    parser.add_argument("-l", "--with-logs",
+    arg("-l", "--with-logs",
         action = "store_true",
         help = "write *.oracle/target.log files near tests"
     )
