@@ -5,20 +5,20 @@ from sys import (
     stderr,
 )
 from os.path import (
-    getmtime,
-    relpath,
-    dirname,
-    join,
-    exists,
     basename,
+    dirname,
+    exists,
+    getmtime,
+    join,
+    relpath,
 )
 from os import (
     killpg,
     setpgrp,
 )
 from signal import (
-    SIGTERM,
     SIGKILL,
+    SIGTERM,
 )
 from argparse import (
     Action,
@@ -28,13 +28,13 @@ from re import (
     compile,
 )
 from multiprocessing import (
-    Value,
-    Queue,
     Process,
+    Queue,
+    Value,
 )
 from psutil import (
-    Process as psutil_Process,
     NoSuchProcess,
+    Process as psutil_Process,
 )
 from threading import (
     Thread,
@@ -46,8 +46,8 @@ from six.moves.queue import (
     Empty,
 )
 from subprocess import (
-    Popen,
     PIPE,
+    Popen,
 )
 from platform import (
     machine,
@@ -59,18 +59,18 @@ from struct import (
     pack,
 )
 from common import (
-    execfile,
     bstr,
-    filefilter,
     cli_repr,
+    execfile,
+    filefilter,
     HelpFormatter,
-    pypath,
     makedirs,
+    pypath,
 )
 from debug import (
+    DWARFInfoCache,
     get_elffile_loading,
     InMemoryELFFile,
-    DWARFInfoCache,
     Runtime,
 )
 with pypath("pyrsp"):
@@ -78,18 +78,18 @@ with pypath("pyrsp"):
         archmap,
     )
     from pyrsp.utils import (
-        wait_for_tcp_port,
-        QMP,
         find_free_port,
+        QMP,
+        wait_for_tcp_port,
     )
 from c2t import (
+    C2TConfig,
+    DebugClient,
     DebugComparator,
     DebugCommandExecutor,
-    C2TConfig,
-    Run,
-    get_new_rsp,
-    DebugClient,
     DebugServer,
+    get_new_rsp,
+    Run,
     TestBuilder,
 )
 
