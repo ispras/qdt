@@ -3,13 +3,9 @@
 
 from c2t import (
     C2TConfig,
-    DebugClient,
+    config as config_api,
     DebugCommandExecutor,
     DebugComparator,
-    DebugServer,
-    get_new_rsp,
-    Run,
-    TestBuilder,
 )
 from common import (
     bstr,
@@ -802,14 +798,9 @@ def main():
                     "configuration file doesn't exist: " + args.config
                 )
 
-    glob = {
-        "C2TConfig": C2TConfig,
-        "Run": Run,
-        "get_new_rsp": get_new_rsp,
-        "DebugClient": DebugClient,
-        "DebugServer": DebugServer,
-        "TestBuilder": TestBuilder
-    }
+    glob = dict(
+        i for i in config_api.__dict__.items() if i[0] in config_api.__all__
+    )
 
     # getting `c2t_cfg` configuration for cpu testing tool
     try:
