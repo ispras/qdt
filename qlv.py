@@ -439,7 +439,6 @@ class QLVWindow(GUITk):
                 pass
 
         self._windows_menu = windows_menu
-        self._text_view_windows = {}
 
         hk = self.hk
         hk(self._hk_copy, 54, symbol = "C")
@@ -519,7 +518,6 @@ class QLVWindow(GUITk):
         panes_trace_text = self.panes_trace_text
         qlog_trace_texts = self.qlog_trace_texts
         windows_menu = self._windows_menu
-        text_view_windows = self._text_view_windows
         # TODO: re-usage?
 
         for qlog in qlogs:
@@ -541,9 +539,6 @@ class QLVWindow(GUITk):
             trace_text.tag_configure(STYLE_DIFFERENCE[0],
                 foreground = "#FF0000"
             )
-            trace_text.tag_bind(TAG_LINK, "<Double-ButtonPress-1>",
-                self._on_link_double_1, "+"
-            )
 
             file_name = qlog.file_name
 
@@ -558,19 +553,23 @@ class QLVWindow(GUITk):
                 command = w.deiconify
             )
 
-            text_view_windows[file_name] = w
+            trace_text.tag_bind(TAG_LINK, "<Double-ButtonPress-1>",
+                self._gen_on_link_double_1(w), "+"
+            )
 
         self.task_manager.enqueue(self.co_trace_builder(qlogs))
 
-    def _on_link_double_1(self, e):
-        trace_text = e.widget
-        # file and line number are always at first line
-        link_text = trace_text.get("1.0", "1.end")
-        file_name, lineno = link_text.rsplit(":", 1)
-        lineno = int(lineno)
-        w = self._text_view_windows[file_name]
-        w.deiconify()
-        w.lineno = lineno
+    def _gen_on_link_double_1(self, w):
+        def _on_link_double_1(e):
+            trace_text = e.widget
+            # line number is always at first line
+            link_text = trace_text.get("1.0", "1.end")
+            __, lineno = link_text.rsplit(":", 1)
+            lineno = int(lineno)
+            w.deiconify()
+            w.lineno = lineno
+
+        return _on_link_double_1
 
     def co_trace_builder(self, qlogs):
         t1 = time()
