@@ -2,7 +2,7 @@
 """ QEMU CPU Testing Tool """
 
 from sys import (
-    stderr
+    stderr,
 )
 from os.path import (
     getmtime,
@@ -10,53 +10,53 @@ from os.path import (
     dirname,
     join,
     exists,
-    basename
+    basename,
 )
 from os import (
     killpg,
-    setpgrp
+    setpgrp,
 )
 from signal import (
     SIGTERM,
-    SIGKILL
+    SIGKILL,
 )
 from argparse import (
     Action,
-    ArgumentParser
+    ArgumentParser,
 )
 from re import (
-    compile
+    compile,
 )
 from multiprocessing import (
     Value,
     Queue,
-    Process
+    Process,
 )
 from psutil import (
     Process as psutil_Process,
-    NoSuchProcess
+    NoSuchProcess,
 )
 from threading import (
-    Thread
+    Thread,
 )
 from traceback import (
-    print_exc
+    print_exc,
 )
 from six.moves.queue import (
-    Empty
+    Empty,
 )
 from subprocess import (
     Popen,
-    PIPE
+    PIPE,
 )
 from platform import (
-    machine
+    machine,
 )
 from collections import (
-    defaultdict
+    defaultdict,
 )
 from struct import (
-    pack
+    pack,
 )
 from common import (
     execfile,
@@ -71,16 +71,16 @@ from debug import (
     get_elffile_loading,
     InMemoryELFFile,
     DWARFInfoCache,
-    Runtime
+    Runtime,
 )
 with pypath("pyrsp"):
     from pyrsp.rsp import (
-        archmap
+        archmap,
     )
     from pyrsp.utils import (
         wait_for_tcp_port,
         QMP,
-        find_free_port
+        find_free_port,
     )
 from c2t import (
     DebugComparator,
@@ -90,7 +90,7 @@ from c2t import (
     get_new_rsp,
     DebugClient,
     DebugServer,
-    TestBuilder
+    TestBuilder,
 )
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
