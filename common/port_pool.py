@@ -33,13 +33,15 @@ within the process.
     MIN_PORT = 1024 # from user range
     MAX_PORT = 65535
 
-    def __init__(self):
+    def __init__(self, start_port = None):
         self.lock = Lock()
         self.free_ports = []
         # Free ports must remains ours.
         # For that purposes we `bind`s `socket`s to them.
         self.sockets = {}
-        self.next_port = self.MIN_PORT
+        if start_port is None:
+            start_port = self.MIN_PORT
+        self.next_port = start_port
 
     def alloc_port(self):
         with self.lock:
