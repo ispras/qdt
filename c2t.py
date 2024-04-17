@@ -15,6 +15,7 @@ from common import (
     HelpFormatter,
     makedirs,
     pypath,
+    qdtdirs,
 )
 from debug import (
     DWARFInfoCache,
@@ -86,6 +87,10 @@ from sys import (
 from threading import (
     Thread,
 )
+from time import (
+    localtime,
+    strftime,
+)
 from traceback import (
     print_exc,
 )
@@ -105,8 +110,8 @@ def c2t_exit(msg, prog = __file__):
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
-C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
-C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
+C2T_WORK_DIR = join(qdtdirs.user_cache_dir, "c2t")
+C2T_LOG_TIME_FMT = "%Y.%m.%d_%H-%M-%S"
 
 ORACLE_CPU = machine()
 
@@ -563,15 +568,23 @@ class C2TTestBuilder(Process):
             cmpl_unit.join()
 
     def run(self):
+        bin_dir = join(C2T_WORK_DIR, self.tests_tail, "bin")
+        ir_dir = join(C2T_WORK_DIR, self.tests_tail, "ir")
+
+        print("Binaries: " + bin_dir)
+        print("Intermediates: " + ir_dir)
+
+        # creates tests subdirectories if they don't exist
+        for sub_dir in (bin_dir, ir_dir):
+            makedirs(sub_dir, exist_ok = True)
+
         for test in self.tests:
             test_name = test[:-2]
             test_src = join(C2T_TEST_DIR, test)
-            test_bin = join(C2T_TEST_BIN_DIR,
-                test_name + "_%s" % self.tests_tail
-            )
+            test_bin = join(bin_dir, test_name)
 
             if not exists(test_bin) or getmtime(test_bin) < getmtime(test_src):
-                test_ir = join(C2T_TEST_IR_DIR, test_name)
+                test_ir = join(ir_dir, test_name)
 
                 self.test_build(test_src, test_ir, test_bin)
 
@@ -659,10 +672,20 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
         target_trp.join()
 
     if with_logs:
+        logs_dir = join(
+            C2T_WORK_DIR,
+            "logs",
+            strftime(C2T_LOG_TIME_FMT, localtime()),
+        )
+        print("Logs: " + logs_dir)
+        makedirs(logs_dir, exist_ok = True)
+
         for test, log in dc.test2logs.items():
             for runner in log.iter_runners():
-                log_file_name = test + "." + runner + ".log"
-                log.to_file(runner, log_file_name)
+                test_name = relpath(test, C2T_TEST_DIR)
+                log_file_name = test_name + "." + runner + ".log"
+                log_file_path = join(logs_dir, log_file_name)
+                log.to_file(runner, log_file_path)
 
 
 class testfilter(filefilter):
@@ -834,10 +857,6 @@ def main():
     jobs = args.jobs
     if jobs < 1:
         parser.error("wrong number of jobs: %s" % jobs)
-
-    # creates tests subdirectories if they don't exist
-    for sub_dir in (C2T_TEST_IR_DIR, C2T_TEST_BIN_DIR):
-        makedirs(sub_dir, exist_ok = True)
 
     start_cpu_testing(tests, jobs, args.reuse, args.verbose,
         with_logs = args.with_logs,
