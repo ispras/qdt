@@ -3,6 +3,9 @@ __all__ = [
   , "get_cleaner"
 ]
 
+from .os_wrappers import (
+    demonize,
+)
 
 from multiprocessing import (
     JoinableQueue,
@@ -32,40 +35,6 @@ from os import (
 from six import (
     PY2,
 )
-
-
-if os_name == "nt":
-    def demonize():
-        pass
-else:
-    from os import (
-        fork,
-        setpgrp
-    )
-    from os import (
-        _exit
-    )
-    def demonize():
-        """ Turns process into something between normal process and
-UNIX daemon. I.e. it's a "light" form of demonization.
-        """
-        # Normally, Python process waits for all children.
-        # Cleaner is a child, so the parent process does not terminate when
-        # its main thread ends or raises an exception.
-        # The parent can use os._exit or terminate itself using other way.
-        # But we want the parent does not worry about it.
-        # The child is terminates itself after making fork of self.
-        # Using this hack the cleaner (child) is alive and its parent process
-        # can terminate in a usual way.
-        # https://stackoverflow.com/questions/473620/how-do-you-create-a-daemon-in-python
-        if fork():
-            _exit(0)
-
-        # Normally, if parent process terminated, all its children are
-        # terminated too. But Cleaner must survive to clean things after
-        # its parent.
-        # See: https://stackoverflow.com/questions/6011235/run-a-program-from-python-and-have-it-continue-to-run-after-the-script-is-kille
-        setpgrp()
 
 
 class Cleaner(Process):
