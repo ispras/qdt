@@ -1,0 +1,9 @@
+*.docx_files/
+*.docx
+!ref.docx
+!isp-ras-proceedings-ref.docx
+*.pmd
+*.d
+*.html
+*.docx#
+*.png
