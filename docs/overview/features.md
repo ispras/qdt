@@ -19,7 +19,7 @@ https://github.com/ispras/qdt
 
 - Boilerplate code generation
 
-	+ Qemu target CPU architecture (with CPU device)
+	+ Qemu target CPU architecture
 	+ System/PCI(e) bus device
 	+ Virtual Machine
 
@@ -40,9 +40,9 @@ https://github.com/ispras/qdt
 
 ## Input
 
-+ Top level CPU features (endianess, registers, name, ...)
-+ Instructions decoding
-+ Instructions disassembly format
++ CPU features (endianess, registers, address length, ...)
++ Instructions encoding
++ Disassembly format
 
 ## Output
 
@@ -50,7 +50,8 @@ https://github.com/ispras/qdt
 + Boilerplate for TCG IR generating functions
 + Disassembler (a giant `switch` tree with prints)
 + CPU device model
-+ Build system and infrastructure patches
++ Infrastructure patches
++ Build system
 
 # Full target CPU architecture generation
 
@@ -60,7 +61,7 @@ https://github.com/ispras/qdt
 + Instructions semantic, two variants...
 
 	- I3S code (Instruction Set Semantics Specification),
-	  *a C language subset with extra operators to cover TCG capabilities.*
+	  *a C language subset with extra operators to cover TCG IR features.*
 
 	- A Python code (part of input) that generates I3S code using QDT's
 	  internal C language model.
@@ -73,22 +74,23 @@ https://github.com/ispras/qdt
 
 ## Notes
 
-+ I3S code generator distinguish TCG translation and run time.
++ I3S code generator distinguish TCG translation time and runtime.
   Some code is left "as is" and some is translated to TCG IR generating
   TCG API calls.
 
 # CPU benchmarking
 
-The tool: C2T (CPU Testing Tool)
+C2T (CPU Testing Tool)
 
 ## Approach
 
 + Comparison with an oracle.
-+ Comparison unit is a simple feature targeting C program, ex...
++ Comparison unit is a simplified feature targeting C program,
+  *for instance*...
 
-	- Arithmetic operation.
+	- ALU operations.
 	- Branching.
-	- Procedure call (stack using).
+	- Procedure call (stack usage).
 
 ## Comparison workflow
 
@@ -104,8 +106,8 @@ language level.
 ## Notes
 
 - Complex, system level and domain specific instructions can by tested
-  using `asm` injection with provided emulation in C for oracle
-  architecture using C preprocessor condition directives.
+  using `asm` injection with emulation code provided in C (for the oracle).
+  Using C preprocessor condition directives is implied.
 
 - The tool can be configured to compare with a hardware oracle.
   It's only required to provide GDB RSP server.
@@ -115,23 +117,22 @@ language level.
 
 ## Input
 
-+ Required Qemu features (Block/Character driver, timer, ...)
-+ Register bank description (MMIO / PMIO / PCI(e) BAR)
++ Set of Qemu features (Block/Character driver, timer, ...) to be used.
++ Optional register bank description (MMIO / PMIO / PCI(e) BAR)
 
-	- Read-write registers
 	- Read-only registers
-	- Write once registers
-	- Write after read registers
-	- RAM-like registers (big buffers)
+	- Write-once registers
+	- Write-after-read registers
+	- RAM-like registers (memory buffers)
 	- Virtual registers (no persistent content, specific access handling)
 	- Gaps
 
-+ User properties (device configuration by CLI/VM)
++ Extra QOM properties (device configuration by CLI/VM)
 + Extra internal state (C language `struct`s)
 
 ## Output boilerplate includes...
 
-+ Live cycle callbacks and key structures
++ Live cycle callbacks and `struct`ures
 + Block driver usage (for ROM images)
 + Character driver usage (for UARTs)
 + Timer callbacks (periodic/delayed events in device)
@@ -141,17 +142,20 @@ language level.
 + VM state description (VMSD) for snapshots
 + Build system and infrastructure patches
 
-# System bus device boilerplate generation features
+# Device type specific boilerplate generation extra features
+
+## System bus device boilerplate generation features
 
 + Output IRQ
 + MMIO and PMIO register banks
 
-# PCIe bus function boilerplate generation features
+## PCIe bus function boilerplate generation features
 
 + Vendor ID, Device ID and other ID data
 + INTx IRQ declaration
 + MSI declaration
 + BARs (register banks)
++ Network interface usage
 
 # Virtual machine boilerplate generation features
 
@@ -181,7 +185,7 @@ language level.
 ## Notes
 
 + Most of a virtual machine "body" is in `init` life cycle callback.
-  Depending on the input completeness the result code may be ready to run.
+  Depending on the input completeness the result code may be a ready VM.
 
 + QDT provides a GUI with machine diagram view.
 
