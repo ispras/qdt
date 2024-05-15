@@ -19,24 +19,30 @@ c2t_cfg = C2TConfig(
     ),
     qemu = DebugServer(Run(
         executable = "/usr/bin/qemu-system-mipsel",
-        args = ("-m 256 -M mips -cpu 4Kc -kernel {bin} -S "
-            "-gdb tcp:localhost:{port} -nographic"
-        )
+        args = (
+            "-m", "256",
+            "-M", "mips",
+            "-cpu", "4Kc",
+            "-kernel", "{bin}",
+            "-S",
+            "-gdb", "tcp:localhost:{port}",
+            "-nographic"
+        ),
     )),
     gdbserver = DebugServer(Run(
         executable = "/usr/bin/gdbserver",
-        args = "localhost:{port} {bin}"
+        args = ("localhost:{port}", "{bin}"),
     )),
     target_compiler = TestBuilder(
         Run( # compiler
             executable = "/usr/bin/mipsel-linux-gnu-gcc",
-            args = "-g -O0 -march=4kc {src} -o {bin}"
+            args = ("-g", "-O0", "-march=4kc", "{src}", "-o", "{bin}"),
         )
     ),
     oracle_compiler = TestBuilder(
         Run( # compiler
             executable = "/usr/bin/gcc",
-            args = "-g -O0 {src} -o {bin} -no-pie"
+            args = ("-g", "-O0", "{src}", "-o", "{bin}", "-no-pie"),
         )
     )
 )
