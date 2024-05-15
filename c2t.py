@@ -597,6 +597,7 @@ class C2TTestBuilder(Process):
 
 
 def start_cpu_testing(tests, jobs, reuse, verbose,
+    no_run = False,
     errors2stop = 1,
     with_logs = False,
 ):
@@ -614,6 +615,11 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
 
     oracle_tb.start()
     target_tb.start()
+
+    if no_run:
+        oracle_tb.join()
+        target_tb.join()
+        return
 
     port_queue = Queue(0)
 
@@ -809,6 +815,10 @@ def main():
         action = "store_true",
         help = "write *.oracle/target.log files near tests"
     )
+    arg("-n", "--no-run",
+        action = "store_true",
+        help = "build binaries only"
+    )
 
     args = parser.parse_args()
 
@@ -863,6 +873,7 @@ def main():
         parser.error("wrong number of jobs: %s" % jobs)
 
     start_cpu_testing(tests, jobs, args.reuse, args.verbose,
+        no_run = args.no_run,
         with_logs = args.with_logs,
         errors2stop = args.errors
     )
