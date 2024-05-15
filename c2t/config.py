@@ -62,10 +62,44 @@ C2TConfig = namedtuple(
     "C2TConfig",
     "rsp_target qemu gdbserver target_compiler oracle_compiler"
 )
-Run = namedtuple(
+class Run(namedtuple(
     "Run",
     "executable args"
-)
+)):
+
+    def format_args(self, **format_input):
+        args = self.args
+        if isinstance(args, str):
+            return args.format_map(format_input)
+        else:
+            return type(args)(arg.format_map(format_input) for arg in args)
+
+    def gen_popen_args(self, *extra_args, **format_input):
+        args = self.format_args(**format_input)
+        if isinstance(args, str):
+            return (
+                self.executable
+              + " "
+              + args
+              + " "
+              + " ".join(extra_args)
+            )
+        else:
+            return type(args)(
+                (self.executable,)
+              + tuple(args)
+              + extra_args
+            )
+
+    def has_substring(self, ss):
+        args = self.args
+        if isinstance(args, str):
+            return ss in args
+        else:
+            for arg in args:
+                if ss in arg:
+                    return True
+            return False
 
 
 def get_new_rsp(regs, pc, regsize, little_endian = True):
