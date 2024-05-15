@@ -144,9 +144,3 @@ class TestBuilder(tuple):
 
     def __new__(cls, *runs):
         return tuple.__new__(cls, runs)
-
-    # TODO: how to operate without runs?
-    @property
-    def run_script(self):
-        for run in self:
-            yield ' '.join(run)
