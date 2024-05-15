@@ -357,7 +357,8 @@ class ProcessWithErrCatching(Thread):
     def __init__(self, *popen_args, **popen_kw):
         Thread.__init__(self)
 
-        popen_kw.setdefault("shell", True)
+        if isinstance(popen_args[0], str):
+            popen_kw.setdefault("shell", True)
         popen_kw["stdout"] = popen_kw["stderr"] = PIPE
 
         self.popen_args = popen_args
@@ -411,7 +412,7 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
         gdbserver_port = port_queue.get(block = True)
 
         gdbserver = ProcessWithErrCatching(
-            c2t_cfg.gdbserver.run_script.format(
+            c2t_cfg.gdbserver.run.gen_popen_args(
                 port = gdbserver_port,
                 bin = test_elf,
                 c2t_dir = C2T_DIR,
@@ -438,15 +439,17 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
 
 
 def run_qemu(test_elf, qemu_port, qmp_port, verbose):
-    cmd = c2t_cfg.qemu.run_script.format(
+    if qmp_port:
+        qmp_args = ("-qmp", "tcp:localhost:%d,server,nowait" % qmp_port)
+    else:
+        qmp_args = ()
+
+    cmd = c2t_cfg.qemu.run.gen_popen_args(*qmp_args, **dict(
         port = qemu_port,
         bin = test_elf,
         c2t_dir = C2T_DIR,
-        test_dir = C2T_TEST_DIR
-    )
-
-    if qmp_port:
-        cmd += " -qmp tcp:localhost:%d,server,nowait" % qmp_port
+        test_dir = C2T_TEST_DIR,
+    ))
 
     if verbose:
         print(cmd)
@@ -553,14 +556,15 @@ class C2TTestBuilder(Process):
         self.verbose = verbose
 
     def test_build(self, test_src, test_ir, test_bin):
-        for run_script in self.compiler.run_script:
-            cmd = run_script.format(
-                src = test_src,
-                ir = test_ir,
-                bin = test_bin,
-                c2t_dir = C2T_DIR,
-                test_dir = C2T_TEST_DIR
-            )
+        substitutions = dict(
+            src = test_src,
+            ir = test_ir,
+            bin = test_bin,
+            c2t_dir = C2T_DIR,
+            test_dir = C2T_TEST_DIR,
+        )
+        for run in self.compiler:
+            cmd = run.gen_popen_args(**substitutions)
             if self.verbose:
                 print(cmd)
             cmpl_unit = ProcessWithErrCatching(cmd)
@@ -720,11 +724,11 @@ def verify_config_components(config):
         (c2t_cfg.target_compiler, "target_compiler"),
         (c2t_cfg.oracle_compiler, "oracle_compiler")
     ):
-        for run in compiler.run_script:
-            if run.find("{bin}") != -1:
+        for run in compiler:
+            if run.has_substring("{bin}"):
                 break
         else:
-            c2t_exit("{bin} doesn't exist", prog = "%s: %s" % (
+            c2t_exit("{bin} is not used", prog = "%s: %s" % (
                 config, compiler_name
             ))
 
