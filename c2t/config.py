@@ -139,10 +139,6 @@ class DebugServer(object):
     def __init__(self, run):
         self.run = run
 
-    @property
-    def run_script(self):
-        return ' '.join(self.run)
-
 
 class TestBuilder(tuple):
 
