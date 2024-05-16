@@ -489,9 +489,17 @@ class CPUType(QOMCPU):
             self._gen_target_meson(join(abs_target_folder, "meson.build"))
 
             hw_target_folder = join("hw", self.target_name)
+            abs_hw_target_folder = join(src, hw_target_folder)
+
+            yield True
+
+            makedirs(abs_hw_target_folder, exist_ok = True)
+
+            yield True
+
             register_in_build_system(src, hw_target_folder, [])
             self._gen_hw_target_meson(
-                join(src, hw_target_folder, "meson.build")
+                join(abs_hw_target_folder, "meson.build")
             )
 
         yield True
