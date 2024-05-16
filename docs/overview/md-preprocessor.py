@@ -471,9 +471,10 @@ def p_from_include(parent, file_name):
                 #       according to actual directory of included file.
                 auto_id = id_from_file_path(cur.file_name.decode("utf-8"))
                 cur.set_title(
-                    (
-                        "Figure <a name=\"pic.%s\">$</a> --- " % auto_id
-                    ).encode("utf-8")
+                    #(
+                    #    "Figure <a name=\"pic.%s\">$</a> --- " % auto_id
+                    #).encode("utf-8")
+                    b""
                     + cur.title
                 )
         elif isinstance(cur, Block):
