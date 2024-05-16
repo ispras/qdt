@@ -184,6 +184,10 @@ language level.
 
 ![MSP430x2xx device diagram](msp430x2xx.png)
 
+# Workflow
+
+![QDT automated workflow](workflow-en.png)
+
 # Example
 
 ## Target Architecture (CPU)
