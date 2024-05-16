@@ -184,25 +184,38 @@ language level.
 
 ![MSP430x2xx device diagram](msp430x2xx.png)
 
-# Evaluation
+# Example
 
 ## Target Architecture (CPU)
 
 **Input**: 3 files, 3039 lines
 
-**Output**:
+**Output**: 26 files changed, 19711 insertions
 
 ```
+ disas/msp430.c                             |  3715 ++++++++
+ hw/msp430-all/msp430_hwm.c                 |   364 +
+ hw/msp430/msp430_test.c                    |    64 +
+ include/disas/dis-asm.h                    |     2 +
+ include/exec/poison.h                      |     2 +
+ include/hw/msp430-all/msp430_hwm.h         |    38 +
+ include/sysemu/arch_init.h                 |     1 +
+ softmmu/arch_init.c                        |     2 +
+ target/msp430/cpu-param.h                  |    10 +
+ target/msp430/cpu.c                        |   147 +
+ target/msp430/cpu.h                        |    65 +
+ target/msp430/helper.c                     |    43 +
+ target/msp430/helper.h                     |     2 +
+ target/msp430/machine.c                    |    17 +
+ target/msp430/translate.c                  |  2885 +++++++
+ target/msp430/translate.inc.c              | 12330 +++++++++++++++++++++++++++
 ```
 
 ## Virtual machine and device boilerplates
 
 **Input**: 1 file, 1104 lines
 
-**Output**:
-
-```
-```
+**Output**: 36 files changed, 4812 insertions
 
 # Questions
 
