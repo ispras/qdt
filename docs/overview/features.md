@@ -7,15 +7,7 @@ tags: []
 abstract: |
 ...
 
-# Qemu models development automation toolkit
-
-Qemu Development Toolkit (QDT)
-
-https://github.com/ispras/qdt
-
-![QDT link QRC](qdt-qrc.gif)
-
-# Key features
+# Qemu Development Toolkit (QDT) key features
 
 - Boilerplate code generation
 
@@ -51,7 +43,7 @@ https://github.com/ispras/qdt
 + Disassembler (a giant `switch` tree with prints)
 + CPU device model
 + Infrastructure patches
-+ Build system
++ Build system patches
 
 # Full target CPU architecture generation
 
@@ -125,7 +117,6 @@ language level.
 	- Write-after-read registers
 	- RAM-like registers (memory buffers)
 	- Virtual registers (no persistent content, specific access handling)
-	- Gaps
 
 + Extra QOM properties (device configuration by CLI/VM)
 + Extra internal state (C language `struct`s)
@@ -189,4 +180,32 @@ language level.
 
 + QDT provides a GUI with machine diagram view.
 
+# VM diagram view
+
 ![MSP430x2xx device diagram](msp430x2xx.png)
+
+# Evaluation
+
+## Target Architecture (CPU)
+
+**Input**: 3 files, 3039 lines
+
+**Output**:
+
+```
+```
+
+## Virtual machine and device boilerplates
+
+**Input**: 1 file, 1104 lines
+
+**Output**:
+
+```
+```
+
+# Questions
+
+https://github.com/ispras/qdt
+
+![QDT link QRC](qdt-qrc.gif)
