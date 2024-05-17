@@ -91,7 +91,7 @@ C2T (CPU Testing Tool)
 3. Compare execution logs in terms of C language (variable values,
    line numbers) on breakpoints set by the test author.
 
-The oracles is (frequently) host CPU.
+The oracle is host CPU frequently.
 Architecture differences does not matter too much because comparison is on C
 language level.
 
