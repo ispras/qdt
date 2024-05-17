@@ -99,7 +99,7 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
 def c2t_exit(msg, prog = __file__):
     print(C2T_ERRMSG_FORMAT.format(
         prog = basename(prog),
-        msg = msg
+        msg = msg.decode(),
     ))
     killpg(0, SIGKILL)
 
