@@ -112,6 +112,9 @@ class Short(object):
         "operand : ID LBRACKET UINT RBRACKET bit_place_ignored"
         ID = p[1]
         UINT = p[3]
+        # When an operand is fragmented in spread parts of the instruction word
+        # this production represent one bit of the operand.
+        # Brackets then encloses position of the bit inside the operand.
         # `num` temporarly stores bit's position.
         # At end of parsing all same named `Operand`s will be sorted and `num`
         #    will be set to relative position index.
@@ -120,6 +123,12 @@ class Short(object):
     @staticmethod
     def p_operand_part(p):
         "operand : ID LBRACKET UINT COLON UINT RBRACKET bit_place_ignored"
+        # When an operand is fragmented in spread parts of the instruction word
+        # this production represent one continuous part of the operand.
+        # Brackets then encloses position of this part inside the operand.
+        # The position is given as first and last bit indices
+        # separated by colon (:)
+        # This also implicitly defines the part length.
         ID = p[1]
         UINT_MAX = int(p[3])
         UINT_MIN = int(p[5])
