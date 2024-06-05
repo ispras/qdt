@@ -46,10 +46,10 @@ class BlockParser(object):
         for c in data:
             state = state(c)
 
-        return self.stack[0][1]
+        return self.stack[0][-1]
 
     def INIT(self, c):
-        self.stack = [(tuple(), self.Block())]
+        self.stack = [(tuple(), None, [])]
         self.indent = []
         self.line = []
 
@@ -102,18 +102,23 @@ class BlockParser(object):
 
         stack = self.stack
 
-        for i, (block_indent, block) in enumerate(stack):
+        for i, (block_indent, __, block) in enumerate(stack):
             if block_indent == indent:
                 block.append(line)
-                line.block = block
-                del stack[i + 1:]
                 break
         else:
-            line.block = block = self.Block([line])
-            block_1 = stack[-1][1]
+            block_1 = stack[-1][-1]
             if not block_1:
                 raise SyntaxError("Indented line at the beginning of data")
-            heading = block_1[-1]
-            heading.subblock = block
+            stack.append((indent, block_1[-1], [line]))
+            return
+
+        ready_blocks = stack[i + 1:]
+        del stack[i + 1:]
+
+        for __, heading, block in reversed(ready_blocks):
+            block = self.Block(block)
+            for line in block:
+                line.block = block
             block.heading = heading
-            stack.append((indent, block))
+            heading.subblock = block
