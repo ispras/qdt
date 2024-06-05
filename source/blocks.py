@@ -112,4 +112,5 @@ class BlockParser(object):
                 raise SyntaxError("Indented line at the beginning of data")
             heading = block_1[-1]
             heading.subblock = block
+            block.heading = heading
             stack.append((indent, block))
