@@ -51,7 +51,7 @@ class BlockParser(object):
     def INIT(self, c):
         self.stack = [(tuple(), self.Block())]
         self.indent = []
-        self.line = self.Line()
+        self.line = []
 
         return self.INDENT(c)
 
@@ -97,8 +97,8 @@ class BlockParser(object):
     def _line_end(self):
         indent = tuple(self.indent)
         self.indent = []
-        line = self.line
-        self.line = self.Line()
+        line = self.Line(self.line)
+        self.line = []
 
         stack = self.stack
 
