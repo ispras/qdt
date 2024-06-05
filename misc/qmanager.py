@@ -16,7 +16,6 @@ from common import (
     makedirs,
     mlget as _,
     QRepo,
-    UserSettings,
 )
 from widgets import (
     add_scrollbars_native,
@@ -30,6 +29,7 @@ from widgets import (
     GUITk,
     HKEntry,
     MenuBuilder,
+    QDTUserSettings,
     Statusbar,
     TaskErrorDialog,
     VarButton,
@@ -51,7 +51,7 @@ from traceback import (
 )
 
 
-class QMSettings(UserSettings):
+class QMSettings(QDTUserSettings):
     _suffix = ".qmanager.py"
 
     def __init__(self):
