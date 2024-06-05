@@ -13,7 +13,6 @@ from common import (
     mlget as _,
 )
 from .gui_editing import (
-    GUIPOp_SetBuildPath,
     GUIPOp_SetTarget,
     POp_SetDescLayout,
 )
@@ -77,8 +76,9 @@ class ReloadBuildPathTask(CoTask):
         )
 
     def main(self):
-        proj = self.pw.p
-        self.qvd = qvd_get(proj.build_path, version = proj.target_version)
+        pw = self.pw
+        proj = pw.p
+        self.qvd = qvd_get(pw.build_path, version = proj.target_version)
         if self.qvd.qvc is None:
             yield self.qvd.co_init_cache()
         self.pw.qvd = self.qvd
@@ -150,6 +150,7 @@ class DescriptionsTreeview(VarTreeview):
 class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
     def __init__(self, *args, **kw):
         self.p = kw.pop("project")
+        self.build_path = kw.pop("build_path", None)
         kw["sashrelief"] = RAISED
         PanedWindow.__init__(self, *args, **kw)
         TkPopupHelper.__init__(self)
@@ -327,7 +328,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
 
         self.pht.all_pci_ids_2_values()
 
-        if self.p.build_path is None:
+        if self.build_path is None:
             return
 
         self.reload_build_path()
@@ -349,7 +350,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             now. It will cause GUI to freeze but there are no more options. """
 
             try:
-                qvd = qvd_load_with_cache(self.p.build_path)
+                qvd = qvd_load_with_cache(self.build_path)
             except BadBuildPath as bbpe:
                 showerror(_("Bad build path").get(), str(bbpe))
             else:
@@ -409,7 +410,7 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
                         break
                 else:
                     w.destroy()
-        elif isinstance(op, (GUIPOp_SetBuildPath, GUIPOp_SetTarget)):
+        elif isinstance(op, GUIPOp_SetTarget):
             try:
                 self.__account_build_path
             except AttributeError:
@@ -563,5 +564,5 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             if qvd.qvc is not None:
                 qvd.forget_cache()
 
-        if self.p.build_path:
+        if self.build_path:
             self.reload_build_path()

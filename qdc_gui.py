@@ -38,7 +38,6 @@ from widgets import (
     CoStatusView,
     DescNameWatcher,
     GitVerSelDialog,
-    GUIPOp_SetBuildPath,
     GUIProject,
     GUIProjectHistoryTracker,
     GUITk,
@@ -53,6 +52,9 @@ from widgets import (
 
 from argparse import (
     ArgumentParser,
+)
+from collections import (
+    OrderedDict,
 )
 from os import (
     remove,
@@ -90,7 +92,7 @@ from traceback import (
 class ProjectGeneration(CoTask):
 
     def __init__(self, project, source_path, signal, reload_build_path_task,
-        gen_chunk_graphs, translate_cpu_semantics
+        gen_chunk_graphs, translate_cpu_semantics, build_path
     ):
         self.p = project
         self.s = source_path
@@ -99,6 +101,7 @@ class ProjectGeneration(CoTask):
         self.reload_build_path_task = reload_build_path_task
         self.gen_chunk_graphs = gen_chunk_graphs
         self.translate_cpu_semantics = translate_cpu_semantics
+        self.build_path = build_path
         CoTask.__init__(
             self,
             self.main(),
@@ -112,7 +115,7 @@ class ProjectGeneration(CoTask):
             self.prev_qvd = None # for `__finalize`
             raise RuntimeError("Cannot continue without a cache")
 
-        cur_qvd = qvd_get(self.p.build_path, version = self.p.target_version)
+        cur_qvd = qvd_get(self.build_path, version = self.p.target_version)
         self.prev_qvd = cur_qvd.use()
 
         yield self.p.co_gen_all(self.s,
@@ -476,6 +479,13 @@ show it else hide it."),
         self._update_recent_projects()
         self._update_options()
 
+        file_name = getattr(self, "current_file_name", None)
+        if file_name:
+            build_path = val.build_path_map.get(file_name, None)
+
+            if build_path:
+                self.set_build_path(build_path)
+
     def _update_recent_projects(self):
         settings = self._user_settings
         menu = self.recentmenu
@@ -638,6 +648,12 @@ show it else hide it."),
             self.filemenu.entryconfig(self.reload_idx, state = NORMAL)
             self.filemenu.entryconfig(self.open_proj_dir_idx, state = NORMAL)
 
+        settings = self._user_settings
+        if settings:
+            build_path = settings.build_path_map.get(file_name, None)
+            if build_path:
+                self.set_build_path(build_path)
+
         self.__update_title__()
 
     def set_project(self, project):
@@ -669,11 +685,19 @@ show it else hide it."),
         )
         self.pw.grid(column = 0, row = 0, sticky = "NEWS")
 
-        self.update_qemu_build_path(project.build_path)
         self.update_target_qemu()
 
         self.pht.watch_changed(self.on_changed)
         self.check_undo_redo()
+
+    def set_build_path(self, build_path):
+        self.pw.build_path = build_path
+        self.update_qemu_build_path(build_path)
+
+        settings = self._user_settings
+        file_name = getattr(self, "current_file_name", None)
+        if file_name and settings and build_path:
+            settings.build_path_map[file_name] = build_path
 
     def __saved_asterisk__(self, saved = True):
         if saved:
@@ -693,13 +717,6 @@ show it else hide it."),
         self.check_undo_redo()
         self.__check_saved_asterisk__()
 
-        if isinstance(op, GUIPOp_SetBuildPath):
-            proj = self.proj
-            if op.p is proj:
-                self.update_qemu_build_path(proj.build_path)
-                # Note that target Qemu version info will be update when QVC
-                # will be ready.
-
     def on_quit(self):
         self.save_project_to_file("project.py")
 
@@ -716,8 +733,12 @@ show it else hide it."),
         self.pht.do_sequence()
 
     def rebuild_cache(self):
+        build_path = self.pw.build_path
+        if not build_path:
+            return
+
         try:
-            qvd = qvd_get(self.proj.build_path,
+            qvd = qvd_get(build_path,
                 version = self.proj.target_version
             )
         except BadBuildPath as e:
@@ -787,15 +808,21 @@ in process. Do you want to start cache rebuilding?")
         if not _dir:
             return
 
-        self.pht.set_build_path(_dir)
+        self.set_build_path(_dir)
 
     def on_sel_tgt_qemu_version(self):
+        qvd = None
         try:
-            qvd = qvd_get(self.proj.build_path)
+            build_path = self.pw.build_path
+            if build_path:
+                qvd = qvd_get(build_path)
         except:
-            repo = None
-        else:
+            pass
+
+        if qvd:
             repo = qvd.repo
+        else:
+            repo = None
 
         new_target = GitVerSelDialog(self, repo).wait()
 
@@ -818,7 +845,8 @@ in process.").get()
                 )
                 return
 
-        if not self.proj.build_path:
+        build_path = self.pw.build_path
+        if not build_path:
             showerror(
                 title = _("Generation is impossible").get(),
                 message = _("No Qemu build path is set for the project.").get()
@@ -826,7 +854,7 @@ in process.").get()
             return
 
         try:
-            qvd = qvd_get(self.proj.build_path,
+            qvd = qvd_get(build_path,
                 version = self.proj.target_version
             )
         except BadBuildPath as e:
@@ -859,7 +887,8 @@ later.").get()
             self.sig_qvc_dirtied,
             self.pw.reload_build_path_task,
             self.var_gen_chunk_graphs.get(),
-            self.var_translate_cpu_semantics.get()
+            self.var_translate_cpu_semantics.get(),
+            build_path,
         )
         self.task_manager.enqueue(self._project_generation_task)
 
@@ -885,6 +914,9 @@ later.").get()
 
             v.replace_relpaths_to_abspaths(abspath(dirname(file_name)))
             self.set_project(v)
+            self.set_current_file_name(None)
+            self.set_build_path(None)
+            # this sets build path if known
             self.set_current_file_name(file_name)
             self.saved_operation = self.pht.pos
             self.__check_saved_asterisk__()
@@ -909,6 +941,14 @@ later.").get()
         pythonize(project, file_name)
 
         project.replace_relpaths_to_abspaths(file_path)
+
+        settings = self._user_settings
+        if settings:
+            build_path = self.pw.build_path
+            if build_path:
+                self._user_settings.build_path_map[file_name] = build_path
+            else:
+                self._user_settings.build_path_map.pop(file_name, None)
 
         self.set_current_file_name(file_name)
         self.saved_operation = self.pht.pos
@@ -971,6 +1011,7 @@ _("Current project has unsaved changes. They will be lost. Continue?")
 
         self.set_project(GUIProject())
         self.set_current_file_name()
+        self.set_build_path(None)
 
         """ There is nothing to save in just created project. So declare that
 all changes are saved. """  
@@ -1050,6 +1091,7 @@ class Settings(QDTUserSettings):
             translate_cpu_semantics = True,
             require_device_tree = True,
             recent_projects = OrderedSet(),
+            build_path_map = OrderedDict(),
             geometry = (1000, 750),
         )
 
@@ -1124,7 +1166,7 @@ def main():
     if arguments.qemu_build is not None:
         load_build_path_list()
         account_build_path(arguments.qemu_build)
-        root.pht.set_build_path(arguments.qemu_build)
+        root.set_build_path(arguments.qemu_build)
 
     with Settings() as settings:
         root.set_user_settings(settings)
