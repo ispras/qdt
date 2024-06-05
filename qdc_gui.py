@@ -10,7 +10,6 @@ from common import (
     OrderedSet,
     pythonize,
     qdtdirs,
-    UserSettings,
     Variable,
 )
 from examples import (
@@ -47,6 +46,7 @@ from widgets import (
     HotKeyBinding,
     ProjectWidget,
     QDCGUISignalHelper,
+    QDTUserSettings,
     Statusbar,
     VarMenu,
 )
@@ -1035,7 +1035,7 @@ all changes are saved. """
         self.update_target_qemu()
 
 
-class Settings(UserSettings):
+class Settings(QDTUserSettings):
     "Keeps user settings in a file."
 
     _suffix = ".qdt.py"
