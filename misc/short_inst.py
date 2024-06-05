@@ -104,12 +104,12 @@ def main():
 
         while stack:
             line = stack.pop()
-            sb = line.subblock
+            block = line.child
 
-            if not sb:
+            if not block:
                 continue
 
-            for sline in sb:
+            for sline in block:
                 m = re_opspec.match(str(sline))
                 if not m:
                     line.insn.comment += "\n" + str(sline)
@@ -119,7 +119,7 @@ def main():
                 if comment:
                     line.insn.comment += "\n" + comment
                 op_val_len = len(op_val)
-                parent_insn = sb.heading.insn
+                parent_insn = block.heading.insn
                 parent_insn.is_family = True
 
                 op_val = int(op_val, base = 2)
@@ -159,7 +159,7 @@ def main():
             continue
 
         for l in b:
-            stack.append(l.subblock)
+            stack.append(l.child)
 
             i = getattr(l, "insn", None)
             if i is None:
