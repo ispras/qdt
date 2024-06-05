@@ -35,27 +35,29 @@ persistent object. See `common.pygen.pythonizable`.
         self._version = version
 
     def _load(self):
-        if isfile(self._file_name):
-            loaded = dict(self._globals)
-            try:
-                execfile(self._file_name, loaded)
-            except:
-                return
+        if not isfile(self._file_name):
+            return
+
+        loaded = dict(self._globals)
+        try:
+            execfile(self._file_name, loaded)
+        except:
+            return
+        else:
+            base = self.__var_base__()
+            for name, ctx in loaded.items():
+                if name.startswith(base):
+                    break
             else:
-                base = self.__var_base__()
-                for name, ctx in loaded.items():
-                    if name.startswith(base):
-                        break
-                else:
-                    print("No persistent data found in " + self._file_name)
+                print("No persistent data found in " + self._file_name)
 
-            ctx_version = ctx.pop("_version", self._version)
+        ctx_version = ctx.pop("_version", self._version)
 
-            for k, v in ctx.items():
-                setattr(self, k, v)
+        for k, v in ctx.items():
+            setattr(self, k, v)
 
-            if ctx_version < self._version:
-                self.__update__(ctx_version)
+        if ctx_version < self._version:
+            self.__update__(ctx_version)
 
     def __update__(self, loaded_version):
         raise NotImplementedError(
