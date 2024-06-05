@@ -8,6 +8,7 @@ from .persistent import (
 
 from os.path import (
     expanduser,
+    isfile,
     join,
 )
 
@@ -22,6 +23,24 @@ class UserSettings(Persistent):
             )
         )
 
+    _prefixes = (
+        expanduser("~"),
+        # append legacy prefixes in subclasses
+    )
+
     def __init__(self, **kw):
-        file_name = expanduser(join("~", self._suffix))
+        suffix = self._suffix
+
+        for i, prefix in enumerate(self._prefixes):
+            file_name = join(prefix, suffix)
+            if isfile(file_name):
+                break
+        else:
+            file_name = join(self._prefixes[0], suffix)
+
         super(UserSettings, self).__init__(file_name, **kw)
+
+        if i > 0:
+            # re-save to preferable location
+            with self:
+                self._file_name = join(self._prefixes[0], suffix)
