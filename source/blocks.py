@@ -10,8 +10,8 @@ class Block(list):
 
 
 class Line(list):
-    block = None
-    subblock = None
+    parent = None
+    child = None
 
     def __str__(self):
         return "".join(self)
@@ -119,6 +119,6 @@ class BlockParser(object):
         for __, heading, block in reversed(ready_blocks):
             block = self.Block(block)
             for line in block:
-                line.block = block
+                line.parent = block
             block.heading = heading
-            heading.subblock = block
+            heading.child = block
