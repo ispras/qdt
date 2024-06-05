@@ -100,10 +100,11 @@ def main():
         insn.is_family = False
         line.insn = insn
 
-        stack = [line.subblock]
+        stack = [line]
 
         while stack:
-            sb = stack.pop()
+            line = stack.pop()
+            sb = line.subblock
 
             if not sb:
                 continue
@@ -111,9 +112,12 @@ def main():
             for sline in sb:
                 m = re_opspec.match(str(sline))
                 if not m:
+                    line.insn.comment += "\n" + str(sline)
                     continue
 
-                op_name, op_val, __ = m.groups()
+                op_name, op_val, comment = m.groups()
+                if comment:
+                    line.insn.comment += "\n" + comment
                 op_val_len = len(op_val)
                 parent_insn = sb.heading.insn
                 parent_insn.is_family = True
@@ -142,7 +146,7 @@ def main():
 
                 insn.raw_fields = tuple(raw_fields)
 
-                stack.append(sline.subblock)
+                stack.append(sline)
 
     # print instructions
 
