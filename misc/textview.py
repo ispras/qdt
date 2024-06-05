@@ -1,15 +1,13 @@
 from argparse import (
     ArgumentParser,
 )
-from common import (
-    UserSettings,
-)
 from widgets import (
+    QDTUserSettings,
     TextViewerTk,
 )
 
 
-class QDTTextViewSettings(UserSettings):
+class QDTTextViewSettings(QDTUserSettings):
 
     _suffix = ".qdt_textview_settings.py"
 
