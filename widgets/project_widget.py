@@ -563,4 +563,5 @@ class ProjectWidget(PanedWindow, TkPopupHelper, QDCGUISignalHelper):
             if qvd.qvc is not None:
                 qvd.forget_cache()
 
-        self.reload_build_path()
+        if self.p.build_path:
+            self.reload_build_path()
