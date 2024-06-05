@@ -1,6 +1,5 @@
 __all__ = [
     "GUIProjectOperation"
-      , "GUIPOp_SetBuildPath"
       , "GUIPOp_SetTarget"
       , "GUIDescriptionOperation"
           , "POp_SetDescLayout"
@@ -44,28 +43,6 @@ class GUIProjectOperation(ProjectOperation):
     def __description__(self, project):
         _check_context(project)
         return super(GUIProjectOperation, self).__description__(project)
-
-
-@changes_attr("build_path")
-class GUIPOp_SetBuildPath(GUIProjectOperation):
-    def __init__(self, path, *args, **kw):
-        GUIProjectOperation.__init__(self, *args, **kw)
-        self._new = path
-
-    def __write_set__(self):
-        return GUIProjectOperation.__write_set__(self) + [
-            "build_path"
-        ]
-
-    def _description(self):
-        if self._new is None:
-            return _("Forget project build path value '%s'") % self._old
-        elif self._old is None:
-            return _("Specify project build path value '%s'") % self._new
-        else:
-            return _("Change project build path value '%s' to '%s'") % (
-                self._old, self._new
-            )
 
 
 @changes_attr("target_version")
