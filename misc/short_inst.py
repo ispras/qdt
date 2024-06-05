@@ -77,12 +77,14 @@ def main():
     bp = BlockParser()
     top_block = bp.parse(short_desc)
 
+    # analyze instructions
+
     for line in top_block:
         l = str(line)
         if not l:
             continue
         try:
-            res = Short.parse(l)
+            insn = Short.parse(l)
         except:
             # before debug call stack another exception
             msg = format_exc()
@@ -94,24 +96,35 @@ def main():
             print(msg)
             return 1
 
-        res.read_bitsize = read_bitsize
+        insn.read_bitsize = read_bitsize
+        insn.is_family = False
+        line.insn = insn
 
-        is_generic = False
+        stack = [line.subblock]
 
-        subblock = line.subblock
-        if subblock:
-            for sline in subblock:
+        while stack:
+            sb = stack.pop()
+
+            if not sb:
+                continue
+
+            for sline in sb:
                 m = re_opspec.match(str(sline))
                 if not m:
                     continue
 
                 op_name, op_val, __ = m.groups()
                 op_val_len = len(op_val)
+                parent_insn = sb.heading.insn
+                parent_insn.is_family = True
+
                 op_val = int(op_val, base = 2)
 
-                insn1 = deepcopy(res)
+                insn = deepcopy(parent_insn)
+                insn.is_family = False
+                sline.insn = insn
 
-                raw_fields = list(insn1.raw_fields)
+                raw_fields = list(insn.raw_fields)
 
                 for i, f in enumerate(raw_fields):
                     if not isinstance(f, Operand):
@@ -127,14 +140,29 @@ def main():
                         "No place for opcode '%s' defined" % op_name
                     )
 
-                insn1.raw_fields = tuple(raw_fields)
+                insn.raw_fields = tuple(raw_fields)
 
-                handle_insn(insn1)
+                stack.append(sline.subblock)
 
-                is_generic = True
+    # print instructions
 
-        if not is_generic:
-            handle_insn(res)
+    stack = [top_block]
+
+    while stack:
+        b = stack.pop()
+
+        if not b:
+            continue
+
+        for l in b:
+            stack.append(l.subblock)
+
+            i = getattr(l, "insn", None)
+            if i is None:
+                continue
+            if i.is_family:
+                continue
+            handle_insn(i)
 
 
 if __name__ == "__main__":
