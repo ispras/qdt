@@ -22,6 +22,9 @@ class Line(list):
 
 class BlockParser(object):
 
+    Block = Block
+    Line = Line
+
     @staticmethod
     def is_indent(c):
         return c in "\t "
@@ -46,9 +49,9 @@ class BlockParser(object):
         return self.stack[0][1]
 
     def INIT(self, c):
-        self.stack = [(tuple(), Block())]
+        self.stack = [(tuple(), self.Block())]
         self.indent = []
-        self.line = Line()
+        self.line = self.Line()
 
         return self.INDENT(c)
 
@@ -95,7 +98,7 @@ class BlockParser(object):
         indent = tuple(self.indent)
         self.indent = []
         line = self.line
-        self.line = Line()
+        self.line = self.Line()
 
         stack = self.stack
 
@@ -106,7 +109,7 @@ class BlockParser(object):
                 del stack[i + 1:]
                 break
         else:
-            line.block = block = Block([line])
+            line.block = block = self.Block([line])
             block_1 = stack[-1][1]
             if not block_1:
                 raise SyntaxError("Indented line at the beginning of data")
