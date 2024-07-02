@@ -144,12 +144,9 @@ class Short(object):
     @staticmethod
     def p_field_1(p):
         """field \
-            : operand_na
-            | operand_la
+            : first_field
             | operand_ra
             | operand_ma
-            | operand_el bit_place_ignored
-            | opcode bit_place_ignored
         """
         p[0] = p[1]
 
