@@ -31,7 +31,6 @@ class Short(object):
     t_CONCAT = r"\|"
     t_UINT = r"\d+"
     t_SPACE = r"[ ]"
-    t_TAB = r"\t"
     t_LBRACKET = r"\["
     t_RBRACKET = r"\]"
 
@@ -209,25 +208,10 @@ class Short(object):
 
     @staticmethod
     def p_instruction(p):
-        "instruction : ID whitespaces fields"
+        "instruction : ID bit_place fields"
         ID = p[1]
         fields = p[3]
         p[0] = Instruction(ID, *fields)
-
-    @staticmethod
-    def p_whitespace(p):
-        """whitespace \
-            : bit_place
-            | TAB
-        """
-
-    @staticmethod
-    def p_whitespaces_start(p):
-        "whitespaces : whitespace"
-
-    @staticmethod
-    def p_whitespaces(p):
-        "whitespaces : whitespaces whitespace"
 
     @staticmethod
     def p_error(p):
