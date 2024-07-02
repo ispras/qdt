@@ -36,13 +36,6 @@ class Short(object):
     t_RBRACKET = r"\]"
 
     @staticmethod
-    def t_NL(t):
-        r"\r|\n|(\r\n)"
-        t._short_last_nl = t.lexpos
-        t.lexer.lineno += 1
-        return t
-
-    @staticmethod
     def t_error(t):
         print("%d.%d: unknown sequence of characters: %s" % (
             t.lineno,
