@@ -105,6 +105,9 @@ Converts short form instructions definitions to script defines them.
 
     for line in top_block:
         l = str(line)
+        # remove comments from top block lines
+        l = l.split("#")[0]
+
         if not l:
             continue
         try:
