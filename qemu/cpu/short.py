@@ -74,11 +74,14 @@ class Short(object):
             : bit_place
             |
         """
-        # ignored anyway...
+        # Bit places are ignored if operand length is given explicitly.
+        # They are for visual alignment only.
+        # Bit places are always ignored for opcodes.
+        # Use explicit leading zeros.
 
     @staticmethod
     def p_opcode(p):
-        "opcode : UINT bit_place_ignored"
+        "opcode : UINT"
         # Bit places are ignored for opcode.
         # They are for visual alignment only.
         # Opcode length is equal to length of token.
@@ -86,30 +89,42 @@ class Short(object):
         p[0] = Opcode(len(UINT), val = int(UINT, base = 2))
 
     @staticmethod
-    def p_operand(p):
-        "operand : ID"
+    def p_operand_not_align(p):
+        "operand_na : ID"
         ID = p[1]
         p[0] = Operand(len(ID), ID)
 
     @staticmethod
-    def p_operand_long(p):
-        "operand : ID bit_place"
+    def p_operand_left_align(p):
+        "operand_la : ID bit_place"
         ID = p[1]
         bit_place = p[2]
         p[0] = Operand(len(ID) + bit_place, ID)
 
     @staticmethod
-    def p_operand_len(p):
-        "operand : ID COLON UINT bit_place_ignored"
-        # Bit places are ignored if operand length is given explicitly.
-        # They are for visual alignment only.
+    def p_operand_right_align(p):
+        "operand_ra : bit_place ID"
+        ID = p[2]
+        bit_place = p[1]
+        p[0] = Operand(len(ID) + bit_place, ID)
+
+    @staticmethod
+    def p_operand_middle_align(p):
+        "operand_ma : bit_place ID bit_place"
+        ID = p[2]
+        bit_place = p[1] +  p[3]
+        p[0] = Operand(len(ID) + bit_place, ID)
+
+    @staticmethod
+    def p_operand_explicit_len(p):
+        "operand_el : ID COLON UINT"
         ID = p[1]
         UINT = p[3]
         p[0] = Operand(int(UINT), ID)
 
     @staticmethod
-    def p_operand_bit(p):
-        "operand : ID LBRACKET UINT RBRACKET bit_place_ignored"
+    def p_operand_explicit_len_bit(p):
+        "operand_el : ID LBRACKET UINT RBRACKET"
         ID = p[1]
         UINT = p[3]
         # When an operand is fragmented in spread parts of the instruction word
@@ -121,8 +136,8 @@ class Short(object):
         p[0] = Operand(1, ID, num = int(UINT))
 
     @staticmethod
-    def p_operand_part(p):
-        "operand : ID LBRACKET UINT COLON UINT RBRACKET bit_place_ignored"
+    def p_operand_explicit_len_part(p):
+        "operand_el : ID LBRACKET UINT COLON UINT RBRACKET"
         # When an operand is fragmented in spread parts of the instruction word
         # this production represent one continuous part of the operand.
         # Brackets then encloses position of this part inside the operand.
@@ -135,13 +150,38 @@ class Short(object):
         p[0] = Operand(UINT_MAX - UINT_MIN + 1, ID, num = int(UINT_MIN))
 
     @staticmethod
-    def p_field(p):
-        "field : operand \n| opcode"
+    def p_field_1(p):
+        """field \
+            : operand_na
+            | operand_la
+            | operand_ra
+            | operand_ma
+            | operand_el bit_place_ignored
+            | opcode bit_place_ignored
+        """
+        p[0] = p[1]
+
+    @staticmethod
+    def p_field_2(p):
+        """field \
+            : bit_place operand_el bit_place_ignored
+            | bit_place opcode bit_place_ignored
+        """
+        p[0] = p[2]
+
+    @staticmethod
+    def p_first_field(p):
+        """first_field \
+            : operand_el bit_place_ignored
+            | operand_na
+            | operand_la
+            | opcode bit_place_ignored
+        """
         p[0] = p[1]
 
     @staticmethod
     def p_field_list_start(p):
-        "fields_list : field"
+        "fields_list : first_field"
         p[0] = [p[1]]
 
     @staticmethod
