@@ -1178,7 +1178,9 @@ class CPUType(QOMCPU):
             else:
                 adapter_name = adapter
 
-            arg_count = op_names.count(',') + 1
+            op_names_lst = [an.strip() for an in op_names.split(",")]
+
+            arg_count = len(op_names_lst)
             if added.get(adapter_name) is None:
                 if fmt is not None:
                     f_spec_match = re_format_specifier.search(fmt)
@@ -1203,13 +1205,18 @@ class CPUType(QOMCPU):
                     ]
                     ret_type = Type["void"]
 
-                # TODO: can we derive argument names from `op_names`?
-                if arg_count == 1:
-                    args += [ Type["uint64_t"]("arg") ]
-                else:
-                    args += [ Type["uint64_t"]("arg" + str(i))
-                        for i in range(0, arg_count)
-                    ]
+                # Derive argument names from `op_names`.
+                for op_name in op_names_lst:
+                    arg_name = op_name
+                    for j in count():
+                        for arg in args:
+                            if arg.name == arg_name:
+                                arg_name = op_name + str(j)
+                                break
+                        else:
+                            break
+
+                    args.append(Type["uint64_t"](arg_name))
 
                 if isinstance(adapter, FunctionType):
                     f = Function(
