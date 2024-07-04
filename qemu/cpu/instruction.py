@@ -159,6 +159,10 @@ class Instruction(object):
 :param disas_format:
     string that describes the disassembler output for this instruction
 
+    The string may contain <places, for, formatted, operands>.
+    Look `name_to_format` parameter description of CPUInfo.__doc__ for
+    farther explanation.
+
 :param comment:
     string to be inserted into the generated semantic boilerplate code (the
     leaves of the instruction tree)
