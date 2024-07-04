@@ -76,6 +76,43 @@ class CPUInfo(object):
         dictionary which describes instructions operands formatting rules for
         disassembler
 
+        Keys must match (correspond) to place names inside
+            Instruction.disas_format.
+        A place is defined as comma separated <names, of, operands> inside
+            <angle parenthesis>.
+        One <name> is enough for simple operand formatting.
+
+        Values are tuples of (format_specifier, operand_value_adapter).
+
+        format_specifier is either None or a (sub-)string, a part of format
+        string of printf-like Qemu printing function (ex.: "%s").
+
+        operand_value_adapter can be...
+        - None, operand value is used as is.
+        - A string, name of function boilerplate to be generated.
+          A developer is expected to write its body in C.
+        - A function returning an iterable or a generator (or `yield`s
+          by self) of `source.function.tree` nodes representing
+          pre-generated body of the boilerplate function.
+
+        If format_specifier is None:
+            operand_value_adapter is given:
+            - Qemu disassembly printing function (pointer to function),
+            - a stream pointer
+              (the printing function first opaque argument),
+            - values of operands listed in key in the same order.
+
+            operand_value_adapter is expected to call the printing function
+            to output corresponding part of disassembly
+
+            The printing function can be called multiple times.
+        else: # if format_specifier is a format string
+            operand_value_adapter is given:
+            - values of operands listed in key in the same order.
+
+            operand_value_adapter is expected to return a value corresponding
+            to the format_specifier.
+
     :param instructions:
         tuple of `Instruction`s
 
