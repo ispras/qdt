@@ -728,12 +728,15 @@ class Operator(SemicolonPresence):
             if self.prior < child.prior:
                 child.parenthesis = True
 
+    def _write_children(self, writer):
+        writer.join(self.delim, self.children, self.out_child)
+
     def __c__(self, writer):
         if self.parenthesis:
             writer.write("(")
 
         writer.write(self.prefix)
-        writer.join(self.delim, self.children, self.out_child)
+        self._write_children(writer)
         writer.write(self.suffix)
         if self.parenthesis:
             writer.write(")")
