@@ -62,6 +62,7 @@ __all__ = [
                       , "OpGreater"
                       , "OpLess"
                       , "CaseRange"
+                  , "OpTernCond"
   , "flat_list"
 ]
 
@@ -1054,6 +1055,29 @@ class CaseRange(BinaryOperator):
         super(CaseRange, self).__init__("...", arg1, arg2, parenthesis)
 
 
+class OpTernCond(Operator):
+
+    def __init__(self, cond, true_val, false_val):
+        super(OpTernCond, self).__init__(cond, true_val, false_val)
+
+    def _write_children(self, writer):
+        cond, true_val, false_fal = self.children
+
+        self.out_child(cond, writer)
+
+        writer.write(self.delim)
+        writer.write("?")
+        writer.write(self.delim)
+
+        self.out_child(true_val, writer)
+
+        writer.write(self.delim)
+        writer.write(":")
+        writer.write(self.delim)
+
+        self.out_child(false_fal, writer)
+
+
 op_priority = {
     CaseRange:       1,
     OpIndex:         1,
@@ -1090,4 +1114,5 @@ op_priority = {
     OpAssign:        13,
     OpDeclareAssign: 13,
     OpCombAssign:    13,
+    OpTernCond:      13,
 }
