@@ -1,97 +1,100 @@
 #!/usr/bin/env python
 """ QEMU CPU Testing Tool """
 
-from sys import (
-    stderr
-)
-from os.path import (
-    getmtime,
-    relpath,
-    dirname,
-    join,
-    exists,
-    basename
-)
-from os import (
-    killpg,
-    setpgrp
-)
-from signal import (
-    SIGTERM,
-    SIGKILL
-)
-from argparse import (
-    Action,
-    ArgumentParser
-)
-from re import (
-    compile
-)
-from multiprocessing import (
-    Value,
-    Queue,
-    Process
-)
-from psutil import (
-    Process as psutil_Process,
-    NoSuchProcess
-)
-from threading import (
-    Thread
-)
-from traceback import (
-    print_exc
-)
-from six.moves.queue import (
-    Empty
-)
-from subprocess import (
-    Popen,
-    PIPE
-)
-from platform import (
-    machine
-)
-from collections import (
-    defaultdict
-)
-from struct import (
-    pack
+from c2t import (
+    C2TConfig,
+    config as config_api,
+    DebugCommandExecutor,
+    DebugComparator,
 )
 from common import (
-    execfile,
     bstr,
-    filefilter,
     cli_repr,
+    execfile,
+    filefilter,
     HelpFormatter,
-    pypath,
     makedirs,
+    pypath,
+    qdtdirs,
 )
 from debug import (
+    DWARFInfoCache,
     get_elffile_loading,
     InMemoryELFFile,
-    DWARFInfoCache,
-    Runtime
+    Runtime,
 )
 with pypath("pyrsp"):
     from pyrsp.rsp import (
-        archmap
+        archmap,
     )
     from pyrsp.utils import (
-        wait_for_tcp_port,
+        find_free_port,
         QMP,
-        find_free_port
+        wait_for_tcp_port,
     )
-from c2t import (
-    DebugComparator,
-    DebugCommandExecutor,
-    C2TConfig,
-    Run,
-    get_new_rsp,
-    DebugClient,
-    DebugServer,
-    TestBuilder
+
+from argparse import (
+    Action,
+    ArgumentParser,
 )
+from collections import (
+    defaultdict,
+)
+from multiprocessing import (
+    Process,
+    Queue,
+    Value,
+)
+from os import (
+    killpg,
+    setpgrp,
+)
+from os.path import (
+    basename,
+    dirname,
+    exists,
+    getmtime,
+    join,
+    relpath,
+)
+from platform import (
+    machine,
+)
+from psutil import (
+    NoSuchProcess,
+    Process as psutil_Process,
+)
+from re import (
+    compile,
+)
+from signal import (
+    SIGKILL,
+    SIGTERM,
+)
+from six.moves.queue import (
+    Empty,
+)
+from struct import (
+    pack,
+)
+from subprocess import (
+    PIPE,
+    Popen,
+)
+from sys import (
+    stderr,
+)
+from threading import (
+    Thread,
+)
+from time import (
+    localtime,
+    strftime,
+)
+from traceback import (
+    print_exc,
+)
+
 
 C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
 
@@ -99,7 +102,7 @@ C2T_ERRMSG_FORMAT = "{prog}:\x1b[31m error:\x1b[0m {msg}\n"
 def c2t_exit(msg, prog = __file__):
     print(C2T_ERRMSG_FORMAT.format(
         prog = basename(prog),
-        msg = msg
+        msg = msg.decode(),
     ))
     killpg(0, SIGKILL)
 
@@ -107,8 +110,8 @@ def c2t_exit(msg, prog = __file__):
 C2T_DIR = dirname(__file__) or '.'
 C2T_CONFIGS_DIR = join(C2T_DIR, "c2t", "configs")
 C2T_TEST_DIR = join(C2T_DIR, "c2t", "tests")
-C2T_TEST_IR_DIR = join(C2T_TEST_DIR, "ir")
-C2T_TEST_BIN_DIR = join(C2T_TEST_DIR, "bin")
+C2T_WORK_DIR = join(qdtdirs.user_cache_dir, "c2t")
+C2T_LOG_TIME_FMT = "%Y.%m.%d_%H-%M-%S"
 
 ORACLE_CPU = machine()
 
@@ -354,7 +357,8 @@ class ProcessWithErrCatching(Thread):
     def __init__(self, *popen_args, **popen_kw):
         Thread.__init__(self)
 
-        popen_kw.setdefault("shell", True)
+        if isinstance(popen_args[0], str):
+            popen_kw.setdefault("shell", True)
         popen_kw["stdout"] = popen_kw["stderr"] = PIPE
 
         self.popen_args = popen_args
@@ -408,7 +412,7 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
         gdbserver_port = port_queue.get(block = True)
 
         gdbserver = ProcessWithErrCatching(
-            c2t_cfg.gdbserver.run_script.format(
+            c2t_cfg.gdbserver.run.gen_popen_args(
                 port = gdbserver_port,
                 bin = test_elf,
                 c2t_dir = C2T_DIR,
@@ -435,15 +439,17 @@ def oracle_tests_run(tests_queue, port_queue, res_queue, is_finish, verbose,
 
 
 def run_qemu(test_elf, qemu_port, qmp_port, verbose):
-    cmd = c2t_cfg.qemu.run_script.format(
+    if qmp_port:
+        qmp_args = ("-qmp", "tcp:localhost:%d,server,nowait" % qmp_port)
+    else:
+        qmp_args = ()
+
+    cmd = c2t_cfg.qemu.run.gen_popen_args(*qmp_args, **dict(
         port = qemu_port,
         bin = test_elf,
         c2t_dir = C2T_DIR,
-        test_dir = C2T_TEST_DIR
-    )
-
-    if qmp_port:
-        cmd += " -qmp tcp:localhost:%d,server,nowait" % qmp_port
+        test_dir = C2T_TEST_DIR,
+    ))
 
     if verbose:
         print(cmd)
@@ -550,14 +556,15 @@ class C2TTestBuilder(Process):
         self.verbose = verbose
 
     def test_build(self, test_src, test_ir, test_bin):
-        for run_script in self.compiler.run_script:
-            cmd = run_script.format(
-                src = test_src,
-                ir = test_ir,
-                bin = test_bin,
-                c2t_dir = C2T_DIR,
-                test_dir = C2T_TEST_DIR
-            )
+        substitutions = dict(
+            src = test_src,
+            ir = test_ir,
+            bin = test_bin,
+            c2t_dir = C2T_DIR,
+            test_dir = C2T_TEST_DIR,
+        )
+        for run in self.compiler:
+            cmd = run.gen_popen_args(**substitutions)
             if self.verbose:
                 print(cmd)
             cmpl_unit = ProcessWithErrCatching(cmd)
@@ -565,15 +572,23 @@ class C2TTestBuilder(Process):
             cmpl_unit.join()
 
     def run(self):
+        bin_dir = join(C2T_WORK_DIR, self.tests_tail, "bin")
+        ir_dir = join(C2T_WORK_DIR, self.tests_tail, "ir")
+
+        print("Binaries: " + bin_dir)
+        print("Intermediates: " + ir_dir)
+
+        # creates tests subdirectories if they don't exist
+        for sub_dir in (bin_dir, ir_dir):
+            makedirs(sub_dir, exist_ok = True)
+
         for test in self.tests:
             test_name = test[:-2]
             test_src = join(C2T_TEST_DIR, test)
-            test_bin = join(C2T_TEST_BIN_DIR,
-                test_name + "_%s" % self.tests_tail
-            )
+            test_bin = join(bin_dir, test_name)
 
             if not exists(test_bin) or getmtime(test_bin) < getmtime(test_src):
-                test_ir = join(C2T_TEST_IR_DIR, test_name)
+                test_ir = join(ir_dir, test_name)
 
                 self.test_build(test_src, test_ir, test_bin)
 
@@ -582,6 +597,7 @@ class C2TTestBuilder(Process):
 
 
 def start_cpu_testing(tests, jobs, reuse, verbose,
+    no_run = False,
     errors2stop = 1,
     with_logs = False,
 ):
@@ -599,6 +615,11 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
 
     oracle_tb.start()
     target_tb.start()
+
+    if no_run:
+        oracle_tb.join()
+        target_tb.join()
+        return
 
     port_queue = Queue(0)
 
@@ -661,10 +682,20 @@ def start_cpu_testing(tests, jobs, reuse, verbose,
         target_trp.join()
 
     if with_logs:
+        logs_dir = join(
+            C2T_WORK_DIR,
+            "logs",
+            strftime(C2T_LOG_TIME_FMT, localtime()),
+        )
+        print("Logs: " + logs_dir)
+        makedirs(logs_dir, exist_ok = True)
+
         for test, log in dc.test2logs.items():
             for runner in log.iter_runners():
-                log_file_name = test + "." + runner + ".log"
-                log.to_file(runner, log_file_name)
+                test_name = relpath(test, C2T_TEST_DIR)
+                log_file_name = test_name + "." + runner + ".log"
+                log_file_path = join(logs_dir, log_file_name)
+                log.to_file(runner, log_file_path)
 
 
 class testfilter(filefilter):
@@ -699,11 +730,11 @@ def verify_config_components(config):
         (c2t_cfg.target_compiler, "target_compiler"),
         (c2t_cfg.oracle_compiler, "oracle_compiler")
     ):
-        for run in compiler.run_script:
-            if run.find("{bin}") != -1:
+        for run in compiler:
+            if run.has_substring("{bin}"):
                 break
         else:
-            c2t_exit("{bin} doesn't exist", prog = "%s: %s" % (
+            c2t_exit("{bin} is not used", prog = "%s: %s" % (
                 config, compiler_name
             ))
 
@@ -729,7 +760,8 @@ def main():
         )),
         formatter_class = HelpFormatter
     )
-    parser.add_argument("config",
+    arg = parser.add_argument
+    arg("config",
         type = str,
         help = ("configuration file for {prog} (see sample and examples in "
             "{dir})".format(
@@ -739,7 +771,7 @@ def main():
         )
     )
     DEFAULT_REGEXPS = testfilter([(testfilter.RE_INCLD, ".*\.c"),])
-    parser.add_argument("-t", "--include",
+    arg("-t", "--include",
         type = str,
         metavar = "RE_INCLD",
         action = TestfilterCLI,
@@ -749,7 +781,7 @@ def main():
             "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
-    parser.add_argument("-s", "--exclude",
+    arg("-s", "--exclude",
         type = str,
         metavar = "RE_EXCLD",
         action = TestfilterCLI,
@@ -759,29 +791,33 @@ def main():
             "(tests are located in %s)" % C2T_TEST_DIR
         )
     )
-    parser.add_argument("-j", "--jobs",
+    arg("-j", "--jobs",
         type = int,
         dest = "jobs",
         default = 1,
         help = "allow N debugging jobs at once"
     )
-    parser.add_argument("-r", "--reuse",
+    arg("-r", "--reuse",
         action = "store_true",
         help = "reuse debug servers after each test (now only QEMU)"
     )
-    parser.add_argument("-v", "--verbose",
+    arg("-v", "--verbose",
         action = "store_true",
         help = "increase output verbosity"
     )
-    parser.add_argument("-e", "--errors",
+    arg("-e", "--errors",
         type = int,
         default = 1,
         metavar = "N",
         help = "stop on N-th error, 0 - no stop mode"
     )
-    parser.add_argument("-l", "--with-logs",
+    arg("-l", "--with-logs",
         action = "store_true",
         help = "write *.oracle/target.log files near tests"
+    )
+    arg("-n", "--no-run",
+        action = "store_true",
+        help = "build binaries only"
     )
 
     args = parser.parse_args()
@@ -799,14 +835,9 @@ def main():
                     "configuration file doesn't exist: " + args.config
                 )
 
-    glob = {
-        "C2TConfig": C2TConfig,
-        "Run": Run,
-        "get_new_rsp": get_new_rsp,
-        "DebugClient": DebugClient,
-        "DebugServer": DebugServer,
-        "TestBuilder": TestBuilder
-    }
+    glob = dict(
+        i for i in config_api.__dict__.items() if i[0] in config_api.__all__
+    )
 
     # getting `c2t_cfg` configuration for cpu testing tool
     try:
@@ -841,11 +872,8 @@ def main():
     if jobs < 1:
         parser.error("wrong number of jobs: %s" % jobs)
 
-    # creates tests subdirectories if they don't exist
-    for sub_dir in (C2T_TEST_IR_DIR, C2T_TEST_BIN_DIR):
-        makedirs(sub_dir, exist_ok = True)
-
     start_cpu_testing(tests, jobs, args.reuse, args.verbose,
+        no_run = args.no_run,
         with_logs = args.with_logs,
         errors2stop = args.errors
     )
