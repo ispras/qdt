@@ -1,21 +1,11 @@
-from common.ply_tools import (
-    gen_tokens,
-)
-from common.pypath import (
-    pypath,
+from source.short_ply_grammar import (
+    short_ply_grammar,
 )
 from .instruction import (
     Instruction,
     Operand,
     Opcode,
 )
-with pypath("..ply"):
-    from ply.yacc import (
-        yacc
-    )
-    from ply.lex import (
-        lex
-    )
 
 from collections import (
     defaultdict,
@@ -24,6 +14,9 @@ from collections import (
 
 _operand_part_min_bit = lambda operand : operand.num
 
+@short_ply_grammar(
+    debugfile = True,
+)
 class Short(object):
 
     t_ID = r"[a-zA-Z_]\w*"
@@ -43,148 +36,136 @@ class Short(object):
         ))
 
     @staticmethod
-    def p_short(p):
-        """short \
-            : instruction
-            | fields
-        """
-        p[0] = p[1]
+    def p_short__0(instruction):
+        return instruction
 
     @staticmethod
-    def p_bit_place(p):
-        "bit_place : SPACE"
-        p[0] = 1
+    def p_short__1(fields):
+        return fields
 
     @staticmethod
-    def p_bit_places(p):
-        "bit_place : bit_place SPACE"
-        p[0] = p[1] + 1
+    def p_bit_place__1(SPACE):
+        return 1
 
     @staticmethod
-    def p_bit_place_ignored(p):
-        """bit_place_ignored \
-            : bit_place
-            |
-        """
+    def p_bit_place__n(bit_place, SPACE):
+        return bit_place + 1
+
+    @staticmethod
+    def p_bit_place_ignored__0(bit_place):
         # Bit places are ignored if operand length is given explicitly.
         # They are for visual alignment only.
         # Bit places are always ignored for opcodes.
         # Use explicit leading zeros.
+        pass
 
     @staticmethod
-    def p_opcode(p):
-        "opcode : UINT"
+    def p_bit_place_ignored__1():
+        pass
+
+    @staticmethod
+    def p_opcode(UINT):
         # Bit places are ignored for opcode.
         # They are for visual alignment only.
         # Opcode length is equal to length of token.
-        UINT = p[1]
-        p[0] = Opcode(len(UINT), val = int(UINT, base = 2))
+        return Opcode(len(UINT), val = int(UINT, base = 2))
 
     @staticmethod
-    def p_operand_not_align(p):
-        "operand_na : ID"
-        ID = p[1]
-        p[0] = Operand(len(ID), ID)
+    def p_operand_na(ID):
+        # not aligned
+        return Operand(len(ID), ID)
 
     @staticmethod
-    def p_operand_left_align(p):
-        "operand_la : ID bit_place"
-        ID = p[1]
-        bit_place = p[2]
-        p[0] = Operand(len(ID) + bit_place, ID)
+    def p_operand_la(ID, bit_place):
+        # left aligned
+        return Operand(len(ID) + bit_place, ID)
 
     @staticmethod
-    def p_operand_right_align(p):
-        "operand_ra : bit_place ID"
-        ID = p[2]
-        bit_place = p[1]
-        p[0] = Operand(len(ID) + bit_place, ID)
+    def p_operand_ra(bit_place, ID):
+        # right aligned
+        return Operand(len(ID) + bit_place, ID)
 
     @staticmethod
-    def p_operand_middle_align(p):
-        "operand_ma : bit_place ID bit_place"
-        ID = p[2]
-        bit_place = p[1] +  p[3]
-        p[0] = Operand(len(ID) + bit_place, ID)
+    def p_operand_ma(bit_place__l, ID, bit_place__r):
+        # middle aligned
+        return Operand(len(ID) + bit_place__l + bit_place__r, ID)
 
     @staticmethod
-    def p_operand_explicit_len(p):
-        "operand_el : ID COLON UINT"
-        ID = p[1]
-        UINT = p[3]
-        p[0] = Operand(int(UINT), ID)
+    def p_operand_el(ID, COLON, UINT):
+        # explicit lenght
+        return Operand(int(UINT), ID)
 
     @staticmethod
-    def p_operand_explicit_len_bit(p):
-        "operand_el : ID LBRACKET UINT RBRACKET"
-        ID = p[1]
-        UINT = p[3]
+    def p_operand_el__bit(ID, LBRACKET, UINT, RBRACKET):
         # When an operand is fragmented in spread parts of the instruction word
         # this production represent one bit of the operand.
         # Brackets then encloses position of the bit inside the operand.
         # `num` temporarly stores bit's position.
         # At end of parsing all same named `Operand`s will be sorted and `num`
         #    will be set to relative position index.
-        p[0] = Operand(1, ID, num = int(UINT))
+        return Operand(1, ID, num = int(UINT))
 
     @staticmethod
-    def p_operand_explicit_len_part(p):
-        "operand_el : ID LBRACKET UINT COLON UINT RBRACKET"
+    def p_operand_el__part(ID, LBRACKET, UINT__0, COLON, UINT__1, RBRACKET):
         # When an operand is fragmented in spread parts of the instruction word
         # this production represent one continuous part of the operand.
         # Brackets then encloses position of this part inside the operand.
         # The position is given as first and last bit indices
         # separated by colon (:)
         # This also implicitly defines the part length.
-        ID = p[1]
-        UINT_MAX = int(p[3])
-        UINT_MIN = int(p[5])
-        p[0] = Operand(UINT_MAX - UINT_MIN + 1, ID, num = int(UINT_MIN))
+        UINT_MAX = int(UINT__0)
+        UINT_MIN = int(UINT__1)
+        return Operand(UINT_MAX - UINT_MIN + 1, ID, num = int(UINT_MIN))
 
     @staticmethod
-    def p_field_1(p):
-        """field \
-            : first_field
-            | operand_ra
-            | operand_ma
-        """
-        p[0] = p[1]
+    def p_field__1(first_field):
+        return first_field
 
     @staticmethod
-    def p_field_2(p):
-        """field \
-            : bit_place operand_el bit_place_ignored
-            | bit_place opcode bit_place_ignored
-        """
-        p[0] = p[2]
+    def p_field__ra(operand_ra):
+        return operand_ra
 
     @staticmethod
-    def p_first_field(p):
-        """first_field \
-            : operand_el bit_place_ignored
-            | operand_na
-            | operand_la
-            | opcode bit_place_ignored
-        """
-        p[0] = p[1]
+    def p_field__ma(operand_ma):
+        return operand_ma
 
     @staticmethod
-    def p_field_list_start(p):
-        "fields_list : first_field"
-        p[0] = [p[1]]
+    def p_field__el(bit_place, operand_el, bit_place_ignored):
+        return operand_el
 
     @staticmethod
-    def p_field_list(p):
-        "fields_list : fields_list CONCAT field"
-        p[0] = p[1] + [p[3]]
+    def p_field__o(bit_place, opcode, bit_place_ignored):
+        return opcode
 
     @staticmethod
-    def p_fields(p):
-        "fields : fields_list"
-        fields = p[1]
+    def p_first_field__0(operand_el, bit_place_ignored):
+        return operand_el
+
+    @staticmethod
+    def p_first_field__1(operand_na):
+        return operand_na
+
+    @staticmethod
+    def p_first_field__2(operand_la):
+        return operand_la
+
+    @staticmethod
+    def p_first_field__3(opcode, bit_place_ignored):
+        return opcode
+
+    @staticmethod
+    def p_fields_list__start(first_field):
+        return [first_field]
+
+    @staticmethod
+    def p_fields_list(fields_list, CONCAT, field):
+        return fields_list + [field]
+
+    @staticmethod
+    def p_fields(fields_list):
         # find out same named operands
         operands = defaultdict(list)
-        for f in fields:
+        for f in fields_list:
             if isinstance(f, Opcode):
                 continue
             operands[f.name].append(f)
@@ -201,32 +182,17 @@ class Short(object):
                 o.num = i
                 offset += o.bitsize
 
-        p[0] = fields
+        return fields_list
 
     @staticmethod
-    def p_instruction(p):
-        "instruction : ID bit_place fields"
-        ID = p[1]
-        fields = p[3]
-        p[0] = Instruction(ID, *fields)
+    def p_instruction(ID, bit_place, fields):
+        return Instruction(ID, *fields)
 
     @staticmethod
     def p_error(p):
         raise SyntaxError
 
-    @staticmethod
-    def parse(text, debug = False):
-        return parser.parse(text, lexer = lexer.clone(), debug = debug)
+    @classmethod
+    def parse(cls, text, debug = False):
+        return cls.parser.parse(text, lexer = cls.lexer.clone(), debug = debug)
 
-
-Short.tokens = tuple(gen_tokens(Short.__dict__))
-lexer = lex(
-    object = Short,
-    optimize = True,
-    lextab = "_short_lextab",
-)
-parser = yacc(
-    module = Short,
-    tabmodule = "_short_parsetab",
-    debugfile = "_short_yacc_debug.txt",
-)
