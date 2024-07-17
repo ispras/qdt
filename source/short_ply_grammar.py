@@ -83,6 +83,10 @@ def {name}({args}):
 
     wrp = ns[name]
 
+    # for PLY's `ParserReflect.validate_pfunctions`
+    if wrp.__module__ is None:
+        wrp.__module__ = p_func.__module__
+
     return wrp
 
 
