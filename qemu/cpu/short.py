@@ -29,9 +29,8 @@ class Short(object):
 
     @staticmethod
     def t_error(t):
-        print("%d.%d: unknown sequence of characters: %s" % (
-            t.lineno,
-            t.lexpos - getattr(t.lexer, "_short_last_nl", 0) + 1,
+        print("%d: unknown sequence of characters: %s" % (
+            t.lexpos + 1,
             t.value,
         ))
 
