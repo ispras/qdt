@@ -35,6 +35,8 @@ __all__ = [
                       , "OpPreInc"
                       , "OpDeref"
                       , "OpNot"
+                      , "OpMinus"
+                      , "OpPlus"
                       , "OpCast"
                       , "OpSizeOf"
                   # BinaryOperator
@@ -887,6 +889,18 @@ class OpNot(UnaryOperator):
         super(OpNot, self).__init__("~", arg1)
 
 
+class OpMinus(UnaryOperator):
+
+    def __init__(self, arg1):
+        super(OpNot, self).__init__("-", arg1)
+
+
+class OpPlus(UnaryOperator):
+
+    def __init__(self, arg1):
+        super(OpNot, self).__init__("+", arg1)
+
+
 class BinaryOperator(Operator):
 
     def __init__(self, op_str, arg1, arg2, parenthesis):
@@ -1092,6 +1106,8 @@ op_priority = {
     OpLogNot:        2,
     OpCast:          2,
     OpSizeOf:        2,
+    OpMinus:         2,
+    OpPlus:          2,
     OpMul:           3,
     OpDiv:           3,
     OpRem:           3,
