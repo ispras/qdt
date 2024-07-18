@@ -11,10 +11,14 @@ from qemu.cpu.short import (
 )
 from source import (
     BlockParser,
+    Line,
 )
 
 from argparse import (
     ArgumentParser,
+)
+from collections import (
+    defaultdict,
 )
 from copy import (
     deepcopy,
@@ -71,6 +75,149 @@ class InstructionsList(list):
         g.pprint(instructions)
 
 
+def analyze_instruction_block(heading):
+    heading.insn = None
+
+    l = str(heading)
+    # remove comments from top block lines
+    l = l.split("#")[0]
+
+    if not l:
+        return
+
+    try:
+        insn = Short.parse(l)
+    except:
+        # before debug call stack another exception
+        msg = format_exc()
+        try:
+            Short.parse(l, debug = True)
+        except:
+            pass
+        # after parser log printed
+        print(msg)
+        return 1
+
+    heading.insn = insn
+    heading.specs = specs = defaultdict(list)
+
+    stack = [heading]
+
+    while stack:
+        line = stack.pop()
+        block = line.child
+
+        if not block:
+            continue
+
+        for sline in block:
+            stack.append(sline)
+
+            m = re_opspec.match(str(sline))
+            if not m:
+                continue
+
+            op_name, op_val, __ = m.groups()
+
+            specs[op_name].append(op_val)
+
+
+def iter_block_lines_specified(op_name, op_val, block):
+    for line in block:
+        m = re_opspec.match(str(line))
+        if not m:
+            yield line
+            continue
+
+        l_op_name, l_op_val, comment = m.groups()
+        if l_op_name == op_name:
+            if l_op_val == op_val:
+
+                # TODO: it might be not so simple
+                if comment:
+                    yield Line(comment)
+                else:
+                    yield Line()
+
+                for sline in iter_block_lines_specified(
+                    op_name, op_val, line.child
+                ):
+                    yield sline
+
+        else:
+            yield line
+
+
+def iter_multiply_instruction_blocks(heading):
+    specs = heading.specs
+    if not specs:
+        yield heading
+        return
+
+    op_name = sorted(specs)[0]
+    op_vals = specs.pop(op_name)
+
+    # don't deepcopy of parent
+    heading.parent = None
+
+    for op_val in op_vals:
+        specified = deepcopy(heading)
+
+        block = specified.child
+
+        # TODO: it might be not so simple
+        block[:] = iter_block_lines_specified(op_name, op_val, block)
+
+        insn = specified.insn
+
+        op_val_len = len(op_val)
+        raw_fields = list(insn.raw_fields)
+
+        for i, f in enumerate(raw_fields):
+            if not isinstance(f, Operand):
+                continue
+            if f.name != op_name:
+                continue
+
+            assert op_val_len <= f.bitsize
+            raw_fields[i] = Opcode(f.bitsize, val = op_val)
+            break
+        else:
+            raise ValueError(
+                "No place for opcode '%s' defined" % op_name
+            )
+
+        insn.raw_fields = tuple(raw_fields)
+
+        for subspec in iter_multiply_instruction_blocks(specified):
+            yield subspec
+
+
+def fill_comment(heading):
+    comment_lines = []
+
+    stack = [(0, heading)]
+
+    while stack:
+        indent, line = stack.pop()
+
+        line_str = str(line)
+        if line_str:
+            comment_lines.append("    " * indent + line_str)
+        else:
+            comment_lines.append("")
+
+        block = line.child
+
+        if not block:
+            continue
+
+        for sline in reversed(block):
+            stack.append((indent + 1, sline))
+
+    heading.insn.comment = "\n".join(comment_lines)
+
+
 def main():
     ap = ArgumentParser(
         description = """\
@@ -103,101 +250,32 @@ Converts short form instructions definitions to script defines them.
 
     # analyze instructions
 
-    for top_line in top_block:
-        l = str(top_line)
-        # remove comments from top block lines
-        l = l.split("#")[0]
+    insn_lines = []
 
-        if not l:
+    for top_line in top_block:
+        analyze_instruction_block(top_line)
+
+        insn = top_line.insn
+        if insn is None:
             continue
-        try:
-            insn = Short.parse(l)
-        except:
-            # before debug call stack another exception
-            msg = format_exc()
-            try:
-                Short.parse(l, debug = True)
-            except:
-                pass
-            # after parser log printed
-            print(msg)
-            return 1
 
         insn.read_bitsize = read_bitsize
-        insn.is_family = False
-        top_line.insn = insn
 
-        stack = [top_line]
-
-        while stack:
-            line = stack.pop()
-            block = line.child
-
-            if not block:
-                continue
-
-            for sline in block:
-                m = re_opspec.match(str(sline))
-                if not m:
-                    line.insn.comment += "\n" + str(sline)
-                    continue
-
-                op_name, op_val, comment = m.groups()
-                if comment:
-                    line.insn.comment += "\n" + comment
-                op_val_len = len(op_val)
-                parent_insn = block.heading.insn
-                parent_insn.is_family = True
-
-                op_val = int(op_val, base = 2)
-
-                insn = deepcopy(parent_insn)
-                insn.is_family = False
-                sline.insn = insn
-
-                raw_fields = list(insn.raw_fields)
-
-                for i, f in enumerate(raw_fields):
-                    if not isinstance(f, Operand):
-                        continue
-                    if f.name != op_name:
-                        continue
-
-                    assert op_val_len <= f.bitsize
-                    raw_fields[i] = Opcode(f.bitsize, val = op_val)
-                    break
-                else:
-                    raise ValueError(
-                        "No place for opcode '%s' defined" % op_name
-                    )
-
-                insn.raw_fields = tuple(raw_fields)
-
-                stack.append(sline)
+        insn_lines.extend(iter_multiply_instruction_blocks(top_line))
 
     # handle instructions
 
     insts = InstructionsList(
         list_name = args.list_name,
     )
-    stack = [top_block]
 
-    while stack:
-        b = stack.pop()
+    for heading in insn_lines:
+        fill_comment(heading)
 
-        if not b:
-            continue
+        i = heading.insn
 
-        for l in b:
-            stack.append(l.child)
-
-            i = getattr(l, "insn", None)
-            if i is None:
-                continue
-            if i.is_family:
-                continue
-            handle_insn(i)
-            insts.append(i)
+        handle_insn(i)
+        insts.append(i)
 
     if output_file_name:
         insts_text = dumps(insts)
