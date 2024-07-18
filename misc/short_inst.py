@@ -30,7 +30,7 @@ from traceback import (
     format_exc,
 )
 
-re_opspec = compile("(" + Short.t_ID + r")\s*==\s*([01]+)(\s+.*)?")
+re_opspec = compile("(" + Short.t_ID + r")\s*:=\s*([01]+)(\s+.*)?")
 
 
 def check_dump(insn):
