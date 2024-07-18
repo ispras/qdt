@@ -103,8 +103,8 @@ Converts short form instructions definitions to script defines them.
 
     # analyze instructions
 
-    for line in top_block:
-        l = str(line)
+    for top_line in top_block:
+        l = str(top_line)
         # remove comments from top block lines
         l = l.split("#")[0]
 
@@ -125,9 +125,9 @@ Converts short form instructions definitions to script defines them.
 
         insn.read_bitsize = read_bitsize
         insn.is_family = False
-        line.insn = insn
+        top_line.insn = insn
 
-        stack = [line]
+        stack = [top_line]
 
         while stack:
             line = stack.pop()
