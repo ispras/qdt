@@ -130,16 +130,21 @@ def find_instruction_specifiers(heading):
             continue
 
         for sline in block:
-            stack.append(sline)
-
             m = re_opspec.match(str(sline))
             if not m:
+                stack.append(sline)
                 continue
 
             op_name, op_val, __ = m.groups()
 
             if op_name in op_names:
                 specs[op_name].append(op_val)
+                # Do not go deeper right now.
+                # Some definitions can be for choisen instruction variants.
+                # They will be handled later during recursive
+                #     `iter_multiply_instruction_blocks` calls.
+            else:
+                stack.append(sline)
 
 
 def find_attribute_definitions(heading):
@@ -235,7 +240,11 @@ def iter_multiply_instruction_blocks(heading):
 
         specify_instruction_operand(insn, op_name, op_val)
 
-        # substitution might add more operands that could be specified
+        # - Possibly, there are operand specifications those are actual for
+        #   this specified instruction (variant) only.
+        # - Substitution might add more operands that could be specified.
+        #   So, more `name := value` pairs could be distinguished as
+        #   specifications.
         find_instruction_specifiers(specified)
 
         for subspec in iter_multiply_instruction_blocks(specified):
