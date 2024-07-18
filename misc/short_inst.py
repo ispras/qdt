@@ -30,7 +30,7 @@ from traceback import (
     format_exc,
 )
 
-re_opspec = compile("(" + Short.t_ID + r")\s*:=\s*([01]+)(\s+.*)?")
+re_opspec = compile("(" + Short.t_ID + r")\s*:=\s*(\"[^\"]+\")(\s+.*)?")
 
 
 def check_dump(insn):
@@ -170,23 +170,42 @@ def iter_multiply_instruction_blocks(heading):
 
         insn = specified.insn
 
-        op_val_len = len(op_val)
-        raw_fields = list(insn.raw_fields)
+        l = eval(op_val)
+        try:
+            sub_insn = Short.parse(l)
+        except:
+            # before debug call stack another exception
+            msg = format_exc()
+            try:
+                Short.parse(l, debug = True)
+            except:
+                pass
+            # after parser log printed
+            print(msg)
+            raise
 
-        for i, f in enumerate(raw_fields):
+        if isinstance(sub_insn, Instruction):
+            insn.mnemonic = sub_insn.mnemonic
+            sub_raw_fields = sub_insn.raw_fields
+        else:
+            sub_raw_fields = sub_insn
+
+        # find place to substitute
+        for field_i, f in enumerate(insn.raw_fields):
             if not isinstance(f, Operand):
                 continue
-            if f.name != op_name:
-                continue
-
-            assert op_val_len <= f.bitsize
-            raw_fields[i] = Opcode(f.bitsize, val = op_val)
-            break
+            if f.name == op_name:
+                break
         else:
             raise ValueError(
                 "No place for opcode '%s' defined" % op_name
             )
 
+        sub_raw_fields_size = sum(f.bitsize for f in sub_raw_fields)
+        assert sub_raw_fields_size == f.bitsize
+
+        raw_fields = list(insn.raw_fields)
+        raw_fields[field_i:(field_i + 1)] = sub_raw_fields
         insn.raw_fields = tuple(raw_fields)
 
         for subspec in iter_multiply_instruction_blocks(specified):
