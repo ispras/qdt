@@ -132,11 +132,26 @@ def analyze_instruction_block(heading):
             specs[op_name].append(op_val)
 
 
+def specified_line(orig_line, op_name, op_val):
+    if orig_line.child:
+        # TODO: it might be not so simple
+        line = Line(orig_line)
+
+        line.child = type(orig_line.child)(
+            iter_block_lines_specified(
+                 op_name, op_val, orig_line.child
+            )
+        )
+    else:
+        line = orig_line
+    return line
+
+
 def iter_block_lines_specified(op_name, op_val, block):
     for line in block:
         m = re_opspec.match(str(line))
         if not m:
-            yield line
+            yield specified_line(line, op_name, op_val)
             continue
 
         l_op_name, l_op_val, comment = m.groups()
@@ -149,13 +164,14 @@ def iter_block_lines_specified(op_name, op_val, block):
                 else:
                     yield Line()
 
-                for sline in iter_block_lines_specified(
-                    op_name, op_val, line.child
-                ):
-                    yield sline
+                if line.child:
+                    for sline in iter_block_lines_specified(
+                        op_name, op_val, line.child
+                    ):
+                        yield sline
 
         else:
-            yield line
+            yield specified_line(line, op_name, op_val)
 
 
 def iter_multiply_instruction_blocks(heading):
