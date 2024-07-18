@@ -32,6 +32,16 @@ from traceback import (
 
 re_opspec = compile("(" + Short.t_ID + r")\s*:=\s*(\"[^\"]+\")(\s+.*)?")
 
+# Specification operator (:=) can set instruction attributes.
+instruction_attributes = dict(
+    branch = bool,
+    disas_format = str,
+    # some attributes cannot be set using := operator
+    # "comment",
+    # "semantics,
+    priority = int,
+)
+
 
 def check_dump(insn):
     code = dumps(insn)
@@ -170,46 +180,54 @@ def iter_multiply_instruction_blocks(heading):
 
         insn = specified.insn
 
-        # find place to substitute
-        for field_i, f in enumerate(insn.raw_fields):
-            if not isinstance(f, Operand):
-                continue
-            if f.name == op_name:
-                break
+        if op_name in instruction_attributes:
+            val = eval(op_val)
+            setattr(insn, op_name, instruction_attributes[op_name](val))
         else:
-            raise ValueError(
-                "No place for opcode '%s' defined" % op_name
-            )
-
-        l = eval(op_val)
-        try:
-            sub_insn = Short.parse(l)
-        except:
-            # before debug call stack another exception
-            msg = format_exc()
-            try:
-                Short.parse(l, debug = True)
-            except:
-                pass
-            # after parser log printed
-            print(msg)
-            raise
-
-        if isinstance(sub_insn, Instruction):
-            insn.mnemonic = sub_insn.mnemonic
-            sub_raw_fields = sub_insn.raw_fields
-        else:
-            sub_raw_fields = sub_insn
-
-        sub_raw_fields_size = sum(f.bitsize for f in sub_raw_fields)
-        assert sub_raw_fields_size == f.bitsize
-
-        raw_fields = list(insn.raw_fields)
-        raw_fields[field_i:(field_i + 1)] = sub_raw_fields
-        insn.raw_fields = tuple(raw_fields)
+            specify_instruction_operand(insn, op_name, op_val)
 
         for subspec in iter_multiply_instruction_blocks(specified):
             yield subspec
+
+
+def specify_instruction_operand(insn, op_name, op_val):
+    # find place to substitute
+    for field_i, f in enumerate(insn.raw_fields):
+        if not isinstance(f, Operand):
+            continue
+        if f.name == op_name:
+            break
+    else:
+        raise ValueError(
+            "No place for opcode '%s' defined" % op_name
+        )
+
+    l = eval(op_val)
+    try:
+        sub_insn = Short.parse(l)
+    except:
+        # before debug call stack another exception
+        msg = format_exc()
+        try:
+            Short.parse(l, debug = True)
+        except:
+            pass
+        # after parser log printed
+        print(msg)
+        raise
+
+    if isinstance(sub_insn, Instruction):
+        insn.mnemonic = sub_insn.mnemonic
+        sub_raw_fields = sub_insn.raw_fields
+    else:
+        sub_raw_fields = sub_insn
+
+    sub_raw_fields_size = sum(f.bitsize for f in sub_raw_fields)
+    assert sub_raw_fields_size == f.bitsize
+
+    raw_fields = list(insn.raw_fields)
+    raw_fields[field_i:(field_i + 1)] = sub_raw_fields
+    insn.raw_fields = tuple(raw_fields)
 
 
 def fill_comment(heading):
