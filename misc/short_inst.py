@@ -109,6 +109,15 @@ def analyze_instruction_block(heading):
         return 1
 
     heading.insn = insn
+
+    find_instruction_specifiers(heading)
+
+
+def find_instruction_specifiers(heading):
+    insn = heading.insn
+
+    op_names = set(f.name for f in insn.raw_fields if isinstance(f, Operand))
+
     heading.specs = specs = defaultdict(list)
 
     stack = [heading]
@@ -129,7 +138,35 @@ def analyze_instruction_block(heading):
 
             op_name, op_val, __ = m.groups()
 
-            specs[op_name].append(op_val)
+            if op_name in op_names:
+                specs[op_name].append(op_val)
+
+
+def find_attribute_definitions(heading):
+    attrs = {}
+
+    stack = [heading]
+
+    while stack:
+        line = stack.pop()
+        block = line.child
+
+        if not block:
+            continue
+
+        for sline in block:
+            stack.append(sline)
+
+            m = re_opspec.match(str(sline))
+            if not m:
+                continue
+
+            def_name, op_val, __ = m.groups()
+            if def_name in instruction_attributes:
+                assert def_name not in attrs
+                attrs[def_name] = op_val
+
+    heading.attrs = attrs
 
 
 def specified_line(orig_line, op_name, op_val):
@@ -196,11 +233,10 @@ def iter_multiply_instruction_blocks(heading):
 
         insn = specified.insn
 
-        if op_name in instruction_attributes:
-            val = eval(op_val)
-            setattr(insn, op_name, instruction_attributes[op_name](val))
-        else:
-            specify_instruction_operand(insn, op_name, op_val)
+        specify_instruction_operand(insn, op_name, op_val)
+
+        # substitution might add more operands that could be specified
+        find_instruction_specifiers(specified)
 
         for subspec in iter_multiply_instruction_blocks(specified):
             yield subspec
@@ -244,6 +280,20 @@ def specify_instruction_operand(insn, op_name, op_val):
     raw_fields = list(insn.raw_fields)
     raw_fields[field_i:(field_i + 1)] = sub_raw_fields
     insn.raw_fields = tuple(raw_fields)
+
+
+def set_attributes(heading):
+    find_attribute_definitions(heading)
+
+    insn = heading.insn
+    block = heading.child
+
+    for attr, val_str in heading.attrs.items():
+        val = eval(val_str)
+
+        setattr(insn, attr, instruction_attributes[attr](val))
+
+        block[:] = iter_block_lines_specified(attr, val_str, block)
 
 
 def fill_comment(heading):
@@ -323,6 +373,7 @@ Converts short form instructions definitions to script defines them.
     )
 
     for heading in insn_lines:
+        set_attributes(heading)
         fill_comment(heading)
 
         i = heading.insn
