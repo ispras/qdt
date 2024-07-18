@@ -170,6 +170,17 @@ def iter_multiply_instruction_blocks(heading):
 
         insn = specified.insn
 
+        # find place to substitute
+        for field_i, f in enumerate(insn.raw_fields):
+            if not isinstance(f, Operand):
+                continue
+            if f.name == op_name:
+                break
+        else:
+            raise ValueError(
+                "No place for opcode '%s' defined" % op_name
+            )
+
         l = eval(op_val)
         try:
             sub_insn = Short.parse(l)
@@ -189,17 +200,6 @@ def iter_multiply_instruction_blocks(heading):
             sub_raw_fields = sub_insn.raw_fields
         else:
             sub_raw_fields = sub_insn
-
-        # find place to substitute
-        for field_i, f in enumerate(insn.raw_fields):
-            if not isinstance(f, Operand):
-                continue
-            if f.name == op_name:
-                break
-        else:
-            raise ValueError(
-                "No place for opcode '%s' defined" % op_name
-            )
 
         sub_raw_fields_size = sum(f.bitsize for f in sub_raw_fields)
         assert sub_raw_fields_size == f.bitsize
