@@ -13,7 +13,13 @@ from functools import (
 # shortcuts
 c = Opcode
 o = Operand
-
+L = Late
+# Note.
+# Some variable references are defined up using `Late` liking while rest
+# are directly got from its origins (function arguments, source global
+# variables).
+# Both techniques are only used interleaved to demonstrate them.
+# A user may prefer to use only one of them.
 
 # cache some types
 tcg = Type["tcg"]
@@ -206,9 +212,9 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         yield Call(
                             "get_dst_mem_addr",
                             mem_addr,
-                            f["ctx"],
-                            f["dst"],
-                            f["doff"],
+                            L("ctx"),
+                            L("dst"),
+                            L("doff"),
                             6 if ext else 4
                         )
 
@@ -220,7 +226,7 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                 else:
                     dst_val = None
 
-                yield OpAssign(src_val, f["soff"])
+                yield OpAssign(src_val, L("soff"))
 
                 res = tcg("res")
                 yield semantics(f, s, src_val, dst_val, res, *bits)
@@ -261,7 +267,7 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                     carry_used
                 )
 
-                yield gen_set_cg2(f, s, src_val, f["as"], *bits)
+                yield gen_set_cg2(f, s, src_val, L("as"), *bits)
 
                 if reads_dst or changes_dst:
                     yield gen_set_mem_size(f, s, ad, ext, tcg_mem_size)
@@ -270,9 +276,9 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         yield Call(
                             "get_dst_mem_addr",
                             mem_addr,
-                            f["ctx"],
-                            f["dst"],
-                            f["doff"],
+                            L("ctx"),
+                            L("dst"),
+                            L("doff"),
                             4 if ext else 2
                         )
 
@@ -313,8 +319,8 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
             @wraps(semantics)
             @flat_list
             def src_idx_sem(f, s, ad = ad, ext = ext):
-                src = f["src"]
-                soff = f["soff"]
+                src = L("src")
+                soff = L("soff")
                 src_val = tcg("src_val")
                 tcg_mem_size = MemOp("size")
 
@@ -335,9 +341,9 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                     yield Call(
                         "get_dst_mem_addr",
                         mem_addr,
-                        f["ctx"],
-                        f["dst"],
-                        f["doff"],
+                        L("ctx"),
+                        L("dst"),
+                        L("doff"),
                         6 if ext else 4
                     )
                 else:
@@ -395,8 +401,8 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
             @wraps(semantics)
             @flat_list
             def src_reg_sem(f, s, ad = ad, ext = ext):
-                _as = f["as"]
-                src = f["src"]
+                _as = L("as")
+                src = L("src")
                 src_val = tcg("src_val")
                 tcg_mem_size = MemOp("size")
                 mem_addr = None
@@ -417,9 +423,9 @@ def append_FI(opcode, base_name, semantics, changes_dst, reads_dst, msb_used,
                         yield Call(
                             "get_dst_mem_addr",
                             mem_addr,
-                            f["ctx"],
-                            f["dst"],
-                            f["doff"],
+                            L("ctx"),
+                            L("dst"),
+                            L("doff"),
                             4 if ext else 2
                         )
                 else:
@@ -511,7 +517,7 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
                 yield gen_save_pc(f, s, 6 if ext else 4)
 
             dst_val = tcg("dst_val")
-            yield OpAssign(dst_val, f["doff"])
+            yield OpAssign(dst_val, L("doff"))
 
             yield semantics(f, s, dst_val, res, 6 if ext else 4, ext, *bits)
 
@@ -549,7 +555,7 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             if save_pc:
                 yield gen_save_pc(f, s, 4 if ext else 2)
 
-            yield gen_set_cg2(f, s, dst_val, f["ad"], *bits)
+            yield gen_set_cg2(f, s, dst_val, L("ad"), *bits)
 
             res = tcg("res")
             yield semantics(f, s, dst_val, res, 4 if ext else 2, ext, *bits)
@@ -575,8 +581,8 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
         @wraps(semantics)
         @flat_list
         def dst_idx_sem(f, s, ext = ext):
-            dst = f["dst"]
-            doff = f["doff"]
+            dst = L("dst")
+            doff = L("doff")
             dst_val = tcg("dst_val")
             tcg_mem_size = MemOp("size")
             mem_addr = tcg("mem_addr")
@@ -637,8 +643,8 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
         kw["priority"] = 0
 
         def dst_reg_sem_iteration(f, s, ext, bits, tcg_mem_size):
-            ad = f["ad"]
-            dst = f["dst"]
+            ad = L("ad")
+            dst = L("dst")
             dst_val = tcg("dst_val")
             mem_addr = tcg("mem_addr")
 
@@ -669,7 +675,7 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
                         OpNEq(dst, 2)
                     )
                 )(
-                    gen_autoincrement(f, s, dst, s["regs"][dst - 1], ext)
+                    gen_autoincrement(f, s, dst, L("regs")[dst - 1], ext)
                 )
 
             if changes_dst:
@@ -687,7 +693,7 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
         @wraps(semantics)
         @flat_list
         def dst_reg_sem(f, s, ext = ext):
-            ad = f["ad"]
+            ad = L("ad")
             tcg_mem_size = MemOp("size")
 
             bits = []
@@ -707,14 +713,14 @@ def append_FII(opcode, base_name, has_ext, semantics, changes_dst, sub_sp,
             if ext:
                 # TODO: Zero carry (ext)
 
-                reg_or_n = f["reg_or_n"]
+                reg_or_n = L("reg_or_n")
                 reps = tcg("reps")
-                pc = OpSDeref(f["ctx"], "pc")
+                pc = OpSDeref(L("ctx"), "pc")
 
-                yield BranchIf(f["rep"])(
+                yield BranchIf(L("rep"))(
                     BranchIf(reg_or_n)(
                         Comment("repetition count is in Rn[3:0] (not PC)"),
-                        OpAssign(reps, s["regs"][reg_or_n - 1]),
+                        OpAssign(reps, L("regs")[reg_or_n - 1]),
                         BranchElse()(
                             Comment("repetition count is in PC[3:0]"),
                             OpAssign(reps, pc)
@@ -752,7 +758,7 @@ def append_J(opcode_and_cond, name, semantics, **kw):
     @wraps(semantics)
     @flat_list
     def j_sem(f, s):
-        offset = f["offset"]
+        offset = L("offset")
         yield semantics(f, s, offset)
         yield is_branch(f, s)
 
@@ -782,15 +788,15 @@ def append_A(opcode, name, semantics,
     def imm_and_reg_sem(f, s):
         src_val = tcg("src_val")
 
-        yield OpAssign(src_val, f["imm"])
+        yield OpAssign(src_val, L("imm"))
 
         if reads_dst:
             dst_val = tcg("dst_val")
-            dst = f["dst"]
+            dst = L("dst")
             yield BranchIf(dst)(
-                OpAssign(dst_val, s["regs"][dst - 1]),
+                OpAssign(dst_val, L("regs")[dst - 1]),
                 BranchElse()(
-                    OpAssign(dst_val, s["pc"])
+                    OpAssign(dst_val, L("pc"))
                 )
             )
         else:
@@ -813,23 +819,23 @@ def append_A(opcode, name, semantics,
     )
     @flat_list
     def reg_and_reg_sem(f, s):
-        src = f["src"]
+        src = L("src")
         src_val = tcg("src_val")
 
         yield BranchIf(src)(
-            OpAssign(src_val, s["regs"][src - 1]),
+            OpAssign(src_val, L("regs")[src - 1]),
             BranchElse()(
-                OpAssign(src_val, s["pc"])
+                OpAssign(src_val, L("pc"))
             )
         )
 
         if reads_dst:
             dst_val = tcg("dst_val")
-            dst = f["dst"]
+            dst = L("dst")
             yield BranchIf(src)(
-                OpAssign(dst_val, s["regs"][dst - 1]),
+                OpAssign(dst_val, L("regs")[dst - 1]),
                 BranchElse()(
-                    OpAssign(dst_val, s["pc"])
+                    OpAssign(dst_val, L("pc"))
                 )
             )
         else:
@@ -858,24 +864,24 @@ def append_R(opcode, name, semantics, **kw):
     @wraps(semantics)
     @flat_list
     def semantics_wrapper(f, s):
-        dst = f["dst"]
-        pc = s["pc"]
+        dst = L("dst")
+        pc = L("pc")
         dst_val = tcg("dst_val")
 
         yield BranchIf(dst)(
-            OpAssign(dst_val, s["regs"][dst - 1]),
+            OpAssign(dst_val, L("regs")[dst - 1]),
             BranchElse()(
                 OpAssign(dst_val, pc)
             )
         )
 
         res = tcg("res")
-        imm = f["imm"]
+        imm = L("imm")
 
         yield semantics(f, s, dst_val, imm, res)
 
         yield BranchIf(dst)(
-            OpAssign(s["regs"][dst - 1], res),
+            OpAssign(L("regs")[dst - 1], res),
             BranchElse()(
                 OpAssign(pc, res),
                 is_branch(f, s)
@@ -924,7 +930,7 @@ def append_calla(opcode, *operands, **kw):
         yield read_src(f, s, target_address)
 
         ret_pc = uint32_t("ret_pc")
-        yield OpAssign(ret_pc, OpSDeref(f["ctx"], "pc") + instruction_size)
+        yield OpAssign(ret_pc, OpSDeref(L("ctx"), "pc") + instruction_size)
 
         ret_pc_low = tcg("ret_pc_low")
         yield OpAssign(ret_pc_low, ret_pc & CINT("0xFFFF"))
@@ -945,7 +951,7 @@ def append_calla(opcode, *operands, **kw):
 
         yield is_branch(f, s)
         # set PC
-        yield OpAssign(s["pc"], target_address)
+        yield OpAssign(L("pc"), target_address)
 
 
 # semantics sub-generators used in functions above
@@ -957,7 +963,7 @@ def gen_define_size_bits(f, s, ext, bits, msb_used, mask_used, carry_used):
     carry_used = carry_used or mask_used
 
     if msb_used or carry_used:
-        bw = f["bw"]
+        bw = L("bw")
 
         bits_b = []
         bits_w = []
@@ -991,7 +997,7 @@ def gen_define_size_bits(f, s, ext, bits, msb_used, mask_used, carry_used):
                 )
             )
 
-            yield BranchIf(f["al"])(
+            yield BranchIf(L("al"))(
                 bw_size,
                 BranchElse()(
                     al_size
@@ -1022,7 +1028,7 @@ def gen_save_pc(f, s, instruction_size):
     sp = SP(f, s)
     ret_pc = tcg("ret_pc")
 
-    yield OpAssign(ret_pc, OpSDeref(f["ctx"], "pc") + instruction_size)
+    yield OpAssign(ret_pc, OpSDeref(L("ctx"), "pc") + instruction_size)
     yield Call("tcg_gen_qemu_st_tl", ret_pc, sp, 0, MO_UW | MO_TE)
 
 
@@ -1030,7 +1036,7 @@ def gen_set_mem_size(f, s, ad, ext, tcg_mem_size):
     if not ad:
         return
 
-    bw = f["bw"]
+    bw = L("bw")
 
     bw_size = BranchIf(bw)(
         OpAssign(tcg_mem_size, MO_UB),
@@ -1040,7 +1046,7 @@ def gen_set_mem_size(f, s, ad, ext, tcg_mem_size):
     )
 
     if ext:
-        yield BranchIf(f["al"])(
+        yield BranchIf(L("al"))(
             bw_size,
             BranchElse()(
                 BranchIf(bw)(
@@ -1057,7 +1063,7 @@ def gen_set_mem_size(f, s, ad, ext, tcg_mem_size):
 
 
 def gen_truncate_val(f, s, val, ext):
-    bw = f["bw"]
+    bw = L("bw")
 
     bw_branch = BranchIf(bw)(
         Comment("byte mode"),
@@ -1069,7 +1075,7 @@ def gen_truncate_val(f, s, val, ext):
     )
 
     if ext:
-        yield BranchIf(f["al"])(
+        yield BranchIf(L("al"))(
             bw_branch,
             BranchElse()(
                 BranchIf(bw)(
@@ -1086,7 +1092,7 @@ def gen_truncate_val(f, s, val, ext):
 
 
 def gen_autoincrement(f, s, operand, reg_expr, ext):
-    bw = f["bw"]
+    bw = L("bw")
 
     # Note: SP always increments by 2
     bw_branch = BranchIf(OpLogAnd(bw, OpNEq(operand, 1)))(
@@ -1099,7 +1105,7 @@ def gen_autoincrement(f, s, operand, reg_expr, ext):
     )
 
     if ext:
-        yield BranchIf(f["al"])(
+        yield BranchIf(L("al"))(
             bw_branch,
             BranchElse()(
                 BranchIf(bw)(
@@ -1129,8 +1135,8 @@ def gen_set_cg2(f, s, val, mode, msb, mask, carry):
 def gen_get_operand_idx_code(f, s, ext, operand, op_off, val, tcg_mem_size,
     oper_mem_addr = None
 ):
-    pc = OpSDeref(f["ctx"], "pc")
-    regs = s["regs"]
+    pc = OpSDeref(L("ctx"), "pc")
+    regs = L("regs")
     if oper_mem_addr is None:
         oper_mem_addr = tcg("oper_mem_addr")
 
@@ -1173,8 +1179,8 @@ def gen_get_oper_reg_code(f, s, ext, mode, operand, oper_val, tcg_mem_size,
     pc_offset, ad, deferred_increment,
     oper_mem_addr = None
 ):
-    pc = OpSDeref(f["ctx"], "pc")
-    regs = s["regs"]
+    pc = OpSDeref(L("ctx"), "pc")
+    regs = L("regs")
     if oper_mem_addr is None:
         oper_mem_addr = tcg("oper_mem_addr")
 
@@ -1231,12 +1237,12 @@ def gen_get_oper_reg_code(f, s, ext, mode, operand, oper_val, tcg_mem_size,
 
 
 def gen_get_dst_mem_addr_func_body(f, s, ext):
-    mem_addr = f["mem_addr"]
-    pc = OpSDeref(f["ctx"], "pc")
-    regs = s["regs"]
-    dst = f["dst"]
-    doff = f["doff"]
-    pc_offset = f["pc_offset"]
+    mem_addr = L("mem_addr")
+    pc = OpSDeref(L("ctx"), "pc")
+    regs = L("regs")
+    dst = L("dst")
+    doff = L("doff")
+    pc_offset = L("pc_offset")
 
     yield BranchSwitch(dst)(
         SwitchCase(0)(
@@ -1280,9 +1286,9 @@ def gen_get_dst_code(f, s, ext, ad, dst_val, tcg_mem_size, mem_addr,
             tcg_mem_size | MO_TE
         )
     else:
-        pc = OpSDeref(f["ctx"], "pc")
-        regs = s["regs"]
-        dst = f["dst"]
+        pc = OpSDeref(L("ctx"), "pc")
+        regs = L("regs")
+        dst = L("dst")
 
         yield BranchIf(dst)(
             OpAssign(dst_val, regs[dst - 1]),
@@ -1304,8 +1310,8 @@ def gen_set_dst_code(f, s, ad, res, tcg_mem_size, mem_addr):
 
 
 def gen_set_dst_reg_code(f, s, res):
-    regs = s["regs"]
-    dst = f["dst"]
+    regs = L("regs")
+    dst = L("dst")
     # PC and SP are word aligned
     yield BranchIf(OpLess(dst, 2))(
         OpCombAssign(res, CINT("0xFFFFE"), "&")
@@ -1317,7 +1323,7 @@ def gen_set_dst_reg_code(f, s, res):
             gen_helper_check_sr_machine_bits(f, s)
         ),
         BranchElse()(
-            OpAssign(s["pc"], res),
+            OpAssign(L("pc"), res),
             is_branch(f, s)
         )
     )
@@ -1325,12 +1331,12 @@ def gen_set_dst_reg_code(f, s, res):
 
 def SP(f, s):
     "PC is not in regs, so 0-th reg is SP (R1)"
-    return s["regs"][0]
+    return L("regs")[0]
 
 
 def SR(f, s):
     "1-th is SR (R2)"
-    return s["regs"][1]
+    return L("regs")[1]
 
 
 def set_sr_flag_if(f, s, flag, cond):
@@ -1385,7 +1391,7 @@ def gen_set_flags(f, s, src, dst, res, msb, mask, carry):
 
 def is_branch(f, s):
     # ctx->bstate = BS_BRANCH;
-    return OpAssign(OpSDeref(f["ctx"], "bstate"), MCall("BS_BRANCH"))
+    return OpAssign(OpSDeref(L("ctx"), "bstate"), MCall("BS_BRANCH"))
 
 
 def gen_call_autoinc_sp(f, s):
@@ -1397,7 +1403,7 @@ def gen_call_autoinc_sp(f, s):
 
     flags = MO_UW | MO_TE
 
-    yield OpAssign(ret_pc, OpSDeref(f["ctx"], "pc") + 2)
+    yield OpAssign(ret_pc, OpSDeref(L("ctx"), "pc") + 2)
     yield Call("tcg_gen_qemu_st_tl", ret_pc, sp, 0, flags)
 
     yield OpAssign(mem_addr, sp - 2)
@@ -1406,13 +1412,13 @@ def gen_call_autoinc_sp(f, s):
     yield is_branch(f, s)
 
     # set PC
-    yield OpAssign(s["pc"], dst_val)
+    yield OpAssign(L("pc"), dst_val)
 
 
 def gen_reti_430(f, s):
     sp = SP(f, s)
     sr = SR(f, s)
-    PC = s["pc"]
+    PC = L("pc")
     flags = MO_UW | MO_TE
 
     yield Call("tcg_gen_qemu_ld_tl", sr, sp, 0, flags)
@@ -1427,7 +1433,7 @@ def gen_reti_430(f, s):
 def gen_reti_430x(f, s):
     sp = SP(f, s)
     sr = SR(f, s)
-    PC = s["pc"]
+    PC = L("pc")
     flags = MO_UW | MO_TE
 
     pc_19_16_and_sr = tcg("pc_19_16_and_sr")
@@ -1451,18 +1457,18 @@ def gen_reti_430x(f, s):
 
 
 def write_dst_reg(f, s, dst_val):
-    dst = f["dst"]
+    dst = L("dst")
     yield BranchIf(dst)(
-        OpAssign(s["regs"][dst - 1], dst_val),
+        OpAssign(L("regs")[dst - 1], dst_val),
         BranchElse()(
-            OpAssign(s["pc"], dst_val),
+            OpAssign(L("pc"), dst_val),
             is_branch(f, s)
         )
     )
 
 
 def read_src_indirect(f, s, src_val):
-    src = f["src"]
+    src = L("src")
 
     src_mem_addr = tcg("src_mem_addr")
 
@@ -1478,11 +1484,11 @@ def read_src_indirect(f, s, src_val):
         SwitchCaseDefault()(
             BranchIf(src)(
                 OpAssign(src_mem_addr,
-                    s["regs"][src - 1]
+                    L("regs")[src - 1]
                 ),
                 BranchElse()(
                     Comment("Symbolic mode"),
-                    OpAssign(src_mem_addr, s["pc"])
+                    OpAssign(src_mem_addr, L("pc"))
                 )
             ),
             Call("tcg_gen_qemu_ld_tl", src_val, src_mem_addr, 0,
@@ -1494,7 +1500,7 @@ def read_src_indirect(f, s, src_val):
 
 
 def read_src_autoincrement(f, s, src_val):
-    src = f["src"]
+    src = L("src")
 
     src_mem_addr = tcg("src_mem_addr")
 
@@ -1512,8 +1518,8 @@ def read_src_autoincrement(f, s, src_val):
             OpAssign(src_val, CINT("0xFFFFF"))
         ),
         SwitchCaseDefault()(
-            OpAssign(src_mem_addr, s["regs"][src - 1]),
-            OpCombAssign(s["regs"][src - 1], 4, "+"),
+            OpAssign(src_mem_addr, L("regs")[src - 1]),
+            OpCombAssign(L("regs")[src - 1], 4, "+"),
             Call("tcg_gen_qemu_ld_tl", src_val, src_mem_addr, 0,
                 MO_UL | MO_TE
             ),
@@ -1525,7 +1531,7 @@ def read_src_autoincrement(f, s, src_val):
 def read_src_absolute(f, s, src_val):
     src_mem_addr = tcg("src_mem_addr")
 
-    yield OpAssign(src_mem_addr, f["imm"])
+    yield OpAssign(src_mem_addr, L("imm"))
 
     yield Call("tcg_gen_qemu_ld_tl", src_val, src_mem_addr, 0, MO_UL | MO_TE)
 
@@ -1533,22 +1539,22 @@ def read_src_absolute(f, s, src_val):
 
 
 def read_src_indexed(f, s, src_val):
-    src = f["src"]
-    soff = f["soff"]
+    src = L("src")
+    soff = L("soff")
 
     src_mem_addr = tcg("src_mem_addr")
 
     yield BranchSwitch(src)(
         SwitchCase(0)(
             Comment("Symbolic mode"),
-            OpAssign(src_mem_addr, s["pc"] + soff)
+            OpAssign(src_mem_addr, L("pc") + soff)
         ),
         SwitchCase(2)(
             Comment("There is another MOVA opcode for absolute mode, but..."),
             OpAssign(src_mem_addr, soff)
         ),
         SwitchCaseDefault()(
-            OpAssign(src_mem_addr, s["regs"][src - 1] + soff)
+            OpAssign(src_mem_addr, L("regs")[src - 1] + soff)
         )
     )
 
@@ -1558,32 +1564,32 @@ def read_src_indexed(f, s, src_val):
 
 
 def read_src_reg(f, s, src_val):
-    src = f["src"]
+    src = L("src")
     yield BranchIf(src)(
-        OpAssign(src_val, s["regs"][src - 1]),
+        OpAssign(src_val, L("regs")[src - 1]),
         BranchElse()(
-            OpAssign(src_val, s["pc"])
+            OpAssign(src_val, L("pc"))
         )
     )
 
 
 def write_dst_absolute(f, s, dst_val):
     dst_mem_addr = tcg("dst_mem_addr")
-    yield OpAssign(dst_mem_addr, f["imm"])
+    yield OpAssign(dst_mem_addr, L("imm"))
 
     yield Call("tcg_gen_qemu_st_tl", dst_val, dst_mem_addr, 0, MO_UL | MO_TE)
 
 
 def write_dst_indexed(f, s, dst_val):
-    dst = f["dst"]
-    doff = f["doff"]
+    dst = L("dst")
+    doff = L("doff")
 
     dst_mem_addr = tcg("dst_mem_addr")
 
     yield BranchSwitch(dst)(
         SwitchCase(0)(
             Comment("Symbolic mode"),
-            OpAssign(dst_mem_addr, s["pc"] + doff)
+            OpAssign(dst_mem_addr, L("pc") + doff)
         ),
         SwitchCase(2)(
             Comment("There is another MOVA opcode for absolute mode, but..."),
@@ -1591,7 +1597,7 @@ def write_dst_indexed(f, s, dst_val):
         ),
         # 3 CG2? There are no As mode bits, remember?
         SwitchCaseDefault()(
-            OpAssign(dst_mem_addr, s["regs"][dst - 1] + doff)
+            OpAssign(dst_mem_addr, L("regs")[dst - 1] + doff)
         )
     )
 
@@ -1602,9 +1608,9 @@ def write_dst_indexed(f, s, dst_val):
 
 
 def read_src_symbolic(f, s, src_val):
-    soff = f["soff"]
+    soff = L("soff")
     src_mem_addr = tcg("src_mem_addr")
-    yield OpAssign(src_mem_addr, s["pc"] + soff)
+    yield OpAssign(src_mem_addr, L("pc") + soff)
 
     yield Call("tcg_gen_qemu_ld_tl", src_val, src_mem_addr, 0, MO_UL | MO_TE)
 
@@ -1612,30 +1618,30 @@ def read_src_symbolic(f, s, src_val):
 
 
 def read_src_immediate(f, s, src_val):
-    yield OpAssign(src_val, f["imm"])
+    yield OpAssign(src_val, L("imm"))
 
 
 # jump semantics generation helpers
 
 
 def jump(f, s, offset):
-    ctx_pc = OpSDeref(f["ctx"], "pc")
+    ctx_pc = OpSDeref(L("ctx"), "pc")
 
     target_offset = (
         OpAdd(ctx_pc, Call("extend_offset", offset) + 2, parenthesis = True) &
         CINT("0xFFFFF")
     )
 
-    return OpAssign(s["pc"], target_offset)
+    return OpAssign(L("pc"), target_offset)
 
 
 def cond_jump(f, s, cond, offset):
-    ctx_pc = OpSDeref(f["ctx"], "pc")
+    ctx_pc = OpSDeref(L("ctx"), "pc")
 
     return BranchIf(cond)(
         jump(f, s, offset),
         BranchElse()(
-            OpAssign(s["pc"], ctx_pc + 2)
+            OpAssign(L("pc"), ctx_pc + 2)
         )
     )
 
@@ -1760,7 +1766,7 @@ def append_common_instructions():
         yield is_branch(f, s)
 
         # set PC
-        yield OpAssign(s["pc"], dst)
+        yield OpAssign(L("pc"), dst)
 
     # Note: extract "CALL @SP+" into separate case
     i("call_autoinc_sp", c(9, 0b000100101), o(1, "bw"), c(6, 0b110001),
@@ -2094,14 +2100,14 @@ def gen_msp430x_instructions():
         reg_n = int_("reg_n")
         last_reg = int_("last_reg")
         sp = SP(f, s)
-        regs = s["regs"]
+        regs = L("regs")
         reg_val = tcg("reg_val")
 
-        yield OpAssign(reg_n, f["dst"])
-        yield OpAssign(last_reg, reg_n + f["n_minus_1"])
+        yield OpAssign(reg_n, L("dst"))
+        yield OpAssign(last_reg, reg_n + L("n_minus_1"))
 
         yield LoopFor(None, OpLE(reg_n, last_reg), OpInc(reg_n))(
-            BranchIf(f["aw"])(
+            BranchIf(L("aw"))(
                 Call("tcg_gen_qemu_ld_tl", reg_val, sp, 0, MO_UW | MO_TE),
                 OpCombAssign(sp, 2, "+"),
                 OpCombAssign(reg_val, "0x0FFFF", "&"),
@@ -2115,7 +2121,7 @@ def gen_msp430x_instructions():
             BranchIf(reg_n)(
                 OpAssign(regs[reg_n - 1], reg_val),
                 BranchElse()(
-                    OpAssign(s["pc"], reg_val),
+                    OpAssign(L("pc"), reg_val),
                     is_branch(f, s)
                 )
             )
@@ -2135,20 +2141,20 @@ def gen_msp430x_instructions():
         reg_n = int_("reg_n")
         last_reg = int_("last_reg")
         sp = SP(f, s)
-        regs = s["regs"]
+        regs = L("regs")
         reg_val = tcg("reg_val")
 
-        yield OpAssign(reg_n, f["dst"])
-        yield OpAssign(last_reg, reg_n - f["n_minus_1"])
+        yield OpAssign(reg_n, L("dst"))
+        yield OpAssign(last_reg, reg_n - L("n_minus_1"))
 
         yield LoopFor(None, OpLE(last_reg, reg_n), OpDec(reg_n))(
             BranchIf(reg_n)(
                 OpAssign(reg_val, regs[reg_n - 1]),
                 BranchElse()(
-                    OpAssign(reg_val, s["pc"])
+                    OpAssign(reg_val, L("pc"))
                 )
             ),
-            BranchIf(f["aw"])(
+            BranchIf(L("aw"))(
                 OpCombAssign(sp, 2, "-"),
                 Call("tcg_gen_qemu_st_tl", reg_val, sp, 0, MO_UW | MO_TE),
 
@@ -2174,7 +2180,7 @@ def gen_msp430x_instructions():
 
         yield OpAssign(res, dst_val << n)
 
-        yield BranchIf(f["aw"])(
+        yield BranchIf(L("aw"))(
             Comment("Word size"),
             OpAssign(mask, CINT("0xFFFF")),
             OpAssign(msb, CINT("0x8000")),
@@ -2204,7 +2210,7 @@ def gen_msp430x_instructions():
 
         mask = uint32_t("mask")
 
-        yield BranchIf(f["aw"])(
+        yield BranchIf(L("aw"))(
             Comment("Word size"),
             OpAssign(mask, CINT("0xFFFF")),
             OpAssign(res, (dst_val & CINT("0xFFFF")) >> n),
@@ -2260,7 +2266,7 @@ def gen_msp430x_instructions():
 
         mask, msb, carry = uint32_t("mask"), uint32_t("msb"), uint32_t("carry")
 
-        yield BranchIf(f["aw"])(
+        yield BranchIf(L("aw"))(
             Comment("Word size"),
             OpAssign(mask, CINT("0xFFFF")),
             OpAssign(msb, CINT("0x8000")),
@@ -2311,7 +2317,7 @@ def gen_msp430x_instructions():
 
         yield OpAssign(res, dst_val >> n)
 
-        yield BranchIf(f["aw"])(
+        yield BranchIf(L("aw"))(
             Comment("Word size"),
             OpAssign(mask, CINT("0xFFFF")),
 
@@ -2561,7 +2567,7 @@ always be defined.
 
         get_reg.body = BodyTree()(
             BranchIf(reg)(
-                Return(s["regs"][reg - 1]),
+                Return(L("regs")[reg - 1]),
                 BranchElse()(
                     Return("pc")
                 )
