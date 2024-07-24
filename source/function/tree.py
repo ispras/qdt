@@ -6,14 +6,15 @@ __all__ = [
       , "Ifdef"
       , "CNode"
           , "Label"
-          , "LoopWhile"
-          , "LoopDoWhile"
-          , "LoopFor"
-          , "BranchIf"
-          , "BranchSwitch"
-          , "BranchElse"
-          , "SwitchCase"
-          , "SwitchCaseDefault"
+          , "CBlock"
+              , "LoopWhile"
+              , "LoopDoWhile"
+              , "LoopFor"
+              , "BranchIf"
+              , "BranchSwitch"
+              , "BranchElse"
+              , "SwitchCase"
+              , "SwitchCaseDefault"
           , "StrConcat"
           # SemicolonPresence
               , "Break"
@@ -268,7 +269,11 @@ class MacroBranch(Node):
         writer.write("}")
 
 
-class LoopWhile(CNode):
+class CBlock(CNode):
+    pass
+
+
+class LoopWhile(CBlock):
 
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
@@ -285,7 +290,7 @@ class LoopWhile(CNode):
         writer.write("}")
 
 
-class LoopDoWhile(CNode):
+class LoopDoWhile(CBlock):
 
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
@@ -302,7 +307,7 @@ class LoopDoWhile(CNode):
         writer.write(");")
 
 
-class LoopFor(CNode):
+class LoopFor(CBlock):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = ("init", "cond", "step")
@@ -330,7 +335,7 @@ class LoopFor(CNode):
         writer.write("}")
 
 
-class BranchIf(CNode):
+class BranchIf(CBlock):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = ("cond", "else_blocks")
@@ -364,7 +369,7 @@ class BranchIf(CNode):
         writer.write("}")
 
 
-class BranchElse(CNode):
+class BranchElse(CBlock):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
@@ -384,7 +389,7 @@ class BranchElse(CNode):
         self.out_children(writer)
 
 
-class BranchSwitch(CNode):
+class BranchSwitch(CBlock):
 
     __node__ = ("children", "var")
     __type_references__ = ("var",)
@@ -443,7 +448,7 @@ class BranchSwitch(CNode):
         children[:] = new_ch
 
 
-class SwitchCase(CNode):
+class SwitchCase(CBlock):
 
     def __init__(self, const, add_break = True):
         super(SwitchCase, self).__init__()
@@ -477,7 +482,7 @@ class SwitchCase(CNode):
             self.new_line = None
 
 
-class SwitchCaseDefault(CNode):
+class SwitchCaseDefault(CBlock):
 
     def __init__(self, add_break = True):
         super(SwitchCaseDefault, self).__init__()
