@@ -65,6 +65,7 @@ __all__ = [
                       , "OpLess"
                       , "CaseRange"
                   , "OpTernCond"
+  , "define_python_operators"
   , "flat_list"
 ]
 
@@ -224,36 +225,6 @@ class CNode(Node):
     @staticmethod
     def out_child(child, writer):
         child.__c__(writer)
-
-    def __add__(self, arg):
-        return OpAdd(self, arg)
-
-    def __radd__(self, arg):
-        return OpAdd(arg, self)
-
-    def __and__(self, arg):
-        return OpAnd(self, arg)
-
-    def __sub__(self, arg):
-        return OpSub(self, arg)
-
-    def __rsub__(self, arg):
-        return OpSub(arg, self)
-
-    def __or__(self, arg):
-        return OpOr(self, arg)
-
-    def __xor__(self, arg):
-        return OpXor(self, arg)
-
-    def __lshift__(self, arg):
-        return OpLShift(self, arg)
-
-    def __rshift__(self, arg):
-        return OpRShift(self, arg)
-
-    def __invert__(self):
-        return OpNot(self)
 
 
 class Comment(Node):
@@ -1129,3 +1100,57 @@ op_priority = {
     OpCombAssign:    13,
     OpTernCond:      13,
 }
+
+
+def define_python_operators(cls):
+    """ Define Python operators for some types to make function tree
+construction simpler.
+    """
+    for attr, value in PYTHON_OPERATORS.items():
+        if hasattr(cls, attr):
+            print("%s.%s: is already defined")
+            return
+        setattr(cls, attr, value)
+
+PYTHON_OPERATORS = dict(
+    __invert__ = lambda self: OpNot(self),
+    __getitem__ = lambda self, key: OpIndex(self, key),
+)
+
+for name, oper in {
+    "add": OpAdd,
+    "and": OpAnd,
+    "div": OpDiv,  # Py2 compatibility
+    "truediv": OpDiv,
+    "lshift": OpLShift,
+    "mod": OpRem,
+    "mul": OpMul,
+    "or": OpOr,
+    "rshift": OpRShift,
+    "sub": OpSub,
+    "xor": OpXor,
+}.items():
+    handler = lambda self, o, _oper = oper: _oper(self, o)
+    PYTHON_OPERATORS["__" + name + "__"] = handler
+    rhandler = lambda self, o, _oper = oper: _oper(o, self)
+    PYTHON_OPERATORS["__r" + name + "__"] = rhandler
+
+for name, oper in {
+    "iadd": "+",
+    "iand": "&",
+    "idiv": "/",  # Py2 compatibility
+    "itruediv": "/",
+    "ilshift": "<<",
+    "imod": "%",
+    "imul": "*",
+    "ior": "|",
+    "irshift": ">>",
+    "isub": "-",
+    "ixor": "^",
+}.items():
+    opgen = lambda a, b, _oper = oper: OpCombAssign(a, b, _oper)
+    PYTHON_OPERATORS["__" + name + "__"] = opgen
+
+
+define_python_operators(CNode)
+define_python_operators(Variable)
