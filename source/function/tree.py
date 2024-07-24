@@ -739,8 +739,6 @@ class OpIndex(Operator):
 
 class OpSDeref(Operator):
 
-    __type_references__ = ("struct",)
-
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
 
