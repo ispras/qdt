@@ -749,7 +749,9 @@ class OpSDeref(Operator):
 
         self.field = field
 
-        struct = value.type
+    @property
+    def struct(self):
+        struct = self.container.type
         # Note, pointer nesting must be at most 1.
         if isinstance(struct, Pointer):
             struct = struct.type
@@ -757,15 +759,14 @@ class OpSDeref(Operator):
         if OPSDEREF_FROM_DEFINITION:
             struct = struct.definition
 
-        # for type collection
-        self.struct = struct
-
         try:
-            struct.fields[field]
+            struct.fields[self.field]
         except KeyError:
             raise RuntimeError('Structure "%s" has no field "%s"' % (
-                struct, field
+                struct, self.field
             ))
+
+        return struct
 
     @property
     def type(self):
