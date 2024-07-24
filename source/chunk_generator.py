@@ -176,9 +176,11 @@ class ChunkGenerator(object):
                 if (    self.for_header
                     and (not origin.static or not origin.inline)
                 ):
-                    chunks = origin.gen_declaration_chunks(self, **kw)
+                    chunks = gen_function_declaration_chunks(
+                        origin, self, **kw
+                    )
                 else:
-                    chunks = origin.gen_definition_chunks(self, **kw)
+                    chunks = gen_function_definition_chunks(origin, self, **kw)
             elif isinstance(origin, Variable):
                 if origin.definer is not None or origin.declarer is not None:
                     # It is a global variable
@@ -208,22 +210,28 @@ class ChunkGenerator(object):
                         # modifier.
                         if self.for_header:
                             kw["extern"] = True
-                            chunks = origin.gen_declaration_chunks(self, **kw)
+                            chunks = gen_variable_declaration_chunks(
+                                origin, self, **kw
+                            )
                         else:
-                            chunks = origin.get_definition_chunks(self, **kw)
+                            chunks = get_variable_definition_chunks(
+                                origin, self, **kw
+                            )
                 else:
                     # It is a variable inside something
                     if (    len(self.stack) > 1
                         and isinstance(self.stack[-2], (Structure, Variable))
                     ):
                         # structure fields
-                        chunks = origin.gen_declaration_chunks(self, **kw)
+                        chunks = gen_variable_declaration_chunks(
+                            origin, self, **kw
+                        )
                     else:
                         raise RuntimeError("Attempt to generate chunks for"
                             " local variable '%s'" % origin
                         )
             else:
-                chunks = origin.gen_defining_chunk_list(self, **kw)
+                chunks = self.gen_defining_chunk_list(origin, **kw)
 
             # All chunks of the `origin` has been generated at this point.
             self.stack.pop()
