@@ -758,10 +758,8 @@ class OpCast(Operator):
 
 class OpIndex(Operator):
 
-    def __init__(self, var, index):
-        super(OpIndex, self).__init__(var, index)
-        self.delim = "["
-        self.suffix = "]"
+    delim = "["
+    suffix = "]"
 
     def add_child(self, child):
         # Note, ignore `Operator.add_child` to suppress unnecessary parentheses
