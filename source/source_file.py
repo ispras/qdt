@@ -1,5 +1,6 @@
 __all__ = [
-    "disable_auto_lock_inclusions"
+    "ChunkGenerator"
+  , "disable_auto_lock_inclusions"
   , "enable_auto_lock_inclusions"
   , "Source"
       , "Header"
