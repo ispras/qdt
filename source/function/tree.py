@@ -1104,13 +1104,15 @@ op_priority = {
 
 def define_python_operators(cls):
     """ Define Python operators for some types to make function tree
-construction simpler.
+construction simpler. Can be a class @decorator.
     """
     for attr, value in PYTHON_OPERATORS.items():
         if hasattr(cls, attr):
             print("%s.%s: is already defined")
             return
         setattr(cls, attr, value)
+    return cls
+
 
 PYTHON_OPERATORS = dict(
     __invert__ = lambda self: OpNot(self),
