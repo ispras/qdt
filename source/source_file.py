@@ -290,62 +290,6 @@ class Source(TypeContainer):
 
         return self
 
-    def gen_chunks(self):
-        inherit_references = self.inherit_references
-        if inherit_references:
-            assert(isinstance(self, Header))
-
-        # Auto `Declare` variables in `Function`s with `BodyTree`.
-        for func in self.types.values():
-            if not isinstance(func, Function):
-                continue
-            if func.definer is not self:
-                continue
-            body = func.body
-            if not isinstance(body, BodyTree):
-                continue
-            VarDeclarator(body, func.args).visit()
-
-        # This header includes other headers to provide types for includers
-        # of self. This is list of references to those types.
-        ref_list = []
-
-        if isinstance(self, Header) and not self.locked_inclusions:
-            for user in self.includers:
-                for ref in user.references:
-                    if ref.definer not in user.inclusions:
-                        ref_list.append(ref)
-
-        # Finally, we must fix types just before generation because user can
-        # change already added types.
-        TypeFixerVisitor(self, self).visit()
-
-        gen = ChunkGenerator(self)
-
-        for t in self.types.values():
-            if t.definer is self:
-                gen.provide_chunks(t)
-
-        for gv in self.global_variables.values():
-            gen.provide_chunks(gv)
-
-        if isinstance(self, Header):
-            for r in ref_list:
-                gen.provide_chunks(r)
-
-        chunks = gen.get_all_chunks()
-
-        return chunks
-
-    def generate(self):
-        Header.propagate_references()
-
-        file = SourceFile(self, protection_prefix = self.protection_prefix)
-
-        file.add_chunks(self.gen_chunks())
-
-        return file
-
     __type_references__ = ("types", "global_variables")
 
     def __repr__(self):
@@ -567,6 +511,59 @@ class ChunkGenerator(object):
         only to generate "extern" keyword for global variables in header and to
         distinguish structure fields and normal variables. """
         self.stack = []
+
+    def generate(self):
+        definer = self.definer
+
+        Header.propagate_references()
+
+        file = SourceFile(definer,
+            protection_prefix = definer.protection_prefix,
+        )
+
+        inherit_references = definer.inherit_references
+        if inherit_references:
+            assert (isinstance(definer, Header))
+
+        # Auto `Declare` variables in `Function`s with `BodyTree`.
+        for func in definer.types.values():
+            if not isinstance(func, Function):
+                continue
+            if func.definer is not definer:
+                continue
+            body = func.body
+            if not isinstance(body, BodyTree):
+                continue
+            VarDeclarator(body, func.args).visit()
+
+        # This header includes other headers to provide types for includers
+        # of self. This is list of references to those types.
+        ref_list = []
+
+        if isinstance(definer, Header) and not definer.locked_inclusions:
+            for user in definer.includers:
+                for ref in user.references:
+                    if ref.definer not in user.inclusions:
+                        ref_list.append(ref)
+
+        # Finally, we must fix types just before generation because user can
+        # change already added types.
+        TypeFixerVisitor(definer, definer).visit()
+
+        for t in definer.types.values():
+            if t.definer is definer:
+                self.provide_chunks(t)
+
+        for gv in definer.global_variables.values():
+            self.provide_chunks(gv)
+
+        if isinstance(definer, Header):
+            for r in ref_list:
+                self.provide_chunks(r)
+
+        file.add_chunks(self.get_all_chunks())
+
+        return file
 
     def provide_chunks(self, origin, **kw):
         """ Given origin the method returns chunk list generating it on first

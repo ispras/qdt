@@ -61,6 +61,7 @@ from re import (
     compile,
 )
 from source import (
+    ChunkGenerator,
     Enumeration,
     Function,
     Header,
@@ -363,7 +364,7 @@ class CPUType(QOMCPU):
             else:
                 path = join(src, f.path)
 
-            sf = f.generate()
+            sf = ChunkGenerator(f).generate()
 
             if with_chunk_graph:
                 yield True
