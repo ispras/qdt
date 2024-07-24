@@ -23,6 +23,7 @@ __all__ = [
               , "MCall"
               , "Return"
               # Operator
+                  , "OpCast"
                   , "OpIndex"
                   , "OpSDeref"
                   # UnaryOperator
@@ -37,7 +38,6 @@ __all__ = [
                       , "OpNot"
                       , "OpMinus"
                       , "OpPlus"
-                      , "OpCast"
                       , "OpSizeOf"
                   # BinaryOperator
                       , "OpAssign"
@@ -745,6 +745,17 @@ class Operator(SemicolonPresence):
             writer.write(")")
 
 
+class OpCast(Operator):
+
+    prefix = "("
+    delim = ")"
+
+    def __init__(self, type_or_name, arg):
+        if not isinstance(type_or_name, Type):
+            type_or_name = Type[type_or_name]
+        super(OpCast, self).__init__(type_or_name, arg)
+
+
 class OpIndex(Operator):
 
     def __init__(self, var, index):
@@ -844,18 +855,6 @@ class OpPreInc(UnaryOperator):
     def __init__(self, var):
         super(OpPreInc, self).__init__("++", var, suffix_op = False)
 
-
-class OpCast(UnaryOperator):
-
-    __type_references__ = ("type",)
-
-    def __init__(self, type_or_name, arg):
-        if isinstance(type_or_name, Type):
-            type_name = type_or_name.c_name
-        else:
-            type_name = type_or_name
-        super(OpCast, self).__init__("(" + type_name + ")", arg)
-        self.type = Type[type_name]
 
 
 class OpSizeOf(UnaryOperator):
