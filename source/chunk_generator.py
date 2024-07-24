@@ -36,6 +36,9 @@ from .function.bindings import (
 from .function.var_declarator import (
     VarDeclarator,
 )
+from .late import (
+    FuncLateLinker,
+)
 from .model import (
     CPP,
     CPPMacro,
@@ -106,6 +109,7 @@ class ChunkGenerator(object):
             body = func.body
             if not isinstance(body, BodyTree):
                 continue
+            FuncLateLinker(func, **definer.global_variables).visit()
             VarDeclarator(body, func.args).visit()
 
         # This header includes other headers to provide types for includers
