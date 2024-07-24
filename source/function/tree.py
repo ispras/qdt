@@ -87,7 +87,6 @@ from ..type_container import (
 from common import (
     ee,
     SkipVisiting,
-    lazy
 )
 from six import (
     integer_types
