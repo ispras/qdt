@@ -25,6 +25,7 @@ from .machine_description import (
     MachineNode,
 )
 from source import (
+    ChunkGenerator,
     disable_auto_lock_inclusions,
     enable_auto_lock_inclusions,
     Source,
@@ -153,7 +154,7 @@ class QProject(object):
 
             yield True
 
-            f = s.generate()
+            f = ChunkGenerator(s).generate()
 
             if with_chunk_graph:
                 yield True
