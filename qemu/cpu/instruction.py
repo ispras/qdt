@@ -169,7 +169,7 @@ class Instruction(object):
 
 :param semantics:
     callable object which gets `Function` and source containing the
-    function, and must return list of function body tree elements that
+    function, and must return an iterable of function body tree elements that
     describe the semantics of the instruction (see `no_semantics` example)
 
 :param priority:
