@@ -3,7 +3,32 @@ __all__ = [
 ]
 
 from .chunks import (
+    EnumerationDeclarationBegin,
+    EnumerationDeclarationEnd,
+    EnumerationElementDeclaration,
+    FunctionDeclaration,
+    FunctionDefinition,
+    FunctionPointerDeclaration,
+    FunctionPointerTypeDeclaration,
     HeaderInclusion,
+    MacroDefinition,
+    MacroTypeChunk,
+    OpaqueChunk,
+    PointerTypeDeclaration,
+    StructureClosingBracket,
+    StructureDeclarationBegin,
+    StructureDeclarationEnd,
+    StructureForwardDeclaration,
+    StructureTypedefDeclarationBegin,
+    StructureTypedefDeclarationEnd,
+    StructureOpeningBracket,
+    StructureVariableDeclarationBegin,
+    StructureVariableDeclarationEnd,
+    VariableDeclaration,
+    VariableDefinition,
+)
+from common import (
+    ee,
 )
 from .function.bindings import (
     BodyTree,
@@ -13,9 +38,18 @@ from .function.var_declarator import (
 )
 from .model import (
     CPP,
+    CPPMacro,
+    Enumeration,
+    EnumerationElement,
     Function,
+    GlobalsCollector,
+    Macro,
+    MacroUsage,
+    OpaqueCode,
+    Pointer,
     Structure,
     Type,
+    TypesCollector,
     Variable,
 )
 from .source_file import (
@@ -28,6 +62,14 @@ from .source_file import (
 from collections import (
     deque,
 )
+from inspect import (
+    getmro,
+)
+
+
+# Add a new line after the opening curly bracket in the structure without
+# fields
+ADD_NL_IN_EMPTY_STRUCTURE = ee("QDT_ADD_NL_IN_EMPTY_STRUCTURE", "False")
 
 
 class ChunkGenerator(object):
@@ -311,3 +353,317 @@ class ChunkGenerator(object):
                 type(frame).__name__, frame, definer
             ))
         return "\n".join(frames)
+
+    def gen_defining_chunk_list(self, t, **kw):
+        if t.base:
+            return []
+        else:
+            return self.gen_chunks(t, **kw)
+
+    def gen_chunks(self, t, **kw):
+        for tt in getmro(type(t)):
+            gen = get_chunks_generator(tt)
+            if gen is not None:
+                break
+        else:
+            raise ValueError("Attempt to generate source chunks for stub"
+                " type %s" % t
+            )
+        return gen(t, self, **kw)
+
+
+def gen_cpp_macro_chunks(cppm, generator):
+    # CPPMacro does't require referenced types
+    # because it's defined by C preprocessor.
+    return []
+
+
+def gen_enumeration_chunks(e, generator):
+    fields_indent = "    "
+    indent = ""
+
+    enum_begin = EnumerationDeclarationBegin(e, indent)
+    enum_end = EnumerationDeclarationEnd(e, indent)
+
+    field_indent = indent + fields_indent
+    field_refs = []
+    top_chunk = enum_begin
+
+    last_num = len(e.elems) - 1
+    for i, f in enumerate(e.elems.values()):
+        field_declaration = EnumerationElementDeclaration(f,
+            indent = field_indent,
+            separ = "" if i == last_num else ","
+        )
+        field_declaration.add_reference(top_chunk)
+
+        if f.initializer is not None:
+            for t in f.initializer.used_types:
+                field_refs.extend(list(generator.provide_chunks(t)))
+
+        top_chunk = field_declaration
+
+    enum_begin.add_references(field_refs)
+    enum_end.add_reference(top_chunk)
+
+    return [enum_end, enum_begin]
+
+
+def gen_enumeration_element_chunks(e, generator, **kw):
+    return list(generator.provide_chunks(e.enum_parent, **kw))
+
+
+def gen_function_declaration_chunks(f, generator):
+    indent = ""
+    ch = FunctionDeclaration(f, indent)
+
+    refs = gen_function_decl_ref_chunks(f, generator)
+
+    ch.add_references(refs)
+
+    return [ch]
+
+gen_function_chunks = gen_function_declaration_chunks
+
+def gen_function_definition_chunks(f, generator):
+    indent = ""
+    ch = FunctionDefinition(f, indent)
+
+    refs = (gen_function_decl_ref_chunks(f, generator) +
+        gen_function_def_ref_chunks(f, generator)
+    )
+
+    ch.add_references(refs)
+    return [ch]
+
+
+def gen_macro_chunks(m, generator):
+    return [ MacroDefinition(m) ]
+
+
+def gen_macro_usage_chunks(mu, generator, indent = ""):
+    macro = mu.macro
+    initializer = mu.initializer
+
+    refs = list(generator.provide_chunks(macro))
+
+    if initializer is not None:
+        for v in initializer.used_variables:
+            refs.extend(generator.provide_chunks(v))
+
+        for t in initializer.used_types:
+            refs.extend(generator.provide_chunks(t))
+
+    if mu.is_named:
+        ch = MacroTypeChunk(mu, indent)
+        ch.add_references(refs)
+        return [ch]
+    else:
+        return refs
+
+
+def gen_opaque_code_chunks(self, generator, indent = ""):
+    ch = OpaqueChunk(self, indent)
+
+    for item in self.used:
+        ch.add_references(generator.provide_chunks(item))
+
+    return [ch]
+
+
+def gen_pointer_chunks(p, generator):
+    _type = p.type
+
+    is_function = isinstance(_type, Function)
+
+    # strip function definition chunk, its references is only needed
+    if is_function:
+        refs = gen_function_decl_ref_chunks(_type, generator)
+    else:
+        refs = generator.provide_chunks(_type)
+
+    if not p.is_named:
+        return refs
+
+    name = p.c_name
+
+    if is_function:
+        ch = FunctionPointerTypeDeclaration(_type, name)
+    else:
+        ch = PointerTypeDeclaration(_type, name)
+
+    """ 'typedef' does not require referenced types to be visible.
+Hence, it is not correct to add references to the PointerTypeDeclaration
+chunk. The references is to be added to `users` of the 'typedef'.
+    """
+    ch.add_references(refs)
+
+    return [ch]
+
+
+def gen_structure_chunks(s, g, indent = ""):
+    if not s.is_named:
+        raise AssertionError("chunks for a nameless structure are "
+            "generated by the variable having that structure immediately "
+            "in its declaration"
+        )
+
+    if s._definition is not None:
+        return [StructureForwardDeclaration(s, indent)]
+
+    if s.declaration is None:
+        struct_begin = StructureTypedefDeclarationBegin(s, indent)
+        struct_end = StructureTypedefDeclarationEnd(s)
+    else:
+        struct_begin = StructureDeclarationBegin(s, indent)
+        struct_end = StructureDeclarationEnd(s)
+
+    gen_structure_fields_chunks(s, g, struct_begin, struct_end, indent)
+
+    return [struct_end, struct_begin]
+
+def gen_structure_fields_chunks(s, generator, struct_begin, struct_end,
+    indent = ""
+):
+    fields_indent = "    "
+    need_nl = ADD_NL_IN_EMPTY_STRUCTURE or bool(s.fields)
+
+    """
+    References map of structure definition chunks:
+
+          ____--------> [self references of struct_begin ]
+         /    ___-----> [ united references of all fields ]
+        |    /     _--> [ references of struct_end ] == empty
+        |    |    /
+        |    |   |
+       struct_begin
+            ^
+            |
+      opening bracket
+            ^
+            |
+         field_0
+            ^
+            |
+         field_1
+            ^
+            |
+           ...
+            ^
+            |
+         field_N
+            ^
+            |
+      closing bracket
+            ^
+            |
+        struct_end
+
+    """
+
+    field_indent = indent + fields_indent
+    field_refs = []
+
+    br = StructureOpeningBracket(s, need_nl)
+    br.add_reference(struct_begin)
+    top_chunk = br
+
+    for f in s.fields.values():
+        field_chunks = generator.provide_chunks(f, indent = field_indent)
+        # believe that we got a list of chunks in the format
+        # [end, ..., begin] or [single_chunk] and the last (begin) chunk
+        # accumulates all outer references of the chunk subtree
+
+        field_decl = field_chunks[-1]
+        field_refs.extend(list(field_decl.references))
+        field_decl.clean_references()
+        field_decl.add_reference(top_chunk)
+        top_chunk = field_chunks[0]
+
+    struct_begin.add_references(field_refs)
+
+    br = StructureClosingBracket(s, indent if need_nl else "")
+    br.add_reference(top_chunk)
+    struct_end.add_reference(br)
+
+
+def gen_variable_declaration_chunks(v, generator,
+    indent = "",
+    extern = False
+):
+    type_ = v.type
+    if (    isinstance(type_, Structure)
+        and not type_.is_named
+    ):
+        var_begin = StructureVariableDeclarationBegin(v, indent)
+        var_end = StructureVariableDeclarationEnd(v)
+        gen_structure_fields_chunks(type_, generator, var_begin, var_end, indent)
+        return [var_end, var_begin]
+    elif (    isinstance(type_, Pointer)
+          and not type_.is_named
+          and isinstance(type_.type, Function)
+    ):
+        ch = FunctionPointerDeclaration(v, indent, extern)
+        refs = gen_function_decl_ref_chunks(type_.type, generator)
+    else:
+        ch = VariableDeclaration(v, indent, extern)
+        refs = generator.provide_chunks(type_)
+    ch.add_references(refs)
+
+    return [ch]
+
+def get_variable_definition_chunks(v, generator,
+    indent = "",
+    append_nl = True,
+    separ = ";"
+):
+    ch = VariableDefinition(v, indent, append_nl, separ)
+
+    refs = list(generator.provide_chunks(v.type))
+
+    if v.initializer is not None:
+        for v in v.initializer.used_variables:
+            refs.extend(generator.provide_chunks(v))
+
+        for t in v.initializer.used_types:
+            refs.extend(generator.provide_chunks(t))
+
+    ch.add_references(refs)
+    return [ch]
+
+
+CHUNK_GENERATORS = {
+    CPPMacro: gen_cpp_macro_chunks,
+    Enumeration: gen_enumeration_chunks,
+    EnumerationElement: gen_enumeration_element_chunks,
+    Function: gen_function_chunks,
+    Macro: gen_macro_chunks,
+    MacroUsage: gen_macro_usage_chunks,
+    OpaqueCode: gen_opaque_code_chunks,
+    Pointer: gen_pointer_chunks,
+    Structure: gen_structure_chunks,
+}
+
+get_chunks_generator = CHUNK_GENERATORS.get
+
+
+def gen_function_decl_ref_chunks(function, generator):
+    references = list(generator.provide_chunks(function.ret_type))
+
+    if function.args is not None:
+        for a in function.args:
+            references.extend(generator.provide_chunks(a.type))
+
+    return references
+
+
+def gen_function_def_ref_chunks(f, generator):
+    references = []
+
+    for t in TypesCollector(f.body).visit().used_types:
+        references.extend(generator.provide_chunks(t))
+
+    for t in GlobalsCollector(f.body).visit().used_globals:
+        references.extend(generator.provide_chunks(t))
+
+    return references
