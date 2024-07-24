@@ -6,6 +6,7 @@ from six import (
     StringIO
 )
 from source import (
+    ChunkGenerator,
     Return,
     OpSDeref,
     disable_auto_lock_inclusions,
@@ -64,7 +65,7 @@ class SourceModelTestHelper(object):
             kw = {}
             if isinstance(file_, Header):
                 file_.inherit_references = self.inherit_references
-            sf = file_.generate(**kw)
+            sf = ChunkGenerator(file_).generate(**kw)
 
             if SAVE_CHUNK_GRAPH:
                 sf.gen_chunks_gv_file(
@@ -107,8 +108,8 @@ class FunctionTreeTestDoubleGenerationHelper(object):
 
     def test(self):
         for file_, content in self.files:
-            sf_first = file_.generate()
-            sf_second = file_.generate()
+            sf_first = ChunkGenerator(file_).generate()
+            sf_second = ChunkGenerator(file_).generate()
 
             sio_first = StringIO()
             sio_second = StringIO()
