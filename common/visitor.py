@@ -139,6 +139,10 @@ Features (+) implemented, (-) TODO:
         for obj in self.path[:-1]:
             yield obj[0]
 
+    @property
+    def root(self):
+        return self.path[0][0]
+
     def __push__(self, destination, path_name):
         self.path.append((destination, path_name))
         self.cur = destination
