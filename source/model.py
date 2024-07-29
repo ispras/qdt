@@ -955,9 +955,6 @@ class ForwardDeclarator(TypeReferencesVisitor):
     structure declaration with a forward declaration of the structure
     """
 
-    def __init__(self, variable):
-        super(ForwardDeclarator, self).__init__(variable)
-
     def on_visit(self):
         t = self.cur
         if isinstance(t, Structure) and t in self.previous:
