@@ -22,7 +22,9 @@ L = Late
 # A user may prefer to use only one of them.
 
 # cache some types
-tcg = Type["tcg"]
+
+# Note that, Type["tcg"] is also possible here.
+tcg = L("tcg")
 MemOp = Type[get_vp("memop")]
 MO_UB = MemOp.MO_UB
 MO_UW = MemOp.MO_UW
