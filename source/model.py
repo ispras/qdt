@@ -909,10 +909,7 @@ class TopComment(OpaqueCode):
 
 class TypeReferencesVisitor(ObjectVisitor):
 
-    def __init__(self, root):
-        super(TypeReferencesVisitor, self).__init__(root,
-            field_name = "__type_attributes__"
-        )
+    __field_name__ = "__type_attributes__"
 
 
 class NodeVisitor(ObjectVisitor):
