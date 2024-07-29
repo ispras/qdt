@@ -31,6 +31,9 @@ from inspect import (
 from itertools import (
     count,
 )
+from keyword import (
+    iskeyword,
+)
 from six import (
     binary_type,
     class_types,
@@ -164,7 +167,7 @@ require reference to the current object.
 
             name = var_base
 
-            if name in self.name2obj:
+            if name in self.name2obj or iskeyword(name):
                 for i in self.name_counter.setdefault(var_base, count(0)):
                     name = "%s%d" % (var_base, i)
                     if name not in self.name2obj:
