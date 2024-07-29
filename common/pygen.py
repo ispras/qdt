@@ -52,10 +52,7 @@ pythonizable = const_types + (list, set, dict, tuple)
 
 class PyGenDepsVisitor(ObjectVisitor):
 
-    def __init__(self, root):
-        super(PyGenDepsVisitor, self).__init__(root,
-            field_name = "__pygen_deps__"
-        )
+    __field_name__ = "__pygen_deps__"
 
 
 class PyGenerator(CodeWriter):
