@@ -195,6 +195,9 @@ class Instruction(object):
         # mark for finding unreachable instructions
         self.used = False
 
+    def __var_base__(self):
+        return self.mnemonic.lower()
+
     def __gen_code__(self, gen):
         gen.reset_gen(self)
         gen.gen_field(""); gen.pprint(self.mnemonic)
