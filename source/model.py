@@ -923,8 +923,7 @@ class TypesCollector(TypeReferencesVisitor):
         super(TypesCollector, self).__init__(code)
         self.used_types = set()
 
-    def on_visit(self):
-        cur = self.cur
+    def __visit__(self, cur):
         if isinstance(cur, Type):
             self.used_types.add(cur)
             raise SkipVisiting()
