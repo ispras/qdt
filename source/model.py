@@ -935,8 +935,7 @@ class GlobalsCollector(NodeVisitor):
         super(GlobalsCollector, self).__init__(code)
         self.used_globals = set()
 
-    def on_visit(self):
-        cur = self.cur
+    def __visit__(self, cur):
         if (    isinstance(cur, Variable)
             and (cur.declarer is not None or cur.definer is not None)
         ):
