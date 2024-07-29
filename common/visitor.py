@@ -2,7 +2,6 @@ __all__ = [
     "ObjectVisitor"
   , "SkipVisiting"
   , "StopVisiting"
-  , "VisitingIsNotImplemented"
 ]
 
 
@@ -12,10 +11,6 @@ class SkipVisiting(BaseException):
 
 # Not an `Exception` too...
 class StopVisiting(BaseException):
-    pass
-
-
-class VisitingIsNotImplemented(NotImplementedError):
     pass
 
 
@@ -191,14 +186,8 @@ Features (+) implemented, (-) TODO:
             self._visit_dict(attr)
         elif isinstance(attr, set):
             self._visit_set(attr)
-        elif isinstance(attr, object):
-            self._visit_fields(attr)
         else:
-            raise VisitingIsNotImplemented(
-                "Visiting of attribute '%s' of type '%s is not implemented" % (
-                    self.path[-1][1], type(attr).name
-                )
-            )
+            self._visit_fields(attr)
 
     def _visit(self, attr):
         try:
