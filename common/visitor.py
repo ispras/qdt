@@ -143,15 +143,15 @@ Features (+) implemented, (-) TODO:
     def root(self):
         return self.path[0][0]
 
-    def __push__(self, destination, path_name):
+    def _push(self, destination, path_name):
         self.path.append((destination, path_name))
         self.cur = destination
 
-    def __pop__(self):
+    def _pop(self):
         self.path.pop()
         self.cur = self.path[-1][0]
 
-    def __visit_fields__(self, obj):
+    def _visit_fields(self, obj):
         try:
             visitable_list = getattr(obj, self.field_name)
         except AttributeError:
@@ -159,31 +159,31 @@ Features (+) implemented, (-) TODO:
         else:
             for attribute_name in visitable_list:
                 attr = getattr(obj, attribute_name)
-                self.__push__(attr, attribute_name)
+                self._push(attr, attribute_name)
                 try:
-                    self.__visit__(attr)
+                    self._visit(attr)
                 except StopVisiting:
-                    # TODO: try to move `__pop__` to `finally` block, below too
-                    self.__pop__()
+                    # TODO: try to move `_pop` to `finally` block, below too
+                    self._pop()
                     raise
-                self.__pop__()
+                self._pop()
 
     def visit(self):
         try:
-            self.__visit_items__(self.cur)
+            self._visit_items(self.cur)
         except StopVisiting:
             pass
         return self # for call chaining
 
-    def __visit_items__(self, attr):
+    def _visit_items(self, attr):
         if isinstance(attr, (list, tuple)):
-            self.__visit_list__(attr)
+            self._visit_list(attr)
         elif isinstance(attr, dict):
-            self.__visit_dictionary__(attr)
+            self._visit_dict(attr)
         elif isinstance(attr, set):
-            self.__visit_set__(attr)
+            self._visit_set(attr)
         elif isinstance(attr, object):
-            self.__visit_fields__(attr)
+            self._visit_fields(attr)
         else:
             raise VisitingIsNotImplemented(
                 "Visiting of attribute '%s' of type '%s is not implemented" % (
@@ -191,7 +191,7 @@ Features (+) implemented, (-) TODO:
                 )
             )
 
-    def __visit__(self, attr):
+    def _visit(self, attr):
         try:
             self.on_visit()
         except SkipVisiting:
@@ -199,36 +199,36 @@ Features (+) implemented, (-) TODO:
         except StopVisiting:
             raise
         else:
-            self.__visit_items__(attr)
+            self._visit_items(attr)
         finally:
             self.on_leave()
 
-    def __visit_set__(self, attr):
+    def _visit_set(self, attr):
         for e in sorted(attr):
-            self.__push__(e, None) # objects in a set are not named.
+            self._push(e, None) # objects in a set are not named.
             try:
-                self.__visit__(e)
+                self._visit(e)
             except StopVisiting:
-                self.__pop__()
+                self._pop()
                 raise
-            self.__pop__()
+            self._pop()
 
-    def __visit_list__(self, attr):
+    def _visit_list(self, attr):
         for i, e in enumerate(attr):
-            self.__push__(e, i)
+            self._push(e, i)
             try:
-                self.__visit__(e)
+                self._visit(e)
             except StopVisiting:
-                self.__pop__()
+                self._pop()
                 raise
-            self.__pop__()
+            self._pop()
 
-    def __visit_dictionary__(self, attr):
+    def _visit_dict(self, attr):
         for k, e in sorted(attr.items()):
-            self.__push__(e, k)
+            self._push(e, k)
             try:
-                self.__visit__(e)
+                self._visit(e)
             except StopVisiting:
-                self.__pop__()
+                self._pop()
                 raise
-            self.__pop__()
+            self._pop()
