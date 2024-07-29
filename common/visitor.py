@@ -24,8 +24,8 @@ object to traverse next.
 
 The iterable attribute name is "__visitable__" by default.
 An example of the iterable attribute type is `list`.
-The name of the attribute can be customized by `field_name` argument of
-base constructor.
+The name of the attribute can be customized by `__field_name__` class variable
+or `field_name` argument of `__init__.
 
 To traverse an object tree set `root`, argument of `__init__`, to the root
 object and call `visit`.
@@ -70,10 +70,14 @@ Features (+) implemented, (-) TODO:
  - replacement during recursive visiting of dictionary
 
     """
-    def __init__(self, root, field_name = "__visitable__"):
+
+    __field_name__ = "__visitable__"
+
+    def __init__(self, root, field_name = None):
         self.path = [(root,)]
         self.cur = root
-        self.field_name = field_name
+        if field_name is not None:
+            self.__field_name__ = field_name
 
     @property
     def container(self):
@@ -157,7 +161,7 @@ Features (+) implemented, (-) TODO:
 
     def _visit_fields(self, obj):
         try:
-            visitable_list = getattr(obj, self.field_name)
+            visitable_list = getattr(obj, self.__field_name__)
         except AttributeError:
             pass
         else:
