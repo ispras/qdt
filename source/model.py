@@ -914,10 +914,7 @@ class TypeReferencesVisitor(ObjectVisitor):
 
 class NodeVisitor(ObjectVisitor):
 
-    def __init__(self, root):
-        super(NodeVisitor, self).__init__(root,
-            field_name = "__node__"
-        )
+    __field_name__ = "__node__"
 
 
 class TypesCollector(TypeReferencesVisitor):
