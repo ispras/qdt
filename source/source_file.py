@@ -308,9 +308,9 @@ class TypeFixerVisitor(TypeReferencesVisitor):
         self.source = source
         self.required_types = deque()
 
-    def on_visit(self):
-        if isinstance(self.cur, Type):
-            t = self.cur
+    def __visit__(self, cur):
+        if isinstance(cur, Type):
+            t = cur
 
             if t.base:
                 raise SkipVisiting()
