@@ -37,7 +37,7 @@ from .function.var_declarator import (
     VarDeclarator,
 )
 from .late import (
-    FuncLateLinker,
+    LateLinker,
 )
 from .model import (
     CPP,
@@ -100,6 +100,8 @@ class ChunkGenerator(object):
         if inherit_references:
             assert (isinstance(definer, Header))
 
+        LateLinker(definer).visit()
+
         # Auto `Declare` variables in `Function`s with `BodyTree`.
         for func in definer.types.values():
             if not isinstance(func, Function):
@@ -109,7 +111,6 @@ class ChunkGenerator(object):
             body = func.body
             if not isinstance(body, BodyTree):
                 continue
-            FuncLateLinker(func, **definer.global_variables).visit()
             VarDeclarator(body, func.args).visit()
 
         # This header includes other headers to provide types for includers
