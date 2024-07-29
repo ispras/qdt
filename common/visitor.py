@@ -35,25 +35,26 @@ base constructor.
 To traverse an object tree set `root`, argument of `__init__`, to the root
 object and call `visit`.
 
-Each time an object is visited the `on_visit` and `on_leave` methods are
+Each time an object is visited the `__visit__` and `__leave__` methods are
 called.
-Neither `on_visit` nor `on_leave` is called for the root.
-`on_visit` is called before subtree visiting and `on_leave` is called after it.
-A reference the object being visited is stored in `self.cur`.
-That reference and the name (index, key, attribute, ...) inside the parent of
-the current object are also stored in the last entry of `self.path`.
+Neither `__visit__` nor `__leave__` is called for the root.
+`__visit__` is called before subtree visiting and `__leave__` is called
+after it.
+A reference to the object being visited is first argument.
+That reference and its name (index, key, attribute, ...) inside the parent
+object are also stored in the last entry of `self.path`.
 
 
-Default `on_visit` (`on_leave`) does nothing.
+Default `__visit__` (`__leave__`) does nothing.
 The user should override it to define needed behaviour.
 
-To prevent traversing of subtree the `on_visit` can raise `SkipVisiting`.
-`on_leave` is called even if `SkipVisiting` was raised.
-To stop traversing at all `on_visit` can raise `StopVisiting`.
-`on_leave` is called foreach node `on_visit` was called for.
+To prevent traversing of subtree `SkipVisiting` is to be `raise`d.
+To stop traversing at all `StopVisiting` is to be `raise`d.
+`__leave__` is called foreach node `__visit__` was called for.
+I.e. `__leave__` is called even if `Stop/SkipVisiting` was raised.
 
 The `replace` could be called to replace current object in its parent.
-Note that `replace` method raises `SkipVisiting` by default.
+`replace` method `raise`s `SkipVisiting` by default.
 
 Features (+) implemented, (-) TODO:
  - detection for cycles
@@ -90,10 +91,18 @@ Features (+) implemented, (-) TODO:
         return self.path[-1][1]
 
     def on_visit(self):
-        "default method does nothing"
+        "backward compatibility, default method does nothing"
 
     def on_leave(self):
-        "default method does nothing"
+        "backward compatibility, default method does nothing"
+
+    def __visit__(self, o):
+        "default method provides backward compatibility"
+        self.on_visit()
+
+    def __leave__(self, o):
+        "default method provides backward compatibility"
+        self.on_leave()
 
     def replace(self, new_value, skip_trunk = True):
         """ Replaces current (being replaced) node within its container with.
@@ -193,7 +202,7 @@ Features (+) implemented, (-) TODO:
 
     def _visit(self, attr):
         try:
-            self.on_visit()
+            self.__visit__(attr)
         except SkipVisiting:
             return
         except StopVisiting:
@@ -201,7 +210,7 @@ Features (+) implemented, (-) TODO:
         else:
             self._visit_items(attr)
         finally:
-            self.on_leave()
+            self.__leave__(attr)
 
     def _visit_set(self, attr):
         for e in sorted(attr):
