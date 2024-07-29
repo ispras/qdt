@@ -18,9 +18,7 @@ from common import (
 
 class VarUsageAnalyzer(NodeVisitor):
 
-    def on_visit(self):
-        cur = self.cur
-
+    def __visit__(self, cur):
         if isinstance(cur, Variable):
             parent = self.path[-3][0]
 
