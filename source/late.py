@@ -1,20 +1,19 @@
-# TODO: support types
-
 __all__ = [
     "Late"
   , "LateLinker"
-      , "FuncLateLinker"
 ]
 
 from common import (
     DictStack,
+    SkipVisiting,
 )
 from .function.tree import (
     CBlock,
     define_python_operators,
 )
 from .model import (
-    NodeVisitor,
+    Type,
+    TypeReferencesVisitor,
     Variable,
 )
 
@@ -28,14 +27,16 @@ class Late(object):
         self.name = name
 
 
-class LateLinker(NodeVisitor):
+class LateLinker(TypeReferencesVisitor):
 
-    def __init__(self, root, **glob_ns):
-        super(LateLinker, self).__init__(root)
+    def __init__(self, definer, **glob_ns):
+        super(LateLinker, self).__init__(definer)
         # Don't try `Namespace(glob_ns)`, `pop_ns` must `raise AttributeError`
         # on "stack" underflow.
         ns = DictStack()
         ns.update(glob_ns)
+        ns.update(definer.types)
+        ns.update(definer.global_variables)
         self.ns = ns
 
     def _push_ns(self):
@@ -47,27 +48,30 @@ class LateLinker(NodeVisitor):
     def on_visit(self):
         cur = self.cur
 
-        if isinstance(cur, Late):
+        if isinstance(cur, Type):
+            if cur.definer is not self.root:
+                raise SkipVisiting
+            # Some `Type`s have `Variable`s inside (Structure, Function).
+            # Those `Variable`s are only visible in `Type`'s scope.
+            self._push_ns()
+
+        elif isinstance(cur, CBlock):
+            self._push_ns()
+
+        elif isinstance(cur, Variable):
+            self.ns[cur.name] = cur
+
+        elif isinstance(cur, Late):
             self.replace(self.ns[cur.name])
             assert False  # no return
 
-        if isinstance(cur, Variable):
-            self.ns[cur.name] = cur
-            return
-
-        if isinstance(cur, CBlock):
-            self._push_ns()
-            return
-
     def on_leave(self):
-        if isinstance(self.cur, CBlock):
+        cur = self.cur
+
+        if isinstance(cur, Type):
+            if cur.definer is not self.root:
+                return
             self._pop_ns()
 
-
-class FuncLateLinker(LateLinker):
-
-    def __init__(self, func, **glob_ns):
-        for arg in func.args or ():
-            glob_ns[arg.name] = arg
-        super(FuncLateLinker, self).__init__(func.body, **glob_ns)
-        self.function = func
+        elif isinstance(cur, CBlock):
+            self._pop_ns()
