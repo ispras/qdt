@@ -48,7 +48,12 @@ def check_dump(insn):
     print(code)
     locals_ = {}
     exec(code, globals(), locals_)
-    loaded_code = dumps(locals_["obj"])
+    for loaded in locals_.values():
+        if isinstance(loaded, Instruction):
+            break
+    else:
+        raise AssertionError("code does not provide Instruction object")
+    loaded_code = dumps(loaded)
     if code != loaded_code:
         print(loaded_code)
         raise AssertionError("dumps/loads-ed instruction differs")
