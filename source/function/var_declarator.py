@@ -23,9 +23,7 @@ class VarDeclarator(NodeVisitor):
         self.declared = set()
         self.variables = set()
 
-    def on_visit(self):
-        cur = self.cur
-
+    def __visit__(self, cur):
         if isinstance(cur, Variable):
             self.variables.add(cur)
         elif isinstance(cur, Declare):
