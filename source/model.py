@@ -1020,7 +1020,9 @@ class Variable(TypeContainer):
         super(Variable, self).__init__(**kw)
 
         self.name = name
-        self.type = _type if isinstance(_type, Type) else Type[_type]
+        if isinstance(_type, str):
+            _type = Type[_type]
+        self.type = _type
         self.initializer = initializer
         self.static = static
         self.const = const
