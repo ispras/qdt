@@ -947,8 +947,7 @@ class ForwardDeclarator(TypeReferencesVisitor):
     structure declaration with a forward declaration of the structure
     """
 
-    def on_visit(self):
-        t = self.cur
+    def __visit__(self, t):
         if isinstance(t, Structure) and t in self.previous:
             if t.declaration is not None:
                 decl = t.declaration
