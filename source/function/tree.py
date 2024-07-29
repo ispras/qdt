@@ -111,8 +111,8 @@ class DeclarationSearcher(NodeVisitor):
         super(DeclarationSearcher, self).__init__(root)
         self.have_declaration = False
 
-    def on_visit(self):
-        if isinstance(self.cur, Declare):
+    def __visit__(self, cur):
+        if isinstance(cur, Declare):
             self.have_declaration = True
             raise SkipVisiting()
 
