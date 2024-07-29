@@ -634,8 +634,7 @@ class PyGenDepsCatcher(PyGenDepsVisitor):
         super(PyGenDepsCatcher, self).__init__(root)
         self.deps = []
 
-    def on_visit(self):
-        cur = self.cur
+    def __visit__(self, cur):
         if hasattr(cur, "__gen_code__") or hasattr(cur, "__pygen_pass__"):
             self.deps.append(cur)
             raise SkipVisiting()
