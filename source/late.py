@@ -49,9 +49,7 @@ class LateLinker(TypeReferencesVisitor):
     def _pop_ns(self):
         self.ns = self.ns.backing
 
-    def on_visit(self):
-        cur = self.cur
-
+    def __visit__(self, cur):
         if isinstance(cur, Type):
             if cur.definer is not self.root:
                 raise SkipVisiting
@@ -69,9 +67,7 @@ class LateLinker(TypeReferencesVisitor):
             self.replace(self.ns[cur.name])
             assert False  # no return
 
-    def on_leave(self):
-        cur = self.cur
-
+    def __leave__(self, cur):
         if isinstance(cur, Type):
             if cur.definer is not self.root:
                 return
