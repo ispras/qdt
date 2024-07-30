@@ -67,6 +67,10 @@ class LateLinker(TypeReferencesVisitor):
             self._push_ns()
 
         elif isinstance(cur, Variable):
+            if cur.name in self.ns:
+                print("%s: conflict in namespace: %s is replaced with %s" % (
+                    cur.name, self.ns[cur.name], cur
+                ))
             self.ns[cur.name] = cur
 
         elif isinstance(cur, Late):
