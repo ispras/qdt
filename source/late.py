@@ -9,7 +9,7 @@ from common import (
 )
 from .function.tree import (
     CBlock,
-    define_python_operators,
+    CNode,
 )
 from .model import (
     Type,
@@ -18,17 +18,20 @@ from .model import (
 )
 
 
-@define_python_operators
-class Late(object):
+class Late(CNode):
 
     __slots__ = ("name",)
 
     def __init__(self, name):
+        super(Late, self).__init__()
         self.name = name
 
     def __call__(self, name, *a, **kw):
         "Emulate Type.__call__"
         return Variable(name, self, *a, **kw)
+
+    def __c__(self, __):
+        raise RuntimeError("%s: late linking failed" % self)
 
     def __repr__(self):
         return type(self).__name__ + "(%r)" % self.name
