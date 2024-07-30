@@ -30,6 +30,9 @@ class Late(object):
         "Emulate Type.__call__"
         return Variable(name, self, *a, **kw)
 
+    def __repr__(self):
+        return type(self).__name__ + "(%r)" % self.name
+
 
 class LateLinker(TypeReferencesVisitor):
 
