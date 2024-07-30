@@ -692,9 +692,14 @@ class Operator(SemicolonPresence):
     prefix = ""
     delim = "@s"
     suffix = ""
+    prior = None
 
     def __init__(self, *args, **kw_args):
-        self.prior = op_priority[type(self)]
+        # `prior`ity can be defined at `class` level.
+        # This is for custom operators mostly.
+        # TODO: define all `prior`ities in that way?
+        if self.prior is None:
+            self.prior = op_priority[type(self)]
         super(Operator, self).__init__(children = args)
 
         self.parenthesis = kw_args.get("parenthesis", False)
