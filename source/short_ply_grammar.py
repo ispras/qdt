@@ -135,4 +135,11 @@ def _short_ply_grammar(cls,
         debug = bool(debugfile),
     )
 
+    @classmethod
+    def parse(cls, *a, **kw):
+        kw["lexer"] = cls.lexer.clone()
+        return cls.parser.parse(*a, **kw)
+
+    cls.parse = parse
+
     return cls
