@@ -190,8 +190,3 @@ class Short(object):
     @staticmethod
     def p_error(p):
         raise SyntaxError
-
-    @classmethod
-    def parse(cls, text, debug = False):
-        return cls.parser.parse(text, lexer = cls.lexer.clone(), debug = debug)
-
