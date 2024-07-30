@@ -70,7 +70,8 @@ class LateLinker(TypeReferencesVisitor):
             self.ns[cur.name] = cur
 
         elif isinstance(cur, Late):
-            self.replace(self.ns[cur.name])
+            # This could be declared late.
+            self.replace(self.ns.get(cur.name, cur))
             assert False  # no return
 
     def __leave__(self, cur):
