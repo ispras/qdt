@@ -146,20 +146,19 @@ def find_instruction_specifiers(heading):
             continue
 
         for sline in block:
-            m = re_opspec.match(str(sline))
-            if not m:
-                stack.append(sline)
-                continue
+            no_specs = True
+            for op_name, op_val in iter_defines(sline.stmnts):
+                if op_name not in op_names:
+                    continue
 
-            op_name, op_val, __ = m.groups()
-
-            if op_name in op_names:
                 specs[op_name].append(op_val)
                 # Do not go deeper right now.
                 # Some definitions can be for choisen instruction variants.
                 # They will be handled later during recursive
                 #     `iter_multiply_instruction_blocks` calls.
-            else:
+                no_specs = False
+
+            if no_specs:
                 stack.append(sline)
 
 
