@@ -46,10 +46,15 @@ class BlockParser(object):
         for c in data:
             state = state(c)
 
-        return self.stack[0][-1]
+        self._finalize_stack_top(0)
+
+        # vheading is a virtual line, not existing in the `data`.
+        # Its `child` is `Block` containing all items found in the `data`.
+        return self.vheading
 
     def INIT(self, c):
-        self.stack = [(tuple(), None, [])]
+        self.vheading = vheading = Line()
+        self.stack = [(tuple(), vheading, [])]
         self.indent = []
         self.line = []
 
