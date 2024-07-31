@@ -163,6 +163,29 @@ def find_instruction_specifiers(heading):
                 stack.append(sline)
 
 
+def iter_defines(stmnts):
+    defines = DefineFinder(stmnts).visit().defines
+
+    for d in defines:
+        name = d.name
+        if isinstance(name, VersatileIdentifier):
+            def_name = name.name
+        else:
+            raise SyntaxError(
+                "lvalue of `:=` must be an ID, not %r" % name
+            )
+
+        value = d.value
+        if isinstance(value, CSTR):
+            def_val = str(value)
+        else:
+            raise SyntaxError(
+                'rvalue of `:=` must be a "str", not %r' % value
+            )
+
+        yield def_name, def_val
+
+
 def find_attribute_definitions(heading):
     attrs = {}
 
@@ -178,25 +201,7 @@ def find_attribute_definitions(heading):
         for sline in block:
             stack.append(sline)
 
-            defines = DefineFinder(sline.stmnts).visit().defines
-
-            for d in defines:
-                name = d.name
-                if isinstance(name, VersatileIdentifier):
-                    def_name = name.name
-                else:
-                    raise SyntaxError(
-                        "lvalue of `:=` must be an ID, not %r" % name
-                    )
-
-                value = d.value
-                if isinstance(value, CSTR):
-                    op_val = str(value)
-                else:
-                    raise SyntaxError(
-                        'rvalue of `:=` must be a "str", not %r' % value
-                    )
-
+            for def_name, op_val in iter_defines(sline.stmnts):
                 if def_name in instruction_attributes:
                     assert def_name not in attrs
                     attrs[def_name] = op_val
