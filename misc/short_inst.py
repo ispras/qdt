@@ -10,11 +10,16 @@ from qemu.cpu.short import (
     Short,
 )
 from qemu.cpu.short_statement import (
+    DefineFinder,
     ShortStatement,
+    VersatileIdentifier,
 )
 from source import (
     BlockParser,
     Line,
+)
+from source.c_const import (
+    CSTR,
 )
 from source.function.tree import (
     Comment,
@@ -173,14 +178,28 @@ def find_attribute_definitions(heading):
         for sline in block:
             stack.append(sline)
 
-            m = re_opspec.match(str(sline))
-            if not m:
-                continue
+            defines = DefineFinder(sline.stmnt).visit().defines
 
-            def_name, op_val, __ = m.groups()
-            if def_name in instruction_attributes:
-                assert def_name not in attrs
-                attrs[def_name] = op_val
+            for d in defines:
+                name = d.name
+                if isinstance(name, VersatileIdentifier):
+                    def_name = name.name
+                else:
+                    raise SyntaxError(
+                        "lvalue of `:=` must be an ID, not %r" % name
+                    )
+
+                value = d.value
+                if isinstance(value, CSTR):
+                    op_val = str(value)
+                else:
+                    raise SyntaxError(
+                        'rvalue of `:=` must be a "str", not %r' % value
+                    )
+
+                if def_name in instruction_attributes:
+                    assert def_name not in attrs
+                    attrs[def_name] = op_val
 
     heading.attrs = attrs
 
