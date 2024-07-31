@@ -178,7 +178,7 @@ def find_attribute_definitions(heading):
         for sline in block:
             stack.append(sline)
 
-            defines = DefineFinder(sline.stmnt).visit().defines
+            defines = DefineFinder(sline.stmnts).visit().defines
 
             for d in defines:
                 name = d.name
@@ -393,7 +393,7 @@ def parse_lines(heading):
             else:
                 stmnts.append(stmnt)
 
-        line.stmnt = stmnts
+        line.stmnts = stmnts
 
         parse_lines(line)
 
