@@ -426,13 +426,13 @@ Converts short form instructions definitions to script defines them.
         short_desc = f.read()
 
     bp = BlockParser()
-    top_block = bp.parse(short_desc)
+    top = bp.parse(short_desc)
 
     # analyze instructions
 
     insn_lines = []
 
-    for top_line in top_block:
+    for top_line in top.child:
         analyze_instruction_block(top_line)
 
         insn = top_line.insn
