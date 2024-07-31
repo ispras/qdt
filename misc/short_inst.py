@@ -208,6 +208,7 @@ def specified_line(orig_line, op_name, op_val):
     if orig_line.child:
         # TODO: it might be not so simple
         line = Line(orig_line)
+        line.stmnts = orig_line.stmnts
 
         line.child = type(orig_line.child)(
             iter_block_lines_specified(
@@ -232,9 +233,12 @@ def iter_block_lines_specified(op_name, op_val, block):
 
                 # TODO: it might be not so simple
                 if comment:
-                    yield Line(comment)
+                    prefix_line =  Line(comment)
                 else:
-                    yield Line()
+                    prefix_line =  Line()
+                prefix_line.stmnts = []
+
+                yield prefix_line
 
                 if line.child:
                     for sline in iter_block_lines_specified(
@@ -376,7 +380,8 @@ def parse_lines(heading):
         else:
             stmnts = []
 
-        if code:
+        # Don't try to parse `Short` instruction encoding.
+        if code and heading.parent is not None:
             try:
                 stmnt = ShortStatement.parse(code)
             except:
@@ -430,6 +435,8 @@ Converts short form instructions definitions to script defines them.
 
     # analyze instructions
 
+    parse_lines(top)
+
     insn_lines = []
 
     for top_line in top.child:
@@ -450,7 +457,6 @@ Converts short form instructions definitions to script defines them.
     )
 
     for heading in insn_lines:
-        parse_lines(heading)
         set_attributes(heading)
         fill_comment(heading)
 
