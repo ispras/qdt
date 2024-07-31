@@ -113,8 +113,12 @@ class BlockParser(object):
             stack.append((indent, block_1[-1], [line]))
             return
 
-        ready_blocks = stack[i + 1:]
-        del stack[i + 1:]
+        self._finalize_stack_top(i + 1)
+
+    def _finalize_stack_top(self, i):
+        stack = self.stack
+        ready_blocks = stack[i:]
+        del stack[i:]
 
         for __, heading, block in reversed(ready_blocks):
             block = self.Block(block)
