@@ -9,9 +9,15 @@ from qemu.cpu.instruction import (
 from qemu.cpu.short import (
     Short,
 )
+from qemu.cpu.short_statement import (
+    ShortStatement,
+)
 from source import (
     BlockParser,
     Line,
+)
+from source.function.tree import (
+    Comment,
 )
 
 from argparse import (
@@ -335,6 +341,44 @@ def fill_comment(heading):
     heading.insn.comment = "\n".join(comment_lines)
 
 
+def parse_lines(heading):
+    block = heading.child
+
+    if block is None:
+        return
+
+    for line in block:
+        # strip comment
+        parts = str(line).split("#", 1)
+        code = parts[0].strip()
+        if len(parts) > 1:
+            comment = parts[1].strip()
+            stmnts = [Comment(comment)]
+        else:
+            stmnts = []
+
+        if code:
+            try:
+                stmnt = ShortStatement.parse(code)
+            except:
+                # before debug call stack another exception
+                msg = format_exc()
+                print("code: " + code)
+                try:
+                    ShortStatement.parse(code, debug = True)
+                except:
+                    pass
+                # after parser log printed
+                print(msg)
+                raise
+            else:
+                stmnts.append(stmnt)
+
+        line.stmnt = stmnts
+
+        parse_lines(line)
+
+
 def main():
     ap = ArgumentParser(
         description = """\
@@ -387,6 +431,7 @@ Converts short form instructions definitions to script defines them.
     )
 
     for heading in insn_lines:
+        parse_lines(heading)
         set_attributes(heading)
         fill_comment(heading)
 
