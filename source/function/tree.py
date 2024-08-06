@@ -851,6 +851,7 @@ class OpLogNot(UnaryOperator):
 class OpNot(UnaryOperator):
 
     prefix = "~"
+    prior = 2
 
 
 class OpMinus(UnaryOperator):
@@ -1033,7 +1034,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpNot:           2,
     OpLogNot:        2,
     OpCast:          2,
     OpSizeOf:        2,
