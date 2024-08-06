@@ -83,8 +83,8 @@ class Define(BinaryOperator):
 
     prior = 0
 
-    def __init__(self, name, value):
-        super(Define, self).__init__(":=", name, value, False)
+    def __init__(self, name, value, **kw):
+        super(Define, self).__init__(":=", name, value, **kw)
 
     @property
     def name(self):
