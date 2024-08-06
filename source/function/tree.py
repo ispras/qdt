@@ -789,25 +789,17 @@ class OpSDeref(Operator):
 
 
 class UnaryOperator(Operator):
-
-    def __init__(self, op_str, arg1, suffix_op = False):
-        super(UnaryOperator, self).__init__(arg1)
-        if suffix_op:
-            self.suffix = op_str
-        else:
-            self.prefix = op_str
+    pass
 
 
 class OpInc(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpInc, self).__init__("++", var, suffix_op = True)
+    suffix = "++"
 
 
 class OpDec(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpDec, self).__init__("--", var, suffix_op = True)
+    suffix = "--"
 
 
 OpPostDec = OpDec
@@ -818,58 +810,48 @@ OpPostInc = OpInc
 
 class OpPreDec(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpPreDec, self).__init__("--", var, suffix_op = False)
+    prefix = "--"
 
 
 class OpPreInc(UnaryOperator):
 
-    def __init__(self, var):
-        super(OpPreInc, self).__init__("++", var, suffix_op = False)
-
+    prefix = "++"
 
 
 class OpSizeOf(UnaryOperator):
 
-    def __init__(self, arg):
-        super(OpSizeOf, self).__init__("sizeof(", arg, suffix_op = False)
-        self.suffix = ")"
+    prefix = "sizeof("
+    suffix = ")"
 
 
 class OpAddr(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpAddr, self).__init__("&", arg1)
+    prefix = "&"
 
 
 class OpDeref(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpDeref, self).__init__("*", arg1)
+    prefix = "*"
 
 
 class OpLogNot(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpLogNot, self).__init__("!", arg1)
+    prefix = "!"
 
 
 class OpNot(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpNot, self).__init__("~", arg1)
+    prefix = "~"
 
 
 class OpMinus(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpNot, self).__init__("-", arg1)
+    prefix = "-"
 
 
 class OpPlus(UnaryOperator):
 
-    def __init__(self, arg1):
-        super(OpNot, self).__init__("+", arg1)
+    prefix = "+"
 
 
 class BinaryOperator(Operator):
