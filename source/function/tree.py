@@ -1006,8 +1006,8 @@ class OpLE(BinaryOperator):
 
 class OpGreater(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpGreater, self).__init__(">", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpGreater, self).__init__(">", arg1, arg2, **kw)
 
 
 class OpLess(BinaryOperator):
