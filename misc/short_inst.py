@@ -56,18 +56,22 @@ instruction_attributes = dict(
 
 def check_dump(insn):
     code = dumps(insn)
-    print(code)
     locals_ = {}
     exec(code, globals(), locals_)
     for loaded in locals_.values():
         if isinstance(loaded, Instruction):
             break
     else:
-        raise AssertionError("code does not provide Instruction object")
+        raise AssertionError(
+            "code does not provide Instruction object\n%s" % code
+        )
     loaded_code = dumps(loaded)
     if code != loaded_code:
-        print(loaded_code)
-        raise AssertionError("dumps/loads-ed instruction differs")
+        raise AssertionError(
+            "dumps/loads-ed instruction differs\n%s\n--\n%s" % (
+                code, loaded_code
+            )
+        )
 
 
 def print_layout(insn):
