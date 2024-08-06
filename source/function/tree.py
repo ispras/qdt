@@ -462,6 +462,13 @@ class SwitchCase(CBlock):
 
         self.const = const
 
+    @property
+    def new_line(self):
+        if DeclarationSearcher(self).visit().have_declaration:
+            return "}"
+        else:
+            return None
+
     def __c__(self, writer):
         if (   self.add_break
             and (   self.children
@@ -476,11 +483,9 @@ class SwitchCase(CBlock):
         if DeclarationSearcher(self).visit().have_declaration:
             writer.line(":@b{")
             self.out_children(writer)
-            self.new_line = "}"
         else:
             writer.line(":")
             self.out_children(writer)
-            self.new_line = None
 
 
 class SwitchCaseDefault(CBlock):
