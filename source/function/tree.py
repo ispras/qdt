@@ -927,8 +927,8 @@ class OpDiv(BinaryOperator):
 
 class OpRem(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpRem, self).__init__("%", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpRem, self).__init__("%", arg1, arg2, **kw)
 
 
 class OpAnd(BinaryOperator):
