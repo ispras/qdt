@@ -168,9 +168,12 @@ class Instruction(object):
     leaves of the instruction tree)
 
 :param semantics:
-    callable object which gets `Function` and source containing the
-    function, and must return an iterable of function body tree elements that
-    describe the semantics of the instruction (see `no_semantics` example)
+    is an iterable of function body tree elements that describe the semantics
+    of the instruction.
+    It can be a callable object which is called at source generation time.
+    The callable is given the `Function` (the body is being generated for)
+    and source being generated (containing the `Function`), and must return
+    such an iterable (see `no_semantics` example).
 
 :param priority:
     number that determines which instruction will be selected if the encoding
