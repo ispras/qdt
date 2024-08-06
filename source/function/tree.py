@@ -1055,6 +1055,7 @@ class OpLess(BinaryOperator):
 class CaseRange(BinaryOperator):
 
     op_str = "..."
+    prior = 1
 
 
 class OpTernCond(Operator):
@@ -1081,7 +1082,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    CaseRange:       1,
     OpIndex:         1,
     OpSDeref:        1,
     OpDec:           1,
