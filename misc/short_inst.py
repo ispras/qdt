@@ -49,7 +49,11 @@ instruction_attributes = dict(
 def check_dump(insn):
     code = dumps(insn)
     locals_ = {}
-    exec(code, globals(), locals_)
+    try:
+        exec(code, globals(), locals_)
+    except:
+        print(code)
+        raise
     for loaded in locals_.values():
         if isinstance(loaded, Instruction):
             break
