@@ -664,13 +664,16 @@ class MCall(SemicolonPresence):
 
 class Return(SemicolonPresence):
 
-    def __init__(self, arg = None):
+    def __init__(self, *child):
         super(Return, self).__init__()
-        if arg is not None:
-            self.val = "return" + "@b"
-            self.add_child(arg)
+        self(*child)
+
+    @property
+    def val(self):
+        if self.children:
+            return "return@b"
         else:
-            self.val = "return"
+            return "return"
 
     def __c__(self, writer):
         writer.write(self.val)
