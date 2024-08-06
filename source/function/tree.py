@@ -526,8 +526,7 @@ class SemicolonPresence(CNode):
 
 class Break(SemicolonPresence):
 
-    def __init__(self):
-        super(Break, self).__init__(val = "break")
+    val = "break"
 
 
 class Call(SemicolonPresence):
