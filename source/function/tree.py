@@ -816,6 +816,7 @@ OpPostInc = OpInc
 class OpPreDec(UnaryOperator):
 
     prefix = "--"
+    prior = 1
 
 
 class OpPreInc(UnaryOperator):
@@ -1029,7 +1030,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpPreDec:        1,
     OpPreInc:        1,
     OpDeref:         2,
     OpAddr:          2,
