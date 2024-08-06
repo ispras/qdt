@@ -856,7 +856,7 @@ class OpPlus(UnaryOperator):
 
 class BinaryOperator(Operator):
 
-    def __init__(self, op_str, arg1, arg2, parenthesis):
+    def __init__(self, op_str, arg1, arg2, parenthesis = False):
         super(BinaryOperator, self).__init__(arg1, arg2,
             parenthesis = parenthesis
         )
