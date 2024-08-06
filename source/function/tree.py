@@ -505,8 +505,8 @@ class SwitchCaseDefault(CBlock):
 # TODO: joining "a""b" to "ab". Optionally? By a helper function?
 class StrConcat(CNode):
 
-    def __init__(self, *args, **kw_args):
-        super(StrConcat, self).__init__(children = args)
+    def __init__(self, *children, **kw_args):
+        super(StrConcat, self).__init__(children = children)
         self.delim = kw_args.get("delim", "")
 
     def __c__(self, writer):
