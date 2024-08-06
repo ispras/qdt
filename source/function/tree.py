@@ -146,10 +146,11 @@ class Node(TypeContainer):
     __type_references__ = __node__
 
     val = ""
+    new_line = ""
 
     def __init__(self,
         val = None,
-        new_line = "",
+        new_line = None,
         indent_children = True,
         children = []
     ):
@@ -157,7 +158,8 @@ class Node(TypeContainer):
 
         if val is not None:
             self.val = val
-        self.new_line = new_line
+        if new_line is not None:
+            self.new_line = new_line
         self.indent_children = indent_children
         self.children = []
         for child in children:
