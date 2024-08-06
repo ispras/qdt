@@ -822,6 +822,7 @@ class OpPreDec(UnaryOperator):
 class OpPreInc(UnaryOperator):
 
     prefix = "++"
+    prior = 1
 
 
 class OpSizeOf(UnaryOperator):
@@ -1030,7 +1031,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpPreInc:        1,
     OpDeref:         2,
     OpAddr:          2,
     OpNot:           2,
