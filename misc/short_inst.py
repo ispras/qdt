@@ -216,22 +216,6 @@ def find_attribute_definitions(heading):
     heading.attrs = attrs
 
 
-def specified_line(orig_line, op_name, op_val):
-    if orig_line.child:
-        # TODO: it might be not so simple
-        line = Line(orig_line)
-        line.stmnts = orig_line.stmnts
-
-        line.child = type(orig_line.child)(
-            iter_block_lines_specified(
-                 op_name, op_val, orig_line.child
-            )
-        )
-    else:
-        line = orig_line
-    return line
-
-
 def iter_block_lines_specified(op_name, op_val, block):
     for line in block:
 
@@ -253,7 +237,20 @@ def iter_block_lines_specified(op_name, op_val, block):
 
                 break
         else:
-            yield specified_line(line, op_name, op_val)
+            if line.child:
+                # TODO: it might be not so simple
+                specified_line = Line(line)
+                specified_line.stmnts = line.stmnts
+
+                specified_line.child = type(line.child)(
+                    iter_block_lines_specified(
+                         op_name, op_val, line.child
+                    )
+                )
+            else:
+                specified_line = line
+
+            yield specified_line
 
 
 def iter_multiply_instruction_blocks(heading):
