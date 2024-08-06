@@ -1000,8 +1000,8 @@ class OpGE(BinaryOperator):
 
 class OpLE(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLE, self).__init__("<=", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpLE, self).__init__("<=", arg1, arg2, **kw)
 
 
 class OpGreater(BinaryOperator):
