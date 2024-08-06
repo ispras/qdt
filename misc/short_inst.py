@@ -166,8 +166,12 @@ def find_instruction_specifiers(heading):
                 stack.append(sline)
 
 
+def find_defines(stmnts):
+    return DefineFinder(stmnts).visit().defines
+
+
 def iter_defines(stmnts):
-    defines = DefineFinder(stmnts).visit().defines
+    defines = find_defines(stmnts)
 
     for d in defines:
         name = d.name
