@@ -230,30 +230,24 @@ def specified_line(orig_line, op_name, op_val):
 
 def iter_block_lines_specified(op_name, op_val, block):
     for line in block:
-        m = re_opspec.match(str(line))
-        if not m:
-            yield specified_line(line, op_name, op_val)
-            continue
 
-        l_op_name, l_op_val, comment = m.groups()
-        if l_op_name == op_name:
-            if l_op_val == op_val:
+        for l_op_name, l_op_val in iter_defines(line.stmnts):
+            if l_op_name == op_name:
+                if l_op_val == op_val:
 
-                # TODO: it might be not so simple
-                if comment:
-                    prefix_line =  Line(comment)
-                else:
-                    prefix_line =  Line()
-                prefix_line.stmnts = []
+                    prefix_line_txt = re_opspec.sub("", str(line))
+                    # TODO: it might be not so simple
+                    prefix_line = Line(prefix_line_txt)
+                    prefix_line.stmnts = []
+                    yield prefix_line
 
-                yield prefix_line
+                    if line.child:
+                        for sline in iter_block_lines_specified(
+                            op_name, op_val, line.child
+                        ):
+                            yield sline
 
-                if line.child:
-                    for sline in iter_block_lines_specified(
-                        op_name, op_val, line.child
-                    ):
-                        yield sline
-
+                break
         else:
             yield specified_line(line, op_name, op_val)
 
