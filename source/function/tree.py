@@ -856,9 +856,7 @@ class OpPlus(UnaryOperator):
 
 class BinaryOperator(Operator):
 
-    def __init__(self, op_str, arg1, arg2, **kw):
-        super(BinaryOperator, self).__init__(arg1, arg2, **kw)
-        self.op_str = op_str
+    # subclass must define `op_str`
 
     @property
     def delim(self):
@@ -867,14 +865,12 @@ class BinaryOperator(Operator):
 
 class OpAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpAssign, self).__init__("=", arg1, arg2, **kw)
+    op_str = "="
 
 
 class OpDeclareAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpDeclareAssign, self).__init__("=", arg1, arg2, **kw)
+    op_str = "="
 
     @staticmethod
     def out_child(child, writer):
@@ -899,129 +895,108 @@ class OpDeclareAssign(BinaryOperator):
 class OpCombAssign(BinaryOperator):
 
     def __init__(self, arg1, arg2, op_str, **kw):
-        super(OpCombAssign, self).__init__(op_str + "=",
-            arg1, arg2, **kw
-        )
+        super(OpCombAssign, self).__init__(arg1, arg2, **kw)
+        self.op_str = op_str + "="
 
 
 class OpAdd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpAdd, self).__init__("+", arg1, arg2, **kw)
+    op_str = "+"
 
 
 class OpSub(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpSub, self).__init__("-", arg1, arg2, **kw)
+    op_str = "-"
 
 
 class OpMul(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpMul, self).__init__("*", arg1, arg2, **kw)
+    op_str = "*"
 
 
 class OpDiv(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpDiv, self).__init__("/", arg1, arg2, **kw)
+    op_str = "/"
 
 
 class OpRem(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpRem, self).__init__("%", arg1, arg2, **kw)
+    op_str = "%"
 
 
 class OpAnd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpAnd, self).__init__("&", arg1, arg2, **kw)
+    op_str = "&"
 
 
 class OpOr(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpOr, self).__init__("|", arg1, arg2, **kw)
+    op_str = "|"
 
 
 class OpXor(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpXor, self).__init__("^", arg1, arg2, **kw)
+    op_str = "^"
 
 
 class OpLShift(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpLShift, self).__init__("<<", arg1, arg2, **kw)
+    op_str = "<<"
 
 
 class OpRShift(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpRShift, self).__init__(">>", arg1, arg2, **kw)
+    op_str = ">>"
 
 
 class OpRotR(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpRotR, self).__init__(">>>", arg1, arg2, **kw)
+    op_str = ">>>"
 
 
 class OpLogAnd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpLogAnd, self).__init__("&&", arg1, arg2, **kw)
+    op_str = "&&"
 
 
 class OpLogOr(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpLogOr, self).__init__("||", arg1, arg2, **kw)
+    op_str = "||"
 
 
 class OpEq(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpEq, self).__init__("==", arg1, arg2, **kw)
+    op_str = "=="
 
 
 class OpNEq(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpNEq, self).__init__("!=", arg1, arg2, **kw)
+    op_str = "!="
 
 
 class OpGE(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpGE, self).__init__(">=", arg1, arg2, **kw)
+    op_str = ">="
 
 
 class OpLE(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpLE, self).__init__("<=", arg1, arg2, **kw)
+    op_str = "<="
 
 
 class OpGreater(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpGreater, self).__init__(">", arg1, arg2, **kw)
+    op_str = ">"
 
 
 class OpLess(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(OpLess, self).__init__("<", arg1, arg2, **kw)
+    op_str = "<"
 
 
 class CaseRange(BinaryOperator):
 
-    def __init__(self, arg1, arg2, **kw):
-        super(CaseRange, self).__init__("...", arg1, arg2, **kw)
+    op_str = "..."
 
 
 class OpTernCond(Operator):
