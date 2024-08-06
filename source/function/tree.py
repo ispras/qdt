@@ -689,13 +689,13 @@ class Operator(SemicolonPresence):
     suffix = ""
     prior = None
 
-    def __init__(self, *args, **kw_args):
+    def __init__(self, *children, **kw_args):
         # `prior`ity can be defined at `class` level.
         # This is for custom operators mostly.
         # TODO: define all `prior`ities in that way?
         if self.prior is None:
             self.prior = op_priority[type(self)]
-        super(Operator, self).__init__(children = args)
+        super(Operator, self).__init__(children = children)
 
         self.parenthesis = kw_args.get("parenthesis", False)
 
