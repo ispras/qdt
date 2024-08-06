@@ -916,8 +916,8 @@ class OpSub(BinaryOperator):
 
 class OpMul(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpMul, self).__init__("*", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpMul, self).__init__("*", arg1, arg2, **kw)
 
 
 class OpDiv(BinaryOperator):
