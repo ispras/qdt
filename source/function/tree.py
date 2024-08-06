@@ -904,8 +904,8 @@ class OpCombAssign(BinaryOperator):
 
 class OpAdd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpAdd, self).__init__("+", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpAdd, self).__init__("+", arg1, arg2, **kw)
 
 
 class OpSub(BinaryOperator):
