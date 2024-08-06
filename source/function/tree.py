@@ -871,8 +871,8 @@ class OpAssign(BinaryOperator):
 
 class OpDeclareAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpDeclareAssign, self).__init__("=", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpDeclareAssign, self).__init__("=", arg1, arg2, **kw)
 
     @staticmethod
     def out_child(child, writer):
