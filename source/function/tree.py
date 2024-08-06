@@ -418,10 +418,6 @@ class BranchSwitch(CBlock):
         for case in cases:
             self.add_child(case)
 
-    def __call__(self, *cases):
-        self.add_cases(cases)
-        return self
-
     def __c__(self, writer):
         if not self.default_case:
             self.add_child(SwitchCaseDefault(self.add_break_in_default))
