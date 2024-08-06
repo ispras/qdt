@@ -78,7 +78,16 @@ class LateLinker(TypeReferencesVisitor):
 
         elif isinstance(cur, Late):
             # This could be declared late.
-            self.replace(self.ns.get(cur.name, cur))
+            try:
+                # Note, don't use `get`.
+                # It doesn't use `__missing__` of `DictStack`.
+                # So, `get` misses outer namespace entries.
+                rep = self.ns[cur.name]
+            except KeyError:
+                # This could be declared late.
+                raise SkipVisiting
+            else:
+                self.replace(rep)
             assert False  # no return
 
     def __leave__(self, cur):
