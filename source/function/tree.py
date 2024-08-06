@@ -888,6 +888,7 @@ class OpSizeOf(UnaryOperator):
 class OpAddr(UnaryOperator):
 
     prefix = "&"
+    prior = 2
 
 
 class OpDeref(UnaryOperator):
@@ -1090,7 +1091,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpAddr:          2,
     OpNot:           2,
     OpLogNot:        2,
     OpCast:          2,
