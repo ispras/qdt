@@ -694,8 +694,16 @@ class Return(SemicolonPresence):
 
 class Goto(SemicolonPresence):
 
-    def __init__(self, label):
-        super(Goto, self).__init__(val = "goto@b" + label.name)
+    __node__ = SemicolonPresence.__node__ + ("label",)
+    __type_references__ = SemicolonPresence.__type_references__ + ("label",)
+
+    def __init__(self, label, **kw):
+        super(Goto, self).__init__(**kw)
+        self.label = label
+
+    @property
+    def val(self):
+        return "goto@b" + self.label.name
 
 
 class Operator(SemicolonPresence):
