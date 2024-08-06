@@ -195,6 +195,8 @@ class Node(TypeContainer):
 
 class Ifdef(Node):
 
+    new_line = None
+
     def __init__(self, val, *children):
         if isinstance(val, Macro):
             val = val.c_name
@@ -205,7 +207,6 @@ class Ifdef(Node):
             indent_children = False,
             children = children
         )
-        self.new_line = None
 
     def __c__(self, writer):
         with writer.cpp:
