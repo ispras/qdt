@@ -532,9 +532,7 @@ class StrConcat(CNode):
 class SemicolonPresence(CNode):
     "SemicolonPresence class is used to decide when to print semicolon."
 
-    def __init__(self, *args, **kw_args):
-        kw_args["new_line"] = ";"
-        super(SemicolonPresence, self).__init__(*args, **kw_args)
+    new_line = ";"
 
 
 class Break(SemicolonPresence):
