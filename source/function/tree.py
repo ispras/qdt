@@ -940,8 +940,8 @@ class OpAnd(BinaryOperator):
 
 class OpOr(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpOr, self).__init__("|", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpOr, self).__init__("|", arg1, arg2, **kw)
 
 
 class OpXor(BinaryOperator):
