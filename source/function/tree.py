@@ -403,13 +403,14 @@ class BranchSwitch(CBlock):
     __node__ = ("children", "var")
     __type_references__ = ("var",)
 
+    indent_children = False
+
     def __init__(self, var,
         add_break_in_default = True,
         cases = [],
-        child_indent = False,
         separate_cases = False
     ):
-        super(BranchSwitch, self).__init__(indent_children = child_indent)
+        super(BranchSwitch, self).__init__()
         self.default_case = None
         self.add_break_in_default = add_break_in_default
         self.var = var
