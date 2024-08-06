@@ -789,6 +789,7 @@ class OpIndex(Operator):
 
     delim = "["
     suffix = "]"
+    prior = 1
 
     def add_child(self, child):
         # Note, ignore `Operator.add_child` to suppress unnecessary parentheses
@@ -1082,7 +1083,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpIndex:         1,
     OpSDeref:        1,
     OpDec:           1,
     OpInc:           1,
