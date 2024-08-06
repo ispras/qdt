@@ -82,9 +82,7 @@ class VersatileIdentifier(object):
 class Define(BinaryOperator):
 
     prior = 0
-
-    def __init__(self, name, value, **kw):
-        super(Define, self).__init__(":=", name, value, **kw)
+    op_str = ":="
 
     @property
     def name(self):
