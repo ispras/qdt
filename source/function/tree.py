@@ -494,6 +494,13 @@ class SwitchCaseDefault(CBlock):
         super(SwitchCaseDefault, self).__init__()
         self.add_break = add_break
 
+    @property
+    def new_line(self):
+        if DeclarationSearcher(self).visit().have_declaration:
+            return "}"
+        else:
+            return None
+
     def __c__(self, writer):
         if (   self.add_break
             and (   self.children
@@ -506,11 +513,9 @@ class SwitchCaseDefault(CBlock):
         if DeclarationSearcher(self).visit().have_declaration:
             writer.line("default:@b{")
             self.out_children(writer)
-            self.new_line = "}"
         else:
             writer.line("default:")
             self.out_children(writer)
-            self.new_line = None
 
 
 # TODO: joining "a""b" to "ab". Optionally? By a helper function?
