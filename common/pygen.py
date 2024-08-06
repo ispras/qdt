@@ -138,7 +138,8 @@ require reference to the current object.
 
     - __pygen_deps__, an attribute that is used by `PyGenerator` to locate
         objects this object does depend on. It must list names of
-        corresponding attributes. See `ObjectVisitor.field_name` description.
+        corresponding attributes.
+        See `ObjectVisitor.__field_name__` description.
     """
 
     def reset(self):
