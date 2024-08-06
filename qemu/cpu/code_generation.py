@@ -422,9 +422,14 @@ def fill_decode_opc_body(cputype, function, cpu_env):
             func.extra_references = set_pc_ref
             h.add_type(func)
 
+            semantics = instruction.semantics
+
+            if isinstance(semantics, FunctionType):
+                semantics = semantics(func, h)
+
             func.body = BodyTree()(
                 Comment(comment),
-                *instruction.semantics(func, h)
+                *semantics
             )
 
         node(Call(func, ctx, *operands))
