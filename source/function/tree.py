@@ -798,6 +798,7 @@ class UnaryOperator(Operator):
 class OpInc(UnaryOperator):
 
     suffix = "++"
+    prior = 1
 
 
 class OpDec(UnaryOperator):
@@ -1028,7 +1029,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpInc:           1,
     OpPreDec:        1,
     OpPreInc:        1,
     OpDeref:         2,
