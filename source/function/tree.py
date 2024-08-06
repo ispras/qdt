@@ -982,8 +982,8 @@ class OpLogOr(BinaryOperator):
 
 class OpEq(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpEq, self).__init__("==", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpEq, self).__init__("==", arg1, arg2, **kw)
 
 
 class OpNEq(BinaryOperator):
