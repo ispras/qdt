@@ -200,14 +200,15 @@ class Ifdef(Node):
     new_line = None
     indent_children = False
 
-    def __init__(self, val, *children):
+    def __init__(self, val, *children, **kw):
         if isinstance(val, Macro):
             val = val.c_name
         super(Ifdef, self).__init__(
             # Since the macro can be undefined and unknown to the model,
             # we refer it using its string name.
             val = str(val),
-            children = children
+            children = children,
+            **kw
         )
 
     def __c__(self, writer):
