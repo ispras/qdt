@@ -858,7 +858,11 @@ class BinaryOperator(Operator):
 
     def __init__(self, op_str, arg1, arg2, **kw):
         super(BinaryOperator, self).__init__(arg1, arg2, **kw)
-        self.delim = "@b" + op_str + "@s"
+        self.op_str = op_str
+
+    @property
+    def delim(self):
+        return "@b" + self.op_str + "@s"
 
 
 class OpAssign(BinaryOperator):
