@@ -170,27 +170,28 @@ def find_defines(stmnts):
     return DefineFinder(stmnts).visit().defines
 
 
+def str_define(d):
+    name = d.name
+    if isinstance(name, VersatileIdentifier):
+        def_name = name.name
+    else:
+        raise SyntaxError(
+            "lvalue of `:=` must be an ID, not %r" % name
+        )
+
+    value = d.value
+    if isinstance(value, CSTR):
+        def_val = str(value)
+    else:
+        raise SyntaxError(
+            'rvalue of `:=` must be a "str", not %r' % value
+        )
+
+    return def_name, def_val
+
+
 def iter_defines(stmnts):
-    defines = find_defines(stmnts)
-
-    for d in defines:
-        name = d.name
-        if isinstance(name, VersatileIdentifier):
-            def_name = name.name
-        else:
-            raise SyntaxError(
-                "lvalue of `:=` must be an ID, not %r" % name
-            )
-
-        value = d.value
-        if isinstance(value, CSTR):
-            def_val = str(value)
-        else:
-            raise SyntaxError(
-                'rvalue of `:=` must be a "str", not %r' % value
-            )
-
-        yield def_name, def_val
+    return map(str_define, find_defines(stmnts))
 
 
 def find_attribute_definitions(heading):
