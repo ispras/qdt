@@ -952,8 +952,8 @@ class OpXor(BinaryOperator):
 
 class OpLShift(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLShift, self).__init__("<<", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpLShift, self).__init__("<<", arg1, arg2, **kw)
 
 
 class OpRShift(BinaryOperator):
