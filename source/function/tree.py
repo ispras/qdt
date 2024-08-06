@@ -934,8 +934,8 @@ class OpRem(BinaryOperator):
 
 class OpAnd(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpAnd, self).__init__("&", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpAnd, self).__init__("&", arg1, arg2, **kw)
 
 
 class OpOr(BinaryOperator):
