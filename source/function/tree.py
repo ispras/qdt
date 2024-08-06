@@ -1012,8 +1012,8 @@ class OpGreater(BinaryOperator):
 
 class OpLess(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpLess, self).__init__("<", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpLess, self).__init__("<", arg1, arg2, **kw)
 
 
 class CaseRange(BinaryOperator):
