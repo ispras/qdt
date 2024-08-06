@@ -994,8 +994,8 @@ class OpNEq(BinaryOperator):
 
 class OpGE(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpGE, self).__init__(">=", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpGE, self).__init__(">=", arg1, arg2, **kw)
 
 
 class OpLE(BinaryOperator):
