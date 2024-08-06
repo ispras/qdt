@@ -198,6 +198,7 @@ class Node(TypeContainer):
 class Ifdef(Node):
 
     new_line = None
+    indent_children = False
 
     def __init__(self, val, *children):
         if isinstance(val, Macro):
@@ -206,7 +207,6 @@ class Ifdef(Node):
             # Since the macro can be undefined and unknown to the model,
             # we refer it using its string name.
             val = str(val),
-            indent_children = False,
             children = children
         )
 
