@@ -964,8 +964,8 @@ class OpRShift(BinaryOperator):
 
 class OpRotR(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpRotR, self).__init__(">>>", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpRotR, self).__init__(">>>", arg1, arg2, **kw)
 
 
 class OpLogAnd(BinaryOperator):
