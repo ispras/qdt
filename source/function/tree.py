@@ -744,6 +744,8 @@ class OpIndex(Operator):
 
 class OpSDeref(Operator):
 
+    prior = 1
+
     def __init__(self, value, field):
         super(OpSDeref, self).__init__(value)
 
@@ -1025,7 +1027,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpSDeref:        1,
     OpDec:           1,
     OpInc:           1,
     OpPreDec:        1,
