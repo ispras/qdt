@@ -75,7 +75,7 @@ def check_dump(insn):
 
 
 def print_layout(insn):
-    print(insn.bitsize)
+    print("%s.bitsize == %d" % (insn.mnemonic, insn.bitsize))
     offset = 0
     for f in insn.fields:
         print("\t%2d %2d %s" % (
