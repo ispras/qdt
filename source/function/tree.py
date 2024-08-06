@@ -190,7 +190,7 @@ class Node(TypeContainer):
 
 class Ifdef(Node):
 
-    def __init__(self, val, *args):
+    def __init__(self, val, *children):
         if isinstance(val, Macro):
             val = val.c_name
         super(Ifdef, self).__init__(
@@ -198,7 +198,7 @@ class Ifdef(Node):
             # we refer it using its string name.
             val = str(val),
             indent_children = False,
-            children = args
+            children = children
         )
         self.new_line = None
 
