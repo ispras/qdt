@@ -839,6 +839,7 @@ class OpAddr(UnaryOperator):
 class OpDeref(UnaryOperator):
 
     prefix = "*"
+    prior = 2
 
 
 class OpLogNot(UnaryOperator):
@@ -1031,7 +1032,6 @@ class OpTernCond(Operator):
 
 
 op_priority = {
-    OpDeref:         2,
     OpAddr:          2,
     OpNot:           2,
     OpLogNot:        2,
