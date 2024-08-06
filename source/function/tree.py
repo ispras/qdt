@@ -896,9 +896,9 @@ class OpDeclareAssign(BinaryOperator):
 
 class OpCombAssign(BinaryOperator):
 
-    def __init__(self, arg1, arg2, op_str, parenthesis = False):
+    def __init__(self, arg1, arg2, op_str, **kw):
         super(OpCombAssign, self).__init__(op_str + "=",
-            arg1, arg2, parenthesis
+            arg1, arg2, **kw
         )
 
 
