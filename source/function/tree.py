@@ -415,8 +415,7 @@ class BranchSwitch(CBlock):
         self.children.append(case)
 
     def add_cases(self, cases):
-        for case in cases:
-            self.add_child(case)
+        return self(*cases)
 
     def __c__(self, writer):
         if not self.default_case:
