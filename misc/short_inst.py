@@ -1,28 +1,20 @@
 from common.pygen import (
     dumps,
 )
-from qemu.cpu.instruction import (
+from qemu import (
+    DefineFinder,
     Instruction,  # for exec
     Opcode,  # for exec
     Operand,
-)
-from qemu.cpu.short import (
     Short,
-)
-from qemu.cpu.short_statement import (
-    DefineFinder,
     ShortStatement,
     VersatileIdentifier,
 )
 from source import (
     BlockParser,
-    Line,
-)
-from source.c_const import (
-    CSTR,
-)
-from source.function.tree import (
     Comment,
+    CSTR,
+    Line,
 )
 
 from argparse import (
