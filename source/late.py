@@ -67,9 +67,12 @@ class LateLinker(TypeReferencesVisitor):
             self._push_ns()
 
         elif isinstance(cur, Variable):
-            if cur.name in self.ns:
+            # Note, `get` does not use `__missing__` of `DictStack`.
+            # So, conflicts are only checked at top of namsapace stack.
+            conflict = self.ns.get(cur.name, cur)
+            if conflict is not cur:
                 print("%s: conflict in namespace: %s is replaced with %s" % (
-                    cur.name, self.ns[cur.name], cur
+                    cur.name, conflict, cur
                 ))
             self.ns[cur.name] = cur
 
