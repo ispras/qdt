@@ -910,8 +910,8 @@ class OpAdd(BinaryOperator):
 
 class OpSub(BinaryOperator):
 
-    def __init__(self, arg1, arg2, parenthesis = False):
-        super(OpSub, self).__init__("-", arg1, arg2, parenthesis)
+    def __init__(self, arg1, arg2, **kw):
+        super(OpSub, self).__init__("-", arg1, arg2, **kw)
 
 
 class OpMul(BinaryOperator):
