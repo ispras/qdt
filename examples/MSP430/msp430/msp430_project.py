@@ -121,7 +121,7 @@ msp430_l0 = GUILayout(
 )
 msp430_l0.lid = 0
 
-obj = MachineWidgetLayout(
+machine_widget_layout = MachineWidgetLayout(
     mdwl = {
         -1: {
             "IRQ lines points": {},
@@ -158,7 +158,7 @@ obj = MachineWidgetLayout(
 
 msp430_test_l0 = GUILayout(
     desc_name = "msp430-test",
-    opaque = obj,
+    opaque = machine_widget_layout,
     shown = True
 )
 msp430_test_l0.lid = 0
