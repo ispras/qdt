@@ -28,6 +28,9 @@ from collections import (
 from copy import (
     deepcopy,
 )
+from difflib import (
+    unified_diff
+)
 from re import (
     compile,
 )
@@ -68,9 +71,13 @@ def check_dump(insn):
         )
     loaded_code = dumps(loaded)
     if code != loaded_code:
+        diff = "\n".join(
+            unified_diff(code.split("\n"),
+            loaded_code.split("\n"))
+        )
         raise AssertionError(
-            "dumps/loads-ed instruction differs\n%s\n--\n%s" % (
-                code, loaded_code
+            "dumps/loads-ed instruction differs\n%s\ndiff:\n%s" % (
+                loaded_code, diff
             )
         )
 
