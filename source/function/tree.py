@@ -145,6 +145,7 @@ class Node(TypeContainer):
     # traverse order indicator for `ObjectVisitor`
     __node__ = ("children",)
     __type_references__ = __node__
+    __pygen_deps__ = __node__
 
     val = ""
     new_line = ""
@@ -167,6 +168,16 @@ class Node(TypeContainer):
             self.indent_children = indent_children
         self.children = []
         self.add_children(children)
+
+    def __gen_code__(self, gen):
+        gen.gen_code(self)
+        if self.children:
+            gen.line(gen.nameof(self) + "(")
+            gen.push_indent()
+            gen.pprint_join(",", self.children)
+            gen.pop_indent()
+            gen.line()
+            gen.line(")")
 
     def __call__(self, *children):
         self.add_children(children)
@@ -204,6 +215,7 @@ class Ifdef(Node):
 
     __node__ = Node.__node__ + ("cond",)
     __type_references__ = __node__
+    __pygen_deps__ = __node__
 
     new_line = None
     indent_children = False
@@ -280,6 +292,7 @@ class MacroBranch(Node):
 
     __node__ = Node.__node__ + ("macro_call",)
     __type_references__ = ("macro_call",)
+    __pygen_deps__ = __node__
 
     def __init__(self, macro_call, **kw):
         super(MacroBranch, self).__init__(**kw)
@@ -300,6 +313,7 @@ class LoopWhile(CBlock):
 
     __node__ = CBlock.__node__ + ("cond",)
     __type_references__ = ("cond",)
+    __pygen_deps__ = __node__
 
     def __init__(self, cond):
         super(LoopWhile, self).__init__()
@@ -317,6 +331,7 @@ class LoopDoWhile(CBlock):
 
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
+    __pygen_deps__ = __node__
 
     def __init__(self, cond, **kw):
         super(LoopDoWhile, self).__init__(**kw)
@@ -334,6 +349,7 @@ class LoopFor(CBlock):
 
     __node__ = ("children", "init", "cond", "step")
     __type_references__ = ("init", "cond", "step")
+    __pygen_deps__ = __node__
 
     def __init__(self, init = None, cond = None, step = None, **kw):
         super(LoopFor, self).__init__(**kw)
@@ -362,6 +378,7 @@ class BranchIf(CBlock):
 
     __node__ = ("children", "cond", "else_blocks")
     __type_references__ = ("cond", "else_blocks")
+    __pygen_deps__ = __node__
 
     def __init__(self, cond, **kw):
         super(BranchIf, self).__init__(**kw)
@@ -391,12 +408,20 @@ class BranchIf(CBlock):
 
         writer.write("}")
 
+    def __gen_code__(self, gen):
+        super(BranchIf, self).__gen_code__(gen)
+        if self.else_blocks:
+            gen.write(gen.nameof(self) + "(*")
+            gen.pprint(self.else_blocks)
+            gen.line(")")
+
 
 class BranchElse(CBlock):
     """ BranchElse must be added to parent BranchIf node using `add_else`. """
 
     __node__ = ("children", "cond")
     __type_references__ = ("cond",)
+    __pygen_deps__ = __node__
 
     def __init__(self, cond = None, **kw):
         super(BranchElse, self).__init__(**kw)
@@ -416,6 +441,7 @@ class BranchSwitch(CBlock):
 
     __node__ = CBlock.__node__ + ("var",)
     __type_references__ = ("var",)
+    __pygen_deps__ = __node__
 
     indent_children = False
 
@@ -592,6 +618,15 @@ class Call(SemicolonPresence):
         writer.join(",@s", self.args, self.out_child)
         writer.write("@c)")
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.pprint(self.func)
+        if self.args:
+            # visually delimit func and args
+            gen.write(")(")
+            gen.pprint_join(", ", self.args, per_line = False)
+        gen.line(")")
+
 
 class Declare(SemicolonPresence):
 
@@ -726,6 +761,7 @@ class Goto(SemicolonPresence):
 
     __node__ = SemicolonPresence.__node__ + ("label",)
     __type_references__ = SemicolonPresence.__type_references__ + ("label",)
+    __pygen_deps__ = __node__
 
     def __init__(self, label, **kw):
         super(Goto, self).__init__(**kw)
