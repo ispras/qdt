@@ -3,7 +3,7 @@ from common.pygen import (
 )
 from qemu import (
     DefineFinder,
-    Instruction,  # for exec
+    Instruction,
     Opcode,  # for exec
     Operand,
     Short,
