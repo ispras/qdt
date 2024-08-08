@@ -36,6 +36,9 @@ class Late(CNode):
     def __repr__(self):
         return type(self).__name__ + "(%r)" % self.name
 
+    def __var_base__(self):
+        return "l_" + self.name
+
 
 class LateLinker(TypeReferencesVisitor):
 
