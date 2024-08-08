@@ -197,19 +197,18 @@ class Node(TypeContainer):
 
 class Ifdef(Node):
 
+    __node__ = Node.__node__ + ("cond",)
+    __type_references__ = __node__
+
     new_line = None
     indent_children = False
 
-    def __init__(self, val, *children, **kw):
-        if isinstance(val, Macro):
-            val = val.c_name
+    def __init__(self, cond, *children, **kw):
         super(Ifdef, self).__init__(
-            # Since the macro can be undefined and unknown to the model,
-            # we refer it using its string name.
-            val = str(val),
             children = children,
             **kw
         )
+        self.cond = cond
 
     def __c__(self, writer):
         with writer.cpp:
@@ -219,6 +218,13 @@ class Ifdef(Node):
         with writer.cpp:
             writer.pop_indent()
             writer.line("endif")
+
+    @property
+    def val(self):
+        cond = self.cond
+        if isinstance(cond, Macro):
+            return cond.c_name
+        return cond
 
 
 class CNode(Node):
