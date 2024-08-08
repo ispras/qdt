@@ -41,7 +41,7 @@ class CConst(object):
         raise NotImplementedError()
 
     # for usage in source.function.tree
-    new_line = None
+    new_line = ";"
 
     def __c__(self, writer):
         writer.write(self.gen_c_code())
