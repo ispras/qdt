@@ -337,13 +337,23 @@ require reference to the current object.
 
         self.line()
 
+    def pprint_join(self, sep, iterable, per_line = True):
+        write = self.line if per_line else self.write
+
+        i = iter(iterable)
+        try:
+            val = next(i)
+        except StopIteration:
+            return
+        self.pprint(val)
+        for val in i:
+            write(sep)
+            self.pprint(val)
+
     def pprint_list(self, val):
         self.line("[")
         self.push_indent()
-        self.pprint(val[0])
-        for v in val[1:]:
-            self.line(",")
-            self.pprint(v)
+        self.pprint_join(",", val)
         self.pop_indent()
         self.line()
         self.write("]")
