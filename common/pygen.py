@@ -17,6 +17,9 @@ from .ordered_set import (
 from .reflection import (
     get_class_total_args,
 )
+from .snake_case import (
+    snake_case,
+)
 from .visitor import (
     ObjectVisitor,
     SkipVisiting,
@@ -159,7 +162,7 @@ require reference to the current object.
             try:
                 var_base = obj.__var_base__
             except AttributeError:
-                var_base = "obj"
+                var_base = snake_case(type(obj).__name__)
             else:
                 var_base = var_base()
 
