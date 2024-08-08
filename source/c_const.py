@@ -40,6 +40,9 @@ class CConst(object):
         "Implementation must return string compatible with C generator"
         raise NotImplementedError()
 
+    # for usage in source.function.tree
+    new_line = None
+
     def __c__(self, writer):
         writer.write(self.gen_c_code())
 
