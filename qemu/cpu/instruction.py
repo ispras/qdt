@@ -198,6 +198,8 @@ class Instruction(object):
         # mark for finding unreachable instructions
         self.used = False
 
+    __pygen_deps__ = ("semantics",)
+
     def __var_base__(self):
         return self.mnemonic.lower()
 
