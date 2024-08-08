@@ -1021,6 +1021,19 @@ class Variable(TypeContainer):
         # a module
         self.definer = None
 
+    __pygen_deps__ = (
+        "type",
+        "initializer",
+    )
+
+    def __gen_code__(self, gen):
+        gen.gen_code(self)
+
+    def __get_init_arg_val__(self, name):
+        if name == "_type":
+            return self.type
+        return getattr(self, name)
+
     @property
     def asterisks(self):
         return self.type.asterisks
