@@ -239,9 +239,12 @@ class CNode(Node):
 class Comment(Node):
 
     def __init__(self, text):
-        super(Comment, self).__init__(
-            val = "/*@s" + text.replace(" ", "@s") + "@s*/"
-        )
+        super(Comment, self).__init__()
+        self.text = text
+
+    @property
+    def val(self):
+        return "/*@s" + self.text.replace(" ", "@s") + "@s*/"
 
 
 class Label(CNode):
