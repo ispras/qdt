@@ -672,10 +672,15 @@ class MCall(SemicolonPresence):
 
     def __init__(self, macro, *args):
         super(MCall, self).__init__(children = args)
+        self.macro = macro
+
+    @property
+    def type(self):
+        macro = self.macro
         if isinstance(macro, Macro):
-            self.type = macro
+            return macro
         else:
-            self.type = Type[macro]
+            return Type[macro]
 
     def __c__(self, writer):
         writer.write(self.type.c_name)
