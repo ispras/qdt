@@ -47,6 +47,10 @@ class CConst(object):
         "Explicit redirection for Py2."
         return not self.__eq__(v)
 
+    def __gen_code__(self, gen):
+        gen.line(repr(self))
+
+
 digs = digits + ascii_uppercase
 
 def uint2base(x, base):
