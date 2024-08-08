@@ -4,7 +4,6 @@ from common.pygen import (
 from qemu import (
     DefineFinder,
     Instruction,
-    Opcode,  # for exec
     Operand,
     Short,
     ShortStatement,
@@ -16,6 +15,9 @@ from source import (
     CSTR,
     Line,
 )
+# for exec
+import qemu
+import source
 
 from argparse import (
     ArgumentParser,
@@ -49,8 +51,11 @@ instruction_attributes = dict(
 def check_dump(insn):
     code = dumps(insn)
     locals_ = {}
+    globals_ = dict(globals())
+    globals_.update(qemu.__dict__)
+    globals_.update(source.__dict__)
     try:
-        exec(code, globals(), locals_)
+        exec(code, globals_, locals_)
     except:
         print(code)
         raise
