@@ -18,7 +18,6 @@ from source import (
     CBlock,
     CSTR,
     Late,
-    Line,
 )
 # for exec
 import qemu
@@ -36,14 +35,9 @@ from copy import (
 from difflib import (
     unified_diff
 )
-from re import (
-    compile,
-)
 from traceback import (
     format_exc,
 )
-
-re_opspec = compile("(" + Short.t_ID + r")\s*:=\s*(\"[^\"]+\")(\s+.*)?")
 
 # Specification operator (:=) can set instruction attributes.
 instruction_attributes = dict(
@@ -248,9 +242,7 @@ def iter_block_lines_specified(op_name, op_val, block):
             if l_op_name == op_name:
                 if l_op_val == op_val:
 
-                    prefix_line_txt = re_opspec.sub("", str(line))
-                    # TODO: it might be not so simple
-                    prefix_line = Line(prefix_line_txt)
+                    prefix_line = type(line)()
                     prefix_line.stmnts = []
                     yield prefix_line
 
@@ -263,8 +255,7 @@ def iter_block_lines_specified(op_name, op_val, block):
                 break
         else:
             if line.child:
-                # TODO: it might be not so simple
-                specified_line = Line(line)
+                specified_line = type(line)()
                 specified_line.stmnts = line.stmnts
 
                 specified_line.child = type(line.child)(
