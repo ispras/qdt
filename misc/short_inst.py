@@ -367,31 +367,6 @@ def set_attributes(heading):
         block[:] = iter_block_lines_specified(attr, val_str, block)
 
 
-def fill_comment(heading):
-    comment_lines = []
-
-    stack = [(0, heading)]
-
-    while stack:
-        indent, line = stack.pop()
-
-        line_str = str(line)
-        if line_str:
-            comment_lines.append("    " * indent + line_str)
-        else:
-            comment_lines.append("")
-
-        block = line.child
-
-        if not block:
-            continue
-
-        for sline in reversed(block):
-            stack.append((indent + 1, sline))
-
-    heading.insn.comment = "\n".join(comment_lines)
-
-
 def parse_lines(heading):
     block = heading.child
 
@@ -524,7 +499,6 @@ Converts short form instructions definitions to script defines them.
 
     for heading in insn_lines:
         set_attributes(heading)
-        fill_comment(heading)
         merge_statements(heading)
         VID2Late(heading.stmnts).visit()
 
