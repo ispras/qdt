@@ -11,7 +11,10 @@ from qemu import (
 )
 from source import (
     BlockParser,
+    BranchElse,
+    BranchIf,
     Comment,
+    CBlock,
     CSTR,
     Line,
 )
@@ -419,6 +422,44 @@ def parse_lines(heading):
         parse_lines(line)
 
 
+def merge_statements(heading):
+    block = heading.child
+    if block is not None:
+        sub_stmnts = []
+        for line in block:
+            merge_statements(line)
+            sub_stmnts.extend(line.stmnts)
+
+        sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
+
+        if sub_stmnts:
+            stmnts = heading.stmnts
+            if stmnts:
+                last_stmnt = stmnts[-1]
+                if not isinstance(last_stmnt, CBlock):
+                    stmnts[-1] = last_stmnt = BranchIf(last_stmnt)
+                last_stmnt(*sub_stmnts)
+            else:
+                stmnts[:] = sub_stmnts
+
+
+def iter_join_BranchElse(stmnts):
+    prev_stmnt = None
+    for stmnt in stmnts:
+
+        if isinstance(stmnt, BranchElse):
+            if not isinstance(prev_stmnt, BranchIf):
+                raise SyntaxError("%r must follows be BranchIf, not %r" % (
+                    stmnt, prev_stmnt
+                ))
+            prev_stmnt(stmnt)
+            continue
+
+        yield stmnt
+
+        prev_stmnt = stmnt
+
+
 def main():
     ap = ArgumentParser(
         description = """\
@@ -475,6 +516,7 @@ Converts short form instructions definitions to script defines them.
     for heading in insn_lines:
         set_attributes(heading)
         fill_comment(heading)
+        merge_statements(heading)
 
         i = heading.insn
 
