@@ -4,6 +4,7 @@ from common.pygen import (
 from qemu import (
     DefineFinder,
     Instruction,
+    NodeVisitor,
     Operand,
     Short,
     ShortStatement,
@@ -16,6 +17,7 @@ from source import (
     Comment,
     CBlock,
     CSTR,
+    Late,
     Line,
 )
 # for exec
@@ -101,6 +103,13 @@ def handle_insn(insn):
     print("\n\n")
     check_dump(insn)
     print_layout(insn)
+
+
+class VID2Late(NodeVisitor):
+
+    def __visit__(self, cur):
+        if isinstance(cur, VersatileIdentifier):
+            self.replace(Late(cur.name))
 
 
 class InstructionsList(list):
@@ -517,6 +526,7 @@ Converts short form instructions definitions to script defines them.
         set_attributes(heading)
         fill_comment(heading)
         merge_statements(heading)
+        VID2Late(heading.stmnts).visit()
 
         i = heading.insn
 
