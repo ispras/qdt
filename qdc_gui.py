@@ -62,6 +62,7 @@ from os import (
 from os.path import (
     abspath,
     dirname,
+    isdir,
     isfile,
 )
 from six.moves.cPickle import (
@@ -804,7 +805,19 @@ in process. Do you want to start cache rebuilding?")
         AddDescriptionDialog(self.pht, self)
 
     def on_set_qemu_build_path(self):
-        _dir = askdirectory(self, title = _("Select Qemu build path"))
+        kw = {}
+        try:
+            build_path = self.pw.build_path
+        except:
+            pass
+        else:
+            if isdir(build_path):
+                kw["initialdir"] = build_path
+
+        _dir = askdirectory(self,
+            title = _("Select Qemu build path"),
+            **kw
+        )
         if not _dir:
             return
 
