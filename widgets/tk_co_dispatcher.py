@@ -75,7 +75,7 @@ peaces among Tkinter event driven GUI model.
         if self.active_tasks or self.tasks or self.io2read or self.io2write:
             # Note, `self.callers` may also contain tasks. But corresponding
             # callees are in the one of container above.
-            stderr.write("There are not finalized tasks\n")
+            stderr.write("Not all tasks are finalized\n")
 
     def start_loop(self):
         self.tk.after(0, self.iteration)
