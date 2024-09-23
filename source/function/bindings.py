@@ -1,5 +1,6 @@
 __all__ = [
     "BodyTree"
+  , "VarUsageAnalyzer"
 ]
 
 from .tree import (
