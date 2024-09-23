@@ -107,6 +107,10 @@ class BlockParser(object):
 
         stack = self.stack
 
+        if not (indent or line):
+            # ignore blank lines
+            return
+
         for i, (block_indent, __, block) in enumerate(stack):
             if block_indent == indent:
                 block.append(line)
