@@ -30,7 +30,19 @@ class Late(CNode):
         "Emulate Type.__call__"
         return Variable(name, self, *a, **kw)
 
-    def __c__(self, __):
+    def __c__(self, writer):
+        # If writer has "late language", the code being generated is not
+        # required to be final.
+        # Ignore late linking failure check.
+        try:
+            late = writer.late
+        except AttributeError:
+            pass
+        else:
+            with late:
+                writer.write(self.name)
+            return
+
         raise RuntimeError("%s: late linking failed" % self)
 
     def __repr__(self):
@@ -49,6 +61,13 @@ class Late(CNode):
         #      This `@property` is currently used to pass instantiation time
         #      checks.
         return self
+
+    @property
+    def c_name(self):
+        return self.name
+
+    # cannot be a star-pointer
+    asterisks = ""
 
 
 class LateLinker(TypeReferencesVisitor):
