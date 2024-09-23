@@ -1,5 +1,6 @@
 __all__ = [
     "Late"
+  , "late_linkage"
   , "LateLinker"
 ]
 
@@ -70,16 +71,20 @@ class Late(CNode):
     asterisks = ""
 
 
+def late_linkage(definer, **glob_ns):
+    glob_ns.update(definer.types)
+    glob_ns.update(definer.global_variable)
+    LateLinker(definer, glob_ns = glob_ns).visit()
+
+
 class LateLinker(TypeReferencesVisitor):
 
-    def __init__(self, definer, **glob_ns):
-        super(LateLinker, self).__init__(definer)
+    def __init__(self, root, glob_ns = {}, **glob_ns_):
+        super(LateLinker, self).__init__(root)
         # Don't try `Namespace(glob_ns)`, `pop_ns` must `raise AttributeError`
         # on "stack" underflow.
-        ns = DictStack()
-        ns.update(glob_ns)
-        ns.update(definer.types)
-        ns.update(definer.global_variables)
+        ns = DictStack(glob_ns)
+        ns.update(glob_ns_)
         self.ns = ns
 
     def _push_ns(self):

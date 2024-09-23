@@ -37,7 +37,7 @@ from .function.var_declarator import (
     VarDeclarator,
 )
 from .late import (
-    LateLinker,
+    late_linkage,
 )
 from .model import (
     CPP,
@@ -100,7 +100,7 @@ class ChunkGenerator(object):
         if inherit_references:
             assert (isinstance(definer, Header))
 
-        LateLinker(definer).visit()
+        late_linkage(definer)
 
         # Auto `Declare` variables in `Function`s with `BodyTree`.
         for func in definer.types.values():
