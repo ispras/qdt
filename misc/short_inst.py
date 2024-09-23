@@ -46,6 +46,7 @@ instruction_attributes = dict(
     # some attributes cannot be set using := operator
     # "comment",
     # "semantics,
+    mnemonic = str,
     priority = int,
 )
 
