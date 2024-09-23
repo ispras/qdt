@@ -7,6 +7,7 @@ __all__ = [
   , "CAN"
   , "NBS"
   , "NSS"
+  , "check_cols_fix_up"
 ]
 
 from re import (
@@ -44,6 +45,107 @@ re_can = compile(common_re % CAN)
 re_nbs = compile(common_re % NBS)
 re_nss = compile(common_re % NSS)
 re_clr = compile("@(.|$)")
+
+def check_cols_fix_up(code_layout, max_cols = 80, indent = "    "):
+    lines = code_layout.split('\n')
+    code = ""
+    last_line = len(lines) - 1
+
+    for idx1, line in enumerate(lines):
+        clear_line = re_clr.sub("\\1", re_anc.sub("\\1", re_can.sub("\\1",
+                     re_nbs.sub("\\1 ", re_nss.sub("\\1 ", line)))))
+
+        if len(clear_line) <= max_cols:
+            code += clear_line
+            if idx1 != last_line:
+                code += '\n'
+            continue
+
+        line_no_indent_len = len(line) - len(line.lstrip(' '))
+        line_indent = line[:line_no_indent_len]
+        indents = []
+        indents.append(len(indent))
+        tmp_indent = indent
+
+        """
+        1. cut off indent of the line
+        2. surround non-slash spaces with ' ' moving them to separated
+           words
+        3. split the line onto words
+        4. replace any non-breaking space with a regular space in each word
+        """
+        words = list(filter(None, map(
+            lambda a: re_nbs.sub("\\1 ", a),
+            re_nss.sub("\\1 " + NSS + ' ', line.lstrip(' ')).split(' ')
+        )))
+
+        ll = 0 # line length
+        last_word = len(words) - 1
+        for idx2, word in enumerate(words):
+            if word == NSS:
+                slash = False
+                continue
+
+            """ split the word onto anchor control sequences and n-grams
+            around them """
+            subwords = list(filter(None, chain(*map(
+                lambda a: re_can.split(a),
+                re_anc.split(word)
+            ))))
+            word = ""
+            subword_indents = []
+            for subword in subwords:
+                if subword == ANC:
+                    subword_indents.append(len(word))
+                elif subword == CAN:
+                    if subword_indents:
+                        subword_indents.pop()
+                    else:
+                        try:
+                            indents.pop()
+                        except IndexError:
+                            raise RuntimeError("Trying to pop indent"
+                                " anchor from empty stack"
+                            )
+                else:
+                    word += re_clr.sub("\\1", subword)
+
+            if ll > 0:
+                # The variable r reserves characters for " \\"
+                # that can be added after current word
+                if idx2 == last_word or words[idx2 + 1] == NSS:
+                    r = 0
+                else:
+                    r = 2
+                """ If the line will be broken _after_ this word,
+its length may be still longer than max_cols because of safe breaking (' \').
+If so, brake the line _before_ this word. Safe breaking is presented by
+'r' variable in the expression which is 0 if safe breaking is not required
+after this word.
+                """
+                if ll + 1 + len(word) + r > max_cols:
+                    if slash:
+                        code += " \\"
+                    code += '\n' + line_indent + tmp_indent + word
+                    ll = len(line_indent) + len(tmp_indent) + len(word)
+                else:
+                    code += ' ' + word
+                    ll += 1 + len(word)
+            else:
+                code += line_indent + word
+                ll += len(line_indent) + len(word)
+
+            word_indent = ll - len(line_indent) - len(word)
+            for ind in subword_indents:
+                indents.append(word_indent + ind)
+            tmp_indent = " " * indents[-1] if indents else ""
+            slash = True
+
+        if idx1 != last_line:
+            code += '\n'
+
+    return '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
+
 
 class SourceChunk(object):
     """
@@ -106,105 +208,8 @@ class SourceChunk(object):
         for r in list(self.references):
             self.del_reference(r)
 
-    def check_cols_fix_up(self, max_cols = 80, indent = "    "):
-        lines = self.code.split('\n')
-        code = ""
-        last_line = len(lines) - 1
-
-        for idx1, line in enumerate(lines):
-            clear_line = re_clr.sub("\\1", re_anc.sub("\\1", re_can.sub("\\1",
-                         re_nbs.sub("\\1 ", re_nss.sub("\\1 ", line)))))
-
-            if len(clear_line) <= max_cols:
-                code += clear_line
-                if idx1 != last_line:
-                    code += '\n'
-                continue
-
-            line_no_indent_len = len(line) - len(line.lstrip(' '))
-            line_indent = line[:line_no_indent_len]
-            indents = []
-            indents.append(len(indent))
-            tmp_indent = indent
-
-            """
-            1. cut off indent of the line
-            2. surround non-slash spaces with ' ' moving them to separated
-               words
-            3. split the line onto words
-            4. replace any non-breaking space with a regular space in each word
-            """
-            words = list(filter(None, map(
-                lambda a: re_nbs.sub("\\1 ", a),
-                re_nss.sub("\\1 " + NSS + ' ', line.lstrip(' ')).split(' ')
-            )))
-
-            ll = 0 # line length
-            last_word = len(words) - 1
-            for idx2, word in enumerate(words):
-                if word == NSS:
-                    slash = False
-                    continue
-
-                """ split the word onto anchor control sequences and n-grams
-                around them """
-                subwords = list(filter(None, chain(*map(
-                    lambda a: re_can.split(a),
-                    re_anc.split(word)
-                ))))
-                word = ""
-                subword_indents = []
-                for subword in subwords:
-                    if subword == ANC:
-                        subword_indents.append(len(word))
-                    elif subword == CAN:
-                        if subword_indents:
-                            subword_indents.pop()
-                        else:
-                            try:
-                                indents.pop()
-                            except IndexError:
-                                raise RuntimeError("Trying to pop indent"
-                                    " anchor from empty stack"
-                                )
-                    else:
-                        word += re_clr.sub("\\1", subword)
-
-                if ll > 0:
-                    # The variable r reserves characters for " \\"
-                    # that can be added after current word
-                    if idx2 == last_word or words[idx2 + 1] == NSS:
-                        r = 0
-                    else:
-                        r = 2
-                    """ If the line will be broken _after_ this word,
-its length may be still longer than max_cols because of safe breaking (' \').
-If so, brake the line _before_ this word. Safe breaking is presented by
-'r' variable in the expression which is 0 if safe breaking is not required
-after this word.
-                    """
-                    if ll + 1 + len(word) + r > max_cols:
-                        if slash:
-                            code += " \\"
-                        code += '\n' + line_indent + tmp_indent + word
-                        ll = len(line_indent) + len(tmp_indent) + len(word)
-                    else:
-                        code += ' ' + word
-                        ll += 1 + len(word)
-                else:
-                    code += line_indent + word
-                    ll += len(line_indent) + len(word)
-
-                word_indent = ll - len(line_indent) - len(word)
-                for ind in subword_indents:
-                    indents.append(word_indent + ind)
-                tmp_indent = " " * indents[-1] if indents else ""
-                slash = True
-
-            if idx1 != last_line:
-                code += '\n'
-
-        self.code = '\n'.join(map(lambda a: a.rstrip(' '), code.split('\n')))
+    def check_cols_fix_up(self, *a, **kw):
+        self.code = check_cols_fix_up(self.code, *a, **kw)
 
     def __lt__(self, other):
         sw = self.weight
