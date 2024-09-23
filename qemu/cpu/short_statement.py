@@ -231,11 +231,14 @@ class ShortStatement(object):
         return BranchElse(constant_expression)
 
     @staticmethod
-    def p_statement__decl(identifier__t, identifier__n):
+    def p_statement__decls(identifier__t, identifier_list__n):
         identifier__t.specify(ID_TYPE_NAME)
-        identifier__n.specify(ID_VARIABLE)
-        v = Late(identifier__t.name)(identifier__n.name)
-        return Declare(v)
+        t = Late(identifier__t.name)
+        vs = []
+        for n in identifier_list__n:
+            n.specify(ID_VARIABLE)
+            vs.append(t(n.name))
+        return Declare(*vs)
 
     @staticmethod
     def p_constant_expression(conditional_expression):
@@ -271,6 +274,14 @@ class ShortStatement(object):
     def p_identifier__enum(ENUM, identifier):
         identifier.specify(ID_ENUM)
         return identifier
+
+    @staticmethod
+    def p_identifier_list(identifier):
+        return [identifier]
+
+    @staticmethod
+    def p_identifier_list__n(identifier_list, COMMA, identifier):
+        return identifier_list + [identifier]
 
     @staticmethod
     def p_primary_expression__id(identifier):
