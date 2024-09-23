@@ -219,16 +219,16 @@ class ShortStatement(object):
 
     # it's start production
     @staticmethod
-    def p_statement__expr(constant_expression):
-        return constant_expression
+    def p_statement__expr(expression):
+        return expression
 
     @staticmethod
     def p_statement__else(ELSE):
         return BranchElse()
 
     @staticmethod
-    def p_statement__elif(ELSE, constant_expression):
-        return BranchElse(constant_expression)
+    def p_statement__elif(ELSE, expression):
+        return BranchElse(expression)
 
     @staticmethod
     def p_statement__decls(identifier__t, identifier_list__n):
@@ -239,10 +239,6 @@ class ShortStatement(object):
             n.specify(ID_VARIABLE)
             vs.append(t(n.name))
         return Declare(*vs)
-
-    @staticmethod
-    def p_constant_expression(conditional_expression):
-        return conditional_expression
 
     @staticmethod
     def p_constant__int(INTEGER):
