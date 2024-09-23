@@ -39,6 +39,17 @@ class Late(CNode):
     def __var_base__(self):
         return "l_" + self.name
 
+    @property
+    def full_deref(self):
+        # Late is always named.
+        # It cannot be a star-pointer (i.e.: **TypeName)
+        # But, it still can be a named pointer type.
+        # XXX: full_deref of such a type is NOT self.
+        #      However, it is not possible to get true value.
+        #      This `@property` is currently used to pass instantiation time
+        #      checks.
+        return self
+
 
 class LateLinker(TypeReferencesVisitor):
 
