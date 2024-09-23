@@ -167,15 +167,25 @@ def find_instruction_specifiers(heading):
         for sline in block:
             no_specs = True
             for op_name, op_val in iter_defines(sline.stmnts):
-                if op_name not in op_names:
-                    continue
-
-                specs[op_name].append(op_val)
-                # Do not go deeper right now.
-                # Some definitions can be for choisen instruction variants.
-                # They will be handled later during recursive
-                #     `iter_multiply_instruction_blocks` calls.
-                no_specs = False
+                if op_name in op_names:
+                    specs[op_name].append(op_val)
+                    # Do not go deeper right now.
+                    # Some definitions can be for choisen instruction variants.
+                    # They will be handled later during recursive
+                    #     `iter_multiply_instruction_blocks` calls.
+                    no_specs = False
+                elif op_name in instruction_attributes:
+                    pass
+                else:
+                    # Possible errors...
+                    # - Trying to define read-only (unsupported) instruction
+                    #   attribute.
+                    # - Trying to re-define instruction encoding operand which
+                    #   is not visible here (in that subtree).
+                    # - A misprint.
+                    raise AssertionError(
+                        op_name + ": is not (re)defineable here"
+                    )
 
             if no_specs:
                 stack.append(sline)
