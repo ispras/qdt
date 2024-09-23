@@ -1,3 +1,6 @@
+from common import (
+    CodeWriter,
+)
 from common.pygen import (
     dumps,
 )
@@ -12,12 +15,16 @@ from qemu import (
 )
 from source import (
     BlockParser,
+    BodyTree,
     BranchElse,
     BranchIf,
     Comment,
     CBlock,
+    check_cols_fix_up,
     CSTR,
     Late,
+    LateLinker,
+    VarUsageAnalyzer,
 )
 # for exec
 import qemu
@@ -94,10 +101,35 @@ def print_layout(insn):
         offset += f.bitsize
 
 
-def handle_insn(insn):
+def handle_insn(insn,
+    print_semantics = False,
+):
     print("\n\n")
     check_dump(insn)
     print_layout(insn)
+    if print_semantics:
+        do_print_semantics(insn)
+
+
+def do_print_semantics(insn):
+    sem = deepcopy(insn.semantics)
+
+    LateLinker(sem).visit()
+
+    body = BodyTree(children = sem)
+
+    VarUsageAnalyzer(body).visit()
+
+    cw = CodeWriter()
+    cw.add_lang("c", "    ")
+    cw.add_lang("cpp", "  ", "#")
+    cw.add_lang("late", "    ")
+    cw.new_line = True
+
+    with cw.c:
+        body.__c__(cw)
+
+    print("semantics {\n%s}\n" % check_cols_fix_up(cw.w.getvalue()))
 
 
 class VID2Late(NodeVisitor):
@@ -465,6 +497,9 @@ Converts short form instructions definitions to script defines them.
         type = str,
         help = "name of list of instructions",
     )
+    arg("-s", "--print-semantics",
+        action = "store_true",
+    )
 
     args = ap.parse_args()
     read_bitsize = args.read_bitsize
@@ -508,7 +543,9 @@ Converts short form instructions definitions to script defines them.
 
         i.semantics = heading.stmnts
 
-        handle_insn(i)
+        handle_insn(i,
+            print_semantics = args.print_semantics,
+        )
         insts.append(i)
 
     if output_file_name:
