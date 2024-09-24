@@ -29,7 +29,7 @@ class Short(object):
 
     @staticmethod
     def t_error(t):
-        print("%d: unknown sequence of characters: %s" % (
+        raise SyntaxError("%d: unknown sequence of characters: %s" % (
             t.lexpos + 1,
             t.value,
         ))
