@@ -181,11 +181,14 @@ def analyze_instruction_block(heading):
 
 
 def find_instruction_specifiers(heading):
+    heading.specs = specs = defaultdict(list)
+
     insn = heading.insn
 
-    op_names = set(f.name for f in insn.raw_fields if isinstance(f, Operand))
+    if insn is None:
+        return
 
-    heading.specs = specs = defaultdict(list)
+    op_names = set(f.name for f in insn.raw_fields if isinstance(f, Operand))
 
     stack = [heading]
 
