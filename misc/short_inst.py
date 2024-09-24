@@ -108,11 +108,11 @@ def handle_insn(insn,
     check_dump(insn)
     print_layout(insn)
     if print_semantics:
-        do_print_semantics(insn)
+        print("semantics {\n%s}\n" % str_as_function_body(insn.semantics))
 
 
-def do_print_semantics(insn):
-    sem = deepcopy(insn.semantics)
+def str_as_function_body(stmnts):
+    sem = deepcopy(stmnts)
 
     LateLinker(sem).visit()
 
@@ -129,7 +129,7 @@ def do_print_semantics(insn):
     with cw.c:
         body.__c__(cw)
 
-    print("semantics {\n%s}\n" % check_cols_fix_up(cw.w.getvalue()))
+    return check_cols_fix_up(cw.w.getvalue())
 
 
 class VID2Late(NodeVisitor):
