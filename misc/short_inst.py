@@ -139,10 +139,10 @@ class VID2Late(NodeVisitor):
             self.replace(Late(cur.name))
 
 
-class InstructionsList(list):
+class NamedList(list):
 
-    def __init__(self, list_name = "instructions"):
-        super(InstructionsList, self).__init__()
+    def __init__(self, list_name = "list"):
+        super(NamedList, self).__init__()
         self.list_name = list_name
 
     def __pygen_pass__(self, g):
@@ -533,7 +533,7 @@ Converts short form instructions definitions to script defines them.
 
     # handle instructions
 
-    insts = InstructionsList(
+    insts = NamedList(
         list_name = args.list_name,
     )
 
