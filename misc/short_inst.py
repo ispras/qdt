@@ -1,5 +1,6 @@
 from common import (
     CodeWriter,
+    DictStack,
 )
 from common.pygen import (
     dumps,
@@ -14,6 +15,7 @@ from qemu import (
     VersatileIdentifier,
 )
 from source import (
+    BinaryOperator,
     BlockParser,
     BodyTree,
     BranchElse,
@@ -217,9 +219,25 @@ def find_instruction_specifiers(heading):
 
         for sline in block:
             no_specs = True
-            for op_name, op_val in iter_defines(sline.stmnts):
+            for d in find_defines(sline.stmnts):
+                lvalue = d.name
+                if not isinstance(lvalue, VersatileIdentifier):
+                    raise SyntaxError(
+                        "%d: lvalue of `:=` must be an ID, not %r"
+                        % (sline.n, lvalue)
+                    )
+                op_name = lvalue.name
+
                 if op_name in op_names:
-                    specs[op_name].append(op_val)
+                    rvalue = d.value
+                    if not isinstance(rvalue, CSTR):
+                        raise SyntaxError(
+                '%d: instruction operand replacement (rvalue of `:=`) must be'
+                ' a "C-string", not %r'
+                            % (heading.n, rvalue)
+                        )
+
+                    specs[op_name].append(str(rvalue))
                     # Do not go deeper right now.
                     # Some definitions can be for choisen instruction variants.
                     # They will be handled later during recursive
@@ -247,57 +265,100 @@ def find_defines(stmnts):
     return DefineFinder(stmnts).visit().defines
 
 
-def str_define(d):
-    name = d.name
-    if isinstance(name, VersatileIdentifier):
-        def_name = name.name
-    else:
-        raise SyntaxError(
-            "lvalue of `:=` must be an ID, not %r" % name
-        )
-
-    value = d.value
-    if isinstance(value, CSTR):
-        def_val = str(value)
-    else:
-        raise SyntaxError(
-            'rvalue of `:=` must be a "str", not %r' % value
-        )
-
-    return def_name, def_val
-
-
-def iter_defines(stmnts):
-    return map(str_define, find_defines(stmnts))
-
-
 def find_attribute_definitions(heading):
     attrs = {}
 
-    stack = [heading]
+    stack = [(heading, DictStack(attrs))]
 
     while stack:
-        line = stack.pop()
+        line, ns = stack.pop()
         block = line.child
 
         if not block:
             continue
 
         for sline in block:
-            stack.append(sline)
+            stack.append((sline, ns.push()))
 
-            for def_name, op_val in iter_defines(sline.stmnts):
-                if def_name in instruction_attributes:
-                    attrs[def_name] = op_val
+            for d in find_defines(sline.stmnts):
+                # find_instruction_specifiers missed it
+                assert isinstance(d.name, VersatileIdentifier)
+
+                def_name = d.name.name
+
+                if def_name not in instruction_attributes:
+                    continue
+
+                op_val = eval_def_rvalue(d.value, ns)
+
+                ns[def_name] = op_val
+                attrs[def_name] = op_val
 
     heading.attrs = attrs
 
 
+_c2py_op = {
+    "&&" : "and",
+    "||" : "or",
+    # Inside expressions, define operator returns True if right value equals
+    # to currently defined value.
+    ":=" : "==",
+}.get
+
+c2py_op = lambda op : _c2py_op(op, op)
+
+
+class Evaluator(NodeVisitor):
+
+    def __init__(self, root, ns = {}, **kw):
+        super(Evaluator, self).__init__(root, **kw)
+        self.ns = DictStack(backing = ns)
+
+    def __getitem__(self, o):
+        return self.ns["_evaluated_%d" % id(o)]
+
+    def __setitem__(self, o, v):
+        self.ns["_evaluated_%d" % id(o)] = v
+
+    def __leave__(self, o):
+        if isinstance(o, CSTR):
+            evaluated = str(o)
+        elif isinstance(o, VersatileIdentifier):
+            evaluated = self.ns[o.name]
+        elif isinstance(o, BinaryOperator):
+            code = "_evaluated_%d %s _evaluated_%d" % (
+                id(o.children[0]),
+                c2py_op(o.op_str),
+                id(o.children[1]),
+            )
+            evaluated = eval(code, self.ns)
+        else:
+            return
+
+        self[o] = evaluated
+
+
+def eval_def_rvalue(rvalue, ns = {}):
+    evaluator = Evaluator([rvalue], ns = ns)
+    evaluator.visit()
+    val = evaluator[rvalue]
+    return val
+
+
 def iter_block_lines_specified(op_name, op_val, block):
     for line in block:
+        for d in find_defines(line.stmnts):
+            # find_instruction_specifiers missed it
+            assert isinstance(d.name, VersatileIdentifier)
 
-        for l_op_name, l_op_val in iter_defines(line.stmnts):
+            l_op_name = d.name.name
+
             if l_op_name == op_name:
+                # find_instruction_specifiers missed it
+                assert isinstance(d.value, CSTR)
+
+                l_op_val = str(d.value)
+
                 if l_op_val == op_val:
 
                     prefix_line = type(line)()
@@ -420,8 +481,11 @@ def set_attributes(heading):
 
 def iter_block_lines_without_defines(block, names):
     for line in block:
-        for l_op_name, __ in iter_defines(line.stmnts):
-            if l_op_name in names:
+        for d in find_defines(line.stmnts):
+            # find_instruction_specifiers missed it
+            assert isinstance(d.name, VersatileIdentifier)
+
+            if d.name.name in names:
                 # replace line with its block or just drop (if without block)
                 if line.child:
                     for sline in iter_block_lines_without_defines(
