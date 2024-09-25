@@ -195,8 +195,6 @@ def analyze_instruction_block(heading):
     heading.insn = insn
     heading.decl = decl
 
-    find_instruction_specifiers(heading)
-
 
 def find_instruction_specifiers(heading):
     heading.specs = specs = defaultdict(list)
@@ -335,6 +333,14 @@ def iter_block_lines_specified(op_name, op_val, block):
 
 
 def iter_multiply_instruction_blocks(heading):
+    # Note: during recursion, after specify_instruction_operand:
+    # - Possibly, there are operand specifications those are actual for
+    #   this specified instruction (variant) only.
+    # - Substitution might add more operands that could be specified.
+    #   So, more `name := value` pairs could be distinguished as
+    #   specifications.
+    find_instruction_specifiers(heading)
+
     specs = heading.specs
     if not specs:
         yield heading
@@ -357,13 +363,6 @@ def iter_multiply_instruction_blocks(heading):
         insn = specified.insn
 
         specify_instruction_operand(insn, op_name, op_val)
-
-        # - Possibly, there are operand specifications those are actual for
-        #   this specified instruction (variant) only.
-        # - Substitution might add more operands that could be specified.
-        #   So, more `name := value` pairs could be distinguished as
-        #   specifications.
-        find_instruction_specifiers(specified)
 
         for subspec in iter_multiply_instruction_blocks(specified):
             yield subspec
