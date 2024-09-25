@@ -12,6 +12,7 @@ class Block(list):
 class Line(list):
     parent = None
     child = None
+    n = None
 
     def __str__(self):
         return "".join(self)
@@ -57,6 +58,7 @@ class BlockParser(object):
         self.stack = [(tuple(), vheading, [])]
         self.indent = []
         self.line = []
+        self.line_n = 1
 
         return self.INDENT(c)
 
@@ -100,6 +102,9 @@ class BlockParser(object):
         return self.LINE
 
     def _line_end(self):
+        n = self.line_n
+        self.line_n = n + 1
+
         indent = tuple(self.indent)
         self.indent = []
         line = self.Line(self.line)
@@ -110,6 +115,8 @@ class BlockParser(object):
         if not (indent or line):
             # ignore blank lines
             return
+
+        line.n = n
 
         for i, (block_indent, __, block) in enumerate(stack):
             if block_indent == indent:
