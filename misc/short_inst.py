@@ -184,7 +184,6 @@ def analyze_instruction_block(heading):
             (insn_msg, Short),
             (func_msg, CDecl),
         ):
-            print(msg)
             try:
                 parser.parse(l, debug = True)
             except:
