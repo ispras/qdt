@@ -245,17 +245,6 @@ def find_instruction_specifiers(heading):
                     no_specs = False
                 elif op_name in instruction_attributes:
                     pass
-                else:
-                    # Possible errors...
-                    # - Trying to define read-only (unsupported) instruction
-                    #   attribute.
-                    # - Trying to re-define instruction encoding operand which
-                    #   is not visible here (in that subtree).
-                    # - A misprint.
-                    raise AssertionError(
-                        "%d: %s: is not (re)defineable here, line "
-                        % (sline.n, op_name)
-                    )
 
             if no_specs:
                 stack.append(sline)
@@ -263,38 +252,6 @@ def find_instruction_specifiers(heading):
 
 def find_defines(stmnts):
     return DefineFinder(stmnts).visit().defines
-
-
-def find_attribute_definitions(heading):
-    attrs = {}
-
-    stack = [(heading, DictStack(attrs))]
-
-    while stack:
-        line, ns = stack.pop()
-        block = line.child
-
-        if not block:
-            continue
-
-        for sline in block:
-            stack.append((sline, ns.push()))
-
-            for d in find_defines(sline.stmnts):
-                # find_instruction_specifiers missed it
-                assert isinstance(d.name, VersatileIdentifier)
-
-                def_name = d.name.name
-
-                if def_name not in instruction_attributes:
-                    continue
-
-                op_val = eval_def_rvalue(d.value, ns)
-
-                ns[def_name] = op_val
-                attrs[def_name] = op_val
-
-    heading.attrs = attrs
 
 
 _c2py_op = {
@@ -465,39 +422,63 @@ def specify_instruction_operand(insn, op_name, op_val):
 
 
 def set_attributes(heading):
-    find_attribute_definitions(heading)
+    attrs = dict()
+    base_ns = DictStack(attrs)
 
     insn = heading.insn
+
+    base_ns.update(
+        (a, getattr(insn, a)) for a in instruction_attributes
+    )
+
+    stack = [(heading, base_ns)]
+
+    while stack:
+        line, ns = stack.pop()
+        block = line.child
+
+        if not block:
+            continue
+
+        for sline in block:
+            stack.append((sline, ns.push()))
+
+            for d in find_defines(sline.stmnts):
+                # find_instruction_specifiers missed it
+                assert isinstance(d.name, VersatileIdentifier)
+
+                def_name = d.name.name
+
+                op_val = eval_def_rvalue(d.value, ns)
+
+                ns[def_name] = op_val
+                if def_name in instruction_attributes:
+                    attrs[def_name] = op_val
+
     block = heading.child
 
-    for attr, val_str in heading.attrs.items():
+    for attr, val_str in attrs.items():
         val = eval(val_str)
         setattr(insn, attr, instruction_attributes[attr](val))
 
-    # Attribute definition does not multiply instructions.
-    # It just must be dropped from semantic code.
-    block[:] = iter_block_lines_without_defines(block, heading.attrs)
+    block[:] = iter_block_lines_without_defines(block)
 
 
-def iter_block_lines_without_defines(block, names):
+def iter_block_lines_without_defines(block):
     for line in block:
-        for d in find_defines(line.stmnts):
-            # find_instruction_specifiers missed it
-            assert isinstance(d.name, VersatileIdentifier)
+        for __ in find_defines(line.stmnts):
+            # replace line with its block or just drop (if without block)
+            if line.child:
+                for sline in iter_block_lines_without_defines(
+                    line.child
+                ):
+                    yield sline
 
-            if d.name.name in names:
-                # replace line with its block or just drop (if without block)
-                if line.child:
-                    for sline in iter_block_lines_without_defines(
-                        line.child, names
-                    ):
-                        yield sline
-
-                break
+            break
         else:
             if line.child:
                 line.child[:] = iter_block_lines_without_defines(
-                    line.child, names
+                    line.child
                 )
             yield line
 
