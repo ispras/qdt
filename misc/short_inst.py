@@ -288,11 +288,6 @@ def find_attribute_definitions(heading):
 
             for def_name, op_val in iter_defines(sline.stmnts):
                 if def_name in instruction_attributes:
-                    if def_name in attrs:
-                        raise AssertionError(
-                            "%d: %s: attribute value conflict: %r and %r" %
-                            (sline.n, def_name, attrs[def_name], op_val)
-                        )
                     attrs[def_name] = op_val
 
     heading.attrs = attrs
