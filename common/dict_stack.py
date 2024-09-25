@@ -16,3 +16,6 @@ class DictStack(dict):
 
     def __missing__(self, key):
         return self.backing[key]
+
+    def push(self):
+        return DictStack(backing = self)
