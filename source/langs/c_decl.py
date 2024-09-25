@@ -1,6 +1,6 @@
 __all__ = [
     "one_of"
-  , "token"
+  , "word"
   , "CDecl"
 ]
 
@@ -21,9 +21,9 @@ from ..short_ply_grammar import (
 )
 
 
-one_of = lambda words : "((" + ")|(".join(words) + "))"
+one_of = lambda words : "((" + ")|(".join(words) + "))(?=[ \t])"
 
-def token(*words):
+def word(*words):
     def decorate(func):
         func.__doc__ = one_of(words)
         return func
@@ -44,22 +44,28 @@ class CDecl:
 
     # priority over t_IDENTIFIER
     @staticmethod
+    @word(
+        "_Alignas",
+    )
     def t_ALIGN_AS(t):
-        "_Alignas"
         return t
 
     @staticmethod
+    @word(
+        "_Atomic",
+    )
     def t_ATOMIC(t):
-        "_Atomic"
         return t
 
     @staticmethod
+    @word(
+        "enum",
+    )
     def t_ENUM(t):
-        "enum"
         return t
 
     @staticmethod
-    @token(
+    @word(
         "inline",
         "_Noreturn",
     )
@@ -67,7 +73,7 @@ class CDecl:
         return t
 
     @staticmethod
-    @token(
+    @word(
         "void",
         "char",
         "short",
@@ -84,7 +90,7 @@ class CDecl:
         return t
 
     @staticmethod
-    @token(
+    @word(
         "typedef",
         "extern",
         "static",
@@ -96,7 +102,7 @@ class CDecl:
         return t
 
     @staticmethod
-    @token(
+    @word(
         "const",
         "restrict",
         "volatile",
