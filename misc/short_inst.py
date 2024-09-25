@@ -580,11 +580,15 @@ Converts short form instructions definitions to script defines them.
     )
 
     for heading in insn_lines:
+        i = heading.insn
+
         set_attributes(heading)
+
+        if i.mnemonic == "skip":
+            continue
+
         merge_statements(heading)
         VID2Late(heading.stmnts).visit()
-
-        i = heading.insn
 
         i.semantics = heading.stmnts
 
