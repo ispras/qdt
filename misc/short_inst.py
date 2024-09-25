@@ -178,8 +178,6 @@ def analyze_instruction_block(heading):
         decl = None
 
     if (insn or decl) is None:
-        print("%d: bad block (all parsers failed)" % (heading.n,))
-
         for msg, parser in (
             (insn_msg, Short),
             (func_msg, CDecl),
@@ -191,6 +189,8 @@ def analyze_instruction_block(heading):
                 pass
             # after parser log printed
             print(msg)
+
+        raise SyntaxError("%d: bad block (all parsers failed)" % (heading.n,))
 
     heading.insn = insn
     heading.decl = decl
