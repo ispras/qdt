@@ -601,7 +601,7 @@ Converts short form instructions definitions to script defines them.
         for t in types:
             if isinstance(t, Function):
                 # Note: can't use regular chunks mechanism until fully linked.
-                print("%s %s(%s)\n{%s}\n" % (
+                print("%s %s(%s)\n{\n%s}\n" % (
                     t.ret_type.name,
                     t.c_name,
                     ", ".join((a.type.name + " " + a.name) for a in t.args),
