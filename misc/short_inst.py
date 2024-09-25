@@ -178,7 +178,7 @@ def analyze_instruction_block(heading):
         decl = None
 
     if (insn or decl) is None:
-        print("Bad block (all parsers failed)")
+        print("%d: bad block (all parsers failed)" % (heading.n,))
 
         for msg, parser in (
             (insn_msg, Short),
@@ -237,7 +237,8 @@ def find_instruction_specifiers(heading):
                     #   is not visible here (in that subtree).
                     # - A misprint.
                     raise AssertionError(
-                        op_name + ": is not (re)defineable here"
+                        "%d: %s: is not (re)defineable here, line "
+                        % (sline.n, op_name)
                     )
 
             if no_specs:
@@ -291,8 +292,8 @@ def find_attribute_definitions(heading):
                 if def_name in instruction_attributes:
                     if def_name in attrs:
                         raise AssertionError(
-                            "%s: attribute value conflict: %r and %r" %
-                            (def_name, attrs[def_name], op_val)
+                            "%d: %s: attribute value conflict: %r and %r" %
+                            (sline.n, def_name, attrs[def_name], op_val)
                         )
                     attrs[def_name] = op_val
 
