@@ -40,7 +40,7 @@ __all__ = [
                       , "OpMinus"
                       , "OpPlus"
                       , "OpSizeOf"
-                  # BinaryOperator
+                  , "BinaryOperator"
                       , "OpAssign"
                       , "OpDeclareAssign"
                       , "OpCombAssign"
