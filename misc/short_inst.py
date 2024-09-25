@@ -416,10 +416,31 @@ def set_attributes(heading):
 
     for attr, val_str in heading.attrs.items():
         val = eval(val_str)
-
         setattr(insn, attr, instruction_attributes[attr](val))
 
-        block[:] = iter_block_lines_specified(attr, val_str, block)
+    # Attribute definition does not multiply instructions.
+    # It just must be dropped from semantic code.
+    block[:] = iter_block_lines_without_defines(block, heading.attrs)
+
+
+def iter_block_lines_without_defines(block, names):
+    for line in block:
+        for l_op_name, __ in iter_defines(line.stmnts):
+            if l_op_name in names:
+                # replace line with its block or just drop (if without block)
+                if line.child:
+                    for sline in iter_block_lines_without_defines(
+                        line.child, names
+                    ):
+                        yield sline
+
+                break
+        else:
+            if line.child:
+                line.child[:] = iter_block_lines_without_defines(
+                    line.child, names
+                )
+            yield line
 
 
 def parse_lines(heading):
