@@ -715,6 +715,8 @@ Converts short form instructions definitions to script defines them.
           + "\n"
         )
 
+    print("Total instructions: %d" % len(insts))
+
 
 if __name__ == "__main__":
     exit(main() or 0)
