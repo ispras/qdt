@@ -214,7 +214,7 @@ class ShortStatement(object):
 
     @staticmethod
     def t_STR(t):
-        '"[^"]+"'
+        '"[^"]*"'
         return t
 
     # it's start production
