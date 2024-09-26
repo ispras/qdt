@@ -645,6 +645,13 @@ Converts short form instructions definitions to script defines them.
         list_name = args.list_name,
     )
 
+    # XXX: Currently, duplicates can be produced by the tool.
+    #      This is to be fixed.
+    # User can produce duplicates in source code.
+    # So, it's error in user code.
+    # User to be notified.
+    duplicates = defaultdict(list)
+
     for heading in insn_lines:
         i = heading.insn
 
@@ -657,6 +664,12 @@ Converts short form instructions definitions to script defines them.
         VID2Late(heading.stmnts).visit()
 
         i.semantics = heading.stmnts
+
+        code = dumps(i)
+        same_insts = duplicates[code]
+        same_insts.append(i)
+        if 1 < len(duplicates[code]):
+            continue
 
         handle_insn(i,
             print_disas_format = args.print_disas_format,
@@ -689,6 +702,19 @@ Converts short form instructions definitions to script defines them.
             if False and types:
                 f.write("\n")
                 f.write(types_text + "\n")
+
+    if duplicates:
+        print(
+            "Duplicates:\n\t"
+          + "\n\t".join(
+                ("%s: %d" % (d[0].mnemonic, len(d)))
+                    for __, d in sorted(i
+                        for i in  duplicates.items() if 1 < len(i[1])
+                    )
+            )
+          + "\n"
+        )
+
 
 if __name__ == "__main__":
     exit(main() or 0)
