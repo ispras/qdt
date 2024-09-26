@@ -54,8 +54,8 @@ from traceback import (
 instruction_attributes = dict(
     branch = bool,
     disas_format = str,
+    comment = str,
     # some attributes cannot be set using := operator
-    # "comment",
     # "semantics,
     mnemonic = str,
     priority = int,
