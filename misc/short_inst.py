@@ -365,6 +365,16 @@ def iter_multiply_instruction_blocks(heading):
     op_name = sorted(specs)[0]
     op_vals = specs.pop(op_name)
 
+    if len(op_vals) == 1:
+        # can change heading inplace
+        op_val = op_vals[0]
+        block = heading.child
+        block[:] = iter_block_lines_specified(op_name, op_val, block)
+        specify_instruction_operand(heading.insn, op_name, op_val)
+        for subspec in iter_multiply_instruction_blocks(heading):
+            yield subspec
+        return
+
     # don't deepcopy of parent
     heading.parent = None
 
