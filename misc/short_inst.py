@@ -106,11 +106,14 @@ def print_layout(insn):
 
 
 def handle_insn(insn,
+    print_disas_format = False,
     print_semantics = False,
 ):
     print("\n\n")
     check_dump(insn)
     print_layout(insn)
+    if print_disas_format:
+        print("disas_format: %r" % insn.disas_format)
     if print_semantics:
         print("semantics {\n%s}\n" % str_as_function_body(insn.semantics))
 
@@ -587,6 +590,9 @@ Converts short form instructions definitions to script defines them.
     arg("-s", "--print-semantics",
         action = "store_true",
     )
+    arg("-d", "--print-disas-format",
+        action = "store_true",
+    )
 
     args = ap.parse_args()
     read_bitsize = args.read_bitsize
@@ -653,6 +659,7 @@ Converts short form instructions definitions to script defines them.
         i.semantics = heading.stmnts
 
         handle_insn(i,
+            print_disas_format = args.print_disas_format,
             print_semantics = args.print_semantics,
         )
         insts.append(i)
