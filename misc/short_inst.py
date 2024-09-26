@@ -339,7 +339,7 @@ def iter_block_lines_specified(op_name, op_val, block):
 
                 specified_line.child = type(line.child)(
                     iter_block_lines_specified(
-                         op_name, op_val, line.child
+                        op_name, op_val, line.child
                     )
                 )
             else:
