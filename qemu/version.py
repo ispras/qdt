@@ -96,9 +96,9 @@ def define_only_qemu_2_6_0_types():
     tcg_h_path = get_vp("tcg headers prefix") + "tcg.h"
     tcg_header = Header[tcg_h_path].add_reference(osdep_fake_type)
     tcg_header.add_types([
-        Type("TCGv_i32"),
-        Type("TCGv_i64"),
-        Type("TCGv_ptr"),
+        Type("TCGv_i32", incomplete = False),
+        Type("TCGv_i64", incomplete = False),
+        Type("TCGv_ptr", incomplete = False),
         Type("TCGv_env", incomplete = False),
         Pointer(Type["void"], name = "TCGv"),
         Structure("TCGContext"),
