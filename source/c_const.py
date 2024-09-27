@@ -140,7 +140,15 @@ class CINT(CConst):
 
         val_str = uint2base(val, base)
 
-        return prefix + "0" * max(0, self.d - len(val_str)) + val_str
+        prefix += "0" * max(0, self.d - len(val_str))
+
+        val_str = prefix + val_str
+
+        if val.bit_length() > 32:
+            # Because `ll` looks like `11`.
+            val_str += "LL"
+
+        return val_str
 
     def __repr__(self):
         val = self.v
