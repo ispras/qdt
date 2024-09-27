@@ -73,7 +73,7 @@ class Late(CNode):
 
 def late_linkage(definer, **glob_ns):
     glob_ns.update(definer.types)
-    glob_ns.update(definer.global_variable)
+    glob_ns.update(definer.global_variables)
     LateLinker(definer, glob_ns = glob_ns).visit()
 
 
