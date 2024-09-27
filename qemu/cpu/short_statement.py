@@ -219,6 +219,14 @@ class ShortStatement(object):
 
     # it's start production
     @staticmethod
+    def p_block_item__stmnt(statement):
+        return statement
+
+    @staticmethod
+    def p_block_item__decl(declaration):
+        return declaration
+
+    @staticmethod
     def p_statement__expr(expression):
         return expression
 
@@ -231,7 +239,7 @@ class ShortStatement(object):
         return BranchElse(expression)
 
     @staticmethod
-    def p_statement__decls(identifier__t, identifier_list__n):
+    def p_declaration(identifier__t, identifier_list__n):
         identifier__t.specify(ID_TYPE_NAME)
         t = Late(identifier__t.name)
         vs = []
