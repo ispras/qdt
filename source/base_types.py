@@ -1,5 +1,8 @@
 __all__ = [
     "add_base_types"
+  , "iter_type_specs"
+  , "iter_specified_type_names"
+  , "iter_base_complet_type_names"
 ]
 
 from .model import (
@@ -11,26 +14,89 @@ from .source_file import (
     Header,
 )
 
+from itertools import (
+    permutations,
+    product,
+)
+
+
+def iter_type_specs(specs):
+    for r in range(1, len(specs) + 1):
+        for perm in permutations(specs, r):
+            for prod in product(*perm):
+                yield prod
+
+
+def iter_specified_type_names(name, *specs):
+    yield name
+    for spec in iter_type_specs(specs):
+        yield " ".join(spec) + " " + name
+
+
+def iter_base_complet_type_names():
+    for n in iter_specified_type_names(
+        "char",
+        ("const",),
+        ("unsigned", "signed",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "short",
+        ("const",),
+        ("unsigned", "signed",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "int",
+        ("const",),
+        ("unsigned", "signed",),
+        ("short", "long", "long long",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "unsigned",
+        ("const",),
+        ("short", "long", "long long",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "signed",
+        ("const",),
+        ("short", "long", "long long",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "long",
+        ("const",),
+        ("unsigned", "signed",),
+        ("long",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "float",
+        ("const",),
+    ):
+        yield n
+
+    for n in iter_specified_type_names(
+        "double",
+        ("const",),
+        ("long",),
+    ):
+        yield n
+
 
 def add_base_types():
     Type(name = "void", incomplete = True, base = True)
-    Type(name = "int", incomplete = False, base = True)
-    Type(name = "unsigned", incomplete = False, base = True)
-    Type(name = "unsigned int", incomplete = False, base = True)
-    Type(name = "short int", incomplete = False, base = True)
-    Type(name = "unsigned short int", incomplete = False, base = True)
-    Type(name = "long int", incomplete = False, base = True)
-    Type(name = "unsigned long", incomplete = False, base = True)
-    Type(name = "unsigned long int", incomplete = False, base = True)
-    Type(name = "long long int", incomplete = False, base = True)
-    Type(name = "unsigned long long", incomplete = False, base = True)
-    Type(name = "unsigned long long int", incomplete = False, base = True)
-    Type(name = "const char", incomplete = False, base = True)
-    Type(name = "char", incomplete = False, base = True)
-    Type(name = "signed char", incomplete = False, base = True)
-    Type(name = "unsigned char", incomplete = False, base = True)
-    Type(name = "double", incomplete = False, base = True)
-    Type(name = "long double", incomplete = False, base = True)
+
+    for n in iter_base_complet_type_names():
+        Type(n, incomplete = False, base = True)
 
     try:
         h = Header["stdint.h"]
