@@ -990,9 +990,19 @@ later.").get()
             self._update_recent_projects()
 
     def on_save_as(self):
+        kw = {}
+        try:
+            current_file_name = self.current_file_name
+        except:
+            pass
+        else:
+            if isfile(current_file_name):
+                kw["initial_file"] = current_file_name
+
         fname = asksaveas(self,
             [(_("QDC GUI Project defining script"), ".py")],
-            title = _("Save project")
+            title = _("Save project"),
+            **kw
         )
 
         if not fname:
