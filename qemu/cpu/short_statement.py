@@ -1,7 +1,6 @@
 # TODO: rename to "short block item" (module, related classes, etc..)
 
 from source.c_const import (
-    CINT,
     CSTR,
 )
 from source.function.tree import (
@@ -44,6 +43,9 @@ from source.function.tree import (
     OpSub,
     OpTernCond,
     OpXor,
+)
+from source.langs.c_const import (
+    CConst,
 )
 from source.langs.c_words import (
     CWords,
@@ -111,8 +113,9 @@ class DefineFinder(NodeVisitor):
 
 @short_ply_grammar(
     debugfile = True,
+    start = "block_item",
 )
-class ShortStatement(CWords):
+class ShortStatement(CConst, CWords):
 
     t_LPAREN = r"\("
     t_RPAREN = r"\)"
@@ -164,36 +167,6 @@ class ShortStatement(CWords):
         r"[ \t]"
 
     @staticmethod
-    def t_INTEGER(t):
-        # This is coarse. CINT must parse accurately.
-        "((0[xX][0-9a-fA-F]+)|([0-9]+))[uUlL]*"
-        return t
-
-    @staticmethod
-    def t_FLOAT(t):
-        "\
-(0[xX])?\
-(\
-((([0-9a-fA-F]+[.])|([0-9a-fA-F]*[.][0-9a-fA-F]+))([eEpP][+-]?[0-9]+)?)\
-|\
-([0-9a-fA-F]+[eEpP][+-]?[0-9]+)\
-)\
-[fFlL]?\
-"
-        return t
-
-    @staticmethod
-    def t_CHAR(t):
-        "'[^']+'"
-        return t
-
-    @staticmethod
-    def t_STR(t):
-        '"[^"]*"'
-        return t
-
-    # it's start production
-    @staticmethod
     def p_block_item__stmnt(statement):
         return statement
 
@@ -222,18 +195,6 @@ class ShortStatement(CWords):
             n.specify(ID_VARIABLE)
             vs.append(t(n.name))
         return Declare(*vs)
-
-    @staticmethod
-    def p_constant__int(INTEGER):
-        return CINT(INTEGER)
-
-    @staticmethod
-    def p_constant__float(FLOAT):
-        raise NotImplementedError("float constant")
-
-    @staticmethod
-    def p_constant__char(CHAR):
-        raise NotImplementedError("character constant")
 
     @staticmethod
     def p_identifier(IDENTIFIER):
