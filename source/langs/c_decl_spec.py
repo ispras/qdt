@@ -1,9 +1,12 @@
+from .c_punct import (
+    CPunctuation,
+)
 from .c_words import (
     CWords,
 )
 
 
-class CDeclSpec(CWords):
+class CDeclSpec(CWords, CPunctuation):
     """ This sub-grammar defines self-sufficient productions only.
 See: CDeclSpecEx.
     """
@@ -136,9 +139,6 @@ See: CDeclSpecEx.
 class CDeclSpecEx(CDeclSpec):
     """ This grammar extends CDeclSpec with productions which require external
 productions/tokens to be defined...
-    - SEMI (`;`)
-    - LPAREN (`(`)
-    - RPAREN (`)`)
     - constant_expression
     - declorator
     - static_assert_declaration
