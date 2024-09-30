@@ -5,7 +5,7 @@ __all__ = [
 ]
 
 
-one_of = lambda words : "((" + ")|(".join(words) + "))(?=[ \t])"
+one_of = lambda words : "((" + ")|(".join(words) + "))(?=[ \t]|$)"
 
 def word(*words):
     def decorate(func):
