@@ -19,7 +19,7 @@ from types import (
 )
 from inspect import (
     currentframe,
-    getframeinfo
+    getframeinfo,
 )
 from re import (
     compile
