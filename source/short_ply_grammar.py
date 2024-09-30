@@ -102,6 +102,7 @@ def _short_ply_grammar(cls,
     lextab = None,
     parsetab = None,
     debugfile = None,
+    start = None,
 ):
     if lextab is None:
         lextab = "_" + cls.__name__ + "_lextab"
@@ -133,6 +134,7 @@ def _short_ply_grammar(cls,
         tabmodule = parsetab,
         debugfile = debugfile,
         debug = bool(debugfile),
+        start = start,
     )
 
     @classmethod
