@@ -197,22 +197,23 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
     if initializer is not None:
         raise NotImplementedError
 
-    direct_declarator = declarator[-1]
+    decl_spec_type = get_declaration_type(declaration_specifiers)
+
     pointers = declarator[:-1]
+    direct_declarator = declarator[-1]
+
+    full_decl_spec_type = make_pointer(decl_spec_type, pointers)
 
     dd_type = direct_declarator["type"]
 
     if dd_type is Function:
-        ret_type = get_declaration_type(declaration_specifiers)
-        ret_type = make_pointer(ret_type, pointers)
-
         name_desc = direct_declarator["name"]
         assert name_desc["type"] is str
 
         yield Function(
             name = name_desc["name"],
             args = direct_declarator["args"],
-            ret_type = ret_type,
+            ret_type = full_decl_spec_type,
         )
     else:
         raise NotImplementedError
