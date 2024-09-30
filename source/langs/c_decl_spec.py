@@ -1,3 +1,9 @@
+__all__ = [
+    "CDeclSpec"
+      , "CDeclSpecEx"
+]
+
+
 from .c_punct import (
     CPunctuation,
 )
