@@ -1,10 +1,11 @@
 __all__ = [
-    "one_of"
-  , "word"
-  , "CDecl"
+    "CDecl"
 ]
 
 
+from .c_words import (
+    CWords,
+)
 from ..late import (
     Late,
 )
@@ -40,82 +41,7 @@ spec_and_name = set([
 @short_ply_grammar(
     debugfile = True,
 )
-class CDecl:
-
-    # priority over t_IDENTIFIER
-    @staticmethod
-    @word(
-        "_Alignas",
-    )
-    def t_ALIGN_AS(t):
-        return t
-
-    @staticmethod
-    @word(
-        "_Atomic",
-    )
-    def t_ATOMIC(t):
-        return t
-
-    @staticmethod
-    @word(
-        "enum",
-    )
-    def t_ENUM(t):
-        return t
-
-    @staticmethod
-    @word(
-        "inline",
-        "_Noreturn",
-    )
-    def t_FUNCTION_SPECIFIER(t):
-        return t
-
-    @staticmethod
-    @word(
-        "void",
-        "char",
-        "short",
-        "int",
-        "long",
-        "float",
-        "double",
-        "signed",
-        "unsigned",
-        "_Bool",
-        "_Complex",
-    )
-    def t_BASE_TYPE_SPECIFIER(t):
-        return t
-
-    @staticmethod
-    @word(
-        "typedef",
-        "extern",
-        "static",
-        "_Thread_local",
-        "auto",
-        "register",
-    )
-    def t_STORAGE_CLASS_SPECIFIER(t):
-        return t
-
-    @staticmethod
-    @word(
-        "const",
-        "restrict",
-        "volatile",
-        # "_Atomic",
-    )
-    def t_TYPE_QUALIFIER(t):
-        return t
-
-    @staticmethod
-    def t_IDENTIFIER(t):
-        "[_a-zA-Z][_a-zA-Z0-9]*"
-        return t
-
+class CDecl(CWords):
     t_DOTS = r"\.\.\."
 
     t_STAR = r"\*"
