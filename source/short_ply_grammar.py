@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 from common.ply_tools import (
-    gen_tokens,
+    iter_class_tokens,
 )
 from common.pypath import (
     pypath,
@@ -112,7 +112,7 @@ def _short_ply_grammar(cls,
     if debugfile is True:
         debugfile = "_" + cls.__name__ + "_yacc_debug.txt"
 
-    cls.tokens = tuple(gen_tokens(cls.__dict__))
+    cls.tokens = tuple(iter_class_tokens(cls))
 
     cls.lexer = lex(
         object = cls,
