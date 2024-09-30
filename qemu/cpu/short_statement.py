@@ -343,7 +343,10 @@ class ShortStatement(CConst, CPunctuation, CWords):
 
     @staticmethod
     def p_unary_expression__sizeof_id(
-        SIZEOF, LPAREN, identifier, RPAREN
+        SIZEOF,
+        LPAREN,
+        identifier,  # type_name, actually
+        RPAREN
     ):
         identifier.specify(ID_TYPE_NAME)
         return OpSizeOf(identifier)
@@ -356,7 +359,10 @@ class ShortStatement(CConst, CPunctuation, CWords):
 
     @staticmethod
     def p_cast_expression__cast_id(
-        LPAREN, identifier, RPAREN, cast_expression
+        LPAREN,
+        identifier,  # type_name, actually
+        RPAREN,
+        cast_expression
     ):
         identifier.specify(ID_TYPE_NAME)
         return OpCast(identifier, cast_expression)
