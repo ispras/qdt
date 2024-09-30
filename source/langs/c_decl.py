@@ -44,12 +44,10 @@ class CDecl(CDeclSpec):
 
     @staticmethod
     def p_declaration__init(declaration_specifiers, init_declarator_list):
-        for d in iter_declarations(
+        return list(iter_declarations(
             declaration_specifiers,
             init_declarator_list
-        ):
-            return d
-        raise AssertionError("At least one declaration must be parsed")
+        ))
 
     # TODO: declaration: static_assert_declaration
 
