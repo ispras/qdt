@@ -190,33 +190,35 @@ class CDecl(CDeclSpec):
 
 
 def iter_declarations(declaration_specifiers, init_declarator_list):
-    if len(init_declarator_list) > 1:
-        raise NotImplementedError
-
-    declarator, initializer = init_declarator_list[0]
-    if initializer is not None:
-        raise NotImplementedError
-
     decl_spec_type = get_declaration_type(declaration_specifiers)
 
-    pointers = declarator[:-1]
-    direct_declarator = declarator[-1]
+    for declarator, initializer in init_declarator_list:
+        if initializer is not None:
+            raise NotImplementedError
 
-    full_decl_spec_type = make_pointer(decl_spec_type, pointers)
+        pointers = declarator[:-1]
+        direct_declarator = declarator[-1]
 
-    dd_type = direct_declarator["type"]
+        full_decl_spec_type = make_pointer(decl_spec_type, pointers)
 
-    if dd_type is Function:
-        name_desc = direct_declarator["name"]
-        assert name_desc["type"] is str
+        dd_type = direct_declarator["type"]
 
-        yield Function(
-            name = name_desc["name"],
-            args = direct_declarator["args"],
-            ret_type = full_decl_spec_type,
-        )
-    else:
-        raise NotImplementedError
+        if dd_type is Function:
+            name_desc = direct_declarator["name"]
+            assert name_desc["type"] is str
+
+            yield Function(
+                name = name_desc["name"],
+                args = direct_declarator["args"],
+                ret_type = full_decl_spec_type,
+            )
+        elif dd_type is str:
+            # variable
+            name = direct_declarator["name"]
+            assert isinstance(name, str)
+            yield full_decl_spec_type(name)
+        else:
+            raise NotImplementedError
 
 
 def get_declaration_type(declaration_specifiers):
