@@ -344,29 +344,6 @@ class CDecl(CWords):
     def _p_type_name__abstract(specifier_qualifier_list, abstract_declarator):
         raise NotImplementedError
 
-    @staticmethod
-    def p_specifier_qualifier_list(specifier_qualifier_item):
-        return [specifier_qualifier_item]
-
-    @staticmethod
-    def p_specifier_qualifier_list__n(
-        specifier_qualifier_item, specifier_qualifier_list
-    ):
-        return [specifier_qualifier_item] + specifier_qualifier_list
-
-    @staticmethod
-    def p_specifier_qualifier_item__type(type_specifier):
-        return type_specifier
-
-    @staticmethod
-    def p_specifier_qualifier_item__type_qualifier(type_qualifier):
-        return type_qualifier
-
-    # TODO
-    @staticmethod
-    def _p_specifier_qualifier_item__alignment(alignment_specifier):
-        return alignment_specifier
-
     """
 
     @staticmethod
