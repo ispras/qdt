@@ -45,32 +45,12 @@ class CDecl(CDeclSpec):
 
     @staticmethod
     def p_declaration__init(declaration_specifiers, init_declarator_list):
-        if len(init_declarator_list) > 1:
-            raise NotImplementedError
-
-        declarator, initializer = init_declarator_list[0]
-        if initializer is not None:
-            raise NotImplementedError
-
-        direct_declorator = declarator[-1]
-        pointers = declarator[:-1]
-
-        dd_type = direct_declorator["type"]
-
-        if dd_type is Function:
-            ret_type = get_declaration_type(declaration_specifiers)
-            ret_type = make_pointer(ret_type, pointers)
-
-            name_desc = direct_declorator["name"]
-            assert name_desc["type"] is str
-
-            return Function(
-                name = name_desc["name"],
-                args = direct_declorator["args"],
-                ret_type = ret_type,
-            )
-        else:
-            raise NotImplementedError
+        for d in iter_declarations(
+            declaration_specifiers,
+            init_declarator_list
+        ):
+            return d
+        raise AssertionError("At least one declaration must be parsed")
 
     # TODO: declaration: static_assert_declaration
 
@@ -207,6 +187,35 @@ class CDecl(CDeclSpec):
     @staticmethod
     def p_error(p):
         raise SyntaxError
+
+
+def iter_declarations(declaration_specifiers, init_declarator_list):
+    if len(init_declarator_list) > 1:
+        raise NotImplementedError
+
+    declarator, initializer = init_declarator_list[0]
+    if initializer is not None:
+        raise NotImplementedError
+
+    direct_declorator = declarator[-1]
+    pointers = declarator[:-1]
+
+    dd_type = direct_declorator["type"]
+
+    if dd_type is Function:
+        ret_type = get_declaration_type(declaration_specifiers)
+        ret_type = make_pointer(ret_type, pointers)
+
+        name_desc = direct_declorator["name"]
+        assert name_desc["type"] is str
+
+        yield Function(
+            name = name_desc["name"],
+            args = direct_declorator["args"],
+            ret_type = ret_type,
+        )
+    else:
+        raise NotImplementedError
 
 
 def get_declaration_type(declaration_specifiers):
