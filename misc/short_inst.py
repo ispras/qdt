@@ -177,12 +177,12 @@ def analyze_instruction_block(heading):
         insn = None
 
     try:
-        decl = CDecl.parse(l)
+        decls = CDecl.parse(l)
     except:
         func_msg = format_exc()
-        decl = None
+        decls = None
 
-    if (insn or decl) is None:
+    if (insn or decls) is None:
         for msg, parser in (
             (insn_msg, Short),
             (func_msg, CDecl),
@@ -198,7 +198,7 @@ def analyze_instruction_block(heading):
         raise SyntaxError("%d: bad block (all parsers failed)" % (heading.n,))
 
     heading.insn = insn
-    heading.decl = decl
+    heading.decls = decls
 
 
 def find_instruction_specifiers(heading):
@@ -629,8 +629,8 @@ Converts short form instructions definitions to script defines them.
             insn.read_bitsize = read_bitsize
             insn_lines.extend(iter_multiply_instruction_blocks(top_line))
 
-        decl = top_line.decl
-        if decl is not None:
+        decls = top_line.decls
+        if decls is not None:
             decl_lines.append(top_line)
 
     # Handle declarations
@@ -640,14 +640,14 @@ Converts short form instructions definitions to script defines them.
     )
 
     for heading in decl_lines:
-        t = heading.decl
+        for t in heading.decls:
 
-        if isinstance(t, Function):
-            merge_statements(heading)
-            VID2Late(heading.stmnts).visit()
-            t.body = BodyTree(children = heading.stmnts)
+            if isinstance(t, Function):
+                merge_statements(heading)
+                VID2Late(heading.stmnts).visit()
+                t.body = BodyTree(children = heading.stmnts)
 
-        types.append(t)
+            types.append(t)
 
     # handle instructions
 
