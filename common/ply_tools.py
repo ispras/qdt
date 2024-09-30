@@ -15,7 +15,7 @@ from .ply_helpers import (
 
 from inspect import (
     currentframe,
-    getframeinfo
+    getframeinfo,
 )
 from types import (
     FunctionType,
