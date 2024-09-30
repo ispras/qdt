@@ -22,15 +22,6 @@ from ..short_ply_grammar import (
 )
 
 
-one_of = lambda words : "((" + ")|(".join(words) + "))(?=[ \t])"
-
-def word(*words):
-    def decorate(func):
-        func.__doc__ = one_of(words)
-        return func
-    return decorate
-
-
 spec_and_name = set([
     "short",
     "long",
