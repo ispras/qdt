@@ -797,6 +797,16 @@ class Operator(SemicolonPresence):
         if self.parenthesis:
             writer.write(")")
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.pprint_join(", ", self.children, per_line = False)
+        if self.parenthesis:
+            gen.first_field = False
+            gen.push_indent()
+            gen.gen_field("parenthesis = ")
+            gen.pprint(self.parenthesis)
+        gen.gen_end()
+
 
 class OpCast(Operator):
 
