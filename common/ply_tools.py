@@ -1,6 +1,7 @@
 __all__ = [
     "gen_tokens"
   , "def_tokens"
+  , "iter_class_tokens"
   , "iter_rules"
   , "unify_rules"
   , "join_tokens"
@@ -24,6 +25,17 @@ from types import (
 from re import (
     compile
 )
+
+
+def iter_class_tokens(cls):
+    "Given a class yielding PLY tokens."
+    for n in dir(cls):
+        if not n.startswith("t_"):
+            continue
+        t = n[2:]
+        if t in ("error", "ignore"):
+            continue
+        yield t
 
 
 def gen_tokens(glob):
