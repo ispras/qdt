@@ -101,9 +101,9 @@ class CDecl(CDeclSpec):
 
     @staticmethod
     def p_parameter_declaration(declaration_specifiers, declarator):
-        direct_declorator = declarator[-1]
+        direct_declarator = declarator[-1]
 
-        dd_type = direct_declorator["type"]
+        dd_type = direct_declarator["type"]
         if dd_type is not str:
             raise ValueError("argument name expected")
 
@@ -112,7 +112,7 @@ class CDecl(CDeclSpec):
         var_type = get_declaration_type(declaration_specifiers)
         var_type = make_pointer(var_type, pointers)
 
-        name = direct_declorator["name"]
+        name = direct_declarator["name"]
 
         return Variable(name, var_type)
 
@@ -197,21 +197,21 @@ def iter_declarations(declaration_specifiers, init_declarator_list):
     if initializer is not None:
         raise NotImplementedError
 
-    direct_declorator = declarator[-1]
+    direct_declarator = declarator[-1]
     pointers = declarator[:-1]
 
-    dd_type = direct_declorator["type"]
+    dd_type = direct_declarator["type"]
 
     if dd_type is Function:
         ret_type = get_declaration_type(declaration_specifiers)
         ret_type = make_pointer(ret_type, pointers)
 
-        name_desc = direct_declorator["name"]
+        name_desc = direct_declarator["name"]
         assert name_desc["type"] is str
 
         yield Function(
             name = name_desc["name"],
-            args = direct_declorator["args"],
+            args = direct_declarator["args"],
             ret_type = ret_type,
         )
     else:
