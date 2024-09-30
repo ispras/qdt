@@ -136,7 +136,9 @@ See: CDeclSpecEx.
 class CDeclSpecEx(CDeclSpec):
     """ This grammar extends CDeclSpec with productions which require external
 productions/tokens to be defined...
-    - SEMI (;)
+    - SEMI (`;`)
+    - LPAREN (`(`)
+    - RPAREN (`)`)
     - constant_expression
     - declorator
     - static_assert_declaration
