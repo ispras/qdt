@@ -45,6 +45,9 @@ from source.function.tree import (
     OpTernCond,
     OpXor,
 )
+from source.langs.c_words import (
+    CWords,
+)
 from source.late import (
     Late,
 )
@@ -109,7 +112,7 @@ class DefineFinder(NodeVisitor):
 @short_ply_grammar(
     debugfile = True,
 )
-class ShortStatement(object):
+class ShortStatement(CWords):
 
     t_LPAREN = r"\("
     t_RPAREN = r"\)"
@@ -159,36 +162,6 @@ class ShortStatement(object):
     @staticmethod
     def t_WS(t):
         r"[ \t]"
-
-    @staticmethod
-    def t_SIZEOF(t):
-        "sizeof"
-        return t
-
-    @staticmethod
-    def t_STRUCT(t):
-        "struct"
-        return t
-
-    @staticmethod
-    def t_UNION(t):
-        "union"
-        return t
-
-    @staticmethod
-    def t_ENUM(t):
-        "enum"
-        return t
-
-    @staticmethod
-    def t_ELSE(t):
-        "else"
-        return t
-
-    @staticmethod
-    def t_IDENTIFIER(t):
-        "[_a-zA-Z][_a-zA-Z0-9]*"
-        return t
 
     @staticmethod
     def t_INTEGER(t):
