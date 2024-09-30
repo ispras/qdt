@@ -39,6 +39,97 @@ class CWords:
 
     @staticmethod
     @word(
+        "struct",
+    )
+    def t_STRUCT(t):
+        return t
+
+    @staticmethod
+    @word(
+        "union",
+    )
+    def t_UNION(t):
+        return t
+
+    @staticmethod
+    @word(
+        "sizeof",
+    )
+    def t_SIZEOF(t):
+        return t
+
+    @staticmethod
+    @word(
+        "if",
+    )
+    def t_IF(t):
+        return t
+
+    @staticmethod
+    @word(
+        "else",
+    )
+    def t_ELSE(t):
+        return t
+
+    @staticmethod
+    @word(
+        "while",
+    )
+    def t_WHILE(t):
+        return t
+
+    @staticmethod
+    @word(
+        "do",
+    )
+    def t_DO(t):
+        return t
+
+    @staticmethod
+    @word(
+        "for",
+    )
+    def t_FOR(t):
+        return t
+
+    @staticmethod
+    @word(
+        "switch",
+    )
+    def t_SWITCH(t):
+        return t
+
+    @staticmethod
+    @word(
+        "case",
+    )
+    def t_CESE(t):
+        return t
+
+    @staticmethod
+    @word(
+        "default",
+    )
+    def t_DEFAULT(t):
+        return t
+
+    @staticmethod
+    @word(
+        "break",
+    )
+    def t_BREAK(t):
+        return t
+
+    @staticmethod
+    @word(
+        "continue",
+    )
+    def t_CONTINUE(t):
+        return t
+
+    @staticmethod
+    @word(
         "inline",
         "_Noreturn",
     )
