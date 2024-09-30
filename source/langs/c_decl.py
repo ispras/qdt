@@ -14,7 +14,6 @@ from ..model import (
     Pointer,
     Type,
     TypeNotRegistered,
-    Variable,
 )
 from ..short_ply_grammar import (
     short_ply_grammar,
@@ -101,20 +100,9 @@ class CDecl(CDeclSpec):
 
     @staticmethod
     def p_parameter_declaration(declaration_specifiers, declarator):
-        direct_declarator = declarator[-1]
-
-        dd_type = direct_declarator["type"]
-        if dd_type is not str:
-            raise ValueError("argument name expected")
-
-        pointers = declarator[:-1]
-
-        var_type = get_declaration_type(declaration_specifiers)
-        var_type = make_pointer(var_type, pointers)
-
-        name = direct_declarator["name"]
-
-        return Variable(name, var_type)
+        return next(iter_declarations(
+            declaration_specifiers, ((declarator, None),)
+        ))
 
     @staticmethod
     def p_declarator(direct_declarator):
