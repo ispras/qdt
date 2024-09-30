@@ -3,14 +3,13 @@ __all__ = [
 ]
 
 
-from .c_words import (
-    CWords,
+from .c_decl_spec import (
+    CDeclSpec,
 )
 from ..late import (
     Late,
 )
 from ..model import (
-    Enumeration,
     Function,
     Pointer,
     Type,
@@ -31,19 +30,10 @@ spec_and_name = set([
 
 @short_ply_grammar(
     debugfile = True,
+    start = "declaration",
 )
-class CDecl(CWords):
-    t_DOTS = r"\.\.\."
-
+class CDecl(CDeclSpec):
     t_STAR = r"\*"
-
-    t_LPAREN = r"\("
-    t_RPAREN = r"\)"
-
-    t_LBRACE = r"\{"
-    t_RBRACE = r"\}"
-
-    t_COMMA = ","
 
     @staticmethod
     def t_WS(t):
@@ -147,79 +137,6 @@ class CDecl(CWords):
         return Variable(name, var_type)
 
     @staticmethod
-    def p_declaration_specifiers(declaration_specifier):
-        return [declaration_specifier]
-
-    @staticmethod
-    def p_declaration_specifiers__n(
-        declaration_specifiers, declaration_specifier
-    ):
-        return declaration_specifiers + [declaration_specifier]
-
-    @staticmethod
-    def p_declaration_specifier__storage_class(STORAGE_CLASS_SPECIFIER):
-        return STORAGE_CLASS_SPECIFIER
-
-    @staticmethod
-    def p_declaration_specifier__type(type_specifier):
-        return type_specifier
-
-    @staticmethod
-    def p_declaration_specifier__type_qualifier(type_qualifier):
-        return type_qualifier
-
-    @staticmethod
-    def p_declaration_specifier__function(FUNCTION_SPECIFIER):
-        return FUNCTION_SPECIFIER
-
-    # TODO:
-    # alignment-specifier:
-    #    ALIGN_AS ( type-name )
-    #    ALIGN_AS ( constant-expression )
-    @staticmethod
-    def _p_declaration_specifier__alignment(alignment_specifier):
-        return alignment_specifier
-
-    @staticmethod
-    def p_type_qualifier(TYPE_QUALIFIER):
-        return TYPE_QUALIFIER
-
-    @staticmethod
-    def p_type_qualifier__atomic(ATOMIC):
-        return ATOMIC
-
-    @staticmethod
-    def p_type_specifier__base(BASE_TYPE_SPECIFIER):
-        return dict(
-            type = Type,
-            name = BASE_TYPE_SPECIFIER,
-            base = True,
-        )
-
-    # TODO
-    @staticmethod
-    def _p_type_specifier__atomic(ATOMIC, LPAREN, type_name, RPAREN):
-        pass
-
-    # TODO
-    @staticmethod
-    def _p_type_specifier__struct_or_union():
-        pass
-
-    @staticmethod
-    def p_type_specifier__enum(enum_specifier):
-        return enum_specifier
-
-    @staticmethod
-    def p_type_specifier__typedef_name(IDENTIFIER):
-        # Note that, `typedef_name: identifier` only
-        return dict(
-            type = Type,
-            name = IDENTIFIER,
-            base = False,
-        )
-
-    @staticmethod
     def p_declarator(direct_declarator):
         return [direct_declarator]
 
@@ -273,56 +190,6 @@ class CDecl(CWords):
     @staticmethod
     def p_type_qualifier_list__n(type_qualifier_list, type_qualifier):
         return type_qualifier_list + [type_qualifier]
-
-    @staticmethod
-    def p_enum_specifier(ENUM, IDENTIFIER):
-        return dict(
-            type = Enumeration,
-            name = IDENTIFIER,
-            items = None,
-        )
-
-    @staticmethod
-    def p_enum_specifier__anonimous(ENUM, enumerator_list_block):
-        return dict(
-            type = Enumeration,
-            name = None,
-            items = enumerator_list_block,
-        )
-
-    @staticmethod
-    def p_enum_specifier__definition(ENUM, IDENTIFIER, enumerator_list_block):
-        return dict(
-            type = Enumeration,
-            name = IDENTIFIER,
-            items = enumerator_list_block,
-        )
-
-    @staticmethod
-    def p_enumerator_list_block(LBRACE, enumerator_list, RBRACE):
-        return enumerator_list
-
-    @staticmethod
-    def p_enumerator_list_block__comma(LBRACE, enumerator_list, COMMA, RBRACE):
-        return enumerator_list
-
-    @staticmethod
-    def p_enumerator_list(enumerator):
-        return [enumerator]
-
-    @staticmethod
-    def p_enumerator_list__n(enumerator_list, COMMA, enumerator):
-        return enumerator_list + [enumerator]
-
-    @staticmethod
-    def p_enumerator__auto(IDENTIFIER):
-        # Note that, `enumeration_constant: identifier` only
-        return IDENTIFIER
-
-    @staticmethod
-    def _p_enumerator__manual(IDENTIFIER, ASSIGN, constant_expression):
-        # Note that, `enumeration_constant: identifier` only
-        return (IDENTIFIER, constant_expression)
 
     """
 
