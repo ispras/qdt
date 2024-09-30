@@ -47,6 +47,9 @@ from source.function.tree import (
 from source.langs.c_const import (
     CConst,
 )
+from source.langs.c_punct import (
+    CPunctuation,
+)
 from source.langs.c_words import (
     CWords,
 )
@@ -115,23 +118,13 @@ class DefineFinder(NodeVisitor):
     debugfile = True,
     start = "block_item",
 )
-class ShortStatement(CConst, CWords):
-
-    t_LPAREN = r"\("
-    t_RPAREN = r"\)"
-
-    t_LBRACKET = r"\["
-    t_RBRACKET = r"\]"
-
-    t_DOT = r"\."
+class ShortStatement(CConst, CPunctuation, CWords):
 
     t_RARROW = "->"
 
     t_DEC = "--"
     t_INC = r"\+\+"
-    t_COMMA = ","
     t_QUEST = r"\?"
-    t_COLON = ":"
 
     t_BIT_AND = "&"
     t_BIT_OR = r"\|"
