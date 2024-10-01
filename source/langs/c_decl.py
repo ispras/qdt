@@ -174,6 +174,10 @@ class CDecl(CDeclSpec):
     def p_error(p):
         raise SyntaxError
 
+    @staticmethod
+    def t_error(t):
+        raise SyntaxError
+
 
 def iter_declarations(declaration_specifiers, init_declarator_list):
     decl_spec_type = get_declaration_type(declaration_specifiers)
