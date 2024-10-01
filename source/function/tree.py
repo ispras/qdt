@@ -153,18 +153,12 @@ class Node(TypeContainer):
 
     def __init__(self,
         val = None,
-        new_line = None,
-        indent_children = None,
         children = []
     ):
         super(Node, self).__init__()
 
         if val is not None:
             self.val = val
-        if new_line is not None:
-            self.new_line = new_line
-        if indent_children is not None:
-            self.indent_children = indent_children
         self.children = []
         for child in children:
             self.add_child(child)
