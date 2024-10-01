@@ -452,7 +452,7 @@ def dumps(root, **pygen_kw):
     return pygenerate(root, **pygen_kw).w.getvalue()
 
 
-def pythonize(root, path):
+def pythonize(root, path, **pygen_kw):
     """ Serializes graph of objects presented by its :root: object to Python
     script and writes it to file. See `PyGenerator`.
 
@@ -462,7 +462,7 @@ def pythonize(root, path):
 
     # Pythonization can be long enough.
     # Do not touch target file until it ended.
-    data = dumps(root).encode("utf-8")
+    data = dumps(root, **pygen_kw).encode("utf-8")
 
     with open(path, "wb") as _file:
         _file.write(data)
