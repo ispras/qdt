@@ -1,5 +1,6 @@
 __all__ = [
-    "CDecl"
+    "CDeclaration"
+      , "CDecl"
 ]
 
 
@@ -27,16 +28,8 @@ spec_and_name = set([
     "signed",
 ])
 
-@short_ply_grammar(
-    debugfile = True,
-    start = "declaration",
-)
-class CDecl(CDeclSpec):
+class CDeclaration(CDeclSpec):
     t_STAR = r"\*"
-
-    @staticmethod
-    def t_WS(t):
-        r"[ \t]"
 
     @staticmethod
     def p_declaration(declaration_specifiers):
@@ -181,6 +174,17 @@ class CDecl(CDeclSpec):
         raise NotImplementedError
 
     """
+
+
+@short_ply_grammar(
+    debugfile = True,
+    start = "declaration",
+)
+class CDecl(CDeclaration):
+
+    @staticmethod
+    def t_WS(t):
+        r"[ \t]"
 
     @staticmethod
     def p_error(p):
