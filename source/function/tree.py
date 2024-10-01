@@ -273,15 +273,26 @@ class Comment(Node):
 
 class Label(CNode):
 
+    new_line = ":"
+
     def __init__(self, name):
-        super(Label, self).__init__()
-        self.name = name
+        if not isinstance(name, CId):
+            name = CId(name)
+        super(Label, self).__init__(children = [name])
 
     def __c__(self, writer):
         # A label must be written without an indent.
         writer.save_indent()
-        writer.write(self.name + ":")
+        super(Label, self).__c__(writer)
         writer.load_indent()
+
+    @property
+    def name(self):
+        return self.id.val
+
+    @property
+    def id(self):
+        return self.children[0]
 
 
 class NewLine(Node):
