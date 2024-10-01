@@ -1,6 +1,6 @@
 __all__ = [
-    "CConstToks",
-    "CConst",
+    "CConstantToks",
+    "CConstant",
 ]
 
 
@@ -8,7 +8,7 @@ from ..c_const import (
     CINT,
 )
 
-class CConstToks:
+class CConstantToks:
 
     @staticmethod
     def t_INTEGER(t):
@@ -48,7 +48,7 @@ class CConstToks:
         return t
 
 
-class CConst(CConstToks):
+class CConstant(CConstantToks):
 
     @staticmethod
     def p_constant__int(INTEGER):
