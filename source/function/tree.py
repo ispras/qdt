@@ -764,17 +764,18 @@ class Return(SemicolonPresence):
 
 class Goto(SemicolonPresence):
 
-    __node__ = SemicolonPresence.__node__ + ("label",)
-    __type_references__ = SemicolonPresence.__type_references__ + ("label",)
-    __pygen_deps__ = __node__
+    val = "goto@b"
 
     def __init__(self, label, **kw):
-        super(Goto, self).__init__(**kw)
-        self.label = label
+        if isinstance(label, Label):
+            label = label.id
+        if not isinstance(label, CId):
+            label = CId(label)
+        super(Goto, self).__init__(children = [label], **kw)
 
     @property
-    def val(self):
-        return "goto@b" + self.label.name
+    def label(self):
+        return self.children[0]
 
 
 class Operator(SemicolonPresence):
