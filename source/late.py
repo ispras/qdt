@@ -1,11 +1,19 @@
 __all__ = [
-    "Late"
+    "K_ANY"
+      , "K_VAR"
+      , "K_TYPE"
+          , "K_STRUT"
+          , "K_UNION"
+          , "K_ENUM"
+          , "K_FUNC"
+  , "Late"
   , "late_linkage"
   , "LateLinker"
 ]
 
 from common import (
     DictStack,
+    ee,
     SkipVisiting,
 )
 from .function.tree import (
@@ -19,16 +27,49 @@ from .model import (
 )
 
 
+class _KIND_OF_LATE: pass
+class K_ANY(_KIND_OF_LATE): pass
+class   K_VAR(K_ANY): pass
+class   K_TYPE(K_ANY): pass
+class       K_STRUT(K_TYPE): pass
+class       K_UNION(K_TYPE): pass
+class       K_ENUM(K_TYPE): pass
+class       K_FUNC(K_TYPE): pass
+
+
 class Late(CNode):
 
-    __slots__ = ("name",)
+    __slots__ = ("name", "kind")
 
-    def __init__(self, name):
+    def __init__(self, name, kind = K_ANY):
         super(Late, self).__init__()
         self.name = name
+        self.kind = kind
+
+    strict = bool(ee("QDT_LATE_STRICT"))
+
+    def specify(self, kind):
+        skind = self.kind
+        if issubclass(kind, skind):
+            self.kind = skind = kind
+        elif issubclass(skind, kind):
+            # current kind is at less accurate as new one
+            pass
+        else:
+            msg = "%s: wrong kind %s, it must be %s" % (
+                self.name,
+                kind,
+                skind
+            )
+            if self.strict:
+                raise ValueError(msg)
+            else:
+                print(msg)
+        return skind
 
     def __call__(self, name, *a, **kw):
         "Emulate Type.__call__"
+        self.specify(K_TYPE)
         return Variable(name, self, *a, **kw)
 
     def __c__(self, writer):
@@ -54,6 +95,7 @@ class Late(CNode):
 
     @property
     def full_deref(self):
+        self.specify(K_TYPE)
         # Late is always named.
         # It cannot be a star-pointer (i.e.: **TypeName)
         # But, it still can be a named pointer type.
