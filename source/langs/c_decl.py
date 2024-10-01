@@ -40,6 +40,18 @@ class CDecl(CDeclSpec):
 
     @staticmethod
     def p_declaration(declaration_specifiers):
+        if 1 < len(declaration_specifiers):
+            # That's a variable.
+            # Last specifier is actually the variable name.
+            # I.e. it's like a diract_declarator.
+            # So, emulate this.
+            diract_declarator = dict(declaration_specifiers[-1])
+            diract_declarator["type"] = str
+
+            return list(iter_declarations(
+                declaration_specifiers[:-1],
+                [([diract_declarator], None)]
+            ))
         raise NotImplementedError
 
     @staticmethod
