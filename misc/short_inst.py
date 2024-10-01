@@ -12,7 +12,6 @@ from qemu import (
     Operand,
     Short,
     ShortStatement,
-    VersatileIdentifier,
 )
 from source import (
     BinaryOperator,
@@ -142,13 +141,6 @@ def str_as_function_body(stmnts):
     return check_cols_fix_up(cw.w.getvalue())
 
 
-class VID2Late(NodeVisitor):
-
-    def __visit__(self, cur):
-        if isinstance(cur, VersatileIdentifier):
-            self.replace(Late(cur.name))
-
-
 class NamedList(list):
 
     def __init__(self, list_name = "list"):
@@ -227,7 +219,7 @@ def find_instruction_specifiers(heading):
             no_specs = True
             for d in find_defines(sline.stmnts):
                 lvalue = d.name
-                if not isinstance(lvalue, VersatileIdentifier):
+                if not isinstance(lvalue, Late):
                     raise SyntaxError(
                         "%d: lvalue of `:=` must be an ID, not %r"
                         % (sline.n, lvalue)
@@ -286,7 +278,7 @@ class Evaluator(NodeVisitor):
     def __leave__(self, o):
         if isinstance(o, CSTR):
             evaluated = str(o)
-        elif isinstance(o, VersatileIdentifier):
+        elif isinstance(o, Late):
             evaluated = self.ns[o.name]
         elif isinstance(o, BinaryOperator):
             code = "_evaluated_%d %s _evaluated_%d" % (
@@ -312,7 +304,7 @@ def iter_block_lines_specified(op_name, op_val, block):
     for line in block:
         for d in find_defines(line.stmnts):
             # find_instruction_specifiers missed it
-            assert isinstance(d.name, VersatileIdentifier)
+            assert isinstance(d.name, Late)
 
             l_op_name = d.name.name
 
@@ -461,7 +453,7 @@ def set_attributes(heading):
 
             for d in find_defines(sline.stmnts):
                 # find_instruction_specifiers missed it
-                assert isinstance(d.name, VersatileIdentifier)
+                assert isinstance(d.name, Late)
 
                 def_name = d.name.name
 
@@ -647,7 +639,6 @@ Converts short form instructions definitions to script defines them.
 
             if isinstance(t, Function):
                 merge_statements(heading)
-                VID2Late(heading.stmnts).visit()
                 t.body = BodyTree(children = heading.stmnts)
 
             types.append(t)
@@ -674,7 +665,6 @@ Converts short form instructions definitions to script defines them.
             continue
 
         merge_statements(heading)
-        VID2Late(heading.stmnts).visit()
 
         i.semantics = heading.stmnts
 
