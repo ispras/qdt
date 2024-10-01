@@ -91,7 +91,8 @@ class Late(CNode):
         return type(self).__name__ + "(%r)" % self.name
 
     def __var_base__(self):
-        return "l_" + self.name
+        # Note: type with specifiers have spaces inside name.
+        return "l_" + "_".join(self.name.split())
 
     @property
     def full_deref(self):
