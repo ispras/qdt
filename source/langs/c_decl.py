@@ -32,20 +32,29 @@ class CDeclaration(CDeclSpec):
     t_STAR = r"\*"
 
     @staticmethod
-    def p_declaration(declaration_specifiers):
-        if 1 < len(declaration_specifiers):
-            # That's a variable.
-            # Last specifier is actually the variable name.
-            # I.e. it's like a direct_declarator.
-            # So, emulate this.
-            direct_declarator = dict(declaration_specifiers[-1])
-            direct_declarator["type"] = str
+    def p_declaration(declaration_specifiers__0, declaration_specifiers__1):
+        # Declaration mast have at least two tokens.
+        # Else, it can be confused with a an expression.
+        # So, the production requires two lists of specifiers.
+        # That's insignificantly how the parser do split specifiers.
+        declaration_specifiers = (
+            declaration_specifiers__0 + declaration_specifiers__1
+        )
 
-            return list(iter_declarations(
-                declaration_specifiers[:-1],
-                [([direct_declarator], None)]
-            ))
-        raise NotImplementedError
+        # TODO: Currently, it's only possible to be a variable.
+        #       Normally, struct/enum/typedef must also get here.
+
+        # That's a variable.
+        # Last specifier is actually the variable name.
+        # I.e. it's like a direct_declarator.
+        # So, emulate this.
+        direct_declarator = dict(declaration_specifiers[-1])
+        direct_declarator["type"] = str
+
+        return list(iter_declarations(
+            declaration_specifiers[:-1],
+            [([direct_declarator], None)]
+        ))
 
     @staticmethod
     def p_declaration__init(declaration_specifiers, init_declarator_list):
