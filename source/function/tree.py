@@ -840,14 +840,16 @@ class OpSDeref(Operator):
     prior = 1
 
     def __init__(self, value, field):
-        super(OpSDeref, self).__init__(value)
-
-        if not isinstance(field, str):
+        if isinstance(field, CId):
+            pass
+        elif isinstance(field, str):
+            field = CId(field)
+        else:
             raise ValueError(
                 "Invalid type of field in OpSDeref: " + type(field).__name__
             )
 
-        self.field = field
+        super(OpSDeref, self).__init__(value, field)
 
     @property
     def struct(self):
@@ -873,15 +875,19 @@ class OpSDeref(Operator):
         return self.struct.fields[self.field].type
 
     @property
-    def suffix(self):
+    def delim(self):
         if isinstance(self.container.type, Pointer):
-            return "->" + self.field
+            return "->"
         else:
-            return "." + self.field
+            return "."
 
     @property
     def container(self):
         return self.children[0]
+
+    @property
+    def field(self):
+        return self.children[1].val
 
 
 class UnaryOperator(Operator):
