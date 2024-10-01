@@ -243,15 +243,15 @@ class ShortStatement(CConstant, CPunctuation, CWords):
 
     @staticmethod
     def p_postfix_expression__struct_deref(
-        postfix_expression, DOT, identifier
+        postfix_expression, DOT, IDENTIFIER
     ):
-        return OpSDeref(postfix_expression, identifier.name)
+        return OpSDeref(postfix_expression, IDENTIFIER)
 
     @staticmethod
     def p_postfix_expression__struct_ptr_deref(
-        postfix_expression, RARROW, identifier
+        postfix_expression, RARROW, IDENTIFIER
     ):
-        return OpSDeref(postfix_expression, identifier.name)
+        return OpSDeref(postfix_expression, IDENTIFIER)
 
     @staticmethod
     def p_postfix_expression__post_inc(postfix_expression, INC):
