@@ -257,6 +257,7 @@ class CNode(Node):
 
 class CId(CNode):
     "C Identifier"
+    new_line = None
 
 
 class Comment(Node):
