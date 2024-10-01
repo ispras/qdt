@@ -47,22 +47,17 @@ from source.function.tree import (
 from source.langs.c_const import (
     CConstant,
 )
-from source.langs.c_punct import (
-    CPunctuation,
-)
-from source.langs.c_words import (
-    CWords,
+from source.langs.c_decl import (
+    CDeclaration,
 )
 from source.late import (
-    K_ENUM,
     K_FUNC,
-    K_STRUCT,
     K_TYPE,
-    K_UNION,
     Late,
 )
 from source.model import (
     NodeVisitor,
+    Variable,
 )
 from source.short_ply_grammar import (
     short_ply_grammar,
@@ -98,7 +93,7 @@ class DefineFinder(NodeVisitor):
     debugfile = True,
     start = "block_item",
 )
-class ShortStatement(CConstant, CPunctuation, CWords):
+class ShortStatement(CConstant, CDeclaration):
 
     t_RARROW = "->"
 
@@ -145,7 +140,15 @@ class ShortStatement(CConstant, CPunctuation, CWords):
 
     @staticmethod
     def p_block_item__decl(declaration):
-        return declaration
+        for decl in declaration:
+            if not isinstance(decl, Variable):
+                raise SyntaxError(
+                    "Only variable declaration is alowed inside block"
+                )
+            if decl.initializer is not None:
+                # TODO: convert to OpDeclareAssign?
+                raise NotImplementedError
+        return Declare(*declaration)
 
     @staticmethod
     def p_statement__expr(expression):
@@ -160,39 +163,8 @@ class ShortStatement(CConstant, CPunctuation, CWords):
         return BranchElse(expression)
 
     @staticmethod
-    def p_declaration(identifier__t, identifier_list__n):
-        identifier__t.specify(K_TYPE)
-        vs = []
-        for n in identifier_list__n:
-            vs.append(identifier__t(n.name))
-        return Declare(*vs)
-
-    @staticmethod
     def p_identifier(IDENTIFIER):
         return Late(IDENTIFIER)
-
-    @staticmethod
-    def p_identifier__struct(STRUCT, identifier):
-        identifier.specify(K_STRUCT)
-        return identifier
-
-    @staticmethod
-    def p_identifier__union(UNION, identifier):
-        identifier.specify(K_UNION)
-        return identifier
-
-    @staticmethod
-    def p_identifier__enum(ENUM, identifier):
-        identifier.specify(K_ENUM)
-        return identifier
-
-    @staticmethod
-    def p_identifier_list(identifier):
-        return [identifier]
-
-    @staticmethod
-    def p_identifier_list__n(identifier_list, COMMA, identifier):
-        return identifier_list + [identifier]
 
     @staticmethod
     def p_primary_expression__id(identifier):
