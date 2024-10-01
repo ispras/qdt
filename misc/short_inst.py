@@ -172,9 +172,7 @@ def analyze_instruction_block(heading):
 
     try:
         decls = CDecl.parse(l)
-    except NotImplementedError:
-        raise
-    except:
+    except SyntaxError:
         func_msg = format_exc()
         decls = None
 
@@ -182,9 +180,7 @@ def analyze_instruction_block(heading):
     if decls is None:
         try:
             insn = Short.parse(l)
-        except NotImplementedError:
-            raise
-        except:
+        except SyntaxError:
             # before debug call stack another exception
             insn_msg = format_exc()
 
