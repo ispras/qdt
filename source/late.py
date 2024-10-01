@@ -105,6 +105,12 @@ class Late(CNode):
         #      checks.
         return self
 
+    # A for Type.
+    @property
+    def declaration_string(self):
+        # asterisks/full_deref does not alter result
+        return self.c_name + "@b"
+
     @property
     def c_name(self):
         return self.name
