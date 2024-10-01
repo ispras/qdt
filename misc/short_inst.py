@@ -25,8 +25,10 @@ from source import (
     check_cols_fix_up,
     CSTR,
     Function,
+    gen_init_string,
     Late,
     LateLinker,
+    Variable,
     VarUsageAnalyzer,
 )
 # for exec
@@ -689,6 +691,16 @@ Converts short form instructions definitions to script defines them.
                     t.c_name,
                     ", ".join((a.type.name + " " + a.name) for a in t.args),
                     str_as_function_body(t.body.children),
+                ))
+            elif isinstance(t, Variable):
+                print(check_cols_fix_up(
+                    t.declaration_string
+                  + gen_init_string(
+                        t.type,
+                        t.initializer,
+                        "    "
+                    )
+                  + "\n"
                 ))
 
     if output_file_name:
