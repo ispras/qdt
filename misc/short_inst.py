@@ -166,18 +166,23 @@ def analyze_instruction_block(heading):
     if not l:
         return
 
-    try:
-        insn = Short.parse(l)
-    except:
-        # before debug call stack another exception
-        insn_msg = format_exc()
-        insn = None
+    # Note, `int i` is a valid `Short` instruction encoding.
+    # I.e. mnemonic = "int", bit lenght = 1 bit, i is an operand.
+    # So, first try to parse line as C declaration.
 
     try:
         decls = CDecl.parse(l)
     except:
         func_msg = format_exc()
         decls = None
+
+    insn = None
+    if decls is None:
+        try:
+            insn = Short.parse(l)
+        except:
+            # before debug call stack another exception
+            insn_msg = format_exc()
 
     if (insn or decls) is None:
         for msg, parser in (
