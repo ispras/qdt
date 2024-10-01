@@ -2,7 +2,7 @@ __all__ = [
     "K_ANY"
       , "K_VAR"
       , "K_TYPE"
-          , "K_STRUT"
+          , "K_STRUCT"
           , "K_UNION"
           , "K_ENUM"
           , "K_FUNC"
@@ -31,7 +31,7 @@ class _KIND_OF_LATE: pass
 class K_ANY(_KIND_OF_LATE): pass
 class   K_VAR(K_ANY): pass
 class   K_TYPE(K_ANY): pass
-class       K_STRUT(K_TYPE): pass
+class       K_STRUCT(K_TYPE): pass
 class       K_UNION(K_TYPE): pass
 class       K_ENUM(K_TYPE): pass
 class       K_FUNC(K_TYPE): pass
