@@ -54,6 +54,11 @@ from source.langs.c_words import (
     CWords,
 )
 from source.late import (
+    K_ENUM,
+    K_FUNC,
+    K_STRUCT,
+    K_TYPE,
+    K_UNION,
     Late,
 )
 from source.model import (
@@ -62,31 +67,6 @@ from source.model import (
 from source.short_ply_grammar import (
     short_ply_grammar,
 )
-
-
-class ID_ANY: pass
-class ID_VARIABLE(ID_ANY): pass
-class ID_TYPE_NAME(ID_ANY): pass
-class ID_BASE_TYPE(ID_TYPE_NAME): pass
-class ID_STRUT(ID_TYPE_NAME): pass
-class ID_UNION(ID_TYPE_NAME): pass
-class ID_ENUM(ID_TYPE_NAME): pass
-class ID_FUNC(ID_TYPE_NAME): pass
-class ID_INSTR_FIELD(ID_ANY): pass
-
-
-class VersatileIdentifier(object):
-
-    def __init__(self, name):
-        self.name = name
-        self.kind = ID_ANY
-
-    def specify(self, kind):
-        if issubclass(self.kind, kind):
-            # new kind is less accurate
-            return
-        assert issubclass(kind, self.kind)
-        self.kind = kind
 
 
 class Define(BinaryOperator):
@@ -181,31 +161,29 @@ class ShortStatement(CConst, CPunctuation, CWords):
 
     @staticmethod
     def p_declaration(identifier__t, identifier_list__n):
-        identifier__t.specify(ID_TYPE_NAME)
-        t = Late(identifier__t.name)
+        identifier__t.specify(K_TYPE)
         vs = []
         for n in identifier_list__n:
-            n.specify(ID_VARIABLE)
-            vs.append(t(n.name))
+            vs.append(identifier__t(n.name))
         return Declare(*vs)
 
     @staticmethod
     def p_identifier(IDENTIFIER):
-        return VersatileIdentifier(IDENTIFIER)
+        return Late(IDENTIFIER)
 
     @staticmethod
     def p_identifier__struct(STRUCT, identifier):
-        identifier.specify(ID_STRUT)
+        identifier.specify(K_STRUCT)
         return identifier
 
     @staticmethod
     def p_identifier__union(UNION, identifier):
-        identifier.specify(ID_UNION)
+        identifier.specify(K_UNION)
         return identifier
 
     @staticmethod
     def p_identifier__enum(ENUM, identifier):
-        identifier.specify(ID_ENUM)
+        identifier.specify(K_ENUM)
         return identifier
 
     @staticmethod
@@ -253,9 +231,8 @@ class ShortStatement(CConst, CPunctuation, CWords):
     def p_postfix_expression__call(
         postfix_expression, LPAREN, argument_expression_list, RPAREN
     ):
-        if isinstance(postfix_expression, VersatileIdentifier):
-            postfix_expression.specify(ID_FUNC)
-            postfix_expression = Late(postfix_expression.name)
+        if isinstance(postfix_expression, Late):
+            postfix_expression.specify(K_FUNC)
         return Call(postfix_expression, *argument_expression_list)
 
     @staticmethod
@@ -348,7 +325,7 @@ class ShortStatement(CConst, CPunctuation, CWords):
         identifier,  # type_name, actually
         RPAREN
     ):
-        identifier.specify(ID_TYPE_NAME)
+        identifier.specify(K_TYPE)
         return OpSizeOf(identifier)
 
     # TODO: unary-expression: _Alignof ( type-name )
@@ -364,7 +341,7 @@ class ShortStatement(CConst, CPunctuation, CWords):
         RPAREN,
         cast_expression
     ):
-        identifier.specify(ID_TYPE_NAME)
+        identifier.specify(K_TYPE)
         return OpCast(identifier, cast_expression)
 
     @staticmethod
