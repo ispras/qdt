@@ -448,8 +448,8 @@ require reference to the current object.
             self.write(s)
 
 
-def dumps(root):
-    return pygenerate(root).w.getvalue()
+def dumps(root, **pygen_kw):
+    return pygenerate(root, **pygen_kw).w.getvalue()
 
 
 def pythonize(root, path):
