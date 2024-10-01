@@ -36,14 +36,14 @@ class CDeclaration(CDeclSpec):
         if 1 < len(declaration_specifiers):
             # That's a variable.
             # Last specifier is actually the variable name.
-            # I.e. it's like a diract_declarator.
+            # I.e. it's like a direct_declarator.
             # So, emulate this.
-            diract_declarator = dict(declaration_specifiers[-1])
-            diract_declarator["type"] = str
+            direct_declarator = dict(declaration_specifiers[-1])
+            direct_declarator["type"] = str
 
             return list(iter_declarations(
                 declaration_specifiers[:-1],
-                [([diract_declarator], None)]
+                [([direct_declarator], None)]
             ))
         raise NotImplementedError
 
