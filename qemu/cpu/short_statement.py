@@ -45,7 +45,7 @@ from source.function.tree import (
     OpXor,
 )
 from source.langs.c_const import (
-    CConst,
+    CConstant,
 )
 from source.langs.c_punct import (
     CPunctuation,
@@ -98,7 +98,7 @@ class DefineFinder(NodeVisitor):
     debugfile = True,
     start = "block_item",
 )
-class ShortStatement(CConst, CPunctuation, CWords):
+class ShortStatement(CConstant, CPunctuation, CWords):
 
     t_RARROW = "->"
 
