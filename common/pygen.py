@@ -1,5 +1,7 @@
 __all__ = [
-    "PyGenerator"
+    "IMPORTS_IMMEDIATE"
+  , "IMPORTS_OFF"
+  , "PyGenerator"
   , "pythonize"
   , "PyGenDepsVisitor"
       , "PyGenDepsCatcher"
@@ -58,6 +60,10 @@ pythonizable = const_types + (list, set, dict, tuple) + imported_types
 class PyGenDepsVisitor(ObjectVisitor):
 
     __field_name__ = "__pygen_deps__"
+
+
+IMPORTS_OFF = False
+IMPORTS_IMMEDIATE = True
 
 
 class PyGenerator(CodeWriter):
@@ -144,6 +150,13 @@ require reference to the current object.
         corresponding attributes.
         See `ObjectVisitor.__field_name__` description.
     """
+
+    def __init__(self,
+        imports = IMPORTS_IMMEDIATE,
+        **kw
+    ):
+        super(PyGenerator, self).__init__(**kw)
+        self.imports = imports
 
     def reset(self):
         super(PyGenerator, self).reset()
@@ -427,7 +440,7 @@ require reference to the current object.
             self.write(self.gen_const(val))
         elif isinstance(val, imported_types):
             mod = val.__module__
-            if mod == "__main__":
+            if mod == "__main__" or self.imports is IMPORTS_OFF:
                 self.write(val.__name__)
             else:
                 # Without `fromlist` `__import__` returns toplevel package.
