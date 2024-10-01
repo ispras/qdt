@@ -5,6 +5,7 @@ __all__ = [
       , "MacroBranch"
       , "Ifdef"
       , "CNode"
+          , "CId"
           , "Label"
           , "CBlock"
               , "LoopWhile"
@@ -252,6 +253,10 @@ class CNode(Node):
     @staticmethod
     def out_child(child, writer):
         child.__c__(writer)
+
+
+class CId(CNode):
+    "C Identifier"
 
 
 class Comment(Node):
