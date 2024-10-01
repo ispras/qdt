@@ -471,10 +471,10 @@ def pythonize(root, path):
 EMPTY = tuple()
 
 
-def pygenerate(*objs):
+def pygenerate(*objs, **pygen_kw):
     # See `PyGenerator` for general algorithm description.
 
-    gen = PyGenerator()
+    gen = PyGenerator(**pygen_kw)
     gen.reset()
 
     if not objs:
