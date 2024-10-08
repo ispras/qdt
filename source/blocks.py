@@ -54,7 +54,7 @@ class BlockParser(object):
         return self.vheading
 
     def INIT(self, c):
-        self.vheading = vheading = Line()
+        self.vheading = vheading = self.Line()
         self.stack = [(tuple(), vheading, [])]
         self.indent = []
         self.line = []
