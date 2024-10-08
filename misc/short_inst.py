@@ -51,6 +51,15 @@ from traceback import (
     format_exc,
 )
 
+
+class Cline(BlockParser.Line):
+    multiline = False
+
+
+class CBlockParser(BlockParser):
+    Line = Cline
+
+
 # Specification operator (:=) can set instruction attributes.
 instruction_attributes = dict(
     branch = bool,
@@ -498,6 +507,64 @@ def iter_block_lines_without_defines(block):
             yield line
 
 
+def parse_short_statement(heading, **parse_kw):
+    # strip comment
+    parts = str(heading).split("#", 1)
+    code = parts[0].strip()
+
+    if len(parts) > 1:
+        comment = parts[1].strip()
+        stmnts = [Comment(comment)]
+    else:
+        stmnts = []
+
+    if not code:
+        return stmnts
+
+    try:
+        stmnt = ShortStatement.parse(code, **parse_kw)
+    except SyntaxError:
+        # try to parse line with it's block as multiline statement
+        block = heading.child
+        if not block:
+            raise
+
+        block_code = code
+
+        prev_have_child = False
+        for line in block:
+            if line.child:
+                if prev_have_child:
+                    # only last line is alowed to have block
+                    raise
+                prev_have_child = True
+
+            line_parts = str(line).split("#", 1)
+            line_code = line_parts[0].strip()
+            block_code += " " + line_code
+
+            if len(line_parts) > 1:
+                comment = line_parts[1].strip()
+                stmnts.append(Comment(comment))
+
+        if block_code == code:
+            raise
+
+        try:
+            stmnt = ShortStatement.parse(block_code, **parse_kw)
+        except SyntaxError:
+            stmnt = None
+        else:
+            heading.multiline = True
+
+        if stmnt is None:
+            # need to `raise` first `SyntaxError`
+            raise
+
+    stmnts.append(stmnt)
+    return stmnts
+
+
 def parse_lines(heading):
     block = heading.child
 
@@ -505,36 +572,32 @@ def parse_lines(heading):
         return
 
     for line in block:
-        # strip comment
-        parts = str(line).split("#", 1)
-        code = parts[0].strip()
-        if len(parts) > 1:
-            comment = parts[1].strip()
-            stmnts = [Comment(comment)]
-        else:
+        if heading.parent is None:
+            # Don't try to parse `Short` instruction encoding.
             stmnts = []
-
-        # Don't try to parse `Short` instruction encoding.
-        if code and heading.parent is not None:
+        else:
             try:
-                stmnt = ShortStatement.parse(code)
-            except:
+                stmnts = parse_short_statement(line, debug = False)
+            except SyntaxError:
                 # before debug call stack another exception
                 msg = format_exc()
-                print("code: " + code)
+                print("line: " + str(line))
                 try:
-                    ShortStatement.parse(code, debug = True)
-                except:
+                    parse_short_statement(line, debug = True)
+                except SyntaxError:
                     pass
                 # after parser log printed
                 print(msg)
                 raise
-            else:
-                stmnts.append(stmnt)
 
         line.stmnts = stmnts
 
-        parse_lines(line)
+        if line.multiline:
+            for subline in line.child:
+                subline.stmnts = []
+            parse_lines(subline)  # line.child[-1]
+        else:
+            parse_lines(line)
 
 
 def merge_statements(heading):
@@ -618,7 +681,7 @@ Converts short form instructions definitions to script defines them.
     with open(args.short_desc_file_name, "r") as f:
         short_desc = f.read()
 
-    bp = BlockParser()
+    bp = CBlockParser()
     top = bp.parse(short_desc)
 
     # analyze instructions
