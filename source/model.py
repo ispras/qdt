@@ -580,6 +580,12 @@ class Function(Type):
                     "string body is redundant."
                 )
 
+    __pygen_deps__ = (
+        "body",
+        "ret_type",
+        "args",
+    )
+
     def __getitem__(self, name_or_index):
         "Shortcut for arguments"
         if isinstance(name_or_index, str):
