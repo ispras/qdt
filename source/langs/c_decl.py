@@ -63,6 +63,21 @@ class CDeclaration(CDeclSpec):
             init_declarator_list
         ))
 
+    @staticmethod
+    def p_declaration__init_2(
+        declaration_specifiers__0,
+        declaration_specifiers__1,
+        init_declarator_list
+    ):
+        # Declarations like `short int a, b` are not covered by both
+        # `p_declaration__init` because there are two `declaration_specifiers`
+        # lists, and `p_declaration` because it does not consumes COMMA inside
+        # init_declarator_list.
+        return list(iter_declarations(
+            declaration_specifiers__0 + declaration_specifiers__1,
+            init_declarator_list
+        ))
+
     # TODO: declaration: static_assert_declaration
 
     @staticmethod
