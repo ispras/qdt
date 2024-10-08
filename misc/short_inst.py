@@ -786,8 +786,7 @@ Converts short form instructions definitions to script defines them.
             f.write("\n")
             f.write(insts_text + "\n")
 
-            # TODO
-            if False and types:
+            if types:
                 f.write("\n")
                 f.write(types_text + "\n")
 
