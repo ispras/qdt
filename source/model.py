@@ -1026,6 +1026,9 @@ class Variable(TypeContainer):
         "initializer",
     )
 
+    def __var_base__(self):
+        return self.name
+
     def __gen_code__(self, gen):
         gen.gen_code(self)
 
