@@ -1018,6 +1018,18 @@ class OpCombAssign(BinaryOperator):
     def op_str(self):
         return self.op_sym + "="
 
+    def __gen_code__(self, gen):
+        gen.reset_gen(self)
+        gen.pprint_join(", ", self.children + [self.op_sym],
+            per_line = False
+        )
+        if self.parenthesis:
+            gen.first_field = False
+            gen.push_indent()
+            gen.gen_field("parenthesis = ")
+            gen.pprint(self.parenthesis)
+        gen.gen_end()
+
 
 class OpAdd(BinaryOperator):
 
