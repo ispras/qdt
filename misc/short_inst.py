@@ -539,23 +539,26 @@ def parse_lines(heading):
 
 def merge_statements(heading):
     block = heading.child
-    if block is not None:
-        sub_stmnts = []
-        for line in block:
-            merge_statements(line)
-            sub_stmnts.extend(line.stmnts)
 
-        sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
+    if block is None:
+        return
 
-        if sub_stmnts:
-            stmnts = heading.stmnts
-            if stmnts:
-                last_stmnt = stmnts[-1]
-                if not isinstance(last_stmnt, CBlock):
-                    stmnts[-1] = last_stmnt = BranchIf(last_stmnt)
-                last_stmnt(*sub_stmnts)
-            else:
-                stmnts[:] = sub_stmnts
+    sub_stmnts = []
+    for line in block:
+        merge_statements(line)
+        sub_stmnts.extend(line.stmnts)
+
+    sub_stmnts = list(iter_join_BranchElse(sub_stmnts))
+
+    if sub_stmnts:
+        stmnts = heading.stmnts
+        if stmnts:
+            last_stmnt = stmnts[-1]
+            if not isinstance(last_stmnt, CBlock):
+                stmnts[-1] = last_stmnt = BranchIf(last_stmnt)
+            last_stmnt(*sub_stmnts)
+        else:
+            stmnts[:] = sub_stmnts
 
 
 def iter_join_BranchElse(stmnts):
