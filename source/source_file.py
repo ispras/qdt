@@ -26,6 +26,7 @@ from six import (
     add_metaclass,
 )
 from common import (
+    DictStack,
     SkipVisiting,
     ee,
     OrderedSet,
@@ -35,6 +36,9 @@ from .chunks import (
     FunctionDeclaration,
     FunctionDefinition,
     HeaderInclusion,
+)
+from .late import (
+    LateLinker,
 )
 from .model import (
     CPPMacro,
@@ -265,6 +269,16 @@ class Source(TypeContainer):
             # Register the type with any name in order to be able to generate
             # its chunks.
             self.types[".anonymous" + str(id(_type))] = _type
+
+        glob_ns = DictStack(Type.reg)
+        glob_ns.update(self.types)
+        glob_ns.update(self.global_variables)
+
+        LateLinker(_type, glob_ns = glob_ns).visit()
+
+        # Late can be replaced with definer-less types.
+        # This type will be added by `TypeFixerVisitor` resulting in recursion
+        # until all possible Late references are resolved.
 
         if isinstance(_type, Structure) and _type.definition is _type:
             for field in _type.fields.values():

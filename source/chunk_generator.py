@@ -28,6 +28,7 @@ from .chunks import (
     VariableDefinition,
 )
 from common import (
+    DictStack,
     ee,
 )
 from .function.bindings import (
@@ -37,7 +38,7 @@ from .function.var_declarator import (
     VarDeclarator,
 )
 from .late import (
-    late_linkage,
+    LateLinker,
 )
 from .model import (
     CPP,
@@ -100,7 +101,23 @@ class ChunkGenerator(object):
         if inherit_references:
             assert (isinstance(definer, Header))
 
-        late_linkage(definer)
+        # Final late linkage.
+        # Some type can be added before types it `Late`-refers are created.
+        # So, LateLinker did not resolve them during `add_type`.
+        # At moment of `generate` all types must be created.
+        glob_ns = DictStack(Type.reg)
+        glob_ns.update(definer.types)
+        glob_ns.update(definer.global_variables)
+
+        LateLinker(definer, glob_ns = glob_ns).visit()
+
+        # `Late` can be replaced with definer-less types.
+        # `TypeFixerVisitor` below will grab them.
+        # They, of cource, are not handled by `LateLinker` above.
+        # But, they will be handled by `LateLinker` in `add_type` called by
+        # `TypeFixerVisitor` below.
+        # `TypeFixerVisitor` in `add_type` makes recursion grabbing rest
+        # definer-less types and resolving rest `Late` references.
 
         # Auto `Declare` variables in `Function`s with `BodyTree`.
         for func in definer.types.values():
