@@ -7,7 +7,6 @@ __all__ = [
           , "K_ENUM"
           , "K_FUNC"
   , "Late"
-  , "late_linkage"
   , "LateLinker"
 ]
 
@@ -24,9 +23,6 @@ from .model import (
     Type,
     TypeReferencesVisitor,
     Variable,
-)
-from .source_file import (
-    TypeFixerVisitor,
 )
 
 
@@ -121,15 +117,6 @@ class Late(CNode):
 
     # cannot be a star-pointer
     asterisks = ""
-
-
-def late_linkage(definer):
-    glob_ns = DictStack(Type.reg)
-    glob_ns.update(definer.types)
-    glob_ns.update(definer.global_variables)
-    LateLinker(definer, glob_ns = glob_ns).visit()
-    # E.g. Late can be replaced with definer-less types.
-    TypeFixerVisitor(definer, definer).visit()
 
 
 class LateLinker(TypeReferencesVisitor):
